@@ -1,0 +1,1699 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict TgQvltr2xfa86T7c4SzstYl3hAiCVch9KFn1GkLcVdNKBnefJeCJ1mf4Y9YuoOu
+
+-- Dumped from database version 18.1
+-- Dumped by pg_dump version 18.1
+
+-- Started on 2026-01-22 14:18:39
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 228 (class 1259 OID 16680)
+-- Name: action_types; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.action_types (
+    id bigint NOT NULL,
+    action_name character varying
+);
+
+
+ALTER TABLE public.action_types OWNER TO postgres;
+
+--
+-- TOC entry 227 (class 1259 OID 16679)
+-- Name: action_types_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.action_types_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.action_types_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5243 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: action_types_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.action_types_id_seq OWNED BY public.action_types.id;
+
+
+--
+-- TOC entry 240 (class 1259 OID 16740)
+-- Name: bike_brands; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bike_brands (
+    id bigint CONSTRAINT bike_details_id_not_null NOT NULL,
+    bike_brand character varying
+);
+
+
+ALTER TABLE public.bike_brands OWNER TO postgres;
+
+--
+-- TOC entry 259 (class 1259 OID 17079)
+-- Name: bike_brands_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.bike_brands ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.bike_brands_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- TOC entry 254 (class 1259 OID 16903)
+-- Name: components_on_bike; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.components_on_bike (
+    id bigint CONSTRAINT bike_components_id_not_null NOT NULL,
+    bike_id bigint,
+    component_id integer,
+    mounted_at timestamp with time zone,
+    remove_at timestamp with time zone,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    total_mileage_km integer,
+    note text,
+    is_active boolean DEFAULT true,
+    interval_id bigint,
+    brake_load_since_service integer,
+    last_serviced_at timestamp with time zone,
+    is_deleted boolean DEFAULT false,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.components_on_bike OWNER TO postgres;
+
+--
+-- TOC entry 253 (class 1259 OID 16902)
+-- Name: bike_components_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.bike_components_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bike_components_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5244 (class 0 OID 0)
+-- Dependencies: 253
+-- Name: bike_components_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.bike_components_id_seq OWNED BY public.components_on_bike.id;
+
+
+--
+-- TOC entry 239 (class 1259 OID 16739)
+-- Name: bike_details_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.bike_details_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bike_details_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5245 (class 0 OID 0)
+-- Dependencies: 239
+-- Name: bike_details_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.bike_details_id_seq OWNED BY public.bike_brands.id;
+
+
+--
+-- TOC entry 252 (class 1259 OID 16883)
+-- Name: bike_events; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bike_events (
+    id bigint NOT NULL,
+    bike_id bigint,
+    note text,
+    total_cost numeric(10,2),
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone,
+    is_deleted boolean DEFAULT false,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.bike_events OWNER TO postgres;
+
+--
+-- TOC entry 251 (class 1259 OID 16882)
+-- Name: bike_events_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.bike_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bike_events_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5246 (class 0 OID 0)
+-- Dependencies: 251
+-- Name: bike_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.bike_events_id_seq OWNED BY public.bike_events.id;
+
+
+--
+-- TOC entry 258 (class 1259 OID 17018)
+-- Name: bike_models; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bike_models (
+    id bigint NOT NULL,
+    model_name character varying(255) NOT NULL,
+    brand_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.bike_models OWNER TO postgres;
+
+--
+-- TOC entry 257 (class 1259 OID 17017)
+-- Name: bike_models_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.bike_models_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bike_models_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5247 (class 0 OID 0)
+-- Dependencies: 257
+-- Name: bike_models_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.bike_models_id_seq OWNED BY public.bike_models.id;
+
+
+--
+-- TOC entry 234 (class 1259 OID 16710)
+-- Name: bike_sizes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bike_sizes (
+    id integer NOT NULL,
+    size character varying
+);
+
+
+ALTER TABLE public.bike_sizes OWNER TO postgres;
+
+--
+-- TOC entry 233 (class 1259 OID 16709)
+-- Name: bike_sizes_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.bike_sizes_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bike_sizes_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5248 (class 0 OID 0)
+-- Dependencies: 233
+-- Name: bike_sizes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.bike_sizes_id_seq OWNED BY public.bike_sizes.id;
+
+
+--
+-- TOC entry 238 (class 1259 OID 16730)
+-- Name: bike_types; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bike_types (
+    id integer NOT NULL,
+    type character varying
+);
+
+
+ALTER TABLE public.bike_types OWNER TO postgres;
+
+--
+-- TOC entry 237 (class 1259 OID 16729)
+-- Name: bike_types_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.bike_types_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bike_types_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5249 (class 0 OID 0)
+-- Dependencies: 237
+-- Name: bike_types_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.bike_types_id_seq OWNED BY public.bike_types.id;
+
+
+--
+-- TOC entry 248 (class 1259 OID 16820)
+-- Name: bikes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bikes (
+    id bigint NOT NULL,
+    organization_id bigint CONSTRAINT bikes_user_id_not_null NOT NULL,
+    bike_brand_id integer,
+    bike_type_id integer,
+    year integer,
+    wheel_size_id integer,
+    bike_size_id integer,
+    mileage_km integer,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone,
+    frame_material character varying(50),
+    is_deleted boolean DEFAULT false,
+    deleted_at timestamp with time zone,
+    bike_model_id bigint
+);
+
+
+ALTER TABLE public.bikes OWNER TO postgres;
+
+--
+-- TOC entry 247 (class 1259 OID 16819)
+-- Name: bikes_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.bikes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bikes_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5250 (class 0 OID 0)
+-- Dependencies: 247
+-- Name: bikes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.bikes_id_seq OWNED BY public.bikes.id;
+
+
+--
+-- TOC entry 230 (class 1259 OID 16690)
+-- Name: component_details; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.component_details (
+    id integer NOT NULL,
+    components_brand character varying,
+    components_model character varying
+);
+
+
+ALTER TABLE public.component_details OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1259 OID 16689)
+-- Name: component_details_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.component_details_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.component_details_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5251 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: component_details_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.component_details_id_seq OWNED BY public.component_details.id;
+
+
+--
+-- TOC entry 226 (class 1259 OID 16672)
+-- Name: component_service_intervals; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.component_service_intervals (
+    id bigint NOT NULL,
+    interval_km integer,
+    interval_days integer,
+    interval_km_downhill integer,
+    brake_load_threshold integer
+);
+
+
+ALTER TABLE public.component_service_intervals OWNER TO postgres;
+
+--
+-- TOC entry 225 (class 1259 OID 16671)
+-- Name: component_service_intervals_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.component_service_intervals_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.component_service_intervals_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5252 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: component_service_intervals_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.component_service_intervals_id_seq OWNED BY public.component_service_intervals.id;
+
+
+--
+-- TOC entry 232 (class 1259 OID 16700)
+-- Name: component_types; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.component_types (
+    id integer NOT NULL,
+    component_type character varying
+);
+
+
+ALTER TABLE public.component_types OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 16699)
+-- Name: component_types_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.component_types_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.component_types_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5253 (class 0 OID 0)
+-- Dependencies: 231
+-- Name: component_types_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.component_types_id_seq OWNED BY public.component_types.id;
+
+
+--
+-- TOC entry 244 (class 1259 OID 16776)
+-- Name: components; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.components (
+    id integer NOT NULL,
+    component_type_id integer,
+    component_detail_id integer
+);
+
+
+ALTER TABLE public.components OWNER TO postgres;
+
+--
+-- TOC entry 243 (class 1259 OID 16775)
+-- Name: components_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.components_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.components_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5254 (class 0 OID 0)
+-- Dependencies: 243
+-- Name: components_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.components_id_seq OWNED BY public.components.id;
+
+
+--
+-- TOC entry 256 (class 1259 OID 16940)
+-- Name: event_components; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.event_components (
+    id bigint NOT NULL,
+    bike_event_id bigint,
+    component_id bigint,
+    action_id bigint,
+    note text,
+    partial_cost numeric(10,2),
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone,
+    part_replaced boolean DEFAULT false,
+    is_deleted boolean DEFAULT false,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.event_components OWNER TO postgres;
+
+--
+-- TOC entry 255 (class 1259 OID 16939)
+-- Name: event_components_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.event_components_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.event_components_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5255 (class 0 OID 0)
+-- Dependencies: 255
+-- Name: event_components_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.event_components_id_seq OWNED BY public.event_components.id;
+
+
+--
+-- TOC entry 246 (class 1259 OID 16796)
+-- Name: organization_members; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.organization_members (
+    id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    role_id bigint NOT NULL,
+    organization_id bigint NOT NULL
+);
+
+
+ALTER TABLE public.organization_members OWNER TO postgres;
+
+--
+-- TOC entry 245 (class 1259 OID 16795)
+-- Name: organization_members_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.organization_members_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.organization_members_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5256 (class 0 OID 0)
+-- Dependencies: 245
+-- Name: organization_members_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.organization_members_id_seq OWNED BY public.organization_members.id;
+
+
+--
+-- TOC entry 222 (class 1259 OID 16651)
+-- Name: organization_roles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.organization_roles (
+    id bigint NOT NULL,
+    code character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    sort_order integer,
+    description text
+);
+
+
+ALTER TABLE public.organization_roles OWNER TO postgres;
+
+--
+-- TOC entry 221 (class 1259 OID 16650)
+-- Name: organization_roles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.organization_roles_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.organization_roles_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5257 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: organization_roles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.organization_roles_id_seq OWNED BY public.organization_roles.id;
+
+
+--
+-- TOC entry 220 (class 1259 OID 16637)
+-- Name: organizations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.organizations (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    is_deleted boolean DEFAULT false,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.organizations OWNER TO postgres;
+
+--
+-- TOC entry 219 (class 1259 OID 16636)
+-- Name: organizations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.organizations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.organizations_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5258 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: organizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.organizations_id_seq OWNED BY public.organizations.id;
+
+
+--
+-- TOC entry 224 (class 1259 OID 16662)
+-- Name: ride_styles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ride_styles (
+    id integer NOT NULL,
+    ride_style character varying
+);
+
+
+ALTER TABLE public.ride_styles OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 16661)
+-- Name: ride_styles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.ride_styles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.ride_styles_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5259 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: ride_styles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.ride_styles_id_seq OWNED BY public.ride_styles.id;
+
+
+--
+-- TOC entry 250 (class 1259 OID 16862)
+-- Name: rides; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rides (
+    id bigint NOT NULL,
+    bike_id bigint,
+    user_id bigint,
+    started_at timestamp with time zone,
+    duration_sec integer,
+    distance_m integer,
+    elevation_down_m integer,
+    elevation_up_m integer,
+    speed_down integer,
+    speed_avg integer,
+    braking_load_score integer,
+    max_speed_kmh integer,
+    is_deleted boolean DEFAULT false,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.rides OWNER TO postgres;
+
+--
+-- TOC entry 249 (class 1259 OID 16861)
+-- Name: rides_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.rides_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.rides_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5260 (class 0 OID 0)
+-- Dependencies: 249
+-- Name: rides_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.rides_id_seq OWNED BY public.rides.id;
+
+
+--
+-- TOC entry 242 (class 1259 OID 16750)
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    id bigint NOT NULL,
+    name character varying,
+    email character varying,
+    password_hash character varying,
+    avatar_url character varying,
+    language character varying,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    last_login_at timestamp with time zone,
+    currency character varying,
+    weight_kg integer,
+    ride_style_id integer,
+    is_deleted boolean DEFAULT false,
+    deleted_at timestamp with time zone
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- TOC entry 241 (class 1259 OID 16749)
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5261 (class 0 OID 0)
+-- Dependencies: 241
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- TOC entry 236 (class 1259 OID 16720)
+-- Name: wheel_sizes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.wheel_sizes (
+    id integer NOT NULL,
+    size character varying
+);
+
+
+ALTER TABLE public.wheel_sizes OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1259 OID 16719)
+-- Name: wheel_sizes_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.wheel_sizes_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.wheel_sizes_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5262 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: wheel_sizes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.wheel_sizes_id_seq OWNED BY public.wheel_sizes.id;
+
+
+--
+-- TOC entry 4959 (class 2604 OID 16683)
+-- Name: action_types id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.action_types ALTER COLUMN id SET DEFAULT nextval('public.action_types_id_seq'::regclass);
+
+
+--
+-- TOC entry 4977 (class 2604 OID 16886)
+-- Name: bike_events id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_events ALTER COLUMN id SET DEFAULT nextval('public.bike_events_id_seq'::regclass);
+
+
+--
+-- TOC entry 4989 (class 2604 OID 17021)
+-- Name: bike_models id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_models ALTER COLUMN id SET DEFAULT nextval('public.bike_models_id_seq'::regclass);
+
+
+--
+-- TOC entry 4962 (class 2604 OID 16713)
+-- Name: bike_sizes id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_sizes ALTER COLUMN id SET DEFAULT nextval('public.bike_sizes_id_seq'::regclass);
+
+
+--
+-- TOC entry 4964 (class 2604 OID 16733)
+-- Name: bike_types id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_types ALTER COLUMN id SET DEFAULT nextval('public.bike_types_id_seq'::regclass);
+
+
+--
+-- TOC entry 4972 (class 2604 OID 16823)
+-- Name: bikes id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes ALTER COLUMN id SET DEFAULT nextval('public.bikes_id_seq'::regclass);
+
+
+--
+-- TOC entry 4960 (class 2604 OID 16693)
+-- Name: component_details id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.component_details ALTER COLUMN id SET DEFAULT nextval('public.component_details_id_seq'::regclass);
+
+
+--
+-- TOC entry 4958 (class 2604 OID 16675)
+-- Name: component_service_intervals id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.component_service_intervals ALTER COLUMN id SET DEFAULT nextval('public.component_service_intervals_id_seq'::regclass);
+
+
+--
+-- TOC entry 4961 (class 2604 OID 16703)
+-- Name: component_types id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.component_types ALTER COLUMN id SET DEFAULT nextval('public.component_types_id_seq'::regclass);
+
+
+--
+-- TOC entry 4970 (class 2604 OID 16779)
+-- Name: components id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components ALTER COLUMN id SET DEFAULT nextval('public.components_id_seq'::regclass);
+
+
+--
+-- TOC entry 4980 (class 2604 OID 16906)
+-- Name: components_on_bike id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components_on_bike ALTER COLUMN id SET DEFAULT nextval('public.bike_components_id_seq'::regclass);
+
+
+--
+-- TOC entry 4985 (class 2604 OID 16943)
+-- Name: event_components id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.event_components ALTER COLUMN id SET DEFAULT nextval('public.event_components_id_seq'::regclass);
+
+
+--
+-- TOC entry 4971 (class 2604 OID 16799)
+-- Name: organization_members id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_members ALTER COLUMN id SET DEFAULT nextval('public.organization_members_id_seq'::regclass);
+
+
+--
+-- TOC entry 4956 (class 2604 OID 16654)
+-- Name: organization_roles id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_roles ALTER COLUMN id SET DEFAULT nextval('public.organization_roles_id_seq'::regclass);
+
+
+--
+-- TOC entry 4952 (class 2604 OID 16640)
+-- Name: organizations id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organizations ALTER COLUMN id SET DEFAULT nextval('public.organizations_id_seq'::regclass);
+
+
+--
+-- TOC entry 4957 (class 2604 OID 16665)
+-- Name: ride_styles id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ride_styles ALTER COLUMN id SET DEFAULT nextval('public.ride_styles_id_seq'::regclass);
+
+
+--
+-- TOC entry 4975 (class 2604 OID 16865)
+-- Name: rides id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rides ALTER COLUMN id SET DEFAULT nextval('public.rides_id_seq'::regclass);
+
+
+--
+-- TOC entry 4965 (class 2604 OID 16753)
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- TOC entry 4963 (class 2604 OID 16723)
+-- Name: wheel_sizes id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.wheel_sizes ALTER COLUMN id SET DEFAULT nextval('public.wheel_sizes_id_seq'::regclass);
+
+
+--
+-- TOC entry 5001 (class 2606 OID 16688)
+-- Name: action_types action_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.action_types
+    ADD CONSTRAINT action_types_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5013 (class 2606 OID 17036)
+-- Name: bike_brands bike_brand_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_brands
+    ADD CONSTRAINT bike_brand_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5057 (class 2606 OID 16915)
+-- Name: components_on_bike bike_components_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components_on_bike
+    ADD CONSTRAINT bike_components_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5048 (class 2606 OID 16893)
+-- Name: bike_events bike_events_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_events
+    ADD CONSTRAINT bike_events_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5068 (class 2606 OID 17027)
+-- Name: bike_models bike_models_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_models
+    ADD CONSTRAINT bike_models_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5007 (class 2606 OID 16718)
+-- Name: bike_sizes bike_sizes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_sizes
+    ADD CONSTRAINT bike_sizes_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5011 (class 2606 OID 16738)
+-- Name: bike_types bike_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_types
+    ADD CONSTRAINT bike_types_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5036 (class 2606 OID 16828)
+-- Name: bikes bikes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes
+    ADD CONSTRAINT bikes_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4993 (class 2606 OID 17077)
+-- Name: organization_roles code; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_roles
+    ADD CONSTRAINT code UNIQUE (code);
+
+
+--
+-- TOC entry 5003 (class 2606 OID 16698)
+-- Name: component_details component_details_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.component_details
+    ADD CONSTRAINT component_details_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4999 (class 2606 OID 16678)
+-- Name: component_service_intervals component_service_intervals_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.component_service_intervals
+    ADD CONSTRAINT component_service_intervals_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5005 (class 2606 OID 16708)
+-- Name: component_types component_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.component_types
+    ADD CONSTRAINT component_types_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5026 (class 2606 OID 16782)
+-- Name: components components_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components
+    ADD CONSTRAINT components_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5064 (class 2606 OID 16951)
+-- Name: event_components event_components_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.event_components
+    ADD CONSTRAINT event_components_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5029 (class 2606 OID 16802)
+-- Name: organization_members organization_members_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_members
+    ADD CONSTRAINT organization_members_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4995 (class 2606 OID 16660)
+-- Name: organization_roles organization_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_roles
+    ADD CONSTRAINT organization_roles_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4991 (class 2606 OID 16649)
+-- Name: organizations organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organizations
+    ADD CONSTRAINT organizations_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4997 (class 2606 OID 16670)
+-- Name: ride_styles ride_styles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ride_styles
+    ADD CONSTRAINT ride_styles_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5043 (class 2606 OID 16869)
+-- Name: rides rides_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rides
+    ADD CONSTRAINT rides_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5031 (class 2606 OID 16979)
+-- Name: organization_members unique_organization_members; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_members
+    ADD CONSTRAINT unique_organization_members UNIQUE (organization_id, user_id);
+
+
+--
+-- TOC entry 5016 (class 2606 OID 16764)
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 5020 (class 2606 OID 16762)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5009 (class 2606 OID 16728)
+-- Name: wheel_sizes wheel_sizes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.wheel_sizes
+    ADD CONSTRAINT wheel_sizes_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5050 (class 1259 OID 16937)
+-- Name: bike_components_bike_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_bike_id ON public.components_on_bike USING btree (bike_id);
+
+
+--
+-- TOC entry 5051 (class 1259 OID 16933)
+-- Name: bike_components_component_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_component_id ON public.components_on_bike USING btree (component_id);
+
+
+--
+-- TOC entry 5052 (class 1259 OID 16931)
+-- Name: bike_components_interval_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_interval_id ON public.components_on_bike USING btree (interval_id);
+
+
+--
+-- TOC entry 5053 (class 1259 OID 16935)
+-- Name: bike_components_is_active; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_is_active ON public.components_on_bike USING btree (is_active);
+
+
+--
+-- TOC entry 5054 (class 1259 OID 16932)
+-- Name: bike_components_mileage; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_mileage ON public.components_on_bike USING btree (total_mileage_km);
+
+
+--
+-- TOC entry 5055 (class 1259 OID 16936)
+-- Name: bike_components_mounted_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_mounted_at ON public.components_on_bike USING btree (mounted_at);
+
+
+--
+-- TOC entry 5058 (class 1259 OID 16934)
+-- Name: bike_components_remove_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_remove_at ON public.components_on_bike USING btree (remove_at);
+
+
+--
+-- TOC entry 5059 (class 1259 OID 16938)
+-- Name: bike_components_updated_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_components_updated_at ON public.components_on_bike USING btree (updated_at);
+
+
+--
+-- TOC entry 5045 (class 1259 OID 16901)
+-- Name: bike_events_bike_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_events_bike_id ON public.bike_events USING btree (bike_id);
+
+
+--
+-- TOC entry 5046 (class 1259 OID 16899)
+-- Name: bike_events_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_events_created_at ON public.bike_events USING btree (created_at);
+
+
+--
+-- TOC entry 5049 (class 1259 OID 16900)
+-- Name: bike_events_updated_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bike_events_updated_at ON public.bike_events USING btree (updated_at);
+
+
+--
+-- TOC entry 5032 (class 1259 OID 16857)
+-- Name: bikes_bike_size_col; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bikes_bike_size_col ON public.bikes USING btree (bike_size_id);
+
+
+--
+-- TOC entry 5033 (class 1259 OID 16859)
+-- Name: bikes_brand_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bikes_brand_id ON public.bikes USING btree (bike_brand_id);
+
+
+--
+-- TOC entry 5034 (class 1259 OID 16855)
+-- Name: bikes_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bikes_created_at ON public.bikes USING btree (created_at);
+
+
+--
+-- TOC entry 5037 (class 1259 OID 16854)
+-- Name: bikes_type_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bikes_type_id ON public.bikes USING btree (bike_type_id);
+
+
+--
+-- TOC entry 5038 (class 1259 OID 16860)
+-- Name: bikes_updated_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bikes_updated_at ON public.bikes USING btree (updated_at);
+
+
+--
+-- TOC entry 5039 (class 1259 OID 16856)
+-- Name: bikes_user_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bikes_user_id ON public.bikes USING btree (organization_id);
+
+
+--
+-- TOC entry 5040 (class 1259 OID 16858)
+-- Name: bikes_wheel_size_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bikes_wheel_size_id ON public.bikes USING btree (wheel_size_id);
+
+
+--
+-- TOC entry 5023 (class 1259 OID 16794)
+-- Name: components_component_brand_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX components_component_brand_id ON public.components USING btree (component_detail_id);
+
+
+--
+-- TOC entry 5024 (class 1259 OID 16793)
+-- Name: components_component_type_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX components_component_type_id ON public.components USING btree (component_type_id);
+
+
+--
+-- TOC entry 5060 (class 1259 OID 16969)
+-- Name: event_components_bike_event_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX event_components_bike_event_id ON public.event_components USING btree (bike_event_id);
+
+
+--
+-- TOC entry 5061 (class 1259 OID 16970)
+-- Name: event_components_component_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX event_components_component_id ON public.event_components USING btree (component_id);
+
+
+--
+-- TOC entry 5062 (class 1259 OID 16967)
+-- Name: event_components_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX event_components_created_at ON public.event_components USING btree (created_at);
+
+
+--
+-- TOC entry 5065 (class 1259 OID 16971)
+-- Name: event_components_type_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX event_components_type_id ON public.event_components USING btree (action_id);
+
+
+--
+-- TOC entry 5066 (class 1259 OID 16968)
+-- Name: event_components_updated_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX event_components_updated_at ON public.event_components USING btree (updated_at);
+
+
+--
+-- TOC entry 5027 (class 1259 OID 16818)
+-- Name: index_1; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX index_1 ON public.organization_members USING btree (organization_id, user_id);
+
+
+--
+-- TOC entry 5041 (class 1259 OID 16881)
+-- Name: rides_bike_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX rides_bike_id ON public.rides USING btree (bike_id);
+
+
+--
+-- TOC entry 5044 (class 1259 OID 16880)
+-- Name: rides_started_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX rides_started_at ON public.rides USING btree (started_at);
+
+
+--
+-- TOC entry 5014 (class 1259 OID 16774)
+-- Name: users_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_created_at ON public.users USING btree (created_at);
+
+
+--
+-- TOC entry 5017 (class 1259 OID 16773)
+-- Name: users_last_login_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_last_login_at ON public.users USING btree (last_login_at);
+
+
+--
+-- TOC entry 5018 (class 1259 OID 16772)
+-- Name: users_name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_name ON public.users USING btree (name);
+
+
+--
+-- TOC entry 5021 (class 1259 OID 16771)
+-- Name: users_ride_style_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_ride_style_id ON public.users USING btree (ride_style_id);
+
+
+--
+-- TOC entry 5022 (class 1259 OID 16770)
+-- Name: users_updated_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX users_updated_at ON public.users USING btree (updated_at);
+
+
+--
+-- TOC entry 5090 (class 2606 OID 17130)
+-- Name: bike_models bike_brands_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_models
+    ADD CONSTRAINT bike_brands_fkey FOREIGN KEY (brand_id) REFERENCES public.bike_brands(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 5083 (class 2606 OID 16894)
+-- Name: bike_events bike_events_bike_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bike_events
+    ADD CONSTRAINT bike_events_bike_id_fkey FOREIGN KEY (bike_id) REFERENCES public.bikes(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5075 (class 2606 OID 17095)
+-- Name: bikes bikes_bike_brand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes
+    ADD CONSTRAINT bikes_bike_brand_id_fkey FOREIGN KEY (bike_brand_id) REFERENCES public.bike_brands(id) ON UPDATE RESTRICT ON DELETE RESTRICT NOT VALID;
+
+
+--
+-- TOC entry 5076 (class 2606 OID 17115)
+-- Name: bikes bikes_bike_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes
+    ADD CONSTRAINT bikes_bike_model_id_fkey FOREIGN KEY (bike_model_id) REFERENCES public.bike_models(id) ON DELETE SET NULL NOT VALID;
+
+
+--
+-- TOC entry 5077 (class 2606 OID 16849)
+-- Name: bikes bikes_bike_size_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes
+    ADD CONSTRAINT bikes_bike_size_id_fkey FOREIGN KEY (bike_size_id) REFERENCES public.bike_sizes(id);
+
+
+--
+-- TOC entry 5078 (class 2606 OID 16839)
+-- Name: bikes bikes_bike_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes
+    ADD CONSTRAINT bikes_bike_type_id_fkey FOREIGN KEY (bike_type_id) REFERENCES public.bike_types(id);
+
+
+--
+-- TOC entry 5079 (class 2606 OID 17125)
+-- Name: bikes bikes_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes
+    ADD CONSTRAINT bikes_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 5080 (class 2606 OID 16844)
+-- Name: bikes bikes_wheel_size_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bikes
+    ADD CONSTRAINT bikes_wheel_size_id_fkey FOREIGN KEY (wheel_size_id) REFERENCES public.wheel_sizes(id);
+
+
+--
+-- TOC entry 5070 (class 2606 OID 17155)
+-- Name: components components_component_detail_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components
+    ADD CONSTRAINT components_component_detail_id_fkey FOREIGN KEY (component_detail_id) REFERENCES public.component_details(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 5071 (class 2606 OID 16788)
+-- Name: components components_component_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components
+    ADD CONSTRAINT components_component_type_id_fkey FOREIGN KEY (component_type_id) REFERENCES public.component_types(id);
+
+
+--
+-- TOC entry 5084 (class 2606 OID 17105)
+-- Name: components_on_bike components_on_bike_bike_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components_on_bike
+    ADD CONSTRAINT components_on_bike_bike_id_fkey FOREIGN KEY (bike_id) REFERENCES public.bikes(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 5085 (class 2606 OID 17120)
+-- Name: components_on_bike components_on_bike_component_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components_on_bike
+    ADD CONSTRAINT components_on_bike_component_fkey FOREIGN KEY (component_id) REFERENCES public.components(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 5086 (class 2606 OID 16916)
+-- Name: components_on_bike components_on_bike_interval_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.components_on_bike
+    ADD CONSTRAINT components_on_bike_interval_id_fkey FOREIGN KEY (interval_id) REFERENCES public.component_service_intervals(id);
+
+
+--
+-- TOC entry 5087 (class 2606 OID 16952)
+-- Name: event_components event_components_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.event_components
+    ADD CONSTRAINT event_components_action_id_fkey FOREIGN KEY (action_id) REFERENCES public.action_types(id);
+
+
+--
+-- TOC entry 5088 (class 2606 OID 16957)
+-- Name: event_components event_components_bike_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.event_components
+    ADD CONSTRAINT event_components_bike_event_id_fkey FOREIGN KEY (bike_event_id) REFERENCES public.bike_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5089 (class 2606 OID 16962)
+-- Name: event_components event_components_component_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.event_components
+    ADD CONSTRAINT event_components_component_id_fkey FOREIGN KEY (component_id) REFERENCES public.components_on_bike(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5072 (class 2606 OID 16803)
+-- Name: organization_members organization_members_organization_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_members
+    ADD CONSTRAINT organization_members_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5073 (class 2606 OID 17145)
+-- Name: organization_members organization_members_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_members
+    ADD CONSTRAINT organization_members_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.organization_roles(id) NOT VALID;
+
+
+--
+-- TOC entry 5074 (class 2606 OID 17160)
+-- Name: organization_members organization_members_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization_members
+    ADD CONSTRAINT organization_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 5081 (class 2606 OID 16875)
+-- Name: rides rides_bike_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rides
+    ADD CONSTRAINT rides_bike_id_fkey FOREIGN KEY (bike_id) REFERENCES public.bikes(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5082 (class 2606 OID 17135)
+-- Name: rides rides_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rides
+    ADD CONSTRAINT rides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- TOC entry 5069 (class 2606 OID 17090)
+-- Name: users style_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT style_fkey FOREIGN KEY (ride_style_id) REFERENCES public.ride_styles(id) ON UPDATE RESTRICT ON DELETE RESTRICT NOT VALID;
+
+
+-- Completed on 2026-01-22 14:18:40
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict TgQvltr2xfa86T7c4SzstYl3hAiCVch9KFn1GkLcVdNKBnefJeCJ1mf4Y9YuoOu
+
