@@ -33,7 +33,7 @@ export class UserController {
   // GET user/:id
   @ApiOperation({ summary: 'TEST' })
   @ApiResponse({ status: 200, type: UserResponseDto })
-  @Get('test2')
+  @Get('test22')
   getUser22() {
     return { message: 'test works' };
   }
