@@ -38,6 +38,13 @@ export class UserController {
     return { message: 'shit works' };
   }
 
+  // GET user/:id
+  @ApiOperation({ summary: 'TEST' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @Get('aaa')
+  aaa() {
+    return { message: 'aaa works' };
+  }
   // POST new user
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, type: UserResponseDto })
