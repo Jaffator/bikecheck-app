@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+generator jsonSchema {
+  provider = "prisma-json-schema-generator"
+  output   = "./generated-schema.json"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model action_types {
+  id               Int                @id @default(autoincrement())
+  action_name      String?            @db.VarChar
+  event_components event_components[]
+}
+
+model bike_brands {
+  id          Int           @id(map: "bike_brand_pkey") @default(autoincrement())
+  bike_brand  String?       @db.VarChar
+  bike_models bike_models[]
+  bikes       bikes[]
+}
+
+model bike_events {
+  id               Int                @id @default(autoincrement())
+  bike_id          Int?
+  note             String?
+  total_cost       Decimal?           @db.Decimal(10, 2)
+  created_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime?          @db.Timestamptz(6)
+  is_deleted       Boolean?           @default(false)
+  deleted_at       DateTime?          @db.Timestamptz(6)
+  bikes            bikes?             @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+  event_components event_components[]
+
+  @@index([bike_id], map: "bike_events_bike_id")
+  @@index([created_at], map: "bike_events_created_at")
+  @@index([updated_at], map: "bike_events_updated_at")
+}
+
+model bike_models {
+  id          Int         @id @default(autoincrement())
+  model_name  String      @db.VarChar(255)
+  brand_id    Int
+  bike_brands bike_brands @relation(fields: [brand_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "bike_brands_fkey")
+  bikes       bikes[]
+}
+
+model bike_sizes {
+  id    Int     @id @default(autoincrement())
+  size  String? @db.VarChar
+  bikes bikes[]
+}
+
+model bike_types {
+  id    Int     @id @default(autoincrement())
+  type  String? @db.VarChar
+  bikes bikes[]
+}
+
+model bikes {
+  id                 Int                  @id @default(autoincrement())
+  organization_id    Int
+  bike_brand_id      Int
+  bike_type_id       Int?
+  year               Int?
+  wheel_size_id      Int?
+  bike_size_id       Int?
+  mileage_km         Int?
+  created_at         DateTime?            @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?            @db.Timestamptz(6)
+  frame_material     String?              @db.VarChar(50)
+  is_deleted         Boolean?             @default(false)
+  deleted_at         DateTime?            @db.Timestamptz(6)
+  bike_model_id      Int?
+  bike_events        bike_events[]
+  bike_brands        bike_brands          @relation(fields: [bike_brand_id], references: [id], onUpdate: Restrict)
+  bike_models        bike_models?         @relation(fields: [bike_model_id], references: [id], onUpdate: NoAction)
+  bike_sizes         bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bike_types         bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations      organizations        @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  wheel_sizes        wheel_sizes?         @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_on_bike components_on_bike[]
+  rides              rides[]
+
+  @@index([bike_size_id], map: "bikes_bike_size_col")
+  @@index([bike_brand_id], map: "bikes_brand_id")
+  @@index([created_at], map: "bikes_created_at")
+  @@index([bike_type_id], map: "bikes_type_id")
+  @@index([updated_at], map: "bikes_updated_at")
+  @@index([organization_id], map: "bikes_user_id")
+  @@index([wheel_size_id], map: "bikes_wheel_size_id")
+}
+
+model component_details {
+  id               Int          @id @default(autoincrement())
+  components_brand String?      @db.VarChar
+  components_model String?      @db.VarChar
+  components       components[]
+}
+
+model component_service_intervals {
+  id                   Int                  @id @default(autoincrement())
+  interval_km          Int?
+  interval_days        Int?
+  interval_km_downhill Int?
+  brake_load_threshold Int?
+  components_on_bike   components_on_bike[]
+}
+
+model component_types {
+  id             Int          @id @default(autoincrement())
+  component_type String?      @db.VarChar
+  components     components[]
+}
+
+model components {
+  id                  Int                  @id @default(autoincrement())
+  component_type_id   Int?
+  component_detail_id Int?
+  component_details   component_details?   @relation(fields: [component_detail_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  component_types     component_types?     @relation(fields: [component_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_on_bike  components_on_bike[]
+
+  @@index([component_detail_id], map: "components_component_brand_id")
+  @@index([component_type_id], map: "components_component_type_id")
+}
+
+model components_on_bike {
+  id                          Int                          @id(map: "bike_components_pkey") @default(autoincrement())
+  bike_id                     Int?
+  component_id                Int?
+  mounted_at                  DateTime?                    @db.Timestamptz(6)
+  remove_at                   DateTime?                    @db.Timestamptz(6)
+  updated_at                  DateTime?                    @default(now()) @db.Timestamptz(6)
+  created_at                  DateTime?                    @default(now()) @db.Timestamptz(6)
+  total_mileage_km            Int?
+  note                        String?
+  is_active                   Boolean?                     @default(true)
+  interval_id                 Int?
+  brake_load_since_service    Int?
+  last_serviced_at            DateTime?                    @db.Timestamptz(6)
+  is_deleted                  Boolean?                     @default(false)
+  deleted_at                  DateTime?                    @db.Timestamptz(6)
+  bikes                       bikes?                       @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  components                  components?                  @relation(fields: [component_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "components_on_bike_component_fkey")
+  component_service_intervals component_service_intervals? @relation(fields: [interval_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  event_components            event_components[]
+
+  @@index([bike_id], map: "bike_components_bike_id")
+  @@index([component_id], map: "bike_components_component_id")
+  @@index([interval_id], map: "bike_components_interval_id")
+  @@index([is_active], map: "bike_components_is_active")
+  @@index([total_mileage_km], map: "bike_components_mileage")
+  @@index([mounted_at], map: "bike_components_mounted_at")
+  @@index([remove_at], map: "bike_components_remove_at")
+  @@index([updated_at], map: "bike_components_updated_at")
+}
+
+model event_components {
+  id                 Int                 @id @default(autoincrement())
+  bike_event_id      Int?
+  component_id       Int?
+  action_id          Int?
+  note               String?
+  partial_cost       Decimal?            @db.Decimal(10, 2)
+  created_at         DateTime?           @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?           @db.Timestamptz(6)
+  part_replaced      Boolean?            @default(false)
+  is_deleted         Boolean?            @default(false)
+  deleted_at         DateTime?           @db.Timestamptz(6)
+  action_types       action_types?       @relation(fields: [action_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bike_events        bike_events?        @relation(fields: [bike_event_id], references: [id], onDelete: Cascade)
+  components_on_bike components_on_bike? @relation(fields: [component_id], references: [id], onDelete: Cascade)
+
+  @@index([bike_event_id], map: "event_components_bike_event_id")
+  @@index([component_id], map: "event_components_component_id")
+  @@index([created_at], map: "event_components_created_at")
+  @@index([action_id], map: "event_components_type_id")
+  @@index([updated_at], map: "event_components_updated_at")
+}
+
+model organization_members {
+  id                 Int                @id @default(autoincrement())
+  user_id            Int
+  role_id            Int
+  organization_id    Int
+  organizations      organizations      @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  organization_roles organization_roles @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users              users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([organization_id, user_id], map: "index_1")
+  @@unique([organization_id, user_id], map: "unique_organization_members")
+}
+
+model organization_roles {
+  id                   Int                    @id @default(autoincrement())
+  code                 String                 @unique(map: "code") @db.VarChar(255)
+  name                 String                 @db.VarChar(255)
+  sort_order           Int?
+  description          String?
+  organization_members organization_members[]
+}
+
+model organizations {
+  id                   Int                    @id @default(autoincrement())
+  name                 String
+  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  is_deleted           Boolean?               @default(false)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  bikes                bikes[]
+  organization_members organization_members[]
+}
+
+model ride_styles {
+  id         Int     @id @default(autoincrement())
+  ride_style String? @db.VarChar
+  users      users[]
+}
+
+model rides {
+  id                 Int       @id @default(autoincrement())
+  bike_id            Int?
+  user_id            Int?
+  started_at         DateTime? @db.Timestamptz(6)
+  duration_sec       Int?
+  distance_m         Int?
+  elevation_down_m   Int?
+  elevation_up_m     Int?
+  speed_down         Int?
+  speed_avg          Int?
+  braking_load_score Int?
+  max_speed_kmh      Int?
+  is_deleted         Boolean?  @default(false)
+  deleted_at         DateTime? @db.Timestamptz(6)
+  bikes              bikes?    @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+  users              users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([bike_id], map: "rides_bike_id")
+  @@index([started_at], map: "rides_started_at")
+}
+
+model users {
+  id                   Int                    @id @default(autoincrement())
+  name                 String?                @db.VarChar
+  email                String                 @unique @db.VarChar
+  password_hash        String?                @db.VarChar
+  avatar_url           String?                @db.VarChar
+  language             String?                @db.VarChar
+  is_active            Boolean?               @default(true)
+  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  last_login_at        DateTime?              @db.Timestamptz(6)
+  currency             String?                @db.VarChar
+  weight_kg            Int?
+  ride_style_id        Int?
+  is_deleted           Boolean?               @default(false)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  googleId             String?                @unique @db.VarChar
+  accounts             accounts[]
+  organization_members organization_members[]
+  rides                rides[]
+  ride_styles          ride_styles?           @relation(fields: [ride_style_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "style_fkey")
+
+  @@index([created_at], map: "users_created_at")
+  @@index([last_login_at], map: "users_last_login_at")
+  @@index([name], map: "users_name")
+  @@index([ride_style_id], map: "users_ride_style_id")
+  @@index([updated_at], map: "users_updated_at")
+}
+
+model wheel_sizes {
+  id    Int     @id @default(autoincrement())
+  size  String? @db.VarChar
+  bikes bikes[]
+}
+
+model accounts {
+  id         Int    @id @default(autoincrement())
+  userId     Int
+  provider   String @db.VarChar
+  providerID String @db.VarChar
+  users      users  @relation(fields: [userId], references: [id], onDelete: Cascade, map: "userid_accountid")
+}
