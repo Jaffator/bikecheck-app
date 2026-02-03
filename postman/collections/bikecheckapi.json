@@ -1,0 +1,679 @@
+{
+	"info": {
+		"_postman_id": "00fea251-6e1c-4b57-bbdb-bf2f3d65b8d5",
+		"name": "bikecheckapi",
+		"description": "Bikechek API documentation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_uid": "39207843-00fea251-6e1c-4b57-bbdb-bf2f3d65b8d5"
+	},
+	"item": [
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "users",
+					"item": [
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "Get user by ID",
+									"id": "f3b19a96-373f-4a21-a097-9ecf1558ad33",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/users/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"users",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "string"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "e8d4d194-04f6-49b5-a85c-c7e1d1d6f34c",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/users/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"users",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "string"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": 1,\n  \"name\": \"John Doe\",\n  \"email\": \"string\",\n  \"avatar_url\": {},\n  \"language\": {},\n  \"currency\": {},\n  \"weight_kg\": {},\n  \"ride_style_id\": {},\n  \"is_active\": true,\n  \"last_login_at\": {},\n  \"created_at\": \"2024-01-01T12:00:00Z\",\n  \"updated_at\": \"2024-01-02T12:00:00Z\"\n}"
+										}
+									]
+								},
+								{
+									"name": "Update user by given ID",
+									"id": "2f9dd270-f6b2-497c-bfc4-5d8f216f90f9",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"John Doe\",\n  \"language\": \"en\",\n  \"currency\": \"czk\",\n  \"weight_kg\": 70,\n  \"ride_style_id\": 1,\n  \"avatar_url\": \"https://example.com/avatar.jpg\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/users/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"users",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "string"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "563d2781-b051-4e7f-8b16-86237875c8d4",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "PATCH",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"name\": \"John Doe\",\n  \"language\": \"en\",\n  \"currency\": \"czk\",\n  \"weight_kg\": 70,\n  \"ride_style_id\": 1,\n  \"avatar_url\": \"https://example.com/avatar.jpg\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/users/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"users",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "string"
+														}
+													]
+												}
+											},
+											"status": "Accepted",
+											"code": 202,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": 1,\n  \"name\": \"John Doe\",\n  \"email\": \"string\",\n  \"avatar_url\": {},\n  \"language\": {},\n  \"currency\": {},\n  \"weight_kg\": {},\n  \"ride_style_id\": {},\n  \"is_active\": true,\n  \"last_login_at\": {},\n  \"created_at\": \"2024-01-01T12:00:00Z\",\n  \"updated_at\": \"2024-01-02T12:00:00Z\"\n}"
+										}
+									]
+								}
+							],
+							"id": "5378a0a2-2198-4386-a26f-1875c40f6d01"
+						},
+						{
+							"name": "test",
+							"item": [
+								{
+									"name": "TEST",
+									"id": "ca589df1-4bd0-439b-9349-afc5a319e750",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/users/test",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"test"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "98e0dc79-1bcc-4653-a7f1-069eff45ee47",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/users/test",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"test"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": 1,\n  \"name\": \"John Doe\",\n  \"email\": \"string\",\n  \"avatar_url\": {},\n  \"language\": {},\n  \"currency\": {},\n  \"weight_kg\": {},\n  \"ride_style_id\": {},\n  \"is_active\": true,\n  \"last_login_at\": {},\n  \"created_at\": \"2024-01-01T12:00:00Z\",\n  \"updated_at\": \"2024-01-02T12:00:00Z\"\n}"
+										}
+									]
+								}
+							],
+							"id": "b34b2a25-b201-4df9-896a-dd90401e8578"
+						},
+						{
+							"name": "test22",
+							"item": [
+								{
+									"name": "Get user by ID",
+									"id": "ea0ac4ad-9ce0-45ac-af81-8d7fe4c59a48",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/users/test22",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"test22"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "8ebfc909-8a71-452d-b622-5d2779f29faf",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/users/test22",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"test22"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": 1,\n  \"name\": \"John Doe\",\n  \"email\": \"string\",\n  \"avatar_url\": {},\n  \"language\": {},\n  \"currency\": {},\n  \"weight_kg\": {},\n  \"ride_style_id\": {},\n  \"is_active\": true,\n  \"last_login_at\": {},\n  \"created_at\": \"2024-01-01T12:00:00Z\",\n  \"updated_at\": \"2024-01-02T12:00:00Z\"\n}"
+										}
+									]
+								}
+							],
+							"id": "711e076c-e609-4aa8-95f2-6579e46602c9"
+						},
+						{
+							"name": "create",
+							"item": [
+								{
+									"name": "Create a new user",
+									"id": "2b2e81c9-c30b-471e-9f66-838ba8bf9e12",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"strongPassword123\",\n  \"language\": \"en\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/users/create",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"users",
+												"create"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "fdcd18bb-89fd-4ce9-8235-b4cf41b09717",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"strongPassword123\",\n  \"language\": \"en\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/users/create",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"users",
+														"create"
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": 1,\n  \"name\": \"John Doe\",\n  \"email\": \"string\",\n  \"avatar_url\": {},\n  \"language\": {},\n  \"currency\": {},\n  \"weight_kg\": {},\n  \"ride_style_id\": {},\n  \"is_active\": true,\n  \"last_login_at\": {},\n  \"created_at\": \"2024-01-01T12:00:00Z\",\n  \"updated_at\": \"2024-01-02T12:00:00Z\"\n}"
+										}
+									]
+								}
+							],
+							"id": "679e3a08-f8e7-40d0-abdf-2a53098dab21"
+						}
+					],
+					"id": "27009ba3-c7d5-455f-8617-4c06eb20674d"
+				},
+				{
+					"name": "auth",
+					"item": [
+						{
+							"name": "register",
+							"item": [
+								{
+									"name": "register user with email and pass",
+									"id": "07c5d201-94f1-4667-9e18-ce1266f55232",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"auth",
+												"register"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "a26811f9-7331-4e12-9f6d-616372709a88",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "POST",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/auth/register",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"auth",
+														"register"
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": []
+										}
+									]
+								}
+							],
+							"id": "89917650-9419-4d95-8b0d-00eabfff89aa"
+						},
+						{
+							"name": "login",
+							"item": [
+								{
+									"name": "login user",
+									"id": "ba461ea1-10f6-4edf-bf6f-687a597e8598",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"auth",
+												"login"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "5bb81824-4292-48ef-92d1-e3be2be52cbb",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "POST",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/auth/login",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"auth",
+														"login"
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": []
+										}
+									]
+								}
+							],
+							"id": "240a0ead-4cc1-49d6-a984-310da9837d0d"
+						},
+						{
+							"name": "google",
+							"item": [
+								{
+									"name": "callback",
+									"item": [
+										{
+											"name": "Auth Controller google Auth Redirect",
+											"id": "e01ebc0a-33ad-4a71-8759-d42a5cc325c8",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/auth/google/callback",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"auth",
+														"google",
+														"callback"
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "7f1b70ce-2fa8-45a4-b94c-54213f84ce9f",
+													"name": "Untitled Example",
+													"originalRequest": {
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/auth/google/callback",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"auth",
+																"google",
+																"callback"
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": []
+												}
+											]
+										}
+									],
+									"id": "2a5ad754-3977-46c7-a33c-515a7b6dcaa7"
+								},
+								{
+									"name": "Auth Controller google Auth",
+									"id": "25c8e183-d4a7-441c-87b5-e2d5ef5abe33",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/auth/google",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"auth",
+												"google"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "2beb7183-68cb-4669-8563-7c1e4e49bb8d",
+											"name": "Untitled Example",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/auth/google",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"auth",
+														"google"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": []
+										}
+									]
+								}
+							],
+							"id": "e56e1a2f-0755-4716-8244-2b36e80ca1f0"
+						}
+					],
+					"id": "c888fa43-e627-4ccd-9e27-8c4a06493f5f"
+				}
+			],
+			"id": "61ad1d5f-d746-4cf9-9edb-5a260ee23e16"
+		}
+	],
+	"variable": [
+		{
+			"id": "d9541ff2-7b37-4759-9f82-51f075565ba6",
+			"key": "baseUrl",
+			"value": "/",
+			"type": "any"
+		}
+	]
+}
