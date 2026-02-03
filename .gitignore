@@ -3,10 +3,12 @@ node_modules/
 dist/
 .next/
 build/
-
+# .gitignore
+# Keep environment variables out of version control
+tempCodeRunnerFile.*
+/generated/prisma
 # sensitive environment variables
 .env
-
 # Operating system and editors
 .DS_Store
 Thumbs.db
