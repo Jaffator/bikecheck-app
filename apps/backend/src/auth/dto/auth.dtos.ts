@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+// auth.dtos.ts is classes used like types becouse class validation techniques are used
 
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, MinLength, IsBoolean } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
@@ -13,8 +14,20 @@ export class LoginDto {
   password: string;
 }
 
-export class LoginResponse {
-  jwt_token: string;
-  userID: number;
+export class LoginGoogleDto {
+  @IsString()
+  @MinLength(1)
+  name: string;
+
+  @IsString()
+  @MinLength(1)
+  googleId: string;
+
+  @IsBoolean()
+  emailVerified: boolean;
+
+  @IsString()
+  @IsEmail()
+  @ApiProperty({ example: 'john.doe@example.com' })
   email: string;
 }

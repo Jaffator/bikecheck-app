@@ -1,12 +1,10 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
 import { users } from 'generated/prisma/client';
+import { LoginGoogleDto } from 'src/auth/dto/auth.dtos';
+import { SafeUserType, toSafeUser } from 'src/auth/interface/auth.interface';
 
 @Injectable()
 export class UserService {
@@ -28,14 +26,8 @@ export class UserService {
     return user;
   }
 
-  async createUserByGoogle(dto: CreateUserDto): Promise<users> {
-    //1. email validation, is it exist alread?
-    const existingUser = await this.userRepository.findByEmail(dto.email);
-    if (existingUser) {
-      throw new ConflictException('User with this email already exist');
-    }
-
-    // 2. create user with googleID
+  async createUserByGoogle(dto: LoginGoogleDto): Promise<SafeUserType> {
+    // 1. create user with googleID
     const user = await this.userRepository.createUser({
       name: dto.name,
       email: dto.email,
@@ -44,10 +36,10 @@ export class UserService {
       is_active: true,
       language: 'en',
     });
-    return user;
+    return toSafeUser(user);
   }
 
-  async createUserLocal(dto: CreateUserDto): Promise<users> {
+  async createUserLocal(dto: CreateUserDto): Promise<SafeUserType> {
     //1. email validation, is it exist alread?
     const existingUser = await this.userRepository.findByEmail(dto.email);
     if (existingUser) {
@@ -68,14 +60,14 @@ export class UserService {
       language: 'en',
     });
     // 4. Response DTO
-    return user;
+    return toSafeUser(user);
   }
-  async updateUserProfile(id: number, dto: UpdateUserDto): Promise<users> {
+  async updateUserProfile(id: number, dto: UpdateUserDto): Promise<SafeUserType> {
     const user = await this.userRepository.findById(id);
     if (!user) {
       throw new NotFoundException('User not found');
     }
     const updateUser = await this.userRepository.updateUser(id, dto);
-    return updateUser;
+    return toSafeUser(updateUser);
   }
 }

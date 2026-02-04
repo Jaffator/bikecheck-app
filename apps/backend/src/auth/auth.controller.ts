@@ -1,15 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Controller, Request, Post, UseGuards, Get, Res, Req, Body } from '@nestjs/common';
+import { Controller, Post, UseGuards, Get, Res, Req, Body, Response } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import chalk from 'chalk';
 import { Public } from './decorators/public.decorator';
 import { CreateUserDto, UserResponseDto } from 'src/user/dto/user.dtos';
-import { LoginDto, LoginResponse } from './dto/auth.dtos';
+import { LoginDto } from './dto/auth.dtos';
 import { users } from 'generated/prisma/client';
+import { Request } from 'express';
+import type { SafeUserType } from './interface/auth.interface';
+
+export interface AuthenticatedRequest extends Request {
+  user: SafeUserType;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -35,11 +41,19 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ status: 202, type: LoginResponse })
+  @ApiResponse({ status: 202, type: UserResponseDto })
   @Post('login')
-  login(@Request() req) {
+  login(@Req() req: AuthenticatedRequest, @Res() res) {
+    const jwt_token = this.authService.getJWTtoken(req.user);
+
+    res.cookie('access_token', jwt_token, {
+      httpOnly: true,
+      secure: true, // only thru HTTPS
+      sameSite: 'strict',
+    });
+
     console.log(chalk.greenBright(`User ${req.user.email} logged in`));
-    return this.authService.login(req.user);
+    return this.mapToResponse(req.user);
   }
 
   // --- Google auth endpoint
@@ -53,25 +67,31 @@ export class AuthController {
   // --- Google auth callback endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
-  @ApiResponse({ status: 202, type: LoginResponse })
+  @ApiResponse({ status: 202, type: UserResponseDto })
   @Get('google/callback')
-  googleAuthRedirect(@Req() req, @Res() res) {
-    console.log(req.user);
-    // 1. In req.user you now have data from GoogleStrategy.validate()
-    // 2. Here you either find the user in the DB or create them (registration)
-    // 3. You generate your standard JWT token
-    const { jwt_token } = this.authService.login(req.user);
+  async googleAuthRedirect(@Req() req, @Res() res) {
+    // 1. In req.user is now data from GoogleStrategy.validate()
+    // 2. Find the user in the DB or create them (registration)
+    const user = await this.authService.registerOrLoginUserGoogle({
+      googleId: req.user.user_details.googleId,
+      email: req.user.user_details.email,
+      emailVerified: req.user.user_details.emailVerified,
+      name: req.user.user_details.firstName,
+    });
+
+    // 3. Generate standard JWT token
+    const jwt_token = this.authService.getJWTtoken(user);
 
     // For testing without frontend redirection:
     // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
     return res.json({
       message: 'Google authentication successful!',
       jwt_token: jwt_token,
-      user_details: req.user,
+      user_details: this.mapToResponse(user),
     });
   }
 
-  private mapToResponse(user: users): UserResponseDto {
+  private mapToResponse(user: SafeUserType): UserResponseDto {
     return {
       id: user.id,
       name: user.name || '',
@@ -85,7 +105,6 @@ export class AuthController {
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
       created_at: user.created_at || new Date(),
-      // password:  obviously not passed to response
     };
   }
 }
