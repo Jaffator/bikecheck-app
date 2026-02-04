@@ -22,14 +22,6 @@ export class UserController {
     return this.mapToResponse(user);
   }
 
-  // GET user/:id
-  @ApiOperation({ summary: 'nmevim' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
-  @Get('nevim')
-  async getNevim(@Param('id') id: string) {
-    const user = await this.userService.getUserbyId(Number(id));
-    return this.mapToResponse(user);
-  }
   // POST new user
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, type: UserResponseDto })
