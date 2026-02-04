@@ -1,14 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  MaxLength,
-  IsOptional,
-  IsInt,
-  IsPositive,
-} from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsOptional, IsInt, IsPositive } from 'class-validator';
 
 // ------ DTOs for API ------
 // CREATE
@@ -76,17 +68,6 @@ export class UpdateUserDto {
   @IsString()
   @ApiProperty({ example: 'https://example.com/avatar.jpg' })
   avatar_url?: string;
-}
-
-export class LoginUserDto {
-  @IsEmail()
-  @ApiProperty({ example: 'john.doe@example.com' })
-  email: string;
-
-  @IsString()
-  @MinLength(8)
-  @ApiProperty({ example: 'strongPassword123' })
-  password: string;
 }
 
 export class UserResponseDto {

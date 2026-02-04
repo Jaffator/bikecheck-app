@@ -1,22 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import {
-  Controller,
-  Request,
-  Post,
-  UseGuards,
-  Get,
-  Res,
-  Req,
-  Body,
-} from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Get, Res, Req, Body } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import chalk from 'chalk';
 import { Public } from './decorators/public.decorator';
 import { CreateUserDto, UserResponseDto } from 'src/user/dto/user.dtos';
+import { LoginDto, LoginResponse } from './dto/auth.dtos';
 import { users } from 'generated/prisma/client';
 
 @Controller('auth')
@@ -25,9 +17,10 @@ export class AuthController {
     private authService: AuthService,
     private userService: UserService,
   ) {}
-  // Register, email password endpoint
+
+  // --- Create user, email password endpoint
   @Public()
-  @ApiOperation({ summary: 'Register new user, email and password' })
+  @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, type: UserResponseDto })
   @Post('register')
   async createUser(@Body() data: CreateUserDto): Promise<UserResponseDto> {
@@ -38,17 +31,18 @@ export class AuthController {
     return this.mapToResponse(newUser);
   }
 
-  // Login, email password endpoint
+  // --- Login user, email password endpoint
   @Public()
-  @ApiOperation({ summary: 'Login user' })
   @UseGuards(LocalAuthGuard)
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({ status: 202, type: LoginResponse })
   @Post('login')
   login(@Request() req) {
     console.log(chalk.greenBright(`User ${req.user.email} logged in`));
     return this.authService.login(req.user);
   }
 
-  // Google auth endpoint
+  // --- Google auth endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google')
@@ -56,25 +50,27 @@ export class AuthController {
     // initiates the Google OAuth2 login flow
   }
 
-  // Google auth callback endpoint
+  // --- Google auth callback endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
+  @ApiResponse({ status: 202, type: LoginResponse })
   @Get('google/callback')
   googleAuthRedirect(@Req() req, @Res() res) {
     console.log(req.user);
-    // 1. V req.user máš teď data z GoogleStrategy.validate()
-    // 2. Tady buď uživatele najdeš v DB nebo ho vytvoříš (registrace)
-    // 3. Vygeneruješ svůj standardní JWT token
-    const { access_token } = this.authService.login(req.user);
+    // 1. In req.user you now have data from GoogleStrategy.validate()
+    // 2. Here you either find the user in the DB or create them (registration)
+    // 3. You generate your standard JWT token
+    const { jwt_token } = this.authService.login(req.user);
 
-    // Pro testování bez frontendu:
-    // Místo přesměrování na frontend (res.redirect) prostě pošli token jako JSON
+    // For testing without frontend redirection:
+    // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
     return res.json({
-      message: 'Přihlášení úspěšné!',
-      backend_jwt_token: access_token,
+      message: 'Google authentication successful!',
+      jwt_token: jwt_token,
       user_details: req.user,
     });
   }
+
   private mapToResponse(user: users): UserResponseDto {
     return {
       id: user.id,

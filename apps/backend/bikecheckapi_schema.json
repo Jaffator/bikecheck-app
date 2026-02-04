@@ -151,7 +151,6 @@
             }
           }
         },
-        "summary": "Register new user, email and password",
         "tags": [
           "Auth"
         ]
@@ -161,12 +160,28 @@
       "post": {
         "operationId": "AuthController_login",
         "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
           }
         },
-        "summary": "Login user",
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        },
         "tags": [
           "Auth"
         ]
@@ -347,6 +362,27 @@
           "ride_style_id",
           "avatar_url"
         ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "strongPassword123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {}
       }
     }
   }
