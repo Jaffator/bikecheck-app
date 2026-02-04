@@ -7,14 +7,17 @@ import {
   Get,
   Res,
   Req,
+  Body,
 } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import chalk from 'chalk';
 import { Public } from './decorators/public.decorator';
+import { CreateUserDto, UserResponseDto } from 'src/user/dto/user.dtos';
+import { users } from 'generated/prisma/client';
 
 @Controller('auth')
 export class AuthController {
@@ -22,21 +25,22 @@ export class AuthController {
     private authService: AuthService,
     private userService: UserService,
   ) {}
-  // email and password register endpoint
+  // Register, email password endpoint
   @Public()
-  @ApiOperation({ summary: 'register user with email and pass' })
+  @ApiOperation({ summary: 'Register new user, email and password' })
+  @ApiResponse({ status: 201, type: UserResponseDto })
   @Post('register')
-  async createUser(@Request() req) {
-    const newUser = await this.userService.createUserLocal(req.body);
+  async createUser(@Body() data: CreateUserDto): Promise<UserResponseDto> {
+    const newUser = await this.userService.createUserLocal(data);
     if (newUser) {
-      console.log(chalk.greenBright(`User ${req.body.email} created`));
+      console.log(chalk.greenBright(`User ${data.email} created`));
     }
-    return this.authService.login(newUser);
+    return this.mapToResponse(newUser);
   }
 
-  // email password login endpoint
+  // Login, email password endpoint
   @Public()
-  @ApiOperation({ summary: 'login user' })
+  @ApiOperation({ summary: 'Login user' })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   login(@Request() req) {
@@ -44,7 +48,7 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
-  // google auth endpoint
+  // Google auth endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google')
@@ -52,7 +56,7 @@ export class AuthController {
     // initiates the Google OAuth2 login flow
   }
 
-  // google auth callback endpoint
+  // Google auth callback endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google/callback')
@@ -70,5 +74,22 @@ export class AuthController {
       backend_jwt_token: access_token,
       user_details: req.user,
     });
+  }
+  private mapToResponse(user: users): UserResponseDto {
+    return {
+      id: user.id,
+      name: user.name || '',
+      email: user.email || '',
+      avatar_url: user.avatar_url,
+      language: user.language,
+      currency: user.currency,
+      weight_kg: user.weight_kg,
+      ride_style_id: user.ride_style_id,
+      is_active: user.is_active || false,
+      last_login_at: user.last_login_at ?? null,
+      updated_at: user.updated_at ?? new Date(),
+      created_at: user.created_at || new Date(),
+      // password:  obviously not passed to response
+    };
   }
 }

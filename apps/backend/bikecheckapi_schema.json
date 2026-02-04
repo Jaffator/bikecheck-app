@@ -129,12 +129,29 @@
       "post": {
         "operationId": "AuthController_createUser",
         "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
           }
         },
-        "summary": "register user with email and pass",
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Register new user, email and password",
         "tags": [
           "Auth"
         ]
@@ -149,7 +166,7 @@
             "description": ""
           }
         },
-        "summary": "login user",
+        "summary": "Login user",
         "tags": [
           "Auth"
         ]
