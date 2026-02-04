@@ -71,6 +71,28 @@
         ]
       }
     },
+    "/api/users/test": {
+      "get": {
+        "operationId": "UserController_gettest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get user by ID",
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/api/users/create": {
       "post": {
         "operationId": "UserController_createUser",

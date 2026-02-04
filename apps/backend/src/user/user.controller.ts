@@ -22,6 +22,14 @@ export class UserController {
     return this.mapToResponse(user);
   }
 
+  // GET user/:id
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @Get('test')
+  gettest() {
+    return 'test';
+  }
+
   // POST new user
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, type: UserResponseDto })
