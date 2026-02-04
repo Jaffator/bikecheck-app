@@ -71,6 +71,37 @@
         ]
       }
     },
+    "/api/users/nevim": {
+      "get": {
+        "operationId": "UserController_getNevim",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "nmevim",
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/api/users/create": {
       "post": {
         "operationId": "UserController_createUser",
