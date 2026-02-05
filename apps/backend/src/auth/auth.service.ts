@@ -6,6 +6,11 @@ import { LoginGoogleDto } from './dto/auth.dtos';
 import type { Response } from 'express';
 import { users as UserFull } from 'generated/prisma/client';
 
+type GoogleUserType = {
+  user: UserFull;
+  isNewUser: boolean;
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -32,11 +37,11 @@ export class AuthService {
     return null;
   }
 
-  async registerOrLoginUserGoogle(dto: LoginGoogleDto): Promise<UserFull> {
+  async registerOrLoginUserGoogle(dto: LoginGoogleDto): Promise<GoogleUserType> {
     // 1. Google user exist
     const userGoogle = await this.userService.getUserbyGoogleId(dto.googleId);
     if (userGoogle?.googleId === dto.googleId) {
-      return userGoogle;
+      return { user: userGoogle, isNewUser: false };
     }
 
     // 2. Google user does NOT exist but email YES -> link googleiId to user account
@@ -46,10 +51,11 @@ export class AuthService {
         googleId: dto.googleId,
         avatar_url: dto.avatar_url,
       });
-      return updatedUser;
+      return { user: updatedUser, isNewUser: false };
     }
     // 3 User does NOT exist at all -> create new register
-    return this.userService.createUserByGoogle(dto);
+    const newUser = await this.userService.createUserByGoogle(dto);
+    return { user: newUser, isNewUser: true };
   }
 
   setJWTtokenToCookie(res: Response, user: UserFull) {

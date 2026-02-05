@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Get, Res, Req, Body } from '@nestjs/common';
+import { Controller, Post, UseGuards, Get, Res, Req, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -41,6 +41,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 202, type: UserResponseDto })
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   login(@Req() req, @Res({ passthrough: true }) res: Response) {
     this.authService.setJWTtokenToCookie(res, req.user);
@@ -59,13 +60,13 @@ export class AuthController {
   // --- Google auth callback endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
-  @ApiResponse({ status: 202, type: UserResponseDto })
+  @ApiResponse({ status: 202 | 201, type: UserResponseDto })
   @Get('google/callback')
   async googleAuthRedirect(@Req() req, @Res({ passthrough: true }) res: Response) {
     // 1. In req.user is now data from GoogleStrategy.validate()
     // 2. Find the user in the DB or create them (registration)
     const { googleId, email, emailVerified, avatar_url, firstName: name } = req.user;
-    const user = await this.authService.registerOrLoginUserGoogle({
+    const { user, isNewUser } = await this.authService.registerOrLoginUserGoogle({
       googleId,
       email,
       emailVerified,
@@ -73,6 +74,8 @@ export class AuthController {
       avatar_url,
     });
     this.authService.setJWTtokenToCookie(res, user);
+    const statusCode = isNewUser ? HttpStatus.CREATED : HttpStatus.ACCEPTED;
+    res.status(statusCode);
     console.log(chalk.bgGreen.bold(`User ${email} loggedIn by Google`));
     console.log(user);
     return this.mapToResponse(user);
