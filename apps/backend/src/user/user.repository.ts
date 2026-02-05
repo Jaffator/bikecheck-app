@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma.service';
-import type { users } from 'generated/prisma/client';
+import { users as UserFull } from 'generated/prisma/client';
 import { UpdateUserDto } from './dto/user.dtos';
 import { CreateUserData } from './interfaces/user.interface';
 
@@ -8,19 +8,14 @@ import { CreateUserData } from './interfaces/user.interface';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createUser(data: CreateUserData): Promise<users> {
+  async createUser(data: CreateUserData): Promise<UserFull> {
     return this.prisma.users.create({ data });
   }
 
-  async updateUser(
-    id: number,
-    dataWithoutUndefined: UpdateUserDto,
-  ): Promise<users> {
+  async updateUser(id: number, dataWithoutUndefined: UpdateUserDto): Promise<UserFull> {
     // remove undefined value from object data
     const dataFilteredUndefined = Object.fromEntries(
-      Object.entries(dataWithoutUndefined).filter(
-        ([, value]) => value !== undefined,
-      ),
+      Object.entries(dataWithoutUndefined).filter(([, value]) => value !== undefined),
     );
 
     return this.prisma.users.update({
@@ -32,19 +27,24 @@ export class UserRepository {
     });
   }
 
-  async findById(id: number): Promise<users | null> {
+  async findById(id: number): Promise<UserFull | null> {
     return this.prisma.users.findUnique({
       where: { id },
     });
   }
 
-  async findByEmail(email: string): Promise<users | null> {
+  async findByGoogleId(googleId: string): Promise<UserFull | null> {
+    return this.prisma.users.findUnique({
+      where: { googleId },
+    });
+  }
+  async findByEmail(email: string): Promise<UserFull | null> {
     return this.prisma.users.findUnique({
       where: { email },
     });
   }
 
-  async deleteUser(id: number): Promise<users | null> {
+  async deleteUser(id: number): Promise<UserFull | null> {
     return this.prisma.users.delete({
       where: { id },
     });

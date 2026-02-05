@@ -2,12 +2,11 @@
 // Routing, parsing requests, calling Services
 // No Bussines logic
 
-import { Controller, Get, Post, Param, Body, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Patch, NotFoundException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto/user.dtos';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-
-import type { users } from 'generated/prisma/client';
+import { users as UserFull } from 'generated/prisma/client';
 
 @Controller('users')
 export class UserController {
@@ -20,15 +19,10 @@ export class UserController {
   async getUser(@Param('id') id: string) {
     console.log('cus');
     const user = await this.userService.getUserbyId(Number(id));
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return this.mapToResponse(user);
-  }
-
-  // GET user/:id
-  @ApiOperation({ summary: 'Get user by ID' })
-  @ApiResponse({ status: 200, type: UserResponseDto })
-  @Get('test')
-  gettest() {
-    return 'test';
   }
 
   // POST new user
@@ -49,7 +43,7 @@ export class UserController {
     return this.mapToResponse(user);
   }
 
-  private mapToResponse(user: users): UserResponseDto {
+  private mapToResponse(user: UserFull): UserResponseDto {
     return {
       id: user.id,
       name: user.name || '',
@@ -63,7 +57,6 @@ export class UserController {
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
       created_at: user.created_at || new Date(),
-      // password:  obviously not passed to response
     };
   }
 }

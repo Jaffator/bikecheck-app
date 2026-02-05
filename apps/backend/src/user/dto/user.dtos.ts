@@ -41,6 +41,11 @@ export class UpdateUserDto {
   @ApiProperty({ example: 'John Doe' })
   name?: string;
 
+  @MinLength(1)
+  @IsOptional()
+  @IsString()
+  googleId: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(10)

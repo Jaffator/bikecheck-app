@@ -23,3 +23,4 @@
 // } else {
 //   console.log('no');
 // }
+console.log(process.env.NODE_ENV === 'production');

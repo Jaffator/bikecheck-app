@@ -7,7 +7,7 @@ export interface CreateUserData {
   password_hash: string | null;
   is_active: boolean;
   language: string | null;
-  // avatar_url: string | null;
+  avatar_url: string | null;
   // last_login_at: Date | null;
   // currency: string | null;
   // weight_kg: number | null;

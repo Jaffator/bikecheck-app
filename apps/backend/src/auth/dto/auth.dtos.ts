@@ -17,6 +17,10 @@ export class LoginDto {
 export class LoginGoogleDto {
   @IsString()
   @MinLength(1)
+  avatar_url: string;
+
+  @IsString()
+  @MinLength(1)
   name: string;
 
   @IsString()
@@ -28,6 +32,5 @@ export class LoginGoogleDto {
 
   @IsString()
   @IsEmail()
-  @ApiProperty({ example: 'john.doe@example.com' })
   email: string;
 }

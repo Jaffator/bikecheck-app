@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Controller, Post, UseGuards, Get, Res, Req, Body, Response } from '@nestjs/common';
+import { Controller, Post, UseGuards, Get, Res, Req, Body } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -9,8 +8,8 @@ import chalk from 'chalk';
 import { Public } from './decorators/public.decorator';
 import { CreateUserDto, UserResponseDto } from 'src/user/dto/user.dtos';
 import { LoginDto } from './dto/auth.dtos';
-import { users } from 'generated/prisma/client';
-import { Request } from 'express';
+import { users as UserFull } from 'generated/prisma/client';
+import type { Request, Response } from 'express';
 import type { SafeUserType } from './interface/auth.interface';
 
 export interface AuthenticatedRequest extends Request {
@@ -43,16 +42,9 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 202, type: UserResponseDto })
   @Post('login')
-  login(@Req() req: AuthenticatedRequest, @Res() res) {
-    const jwt_token = this.authService.getJWTtoken(req.user);
-
-    res.cookie('access_token', jwt_token, {
-      httpOnly: true,
-      secure: true, // only thru HTTPS
-      sameSite: 'strict',
-    });
-
-    console.log(chalk.greenBright(`User ${req.user.email} logged in`));
+  login(@Req() req, @Res({ passthrough: true }) res: Response) {
+    this.authService.setJWTtokenToCookie(res, req.user);
+    console.log(chalk.greenBright(`User ${req.user.email} logged in by Google`));
     return this.mapToResponse(req.user);
   }
 
@@ -69,29 +61,26 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiResponse({ status: 202, type: UserResponseDto })
   @Get('google/callback')
-  async googleAuthRedirect(@Req() req, @Res() res) {
+  async googleAuthRedirect(@Req() req, @Res({ passthrough: true }) res: Response) {
+    console.log('google');
     // 1. In req.user is now data from GoogleStrategy.validate()
     // 2. Find the user in the DB or create them (registration)
+    const { googleId, email, emailVerified, avatar_url, firstName: name } = req.user;
     const user = await this.authService.registerOrLoginUserGoogle({
-      googleId: req.user.user_details.googleId,
-      email: req.user.user_details.email,
-      emailVerified: req.user.user_details.emailVerified,
-      name: req.user.user_details.firstName,
+      googleId,
+      email,
+      emailVerified,
+      name,
+      avatar_url,
     });
-
-    // 3. Generate standard JWT token
-    const jwt_token = this.authService.getJWTtoken(user);
-
-    // For testing without frontend redirection:
+    this.authService.setJWTtokenToCookie(res, user);
+    console.log(chalk.greenBright(`User ${email} logged in by Google`));
+    console.log(user);
+    return this.mapToResponse(user);
     // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
-    return res.json({
-      message: 'Google authentication successful!',
-      jwt_token: jwt_token,
-      user_details: this.mapToResponse(user),
-    });
   }
 
-  private mapToResponse(user: SafeUserType): UserResponseDto {
+  private mapToResponse(user: UserFull): UserResponseDto {
     return {
       id: user.id,
       name: user.name || '',
