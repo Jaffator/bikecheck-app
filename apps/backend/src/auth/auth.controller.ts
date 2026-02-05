@@ -44,7 +44,7 @@ export class AuthController {
   @Post('login')
   login(@Req() req, @Res({ passthrough: true }) res: Response) {
     this.authService.setJWTtokenToCookie(res, req.user);
-    console.log(chalk.greenBright(`User ${req.user.email} logged in by Google`));
+    console.log(chalk.greenBright(`User ${req.user.email} loggedIn by password`));
     return this.mapToResponse(req.user);
   }
 
@@ -62,7 +62,6 @@ export class AuthController {
   @ApiResponse({ status: 202, type: UserResponseDto })
   @Get('google/callback')
   async googleAuthRedirect(@Req() req, @Res({ passthrough: true }) res: Response) {
-    console.log('google');
     // 1. In req.user is now data from GoogleStrategy.validate()
     // 2. Find the user in the DB or create them (registration)
     const { googleId, email, emailVerified, avatar_url, firstName: name } = req.user;
@@ -74,7 +73,7 @@ export class AuthController {
       avatar_url,
     });
     this.authService.setJWTtokenToCookie(res, user);
-    console.log(chalk.greenBright(`User ${email} logged in by Google`));
+    console.log(chalk.bgGreen.bold(`User ${email} loggedIn by Google`));
     console.log(user);
     return this.mapToResponse(user);
     // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
