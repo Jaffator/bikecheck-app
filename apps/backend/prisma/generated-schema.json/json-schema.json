@@ -932,6 +932,12 @@
             "$ref": "#/definitions/organization_members"
           }
         },
+        "refresh_tokens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/refresh_tokens"
+          }
+        },
         "rides": {
           "type": "array",
           "items": {
@@ -981,6 +987,60 @@
         },
         "providerID": {
           "type": "string"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "refresh_tokens": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "refresh_token": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "revoked": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "revoked_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "user_agent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ip_address": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "users": {
           "$ref": "#/definitions/users"
@@ -1052,6 +1112,9 @@
     },
     "accounts": {
       "$ref": "#/definitions/accounts"
+    },
+    "refresh_tokens": {
+      "$ref": "#/definitions/refresh_tokens"
     }
   }
 }

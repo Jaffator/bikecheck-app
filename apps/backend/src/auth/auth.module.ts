@@ -7,6 +7,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { GoogleStrategy } from './google.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
+import { RefreshTokenModule } from 'src/refreshtoken/refreshtoken.module';
 
 import 'dotenv/config';
 
@@ -20,6 +21,7 @@ const jwtConstant = process.env['JWT_SECRET'];
       secret: jwtConstant,
       signOptions: { expiresIn: '10m' },
     }),
+    RefreshTokenModule,
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
   exports: [AuthService],

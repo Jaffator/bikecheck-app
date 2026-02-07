@@ -6,7 +6,7 @@ import { Controller, Get, Post, Param, Body, Patch, NotFoundException } from '@n
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto/user.dtos';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { users as UserFull } from 'generated/prisma/client';
+import { users as UserFull } from '@prisma/client';
 
 @Controller('users')
 export class UserController {

@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { UserRepository } from './user.repository';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
-import { users as UserFull } from 'generated/prisma/client';
+import { users as UserFull } from '@prisma/client';
 import { LoginGoogleDto } from 'src/auth/dto/auth.dtos';
 
 @Injectable()

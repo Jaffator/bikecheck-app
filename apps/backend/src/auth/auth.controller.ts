@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Get, Res, Req, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, UseGuards, Get, Res, Req, Body, HttpCode, HttpStatus, Ip } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -8,12 +8,12 @@ import chalk from 'chalk';
 import { Public } from './decorators/public.decorator';
 import { CreateUserDto, UserResponseDto } from 'src/user/dto/user.dtos';
 import { LoginDto } from './dto/auth.dtos';
-import { users as UserFull } from 'generated/prisma/client';
+import { users as UserFull } from '@prisma/client';
 import type { Request, Response } from 'express';
-import type { SafeUserType } from './interface/auth.interface';
+import { UAParser } from 'ua-parser-js';
 
-export interface AuthenticatedRequest extends Request {
-  user: SafeUserType;
+export interface AuthRequest extends Request {
+  user: UserFull;
 }
 
 @Controller('auth')
@@ -23,7 +23,7 @@ export class AuthController {
     private userService: UserService,
   ) {}
 
-  // --- Create user, email password endpoint
+  // --- REGISTER new user, email password endpoint
   @Public()
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, type: UserResponseDto })
@@ -35,36 +35,51 @@ export class AuthController {
     }
     return this.mapToResponse(newUser);
   }
+  // --- LOGOUT user, email password endpoint
+  @UseGuards(LocalAuthGuard)
+  @Post('logout')
+  logout(req: Request) {
+    console.log(req.headers);
+  }
 
-  // --- Login user, email password endpoint
+  // --- LOGIN user, email password endpoint
   @Public()
   @UseGuards(LocalAuthGuard)
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 202, type: UserResponseDto })
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@Req() req, @Res({ passthrough: true }) res: Response) {
-    this.authService.setJWTtokenToCookie(res, req.user);
+  async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<UserResponseDto> {
+    const deviceInfo = this.getDeviceInfo(req);
+    const { newRefreshToken, newJwt_token } = await this.authService.getTokens(req.user, deviceInfo, ip);
+
+    this.setAuthCookies(res, newJwt_token, newRefreshToken);
+
     console.log(chalk.greenBright(`User ${req.user.email} loggedIn by password`));
     return this.mapToResponse(req.user);
   }
-
-  // --- Google auth endpoint
+  // --- GOOGLE auth endopoints ---
+  // --- Google ask for auth
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google')
-  googleAuth() {
+  googleAuth(): void {
     // initiates the Google OAuth2 login flow
   }
 
   // --- Google auth callback endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
-  @ApiResponse({ status: 202 | 201, type: UserResponseDto })
+  @ApiResponse({ status: 201 | 202, type: UserResponseDto })
   @Get('google/callback')
-  async googleAuthRedirect(@Req() req, @Res({ passthrough: true }) res: Response) {
+  async googleAuthRedirect(
+    @Req() req: any,
+    @Res({ passthrough: true }) res: Response,
+    @Ip() ip: string,
+  ): Promise<UserResponseDto> {
     // 1. In req.user is now data from GoogleStrategy.validate()
     // 2. Find the user in the DB or create them (registration)
+
     const { googleId, email, emailVerified, avatar_url, firstName: name } = req.user;
     const { user, isNewUser } = await this.authService.registerOrLoginUserGoogle({
       googleId,
@@ -73,13 +88,43 @@ export class AuthController {
       name,
       avatar_url,
     });
-    this.authService.setJWTtokenToCookie(res, user);
+
+    const deviceInfo = this.getDeviceInfo(req);
+    const { newRefreshToken, newJwt_token } = await this.authService.getTokens(user, deviceInfo, ip);
+
+    this.setAuthCookies(res, newJwt_token, newRefreshToken);
+
     const statusCode = isNewUser ? HttpStatus.CREATED : HttpStatus.ACCEPTED;
     res.status(statusCode);
     console.log(chalk.bgGreen.bold(`User ${email} loggedIn by Google`));
     console.log(user);
     return this.mapToResponse(user);
     // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
+  }
+
+  // ---- Private methods ----
+
+  private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  private getDeviceInfo(req: any): string {
+    const userAgentRaw = req.headers['user-agent'];
+    const parser = new UAParser(userAgentRaw);
+    const ua = parser.getResult();
+    const deviceName = `${ua.browser.name || 'Unknown'} on ${ua.os.name || 'Unknown'}`;
+    return deviceName;
   }
 
   private mapToResponse(user: UserFull): UserResponseDto {

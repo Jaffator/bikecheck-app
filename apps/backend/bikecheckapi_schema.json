@@ -134,6 +134,20 @@
         ]
       }
     },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/auth/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -184,7 +198,7 @@
         "operationId": "AuthController_googleAuthRedirect",
         "parameters": [],
         "responses": {
-          "202": {
+          "203": {
             "description": "",
             "content": {
               "application/json": {
