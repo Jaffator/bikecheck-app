@@ -44,7 +44,9 @@ export class AuthService {
     }
     return null;
   }
-
+  async logout(refresh_token: string) {
+    await this.refreshTokenRepository.revokeToken(refresh_token);
+  }
   async registerOrLoginUserGoogle(dto: LoginGoogleDto): Promise<GoogleUserType> {
     // 1. Google user exist
     const userGoogle = await this.userService.getUserbyGoogleId(dto.googleId);

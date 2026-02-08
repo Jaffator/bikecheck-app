@@ -36,12 +36,14 @@ export class AuthController {
     return this.mapToResponse(newUser);
   }
   // --- LOGOUT user, email password endpoint
-  @UseGuards(LocalAuthGuard)
   @Post('logout')
-  logout(req: Request) {
-    console.log(req.headers);
+  async logout(@Req() req: Request, @Res() res: Response) {
+    const token = req.cookies['refresh_token'];
+    await this.authService.logout(token);
+    this.deleteAuthCookies(res);
+    console.log(chalk.bgBlue.greenBright(`Token revoked, user LogOut`));
+    return res.status(200).json({ message: 'User successfully logged out' });
   }
-
   // --- LOGIN user, email password endpoint
   @Public()
   @UseGuards(LocalAuthGuard)
@@ -55,7 +57,7 @@ export class AuthController {
 
     this.setAuthCookies(res, newJwt_token, newRefreshToken);
 
-    console.log(chalk.greenBright(`User ${req.user.email} loggedIn by password`));
+    console.log(chalk.bgGreen.greenBright(`User ${req.user.email} LoggedIn by password`));
     return this.mapToResponse(req.user);
   }
   // --- GOOGLE auth endopoints ---
@@ -103,6 +105,20 @@ export class AuthController {
   }
 
   // ---- Private methods ----
+  private deleteAuthCookies(res: Response): void {
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: true, // Musí být stejné jako při vytváření
+      sameSite: 'lax', // Musí být stejné jako při vytváření
+      path: '/', // Velmi důležité – musí sedět cesta!
+    });
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true, // Musí být stejné jako při vytváření
+      sameSite: 'lax', // Musí být stejné jako při vytváření
+      path: '/', // Velmi důležité – musí sedět cesta!
+    });
+  }
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
     res.cookie('access_token', accessToken, {
