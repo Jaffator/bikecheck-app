@@ -35,7 +35,20 @@ export class AuthController {
     }
     return this.mapToResponse(newUser);
   }
+
+  // --- REFRESH token
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @Post('refresh')
+  async refreshUser(@Req() req: Request, @Res() res: Response, @Ip() ip: string) {
+    const deviceInfo = this.getDeviceInfo(req);
+    const refreshToken = req.cookies['refresh_token'];
+    const { newRefreshToken, newJwt_token } = await this.authService.refreshToken(refreshToken, deviceInfo, ip);
+    this.setAuthCookies(res, newJwt_token, newRefreshToken);
+    console.log(req);
+  }
+
   // --- LOGOUT user, email password endpoint
+  @ApiResponse({ status: 200 })
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
     const token = req.cookies['refresh_token'];
@@ -44,6 +57,7 @@ export class AuthController {
     console.log(chalk.bgBlue.greenBright(`Token revoked, user LogOut`));
     return res.status(200).json({ message: 'User successfully logged out' });
   }
+
   // --- LOGIN user, email password endpoint
   @Public()
   @UseGuards(LocalAuthGuard)
@@ -60,8 +74,8 @@ export class AuthController {
     console.log(chalk.bgGreen.greenBright(`User ${req.user.email} LoggedIn by password`));
     return this.mapToResponse(req.user);
   }
-  // --- GOOGLE auth endopoints ---
-  // --- Google ask for auth
+
+  // --- GOOGLE ask for auth
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google')
@@ -69,7 +83,7 @@ export class AuthController {
     // initiates the Google OAuth2 login flow
   }
 
-  // --- Google auth callback endpoint
+  // --- GOOGLE auth callback endpoint
   @Public()
   @UseGuards(GoogleAuthGuard)
   @ApiResponse({ status: 201 | 202, type: UserResponseDto })

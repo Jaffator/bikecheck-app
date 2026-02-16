@@ -84,7 +84,7 @@ export class AuthService {
       throw new NotFoundException('Session expired');
     }
 
-    // 3. Refresh Token valid -> Generate new Access nad Refresh tokens (sliding token window)
+    // 3. Refresh Token valid -> Generate new Access and Refresh tokens (sliding token window)
     await this.refreshTokenRepository.revokeToken(refreshToken);
     const newRefreshToken = await this.generateRefreshToken(user, deviceInfo, ip);
     const newJwt_token = this.generateAccessToken(user);
