@@ -3,6 +3,8 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { GoogleAuthService } from './googleAuth.service';
+import { TokenService } from './token.service';
 import { UserService } from 'src/user/user.service';
 import chalk from 'chalk';
 import { Public } from './decorators/public.decorator';
@@ -21,6 +23,8 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private userService: UserService,
+    private googleService: GoogleAuthService,
+    private tokenService: TokenService,
   ) {}
 
   // --- REGISTER new user, email password endpoint
@@ -37,14 +41,14 @@ export class AuthController {
   }
 
   // --- REFRESH token
-  @ApiResponse({ status: 200, type: UserResponseDto })
+  @ApiResponse({ status: 200 })
   @Post('refresh')
   async refreshUser(@Req() req: Request, @Res() res: Response, @Ip() ip: string) {
     const deviceInfo = this.getDeviceInfo(req);
     const refreshToken = req.cookies['refresh_token'];
-    const { newRefreshToken, newJwt_token } = await this.authService.refreshToken(refreshToken, deviceInfo, ip);
+    const { newRefreshToken, newJwt_token } = await this.tokenService.refreshToken(refreshToken, deviceInfo, ip);
     this.setAuthCookies(res, newJwt_token, newRefreshToken);
-    console.log(req);
+    return res.status(200).json({ message: 'Refresh token done' });
   }
 
   // --- LOGOUT user, email password endpoint
@@ -67,11 +71,11 @@ export class AuthController {
   @Post('login')
   async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<UserResponseDto> {
     const deviceInfo = this.getDeviceInfo(req);
-    const { newRefreshToken, newJwt_token } = await this.authService.getTokens(req.user, deviceInfo, ip);
+    const { newRefreshToken, newJwt_token } = await this.tokenService.getTokens(req.user, deviceInfo, ip);
 
     this.setAuthCookies(res, newJwt_token, newRefreshToken);
 
-    console.log(chalk.bgGreen.greenBright(`User ${req.user.email} LoggedIn by password`));
+    console.log(chalk.bgGreen.greenBright(`User: ${req.user.name}, email: ${req.user.email}, logged by password`));
     return this.mapToResponse(req.user);
   }
 
@@ -97,7 +101,7 @@ export class AuthController {
     // 2. Find the user in the DB or create them (registration)
 
     const { googleId, email, emailVerified, avatar_url, firstName: name } = req.user;
-    const { user, isNewUser } = await this.authService.registerOrLoginUserGoogle({
+    const { user, isNewUser } = await this.googleService.googleLogin({
       googleId,
       email,
       emailVerified,
@@ -106,7 +110,7 @@ export class AuthController {
     });
 
     const deviceInfo = this.getDeviceInfo(req);
-    const { newRefreshToken, newJwt_token } = await this.authService.getTokens(user, deviceInfo, ip);
+    const { newRefreshToken, newJwt_token } = await this.tokenService.getTokens(user, deviceInfo, ip);
 
     this.setAuthCookies(res, newJwt_token, newRefreshToken);
 

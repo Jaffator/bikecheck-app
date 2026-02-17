@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  // output   = "../generated/prisma"
 }
 
 generator jsonSchema {
@@ -293,8 +292,8 @@ model refresh_tokens {
   id            Int       @id @default(autoincrement())
   user_id       Int
   refresh_token String    @unique(map: "jwt_token") @db.VarChar(255)
-  expires_at    DateTime? @db.Date
-  created_at    DateTime? @default(now()) @db.Date
+  expires_at    DateTime? @db.Timestamptz(6)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
   revoked       Boolean?  @default(false)
   revoked_at    DateTime? @db.Timestamptz(6)
   user_agent    String?   @db.VarChar(255)
