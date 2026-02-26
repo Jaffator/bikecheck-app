@@ -1003,24 +1003,15 @@
           "type": "string"
         },
         "expires_at": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": "string",
           "format": "date-time"
         },
         "created_at": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": "string",
           "format": "date-time"
         },
         "revoked": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": false
         },
         "revoked_at": {

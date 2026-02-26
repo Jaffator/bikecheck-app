@@ -7,7 +7,7 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import { GoogleStrategy } from './strategy/google.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
-import { RefreshTokenModule } from 'src/refreshtoken/refreshtoken.module';
+import { RefreshTokenModule } from '../refreshtoken/refreshtoken.module';
 import { GoogleAuthService } from './googleAuth.service';
 import { TokenService } from './token.service';
 import { AUTH_CONFIG } from './auth.config';

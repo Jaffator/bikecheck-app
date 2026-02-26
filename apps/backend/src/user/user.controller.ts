@@ -17,7 +17,6 @@ export class UserController {
   @ApiResponse({ status: 200, type: UserResponseDto })
   @Get(':id')
   async getUser(@Param('id') id: string) {
-    console.log('cus');
     const user = await this.userService.getUserbyId(Number(id));
     if (!user) {
       throw new NotFoundException('User not found');

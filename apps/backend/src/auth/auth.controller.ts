@@ -5,10 +5,9 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './googleAuth.service';
 import { TokenService } from './token.service';
-import { UserService } from 'src/user/user.service';
-import chalk from 'chalk';
+import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
-import { CreateUserDto, UserResponseDto } from 'src/user/dto/user.dtos';
+import { CreateUserDto, UserResponseDto } from '../user/dto/user.dtos';
 import { LoginDto } from './dto/auth.dtos';
 import { users as UserFull } from '@prisma/client';
 import type { Request, Response } from 'express';
@@ -27,6 +26,12 @@ export class AuthController {
     private tokenService: TokenService,
   ) {}
 
+  // testing endpoint
+  @Public()
+  @Get('/test')
+  test(@Res() res: Response) {
+    return res.status(200).json({ message: 'Refresh token done' });
+  }
   // --- REGISTER new user, email password endpoint
   @Public()
   @ApiBody({ type: CreateUserDto })
@@ -34,9 +39,7 @@ export class AuthController {
   @Post('register')
   async createUser(@Body() data: CreateUserDto): Promise<UserResponseDto> {
     const newUser = await this.userService.createUserLocal(data);
-    if (newUser) {
-      console.log(chalk.greenBright(`User ${data.email} created`));
-    }
+
     return this.mapToResponse(newUser);
   }
 
@@ -45,9 +48,9 @@ export class AuthController {
   @Post('refresh')
   async refreshUser(@Req() req: Request, @Res() res: Response, @Ip() ip: string) {
     const deviceInfo = this.getDeviceInfo(req);
-    const refreshToken = req.cookies['refresh_token'];
-    const { newRefreshToken, newJwt_token } = await this.tokenService.refreshToken(refreshToken, deviceInfo, ip);
-    this.setAuthCookies(res, newJwt_token, newRefreshToken);
+    const currentRefreshToken = req.cookies['refresh_token'];
+    const { refreshToken, accessToken } = await this.tokenService.refreshToken(currentRefreshToken, deviceInfo, ip);
+    this.setAuthCookies(res, accessToken, refreshToken);
     return res.status(200).json({ message: 'Refresh token done' });
   }
 
@@ -58,7 +61,6 @@ export class AuthController {
     const token = req.cookies['refresh_token'];
     await this.authService.logout(token);
     this.deleteAuthCookies(res);
-    console.log(chalk.bgBlue.greenBright(`Token revoked, user LogOut`));
     return res.status(200).json({ message: 'User successfully logged out' });
   }
 
@@ -71,11 +73,12 @@ export class AuthController {
   @Post('login')
   async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<UserResponseDto> {
     const deviceInfo = this.getDeviceInfo(req);
-    const { newRefreshToken, newJwt_token } = await this.tokenService.getTokens(req.user, deviceInfo, ip);
-
-    this.setAuthCookies(res, newJwt_token, newRefreshToken);
-
-    console.log(chalk.bgGreen.greenBright(`User: ${req.user.name}, email: ${req.user.email}, logged by password`));
+    const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(
+      req.user,
+      deviceInfo,
+      ip,
+    );
+    this.setAuthCookies(res, accessToken, refreshToken);
     return this.mapToResponse(req.user);
   }
 
@@ -110,14 +113,10 @@ export class AuthController {
     });
 
     const deviceInfo = this.getDeviceInfo(req);
-    const { newRefreshToken, newJwt_token } = await this.tokenService.getTokens(user, deviceInfo, ip);
-
-    this.setAuthCookies(res, newJwt_token, newRefreshToken);
-
+    const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
+    this.setAuthCookies(res, accessToken, refreshToken);
     const statusCode = isNewUser ? HttpStatus.CREATED : HttpStatus.ACCEPTED;
     res.status(statusCode);
-    console.log(chalk.bgGreen.bold(`User ${email} loggedIn by Google`));
-    console.log(user);
     return this.mapToResponse(user);
     // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
   }

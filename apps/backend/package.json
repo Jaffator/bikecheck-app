@@ -18,7 +18,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "bash ./test/run-e2e.sh"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -42,6 +42,7 @@
     "pg": "^8.17.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "set-cookie-parser": "^3.0.1",
     "ua-parser-js": "^2.0.9"
   },
   "devDependencies": {
@@ -50,18 +51,21 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/schematics": "^11.0.0",
-    "@nestjs/testing": "^11.0.1",
+    "@nestjs/testing": "^11.1.14",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.10.7",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.16.0",
+    "@types/set-cookie-parser": "^2.4.10",
     "@types/supertest": "^6.0.2",
     "@types/ua-parser-js": "^0.7.39",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -90,7 +94,11 @@
       "ts"
     ],
     "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
+    "testRegex": ".*\\.test\\.ts$",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/test/"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },

@@ -6,6 +6,10 @@ import { refresh_tokens } from '@prisma/client';
 export class RefreshTokenRepository {
   constructor(private prisma: PrismaService) {}
 
+  async getAll(): Promise<refresh_tokens[]> {
+    return await this.prisma.refresh_tokens.findMany();
+  }
+
   async create(
     user_id: number,
     refresh_token: string,
@@ -22,6 +26,32 @@ export class RefreshTokenRepository {
         ip_address,
       },
     });
+  }
+
+  async revokeAndCreateNew(
+    oldToken: string,
+    userId: number,
+    newRefreshToken: string,
+    expiresAt: Date,
+    deviceInfo?: string,
+    ip?: string,
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.refresh_tokens.update({
+        where: { refresh_token: oldToken },
+        data: { revoked: true },
+      }),
+      this.prisma.refresh_tokens.create({
+        data: {
+          user_id: userId,
+          refresh_token: newRefreshToken,
+          expires_at: expiresAt,
+          user_agent: deviceInfo,
+          ip_address: ip,
+          revoked: false,
+        },
+      }),
+    ]);
   }
 
   async findByToken(refresh_token: string): Promise<refresh_tokens | null> {

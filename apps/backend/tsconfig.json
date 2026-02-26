@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["jest", "node"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
@@ -22,6 +23,12 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "include": [
+    "src/**/*",
+    "scripts/**/*",
+    "test/**/*.ts",
+    "src/auth/auth.service.test.ts",
+    "src/auth/token.service.test.ts"
+  ],
+  "exclude": ["node_modules", "dist", "**/*spec.ts"]
 }

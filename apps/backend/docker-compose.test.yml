@@ -1,0 +1,10 @@
+version: '3.8' # Verze formátu
+services:
+  db-test: # Název služby (můžeš si vybrat)
+    image: postgres:15 # Oficiální "šablona" s Postgresem verze 15
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_db
+    ports:
+      - '5433:5432' # "Propoj port 5433 mého PC s portem 5432 uvnitř kontejneru"
