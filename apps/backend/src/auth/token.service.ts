@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { users as UserFull } from '@prisma/client';
 import { RefreshTokenRepository } from '../refreshtoken/refreshtoken.repository';
 import { randomBytes } from 'crypto';
@@ -8,11 +9,11 @@ import { AUTH_CONFIG } from './auth.config';
 
 @Injectable()
 export class TokenService {
-  private readonly logger = new Logger(TokenService.name);
   constructor(
     private refreshTokenRepository: RefreshTokenRepository,
     private jwtService: JwtService,
     private userService: UserService,
+    @InjectPinoLogger(TokenService.name) private readonly logger: PinoLogger,
   ) {}
 
   // ---- Public methods ----
@@ -26,7 +27,7 @@ export class TokenService {
 
     const refreshTokenInfo = await this.refreshTokenRepository.findByToken(currentRefreshToken);
     if (!refreshTokenInfo || refreshTokenInfo.revoked === true) {
-      this.logger.error(`Token doesn exist`);
+      this.logger.info(`Token doesn exist`);
       throw new UnauthorizedException('Session expired');
     }
 
@@ -37,7 +38,7 @@ export class TokenService {
 
     if (new Date() > refreshTokenInfo.expires_at) {
       await this.refreshTokenRepository.revokeToken(currentRefreshToken);
-      this.logger.error(`Token expired`);
+      this.logger.info(`Token expired`);
       throw new UnauthorizedException('Session expired');
     }
     const accessToken = this.generateAccessToken(user);

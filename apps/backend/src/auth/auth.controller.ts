@@ -32,6 +32,7 @@ export class AuthController {
   test(@Res() res: Response) {
     return res.status(200).json({ message: 'Refresh token done' });
   }
+
   // --- REGISTER new user, email password endpoint
   @Public()
   @ApiBody({ type: CreateUserDto })

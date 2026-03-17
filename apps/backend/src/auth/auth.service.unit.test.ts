@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
+import { getLoggerToken } from 'nestjs-pino';
 import { RefreshTokenRepository } from '../refreshtoken/refreshtoken.repository';
 import * as bcrypt from 'bcrypt';
 import { UnauthorizedException } from '@nestjs/common';
@@ -10,8 +11,6 @@ import { UnauthorizedException } from '@nestjs/common';
 
 describe('AuthService_testing', () => {
   let authService: AuthService;
-  let userService: UserService;
-  let refreshTokenRepository: RefreshTokenRepository;
   const mockUserService = {
     getUserbyEmail: jest.fn(),
   };
@@ -19,18 +18,28 @@ describe('AuthService_testing', () => {
     revokeToken: jest.fn(() => {}),
     findByToken: jest.fn(() => {}),
   };
+  const mockLogger = {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: UserService, useValue: mockUserService },
         { provide: RefreshTokenRepository, useValue: mockRefreshTokenRepository },
+        { provide: getLoggerToken(AuthService.name), useValue: mockLogger },
       ],
     }).compile();
+
     authService = module.get<AuthService>(AuthService);
-    userService = module.get<UserService>(UserService);
-    refreshTokenRepository = module.get<RefreshTokenRepository>(RefreshTokenRepository);
   });
+
   describe('loginUserLocal', () => {
     // happy path
     it('Should return user if email and password correct', async () => {
@@ -72,6 +81,7 @@ describe('AuthService_testing', () => {
       await expect(authService.loginUserLocal(email, password)).rejects.toThrow(UnauthorizedException);
     });
   });
+
   describe('logout', () => {
     it('should call revoke fnc', async () => {
       // ARRANGE

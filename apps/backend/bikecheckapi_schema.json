@@ -103,6 +103,20 @@
         ]
       }
     },
+    "/api/auth/test": {
+      "get": {
+        "operationId": "AuthController_test",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/auth/register": {
       "post": {
         "operationId": "AuthController_createUser",
@@ -140,14 +154,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
-                }
-              }
-            }
+            "description": ""
           }
         },
         "tags": [
@@ -232,6 +239,189 @@
         },
         "tags": [
           "Auth"
+        ]
+      }
+    },
+    "/api/bike": {
+      "post": {
+        "operationId": "BikeController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBikeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/all": {
+      "get": {
+        "operationId": "BikeController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseBikeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/{id}": {
+      "get": {
+        "operationId": "BikeController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      },
+      "patch": {
+        "operationId": "BikeController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBikeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/delsoft/{id}": {
+      "delete": {
+        "operationId": "BikeController_deleteSoft",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/delhard/{id}": {
+      "delete": {
+        "operationId": "BikeController_deleteHard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
         ]
       }
     }
@@ -399,6 +589,139 @@
           "email",
           "password"
         ]
+      },
+      "CreateBikeDto": {
+        "type": "object",
+        "properties": {
+          "bike_brand_id": {
+            "type": "number",
+            "example": 2
+          },
+          "organization_id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_type_id": {
+            "type": "number",
+            "example": 1
+          },
+          "bikename": {
+            "type": "string",
+            "example": "Tarmac SL7"
+          },
+          "year": {
+            "type": "number",
+            "example": 2024
+          },
+          "description": {
+            "type": "string",
+            "example": "Serviced bike, top health"
+          },
+          "wheel_size_id": {
+            "type": "number",
+            "example": 2
+          },
+          "bike_size_id": {
+            "type": "number",
+            "example": 3
+          },
+          "mileage_km": {
+            "type": "number",
+            "example": 1540
+          },
+          "frame_material": {
+            "type": "string",
+            "example": "Carbon"
+          },
+          "bike_model_id": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "bike_brand_id",
+          "organization_id",
+          "bike_type_id",
+          "bikename"
+        ]
+      },
+      "ResponseBikeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "organization_id": {
+            "type": "object",
+            "nullable": true
+          },
+          "bike_brand_id": {
+            "type": "number"
+          },
+          "bike_type_id": {
+            "type": "object",
+            "nullable": true
+          },
+          "year": {
+            "type": "object",
+            "nullable": true
+          },
+          "wheel_size_id": {
+            "type": "object",
+            "nullable": true
+          },
+          "bike_size_id": {
+            "type": "object",
+            "nullable": true
+          },
+          "mileage_km": {
+            "type": "object",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "frame_material": {
+            "type": "object",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "bike_model_id": {
+            "type": "object",
+            "nullable": true
+          },
+          "bikename": {
+            "type": "object",
+            "nullable": true
+          },
+          "description": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "bike_brand_id"
+        ]
+      },
+      "UpdateBikeDto": {
+        "type": "object",
+        "properties": {}
       }
     }
   }

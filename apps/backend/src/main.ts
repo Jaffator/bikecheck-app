@@ -1,14 +1,17 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap(): Promise<void> {
-  const isProduction = process.env.NODE_ENV === 'production';
   const app = await NestFactory.create(AppModule, {
-    logger: isProduction ? ['error', 'warn', 'log'] : ['error', 'warn', 'log', 'debug', 'verbose'],
+    bufferLogs: true,
   });
+
+  app.useLogger(app.get(Logger));
+
   app.setGlobalPrefix('api');
   app.use(cookieParser());
 
@@ -30,8 +33,7 @@ async function bootstrap(): Promise<void> {
 
   await app.listen(process.env.PORT ?? 3000);
 
-  const logger = new Logger('Bootstrap');
-  logger.log(`Application is running on: ${await app.getUrl()}`);
+  app.get(Logger).log(`Application is running on: ${await app.getUrl()}`, 'Bootstrap');
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises

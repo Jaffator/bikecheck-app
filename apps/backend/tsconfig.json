@@ -24,11 +24,12 @@
     "noFallthroughCasesInSwitch": false
   },
   "include": [
+    "jest.config.ts",
     "src/**/*",
     "scripts/**/*",
-    "test/**/*.ts",
-    "src/auth/auth.service.test.ts",
-    "src/auth/token.service.test.ts"
+    "tests/**/*.ts",
+    "src/auth/auth.service.unit.test.ts",
+    "src/auth/token.service.unit.test.ts"
   ],
   "exclude": ["node_modules", "dist", "**/*spec.ts"]
 }

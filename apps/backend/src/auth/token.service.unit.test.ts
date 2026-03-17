@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TokenService } from './token.service';
 import { RefreshTokenRepository } from '../refreshtoken/refreshtoken.repository';
+import { getLoggerToken } from 'nestjs-pino';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { UnauthorizedException } from '@nestjs/common';
@@ -21,7 +22,12 @@ describe('TokenService_testing', () => {
   const mockUserService = {
     getUserbyId: jest.fn(),
   };
-
+  const mockLogger = {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -29,6 +35,7 @@ describe('TokenService_testing', () => {
         { provide: RefreshTokenRepository, useValue: mockRepo },
         { provide: JwtService, useValue: { sign: () => 'fake-access-token' } },
         { provide: UserService, useValue: mockUserService },
+        { provide: getLoggerToken(TokenService.name), useValue: mockLogger },
       ],
     }).compile();
 

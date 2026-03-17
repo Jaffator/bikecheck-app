@@ -21,7 +21,6 @@ model bike_brands {
   id          Int           @id(map: "bike_brand_pkey") @default(autoincrement())
   bike_brand  String?       @db.VarChar
   bike_models bike_models[]
-  bikes       bikes[]
 }
 
 model bike_events {
@@ -62,36 +61,33 @@ model bike_types {
 }
 
 model bikes {
-  id                 Int                  @id @default(autoincrement())
-  organization_id    Int
-  bike_brand_id      Int
-  bike_type_id       Int?
-  year               Int?
-  wheel_size_id      Int?
-  bike_size_id       Int?
-  mileage_km         Int?
-  created_at         DateTime?            @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime?            @db.Timestamptz(6)
-  frame_material     String?              @db.VarChar(50)
-  is_deleted         Boolean?             @default(false)
-  deleted_at         DateTime?            @db.Timestamptz(6)
-  bike_model_id      Int?
-  bike_events        bike_events[]
-  bike_brands        bike_brands          @relation(fields: [bike_brand_id], references: [id], onUpdate: Restrict)
-  bike_models        bike_models?         @relation(fields: [bike_model_id], references: [id], onUpdate: NoAction)
-  bike_sizes         bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  bike_types         bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  organizations      organizations        @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  wheel_sizes        wheel_sizes?         @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  components_on_bike components_on_bike[]
-  rides              rides[]
+  id                  Int                  @id @default(autoincrement())
+  bike_brand_model_id Int
+  bike_type_id        Int?
+  year                Int?
+  wheel_size_id       Int?
+  bike_size_id        Int?
+  mileage_km          Int?
+  created_at          DateTime?            @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime?            @db.Timestamptz(6)
+  frame_material      String?              @db.VarChar(50)
+  is_deleted          Boolean?             @default(false)
+  deleted_at          DateTime?            @db.Timestamptz(6)
+  bikename            String?              @db.VarChar(50)
+  description         String?              @db.VarChar(255)
+  bike_events         bike_events[]
+  bike_sizes          bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bike_types          bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bike_models         bike_models          @relation(fields: [bike_brand_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "bikes_brand_model_id_fkey")
+  wheel_sizes         wheel_sizes?         @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_on_bike  components_on_bike[]
+  rides               rides[]
 
   @@index([bike_size_id], map: "bikes_bike_size_col")
-  @@index([bike_brand_id], map: "bikes_brand_id")
+  @@index([bike_brand_model_id], map: "bikes_brand_id")
   @@index([created_at], map: "bikes_created_at")
   @@index([bike_type_id], map: "bikes_type_id")
   @@index([updated_at], map: "bikes_updated_at")
-  @@index([organization_id], map: "bikes_user_id")
   @@index([wheel_size_id], map: "bikes_wheel_size_id")
 }
 
@@ -212,7 +208,6 @@ model organizations {
   updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
   is_deleted           Boolean?               @default(false)
   deleted_at           DateTime?              @db.Timestamptz(6)
-  bikes                bikes[]
   organization_members organization_members[]
 }
 
@@ -224,8 +219,8 @@ model ride_styles {
 
 model rides {
   id                 Int       @id @default(autoincrement())
-  bike_id            Int?
-  user_id            Int?
+  bike_id            Int
+  user_id            Int
   started_at         DateTime? @db.Timestamptz(6)
   duration_sec       Int?
   distance_m         Int?
@@ -237,8 +232,8 @@ model rides {
   max_speed_kmh      Int?
   is_deleted         Boolean?  @default(false)
   deleted_at         DateTime? @db.Timestamptz(6)
-  bikes              bikes?    @relation(fields: [bike_id], references: [id], onDelete: Cascade)
-  users              users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  bikes              bikes     @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+  users              users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([bike_id], map: "rides_bike_id")
   @@index([started_at], map: "rides_started_at")

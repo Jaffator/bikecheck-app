@@ -11,9 +11,7 @@ async function getApiSchema(): Promise<void> {
   }
   const outputPath = path.join(__dirname, '..', 'bikecheckapi_schema.json');
   await fs.writeFile(outputPath, schema);
-  console.log(
-    chalk.yellow.bgGreen.bold(`--- OpenAPI schema successfully exported ---`),
-  );
+  console.log(chalk.yellow.bgGreen.bold(`--- OpenAPI schema successfully exported ---`));
 }
 
 getApiSchema().catch((err) => {

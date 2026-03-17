@@ -38,12 +38,6 @@
           "items": {
             "$ref": "#/definitions/bike_models"
           }
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
         }
       }
     },
@@ -223,24 +217,23 @@
           ],
           "format": "date-time"
         },
+        "bikename": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "bike_events": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/bike_events"
           }
-        },
-        "bike_brands": {
-          "$ref": "#/definitions/bike_brands"
-        },
-        "bike_models": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/bike_models"
-            },
-            {
-              "type": "null"
-            }
-          ]
         },
         "bike_sizes": {
           "anyOf": [
@@ -262,8 +255,8 @@
             }
           ]
         },
-        "organizations": {
-          "$ref": "#/definitions/organizations"
+        "bike_models": {
+          "$ref": "#/definitions/bike_models"
         },
         "wheel_sizes": {
           "anyOf": [
@@ -696,12 +689,6 @@
           ],
           "format": "date-time"
         },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        },
         "organization_members": {
           "type": "array",
           "items": {
@@ -806,24 +793,10 @@
           "format": "date-time"
         },
         "bikes": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/bikes"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/bikes"
         },
         "users": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/users"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/users"
         }
       }
     },

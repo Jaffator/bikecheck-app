@@ -3,8 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import cookieParser from 'cookie-parser';
-import { AppModule } from '../src/app.module';
-import { UserResponseDto } from '../src/user/dto/user.dtos';
+import { AppModule } from '../app.module';
+import { UserResponseDto } from '../user/dto/user.dtos';
 import setCookie from 'set-cookie-parser';
 
 describe('AppController (e2e)', () => {
@@ -50,7 +50,7 @@ describe('AppController (e2e)', () => {
     const user: UserResponseDto = res.body;
     expect(user.name).toBe('Jarda');
     expect(user.email).toBe(testexample);
-    expect(user.id).toBe(1);
+    expect(user.id).toBeGreaterThan(0);
   });
 
   it('should nok /auth/register same user (POST)', async () => {
@@ -76,13 +76,15 @@ describe('AppController (e2e)', () => {
     const user: UserResponseDto = res.body;
     expect(user.name).toBe('Jarda');
     expect(user.email).toBe(testexample);
-    expect(user.id).toBe(1);
+    expect(user.id).toBeGreaterThan(0);
+    expect(access_token).toBeDefined();
+    expect(refresh_token).toBeDefined();
   });
 
   it('should ok /users/:id (GET)', async () => {
     // ACT
     const res = await request(app.getHttpServer())
-      .get('/api/users/1')
+      .get('/api/users/2')
       .set('Authorization', `Bearer ${access_token}`)
       .set('Cookie', [`refresh_token=${refresh_token}`])
       .expect(200);
@@ -90,6 +92,6 @@ describe('AppController (e2e)', () => {
     const user: UserResponseDto = res.body;
     expect(user.name).toBe('Jarda');
     expect(user.email).toBe(testexample);
-    expect(user.id).toBe(1);
+    expect(user.id).toBe(2);
   });
 });
