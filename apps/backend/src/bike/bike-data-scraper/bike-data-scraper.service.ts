@@ -132,7 +132,7 @@ export class BikeDataScrapeService {
   private buildSearchUrl(query: BikeSearchQuery): string {
     const searchQuery = `${query.brand} ${query.model}`.trim();
 
-    return `https://99spokes.com/en-EU/bikes?q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(query.year)}`;
+    return `https://99spokes.com/en-EU/bikes?frameset=0&q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(query.year)}`;
   }
 
   private async withPage<T>(callback: (page: Page) => Promise<T>): Promise<T> {
