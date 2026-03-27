@@ -27,7 +27,7 @@
     "jest.config.ts",
     "src/**/*",
     "scripts/**/*",
-    "tests/**/*.ts",
+    "test setup/**/*.ts",
     "src/auth/auth.service.unit.test.ts",
     "src/auth/token.service.unit.test.ts"
   ],

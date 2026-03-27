@@ -1,14 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../shared/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBikeDto } from './dto/create-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
+import 'dotenv/config';
+import { Prisma } from '@prisma/client';
+type DbClient = PrismaService | Prisma.TransactionClient;
 
 @Injectable()
 export class BikeRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createBike(data: CreateBikeDto): Promise<ResponseBikeDto> {
-    return this.prisma.bikes.create({ data });
+  async createBike(bikeData: CreateBikeDto, db: DbClient = this.prisma): Promise<ResponseBikeDto> {
+    return db.bikes.create({
+      data: {
+        ...bikeData,
+      },
+    });
   }
   async findAll(): Promise<ResponseBikeDto[]> {
     return this.prisma.bikes.findMany({});
@@ -29,3 +36,27 @@ export class BikeRepository {
     });
   }
 }
+
+// async function run() {
+//   const prisma = new PrismaService();
+//   await prisma.onModuleInit();
+
+//   try {
+//     const repository = new BikeRepository(prisma);
+//     const result = await repository.createBike({
+//       user_id: 38,
+//       bike_brand: 'Trek shit',
+//       bike_model: 'Domane SL 7ss',
+//       bike_type_id: 50,
+//       frame_material: 'Carbon',
+//       image_url: 'https://example.com/bike-image.jpg',
+//     });
+//     console.log(result);
+//   } catch (error) {
+//     console.error('Error creating bike:', error);
+//   } finally {
+//     await prisma.onModuleDestroy();
+//   }
+// }
+
+// run().catch(console.error);

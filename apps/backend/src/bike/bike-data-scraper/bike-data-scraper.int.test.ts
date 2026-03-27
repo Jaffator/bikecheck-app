@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BikeDataScrapeService } from './bike-data-scraper.service';
-import { PrismaService } from '../../../shared/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { getLoggerToken } from 'nestjs-pino';
 import type { BikeListItem } from './bike-data-scraper.types';
 
@@ -60,7 +60,7 @@ describe('BikeDataScrapeService (integration)', () => {
       expect(item.url).toBeTruthy();
       expect(() => new URL(item.url)).not.toThrow();
       expect(item.image).toBeTruthy();
-      expect(() => new URL(item.image)).not.toThrow();
+      expect(() => new URL(item.image!)).not.toThrow();
       expect(item.name).toBeTruthy();
     });
   });

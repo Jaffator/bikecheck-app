@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaService } from '../../shared/prisma.service';
 export const components = [
   'Frame',
   'Fork',
@@ -29,6 +28,7 @@ export const components = [
   'Battery',
   'Display',
   'Charger',
+  'Pedals',
 ];
 
 export class SeedComponent {
@@ -49,7 +49,7 @@ export class SeedComponent {
     }
   }
 
-  async runSeedComponent(): Promise<void> {
+  async run(): Promise<void> {
     await this.componentTypes(components);
   }
 }

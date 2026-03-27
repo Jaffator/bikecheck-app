@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient } from '@prisma/client';
-import seedData from './data.json';
+import seedData from './seed_data.json';
 
 type ModelsData = {
   brand: string;
   models: string[];
 };
 
-export class SeedBike {
+export class SeedBikeAddData {
   private prisma: PrismaClient;
 
   constructor(prisma: PrismaClient) {
@@ -108,7 +108,7 @@ export class SeedBike {
     }
   }
 
-  async runSeedBike() {
+  async run() {
     await this.bike_brands(seedData.bike_brands);
     await this.bike_sizes(seedData.bike_sizes);
     await this.wheel_size(seedData.wheel_sizes);

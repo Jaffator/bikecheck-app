@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
-import { PrismaModule } from '../../../shared/prisma.module';
-import { BikeDataScrapeService } from './bike-data-scraper.service';
+import { PrismaModule } from '../../../../prisma/prisma.module';
+import { BikeDataScrapeService } from '../bike-data-scraper.service';
 
 @Module({
   imports: [

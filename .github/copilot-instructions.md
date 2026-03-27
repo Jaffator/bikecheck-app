@@ -54,3 +54,4 @@ General:
 - Respect current project conventions
 - Reuse existing types and utilities
 - Ask before large structural changes
+- Chat responses should be concise by default

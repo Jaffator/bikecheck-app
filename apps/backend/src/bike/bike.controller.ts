@@ -9,36 +9,42 @@ import { ResponseBikeDto } from './dto/response-bike.dto';
 export class BikeController {
   constructor(private readonly bikeService: BikeService) {}
 
+  // Create new bike
   @ApiResponse({ status: 201, type: ResponseBikeDto })
   @Post()
   async create(@Body() createBikeDto: CreateBikeDto) {
     return await this.bikeService.create(createBikeDto);
   }
 
+  // Get all bikes
   @ApiResponse({ status: 200, type: ResponseBikeDto, isArray: true })
   @Get('/all')
   findAll() {
     return this.bikeService.findAll();
   }
 
+  // Get bike by ID
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.bikeService.findByID(+id);
   }
 
+  // Update bike by ID
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateBikeDto: UpdateBikeDto) {
     return this.bikeService.update(+id, updateBikeDto);
   }
 
+  // Soft delete bike by ID
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   @Delete('/delsoft/:id')
   deleteSoft(@Param('id') id: string) {
     return this.bikeService.deleteSoft(+id);
   }
 
+  // Hard delete bike by ID
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   @Delete('/delhard/:id')
   deleteHard(@Param('id') id: string) {

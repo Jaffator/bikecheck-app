@@ -1,0 +1,74 @@
+[
+  {
+    "component": "Frame",
+    "desc": "Carbon"
+  },
+  {
+    "component": "Fork",
+    "desc": "Carbon"
+  },
+  {
+    "component": "Motor",
+    "desc": "Bosch 600W 75Nm mid-drive"
+  },
+  {
+    "component": "Battery",
+    "desc": "Bosch 500Wh"
+  },
+  {
+    "component": "Brakes",
+    "desc": "Shimano GRX 400 Hydraulic Disc"
+  },
+  {
+    "component": "Stem",
+    "desc": "Size: 52, 54, Bontrager Elite, 31.8mm, Blendr compatible, 7 degree, 90mm length; Size: 56, 58, Bontrager Elite, 31.8mm, Blendr compatible, 7 degree, 100mm length; Size: 58, 60, Bontrager Elite, 31.8mm, Blendr compatible, 7 degree, 110mm length"
+  },
+  {
+    "component": "Handlebar",
+    "desc": "Size: 52, Bontrager Elite IsoZone VR-CF, alloy, 31.8mm, internal Di2 routing, 93mm reach, 123mm drop, 40cm width; Size: 54, 56, Bontrager Elite IsoZone VR-CF, alloy, 31.8mm, internal Di2 routing, 93mm reach, 123mm drop, 42cm width; Size: 58, 60, Bontrager Elite IsoZone VR-CF, alloy, 31.8mm, internal Di2 routing, 93mm reach, 123mm drop, 44cm width"
+  },
+  {
+    "component": "Saddle",
+    "desc": "Bontrager Aeolus Elite, austenite rails, 145mm width"
+  },
+  {
+    "component": "Seatpost",
+    "desc": "Size: 52, 54, 56, Bontrager carbon internal seatmast cap, integrated light mount, 20mm offset, short length; Size: 58, Bontrager carbon internal seatmast cap, integrated light mount, 20mm offset, tall length"
+  },
+  {
+    "component": "Rear Derailleur",
+    "desc": "Shimano GRX RX812, long cage, 42T max cog"
+  },
+  {
+    "component": "Crank",
+    "desc": "Size: 52, Praxis Alloy for Bosch, 46T, 170mm length; Size: 54, 56, Praxis Alloy for Bosch, 46T, 172.5mm length; Size: 58, 60, Praxis Alloy for Bosch, 46T, 175mm length"
+  },
+  {
+    "component": "Shifters",
+    "desc": "Shimano GRX RX810, 11 speed"
+  },
+  {
+    "component": "Cassette",
+    "desc": "Shimano Deore XT M8000, 11-42, 11 speed"
+  },
+  {
+    "component": "Chain",
+    "desc": "Shimano Ultegra HG701, 11-speed"
+  },
+  {
+    "component": "Rims",
+    "desc": "Front: Bontrager Paradigm Comp 25, Tubeless Ready, 25mm rim width, 100x12mm thru axle, Rear: Bontrager Paradigm Comp 25, Tubeless Ready, 25mm rim width, Shimano 11-speed freehub, 142x12 thru axle"
+  },
+  {
+    "component": "Tires",
+    "desc": "Schwalbe G-One Speed, 700x35"
+  },
+  {
+    "component": "Disc Rotors",
+    "desc": "Size: 52, 54, 56, 58, 60, Shimano RT800, 160mm, centerlock; Size: 52, 54, 56, 58, 60, Shimano MT900, 160mm, centerlock; Size: 52, 54, 56, 58, 60, Shimano EM810, 160mm, centerlock"
+  },
+  {
+    "component": "Charger",
+    "desc": "Bosch standard 4A (100-240V) charger"
+  }
+]

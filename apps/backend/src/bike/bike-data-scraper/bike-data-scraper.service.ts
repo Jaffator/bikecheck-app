@@ -1,6 +1,6 @@
 import { BadGatewayException, GatewayTimeoutException, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { PrismaService } from '../../../shared/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { chromium } from 'playwright-extra';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import stealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -111,11 +111,13 @@ export class BikeDataScrapeService {
       await this.createBikeComponentsArray(first, components, result);
     } else {
       if (typeof first === 'string' && components.some((item) => item.component_type === first)) {
+        const componentId = components.find((item) => item.component_type === first)?.id;
+        if (!componentId) throw new Error("id not found, componenet doesn't exist in db");
         let desc: string = dataArray[1] as string;
         if (!result.some((item) => item.component === first)) {
           const findedMark = desc.indexOf('\n');
           if (findedMark > -1) desc = desc.slice(0, findedMark);
-          result.push({ component: first, desc });
+          result.push({ id: componentId, component: first, desc });
         }
       }
     }
@@ -132,7 +134,7 @@ export class BikeDataScrapeService {
   private buildSearchUrl(query: BikeSearchQuery): string {
     const searchQuery = `${query.brand} ${query.model}`.trim();
 
-    return `https://99spokes.com/en-EU/bikes?frameset=0&q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(query.year)}`;
+    return `https://99spokes.com/en-EU/bikes?frameset=0&q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(query.year ?? '')}`;
   }
 
   private async withPage<T>(callback: (page: Page) => Promise<T>): Promise<T> {

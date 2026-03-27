@@ -1,7 +1,7 @@
 export interface BikeSearchQuery {
   brand: string;
   model: string;
-  year: string;
+  year: string | null;
 }
 
 export interface BikeListItem {
@@ -11,6 +11,7 @@ export interface BikeListItem {
 }
 
 export interface BikeComponentsType {
+  id: number;
   component: string;
   desc: string;
 }

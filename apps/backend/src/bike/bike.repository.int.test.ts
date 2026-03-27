@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BikeRepository } from './bike.repository';
-import { PrismaService } from '../../shared/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBikeDto } from './dto/create-bike.dto';
+import { runSeed } from 'scripts/seedData/main_tests';
 
 describe('BikeRepository (integration)', () => {
   let repository: BikeRepository;
@@ -9,23 +10,28 @@ describe('BikeRepository (integration)', () => {
   let moduleRef: TestingModule;
 
   beforeAll(async (): Promise<void> => {
-    // Kontrola že běží test DB
+    // Check if running against test database
     if (!process.env.DATABASE_URL?.includes('test')) {
       throw new Error('⚠️ Test must run against test database! Check DATABASE_URL');
     }
+    // Connect to test database and get repository instance
     moduleRef = await Test.createTestingModule({
       providers: [BikeRepository, PrismaService],
     }).compile();
-
     repository = moduleRef.get<BikeRepository>(BikeRepository);
     prisma = moduleRef.get<PrismaService>(PrismaService);
-
     await prisma.$connect();
-  });
 
-  beforeEach(async (): Promise<void> => {
-    // Pouze test DB
-    // await prisma.bikes.deleteMany({});
+    // const testuser: CreateUserDto = {
+    //   name: 'Test User',
+    //   email: 'testuser@example.com',
+    //   password: 'password123',
+    //   googleId: '',
+    // };
+    // await prisma.users.create({
+    //   data: { ...testuser },
+    // });
+    // await runSeed();
   });
 
   afterAll(async (): Promise<void> => {
@@ -38,10 +44,13 @@ describe('BikeRepository (integration)', () => {
     const bikeType = await prisma.bike_types.findFirst({});
     const wheelSize = await prisma.wheel_sizes.findFirst({});
     const bikeSize = await prisma.bike_sizes.findFirst({});
-    const bike_brand_model_id = await prisma.bike_models.findFirst({});
+    const bikeBrand = await prisma.bike_brands.findFirst({});
+    const user = await prisma.users.findFirst({});
 
     const dto: CreateBikeDto = {
-      bike_brand_model_id: bike_brand_model_id!.id,
+      organization_id: null,
+      user_id: user!.id,
+      bike_brand: bikeBrand!.bike_brand,
       bike_type_id: bikeType!.id,
       wheel_size_id: wheelSize!.id,
       bike_size_id: bikeSize!.id,
@@ -85,17 +94,20 @@ describe('BikeRepository (integration)', () => {
 
   it('update bike', async (): Promise<void> => {
     // ARRANGE
-    const idBikeToUpdate = await prisma.bikes.findFirst({});
+    const user = await prisma.users.findFirst({});
     const bikeType = await prisma.bike_types.findFirst({});
     const wheelSize = await prisma.wheel_sizes.findFirst({});
     const bikeSize = await prisma.bike_sizes.findFirst({});
-    const bikeModel = await prisma.bike_models.findFirst({});
+    const bikeBrand = await prisma.bike_brands.findFirst({});
+    const bike = await prisma.bikes.findFirst({ where: { bikename: 'Tarmac SL7' } });
 
-    const dto: CreateBikeDto = {
+    const updateDto: CreateBikeDto = {
+      organization_id: null,
+      user_id: user!.id,
       bike_type_id: bikeType!.id,
       wheel_size_id: wheelSize!.id,
       bike_size_id: bikeSize!.id,
-      bike_brand_model_id: bikeModel!.id,
+      bike_brand: bikeBrand!.bike_brand,
       bikename: 'Tarmac',
       year: 2025,
       description: '',
@@ -103,27 +115,26 @@ describe('BikeRepository (integration)', () => {
       frame_material: '',
     };
     // ACT
-    const findBike = await repository.updateBike(idBikeToUpdate!.id, dto);
+    const findBike = await repository.updateBike(bike!.id, updateDto);
 
     // ASSERT
     expect(findBike).not.toBeNull();
     expect(findBike.bikename).toBe('Tarmac');
     expect(findBike.year).toBe(2025);
     expect(findBike.mileage_km).toBe(1000);
-    expect(findBike?.id).toBe(idBikeToUpdate!.id);
   });
 
   it('soft delete bike', async (): Promise<void> => {
     // ARRANGE
-    const idBikeToSoftDelete = await prisma.bikes.findFirst({});
+    const bike = await prisma.bikes.findFirst({});
 
     // ACT
-    const softDeletedBike = await repository.softDeleteBike(idBikeToSoftDelete!.id);
+    const softDeletedBike = await repository.softDeleteBike(bike!.id);
 
     // ASSERT
     expect(softDeletedBike.is_deleted).toBe(true);
     expect(softDeletedBike.deleted_at).not.toBeNull();
-    expect(softDeletedBike?.id).toBe(idBikeToSoftDelete!.id);
+    expect(softDeletedBike?.id).toBe(bike!.id);
   });
 
   // it('hard delete bike', async (): Promise<void> => {

@@ -5,8 +5,20 @@ export class ResponseBikeDto implements bikes {
   @ApiProperty({ example: 1 })
   id!: number;
 
-  @ApiProperty({ example: 2 })
-  bike_brand_model_id!: number;
+  @ApiProperty({ example: 15 })
+  user_id!: number; // NOT NULL
+
+  @ApiProperty({ example: 10, nullable: true })
+  organization_id!: number | null;
+
+  @ApiProperty({ example: 'Specialized', nullable: true })
+  bike_brand!: string;
+
+  @ApiProperty({ example: 'Stumpjumper', nullable: true })
+  bike_model!: string | null;
+
+  @ApiProperty({ example: 'https://example.com/bike-image.jpg', nullable: true })
+  image_url!: string | null;
 
   @ApiProperty({ example: 1, nullable: true })
   bike_type_id!: number | null;

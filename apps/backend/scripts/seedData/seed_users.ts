@@ -21,11 +21,12 @@ export class SeedUser {
       await this.prisma.users.create({
         data: { ...testUser },
       });
+      console.log(`✅ users - seeded OK, inserted: 1 item`);
     } catch (error) {
       throw new Error(`Failed to seed new user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
-  async runSeedUser(): Promise<void> {
+  async run(): Promise<void> {
     await this.createUser();
   }
 }

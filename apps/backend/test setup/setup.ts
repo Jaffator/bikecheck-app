@@ -1,19 +1,21 @@
-import { runSeed } from './main';
 import { execSync } from 'child_process';
+import { runSeed } from '../scripts/seedData/main_tests';
 import dotenv from 'dotenv';
-import teardown from '../../tests/teardown';
+import teardown from './teardown';
 
-dotenv.config({ path: '.env.test' });
-async function main() {
+export default async (): Promise<void> => {
+  // Načtení testovacích env proměnných
+  dotenv.config({ path: '.env.test' });
+
   // --- 1. Spuštění Dockeru ---
   console.log('🐳 1: Starting Docker containers ...');
   try {
-    execSync('docker-compose -f docker-compose.test.yml up -d', { stdio: 'ignore' });
+    execSync('docker-compose -f tests/docker-compose.test.yml up -d', { stdio: 'ignore' });
   } catch (error) {
     if (error instanceof Error) {
-      console.log('🛑 Error when starting Docker.\n', error.message);
+      console.log('🛑 Error when starting Docker.\n', error);
+      await teardown();
     }
-    await teardown();
   }
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -24,7 +26,7 @@ async function main() {
     execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.log('🛑 Error when pushing schema into db.\n', error.message);
+      console.log('🛑 Error when pushing schema into db.\n', error);
     }
     await teardown();
   }
@@ -43,11 +45,5 @@ async function main() {
     }
     throw error;
   }
-}
-main().catch((error: unknown) => {
-  if (error instanceof Error) {
-    console.error(error.message);
-    return;
-  }
-  console.error('Unknown error', error);
-});
+  console.log('🔄 4: Running tests ...\n');
+};
