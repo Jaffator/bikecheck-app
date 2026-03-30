@@ -26,11 +26,11 @@ export class AuthController {
     private tokenService: TokenService,
   ) {}
 
-  // testing endpoint
+  // Testing endpoint
   @Public()
   @Get('/test')
   test(@Res() res: Response) {
-    return res.status(200).json({ message: 'Refresh token done' });
+    return res.status(200).json({ message: 'Test endpoint working' });
   }
 
   // --- REGISTER new user, email password endpoint
@@ -55,7 +55,7 @@ export class AuthController {
     return res.status(200).json({ message: 'Refresh token done' });
   }
 
-  // --- LOGOUT user, email password endpoint
+  // --- LOGOUT user, classic email password endpoint
   @ApiResponse({ status: 200 })
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
@@ -65,7 +65,7 @@ export class AuthController {
     return res.status(200).json({ message: 'User successfully logged out' });
   }
 
-  // --- LOGIN user, email password endpoint
+  // --- LOGIN user, classic email password endpoint
   @Public()
   @UseGuards(LocalAuthGuard)
   @ApiBody({ type: LoginDto })

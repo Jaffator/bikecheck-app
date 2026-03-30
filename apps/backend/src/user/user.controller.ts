@@ -5,7 +5,7 @@
 import { Controller, Get, Post, Param, Body, Patch, NotFoundException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto/user.dtos';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { users as UserFull } from '@prisma/client';
 
 @Controller('users')
@@ -26,6 +26,7 @@ export class UserController {
 
   // POST new user
   @ApiOperation({ summary: 'Create a new user' })
+  @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, type: UserResponseDto })
   @Post('create')
   async createUser(@Body() data: CreateUserDto): Promise<UserResponseDto> {
@@ -35,6 +36,7 @@ export class UserController {
 
   // UPDATE user :id
   @ApiOperation({ summary: 'Update user by given ID' })
+  @ApiBody({ type: UpdateUserDto })
   @ApiResponse({ status: 202, type: UserResponseDto })
   @Patch(':id')
   async updateUser(@Param('id') id: string, @Body() data: UpdateUserDto) {

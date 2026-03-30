@@ -6,10 +6,12 @@ import { CreateComponentsDto } from '../../component/dto/create-components';
 
 export class CreateBikeDto {
   // Required
+  @ApiProperty({ example: 1 })
   @IsInt()
   @IsPositive()
   user_id!: number;
 
+  @ApiProperty({ example: 'Trek' })
   @IsString()
   @MaxLength(50)
   bike_brand!: string;
@@ -81,10 +83,12 @@ export class CreateBikeDto {
 }
 
 export class CreateBikeWithComponentsDto {
+  @ApiProperty({ type: CreateBikeDto })
   @ValidateNested()
   @Type(() => CreateBikeDto)
   bike: CreateBikeDto;
 
+  @ApiProperty({ type: [CreateComponentsDto], isArray: true })
   @ValidateNested({ each: true })
   @Type(() => CreateComponentsDto)
   @IsArray()

@@ -1,10 +1,9 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { BikeService } from './bike.service';
 import { CreateBikeWithComponentsDto } from './dto/create-bike.dto';
-import { CreateBikeDto } from './dto/create-bike.dto';
-import { CreateComponentsDto } from 'src/component/dto/create-components';
+
 import { UpdateBikeDto } from './dto/update-bike.dto';
-import { ApiResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator';
+import { ApiResponse, ApiBody } from '@nestjs/swagger';
 import { ResponseBikeDto } from './dto/response-bike.dto';
 
 @Controller('bike')
@@ -12,8 +11,9 @@ export class BikeController {
   constructor(private readonly bikeService: BikeService) {}
 
   // Create new bike with componenets
+  @ApiBody({ type: CreateBikeWithComponentsDto })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
-  @Post()
+  @Post('/create')
   async create(@Body() dto: CreateBikeWithComponentsDto) {
     return this.bikeService.createBikeWithComponents(dto);
   }
@@ -33,6 +33,7 @@ export class BikeController {
   }
 
   // Update bike by ID
+  @ApiBody({ type: UpdateBikeDto })
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateBikeDto: UpdateBikeDto) {
