@@ -601,6 +601,14 @@
             "type": "string",
             "example": "Trek"
           },
+          "bike_model": {
+            "type": "string",
+            "example": "Domane SL7"
+          },
+          "organization_id": {
+            "type": "number",
+            "example": 1
+          },
           "bikename": {
             "type": "string",
             "example": "Tarmac SL7"
@@ -640,8 +648,7 @@
         },
         "required": [
           "user_id",
-          "bike_brand",
-          "bikename"
+          "bike_brand"
         ]
       },
       "CreateBikeWithComponentsDto": {
