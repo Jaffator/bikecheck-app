@@ -590,9 +590,80 @@
           "password"
         ]
       },
+      "CreateBikeDto": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Trek"
+          },
+          "bikename": {
+            "type": "string",
+            "example": "Tarmac SL7"
+          },
+          "year": {
+            "type": "number",
+            "example": 2024
+          },
+          "description": {
+            "type": "string",
+            "example": "Serviced bike, top health"
+          },
+          "wheel_size_id": {
+            "type": "number",
+            "example": 2
+          },
+          "bike_size_id": {
+            "type": "number",
+            "example": 3
+          },
+          "bike_type_id": {
+            "type": "number",
+            "example": 1
+          },
+          "mileage_km": {
+            "type": "number",
+            "example": 1540
+          },
+          "frame_material": {
+            "type": "string",
+            "example": "Carbon"
+          },
+          "image_url": {
+            "type": "string",
+            "example": "https://example.com/bike-image.jpg"
+          }
+        },
+        "required": [
+          "user_id",
+          "bike_brand",
+          "bikename"
+        ]
+      },
       "CreateBikeWithComponentsDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "bike": {
+            "$ref": "#/components/schemas/CreateBikeDto"
+          },
+          "components": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "a"
+              }
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "bike",
+          "components"
+        ]
       },
       "ResponseBikeDto": {
         "type": "object",
