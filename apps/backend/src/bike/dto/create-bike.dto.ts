@@ -85,12 +85,15 @@ export class CreateBikeDto {
 }
 
 export class CreateBikeWithComponentsDto {
-  @ApiProperty({ type: CreateBikeDto })
+  @ApiProperty({ type: () => CreateBikeDto })
   @ValidateNested()
   @Type(() => CreateBikeDto)
   bike: CreateBikeDto;
 
-  @ApiProperty({ type: [CreateComponentsDto], isArray: true })
+  @ApiProperty({ 
+    type: () => CreateComponentsDto,
+    isArray: true 
+  })
   @ValidateNested({ each: true })
   @Type(() => CreateComponentsDto)
   @IsArray()

@@ -651,6 +651,65 @@
           "bike_brand"
         ]
       },
+      "CreateComponentsDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 1
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12
+          },
+          "component_desc": {
+            "type": "string",
+            "example": "Fox 38 Factory Grip2",
+            "nullable": true
+          },
+          "mounted_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "total_mileage_km": {
+            "type": "number",
+            "example": 1200,
+            "nullable": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "example": true,
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "example": "Mounted after spring service",
+            "nullable": true
+          },
+          "interval_id": {
+            "type": "number",
+            "example": 2,
+            "nullable": true
+          },
+          "brake_load_since_service": {
+            "type": "number",
+            "example": 350,
+            "nullable": true
+          },
+          "last_serviced_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-03-20T10:00:00.000Z",
+            "nullable": true
+          }
+        },
+        "required": [
+          "bike_id",
+          "component_type_id"
+        ]
+      },
       "CreateBikeWithComponentsDto": {
         "type": "object",
         "properties": {
@@ -658,13 +717,10 @@
             "$ref": "#/components/schemas/CreateBikeDto"
           },
           "components": {
+            "type": "array",
             "items": {
-              "type": "array",
-              "items": {
-                "type": "a"
-              }
-            },
-            "type": "array"
+              "$ref": "#/components/schemas/CreateComponentsDto"
+            }
           }
         },
         "required": [

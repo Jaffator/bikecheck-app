@@ -18,7 +18,7 @@ export class BikeController {
     return this.bikeService.createBikeWithComponents(dto);
   }
 
-  // Get all bikes
+  // Get all bikess
   @ApiResponse({ status: 200, type: ResponseBikeDto, isArray: true })
   @Get('/all')
   findAll() {
