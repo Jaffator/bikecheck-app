@@ -66,9 +66,9 @@ export class AuthController {
   }
 
   // --- LOGIN user, classic email password endpoint
+  @ApiBody({ type: LoginDto })
   @Public()
   @UseGuards(LocalAuthGuard)
-  @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 202, type: UserResponseDto })
   @HttpCode(HttpStatus.OK)
   @Post('login')
