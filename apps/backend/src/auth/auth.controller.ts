@@ -34,8 +34,8 @@ export class AuthController {
   }
 
   // --- REGISTER new user, email password endpoint
-  @Public()
   @ApiBody({ type: CreateUserDto })
+  @Public()
   @ApiResponse({ status: 201, type: UserResponseDto })
   @Post('register')
   async createUser(@Body() data: CreateUserDto): Promise<UserResponseDto> {
