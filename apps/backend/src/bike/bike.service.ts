@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
@@ -23,14 +23,18 @@ export class BikeService {
   private async downloadImageExternalUrl(url: string): Promise<string> {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.statusText}`);
+      throw new BadRequestException(`Failed to download image: ${response.statusText}`);
     }
-    const image = await response.arrayBuffer();
-    const filename = `${randomUUID()}.jpg`;
-    const filepath = path.join(BIKE_IMAGES_DIR, filename);
-    await fs.writeFile(filepath, Buffer.from(image));
+    try {
+      const image = await response.arrayBuffer();
+      const filename = `${randomUUID()}.jpg`;
+      const filepath = path.join(BIKE_IMAGES_DIR, filename);
+      await fs.writeFile(filepath, Buffer.from(image));
 
-    return `/images/bikes/${filename}`;
+      return `/images/bikes/${filename}`;
+    } catch (error) {
+      throw new BadRequestException(`Failed to save image: ${error.message}`);
+    }
   }
 
   // Create a new bike with components
@@ -61,18 +65,34 @@ export class BikeService {
   }
 
   async findByID(id: number): Promise<ResponseBikeDto | null> {
-    return await this.bikeRepository.findById(id);
+    const bike = await this.bikeRepository.findById(id);
+    if (!bike) {
+      throw new NotFoundException(`Bike with ID ${id} not found`);
+    }
+    return bike;
   }
 
   async update(id: number, updateBikeDto: UpdateBikeDto) {
+    const bike = await this.bikeRepository.findById(id);
+    if (!bike) {
+      throw new NotFoundException(`Bike with ID ${id} not found`);
+    }
     return await this.bikeRepository.updateBike(id, updateBikeDto);
   }
 
   async deleteSoft(id: number): Promise<ResponseBikeDto> {
+    const bike = await this.bikeRepository.findById(id);
+    if (!bike) {
+      throw new NotFoundException(`Bike with ID ${id} not found`);
+    }
     return await this.bikeRepository.softDeleteBike(id);
   }
 
   async deleteHard(id: number): Promise<ResponseBikeDto> {
+    const bike = await this.bikeRepository.findById(id);
+    if (!bike) {
+      throw new NotFoundException(`Bike with ID ${id} not found`);
+    }
     return await this.bikeRepository.hardDeleteBike(id);
   }
 }

@@ -349,14 +349,10 @@
           ]
         },
         "components_mounted": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/components_mounted"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/components_mounted"
+          }
         }
       }
     },
