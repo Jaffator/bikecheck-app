@@ -48,7 +48,7 @@ describe('BikeRepository (integration)', () => {
     const user = await prisma.users.findFirst({});
 
     const dto: CreateBikeDto = {
-      organization_id: null,
+      organization_id: undefined,
       user_id: user!.id,
       bike_brand: bikeBrand!.bike_brand,
       bike_type_id: bikeType!.id,
@@ -102,7 +102,7 @@ describe('BikeRepository (integration)', () => {
     const bike = await prisma.bikes.findFirst({ where: { bikename: 'Tarmac SL7' } });
 
     const updateDto: CreateBikeDto = {
-      organization_id: null,
+      organization_id: undefined,
       user_id: user!.id,
       bike_type_id: bikeType!.id,
       wheel_size_id: wheelSize!.id,

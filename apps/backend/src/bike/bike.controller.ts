@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { BikeService } from './bike.service';
+import { CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { CreateBikeDto } from './dto/create-bike.dto';
+import { CreateComponentsDto } from 'src/component/dto/create-components';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ApiResponse } from '@nestjs/swagger/dist/decorators/api-response.decorator';
 import { ResponseBikeDto } from './dto/response-bike.dto';
@@ -9,11 +11,11 @@ import { ResponseBikeDto } from './dto/response-bike.dto';
 export class BikeController {
   constructor(private readonly bikeService: BikeService) {}
 
-  // Create new bike
+  // Create new bike with componenets
   @ApiResponse({ status: 201, type: ResponseBikeDto })
   @Post()
-  async create(@Body() createBikeDto: CreateBikeDto) {
-    return await this.bikeService.create(createBikeDto);
+  async create(@Body() dto: CreateBikeWithComponentsDto) {
+    return this.bikeService.createBikeWithComponents(dto);
   }
 
   // Get all bikes

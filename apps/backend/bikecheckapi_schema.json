@@ -251,7 +251,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateBikeDto"
+                "$ref": "#/components/schemas/CreateBikeWithComponentsDto"
               }
             }
           }
@@ -590,133 +590,121 @@
           "password"
         ]
       },
-      "CreateBikeDto": {
+      "CreateBikeWithComponentsDto": {
         "type": "object",
-        "properties": {
-          "bike_brand_id": {
-            "type": "number",
-            "example": 2
-          },
-          "organization_id": {
-            "type": "number",
-            "example": 1
-          },
-          "bike_type_id": {
-            "type": "number",
-            "example": 1
-          },
-          "bikename": {
-            "type": "string",
-            "example": "Tarmac SL7"
-          },
-          "year": {
-            "type": "number",
-            "example": 2024
-          },
-          "description": {
-            "type": "string",
-            "example": "Serviced bike, top health"
-          },
-          "wheel_size_id": {
-            "type": "number",
-            "example": 2
-          },
-          "bike_size_id": {
-            "type": "number",
-            "example": 3
-          },
-          "mileage_km": {
-            "type": "number",
-            "example": 1540
-          },
-          "frame_material": {
-            "type": "string",
-            "example": "Carbon"
-          },
-          "bike_model_id": {
-            "type": "number",
-            "example": 5
-          }
-        },
-        "required": [
-          "bike_brand_id",
-          "organization_id",
-          "bike_type_id",
-          "bikename"
-        ]
+        "properties": {}
       },
       "ResponseBikeDto": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "number"
+            "type": "number",
+            "example": 1
+          },
+          "user_id": {
+            "type": "number",
+            "example": 15
           },
           "organization_id": {
             "type": "object",
+            "example": 10,
             "nullable": true
           },
-          "bike_brand_id": {
-            "type": "number"
+          "bike_brand": {
+            "type": "string",
+            "example": "Specialized",
+            "nullable": true
+          },
+          "bike_model": {
+            "type": "object",
+            "example": "Stumpjumper",
+            "nullable": true
+          },
+          "image_url": {
+            "type": "object",
+            "example": "https://example.com/bike-image.jpg",
+            "nullable": true
           },
           "bike_type_id": {
             "type": "object",
-            "nullable": true
-          },
-          "year": {
-            "type": "object",
-            "nullable": true
-          },
-          "wheel_size_id": {
-            "type": "object",
-            "nullable": true
-          },
-          "bike_size_id": {
-            "type": "object",
-            "nullable": true
-          },
-          "mileage_km": {
-            "type": "object",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "frame_material": {
-            "type": "object",
-            "nullable": true
-          },
-          "is_deleted": {
-            "type": "object",
-            "nullable": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "bike_model_id": {
-            "type": "object",
+            "example": 1,
             "nullable": true
           },
           "bikename": {
             "type": "object",
+            "example": "Tarmac SL7",
+            "nullable": true
+          },
+          "year": {
+            "type": "object",
+            "example": 2024,
             "nullable": true
           },
           "description": {
             "type": "object",
+            "example": "Serviced bike, top health",
+            "nullable": true
+          },
+          "wheel_size_id": {
+            "type": "object",
+            "example": 2,
+            "nullable": true
+          },
+          "bike_size_id": {
+            "type": "object",
+            "example": 3,
+            "nullable": true
+          },
+          "mileage_km": {
+            "type": "object",
+            "example": 1540,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "object",
+            "example": "2024-01-01T12:00:00.000Z",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "object",
+            "example": "2024-01-02T12:00:00.000Z",
+            "nullable": true
+          },
+          "frame_material": {
+            "type": "object",
+            "example": "Carbon",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "example": false,
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "object",
+            "example": null,
             "nullable": true
           }
         },
         "required": [
           "id",
-          "bike_brand_id"
+          "user_id",
+          "organization_id",
+          "bike_brand",
+          "bike_model",
+          "image_url",
+          "bike_type_id",
+          "bikename",
+          "year",
+          "description",
+          "wheel_size_id",
+          "bike_size_id",
+          "mileage_km",
+          "created_at",
+          "updated_at",
+          "frame_material",
+          "is_deleted",
+          "deleted_at"
         ]
       },
       "UpdateBikeDto": {

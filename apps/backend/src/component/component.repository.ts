@@ -7,15 +7,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ComponentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createMountedMany(data: Prisma.components_mountedCreateManyInput[]): Promise<{ count: number }> {
+  async createMountedComponentMany(data: Prisma.components_mountedCreateManyInput[]): Promise<{ count: number }> {
     return this.prisma.components_mounted.createMany({ data });
   }
+
   async findMountedByBikeId(bikeId: number): Promise<components_mounted[]> {
     return this.prisma.components_mounted.findMany({
       where: { bike_id: bikeId, is_deleted: false },
       orderBy: { created_at: 'asc' },
     });
-    const data: Prisma.components_mountedCreateInput;
   }
 
   async updateMountedComponent(id: number, data: Prisma.components_mountedUpdateInput): Promise<components_mounted> {

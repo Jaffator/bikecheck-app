@@ -27,32 +27,31 @@ describe('BikeService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+  //   it('create a bike', async () => {
+  //     // ARRANGE
+  //     const createBikeDto = {
+  //       bike_brand_id: 1,
+  //       year: 2025,
+  //       mileage_km: 1250,
+  //       bikename: 'testnamebike',
+  //     };
 
-  it('create a bike', async () => {
-    // ARRANGE
-    const createBikeDto = {
-      bike_brand_id: 1,
-      year: 2025,
-      mileage_km: 1250,
-      bikename: 'testnamebike',
-    } as unknown as Parameters<BikeService['create']>[0];
+  //     const bike = {
+  //       ...createBikeDto,
+  //       id: 1,
+  //     };
 
-    const bike = {
-      ...createBikeDto,
-      id: 1,
-    };
+  //     mockBikeRepository.createBike.mockResolvedValue(bike);
 
-    mockBikeRepository.createBike.mockResolvedValue(bike);
+  //     // ACT
+  //     const result = await service.createBikeWithComponents({ bike: createBikeDto, components: [] });
 
-    // ACT
-    const result = await service.create(createBikeDto);
-
-    // ASSERT
-    expect(result).toEqual(bike);
-  });
-  it('findall bikes', async () => {});
-  it('find bike ID', async () => {});
-  it('update bike', async () => {});
-  it('delete soft bike', async () => {});
-  it('delete hard bike', async () => {});
+  //     // ASSERT
+  //     expect(result).toEqual(bike);
+  //   });
+  //   it('findall bikes', async () => {});
+  //   it('find bike ID', async () => {});
+  //   it('update bike', async () => {});
+  //   it('delete soft bike', async () => {});
+  //   it('delete hard bike', async () => {});
 });

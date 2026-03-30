@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsInt, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
 
-export class 
-
-
 export class CreateComponentsDto {
   @ApiProperty({ example: 1 })
   @IsInt()
@@ -24,7 +21,7 @@ export class CreateComponentsDto {
   @ApiProperty({ example: '2026-03-26T10:00:00.000Z', required: false, nullable: true })
   @IsOptional()
   @IsDateString()
-  mounted_at?: string;
+  mounted_at?: Date;
 
   @ApiProperty({ example: 1200, required: false, nullable: true })
   @IsOptional()
@@ -58,5 +55,5 @@ export class CreateComponentsDto {
   @ApiProperty({ example: '2026-03-20T10:00:00.000Z', required: false, nullable: true })
   @IsOptional()
   @IsDateString()
-  last_serviced_at?: string;
+  last_serviced_at?: Date;
 }

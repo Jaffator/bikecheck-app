@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { CreateBikeDto } from './dto/create-bike.dto';
+import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
 import { BikeRepository } from './bike.repository';
 import { ComponentRepository } from 'src/component/component.repository';
-import { CreateComponentsDto } from 'src/component/dto/create-components';
 import { BIKE_IMAGES_DIR } from 'src/config/path';
 import path from 'path';
 import fs from 'fs/promises';
@@ -13,7 +12,7 @@ import { randomUUID } from 'crypto';
 @Injectable()
 export class BikeService {
   constructor(
-    private readonly repository: BikeRepository,
+    private readonly bikeRepository: BikeRepository,
     private readonly componentRepository: ComponentRepository,
   ) {}
 
@@ -35,41 +34,45 @@ export class BikeService {
   }
 
   // Create a new bike with components
-  async create(bikeData: CreateBikeDto, componenetData: ): Promise<ResponseBikeDto> {
+  async createBikeWithComponents(dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
     let bikeToSave: CreateBikeDto;
-    // image url is extrnal, download and save locally
-    if (bikeData.image_url?.startsWith('http')) {
-      const localurl = await this.downloadImageExternalUrl(bikeData.image_url);
+
+    // image url is external, download and save locally
+    if (dto.bike.image_url?.startsWith('http')) {
+      const localurl = await this.downloadImageExternalUrl(dto.bike.image_url);
       bikeToSave = {
-        ...bikeData,
+        ...dto.bike,
         image_url: localurl,
       };
     } else {
       // image url is already local or not provided, use as is
-      bikeToSave = { ...bikeData };
-      const newbike = await this.repository.createBike(bikeToSave);
-      const newComponents = await this.componentRepository.createMountedMany(bikeComponents, newbike.id);
-      return newbike;
+      bikeToSave = { ...dto.bike };
     }
+    const newbike = await this.bikeRepository.createBike(bikeToSave);
+    const componentData = dto.components.map((data) => {
+      return { ...data, bike_id: newbike.id };
+    });
+    await this.componentRepository.createMountedComponentMany(componentData);
+    return newbike;
   }
 
   async findAll(): Promise<ResponseBikeDto[]> {
-    return await this.repository.findAll();
+    return await this.bikeRepository.findAll();
   }
 
   async findByID(id: number): Promise<ResponseBikeDto | null> {
-    return await this.repository.findById(id);
+    return await this.bikeRepository.findById(id);
   }
 
   async update(id: number, updateBikeDto: UpdateBikeDto) {
-    return await this.repository.updateBike(id, updateBikeDto);
+    return await this.bikeRepository.updateBike(id, updateBikeDto);
   }
 
   async deleteSoft(id: number): Promise<ResponseBikeDto> {
-    return await this.repository.softDeleteBike(id);
+    return await this.bikeRepository.softDeleteBike(id);
   }
 
   async deleteHard(id: number): Promise<ResponseBikeDto> {
-    return await this.repository.hardDeleteBike(id);
+    return await this.bikeRepository.hardDeleteBike(id);
   }
 }

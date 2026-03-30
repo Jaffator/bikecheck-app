@@ -4,7 +4,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { chromium } from 'playwright-extra';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import stealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { BikeComponentsType, BikeListItem, BikeSearchQuery } from './bike-data-scraper.types';
+import { BikeListItem, BikeSearchQuery, BikeComponentsArray } from './bike-data-scraper.types';
 import type { component_types as ComponentType } from '@prisma/client';
 import { TimeoutError } from 'rxjs';
 
@@ -21,6 +21,11 @@ export class BikeDataScrapeService {
     private readonly logger: PinoLogger,
   ) {}
 
+  /** FindBikeList
+   * Fetches a list of bikes from an external provider based on the search query.
+   * @param query The search query for fetching bikes.
+   * @returns Array of {name: string, image: string, url: string}
+   */
   async findBikeList(query: BikeSearchQuery): Promise<BikeListItem[]> {
     const url = this.buildSearchUrl(query);
     const startedAt = Date.now();
@@ -66,7 +71,12 @@ export class BikeDataScrapeService {
     }
   }
 
-  async getBikeComponents(url: string): Promise<BikeComponentsType[]> {
+  /**
+   * Fetches the components of a bike from an external provider based on the bike URL.
+   * @param url The URL of the bike for fetching components.
+   * @returns Array of {id: number, component: string, desc: string}
+   */
+  async getBikeComponents(url: string): Promise<BikeComponentsArray[]> {
     try {
       const bikeComponents = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
@@ -101,8 +111,8 @@ export class BikeDataScrapeService {
   private async createBikeComponentsArray(
     dataArray: any[],
     components: ComponentType[],
-    result: BikeComponentsType[] = [],
-  ): Promise<BikeComponentsType[]> {
+    result: BikeComponentsArray[] = [],
+  ): Promise<BikeComponentsArray[]> {
     if (dataArray.length === 0) {
       return result;
     }
@@ -112,12 +122,27 @@ export class BikeDataScrapeService {
     } else {
       if (typeof first === 'string' && components.some((item) => item.component_type === first)) {
         const componentId = components.find((item) => item.component_type === first)?.id;
-        if (!componentId) throw new Error("id not found, componenet doesn't exist in db");
+        if (!componentId) throw new Error("id not found, component doesn't exist in db");
+
         let desc: string = dataArray[1] as string;
-        if (!result.some((item) => item.component === first)) {
+        if (!result.some((item) => item.component.component_type_id === componentId)) {
           const findedMark = desc.indexOf('\n');
           if (findedMark > -1) desc = desc.slice(0, findedMark);
-          result.push({ id: componentId, component: first, desc });
+          result.push({
+            component: {
+              bike_id: 0, // Placeholder, should be set to the actual bike ID
+              component_type_id: componentId,
+              component_desc: desc,
+              mounted_at: undefined,
+              total_mileage_km: 0,
+              is_active: false,
+              note: '',
+              interval_id: undefined,
+              brake_load_since_service: undefined,
+              last_serviced_at: undefined,
+            },
+            component_name: first,
+          });
         }
       }
     }
@@ -128,6 +153,7 @@ export class BikeDataScrapeService {
         await this.createBikeComponentsArray(item, components, result);
       }
     }
+
     return result;
   }
 

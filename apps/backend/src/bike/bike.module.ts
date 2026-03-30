@@ -4,9 +4,10 @@ import { BikeController } from './bike.controller';
 import { BikeRepository } from './bike.repository';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.service';
+import { ComponentModuleModule } from '../component/component.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ComponentModuleModule],
   controllers: [BikeController],
   providers: [BikeService, BikeRepository, BikeDataScrapeService],
   exports: [BikeService, BikeDataScrapeService],

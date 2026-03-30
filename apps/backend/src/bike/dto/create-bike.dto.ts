@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MaxLength, IsOptional, IsInt, IsPositive } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ValidateNested, IsArray } from 'class-validator';
+import { CreateComponentsDto } from '../../component/dto/create-components';
 
 export class CreateBikeDto {
   // Required
@@ -77,20 +80,13 @@ export class CreateBikeDto {
   image_url?: string;
 }
 
-// (alias) type bikes = {
-//     id: number;
-//     created_at: Date | null;
-//     updated_at: Date | null;
-//     is_deleted: boolean | null;
-//     deleted_at: Date | null;
-//     organization_id: number;
-//     bike_brand_id: number;
-//     bike_type_id: number | null;
-//     year: number | null;
-//     wheel_size_id: number | null;
-//     bike_size_id: number | null;
-//     mileage_km: number | null;
-//     frame_material: string | null;
-//     bike_model_id: number | null;
-//     bikename: string | null;
-// }
+export class CreateBikeWithComponentsDto {
+  @ValidateNested()
+  @Type(() => CreateBikeDto)
+  bike: CreateBikeDto;
+
+  @ValidateNested({ each: true })
+  @Type(() => CreateComponentsDto)
+  @IsArray()
+  components: CreateComponentsDto[];
+}

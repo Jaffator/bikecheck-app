@@ -1,3 +1,5 @@
+import { CreateComponentsDto } from '../../component/dto/create-components';
+
 export interface BikeSearchQuery {
   brand: string;
   model: string;
@@ -10,8 +12,7 @@ export interface BikeListItem {
   url: string;
 }
 
-export interface BikeComponentsType {
-  id: number;
-  component: string;
-  desc: string;
+export interface BikeComponentsArray {
+  component: CreateComponentsDto;
+  component_name: string;
 }
