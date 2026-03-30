@@ -17,68 +17,70 @@ export class CreateBikeDto {
   bike_brand!: string;
 
   // Optional
+  @ApiProperty({ example: 'Domane SL7', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(50)
   bike_model?: string;
 
+  @ApiProperty({ example: 1, required: false })
   @IsOptional()
   @IsInt()
   @IsPositive()
   organization_id?: number;
 
+  @ApiProperty({ example: 'Tarmac SL7', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(30)
-  @ApiProperty({ example: 'Tarmac SL7' })
   bikename?: string;
 
+  @ApiProperty({ example: 2024, required: false })
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @ApiProperty({ example: 2024, required: false })
   year?: number;
 
+  @ApiProperty({ example: 'Serviced bike, top health', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  @ApiProperty({ example: 'Serviced bike, top health', required: false })
   description?: string;
 
+  @ApiProperty({ example: 2, required: false })
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @ApiProperty({ example: 2, required: false })
   wheel_size_id?: number;
 
+  @ApiProperty({ example: 3, required: false })
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @ApiProperty({ example: 3, required: false })
   bike_size_id?: number;
 
+  @ApiProperty({ example: 1, required: false })
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @ApiProperty({ example: 1, required: false })
   bike_type_id?: number;
 
+  @ApiProperty({ example: 1540, required: false })
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @ApiProperty({ example: 1540, required: false })
   mileage_km?: number;
 
+  @ApiProperty({ example: 'Carbon', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(30)
-  @ApiProperty({ example: 'Carbon', required: false })
   frame_material?: string;
 
+  @ApiProperty({ example: 'https://example.com/bike-image.jpg', required: false })
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  @ApiProperty({ example: 'https://example.com/bike-image.jpg', required: false })
   image_url?: string;
 }
 
