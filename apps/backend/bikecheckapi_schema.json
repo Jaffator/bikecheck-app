@@ -242,7 +242,7 @@
         ]
       }
     },
-    "/api/bike": {
+    "/api/bike/create": {
       "post": {
         "operationId": "BikeController_create",
         "parameters": [],
