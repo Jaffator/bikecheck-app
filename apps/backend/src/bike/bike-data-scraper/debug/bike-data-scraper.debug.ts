@@ -8,8 +8,6 @@ import path from 'path';
 import https from 'https';
 
 async function run() {
-  console.log('before service init');
-
   const prisma = new PrismaService();
   await prisma.onModuleInit();
 
@@ -31,9 +29,8 @@ async function run() {
 
   try {
     const bikeService = new BikeDataScrapeService(prisma, logger);
-    const result = await bikeService.findBikeList({ brand: 'yeti', model: 'sb160', year: '2024' });
-    const components = await bikeService.getBikeComponents(result[0].url);
-    console.log(components);
+    const result = await bikeService.searchBikeList('yeti sb160', '2024');
+    const components = await bikeService.getBikeComponents(result[0].bikeUrl);
     const filename = 'image1.jpg';
     const filepath = path.join(__dirname, filename);
     // await downloadImage(result[1].image!, filepath);
@@ -49,9 +46,7 @@ run().catch((err) => {
 
 async function downloadImage(imageUrl: string, filepath: string) {
   try {
-    console.log(imageUrl);
     const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-    console.log(filepath);
     await fs.promises.writeFile(filepath, Buffer.from(response.data));
   } catch (error) {
     throw new Error(`download image failed ${error.message}`);

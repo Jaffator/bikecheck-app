@@ -11,16 +11,25 @@ export class UserService {
 
   async getUserbyGoogleId(googleid: string): Promise<UserFull | null> {
     const user = await this.userRepository.findByGoogleId(googleid);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 
   async getUserbyId(id: number): Promise<UserFull | null> {
     const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 
   async getUserbyEmail(email: string): Promise<UserFull | null> {
     const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 

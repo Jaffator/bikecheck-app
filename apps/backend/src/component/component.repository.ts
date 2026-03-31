@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import 'dotenv/config';
 import { Prisma, components_mounted } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+type DbClient = PrismaService | Prisma.TransactionClient;
 
 @Injectable()
 export class ComponentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createMountedComponentMany(data: Prisma.components_mountedCreateManyInput[]): Promise<{ count: number }> {
-    return this.prisma.components_mounted.createMany({ data });
+  async createMountedComponentMany(
+    data: Prisma.components_mountedCreateManyInput[],
+    db: DbClient = this.prisma,
+  ): Promise<{ count: number }> {
+    return db.components_mounted.createMany({ data });
   }
 
   async findMountedByBikeId(bikeId: number): Promise<components_mounted[]> {
@@ -37,20 +41,19 @@ export class ComponentRepository {
   }
 }
 
-async function run() {
-  const prisma = new PrismaService();
-  await prisma.onModuleInit();
+// async function run() {
+//   const prisma = new PrismaService();
+//   await prisma.onModuleInit();
 
-  try {
-    const repository = new ComponentRepository(prisma);
-    const result = await repository.updateMountedComponent(85, {
-      total_mileage_km: 1500,
-      component_desc: 'Updated description',
-    });
-    console.log(result);
-  } finally {
-    await prisma.onModuleDestroy();
-  }
-}
+//   try {
+//     const repository = new ComponentRepository(prisma);
+//     const result = await repository.updateMountedComponent(85, {
+//       total_mileage_km: 1500,
+//       component_desc: 'Updated description',
+//     });
+//   } finally {
+//     await prisma.onModuleDestroy();
+//   }
+// }
 
-run().catch(console.error);
+// run().catch(console.error);

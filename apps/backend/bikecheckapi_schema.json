@@ -273,9 +273,43 @@
         ]
       }
     },
-    "/api/bike/all": {
-      "get": {
-        "operationId": "BikeController_findAll",
+    "/api/bike/search-external": {
+      "post": {
+        "operationId": "BikeController_findBike",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchBikeExternalRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchBikeExternalResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/search-external/components": {
+      "post": {
+        "operationId": "BikeController_findBikeComponents",
         "parameters": [],
         "responses": {
           "200": {
@@ -285,7 +319,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ResponseBikeDto"
+                    "$ref": "#/components/schemas/BikeComponentExternalResponseDto"
                   }
                 }
               }
@@ -839,6 +873,67 @@
           "frame_material",
           "is_deleted",
           "deleted_at"
+        ]
+      },
+      "SearchBikeExternalRequestDto": {
+        "type": "object",
+        "properties": {
+          "bikeName": {
+            "type": "string",
+            "example": "Trek Domane SL7"
+          },
+          "year": {
+            "type": "string",
+            "example": "2024"
+          }
+        },
+        "required": [
+          "bikeName",
+          "year"
+        ]
+      },
+      "SearchBikeExternalResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Orbea Rallon"
+          },
+          "imageUrl": {
+            "type": "object",
+            "example": "https://example.com/bike-image.jpg"
+          },
+          "bikeUrl": {
+            "type": "string",
+            "example": "https://example.com/bike/1"
+          }
+        },
+        "required": [
+          "name",
+          "imageUrl",
+          "bikeUrl"
+        ]
+      },
+      "BikeComponentExternalResponseDto": {
+        "type": "object",
+        "properties": {
+          "component_name": {
+            "type": "string",
+            "example": "Fork"
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12
+          },
+          "component_desc": {
+            "type": "string",
+            "example": "Fox 38 Factory Grip2"
+          }
+        },
+        "required": [
+          "component_name",
+          "component_type_id",
+          "component_desc"
         ]
       },
       "UpdateBikeDto": {

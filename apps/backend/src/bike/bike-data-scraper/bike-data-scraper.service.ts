@@ -4,7 +4,8 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { chromium } from 'playwright-extra';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import stealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { BikeListItem, BikeSearchQuery, BikeComponentsArray } from './bike-data-scraper.types';
+import { BikeComponentsArray } from './bike-data-scraper.types';
+import { SearchBikeExternalResponseDto } from '../dto/response-bike.dto';
 import type { component_types as ComponentType } from '@prisma/client';
 import { TimeoutError } from 'rxjs';
 
@@ -21,13 +22,13 @@ export class BikeDataScrapeService {
     private readonly logger: PinoLogger,
   ) {}
 
-  /** FindBikeList
+  /** SearchBikeList
    * Fetches a list of bikes from an external provider based on the search query.
    * @param query The search query for fetching bikes.
    * @returns Array of {name: string, image: string, url: string}
    */
-  async findBikeList(query: BikeSearchQuery): Promise<BikeListItem[]> {
-    const url = this.buildSearchUrl(query);
+  async searchBikeList(bikeTitle: string, year: string): Promise<SearchBikeExternalResponseDto[]> {
+    const url = this.buildSearchUrl(bikeTitle, year);
     const startedAt = Date.now();
 
     try {
@@ -46,22 +47,25 @@ export class BikeDataScrapeService {
 
               return {
                 name: nameElement ? nameElement.innerText.trim() : 'Unknown name',
-                image: imageElement ? imageElement.getAttribute('src') : null,
-                url: anchor.href.toString(),
+                imageUrl: imageElement ? imageElement.getAttribute('src') : null,
+                bikeUrl: anchor.href.toString(),
               };
             })
-            .filter((bike) => bike.image && !bike.image.includes('placeholder'));
+            .filter((bike) => bike.imageUrl && !bike.imageUrl.includes('placeholder'));
         });
       });
 
       this.logger.info(
-        { url, query, resultCount: bikes.length, durationMs: Date.now() - startedAt },
+        { url, bikeTitle, year, resultCount: bikes.length, durationMs: Date.now() - startedAt },
         'Bike list fetched',
       );
 
       return bikes;
     } catch (error) {
-      this.logger.error({ err: error, url, query, durationMs: Date.now() - startedAt }, 'Failed to fetch bike list');
+      this.logger.error(
+        { err: error, url, bikeTitle, year, durationMs: Date.now() - startedAt },
+        'Failed to fetch bike list',
+      );
 
       if (error instanceof TimeoutError) {
         throw new GatewayTimeoutException('Bike provider did not respond in time');
@@ -157,10 +161,10 @@ export class BikeDataScrapeService {
     return result;
   }
 
-  private buildSearchUrl(query: BikeSearchQuery): string {
-    const searchQuery = `${query.brand} ${query.model}`.trim();
+  private buildSearchUrl(bikeTitle: string, year: string): string {
+    const searchQuery = bikeTitle.trim();
 
-    return `https://99spokes.com/en-EU/bikes?frameset=0&q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(query.year ?? '')}`;
+    return `https://99spokes.com/en-EU/bikes?frameset=0&q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(year ?? '')}`;
   }
 
   private async withPage<T>(callback: (page: Page) => Promise<T>): Promise<T> {

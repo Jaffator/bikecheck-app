@@ -1,6 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { bikes } from '@prisma/client';
 
+export class SearchBikeExternalResponseDto {
+  @ApiProperty({ example: 'Orbea Rallon' })
+  name: string;
+  @ApiProperty({ example: 'https://example.com/bike-image.jpg' })
+  imageUrl: string | null;
+  @ApiProperty({ example: 'https://example.com/bike/1' })
+  bikeUrl: string;
+}
+
+export class BikeComponentExternalResponseDto {
+  @ApiProperty({ example: 'Fork' })
+  component_name: string;
+
+  @ApiProperty({ example: 12 })
+  component_type_id: number;
+
+  @ApiProperty({ example: 'Fox 38 Factory Grip2' })
+  component_desc: string;
+}
+
 export class ResponseBikeDto implements bikes {
   @ApiProperty({ example: 1 })
   id!: number;

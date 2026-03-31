@@ -4,6 +4,18 @@ import { Type } from 'class-transformer';
 import { ValidateNested, IsArray } from 'class-validator';
 import { CreateComponentsDto } from '../../component/dto/create-components';
 
+export class SearchBikeExternalRequestDto {
+  @ApiProperty({ example: 'Trek Domane SL7' })
+  @IsString()
+  @MaxLength(100)
+  bikeName: string;
+
+  @ApiProperty({ example: '2024', required: true })
+  @IsString()
+  @MaxLength(4)
+  year: string;
+}
+
 export class CreateBikeDto {
   // Required
   @ApiProperty({ example: 1 })

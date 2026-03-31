@@ -1,14 +1,22 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { BikeService } from './bike.service';
+import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.service';
 import { CreateBikeWithComponentsDto } from './dto/create-bike.dto';
-
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ApiResponse, ApiBody } from '@nestjs/swagger';
-import { ResponseBikeDto } from './dto/response-bike.dto';
+import { SearchBikeExternalRequestDto } from './dto/create-bike.dto';
+import {
+  SearchBikeExternalResponseDto,
+  BikeComponentExternalResponseDto,
+  ResponseBikeDto,
+} from './dto/response-bike.dto';
 
 @Controller('bike')
 export class BikeController {
-  constructor(private readonly bikeService: BikeService) {}
+  constructor(
+    private readonly bikeService: BikeService,
+    private readonly searchBikeExternalService: BikeDataScrapeService,
+  ) {}
 
   // Create new bike with componenets
   @ApiBody({ type: CreateBikeWithComponentsDto })
@@ -18,11 +26,18 @@ export class BikeController {
     return this.bikeService.createBikeWithComponents(dto);
   }
 
-  // Get all bikess
-  @ApiResponse({ status: 200, type: ResponseBikeDto, isArray: true })
-  @Get('/all')
-  findAll() {
-    return this.bikeService.findAll();
+  // Search External bikelist
+  @Post('/search-external')
+  @ApiResponse({ status: 200, type: SearchBikeExternalResponseDto, isArray: true })
+  async findBike(@Body() dto: SearchBikeExternalRequestDto) {
+    return this.searchBikeExternalService.searchBikeList(dto.bikeName, dto.year);
+  }
+
+  // Search External bike components by bike URL
+  @Post('/search-external/components')
+  @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
+  async findBikeComponents(@Body('bikeUrl') bikeUrl: string) {
+    return this.searchBikeExternalService.getBikeComponents(bikeUrl);
   }
 
   // Get bike by ID

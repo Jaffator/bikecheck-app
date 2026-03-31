@@ -51,7 +51,6 @@ export class BikeRepository {
 //       frame_material: 'Carbon',
 //       image_url: 'https://example.com/bike-image.jpg',
 //     });
-//     console.log(result);
 //   } catch (error) {
 //     console.error('Error creating bike:', error);
 //   } finally {

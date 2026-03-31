@@ -8,36 +8,21 @@ import { BIKE_IMAGES_DIR } from 'src/config/path';
 import path from 'path';
 import fs from 'fs/promises';
 import { randomUUID } from 'crypto';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class BikeService {
   constructor(
     private readonly bikeRepository: BikeRepository,
     private readonly componentRepository: ComponentRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   /**
-   * Downloads an external image, stores it in local public storage,
-   * and returns its local public URL.
+   * Create a new bike with components
+   * - If the bike's image_url is an external URL, it will be downloaded and stored locally, and the local URL will be saved in the database.
+   * @returns ResponseBikeDto
    */
-  private async downloadImageExternalUrl(url: string): Promise<string> {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new BadRequestException(`Failed to download image: ${response.statusText}`);
-    }
-    try {
-      const image = await response.arrayBuffer();
-      const filename = `${randomUUID()}.jpg`;
-      const filepath = path.join(BIKE_IMAGES_DIR, filename);
-      await fs.writeFile(filepath, Buffer.from(image));
-
-      return `/images/bikes/${filename}`;
-    } catch (error) {
-      throw new BadRequestException(`Failed to save image: ${error.message}`);
-    }
-  }
-
-  // Create a new bike with components
   async createBikeWithComponents(dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
     let bikeToSave: CreateBikeDto;
 
@@ -52,11 +37,15 @@ export class BikeService {
       // image url is already local or not provided, use as is
       bikeToSave = { ...dto.bike };
     }
-    const newbike = await this.bikeRepository.createBike(bikeToSave);
-    const componentData = dto.components.map((data) => {
-      return { ...data, bike_id: newbike.id };
+
+    const newbike = await this.prisma.$transaction(async (db) => {
+      const bike = await this.bikeRepository.createBike(bikeToSave, db);
+      const componentData = dto.components.map((data) => {
+        return { ...data, bike_id: bike.id };
+      });
+      await this.componentRepository.createMountedComponentMany(componentData, db);
+      return bike;
     });
-    await this.componentRepository.createMountedComponentMany(componentData);
     return newbike;
   }
 
@@ -94,5 +83,27 @@ export class BikeService {
       throw new NotFoundException(`Bike with ID ${id} not found`);
     }
     return await this.bikeRepository.hardDeleteBike(id);
+  }
+
+  // Private methods
+  /**
+   * Downloads an external image, stores it in local public storage,
+   * and returns its local public URL.
+   */
+  private async downloadImageExternalUrl(url: string): Promise<string> {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new BadRequestException(`Failed to download image: ${response.statusText}`);
+    }
+    try {
+      const image = await response.arrayBuffer();
+      const filename = `${randomUUID()}.jpg`;
+      const filepath = path.join(BIKE_IMAGES_DIR, filename);
+      await fs.writeFile(filepath, Buffer.from(image));
+
+      return `/images/bikes/${filename}`;
+    } catch (error) {
+      throw new BadRequestException(`Failed to save image: ${error.message}`);
+    }
   }
 }

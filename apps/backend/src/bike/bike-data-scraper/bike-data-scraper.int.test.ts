@@ -50,9 +50,9 @@ describe('BikeDataScrapeService (integration)', () => {
 
   it('Try to find bike list', async (): Promise<void> => {
     // ARRANGE
-    const query = { brand: 'Orbea', model: 'Rallon', year: '2023' };
+    const query = { brand: 'Orbea Rallon', year: '2023' };
     // ACT
-    bikelist = await scrapeService.findBikeList(query);
+    bikelist = await scrapeService.findBikeList(query.brand, query.year);
 
     // ASSERT
     expect(bikelist.length).toBeGreaterThan(0);
