@@ -1,18 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, IsOptional, IsInt, IsPositive } from 'class-validator';
+import { IsString, MaxLength, IsOptional, IsInt, IsPositive, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ValidateNested, IsArray } from 'class-validator';
 import { CreateComponentsDto } from '../../component/dto/create-components';
 
 export class SearchBikeExternalRequestDto {
-  @ApiProperty({ example: 'Trek Domane SL7' })
+  @ApiProperty({ example: 'Orebea Rallon' })
   @IsString()
   @MaxLength(100)
   bikeName: string;
 
   @ApiProperty({ example: '2024', required: true })
   @IsString()
-  @MaxLength(4)
+  @Length(4)
   year: string;
 }
 

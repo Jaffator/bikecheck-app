@@ -880,7 +880,7 @@
         "properties": {
           "bikeName": {
             "type": "string",
-            "example": "Trek Domane SL7"
+            "example": "Orebea Rallon"
           },
           "year": {
             "type": "string",
