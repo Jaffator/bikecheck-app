@@ -306,7 +306,7 @@
     },
     "/api/bike/search-external": {
       "post": {
-        "operationId": "BikeController_findBike",
+        "operationId": "BikeController_searchBikeExternal",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -340,7 +340,7 @@
     },
     "/api/bike/search-external/components": {
       "post": {
-        "operationId": "BikeController_findBikeComponents",
+        "operationId": "BikeController_searchComponentsExternal",
         "parameters": [],
         "responses": {
           "200": {

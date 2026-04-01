@@ -57,7 +57,7 @@ export class BikeController {
   @Post('/search-external')
   @HttpCode(200)
   @ApiResponse({ status: 200, type: SearchBikeExternalResponseDto, isArray: true })
-  async findBike(@Body() dto: SearchBikeExternalRequestDto) {
+  async searchBikeExternal(@Body() dto: SearchBikeExternalRequestDto) {
     return this.searchBikeExternalService.searchBikeList(dto.bikeName, dto.year);
   }
 
@@ -65,7 +65,7 @@ export class BikeController {
   @Post('/search-external/components')
   @HttpCode(200)
   @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
-  async findBikeComponents(@Body('bikeUrl') bikeUrl: string) {
+  async searchComponentsExternal(@Body('bikeUrl') bikeUrl: string) {
     return this.searchBikeExternalService.getBikeComponents(bikeUrl);
   }
 
