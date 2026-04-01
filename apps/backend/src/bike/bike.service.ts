@@ -4,7 +4,7 @@ import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
 import { BikeRepository } from './bike.repository';
 import { ComponentRepository } from 'src/component/component.repository';
-import { BIKE_IMAGES_DIR } from 'src/_config/path';
+import { BIKE_IMAGES_DIR, BACKEND_ROOT } from '../_config/path';
 import path from 'path';
 import fs from 'fs/promises';
 import { randomUUID } from 'crypto';
@@ -33,9 +33,8 @@ export class BikeService {
     if (imageFile) {
       const filename = `${randomUUID()}.jpg`;
       const filepath = path.join(BIKE_IMAGES_DIR, filename);
-      console.log('image file path', filepath);
       await fs.writeFile(filepath, imageFile.buffer);
-      bikeToSave = { ...dto.bike, image_url: `public/images/bikes/${filename}` };
+      bikeToSave = { ...dto.bike, image_url: `/images/bikes/${filename}` };
     } else if (dto.bike.image_url?.startsWith('http')) {
       const localurl = await this.downloadImageExternalUrl(dto.bike.image_url);
       bikeToSave = { ...dto.bike, image_url: localurl };

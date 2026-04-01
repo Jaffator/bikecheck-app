@@ -47,10 +47,9 @@ export class BikeController {
   @ApiBody({ type: CreateBikeWithComponentsDto })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
   @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
-  async createWithImage(
-    @UploadedFile() image: Express.Multer.File,
-    @Body('data', ParseJsonPipe, new ValidationPipe({ whitelist: true })) dto: CreateBikeWithComponentsDto,
-  ) {
+  async createWithImage(@UploadedFile() image: Express.Multer.File, @Body('data') data: string) {
+    const dto = JSON.parse(data) as CreateBikeWithComponentsDto;
+    console.log(image);
     return this.bikeService.createBikeWithComponents(dto, image);
   }
 
