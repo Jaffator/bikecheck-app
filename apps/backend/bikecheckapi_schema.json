@@ -273,6 +273,37 @@
         ]
       }
     },
+    "/api/bike/create/with-image": {
+      "post": {
+        "operationId": "BikeController_createWithImage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBikeWithComponentsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
     "/api/bike/search-external": {
       "post": {
         "operationId": "BikeController_findBike",

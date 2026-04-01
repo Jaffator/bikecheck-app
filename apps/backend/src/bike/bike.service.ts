@@ -4,11 +4,12 @@ import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
 import { BikeRepository } from './bike.repository';
 import { ComponentRepository } from 'src/component/component.repository';
-import { BIKE_IMAGES_DIR } from 'src/config/path';
+import { BIKE_IMAGES_DIR } from 'src/_config/path';
 import path from 'path';
 import fs from 'fs/promises';
 import { randomUUID } from 'crypto';
 import { PrismaService } from 'prisma/prisma.service';
+import type { Express } from 'express';
 
 @Injectable()
 export class BikeService {
@@ -23,18 +24,22 @@ export class BikeService {
    * - If the bike's image_url is an external URL, it will be downloaded and stored locally, and the local URL will be saved in the database.
    * @returns ResponseBikeDto
    */
-  async createBikeWithComponents(dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
+  async createBikeWithComponents(
+    dto: CreateBikeWithComponentsDto,
+    imageFile?: Express.Multer.File,
+  ): Promise<ResponseBikeDto> {
     let bikeToSave: CreateBikeDto;
 
-    // image url is external, download and save locally
-    if (dto.bike.image_url?.startsWith('http')) {
+    if (imageFile) {
+      const filename = `${randomUUID()}.jpg`;
+      const filepath = path.join(BIKE_IMAGES_DIR, filename);
+      console.log('image file path', filepath);
+      await fs.writeFile(filepath, imageFile.buffer);
+      bikeToSave = { ...dto.bike, image_url: `public/images/bikes/${filename}` };
+    } else if (dto.bike.image_url?.startsWith('http')) {
       const localurl = await this.downloadImageExternalUrl(dto.bike.image_url);
-      bikeToSave = {
-        ...dto.bike,
-        image_url: localurl,
-      };
+      bikeToSave = { ...dto.bike, image_url: localurl };
     } else {
-      // image url is already local or not provided, use as is
       bikeToSave = { ...dto.bike };
     }
 
