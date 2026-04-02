@@ -5,6 +5,7 @@ import { RefreshTokenModule } from './refreshtoken/refreshtoken.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core/constants';
 import { BikeModule } from './bike/bike.module';
+import { BikeEventModule } from './bike-event/bike-event.module';
 import { LoggerModule } from 'nestjs-pino';
 import pino from 'pino';
 
@@ -35,6 +36,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     AuthModule,
     RefreshTokenModule,
     BikeModule,
+    BikeEventModule,
   ],
   providers: [
     {

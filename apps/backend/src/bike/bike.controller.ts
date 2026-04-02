@@ -77,7 +77,7 @@ export class BikeController {
   // Get bike by ID
   @Get(':id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
-  findOne(@Param('id') id: string) {
+  findBike(@Param('id') id: string) {
     return this.bikeService.findByID(+id);
   }
 
