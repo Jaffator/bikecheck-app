@@ -4,12 +4,12 @@ import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
 import { BikeRepository } from './bike.repository';
 import { ComponentRepository } from 'src/component/component.repository';
-import { BIKE_IMAGES_DIR, BACKEND_ROOT } from '../_config/path';
+import { BIKE_IMAGES_DIR } from '../_config/path';
 import path from 'path';
 import fs from 'fs/promises';
 import { randomUUID } from 'crypto';
 import { PrismaService } from 'prisma/prisma.service';
-import type { Express } from 'express';
+import { NewBikeFormData } from './types/bike.types';
 
 @Injectable()
 export class BikeService {
@@ -18,6 +18,10 @@ export class BikeService {
     private readonly componentRepository: ComponentRepository,
     private readonly prisma: PrismaService,
   ) {}
+
+  async getFormOptions(): Promise<NewBikeFormData> {
+    return await this.bikeRepository.getBikeOptions();
+  }
 
   /**
    * Create a new bike with components
@@ -107,7 +111,8 @@ export class BikeService {
 
       return `/images/bikes/${filename}`;
     } catch (error) {
-      throw new BadRequestException(`Failed to save image: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(`Failed to save image: ${message}`);
     }
   }
 }

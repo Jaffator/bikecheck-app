@@ -362,6 +362,20 @@
         ]
       }
     },
+    "/api/bike/form-options": {
+      "get": {
+        "operationId": "BikeController_formOptions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
     "/api/bike/{id}": {
       "get": {
         "operationId": "BikeController_findOne",
@@ -535,11 +549,6 @@
             "example": 70,
             "nullable": true
           },
-          "ride_style_id": {
-            "type": "object",
-            "example": 1,
-            "nullable": true
-          },
           "is_active": {
             "type": "boolean",
             "example": true
@@ -567,7 +576,6 @@
           "language",
           "currency",
           "weight_kg",
-          "ride_style_id",
           "is_active",
           "last_login_at",
           "created_at",
@@ -809,6 +817,11 @@
             "example": 10,
             "nullable": true
           },
+          "ride_style_id": {
+            "type": "object",
+            "example": "Trail",
+            "nullable": true
+          },
           "bike_brand": {
             "type": "string",
             "example": "Specialized",
@@ -889,6 +902,7 @@
           "id",
           "user_id",
           "organization_id",
+          "ride_style_id",
           "bike_brand",
           "bike_model",
           "image_url",

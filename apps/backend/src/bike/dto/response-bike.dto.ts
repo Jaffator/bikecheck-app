@@ -3,22 +3,22 @@ import { bikes } from '@prisma/client';
 
 export class SearchBikeExternalResponseDto {
   @ApiProperty({ example: 'Orbea Rallon' })
-  name: string;
+  name!: string;
   @ApiProperty({ example: 'https://example.com/bike-image.jpg' })
-  imageUrl: string | null;
+  imageUrl!: string | null;
   @ApiProperty({ example: 'https://example.com/bike/1' })
-  bikeUrl: string;
+  bikeUrl!: string;
 }
 
 export class BikeComponentExternalResponseDto {
   @ApiProperty({ example: 'Fork' })
-  component_name: string;
+  component_name!: string;
 
   @ApiProperty({ example: 12 })
-  component_type_id: number;
+  component_type_id!: number;
 
   @ApiProperty({ example: 'Fox 38 Factory Grip2' })
-  component_desc: string;
+  component_desc!: string;
 }
 
 export class ResponseBikeDto implements bikes {
@@ -30,6 +30,9 @@ export class ResponseBikeDto implements bikes {
 
   @ApiProperty({ example: 10, nullable: true })
   organization_id!: number | null;
+
+  @ApiProperty({ example: 'Trail', nullable: true })
+  ride_style_id!: number | null;
 
   @ApiProperty({ example: 'Specialized', nullable: true })
   bike_brand!: string;

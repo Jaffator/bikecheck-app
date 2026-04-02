@@ -271,6 +271,16 @@
             }
           ]
         },
+        "ride_styles": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ride_styles"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "users": {
           "$ref": "#/definitions/users"
         },
@@ -468,10 +478,10 @@
             "null"
           ]
         },
-        "users": {
+        "bikes": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/users"
+            "$ref": "#/definitions/bikes"
           }
         }
       }
@@ -681,16 +691,6 @@
           "items": {
             "$ref": "#/definitions/rides"
           }
-        },
-        "ride_styles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/ride_styles"
-            },
-            {
-              "type": "null"
-            }
-          ]
         }
       }
     },

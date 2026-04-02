@@ -4,6 +4,7 @@ import { CreateBikeDto } from './dto/create-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
 import 'dotenv/config';
 import { Prisma } from '@prisma/client';
+import { NewBikeFormData } from './types/bike.types';
 type DbClient = PrismaService | Prisma.TransactionClient;
 
 @Injectable()
@@ -17,6 +18,22 @@ export class BikeRepository {
       },
     });
   }
+
+  async getBikeOptions(): Promise<NewBikeFormData> {
+    const [bikeSizes, bikeTypes, rideStyles, wheelSizes] = await Promise.all([
+      this.prisma.bike_sizes.findMany({}),
+      this.prisma.bike_types.findMany({}),
+      this.prisma.ride_styles.findMany({}),
+      this.prisma.wheel_sizes.findMany({}),
+    ]);
+    return {
+      bikeSizes,
+      bikeTypes,
+      rideStyles,
+      wheelSizes,
+    };
+  }
+
   async findAll(): Promise<ResponseBikeDto[]> {
     return this.prisma.bikes.findMany({});
   }
@@ -37,25 +54,18 @@ export class BikeRepository {
   }
 }
 
-// async function run() {
-//   const prisma = new PrismaService();
-//   await prisma.onModuleInit();
+async function run() {
+  const prisma = new PrismaService();
 
-//   try {
-//     const repository = new BikeRepository(prisma);
-//     const result = await repository.createBike({
-//       user_id: 38,
-//       bike_brand: 'Trek shit',
-//       bike_model: 'Domane SL 7ss',
-//       bike_type_id: 50,
-//       frame_material: 'Carbon',
-//       image_url: 'https://example.com/bike-image.jpg',
-//     });
-//   } catch (error) {
-//     console.error('Error creating bike:', error);
-//   } finally {
-//     await prisma.onModuleDestroy();
-//   }
-// }
+  try {
+    const repository = new BikeRepository(prisma);
+    const result = await repository.getBikeOptions();
+    console.log(result);
+  } catch (error) {
+    console.error('Error creating bike:', error);
+  } finally {
+    await prisma.onModuleDestroy();
+  }
+}
 
-// run().catch(console.error);
+run().catch(console.error);

@@ -56,7 +56,7 @@ export class UserService {
 
     // 2.hash password
     const saltRounds = 10;
-    const password_hash = await bcrypt.hash(dto.password, saltRounds);
+    const password_hash = await bcrypt.hash(dto.password!, saltRounds);
 
     // 3. create user with password
     const user = await this.userRepository.createUser({

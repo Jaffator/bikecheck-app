@@ -10,22 +10,22 @@ export class CreateUserDto {
   @MinLength(1)
   @MaxLength(255)
   @ApiProperty({ example: 'John Doe' })
-  name: string;
+  name!: string;
 
   @IsEmail()
   @ApiProperty({ example: 'john.doe@example.com' })
-  email: string;
+  email!: string;
 
   // Optional
   @IsOptional()
   @IsString()
   @MinLength(8)
   @ApiProperty({ example: 'strongPassword123' })
-  password: string;
+  password?: string;
 
   @IsOptional()
   @IsString()
-  googleId: string;
+  googleId?: string;
 
   @IsOptional()
   @IsString()
@@ -41,10 +41,10 @@ export class UpdateUserDto {
   @ApiProperty({ example: 'John Doe' })
   name?: string;
 
-  @MinLength(1)
   @IsOptional()
   @IsString()
-  googleId: string;
+  @MinLength(1)
+  googleId?: string;
 
   @IsOptional()
   @IsString()
@@ -77,27 +77,25 @@ export class UpdateUserDto {
 
 export class UserResponseDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  id!: number;
   @ApiProperty({ example: 'John Doe' })
-  name: string;
+  name!: string;
   @ApiProperty()
-  email: string;
+  email!: string;
   @ApiProperty({ example: 'https://example.com/avatar.jpg', nullable: true })
-  avatar_url: string | null;
+  avatar_url!: string | null;
   @ApiProperty({ example: 'en', nullable: true })
-  language: string | null;
+  language!: string | null;
   @ApiProperty({ example: 'czk', nullable: true })
-  currency: string | null;
+  currency!: string | null;
   @ApiProperty({ example: 70, nullable: true })
-  weight_kg: number | null;
-  @ApiProperty({ example: 1, nullable: true })
-  ride_style_id: number | null;
+  weight_kg!: number | null;
   @ApiProperty({ example: true })
-  is_active: boolean;
+  is_active!: boolean;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })
-  last_login_at: Date | null;
+  last_login_at!: Date | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })
-  created_at: Date;
+  created_at!: Date;
   @ApiProperty({ example: '2024-01-02T12:00:00Z' })
-  updated_at: Date;
+  updated_at!: Date;
 }

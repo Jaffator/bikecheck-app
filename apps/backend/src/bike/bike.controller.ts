@@ -8,7 +8,6 @@ import {
   Delete,
   HttpCode,
   UploadedFile,
-  ValidationPipe,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -24,7 +23,7 @@ import {
   ResponseBikeDto,
 } from './dto/response-bike.dto';
 import { memoryStorage } from 'multer';
-import { ParseJsonPipe } from 'src/_pipes/parse-json.pipe';
+// import { NewBikeFormData } from './types/bike.types';
 
 @Controller('bike')
 export class BikeController {
@@ -33,7 +32,7 @@ export class BikeController {
     private readonly searchBikeExternalService: BikeDataScrapeService,
   ) {}
 
-  // Create new bike with componenets - image external URL
+  // Create new bike with componenets - Image external URL
   @Post('/create')
   @ApiBody({ type: CreateBikeWithComponentsDto })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
@@ -49,11 +48,10 @@ export class BikeController {
   @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
   async createWithImage(@UploadedFile() image: Express.Multer.File, @Body('data') data: string) {
     const dto = JSON.parse(data) as CreateBikeWithComponentsDto;
-    console.log(image);
     return this.bikeService.createBikeWithComponents(dto, image);
   }
 
-  // Search External bikelist
+  // Search External Bikelist - based on name and year
   @Post('/search-external')
   @HttpCode(200)
   @ApiResponse({ status: 200, type: SearchBikeExternalResponseDto, isArray: true })
@@ -61,12 +59,19 @@ export class BikeController {
     return this.searchBikeExternalService.searchBikeList(dto.bikeName, dto.year);
   }
 
-  // Search External bike components by bike URL
+  // Search External Bike components - based picked bikeurl
   @Post('/search-external/components')
   @HttpCode(200)
   @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
   async searchComponentsExternal(@Body('bikeUrl') bikeUrl: string) {
     return this.searchBikeExternalService.getBikeComponents(bikeUrl);
+  }
+
+  // Get bike form options
+  @Get('/form-options')
+  @ApiResponse({ status: 200 })
+  async formOptions() {
+    return this.bikeService.getFormOptions();
   }
 
   // Get bike by ID

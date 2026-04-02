@@ -170,7 +170,6 @@ export class AuthController {
       language: user.language,
       currency: user.currency,
       weight_kg: user.weight_kg,
-      ride_style_id: user.ride_style_id,
       is_active: user.is_active || false,
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
