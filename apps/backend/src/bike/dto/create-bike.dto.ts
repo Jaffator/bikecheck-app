@@ -8,12 +8,12 @@ export class SearchBikeExternalRequestDto {
   @ApiProperty({ example: 'Orebea Rallon' })
   @IsString()
   @MaxLength(100)
-  bikeName: string;
+  bikeName!: string;
 
   @ApiProperty({ example: '2024', required: true })
   @IsString()
   @Length(4)
-  year: string;
+  year!: string;
 }
 
 export class CreateBikeDto {
@@ -100,7 +100,7 @@ export class CreateBikeWithComponentsDto {
   @ApiProperty({ type: () => CreateBikeDto })
   @ValidateNested()
   @Type(() => CreateBikeDto)
-  bike: CreateBikeDto;
+  bike!: CreateBikeDto;
 
   @ApiProperty({
     type: () => CreateComponentsDto,
@@ -109,5 +109,5 @@ export class CreateBikeWithComponentsDto {
   @ValidateNested({ each: true })
   @Type(() => CreateComponentsDto)
   @IsArray()
-  components: CreateComponentsDto[];
+  components!: CreateComponentsDto[];
 }

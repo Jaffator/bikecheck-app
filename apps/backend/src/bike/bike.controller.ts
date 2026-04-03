@@ -1,28 +1,15 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  HttpCode,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode } from '@nestjs/common';
 import { BikeService } from './bike.service';
 import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.service';
 import { CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
-import { ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiResponse, ApiBody } from '@nestjs/swagger';
 import { SearchBikeExternalRequestDto } from './dto/create-bike.dto';
 import {
   SearchBikeExternalResponseDto,
   BikeComponentExternalResponseDto,
   ResponseBikeDto,
 } from './dto/response-bike.dto';
-import { memoryStorage } from 'multer';
 // import { NewBikeFormData } from './types/bike.types';
 
 @Controller('bike')
@@ -36,20 +23,19 @@ export class BikeController {
   @Post('/create')
   @ApiBody({ type: CreateBikeWithComponentsDto })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
-  async create(@Body() dto: CreateBikeWithComponentsDto) {
-    return this.bikeService.createBikeWithComponents(dto);
+  async createBike(@Body() dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
+    return await this.bikeService.createBikeWithComponents(dto);
   }
 
-  // Create new bike with componenets - Upload image
-  @Post('/create/with-image')
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ type: CreateBikeWithComponentsDto })
-  @ApiResponse({ status: 201, type: ResponseBikeDto })
-  @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
-  async createWithImage(@UploadedFile() image: Express.Multer.File, @Body('data') data: string) {
-    const dto = JSON.parse(data) as CreateBikeWithComponentsDto;
-    return this.bikeService.createBikeWithComponents(dto, image);
-  }
+  // // Create new bike with componenets - Upload image
+  // @Post('/create/with-image')
+  // @ApiBody({ type: CreateBikeWithComponentsDto })
+  // @ApiResponse({ status: 201, type: ResponseBikeDto })
+  // @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
+  // async create(@Body('data') data: string) {
+  //   const dto = JSON.parse(data) as CreateBikeWithComponentsDto;
+  //   return this.bikeService.createBikeWithComponents(dto);
+  // }
 
   // Search External Bikelist - based on name and year
   @Post('/search-external')
@@ -64,14 +50,14 @@ export class BikeController {
   @HttpCode(200)
   @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
   async searchComponentsExternal(@Body('bikeUrl') bikeUrl: string) {
-    return this.searchBikeExternalService.getBikeComponents(bikeUrl);
+    return await this.searchBikeExternalService.getBikeComponents(bikeUrl);
   }
 
   // Get bike form options
   @Get('/form-options')
   @ApiResponse({ status: 200 })
   async formOptions() {
-    return this.bikeService.getFormOptions();
+    return await this.bikeService.getFormOptions();
   }
 
   // Get bike by ID

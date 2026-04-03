@@ -244,43 +244,12 @@
     },
     "/api/bike/create": {
       "post": {
-        "operationId": "BikeController_create",
+        "operationId": "BikeController_createBike",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBikeWithComponentsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseBikeDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Bike"
-        ]
-      }
-    },
-    "/api/bike/create/with-image": {
-      "post": {
-        "operationId": "BikeController_createWithImage",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/CreateBikeWithComponentsDto"
               }
@@ -378,7 +347,7 @@
     },
     "/api/bike/{id}": {
       "get": {
-        "operationId": "BikeController_findOne",
+        "operationId": "BikeController_findBike",
         "parameters": [
           {
             "name": "id",
@@ -501,6 +470,220 @@
         },
         "tags": [
           "Bike"
+        ]
+      }
+    },
+    "/api/bike-event": {
+      "post": {
+        "operationId": "BikeEventController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBikeEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeEventDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
+        ]
+      },
+      "get": {
+        "operationId": "BikeEventController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseBikeEventDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
+        ]
+      }
+    },
+    "/api/bike-event/{id}": {
+      "get": {
+        "operationId": "BikeEventController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeEventDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
+        ]
+      },
+      "patch": {
+        "operationId": "BikeEventController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBikeEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeEventDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
+        ]
+      }
+    },
+    "/api/bike-event/bike/{bikeId}": {
+      "get": {
+        "operationId": "BikeEventController_findByBikeId",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseBikeEventDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
+        ]
+      }
+    },
+    "/api/bike-event/soft/{id}": {
+      "delete": {
+        "operationId": "BikeEventController_softDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeEventDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
+        ]
+      }
+    },
+    "/api/bike-event/hard/{id}": {
+      "delete": {
+        "operationId": "BikeEventController_hardDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeEventDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
         ]
       }
     }
@@ -984,6 +1167,109 @@
       "UpdateBikeDto": {
         "type": "object",
         "properties": {}
+      },
+      "CreateBikeEventDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 1
+          },
+          "note": {
+            "type": "string",
+            "example": "Replaced chain and cleaned drivetrain",
+            "nullable": true
+          },
+          "total_cost": {
+            "type": "number",
+            "example": 150.5,
+            "nullable": true
+          }
+        },
+        "required": [
+          "bike_id",
+          "note",
+          "total_cost"
+        ]
+      },
+      "ResponseBikeEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_id": {
+            "type": "object",
+            "example": 15,
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "example": "Replaced chain and cassette",
+            "nullable": true
+          },
+          "total_cost": {
+            "type": "object",
+            "example": 150.5,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "object",
+            "example": "2024-01-01T12:00:00Z",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "object",
+            "example": "2024-01-02T12:00:00Z",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "example": false,
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "bike_id",
+          "note",
+          "total_cost",
+          "created_at",
+          "updated_at",
+          "is_deleted",
+          "deleted_at"
+        ]
+      },
+      "UpdateBikeEventDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 1,
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "example": "Updated service note",
+            "nullable": true
+          },
+          "total_cost": {
+            "type": "number",
+            "example": 200,
+            "nullable": true
+          }
+        },
+        "required": [
+          "bike_id",
+          "note",
+          "total_cost"
+        ]
       }
     }
   }
