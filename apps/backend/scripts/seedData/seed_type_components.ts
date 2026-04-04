@@ -20,7 +20,6 @@ export const components = [
   'Front Hub',
   'Rear Hub',
   'Disc Rotors',
-  'Power Meter',
   'Shifters',
   'Brake Levers',
   'Grips',
@@ -29,6 +28,9 @@ export const components = [
   'Display',
   'Charger',
   'Pedals',
+  'Bottom Bracket',
+  'Front Derailleur',
+  'Thru Axles',
 ];
 
 export class SeedComponent {

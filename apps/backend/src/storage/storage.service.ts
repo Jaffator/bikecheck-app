@@ -57,6 +57,7 @@ export class StorageService {
   private getContentType(url: string): string {
     const ext = path.extname(url).toLowerCase();
     const map: Record<string, string> = {
+      '.webp': 'image/webp',
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.png': 'image/png',

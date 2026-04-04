@@ -28,6 +28,9 @@ export class ResponseBikeDto implements bikes {
   @ApiProperty({ example: 15 })
   user_id!: number; // NOT NULL
 
+  @ApiProperty({ example: true })
+  ebike!: boolean;
+
   @ApiProperty({ example: 10, nullable: true })
   organization_id!: number | null;
 

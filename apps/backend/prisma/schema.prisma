@@ -81,6 +81,7 @@ model bikes {
   organization_id    Int?
   image_url          String?              @db.VarChar
   ride_style_id      Int?
+  ebike              Boolean              @default(false)
   bike_events        bike_events[]
   bike_sizes         bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   bike_types         bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -110,6 +111,7 @@ model component_service_intervals {
 model component_types {
   id                 Int                  @id @default(autoincrement())
   component_type     String?              @unique @db.VarChar
+  ebike              Boolean?             @default(false)
   components_mounted components_mounted[]
 }
 

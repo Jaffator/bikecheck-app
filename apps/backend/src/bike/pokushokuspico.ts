@@ -20,3 +20,6 @@
 // const s = 'https://pub-4ee94249a97347858cdaf97e203e0980.r2.dev/bikes/d91bab0b-8161-4a4f-aa6d-6b1a5bf18e7f.jpg';
 // const result = s.includes('https://pub-4ee94249a97347858cdaf97e203e0980.r2.dev');
 // console.log(result);
+const arr = [1, 2, 3, 4];
+const arr2 = arr.filter((item) => item === 1)[0];
+console.log(arr2);

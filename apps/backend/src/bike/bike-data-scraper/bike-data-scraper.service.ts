@@ -80,7 +80,7 @@ export class BikeDataScrapeService {
    * @param url The URL of the bike for fetching components.
    * @returns Array of {id: number, component: string, desc: string}
    */
-  async getBikeComponents(url: string): Promise<BikeComponentsArray[]> {
+  async externalGetBikeComponents(url: string): Promise<BikeComponentsArray[]> {
     try {
       const bikeComponents = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
@@ -99,10 +99,32 @@ export class BikeDataScrapeService {
         });
       });
 
-      const components = await this.prisma.component_types.findMany({});
-      const result = await this.createBikeComponentsArray(bikeComponents, components);
+      const componentsTypes = await this.prisma.component_types.findMany({});
+      const extractedBikeComponents = await this.assembleBikeComponents(bikeComponents, componentsTypes);
 
-      return result;
+      const mountedComponents = componentsTypes.map((item) => {
+        const found = extractedBikeComponents.find((comp) => comp.component.component_type_id === item.id);
+        if (found) {
+          return found;
+        } else {
+          return {
+            component: {
+              bike_id: 0, // Placeholder, should be set to the actual bike ID
+              component_type_id: item.id,
+              component_desc: undefined,
+              mounted_at: undefined,
+              total_mileage_km: 0,
+              is_active: true,
+              note: '',
+              interval_id: undefined,
+              brake_load_since_service: undefined,
+              last_serviced_at: undefined,
+            },
+            component_name: item.component_type!,
+          };
+        }
+      });
+      return mountedComponents;
     } catch (error) {
       if (error instanceof TimeoutError) {
         throw new GatewayTimeoutException('Bike component provider timed out');
@@ -112,7 +134,7 @@ export class BikeDataScrapeService {
     }
   }
 
-  private async createBikeComponentsArray(
+  private async assembleBikeComponents(
     dataArray: any[],
     components: ComponentType[],
     result: BikeComponentsArray[] = [],
@@ -122,7 +144,7 @@ export class BikeDataScrapeService {
     }
     const first: string = dataArray[0];
     if (Array.isArray(first)) {
-      await this.createBikeComponentsArray(first, components, result);
+      await this.assembleBikeComponents(first, components, result);
     } else {
       if (typeof first === 'string' && components.some((item) => item.component_type === first)) {
         const componentId = components.find((item) => item.component_type === first)?.id;
@@ -139,7 +161,7 @@ export class BikeDataScrapeService {
               component_desc: desc,
               mounted_at: undefined,
               total_mileage_km: 0,
-              is_active: false,
+              is_active: true,
               note: '',
               interval_id: undefined,
               brake_load_since_service: undefined,
@@ -154,7 +176,7 @@ export class BikeDataScrapeService {
     for (let i = 1; i < dataArray.length; i++) {
       const item = dataArray[i];
       if (Array.isArray(item)) {
-        await this.createBikeComponentsArray(item, components, result);
+        await this.assembleBikeComponents(item, components, result);
       }
     }
 

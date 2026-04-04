@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsInt, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
 
-export class CreateComponentsDto {
+export class CreateMountedComponentsDto {
   @ApiProperty({ example: 1 })
   @IsInt()
   @IsPositive()

@@ -69,7 +69,7 @@ describe('BikeDataScrapeService (integration)', () => {
     // ARRANGE
     const firstBike = bikelist[0];
     // ACT
-    const components = await scrapeService.getBikeComponents(firstBike.url);
+    const components = await scrapeService.extractBikeComponents(firstBike.url);
     // ASSERT
     expect(components.length).toBeGreaterThan(0);
     expect(components[0]).toMatchObject({

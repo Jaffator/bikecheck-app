@@ -27,16 +27,6 @@ export class BikeController {
     return await this.bikeService.createBikeWithComponents(dto);
   }
 
-  // // Create new bike with componenets - Upload image
-  // @Post('/create/with-image')
-  // @ApiBody({ type: CreateBikeWithComponentsDto })
-  // @ApiResponse({ status: 201, type: ResponseBikeDto })
-  // @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
-  // async create(@Body('data') data: string) {
-  //   const dto = JSON.parse(data) as CreateBikeWithComponentsDto;
-  //   return this.bikeService.createBikeWithComponents(dto);
-  // }
-
   // Search External Bikelist - based on name and year
   @Post('/search-external')
   @HttpCode(200)
@@ -45,12 +35,12 @@ export class BikeController {
     return this.searchBikeExternalService.searchBikeList(dto.bikeName, dto.year);
   }
 
-  // Search External Bike components - based picked bikeurl
+  // Search External Bike components
   @Post('/search-external/components')
   @HttpCode(200)
   @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
   async searchComponentsExternal(@Body('bikeUrl') bikeUrl: string) {
-    return await this.searchBikeExternalService.getBikeComponents(bikeUrl);
+    return await this.searchBikeExternalService.extractBikeComponents(bikeUrl);
   }
 
   // Get bike form options
@@ -89,3 +79,12 @@ export class BikeController {
     return this.bikeService.deleteHard(+id);
   }
 }
+// // Create new bike with componenets - Upload image
+// @Post('/create/with-image')
+// @ApiBody({ type: CreateBikeWithComponentsDto })
+// @ApiResponse({ status: 201, type: ResponseBikeDto })
+// @UseInterceptors(FileInterceptor('image', { storage: memoryStorage() }))
+// async create(@Body('data') data: string) {
+//   const dto = JSON.parse(data) as CreateBikeWithComponentsDto;
+//   return this.bikeService.createBikeWithComponents(dto);
+// }

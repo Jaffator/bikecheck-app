@@ -235,6 +235,10 @@
             "null"
           ]
         },
+        "ebike": {
+          "type": "boolean",
+          "default": false
+        },
         "bike_events": {
           "type": "array",
           "items": {
@@ -357,6 +361,13 @@
             "string",
             "null"
           ]
+        },
+        "ebike": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
         },
         "components_mounted": {
           "type": "array",

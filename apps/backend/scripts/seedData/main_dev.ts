@@ -49,10 +49,10 @@ export async function runSeed(): Promise<void> {
   const seedMountedComponents = new SeedMountedComponents(prisma);
 
   try {
-    await seedBike.run();
-    await seedMountedComponents.run();
-    await seedUser.run();
-    await seedBikeData.run();
+    // await seedBike.run();
+    // await seedMountedComponents.run();
+    // await seedUser.run();
+    // await seedBikeData.run();
     await seedComponent.run();
   } finally {
     await prisma.$disconnect();

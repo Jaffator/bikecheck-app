@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, IsOptional, IsInt, IsPositive, Length } from 'class-validator';
+import { IsString, MaxLength, IsOptional, IsInt, IsPositive, Length, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ValidateNested, IsArray } from 'class-validator';
-import { CreateComponentsDto } from '../../component/dto/create-components';
+import { CreateMountedComponentsDto } from '../../component/dto/create-components';
 
 export class SearchBikeExternalRequestDto {
   @ApiProperty({ example: 'Orebea Rallon' })
@@ -27,6 +27,10 @@ export class CreateBikeDto {
   @IsString()
   @MaxLength(50)
   bike_brand!: string;
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  ebike!: boolean;
 
   // Optional
   @ApiProperty({ example: 'Domane SL7', required: false })
@@ -103,11 +107,11 @@ export class CreateBikeWithComponentsDto {
   bike!: CreateBikeDto;
 
   @ApiProperty({
-    type: () => CreateComponentsDto,
+    type: () => CreateMountedComponentsDto,
     isArray: true,
   })
   @ValidateNested({ each: true })
-  @Type(() => CreateComponentsDto)
+  @Type(() => CreateMountedComponentsDto)
   @IsArray()
-  components!: CreateComponentsDto[];
+  components!: CreateMountedComponentsDto[];
 }
