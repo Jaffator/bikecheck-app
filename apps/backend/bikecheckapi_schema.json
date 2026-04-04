@@ -473,6 +473,27 @@
         ]
       }
     },
+    "/api/component/form-options": {
+      "get": {
+        "operationId": "ComponentController_getFormOptions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMountedComponentsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
     "/api/bike-event": {
       "post": {
         "operationId": "BikeEventController_create",
@@ -857,6 +878,10 @@
             "type": "string",
             "example": "Trek"
           },
+          "ebike": {
+            "type": "boolean",
+            "example": true
+          },
           "bike_model": {
             "type": "string",
             "example": "Domane SL7"
@@ -904,10 +929,11 @@
         },
         "required": [
           "user_id",
-          "bike_brand"
+          "bike_brand",
+          "ebike"
         ]
       },
-      "CreateComponentsDto": {
+      "CreateMountedComponentsDto": {
         "type": "object",
         "properties": {
           "bike_id": {
@@ -975,7 +1001,7 @@
           "components": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CreateComponentsDto"
+              "$ref": "#/components/schemas/CreateMountedComponentsDto"
             }
           }
         },
@@ -994,6 +1020,10 @@
           "user_id": {
             "type": "number",
             "example": 15
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": true
           },
           "organization_id": {
             "type": "object",
@@ -1084,6 +1114,7 @@
         "required": [
           "id",
           "user_id",
+          "ebike",
           "organization_id",
           "ride_style_id",
           "bike_brand",

@@ -40,7 +40,7 @@ export class BikeController {
   @HttpCode(200)
   @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
   async searchComponentsExternal(@Body('bikeUrl') bikeUrl: string) {
-    return await this.searchBikeExternalService.extractBikeComponents(bikeUrl);
+    return await this.searchBikeExternalService.externalGetBikeComponents(bikeUrl);
   }
 
   // Get bike form options

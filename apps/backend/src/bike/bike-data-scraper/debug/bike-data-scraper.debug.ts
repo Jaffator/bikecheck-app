@@ -28,11 +28,11 @@ async function run() {
   logger.setContext(BikeDataScrapeService.name);
 
   try {
-    const bikeService = new BikeDataScrapeService(prisma, logger);
-    const result = await bikeService.searchBikeList('yeti sb160', '2024');
-    const components = await bikeService.extractBikeComponents(result[0].bikeUrl);
-    const filename = 'image1.jpg';
-    const filepath = path.join(__dirname, filename);
+    // const bikeService = new BikeDataScrapeService(prisma, logger);
+    // const result = await bikeService.searchBikeList('yeti sb160', '2024');
+    // const components = await bikeService.externalGetBikeComponents(result[0].bikeUrl);
+    // const filename = 'image1.jpg';
+    // const filepath = path.join(__dirname, filename);
     // await downloadImage(result[1].image!, filepath);
     // const components = await bikeService.getBikeComponents(result[0].url);
   } finally {
