@@ -17,11 +17,11 @@ export class BikeEventController {
     return this.bikeEventService.create(dto);
   }
 
-  @Get()
-  @ApiResponse({ status: 200, type: ResponseBikeEventDto, isArray: true })
-  async findAll(): Promise<ResponseBikeEventDto[]> {
-    return this.bikeEventService.findAll();
-  }
+  // @Get('components-groups')
+  // @ApiResponse({ status: 200, type })
+  // async getGroups(): Promise<> {
+  //   return this.bikeEventService.findAll();
+  // }
 
   @Get(':id')
   @ApiResponse({ status: 200, type: ResponseBikeEventDto })

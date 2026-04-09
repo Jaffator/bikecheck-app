@@ -11,33 +11,10 @@ datasource db {
   provider = "postgresql"
 }
 
-model action_types {
-  id               Int                @id @default(autoincrement())
-  action_name      String?            @unique @db.VarChar
-  component_events component_events[]
-}
-
 model bike_brands {
   id          Int           @id(map: "bike_brand_pkey") @default(autoincrement())
   bike_brand  String        @unique @db.VarChar
   bike_models bike_models[]
-}
-
-model bike_events {
-  id               Int                @id @default(autoincrement())
-  bike_id          Int?
-  note             String?
-  total_cost       Decimal?           @db.Decimal(10, 2)
-  created_at       DateTime?          @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime?          @db.Timestamptz(6)
-  is_deleted       Boolean?           @default(false)
-  deleted_at       DateTime?          @db.Timestamptz(6)
-  bikes            bikes?             @relation(fields: [bike_id], references: [id], onDelete: Cascade)
-  component_events component_events[]
-
-  @@index([bike_id], map: "bike_events_bike_id")
-  @@index([created_at], map: "bike_events_created_at")
-  @@index([updated_at], map: "bike_events_updated_at")
 }
 
 model bike_models {
@@ -82,7 +59,6 @@ model bikes {
   image_url          String?              @db.VarChar
   ride_style_id      Int?
   ebike              Boolean              @default(false)
-  bike_events        bike_events[]
   bike_sizes         bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   bike_types         bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   organizations      organizations?       @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -90,6 +66,7 @@ model bikes {
   users              users                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   wheel_sizes        wheel_sizes?         @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   components_mounted components_mounted[]
+  events_bikes       events_bikes[]
   rides              rides[]
 
   @@index([bike_size_id], map: "bikes_bike_size_col")
@@ -111,7 +88,10 @@ model component_service_intervals {
 model component_types {
   id                 Int                  @id @default(autoincrement())
   component_type     String?              @unique @db.VarChar
-  ebike              Boolean?             @default(false)
+  ebike              Boolean              @default(false)
+  component_group_id Int?
+  has_position       Boolean              @default(false)
+  component_groups   component_groups?    @relation(fields: [component_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   components_mounted components_mounted[]
 }
 
@@ -234,7 +214,7 @@ model refresh_tokens {
 model components_mounted {
   id                          Int                          @id(map: "bike_components_pkey") @default(autoincrement())
   bike_id                     Int
-  component_type_id           Int
+  component_type_id           Int?
   mounted_at                  DateTime?                    @db.Timestamptz(6)
   removed_at                  DateTime?                    @db.Timestamptz(6)
   updated_at                  DateTime?                    @default(now()) @db.Timestamptz(6)
@@ -248,10 +228,13 @@ model components_mounted {
   is_deleted                  Boolean?                     @default(false)
   deleted_at                  DateTime?                    @db.Timestamptz(6)
   component_desc              String?                      @db.VarChar
-  component_events            component_events[]
+  mileage_at_last_service_km  Int?
+  custom_component_type       String?                      @db.VarChar
+  position                    String?                      @db.VarChar
   bikes                       bikes                        @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  component_types             component_types              @relation(fields: [component_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  component_types             component_types?             @relation(fields: [component_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   component_service_intervals component_service_intervals? @relation(fields: [interval_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  events_components           events_components[]
 
   @@index([bike_id], map: "bike_components_bike_id")
   @@index([component_type_id], map: "bike_components_component_id")
@@ -263,25 +246,54 @@ model components_mounted {
   @@index([updated_at], map: "bike_components_updated_at")
 }
 
-model component_events {
-  id                   Int                 @id(map: "event_components_pkey") @default(autoincrement())
-  bike_event_id        Int?
-  component_mounted_id Int?
-  action_id            Int?
+model component_groups {
+  id              Int               @id @default(autoincrement())
+  group_name      String            @db.VarChar
+  component_types component_types[]
+}
+
+model events_bikes {
+  id                Int                 @id(map: "bike_events_pkey") @default(autoincrement())
+  bike_id           Int?
+  note              String?
+  total_cost        Decimal?            @db.Decimal(10, 2)
+  created_at        DateTime?           @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?           @db.Timestamptz(6)
+  is_deleted        Boolean?            @default(false)
+  deleted_at        DateTime?           @db.Timestamptz(6)
+  bikes             bikes?              @relation(fields: [bike_id], references: [id], onDelete: Cascade, map: "bike_events_bike_id_fkey")
+  events_components events_components[]
+
+  @@index([bike_id], map: "bike_events_bike_id")
+  @@index([created_at], map: "bike_events_created_at")
+  @@index([updated_at], map: "bike_events_updated_at")
+}
+
+model events_components {
+  id                   Int                @id(map: "event_components_pkey") @default(autoincrement())
+  bike_event_id        Int
+  component_mounted_id Int
+  event_type_id        Int
   note                 String?
-  partial_cost         Decimal?            @db.Decimal(10, 2)
-  created_at           DateTime?           @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?           @db.Timestamptz(6)
-  part_replaced        Boolean?            @default(false)
-  is_deleted           Boolean?            @default(false)
-  deleted_at           DateTime?           @db.Timestamptz(6)
-  action_types         action_types?       @relation(fields: [action_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "components_event_action_id_fkey")
-  bike_events          bike_events?        @relation(fields: [bike_event_id], references: [id], onDelete: Cascade, map: "components_event_bike_event_id_fkey")
-  components_mounted   components_mounted? @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "components_event_component_mounted_id_fkey")
+  partial_cost         Decimal?           @db.Decimal(10, 2)
+  created_at           DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?          @db.Timestamptz(6)
+  part_replaced        Boolean?           @default(false)
+  is_deleted           Boolean?           @default(false)
+  deleted_at           DateTime?          @db.Timestamptz(6)
+  events_bikes         events_bikes       @relation(fields: [bike_event_id], references: [id], onDelete: Cascade, map: "components_event_bike_event_id_fkey")
+  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "components_event_component_mounted_id_fkey")
+  events_types         events_types       @relation(fields: [event_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([bike_event_id], map: "event_components_bike_event_id")
   @@index([component_mounted_id], map: "event_components_component_id")
   @@index([created_at], map: "event_components_created_at")
-  @@index([action_id], map: "event_components_type_id")
+  @@index([event_type_id], map: "event_components_type_id")
   @@index([updated_at], map: "event_components_updated_at")
+}
+
+model events_types {
+  id                Int                 @id(map: "action_types_pkey") @default(autoincrement())
+  action_name       String?             @unique(map: "action_types_action_name_key") @db.VarChar
+  events_components events_components[]
 }

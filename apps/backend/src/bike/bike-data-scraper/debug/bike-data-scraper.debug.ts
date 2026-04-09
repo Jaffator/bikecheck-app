@@ -28,12 +28,12 @@ async function run() {
   logger.setContext(BikeDataScrapeService.name);
 
   try {
-    // const bikeService = new BikeDataScrapeService(prisma, logger);
-    // const result = await bikeService.searchBikeList('yeti sb160', '2024');
-    // const components = await bikeService.externalGetBikeComponents(result[0].bikeUrl);
-    // const filename = 'image1.jpg';
-    // const filepath = path.join(__dirname, filename);
-    // await downloadImage(result[1].image!, filepath);
+    const bikeService = new BikeDataScrapeService(prisma, logger);
+    const result = await bikeService.searchBikeList('yeti sb160', '2024');
+    console.log(result);
+    const components = await bikeService.externalGetBikeComponents(result[0].bikeUrl);
+    console.log(components);
+
     // const components = await bikeService.getBikeComponents(result[0].url);
   } finally {
     await prisma.onModuleDestroy();
@@ -44,11 +44,11 @@ run().catch((err) => {
   console.error(err);
 });
 
-async function downloadImage(imageUrl: string, filepath: string) {
-  try {
-    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-    await fs.promises.writeFile(filepath, Buffer.from(response.data));
-  } catch (error) {
-    throw new Error(`download image failed ${error.message}`);
-  }
-}
+// async function downloadImage(imageUrl: string, filepath: string) {
+//   try {
+//     const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+//     await fs.promises.writeFile(filepath, Buffer.from(response.data));
+//   } catch (error) {
+//     throw new Error(`download image failed ${error.message}`);
+//   }
+// }

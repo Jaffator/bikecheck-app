@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from 'prisma/prisma.service';
 import { NewBikeFormData } from './types/bike.types';
 import { StorageService } from '../storage/storage.service';
+import { AssembleBikeComponents } from './bike-data-scraper/bike-data-scraper.types';
 import 'dotenv/config';
 import path from 'path';
 
@@ -23,6 +24,53 @@ export class BikeService {
 
   async getFormOptions(): Promise<NewBikeFormData> {
     return await this.bikeRepository.getBikeOptions();
+  }
+
+  /**
+   * Returns default component structure for manual bike creation
+   * Used when external component data is not available
+   * @param ebike If false, return only non-ebike components. If true, return all components.
+   */
+  async getDefaultComponents(ebike: boolean): Promise<AssembleBikeComponents[]> {
+    const componentTypes = await this.prisma.component_types.findMany({
+      where: ebike ? {} : { ebike: false },
+    });
+
+    return componentTypes.flatMap((type) => {
+      const baseComponent: AssembleBikeComponents = {
+        component: {
+          bike_id: 0,
+          component_type_id: type.id,
+          component_desc: undefined,
+          mounted_at: undefined,
+          total_mileage_km: 0,
+          is_active: true,
+          note: undefined,
+          position: undefined,
+          interval_id: undefined,
+          brake_load_since_service: undefined,
+          last_serviced_at: undefined,
+          custom_component_type: undefined,
+        },
+        component_name: type.component_type!,
+      };
+
+      // Components with position (brakes, wheels, etc.) return front + rear
+      if (type.has_position) {
+        return [
+          {
+            component: { ...baseComponent.component, position: 'front' },
+            component_name: type.component_type!,
+          },
+          {
+            component: { ...baseComponent.component, position: 'rear' },
+            component_name: type.component_type!,
+          },
+        ];
+      }
+
+      return [baseComponent];
+    });
   }
 
   /**

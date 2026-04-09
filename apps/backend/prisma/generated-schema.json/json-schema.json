@@ -1,26 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "action_types": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "action_name": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "component_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/component_events"
-          }
-        }
-      }
-    },
     "bike_brands": {
       "type": "object",
       "properties": {
@@ -34,70 +14,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/bike_models"
-          }
-        }
-      }
-    },
-    "bike_events": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "note": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "total_cost": {
-          "type": [
-            "number",
-            "null"
-          ]
-        },
-        "created_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "is_deleted": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "deleted_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "bikes": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/bikes"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "component_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/component_events"
           }
         }
       }
@@ -239,12 +155,6 @@
           "type": "boolean",
           "default": false
         },
-        "bike_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bike_events"
-          }
-        },
         "bike_sizes": {
           "anyOf": [
             {
@@ -302,6 +212,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/components_mounted"
+          }
+        },
+        "events_bikes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/events_bikes"
           }
         },
         "rides": {
@@ -363,11 +279,22 @@
           ]
         },
         "ebike": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": false
+        },
+        "has_position": {
+          "type": "boolean",
+          "default": false
+        },
+        "component_groups": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/component_groups"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "components_mounted": {
           "type": "array",
@@ -873,17 +800,36 @@
             "null"
           ]
         },
-        "component_events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/component_events"
-          }
+        "mileage_at_last_service_km": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "custom_component_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "position": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "bikes": {
           "$ref": "#/definitions/bikes"
         },
         "component_types": {
-          "$ref": "#/definitions/component_types"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/component_types"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "component_service_intervals": {
           "anyOf": [
@@ -894,10 +840,97 @@
               "type": "null"
             }
           ]
+        },
+        "events_components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/events_components"
+          }
         }
       }
     },
-    "component_events": {
+    "component_groups": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "group_name": {
+          "type": "string"
+        },
+        "component_types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/component_types"
+          }
+        }
+      }
+    },
+    "events_bikes": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_cost": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "is_deleted": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "deleted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "bikes": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/bikes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "events_components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/events_components"
+          }
+        }
+      }
+    },
+    "events_components": {
       "type": "object",
       "properties": {
         "id": {
@@ -950,49 +983,42 @@
           ],
           "format": "date-time"
         },
-        "action_types": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/action_types"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "bike_events": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/bike_events"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "events_bikes": {
+          "$ref": "#/definitions/events_bikes"
         },
         "components_mounted": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/components_mounted"
-            },
-            {
-              "type": "null"
-            }
+          "$ref": "#/definitions/components_mounted"
+        },
+        "events_types": {
+          "$ref": "#/definitions/events_types"
+        }
+      }
+    },
+    "events_types": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "action_name": {
+          "type": [
+            "string",
+            "null"
           ]
+        },
+        "events_components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/events_components"
+          }
         }
       }
     }
   },
   "type": "object",
   "properties": {
-    "action_types": {
-      "$ref": "#/definitions/action_types"
-    },
     "bike_brands": {
       "$ref": "#/definitions/bike_brands"
-    },
-    "bike_events": {
-      "$ref": "#/definitions/bike_events"
     },
     "bike_models": {
       "$ref": "#/definitions/bike_models"
@@ -1042,8 +1068,17 @@
     "components_mounted": {
       "$ref": "#/definitions/components_mounted"
     },
-    "component_events": {
-      "$ref": "#/definitions/component_events"
+    "component_groups": {
+      "$ref": "#/definitions/component_groups"
+    },
+    "events_bikes": {
+      "$ref": "#/definitions/events_bikes"
+    },
+    "events_components": {
+      "$ref": "#/definitions/events_components"
+    },
+    "events_types": {
+      "$ref": "#/definitions/events_types"
     }
   }
 }

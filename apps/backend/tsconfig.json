@@ -29,7 +29,9 @@
     "scripts/**/*",
     "test setup/**/*.ts",
     "src/auth/auth.service.unit.test.ts",
-    "src/auth/token.service.unit.test.ts"
+    "src/auth/token.service.unit.test.ts",
+    "pokusy/playaround copilot.ts",
+    "pokusy/gemini_test.ts"
   ],
   "exclude": ["node_modules", "dist", "**/*spec.ts"]
 }

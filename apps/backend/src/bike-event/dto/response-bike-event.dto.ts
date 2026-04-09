@@ -26,3 +26,5 @@ export class ResponseBikeEventDto implements bike_events {
   @ApiProperty({ example: null, nullable: true })
   deleted_at!: Date | null;
 }
+
+export class ResponseGroupsDto {}

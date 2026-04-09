@@ -4,7 +4,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { chromium } from 'playwright-extra';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import stealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { BikeComponentsArray } from './bike-data-scraper.types';
+import { AssembleBikeComponents } from './bike-data-scraper.types';
 import { SearchBikeExternalResponseDto } from '../dto/response-bike.dto';
 import type { component_types as ComponentType } from '@prisma/client';
 import { TimeoutError } from 'rxjs';
@@ -80,7 +80,7 @@ export class BikeDataScrapeService {
    * @param url The URL of the bike for fetching components.
    * @returns Array of {id: number, component: string, desc: string}
    */
-  async externalGetBikeComponents(url: string): Promise<BikeComponentsArray[]> {
+  async externalGetBikeComponents(url: string): Promise<AssembleBikeComponents[]> {
     try {
       const bikeComponents = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
@@ -100,28 +100,14 @@ export class BikeDataScrapeService {
       });
 
       const componentsTypes = await this.prisma.component_types.findMany({});
-      const extractedBikeComponents = await this.assembleBikeComponents(bikeComponents, componentsTypes);
+      const extractedBikeComponents = await this.assembleBikeComponents(bikeComponents.reverse(), componentsTypes);
 
-      const mountedComponents = componentsTypes.map((item) => {
-        const found = extractedBikeComponents.find((comp) => comp.component.component_type_id === item.id);
-        if (found) {
+      const mountedComponents = componentsTypes.flatMap((item) => {
+        const found = extractedBikeComponents.filter((comp) => comp.component.component_type_id === item.id);
+        if (found.length > 0) {
           return found;
         } else {
-          return {
-            component: {
-              bike_id: 0, // Placeholder, should be set to the actual bike ID
-              component_type_id: item.id,
-              component_desc: undefined,
-              mounted_at: undefined,
-              total_mileage_km: 0,
-              is_active: true,
-              note: '',
-              interval_id: undefined,
-              brake_load_since_service: undefined,
-              last_serviced_at: undefined,
-            },
-            component_name: item.component_type!,
-          };
+          return this.buildBikeMountedComponent(item, '', undefined);
         }
       });
       return mountedComponents;
@@ -137,38 +123,36 @@ export class BikeDataScrapeService {
   private async assembleBikeComponents(
     dataArray: any[],
     components: ComponentType[],
-    result: BikeComponentsArray[] = [],
-  ): Promise<BikeComponentsArray[]> {
+    result: AssembleBikeComponents[] = [],
+  ): Promise<AssembleBikeComponents[]> {
     if (dataArray.length === 0) {
       return result;
     }
-    const first: string = dataArray[0];
-    if (Array.isArray(first)) {
-      await this.assembleBikeComponents(first, components, result);
-    } else {
-      if (typeof first === 'string' && components.some((item) => item.component_type === first)) {
-        const componentId = components.find((item) => item.component_type === first)?.id;
-        if (!componentId) throw new Error("id not found, component doesn't exist in db");
+    const componentNameExt: string = dataArray[0];
 
-        let desc: string = dataArray[1] as string;
-        if (!result.some((item) => item.component.component_type_id === componentId)) {
-          const findedMark = desc.indexOf('\n');
-          if (findedMark > -1) desc = desc.slice(0, findedMark);
-          result.push({
-            component: {
-              bike_id: 0, // Placeholder, should be set to the actual bike ID
-              component_type_id: componentId,
-              component_desc: desc,
-              mounted_at: undefined,
-              total_mileage_km: 0,
-              is_active: true,
-              note: '',
-              interval_id: undefined,
-              brake_load_since_service: undefined,
-              last_serviced_at: undefined,
-            },
-            component_name: first,
-          });
+    // It's array continue to search for string components
+    if (Array.isArray(componentNameExt)) {
+      await this.assembleBikeComponents(componentNameExt, components, result);
+    } else {
+      const component = components.find((item) => {
+        return componentNameExt.toLowerCase().includes(item.component_type!.toLowerCase());
+      });
+      // It's string, try to find component type in db and build component object
+      if (typeof componentNameExt === 'string') {
+        let description: string = dataArray[1] as string;
+        const findedMark = description.indexOf('\n');
+        if (findedMark > -1) description = description.slice(0, findedMark);
+        // Try to find words rear or front
+        const foundedPosititon = componentNameExt.toLowerCase().includes('rear')
+          ? 'rear'
+          : componentNameExt.toLowerCase().includes('front')
+            ? 'front'
+            : undefined;
+
+        // Component found in DB
+        if (component && !result.some((item) => item.component.component_type_id === component.id)) {
+          const mountedComponents = this.buildBikeMountedComponent(component, description, foundedPosititon);
+          mountedComponents?.forEach((comp) => result.push(comp));
         }
       }
     }
@@ -181,6 +165,62 @@ export class BikeDataScrapeService {
     }
 
     return result;
+  }
+
+  private buildBikeMountedComponent(
+    component: ComponentType,
+    desc: string,
+    foundedPosititon: string | undefined,
+  ): AssembleBikeComponents[] {
+    const baseComponent: AssembleBikeComponents = {
+      component: {
+        bike_id: 0,
+        component_type_id: undefined,
+        custom_component_type: undefined,
+        component_desc: desc,
+        mounted_at: undefined,
+        total_mileage_km: 0,
+        is_active: true,
+        note: undefined,
+        position: undefined,
+        interval_id: undefined,
+        brake_load_since_service: undefined,
+        last_serviced_at: undefined,
+      },
+      component_name: '',
+    };
+    if (component && foundedPosititon) {
+      // Position defined in description, return single component with position
+      return [
+        {
+          component: { ...baseComponent.component, component_type_id: component.id, position: foundedPosititon },
+          component_name: component.component_type!,
+        },
+      ];
+    }
+    if (component && component.has_position && !foundedPosititon) {
+      // Position not defined, but components are in pair (front/rear), return two components with front/rear position
+      return [
+        {
+          component: { ...baseComponent.component, component_type_id: component.id, position: 'rear' },
+          component_name: component.component_type!,
+        },
+        {
+          component: { ...baseComponent.component, component_type_id: component.id, position: 'front' },
+          component_name: component.component_type!,
+        },
+      ];
+    }
+    // Just return component without position
+    return [
+      {
+        component: {
+          ...baseComponent.component,
+          component_type_id: component.id,
+        },
+        component_name: component.component_type!,
+      },
+    ];
   }
 
   private buildSearchUrl(bikeTitle: string, year: string): string {

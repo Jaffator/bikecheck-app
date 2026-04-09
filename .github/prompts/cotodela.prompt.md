@@ -1,5 +1,5 @@
 ---
-name: cotodela
+name: Explain-code
 description: strucne vysvetli co je cotodela a jak se pouziva
 agent: ask
 model: GPT-5.4

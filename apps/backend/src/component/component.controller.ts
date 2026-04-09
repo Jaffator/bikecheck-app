@@ -8,7 +8,7 @@ export class ComponentController {
   constructor(private readonly componentService: ComponentService) {}
 
   // Get component form default - for manually fill components
-  @Get('/form-options')
+  @Get('/form-options-news')
   @ApiResponse({ status: 200, type: CreateMountedComponentsDto })
   async getFormOptions() {
     return await this.componentService.getComponentsFormOptions();

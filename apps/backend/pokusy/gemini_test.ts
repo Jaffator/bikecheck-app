@@ -20,3 +20,18 @@ result
   .catch((error) => {
     console.error('Error generating content:', error);
   });
+// fucntion that reverses a string
+function reverseString(str: string): string {
+  return str.split('').reverse().join('');
+}
+reverseString('Hello, World!'); // Output: !dlroW ,olleH
+
+async function fetchdata() {
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/todos/1');
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+}

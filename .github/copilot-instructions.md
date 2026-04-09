@@ -10,14 +10,13 @@ Frontend:
 
 Backend:
 
-- Node.js
+- NestJS
 - TypeScript
 - Prisma + PostgreSQL
 
 Architecture:
 
 - Each domain contains: controller, service, repository
-- Controllers handle HTTP only
 - Services contain business logic
 - Repositories handle database access (Prisma)
 - No shared god-services
@@ -54,4 +53,4 @@ General:
 - Respect current project conventions
 - Reuse existing types and utilities
 - Ask before large structural changes
-- Chat responses should be concise by default
+- Use concise answers by default

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, Query } from '@nestjs/common';
 import { BikeService } from './bike.service';
 import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.service';
 import { CreateBikeWithComponentsDto } from './dto/create-bike.dto';
@@ -48,6 +48,14 @@ export class BikeController {
   @ApiResponse({ status: 200 })
   async formOptions() {
     return await this.bikeService.getFormOptions();
+  }
+
+  // Get default components for manual bike creation
+  @Get('/default-components')
+  @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
+  async getDefaultComponents(@Query('ebike') ebike?: string) {
+    const isEbike = ebike === 'true';
+    return await this.bikeService.getDefaultComponents(isEbike);
   }
 
   // Get bike by ID

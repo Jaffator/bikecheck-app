@@ -21,6 +21,7 @@ export class ComponentService {
           interval_id: undefined,
           brake_load_since_service: undefined,
           last_serviced_at: undefined,
+          custom_component_type: '',
         },
         component_name: comp.component_type!,
       };

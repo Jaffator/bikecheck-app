@@ -4,12 +4,13 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { SeedBikeAddData } from './seed_bikes_infodata';
 import { SeedBike } from './seed_bike';
 import { SeedComponent } from './seed_type_components';
+import { SeedComponentGroups } from './seed_component_groups';
 import { SeedMountedComponents } from './seed_mounted_components';
 import { SeedUser } from './seed_users';
 import dotenv from 'dotenv';
 import path from 'node:path';
 
-function connectToDB() {
+export function connectToDB() {
   // prepare env path
   const currentDirPath: string = __dirname;
   const backendRootPath: string = path.resolve(currentDirPath, '..', '..');
@@ -40,25 +41,27 @@ function connectToDB() {
   return prisma;
 }
 
-export async function runSeed(): Promise<void> {
-  const prisma = connectToDB();
-  const seedBikeData = new SeedBikeAddData(prisma);
-  const seedBike = new SeedBike(prisma);
-  const seedComponent = new SeedComponent(prisma);
-  const seedUser = new SeedUser(prisma);
-  const seedMountedComponents = new SeedMountedComponents(prisma);
+// export async function runSeed(): Promise<void> {
+//   const prisma = connectToDB();
+//   const seedBikeData = new SeedBikeAddData(prisma);
+//   const seedBike = new SeedBike(prisma);
+//   const seedComponent = new SeedComponent(prisma);
+//   const seedComponentGroups = new SeedComponentGroups(prisma);
+//   const seedUser = new SeedUser(prisma);
+//   const seedMountedComponents = new SeedMountedComponents(prisma);
 
-  try {
-    // await seedBike.run();
-    // await seedMountedComponents.run();
-    // await seedUser.run();
-    // await seedBikeData.run();
-    await seedComponent.run();
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-runSeed().catch((error) => {
-  console.error('Error running seed script:', error);
-  process.exit(1);
-});
+//   try {
+//     // await seedBike.run();
+//     // await seedMountedComponents.run();
+//     // await seedUser.run();
+//     // await seedBikeData.run();
+//     // await seedComponent.run();
+//     await seedComponentGroups.run();
+//   } finally {
+//     await prisma.$disconnect();
+//   }
+// }
+// runSeed().catch((error) => {
+//   console.error('Error running seed script:', error);
+//   process.exit(1);
+// });
