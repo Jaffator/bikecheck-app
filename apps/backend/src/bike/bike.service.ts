@@ -44,7 +44,7 @@ export class BikeService {
           component_desc: null,
           mounted_at: undefined,
           total_mileage_km: 0,
-          is_active: undefined,
+          is_active: true,
           note: null,
           position: undefined,
           interval_id: undefined,
