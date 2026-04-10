@@ -345,6 +345,39 @@
         ]
       }
     },
+    "/api/bike/default-components": {
+      "get": {
+        "operationId": "BikeController_getDefaultComponents",
+        "parameters": [
+          {
+            "name": "ebike",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BikeComponentExternalResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
     "/api/bike/{id}": {
       "get": {
         "operationId": "BikeController_findBike",
@@ -473,7 +506,7 @@
         ]
       }
     },
-    "/api/component/form-options": {
+    "/api/component/form-options-news": {
       "get": {
         "operationId": "ComponentController_getFormOptions",
         "parameters": [],
@@ -515,28 +548,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponseBikeEventDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Bike Events"
-        ]
-      },
-      "get": {
-        "operationId": "BikeEventController_findAll",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResponseBikeEventDto"
-                  }
                 }
               }
             }
@@ -944,9 +955,18 @@
             "type": "number",
             "example": 12
           },
+          "custom_component_type": {
+            "type": "string",
+            "example": "Bearing"
+          },
           "component_desc": {
             "type": "string",
             "example": "Fox 38 Factory Grip2",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "example": "Front",
             "nullable": true
           },
           "mounted_at": {
@@ -989,7 +1009,8 @@
         },
         "required": [
           "bike_id",
-          "component_type_id"
+          "component_type_id",
+          "custom_component_type"
         ]
       },
       "CreateBikeWithComponentsDto": {

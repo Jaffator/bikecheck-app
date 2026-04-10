@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { bike_events } from '@prisma/client';
 
-export class ResponseBikeEventDto implements bike_events {
+export class ResponseBikeEventDto {
   @ApiProperty({ example: 1 })
   id!: number;
 

@@ -2,6 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { components_mounted } from '@prisma/client';
 
 export class ResponseComponentsDto implements components_mounted {
+  @ApiProperty({ example: 5000, nullable: true })
+  mileage_at_last_service_km!: number | null;
+
+  @ApiProperty({ example: 'Custom Brake Pad', nullable: true })
+  custom_component_type!: string | null;
+
   @ApiProperty({ example: 1 })
   id!: number;
 
@@ -10,6 +16,9 @@ export class ResponseComponentsDto implements components_mounted {
 
   @ApiProperty({ example: 12 })
   component_type_id!: number;
+
+  @ApiProperty({ example: 'rear' })
+  position!: string | null;
 
   @ApiProperty({ example: '2026-03-26T10:00:00.000Z', nullable: true })
   mounted_at!: Date | null;

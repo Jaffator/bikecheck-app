@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BikeComponentsArray } from '../bike/bike-data-scraper/bike-data-scraper.types';
+import { AssembleBikeComponents } from '../bike/bike-data-scraper/bike-data-scraper.types';
 
 @Injectable()
 export class ComponentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getComponentsFormOptions(): Promise<BikeComponentsArray[]> {
+  async getComponentsFormOptions(): Promise<AssembleBikeComponents[]> {
     const componenetsTypes = await this.prisma.component_types.findMany({});
     const mountedComponentFormOptions = componenetsTypes.map((comp) => {
       return {
