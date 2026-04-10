@@ -960,7 +960,7 @@
             "example": "Bearing"
           },
           "component_desc": {
-            "type": "string",
+            "type": "object",
             "example": "Fox 38 Factory Grip2",
             "nullable": true
           },
@@ -986,7 +986,7 @@
             "nullable": true
           },
           "note": {
-            "type": "string",
+            "type": "object",
             "example": "Mounted after spring service",
             "nullable": true
           },

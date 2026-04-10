@@ -34,6 +34,7 @@ describe('BikeController (e2e)', () => {
   afterAll(async () => {
     await app.close();
   });
+
   it('get bike', async () => {
     // ARRANGE
     // first login test user and get access token
@@ -61,5 +62,22 @@ describe('BikeController (e2e)', () => {
     const bikes: ResponseBikeDto[] = resBike.body;
     // ASSERT
     expect(bikes).toBeDefined();
+  });
+
+  it('GET /default-components - ebike=false', async () => {
+    const response = await request(app.getHttpServer()).get('/api/bike/default-components?ebike=false').expect(200);
+
+    console.log('Components count:', response.body.length);
+    console.log('Components:', JSON.stringify(response.body, null, 2));
+
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('GET /default-components - ebike=true', async () => {
+    const response = await request(app.getHttpServer()).get('/api/bike/default-components?ebike=true').expect(200);
+
+    console.log('All components count:', response.body.length);
+    expect(response.body.length).toBeGreaterThan(0);
   });
 });

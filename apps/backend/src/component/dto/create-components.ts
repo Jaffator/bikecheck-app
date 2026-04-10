@@ -23,7 +23,7 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @ApiProperty({ example: 'Fox 38 Factory Grip2', required: false, nullable: true })
   @IsString()
   @MaxLength(255)
-  component_desc?: string;
+  component_desc?: string | null;
 
   @IsOptional()
   @ApiProperty({ example: 'Front', required: false, nullable: true })
@@ -50,7 +50,7 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @ApiProperty({ example: 'Mounted after spring service', required: false, nullable: true })
   @IsString()
   @MaxLength(255)
-  note?: string;
+  note?: string | null;
 
   @IsOptional()
   @ApiProperty({ example: 2, required: false, nullable: true })

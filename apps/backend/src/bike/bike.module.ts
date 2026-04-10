@@ -5,7 +5,7 @@ import { BikeRepository } from './bike.repository';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.service';
 import { ComponentModuleModule } from '../component/component.module';
-import { StorageModule } from 'src/storage/storage.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [PrismaModule, ComponentModuleModule, StorageModule],

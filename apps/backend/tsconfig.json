@@ -27,7 +27,7 @@
     "jest.config.ts",
     "src/**/*",
     "scripts/**/*",
-    "test setup/**/*.ts",
+    "tests/**/*.ts",
     "src/auth/auth.service.unit.test.ts",
     "src/auth/token.service.unit.test.ts",
     "pokusy/playaround copilot.ts",

@@ -4,9 +4,9 @@ import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dt
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto } from './dto/response-bike.dto';
 import { BikeRepository } from './bike.repository';
-import { ComponentRepository } from 'src/component/component.repository';
+import { ComponentRepository } from '../component/component.repository';
 import { randomUUID } from 'crypto';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { NewBikeFormData } from './types/bike.types';
 import { StorageService } from '../storage/storage.service';
 import { AssembleBikeComponents } from './bike-data-scraper/bike-data-scraper.types';
@@ -41,11 +41,11 @@ export class BikeService {
         component: {
           bike_id: 0,
           component_type_id: type.id,
-          component_desc: undefined,
+          component_desc: null,
           mounted_at: undefined,
           total_mileage_km: 0,
-          is_active: true,
-          note: undefined,
+          is_active: undefined,
+          note: null,
           position: undefined,
           interval_id: undefined,
           brake_load_since_service: undefined,
