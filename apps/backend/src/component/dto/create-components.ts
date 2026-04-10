@@ -38,7 +38,6 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @IsOptional()
   @ApiProperty({ example: 1200, required: false, nullable: true })
   @IsInt()
-  @IsPositive()
   total_mileage_km?: number;
 
   @IsOptional()
