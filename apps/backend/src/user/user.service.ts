@@ -3,7 +3,7 @@ import { UserRepository } from './user.repository';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
 import { users as UserFull } from '@prisma/client';
-import { LoginGoogleDto } from 'src/auth/dto/auth.dtos';
+import { LoginGoogleDto } from '../auth/dto/auth.dtos';
 
 @Injectable()
 export class UserService {

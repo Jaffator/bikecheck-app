@@ -8,6 +8,20 @@ type DbClient = PrismaService | Prisma.TransactionClient;
 export class ComponentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getAllComponentGroups() {
+    return await this.prisma.component_groups.findMany({});
+  }
+
+  async getAllComponentTypes() {
+    return await this.prisma.component_types.findMany({});
+  }
+
+  async getMountedComponents(bikeId: number) {
+    return await this.prisma.components_mounted.findMany({
+      where: { bike_id: bikeId, is_deleted: false },
+    });
+  }
+
   async createMountedComponentMany(
     data: Prisma.components_mountedCreateManyInput[],
     db: DbClient = this.prisma,
@@ -47,10 +61,6 @@ export class ComponentRepository {
 
 //   try {
 //     const repository = new ComponentRepository(prisma);
-//     const result = await repository.updateMountedComponent(85, {
-//       total_mileage_km: 1500,
-//       component_desc: 'Updated description',
-//     });
 //   } finally {
 //     await prisma.onModuleDestroy();
 //   }

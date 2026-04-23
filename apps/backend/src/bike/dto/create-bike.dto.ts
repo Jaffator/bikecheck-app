@@ -16,6 +16,12 @@ export class SearchBikeExternalRequestDto {
   year!: string;
 }
 
+export class DefaultComponentsRequestDto {
+  @ApiProperty({ example: false, description: 'Is the bike an e-bike' })
+  @IsBoolean()
+  ebike!: boolean;
+}
+
 export class CreateBikeDto {
   // Required
   @ApiProperty({ example: 1 })

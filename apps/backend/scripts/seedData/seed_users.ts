@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { CreateUserData } from 'src/user/interfaces/user.interface';
+import { CreateUserData } from '../../src/user/interfaces/user.interface';
 
 export class SeedUser {
   private prisma: PrismaClient;

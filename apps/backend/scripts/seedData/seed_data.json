@@ -1699,5 +1699,362 @@
     "Merida",
     "Rock Machine",
     "CTM"
-  ]
+  ],
+  "actions": {
+    "Brakes": [
+      {
+        "action": "Bleed",
+        "targets": ["Brake Lever", "Brake Caliper"],
+        "tags": ["Full Flush"],
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Pads Replacement",
+        "targets": ["Brake pad"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": true
+      },
+      {
+        "action": "Caliper Service",
+        "targets": ["Brake Caliper"],
+        "tags": ["Piston Lube", "Replace Piston", "Replace Seal", "Centering"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Rotor Service",
+        "targets": ["Brake Rotor"],
+        "tags": ["Degreasing"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Lever Replacement",
+        "targets": ["Brake Lever"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": false
+      },
+      {
+        "action": "Brake Hose Replacement",
+        "targets": ["Brake Caliper", "Brake Lever"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": false
+      }
+    ],
+    "Drivetrain": [
+      {
+        "action": "Chain Lube",
+        "targets": ["Chain"],
+        "tags": ["Oil", "Vax"],
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Chain Replacement",
+        "targets": ["Chain"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": true
+      },
+      {
+        "action": "Derailleur Indexing",
+        "targets": ["Derailleur"],
+        "tags": ["H/L/B-Gap Adjustment and shifter cable tension"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Derailleur Service",
+        "targets": ["Derailleur"],
+        "tags": [
+          "Replace upper pulley",
+          "Replace lower pulley",
+          "Pulley wheels Service",
+          "Clutch Service",
+          "Firmware Update",
+          "Battery replacement",
+          "Pivot Lubrication"
+        ],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Wear Check",
+        "targets": ["Chain"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Cable & Housing Replacement",
+        "targets": ["Derailleur", "Shifter"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "BB Service",
+        "targets": ["Bottom Bracket"],
+        "tags": ["Cleaning & Greasing", "Creak Fix", "Shell Facing"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Drivetrain Detox",
+        "targets": ["Chain", "Cassette", "Derailleur"],
+        "tags": ["Deep cleaning of all moving parts. Removes all grit, grime, and old grease"],
+        "replace": false,
+        "reset_mileage": null
+      },
+      {
+        "action": "Battery Swap",
+        "targets": ["Derailleur", "Shifter"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": null
+      }
+    ],
+    "Suspension": [
+      {
+        "action": "Fork Basic Service",
+        "targets": ["Fork"],
+        "tags": ["Oil change lower leg", "Cleaning & Lubrication"],
+        "replace": false,
+        "reset_mileage": null
+      },
+      {
+        "action": "Fork Full Service",
+        "targets": ["Fork"],
+        "tags": [
+          "Oil change lower leg",
+          "Dust seals replacement",
+          "Cleaning & Lubrication",
+          "Air sleeve service",
+          "Damper seal replacement",
+          "Air seal replacement",
+          "Damper Oil Change",
+          "Test pressure"
+        ],
+        "replace": false,
+        "reset_mileage": null
+      },
+      {
+        "action": "Shock Basic Service",
+        "targets": ["Shock"],
+        "tags": [
+          "Air Can Service",
+          "Air Sleeve Seals Replacement",
+          "Lubrication air can",
+          "Hardware Inspection",
+          "Pressure test"
+        ],
+        "replace": false,
+        "reset_mileage": null
+      },
+      {
+        "action": "Shock Full Service",
+        "targets": ["Shock"],
+        "tags": [
+          "Full Damper service",
+          "Full Seal Kit Replacement",
+          "Oil Change (Damper)",
+          "IFP Service & Recharge",
+          "Nitrogen Charge",
+          "Valve/Shim Stack Service",
+          "Air Can Service",
+          "Air Sleeve Seals Replacement",
+          "Lubrication air can",
+          "Hardware Inspection",
+          "Pressure test",
+          "Dust Wiper Replacement"
+        ],
+        "replace": false,
+        "reset_mileage": null
+      },
+      {
+        "action": "Fork adjusment",
+        "targets": ["Fork"],
+        "tags": ["Pressure", "sag", "token settings"],
+        "replace": false,
+        "reset_mileage": null
+      },
+      {
+        "action": "Shock adjusment",
+        "targets": ["Shock"],
+        "tags": ["Pressure", "sag", "token settings"],
+        "replace": false,
+        "reset_mileage": null
+      },
+      {
+        "action": "Remote Lever Service",
+        "targets": ["Remote Lever"],
+        "tags": ["Seřízení ovládací páčky z řidítek"],
+        "replace": false,
+        "reset_mileage": null
+      }
+    ],
+    "Wheels": [
+      {
+        "action": "Tire Replacement",
+        "targets": ["Tire"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": true
+      },
+      {
+        "action": "Sealant Refresh",
+        "targets": ["Sealant"],
+        "tags": ["New sealant"],
+        "replace": true,
+        "reset_mileage": true
+      },
+      {
+        "action": "Tubeless Conversion",
+        "targets": ["Tire", "Rim", "Sealant"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Wheel Truing",
+        "targets": ["Rim"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Hub Service",
+        "targets": ["Hub"],
+        "tags": ["Bearing Regrease", "Freehub Clean & Lube", "Pawl/Ratchet Replacement", "Seal Replacement"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Hub Bearing Replacement",
+        "targets": ["Hub"],
+        "tags": ["6902-2RS", "6802-2RS", "6803-2RS", "15267-2RS", "6903-2RS", "Enduro Bearings"],
+        "replace": true,
+        "reset_mileage": true
+      }
+    ],
+    "Cockpit": [
+      {
+        "action": "Headset Service",
+        "targets": ["Headset"],
+        "tags": ["Cleaning and lubricating the headset", "Play Adjustment"],
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Headset Bearing Replacement",
+        "targets": ["Headset"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": true
+      },
+      {
+        "action": "Bolt Torque Check",
+        "targets": ["Stem"],
+        "tags": ["Check the tightness of all screws"],
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Grip Replecament",
+        "targets": ["Grips"],
+        "tags": null,
+        "replace": true,
+        "reset_mileage": true
+      }
+    ],
+    "Saddle & Seatpost": [
+      {
+        "action": "Dropper Service",
+        "targets": ["Seatpost"],
+        "tags": ["Brass Keys Replacement", "Fresh Slick Honey", "Clean", "New Seal Kit", "Air Pressure Adjustment"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Remote Cable Replaced",
+        "targets": ["Seatpost"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": false
+      }
+    ],
+    "Frame": [
+      {
+        "action": "Pivot Bearings Replacement",
+        "targets": ["Frame"],
+        "tags": ["Full Set", "Only rear triangle", "Main Pivot Only", "Enduro bearings"],
+        "replace": false,
+        "reset_mileage": true
+      },
+      {
+        "action": "Hanger Replacement",
+        "targets": ["Hanger"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Hanger Alignment",
+        "targets": ["Hanger"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Apply frame shield",
+        "targets": ["Frame"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": false
+      }
+    ],
+    "E-bike": [
+      {
+        "action": "Firmware Update",
+        "targets": ["E-Bike System"],
+        "tags": null,
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Battery Check",
+        "targets": ["Battery"],
+        "tags": ["Deep Charge / geBalancing", "Battery Health Check"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "Hardware Maintenance",
+        "targets": ["Motor"],
+        "tags": ["Contacts Cleaned", "Dielectric Grease applied", "Motor Bolts Tightened"],
+        "replace": false,
+        "reset_mileage": false
+      },
+      {
+        "action": "System Diagnostics",
+        "targets": ["E-Bike System"],
+        "tags": ["No Errors Found", "Error Log Cleared", "Sensor Calibration"],
+        "replace": false,
+        "reset_mileage": false
+      }
+    ],
+    "Other": [
+      {
+        "action": "Pedal Service",
+        "targets": ["Pedals"],
+        "tags": ["Regrease", "Pins Replaced", "New Bearings"],
+        "replace": false,
+        "reset_mileage": false
+      }
+    ]
+  }
 }

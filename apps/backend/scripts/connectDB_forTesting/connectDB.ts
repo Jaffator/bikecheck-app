@@ -1,21 +1,20 @@
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { SeedBikeAddData } from './seed_bikes_infodata';
-import { SeedComponent } from './seed_type_components';
-import { SeedUser } from './seed_users';
-import { SeedActions } from './seed_actions';
 import dotenv from 'dotenv';
 import path from 'node:path';
 
-function connectToDB() {
+type DBtype = 'dev' | 'test';
+
+export function connectToDB(type: DBtype = 'dev') {
   // prepare env path
   const currentDirPath: string = __dirname;
   const backendRootPath: string = path.resolve(currentDirPath, '..', '..');
-  dotenv.config({ path: path.join(backendRootPath, '.env.test') });
+  const envfile = type === 'dev' ? '.env' : `.env.test`;
+  dotenv.config({ path: path.join(backendRootPath, envfile) });
   const connectionString: string | undefined = process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error(`DATABASE_URL is not defined. Expected in ${path.join(backendRootPath, '.env.test')}`);
+    throw new Error(`DATABASE_URL is not defined. Expected in ${path.join(backendRootPath, envfile)}`);
   }
   // create prisma instance
   console.log('connecting to db...');
@@ -37,20 +36,4 @@ function connectToDB() {
   }
   console.log('Prisma Client connected to db...');
   return prisma;
-}
-
-export async function runSeed(): Promise<void> {
-  const prisma = connectToDB();
-  const seedUser = new SeedUser(prisma);
-  const seedComponent = new SeedComponent(prisma);
-  const seedBikeData = new SeedBikeAddData(prisma);
-  const seedActions = new SeedActions(prisma);
-  try {
-    // await seedUser.run();
-    // await seedComponent.run();
-    // await seedBikeData.run();
-    await seedActions.run();
-  } finally {
-    await prisma.$disconnect();
-  }
 }

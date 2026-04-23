@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { bikes } from '@prisma/client';
+// import { bikes } from '@prisma/client';
 
 export class SeedBike {
   constructor(private readonly prisma: PrismaClient) {}
@@ -25,7 +25,7 @@ export class SeedBike {
     const bike = {
       organization_id: null,
       user_id: userid!.id,
-      bike_brand: brand?.bike_brand,
+      bike_brand: brand?.bike_brand || '',
       bike_model: 'Stumpjumper',
       bike_type_id: biketypeid?.id,
       year: 2023,
@@ -39,7 +39,7 @@ export class SeedBike {
     };
     try {
       const result = await this.prisma.bikes.create({
-        data: { ...bike },
+        data: bike,
       });
       console.log(`✅ bike - seeded OK ${result.bike_brand} ${result.bike_model}`);
     } catch (error) {

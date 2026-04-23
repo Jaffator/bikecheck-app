@@ -1,12 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ValidateNested, IsString } from 'class-validator';
+import { CreateMountedComponentsDto } from '../../component/dto/create-components';
 import { components_mounted } from '@prisma/client';
+
+export class AssembleBikeComponentsDto {
+  @ApiProperty({ type: () => CreateMountedComponentsDto })
+  @ValidateNested()
+  @Type(() => CreateMountedComponentsDto)
+  component!: CreateMountedComponentsDto;
+
+  @ApiProperty({ example: 'Fork' })
+  @IsString()
+  component_name!: string;
+}
 
 export class ResponseComponentsDto implements components_mounted {
   @ApiProperty({ example: 5000, nullable: true })
   mileage_at_last_service_km!: number | null;
-
-  @ApiProperty({ example: 'Custom Brake Pad', nullable: true })
-  custom_component_type!: string | null;
 
   @ApiProperty({ example: 1 })
   id!: number;
@@ -14,10 +25,10 @@ export class ResponseComponentsDto implements components_mounted {
   @ApiProperty({ example: 1 })
   bike_id!: number;
 
-  @ApiProperty({ example: 12 })
+  @ApiProperty({ example: 12, nullable: true })
   component_type_id!: number;
 
-  @ApiProperty({ example: 'rear' })
+  @ApiProperty({ example: 'rear', nullable: true })
   position!: string | null;
 
   @ApiProperty({ example: '2026-03-26T10:00:00.000Z', nullable: true })
@@ -41,9 +52,6 @@ export class ResponseComponentsDto implements components_mounted {
   @ApiProperty({ example: true, nullable: true })
   is_active!: boolean | null;
 
-  @ApiProperty({ example: 2, nullable: true })
-  interval_id!: number | null;
-
   @ApiProperty({ example: 350, nullable: true })
   brake_load_since_service!: number | null;
 
@@ -58,4 +66,21 @@ export class ResponseComponentsDto implements components_mounted {
 
   @ApiProperty({ example: 'Fox 38 Factory Grip2', nullable: true })
   component_desc!: string | null;
+
+  @ApiProperty({ example: 1200, nullable: true })
+  total_minutes_used!: number | null;
+
+  @ApiProperty({ example: 350, nullable: true })
+  minutes_since_last_service!: number | null;
+}
+
+export class ResponseComponentGroupDto {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 'Drivetrain' })
+  group_name!: string;
+
+  @ApiProperty({ example: false })
+  side_choice!: boolean;
 }

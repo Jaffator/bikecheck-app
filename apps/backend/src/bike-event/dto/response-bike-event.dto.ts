@@ -26,4 +26,46 @@ export class ResponseBikeEventDto {
   deleted_at!: Date | null;
 }
 
-export class ResponseGroupsDto {}
+export class ActionComponentsDto {
+  @ApiProperty({ example: 42 })
+  id!: number;
+
+  @ApiProperty({ example: 'Brake' })
+  component_type!: string;
+
+  @ApiProperty({ example: 'Shimano XT M8100' })
+  component_desc!: string | null;
+
+  @ApiProperty({ example: 'front' })
+  position!: string | null;
+}
+
+export class ActionDto {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 'Bleed brake' })
+  action_name!: string;
+
+  @ApiProperty({ example: false })
+  replace_action!: boolean;
+
+  @ApiProperty({ example: ['maintenance', 'hydraulic'] })
+  tags!: string[];
+
+  @ApiProperty({ type: [ActionComponentsDto] })
+  components!: ActionComponentsDto[];
+}
+
+export class ResponseActionsAndComponenetsDto {
+  group_id!: number;
+
+  @ApiProperty({ example: 'Suspension' })
+  group_name!: string;
+
+  @ApiProperty({ example: false })
+  side_choice!: boolean;
+
+  @ApiProperty({ type: [ActionDto] })
+  actions!: ActionDto[];
+}

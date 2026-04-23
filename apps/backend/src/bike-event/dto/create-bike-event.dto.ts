@@ -4,7 +4,7 @@ import { IsInt, IsOptional, IsString, IsNumber, MaxLength } from 'class-validato
 export class CreateBikeEventDto {
   @IsInt()
   @ApiProperty({ example: 1 })
-  bike_id: number;
+  bike_id!: number;
 
   @IsOptional()
   @IsString()
@@ -14,6 +14,16 @@ export class CreateBikeEventDto {
 
   @IsOptional()
   @IsNumber()
-  @ApiProperty({ example: 150.50, nullable: true })
+  @ApiProperty({ example: 150.5, nullable: true })
   total_cost?: number;
+}
+
+export class ActionsComponentsGroupDto {
+  @IsInt()
+  @ApiProperty({ example: 1 })
+  group_id!: number;
+
+  @IsInt()
+  @ApiProperty({ example: 1 })
+  bike_id!: number;
 }

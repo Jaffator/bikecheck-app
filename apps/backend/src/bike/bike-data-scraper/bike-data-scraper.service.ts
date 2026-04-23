@@ -4,8 +4,8 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { chromium } from 'playwright-extra';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import stealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { AssembleBikeComponents } from './bike-data-scraper.types';
 import { SearchBikeExternalResponseDto } from '../dto/response-bike.dto';
+import { AssembleBikeComponentsDto } from '../../component/dto/response-components';
 import type { component_types as ComponentType } from '@prisma/client';
 import { TimeoutError } from 'rxjs';
 
@@ -80,7 +80,7 @@ export class BikeDataScrapeService {
    * @param url The URL of the bike for fetching components.
    * @returns Array of {id: number, component: string, desc: string}
    */
-  async externalGetBikeComponents(url: string): Promise<AssembleBikeComponents[]> {
+  async externalGetBikeComponents(url: string): Promise<AssembleBikeComponentsDto[]> {
     try {
       const bikeComponents = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
@@ -123,8 +123,8 @@ export class BikeDataScrapeService {
   private async assembleBikeComponents(
     dataArray: any[],
     components: ComponentType[],
-    result: AssembleBikeComponents[] = [],
-  ): Promise<AssembleBikeComponents[]> {
+    result: AssembleBikeComponentsDto[] = [],
+  ): Promise<AssembleBikeComponentsDto[]> {
     if (dataArray.length === 0) {
       return result;
     }
@@ -171,12 +171,11 @@ export class BikeDataScrapeService {
     component: ComponentType,
     desc: string,
     foundedPosititon: string | undefined,
-  ): AssembleBikeComponents[] {
-    const baseComponent: AssembleBikeComponents = {
+  ): AssembleBikeComponentsDto[] {
+    const baseComponent: AssembleBikeComponentsDto = {
       component: {
         bike_id: 0,
-        component_type_id: undefined,
-        custom_component_type: undefined,
+        component_type_id: 0,
         component_desc: desc,
         mounted_at: undefined,
         total_mileage_km: 0,

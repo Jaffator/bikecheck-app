@@ -1,6 +1,58 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "accounts": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "providerID": {
+          "type": "string"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "action_service_intervals": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "service_interval_km": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "service_interval_h": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "interval_km_downhill": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "brake_load_threshold": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "events_action": {
+          "$ref": "#/definitions/events_action"
+        }
+      }
+    },
     "bike_brands": {
       "type": "object",
       "properties": {
@@ -228,40 +280,23 @@
         }
       }
     },
-    "component_service_intervals": {
+    "component_groups": {
       "type": "object",
       "properties": {
         "id": {
           "type": "integer"
         },
-        "interval_km": {
-          "type": [
-            "integer",
-            "null"
-          ]
+        "group_name": {
+          "type": "string"
         },
-        "interval_days": {
-          "type": [
-            "integer",
-            "null"
-          ]
+        "side_choice": {
+          "type": "boolean",
+          "default": false
         },
-        "interval_km_downhill": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "brake_load_threshold": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "components_mounted": {
+        "component_types": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/components_mounted"
+            "$ref": "#/definitions/component_types"
           }
         }
       }
@@ -273,10 +308,7 @@
           "type": "integer"
         },
         "component_type": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "ebike": {
           "type": "boolean",
@@ -296,421 +328,27 @@
             }
           ]
         },
+        "users": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/users"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "components_mounted": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/components_mounted"
           }
-        }
-      }
-    },
-    "organization_members": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
         },
-        "organizations": {
-          "$ref": "#/definitions/organizations"
-        },
-        "organization_roles": {
-          "$ref": "#/definitions/organization_roles"
-        },
-        "users": {
-          "$ref": "#/definitions/users"
-        }
-      }
-    },
-    "organization_roles": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "code": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "sort_order": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "description": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "organization_members": {
+        "event_action_targets": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/organization_members"
+            "$ref": "#/definitions/event_action_targets"
           }
-        }
-      }
-    },
-    "organizations": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "name": {
-          "type": "string"
-        },
-        "created_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "is_deleted": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "deleted_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        },
-        "organization_members": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/organization_members"
-          }
-        }
-      }
-    },
-    "ride_styles": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "ride_style": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        }
-      }
-    },
-    "rides": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "started_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "duration_sec": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "distance_m": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "elevation_down_m": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "elevation_up_m": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "speed_down": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "speed_avg": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "braking_load_score": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "max_speed_kmh": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "is_deleted": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "deleted_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "bikes": {
-          "$ref": "#/definitions/bikes"
-        },
-        "users": {
-          "$ref": "#/definitions/users"
-        }
-      }
-    },
-    "users": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "name": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "email": {
-          "type": "string"
-        },
-        "password_hash": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "avatar_url": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "language": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "is_active": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": true
-        },
-        "created_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "last_login_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "currency": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "weight_kg": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "is_deleted": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "deleted_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "googleId": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "accounts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/accounts"
-          }
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        },
-        "organization_members": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/organization_members"
-          }
-        },
-        "refresh_tokens": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/refresh_tokens"
-          }
-        },
-        "rides": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/rides"
-          }
-        }
-      }
-    },
-    "wheel_sizes": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "size": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        }
-      }
-    },
-    "accounts": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "provider": {
-          "type": "string"
-        },
-        "providerID": {
-          "type": "string"
-        },
-        "users": {
-          "$ref": "#/definitions/users"
-        }
-      }
-    },
-    "refresh_tokens": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "refresh_token": {
-          "type": "string"
-        },
-        "expires_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "revoked": {
-          "type": "boolean",
-          "default": false
-        },
-        "revoked_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "user_agent": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "ip_address": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "users": {
-          "$ref": "#/definitions/users"
         }
       }
     },
@@ -806,15 +444,21 @@
             "null"
           ]
         },
-        "custom_component_type": {
+        "position": {
           "type": [
             "string",
             "null"
           ]
         },
-        "position": {
+        "total_minutes_used": {
           "type": [
-            "string",
+            "integer",
+            "null"
+          ]
+        },
+        "minutes_since_last_service": {
+          "type": [
+            "integer",
             "null"
           ]
         },
@@ -822,19 +466,91 @@
           "$ref": "#/definitions/bikes"
         },
         "component_types": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/component_types"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/component_types"
         },
-        "component_service_intervals": {
+        "events_components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/events_components"
+          }
+        },
+        "suspension_setup": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/suspension_setup"
+          }
+        },
+        "tire_setup": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/tire_setup"
+          }
+        }
+      }
+    },
+    "event_action_tags": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "event_action_tag": {
+          "type": "string"
+        },
+        "events_action": {
+          "$ref": "#/definitions/events_action"
+        }
+      }
+    },
+    "event_action_targets": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "component_types": {
+          "$ref": "#/definitions/component_types"
+        },
+        "events_action": {
+          "$ref": "#/definitions/events_action"
+        }
+      }
+    },
+    "events_action": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "action_name": {
+          "type": "string"
+        },
+        "replace_action": {
+          "type": "boolean",
+          "default": false
+        },
+        "action_service_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/action_service_intervals"
+          }
+        },
+        "event_action_tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event_action_tags"
+          }
+        },
+        "event_action_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event_action_targets"
+          }
+        },
+        "users": {
           "anyOf": [
             {
-              "$ref": "#/definitions/component_service_intervals"
+              "$ref": "#/definitions/users"
             },
             {
               "type": "null"
@@ -845,23 +561,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/events_components"
-          }
-        }
-      }
-    },
-    "component_groups": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "group_name": {
-          "type": "string"
-        },
-        "component_types": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/component_types"
           }
         }
       }
@@ -989,27 +688,504 @@
         "components_mounted": {
           "$ref": "#/definitions/components_mounted"
         },
-        "events_types": {
-          "$ref": "#/definitions/events_types"
+        "events_action": {
+          "$ref": "#/definitions/events_action"
         }
       }
     },
-    "events_types": {
+    "organization_members": {
       "type": "object",
       "properties": {
         "id": {
           "type": "integer"
         },
-        "action_name": {
+        "organizations": {
+          "$ref": "#/definitions/organizations"
+        },
+        "organization_roles": {
+          "$ref": "#/definitions/organization_roles"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "organization_roles": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sort_order": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "description": {
           "type": [
             "string",
             "null"
           ]
         },
-        "events_components": {
+        "organization_members": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/events_components"
+            "$ref": "#/definitions/organization_members"
+          }
+        }
+      }
+    },
+    "organizations": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "is_deleted": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "deleted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "bikes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bikes"
+          }
+        },
+        "organization_members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/organization_members"
+          }
+        }
+      }
+    },
+    "refresh_tokens": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "refresh_token": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "revoked": {
+          "type": "boolean",
+          "default": false
+        },
+        "revoked_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "user_agent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ip_address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "ride_styles": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "ride_style": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bikes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bikes"
+          }
+        }
+      }
+    },
+    "rides": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "started_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "duration_sec": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "distance_m": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "elevation_down_m": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "elevation_up_m": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "speed_down": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "speed_avg": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "braking_load_score": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "max_speed_kmh": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "is_deleted": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "deleted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "bikes": {
+          "$ref": "#/definitions/bikes"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "suspension_setup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "setup_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "pressure_psi": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "pressure_bar": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "sag_percentage": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "amount_tokens_spacers": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "rebound_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "rebound_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "compression_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "compression_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "components_mounted": {
+          "$ref": "#/definitions/components_mounted"
+        }
+      }
+    },
+    "tire_setup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "tire_pressure_bar": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "tire_pressure_psi": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "components_mounted": {
+          "$ref": "#/definitions/components_mounted"
+        }
+      }
+    },
+    "users": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "email": {
+          "type": "string"
+        },
+        "password_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "avatar_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_active": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "last_login_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "weight_kg": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "is_deleted": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "deleted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "googleId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/accounts"
+          }
+        },
+        "bikes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bikes"
+          }
+        },
+        "component_types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/component_types"
+          }
+        },
+        "events_action": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/events_action"
+          }
+        },
+        "organization_members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/organization_members"
+          }
+        },
+        "refresh_tokens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/refresh_tokens"
+          }
+        },
+        "rides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/rides"
+          }
+        }
+      }
+    },
+    "wheel_sizes": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "size": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bikes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bikes"
           }
         }
       }
@@ -1017,6 +1193,12 @@
   },
   "type": "object",
   "properties": {
+    "accounts": {
+      "$ref": "#/definitions/accounts"
+    },
+    "action_service_intervals": {
+      "$ref": "#/definitions/action_service_intervals"
+    },
     "bike_brands": {
       "$ref": "#/definitions/bike_brands"
     },
@@ -1032,11 +1214,29 @@
     "bikes": {
       "$ref": "#/definitions/bikes"
     },
-    "component_service_intervals": {
-      "$ref": "#/definitions/component_service_intervals"
+    "component_groups": {
+      "$ref": "#/definitions/component_groups"
     },
     "component_types": {
       "$ref": "#/definitions/component_types"
+    },
+    "components_mounted": {
+      "$ref": "#/definitions/components_mounted"
+    },
+    "event_action_tags": {
+      "$ref": "#/definitions/event_action_tags"
+    },
+    "event_action_targets": {
+      "$ref": "#/definitions/event_action_targets"
+    },
+    "events_action": {
+      "$ref": "#/definitions/events_action"
+    },
+    "events_bikes": {
+      "$ref": "#/definitions/events_bikes"
+    },
+    "events_components": {
+      "$ref": "#/definitions/events_components"
     },
     "organization_members": {
       "$ref": "#/definitions/organization_members"
@@ -1047,38 +1247,26 @@
     "organizations": {
       "$ref": "#/definitions/organizations"
     },
+    "refresh_tokens": {
+      "$ref": "#/definitions/refresh_tokens"
+    },
     "ride_styles": {
       "$ref": "#/definitions/ride_styles"
     },
     "rides": {
       "$ref": "#/definitions/rides"
     },
+    "suspension_setup": {
+      "$ref": "#/definitions/suspension_setup"
+    },
+    "tire_setup": {
+      "$ref": "#/definitions/tire_setup"
+    },
     "users": {
       "$ref": "#/definitions/users"
     },
     "wheel_sizes": {
       "$ref": "#/definitions/wheel_sizes"
-    },
-    "accounts": {
-      "$ref": "#/definitions/accounts"
-    },
-    "refresh_tokens": {
-      "$ref": "#/definitions/refresh_tokens"
-    },
-    "components_mounted": {
-      "$ref": "#/definitions/components_mounted"
-    },
-    "component_groups": {
-      "$ref": "#/definitions/component_groups"
-    },
-    "events_bikes": {
-      "$ref": "#/definitions/events_bikes"
-    },
-    "events_components": {
-      "$ref": "#/definitions/events_components"
-    },
-    "events_types": {
-      "$ref": "#/definitions/events_types"
     }
   }
 }

@@ -4,24 +4,29 @@ import { BikeEventService } from './bike-event.service';
 import { CreateBikeEventDto } from './dto/create-bike-event.dto';
 import { UpdateBikeEventDto } from './dto/update-bike-event.dto';
 import { ResponseBikeEventDto } from './dto/response-bike-event.dto';
+import { ResponseActionsAndComponenetsDto } from './dto/response-bike-event.dto';
+import { ActionsComponentsGroupDto } from './dto/create-bike-event.dto';
 
 @ApiTags('Bike Events')
 @Controller('bike-event')
 export class BikeEventController {
   constructor(private readonly bikeEventService: BikeEventService) {}
 
-  @Post()
+  // Create a new bike event
+  @Post('/create')
   @ApiBody({ type: CreateBikeEventDto })
   @ApiResponse({ status: 201, type: ResponseBikeEventDto })
   async create(@Body() dto: CreateBikeEventDto): Promise<ResponseBikeEventDto> {
     return this.bikeEventService.create(dto);
   }
 
-  // @Get('components-groups')
-  // @ApiResponse({ status: 200, type })
-  // async getGroups(): Promise<> {
-  //   return this.bikeEventService.findAll();
-  // }
+  // Get all actions and mounted componenets releated to group of componenets
+  @Post('/actions-on-group')
+  @ApiBody({ type: ActionsComponentsGroupDto })
+  @ApiResponse({ status: 201, type: ResponseActionsAndComponenetsDto })
+  async getActionsOnGroup(@Body() dto: ActionsComponentsGroupDto): Promise<ResponseActionsAndComponenetsDto> {
+    return this.bikeEventService.getActionsOnGroupComponents(dto);
+  }
 
   @Get(':id')
   @ApiResponse({ status: 200, type: ResponseBikeEventDto })

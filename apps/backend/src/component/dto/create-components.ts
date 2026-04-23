@@ -8,16 +8,10 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @IsPositive()
   bike_id!: number;
 
-  @IsOptional()
   @ApiProperty({ example: 12 })
   @IsInt()
   @IsPositive()
-  component_type_id?: number;
-
-  @ApiProperty({ example: 'Bearing' })
-  @IsOptional()
-  @IsString()
-  custom_component_type?: string;
+  component_type_id!: number;
 
   @IsOptional()
   @ApiProperty({ example: 'Fox 38 Factory Grip2', required: false, nullable: true })
@@ -66,5 +60,5 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @IsOptional()
   @ApiProperty({ example: '2026-03-20T10:00:00.000Z', required: false, nullable: true })
   @IsDateString()
-  last_serviced_at?: Date;
+  last_serviced_at?: Date | null;
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
@@ -9,7 +8,7 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NewBikeFormData } from './types/bike.types';
 import { StorageService } from '../storage/storage.service';
-import { AssembleBikeComponents } from './bike-data-scraper/bike-data-scraper.types';
+import { AssembleBikeComponentsDto } from '../component/dto/response-components';
 import 'dotenv/config';
 import path from 'path';
 
@@ -31,13 +30,13 @@ export class BikeService {
    * Used when external component data is not available
    * @param ebike If false, return only non-ebike components. If true, return all components.
    */
-  async getDefaultComponents(ebike: boolean): Promise<AssembleBikeComponents[]> {
+  async getDefaultComponents(ebike: boolean): Promise<AssembleBikeComponentsDto[]> {
     const componentTypes = await this.prisma.component_types.findMany({
       where: ebike ? {} : { ebike: false },
     });
 
     return componentTypes.flatMap((type) => {
-      const baseComponent: AssembleBikeComponents = {
+      const baseComponent: AssembleBikeComponentsDto = {
         component: {
           bike_id: 0,
           component_type_id: type.id,
@@ -49,10 +48,9 @@ export class BikeService {
           position: undefined,
           interval_id: undefined,
           brake_load_since_service: undefined,
-          last_serviced_at: undefined,
-          custom_component_type: undefined,
+          last_serviced_at: null,
         },
-        component_name: type.component_type!,
+        component_name: type.component_type,
       };
 
       // Components with position (brakes, wheels, etc.) return front + rear
@@ -60,11 +58,11 @@ export class BikeService {
         return [
           {
             component: { ...baseComponent.component, position: 'front' },
-            component_name: type.component_type!,
+            component_name: type.component_type,
           },
           {
             component: { ...baseComponent.component, position: 'rear' },
-            component_name: type.component_type!,
+            component_name: type.component_type,
           },
         ];
       }
@@ -80,7 +78,6 @@ export class BikeService {
    */
   async createBikeWithComponents(dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
     let imageUrl = dto.bike.image_url;
-
     // Pokud je external URL (ne z R2), uložit do R2
     if (imageUrl && !imageUrl.includes(process.env.CLOUDFARE_PUBLIC_URL!)) {
       imageUrl = await this.storeFileFromUrl(imageUrl);
@@ -89,8 +86,18 @@ export class BikeService {
     const bikeToSave: CreateBikeDto = { ...dto.bike, image_url: imageUrl };
 
     const newbike = await this.prisma.$transaction(async (db) => {
+      // Save bike first to get ID
       const bike = await this.bikeRepository.createBike(bikeToSave, db);
-      const componentData = dto.components.map((data) => ({ ...data, bike_id: bike.id }));
+
+      // Filter out components with undefined component_type_id
+      const validComponents = dto.components.filter((c) => c.component_type_id !== undefined);
+
+      const componentData = validComponents.map((data) => ({
+        ...data,
+        bike_id: bike.id,
+        component_type_id: data.component_type_id,
+      }));
+
       await this.componentRepository.createMountedComponentMany(componentData, db);
       return bike;
     });

@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AssembleBikeComponents } from '../bike/bike-data-scraper/bike-data-scraper.types';
+import { ComponentRepository } from './component.repository';
+import { ResponseComponentGroupDto, AssembleBikeComponentsDto, ResponseComponentsDto } from './dto/response-components';
 
 @Injectable()
 export class ComponentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly componentRepository: ComponentRepository) {}
 
-  async getComponentsFormOptions(): Promise<AssembleBikeComponents[]> {
-    const componenetsTypes = await this.prisma.component_types.findMany({});
-    const mountedComponentFormOptions = componenetsTypes.map((comp) => {
+  async getComponentsFormOptions(): Promise<AssembleBikeComponentsDto[]> {
+    const componentsTypes = await this.componentRepository.getAllComponentTypes();
+    const mountedComponentFormOptions = componentsTypes.map((comp) => {
       return {
         component: {
           bike_id: 0, // Placeholder, should be set to the actual bike ID
@@ -23,20 +24,29 @@ export class ComponentService {
           last_serviced_at: undefined,
           custom_component_type: '',
         },
-        component_name: comp.component_type!,
+        component_name: comp.component_type,
       };
     });
     return mountedComponentFormOptions;
   }
+
+  async getMountedComponents(bikeId: string): Promise<ResponseComponentsDto[]> {
+    return await this.componentRepository.getMountedComponents(+bikeId);
+  }
+
+  async getAllComponentGroups(): Promise<ResponseComponentGroupDto[]> {
+    return await this.componentRepository.getAllComponentGroups();
+  }
 }
 
-// const prisma = new PrismaService();
-// const componentService = new ComponentService(prisma);
-// componentService
-//   .getComponentsFormOptions()
-//   .then((options) => {
-//     console.log(options);
-//   })
-//   .catch((error) => {
-//     console.error('Error fetching component form options:', error);
-//   });
+const prisma = new PrismaService();
+const componentRepository = new ComponentRepository(prisma);
+const componentService = new ComponentService(componentRepository);
+componentService
+  .getAllComponentGroups() // Replace '1' with the actual bike ID
+  .then((options) => {
+    console.log(options);
+  })
+  .catch((error) => {
+    console.error('Error fetching component form options:', error);
+  });

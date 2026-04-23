@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BikeEventRepository } from './bike-event.repository';
-import { CreateBikeEventDto } from './dto/create-bike-event.dto';
+import { ActionsComponentsGroupDto, CreateBikeEventDto } from './dto/create-bike-event.dto';
 import { UpdateBikeEventDto } from './dto/update-bike-event.dto';
-import { ResponseBikeEventDto } from './dto/response-bike-event.dto';
+import { ResponseActionsAndComponenetsDto, ResponseBikeEventDto } from './dto/response-bike-event.dto';
 
 @Injectable()
 export class BikeEventService {
   constructor(private readonly bikeEventRepository: BikeEventRepository) {}
+
+  async getActionsOnGroupComponents(dto: ActionsComponentsGroupDto): Promise<ResponseActionsAndComponenetsDto> {
+    return this.bikeEventRepository.getActionsOnGroupComponents(dto);
+  }
 
   async create(dto: CreateBikeEventDto): Promise<ResponseBikeEventDto> {
     return this.bikeEventRepository.create(dto);

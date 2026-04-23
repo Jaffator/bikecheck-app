@@ -506,7 +506,7 @@
         ]
       }
     },
-    "/api/component/form-options-news": {
+    "/api/component/defaults-form": {
       "get": {
         "operationId": "ComponentController_getFormOptions",
         "parameters": [],
@@ -516,7 +516,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateMountedComponentsDto"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssembleBikeComponentsDto"
+                  }
                 }
               }
             }
@@ -527,7 +530,64 @@
         ]
       }
     },
-    "/api/bike-event": {
+    "/api/component/groups": {
+      "get": {
+        "operationId": "ComponentController_getGroups",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseComponentGroupDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
+    "/api/component/mounted-components": {
+      "get": {
+        "operationId": "ComponentController_getMountedComponents",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseComponentsDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
+    "/api/bike-event/create": {
       "post": {
         "operationId": "BikeEventController_create",
         "parameters": [],
@@ -548,6 +608,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponseBikeEventDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike Events"
+        ]
+      }
+    },
+    "/api/bike-event/actions-on-group": {
+      "post": {
+        "operationId": "BikeEventController_getActionsOnGroup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionsComponentsGroupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseActionsAndComponenetsDto"
                 }
               }
             }
@@ -955,10 +1046,6 @@
             "type": "number",
             "example": 12
           },
-          "custom_component_type": {
-            "type": "string",
-            "example": "Bearing"
-          },
           "component_desc": {
             "type": "object",
             "example": "Fox 38 Factory Grip2",
@@ -1001,16 +1088,14 @@
             "nullable": true
           },
           "last_serviced_at": {
-            "format": "date-time",
-            "type": "string",
+            "type": "object",
             "example": "2026-03-20T10:00:00.000Z",
             "nullable": true
           }
         },
         "required": [
           "bike_id",
-          "component_type_id",
-          "custom_component_type"
+          "component_type_id"
         ]
       },
       "CreateBikeWithComponentsDto": {
@@ -1220,6 +1305,163 @@
         "type": "object",
         "properties": {}
       },
+      "AssembleBikeComponentsDto": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "$ref": "#/components/schemas/CreateMountedComponentsDto"
+          },
+          "component_name": {
+            "type": "string",
+            "example": "Fork"
+          }
+        },
+        "required": [
+          "component",
+          "component_name"
+        ]
+      },
+      "ResponseComponentGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "group_name": {
+            "type": "string",
+            "example": "Drivetrain"
+          },
+          "side_choice": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "group_name",
+          "side_choice"
+        ]
+      },
+      "ResponseComponentsDto": {
+        "type": "object",
+        "properties": {
+          "mileage_at_last_service_km": {
+            "type": "object",
+            "example": 5000,
+            "nullable": true
+          },
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 1
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12,
+            "nullable": true
+          },
+          "position": {
+            "type": "object",
+            "example": "rear",
+            "nullable": true
+          },
+          "mounted_at": {
+            "type": "object",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "removed_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "object",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "object",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "total_mileage_km": {
+            "type": "object",
+            "example": 1200,
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "example": "Mounted after spring service",
+            "nullable": true
+          },
+          "is_active": {
+            "type": "object",
+            "example": true,
+            "nullable": true
+          },
+          "brake_load_since_service": {
+            "type": "object",
+            "example": 350,
+            "nullable": true
+          },
+          "last_serviced_at": {
+            "type": "object",
+            "example": "2026-03-20T10:00:00.000Z",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "example": false,
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "component_desc": {
+            "type": "object",
+            "example": "Fox 38 Factory Grip2",
+            "nullable": true
+          },
+          "total_minutes_used": {
+            "type": "object",
+            "example": 1200,
+            "nullable": true
+          },
+          "minutes_since_last_service": {
+            "type": "object",
+            "example": 350,
+            "nullable": true
+          }
+        },
+        "required": [
+          "mileage_at_last_service_km",
+          "id",
+          "bike_id",
+          "component_type_id",
+          "position",
+          "mounted_at",
+          "removed_at",
+          "updated_at",
+          "created_at",
+          "total_mileage_km",
+          "note",
+          "is_active",
+          "brake_load_since_service",
+          "last_serviced_at",
+          "is_deleted",
+          "deleted_at",
+          "component_desc",
+          "total_minutes_used",
+          "minutes_since_last_service"
+        ]
+      },
       "CreateBikeEventDto": {
         "type": "object",
         "properties": {
@@ -1296,6 +1538,114 @@
           "updated_at",
           "is_deleted",
           "deleted_at"
+        ]
+      },
+      "ActionsComponentsGroupDto": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "group_id",
+          "bike_id"
+        ]
+      },
+      "ActionComponentsDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 42
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Brake"
+          },
+          "component_desc": {
+            "type": "object",
+            "example": "Shimano XT M8100"
+          },
+          "position": {
+            "type": "object",
+            "example": "front"
+          }
+        },
+        "required": [
+          "id",
+          "component_type",
+          "component_desc",
+          "position"
+        ]
+      },
+      "ActionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Bleed brake"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": false
+          },
+          "tags": {
+            "example": [
+              "maintenance",
+              "hydraulic"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionComponentsDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "action_name",
+          "replace_action",
+          "tags",
+          "components"
+        ]
+      },
+      "ResponseActionsAndComponenetsDto": {
+        "type": "object",
+        "properties": {
+          "group_name": {
+            "type": "string",
+            "example": "Suspension"
+          },
+          "side_choice": {
+            "type": "boolean",
+            "example": false
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionDto"
+            }
+          }
+        },
+        "required": [
+          "group_name",
+          "side_choice",
+          "actions"
         ]
       },
       "UpdateBikeEventDto": {
