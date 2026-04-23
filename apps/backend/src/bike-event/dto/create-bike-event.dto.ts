@@ -20,10 +20,10 @@ export class CreateBikeEventDto {
 
 export class ActionsComponentsGroupDto {
   @IsInt()
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 13 })
   group_id!: number;
 
   @IsInt()
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 141 })
   bike_id!: number;
 }
