@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, IsNumber, MaxLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsNumber, MaxLength, IsNotEmpty } from 'class-validator';
 
 export class CreateBikeEventDto {
   @IsInt()
@@ -20,10 +20,12 @@ export class CreateBikeEventDto {
 
 export class ActionsComponentsGroupDto {
   @IsInt()
+  @IsNotEmpty()
   @ApiProperty({ example: 13 })
   group_id!: number;
 
   @IsInt()
+  @IsNotEmpty()
   @ApiProperty({ example: 141 })
   bike_id!: number;
 }

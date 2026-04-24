@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ApiResponse, ApiBody, ApiTags } from '@nestjs/swagger';
 import { BikeEventService } from './bike-event.service';
 import { CreateBikeEventDto } from './dto/create-bike-event.dto';
@@ -21,10 +21,9 @@ export class BikeEventController {
   }
 
   // Get all actions and mounted componenets releated to group of componenets
-  @Post('/actions-on-group')
-  @ApiBody({ type: ActionsComponentsGroupDto })
-  @ApiResponse({ status: 201, type: ResponseActionsAndComponenetsDto })
-  async getActionsOnGroup(@Body() dto: ActionsComponentsGroupDto): Promise<ResponseActionsAndComponenetsDto> {
+  @Get('/actions-on-group')
+  @ApiResponse({ status: 200, type: ResponseActionsAndComponenetsDto })
+  async getActionsOnGroup(@Query() dto: ActionsComponentsGroupDto): Promise<ResponseActionsAndComponenetsDto> {
     return this.bikeEventService.getActionsOnGroupComponents(dto);
   }
 

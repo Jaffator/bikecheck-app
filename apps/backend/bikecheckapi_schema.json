@@ -3,7 +3,7 @@
   "paths": {
     "/api/users/{id}": {
       "get": {
-        "operationId": "User_getUser",
+        "operationId": "User getUser",
         "parameters": [
           {
             "name": "id",
@@ -32,7 +32,7 @@
         ]
       },
       "patch": {
-        "operationId": "User_updateUser",
+        "operationId": "User updateUser",
         "parameters": [
           {
             "name": "id",
@@ -73,7 +73,7 @@
     },
     "/api/users/create": {
       "post": {
-        "operationId": "User_createUser",
+        "operationId": "User createUser",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -105,7 +105,7 @@
     },
     "/api/auth/test": {
       "get": {
-        "operationId": "Auth_test",
+        "operationId": "Auth test",
         "parameters": [],
         "responses": {
           "200": {
@@ -119,7 +119,7 @@
     },
     "/api/auth/register": {
       "post": {
-        "operationId": "Auth_createUser",
+        "operationId": "Auth createUser",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -150,7 +150,7 @@
     },
     "/api/auth/refresh": {
       "post": {
-        "operationId": "Auth_refreshUser",
+        "operationId": "Auth refreshUser",
         "parameters": [],
         "responses": {
           "200": {
@@ -164,7 +164,7 @@
     },
     "/api/auth/logout": {
       "post": {
-        "operationId": "Auth_logout",
+        "operationId": "Auth logout",
         "parameters": [],
         "responses": {
           "200": {
@@ -178,7 +178,7 @@
     },
     "/api/auth/login": {
       "post": {
-        "operationId": "Auth_login",
+        "operationId": "Auth login",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -209,7 +209,7 @@
     },
     "/api/auth/google": {
       "get": {
-        "operationId": "Auth_googleAuth",
+        "operationId": "Auth googleAuth",
         "parameters": [],
         "responses": {
           "200": {
@@ -223,7 +223,7 @@
     },
     "/api/auth/google/callback": {
       "get": {
-        "operationId": "Auth_googleAuthRedirect",
+        "operationId": "Auth googleAuthRedirect",
         "parameters": [],
         "responses": {
           "203": {
@@ -244,7 +244,7 @@
     },
     "/api/bike/create": {
       "post": {
-        "operationId": "Bike_createBike",
+        "operationId": "Bike createBike",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -275,7 +275,7 @@
     },
     "/api/bike/search-external": {
       "post": {
-        "operationId": "Bike_searchBikeExternal",
+        "operationId": "Bike searchBikeExternal",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -309,7 +309,7 @@
     },
     "/api/bike/search-external/components": {
       "post": {
-        "operationId": "Bike_searchComponentsExternal",
+        "operationId": "Bike searchComponentsExternal",
         "parameters": [],
         "responses": {
           "200": {
@@ -333,7 +333,7 @@
     },
     "/api/bike/form-options": {
       "get": {
-        "operationId": "Bike_formOptions",
+        "operationId": "Bike formOptions",
         "parameters": [],
         "responses": {
           "200": {
@@ -347,7 +347,7 @@
     },
     "/api/bike/default-components": {
       "get": {
-        "operationId": "Bike_getDefaultComponents",
+        "operationId": "Bike getDefaultComponents",
         "parameters": [
           {
             "name": "ebike",
@@ -380,7 +380,7 @@
     },
     "/api/bike/{id}": {
       "get": {
-        "operationId": "Bike_findBike",
+        "operationId": "Bike findBike",
         "parameters": [
           {
             "name": "id",
@@ -408,7 +408,7 @@
         ]
       },
       "patch": {
-        "operationId": "Bike_update",
+        "operationId": "Bike update",
         "parameters": [
           {
             "name": "id",
@@ -448,7 +448,7 @@
     },
     "/api/bike/delsoft/{id}": {
       "delete": {
-        "operationId": "Bike_deleteSoft",
+        "operationId": "Bike deleteSoft",
         "parameters": [
           {
             "name": "id",
@@ -478,7 +478,7 @@
     },
     "/api/bike/delhard/{id}": {
       "delete": {
-        "operationId": "Bike_deleteHard",
+        "operationId": "Bike deleteHard",
         "parameters": [
           {
             "name": "id",
@@ -508,7 +508,7 @@
     },
     "/api/component/defaults-form": {
       "get": {
-        "operationId": "Component_getFormOptions",
+        "operationId": "Component getFormOptions",
         "parameters": [],
         "responses": {
           "200": {
@@ -532,7 +532,7 @@
     },
     "/api/component/groups": {
       "get": {
-        "operationId": "Component_getGroups",
+        "operationId": "Component getGroups",
         "parameters": [],
         "responses": {
           "200": {
@@ -556,7 +556,7 @@
     },
     "/api/component/mounted-components": {
       "get": {
-        "operationId": "Component_getMountedComponents",
+        "operationId": "Component getMountedComponents",
         "parameters": [
           {
             "name": "bikeId",
@@ -589,7 +589,7 @@
     },
     "/api/bike-event/create": {
       "post": {
-        "operationId": "BikeEvent_create",
+        "operationId": "BikeEvent create",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -619,21 +619,30 @@
       }
     },
     "/api/bike-event/actions-on-group": {
-      "post": {
-        "operationId": "BikeEvent_getActionsOnGroup",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ActionsComponentsGroupDto"
-              }
+      "get": {
+        "operationId": "BikeEvent getActionsOnGroup",
+        "parameters": [
+          {
+            "name": "group_id",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": 13,
+              "type": "number"
+            }
+          },
+          {
+            "name": "bike_id",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": 141,
+              "type": "number"
             }
           }
-        },
+        ],
         "responses": {
-          "201": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -651,7 +660,7 @@
     },
     "/api/bike-event/{id}": {
       "get": {
-        "operationId": "BikeEvent_findOne",
+        "operationId": "BikeEvent findOne",
         "parameters": [
           {
             "name": "id",
@@ -679,7 +688,7 @@
         ]
       },
       "patch": {
-        "operationId": "BikeEvent_update",
+        "operationId": "BikeEvent update",
         "parameters": [
           {
             "name": "id",
@@ -719,7 +728,7 @@
     },
     "/api/bike-event/bike/{bikeId}": {
       "get": {
-        "operationId": "BikeEvent_findByBikeId",
+        "operationId": "BikeEvent findByBikeId",
         "parameters": [
           {
             "name": "bikeId",
@@ -752,7 +761,7 @@
     },
     "/api/bike-event/soft/{id}": {
       "delete": {
-        "operationId": "BikeEvent_softDelete",
+        "operationId": "BikeEvent softDelete",
         "parameters": [
           {
             "name": "id",
@@ -782,7 +791,7 @@
     },
     "/api/bike-event/hard/{id}": {
       "delete": {
-        "operationId": "BikeEvent_hardDelete",
+        "operationId": "BikeEvent hardDelete",
         "parameters": [
           {
             "name": "id",
@@ -1538,23 +1547,6 @@
           "updated_at",
           "is_deleted",
           "deleted_at"
-        ]
-      },
-      "ActionsComponentsGroupDto": {
-        "type": "object",
-        "properties": {
-          "group_id": {
-            "type": "number",
-            "example": 13
-          },
-          "bike_id": {
-            "type": "number",
-            "example": 141
-          }
-        },
-        "required": [
-          "group_id",
-          "bike_id"
         ]
       },
       "ActionComponentsDto": {

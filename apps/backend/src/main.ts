@@ -24,7 +24,7 @@ async function bootstrap(): Promise<void> {
     SwaggerModule.createDocument(app, config, {
       operationIdFactory: (controllerKey: string, methodKey: string) => {
         const cleanKey = controllerKey.replace('Controller', '').trim();
-        return `${cleanKey}_${methodKey}`;
+        return `${cleanKey} ${methodKey}`;
       },
     });
   SwaggerModule.setup('api', app, documentFactory);
