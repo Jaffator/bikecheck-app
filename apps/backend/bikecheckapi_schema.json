@@ -186,6 +186,15 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LoginDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Login payload",
+                  "value": {
+                    "email": "john.doe@example.com",
+                    "password": "strongPassword123"
+                  }
+                }
               }
             }
           }
