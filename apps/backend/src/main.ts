@@ -20,12 +20,13 @@ async function bootstrap(): Promise<void> {
     .setDescription('Bikechek API documentation')
     .setVersion('1.0')
     .build();
-
   const documentFactory = () =>
     SwaggerModule.createDocument(app, config, {
-      operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+      operationIdFactory: (controllerKey: string, methodKey: string) => {
+        const cleanKey = controllerKey.replace('Controller', '').trim();
+        return `${cleanKey}_${methodKey}`;
+      },
     });
-
   SwaggerModule.setup('api', app, documentFactory);
 
   app.useGlobalPipes(
