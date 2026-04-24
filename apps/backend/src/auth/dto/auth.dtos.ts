@@ -6,31 +6,31 @@ import { IsEmail, IsString, MinLength, IsBoolean } from 'class-validator';
 export class LoginDto {
   @ApiProperty({ example: 'john.doe@example.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'strongPassword123' })
   @IsString()
   @MinLength(8)
-  password: string;
+  password!: string;
 }
 
 export class LoginGoogleDto {
   @IsString()
   @MinLength(1)
-  avatar_url: string;
+  avatar_url!: string;
 
   @IsString()
   @MinLength(1)
-  name: string;
+  name!: string;
 
   @IsString()
   @MinLength(1)
-  googleId: string;
+  googleId!: string;
 
   @IsBoolean()
-  emailVerified: boolean;
+  emailVerified!: boolean;
 
   @IsString()
   @IsEmail()
-  email: string;
+  email!: string;
 }

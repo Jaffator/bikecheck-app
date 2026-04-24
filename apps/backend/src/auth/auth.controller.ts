@@ -66,10 +66,10 @@ export class AuthController {
   }
 
   // --- LOGIN user, classic email password endpoint
-  @ApiBody({ type: LoginDto })
   @Public()
-  @UseGuards(LocalAuthGuard)
+  @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 202, type: UserResponseDto })
+  @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<UserResponseDto> {
