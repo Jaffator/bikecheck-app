@@ -1,49 +1,51 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BikeEventRepository } from './bike-event.repository';
-import { ActionsComponentsGroupDto, CreateBikeEventDto } from './dto/create-bike-event.dto';
+import { Create_BikeEventDto } from './dto/create-bike-event.dto';
 import { UpdateBikeEventDto } from './dto/update-bike-event.dto';
-import { ResponseActionsAndComponenetsDto, ResponseBikeEventDto } from './dto/response-bike-event.dto';
+import { Response_ActionsOnGroup_Dto, Response_BikeEvent_Dto } from './dto/response-bike-event.dto';
 
 @Injectable()
 export class BikeEventService {
   constructor(private readonly bikeEventRepository: BikeEventRepository) {}
 
-  async getActionsOnGroupComponents(dto: ActionsComponentsGroupDto): Promise<ResponseActionsAndComponenetsDto> {
-    return this.bikeEventRepository.getActionsOnGroupComponents(dto);
+  // Get all actions and mounted componenets releated to group of componenets
+  async actionsGroupComponents(groupId: number, bikeId: number): Promise<Response_ActionsOnGroup_Dto> {
+    return this.bikeEventRepository.getActionsGroupComponents(groupId, bikeId);
   }
 
-  async create(dto: CreateBikeEventDto): Promise<ResponseBikeEventDto> {
+  // Create a new bike event (with actions, attachments and replaced components)
+  async create(dto: Create_BikeEventDto): Promise<Response_BikeEvent_Dto> {
     return this.bikeEventRepository.create(dto);
   }
 
-  async findAll(): Promise<ResponseBikeEventDto[]> {
-    return this.bikeEventRepository.findAll();
-  }
+  // async findAll(): Promise<Response_BikeEvent_Dto[]> {
+  //   return this.bikeEventRepository.findAll();
+  // }
 
-  async findById(id: number): Promise<ResponseBikeEventDto> {
-    const event = await this.bikeEventRepository.findById(id);
-    if (!event) {
-      throw new NotFoundException(`Bike event with ID ${id} not found`);
-    }
-    return event;
-  }
+  // async findByBikeId(bikeId: number): Promise<Response_BikeEvent_Dto[]> {
+  //   return this.bikeEventRepository.findByBikeId(bikeId);
+  // }
 
-  async findByBikeId(bikeId: number): Promise<ResponseBikeEventDto[]> {
-    return this.bikeEventRepository.findByBikeId(bikeId);
-  }
+  // async update(id: number, dto: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto> {
+  //   await this.findById(id);
+  //   return this.bikeEventRepository.update(id, dto);
+  // }
 
-  async update(id: number, dto: UpdateBikeEventDto): Promise<ResponseBikeEventDto> {
-    await this.findById(id);
-    return this.bikeEventRepository.update(id, dto);
-  }
+  // async softDelete(id: number): Promise<Response_BikeEvent_Dto> {
+  //   await this.findById(id);
+  //   return this.bikeEventRepository.softDelete(id);
+  // }
 
-  async softDelete(id: number): Promise<ResponseBikeEventDto> {
-    await this.findById(id);
-    return this.bikeEventRepository.softDelete(id);
-  }
+  // async hardDelete(id: number): Promise<Response_BikeEvent_Dto> {
+  //   await this.findById(id);
+  //   return this.bikeEventRepository.hardDelete(id);
+  // }
 
-  async hardDelete(id: number): Promise<ResponseBikeEventDto> {
-    await this.findById(id);
-    return this.bikeEventRepository.hardDelete(id);
-  }
+  // private async findById(id: number): Promise<Response_BikeEvent_Dto> {
+  //   const event = await this.bikeEventRepository.findById(id);
+  //   if (!event) {
+  //     throw new NotFoundException(`Bike event with ID ${id} not found`);
+  //   }
+  //   return event;
+  // }
 }

@@ -186,15 +186,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LoginDto"
-              },
-              "examples": {
-                "default": {
-                  "summary": "Login payload",
-                  "value": {
-                    "email": "john.doe@example.com",
-                    "password": "strongPassword123"
-                  }
-                }
               }
             }
           }
@@ -605,7 +596,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateBikeEventDto"
+                "$ref": "#/components/schemas/Create_BikeEventDto"
               }
             }
           }
@@ -616,14 +607,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseBikeEventDto"
+                  "$ref": "#/components/schemas/Response_BikeEvent_Dto"
                 }
               }
             }
           }
         },
         "tags": [
-          "Bike Events"
+          "BikeEvent"
         ]
       }
     },
@@ -632,50 +623,18 @@
         "operationId": "BikeEvent getActionsOnGroup",
         "parameters": [
           {
-            "name": "group_id",
+            "name": "groupId",
             "required": true,
             "in": "query",
             "schema": {
-              "example": 13,
-              "type": "number"
+              "type": "string"
             }
           },
           {
-            "name": "bike_id",
+            "name": "bikeId",
             "required": true,
             "in": "query",
             "schema": {
-              "example": 141,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseActionsAndComponenetsDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Bike Events"
-        ]
-      }
-    },
-    "/api/bike-event/{id}": {
-      "get": {
-        "operationId": "BikeEvent findOne",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
               "type": "string"
             }
           }
@@ -686,145 +645,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseBikeEventDto"
+                  "$ref": "#/components/schemas/Response_ActionsOnGroup_Dto"
                 }
               }
             }
           }
         },
         "tags": [
-          "Bike Events"
-        ]
-      },
-      "patch": {
-        "operationId": "BikeEvent update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateBikeEventDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseBikeEventDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Bike Events"
-        ]
-      }
-    },
-    "/api/bike-event/bike/{bikeId}": {
-      "get": {
-        "operationId": "BikeEvent findByBikeId",
-        "parameters": [
-          {
-            "name": "bikeId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResponseBikeEventDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Bike Events"
-        ]
-      }
-    },
-    "/api/bike-event/soft/{id}": {
-      "delete": {
-        "operationId": "BikeEvent softDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseBikeEventDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Bike Events"
-        ]
-      }
-    },
-    "/api/bike-event/hard/{id}": {
-      "delete": {
-        "operationId": "BikeEvent hardDelete",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseBikeEventDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Bike Events"
+          "BikeEvent"
         ]
       }
     }
@@ -1480,31 +1308,30 @@
           "minutes_since_last_service"
         ]
       },
-      "CreateBikeEventDto": {
+      "Create_BikeEventDto": {
         "type": "object",
         "properties": {
           "bike_id": {
             "type": "number",
-            "example": 1
+            "example": 15
+          },
+          "total_cost": {
+            "type": "number",
+            "example": 15
           },
           "note": {
             "type": "string",
             "example": "Replaced chain and cleaned drivetrain",
             "nullable": true
-          },
-          "total_cost": {
-            "type": "number",
-            "example": 150.5,
-            "nullable": true
           }
         },
         "required": [
           "bike_id",
-          "note",
-          "total_cost"
+          "total_cost",
+          "note"
         ]
       },
-      "ResponseBikeEventDto": {
+      "Response_BikeEvent_Dto": {
         "type": "object",
         "properties": {
           "id": {
@@ -1512,38 +1339,25 @@
             "example": 1
           },
           "bike_id": {
-            "type": "object",
-            "example": 15,
-            "nullable": true
+            "type": "number",
+            "example": 15
           },
           "note": {
-            "type": "object",
-            "example": "Replaced chain and cassette",
+            "type": "string",
+            "example": "Regular service",
             "nullable": true
           },
           "total_cost": {
-            "type": "object",
-            "example": 150.5,
-            "nullable": true
+            "type": "number",
+            "example": 350.5
           },
           "created_at": {
-            "type": "object",
-            "example": "2024-01-01T12:00:00Z",
-            "nullable": true
+            "format": "date-time",
+            "type": "string"
           },
           "updated_at": {
-            "type": "object",
-            "example": "2024-01-02T12:00:00Z",
-            "nullable": true
-          },
-          "is_deleted": {
-            "type": "object",
-            "example": false,
-            "nullable": true
-          },
-          "deleted_at": {
-            "type": "object",
-            "example": null,
+            "format": "date-time",
+            "type": "string",
             "nullable": true
           }
         },
@@ -1553,125 +1367,29 @@
           "note",
           "total_cost",
           "created_at",
-          "updated_at",
-          "is_deleted",
-          "deleted_at"
+          "updated_at"
         ]
       },
-      "ActionComponentsDto": {
+      "Response_ActionsOnGroup_Dto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "number",
-            "example": 42
-          },
-          "component_type": {
-            "type": "string",
-            "example": "Brake"
-          },
-          "component_desc": {
-            "type": "object",
-            "example": "Shimano XT M8100"
-          },
-          "position": {
-            "type": "object",
-            "example": "front"
-          }
-        },
-        "required": [
-          "id",
-          "component_type",
-          "component_desc",
-          "position"
-        ]
-      },
-      "ActionDto": {
-        "type": "object",
-        "properties": {
-          "id": {
+          "group_id": {
             "type": "number",
             "example": 1
           },
-          "action_name": {
-            "type": "string",
-            "example": "Bleed brake"
-          },
-          "replace_action": {
-            "type": "boolean",
-            "example": false
-          },
-          "tags": {
-            "example": [
-              "maintenance",
-              "hydraulic"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "components": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActionComponentsDto"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "action_name",
-          "replace_action",
-          "tags",
-          "components"
-        ]
-      },
-      "ResponseActionsAndComponenetsDto": {
-        "type": "object",
-        "properties": {
           "group_name": {
             "type": "string",
-            "example": "Suspension"
+            "example": "Brake System"
           },
           "side_choice": {
             "type": "boolean",
             "example": false
-          },
-          "actions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActionDto"
-            }
           }
         },
         "required": [
+          "group_id",
           "group_name",
-          "side_choice",
-          "actions"
-        ]
-      },
-      "UpdateBikeEventDto": {
-        "type": "object",
-        "properties": {
-          "bike_id": {
-            "type": "number",
-            "example": 1,
-            "nullable": true
-          },
-          "note": {
-            "type": "string",
-            "example": "Updated service note",
-            "nullable": true
-          },
-          "total_cost": {
-            "type": "number",
-            "example": 200,
-            "nullable": true
-          }
-        },
-        "required": [
-          "bike_id",
-          "note",
-          "total_cost"
+          "side_choice"
         ]
       }
     }

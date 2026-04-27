@@ -14,10 +14,7 @@ describe('ComponentService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ComponentService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [ComponentService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<ComponentService>(ComponentService);
@@ -77,9 +74,7 @@ describe('ComponentService', () => {
 
     it('should map all component types correctly', async () => {
       // ARRANGE
-      const mockComponentTypes = [
-        { id: 5, component_type: 'Chain', group_id: 2, ebike: false },
-      ];
+      const mockComponentTypes = [{ id: 5, component_type: 'Chain', group_id: 2, ebike: false }];
       mockPrismaService.component_types.findMany.mockResolvedValue(mockComponentTypes);
 
       // ACT
@@ -107,14 +102,10 @@ describe('ComponentService', () => {
 
     it('should handle prisma errors', async () => {
       // ARRANGE
-      mockPrismaService.component_types.findMany.mockRejectedValue(
-        new Error('Database connection failed'),
-      );
+      mockPrismaService.component_types.findMany.mockRejectedValue(new Error('Database connection failed'));
 
       // ACT & ASSERT
-      await expect(service.getComponentsFormOptions()).rejects.toThrow(
-        'Database connection failed',
-      );
+      await expect(service.getComponentsFormOptions()).rejects.toThrow('Database connection failed');
     });
   });
 });

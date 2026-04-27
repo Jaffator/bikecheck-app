@@ -16,7 +16,6 @@ import { UAParser } from 'ua-parser-js';
 export interface AuthRequest extends Request {
   user: UserFull;
 }
-
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -67,19 +66,7 @@ export class AuthController {
 
   // --- LOGIN user, classic email password endpoint
   @Public()
-  @ApiBody({
-    type: LoginDto,
-    required: true,
-    examples: {
-      default: {
-        summary: 'Login payload',
-        value: {
-          email: 'john.doe@example.com',
-          password: 'strongPassword123',
-        },
-      },
-    },
-  })
+  @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 202, type: UserResponseDto })
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)

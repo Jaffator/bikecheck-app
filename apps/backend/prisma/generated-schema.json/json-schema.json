@@ -611,6 +611,12 @@
           ],
           "format": "date-time"
         },
+        "bike_event_attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bike_event_attachments"
+          }
+        },
         "bikes": {
           "anyOf": [
             {
@@ -1189,6 +1195,33 @@
           }
         }
       }
+    },
+    "bike_event_attachments": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "content_type": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "events_bikes": {
+          "$ref": "#/definitions/events_bikes"
+        }
+      }
     }
   },
   "type": "object",
@@ -1267,6 +1300,9 @@
     },
     "wheel_sizes": {
       "$ref": "#/definitions/wheel_sizes"
+    },
+    "bike_event_attachments": {
+      "$ref": "#/definitions/bike_event_attachments"
     }
   }
 }

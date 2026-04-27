@@ -1,26 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ActionsComponentsGroupDto, CreateBikeEventDto } from './dto/create-bike-event.dto';
+import { Create_BikeEventDto } from './dto/create-bike-event.dto';
 import { UpdateBikeEventDto } from './dto/update-bike-event.dto';
-import { ResponseActionsAndComponenetsDto, ResponseBikeEventDto } from './dto/response-bike-event.dto';
-import { Prisma } from '@prisma/client';
-
-type DbClient = PrismaService | Prisma.TransactionClient;
+import { Response_ActionsOnGroup_Dto, Response_BikeEvent_Dto } from './dto/response-bike-event.dto';
 
 @Injectable()
 export class BikeEventRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getActionsOnGroupComponents(dto: ActionsComponentsGroupDto): Promise<ResponseActionsAndComponenetsDto> {
+  // Based on GroupID and BikeID het all actions
+  async getActionsGroupComponents(groupId: number, bikeId: number): Promise<Response_ActionsOnGroup_Dto> {
     const group = await this.prisma.component_groups.findUnique({
-      where: { id: dto.group_id },
+      where: { id: groupId },
     });
     const actions = await this.prisma.events_action.findMany({
       where: {
         event_action_targets: {
           some: {
             component_types: {
-              component_group_id: dto.group_id,
+              component_group_id: groupId,
             },
           },
         },
@@ -41,7 +39,7 @@ export class BikeEventRepository {
                 component_type: true,
                 components_mounted: {
                   where: {
-                    bike_id: dto.bike_id,
+                    bike_id: bikeId,
                     is_active: true,
                   },
                   select: {
@@ -77,52 +75,171 @@ export class BikeEventRepository {
       side_choice: Boolean(group!.side_choice),
       actions: mappedAction,
     };
-    console.log(actionsOnGroupComponents);
     return actionsOnGroupComponents;
   }
 
-  async create(data: CreateBikeEventDto, db: DbClient = this.prisma): Promise<ResponseBikeEventDto> {
-    return await db.events_bikes.create({ data });
-  }
+  // Create new bike event
+  async create(data: Create_BikeEventDto): Promise<Response_BikeEvent_Dto> {
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. Vytvoř bike event
+      const bikeEvent = await tx.events_bikes.create({
+        data: {
+          bike_id: data.bike_id,
+          note: data.note,
+          total_cost: data.total_cost,
+        },
+      });
 
-  async findAll(): Promise<ResponseBikeEventDto[]> {
-    return await this.prisma.events_bikes.findMany({
-      where: { is_deleted: false },
-      orderBy: { created_at: 'desc' },
+      // 2. Servisní akce – jedna events_components na každou zapojenou komponentu
+      if (data.actions_done?.length) {
+        const rows = data.actions_done.flatMap((action) =>
+          action.mounted_components_involved.map((componentId) => ({
+            bike_event_id: bikeEvent.id,
+            event_action_id: action.action_id,
+            component_mounted_id: componentId,
+            note: action.description,
+            partial_cost: action.partial_cost,
+            part_replaced: false,
+          })),
+        );
+        await tx.events_components.createMany({ data: rows });
+      }
+
+      // 3. Výměny komponent
+      if (data.actions_replaced?.length) {
+        for (const replacement of data.actions_replaced) {
+          // Deaktivuj starou komponentu
+          await tx.components_mounted.update({
+            where: { id: replacement.old_component_mounted_id },
+            data: { is_active: false },
+          });
+
+          // Vytvoř novou komponentu
+          const newComponent = await tx.components_mounted.create({
+            data: {
+              bike_id: data.bike_id,
+              component_type_id: replacement.component_type_id,
+              component_desc: replacement.new_component_desc,
+              is_active: true,
+            },
+          });
+
+          // Zaloguj výměnu jako akci
+          await tx.events_components.create({
+            data: {
+              bike_event_id: bikeEvent.id,
+              event_action_id: replacement.action_id,
+              component_mounted_id: newComponent.id,
+              note: replacement.note,
+              partial_cost: replacement.partial_cost ?? 0,
+              part_replaced: true,
+            },
+          });
+        }
+      }
+
+      // 4. Načti výsledek s relacemi
+      const created = await tx.events_bikes.findUniqueOrThrow({
+        where: { id: bikeEvent.id },
+        include: {
+          events_components: {
+            include: {
+              events_action: {
+                include: { event_action_tags: true },
+              },
+              components_mounted: {
+                include: { component_types: true },
+              },
+            },
+          },
+        },
+      });
+
+      // 5. Seskup events_components podle action_id → ActionDto[]
+      type ActionEntry = {
+        id: number;
+        action_name: string;
+        replace_action: boolean;
+        event_action_tags: { event_action_tag: string }[];
+        components: { id: number; component_desc: string | null; position: string | null; component_type: string }[];
+      };
+      const actionMap = new Map<number, ActionEntry>();
+
+      for (const comp of created.events_components) {
+        const actionId = comp.event_action_id;
+        if (!actionMap.has(actionId)) {
+          actionMap.set(actionId, {
+            id: comp.events_action.id,
+            action_name: comp.events_action.action_name,
+            replace_action: comp.events_action.replace_action,
+            event_action_tags: comp.events_action.event_action_tags,
+            components: [],
+          });
+        }
+        actionMap.get(actionId)!.components.push({
+          id: comp.component_mounted_id,
+          component_desc: comp.components_mounted.component_desc,
+          position: comp.components_mounted.position,
+          component_type: comp.components_mounted.component_types.component_type,
+        });
+      }
+
+      return {
+        id: created.id,
+        bike_id: created.bike_id!,
+        note: created.note ?? undefined,
+        total_cost: Number(created.total_cost),
+        created_at: created.created_at!,
+        updated_at: created.updated_at ?? undefined,
+        actions: Array.from(actionMap.values()).map((action) => ({
+          id: action.id,
+          action_name: action.action_name,
+          replace_action: action.replace_action,
+          tags: action.event_action_tags.map((t) => t.event_action_tag),
+          components: action.components,
+        })),
+      };
     });
   }
 
-  async findById(id: number): Promise<ResponseBikeEventDto | null> {
-    return await this.prisma.events_bikes.findUnique({
-      where: { id, is_deleted: false },
-    });
-  }
+  // async findAll(): Promise<Response_BikeEvent_Dto[]> {
+  //   return await this.prisma.events_bikes.findMany({
+  //     where: { is_deleted: false },
+  //     orderBy: { created_at: 'desc' },
+  //   });
+  // }
 
-  async findByBikeId(bikeId: number): Promise<ResponseBikeEventDto[]> {
-    return await this.prisma.events_bikes.findMany({
-      where: { bike_id: bikeId, is_deleted: false },
-      orderBy: { created_at: 'desc' },
-    });
-  }
+  // async findById(id: number): Promise<Response_BikeEvent_Dto | null> {
+  //   return await this.prisma.events_bikes.findUnique({
+  //     where: { id, is_deleted: false },
+  //   });
+  // }
 
-  async update(id: number, data: UpdateBikeEventDto): Promise<ResponseBikeEventDto> {
-    return await this.prisma.events_bikes.update({
-      where: { id },
-      data: { ...data, updated_at: new Date() },
-    });
-  }
+  // async findByBikeId(bikeId: number): Promise<Response_BikeEvent_Dto[]> {
+  //   return await this.prisma.events_bikes.findMany({
+  //     where: { bike_id: bikeId, is_deleted: false },
+  //     orderBy: { created_at: 'desc' },
+  //   });
+  // }
 
-  async softDelete(id: number): Promise<ResponseBikeEventDto> {
-    return await this.prisma.events_bikes.update({
-      where: { id },
-      data: {
-        is_deleted: true,
-        deleted_at: new Date(),
-      },
-    });
-  }
+  // async update(id: number, data: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto> {
+  //   return await this.prisma.events_bikes.update({
+  //     where: { id },
+  //     data: { ...data, updated_at: new Date() },
+  //   });
+  // }
 
-  async hardDelete(id: number): Promise<ResponseBikeEventDto> {
-    return await this.prisma.events_bikes.delete({ where: { id } });
-  }
+  // async softDelete(id: number): Promise<Response_BikeEvent_Dto> {
+  //   return await this.prisma.events_bikes.update({
+  //     where: { id },
+  //     data: {
+  //       is_deleted: true,
+  //       deleted_at: new Date(),
+  //     },
+  //   });
+  // }
+
+  // async hardDelete(id: number): Promise<Response_BikeEvent_Dto> {
+  //   return await this.prisma.events_bikes.delete({ where: { id } });
+  // }
 }
