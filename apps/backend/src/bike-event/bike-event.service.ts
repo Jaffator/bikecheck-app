@@ -18,12 +18,20 @@ export class BikeEventService {
     return this.bikeEventRepository.create(dto);
   }
 
+  async findAllBikeEvents(bikeId: number): Promise<Response_BikeEvent_Dto[]> {
+    return this.bikeEventRepository.findAllByBikeId(bikeId);
+  }
+
+  async softDelete(bikeEventId: number): Promise<void> {
+    await this.bikeEventRepository.softDelete(bikeEventId);
+  }
+
+  async hardDelete(bikeEventId: number): Promise<void> {
+    await this.bikeEventRepository.hardDelete(bikeEventId);
+  }
+
   // async findAll(): Promise<Response_BikeEvent_Dto[]> {
   //   return this.bikeEventRepository.findAll();
-  // }
-
-  // async findByBikeId(bikeId: number): Promise<Response_BikeEvent_Dto[]> {
-  //   return this.bikeEventRepository.findByBikeId(bikeId);
   // }
 
   // async update(id: number, dto: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto> {

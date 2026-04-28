@@ -27,16 +27,28 @@ export class BikeEventController {
     return this.bikeEventService.actionsGroupComponents(+groupId, +bikeId);
   }
 
+  @Get('/findAll/:bikeId')
+  @ApiResponse({ status: 200, type: Response_BikeEvent_Dto, isArray: true })
+  async findAllBikeEvents(@Param('bikeId') bikeId: string): Promise<Response_BikeEvent_Dto[]> {
+    return this.bikeEventService.findAllBikeEvents(+bikeId);
+  }
+
+  @Delete('/delsoft/:id')
+  @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })
+  async softDelete(@Param('id') id: string): Promise<void> {
+    return this.bikeEventService.softDelete(+id);
+  }
+
+  @Delete('/delhard/:id')
+  @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })
+  async hardDelete(@Param('id') id: string): Promise<void> {
+    return this.bikeEventService.hardDelete(+id);
+  }
+
   // @Get(':id')
   // @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })
   // async findOne(@Param('id') id: string): Promise<Response_BikeEvent_Dto> {
   //   return this.bikeEventService.findById(+id);
-  // }
-
-  // @Get('bike/:bikeId')
-  // @ApiResponse({ status: 200, type: Response_BikeEvent_Dto, isArray: true })
-  // async findByBikeId(@Param('bikeId') bikeId: string): Promise<Response_BikeEvent_Dto[]> {
-  //   return this.bikeEventService.findByBikeId(+bikeId);
   // }
 
   // @Patch(':id')
@@ -44,17 +56,5 @@ export class BikeEventController {
   // @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })S
   // async update(@Param('id') id: string, @Body() dto: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto> {
   //   return this.bikeEventService.update(+id, dto);
-  // }
-
-  // @Delete('/soft/:id')
-  // @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })
-  // async softDelete(@Param('id') id: string): Promise<Response_BikeEvent_Dto> {
-  //   return this.bikeEventService.softDelete(+id);
-  // }
-
-  // @Delete('/hard/:id')
-  // @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })
-  // async hardDelete(@Param('id') id: string): Promise<Response_BikeEvent_Dto> {
-  //   return this.bikeEventService.hardDelete(+id);
   // }
 }

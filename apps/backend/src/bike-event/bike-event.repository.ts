@@ -259,18 +259,16 @@ export class BikeEventRepository {
     });
   }
 
-  async update(id: number, data: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto | null> {
-    await this.prisma.events_bikes.update({
-      where: { id },
-      data: { ...data, updated_at: new Date() },
-    });
-    return this.findById(id);
+  async hardDelete(id: number): Promise<void> {
+    await this.prisma.events_bikes.delete({ where: { id } });
   }
 }
-
-// async hardDelete(id: number): Promise<Response_BikeEvent_Dto> {
-//   return await this.prisma.events_bikes.delete({ where: { id } });
-// }
+// async update(id: number, data: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto | null> {
+//   await this.prisma.events_bikes.update({
+//     where: { id },
+//     data: { ...data, updated_at: new Date() },
+//   });
+//   return this.findById(id);
 // }
 
 // async function run() {

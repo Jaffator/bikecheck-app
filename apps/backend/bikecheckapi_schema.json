@@ -655,6 +655,99 @@
           "BikeEvent"
         ]
       }
+    },
+    "/api/bike-event/findAll/{bikeId}": {
+      "get": {
+        "operationId": "BikeEvent findAllBikeEvents",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/bike-event/delsoft/{id}": {
+      "delete": {
+        "operationId": "BikeEvent softDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/bike-event/delhard/{id}": {
+      "delete": {
+        "operationId": "BikeEvent hardDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
     }
   },
   "info": {
