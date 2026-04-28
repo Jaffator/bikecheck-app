@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Create_BikeEventDto } from './dto/create-bike-event.dto';
+import { UpdateBikeEventDto } from './dto/update-bike-event.dto';
 import { Response_ActionsOnGroup_Dto, Response_BikeEvent_Dto } from './dto/response-bike-event.dto';
 
 @Injectable()
@@ -81,10 +82,10 @@ export class BikeEventRepository {
   }
 
   // ---------------------------------------------------------------
-  // -------------------- Create new bike event --------------------
+  // -------------------- Create new Bike Event --------------------
   // ---------------------------------------------------------------
   async create(data: Create_BikeEventDto): Promise<Response_BikeEvent_Dto> {
-    return await this.prisma.$transaction(async (tx) => {
+    const bikeEventID = await this.prisma.$transaction(async (tx) => {
       // 1. Create bike event
       const bikeEvent = await tx.events_bikes.create({
         data: {
@@ -117,7 +118,19 @@ export class BikeEventRepository {
         }
       }
 
-      // 3. Component replacements – deactivate old component, create new component, log action with part_replaced = true
+      // 3. Attachments
+      if (data.attachment?.length) {
+        await tx.bike_event_attachments.createMany({
+          data: data.attachment.map((a) => ({
+            bike_event_id: bikeEvent.id,
+            name: a.name ?? '',
+            url: a.url ?? '',
+            content_type: a.content_type ?? '',
+          })),
+        });
+      }
+
+      // 4. Component replacements – deactivate old component, create new component, log action with part_replaced = true
       if (data.actions_replaced?.length) {
         for (const replacement of data.actions_replaced) {
           // Deactivate old component
@@ -154,62 +167,13 @@ export class BikeEventRepository {
           });
         }
       }
-
-      // 4. Load the result with relations
-      const createdBikeEvent = await tx.events_bikes.findUniqueOrThrow({
-        where: { id: bikeEvent.id },
-        include: {
-          event_actions_done: {
-            include: {
-              events_action: true,
-              action_done_component_map: {
-                include: {
-                  components_mounted: {
-                    include: {
-                      component_types: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      // 5. Mapuj na response DTO
-      return {
-        id: createdBikeEvent.id,
-        bike_id: createdBikeEvent.bike_id!,
-        note: createdBikeEvent.note ?? undefined,
-        total_cost: Number(createdBikeEvent.total_cost),
-        created_at: createdBikeEvent.created_at!,
-        updated_at: createdBikeEvent.updated_at ?? undefined,
-        actions_done: createdBikeEvent.event_actions_done.map((actionDone) => ({
-          action_id: actionDone.event_action_id,
-          action_name: actionDone.events_action!.action_name,
-          partial_cost: Number(actionDone.partial_cost),
-          replace_action: actionDone.events_action!.replace_action,
-          note: actionDone.note,
-          mounted_components: actionDone.action_done_component_map.map((junc) => ({
-            id: junc.components_mounted.id,
-            component_desc: junc.components_mounted.component_desc,
-            position: junc.components_mounted.position,
-            component_type: junc.components_mounted.component_types.component_type,
-          })),
-        })),
-      };
+      return bikeEvent.id;
     });
+    // 4. Load the result bike event with all related data to return
+    return (await this.findById(bikeEventID))!;
   }
 
-  private async mapBikeEvent() {
-    // bike event
-    // actions done
-    // mounted components involved in actions
-    // replaced components
-    // attachments
-  }
-
-  async findById(bikeEvent_id: number) {
+  async findById(bikeEvent_id: number): Promise<Response_BikeEvent_Dto | null> {
     const bikeEvent = await this.prisma.events_bikes.findUnique({
       where: { id: bikeEvent_id },
       include: {
@@ -227,80 +191,100 @@ export class BikeEventRepository {
             },
           },
         },
+        bike_event_attachments: true,
       },
     });
 
-    console.log(bikeEvent);
+    return this.mapBikeEvent(bikeEvent);
   }
 
-  // async findAll(): Promise<Response_BikeEvent_Dto[]> {
-  //   return await this.prisma.events_bikes.findMany({
-  //     where: { is_deleted: false },
-  //     orderBy: { created_at: 'desc' },
-  //   });
-  // }
+  async findAllByBikeId(bikeId: number): Promise<Response_BikeEvent_Dto[]> {
+    const bikeEvents = await this.prisma.events_bikes.findMany({
+      where: { bike_id: bikeId, is_deleted: false },
+      include: {
+        event_actions_done: {
+          include: {
+            events_action: true,
+            action_done_component_map: {
+              include: {
+                components_mounted: {
+                  include: {
+                    component_types: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    return bikeEvents.map((bikeEvent) => this.mapBikeEvent(bikeEvent));
+  }
+  private mapBikeEvent(bikeEvent: any): Response_BikeEvent_Dto {
+    return {
+      id: bikeEvent.id,
+      bike_id: bikeEvent.bike_id!,
+      note: bikeEvent.note,
+      total_cost: Number(bikeEvent.total_cost),
+      created_at: bikeEvent.created_at!,
+      updated_at: bikeEvent.updated_at,
+      attachments: bikeEvent.bike_event_attachments?.map((a) => ({
+        id: a.id,
+        name: a.name,
+        content_type: a.content_type,
+        url: a.url,
+      })),
+      actions_done: bikeEvent.event_actions_done.map((actionDone) => ({
+        action_id: actionDone.event_action_id,
+        action_name: actionDone.events_action.action_name,
+        partial_cost: Number(actionDone.partial_cost),
+        replace_action: actionDone.events_action.replace_action,
+        note: actionDone.note ?? null,
+        mounted_components: actionDone.action_done_component_map.map((junc) => ({
+          id: junc.components_mounted.id,
+          component_desc: junc.components_mounted.component_desc,
+          position: junc.components_mounted.position,
+          component_type: junc.components_mounted.component_types.component_type,
+        })),
+      })),
+    };
+  }
+  async softDelete(id: number): Promise<void> {
+    await this.prisma.events_bikes.update({
+      where: { id },
+      data: {
+        is_deleted: true,
+        deleted_at: new Date(),
+      },
+    });
+  }
 
-  // async findByBikeId(bikeId: number): Promise<Response_BikeEvent_Dto[]> {
-  //   return await this.prisma.events_bikes.findMany({
-  //     where: { bike_id: bikeId, is_deleted: false },
-  //     orderBy: { created_at: 'desc' },
-  //   });
-  // }
-
-  // async update(id: number, data: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto> {
-  //   return await this.prisma.events_bikes.update({
-  //     where: { id },
-  //     data: { ...data, updated_at: new Date() },
-  //   });
-  // }
-
-  // async softDelete(id: number): Promise<Response_BikeEvent_Dto> {
-  //   return await this.prisma.events_bikes.update({
-  //     where: { id },
-  //     data: {
-  //       is_deleted: true,
-  //       deleted_at: new Date(),
-  //     },
-  //   });
-  // }
-
-  // async hardDelete(id: number): Promise<Response_BikeEvent_Dto> {
-  //   return await this.prisma.events_bikes.delete({ where: { id } });
-  // }
+  async update(id: number, data: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto | null> {
+    await this.prisma.events_bikes.update({
+      where: { id },
+      data: { ...data, updated_at: new Date() },
+    });
+    return this.findById(id);
+  }
 }
+
+// async hardDelete(id: number): Promise<Response_BikeEvent_Dto> {
+//   return await this.prisma.events_bikes.delete({ where: { id } });
+// }
+// }
 
 // async function run() {
 //   const prisma = new PrismaService();
 
 //   try {
 //     const repository = new BikeEventRepository(prisma);
-//     // const result = await repository.findById(2);
-//     const newEvent = await repository.create({
-//       bike_id: 95,
-//       total_cost: 150,
-//       note: 'Replaced chain and cleaned drivetrain',
-//       actions_done: [
-//         {
-//           action_id: 1,
-//           description: 'Replaced chain',
-//           partial_cost: 100,
-//           part_replaced: true,
-//           mounted_components_involved: [45], // Assuming this is the ID of the new component
-//         },
-//         {
-//           action_id: 2,
-//           description: 'Cleaned drivetrain',
-//           partial_cost: 50,
-//           part_replaced: false,
-//           mounted_components_involved: [46], // Assuming this is the ID of the new component
-//         },
-//       ],
-//     });
-//     console.log(newEvent);
+//     const result = await repository.findAllByBikeId(95);
+//     console.log(result);
+//     // console.log(result.action_done_component_map);
 //   } catch (error) {
 //     console.error('Error fetching bike event:', error);
 //   } finally {
-//     await prisma.onModuleDestroy();
+//     await prisma.$disconnect();
 //   }
 // }
 

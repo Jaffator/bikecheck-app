@@ -1,6 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-// Mounted components realeted to actions
+// 1. Attachments and components (used in Response_BikeEvent_Dto) ----
+export class AttachmentDto {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 'invoice.pdf' })
+  name?: string;
+
+  @ApiProperty({ example: 'application/pdf' })
+  content_type?: string;
+
+  @ApiProperty({ example: 'https://cdn.example.com/invoice.pdf' })
+  url?: string;
+}
+
+// 2. Mounted components related to actions
 export class MountedComponentDto {
   // Mounted component ID
   @ApiProperty({ example: 45 })
@@ -16,7 +31,7 @@ export class MountedComponentDto {
   component_type!: string;
 }
 
-// Action in Bike Event
+// 3. Action in Bike Event
 export class ActionsDoneDto {
   // Information about action
   // Action ID
@@ -26,8 +41,8 @@ export class ActionsDoneDto {
   @ApiProperty({ example: 'Brake bleed' })
   action_name!: string;
 
-  @ApiProperty({ example: 150 })
-  partial_cost!: number;
+  @ApiProperty({ example: 150, nullable: true })
+  partial_cost?: number | null;
 
   @ApiProperty({ example: false })
   replace_action!: boolean;
@@ -40,7 +55,9 @@ export class ActionsDoneDto {
   mounted_components!: MountedComponentDto[];
 }
 
-// ------------ CREATED Bike Event ------------
+// -----------------------------------------------------------------
+// ------------ Created Bike Event with related actions ------------
+// -----------------------------------------------------------------
 export class Response_BikeEvent_Dto {
   @ApiProperty({ example: 1 })
   id!: number;
@@ -49,7 +66,7 @@ export class Response_BikeEvent_Dto {
   bike_id!: number;
 
   @ApiProperty({ example: 'Regular service', nullable: true })
-  note?: string;
+  note?: string | null;
 
   @ApiProperty({ example: 350.5 })
   total_cost!: number;
@@ -58,13 +75,16 @@ export class Response_BikeEvent_Dto {
   created_at!: Date;
 
   @ApiProperty({ nullable: true })
-  updated_at?: Date;
+  updated_at?: Date | null;
 
   @ApiProperty({ type: [ActionsDoneDto] })
   actions_done!: ActionsDoneDto[];
+
+  @ApiProperty({ type: [AttachmentDto] })
+  attachments?: AttachmentDto[];
 }
 
-// ---- Actions (used in Response_ActionsOnGroup_Dto) ----
+// 1. Actions (used in Response_ActionsOnGroup_Dto) ----
 export class ActionDto {
   @ApiProperty({ example: 1 })
   id!: number;
@@ -82,7 +102,9 @@ export class ActionDto {
   components!: MountedComponentDto[];
 }
 
-// ---- Actions related to selected components group ----
+// ---------------------------------------------------------------------
+// ------------ Actions related to selected components group ------------
+// ---------------------------------------------------------------------
 export class Response_ActionsOnGroup_Dto {
   @ApiProperty({ example: 1 })
   group_id!: number;
@@ -95,19 +117,4 @@ export class Response_ActionsOnGroup_Dto {
 
   @ApiProperty({ type: [ActionDto] })
   actions!: ActionDto[];
-}
-
-// ---- Additional DTOs for attachments and components (used in Response_ActionsOnGroup_Dto) ----
-export class AttachmentDto {
-  @ApiProperty({ example: 1 })
-  id!: number;
-
-  @ApiProperty({ example: 'invoice.pdf' })
-  name!: string;
-
-  @ApiProperty({ example: 'application/pdf' })
-  content_type!: string;
-
-  @ApiProperty({ example: 'https://cdn.example.com/invoice.pdf' })
-  url!: string;
 }

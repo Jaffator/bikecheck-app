@@ -1308,6 +1308,67 @@
           "minutes_since_last_service"
         ]
       },
+      "Attachment_BikeEventDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "faktura.pdf"
+          },
+          "content_type": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://cdn.example.com/files/faktura.pdf"
+          }
+        },
+        "required": [
+          "name",
+          "content_type",
+          "url"
+        ]
+      },
+      "Actions_BikeEventDto": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "number",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "example": "Replaced chain"
+          },
+          "partial_cost": {
+            "type": "number",
+            "example": 50
+          },
+          "part_replaced": {
+            "type": "boolean",
+            "example": false
+          },
+          "mounted_components_involved": {
+            "example": [
+              15,
+              16
+            ],
+            "description": "IDs of components involved in this action",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "action_id",
+          "description",
+          "partial_cost",
+          "part_replaced",
+          "mounted_components_involved"
+        ]
+      },
       "Create_BikeEventDto": {
         "type": "object",
         "properties": {
@@ -1319,16 +1380,128 @@
             "type": "number",
             "example": 15
           },
+          "attachment": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment_BikeEventDto"
+            }
+          },
           "note": {
             "type": "string",
             "example": "Replaced chain and cleaned drivetrain",
             "nullable": true
+          },
+          "actions_done": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Actions_BikeEventDto"
+            }
           }
         },
         "required": [
           "bike_id",
           "total_cost",
-          "note"
+          "attachment",
+          "note",
+          "actions_done"
+        ]
+      },
+      "MountedComponentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 45
+          },
+          "component_desc": {
+            "type": "object",
+            "example": "Shimano XT M8100",
+            "nullable": true
+          },
+          "position": {
+            "type": "object",
+            "example": "front",
+            "nullable": true
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Brake"
+          }
+        },
+        "required": [
+          "id",
+          "component_desc",
+          "position",
+          "component_type"
+        ]
+      },
+      "ActionsDoneDto": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "number",
+            "example": 1
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Brake bleed"
+          },
+          "partial_cost": {
+            "type": "object",
+            "example": 150,
+            "nullable": true
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": false
+          },
+          "note": {
+            "type": "object",
+            "example": "Replaced brake pads",
+            "nullable": true
+          },
+          "mounted_components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MountedComponentDto"
+            }
+          }
+        },
+        "required": [
+          "action_id",
+          "action_name",
+          "partial_cost",
+          "replace_action",
+          "note",
+          "mounted_components"
+        ]
+      },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "invoice.pdf"
+          },
+          "content_type": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://cdn.example.com/invoice.pdf"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "content_type",
+          "url"
         ]
       },
       "Response_BikeEvent_Dto": {
@@ -1343,7 +1516,7 @@
             "example": 15
           },
           "note": {
-            "type": "string",
+            "type": "object",
             "example": "Regular service",
             "nullable": true
           },
@@ -1356,9 +1529,20 @@
             "type": "string"
           },
           "updated_at": {
-            "format": "date-time",
-            "type": "string",
+            "type": "object",
             "nullable": true
+          },
+          "actions_done": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionsDoneDto"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
           }
         },
         "required": [
@@ -1367,7 +1551,49 @@
           "note",
           "total_cost",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "actions_done",
+          "attachments"
+        ]
+      },
+      "ActionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Brake bleed"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": false
+          },
+          "tags": {
+            "example": [
+              "maintenance",
+              "hydraulic"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MountedComponentDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "action_name",
+          "replace_action",
+          "tags",
+          "components"
         ]
       },
       "Response_ActionsOnGroup_Dto": {
@@ -1384,12 +1610,19 @@
           "side_choice": {
             "type": "boolean",
             "example": false
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionDto"
+            }
           }
         },
         "required": [
           "group_id",
           "group_name",
-          "side_choice"
+          "side_choice",
+          "actions"
         ]
       }
     }
