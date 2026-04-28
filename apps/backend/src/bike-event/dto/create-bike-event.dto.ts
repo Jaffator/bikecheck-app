@@ -1,32 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, IsNumber, MaxLength, IsNotEmpty, IsPositive, IsBoolean } from 'class-validator';
-
-export class Create_BikeEventDto {
-  @IsNumber()
-  @IsNotEmpty()
-  @IsPositive()
-  @ApiProperty({ example: 15 })
-  bike_id!: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  @IsPositive()
-  @ApiProperty({ example: 15 })
-  total_cost!: number;
-
-  @IsOptional()
-  attachment?: Attachment_BikeEventDto[];
-
-  @IsString()
-  @MaxLength(500)
-  @ApiProperty({ example: 'Replaced chain and cleaned drivetrain', nullable: true })
-  note?: string;
-
-  actions_done!: Actions_BikeEventDto[];
-
-  @IsOptional()
-  actions_replaced?: Replaced_ComponentsDto[];
-}
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  IsNumber,
+  MaxLength,
+  IsNotEmpty,
+  IsPositive,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 // Replaced components during bike event, e.g. "Replaced chain", "Replaced brake pads", etc.
 export class Replaced_ComponentsDto {
@@ -119,4 +104,42 @@ export class Actions_OnGroupDto {
   @IsNotEmpty()
   @ApiProperty({ example: 2 })
   group_id!: number;
+}
+
+export class Create_BikeEventDto {
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @ApiProperty({ example: 15 })
+  bike_id!: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @ApiProperty({ example: 15 })
+  total_cost!: number;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => Attachment_BikeEventDto)
+  @ApiProperty({ type: [Attachment_BikeEventDto], nullable: true })
+  attachment?: Attachment_BikeEventDto[];
+
+  @IsString()
+  @MaxLength(500)
+  @ApiProperty({ example: 'Replaced chain and cleaned drivetrain', nullable: true })
+  note?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Actions_BikeEventDto)
+  @ApiProperty({ type: [Actions_BikeEventDto] })
+  actions_done!: Actions_BikeEventDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Replaced_ComponentsDto)
+  actions_replaced?: Replaced_ComponentsDto[];
 }

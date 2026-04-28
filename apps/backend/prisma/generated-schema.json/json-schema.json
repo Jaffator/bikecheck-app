@@ -18,6 +18,17 @@
         }
       }
     },
+    "action_done_component_map": {
+      "type": "object",
+      "properties": {
+        "components_mounted": {
+          "$ref": "#/definitions/components_mounted"
+        },
+        "event_actions_done": {
+          "$ref": "#/definitions/event_actions_done"
+        }
+      }
+    },
     "action_service_intervals": {
       "type": "object",
       "properties": {
@@ -67,6 +78,33 @@
           "items": {
             "$ref": "#/definitions/bike_models"
           }
+        }
+      }
+    },
+    "bike_event_attachments": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "content_type": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "events_bikes": {
+          "$ref": "#/definitions/events_bikes"
         }
       }
     },
@@ -462,17 +500,17 @@
             "null"
           ]
         },
+        "action_done_component_map": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/action_done_component_map"
+          }
+        },
         "bikes": {
           "$ref": "#/definitions/bikes"
         },
         "component_types": {
           "$ref": "#/definitions/component_types"
-        },
-        "events_components": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/events_components"
-          }
         },
         "suspension_setup": {
           "type": "array",
@@ -516,6 +554,52 @@
         }
       }
     },
+    "event_actions_done": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "partial_cost": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "part_replaced": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "action_done_component_map": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/action_done_component_map"
+          }
+        },
+        "events_bikes": {
+          "$ref": "#/definitions/events_bikes"
+        },
+        "events_action": {
+          "$ref": "#/definitions/events_action"
+        }
+      }
+    },
     "events_action": {
       "type": "object",
       "properties": {
@@ -547,6 +631,12 @@
             "$ref": "#/definitions/event_action_targets"
           }
         },
+        "event_actions_done": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event_actions_done"
+          }
+        },
         "users": {
           "anyOf": [
             {
@@ -556,12 +646,6 @@
               "type": "null"
             }
           ]
-        },
-        "events_components": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/events_components"
-          }
         }
       }
     },
@@ -617,6 +701,12 @@
             "$ref": "#/definitions/bike_event_attachments"
           }
         },
+        "event_actions_done": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event_actions_done"
+          }
+        },
         "bikes": {
           "anyOf": [
             {
@@ -626,76 +716,6 @@
               "type": "null"
             }
           ]
-        },
-        "events_components": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/events_components"
-          }
-        }
-      }
-    },
-    "events_components": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "note": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "partial_cost": {
-          "type": [
-            "number",
-            "null"
-          ]
-        },
-        "created_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "part_replaced": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "is_deleted": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "deleted_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "events_bikes": {
-          "$ref": "#/definitions/events_bikes"
-        },
-        "components_mounted": {
-          "$ref": "#/definitions/components_mounted"
-        },
-        "events_action": {
-          "$ref": "#/definitions/events_action"
         }
       }
     },
@@ -1195,33 +1215,6 @@
           }
         }
       }
-    },
-    "bike_event_attachments": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "content_type": {
-          "type": "string"
-        },
-        "created_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "events_bikes": {
-          "$ref": "#/definitions/events_bikes"
-        }
-      }
     }
   },
   "type": "object",
@@ -1229,11 +1222,17 @@
     "accounts": {
       "$ref": "#/definitions/accounts"
     },
+    "action_done_component_map": {
+      "$ref": "#/definitions/action_done_component_map"
+    },
     "action_service_intervals": {
       "$ref": "#/definitions/action_service_intervals"
     },
     "bike_brands": {
       "$ref": "#/definitions/bike_brands"
+    },
+    "bike_event_attachments": {
+      "$ref": "#/definitions/bike_event_attachments"
     },
     "bike_models": {
       "$ref": "#/definitions/bike_models"
@@ -1262,14 +1261,14 @@
     "event_action_targets": {
       "$ref": "#/definitions/event_action_targets"
     },
+    "event_actions_done": {
+      "$ref": "#/definitions/event_actions_done"
+    },
     "events_action": {
       "$ref": "#/definitions/events_action"
     },
     "events_bikes": {
       "$ref": "#/definitions/events_bikes"
-    },
-    "events_components": {
-      "$ref": "#/definitions/events_components"
     },
     "organization_members": {
       "$ref": "#/definitions/organization_members"
@@ -1300,9 +1299,6 @@
     },
     "wheel_sizes": {
       "$ref": "#/definitions/wheel_sizes"
-    },
-    "bike_event_attachments": {
-      "$ref": "#/definitions/bike_event_attachments"
     }
   }
 }

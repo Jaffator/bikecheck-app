@@ -54,18 +54,18 @@ export class BikeRepository {
   }
 }
 
-async function run() {
-  const prisma = new PrismaService();
+// async function run() {
+//   const prisma = new PrismaService();
 
-  try {
-    const repository = new BikeRepository(prisma);
-    const result = await repository.getBikeOptions();
-    console.log(result);
-  } catch (error) {
-    console.error('Error creating bike:', error);
-  } finally {
-    await prisma.onModuleDestroy();
-  }
-}
+//   try {
+//     const repository = new BikeRepository(prisma);
+//     const result = await repository.getBikeOptions();
+//     console.log(result);
+//   } catch (error) {
+//     console.error('Error creating bike:', error);
+//   } finally {
+//     await prisma.onModuleDestroy();
+//   }
+// }
 
-run().catch(console.error);
+// run().catch(console.error);
