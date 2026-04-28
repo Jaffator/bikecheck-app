@@ -135,7 +135,7 @@ export class BikeDataScrapeService {
       await this.assembleBikeComponents(componentNameExt, components, result);
     } else {
       const component = components.find((item) => {
-        return componentNameExt.toLowerCase().includes(item.component_type!.toLowerCase());
+        return componentNameExt.toLowerCase().includes(item.component_type.toLowerCase());
       });
       // It's string, try to find component type in db and build component object
       if (typeof componentNameExt === 'string') {
@@ -193,7 +193,7 @@ export class BikeDataScrapeService {
       return [
         {
           component: { ...baseComponent.component, component_type_id: component.id, position: foundedPosititon },
-          component_name: component.component_type!,
+          component_name: component.component_type,
         },
       ];
     }
@@ -202,11 +202,11 @@ export class BikeDataScrapeService {
       return [
         {
           component: { ...baseComponent.component, component_type_id: component.id, position: 'rear' },
-          component_name: component.component_type!,
+          component_name: component.component_type,
         },
         {
           component: { ...baseComponent.component, component_type_id: component.id, position: 'front' },
-          component_name: component.component_type!,
+          component_name: component.component_type,
         },
       ];
     }
@@ -217,7 +217,7 @@ export class BikeDataScrapeService {
           ...baseComponent.component,
           component_type_id: component.id,
         },
-        component_name: component.component_type!,
+        component_name: component.component_type,
       },
     ];
   }

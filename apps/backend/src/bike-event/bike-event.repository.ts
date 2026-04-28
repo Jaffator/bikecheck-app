@@ -2,7 +2,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Create_BikeEventDto } from './dto/create-bike-event.dto';
-import { UpdateBikeEventDto } from './dto/update-bike-event.dto';
 import { Response_ActionsOnGroup_Dto, Response_BikeEvent_Dto } from './dto/response-bike-event.dto';
 
 @Injectable()
@@ -118,7 +117,7 @@ export class BikeEventRepository {
         }
       }
 
-      // 3. Attachments
+      // 3. Handle Attachments
       if (data.attachment?.length) {
         await tx.bike_event_attachments.createMany({
           data: data.attachment.map((a) => ({
@@ -130,7 +129,7 @@ export class BikeEventRepository {
         });
       }
 
-      // 4. Component replacements – deactivate old component, create new component, log action with part_replaced = true
+      // 4. Component replacements – deactivate old component and create new one, log the replacement as an action with part_replaced = true
       if (data.actions_replaced?.length) {
         for (const replacement of data.actions_replaced) {
           // Deactivate old component
@@ -170,10 +169,13 @@ export class BikeEventRepository {
       return bikeEvent.id;
     });
     // 4. Load the result bike event with all related data to return
-    return (await this.findById(bikeEventID))!;
+    return await this.findById(bikeEventID);
   }
 
-  async findById(bikeEvent_id: number): Promise<Response_BikeEvent_Dto | null> {
+  // -----------------------------------------------------------------------
+  // -------------------- Get a single bike event by ID --------------------
+  // -----------------------------------------------------------------------
+  async findById(bikeEvent_id: number): Promise<Response_BikeEvent_Dto> {
     const bikeEvent = await this.prisma.events_bikes.findUnique({
       where: { id: bikeEvent_id },
       include: {
@@ -263,6 +265,7 @@ export class BikeEventRepository {
     await this.prisma.events_bikes.delete({ where: { id } });
   }
 }
+
 // async update(id: number, data: UpdateBikeEventDto): Promise<Response_BikeEvent_Dto | null> {
 //   await this.prisma.events_bikes.update({
 //     where: { id },

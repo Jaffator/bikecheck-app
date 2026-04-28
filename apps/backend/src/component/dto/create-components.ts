@@ -62,3 +62,10 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @IsDateString()
   last_serviced_at?: Date | null;
 }
+
+export class CreateCustomComponentsDto {
+  @ApiProperty({ example: 15 })
+  @IsInt()
+  @IsPositive()
+  component_group_id!: number;
+}

@@ -1,6 +1,33 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { bikes } from '@prisma/client';
 
+export class BikeTypeDto {
+  @ApiProperty({ example: 1 }) id!: number;
+  @ApiProperty({ example: 'Enduro', nullable: true }) type!: string | null;
+}
+
+export class WheelSizeDto {
+  @ApiProperty({ example: 1 }) id!: number;
+  @ApiProperty({ example: '29"', nullable: true }) size!: string | null;
+}
+
+export class BikeSizeDto {
+  @ApiProperty({ example: 1 }) id!: number;
+  @ApiProperty({ example: 'L', nullable: true }) size!: string | null;
+}
+
+export class RideStyleDto {
+  @ApiProperty({ example: 1 }) id!: number;
+  @ApiProperty({ example: 'Trail', nullable: true }) ride_style!: string | null;
+}
+
+export class NewBikeFormDataDto {
+  @ApiProperty({ type: [BikeTypeDto] }) bikeTypes!: BikeTypeDto[];
+  @ApiProperty({ type: [WheelSizeDto] }) wheelSizes!: WheelSizeDto[];
+  @ApiProperty({ type: [BikeSizeDto] }) bikeSizes!: BikeSizeDto[];
+  @ApiProperty({ type: [RideStyleDto] }) rideStyles!: RideStyleDto[];
+}
+
 export class SearchBikeExternalResponseDto {
   @ApiProperty({ example: 'Orbea Rallon' })
   name!: string;

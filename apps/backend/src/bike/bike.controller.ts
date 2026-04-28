@@ -1,15 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { BikeService } from './bike.service';
 import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.service';
 import { CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
-import { ApiResponse, ApiBody } from '@nestjs/swagger';
-import { SearchBikeExternalRequestDto } from './dto/create-bike.dto';
-import {
-  SearchBikeExternalResponseDto,
-  BikeComponentExternalResponseDto,
-  ResponseBikeDto,
-} from './dto/response-bike.dto';
+import { ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { SearchBikeExternalResponseDto, ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
+import { AssembleBikeComponentsDto } from '../component/dto/response-components';
 // import { NewBikeFormData } from './types/bike.types';
 
 @Controller('bike')
@@ -19,7 +15,7 @@ export class BikeController {
     private readonly searchBikeExternalService: BikeDataScrapeService,
   ) {}
 
-  // Create new bike with componenets - Image external URL
+  // ---------- POST Create new bike with componenets - Image external URL ----------
   @Post('/create')
   @ApiBody({ type: CreateBikeWithComponentsDto })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
@@ -27,45 +23,49 @@ export class BikeController {
     return await this.bikeService.createBikeWithComponents(dto);
   }
 
-  // Search External Bikelist - based on name and year
-  @Post('/search-external')
-  @HttpCode(200)
+  // ---------- GET External Bike List ----------
+  @Get('/external')
   @ApiResponse({ status: 200, type: SearchBikeExternalResponseDto, isArray: true })
-  async searchBikeExternal(@Body() dto: SearchBikeExternalRequestDto) {
-    return this.searchBikeExternalService.searchBikeList(dto.bikeName, dto.year);
+  @ApiQuery({ name: 'bikeName', type: String })
+  @ApiQuery({ name: 'year', type: String })
+  async searchBikeExternal(
+    @Query('bikeName') bikeName: string,
+    @Query('year') year: string,
+  ): Promise<SearchBikeExternalResponseDto[]> {
+    return this.searchBikeExternalService.searchBikeList(bikeName, year);
   }
 
-  // Search External Bike components
-  @Post('/search-external/components')
-  @HttpCode(200)
-  @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
-  async searchComponentsExternal(@Body('bikeUrl') bikeUrl: string) {
+  // ---------- GET Search External Bike components ----------
+  @Get('/external/components')
+  @ApiResponse({ status: 200, type: AssembleBikeComponentsDto, isArray: true })
+  @ApiQuery({ name: 'bikeUrl', type: String })
+  async searchComponentsExternal(@Query('bikeUrl') bikeUrl: string): Promise<AssembleBikeComponentsDto[]> {
     return await this.searchBikeExternalService.externalGetBikeComponents(bikeUrl);
   }
 
-  // Get bike form options
+  // ---------- GET bike form options ----------
   @Get('/form-options')
-  @ApiResponse({ status: 200 })
-  async formOptions() {
+  @ApiResponse({ status: 200, type: NewBikeFormDataDto })
+  async formOptions(): Promise<NewBikeFormDataDto> {
     return await this.bikeService.getFormOptions();
   }
 
-  // Get default components for manual bike creation
+  // ---------- GET default components for manual bike creation ----------
   @Get('/default-components')
-  @ApiResponse({ status: 200, type: BikeComponentExternalResponseDto, isArray: true })
-  async getDefaultComponents(@Query('ebike') ebike?: string) {
+  @ApiResponse({ status: 200, type: AssembleBikeComponentsDto, isArray: true })
+  async getDefaultComponents(@Query('ebike') ebike?: string): Promise<AssembleBikeComponentsDto[]> {
     const isEbike = ebike === 'true';
     return await this.bikeService.getDefaultComponents(isEbike);
   }
 
-  // Get bike by ID
+  // ---------- GET bike by ID ----------
   @Get(':id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   findBike(@Param('id') id: string) {
     return this.bikeService.findByID(+id);
   }
 
-  // Update bike by ID
+  // ---------- UPDATE bike by ID ----------
   @Patch(':id')
   @ApiBody({ type: UpdateBikeDto })
   @ApiResponse({ status: 200, type: ResponseBikeDto })
@@ -73,21 +73,21 @@ export class BikeController {
     return this.bikeService.update(+id, updateBikeDto);
   }
 
-  // Soft delete bike by ID
+  // ---------- DELETE soft bike by ID ----------
   @Delete('/delsoft/:id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   deleteSoft(@Param('id') id: string) {
     return this.bikeService.deleteSoft(+id);
   }
 
-  // Hard delete bike by ID
+  // ---------- DELETE hard bike by ID ----------
   @Delete('/delhard/:id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
   deleteHard(@Param('id') id: string) {
     return this.bikeService.deleteHard(+id);
   }
 }
-// // Create new bike with componenets - Upload image
+// // ---------- Create new bike with componenets - Upload image ----------
 // @Post('/create/with-image')
 // @ApiBody({ type: CreateBikeWithComponentsDto })
 // @ApiResponse({ status: 201, type: ResponseBikeDto })
