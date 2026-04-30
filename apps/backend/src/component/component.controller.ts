@@ -1,37 +1,44 @@
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { ComponentService } from './component.service';
-import { ResponseComponentGroupDto, AssembleBikeComponentsDto, ResponseComponentsDto } from './dto/response-components';
+import {
+  Response_ComponentGroupDto,
+  AssembleBikeComponentsDto,
+  Response_MountedComponentsDto,
+  Response_ComponentDto,
+} from './dto/response-components';
+import { CustomComponentsDto } from './dto/create-components';
 
 @Controller('components')
 export class ComponentController {
   constructor(private readonly componentService: ComponentService) {}
 
-  // ---------- POST Custom system Component with user id ----------
+  // ---------- POST Custom Component Type with user id ----------
   @Post()
-  @ApiResponse({ status: 201, type: ResponseComponentsDto })
-  async createCustomComponent() {
-    // Implementation for creating a custom component with user ID goes here
+  @ApiResponse({ status: 201, type: Response_ComponentDto })
+  async createComponentType(@Body() dto: CustomComponentsDto): Promise<Response_ComponentDto> {
+    return await this.componentService.createComponentType(dto);
   }
 
-  // ---------- GET component form default - for manually fill components ----------
-  @Get('/defaults-form')
+  // ---------- GET default components for manual bike creation ----------
+  @Get('/default-components')
   @ApiResponse({ status: 200, type: AssembleBikeComponentsDto, isArray: true })
-  async getFormOptions() {
-    return await this.componentService.getComponentsFormOptions();
+  async getDefaultComponents(@Query('ebike') ebike?: string): Promise<AssembleBikeComponentsDto[]> {
+    const isEbike = ebike === 'true';
+    return await this.componentService.getComponentsDefaults(isEbike);
   }
 
-  // ---------- GET all Groups ----------
+  // ---------- GET All Groups ----------
   @Get('groups')
-  @ApiResponse({ status: 200, type: ResponseComponentGroupDto, isArray: true })
-  async getGroups(): Promise<ResponseComponentGroupDto[]> {
+  @ApiResponse({ status: 200, type: Response_ComponentGroupDto, isArray: true })
+  async getGroups(): Promise<Response_ComponentGroupDto[]> {
     return await this.componentService.getAllComponentGroups();
   }
 
   // ---------- GET Mounted Components based on bike ID ----------
   @Get('mounted-components')
-  @ApiResponse({ status: 200, type: ResponseComponentsDto, isArray: true })
-  async getMountedComponents(@Query('bikeId') bikeId: string): Promise<ResponseComponentsDto[]> {
+  @ApiResponse({ status: 200, type: Response_MountedComponentsDto, isArray: true })
+  async getMountedComponents(@Query('bikeId') bikeId: string): Promise<Response_MountedComponentsDto[]> {
     return await this.componentService.getMountedComponents(bikeId);
   }
   // ---------- GET mounted components for a bike ----------

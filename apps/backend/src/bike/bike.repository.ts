@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBikeDto } from './dto/create-bike.dto';
-import { ResponseBikeDto } from './dto/response-bike.dto';
+import { ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
 import 'dotenv/config';
 import { Prisma } from '@prisma/client';
-import { NewBikeFormData } from './types/bike.types';
 type DbClient = PrismaService | Prisma.TransactionClient;
 
 @Injectable()
@@ -19,7 +18,7 @@ export class BikeRepository {
     });
   }
 
-  async getBikeOptions(): Promise<NewBikeFormData> {
+  async getBikeOptions(): Promise<NewBikeFormDataDto> {
     const [bikeSizes, bikeTypes, rideStyles, wheelSizes] = await Promise.all([
       this.prisma.bike_sizes.findMany({}),
       this.prisma.bike_types.findMany({}),

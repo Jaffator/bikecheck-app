@@ -1,14 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
-import { ResponseBikeDto } from './dto/response-bike.dto';
+import { ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
 import { BikeRepository } from './bike.repository';
 import { ComponentRepository } from '../component/component.repository';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NewBikeFormData } from './types/bike.types';
 import { StorageService } from '../storage/storage.service';
-import { AssembleBikeComponentsDto } from '../component/dto/response-components';
 import 'dotenv/config';
 import path from 'path';
 
@@ -21,54 +19,8 @@ export class BikeService {
     private readonly storageService: StorageService,
   ) {}
 
-  async getFormOptions(): Promise<NewBikeFormData> {
+  async getFormOptions(): Promise<NewBikeFormDataDto> {
     return await this.bikeRepository.getBikeOptions();
-  }
-
-  /**
-   * Returns default component structure for manual bike creation
-   * Used when external component data is not available
-   * @param ebike If false, return only non-ebike components. If true, return all components.
-   */
-  async getDefaultComponents(ebike: boolean): Promise<AssembleBikeComponentsDto[]> {
-    const componentTypes = await this.prisma.component_types.findMany({
-      where: ebike ? {} : { ebike: false },
-    });
-
-    return componentTypes.flatMap((type) => {
-      const baseComponent: AssembleBikeComponentsDto = {
-        component: {
-          bike_id: 0,
-          component_type_id: type.id,
-          component_desc: null,
-          mounted_at: undefined,
-          total_mileage_km: 0,
-          is_active: true,
-          note: null,
-          position: undefined,
-          interval_id: undefined,
-          brake_load_since_service: undefined,
-          last_serviced_at: null,
-        },
-        component_name: type.component_type,
-      };
-
-      // Components with position (brakes, wheels, etc.) return front + rear
-      if (type.has_position) {
-        return [
-          {
-            component: { ...baseComponent.component, position: 'front' },
-            component_name: type.component_type,
-          },
-          {
-            component: { ...baseComponent.component, position: 'rear' },
-            component_name: type.component_type,
-          },
-        ];
-      }
-
-      return [baseComponent];
-    });
   }
 
   /**

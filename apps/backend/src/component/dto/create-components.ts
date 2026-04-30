@@ -63,9 +63,27 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   last_serviced_at?: Date | null;
 }
 
-export class CreateCustomComponentsDto {
+export class CustomComponentsDto {
   @ApiProperty({ example: 15 })
   @IsInt()
   @IsPositive()
   component_group_id!: number;
+
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  @IsPositive()
+  user_id!: number;
+
+  @ApiProperty({ example: 'Custom Component Name' })
+  @IsString()
+  @MaxLength(255)
+  component_type!: string;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  ebike!: boolean;
+
+  @ApiProperty({ example: true, required: false, nullable: true })
+  @IsBoolean()
+  has_position?: boolean;
 }

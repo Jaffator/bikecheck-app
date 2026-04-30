@@ -357,14 +357,7 @@
           "default": false
         },
         "component_groups": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/component_groups"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/definitions/component_groups"
         },
         "users": {
           "anyOf": [

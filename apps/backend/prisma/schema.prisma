@@ -125,10 +125,10 @@ model component_types {
   id                   Int                    @id @default(autoincrement())
   component_type       String                 @db.VarChar
   ebike                Boolean                @default(false)
-  component_group_id   Int?
+  component_group_id   Int
   has_position         Boolean                @default(false)
   user_id              Int?
-  component_groups     component_groups?      @relation(fields: [component_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  component_groups     component_groups       @relation(fields: [component_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                users?                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
   components_mounted   components_mounted[]
   event_action_targets event_action_targets[]

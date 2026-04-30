@@ -15,7 +15,7 @@ export class AssembleBikeComponentsDto {
   component_name!: string;
 }
 
-export class ResponseComponentsDto implements components_mounted {
+export class Response_MountedComponentsDto implements components_mounted {
   @ApiProperty({ example: 5000, nullable: true })
   mileage_at_last_service_km!: number | null;
 
@@ -74,7 +74,7 @@ export class ResponseComponentsDto implements components_mounted {
   minutes_since_last_service!: number | null;
 }
 
-export class ResponseComponentGroupDto {
+export class Response_ComponentGroupDto {
   @ApiProperty({ example: 1 })
   id!: number;
 
@@ -83,4 +83,21 @@ export class ResponseComponentGroupDto {
 
   @ApiProperty({ example: false })
   side_choice!: boolean;
+}
+
+export class Response_ComponentDto {
+  @ApiProperty({ example: 15 })
+  component_group_id!: number;
+
+  @ApiProperty({ example: 1 })
+  user_id!: number | null;
+
+  @ApiProperty({ example: 'Custom Component Name' })
+  component_type!: string;
+
+  @ApiProperty({ example: false })
+  ebike!: boolean;
+
+  @ApiProperty({ example: true })
+  has_position!: boolean;
 }

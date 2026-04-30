@@ -50,14 +50,6 @@ export class BikeController {
     return await this.bikeService.getFormOptions();
   }
 
-  // ---------- GET default components for manual bike creation ----------
-  @Get('/default-components')
-  @ApiResponse({ status: 200, type: AssembleBikeComponentsDto, isArray: true })
-  async getDefaultComponents(@Query('ebike') ebike?: string): Promise<AssembleBikeComponentsDto[]> {
-    const isEbike = ebike === 'true';
-    return await this.bikeService.getDefaultComponents(isEbike);
-  }
-
   // ---------- GET bike by ID ----------
   @Get(':id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
