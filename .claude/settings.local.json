@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(service|controller|module|repository\\)\\\\.ts$\")",
+      "Bash(cp -r /d/Projects/BikeCheck/apps/strava-service/src/. /d/Projects/BikeCheck/apps/backend/apps/strava-service/src/ && echo \"DONE\")",
+      "Bash(docker run *)"
+    ]
+  }
+}

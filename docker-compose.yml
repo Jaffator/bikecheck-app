@@ -1,0 +1,60 @@
+services:
+  db-monolith:
+    image: postgres:18.1-alpine
+    environment:
+      POSTGRES_USER: jaroslav_user
+      POSTGRES_PASSWORD: Tanvald222
+      POSTGRES_DB: monolith_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_monolith:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jaroslav_user -d monolith_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  db-strava-service:
+    image: postgres:18.1-alpine
+    environment:
+      POSTGRES_USER: jaroslav_user
+      POSTGRES_PASSWORD: Tanvald222
+      POSTGRES_DB: strava_service_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_strava_service:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jaroslav_user -d strava_service_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/loki-config.yml:/etc/loki/local-config.yaml
+      - lokidata:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafanadata:/var/lib/grafana
+  redis:
+    image: redis:7-alpine
+    container_name: bikecheck-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  pgdata_monolith:
+  pgdata_strava_service:
+  lokidata:
+  grafanadata:
+  redis_data:
