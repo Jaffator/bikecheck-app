@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { RefreshTokenModule } from './refreshtoken/refreshtoken.module';
@@ -8,7 +10,12 @@ import { BikeModule } from './bike/bike.module';
 import { BikeEventModule } from './bike-event/bike-event.module';
 import { OrganizationModule } from './organization/organization.module';
 import { StorageModule } from './storage/storage.module';
+import { StravaModule } from './strava/strava.module';
+import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from 'nestjs-pino';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 import pino from 'pino';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
@@ -16,6 +23,26 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
 
 @Module({
   imports: [
+    BullBoardModule.forRoot({
+      route: '/queues',
+      adapter: ExpressAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: 'strava-events-queue',
+      adapter: BullMQAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: 'strava-webhook-queue',
+      adapter: BullMQAdapter,
+    }),
+    ConfigModule.forRoot({ envFilePath: 'apps/monolith/.env', isGlobal: true }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: 6379,
+      },
+    }),
+    BullModule.registerQueue({ name: 'strava-webhook-queue' }),
     LoggerModule.forRoot({
       pinoHttp: {
         level: isTestEnv ? 'silent' : isProductionEnv ? 'info' : 'debug',
@@ -32,6 +59,8 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
                     labels: { app: 'bikecheck-monolith' },
                     batching: true,
                     interval: 5,
+                    replaceTimestamp: true,
+                    convertArrays: true,
                   },
                 },
                 ...(!isProductionEnv
@@ -59,6 +88,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     BikeEventModule,
     StorageModule,
     OrganizationModule,
+    StravaModule,
   ],
   providers: [
     {

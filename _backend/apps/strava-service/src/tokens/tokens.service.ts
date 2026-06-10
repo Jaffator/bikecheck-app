@@ -26,26 +26,22 @@ export class TokenService {
 
   async getAccessToken(athleteID: number): Promise<string> {
     // get access token from db
-    console.log('1');
     const tokenInfo: any = await this.databaseService.query(
       'SELECT expires_at, access_token FROM access_tokens WHERE athlete_id = $1',
       [athleteID],
     );
     if (!tokenInfo[0]) {
-      console.log('empty');
       throw new Error(`No tokens found for athlete_id: ${athleteID}`);
     }
 
     // check token expiration
     if (new Date(Date.now() - 5 * 60 * 1000) > tokenInfo[0].expires_at) {
       // call for new token using refresh token
-      console.log('3----------------');
 
       return await this._getNewAccessToken(athleteID);
     }
     // Access token still valid, return it
 
-    console.log('4----------------');
     return tokenInfo[0].access_token;
   }
 

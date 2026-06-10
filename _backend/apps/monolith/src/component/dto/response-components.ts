@@ -16,16 +16,13 @@ export class AssembleBikeComponentsDto {
 }
 
 export class Response_MountedComponentsDto implements components_mounted {
-  @ApiProperty({ example: 5000, nullable: true })
-  mileage_at_last_service_km!: number | null;
-
   @ApiProperty({ example: 1 })
   id!: number;
 
   @ApiProperty({ example: 1 })
   bike_id!: number;
 
-  @ApiProperty({ example: 12, nullable: true })
+  @ApiProperty({ example: 12 })
   component_type_id!: number;
 
   @ApiProperty({ example: 'rear', nullable: true })
@@ -44,19 +41,13 @@ export class Response_MountedComponentsDto implements components_mounted {
   created_at!: Date | null;
 
   @ApiProperty({ example: 1200, nullable: true })
-  total_mileage_km!: number | null;
+  total_km!: number | null;
 
   @ApiProperty({ example: 'Mounted after spring service', nullable: true })
   note!: string | null;
 
   @ApiProperty({ example: true, nullable: true })
   is_active!: boolean | null;
-
-  @ApiProperty({ example: 350, nullable: true })
-  brake_load_since_service!: number | null;
-
-  @ApiProperty({ example: '2026-03-20T10:00:00.000Z', nullable: true })
-  last_serviced_at!: Date | null;
 
   @ApiProperty({ example: false, nullable: true })
   is_deleted!: boolean | null;
@@ -67,11 +58,14 @@ export class Response_MountedComponentsDto implements components_mounted {
   @ApiProperty({ example: 'Fox 38 Factory Grip2', nullable: true })
   component_desc!: string | null;
 
-  @ApiProperty({ example: 1200, nullable: true })
-  total_minutes_used!: number | null;
+  @ApiProperty({ example: 1200 })
+  total_time_min!: number;
 
-  @ApiProperty({ example: 350, nullable: true })
-  minutes_since_last_service!: number | null;
+  @ApiProperty({ example: 800 })
+  effective_km!: number;
+
+  @ApiProperty({ example: 85, nullable: true })
+  health_index!: number | null;
 }
 
 export class Response_ComponentGroupDto {

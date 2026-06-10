@@ -14,10 +14,10 @@
     "monolith": {
       "type": "application",
       "root": "apps/monolith",
-      "entryFile": "main",
+      "entryFile": "src/main",
       "sourceRoot": "apps/monolith/src",
       "compilerOptions": {
-        "webpack": true,
+        "webpack": false,
         "tsConfigPath": "apps/monolith/tsconfig.app.json"
       }
     },

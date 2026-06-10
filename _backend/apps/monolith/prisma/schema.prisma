@@ -1,0 +1,398 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator jsonSchema {
+  provider = "prisma-json-schema-generator"
+  output   = "./generated-schema.json"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model accounts {
+  id         Int    @id @default(autoincrement())
+  userId     Int
+  provider   String @db.VarChar
+  providerID String @db.VarChar
+  users      users  @relation(fields: [userId], references: [id], onDelete: Cascade, map: "userid_accountid")
+}
+
+model action_done_component_map {
+  event_action_done_id Int
+  component_mounted_id Int
+  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  event_actions_done   event_actions_done @relation(fields: [event_action_done_id], references: [id], onDelete: Cascade)
+
+  @@id([event_action_done_id, component_mounted_id])
+  @@index([component_mounted_id])
+}
+
+model action_service_intervals {
+  id                    Int           @id(map: "component_service_intervals_pkey") @default(autoincrement())
+  service_interval_meters Int?
+  service_interval_min  Int?
+  health_index_interval Int?
+  event_actions_id      Int
+  category              String[]      @default([])
+  events_action         events_action @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)
+  @@unique([event_actions_id, service_interval_meters, service_interval_min, health_index_interval])
+}
+
+model bike_brands {
+  id          Int           @id(map: "bike_brand_pkey") @default(autoincrement())
+  bike_brand  String        @unique @db.VarChar
+  bike_models bike_models[]
+}
+
+model bike_event_attachments {
+  id            Int          @id @default(autoincrement())
+  bike_event_id Int
+  name          String       @db.VarChar
+  url           String       @db.VarChar
+  content_type  String       @db.VarChar
+  created_at    DateTime?    @default(now()) @db.Timestamptz(6)
+  events_bikes  events_bikes @relation(fields: [bike_event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model bike_models {
+  id          Int         @id @default(autoincrement())
+  model_name  String      @db.VarChar(255)
+  brand_id    Int
+  bike_brands bike_brands @relation(fields: [brand_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "bike_brands_fkey")
+
+  @@unique([model_name, brand_id])
+}
+
+model bike_sizes {
+  id    Int     @id @default(autoincrement())
+  size  String? @unique @db.VarChar
+  bikes bikes[]
+}
+
+model bike_types {
+  id    Int     @id @default(autoincrement())
+  type  String? @unique @db.VarChar
+  bikes bikes[]
+}
+
+model bikes {
+  id                 Int                  @id @default(autoincrement())
+  bike_type_id       Int?
+  year               Int?
+  wheel_size_id      Int?
+  bike_size_id       Int?
+  total_km           Int?
+  total_time_min     Int?
+  created_at         DateTime?            @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?            @db.Timestamptz(6)
+  frame_material     String?              @db.VarChar(50)
+  is_deleted         Boolean?             @default(false)
+  deleted_at         DateTime?            @db.Timestamptz(6)
+  bikename           String?              @db.VarChar(50)
+  description        String?              @db.VarChar(255)
+  bike_brand         String               @db.VarChar(255)
+  bike_model         String?              @db.VarChar(255)
+  user_id            Int
+  organization_id    Int?
+  image_url          String?              @db.VarChar
+  ride_style_id      Int?
+  ebike                Boolean              @default(false)
+  has_front_suspension Boolean              @default(false)
+  has_rear_suspension  Boolean              @default(false)
+  bike_sizes         bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bike_types         bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations      organizations?       @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ride_styles        ride_styles?         @relation(fields: [ride_style_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "bikes_ride_style_fkey")
+  users              users                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  wheel_sizes        wheel_sizes?         @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_mounted components_mounted[]
+  events_bikes       events_bikes[]
+  rides              rides[]
+  service_snooze     service_snooze[]
+
+  @@index([bike_size_id], map: "bikes_bike_size_col")
+  @@index([created_at], map: "bikes_created_at")
+  @@index([bike_type_id], map: "bikes_type_id")
+  @@index([updated_at], map: "bikes_updated_at")
+  @@index([wheel_size_id], map: "bikes_wheel_size_id")
+}
+
+model component_groups {
+  id              Int               @id @default(autoincrement())
+  group_name      String            @db.VarChar
+  side_choice     Boolean           @default(false)
+  component_types component_types[]
+}
+
+model component_types {
+  id                   Int                    @id @default(autoincrement())
+  component_type       String                 @db.VarChar
+  ebike                Boolean                @default(false)
+  component_group_id   Int
+  has_position         Boolean                @default(false)
+  user_id              Int?
+  component_groups     component_groups       @relation(fields: [component_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                users?                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  components_mounted   components_mounted[]
+  event_action_targets event_action_targets[]
+
+  @@unique([component_type, user_id])
+}
+
+model components_mounted {
+  id                Int                         @id(map: "bike_components_pkey") @default(autoincrement())
+  bike_id           Int
+  component_type_id Int
+  mounted_at        DateTime?                   @db.Timestamptz(6)
+  removed_at        DateTime?                   @db.Timestamptz(6)
+  updated_at        DateTime?                   @default(now()) @db.Timestamptz(6)
+  created_at        DateTime?                   @default(now()) @db.Timestamptz(6)
+  note              String?
+  is_active         Boolean?                    @default(true)
+  is_deleted        Boolean?                    @default(false)
+  deleted_at        DateTime?                   @db.Timestamptz(6)
+  component_desc    String?                     @db.VarChar
+  position          String?                     @db.VarChar
+  total_time_min    Int                         @default(0)
+  total_km          Int?                        @default(0)
+  effective_km      Int                         @default(0)
+  health_index      Int?                        @default(0)
+  action_done_component_map  action_done_component_map[]
+  bikes                      bikes                       @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  component_types            component_types             @relation(fields: [component_type_id], references: [id], onUpdate: NoAction)
+  suspension_setup           suspension_setup[]
+  tire_setup                 tire_setup[]
+
+  @@index([bike_id], map: "bike_components_bike_id")
+  @@index([component_type_id], map: "bike_components_component_id")
+  @@index([is_active], map: "bike_components_is_active")
+  @@index([total_km], map: "bike_components_mileage")
+  @@index([mounted_at], map: "bike_components_mounted_at")
+  @@index([removed_at], map: "bike_components_remove_at")
+  @@index([updated_at], map: "bike_components_updated_at")
+  @@index([component_desc(ops: raw("gin_trgm_ops"))], map: "components_mounted_desc_trgm_idx", type: Gin)
+}
+
+model event_action_tags {
+  id               Int           @id @default(autoincrement())
+  event_action_id  Int
+  event_action_tag String        @db.VarChar
+  events_action    events_action @relation(fields: [event_action_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_action_id, event_action_tag])
+}
+
+model event_action_targets {
+  id                Int             @id @default(autoincrement())
+  event_action_id   Int
+  component_type_id Int
+  component_types   component_types @relation(fields: [component_type_id], references: [id], onDelete: Cascade)
+  events_action     events_action   @relation(fields: [event_action_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_action_id, component_type_id])
+}
+
+model event_actions_done {
+  id                    Int                         @id @default(autoincrement())
+  bike_event_id         Int
+  event_action_id       Int
+  note                  String?
+  partial_cost          Decimal?                    @db.Decimal(10, 2)
+  part_replaced         Boolean?                    @default(false)
+  created_at            DateTime?                   @default(now()) @db.Timestamptz(6)
+  bike_km_at_time       Int?
+  bike_minutes_at_time  Int?
+  action_done_component_map action_done_component_map[]
+  events_bikes              events_bikes                @relation(fields: [bike_event_id], references: [id], onDelete: Cascade)
+  events_action             events_action               @relation(fields: [event_action_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([bike_event_id])
+  @@index([event_action_id])
+}
+
+model events_action {
+  id                       Int                        @id(map: "action_types_pkey") @default(autoincrement())
+  action_name              String                     @unique(map: "action_types_action_name_key") @db.VarChar
+  warning_message          String?                    @db.VarChar
+  replace_action           Boolean                    @default(false)
+  req_front_suspension     Boolean                    @default(false)
+  req_rear_suspension      Boolean                    @default(false)
+  user_id                  Int?
+  action_service_intervals action_service_intervals[]
+  event_action_tags        event_action_tags[]
+  event_action_targets     event_action_targets[]
+  event_actions_done       event_actions_done[]
+  service_snooze           service_snooze[]
+  users                    users?                     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model events_bikes {
+  id                     Int                      @id(map: "bike_events_pkey") @default(autoincrement())
+  bike_id                Int?
+  note                   String?
+  total_cost             Decimal?                 @db.Decimal(10, 2)
+  created_at             DateTime?                @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime?                @db.Timestamptz(6)
+  is_deleted             Boolean?                 @default(false)
+  deleted_at             DateTime?                @db.Timestamptz(6)
+  bike_event_attachments bike_event_attachments[]
+  event_actions_done     event_actions_done[]
+  bikes                  bikes?                   @relation(fields: [bike_id], references: [id], onDelete: Cascade, map: "bike_events_bike_id_fkey")
+
+  @@index([bike_id], map: "bike_events_bike_id")
+  @@index([created_at], map: "bike_events_created_at")
+  @@index([updated_at], map: "bike_events_updated_at")
+}
+
+model organization_members {
+  id                 Int                @id @default(autoincrement())
+  user_id            Int
+  role_id            Int
+  organization_id    Int
+  organizations      organizations      @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  organization_roles organization_roles @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users              users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([organization_id, user_id], map: "index_1")
+  @@unique([organization_id, user_id], map: "unique_organization_members")
+}
+
+model organization_roles {
+  id                   Int                    @id @default(autoincrement())
+  code                 String                 @unique(map: "code") @db.VarChar(255)
+  name                 String                 @db.VarChar(255)
+  sort_order           Int?
+  description          String?
+  organization_members organization_members[]
+}
+
+model organizations {
+  id                   Int                    @id @default(autoincrement())
+  name                 String
+  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  is_deleted           Boolean?               @default(false)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  bikes                bikes[]
+  organization_members organization_members[]
+}
+
+model refresh_tokens {
+  id            Int       @id @default(autoincrement())
+  user_id       Int
+  refresh_token String    @unique(map: "jwt_token") @db.VarChar(255)
+  expires_at    DateTime  @db.Timestamptz(6)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  revoked       Boolean   @default(false)
+  revoked_at    DateTime? @db.Timestamptz(6)
+  user_agent    String?   @db.VarChar(255)
+  ip_address    String?   @db.VarChar(100)
+  users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_id")
+}
+
+model ride_styles {
+  id         Int     @id @default(autoincrement())
+  ride_style String? @unique @db.VarChar
+  bikes      bikes[]
+}
+
+model rides {
+  id                 Int       @id @default(autoincrement())
+  bike_id            Int
+  user_id            Int
+  started_at         DateTime? @db.Timestamptz(6)
+  duration_sec       Int?
+  distance_m         Int?
+  elevation_down_m   Int?
+  elevation_up_m     Int?
+  speed_down         Int?
+  speed_avg          Int?
+  braking_load_score Int?
+  max_speed_kmh      Int?
+  note               String?   @db.VarChar
+  is_deleted         Boolean?  @default(false)
+  deleted_at         DateTime? @db.Timestamptz(6)
+  bikes              bikes     @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+  users              users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([bike_id], map: "rides_bike_id")
+  @@index([started_at], map: "rides_started_at")
+}
+
+model suspension_setup {
+  id                    Int                @id @default(autoincrement())
+  mounted_component_id  Int
+  setup_date            DateTime           @default(now()) @db.Timetz(6)
+  pressure_psi          Int?
+  pressure_bar          Int?
+  sag_percentage        Int?
+  amount_tokens_spacers Int?
+  rebound_ls            Int?
+  rebound_hs            Int?
+  compression_ls        Int?
+  compression_hs        Int?
+  notes                 String?            @db.VarChar
+  components_mounted    components_mounted @relation(fields: [mounted_component_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model tire_setup {
+  id                   Int                @id @default(autoincrement())
+  component_mounted_id Int
+  tire_pressure_bar    Int?
+  tire_pressure_psi    Int?
+  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id                   Int                    @id @default(autoincrement())
+  name                 String?                @db.VarChar
+  email                String                 @unique @db.VarChar
+  password_hash        String?                @db.VarChar
+  avatar_url           String?                @db.VarChar
+  language             String?                @db.VarChar
+  is_active            Boolean?               @default(true)
+  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  last_login_at        DateTime?              @db.Timestamptz(6)
+  currency             String?                @db.VarChar
+  weight_kg            Int?
+  is_deleted           Boolean?               @default(false)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  googleId             String?                @unique @db.VarChar
+  accounts             accounts[]
+  bikes                bikes[]
+  component_types      component_types[]
+  events_action        events_action[]
+  organization_members organization_members[]
+  refresh_tokens       refresh_tokens[]
+  rides                rides[]
+
+  @@index([created_at], map: "users_created_at")
+  @@index([last_login_at], map: "users_last_login_at")
+  @@index([name], map: "users_name")
+  @@index([updated_at], map: "users_updated_at")
+}
+
+model wheel_sizes {
+  id    Int     @id @default(autoincrement())
+  size  String? @unique @db.VarChar
+  bikes bikes[]
+}
+
+model service_snooze {
+  id              Int           @id @default(autoincrement())
+  event_action_id Int
+  bike_id         Int
+  extended_by_km  Int?          @default(0)
+  extended_by_min Int?          @default(0)
+  extended_by_healthIndex Int?          @default(0)
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  events_action   events_action @relation(fields: [event_action_id], references: [id], onDelete: Cascade)
+  bikes           bikes         @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+
+  @@unique([bike_id, event_action_id])
+}

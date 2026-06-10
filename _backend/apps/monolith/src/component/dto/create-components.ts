@@ -32,7 +32,7 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @IsOptional()
   @ApiProperty({ example: 1200, required: false, nullable: true })
   @IsInt()
-  total_mileage_km?: number;
+  total_km?: number;
 
   @IsOptional()
   @ApiProperty({ example: true, required: false, nullable: true })
@@ -51,16 +51,6 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @IsPositive()
   interval_id?: number;
 
-  @IsOptional()
-  @ApiProperty({ example: 350, required: false, nullable: true })
-  @IsInt()
-  @IsPositive()
-  brake_load_since_service?: number;
-
-  @IsOptional()
-  @ApiProperty({ example: '2026-03-20T10:00:00.000Z', required: false, nullable: true })
-  @IsDateString()
-  last_serviced_at?: Date | null;
 }
 
 export class CustomComponentsDto {

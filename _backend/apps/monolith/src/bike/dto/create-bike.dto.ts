@@ -79,7 +79,7 @@ export class CreateBikeDto {
   @IsOptional()
   @IsInt()
   @IsPositive()
-  mileage_km?: number;
+  total_km?: number;
 
   @ApiProperty({ example: 'Carbon', required: false })
   @IsOptional()

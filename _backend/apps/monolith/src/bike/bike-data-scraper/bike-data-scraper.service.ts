@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { BadGatewayException, GatewayTimeoutException, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -178,13 +179,11 @@ export class BikeDataScrapeService {
         component_type_id: 0,
         component_desc: desc,
         mounted_at: undefined,
-        total_mileage_km: 0,
+        total_km: 0,
         is_active: true,
         note: undefined,
         position: undefined,
         interval_id: undefined,
-        brake_load_since_service: undefined,
-        last_serviced_at: undefined,
       },
       component_name: '',
     };

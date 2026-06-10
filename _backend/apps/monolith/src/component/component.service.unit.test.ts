@@ -37,9 +37,9 @@ describe('ComponentService', () => {
         { id: 2, component_type: 'Rear Shock', group_id: 1, ebike: false },
       ];
       mockPrismaService.component_types.findMany.mockResolvedValue(mockComponentTypes);
-
+      const ebike = false;
       // ACT
-      const result = await service.getComponentsFormOptions();
+      const result = await service.getComponentsDefaults(ebike);
 
       // ASSERT
       expect(result).toHaveLength(2);
@@ -49,12 +49,10 @@ describe('ComponentService', () => {
           component_type_id: 1,
           component_desc: undefined,
           mounted_at: undefined,
-          total_mileage_km: 0,
+          total_km: 0,
           is_active: false,
           note: '',
           interval_id: undefined,
-          brake_load_since_service: undefined,
-          last_serviced_at: undefined,
         },
         component_name: 'Fork',
       });
@@ -65,8 +63,9 @@ describe('ComponentService', () => {
       // ARRANGE
       mockPrismaService.component_types.findMany.mockResolvedValue([]);
 
+      const ebike = false;
       // ACT
-      const result = await service.getComponentsFormOptions();
+      const result = await service.getComponentsDefaults(ebike);
 
       // ASSERT
       expect(result).toEqual([]);
@@ -77,14 +76,15 @@ describe('ComponentService', () => {
       const mockComponentTypes = [{ id: 5, component_type: 'Chain', group_id: 2, ebike: false }];
       mockPrismaService.component_types.findMany.mockResolvedValue(mockComponentTypes);
 
+      const ebike = false;
       // ACT
-      const result = await service.getComponentsFormOptions();
+      const result = await service.getComponentsDefaults(ebike);
 
       // ASSERT
       expect(result[0].component.component_type_id).toBe(5);
       expect(result[0].component_name).toBe('Chain');
       expect(result[0].component.bike_id).toBe(0);
-      expect(result[0].component.total_mileage_km).toBe(0);
+      expect(result[0].component.total_km).toBe(0);
       expect(result[0].component.is_active).toBe(false);
     });
 
@@ -92,8 +92,9 @@ describe('ComponentService', () => {
       // ARRANGE
       mockPrismaService.component_types.findMany.mockResolvedValue([]);
 
+      const ebike = false;
       // ACT
-      await service.getComponentsFormOptions();
+      await service.getComponentsDefaults(ebike);
 
       // ASSERT
       expect(mockPrismaService.component_types.findMany).toHaveBeenCalledTimes(1);
@@ -104,8 +105,9 @@ describe('ComponentService', () => {
       // ARRANGE
       mockPrismaService.component_types.findMany.mockRejectedValue(new Error('Database connection failed'));
 
+      const ebike = false;
       // ACT & ASSERT
-      await expect(service.getComponentsFormOptions()).rejects.toThrow('Database connection failed');
+      await expect(service.getComponentsDefaults(ebike)).rejects.toThrow('Database connection failed');
     });
   });
 });

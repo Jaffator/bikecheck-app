@@ -35,7 +35,7 @@ export class WebhookController {
   }
   @Get()
   test(): string {
-    return 'Strava Webhook is up and running!';
+    return 'Strava Microservice is online';
   }
 
   // ----------------------------------------------------------
@@ -100,9 +100,9 @@ export class WebhookController {
 //       -d '{
 //           "aspect_type": "update",
 //               "event_time": 1516126040,
-//                   "object_id": 1360128428,
+//                   "object_id": 18658538174,
 //                       "object_type": "activity",
-//                           "owner_id": 134815,
+//                           "owner_id": 20678962,
 //                               "subscription_id": 120475,
 //                                   "updates": {
 //                                         "title": "Messy"

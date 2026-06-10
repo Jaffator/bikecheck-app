@@ -4,9 +4,15 @@ import { WebhookController } from './strava-webhook.controller';
 import { StravaWebhookService } from './strava-webhook.service';
 import { StravaProcessor } from './strava-webhook.processor';
 import { TokenModule } from '../tokens/tokens.module';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: 'strava-webhook-queue' }), TokenModule],
+  imports: [
+    BullModule.registerQueue({ name: 'strava-webhook-queue' }),
+    BullModule.registerQueue({ name: 'strava-events-queue' }),
+    TokenModule,
+    DatabaseModule,
+  ],
   controllers: [WebhookController],
   providers: [StravaWebhookService, StravaProcessor],
 })

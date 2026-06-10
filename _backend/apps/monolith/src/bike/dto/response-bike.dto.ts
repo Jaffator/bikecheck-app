@@ -92,7 +92,16 @@ export class ResponseBikeDto implements bikes {
   bike_size_id!: number | null;
 
   @ApiProperty({ example: 1540, nullable: true })
-  mileage_km!: number | null;
+  total_km!: number | null;
+
+  @ApiProperty({ example: 3600, nullable: true })
+  total_time_min!: number | null;
+
+  @ApiProperty({ example: false })
+  has_front_suspension!: boolean;
+
+  @ApiProperty({ example: false })
+  has_rear_suspension!: boolean;
 
   @ApiProperty({ example: '2024-01-01T12:00:00.000Z', nullable: true })
   created_at!: Date | null;

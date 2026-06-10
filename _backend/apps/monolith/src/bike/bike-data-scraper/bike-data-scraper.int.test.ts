@@ -52,15 +52,15 @@ describe('BikeDataScrapeService (integration)', () => {
     // ARRANGE
     const query = { brand: 'Orbea Rallon', year: '2023' };
     // ACT
-    bikelist = await scrapeService.findBikeList(query.brand, query.year);
+    bikelist = await scrapeService.searchBikeList(query.brand, query.year);
 
     // ASSERT
     expect(bikelist.length).toBeGreaterThan(0);
     bikelist.forEach((item) => {
-      expect(item.url).toBeTruthy();
-      expect(() => new URL(item.url)).not.toThrow();
-      expect(item.image).toBeTruthy();
-      expect(() => new URL(item.image!)).not.toThrow();
+      expect(item.bikeUrl).toBeTruthy();
+      expect(() => new URL(item.bikeUrl)).not.toThrow();
+      expect(item.imageUrl).toBeTruthy();
+      expect(() => new URL(item.imageUrl ?? '')).not.toThrow();
       expect(item.name).toBeTruthy();
     });
   });
@@ -69,7 +69,7 @@ describe('BikeDataScrapeService (integration)', () => {
     // ARRANGE
     const firstBike = bikelist[0];
     // ACT
-    const components = await scrapeService.extractBikeComponents(firstBike.url);
+    const components = await scrapeService.externalGetBikeComponents(firstBike.bikeUrl);
     // ASSERT
     expect(components.length).toBeGreaterThan(0);
     expect(components[0]).toMatchObject({

@@ -2,18 +2,17 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 
-const jwtConstant = process.env['JWT_SECRET'];
-
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
-    if (!jwtConstant) {
+    const jwtSecret = process.env['JWT_SECRET'];
+    if (!jwtSecret) {
       throw new Error('JWT_SECRET environment variable is not defined');
     }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: jwtConstant,
+      secretOrKey: jwtSecret,
     });
   }
 

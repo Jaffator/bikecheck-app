@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { runSeed } from '../scripts/seedData/main_tests';
+import { runSeed } from '../apps/monolith/scripts/seedData/main_tests';
 import dotenv from 'dotenv';
 import teardown from './teardown';
 

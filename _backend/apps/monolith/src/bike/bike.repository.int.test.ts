@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BikeRepository } from './bike.repository';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBikeDto } from './dto/create-bike.dto';
-import { runSeed } from 'scripts/seedData/main_tests';
+import { runSeed } from '../../scripts/seedData/main_tests';
 
 describe('BikeRepository (integration)', () => {
   let repository: BikeRepository;
@@ -55,9 +55,10 @@ describe('BikeRepository (integration)', () => {
       wheel_size_id: wheelSize!.id,
       bike_size_id: bikeSize!.id,
       bikename: 'Tarmac SL7',
+      ebike: false,
       year: 2024,
       description: '',
-      mileage_km: 0,
+      total_km: 0,
       frame_material: '',
     };
 
@@ -110,8 +111,9 @@ describe('BikeRepository (integration)', () => {
       bike_brand: bikeBrand!.bike_brand,
       bikename: 'Tarmac',
       year: 2025,
+      ebike: false,
       description: '',
-      mileage_km: 1000,
+      total_km: 1000,
       frame_material: '',
     };
     // ACT
@@ -121,7 +123,7 @@ describe('BikeRepository (integration)', () => {
     expect(findBike).not.toBeNull();
     expect(findBike.bikename).toBe('Tarmac');
     expect(findBike.year).toBe(2025);
-    expect(findBike.mileage_km).toBe(1000);
+    expect(findBike.total_km).toBe(1000);
   });
 
   it('soft delete bike', async (): Promise<void> => {
