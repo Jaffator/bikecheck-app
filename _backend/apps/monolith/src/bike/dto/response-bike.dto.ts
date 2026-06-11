@@ -117,4 +117,10 @@ export class ResponseBikeDto implements bikes {
 
   @ApiProperty({ example: null, nullable: true })
   deleted_at!: Date | null;
+
+  @ApiProperty({ example: 'b12345678', nullable: true })
+  strava_gear_id!: string | null;
+
+  @ApiProperty({ example: 'My Enduro Bike', nullable: true })
+  strava_name!: string | null;
 }

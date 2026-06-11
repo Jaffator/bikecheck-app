@@ -24,6 +24,7 @@ export class WebhookController {
       this.logger.error('Invalid signature on webhook event');
       throw new ForbiddenException('Invalid signature');
     }
+
     this.logger.info({ custom: true }, 'Successfully received Strava event');
 
     // Add the event to the BullMQ queue for processing

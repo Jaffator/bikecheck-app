@@ -18,10 +18,6 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
         port: 6379,
       },
     }),
-    // 2. Register the webhook queue
-    BullModule.registerQueue({
-      name: 'strava-webhook-queue',
-    }),
     LoggerModule.forRoot({
       pinoHttp: {
         autoLogging: false,

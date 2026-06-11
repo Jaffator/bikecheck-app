@@ -9,7 +9,7 @@ import { DatabaseModule } from '../database/database.module';
 @Module({
   imports: [
     BullModule.registerQueue({ name: 'strava-webhook-queue' }),
-    BullModule.registerQueue({ name: 'strava-events-queue' }),
+    BullModule.registerQueue({ name: 'strava-monolith-queue' }),
     TokenModule,
     DatabaseModule,
   ],

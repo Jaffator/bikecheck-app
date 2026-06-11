@@ -24,7 +24,7 @@ async function run() {
     avg_temp_c: activityData.average_temp,
   };
 
-  const prompt = `Zhodnoť tuto jízdu na kole stručně (2-3 věty česky):
+  const prompt = `Make a summary about this ride in english (2-3 sentences):
 ${JSON.stringify(rideMetrics, null, 2)}`;
 
   const result = await withMeasure('gemini prompt', () => model.generateContent(prompt));
@@ -39,8 +39,4 @@ async function withMeasure(name: string, fn: () => Promise<any>) {
   const end = performance.now();
   console.log(`${name} took ${end - start} ms`);
   return result;
-}
-
-export function MeasureTime(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value;
 }

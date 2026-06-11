@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { DatabaseService } from '../database/database.service';
+import { Queue } from 'bullmq';
 import axios from 'axios';
 import 'dotenv/config';
+import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
 
 interface StravaTokenResponse {
   athlete_id: number;
@@ -17,6 +19,7 @@ interface StravaTokenResponse {
 export class TokenService {
   constructor(
     @InjectPinoLogger(TokenService.name) private readonly logger: PinoLogger,
+    @InjectQueue('strava-monolith-queue') private readonly eventsQueue: Queue,
     private readonly databaseService: DatabaseService,
   ) {}
 
@@ -31,6 +34,7 @@ export class TokenService {
       [athleteID],
     );
     if (!tokenInfo[0]) {
+      this.logger.error({ athleteID }, 'No access token found for athlete: ' + athleteID);
       throw new Error(`No tokens found for athlete_id: ${athleteID}`);
     }
 
@@ -45,13 +49,19 @@ export class TokenService {
     return tokenInfo[0].access_token;
   }
 
-  async exchangeToken(code: string): Promise<boolean> {
+  async exchangeToken(code: string, userID: string): Promise<boolean> {
     // Get refresh and access tokens from Strava API
     const response = await axios.post('https://www.strava.com/oauth/token', {
       client_id: process.env.STRAVA_CLIENT_ID,
       client_secret: process.env.STRAVA_CLIENT_SECRET,
       code: code,
       grant_type: 'authorization_code',
+    });
+
+    // Send UserID and AthleteID to monolith
+    await this.eventsQueue.add('strava-authorization', {
+      athlete_id: response.data.athlete.id,
+      user_id: userID,
     });
 
     // Save the tokens data to the database
@@ -91,7 +101,7 @@ export class TokenService {
     });
     return response.data.access_token;
   }
-
+  private;
   private async _updateStravaAuthData(data: StravaTokenResponse): Promise<void> {
     try {
       await this.databaseService.transaction(async (client) => {
@@ -125,16 +135,26 @@ export class TokenService {
     try {
       const result = await this.databaseService.transaction(async (client) => {
         await client.query(
-          'INSERT INTO access_tokens (athlete_id, access_token, scope, expires_at) VALUES ($1, $2, $3, $4)',
+          `INSERT INTO access_tokens (athlete_id, access_token, scope, expires_at) VALUES ($1, $2, $3, $4)   ON CONFLICT (athlete_id) DO UPDATE
+          SET access_token = EXCLUDED.access_token,
+          scope = EXCLUDED.scope,
+          expires_at = EXCLUDED.expires_at`,
           [data.athlete_id, data.access_token, data.scope, new Date(data.expires_at * 1000)],
         );
         await client.query(
-          'INSERT INTO refresh_tokens (athlete_id, refresh_token, scope, expires_at) VALUES ($1, $2, $3, $4)',
+          `INSERT INTO refresh_tokens (athlete_id, refresh_token, scope, expires_at) VALUES ($1, $2, $3, $4)
+          ON CONFLICT (athlete_id) DO UPDATE
+          SET refresh_token = EXCLUDED.refresh_token,
+          scope = EXCLUDED.scope,
+          expires_at = EXCLUDED.expires_at`,
           [data.athlete_id, data.refresh_token, data.scope, new Date(data.expires_at * 1000)],
         );
         return true;
       });
-      this.logger.info({ custom: true, athlete_id: data.athlete_id }, 'Strava auth data saved to the database');
+      this.logger.info(
+        { custom: true, athlete_id: data.athlete_id },
+        'Strava auth data saved to the database: Athlete ID: ' + data.athlete_id,
+      );
       return result;
     } catch (err) {
       this.logger.error({ err }, 'Failed to save Strava auth data to the database');

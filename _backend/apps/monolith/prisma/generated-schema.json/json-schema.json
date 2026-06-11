@@ -255,6 +255,18 @@
           "type": "boolean",
           "default": false
         },
+        "strava_gear_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strava_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "has_rear_suspension": {
           "type": "boolean",
           "default": false
@@ -487,7 +499,11 @@
           ],
           "default": 0
         },
-        "effective_km": {
+        "effective_meters": {
+          "type": "integer",
+          "default": 0
+        },
+        "effective_time_min": {
           "type": "integer",
           "default": 0
         },
@@ -927,7 +943,7 @@
           ],
           "format": "date-time"
         },
-        "duration_sec": {
+        "duration_min": {
           "type": [
             "integer",
             "null"
@@ -951,12 +967,6 @@
             "null"
           ]
         },
-        "speed_down": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
         "speed_avg": {
           "type": [
             "integer",
@@ -970,6 +980,54 @@
           ]
         },
         "max_speed_kmh": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "suspension_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "drivetrain_meters": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "json_data": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "activity_strava_id": {
           "type": [
             "integer",
             "null"
@@ -1177,6 +1235,12 @@
           "format": "date-time"
         },
         "googleId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strava_athlete_id": {
           "type": [
             "string",
             "null"

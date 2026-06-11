@@ -1,0 +1,93 @@
+{
+  "id": 20678962,
+  "username": "jlufinka",
+  "resource_state": 3,
+  "firstname": "Jaroslav",
+  "lastname": "Lufinka",
+  "bio": "",
+  "city": "",
+  "state": "",
+  "country": null,
+  "sex": null,
+  "premium": false,
+  "summit": false,
+  "created_at": "2017-03-25T10:31:24Z",
+  "updated_at": "2025-08-19T06:27:55Z",
+  "badge_type_id": 0,
+  "weight": null,
+  "profile_medium": "https://dgalywyr863hv.cloudfront.net/pictures/athletes/20678962/34165261/1/medium.jpg",
+  "profile": "https://dgalywyr863hv.cloudfront.net/pictures/athletes/20678962/34165261/1/large.jpg",
+  "friend": null,
+  "follower": null,
+  "blocked": false,
+  "can_follow": true,
+  "follower_count": 41,
+  "friend_count": 45,
+  "mutual_friend_count": 0,
+  "athlete_type": 0,
+  "date_preference": "%m/%d/%Y",
+  "measurement_preference": "meters",
+  "clubs": [
+    {
+      "id": 1640407,
+      "resource_state": 2,
+      "name": "Vodiči kol",
+      "profile_medium": "https://dgalywyr863hv.cloudfront.net/pictures/clubs/1640407/38876689/2/medium.jpg",
+      "profile": "https://dgalywyr863hv.cloudfront.net/pictures/clubs/1640407/38876689/2/large.jpg",
+      "cover_photo": "https://dgalywyr863hv.cloudfront.net/pictures/clubs/1640407/38876667/3/large.jpg",
+      "cover_photo_small": "https://dgalywyr863hv.cloudfront.net/pictures/clubs/1640407/38876667/3/small.jpg",
+      "activity_types": ["Handcycle", "EBikeRide", "VirtualRide", "Velomobile", "Ride"],
+      "activity_types_icon": "sports_bike_normal",
+      "dimensions": ["distance", "num_activities", "best_activities_distance", "velocity", "elev_gain", "moving_time"],
+      "sport_type": "cycling",
+      "localized_sport_type": "Cycling",
+      "city": "Jablonec nad Nisou",
+      "state": "Liberec",
+      "country": "Czech Republic",
+      "private": false,
+      "member_count": 0,
+      "featured": false,
+      "verified": false,
+      "url": "vodicikol",
+      "membership": "member",
+      "admin": false,
+      "owner": false
+    }
+  ],
+  "postable_clubs_count": 1,
+  "ftp": null,
+  "bikes": [
+    {
+      "id": "b16637288",
+      "primary": false,
+      "name": "Cube Nuroad C:62 One",
+      "nickname": "Cube Nuroad C:62 One",
+      "resource_state": 2,
+      "retired": false,
+      "distance": 258932,
+      "converted_distance": 258.9
+    },
+    {
+      "id": "b16637292",
+      "primary": false,
+      "name": "Orbea Rallon",
+      "nickname": "Orbea Rallon",
+      "resource_state": 2,
+      "retired": false,
+      "distance": 54712,
+      "converted_distance": 54.7
+    }
+  ],
+  "shoes": [
+    {
+      "id": "g31709252",
+      "primary": false,
+      "name": "Altra Lone Peak 8",
+      "nickname": "",
+      "resource_state": 2,
+      "retired": false,
+      "distance": 0,
+      "converted_distance": 0.0
+    }
+  ]
+}

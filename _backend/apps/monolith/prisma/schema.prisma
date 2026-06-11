@@ -100,6 +100,8 @@ model bikes {
   ride_style_id      Int?
   ebike                Boolean              @default(false)
   has_front_suspension Boolean              @default(false)
+  strava_gear_id       String?              @db.VarChar
+  strava_name          String?              @db.VarChar
   has_rear_suspension  Boolean              @default(false)
   bike_sizes         bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   bike_types         bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -157,7 +159,8 @@ model components_mounted {
   position          String?                     @db.VarChar
   total_time_min    Int                         @default(0)
   total_km          Int?                        @default(0)
-  effective_km      Int                         @default(0)
+  effective_meters  Int                         @default(0)
+  effective_time_min Int                        @default(0)
   health_index      Int?                        @default(0)
   action_done_component_map  action_done_component_map[]
   bikes                      bikes                       @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -303,15 +306,20 @@ model rides {
   bike_id            Int
   user_id            Int
   started_at         DateTime? @db.Timestamptz(6)
-  duration_sec       Int?
+  duration_min       Int?
   distance_m         Int?
   elevation_down_m   Int?
   elevation_up_m     Int?
-  speed_down         Int?
   speed_avg          Int?
   braking_load_score Int?
   max_speed_kmh      Int?
-  note               String?   @db.VarChar
+  suspension_min      Int?
+  drivetrain_meters   Int?
+  summary             String?   @db.VarChar
+  json_data           Json?
+  created_at         DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime? @db.Timestamptz(6)
+  activity_strava_id BigInt?   @unique
   is_deleted         Boolean?  @default(false)
   deleted_at         DateTime? @db.Timestamptz(6)
   bikes              bikes     @relation(fields: [bike_id], references: [id], onDelete: Cascade)
@@ -361,6 +369,7 @@ model users {
   is_deleted           Boolean?               @default(false)
   deleted_at           DateTime?              @db.Timestamptz(6)
   googleId             String?                @unique @db.VarChar
+  strava_athlete_id    String?                @unique @db.VarChar
   accounts             accounts[]
   bikes                bikes[]
   component_types      component_types[]

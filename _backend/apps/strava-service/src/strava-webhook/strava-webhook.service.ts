@@ -66,23 +66,44 @@ export class StravaWebhookService {
   }
 
   // ---------------------------------------------------------------------
-  // -------------------- Fetch data from Strava API ---------------------
+  // -------------------- Fetch Activity from Strava API ---------------------
   // ---------------------------------------------------------------------
   async downloadActivity(activity_id: number, athlete_id: number): Promise<any> {
     const access_token = await this.tokenService.getAccessToken(athlete_id);
-    if (!access_token) {
-      this.logger.error({ athlete_id }, 'No access token found for athlete');
-      throw new Error('No access token found for athlete');
-    }
+
     try {
       const activityData = await axios.get(`https://www.strava.com/api/v3/activities/${activity_id}`, {
         params: { include_all_effort: true },
         headers: { Authorization: `Bearer ${access_token}` },
       });
-      this.logger.info({ custom: true, data: activityData.data }, 'Succesfuly fetched Strava activity data');
+      this.logger.info({ custom: true }, 'Succesfuly fetched Strava activity data');
       return activityData;
     } catch (error) {
       throw new Error(`Error fetching Strava API: ${(error as Error).message}`);
+    }
+  }
+  interface;
+  // ---------------------------------------------------------------------
+  // -------------------- Fetch Gear from Strava API ---------------------
+  // ---------------------------------------------------------------------
+  async downloadGear(athlete_id: number): Promise<any> {
+    const access_token = await this.tokenService.getAccessToken(athlete_id);
+    try {
+      const gear = await axios.get(`https://www.strava.com/api/v3/athlete`, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      const bikes = {
+        athlete_id: gear.data.id,
+        bikes: gear.data.bikes!.map((bike) => {
+          return {
+            id: bike.id,
+            name: bike.name,
+          };
+        }),
+      };
+      return bikes;
+    } catch (error) {
+      throw new Error(`Error fetching Gear from Strava, athlete id ${athlete_id}, error: ${(error as Error).message}`);
     }
   }
 
@@ -94,7 +115,6 @@ export class StravaWebhookService {
     delete simplifiedStravaData.map.polyline;
     delete simplifiedStravaData.segment_efforts;
     delete simplifiedStravaData.laps;
-    this.logger.info({ custom: true, simplifiedStravaData }, 'Strava activity data simplified');
     return simplifiedStravaData;
   }
 

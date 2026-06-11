@@ -10,7 +10,7 @@ import stravaData from '../example_strava_data.json';
 export class StravaProcessor extends WorkerHost {
   constructor(
     @InjectPinoLogger(StravaProcessor.name) private readonly logger: PinoLogger,
-    @InjectQueue('strava-events-queue') private readonly eventsQueue: Queue,
+    @InjectQueue('strava-monolith-queue') private readonly eventsQueue: Queue,
     private readonly stravaService: StravaWebhookService,
   ) {
     super();
@@ -22,11 +22,12 @@ export class StravaProcessor extends WorkerHost {
       const stravaEvent: StravaWebhookEventDto = job.data;
 
       // Fetch activity from Strava API
-
-      // Fetch activity from Strava API
       let activityData = stravaData;
       if ('test' in job.data) {
+        // ------- DELETE THIS IN PRODUCTION -------
+        // ----- TESTING STRAVA JSON DATA -----
         activityData = stravaData;
+        // ------- DELETE THIS IN PRODUCTION -------
         // throw new Error('Test error: Simulating failure in fetching activity data');
       } else activityData = await this.stravaService.downloadActivity(stravaEvent.object_id, stravaEvent.owner_id);
 

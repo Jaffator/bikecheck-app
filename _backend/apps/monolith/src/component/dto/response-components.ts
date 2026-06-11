@@ -61,8 +61,11 @@ export class Response_MountedComponentsDto implements components_mounted {
   @ApiProperty({ example: 1200 })
   total_time_min!: number;
 
-  @ApiProperty({ example: 800 })
-  effective_km!: number;
+  @ApiProperty({ example: 80000 })
+  effective_meters!: number;
+
+  @ApiProperty({ example: 480 })
+  effective_time_min!: number;
 
   @ApiProperty({ example: 85, nullable: true })
   health_index!: number | null;

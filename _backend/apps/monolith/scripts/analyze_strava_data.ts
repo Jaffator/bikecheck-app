@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import stravaData from './simplified_strava_data.json';
 
 interface SplitMetricEntry {
