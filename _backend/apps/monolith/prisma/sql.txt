@@ -1,0 +1,9 @@
+SELECT cm.* from components_mounted cm JOIN component_types ct ON ct.id = cm.component_type_id WHERE ct.component_type = 'Brake pad' AND cm.bike_id = 133 LIMIT 100
+
+UPDATE components_mounted cm
+SET health_index = health_index + 42
+FROM component_types ct
+WHERE ct.id = cm.component_type_id
+  AND ct.component_type = 'Brake pad'
+  AND cm.bike_id = 133
+  AND cm.is_deleted = false;

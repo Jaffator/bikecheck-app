@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { TokenService } from './token.service';
-import { RefreshTokenRepository } from '../refreshtoken/refreshtoken.repository';
+import { RefreshTokenService } from '../refreshtoken/refreshtoken.service';
 import { getLoggerToken } from 'nestjs-pino';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
@@ -10,7 +10,7 @@ import { users as UserFull } from '@prisma/client';
 
 describe('TokenService_testing', () => {
   let tokenService: TokenService;
-  let repo: RefreshTokenRepository;
+  let repo: RefreshTokenService;
   // Mocks
   const mockRepo = {
     findByToken: jest.fn(),
@@ -32,7 +32,7 @@ describe('TokenService_testing', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TokenService,
-        { provide: RefreshTokenRepository, useValue: mockRepo },
+        { provide: RefreshTokenService, useValue: mockRepo },
         { provide: JwtService, useValue: { sign: () => 'fake-access-token' } },
         { provide: UserService, useValue: mockUserService },
         { provide: getLoggerToken(TokenService.name), useValue: mockLogger },
@@ -40,7 +40,7 @@ describe('TokenService_testing', () => {
     }).compile();
 
     tokenService = module.get<TokenService>(TokenService);
-    repo = module.get<RefreshTokenRepository>(RefreshTokenRepository);
+    repo = module.get<RefreshTokenService>(RefreshTokenService);
   });
   describe('RefreshToken', () => {
     it('Should return new access token and reuse refresh token', async () => {

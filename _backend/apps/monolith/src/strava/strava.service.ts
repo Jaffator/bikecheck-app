@@ -23,8 +23,9 @@ interface StravaActivityData {
   gearid: string;
   analyzedData: {
     rawJson: any;
+    started_at: string;
     suspension_minutes: number;
-    brake_indexWear: number;
+    health_index_brake_pad: number;
     drivetrain_meters: number;
     distance_m: number;
     duration_min: number;
@@ -75,7 +76,7 @@ export class StravaEventsService {
       return 0;
     }
     // Declare variables to store results
-    let brake_indexWear = 0;
+    let health_index_brake_pad = 0;
     let suspension_minutes = 0;
     let drivetrain_meters = 0;
     let total_elevation_loss = 0;
@@ -93,7 +94,7 @@ export class StravaEventsService {
         total_elevation_loss += Math.abs(split.elevation_difference);
         const slopePercentDown = Number(Math.abs(slopeSigned).toFixed(2));
         const splitIndexWear = split.elevation_difference * getKslopeDH(slopePercentDown) * parameters.kweight;
-        brake_indexWear += Math.abs(splitIndexWear);
+        health_index_brake_pad += Math.abs(splitIndexWear);
       }
 
       /*
@@ -124,8 +125,9 @@ export class StravaEventsService {
       gearid: stravaData.gear.id,
       analyzedData: {
         rawJson: stravaData,
+        started_at: stravaData.start_date,
         suspension_minutes: Math.floor(suspension_minutes / 60),
-        brake_indexWear: Math.floor(brake_indexWear),
+        health_index_brake_pad: Math.floor(health_index_brake_pad),
         drivetrain_meters: Math.floor(drivetrain_meters),
         distance_m: Math.floor(stravaData.distance),
         duration_min: Math.floor(stravaData.moving_time / 60),
@@ -152,26 +154,16 @@ export class StravaEventsService {
     const bikeId = bike ? Number(bike.id) : null;
     const userId = bike ? Number(bike.user_id) : null;
 
+    // Save data to db - Rides table
     if (bikeId && userId) {
       const ride = await this.prisma.rides.upsert({
         where: { activity_strava_id: BigInt(data.activity_id) },
-        update: {
-          json_data: JSON.stringify(data.analyzedData.rawJson),
-          braking_load_score: data.analyzedData.brake_indexWear,
-          distance_m: data.analyzedData.distance_m,
-          duration_min: data.analyzedData.duration_min,
-          elevation_up_m: data.analyzedData.elevation_up_m,
-          elevation_down_m: data.analyzedData.elevation_down_m,
-          speed_avg: data.analyzedData.speed_avg,
-          max_speed_kmh: data.analyzedData.max_speed_kmh,
-          suspension_min: data.analyzedData.suspension_minutes,
-          drivetrain_meters: data.analyzedData.drivetrain_meters,
-        },
         create: {
           bike_id: bikeId,
           user_id: userId,
+          started_at: new Date(data.analyzedData.started_at),
           json_data: JSON.stringify(data.analyzedData.rawJson),
-          braking_load_score: data.analyzedData.brake_indexWear,
+          health_index: data.analyzedData.health_index_brake_pad,
           activity_strava_id: BigInt(data.activity_id),
           distance_m: data.analyzedData.distance_m,
           duration_min: data.analyzedData.duration_min,
@@ -182,7 +174,77 @@ export class StravaEventsService {
           suspension_min: data.analyzedData.suspension_minutes,
           drivetrain_meters: data.analyzedData.drivetrain_meters,
         },
+        update: {
+          started_at: new Date(data.analyzedData.started_at),
+          json_data: JSON.stringify(data.analyzedData.rawJson),
+          health_index: data.analyzedData.health_index_brake_pad,
+          distance_m: data.analyzedData.distance_m,
+          duration_min: data.analyzedData.duration_min,
+          elevation_up_m: data.analyzedData.elevation_up_m,
+          elevation_down_m: data.analyzedData.elevation_down_m,
+          speed_avg: data.analyzedData.speed_avg,
+          max_speed_kmh: data.analyzedData.max_speed_kmh,
+          suspension_min: data.analyzedData.suspension_minutes,
+          drivetrain_meters: data.analyzedData.drivetrain_meters,
+        },
       });
+
+      // Save data to db - Components_mounted table
+
+      /* --- health_index_brake_pad parameter --- 
+        - health_index parameter in table
+          - releated to Brake pads
+          - (posible other parts will have health index too)
+      */
+      console.log(bikeId);
+      const { count: brakepads_Count } = await this.prisma.components_mounted.updateMany({
+        where: {
+          bike_id: bikeId,
+          is_deleted: false,
+          component_types: { component_type: 'Brake pad' },
+        },
+        data: { health_index: { increment: data.analyzedData.health_index_brake_pad } },
+      });
+
+      /* --- distance_m parameter ---
+          - total_meters parameter in table
+            - releated to all coponents
+      */
+      const { count: total_metersCount } = await this.prisma.components_mounted.updateMany({
+        where: {
+          bike_id: bikeId,
+          is_deleted: false,
+        },
+        data: { total_meters: { increment: data.analyzedData.distance_m } },
+      });
+
+      /* --- duration_min parameter ---
+          - total_time_min parameter in table
+            - releated to all coponents
+      */
+      const { count: total_time_minCount } = await this.prisma.components_mounted.updateMany({
+        where: {
+          bike_id: bikeId,
+          is_deleted: false,
+        },
+        data: { total_time_min: { increment: data.analyzedData.duration_min } },
+      });
+
+      /* --- drivetrain_meters parameter ---
+          - drivetrain_meters parameter in table
+          - releated to chain, cassette, chainring
+      */
+      const { count: total_time_minCount } = await this.prisma.components_mounted.updateMany({
+        where: {
+          bike_id: bikeId,
+          is_deleted: false,
+        },
+        data: { total_time_min: { increment: data.analyzedData.duration_min } },
+      });
+
+      if (brakepads_Count === 0) throw new Error('Cannot update health_index');
+      if (total_metersCount === 0) throw new Error('Cannot update total_meters');
+      if (total_time_minCount === 0) throw new Error('Cannot update total_time_min');
 
       // Generate ride summary
       await this.geminiQueue.add('generate-ride-summary', { data, rideId: ride.id } satisfies GeminiRideSummaryJob);

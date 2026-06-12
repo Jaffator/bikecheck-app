@@ -3,13 +3,13 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import { users as UserFull } from '@prisma/client';
-import { RefreshTokenRepository } from '../refreshtoken/refreshtoken.repository';
+import { RefreshTokenService } from '../refreshtoken/refreshtoken.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
-    private refreshTokenRepository: RefreshTokenRepository,
+    private refreshTokenRepository: RefreshTokenService,
     @InjectPinoLogger(AuthService.name) private readonly logger: PinoLogger,
   ) {}
 

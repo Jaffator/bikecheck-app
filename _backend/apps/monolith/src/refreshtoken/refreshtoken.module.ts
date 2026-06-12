@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RefreshTokenRepository } from './refreshtoken.repository';
+import { RefreshTokenService } from './refreshtoken.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  providers: [RefreshTokenRepository], // dependency injection
-  exports: [RefreshTokenRepository],
+  providers: [RefreshTokenService],
+  exports: [RefreshTokenService],
 })
 export class RefreshTokenModule {}

@@ -1,57 +1,44 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BikeService } from './bike.service';
-import { BikeRepository } from './bike.repository';
+import { PrismaService } from '../../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 
 describe('BikeService', () => {
   let service: BikeService;
-  let repository: BikeRepository;
 
-  const mockBikeRepository = {
-    createBike: jest.fn(),
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    updateBike: jest.fn(),
-    hardDeleteBike: jest.fn(),
-    softDeleteBike: jest.fn(),
+  const mockPrisma = {
+    bikes: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    bike_sizes: { findMany: jest.fn() },
+    bike_types: { findMany: jest.fn() },
+    ride_styles: { findMany: jest.fn() },
+    wheel_sizes: { findMany: jest.fn() },
+    components_mounted: { createMany: jest.fn() },
+    $transaction: jest.fn(),
+  };
+
+  const mockStorageService = {
+    uploadFileR2CloudFare: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BikeService, { provide: BikeRepository, useValue: mockBikeRepository }],
+      providers: [
+        BikeService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: StorageService, useValue: mockStorageService },
+      ],
     }).compile();
 
     service = module.get<BikeService>(BikeService);
-    repository = module.get<BikeRepository>(BikeRepository);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-  //   it('create a bike', async () => {
-  //     // ARRANGE
-  //     const createBikeDto = {
-  //       bike_brand_id: 1,
-  //       year: 2025,
-  //       mileage_km: 1250,
-  //       bikename: 'testnamebike',
-  //     };
-
-  //     const bike = {
-  //       ...createBikeDto,
-  //       id: 1,
-  //     };
-
-  //     mockBikeRepository.createBike.mockResolvedValue(bike);
-
-  //     // ACT
-  //     const result = await service.createBikeWithComponents({ bike: createBikeDto, components: [] });
-
-  //     // ASSERT
-  //     expect(result).toEqual(bike);
-  //   });
-  //   it('findall bikes', async () => {});
-  //   it('find bike ID', async () => {});
-  //   it('update bike', async () => {});
-  //   it('delete soft bike', async () => {});
-  //   it('delete hard bike', async () => {});
 });

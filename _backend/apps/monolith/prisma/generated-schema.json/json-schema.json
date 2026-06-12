@@ -41,13 +41,13 @@
             "null"
           ]
         },
-        "service_interval_min": {
+        "health_index_interval": {
           "type": [
             "integer",
             "null"
           ]
         },
-        "health_index_interval": {
+        "service_interval_min": {
           "type": [
             "integer",
             "null"
@@ -174,18 +174,6 @@
             "null"
           ]
         },
-        "total_km": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "total_time_min": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
         "created_at": {
           "type": [
             "string",
@@ -255,6 +243,22 @@
           "type": "boolean",
           "default": false
         },
+        "has_rear_suspension": {
+          "type": "boolean",
+          "default": false
+        },
+        "total_km": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "total_time_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "strava_gear_id": {
           "type": [
             "string",
@@ -266,10 +270,6 @@
             "string",
             "null"
           ]
-        },
-        "has_rear_suspension": {
-          "type": "boolean",
-          "default": false
         },
         "bike_sizes": {
           "anyOf": [
@@ -488,10 +488,6 @@
             "null"
           ]
         },
-        "total_time_min": {
-          "type": "integer",
-          "default": 0
-        },
         "total_km": {
           "type": [
             "integer",
@@ -499,12 +495,11 @@
           ],
           "default": 0
         },
-        "effective_meters": {
-          "type": "integer",
-          "default": 0
-        },
-        "effective_time_min": {
-          "type": "integer",
+        "total_time_min": {
+          "type": [
+            "integer",
+            "null"
+          ],
           "default": 0
         },
         "health_index": {
@@ -512,6 +507,17 @@
             "integer",
             "null"
           ],
+          "default": 0
+        },
+        "effective_meters": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": 0
+        },
+        "effective_time_min": {
+          "type": "integer",
           "default": 0
         },
         "action_done_component_map": {
@@ -600,13 +606,13 @@
           ],
           "format": "date-time"
         },
-        "bike_km_at_time": {
+        "bike_minutes_at_time": {
           "type": [
             "integer",
             "null"
           ]
         },
-        "bike_minutes_at_time": {
+        "bike_km_at_time": {
           "type": [
             "integer",
             "null"
@@ -635,12 +641,6 @@
         "action_name": {
           "type": "string"
         },
-        "warning_message": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "replace_action": {
           "type": "boolean",
           "default": false
@@ -652,6 +652,12 @@
         "req_rear_suspension": {
           "type": "boolean",
           "default": false
+        },
+        "warning_message": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "action_service_intervals": {
           "type": "array",
@@ -677,12 +683,6 @@
             "$ref": "#/definitions/event_actions_done"
           }
         },
-        "service_snooze": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/service_snooze"
-          }
-        },
         "users": {
           "anyOf": [
             {
@@ -692,6 +692,12 @@
               "type": "null"
             }
           ]
+        },
+        "service_snooze": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/service_snooze"
+          }
         }
       }
     },
@@ -943,12 +949,6 @@
           ],
           "format": "date-time"
         },
-        "duration_min": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
         "distance_m": {
           "type": [
             "integer",
@@ -985,54 +985,6 @@
             "null"
           ]
         },
-        "suspension_min": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "drivetrain_meters": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "summary": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "json_data": {
-          "type": [
-            "number",
-            "string",
-            "boolean",
-            "object",
-            "array",
-            "null"
-          ]
-        },
-        "created_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "updated_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "activity_strava_id": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
         "is_deleted": {
           "type": [
             "boolean",
@@ -1046,6 +998,60 @@
             "null"
           ],
           "format": "date-time"
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "drivetrain_meters": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "duration_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "json_data": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suspension_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "activity_strava_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "bikes": {
           "$ref": "#/definitions/bikes"
@@ -1330,13 +1336,6 @@
           ],
           "default": 0
         },
-        "extended_by_healthIndex": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -1345,11 +1344,18 @@
           "type": "string",
           "format": "date-time"
         },
-        "events_action": {
-          "$ref": "#/definitions/events_action"
+        "extended_by_healthIndex": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": 0
         },
         "bikes": {
           "$ref": "#/definitions/bikes"
+        },
+        "events_action": {
+          "$ref": "#/definitions/events_action"
         }
       }
     }

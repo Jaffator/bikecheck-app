@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
 import { getLoggerToken } from 'nestjs-pino';
-import { RefreshTokenRepository } from '../refreshtoken/refreshtoken.repository';
+import { RefreshTokenService } from '../refreshtoken/refreshtoken.service';
 import * as bcrypt from 'bcrypt';
 import { UnauthorizedException } from '@nestjs/common';
 // import { UnauthorizedException } from '@nestjs/common';
@@ -13,7 +13,7 @@ describe('AuthService_testing', () => {
   const mockUserService = {
     getUserbyEmail: jest.fn(),
   };
-  const mockRefreshTokenRepository = {
+  const mockRefreshTokenService = {
     revokeToken: jest.fn(() => {}),
     findByToken: jest.fn(() => {}),
   };
@@ -31,7 +31,7 @@ describe('AuthService_testing', () => {
       providers: [
         AuthService,
         { provide: UserService, useValue: mockUserService },
-        { provide: RefreshTokenRepository, useValue: mockRefreshTokenRepository },
+        { provide: RefreshTokenService, useValue: mockRefreshTokenService },
         { provide: getLoggerToken(AuthService.name), useValue: mockLogger },
       ],
     }).compile();
@@ -90,7 +90,7 @@ describe('AuthService_testing', () => {
       await authService.logout(refresh_token);
 
       // ASSSERT
-      expect(mockRefreshTokenRepository.revokeToken).toHaveBeenCalled();
+      expect(mockRefreshTokenService.revokeToken).toHaveBeenCalled();
     });
   });
 });

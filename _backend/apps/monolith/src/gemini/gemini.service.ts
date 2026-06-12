@@ -10,14 +10,16 @@ export interface GeminiRideSummaryJob {
 
 @Injectable()
 export class GeminiService {
+  private readonly model = new GoogleGenerativeAI(process.env['GEMINI_API_KEY']!).getGenerativeModel({
+    model: 'gemini-flash-latest',
+  });
+
   constructor(
     @InjectPinoLogger(GeminiService.name) private readonly logger: PinoLogger,
     private readonly prisma: PrismaService,
   ) {}
 
   async generateRideSummary(job: GeminiRideSummaryJob) {
-    const genAI = new GoogleGenerativeAI(process.env['GEMINI_API_KEY']!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     const prompt = `
       # ROLE
       You are a specialized AI bike mechanic for the "BikeCheck" app. Your task is to analyze raw JSON data from the Strava fitness app and write a human-like, concise, and technically accurate verbal evaluation of the ride from a service and recommended maintenance perspective. Speak with a bit of a casual attitude, and talk directly to the rider using an informal tone and be funny a little. Give some advice what to check but not too much.
@@ -37,7 +39,7 @@ export class GeminiService {
       </data>
       `.trim();
     // Get the AI summary
-    const ai_summary = await this.callMethod_with_Measure('gemini summary', () => model.generateContent(prompt));
+    const ai_summary = await this.callMethod_with_Measure('gemini summary', () => this.model.generateContent(prompt));
     const summary = ai_summary.response.text();
 
     // Save the summary to the ride

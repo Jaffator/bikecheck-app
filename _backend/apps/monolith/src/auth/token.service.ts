@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { users as UserFull } from '@prisma/client';
-import { RefreshTokenRepository } from '../refreshtoken/refreshtoken.repository';
+import { RefreshTokenService } from '../refreshtoken/refreshtoken.service';
 import { randomBytes } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
@@ -10,7 +10,7 @@ import { AUTH_CONFIG } from './auth.config';
 @Injectable()
 export class TokenService {
   constructor(
-    private refreshTokenRepository: RefreshTokenRepository,
+    private refreshTokenRepository: RefreshTokenService,
     private jwtService: JwtService,
     private userService: UserService,
     @InjectPinoLogger(TokenService.name) private readonly logger: PinoLogger,
