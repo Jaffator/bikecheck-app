@@ -51,7 +51,7 @@ export class NotificationService {
   }
 
   async list(userId: number, unreadOnly: boolean): Promise<notifications[]> {
-    return this.prisma.notifications.findMany({
+    return await this.prisma.notifications.findMany({
       where: { user_id: userId, ...(unreadOnly ? { is_read: false } : {}) },
       orderBy: { created_at: 'desc' },
     });
