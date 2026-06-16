@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ValidateNested, IsString } from 'class-validator';
 import { CreateMountedComponentsDto } from './create-components';
-import { components_mounted } from '@prisma/client';
 
 export class AssembleBikeComponentsDto {
   @ApiProperty({ type: () => CreateMountedComponentsDto })
@@ -15,7 +14,7 @@ export class AssembleBikeComponentsDto {
   component_name!: string;
 }
 
-export class Response_MountedComponentsDto implements components_mounted {
+export class Response_MountedComponentsDto {
   @ApiProperty({ example: 1 })
   id!: number;
 
@@ -58,14 +57,14 @@ export class Response_MountedComponentsDto implements components_mounted {
   @ApiProperty({ example: 'Fox 38 Factory Grip2', nullable: true })
   component_desc!: string | null;
 
-  @ApiProperty({ example: 1200 })
-  total_time_min!: number;
+  @ApiProperty({ example: 1200, nullable: true })
+  total_time_min!: number | null;
 
-  @ApiProperty({ example: 80000 })
-  effective_meters!: number;
+  @ApiProperty({ example: 80000, nullable: true })
+  drivetrain_km!: number | null;
 
-  @ApiProperty({ example: 480 })
-  effective_time_min!: number;
+  @ApiProperty({ example: 480, nullable: true })
+  suspension_min!: number | null;
 
   @ApiProperty({ example: 85, nullable: true })
   health_index!: number | null;

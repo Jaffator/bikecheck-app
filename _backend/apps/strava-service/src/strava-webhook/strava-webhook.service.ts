@@ -82,7 +82,7 @@ export class StravaWebhookService {
       throw new Error(`Error fetching Strava API: ${(error as Error).message}`);
     }
   }
-  interface;
+
   // ---------------------------------------------------------------------
   // -------------------- Fetch Gear from Strava API ---------------------
   // ---------------------------------------------------------------------

@@ -35,7 +35,7 @@
         "id": {
           "type": "integer"
         },
-        "service_interval_meters": {
+        "service_interval_km": {
           "type": [
             "integer",
             "null"
@@ -509,15 +509,18 @@
           ],
           "default": 0
         },
-        "effective_meters": {
+        "drivetrain_km": {
           "type": [
             "integer",
             "null"
           ],
           "default": 0
         },
-        "effective_time_min": {
-          "type": "integer",
+        "suspension_min": {
+          "type": [
+            "integer",
+            "null"
+          ],
           "default": 0
         },
         "action_done_component_map": {
@@ -820,6 +823,57 @@
         }
       }
     },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "payload": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "dedup_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_read": {
+          "type": "boolean",
+          "default": false
+        },
+        "read_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
     "organizations": {
       "type": "object",
       "properties": {
@@ -973,7 +1027,7 @@
             "null"
           ]
         },
-        "braking_load_score": {
+        "health_index_brake_pad": {
           "type": [
             "integer",
             "null"
@@ -1276,6 +1330,12 @@
             "$ref": "#/definitions/events_action"
           }
         },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/notifications"
+          }
+        },
         "organization_members": {
           "type": "array",
           "items": {
@@ -1358,6 +1418,44 @@
           "$ref": "#/definitions/events_action"
         }
       }
+    },
+    "strava_pending_activities": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "activity_id": {
+          "type": "integer"
+        },
+        "athlete_id": {
+          "type": "string"
+        },
+        "gear_id": {
+          "type": "string"
+        },
+        "analyzed_data": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resolved_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
     }
   },
   "type": "object",
@@ -1419,6 +1517,9 @@
     "organization_roles": {
       "$ref": "#/definitions/organization_roles"
     },
+    "notifications": {
+      "$ref": "#/definitions/notifications"
+    },
     "organizations": {
       "$ref": "#/definitions/organizations"
     },
@@ -1445,6 +1546,9 @@
     },
     "service_snooze": {
       "$ref": "#/definitions/service_snooze"
+    },
+    "strava_pending_activities": {
+      "$ref": "#/definitions/strava_pending_activities"
     }
   }
 }

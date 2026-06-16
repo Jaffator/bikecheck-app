@@ -3,7 +3,7 @@ import { Job, Queue } from 'bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { StravaWebhookEventDto } from './dto/strava-webhook-event.dto';
 import { StravaWebhookService } from './strava-webhook.service';
-import stravaData from '../example_strava_data.json';
+import stravaJsonData_forTest from '../example_strava_data.json';
 
 // Decorator name must exactly match the Queue name registered in the module
 @Processor('strava-webhook-queue')
@@ -20,17 +20,22 @@ export class StravaProcessor extends WorkerHost {
     this.logger.info({ custom: true }, `Worker starting job: ${job.id}`);
     if (job.name === 'process-strava-event') {
       const stravaEvent: StravaWebhookEventDto = job.data;
-
+      // --- Delete ---
+      if (stravaEvent.aspect_type === 'delete') {
+        await this.stravaService.deleteActivityData(stravaEvent.owner_id, stravaEvent.object_id);
+        return { type: 'delete', data: null };
+      }
+      console.log(stravaEvent);
       // Fetch activity from Strava API
-      let activityData = stravaData;
+      let activityData = stravaJsonData_forTest;
       if ('test' in job.data) {
         // ------- DELETE THIS IN PRODUCTION -------
         // ----- TESTING STRAVA JSON DATA -----
-        activityData = stravaData;
+        activityData = stravaJsonData_forTest;
         // ------- DELETE THIS IN PRODUCTION -------
         // throw new Error('Test error: Simulating failure in fetching activity data');
       } else activityData = await this.stravaService.downloadActivity(stravaEvent.object_id, stravaEvent.owner_id);
-
+      console.log('Gear: ', activityData.data.gear);
       // If activity is not Ride or EBikeRide, skip processing
       if (activityData.data.type !== 'EBikeRide' && activityData.data.type !== 'Ride') {
         return { skipped: true, reason: 'Activity type is not Ride or EBikeRide' };
@@ -38,22 +43,16 @@ export class StravaProcessor extends WorkerHost {
       const slimActivityData = this.stravaService.simplifyActivityData(activityData.data);
 
       // Decision based on type activity create / update / delete
-      // Create
+      // --- Create ---
       if (stravaEvent.aspect_type === 'create') {
         await this.stravaService.saveActivityData(activityData.data, stravaEvent.owner_id, stravaEvent.object_id);
         return { type: 'create', data: slimActivityData };
       }
 
-      // Update
+      // --- Update ---
       if (stravaEvent.aspect_type === 'update') {
         await this.stravaService.updateActivityData(activityData.data, stravaEvent.owner_id, stravaEvent.object_id);
         return { type: 'update', data: slimActivityData };
-      }
-
-      // Delete
-      if (stravaEvent.aspect_type === 'delete') {
-        await this.stravaService.deleteActivityData(stravaEvent.owner_id, stravaEvent.object_id);
-        return { type: 'delete', data: null };
       }
     }
   }

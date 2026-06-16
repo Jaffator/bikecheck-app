@@ -17,17 +17,15 @@ export class StravaEventsProcessor extends WorkerHost {
       case 'strava-authorization':
         await this.stravaService.accountLinked(job.data);
         break;
-      case 'strava_activity-created': {
+      case 'strava_activity-created':
+      case 'strava_activity-updated': {
         const analyzedData = await this.stravaService.analyzeStravaData(job.data);
         await this.stravaService.saveAnalyzedData(analyzedData);
         break;
       }
-      // case 'strava_activity-updated':
-      //   await this.stravaService.activityUpdated(job.data);
-      //   break;
-      // case 'strava_activity-deleted':
-      //   await this.stravaService.activityDeleted(job.data);
-      //   break;
+      case 'strava_activity-deleted':
+        await this.stravaService.deleteStravaActivity(job.data);
+        break;
       default:
         this.logger.warn({ custom: true, jobName: job.name }, 'Unknown job type');
     }

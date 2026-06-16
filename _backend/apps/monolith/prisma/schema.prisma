@@ -30,15 +30,15 @@ model action_done_component_map {
 }
 
 model action_service_intervals {
-  id                      Int           @id(map: "component_service_intervals_pkey") @default(autoincrement())
-  service_interval_meters Int?
-  event_actions_id        Int
-  health_index_interval   Int?
-  service_interval_min    Int?
-  category                String[]      @default([])
-  events_action           events_action @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)
+  id                    Int           @id(map: "component_service_intervals_pkey") @default(autoincrement())
+  service_interval_km   Int?
+  event_actions_id      Int
+  health_index_interval Int?
+  service_interval_min  Int?
+  category              String[]      @default([])
+  events_action         events_action @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)
 
-  @@unique([event_actions_id, service_interval_meters, service_interval_min, health_index_interval])
+  @@unique([event_actions_id, service_interval_km, service_interval_min, health_index_interval])
 }
 
 model bike_brands {
@@ -158,11 +158,11 @@ model components_mounted {
   deleted_at                DateTime?                   @db.Timestamptz(6)
   component_desc            String?                     @db.VarChar
   position                  String?                     @db.VarChar
-  total_meters              BigInt?                        @default(0)
-  total_time_min            BigInt?                        @default(0)
-  health_index              BigInt?                        @default(0)
-  drivetrain_meters          BigInt?                        @default(0)
-  suspension_min       BigInt?                        @default(0)
+  total_km                  Int?                        @default(0)
+  total_time_min            Int?                        @default(0)
+  health_index              Int?                        @default(0)
+  drivetrain_km             Int?                        @default(0)
+  suspension_min            Int?                        @default(0)
   action_done_component_map action_done_component_map[]
   bikes                     bikes                       @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   component_types           component_types             @relation(fields: [component_type_id], references: [id], onUpdate: NoAction)
@@ -172,7 +172,7 @@ model components_mounted {
   @@index([bike_id], map: "bike_components_bike_id")
   @@index([component_type_id], map: "bike_components_component_id")
   @@index([is_active], map: "bike_components_is_active")
-  @@index([total_meters], map: "bike_components_mileage")
+  @@index([total_km], map: "bike_components_mileage")
   @@index([mounted_at], map: "bike_components_mounted_at")
   @@index([removed_at], map: "bike_components_remove_at")
   @@index([updated_at], map: "bike_components_updated_at")
@@ -272,6 +272,23 @@ model organization_roles {
   organization_members organization_members[]
 }
 
+model notifications {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  type       String    @db.VarChar
+  title      String    @db.VarChar
+  body       String
+  payload    Json?
+  dedup_key  String?   @db.VarChar
+  is_read    Boolean   @default(false)
+  read_at    DateTime? @db.Timestamptz(6)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, dedup_key])
+  @@index([user_id, is_read], map: "notifications_user_unread")
+}
+
 model organizations {
   id                   Int                    @id @default(autoincrement())
   name                 String
@@ -303,28 +320,28 @@ model ride_styles {
 }
 
 model rides {
-  id                 Int       @id @default(autoincrement())
-  bike_id            Int
-  user_id            Int
-  started_at         DateTime? @db.Timestamptz(6)
-  distance_m         Int?
-  elevation_down_m   Int?
-  elevation_up_m     Int?
-  speed_avg          Int?
-  braking_load_score Int?
-  max_speed_kmh      Int?
-  is_deleted         Boolean?  @default(false)
-  deleted_at         DateTime? @db.Timestamptz(6)
-  created_at         DateTime? @default(now()) @db.Timestamptz(6)
-  drivetrain_meters  Int?
-  duration_min       Int?
-  json_data          Json?
-  summary            String?   @db.VarChar
-  suspension_min     Int?
-  updated_at         DateTime? @db.Timestamptz(6)
-  activity_strava_id BigInt?   @unique
-  bikes              bikes     @relation(fields: [bike_id], references: [id], onDelete: Cascade)
-  users              users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                     Int       @id @default(autoincrement())
+  bike_id                Int
+  user_id                Int
+  started_at             DateTime? @db.Timestamptz(6)
+  distance_m             Int?
+  elevation_down_m       Int?
+  elevation_up_m         Int?
+  speed_avg              Int?
+  health_index_brake_pad Int?
+  max_speed_kmh          Int?
+  is_deleted             Boolean?  @default(false)
+  deleted_at             DateTime? @db.Timestamptz(6)
+  created_at             DateTime? @default(now()) @db.Timestamptz(6)
+  drivetrain_meters      Int?
+  duration_min           Int?
+  json_data              Json?
+  summary                String?   @db.VarChar
+  suspension_min         Int?
+  updated_at             DateTime? @db.Timestamptz(6)
+  activity_strava_id     BigInt?   @unique
+  bikes                  bikes     @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+  users                  users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([bike_id], map: "rides_bike_id")
   @@index([started_at], map: "rides_started_at")
@@ -375,6 +392,7 @@ model users {
   bikes                bikes[]
   component_types      component_types[]
   events_action        events_action[]
+  notifications        notifications[]
   organization_members organization_members[]
   refresh_tokens       refresh_tokens[]
   rides                rides[]
@@ -404,4 +422,16 @@ model service_snooze {
   events_action           events_action @relation(fields: [event_action_id], references: [id], onDelete: Cascade)
 
   @@unique([bike_id, event_action_id])
+}
+
+model strava_pending_activities {
+  id            Int       @id @default(autoincrement())
+  activity_id   BigInt    @unique
+  athlete_id    String    @db.VarChar
+  gear_id       String    @db.VarChar
+  analyzed_data Json
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  resolved_at   DateTime? @db.Timestamptz(6)
+
+  @@index([gear_id, athlete_id], map: "strava_pending_gear_athlete")
 }

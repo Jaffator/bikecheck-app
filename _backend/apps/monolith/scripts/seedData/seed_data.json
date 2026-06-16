@@ -1779,20 +1779,70 @@
         "reset_interval": true,
         "intervals": [
           {
-            "service_interval_meters": 2000000,
+            "service_interval_km": 1000,
             "category": ["DH"]
           },
           {
-            "service_interval_meters": 800000,
+            "service_interval_km": 800,
             "category": ["Enduro", "Trail", "Freeride", "Ebike"]
           },
           {
-            "service_interval_meters": 1200000,
+            "service_interval_km": 1200,
             "category": ["XC", "FatBike", "Dirt"]
           },
           {
-            "service_interval_meters": 3500000,
+            "service_interval_km": 3000,
             "category": ["Road", "Gravel"]
+          }
+        ]
+      },
+      {
+        "action": "Cassette Replacement",
+        "targets": ["Cassette"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "intervals": [
+          {
+            "service_interval_km": 3000,
+            "category": ["DH"]
+          },
+          {
+            "service_interval_km": 2400,
+            "category": ["Enduro", "Trail", "Freeride", "Ebike"]
+          },
+          {
+            "service_interval_km": 3500,
+            "category": ["XC", "FatBike", "Dirt"]
+          },
+          {
+            "service_interval_km": 9000,
+            "category": ["Road", "Gravel"]
+          }
+        ]
+      },
+      {
+        "action": "Chainring Replacement",
+        "targets": ["Chainring"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "intervals": [
+          {
+            "service_interval_km": 3000,
+            "category": ["DH"]
+          },
+          {
+            "service_interval_km": 2500,
+            "category": ["Enduro", "Trail", "Freeride", "Ebike"]
+          },
+          {
+            "service_interval_km": 3600,
+            "category": ["XC", "FatBike", "Dirt"]
+          },
+          {
+            "service_interval_km": 9000,
+            "category": ["Road, Gravel"]
           }
         ]
       },
@@ -1826,15 +1876,15 @@
         "reset_interval": true,
         "intervals": [
           {
-            "service_interval_meters": 500000,
+            "service_interval_km": 500,
             "category": ["DH"]
           },
           {
-            "service_interval_meters": 200000,
+            "service_interval_km": 600,
             "category": ["Enduro", "Trail", "Freeride", "Ebike", "XC", "FatBike", "Dirt"]
           },
           {
-            "service_interval_meters": 300000,
+            "service_interval_km": 1000,
             "category": ["Road", "Gravel"]
           }
         ]

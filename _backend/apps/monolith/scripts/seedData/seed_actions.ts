@@ -1,6 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { PrismaClient } from '@prisma/client';
-import seedData from './seed_data.json';
+import { SeedData } from './seed_data.types';
+import seedDatJson from './seed_data.json';
+
+const seedData: SeedData = seedDatJson as SeedData;
 
 export class SeedActions {
   constructor(private readonly prisma: PrismaClient) {}
@@ -53,7 +55,7 @@ export class SeedActions {
             await this.prisma.action_service_intervals.createMany({
               data: event.intervals.map((interval: any) => ({
                 event_actions_id: save_action.id,
-                service_interval_meters: interval.service_interval_meters,
+                service_interval_km: interval.service_interval_km,
                 service_interval_min: interval.service_interval_min,
                 health_index_interval: interval.health_index_interval,
                 category: interval.category ?? [],
