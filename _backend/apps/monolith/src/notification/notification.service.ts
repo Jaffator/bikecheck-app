@@ -3,7 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorat
 import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationType } from './notification-types.config';
-import { notifications } from '@prisma/client';
+import { notifications, Prisma } from '@prisma/client';
 
 export interface NotificationDeliveryJob {
   notificationId: number;
@@ -14,11 +14,10 @@ export interface CreateNotificationParams {
   type: NotificationType;
   title: string;
   body: string;
-  payload?: Record<string, unknown>;
+  payload?: Prisma.InputJsonObject;
   dedupKey?: string;
 }
-const test: CreateNotificationParams;
-test.type;
+
 @Injectable()
 export class NotificationService {
   constructor(

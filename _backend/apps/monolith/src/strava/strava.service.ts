@@ -4,6 +4,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
 import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
+import { NotificationService } from '../notification/notification.service';
+import type { PendingActivities } from '../notification/notification-types.config';
 
 interface SplitMetricEntry {
   distance: number;
@@ -44,6 +46,7 @@ export class StravaEventsService {
     @InjectPinoLogger(StravaEventsService.name) private readonly logger: PinoLogger,
     @InjectQueue('gemini-queue') private readonly geminiQueue: Queue,
     private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -141,129 +144,243 @@ export class StravaEventsService {
   }
 
   /**
-   * Save analyzed Strava activity data and saves the result to the rides.
+   * Orchestrator: resolves user + bike from Strava data,
+   * then either parks the activity as pending or saves it directly.
    */
   async saveAnalyzedData(data: StravaActivityData): Promise<void> {
-    const bike = await this.prisma.bikes.findFirst({
-      where: {
-        strava_gear_id: data.gearid,
-        users: { strava_athlete_id: String(data.athleteid) },
-      },
-      select: { id: true, user_id: true },
+    // Lookup user and bike by Strava IDs
+    const user = await this.prisma.users.findFirst({
+      where: { strava_athlete_id: String(data.athleteid) },
+      select: { id: true },
     });
-    const bikeId = bike ? Number(bike.id) : null;
-    const userId = bike ? Number(bike.user_id) : null;
 
-    // Strava gearID missing in BikeCheck bikes
-    if (bikeId === null) {
-      // safe to pending table
+    const bike = await this.prisma.bikes.findFirst({
+      where: { strava_gear_id: data.gearid },
+      select: { id: true },
+    });
+
+    const bikeId = bike ? Number(bike.id) : null;
+    const userId = user ? Number(user.id) : null;
+
+    // Bike not linked in BikeCheck — save activity to pending table
+    if (bikeId === null && userId) {
+      await this.prisma.strava_pending_activities.create({
+        data: {
+          activity_id: data.activity_id,
+          user_id: userId,
+          gear_id: data.gearid,
+          analyzed_data: JSON.stringify(data.analyzedData),
+        },
+      });
+
+      // No gearID in Strava activity -> send notification -> user must link activity with bike
+      if (!data.gearid) {
+        await this.notificationService.create({
+          userId,
+          type: 'strava_no_gear',
+          title: 'Strava activity without a bike(gearID)',
+          body: 'Assign a bike to this activity directly in the Strava app.',
+          dedupKey: `strava_no_gear:${user!.id}`,
+        });
+      } else {
+        // No matching bike in BikeCheck -> send notification -> user must link the gear with bike
+        await this.notificationService.create({
+          userId,
+          type: 'strava_unmatched_gear',
+          title: 'Strava bike(gearID) not linked with bike in BikeCheck',
+          body: 'Link your Strava bike to a BikeCheck bike in settings.',
+          payload: { gearId: data.gearid },
+          dedupKey: `strava_unmatched_gear:${data.gearid}`,
+        });
+      }
+      return;
+    } else if (bikeId && userId) {
+      await this.saveRide(bikeId, userId, data.activity_id, data.analyzedData);
+    }
+  }
+
+  /**
+   * Called when user links a Strava gear to a BikeCheck bike.
+   * Processes all unresolved pending activities for that gear and dismisses the notification.
+   */
+  async resolvePendingActivities_without_GearId(params: PendingActivities): Promise<void> {
+    // Resolve only one selected activity
+    if (params.activityId) {
+      const pending = await this.prisma.strava_pending_activities.findFirst({
+        where: { user_id: params.userId, activity_id: params.activityId, resolved_at: null },
+      });
+      if (!pending) throw new Error('No pending activity found');
+
+      const analyzedData = JSON.parse(String(pending.analyzed_data)) as StravaActivityData['analyzedData'];
+      await this.saveRide(params.bikeId, params.userId, Number(pending.activity_id), analyzedData);
+      await this.prisma.strava_pending_activities.update({
+        where: { id: pending.id },
+        data: { resolved_at: new Date() },
+      });
     }
 
-    // Strava gearID synced with Bikechgeck bikeID
-    if (bikeId && userId) {
-      const existingRide = await this.prisma.rides.findUnique({
-        where: { activity_strava_id: BigInt(data.activity_id) },
-        select: {
-          distance_m: true,
-          duration_min: true,
-          drivetrain_meters: true,
-          suspension_min: true,
-          health_index_brake_pad: true,
-        },
+    // Resolve all activities with no gearID
+    if (!params.activityId) {
+      const pending = await this.prisma.strava_pending_activities.findMany({
+        where: { user_id: params.userId, gear_id: { equals: null }, resolved_at: null },
       });
+      for (const activity of pending) {
+        const analyzedData = JSON.parse(String(activity.analyzed_data)) as StravaActivityData['analyzedData'];
+        await this.saveRide(params.bikeId, params.userId, Number(activity.activity_id), analyzedData);
+        await this.prisma.strava_pending_activities.update({
+          where: { id: activity.id },
+          data: { resolved_at: new Date() },
+        });
+      }
+    }
 
-      const ride = await this.prisma.rides.upsert({
-        where: { activity_strava_id: BigInt(data.activity_id) },
-        create: {
-          bike_id: bikeId,
-          user_id: userId,
-          started_at: new Date(data.analyzedData.started_at),
-          json_data: JSON.stringify(data.analyzedData.rawJson),
-          health_index_brake_pad: data.analyzedData.health_index_brake_pad,
-          activity_strava_id: BigInt(data.activity_id),
-          distance_m: data.analyzedData.distance_km * 1000,
-          duration_min: data.analyzedData.duration_min,
-          elevation_up_m: data.analyzedData.elevation_up_m,
-          elevation_down_m: data.analyzedData.elevation_down_m,
-          speed_avg: data.analyzedData.speed_avg,
-          max_speed_kmh: data.analyzedData.max_speed_kmh,
-          suspension_min: data.analyzedData.suspension_minutes,
-          drivetrain_meters: data.analyzedData.drivetrain_km * 1000,
-        },
-        update: {
-          started_at: new Date(data.analyzedData.started_at),
-          json_data: JSON.stringify(data.analyzedData.rawJson),
-          health_index_brake_pad: data.analyzedData.health_index_brake_pad,
-          distance_m: data.analyzedData.distance_km * 1000,
-          duration_min: data.analyzedData.duration_min,
-          elevation_up_m: data.analyzedData.elevation_up_m,
-          elevation_down_m: data.analyzedData.elevation_down_m,
-          speed_avg: data.analyzedData.speed_avg,
-          max_speed_kmh: data.analyzedData.max_speed_kmh,
-          suspension_min: data.analyzedData.suspension_minutes,
-          drivetrain_meters: data.analyzedData.drivetrain_km * 1000,
-        },
-      });
+    // Dismiss the "strava_no_gear" notification for this gear
+    await this.notificationService.resolveByDedupKey(params.userId, `strava_no_gear:${params.userId}`);
+  }
+  async resolvePendingActivity_with_GearId(userId: number): Promise<void> {
+    const pending = await this.prisma.strava_pending_activities.findMany({
+      where: { user_id: userId, resolved_at: null },
+    });
 
-      const diff = existingRide
-        ? {
-            total_km: data.analyzedData.distance_km - Math.floor((existingRide.distance_m ?? 0) / 1000),
-            duration_min: data.analyzedData.duration_min - (existingRide.duration_min ?? 0),
-            drivetrain_km: data.analyzedData.drivetrain_km - Math.floor((existingRide.drivetrain_meters ?? 0) / 1000),
-            suspension_min: data.analyzedData.suspension_minutes - (existingRide.suspension_min ?? 0),
-            health_index_brake_pad:
-              data.analyzedData.health_index_brake_pad - (existingRide.health_index_brake_pad ?? 0),
-          }
-        : {
-            total_km: data.analyzedData.distance_km,
-            duration_min: data.analyzedData.duration_min,
-            drivetrain_km: data.analyzedData.drivetrain_km,
-            suspension_min: data.analyzedData.suspension_minutes,
-            health_index_brake_pad: data.analyzedData.health_index_brake_pad,
-          };
+    const bikes = await this.prisma.bikes.findMany({
+      where: { user_id: userId },
+      select: { strava_gear_id: true, id: true },
+    });
 
-      const { count: suspension_min_Count } = await this.prisma.components_mounted.updateMany({
-        where: {
-          bike_id: bikeId,
-          is_deleted: false,
-          component_types: { component_type: { in: ['Shock', 'Fork'] } },
-        },
-        data: { suspension_min: { increment: diff.suspension_min } },
-      });
+    // Try to solve all pending activities with matching gearID
+    for (const bike of bikes) {
+      if (!bike.strava_gear_id) continue;
 
-      const { count: brakepads_Count } = await this.prisma.components_mounted.updateMany({
-        where: {
-          bike_id: bikeId,
-          is_deleted: false,
-          component_types: { component_type: 'Brake pad' },
-        },
-        data: { health_index: { increment: diff.health_index_brake_pad } },
-      });
+      let matched = false;
+      for (const activity of pending) {
+        if (activity.gear_id === bike.strava_gear_id) {
+          const analyzedData = JSON.parse(String(activity.analyzed_data)) as StravaActivityData['analyzedData'];
+          await this.saveRide(bike.id, userId, Number(activity.activity_id), analyzedData);
+          await this.prisma.strava_pending_activities.update({
+            where: { id: activity.id },
+            data: { resolved_at: new Date() },
+          });
+          matched = true;
+        }
+      }
 
-      const { count: total_metersCount } = await this.prisma.components_mounted.updateMany({
-        where: { bike_id: bikeId, is_deleted: false },
-        data: { total_km: { increment: diff.total_km } },
-      });
+      // Dismiss notification only if at least one activity was resolved
+      if (matched) {
+        await this.notificationService.resolveByDedupKey(userId, `strava_unmatched_gear:${bike.strava_gear_id}`);
+      }
+    }
+  }
 
-      const { count: total_time_minCount } = await this.prisma.components_mounted.updateMany({
-        where: { bike_id: bikeId, is_deleted: false },
-        data: { total_time_min: { increment: diff.duration_min } },
-      });
+  /**
+   * Persists a single ride and updates component wear counters.
+   * Used by both saveAnalyzedData (live) and resolvePendingActivities (backfill).
+   */
+  private async saveRide(
+    bikeId: number,
+    userId: number,
+    activityId: number,
+    analyzedData: StravaActivityData['analyzedData'],
+  ): Promise<void> {
+    // Fetch existing ride to compute diff and avoid double-counting on re-sync
+    const existingRide = await this.prisma.rides.findUnique({
+      where: { activity_strava_id: BigInt(activityId) },
+      select: {
+        distance_m: true,
+        duration_min: true,
+        drivetrain_meters: true,
+        suspension_min: true,
+        health_index_brake_pad: true,
+      },
+    });
 
-      const { count: drivetrain_metersCount } = await this.prisma.components_mounted.updateMany({
-        where: { bike_id: bikeId, is_deleted: false },
-        data: { drivetrain_km: { increment: diff.drivetrain_km } },
-      });
+    const ride = await this.prisma.rides.upsert({
+      where: { activity_strava_id: BigInt(activityId) },
+      create: {
+        bike_id: bikeId,
+        user_id: userId,
+        started_at: new Date(analyzedData.started_at),
+        json_data: JSON.stringify(analyzedData.rawJson),
+        health_index_brake_pad: analyzedData.health_index_brake_pad,
+        activity_strava_id: BigInt(activityId),
+        distance_m: analyzedData.distance_km * 1000,
+        duration_min: analyzedData.duration_min,
+        elevation_up_m: analyzedData.elevation_up_m,
+        elevation_down_m: analyzedData.elevation_down_m,
+        speed_avg: analyzedData.speed_avg,
+        max_speed_kmh: analyzedData.max_speed_kmh,
+        suspension_min: analyzedData.suspension_minutes,
+        drivetrain_meters: analyzedData.drivetrain_km * 1000,
+      },
+      update: {
+        started_at: new Date(analyzedData.started_at),
+        json_data: JSON.stringify(analyzedData.rawJson),
+        health_index_brake_pad: analyzedData.health_index_brake_pad,
+        distance_m: analyzedData.distance_km * 1000,
+        duration_min: analyzedData.duration_min,
+        elevation_up_m: analyzedData.elevation_up_m,
+        elevation_down_m: analyzedData.elevation_down_m,
+        speed_avg: analyzedData.speed_avg,
+        max_speed_kmh: analyzedData.max_speed_kmh,
+        suspension_min: analyzedData.suspension_minutes,
+        drivetrain_meters: analyzedData.drivetrain_km * 1000,
+      },
+    });
 
-      if (brakepads_Count === 0) throw new Error('Cannot update health_index');
-      if (total_metersCount === 0) throw new Error('Cannot update total_meters');
-      if (total_time_minCount === 0) throw new Error('Cannot update total_time_min');
-      if (drivetrain_metersCount === 0) throw new Error('Cannot update drivetrain_metersCount');
-      if (suspension_min_Count === 0) throw new Error('Cannot update suspension_min');
+    const diff = existingRide
+      ? {
+          total_km: analyzedData.distance_km - Math.floor((existingRide.distance_m ?? 0) / 1000),
+          duration_min: analyzedData.duration_min - (existingRide.duration_min ?? 0),
+          drivetrain_km: analyzedData.drivetrain_km - Math.floor((existingRide.drivetrain_meters ?? 0) / 1000),
+          suspension_min: analyzedData.suspension_minutes - (existingRide.suspension_min ?? 0),
+          health_index_brake_pad: analyzedData.health_index_brake_pad - (existingRide.health_index_brake_pad ?? 0),
+        }
+      : {
+          total_km: analyzedData.distance_km,
+          duration_min: analyzedData.duration_min,
+          drivetrain_km: analyzedData.drivetrain_km,
+          suspension_min: analyzedData.suspension_minutes,
+          health_index_brake_pad: analyzedData.health_index_brake_pad,
+        };
 
-      // Generate AI ride summary
-      await this.geminiQueue.add('generate-ride-summary', { data, rideId: ride.id } satisfies GeminiRideSummaryJob);
-    } else throw new Error('UserID or BikeID not found' + 'Bikeid: ' + bikeId + ', UserID: ' + userId);
+    const { count: suspension_min_Count } = await this.prisma.components_mounted.updateMany({
+      where: {
+        bike_id: bikeId,
+        is_deleted: false,
+        component_types: { component_type: { in: ['Shock', 'Fork'] } },
+      },
+      data: { suspension_min: { increment: diff.suspension_min } },
+    });
+
+    const { count: brakepads_Count } = await this.prisma.components_mounted.updateMany({
+      where: { bike_id: bikeId, is_deleted: false, component_types: { component_type: 'Brake pad' } },
+      data: { health_index: { increment: diff.health_index_brake_pad } },
+    });
+
+    const { count: total_metersCount } = await this.prisma.components_mounted.updateMany({
+      where: { bike_id: bikeId, is_deleted: false },
+      data: { total_km: { increment: diff.total_km } },
+    });
+
+    const { count: total_time_minCount } = await this.prisma.components_mounted.updateMany({
+      where: { bike_id: bikeId, is_deleted: false },
+      data: { total_time_min: { increment: diff.duration_min } },
+    });
+
+    const { count: drivetrain_metersCount } = await this.prisma.components_mounted.updateMany({
+      where: { bike_id: bikeId, is_deleted: false },
+      data: { drivetrain_km: { increment: diff.drivetrain_km } },
+    });
+
+    if (brakepads_Count === 0) throw new Error('Cannot update health_index');
+    if (total_metersCount === 0) throw new Error('Cannot update total_meters');
+    if (total_time_minCount === 0) throw new Error('Cannot update total_time_min');
+    if (drivetrain_metersCount === 0) throw new Error('Cannot update drivetrain_metersCount');
+    if (suspension_min_Count === 0) throw new Error('Cannot update suspension_min');
+
+    await this.geminiQueue.add('generate-ride-summary', {
+      data: analyzedData,
+      rideId: ride.id,
+    } satisfies GeminiRideSummaryJob);
   }
   deleteStravaActivity(stravaData: any) {
     console.log('delete activity');

@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -27,5 +27,14 @@ export class NotificationProcessor extends WorkerHost {
       { custom: true, notificationId: notification.id, channels: config.channels },
       'Notification delivery requested: ' + notification.title,
     );
+  }
+
+  @OnWorkerEvent('completed')
+  onCompleted(job: Job): void {
+    this.logger.info({ custom: true, jobId: job.id }, 'Job Notification completed: ' + job.name);
+  }
+  @OnWorkerEvent('failed')
+  onFailed(job: Job, error: Error): void {
+    this.logger.error({ err: error.message, jobId: job.id }, 'Job Notification failed: ' + job.name);
   }
 }

@@ -1428,11 +1428,14 @@
         "activity_id": {
           "type": "integer"
         },
-        "athlete_id": {
-          "type": "string"
+        "user_id": {
+          "type": "integer"
         },
         "gear_id": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "analyzed_data": {
           "type": [

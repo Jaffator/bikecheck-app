@@ -2,7 +2,7 @@ Project uses:
 
 Frontend:
 
-- Next.js
+- React
 - TypeScript
 - Functional components only
 - No class components
@@ -16,9 +16,9 @@ Backend:
 
 Architecture:
 
-- Each domain contains: controller, service, repository
+- Each domain contains: controller, service
 - Services contain business logic
-- Repositories handle database access (Prisma)
+- Database access in services (Prisma)
 - No shared god-services
 
 Rules:
@@ -37,6 +37,7 @@ Code style:
 - Explicit types
 - Small functions
 - No overengineering
+- Every code in English, comments too
 
 General:
 

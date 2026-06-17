@@ -427,11 +427,11 @@ model service_snooze {
 model strava_pending_activities {
   id            Int       @id @default(autoincrement())
   activity_id   BigInt    @unique
-  athlete_id    String    @db.VarChar
-  gear_id       String    @db.VarChar
+  user_id       Int
+  gear_id       String?   @db.VarChar
   analyzed_data Json
   created_at    DateTime  @default(now()) @db.Timestamptz(6)
   resolved_at   DateTime? @db.Timestamptz(6)
 
-  @@index([gear_id, athlete_id], map: "strava_pending_gear_athlete")
+  @@index([gear_id, user_id], map: "strava_pending_gear_athlete")
 }
