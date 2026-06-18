@@ -11,7 +11,7 @@ export class StravaProcessor extends WorkerHost {
   constructor(
     @InjectPinoLogger(StravaProcessor.name) private readonly logger: PinoLogger,
     @InjectQueue('strava-monolith-queue') private readonly eventsQueue: Queue,
-    private readonly stravaService: StravaWebhookService,
+    private readonly stravaWebhookService: StravaWebhookService,
   ) {
     super();
   }
@@ -20,12 +20,14 @@ export class StravaProcessor extends WorkerHost {
     this.logger.info({ custom: true }, `Worker starting job: ${job.id}`);
     if (job.name === 'process-strava-event') {
       const stravaEvent: StravaWebhookEventDto = job.data;
-      // --- Delete ---
+
+      // ------------ Delete ------------
       if (stravaEvent.aspect_type === 'delete') {
-        await this.stravaService.deleteActivityData(stravaEvent.owner_id, stravaEvent.object_id);
-        return { type: 'delete', data: null };
+        await this.stravaWebhookService.deleteActivityData(stravaEvent.owner_id, stravaEvent.object_id);
+        return { type: 'delete', data: stravaEvent };
       }
-      console.log(stravaEvent);
+      this.logger.debug({ custom: true }, `Processing strava event: ${JSON.stringify(stravaEvent)}`);
+
       // Fetch activity from Strava API
       let activityData = stravaJsonData_forTest;
       if ('test' in job.data) {
@@ -33,25 +35,36 @@ export class StravaProcessor extends WorkerHost {
         // ----- TESTING STRAVA JSON DATA -----
         activityData = stravaJsonData_forTest;
         // ------- DELETE THIS IN PRODUCTION -------
+
         // throw new Error('Test error: Simulating failure in fetching activity data');
-      } else activityData = await this.stravaService.downloadActivity(stravaEvent.object_id, stravaEvent.owner_id);
-      console.log('Gear: ', activityData.data.gear);
+      } else
+        activityData = await this.stravaWebhookService.downloadActivity(stravaEvent.object_id, stravaEvent.owner_id);
+      this.logger.debug({ custom: true }, `Gear: ${JSON.stringify(activityData.data.gear)}`);
+
       // If activity is not Ride or EBikeRide, skip processing
       if (activityData.data.type !== 'EBikeRide' && activityData.data.type !== 'Ride') {
         return { skipped: true, reason: 'Activity type is not Ride or EBikeRide' };
       }
-      const slimActivityData = this.stravaService.simplifyActivityData(activityData.data);
+      const slimActivityData = this.stravaWebhookService.simplifyActivityData(activityData.data);
 
       // Decision based on type activity create / update / delete
-      // --- Create ---
+      // ------------ Create ------------
       if (stravaEvent.aspect_type === 'create') {
-        await this.stravaService.saveActivityData(activityData.data, stravaEvent.owner_id, stravaEvent.object_id);
+        await this.stravaWebhookService.saveActivityData(
+          activityData.data,
+          stravaEvent.owner_id,
+          stravaEvent.object_id,
+        );
         return { type: 'create', data: slimActivityData };
       }
 
-      // --- Update ---
+      // ------------ Update ------------
       if (stravaEvent.aspect_type === 'update') {
-        await this.stravaService.updateActivityData(activityData.data, stravaEvent.owner_id, stravaEvent.object_id);
+        await this.stravaWebhookService.updateActivityData(
+          activityData.data,
+          stravaEvent.owner_id,
+          stravaEvent.object_id,
+        );
         return { type: 'update', data: slimActivityData };
       }
     }

@@ -1,27 +1,18 @@
-import { Controller, Get, Patch, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { NotificationService } from './notification.service';
+import { Controller, Get } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { StravaEventsService } from './strava.service';
+import type { StravaGearResponse } from '@contracts/strava-gear.contract';
 
 @Controller('strava')
 export class StravaController {
   constructor(private readonly stravaEventService: StravaEventsService) {}
 
-  // ---------- GET notifications for current user ----------
-  @ApiOperation({ summary: 'List notifications for the current user' })
-  @ApiResponse({ status: 200, type: ResponseNotificationDto, isArray: true })
-  @ApiQuery({ name: 'unread', required: false, type: Boolean })
-  @Get()
-  list(@CurrentUser('userId') userId: string, @Query('unread') unread?: string): Promise<ResponseNotificationDto[]> {
-    return this.notificationService.list(Number(userId), unread === 'true');
-  }
-
-  // ---------- PATCH mark notification as read ----------
-  @ApiOperation({ summary: 'Mark a notification as read' })
+  // ---------- GET current Strava gear (bikes) for the user ----------
+  @ApiOperation({ summary: "List the user's current Strava gear (bikes) for linking" })
   @ApiResponse({ status: 200 })
-  @Patch(':id/read')
-  async markRead(@Param('id') id: string, @CurrentUser('userId') userId: string): Promise<void> {
-    return this.notificationService.markRead(+id, Number(userId));
+  @Get('unmatched-strava-gear')
+  listUnmatchedStravaGear(@CurrentUser('userId') userId: string): Promise<StravaGearResponse> {
+    return this.stravaEventService.listUnmatchedStravaGear(Number(userId));
   }
 }

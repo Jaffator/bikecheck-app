@@ -1,8 +1,21 @@
-import { Controller, ForbiddenException, Get, HttpCode, Post, Query, Req, RawBody } from '@nestjs/common';
+import {
+  Controller,
+  ForbiddenException,
+  Get,
+  HttpCode,
+  Post,
+  Query,
+  Req,
+  RawBody,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { StravaWebhookService } from './strava-webhook.service';
 import { StravaWebhookEventDto } from './dto/strava-webhook-event.dto';
+import { InternalAuthGuard } from '../common/internal-auth.guard';
+import type { StravaGearResponse } from '@contracts/strava-gear.contract';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 
@@ -14,6 +27,15 @@ export class WebhookController {
     private readonly stravaWebhookService: StravaWebhookService,
   ) {}
 
+  // ----------------------------------------------------------
+  // ---------- Fetch athlete's current gear from Strava ------
+  // ----------------------------------------------------------
+  @UseGuards(InternalAuthGuard)
+  @Get('/gear/:athleteId')
+  async getGear(@Param('athleteId') athleteId: string): Promise<StravaGearResponse> {
+    return this.stravaWebhookService.downloadGear(Number(athleteId));
+  }
+
   // ------------------------------------------------------------
   // ---------- Handle incoming webhook events from Strava ------
   // ------------------------------------------------------------
@@ -24,7 +46,7 @@ export class WebhookController {
       this.logger.error('Invalid signature on webhook event');
       throw new ForbiddenException('Invalid signature');
     }
-
+    console.log('Received Strava webhook event:', req.body);
     this.logger.info({ custom: true }, 'Successfully received Strava event');
 
     // Add the event to the BullMQ queue for processing
@@ -40,7 +62,7 @@ export class WebhookController {
   }
 
   // ----------------------------------------------------------
-  // ---------- Only for subscrription of Strava webhook ------
+  // ---------- Only for subscription of Strava webhook ------
   // ----------------------------------------------------------
   @Get('/webhook')
   verifyWebhook(
@@ -52,6 +74,7 @@ export class WebhookController {
   }
 }
 
+// Documentation for Strava Webhook subscription and testing:
 // {"id":346298} strava subscription id, use to delete subscription if needed
 // ngrok url: https://syrup-latch-certainty.ngrok-free.dev/
 

@@ -12,8 +12,8 @@ import { StravaController } from './strava.controller';
     BullModule.registerQueue({ name: 'gemini-queue' }),
     PrismaModule,
     NotificationModule,
-    StravaController,
   ],
+  controllers: [StravaController],
   providers: [StravaEventsProcessor, StravaEventsService],
 })
 export class StravaModule {}

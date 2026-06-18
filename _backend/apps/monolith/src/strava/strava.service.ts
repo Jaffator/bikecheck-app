@@ -5,7 +5,9 @@ import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorat
 import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
+import type { StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
+import axios from 'axios';
 
 interface SplitMetricEntry {
   distance: number;
@@ -22,7 +24,7 @@ interface SplitMetricEntry {
 interface StravaActivityData {
   activity_id: number;
   athleteid: number;
-  gearid: string;
+  gearid: string | null;
   analyzedData: {
     rawJson: any;
     started_at: string;
@@ -40,6 +42,21 @@ interface StravaActivityData {
 
 type SplitsMetric = Record<string, SplitMetricEntry>;
 
+function getKslopeDH(slopePercent: number): number {
+  if (slopePercent < 3) return 1;
+  if (slopePercent < 8) return 1.2;
+  if (slopePercent < 12) return 1.5;
+  return 2;
+}
+
+function getKslopeUP(slopePercent: number): number {
+  if (slopePercent >= 0 && slopePercent < 3) return 1;
+  if (slopePercent < 6) return 1.2;
+  if (slopePercent < 10) return 1.5;
+  if (slopePercent >= 10) return 2;
+  return 0;
+}
+
 @Injectable()
 export class StravaEventsService {
   constructor(
@@ -49,35 +66,44 @@ export class StravaEventsService {
     private readonly notificationService: NotificationService,
   ) {}
 
+  async listUnmatchedStravaGear(userId: number): Promise<StravaGearResponse> {
+    // Resolve athleteId from the logged-in user, never trust it from the FE (IDOR).
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      select: { strava_athlete_id: true },
+    });
+    if (!user?.strava_athlete_id) throw new Error('User has no linked Strava account');
+    console.log('USER', user);
+    try {
+      const response = await axios.get<StravaGearResponse>(
+        `${process.env.STRAVA_SERVICE_URL}/strava/gear/${user.strava_athlete_id}`,
+        {
+          headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
+          timeout: 5000,
+        },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch gear from strava-service: ${(error as Error).message}`);
+    }
+  }
+
   /**
    * Create analyze data from Strava activity.
    */
   async analyzeStravaData(stravaData: any): Promise<StravaActivityData> {
     const splitObj = stravaData.splits_metric as SplitsMetric;
-    const { weight_kg: riderWeight } = (await this.prisma.users.findFirst({
+    const user = await this.prisma.users.findFirst({
       where: { strava_athlete_id: String(stravaData.athlete.id) },
       select: { weight_kg: true },
-    })) ?? { weight_kg: 75 };
+    });
+    const riderWeight = user?.weight_kg;
     const parameters = {
-      kweight: Number((riderWeight! / 75).toFixed(2)),
+      kweight: Number(((riderWeight ?? 75) / 75).toFixed(2)),
       ksuspensionDown: 1,
       ksuspension: 0.2,
     };
 
-    function getKslopeDH(slopePercent: number): number {
-      if (slopePercent < 3) return 1;
-      if (slopePercent < 8) return 1.2;
-      if (slopePercent < 12) return 1.5;
-      return 2;
-    }
-
-    function getKslopeUP(slopePercent: number): number {
-      if (slopePercent >= 0 && slopePercent < 3) return 1;
-      if (slopePercent < 6) return 1.2;
-      if (slopePercent < 10) return 1.5;
-      if (slopePercent > 10) return 2;
-      return 0;
-    }
     // Declare variables to store results
     let health_index_brake_pad = 0;
     let suspension_minutes = 0;
@@ -115,7 +141,7 @@ export class StravaEventsService {
       ------ Drivetrain Meters ------ 
       flat or uphill
        */
-      if (slopeSigned > 0) {
+      if (slopeSigned >= 0) {
         // Uphill
         const slopePercentUP = Number(Math.abs(slopeSigned).toFixed(2));
         const drivetrainMeters = split.distance * getKslopeUP(slopePercentUP);
@@ -125,7 +151,7 @@ export class StravaEventsService {
     const analyzedStravaData: StravaActivityData = {
       activity_id: stravaData.id,
       athleteid: stravaData.athlete.id,
-      gearid: stravaData.gear.id,
+      gearid: stravaData.gear?.id ?? null,
       analyzedData: {
         rawJson: stravaData,
         started_at: stravaData.start_date,
@@ -142,50 +168,59 @@ export class StravaEventsService {
     };
     return analyzedStravaData;
   }
-
   /**
    * Orchestrator: resolves user + bike from Strava data,
    * then either parks the activity as pending or saves it directly.
    */
-  async saveAnalyzedData(data: StravaActivityData): Promise<void> {
+  async saveAnalyzedData(data: StravaActivityData): Promise<{ message: string } | void> {
     // Lookup user and bike by Strava IDs
     const user = await this.prisma.users.findFirst({
       where: { strava_athlete_id: String(data.athleteid) },
       select: { id: true },
     });
+    if (!user) throw new Error('User not found for Strava athlete ID: ' + data.athleteid);
 
-    const bike = await this.prisma.bikes.findFirst({
-      where: { strava_gear_id: data.gearid },
-      select: { id: true },
-    });
+    const bike = data.gearid
+      ? await this.prisma.bikes.findFirst({
+          where: { strava_gear_id: data.gearid, user_id: user.id },
+          select: { id: true },
+        })
+      : null;
 
     const bikeId = bike ? Number(bike.id) : null;
-    const userId = user ? Number(user.id) : null;
-
+    console.log('Resolved bikeId:', bikeId, 'for gearId:', data.gearid); // --- IGNORE ---
     // Bike not linked in BikeCheck — save activity to pending table
-    if (bikeId === null && userId) {
-      await this.prisma.strava_pending_activities.create({
-        data: {
+    if (bikeId === null) {
+      // Strava can send both "create" and "update" events for the same activity
+      // (or redeliver a webhook), so upsert instead of create to avoid a unique
+      // constraint violation on activity_id.
+      await this.prisma.strava_pending_activities.upsert({
+        where: { activity_id: data.activity_id },
+        create: {
           activity_id: data.activity_id,
-          user_id: userId,
+          user_id: user.id,
           gear_id: data.gearid,
-          analyzed_data: JSON.stringify(data.analyzedData),
+          analyzed_data: data.analyzedData,
+        },
+        update: {
+          gear_id: data.gearid,
+          analyzed_data: data.analyzedData,
         },
       });
 
       // No gearID in Strava activity -> send notification -> user must link activity with bike
       if (!data.gearid) {
         await this.notificationService.create({
-          userId,
+          userId: user.id,
           type: 'strava_no_gear',
           title: 'Strava activity without a bike(gearID)',
           body: 'Assign a bike to this activity directly in the Strava app.',
-          dedupKey: `strava_no_gear:${user!.id}`,
+          dedupKey: `strava_no_gear:${user.id}`,
         });
       } else {
         // No matching bike in BikeCheck -> send notification -> user must link the gear with bike
         await this.notificationService.create({
-          userId,
+          userId: user.id,
           type: 'strava_unmatched_gear',
           title: 'Strava bike(gearID) not linked with bike in BikeCheck',
           body: 'Link your Strava bike to a BikeCheck bike in settings.',
@@ -193,39 +228,39 @@ export class StravaEventsService {
           dedupKey: `strava_unmatched_gear:${data.gearid}`,
         });
       }
-      return;
-    } else if (bikeId && userId) {
-      await this.saveRide(bikeId, userId, data.activity_id, data.analyzedData);
+      return { message: 'Not linked bike, activity saved to pending' };
+    } else if (bikeId && user) {
+      const result = await this.saveRide(bikeId, user.id, data.activity_id, data.analyzedData);
+      return { message: result.message };
     }
   }
 
   /**
-   * Called when user links a Strava gear to a BikeCheck bike.
-   * Processes all unresolved pending activities for that gear and dismisses the notification.
+   * Resolves pending activities that have no Strava gearId.
+   * - If activityId is provided: assigns a single activity to the given bike.
+   * - If activityId is omitted: assigns ALL pending activities without gearId to the given bike.
    */
-  async resolvePendingActivities_without_GearId(params: PendingActivities): Promise<void> {
-    // Resolve only one selected activity
+  async resolvePendingActivities_noGear(params: PendingActivities): Promise<void> {
     if (params.activityId) {
+      // Resolve only one selected activity
       const pending = await this.prisma.strava_pending_activities.findFirst({
-        where: { user_id: params.userId, activity_id: params.activityId, resolved_at: null },
+        where: { user_id: params.userId, activity_id: params.activityId, resolved_at: null, gear_id: null },
       });
       if (!pending) throw new Error('No pending activity found');
 
-      const analyzedData = JSON.parse(String(pending.analyzed_data)) as StravaActivityData['analyzedData'];
+      const analyzedData = pending.analyzed_data as StravaActivityData['analyzedData'];
       await this.saveRide(params.bikeId, params.userId, Number(pending.activity_id), analyzedData);
       await this.prisma.strava_pending_activities.update({
         where: { id: pending.id },
         data: { resolved_at: new Date() },
       });
-    }
-
-    // Resolve all activities with no gearID
-    if (!params.activityId) {
+    } else {
+      // Resolve all activities with no gearID
       const pending = await this.prisma.strava_pending_activities.findMany({
-        where: { user_id: params.userId, gear_id: { equals: null }, resolved_at: null },
+        where: { user_id: params.userId, gear_id: null, resolved_at: null },
       });
       for (const activity of pending) {
-        const analyzedData = JSON.parse(String(activity.analyzed_data)) as StravaActivityData['analyzedData'];
+        const analyzedData = activity.analyzed_data as StravaActivityData['analyzedData'];
         await this.saveRide(params.bikeId, params.userId, Number(activity.activity_id), analyzedData);
         await this.prisma.strava_pending_activities.update({
           where: { id: activity.id },
@@ -237,6 +272,10 @@ export class StravaEventsService {
     // Dismiss the "strava_no_gear" notification for this gear
     await this.notificationService.resolveByDedupKey(params.userId, `strava_no_gear:${params.userId}`);
   }
+  /**
+   * Called when user links a Strava gear to a BikeCheck bike in settings.
+   * Matches all unresolved pending activities by gearId and saves them.
+   */
   async resolvePendingActivity_with_GearId(userId: number): Promise<void> {
     const pending = await this.prisma.strava_pending_activities.findMany({
       where: { user_id: userId, resolved_at: null },
@@ -254,7 +293,7 @@ export class StravaEventsService {
       let matched = false;
       for (const activity of pending) {
         if (activity.gear_id === bike.strava_gear_id) {
-          const analyzedData = JSON.parse(String(activity.analyzed_data)) as StravaActivityData['analyzedData'];
+          const analyzedData = activity.analyzed_data as StravaActivityData['analyzedData'];
           await this.saveRide(bike.id, userId, Number(activity.activity_id), analyzedData);
           await this.prisma.strava_pending_activities.update({
             where: { id: activity.id },
@@ -280,7 +319,7 @@ export class StravaEventsService {
     userId: number,
     activityId: number,
     analyzedData: StravaActivityData['analyzedData'],
-  ): Promise<void> {
+  ): Promise<{ message: string }> {
     // Fetch existing ride to compute diff and avoid double-counting on re-sync
     const existingRide = await this.prisma.rides.findUnique({
       where: { activity_strava_id: BigInt(activityId) },
@@ -342,7 +381,7 @@ export class StravaEventsService {
           health_index_brake_pad: analyzedData.health_index_brake_pad,
         };
 
-    const { count: suspension_min_Count } = await this.prisma.components_mounted.updateMany({
+    await this.prisma.components_mounted.updateMany({
       where: {
         bike_id: bikeId,
         is_deleted: false,
@@ -351,39 +390,38 @@ export class StravaEventsService {
       data: { suspension_min: { increment: diff.suspension_min } },
     });
 
-    const { count: brakepads_Count } = await this.prisma.components_mounted.updateMany({
+    await this.prisma.components_mounted.updateMany({
       where: { bike_id: bikeId, is_deleted: false, component_types: { component_type: 'Brake pad' } },
       data: { health_index: { increment: diff.health_index_brake_pad } },
     });
 
-    const { count: total_metersCount } = await this.prisma.components_mounted.updateMany({
+    await this.prisma.components_mounted.updateMany({
       where: { bike_id: bikeId, is_deleted: false },
-      data: { total_km: { increment: diff.total_km } },
+      data: { total_km: { increment: diff.total_km }, total_time_min: { increment: diff.duration_min } },
     });
 
-    const { count: total_time_minCount } = await this.prisma.components_mounted.updateMany({
-      where: { bike_id: bikeId, is_deleted: false },
-      data: { total_time_min: { increment: diff.duration_min } },
-    });
-
-    const { count: drivetrain_metersCount } = await this.prisma.components_mounted.updateMany({
+    await this.prisma.components_mounted.updateMany({
       where: { bike_id: bikeId, is_deleted: false },
       data: { drivetrain_km: { increment: diff.drivetrain_km } },
     });
-
-    if (brakepads_Count === 0) throw new Error('Cannot update health_index');
-    if (total_metersCount === 0) throw new Error('Cannot update total_meters');
-    if (total_time_minCount === 0) throw new Error('Cannot update total_time_min');
-    if (drivetrain_metersCount === 0) throw new Error('Cannot update drivetrain_metersCount');
-    if (suspension_min_Count === 0) throw new Error('Cannot update suspension_min');
 
     await this.geminiQueue.add('generate-ride-summary', {
       data: analyzedData,
       rideId: ride.id,
     } satisfies GeminiRideSummaryJob);
+    return { message: 'Ride saved and summary generation queued' };
   }
-  deleteStravaActivity(stravaData: any) {
-    console.log('delete activity');
+
+  async deleteStravaActivity(stravaData: any) {
+    const user = await this.prisma.users.findFirst({
+      where: { strava_athlete_id: String(stravaData.owner_id) },
+      select: { id: true },
+    });
+    if (!user) throw new Error('User not found for Strava athlete ID: ' + stravaData.owner_id);
+    await this.prisma.rides.delete({
+      where: { activity_strava_id: BigInt(stravaData.object_id) },
+    });
+    this.logger.info({ custom: true, user: user.id }, 'Strava activity deleted');
   }
   async accountLinked(data: { athlete_id: number; user_id: string }): Promise<void> {
     await this.prisma.users.update({
@@ -392,13 +430,4 @@ export class StravaEventsService {
     });
     this.logger.info({ custom: true, userId: data.user_id, athleteId: data.athlete_id }, 'Strava account linked');
   }
-  // async activityUpdated(data: unknown): Promise<void> {
-  //   this.logger.info({ custom: true, data }, 'Strava activity updated');
-  //   // TODO:
-  // }
-
-  // async activityDeleted(data: unknown): Promise<void> {
-  //   this.logger.info({ custom: true, data }, 'Strava activity deleted');
-  //   // TODO:
-  // }
 }

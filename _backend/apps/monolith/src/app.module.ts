@@ -80,7 +80,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
                   : []),
               ],
             },
-        redact: ['req.headers.authorization', 'req.headers.cookie'],
+        redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
       },
     }),
     UserModule,

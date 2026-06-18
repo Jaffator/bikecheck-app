@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: 'apps/monolith/.env' });
 
 export const AUTH_CONFIG = {
   JWT_EXPIRATION: Number(process.env.JWT_EXPIRATION ?? 60 * 15),

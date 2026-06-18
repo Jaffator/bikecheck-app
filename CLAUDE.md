@@ -25,7 +25,7 @@ Rules:
 
 - Follow existing domain structure
 - Do NOT introduce new layers or abstractions
-- No `any`
+- No `any`, only if it's neccesary, like unknow response of api calls
 - Always use async/await
 - Explicit return types
 - Prefer composition over inheritance

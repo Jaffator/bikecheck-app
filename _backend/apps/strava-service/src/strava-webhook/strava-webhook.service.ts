@@ -4,9 +4,7 @@ import { TokenService } from '../tokens/tokens.service';
 import { DatabaseService } from '../database/database.service';
 import type { Request } from 'express';
 import axios from 'axios';
-import { setTimeout } from 'timers/promises';
-import activityData from '../example_strava_data.json';
-import * as fs from 'fs';
+import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.contract';
 
 const VERIFY_TOKEN = 'STRAVA';
 
@@ -22,9 +20,9 @@ export class StravaWebhookService {
   //   const data = this.simplifyActivityData(activityData);
   //   fs.writeFileSync('simplified_strava_data.json', JSON.stringify(data, null, 2));
   // }
-  // ---------------------------------------------------------------------
-  // -------------------- Delete raw json acvitity data ------------------
-  // ---------------------------------------------------------------------
+  /**
+   * Deletes the raw Strava activity JSON for the given athlete and activity.
+   */
   async deleteActivityData(athlete_id: number, activity_id: number): Promise<void> {
     await this.databaseService.query('DELETE FROM strava_activities_raw WHERE athlete_id = $1 AND activity_id = $2', [
       athlete_id,
@@ -33,9 +31,10 @@ export class StravaWebhookService {
     this.logger.info({ custom: true, athlete_id, activity_id }, 'Strava Activity data deleted from database');
   }
 
-  // ---------------------------------------------------------------------
-  // -------------------- Update raw json acvitity data ------------------
-  // ---------------------------------------------------------------------
+  /**
+   * Updates the stored raw Strava activity JSON.
+   * @returns The id of the updated row.
+   */
   async updateActivityData(activityData: any, athlete_id: number, activity_id: number): Promise<any> {
     const updatedActivity = await this.databaseService.query(
       'UPDATE strava_activities_raw SET strava_data = $1, updated_at = NOW() WHERE athlete_id = $2 AND activity_id = $3 RETURNING id',
@@ -49,9 +48,10 @@ export class StravaWebhookService {
     return updatedActivity[0];
   }
 
-  // ---------------------------------------------------------------------
-  // -------------------- Save raw json acvitity data --------------------
-  // ---------------------------------------------------------------------
+  /**
+   * Inserts the raw Strava activity JSON into the database.
+   * @returns The id of the inserted row.
+   */
   async saveActivityData(activityData: any, athlete_id: number, activity_id: number): Promise<any> {
     const savedActivity = await this.databaseService.query(
       'INSERT INTO strava_activities_raw (strava_data, athlete_id, activity_id) VALUES ($1, $2, $3) RETURNING id',
@@ -65,9 +65,10 @@ export class StravaWebhookService {
     return savedActivity[0];
   }
 
-  // ---------------------------------------------------------------------
-  // -------------------- Fetch Activity from Strava API ---------------------
-  // ---------------------------------------------------------------------
+  /**
+   * Fetches a single activity from the Strava API.
+   * @returns The raw axios response with the activity data.
+   */
   async downloadActivity(activity_id: number, athlete_id: number): Promise<any> {
     const access_token = await this.tokenService.getAccessToken(athlete_id);
 
@@ -83,33 +84,33 @@ export class StravaWebhookService {
     }
   }
 
-  // ---------------------------------------------------------------------
-  // -------------------- Fetch Gear from Strava API ---------------------
-  // ---------------------------------------------------------------------
-  async downloadGear(athlete_id: number): Promise<any> {
+  /**
+   * Fetches the athlete's current gear (bikes) from the Strava API.
+   * @returns The athlete id and their bikes (id + name).
+   */
+  async downloadGear(athlete_id: number): Promise<StravaGearResponse> {
     const access_token = await this.tokenService.getAccessToken(athlete_id);
     try {
       const gear = await axios.get(`https://www.strava.com/api/v3/athlete`, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
-      const bikes = {
+      const athlete_bikes: StravaGearResponse = {
         athlete_id: gear.data.id,
-        bikes: gear.data.bikes!.map((bike) => {
-          return {
-            id: bike.id,
-            name: bike.name,
-          };
-        }),
+        bikes: gear.data.bikes.map((bike: StravaBike) => ({
+          id: bike.id,
+          name: bike.name,
+        })),
       };
-      return bikes;
+      return athlete_bikes;
     } catch (error) {
       throw new Error(`Error fetching Gear from Strava, athlete id ${athlete_id}, error: ${(error as Error).message}`);
     }
   }
 
-  // ---------------------------------------------------------------------
-  // -------------------- Make ride strava json = less info --------------
-  // ---------------------------------------------------------------------
+  /**
+   * Strips heavy fields (map polyline, segment efforts, laps) from a Strava activity.
+   * @returns A lighter clone of the activity data.
+   */
   simplifyActivityData(activityData: any): any {
     const simplifiedStravaData = structuredClone(activityData);
     delete simplifiedStravaData.map.polyline;
@@ -118,9 +119,10 @@ export class StravaWebhookService {
     return simplifiedStravaData;
   }
 
-  // ----------------------------------------------------------
-  // ---------- Security check for Strava webhook events ------
-  // ----------------------------------------------------------
+  /**
+   * Verifies the signature and timestamp of an incoming Strava webhook event.
+   * @returns True if the event is considered valid.
+   */
   verifySignature(req: Request, rawBody: Buffer): boolean {
     const header = req.headers['x-strava-signature'] as string | undefined;
     if (!header) {
@@ -152,9 +154,10 @@ export class StravaWebhookService {
     return true;
   }
 
-  // -------------------------------------------------------------------
-  // ------------ Only for subscrription of Strava webhook -------------
-  // -------------------------------------------------------------------
+  /**
+   * Handles Strava's webhook subscription verification challenge.
+   * @returns The echoed hub.challenge value when verification succeeds.
+   */
   verifyChallenge(mode: string, token: string, challenge: string): { 'hub.challenge': string } {
     if (!mode || !token) {
       throw new ForbiddenException('Verification failed');

@@ -34,7 +34,7 @@ Rules:
 
 Rules:
 
-- No any
+- No any, only if absolutely necessary, for example api calls with unknown response shape
 - Use Classes and Interfaces appropriately
 - Use async/await
 - Follow existing folder structure

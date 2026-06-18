@@ -12,7 +12,7 @@ export class StravaEventsProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job): Promise<void> {
+  async process(job: Job): Promise<{ message: string } | void> {
     switch (job.name) {
       case 'strava-authorization':
         await this.stravaService.accountLinked(job.data);
@@ -20,10 +20,10 @@ export class StravaEventsProcessor extends WorkerHost {
       case 'strava_activity-created':
       case 'strava_activity-updated': {
         const analyzedData = await this.stravaService.analyzeStravaData(job.data);
-        await this.stravaService.saveAnalyzedData(analyzedData);
-        break;
+        return await this.stravaService.saveAnalyzedData(analyzedData);
       }
       case 'strava_activity-deleted':
+        console.log('Strava activity deleted:', job.data);
         await this.stravaService.deleteStravaActivity(job.data);
         break;
       default:
@@ -31,8 +31,11 @@ export class StravaEventsProcessor extends WorkerHost {
     }
   }
   @OnWorkerEvent('completed')
-  onCompleted(job: Job): void {
-    this.logger.info({ custom: true, jobId: job.id }, 'Job completed: ' + job.name);
+  onCompleted(job: Job, result: { message: string } | void): void {
+    this.logger.info(
+      { custom: true, jobId: job.id, result },
+      'Job complete: ' + job.name + ' - ' + (result?.message || 'Job completed'),
+    );
   }
 
   @OnWorkerEvent('failed')
