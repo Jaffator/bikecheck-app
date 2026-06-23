@@ -1,8 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  PushNotifications,
-  type PushNotificationSchema,
-} from "@capacitor/push-notifications";
+import { CapacitorHttp, Capacitor } from "@capacitor/core";
+import { PushNotifications, type PushNotificationSchema } from "@capacitor/push-notifications";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+async function sendTokenToBackend(token: string): Promise<void> {
+  try {
+    await CapacitorHttp.post({
+      url: `${API_BASE_URL}/notifications/fcm-token`,
+      headers: { "Content-Type": "application/json" },
+      data: { token, platform: Capacitor.getPlatform() },
+    });
+    console.log("FCM token sent to backend");
+  } catch (error) {
+    console.error("Failed to send FCM token:", error);
+  }
+}
 
 export interface UsePushNotificationsResult {
   // Set only while the app is in the foreground; drives the in-app banner.
@@ -11,8 +24,7 @@ export interface UsePushNotificationsResult {
 }
 
 export function usePushNotifications(): UsePushNotificationsResult {
-  const [foregroundNotification, setForegroundNotification] =
-    useState<PushNotificationSchema | null>(null);
+  const [foregroundNotification, setForegroundNotification] = useState<PushNotificationSchema | null>(null);
 
   const dismiss = useCallback((): void => {
     setForegroundNotification(null);
@@ -28,27 +40,21 @@ export function usePushNotifications(): UsePushNotificationsResult {
     void init();
 
     const registration = PushNotifications.addListener("registration", (token) => {
-      // TODO: send token.value to the backend so it can target this device.
       console.log("FCM TOKEN:", token.value);
+      void sendTokenToBackend(token.value);
     });
 
     // Fires ONLY when the app is in the foreground -> show our own in-app banner.
     // When the app is in background/closed, the system shows the tray notification itself.
-    const received = PushNotifications.addListener(
-      "pushNotificationReceived",
-      (notification) => {
-        setForegroundNotification(notification);
-      },
-    );
+    const received = PushNotifications.addListener("pushNotificationReceived", (notification) => {
+      setForegroundNotification(notification);
+    });
 
     // Fires when the user taps a tray notification (app was in background) -> navigate.
-    const action = PushNotifications.addListener(
-      "pushNotificationActionPerformed",
-      (performed) => {
-        // TODO: navigate using performed.notification.data.route
-        console.log("PUSH TAPPED:", performed.notification);
-      },
-    );
+    const action = PushNotifications.addListener("pushNotificationActionPerformed", (performed) => {
+      // TODO: navigate using performed.notification.data.route
+      console.log("PUSH TAPPED:", performed.notification);
+    });
 
     return () => {
       void registration.then((listener) => listener.remove());

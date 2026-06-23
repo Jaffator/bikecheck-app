@@ -1,3 +1,10 @@
+export interface NotificationFCMToken {
+  userId: number;
+  token: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type NotificationChannel = 'push' | 'email' | 'inApp';
 
 export type NotificationType = 'strava_unmatched_gear' | 'strava_no_gear' | 'maintenance_due' | 'achievement_unlocked';

@@ -4,6 +4,7 @@ import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationType } from './notification-types.config';
 import { notifications, Prisma } from '@prisma/client';
+import { DeviceTokenDto } from './dto/device-token-.dto';
 
 export interface NotificationDeliveryJob {
   notificationId: number;
@@ -24,6 +25,14 @@ export class NotificationService {
     @InjectQueue('notification-queue') private readonly notificationQueue: Queue,
     private readonly prisma: PrismaService,
   ) {}
+
+  async registerFcmToken(userId: number, deviceTokenDto: DeviceTokenDto): Promise<void> {
+    await this.prisma.device_tokens.upsert({
+      where: { user_id_token: { user_id: userId, token: deviceTokenDto.token } },
+      update: { platform: deviceTokenDto.platform },
+      create: { user_id: userId, token: deviceTokenDto.token, platform: deviceTokenDto.platform },
+    });
+  }
 
   async create(params: CreateNotificationParams): Promise<void> {
     if (params.dedupKey) {
