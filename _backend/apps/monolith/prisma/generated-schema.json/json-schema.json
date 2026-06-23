@@ -1324,6 +1324,12 @@
             "$ref": "#/definitions/component_types"
           }
         },
+        "device_tokens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/device_tokens"
+          }
+        },
         "events_action": {
           "type": "array",
           "items": {
@@ -1346,6 +1352,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/refresh_tokens"
+          }
+        },
+        "reports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/reports"
           }
         },
         "rides": {
@@ -1419,6 +1431,59 @@
         }
       }
     },
+    "reports": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "public_token": {
+          "type": "string"
+        },
+        "bike_id": {
+          "type": "integer"
+        },
+        "snapshot": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "view_count": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_viewed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "revoked": {
+          "type": "boolean",
+          "default": false
+        },
+        "expires_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
     "strava_pending_activities": {
       "type": "object",
       "properties": {
@@ -1457,6 +1522,27 @@
             "null"
           ],
           "format": "date-time"
+        }
+      }
+    },
+    "device_tokens": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "token": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
         }
       }
     }
@@ -1550,8 +1636,14 @@
     "service_snooze": {
       "$ref": "#/definitions/service_snooze"
     },
+    "reports": {
+      "$ref": "#/definitions/reports"
+    },
     "strava_pending_activities": {
       "$ref": "#/definitions/strava_pending_activities"
+    },
+    "device_tokens": {
+      "$ref": "#/definitions/device_tokens"
     }
   }
 }

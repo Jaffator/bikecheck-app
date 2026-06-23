@@ -13,3 +13,5 @@ tempCodeRunnerFile.*
 .DS_Store
 Thumbs.db
 .vscode/
+# Firebase service account key
+bikecheck-firebase-adminsdk.json

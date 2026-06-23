@@ -391,10 +391,12 @@ model users {
   accounts             accounts[]
   bikes                bikes[]
   component_types      component_types[]
+  device_tokens        device_tokens[]
   events_action        events_action[]
   notifications        notifications[]
   organization_members organization_members[]
   refresh_tokens       refresh_tokens[]
+  reports              reports[]
   rides                rides[]
 
   @@index([created_at], map: "users_created_at")
@@ -424,6 +426,23 @@ model service_snooze {
   @@unique([bike_id, event_action_id])
 }
 
+model reports {
+  id             Int       @id @default(autoincrement())
+  public_token   String    @unique @db.VarChar
+  user_id        Int
+  bike_id        Int // informative only, NOT a relation: report must survive bike deletion
+  snapshot       Json // frozen copy of bike + components + service history
+  view_count     Int       @default(0)
+  last_viewed_at DateTime? @db.Timestamptz(6)
+  revoked        Boolean   @default(false)
+  expires_at     DateTime? @db.Timestamptz(6)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  users          users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "reports_user_id")
+  @@index([bike_id], map: "reports_bike_id")
+}
+
 model strava_pending_activities {
   id            Int       @id @default(autoincrement())
   activity_id   BigInt    @unique
@@ -434,4 +453,15 @@ model strava_pending_activities {
   resolved_at   DateTime? @db.Timestamptz(6)
 
   @@index([gear_id, user_id], map: "strava_pending_gear_athlete")
+}
+
+model device_tokens {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  token      String    @db.VarChar
+  platform   String   @db.VarChar
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, token])
 }

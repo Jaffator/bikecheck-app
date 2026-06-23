@@ -52,6 +52,10 @@ export class BikeService {
     return this.prisma.bikes.findMany({});
   }
 
+  async findByUser(userId: number): Promise<ResponseBikeDto[]> {
+    return this.prisma.bikes.findMany({ where: { user_id: userId } });
+  }
+
   async findByID(id: number): Promise<ResponseBikeDto> {
     const bike = await this.prisma.bikes.findUnique({ where: { id } });
     if (!bike) {

@@ -13,6 +13,7 @@ import { StorageModule } from './storage/storage.module';
 import { StravaModule } from './strava/strava.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { NotificationModule } from './notification/notification.module';
+import { ReportModule } from './report/report.module';
 import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from 'nestjs-pino';
 import { BullBoardModule } from '@bull-board/nestjs';
@@ -93,6 +94,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     StravaModule,
     GeminiModule,
     NotificationModule,
+    ReportModule,
   ],
   providers: [
     {

@@ -6,6 +6,7 @@ import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { SearchBikeExternalResponseDto, ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
 import { AssembleBikeComponentsDto } from '../component/dto/response-components';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 // import { NewBikeFormData } from './types/bike.types';
 
 @Controller('bike')
@@ -48,6 +49,13 @@ export class BikeController {
   @ApiResponse({ status: 200, type: NewBikeFormDataDto })
   async formOptions(): Promise<NewBikeFormDataDto> {
     return await this.bikeService.getFormOptions();
+  }
+
+  // ---------- GET current user's bikes ----------
+  @Get()
+  @ApiResponse({ status: 200, type: ResponseBikeDto, isArray: true })
+  findUserBikes(@CurrentUser('userId') userId: string): Promise<ResponseBikeDto[]> {
+    return this.bikeService.findByUser(Number(userId));
   }
 
   // ---------- GET bike by ID ----------

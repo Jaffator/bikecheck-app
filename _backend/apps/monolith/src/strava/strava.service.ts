@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
@@ -8,6 +8,8 @@ import { NotificationService } from '../notification/notification.service';
 import type { StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
+import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
+import { GearLinkDto } from './dto/link-strava-gear.dto';
 
 interface SplitMetricEntry {
   distance: number;
@@ -66,14 +68,19 @@ export class StravaEventsService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async listUnmatchedStravaGear(userId: number): Promise<StravaGearResponse> {
+  async listUnmatchedStravaGear(userId: number): Promise<ResponseUnmatchedStravaGearDto> {
     // Resolve athleteId from the logged-in user, never trust it from the FE (IDOR).
     const user = await this.prisma.users.findUnique({
       where: { id: userId },
       select: { strava_athlete_id: true },
     });
+
+    const bikes = await this.prisma.bikes.findMany({
+      where: { user_id: userId },
+    });
+
     if (!user?.strava_athlete_id) throw new Error('User has no linked Strava account');
-    console.log('USER', user);
+
     try {
       const response = await axios.get<StravaGearResponse>(
         `${process.env.STRAVA_SERVICE_URL}/strava/gear/${user.strava_athlete_id}`,
@@ -82,10 +89,50 @@ export class StravaEventsService {
           timeout: 5000,
         },
       );
-      return response.data;
+      const unmatchedGear: ResponseUnmatchedStravaGearDto = {
+        user_id: userId,
+        athlete_id: response.data.athlete_id,
+        strava_bikes: response.data.bikes,
+        bikecheck_bikes: bikes.map((bike) => ({
+          id: bike.id,
+          strava_gear_id: bike.strava_gear_id,
+          bikename: bike.bikename,
+          bike_brand: bike.bike_brand,
+          bike_model: bike.bike_model,
+        })),
+      };
+
+      return unmatchedGear;
     } catch (error) {
       throw new Error(`Failed to fetch gear from strava-service: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Links Strava bikes (gear ids) to the user's BikeCheck bikes in one transaction.
+   */
+  async linkStravaGear(userId: number, links: GearLinkDto[]): Promise<void> {
+    // Interactive transaction so that throwing inside the callback rolls back
+    // every update (all-or-nothing).
+    await this.prisma.$transaction(async (tx) => {
+      let updatedCount = 0;
+      for (const link of links) {
+        // Scope by user_id so a user can never link a bike they don't own (IDOR).
+        const result = await tx.bikes.updateMany({
+          where: { id: link.bikecheckBikeId, user_id: userId },
+          data: { strava_gear_id: link.stravaBikeId },
+        });
+        updatedCount += result.count;
+      }
+
+      // Every link must have updated exactly one bike; otherwise some bike id
+      // didn't exist or didn't belong to the user -> roll back the whole batch.
+      if (updatedCount !== links.length) {
+        this.logger.error({ custom: true, userId, links }, 'Failed to link Strava gear: not all bikes were updated');
+        throw new NotFoundException('One or more bikes were not found for this user');
+      }
+    });
+    await this.resolvePendingActivity_with_GearId(userId);
   }
 
   /**
@@ -280,6 +327,9 @@ export class StravaEventsService {
     const pending = await this.prisma.strava_pending_activities.findMany({
       where: { user_id: userId, resolved_at: null },
     });
+
+    // Nothing to resolve -> skip the extra query and loops.
+    if (pending.length === 0) return;
 
     const bikes = await this.prisma.bikes.findMany({
       where: { user_id: userId },

@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "declaration": false,
-    "outDir": "../../dist"
+    "outDir": "../../dist/apps/monolith"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "**/*.test.ts", "**/*e2e*", "scripts"]
