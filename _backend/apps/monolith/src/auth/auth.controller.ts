@@ -1,4 +1,5 @@
 import { Controller, Post, UseGuards, Get, Res, Req, Body, HttpCode, HttpStatus, Ip } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -33,6 +34,7 @@ export class AuthController {
   }
 
   // --- REGISTER new user, email password endpoint
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiBody({ type: CreateUserDto })
   @Public()
   @ApiResponse({ status: 201, type: UserResponseDto })
@@ -65,6 +67,7 @@ export class AuthController {
   }
 
   // --- LOGIN user, classic email password endpoint
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 202, type: UserResponseDto })

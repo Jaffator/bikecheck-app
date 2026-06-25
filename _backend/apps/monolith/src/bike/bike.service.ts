@@ -25,13 +25,14 @@ export class BikeService {
     return { bikeSizes, bikeTypes, rideStyles, wheelSizes };
   }
 
-  async createBikeWithComponents(dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
+  async createBikeWithComponents(userId: number, dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
     let imageUrl = dto.bike.image_url;
     if (imageUrl && !imageUrl.includes(process.env.CLOUDFARE_PUBLIC_URL!)) {
       imageUrl = await this.storeFileFromUrl(imageUrl);
     }
 
-    const bikeToSave: CreateBikeDto = { ...dto.bike, image_url: imageUrl };
+    // Ownership comes from the authenticated user, never from the request body.
+    const bikeToSave: CreateBikeDto = { ...dto.bike, user_id: userId, image_url: imageUrl };
 
     return await this.prisma.$transaction(async (db) => {
       const bike = await db.bikes.create({ data: { ...bikeToSave } });
@@ -56,39 +57,35 @@ export class BikeService {
     return this.prisma.bikes.findMany({ where: { user_id: userId } });
   }
 
-  async findByID(id: number): Promise<ResponseBikeDto> {
-    const bike = await this.prisma.bikes.findUnique({ where: { id } });
-    if (!bike) {
-      throw new NotFoundException(`Bike with ID ${id} not found`);
-    }
-    return bike;
+  async findByID(id: number, userId: number): Promise<ResponseBikeDto> {
+    return this.findOwnedBike(id, userId);
   }
 
-  async update(id: number, updateBikeDto: UpdateBikeDto): Promise<ResponseBikeDto> {
-    const bike = await this.prisma.bikes.findUnique({ where: { id } });
-    if (!bike) {
-      throw new NotFoundException(`Bike with ID ${id} not found`);
-    }
+  async update(id: number, userId: number, updateBikeDto: UpdateBikeDto): Promise<ResponseBikeDto> {
+    await this.findOwnedBike(id, userId);
     return this.prisma.bikes.update({ where: { id }, data: updateBikeDto });
   }
 
-  async deleteSoft(id: number): Promise<ResponseBikeDto> {
-    const bike = await this.prisma.bikes.findUnique({ where: { id } });
-    if (!bike) {
-      throw new NotFoundException(`Bike with ID ${id} not found`);
-    }
+  async deleteSoft(id: number, userId: number): Promise<ResponseBikeDto> {
+    await this.findOwnedBike(id, userId);
     return this.prisma.bikes.update({
       where: { id },
       data: { is_deleted: true, deleted_at: new Date() },
     });
   }
 
-  async deleteHard(id: number): Promise<ResponseBikeDto> {
-    const bike = await this.prisma.bikes.findUnique({ where: { id } });
+  async deleteHard(id: number, userId: number): Promise<ResponseBikeDto> {
+    await this.findOwnedBike(id, userId);
+    return this.prisma.bikes.delete({ where: { id } });
+  }
+
+  // Returns the bike only if it belongs to the user; otherwise 404 (no ownership leak).
+  private async findOwnedBike(id: number, userId: number): Promise<ResponseBikeDto> {
+    const bike = await this.prisma.bikes.findFirst({ where: { id, user_id: userId } });
     if (!bike) {
       throw new NotFoundException(`Bike with ID ${id} not found`);
     }
-    return this.prisma.bikes.delete({ where: { id } });
+    return bike;
   }
 
   private async storeFileFromUrl(url: string): Promise<string> {

@@ -20,8 +20,11 @@ export class BikeController {
   @Post('/create')
   @ApiBody({ type: CreateBikeWithComponentsDto })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
-  async createBike(@Body() dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
-    return await this.bikeService.createBikeWithComponents(dto);
+  async createBike(
+    @CurrentUser('userId') userId: string,
+    @Body() dto: CreateBikeWithComponentsDto,
+  ): Promise<ResponseBikeDto> {
+    return await this.bikeService.createBikeWithComponents(Number(userId), dto);
   }
 
   // ---------- GET External Bike List ----------
@@ -61,30 +64,34 @@ export class BikeController {
   // ---------- GET bike by ID ----------
   @Get(':id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
-  findBike(@Param('id') id: string) {
-    return this.bikeService.findByID(+id);
+  findBike(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
+    return this.bikeService.findByID(+id, Number(userId));
   }
 
   // ---------- UPDATE bike by ID ----------
   @Patch(':id')
   @ApiBody({ type: UpdateBikeDto })
   @ApiResponse({ status: 200, type: ResponseBikeDto })
-  update(@Param('id') id: string, @Body() updateBikeDto: UpdateBikeDto) {
-    return this.bikeService.update(+id, updateBikeDto);
+  update(
+    @CurrentUser('userId') userId: string,
+    @Param('id') id: string,
+    @Body() updateBikeDto: UpdateBikeDto,
+  ): Promise<ResponseBikeDto> {
+    return this.bikeService.update(+id, Number(userId), updateBikeDto);
   }
 
   // ---------- DELETE soft bike by ID ----------
   @Delete('/delsoft/:id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
-  deleteSoft(@Param('id') id: string) {
-    return this.bikeService.deleteSoft(+id);
+  deleteSoft(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
+    return this.bikeService.deleteSoft(+id, Number(userId));
   }
 
   // ---------- DELETE hard bike by ID ----------
   @Delete('/delhard/:id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
-  deleteHard(@Param('id') id: string) {
-    return this.bikeService.deleteHard(+id);
+  deleteHard(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
+    return this.bikeService.deleteHard(+id, Number(userId));
   }
 }
 // // ---------- Create new bike with componenets - Upload image ----------

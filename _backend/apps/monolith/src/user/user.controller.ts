@@ -2,11 +2,12 @@
 // Routing, parsing requests, calling Services
 // No Bussines logic
 
-import { Controller, Get, Post, Param, Body, Patch, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Patch, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto/user.dtos';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { users as UserFull } from '@prisma/client';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('users')
 export class UserController {
@@ -16,7 +17,8 @@ export class UserController {
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, type: UserResponseDto })
   @Get(':id')
-  async getUser(@Param('id') id: string) {
+  async getUser(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<UserResponseDto> {
+    this.ensureSelf(userId, id);
     const user = await this.userService.getUserbyId(Number(id));
     if (!user) {
       throw new NotFoundException('User not found');
@@ -37,9 +39,21 @@ export class UserController {
   @ApiOperation({ summary: 'Update user by given ID' })
   @ApiResponse({ status: 202, type: UserResponseDto })
   @Patch(':id')
-  async updateUser(@Param('id') id: string, @Body() data: UpdateUserDto) {
+  async updateUser(
+    @CurrentUser('userId') userId: string,
+    @Param('id') id: string,
+    @Body() data: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    this.ensureSelf(userId, id);
     const user = await this.userService.updateUserProfile(Number(id), data);
     return this.mapToResponse(user);
+  }
+
+  // A user may only read or modify their own profile.
+  private ensureSelf(userId: string, targetId: string): void {
+    if (Number(userId) !== Number(targetId)) {
+      throw new ForbiddenException('You can only access your own profile');
+    }
   }
 
   private mapToResponse(user: UserFull): UserResponseDto {

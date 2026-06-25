@@ -28,6 +28,18 @@ export class GeminiProcessor extends WorkerHost {
   }
   @OnWorkerEvent('failed')
   onFailed(job: Job, error: Error): void {
+    const maxAttempts = job.opts.attempts ?? 1;
+    const isFinalAttempt = job.attemptsMade >= maxAttempts;
+
+    if (!isFinalAttempt) {
+      // Still has retries left -> just a warning, not a failure yet.
+      this.logger.warn(
+        { custom: true, jobId: job.id, attempt: job.attemptsMade, maxAttempts },
+        'Job will retry: ' + job.name,
+      );
+      return;
+    }
+
     this.logger.error({ err: error.message, jobId: job.id }, 'Job failed: ' + job.name);
   }
 }

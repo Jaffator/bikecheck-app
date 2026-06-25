@@ -15,6 +15,13 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api');
   app.use(cookieParser());
 
+  // CORS for the web frontend. Set CORS_ORIGINS (comma-separated) in production;
+  // credentials are required because auth uses httpOnly cookies.
+  app.enableCors({
+    origin: process.env.CORS_ORIGINS?.split(',') ?? true,
+    credentials: true,
+  });
+
   const config = new DocumentBuilder()
     .setTitle('BikeCheck API')
     .setDescription('Bikechek API documentation')

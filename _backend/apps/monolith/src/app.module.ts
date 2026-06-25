@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
@@ -6,6 +5,9 @@ import { AuthModule } from './auth/auth.module';
 import { RefreshTokenModule } from './refreshtoken/refreshtoken.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core/constants';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './_filters/all-exceptions.filter';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BikeModule } from './bike/bike.module';
 import { BikeEventModule } from './bike-event/bike-event.module';
 import { OrganizationModule } from './organization/organization.module';
@@ -39,6 +41,8 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
       adapter: BullMQAdapter,
     }),
     ConfigModule.forRoot({ envFilePath: 'apps/monolith/.env', isGlobal: true }),
+    // Global rate limit: 100 requests / 60s per IP. Stricter limits set per-route (e.g. auth).
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST ?? 'localhost',
@@ -100,6 +104,14 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })
