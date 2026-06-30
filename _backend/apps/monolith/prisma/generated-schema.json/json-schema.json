@@ -29,7 +29,7 @@
         }
       }
     },
-    "action_service_intervals": {
+    "default_service_intervals": {
       "type": "object",
       "properties": {
         "id": {
@@ -58,6 +58,52 @@
           "items": {
             "type": "string"
           }
+        },
+        "events_action": {
+          "$ref": "#/definitions/events_action"
+        }
+      }
+    },
+    "bike_service_interval": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "service_interval_km": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "service_interval_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "health_index_interval": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "bikes": {
+          "$ref": "#/definitions/bikes"
         },
         "events_action": {
           "$ref": "#/definitions/events_action"
@@ -328,6 +374,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/components_mounted"
+          }
+        },
+        "bike_service_interval": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bike_service_interval"
           }
         },
         "events_bikes": {
@@ -662,10 +714,16 @@
             "null"
           ]
         },
-        "action_service_intervals": {
+        "default_service_intervals": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/action_service_intervals"
+            "$ref": "#/definitions/default_service_intervals"
+          }
+        },
+        "bike_service_interval": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bike_service_interval"
           }
         },
         "event_action_tags": {
@@ -1555,8 +1613,11 @@
     "action_done_component_map": {
       "$ref": "#/definitions/action_done_component_map"
     },
-    "action_service_intervals": {
-      "$ref": "#/definitions/action_service_intervals"
+    "default_service_intervals": {
+      "$ref": "#/definitions/default_service_intervals"
+    },
+    "bike_service_interval": {
+      "$ref": "#/definitions/bike_service_interval"
     },
     "bike_brands": {
       "$ref": "#/definitions/bike_brands"

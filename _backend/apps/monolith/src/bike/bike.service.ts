@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import 'dotenv/config';
 import path from 'path';
+import { defer } from 'rxjs';
 
 @Injectable()
 export class BikeService {
@@ -26,14 +27,14 @@ export class BikeService {
   }
 
   async createBikeWithComponents(userId: number, dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
-    let imageUrl = dto.bike.image_url;
-    if (imageUrl && !imageUrl.includes(process.env.CLOUDFARE_PUBLIC_URL!)) {
-      imageUrl = await this.storeFileFromUrl(imageUrl);
-    }
+    const imageUrl = dto.bike.image_url;
+    // if (imageUrl && !imageUrl.includes(process.env.CLOUDFARE_PUBLIC_URL!)) {
+    //   imageUrl = await this.storeFileFromUrl(imageUrl);
+    // }
 
     // Ownership comes from the authenticated user, never from the request body.
     const bikeToSave: CreateBikeDto = { ...dto.bike, user_id: userId, image_url: imageUrl };
-
+    console.log('bikeToSave', bikeToSave);
     return await this.prisma.$transaction(async (db) => {
       const bike = await db.bikes.create({ data: { ...bikeToSave } });
 
@@ -43,8 +44,13 @@ export class BikeService {
         bike_id: bike.id,
         component_type_id: data.component_type_id,
       }));
-
+      const biketype = await db.bike_types.findUnique({ where: { id: bikeToSave.bike_type_id } });
+      const defaultIntervals = await db.default_service_intervals.findMany({
+        where: { category: { has: biketype?.type } },
+      });
+      console.log(defaultIntervals);
       await db.components_mounted.createMany({ data: componentData });
+
       return bike as ResponseBikeDto;
     });
   }

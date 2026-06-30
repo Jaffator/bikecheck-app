@@ -50,7 +50,6 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   @IsInt()
   @IsPositive()
   interval_id?: number;
-
 }
 
 export class CustomComponentsDto {

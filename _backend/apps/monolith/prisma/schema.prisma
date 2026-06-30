@@ -29,7 +29,7 @@ model action_done_component_map {
   @@index([component_mounted_id])
 }
 
-model action_service_intervals {
+model default_service_intervals {
   id                    Int           @id(map: "component_service_intervals_pkey") @default(autoincrement())
   service_interval_km   Int?
   event_actions_id      Int
@@ -39,6 +39,26 @@ model action_service_intervals {
   events_action         events_action @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)
 
   @@unique([event_actions_id, service_interval_km, service_interval_min, health_index_interval])
+  @@map("action_service_intervals")
+}
+
+// Per-bike service plan. Materialized from default_service_intervals at bike creation
+// (picks the row whose category matches the bike type). Mirrors default_service_intervals
+// but keyed by bike_id instead of category[] — this is the source of truth the engine reads.
+model bike_service_interval {
+  id                    Int           @id @default(autoincrement())
+  bike_id               Int
+  event_actions_id      Int
+  service_interval_km   Int?
+  service_interval_min  Int?
+  health_index_interval Int?
+  created_at            DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime?     @updatedAt @db.Timestamptz(6)
+  bikes                 bikes         @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+  events_action         events_action @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)
+
+  @@unique([bike_id, event_actions_id])
+  @@index([bike_id])
 }
 
 model bike_brands {
@@ -79,41 +99,42 @@ model bike_types {
 }
 
 model bikes {
-  id                   Int                  @id @default(autoincrement())
-  bike_type_id         Int?
-  year                 Int?
-  wheel_size_id        Int?
-  bike_size_id         Int?
-  created_at           DateTime?            @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?            @db.Timestamptz(6)
-  frame_material       String?              @db.VarChar(50)
-  is_deleted           Boolean?             @default(false)
-  deleted_at           DateTime?            @db.Timestamptz(6)
-  bikename             String?              @db.VarChar(50)
-  description          String?              @db.VarChar(255)
-  bike_brand           String               @db.VarChar(255)
-  bike_model           String?              @db.VarChar(255)
-  user_id              Int
-  organization_id      Int?
-  image_url            String?              @db.VarChar
-  ride_style_id        Int?
-  ebike                Boolean              @default(false)
-  has_front_suspension Boolean              @default(false)
-  has_rear_suspension  Boolean              @default(false)
-  total_km             Int?
-  total_time_min       Int?
-  strava_gear_id       String?              @db.VarChar
-  strava_name          String?              @db.VarChar
-  bike_sizes           bike_sizes?          @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  bike_types           bike_types?          @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  organizations        organizations?       @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  ride_styles          ride_styles?         @relation(fields: [ride_style_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "bikes_ride_style_fkey")
-  users                users                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  wheel_sizes          wheel_sizes?         @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  components_mounted   components_mounted[]
-  events_bikes         events_bikes[]
-  rides                rides[]
-  service_snooze       service_snooze[]
+  id                    Int                     @id @default(autoincrement())
+  bike_type_id          Int?
+  year                  Int?
+  wheel_size_id         Int?
+  bike_size_id          Int?
+  created_at            DateTime?               @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime?               @db.Timestamptz(6)
+  frame_material        String?                 @db.VarChar(50)
+  is_deleted            Boolean?                @default(false)
+  deleted_at            DateTime?               @db.Timestamptz(6)
+  bikename              String?                 @db.VarChar(50)
+  description           String?                 @db.VarChar(255)
+  bike_brand            String                  @db.VarChar(255)
+  bike_model            String?                 @db.VarChar(255)
+  user_id               Int
+  organization_id       Int?
+  image_url             String?                 @db.VarChar
+  ride_style_id         Int?
+  ebike                 Boolean                 @default(false)
+  has_front_suspension  Boolean                 @default(false)
+  has_rear_suspension   Boolean                 @default(false)
+  total_km              Int?
+  total_time_min        Int?
+  strava_gear_id        String?                 @db.VarChar
+  strava_name           String?                 @db.VarChar
+  bike_sizes            bike_sizes?             @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  bike_types            bike_types?             @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizations         organizations?          @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ride_styles           ride_styles?            @relation(fields: [ride_style_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "bikes_ride_style_fkey")
+  users                 users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  wheel_sizes           wheel_sizes?            @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_mounted    components_mounted[]
+  bike_service_interval bike_service_interval[]
+  events_bikes          events_bikes[]
+  rides                 rides[]
+  service_snooze        service_snooze[]
 
   @@index([bike_size_id], map: "bikes_bike_size_col")
   @@index([created_at], map: "bikes_created_at")
@@ -217,19 +238,20 @@ model event_actions_done {
 }
 
 model events_action {
-  id                       Int                        @id(map: "action_types_pkey") @default(autoincrement())
-  action_name              String                     @unique(map: "action_types_action_name_key") @db.VarChar
-  replace_action           Boolean                    @default(false)
-  user_id                  Int?
-  req_front_suspension     Boolean                    @default(false)
-  req_rear_suspension      Boolean                    @default(false)
-  warning_message          String?                    @db.VarChar
-  action_service_intervals action_service_intervals[]
-  event_action_tags        event_action_tags[]
-  event_action_targets     event_action_targets[]
-  event_actions_done       event_actions_done[]
-  users                    users?                     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  service_snooze           service_snooze[]
+  id                        Int                         @id(map: "action_types_pkey") @default(autoincrement())
+  action_name               String                      @unique(map: "action_types_action_name_key") @db.VarChar
+  replace_action            Boolean                     @default(false)
+  user_id                   Int?
+  req_front_suspension      Boolean                     @default(false)
+  req_rear_suspension       Boolean                     @default(false)
+  warning_message           String?                     @db.VarChar
+  default_service_intervals default_service_intervals[]
+  bike_service_interval     bike_service_interval[]
+  event_action_tags         event_action_tags[]
+  event_action_targets      event_action_targets[]
+  event_actions_done        event_actions_done[]
+  users                     users?                      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  service_snooze            service_snooze[]
 }
 
 model events_bikes {
@@ -456,12 +478,12 @@ model strava_pending_activities {
 }
 
 model device_tokens {
-  id         Int       @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   user_id    Int
-  token      String    @db.VarChar
+  token      String   @db.VarChar
   platform   String   @db.VarChar
-  created_at DateTime  @default(now()) @db.Timestamptz(6)
-  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, token])
 }
