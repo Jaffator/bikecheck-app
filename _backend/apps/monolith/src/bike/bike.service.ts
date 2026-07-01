@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import 'dotenv/config';
 import path from 'path';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BikeService {
@@ -34,6 +35,7 @@ export class BikeService {
     }
 
     // Ownership comes from the authenticated user, never from the request body.
+    // Fork Basic Service, Fork Full Service, Shock Basic Service, Shock Full Service
     const bikeToSave: CreateBikeDto = { ...dto.bike, user_id: userId, image_url: imageUrl };
     console.log('bikeToSave', bikeToSave);
     return await this.prisma.$transaction(async (db) => {
@@ -50,11 +52,19 @@ export class BikeService {
       await db.components_mounted.createMany({ data: componentData });
 
       // 3. copy default intervals based on bike type for newly created bike
+      const eventFilter: Prisma.events_actionWhereInput = {};
+      if (!bike.has_front_suspension) eventFilter.req_front_suspension = false;
+      if (!bike.has_rear_suspension) eventFilter.req_rear_suspension = false;
+
       const biketype = await db.bike_types.findUnique({ where: { id: bikeToSave.bike_type_id } });
       const defaultIntervals = await db.default_service_intervals.findMany({
-        where: { category: { has: biketype?.type } },
+        where: {
+          category: { has: biketype?.type },
+          events_action: eventFilter,
+        },
       });
       console.log('defaultIntervals', defaultIntervals);
+
       await db.bike_service_interval.createMany({
         data: defaultIntervals.map((interval) => ({
           bike_id: bike.id,

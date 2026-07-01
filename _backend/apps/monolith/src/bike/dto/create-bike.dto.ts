@@ -10,7 +10,6 @@ export class DefaultComponentsRequestDto {
   ebike!: boolean;
 }
 
-type SuspensionType = 'front' | 'rear' | 'full' | 'none';
 export class CreateBikeDto {
   // Required
   @ApiProperty({ example: 1 })
@@ -27,9 +26,13 @@ export class CreateBikeDto {
   @IsBoolean()
   ebike!: boolean;
 
-  @ApiProperty({ example: 'front', enum: ['front', 'rear', 'full', 'none'] })
-  @IsString()
-  suspension!: SuspensionType;
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  has_front_suspension!: boolean;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  has_rear_suspension!: boolean;
 
   // Optional
   @ApiProperty({ example: 'Domane SL7', required: false })
