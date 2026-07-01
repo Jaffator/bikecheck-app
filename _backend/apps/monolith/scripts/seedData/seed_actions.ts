@@ -49,10 +49,10 @@ export class SeedActions {
             });
           }
           if (event.intervals) {
-            await this.prisma.action_service_intervals.deleteMany({
+            await this.prisma.default_service_intervals.deleteMany({
               where: { event_actions_id: save_action.id },
             });
-            await this.prisma.action_service_intervals.createMany({
+            await this.prisma.default_service_intervals.createMany({
               data: event.intervals.map((interval: any) => ({
                 event_actions_id: save_action.id,
                 service_interval_km: interval.service_interval_km,

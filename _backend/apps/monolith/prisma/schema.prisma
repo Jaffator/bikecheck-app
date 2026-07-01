@@ -30,7 +30,7 @@ model action_done_component_map {
 }
 
 model default_service_intervals {
-  id                    Int           @id(map: "component_service_intervals_pkey") @default(autoincrement())
+  id                    Int           @id(map: "default_service_intervals_pkey") @default(autoincrement())
   service_interval_km   Int?
   event_actions_id      Int
   health_index_interval Int?
@@ -39,7 +39,7 @@ model default_service_intervals {
   events_action         events_action @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)
 
   @@unique([event_actions_id, service_interval_km, service_interval_min, health_index_interval])
-  @@map("action_service_intervals")
+  @@map("default_service_intervals")
 }
 
 // Per-bike service plan. Materialized from default_service_intervals at bike creation

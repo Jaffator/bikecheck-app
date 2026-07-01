@@ -1842,7 +1842,7 @@
           },
           {
             "service_interval_km": 9000,
-            "category": ["Road, Gravel"]
+            "category": ["Road", "Gravel"]
           }
         ]
       },

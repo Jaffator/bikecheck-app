@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
@@ -7,13 +8,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import 'dotenv/config';
 import path from 'path';
-import { defer } from 'rxjs';
 
 @Injectable()
 export class BikeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    @InjectPinoLogger(BikeService.name) private readonly logger: PinoLogger,
   ) {}
 
   async getFormOptions(): Promise<NewBikeFormDataDto> {
@@ -27,29 +28,42 @@ export class BikeService {
   }
 
   async createBikeWithComponents(userId: number, dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
-    const imageUrl = dto.bike.image_url;
-    // if (imageUrl && !imageUrl.includes(process.env.CLOUDFARE_PUBLIC_URL!)) {
-    //   imageUrl = await this.storeFileFromUrl(imageUrl);
-    // }
+    let imageUrl = dto.bike.image_url;
+    if (imageUrl && !imageUrl.includes(process.env.CLOUDFARE_PUBLIC_URL!)) {
+      imageUrl = await this.storeFileFromUrl(imageUrl);
+    }
 
     // Ownership comes from the authenticated user, never from the request body.
     const bikeToSave: CreateBikeDto = { ...dto.bike, user_id: userId, image_url: imageUrl };
     console.log('bikeToSave', bikeToSave);
     return await this.prisma.$transaction(async (db) => {
+      // 1.create a new Bike
       const bike = await db.bikes.create({ data: { ...bikeToSave } });
 
+      // 2.create mounted components for the bike
       const validComponents = dto.components.filter((c) => c.component_type_id !== undefined);
       const componentData = validComponents.map((data) => ({
         ...data,
         bike_id: bike.id,
         component_type_id: data.component_type_id,
       }));
+      await db.components_mounted.createMany({ data: componentData });
+
+      // 3. copy default intervals based on bike type for newly created bike
       const biketype = await db.bike_types.findUnique({ where: { id: bikeToSave.bike_type_id } });
       const defaultIntervals = await db.default_service_intervals.findMany({
         where: { category: { has: biketype?.type } },
       });
-      console.log(defaultIntervals);
-      await db.components_mounted.createMany({ data: componentData });
+      console.log('defaultIntervals', defaultIntervals);
+      await db.bike_service_interval.createMany({
+        data: defaultIntervals.map((interval) => ({
+          bike_id: bike.id,
+          event_actions_id: interval.event_actions_id,
+          service_interval_km: interval.service_interval_km,
+          service_interval_min: interval.service_interval_min,
+          health_index_interval: interval.health_index_interval,
+        })),
+      });
 
       return bike as ResponseBikeDto;
     });
@@ -94,12 +108,13 @@ export class BikeService {
     return bike;
   }
 
-  private async storeFileFromUrl(url: string): Promise<string> {
+  private async storeFileFromUrl(url: string): Promise<string | undefined> {
     const extname = path.extname(url);
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new BadRequestException(`Failed to download file: ${response.statusText}`);
+      this.logger.error({ custom: true }, `Failed to download file: ${response.statusText}`);
+      return undefined; // Return undefined to indicate failure
     }
     try {
       const file = await response.arrayBuffer();
@@ -108,7 +123,8 @@ export class BikeService {
       return await this.storageService.uploadFileR2CloudFare(buffer, filename, 'bikes');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new BadRequestException(`Failed to upload image to cloud: ${message}`);
+      this.logger.error(`Failed to upload image to cloud: ${message}`);
+      return undefined; // Return undefined to indicate failure
     }
   }
 }

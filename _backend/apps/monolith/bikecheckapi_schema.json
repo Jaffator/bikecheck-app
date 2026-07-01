@@ -1,0 +1,2417 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/users/{id}": {
+      "get": {
+        "operationId": "User getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get user by ID",
+        "tags": [
+          "User"
+        ]
+      },
+      "patch": {
+        "operationId": "User updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update user by given ID",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/api/users/create": {
+      "post": {
+        "operationId": "User createUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a new user",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/api/auth/test": {
+      "get": {
+        "operationId": "Auth test",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "Auth createUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "operationId": "Auth refreshUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "Auth logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "Auth login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/google": {
+      "get": {
+        "operationId": "Auth googleAuth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "operationId": "Auth googleAuthRedirect",
+        "parameters": [],
+        "responses": {
+          "203": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/bike/create": {
+      "post": {
+        "operationId": "Bike createBike",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBikeWithComponentsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/external": {
+      "get": {
+        "operationId": "Bike searchBikeExternal",
+        "parameters": [
+          {
+            "name": "bikeName",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchBikeExternalResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/external/components": {
+      "get": {
+        "operationId": "Bike searchComponentsExternal",
+        "parameters": [
+          {
+            "name": "bikeUrl",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssembleBikeComponentsDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/form-options": {
+      "get": {
+        "operationId": "Bike formOptions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewBikeFormDataDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike": {
+      "get": {
+        "operationId": "Bike findUserBikes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseBikeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/{id}": {
+      "get": {
+        "operationId": "Bike findBike",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      },
+      "patch": {
+        "operationId": "Bike update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBikeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/delsoft/{id}": {
+      "delete": {
+        "operationId": "Bike deleteSoft",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/delhard/{id}": {
+      "delete": {
+        "operationId": "Bike deleteHard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike-events/create": {
+      "post": {
+        "operationId": "BikeEvent create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Create_BikeEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/bike-events/group-actions": {
+      "get": {
+        "operationId": "BikeEvent getActionsOnGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_ActionsOnGroup_Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/bike-events/find-all/{bikeId}": {
+      "get": {
+        "operationId": "BikeEvent findAllBikeEvents",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/bike-events/{id}": {
+      "get": {
+        "operationId": "BikeEvent findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/bike-events/delsoft/{id}": {
+      "delete": {
+        "operationId": "BikeEvent softDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/bike-events/delhard/{id}": {
+      "delete": {
+        "operationId": "BikeEvent hardDelete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_BikeEvent_Dto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
+    "/api/organizations": {
+      "post": {
+        "operationId": "Organization createOrganization",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a new organization",
+        "tags": [
+          "Organization"
+        ]
+      }
+    },
+    "/api/organizations/{id}/members": {
+      "post": {
+        "operationId": "Organization addMember",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationMemberResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Add a member to organization",
+        "tags": [
+          "Organization"
+        ]
+      },
+      "get": {
+        "operationId": "Organization getMembers",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationMemberResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get members of an organization",
+        "tags": [
+          "Organization"
+        ]
+      }
+    },
+    "/api/organizations/{id}": {
+      "get": {
+        "operationId": "Organization getOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get organization by ID",
+        "tags": [
+          "Organization"
+        ]
+      },
+      "patch": {
+        "operationId": "Organization updateOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganizationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update organization by ID",
+        "tags": [
+          "Organization"
+        ]
+      },
+      "delete": {
+        "operationId": "Organization deleteOrganization",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Soft delete organization by ID",
+        "tags": [
+          "Organization"
+        ]
+      }
+    },
+    "/api/organizations/{id}/members/{userId}": {
+      "delete": {
+        "operationId": "Organization removeMember",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Remove a member from organization",
+        "tags": [
+          "Organization"
+        ]
+      }
+    },
+    "/api/strava/gear-linking": {
+      "get": {
+        "operationId": "Strava listUnmatchedStravaGear",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseUnmatchedStravaGearDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the user's Strava and BikeCheck bikes for linking",
+        "tags": [
+          "Strava"
+        ]
+      },
+      "patch": {
+        "operationId": "Strava linkStravaGear",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkStravaGearDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Link a Strava bike to a BikeCheck bike",
+        "tags": [
+          "Strava"
+        ]
+      }
+    },
+    "/api/notifications/fcm-token": {
+      "post": {
+        "operationId": "Notification registerFcmToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Register FCM token for the current user",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications/test-push": {
+      "post": {
+        "operationId": "Notification testPush",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "TEST: send a push notification to user 1",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "operationId": "Notification list",
+        "parameters": [
+          {
+            "name": "unread",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseNotificationDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List notifications for the current user",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "patch": {
+        "operationId": "Notification markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark a notification as read",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/reports/bikes/{bikeId}": {
+      "post": {
+        "operationId": "Report create",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseReportDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Generate a shareable report for a bike",
+        "tags": [
+          "Report"
+        ]
+      },
+      "get": {
+        "operationId": "Report listForBike",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseReportDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List reports for a specific bike",
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/api/reports/mine": {
+      "get": {
+        "operationId": "Report listMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseReportDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List all reports for the current user",
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/api/reports/{id}/revoke": {
+      "patch": {
+        "operationId": "Report revoke",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Revoke a report link",
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/api/reports/public/{token}": {
+      "get": {
+        "operationId": "Report getPublic",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Public view of a report by its share token",
+        "tags": [
+          "Report"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "BikeCheck API",
+    "description": "Bikechek API documentation",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "object",
+            "example": "https://example.com/avatar.jpg",
+            "nullable": true
+          },
+          "language": {
+            "type": "object",
+            "example": "en",
+            "nullable": true
+          },
+          "currency": {
+            "type": "object",
+            "example": "czk",
+            "nullable": true
+          },
+          "weight_kg": {
+            "type": "object",
+            "example": 70,
+            "nullable": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "example": true
+          },
+          "last_login_at": {
+            "type": "object",
+            "example": "2024-01-01T12:00:00Z"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-01T12:00:00Z"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-02T12:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "avatar_url",
+          "language",
+          "currency",
+          "weight_kg",
+          "is_active",
+          "last_login_at",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "strongPassword123"
+          },
+          "language": {
+            "type": "string",
+            "example": "en"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "language"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "language": {
+            "type": "string",
+            "example": "en"
+          },
+          "currency": {
+            "type": "string",
+            "example": "czk"
+          },
+          "weight_kg": {
+            "type": "number",
+            "example": 70
+          },
+          "ride_style_id": {
+            "type": "number",
+            "example": 1
+          },
+          "avatar_url": {
+            "type": "string",
+            "example": "https://example.com/avatar.jpg"
+          }
+        },
+        "required": [
+          "name",
+          "language",
+          "currency",
+          "weight_kg",
+          "ride_style_id",
+          "avatar_url"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "strongPassword123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "CreateBikeDto": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Trek"
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": true
+          },
+          "suspension": {
+            "type": "string",
+            "example": "front",
+            "enum": [
+              "front",
+              "rear",
+              "full",
+              "none"
+            ]
+          },
+          "bike_model": {
+            "type": "string",
+            "example": "Domane SL7"
+          },
+          "organization_id": {
+            "type": "number",
+            "example": 1
+          },
+          "bikename": {
+            "type": "string",
+            "example": "Tarmac SL7"
+          },
+          "year": {
+            "type": "number",
+            "example": 2024
+          },
+          "description": {
+            "type": "string",
+            "example": "Serviced bike, top health"
+          },
+          "wheel_size_id": {
+            "type": "number",
+            "example": 2
+          },
+          "bike_size_id": {
+            "type": "number",
+            "example": 3
+          },
+          "bike_type_id": {
+            "type": "number",
+            "example": 1
+          },
+          "total_km": {
+            "type": "number",
+            "example": 1540
+          },
+          "frame_material": {
+            "type": "string",
+            "example": "Carbon"
+          },
+          "image_url": {
+            "type": "string",
+            "example": "https://example.com/bike-image.jpg"
+          }
+        },
+        "required": [
+          "user_id",
+          "bike_brand",
+          "ebike",
+          "suspension"
+        ]
+      },
+      "CreateMountedComponentsDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 1
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12
+          },
+          "component_desc": {
+            "type": "object",
+            "example": "Fox 38 Factory Grip2",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "example": "Front",
+            "nullable": true
+          },
+          "mounted_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "total_km": {
+            "type": "number",
+            "example": 1200,
+            "nullable": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "example": true,
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "example": "Mounted after spring service",
+            "nullable": true
+          },
+          "interval_id": {
+            "type": "number",
+            "example": 2,
+            "nullable": true
+          }
+        },
+        "required": [
+          "bike_id",
+          "component_type_id"
+        ]
+      },
+      "CreateBikeWithComponentsDto": {
+        "type": "object",
+        "properties": {
+          "bike": {
+            "$ref": "#/components/schemas/CreateBikeDto"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMountedComponentsDto"
+            }
+          }
+        },
+        "required": [
+          "bike",
+          "components"
+        ]
+      },
+      "ResponseBikeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "user_id": {
+            "type": "number",
+            "example": 15
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": true
+          },
+          "organization_id": {
+            "type": "object",
+            "example": 10,
+            "nullable": true
+          },
+          "ride_style_id": {
+            "type": "object",
+            "example": "Trail",
+            "nullable": true
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Specialized",
+            "nullable": true
+          },
+          "bike_model": {
+            "type": "object",
+            "example": "Stumpjumper",
+            "nullable": true
+          },
+          "image_url": {
+            "type": "object",
+            "example": "https://example.com/bike-image.jpg",
+            "nullable": true
+          },
+          "bike_type_id": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          },
+          "bikename": {
+            "type": "object",
+            "example": "Tarmac SL7",
+            "nullable": true
+          },
+          "year": {
+            "type": "object",
+            "example": 2024,
+            "nullable": true
+          },
+          "description": {
+            "type": "object",
+            "example": "Serviced bike, top health",
+            "nullable": true
+          },
+          "wheel_size_id": {
+            "type": "object",
+            "example": 2,
+            "nullable": true
+          },
+          "bike_size_id": {
+            "type": "object",
+            "example": 3,
+            "nullable": true
+          },
+          "total_km": {
+            "type": "object",
+            "example": 1540,
+            "nullable": true
+          },
+          "total_time_min": {
+            "type": "object",
+            "example": 3600,
+            "nullable": true
+          },
+          "has_front_suspension": {
+            "type": "boolean",
+            "example": false
+          },
+          "has_rear_suspension": {
+            "type": "boolean",
+            "example": false
+          },
+          "created_at": {
+            "type": "object",
+            "example": "2024-01-01T12:00:00.000Z",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "object",
+            "example": "2024-01-02T12:00:00.000Z",
+            "nullable": true
+          },
+          "frame_material": {
+            "type": "object",
+            "example": "Carbon",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "example": false,
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "strava_gear_id": {
+            "type": "object",
+            "example": "b12345678",
+            "nullable": true
+          },
+          "strava_name": {
+            "type": "object",
+            "example": "My Enduro Bike",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "ebike",
+          "organization_id",
+          "ride_style_id",
+          "bike_brand",
+          "bike_model",
+          "image_url",
+          "bike_type_id",
+          "bikename",
+          "year",
+          "description",
+          "wheel_size_id",
+          "bike_size_id",
+          "total_km",
+          "total_time_min",
+          "has_front_suspension",
+          "has_rear_suspension",
+          "created_at",
+          "updated_at",
+          "frame_material",
+          "is_deleted",
+          "deleted_at",
+          "strava_gear_id",
+          "strava_name"
+        ]
+      },
+      "SearchBikeExternalResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Orbea Rallon"
+          },
+          "imageUrl": {
+            "type": "object",
+            "example": "https://example.com/bike-image.jpg"
+          },
+          "bikeUrl": {
+            "type": "string",
+            "example": "https://example.com/bike/1"
+          }
+        },
+        "required": [
+          "name",
+          "imageUrl",
+          "bikeUrl"
+        ]
+      },
+      "AssembleBikeComponentsDto": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "$ref": "#/components/schemas/CreateMountedComponentsDto"
+          },
+          "component_name": {
+            "type": "string",
+            "example": "Fork"
+          }
+        },
+        "required": [
+          "component",
+          "component_name"
+        ]
+      },
+      "BikeTypeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "type": {
+            "type": "object",
+            "example": "Enduro",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ]
+      },
+      "WheelSizeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "size": {
+            "type": "object",
+            "example": "29\"",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "size"
+        ]
+      },
+      "BikeSizeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "size": {
+            "type": "object",
+            "example": "L",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "size"
+        ]
+      },
+      "RideStyleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "ride_style": {
+            "type": "object",
+            "example": "Trail",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "ride_style"
+        ]
+      },
+      "NewBikeFormDataDto": {
+        "type": "object",
+        "properties": {
+          "bikeTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BikeTypeDto"
+            }
+          },
+          "wheelSizes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WheelSizeDto"
+            }
+          },
+          "bikeSizes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BikeSizeDto"
+            }
+          },
+          "rideStyles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RideStyleDto"
+            }
+          }
+        },
+        "required": [
+          "bikeTypes",
+          "wheelSizes",
+          "bikeSizes",
+          "rideStyles"
+        ]
+      },
+      "UpdateBikeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "Attachment_BikeEventDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "faktura.pdf"
+          },
+          "content_type": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://cdn.example.com/files/faktura.pdf"
+          }
+        },
+        "required": [
+          "name",
+          "content_type",
+          "url"
+        ]
+      },
+      "Actions_BikeEventDto": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "number",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "example": "Replaced chain"
+          },
+          "partial_cost": {
+            "type": "number",
+            "example": 50
+          },
+          "part_replaced": {
+            "type": "boolean",
+            "example": false
+          },
+          "mounted_components_involved": {
+            "example": [
+              15,
+              16
+            ],
+            "description": "IDs of components involved in this action",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "action_id",
+          "description",
+          "partial_cost",
+          "part_replaced",
+          "mounted_components_involved"
+        ]
+      },
+      "Create_BikeEventDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 15
+          },
+          "total_cost": {
+            "type": "number",
+            "example": 15
+          },
+          "attachment": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment_BikeEventDto"
+            }
+          },
+          "note": {
+            "type": "string",
+            "example": "Replaced chain and cleaned drivetrain",
+            "nullable": true
+          },
+          "actions_done": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Actions_BikeEventDto"
+            }
+          }
+        },
+        "required": [
+          "bike_id",
+          "total_cost",
+          "attachment",
+          "note",
+          "actions_done"
+        ]
+      },
+      "MountedComponentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 45
+          },
+          "component_desc": {
+            "type": "object",
+            "example": "Shimano XT M8100",
+            "nullable": true
+          },
+          "position": {
+            "type": "object",
+            "example": "front",
+            "nullable": true
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Brake"
+          }
+        },
+        "required": [
+          "id",
+          "component_desc",
+          "position",
+          "component_type"
+        ]
+      },
+      "ActionsDoneDto": {
+        "type": "object",
+        "properties": {
+          "action_id": {
+            "type": "number",
+            "example": 1
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Brake bleed"
+          },
+          "partial_cost": {
+            "type": "object",
+            "example": 150,
+            "nullable": true
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": false
+          },
+          "note": {
+            "type": "object",
+            "example": "Replaced brake pads",
+            "nullable": true
+          },
+          "mounted_components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MountedComponentDto"
+            }
+          }
+        },
+        "required": [
+          "action_id",
+          "action_name",
+          "partial_cost",
+          "replace_action",
+          "note",
+          "mounted_components"
+        ]
+      },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "invoice.pdf"
+          },
+          "content_type": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://cdn.example.com/invoice.pdf"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "content_type",
+          "url"
+        ]
+      },
+      "Response_BikeEvent_Dto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 15
+          },
+          "note": {
+            "type": "object",
+            "example": "Regular service",
+            "nullable": true
+          },
+          "total_cost": {
+            "type": "number",
+            "example": 350.5
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "object",
+            "nullable": true
+          },
+          "actions_done": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionsDoneDto"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "bike_id",
+          "note",
+          "total_cost",
+          "created_at",
+          "updated_at",
+          "actions_done",
+          "attachments"
+        ]
+      },
+      "ActionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Brake bleed"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": false
+          },
+          "tags": {
+            "example": [
+              "maintenance",
+              "hydraulic"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MountedComponentDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "action_name",
+          "replace_action",
+          "tags",
+          "components"
+        ]
+      },
+      "Response_ActionsOnGroup_Dto": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "number",
+            "example": 1
+          },
+          "group_name": {
+            "type": "string",
+            "example": "Brake System"
+          },
+          "side_choice": {
+            "type": "boolean",
+            "example": false
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionDto"
+            }
+          }
+        },
+        "required": [
+          "group_id",
+          "group_name",
+          "side_choice",
+          "actions"
+        ]
+      },
+      "CreateOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "OrganizationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "object"
+          },
+          "updated_at": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "AddMemberDto": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "number"
+          },
+          "role_type": {
+            "type": "string",
+            "example": "owner, admin, member"
+          }
+        },
+        "required": [
+          "user_id",
+          "role_type"
+        ]
+      },
+      "OrganizationMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "user_id": {
+            "type": "number"
+          },
+          "organization_id": {
+            "type": "number"
+          },
+          "role_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "organization_id",
+          "role_type"
+        ]
+      },
+      "UpdateOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ResponseUnmatchedStravaGearDto": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "number",
+            "example": 1
+          },
+          "athlete_id": {
+            "type": "number",
+            "example": 12345
+          },
+          "strava_bikes": {
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "bikecheck_bikes": {
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          }
+        },
+        "required": [
+          "user_id",
+          "athlete_id",
+          "strava_bikes",
+          "bikecheck_bikes"
+        ]
+      },
+      "GearLinkDto": {
+        "type": "object",
+        "properties": {
+          "stravaBikeId": {
+            "type": "string",
+            "example": "b1234567"
+          },
+          "bikecheckBikeId": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "stravaBikeId",
+          "bikecheckBikeId"
+        ]
+      },
+      "LinkStravaGearDto": {
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GearLinkDto"
+            }
+          }
+        },
+        "required": [
+          "links"
+        ]
+      },
+      "DeviceTokenDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "caYcjw...:APA91b..."
+          },
+          "platform": {
+            "type": "string",
+            "example": "android"
+          }
+        },
+        "required": [
+          "token",
+          "platform"
+        ]
+      },
+      "ResponseNotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "type": {
+            "type": "string",
+            "example": "strava_unmatched_activity"
+          },
+          "title": {
+            "type": "string",
+            "example": "Nepřiřazená aktivita ze Stravy"
+          },
+          "body": {
+            "type": "string",
+            "example": "Kolo \"Trek Fuel EX\" ještě nemáš přiřazené"
+          },
+          "payload": {
+            "type": "object",
+            "example": {
+              "gearId": "b12345"
+            },
+            "nullable": true
+          },
+          "is_read": {
+            "type": "boolean",
+            "example": false
+          },
+          "read_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "payload",
+          "is_read",
+          "read_at",
+          "created_at"
+        ]
+      },
+      "ResponseReportDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "public_token": {
+            "type": "string",
+            "example": "b1f7c0e2-2a3d-4e5f-8a9b-0c1d2e3f4a5b"
+          },
+          "share_url": {
+            "type": "string",
+            "example": "https://app.bikecheck.com/r/b1f7c0e2-2a3d-4e5f-8a9b-0c1d2e3f4a5b"
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 42
+          },
+          "view_count": {
+            "type": "number",
+            "example": 3
+          },
+          "last_viewed_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "revoked": {
+            "type": "boolean",
+            "example": false
+          },
+          "expires_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-23T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "public_token",
+          "share_url",
+          "bike_id",
+          "view_count",
+          "last_viewed_at",
+          "revoked",
+          "expires_at",
+          "created_at"
+        ]
+      }
+    }
+  }
+}
