@@ -25,22 +25,6 @@ export class SeedBikeAddData {
     }
   }
 
-  private async bike_sizes(data: string[]): Promise<void> {
-    try {
-      const [deleted, result] = await this.prisma.$transaction([
-        this.prisma.bike_sizes.deleteMany({}),
-        this.prisma.bike_sizes.createMany({
-          data: data.map((size: string) => ({ size })),
-          skipDuplicates: true,
-        }),
-      ]);
-      //   console.log(`✅ bike_sizes - cleared: ${deleted.count}`);
-      console.log(`✅ bike_sizes - seeded OK, inserted: ${result.count}`);
-    } catch (error) {
-      throw new Error('Failed to seed bike sizes', { cause: error });
-    }
-  }
-
   private async wheel_size(data: string[]): Promise<void> {
     try {
       const [deleted, result] = await this.prisma.$transaction([
@@ -73,22 +57,6 @@ export class SeedBikeAddData {
     }
   }
 
-  private async ride_styles(data: string[]): Promise<void> {
-    try {
-      const [deleted, result] = await this.prisma.$transaction([
-        this.prisma.ride_styles.deleteMany({}),
-        this.prisma.ride_styles.createMany({
-          data: data.map((ride_style: string) => ({ ride_style })),
-          skipDuplicates: true,
-        }),
-      ]);
-      //   console.log(`✅ ride_styles - cleared: ${deleted.count}`);
-      console.log(`✅ ride_styles - seeded OK, inserted: ${result.count}`);
-    } catch (error) {
-      throw new Error('Failed to seed ride_styles', { cause: error });
-    }
-  }
-
   private async bike_models(data: ModelsData[]): Promise<void> {
     try {
       // await this.prisma.bike_models.deleteMany({});
@@ -110,10 +78,8 @@ export class SeedBikeAddData {
 
   async run() {
     await this.bike_brands(seedData.bike_brands);
-    await this.bike_sizes(seedData.bike_sizes);
     await this.wheel_size(seedData.wheel_sizes);
     await this.bike_types(seedData.bike_types);
-    await this.ride_styles(seedData.ride_styles);
     await this.bike_models(seedData.bike_models);
   }
 }

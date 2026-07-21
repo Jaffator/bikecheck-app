@@ -15,3 +15,5 @@ Thumbs.db
 .vscode/
 # Firebase service account key
 bikecheck-firebase-adminsdk.json
+# Local MCP server config (may contain API tokens)
+.mcp.json

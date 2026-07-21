@@ -51,7 +51,7 @@ export async function runSeed(): Promise<void> {
   // const seedComponent = new SeedComponent(prisma);
   // const seedComponentGroups = new SeedComponentGroups(prisma);
   // const seedUser = new SeedUser(prisma);
-  const seedActions = new SeedActions(prisma);
+  // const seedActions = new SeedActions(prisma);
   // const seedMountedComponents = new SeedMountedComponents(prisma);
   // const seedActionIntervals = new SeedActionIntervals(prisma);
 

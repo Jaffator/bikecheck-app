@@ -64,12 +64,6 @@ export class UpdateUserDto {
   weight_kg?: number;
 
   @IsOptional()
-  @IsInt()
-  @IsPositive()
-  @ApiProperty({ example: 1 })
-  ride_style_id?: number;
-
-  @IsOptional()
   @IsString()
   @ApiProperty({ example: 'https://example.com/avatar.jpg' })
   avatar_url?: string;

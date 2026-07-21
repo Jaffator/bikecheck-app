@@ -1,13 +1,9 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
-import heroImg from "./assets/hero.png";
-import "./App.css";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { InAppNotification } from "./components/InAppNotification";
+import { Button } from "@mantine/core";
+// import ServiceReportA4 from "./components/ServiceReportA4_Single";
 
 function App() {
-  const [count, setCount] = useState(0);
   // foregroundNotification is set only while the app is open.
   // Background/closed notifications are shown by the system tray automatically.
   const { foregroundNotification, dismiss } = usePushNotifications();
@@ -15,28 +11,12 @@ function App() {
   return (
     <>
       {foregroundNotification && <InAppNotification notification={foregroundNotification} onDismiss={dismiss} />}
-
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Test Bikecheck App</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button type="button" className="counter" onClick={() => setCount((count) => count + 1)}>
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <div className="flex flex-col items-center justify-center gap-4 m-10 p-10 border border-cards-300 bg-primary-600 rounded-lg">
+        <Button variant="filled" color="primary.6" styles={{ label: { color: "var(--mantine-color-textDark-6)" } }}>
+          Click Me
+        </Button>
+      </div>
+      {/* <ServiceReportA4 /> */}
     </>
   );
 }

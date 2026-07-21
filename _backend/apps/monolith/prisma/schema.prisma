@@ -20,10 +20,17 @@ model accounts {
 }
 
 model action_done_component_map {
-  event_action_done_id Int
-  component_mounted_id Int
-  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  event_actions_done   event_actions_done @relation(fields: [event_action_done_id], references: [id], onDelete: Cascade)
+  event_action_done_id   Int
+  component_mounted_id    Int
+  // Wear accumulators frozen at service time. Each action computes "since last service"
+  // against its own axis (km / time / drivetrain / suspension) using these baselines,
+  // so a single growing accumulator supports multiple services with different intervals.
+  km_at_time             Int?               // total_km snapshot
+  time_min_at_time       Int?               // total_time_min snapshot
+  drivetrain_km_at_time  Int?               // drivetrain_km snapshot
+  suspension_min_at_time Int?               // suspension_min snapshot
+  components_mounted      components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  event_actions_done      event_actions_done @relation(fields: [event_action_done_id], references: [id], onDelete: Cascade)
 
   @@id([event_action_done_id, component_mounted_id])
   @@index([component_mounted_id])
@@ -86,12 +93,6 @@ model bike_models {
   @@unique([model_name, brand_id])
 }
 
-model bike_sizes {
-  id    Int     @id @default(autoincrement())
-  size  String? @unique @db.VarChar
-  bikes bikes[]
-}
-
 model bike_types {
   id    Int     @id @default(autoincrement())
   type  String? @unique @db.VarChar
@@ -103,7 +104,7 @@ model bikes {
   bike_type_id          Int?
   year                  Int?
   wheel_size_id         Int?
-  bike_size_id          Int?
+  bike_size             String?                 @db.VarChar
   created_at            DateTime?               @default(now()) @db.Timestamptz(6)
   updated_at            DateTime?               @db.Timestamptz(6)
   frame_material        String?                 @db.VarChar(50)
@@ -116,7 +117,6 @@ model bikes {
   user_id               Int
   organization_id       Int?
   image_url             String?                 @db.VarChar
-  ride_style_id         Int?
   ebike                 Boolean                 @default(false)
   has_front_suspension  Boolean                 @default(false)
   has_rear_suspension   Boolean                 @default(false)
@@ -124,10 +124,8 @@ model bikes {
   total_time_min        Int?
   strava_gear_id        String?                 @db.VarChar
   strava_name           String?                 @db.VarChar
-  bike_sizes            bike_sizes?             @relation(fields: [bike_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   bike_types            bike_types?             @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   organizations         organizations?          @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  ride_styles           ride_styles?            @relation(fields: [ride_style_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "bikes_ride_style_fkey")
   users                 users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   wheel_sizes           wheel_sizes?            @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   components_mounted    components_mounted[]
@@ -136,7 +134,6 @@ model bikes {
   rides                 rides[]
   service_snooze        service_snooze[]
 
-  @@index([bike_size_id], map: "bikes_bike_size_col")
   @@index([created_at], map: "bikes_created_at")
   @@index([bike_type_id], map: "bikes_type_id")
   @@index([updated_at], map: "bikes_updated_at")
@@ -333,12 +330,6 @@ model refresh_tokens {
   user_agent    String?   @db.VarChar(255)
   ip_address    String?   @db.VarChar(100)
   users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_id")
-}
-
-model ride_styles {
-  id         Int     @id @default(autoincrement())
-  ride_style String? @unique @db.VarChar
-  bikes      bikes[]
 }
 
 model rides {

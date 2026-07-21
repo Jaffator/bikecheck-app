@@ -64,6 +64,11 @@ export class BikeEventService {
           component_desc: mounted.component_desc,
           position: mounted.position,
           component_type: target.component_types.component_type,
+          // No service performed yet in this context, so no frozen baselines.
+          km_at_time: null,
+          time_min_at_time: null,
+          drivetrain_km_at_time: null,
+          suspension_min_at_time: null,
         })),
       ),
     }));
@@ -98,11 +103,32 @@ export class BikeEventService {
             },
           });
           if (action.mounted_components_involved?.length) {
+            // Freeze each component's wear accumulators so per-action "since last service"
+            // stays accurate. Accumulators keep growing; the baseline lives here.
+            const components = await tx.components_mounted.findMany({
+              where: { id: { in: action.mounted_components_involved } },
+              select: {
+                id: true,
+                total_km: true,
+                total_time_min: true,
+                drivetrain_km: true,
+                suspension_min: true,
+              },
+            });
+            const wearById = new Map(components.map((c) => [c.id, c]));
+
             await tx.action_done_component_map.createMany({
-              data: action.mounted_components_involved.map((componentId) => ({
-                event_action_done_id: actionDone.id,
-                component_mounted_id: componentId,
-              })),
+              data: action.mounted_components_involved.map((componentId) => {
+                const wear = wearById.get(componentId);
+                return {
+                  event_action_done_id: actionDone.id,
+                  component_mounted_id: componentId,
+                  km_at_time: wear?.total_km ?? null,
+                  time_min_at_time: wear?.total_time_min ?? null,
+                  drivetrain_km_at_time: wear?.drivetrain_km ?? null,
+                  suspension_min_at_time: wear?.suspension_min ?? null,
+                };
+              }),
             });
           }
         }
@@ -148,6 +174,11 @@ export class BikeEventService {
             data: {
               event_action_done_id: actionDone.id,
               component_mounted_id: newComponent.id,
+              // Fresh component starts from zero at install time.
+              km_at_time: newComponent.total_km ?? 0,
+              time_min_at_time: newComponent.total_time_min ?? 0,
+              drivetrain_km_at_time: newComponent.drivetrain_km ?? 0,
+              suspension_min_at_time: newComponent.suspension_min ?? 0,
             },
           });
         }
@@ -243,6 +274,10 @@ export class BikeEventService {
           component_desc: junc.components_mounted.component_desc,
           position: junc.components_mounted.position,
           component_type: junc.components_mounted.component_types.component_type,
+          km_at_time: junc.km_at_time,
+          time_min_at_time: junc.time_min_at_time,
+          drivetrain_km_at_time: junc.drivetrain_km_at_time,
+          suspension_min_at_time: junc.suspension_min_at_time,
         })),
       })),
     };

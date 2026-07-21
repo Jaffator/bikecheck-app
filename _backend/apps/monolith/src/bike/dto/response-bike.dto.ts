@@ -11,21 +11,9 @@ export class WheelSizeDto {
   @ApiProperty({ example: '29"', nullable: true }) size!: string | null;
 }
 
-export class BikeSizeDto {
-  @ApiProperty({ example: 1 }) id!: number;
-  @ApiProperty({ example: 'L', nullable: true }) size!: string | null;
-}
-
-export class RideStyleDto {
-  @ApiProperty({ example: 1 }) id!: number;
-  @ApiProperty({ example: 'Trail', nullable: true }) ride_style!: string | null;
-}
-
 export class NewBikeFormDataDto {
   @ApiProperty({ type: [BikeTypeDto] }) bikeTypes!: BikeTypeDto[];
   @ApiProperty({ type: [WheelSizeDto] }) wheelSizes!: WheelSizeDto[];
-  @ApiProperty({ type: [BikeSizeDto] }) bikeSizes!: BikeSizeDto[];
-  @ApiProperty({ type: [RideStyleDto] }) rideStyles!: RideStyleDto[];
 }
 
 export class SearchBikeExternalResponseDto {
@@ -61,9 +49,6 @@ export class ResponseBikeDto implements bikes {
   @ApiProperty({ example: 10, nullable: true })
   organization_id!: number | null;
 
-  @ApiProperty({ example: 'Trail', nullable: true })
-  ride_style_id!: number | null;
-
   @ApiProperty({ example: 'Specialized', nullable: true })
   bike_brand!: string;
 
@@ -88,8 +73,8 @@ export class ResponseBikeDto implements bikes {
   @ApiProperty({ example: 2, nullable: true })
   wheel_size_id!: number | null;
 
-  @ApiProperty({ example: 3, nullable: true })
-  bike_size_id!: number | null;
+  @ApiProperty({ example: 'L', nullable: true })
+  bike_size!: string | null;
 
   @ApiProperty({ example: 1540, nullable: true })
   total_km!: number | null;

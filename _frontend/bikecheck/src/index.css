@@ -1,111 +1,167 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* Tailwind v4, CSS-first config. We import theme + utilities only (skip
+   preflight) because Mantine ships its own reset via @mantine/core/styles.css
+   — running both resets fights over base element styles. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss";
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* Color ramps alias the Mantine CSS variables generated from theme.ts, so
+   Mantine and Tailwind always share one source of truth. Mantine index N maps
+   to Tailwind shade N*100 (index 0 -> 50). Base (no number) = index 6 = the
+   exact Figma value. Uses @theme inline so utilities reference the live
+   Mantine variable directly instead of a copied value. */
+@theme inline {
+  --color-primary: var(--mantine-color-primary-6);
+  --color-primary-50: var(--mantine-color-primary-0);
+  --color-primary-100: var(--mantine-color-primary-1);
+  --color-primary-200: var(--mantine-color-primary-2);
+  --color-primary-300: var(--mantine-color-primary-3);
+  --color-primary-400: var(--mantine-color-primary-4);
+  --color-primary-500: var(--mantine-color-primary-5);
+  --color-primary-600: var(--mantine-color-primary-6);
+  --color-primary-700: var(--mantine-color-primary-7);
+  --color-primary-800: var(--mantine-color-primary-8);
+  --color-primary-900: var(--mantine-color-primary-9);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-secondary: var(--mantine-color-secondary-6);
+  --color-secondary-50: var(--mantine-color-secondary-0);
+  --color-secondary-100: var(--mantine-color-secondary-1);
+  --color-secondary-200: var(--mantine-color-secondary-2);
+  --color-secondary-300: var(--mantine-color-secondary-3);
+  --color-secondary-400: var(--mantine-color-secondary-4);
+  --color-secondary-500: var(--mantine-color-secondary-5);
+  --color-secondary-600: var(--mantine-color-secondary-6);
+  --color-secondary-700: var(--mantine-color-secondary-7);
+  --color-secondary-800: var(--mantine-color-secondary-8);
+  --color-secondary-900: var(--mantine-color-secondary-9);
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --color-background: var(--mantine-color-background-6);
+  --color-background-50: var(--mantine-color-background-0);
+  --color-background-100: var(--mantine-color-background-1);
+  --color-background-200: var(--mantine-color-background-2);
+  --color-background-300: var(--mantine-color-background-3);
+  --color-background-400: var(--mantine-color-background-4);
+  --color-background-500: var(--mantine-color-background-5);
+  --color-background-600: var(--mantine-color-background-6);
+  --color-background-700: var(--mantine-color-background-7);
+  --color-background-800: var(--mantine-color-background-8);
+  --color-background-900: var(--mantine-color-background-9);
+
+  --color-cards: var(--mantine-color-cards-6);
+  --color-cards-50: var(--mantine-color-cards-0);
+  --color-cards-100: var(--mantine-color-cards-1);
+  --color-cards-200: var(--mantine-color-cards-2);
+  --color-cards-300: var(--mantine-color-cards-3);
+  --color-cards-400: var(--mantine-color-cards-4);
+  --color-cards-500: var(--mantine-color-cards-5);
+  --color-cards-600: var(--mantine-color-cards-6);
+  --color-cards-700: var(--mantine-color-cards-7);
+  --color-cards-800: var(--mantine-color-cards-8);
+  --color-cards-900: var(--mantine-color-cards-9);
+
+  --color-inputs: var(--mantine-color-inputs-6);
+  --color-inputs-50: var(--mantine-color-inputs-0);
+  --color-inputs-100: var(--mantine-color-inputs-1);
+  --color-inputs-200: var(--mantine-color-inputs-2);
+  --color-inputs-300: var(--mantine-color-inputs-3);
+  --color-inputs-400: var(--mantine-color-inputs-4);
+  --color-inputs-500: var(--mantine-color-inputs-5);
+  --color-inputs-600: var(--mantine-color-inputs-6);
+  --color-inputs-700: var(--mantine-color-inputs-7);
+  --color-inputs-800: var(--mantine-color-inputs-8);
+  --color-inputs-900: var(--mantine-color-inputs-9);
+
+  --color-strava: var(--mantine-color-strava-6);
+  --color-strava-50: var(--mantine-color-strava-0);
+  --color-strava-100: var(--mantine-color-strava-1);
+  --color-strava-200: var(--mantine-color-strava-2);
+  --color-strava-300: var(--mantine-color-strava-3);
+  --color-strava-400: var(--mantine-color-strava-4);
+  --color-strava-500: var(--mantine-color-strava-5);
+  --color-strava-600: var(--mantine-color-strava-6);
+  --color-strava-700: var(--mantine-color-strava-7);
+  --color-strava-800: var(--mantine-color-strava-8);
+  --color-strava-900: var(--mantine-color-strava-9);
+
+  --color-text: var(--mantine-color-text-6);
+  --color-text-50: var(--mantine-color-text-0);
+  --color-text-100: var(--mantine-color-text-1);
+  --color-text-200: var(--mantine-color-text-2);
+  --color-text-300: var(--mantine-color-text-3);
+  --color-text-400: var(--mantine-color-text-4);
+  --color-text-500: var(--mantine-color-text-5);
+  --color-text-600: var(--mantine-color-text-6);
+  --color-text-700: var(--mantine-color-text-7);
+  --color-text-800: var(--mantine-color-text-8);
+  --color-text-900: var(--mantine-color-text-9);
+
+  --color-textDark: var(--mantine-color-textDark-6);
+  --color-textDark-50: var(--mantine-color-textDark-0);
+  --color-textDark-100: var(--mantine-color-textDark-1);
+  --color-textDark-200: var(--mantine-color-textDark-2);
+  --color-textDark-300: var(--mantine-color-textDark-3);
+  --color-textDark-400: var(--mantine-color-textDark-4);
+  --color-textDark-500: var(--mantine-color-textDark-5);
+  --color-textDark-600: var(--mantine-color-textDark-6);
+  --color-textDark-700: var(--mantine-color-textDark-7);
+  --color-textDark-800: var(--mantine-color-textDark-8);
+  --color-textDark-900: var(--mantine-color-textDark-9);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* Fixed single-value tokens from Figma that do not have a ramp. */
+@theme {
+  --color-primary-light: #b8a937;
+  --color-primary-trans: rgba(147, 106, 59, 0.2);
+  --color-muted: #a8a29e;
+  --color-border: rgba(67, 71, 74, 0.3);
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 body {
   margin: 0;
+  background-color: #ffffff;
+  color: #2d2d2d;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Per-page margins (top/bottom/left/right on EVERY page, including
+   continuation pages). MUST be top-level, not nested in @media print,
+   or some browsers ignore it. This is the ONLY thing that gives a top
+   margin on page 2+. Requires the print dialog "Margins" = "Default"
+   (the "None" option forces margins to 0 and overrides this). */
+@page {
+  margin: 14mm;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
   }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  #root {
+    width: 100% !important;
+    border: 0 !important;
+  }
+  /* The report container must flow onto extra pages, not be clipped.
+     Drop its own screen padding so it doesn't double up with @page. */
+  [data-purpose="document-preview"] {
+    overflow: visible !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  [data-purpose="document-preview"] > div {
+    padding: 0 !important;
+  }
+  /* Keep an event/card from being split across a page break */
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
 }

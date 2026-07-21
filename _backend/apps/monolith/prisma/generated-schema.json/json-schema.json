@@ -21,6 +21,30 @@
     "action_done_component_map": {
       "type": "object",
       "properties": {
+        "km_at_time": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "time_min_at_time": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "drivetrain_km_at_time": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "suspension_min_at_time": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "components_mounted": {
           "$ref": "#/definitions/components_mounted"
         },
@@ -168,26 +192,6 @@
         }
       }
     },
-    "bike_sizes": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "size": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        }
-      }
-    },
     "bike_types": {
       "type": "object",
       "properties": {
@@ -217,6 +221,12 @@
         "year": {
           "type": [
             "integer",
+            "null"
+          ]
+        },
+        "bike_size": {
+          "type": [
+            "string",
             "null"
           ]
         },
@@ -317,16 +327,6 @@
             "null"
           ]
         },
-        "bike_sizes": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/bike_sizes"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
         "bike_types": {
           "anyOf": [
             {
@@ -341,16 +341,6 @@
           "anyOf": [
             {
               "$ref": "#/definitions/organizations"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "ride_styles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/ride_styles"
             },
             {
               "type": "null"
@@ -1028,26 +1018,6 @@
         }
       }
     },
-    "ride_styles": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "ride_style": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        }
-      }
-    },
     "rides": {
       "type": "object",
       "properties": {
@@ -1628,9 +1598,6 @@
     "bike_models": {
       "$ref": "#/definitions/bike_models"
     },
-    "bike_sizes": {
-      "$ref": "#/definitions/bike_sizes"
-    },
     "bike_types": {
       "$ref": "#/definitions/bike_types"
     },
@@ -1675,9 +1642,6 @@
     },
     "refresh_tokens": {
       "$ref": "#/definitions/refresh_tokens"
-    },
-    "ride_styles": {
-      "$ref": "#/definitions/ride_styles"
     },
     "rides": {
       "$ref": "#/definitions/rides"

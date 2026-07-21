@@ -29,6 +29,18 @@ export class MountedComponentDto {
 
   @ApiProperty({ example: 'Brake' })
   component_type!: string;
+
+  @ApiProperty({ example: 1240, nullable: true, description: 'total_km frozen at service time' })
+  km_at_time!: number | null;
+
+  @ApiProperty({ example: 3780, nullable: true, description: 'total_time_min frozen at service time' })
+  time_min_at_time!: number | null;
+
+  @ApiProperty({ example: 900, nullable: true, description: 'drivetrain_km frozen at service time' })
+  drivetrain_km_at_time!: number | null;
+
+  @ApiProperty({ example: 2100, nullable: true, description: 'suspension_min frozen at service time' })
+  suspension_min_at_time!: number | null;
 }
 
 // 3. Action in Bike Event

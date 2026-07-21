@@ -1,32 +1,6 @@
 {
-  "bike_sizes": ["XS", "S", "M", "L", "XL"],
-  "wheel_sizes": ["26\"", "27.5\"", "29\""],
-  "bike_types": [
-    "Road",
-    "Enduro",
-    "Trail",
-    "DH",
-    "XC",
-    "Fat Bike",
-    "Gravel",
-    "Dirt",
-    "Electric",
-    "AllMountain",
-    "BMX",
-    "Freeride"
-  ],
-  "ride_styles": [
-    "Cross Country",
-    "Trail Riding",
-    "Downhill",
-    "Enduro",
-    "Freeride",
-    "Dirt Jumping",
-    "Gravel Riding",
-    "Commuting",
-    "Touring",
-    "Bikepacking"
-  ],
+  "wheel_sizes": ["26\"", "27.5\"", "29\"", "700c", "650b", "Mullet"],
+  "bike_types": ["Road", "Enduro", "Trail", "DH", "XC", "Fat Bike", "Gravel", "Dirt", "Freeride"],
   "bike_models": [
     {
       "brand": "Specialized",

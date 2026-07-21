@@ -16,10 +16,6 @@ export class SeedBike {
       where: { size: '29"' },
       select: { id: true },
     });
-    const bikesizeid = await this.prisma.bike_sizes.findFirst({
-      where: { size: 'L' },
-      select: { id: true },
-    });
     const userid = await this.prisma.users.findFirst({});
 
     const bike = {
@@ -30,7 +26,7 @@ export class SeedBike {
       bike_type_id: biketypeid?.id,
       year: 2023,
       wheel_size_id: wheelsizeid?.id,
-      bike_size_id: bikesizeid?.id,
+      bike_size: 'L',
       mileage_km: 1000,
       frame_material: 'Carbon',
       bikename: 'My awesome bike',

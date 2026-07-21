@@ -71,11 +71,11 @@ export class CreateBikeDto {
   @IsPositive()
   wheel_size_id?: number;
 
-  @ApiProperty({ example: 3, required: false })
+  @ApiProperty({ example: 'L', required: false })
   @IsOptional()
-  @IsInt()
-  @IsPositive()
-  bike_size_id?: number;
+  @IsString()
+  @MaxLength(50)
+  bike_size?: string;
 
   @ApiProperty({ example: 1, required: false })
   @IsOptional()

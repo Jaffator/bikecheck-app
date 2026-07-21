@@ -19,13 +19,11 @@ export class BikeService {
   ) {}
 
   async getFormOptions(): Promise<NewBikeFormDataDto> {
-    const [bikeSizes, bikeTypes, rideStyles, wheelSizes] = await Promise.all([
-      this.prisma.bike_sizes.findMany({}),
+    const [bikeTypes, wheelSizes] = await Promise.all([
       this.prisma.bike_types.findMany({}),
-      this.prisma.ride_styles.findMany({}),
       this.prisma.wheel_sizes.findMany({}),
     ]);
-    return { bikeSizes, bikeTypes, rideStyles, wheelSizes };
+    return { bikeTypes, wheelSizes };
   }
 
   async createBikeWithComponents(userId: number, dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
