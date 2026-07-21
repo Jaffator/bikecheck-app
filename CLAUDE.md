@@ -3,6 +3,8 @@ Project uses:
 Frontend:
 
 - React
+- Mantine UI
+- Tailwind
 - TypeScript
 - Functional components only
 - No class components

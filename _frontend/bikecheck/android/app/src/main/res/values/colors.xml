@@ -2,4 +2,7 @@
 <resources>
     <!-- Accent color applied to the push notification small icon -->
     <color name="notification_color">#1E88E5</color>
+    <!-- App background (Mantine "inputs.6"). Shows behind the WebView in the
+         gesture nav bar strip, which the web layout can't reach. -->
+    <color name="app_background">#141414</color>
 </resources>

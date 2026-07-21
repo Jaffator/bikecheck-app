@@ -15,7 +15,6 @@ describe('BikeService', () => {
       delete: jest.fn(),
     },
     bike_types: { findMany: jest.fn() },
-    wheel_sizes: { findMany: jest.fn() },
     components_mounted: { createMany: jest.fn() },
     $transaction: jest.fn(),
   };

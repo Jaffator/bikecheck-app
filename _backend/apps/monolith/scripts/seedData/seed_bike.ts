@@ -12,10 +12,6 @@ export class SeedBike {
       where: { type: 'Enduro' },
       select: { id: true },
     });
-    const wheelsizeid = await this.prisma.wheel_sizes.findFirst({
-      where: { size: '29"' },
-      select: { id: true },
-    });
     const userid = await this.prisma.users.findFirst({});
 
     const bike = {
@@ -25,7 +21,7 @@ export class SeedBike {
       bike_model: 'Stumpjumper',
       bike_type_id: biketypeid?.id,
       year: 2023,
-      wheel_size_id: wheelsizeid?.id,
+      wheel_size: '29"',
       bike_size: 'L',
       mileage_km: 1000,
       frame_material: 'Carbon',

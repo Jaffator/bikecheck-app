@@ -6,14 +6,8 @@ export class BikeTypeDto {
   @ApiProperty({ example: 'Enduro', nullable: true }) type!: string | null;
 }
 
-export class WheelSizeDto {
-  @ApiProperty({ example: 1 }) id!: number;
-  @ApiProperty({ example: '29"', nullable: true }) size!: string | null;
-}
-
 export class NewBikeFormDataDto {
   @ApiProperty({ type: [BikeTypeDto] }) bikeTypes!: BikeTypeDto[];
-  @ApiProperty({ type: [WheelSizeDto] }) wheelSizes!: WheelSizeDto[];
 }
 
 export class SearchBikeExternalResponseDto {
@@ -70,8 +64,8 @@ export class ResponseBikeDto implements bikes {
   @ApiProperty({ example: 'Serviced bike, top health', nullable: true })
   description!: string | null;
 
-  @ApiProperty({ example: 2, nullable: true })
-  wheel_size_id!: number | null;
+  @ApiProperty({ example: '29"', nullable: true })
+  wheel_size!: string | null;
 
   @ApiProperty({ example: 'L', nullable: true })
   bike_size!: string | null;

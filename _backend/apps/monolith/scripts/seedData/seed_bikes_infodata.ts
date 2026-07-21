@@ -25,22 +25,6 @@ export class SeedBikeAddData {
     }
   }
 
-  private async wheel_size(data: string[]): Promise<void> {
-    try {
-      const [deleted, result] = await this.prisma.$transaction([
-        this.prisma.wheel_sizes.deleteMany({}),
-        this.prisma.wheel_sizes.createMany({
-          data: data.map((size: string) => ({ size })),
-          skipDuplicates: true,
-        }),
-      ]);
-      //   console.log(`✅ wheel_sizes - cleared: ${deleted.count}`);
-      console.log(`✅ wheel_sizes - seeded OK, inserted: ${result.count}`);
-    } catch (error) {
-      throw new Error('Failed to seed wheel sizes', { cause: error });
-    }
-  }
-
   private async bike_types(data: string[]): Promise<void> {
     try {
       const [deleted, result] = await this.prisma.$transaction([
@@ -78,7 +62,6 @@ export class SeedBikeAddData {
 
   async run() {
     await this.bike_brands(seedData.bike_brands);
-    await this.wheel_size(seedData.wheel_sizes);
     await this.bike_types(seedData.bike_types);
     await this.bike_models(seedData.bike_models);
   }

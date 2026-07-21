@@ -17,6 +17,19 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <!-- Dark window background shows through in the gesture nav bar strip,
+             which the WebView doesn't extend into, so it matches the footer
+             instead of showing white. (Removed the legacy
+             android:background=@drawable/splash: that white PNG was a DecorView
+             background drawn OVER windowBackground, so it kept the strip white.
+             Android 12+ uses the SplashScreen API, not that drawable.) -->
+        <item name="android:windowBackground">@color/app_background</item>
+        <!-- statusBarColor/navigationBarColor are deprecated no-ops on
+             targetSdk 35+ (edge-to-edge), so bar *background* is handled by the
+             web layout drawing behind the bars (safe-area insets in AppLayout).
+             These only control the *icon* brightness, which still works:
+             false = light icons, for our dark header/footer. -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

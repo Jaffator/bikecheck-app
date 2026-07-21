@@ -32,7 +32,6 @@ export interface SeedActions {
 }
 
 export interface SeedData {
-  wheel_sizes: string[];
   bike_types: string[];
   bike_models: SeedBikeModel[];
   bike_brands: string[];

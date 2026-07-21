@@ -1,23 +1,17 @@
-import { usePushNotifications } from "./hooks/usePushNotifications";
-import { InAppNotification } from "./components/InAppNotification";
-import { Button } from "@mantine/core";
-// import ServiceReportA4 from "./components/ServiceReportA4_Single";
-
-function App() {
-  // foregroundNotification is set only while the app is open.
-  // Background/closed notifications are shown by the system tray automatically.
-  const { foregroundNotification, dismiss } = usePushNotifications();
-
+import type { ReactElement } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AppLayout } from "./layout/AppLayout";
+import { BikeList } from "./features/bikes";
+import { Hovno } from "./features/users/Hovno";
+function App(): ReactElement {
   return (
-    <>
-      {foregroundNotification && <InAppNotification notification={foregroundNotification} onDismiss={dismiss} />}
-      <div className="flex flex-col items-center justify-center gap-4 m-10 p-10 border border-cards-300 bg-primary-600 rounded-lg">
-        <Button variant="filled" color="primary.6" styles={{ label: { color: "var(--mantine-color-textDark-6)" } }}>
-          Click Me
-        </Button>
-      </div>
-      {/* <ServiceReportA4 /> */}
-    </>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Navigate to="/bikes" replace />} />
+        <Route path="/bikes" element={<BikeList />} />
+        <Route path="/hovno" element={<Hovno />} />
+      </Route>
+    </Routes>
   );
 }
 

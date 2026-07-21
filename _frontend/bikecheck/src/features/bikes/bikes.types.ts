@@ -12,7 +12,7 @@ export interface Bike {
   bikename: string | null;
   year: number | null;
   description: string | null;
-  wheel_size_id: number | null;
+  wheel_size: string | null;
   bike_size: string | null;
   total_km: number | null;
   total_time_min: number | null;

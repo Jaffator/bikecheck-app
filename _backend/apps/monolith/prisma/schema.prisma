@@ -103,7 +103,7 @@ model bikes {
   id                    Int                     @id @default(autoincrement())
   bike_type_id          Int?
   year                  Int?
-  wheel_size_id         Int?
+  wheel_size            String?                 @db.VarChar
   bike_size             String?                 @db.VarChar
   created_at            DateTime?               @default(now()) @db.Timestamptz(6)
   updated_at            DateTime?               @db.Timestamptz(6)
@@ -127,7 +127,6 @@ model bikes {
   bike_types            bike_types?             @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   organizations         organizations?          @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                 users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  wheel_sizes           wheel_sizes?            @relation(fields: [wheel_size_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   components_mounted    components_mounted[]
   bike_service_interval bike_service_interval[]
   events_bikes          events_bikes[]
@@ -137,7 +136,6 @@ model bikes {
   @@index([created_at], map: "bikes_created_at")
   @@index([bike_type_id], map: "bikes_type_id")
   @@index([updated_at], map: "bikes_updated_at")
-  @@index([wheel_size_id], map: "bikes_wheel_size_id")
 }
 
 model component_groups {
@@ -416,12 +414,6 @@ model users {
   @@index([last_login_at], map: "users_last_login_at")
   @@index([name], map: "users_name")
   @@index([updated_at], map: "users_updated_at")
-}
-
-model wheel_sizes {
-  id    Int     @id @default(autoincrement())
-  size  String? @unique @db.VarChar
-  bikes bikes[]
 }
 
 model service_snooze {

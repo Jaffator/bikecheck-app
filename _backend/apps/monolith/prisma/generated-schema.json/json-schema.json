@@ -224,6 +224,12 @@
             "null"
           ]
         },
+        "wheel_size": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "bike_size": {
           "type": [
             "string",
@@ -349,16 +355,6 @@
         },
         "users": {
           "$ref": "#/definitions/users"
-        },
-        "wheel_sizes": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/wheel_sizes"
-            },
-            {
-              "type": "null"
-            }
-          ]
         },
         "components_mounted": {
           "type": "array",
@@ -1396,26 +1392,6 @@
         }
       }
     },
-    "wheel_sizes": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
-        },
-        "size": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "bikes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/bikes"
-          }
-        }
-      }
-    },
     "service_snooze": {
       "type": "object",
       "properties": {
@@ -1654,9 +1630,6 @@
     },
     "users": {
       "$ref": "#/definitions/users"
-    },
-    "wheel_sizes": {
-      "$ref": "#/definitions/wheel_sizes"
     },
     "service_snooze": {
       "$ref": "#/definitions/service_snooze"
