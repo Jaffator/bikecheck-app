@@ -9,22 +9,18 @@ import { LoginGoogleDto } from '../auth/dto/auth.dtos';
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Returns null when not found — every caller does its own null handling
+  // (login -> 401, token refresh -> 401, getMe -> 404, Google -> create user).
   async getUserbyGoogleId(googleid: string): Promise<UserFull | null> {
-    const user = await this.prisma.users.findUnique({ where: { googleId: googleid } });
-    if (!user) throw new NotFoundException('User not found');
-    return user;
+    return this.prisma.users.findUnique({ where: { googleId: googleid } });
   }
 
   async getUserbyId(id: number): Promise<UserFull | null> {
-    const user = await this.prisma.users.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
-    return user;
+    return this.prisma.users.findUnique({ where: { id } });
   }
 
   async getUserbyEmail(email: string): Promise<UserFull | null> {
-    const user = await this.prisma.users.findUnique({ where: { email } });
-    if (!user) throw new NotFoundException('User not found');
-    return user;
+    return this.prisma.users.findUnique({ where: { email } });
   }
 
   async createUserByGoogle(dto: LoginGoogleDto): Promise<UserFull> {

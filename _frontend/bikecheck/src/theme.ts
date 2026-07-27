@@ -27,16 +27,16 @@ const secondary: MantineColorsTuple = [
   "#66564c",
 ];
 const background: MantineColorsTuple = [
-  "#ececeb",
-  "#c7c7c5",
-  "#a3a29f",
-  "#7e7d79",
-  "#595953",
-  "#35342d",
-  "#100f07",
-  "#0d0c06",
-  "#0a0a04",
-  "#070703",
+  "#f4f4f5",
+  "#cbcbcb",
+  "#aeaeae",
+  "#969696",
+  "#969696",
+  "#868688",
+  "#7e7e83",
+  "#6c6c71",
+  "#0e0e0f",
+  "#09090a",
 ];
 const cards: MantineColorsTuple = [
   "#ededed",
@@ -107,6 +107,7 @@ export const otherColor = {
 } as const;
 
 export const theme = createTheme({
+  autoContrast: true,
   primaryColor: "primary",
   primaryShade: 6,
   colors: {
@@ -124,4 +125,5 @@ export const theme = createTheme({
     fontFamily: "Space Grotesk, sans-serif",
   },
   other: otherColor,
+  respectReducedMotion: false,
 });

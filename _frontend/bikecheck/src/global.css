@@ -120,6 +120,11 @@
   --font-mono: "JetBrains Mono", monospace;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background-color: #ffffff;
@@ -163,5 +168,24 @@ body {
   /* Keep an event/card from being split across a page break */
   .break-inside-avoid {
     break-inside: avoid;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes wave {
+  0%,
+  100% {
+    border-radius: 50% 50% 0 0 / 60px 60px 0 0;
+  }
+  50% {
+    border-radius: 50% 50% 0 0 / 90px 40px 0 0;
   }
 }

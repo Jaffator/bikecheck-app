@@ -1,4 +1,16 @@
-import { Controller, Post, UseGuards, Get, Res, Req, Body, HttpCode, HttpStatus, Ip } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseGuards,
+  Get,
+  Res,
+  Req,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Ip,
+  NotFoundException,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -8,6 +20,7 @@ import { GoogleAuthService } from './googleAuth.service';
 import { TokenService } from './token.service';
 import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
+import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateUserDto, UserResponseDto } from '../user/dto/user.dtos';
 import { LoginDto } from './dto/auth.dtos';
 import { users as UserFull } from '@prisma/client';
@@ -41,8 +54,18 @@ export class AuthController {
   @Post('register')
   async createUser(@Body() data: CreateUserDto): Promise<UserResponseDto> {
     const newUser = await this.userService.createUserLocal(data);
-
     return this.mapToResponse(newUser);
+  }
+
+  // --- ME - who is currently logged in (used by the frontend to gate routes)
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @Get('me')
+  async getMe(@CurrentUser('userId') userId: string): Promise<UserResponseDto> {
+    const user = await this.userService.getUserbyId(Number(userId));
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.mapToResponse(user);
   }
 
   // --- REFRESH token

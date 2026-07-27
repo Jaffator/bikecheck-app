@@ -43,6 +43,7 @@ Code style:
 
 General:
 
+- do not run dev server on background
 - Respect current project conventions
 - Reuse existing types and utilities
 - Ask before large structural changes
