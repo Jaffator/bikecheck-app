@@ -43,6 +43,7 @@ Code style:
 
 General:
 
+- When reporting information to me, be extremely concise and sacriface grammar for the sake of consision
 - do not run dev server on background
 - Respect current project conventions
 - Reuse existing types and utilities

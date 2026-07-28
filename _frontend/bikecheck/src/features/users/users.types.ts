@@ -4,6 +4,13 @@ export interface LoginCredentials {
   password: string;
 }
 
+// Mirrors the backend CreateUserDto (user/dto/user.dtos.ts).
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+}
+
 // Mirrors the backend UserResponseDto (user/dto/user.dtos.ts).
 // Dates arrive as ISO strings over JSON, so they are typed as string here.
 export interface User {

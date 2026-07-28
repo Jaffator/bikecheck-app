@@ -12,6 +12,7 @@ dependencies {
     implementation project(':capacitor-network')
     implementation project(':capacitor-push-notifications')
     implementation project(':capawesome-capacitor-android-edge-to-edge-support')
+    implementation project(':capawesome-capacitor-google-sign-in')
     implementation project(':capawesome-capacitor-navigation-bar')
 
 }

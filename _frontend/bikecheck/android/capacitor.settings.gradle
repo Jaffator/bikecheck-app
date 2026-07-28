@@ -11,5 +11,8 @@ project(':capacitor-push-notifications').projectDir = new File('../node_modules/
 include ':capawesome-capacitor-android-edge-to-edge-support'
 project(':capawesome-capacitor-android-edge-to-edge-support').projectDir = new File('../node_modules/@capawesome/capacitor-android-edge-to-edge-support/android')
 
+include ':capawesome-capacitor-google-sign-in'
+project(':capawesome-capacitor-google-sign-in').projectDir = new File('../node_modules/@capawesome/capacitor-google-sign-in/android')
+
 include ':capawesome-capacitor-navigation-bar'
 project(':capawesome-capacitor-navigation-bar').projectDir = new File('../node_modules/@capawesome/capacitor-navigation-bar/android')

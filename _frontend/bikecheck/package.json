@@ -16,6 +16,7 @@
     "@capacitor/network": "^8.0.1",
     "@capacitor/push-notifications": "^8.1.1",
     "@capawesome/capacitor-android-edge-to-edge-support": "^8.0.8",
+    "@capawesome/capacitor-google-sign-in": "^0.1.2",
     "@capawesome/capacitor-navigation-bar": "^8.0.1",
     "@mantine/carousel": "^9.4.1",
     "@mantine/charts": "^9.4.1",

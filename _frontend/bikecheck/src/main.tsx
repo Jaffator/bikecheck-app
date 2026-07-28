@@ -10,6 +10,14 @@ import { theme } from "./theme";
 import { queryClient } from "./api/queryClient";
 import { AppRouter } from "./AppRouter";
 import App from "./App.tsx";
+import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
+
+const initialize = async () => {
+  await GoogleSignIn.initialize({
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  });
+};
+initialize();
 
 if (Capacitor.isNativePlatform()) {
   void EdgeToEdge.disable();

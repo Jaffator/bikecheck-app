@@ -2,7 +2,7 @@
 // apiFetch client — no fetch, base URL or token handling lives here.
 // Backend route is under "/auth" (see auth.controller.ts).
 import { apiFetch } from "@/api/client";
-import type { User, LoginCredentials } from "./users.types";
+import type { User, LoginCredentials, RegisterCredentials } from "./users.types";
 
 // GET /auth/me — the currently logged-in user (401 if not authenticated).
 export async function getCurrentUser(): Promise<User> {
@@ -12,6 +12,15 @@ export async function getCurrentUser(): Promise<User> {
 // POST /auth/login — sets the auth cookies and returns the logged-in user.
 export async function loginUser(credentials: LoginCredentials): Promise<User> {
   return apiFetch<User>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+}
+
+// POST /auth/register — creates the user and returns it. Note: it does NOT
+// set the auth cookies, so the caller still has to log in afterwards.
+export async function registerUser(credentials: RegisterCredentials): Promise<User> {
+  return apiFetch<User>("/auth/register", {
     method: "POST",
     body: JSON.stringify(credentials),
   });

@@ -61,7 +61,9 @@ export class AuthController {
   @ApiResponse({ status: 200, type: UserResponseDto })
   @Get('me')
   async getMe(@CurrentUser('userId') userId: string): Promise<UserResponseDto> {
+    console.log('Current userId:---------');
     const user = await this.userService.getUserbyId(Number(userId));
+    console.log('Current user:', user);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -109,6 +111,7 @@ export class AuthController {
   }
 
   // --- GOOGLE ask for auth
+  // @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google')
@@ -125,7 +128,7 @@ export class AuthController {
     @Req() req: any,
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
-  ): Promise<UserResponseDto> {
+  ): Promise<void> {
     // 1. In req.user is now data from GoogleStrategy.validate()
     // 2. Find the user in the DB or create them (registration)
 
@@ -137,14 +140,13 @@ export class AuthController {
       name,
       avatar_url,
     });
-
+    console.log('Google login successful:', user, 'Is new user:', isNewUser);
     const deviceInfo = this.getDeviceInfo(req);
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
-    this.setAuthCookies(res, accessToken, refreshToken);
     const statusCode = isNewUser ? HttpStatus.CREATED : HttpStatus.ACCEPTED;
     res.status(statusCode);
-    return this.mapToResponse(user);
-    // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
+    this.setAuthCookies(res, accessToken, refreshToken);
+    return res.redirect(`${process.env.FRONTEND_URL}`);
   }
 
   // ---- Private methods ----
@@ -167,13 +169,13 @@ export class AuthController {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }

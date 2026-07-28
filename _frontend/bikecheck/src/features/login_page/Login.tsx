@@ -19,7 +19,7 @@ export function Login(): ReactElement {
         <div
           className="w-full h-[110dvh] absolute bottom-0 left-0 -z-10"
           style={{
-            background: "linear-gradient(to top, var(--mantine-color-primary-6) 0%, transparent 70%)",
+            background: "linear-gradient(to top, var(--mantine-color-primary-6) 0%, transparent 78%)",
             animation: "wave 6s ease-in-out infinite",
           }}
         ></div>

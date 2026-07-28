@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "capacitor-plugins": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-plugins/SKILL.md",
+      "computedHash": "7f2f1fd0460dada8795c0e31ac2d1dfd214e22f578558aa9ed9ef6a11467620e"
+    }
+  }
+}
