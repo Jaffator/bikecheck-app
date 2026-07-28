@@ -110,11 +110,11 @@ export function AuthenticationForm(props: PaperProps) {
           </GoogleButton>
         </Stack>
       </Paper>
-      <Group justify="center" gap={4} style={{ position: "absolute", bottom: "2rem", left: 0, right: 0 }}>
-        <Text size="sm" c="background.9">
+      <Group align="center" justify="center" gap={4} style={{ position: "absolute", bottom: "2rem", left: 0, right: 0 }}>
+        <Text size="sm" lh={1} c="background.9">
           {type === "register" ? "Already have an account?" : "Don't have an account?"}
         </Text>
-        <Anchor component="button" type="button" c="background.9" fw={600} size="md" onClick={() => toggle()}>
+        <Anchor component="button" type="button" lh={1} c="background.9" fw={600} size="md" onClick={() => toggle()}>
           {type === "register" ? "Login" : "Register"}
         </Anchor>
       </Group>
