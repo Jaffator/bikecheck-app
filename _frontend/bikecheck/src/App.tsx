@@ -32,6 +32,7 @@ function ProtectedApp(): ReactElement {
   }
 
   if (isUserError || !user) {
+    console.log("User not logged in or error fetching user:", isUserError, user);
     return <Login />;
   }
 

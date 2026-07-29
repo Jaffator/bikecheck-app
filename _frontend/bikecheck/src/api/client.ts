@@ -18,9 +18,11 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const { connected } = await Network.getStatus();
+  console.log(connected);
   let response: Response;
 
   if (!connected) {
+    console.log("No internet connection. Setting offlineWhenCallApi to true.");
     useOfflineWhenCallApiStore.getState().setOfflineWhenCallApi(true);
     throw new NetworkError();
   }

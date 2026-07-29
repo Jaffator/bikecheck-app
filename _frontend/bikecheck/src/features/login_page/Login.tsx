@@ -46,7 +46,7 @@ export function Login(): ReactElement {
           className="w-full absolute top-0 left-0 -z-10"
           style={{
             height: pageHeight,
-            background: "linear-gradient(to top, var(--mantine-color-primary-6) 10%, transparent 100%)",
+            background: "linear-gradient(to top, var(--mantine-color-primary-6) 10%, transparent 95%)",
             animation: "wave 6s ease-in-out infinite",
           }}
         ></div>

@@ -9,6 +9,13 @@ export async function getCurrentUser(): Promise<User> {
   return apiFetch<User>("/auth/me");
 }
 
+// POST /auth/logout — logs out the currently logged-in user.
+export async function logoutUser(): Promise<void> {
+  return apiFetch<void>("/auth/logout", {
+    method: "POST",
+  });
+}
+
 // POST /auth/login — sets the auth cookies and returns the logged-in user.
 export async function loginUser(credentials: LoginCredentials): Promise<User> {
   return apiFetch<User>("/auth/login", {

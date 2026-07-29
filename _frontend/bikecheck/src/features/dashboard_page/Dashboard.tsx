@@ -3,10 +3,11 @@ import type { ReactElement } from "react";
 import { Card, Text, Image, Button } from "@mantine/core";
 import dashboardImage from "../../assets/images/dashboard.png";
 import { useBikes } from "../bikes/bikes.queries";
+import { useLogout } from "../users/users.queries";
 
 export function Dashboard(): ReactElement {
   const { refetch, error } = useBikes();
-
+  const logout = useLogout();
   // if (isLoading) {
   //   return <Loader />;
   // }
@@ -17,23 +18,29 @@ export function Dashboard(): ReactElement {
   if (error) console.log("Error fetching bikes:", error);
   return (
     <>
-      {[...Array(3)].map((_, i) => (
-        <Card key={i} bg="cards.6" className="m-3 border h-auto flex flex-col">
-          <Image src={dashboardImage}></Image>
-          <Text c="text.6">
-            DASHBOARD PAGE: What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-            Lorem Ipsum has
-          </Text>
-          <Button
-            variant="filled"
-            onClick={async () => {
-              await refetch();
-            }}
-          >
-            Button
-          </Button>
-        </Card>
-      ))}
+      <Card bg="cards.6" className="m-3 border h-auto flex flex-col">
+        <Image src={dashboardImage}></Image>
+        <Button
+          onClick={() => {
+            console.log("Logging out...");
+            logout.mutate();
+          }}
+        >
+          Log out
+        </Button>
+        <Text c="text.6">
+          DASHBOARD PAGE: What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+          Lorem Ipsum has
+        </Text>
+        <Button
+          variant="filled"
+          onClick={async () => {
+            await refetch();
+          }}
+        >
+          Button
+        </Button>
+      </Card>
     </>
   );
 }

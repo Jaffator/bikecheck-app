@@ -1,7 +1,7 @@
 // React Query hooks. This is where loading / error / cache state lives —
 // the stuff you used to write by hand with useState + useEffect.
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
-import { getCurrentUser, loginUser, registerUser, sendGoogleToken } from "./users.api";
+import { getCurrentUser, loginUser, registerUser, sendGoogleToken, logoutUser } from "./users.api";
 import type { User, LoginCredentials, RegisterCredentials, GoogleTokenCredentials } from "./users.types";
 import type { ApiError } from "@/api/client";
 
@@ -12,6 +12,24 @@ export function useCurrentUser(): UseQueryResult<User> {
     queryKey: ["currentUser"],
     queryFn: getCurrentUser,
     retry: false,
+  });
+}
+
+// Logout user.
+export function useLogout(): UseMutationResult<void, ApiError, void> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: logoutUser,
+    onSuccess: () => {
+      // Order matters. This has to run while the mounted useCurrentUser is
+      // still attached to the query, so it gets notified and re-renders into
+      // the login page. clear() would destroy that query first, leaving the
+      // observer watching a dead object and the app on screen until a reload.
+      queryClient.setQueryData(["currentUser"], null);
+      // Everything else belonged to the user who just left, so drop it —
+      // except currentUser, which must keep the observer attached.
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== "currentUser" });
+    },
   });
 }
 
