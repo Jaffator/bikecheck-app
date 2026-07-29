@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "androidBuild_withTarget": "npm run build && npx cap sync android && npx cap run android --target MRH6V4DUFMF6PBRG",
+    "androidBuild": "npm run build && npx cap sync android && npx cap run android",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

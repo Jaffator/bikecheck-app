@@ -21,7 +21,7 @@ function App(): ReactElement {
 
 // Everything else requires a logged-in user.
 function ProtectedApp(): ReactElement {
-  const { data: user, isLoading: isUserLoading, isError: isUserError, error: userError } = useCurrentUser();
+  const { data: user, isLoading: isUserLoading, isError: isUserError } = useCurrentUser();
 
   if (isUserLoading) {
     return (
@@ -32,8 +32,6 @@ function ProtectedApp(): ReactElement {
   }
 
   if (isUserError || !user) {
-    console.log("user", user);
-    console.log("error", userError);
     return <Login />;
   }
 

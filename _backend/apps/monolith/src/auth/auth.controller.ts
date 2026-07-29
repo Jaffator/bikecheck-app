@@ -18,11 +18,12 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './googleAuth.service';
 import { TokenService } from './token.service';
+import { AUTH_CONFIG } from './auth.config';
 import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateUserDto, UserResponseDto } from '../user/dto/user.dtos';
-import { LoginDto } from './dto/auth.dtos';
+import { GoogleTokenDto, LoginDto } from './dto/auth.dtos';
 import { users as UserFull } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { UAParser } from 'ua-parser-js';
@@ -71,6 +72,10 @@ export class AuthController {
   }
 
   // --- REFRESH token
+  // Public on purpose: this runs exactly when the access token is gone, so
+  // requiring one would make the endpoint unusable. The refresh token cookie
+  // is the credential here, and tokenService.refreshToken validates it.
+  @Public()
   @ApiResponse({ status: 200 })
   @Post('refresh')
   async refreshUser(@Req() req: Request, @Res() res: Response, @Ip() ip: string) {
@@ -117,6 +122,31 @@ export class AuthController {
   @Get('google')
   googleAuth(): void {
     // initiates the Google OAuth2 login flow
+  }
+
+  // --- GOOGLE Endpoint for the ID token sent by the native app.
+  // The web flow redirects through Google, the native app already holds the
+  // token, so it posts it here. Everything past the verification is identical
+  // to google/callback, except there is no redirect — the app stays put.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Public()
+  @ApiBody({ type: GoogleTokenDto })
+  @ApiResponse({ status: 200 | 201, type: UserResponseDto })
+  @Post('google/token')
+  async googleReceiveToken(
+    @Body() data: GoogleTokenDto, //
+    @Req() req: Request, // deu to headers for device info
+    @Res({ passthrough: true }) res: Response,
+    @Ip() ip: string,
+  ): Promise<UserResponseDto> {
+    const profile = await this.googleService.verifyIdToken(data.idToken);
+    const { user, isNewUser } = await this.googleService.googleLogin(profile);
+
+    const deviceInfo = this.getDeviceInfo(req);
+    const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
+    res.status(isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
+    this.setAuthCookies(res, accessToken, refreshToken);
+    return this.mapToResponse(user);
   }
 
   // --- GOOGLE auth callback endpoint
@@ -169,13 +199,13 @@ export class AuthController {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }

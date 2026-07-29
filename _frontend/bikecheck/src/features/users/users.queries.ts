@@ -1,8 +1,8 @@
 // React Query hooks. This is where loading / error / cache state lives —
 // the stuff you used to write by hand with useState + useEffect.
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
-import { getCurrentUser, loginUser, registerUser } from "./users.api";
-import type { User, LoginCredentials, RegisterCredentials } from "./users.types";
+import { getCurrentUser, loginUser, registerUser, sendGoogleToken } from "./users.api";
+import type { User, LoginCredentials, RegisterCredentials, GoogleTokenCredentials } from "./users.types";
 import type { ApiError } from "@/api/client";
 
 // Used by App.tsx to decide between the protected app and the login page.
@@ -33,5 +33,18 @@ export function useLogin(): UseMutationResult<User, ApiError, LoginCredentials> 
 export function useRegistration(): UseMutationResult<User, ApiError, RegisterCredentials> {
   return useMutation({
     mutationFn: registerUser,
+  });
+}
+
+// Native Google sign-in. The backend sets the auth cookies and returns the
+// user, so this behaves exactly like useLogin — there is no redirect, writing
+// currentUser is what flips the auth gate to the app.
+export function useGoogleNative(): UseMutationResult<User, ApiError, GoogleTokenCredentials> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: sendGoogleToken,
+    onSuccess: (user) => {
+      queryClient.setQueryData(["currentUser"], user);
+    },
   });
 }

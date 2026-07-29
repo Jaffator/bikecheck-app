@@ -5,13 +5,14 @@ import { upperFirst, useToggle } from "@mantine/hooks";
 import { GoogleButton } from "./GoogleButton";
 import { Mail, Lock, User } from "lucide-react";
 import logoName from "../../assets/logo_name.svg";
-import { useLogin, useRegistration } from "../users/users.queries";
+import { useLogin, useRegistration, useGoogleNative } from "../users/users.queries";
 import { Capacitor } from "@capacitor/core";
-// import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
+import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 
 export function AuthenticationForm(props: PaperProps) {
   const login = useLogin();
   const registration = useRegistration();
+  const googleToken = useGoogleNative();
   const [type, toggle] = useToggle(["login", "register"]);
   const form = useForm({
     initialValues: {
@@ -38,17 +39,22 @@ export function AuthenticationForm(props: PaperProps) {
     registration.reset();
   }
 
-  function handleGoogleSignIn() {
+  async function handleGoogleSignIn(): Promise<void> {
     if (Capacitor.getPlatform() === "web") {
       window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
+    } else if (Capacitor.getPlatform() === "android") {
+      const result = await GoogleSignIn.signIn();
+      console.log("Google sign-in result:", result);
+      googleToken.mutate({ idToken: result.idToken });
     }
   }
+
   return (
     <>
       <img
         src={logoName}
         alt="BikeCheck Logo"
-        style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "4rem", left: 0, right: 0, margin: "0 auto" }}
+        style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "6rem", left: 0, right: 0, margin: "0 auto" }}
       />
       <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent">
         <form
@@ -180,7 +186,13 @@ export function AuthenticationForm(props: PaperProps) {
           </GoogleButton>
         </Stack>
       </Paper>
-      <Group align="center" justify="center" gap={4} style={{ position: "absolute", bottom: "2rem", left: 0, right: 0 }}>
+      <Group
+        align="center"
+        justify="center"
+        gap={4}
+        style={{ position: "absolute", bottom: "1.5rem", left: 0, right: 0 }}
+        mb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+      >
         <Text size="sm" lh={1} c="background.9">
           {type === "register" ? "Already have an account?" : "Don't have an account?"}
         </Text>

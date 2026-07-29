@@ -11,6 +11,10 @@ export interface RegisterCredentials {
   password: string;
 }
 
+export interface GoogleTokenCredentials {
+  idToken: string;
+}
+
 // Mirrors the backend UserResponseDto (user/dto/user.dtos.ts).
 // Dates arrive as ISO strings over JSON, so they are typed as string here.
 export interface User {

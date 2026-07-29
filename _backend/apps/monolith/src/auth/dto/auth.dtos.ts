@@ -14,6 +14,15 @@ export class LoginDto {
   password!: string;
 }
 
+// Sent by the native app after a Google sign-in. Only the token is accepted:
+// the profile is read from its verified payload, never from the request body.
+export class GoogleTokenDto {
+  @ApiProperty({ example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6...' })
+  @IsString()
+  @MinLength(1)
+  idToken!: string;
+}
+
 export class LoginGoogleDto {
   @IsString()
   @MinLength(1)
