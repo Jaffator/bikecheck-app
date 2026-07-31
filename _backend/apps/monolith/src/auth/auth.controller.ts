@@ -137,8 +137,9 @@ export class AuthController {
     @Ip() ip: string,
   ): Promise<UserResponseDto> {
     const profile = await this.googleService.verifyIdToken(data.idToken);
+    console.log('Google ID token verified, profile:', profile);
     const { user, isNewUser } = await this.googleService.googleLogin(profile);
-
+    console.log('Google login successful:', user, 'Is new user:', isNewUser);
     const deviceInfo = this.getDeviceInfo(req);
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
     res.status(isNewUser ? HttpStatus.CREATED : HttpStatus.OK);

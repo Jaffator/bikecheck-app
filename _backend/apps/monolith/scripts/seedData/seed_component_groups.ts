@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { toI18nKey } from './i18n_key';
 
 interface Component {
   component_type: string;
@@ -114,13 +115,18 @@ export class SeedComponentGroups {
       const newgroups = await this.prisma.component_groups.createManyAndReturn({
         data: componentGroups.map((group) => ({
           group_name: group.groupName,
+          i18n_key: toI18nKey('componentGroup', group.groupName),
         })),
       });
       console.log(`✅ Created groups: ${newgroups.length}`);
       for (const group of componentGroups) {
         const groupID = newgroups.find((g) => g.group_name === group.groupName);
         if (!groupID) throw new Error(`Group ID not found for group: ${group.groupName}`);
-        const components = group.componentTypes.map((obj) => ({ ...obj, component_group_id: groupID.id }));
+        const components = group.componentTypes.map((obj) => ({
+          ...obj,
+          component_group_id: groupID.id,
+          i18n_key: toI18nKey('component', obj.component_type),
+        }));
         await this.prisma.component_types.createMany({
           data: components,
         });

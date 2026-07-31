@@ -204,6 +204,12 @@
             "null"
           ]
         },
+        "i18n_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "bikes": {
           "type": "array",
           "items": {
@@ -397,6 +403,12 @@
         "group_name": {
           "type": "string"
         },
+        "i18n_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "side_choice": {
           "type": "boolean",
           "default": false
@@ -417,6 +429,12 @@
         },
         "component_type": {
           "type": "string"
+        },
+        "i18n_key": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "ebike": {
           "type": "boolean",
@@ -596,6 +614,12 @@
         "event_action_tag": {
           "type": "string"
         },
+        "i18n_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "events_action": {
           "$ref": "#/definitions/events_action"
         }
@@ -681,6 +705,12 @@
         },
         "action_name": {
           "type": "string"
+        },
+        "i18n_key": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "replace_action": {
           "type": "boolean",

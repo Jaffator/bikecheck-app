@@ -1,0 +1,51 @@
+{
+  "nav": {
+    "home": "Home",
+    "bikes": "Bikes",
+    "service": "Service",
+    "rides": "Rides"
+  },
+  "page": {
+    "home": "Home",
+    "bikes": "Bikes",
+    "service": "Service",
+    "rides": "Rides",
+    "profile": "Profile",
+    "settings": "Settings",
+    "notifications": "Notifications"
+  },
+  "action": {
+    "back": "Back",
+    "retry": "Try again"
+  },
+  "offline": {
+    "title": "You are offline",
+    "description": "Check your internet connection"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "namePlaceholder": "Enter your name",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter your password",
+    "nameRequired": "Name is required",
+    "invalidEmail": "Invalid email",
+    "passwordTooShort": "Password should include at least 8 characters",
+    "acceptTerms": "I accept terms and conditions",
+    "termsRequired": "You must accept the terms and conditions",
+    "invalidCredentials": "Invalid email or password",
+    "emailTaken": "This email is already registered",
+    "genericError": "Something went wrong, try again",
+    "or": "OR",
+    "continueWithGoogle": "Continue with Google",
+    "haveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?"
+  },
+  "settings": {
+    "language": "Language"
+  },
+  "language": {
+    "en": "English",
+    "cs": "Čeština"
+  }
+}

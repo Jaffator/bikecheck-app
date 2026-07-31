@@ -5,5 +5,9 @@
       "Bash(cp -r /d/Projects/BikeCheck/apps/strava-service/src/. /d/Projects/BikeCheck/apps/backend/apps/strava-service/src/ && echo \"DONE\")",
       "Bash(docker run *)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "mantine",
+    "figma"
+  ]
 }

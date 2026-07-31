@@ -32,7 +32,8 @@ export class UserService {
         avatar_url: dto.avatar_url,
         password_hash: null,
         is_active: true,
-        language: 'en',
+        // Google sign-in carries no locale, so the client backfills it on first load.
+        language: null,
       },
     });
   }
@@ -54,7 +55,8 @@ export class UserService {
         googleId: null,
         password_hash,
         is_active: true,
-        language: 'en',
+        // Sent by the client from the device locale; null means "not chosen yet".
+        language: dto.language ?? null,
       },
     });
   }

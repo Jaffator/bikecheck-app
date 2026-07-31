@@ -3,6 +3,7 @@ import { type ReactElement } from "react";
 import { Stack, Title, Text, Button } from "@mantine/core";
 import { Unplug } from "lucide-react";
 import { Network } from "@capacitor/network";
+import { useTranslation } from "react-i18next";
 import { useOfflineWhenCallApiStore } from "../../store/store";
 
 async function tryAgainConnection(): Promise<void> {
@@ -14,6 +15,8 @@ async function tryAgainConnection(): Promise<void> {
 }
 
 export function OfflinePage(): ReactElement {
+  const { t } = useTranslation();
+
   return (
     <Stack
       align="center"
@@ -24,13 +27,13 @@ export function OfflinePage(): ReactElement {
     >
       <Unplug size={48} color="var(--mantine-color-primary-6)" />
       <Title order={3} c="text.6">
-        Jste offline
+        {t("offline.title")}
       </Title>
       <Text c="dimmed" ta="center">
-        Ověřte připojení k internetu
+        {t("offline.description")}
       </Text>
       <Button w="90%" onClick={() => tryAgainConnection()}>
-        Zkust znovu
+        {t("action.retry")}
       </Button>
     </Stack>
   );

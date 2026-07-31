@@ -9,10 +9,21 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
+  language: string;
 }
 
 export interface GoogleTokenCredentials {
   idToken: string;
+}
+
+// Mirrors the backend UpdateUserDto (user/dto/user.dtos.ts). Every field is
+// optional — the backend drops undefined ones and patches the rest.
+export interface UpdateUserPayload {
+  name?: string;
+  language?: string;
+  currency?: string;
+  weight_kg?: number;
+  avatar_url?: string;
 }
 
 // Mirrors the backend UserResponseDto (user/dto/user.dtos.ts).

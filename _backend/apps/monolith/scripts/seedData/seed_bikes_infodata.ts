@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient } from '@prisma/client';
+import { toI18nKey } from './i18n_key';
 import seedData from './seed_data.json';
 
 type ModelsData = {
@@ -30,7 +31,7 @@ export class SeedBikeAddData {
       const [deleted, result] = await this.prisma.$transaction([
         this.prisma.bike_types.deleteMany({}),
         this.prisma.bike_types.createMany({
-          data: data.map((type: string) => ({ type })),
+          data: data.map((type: string) => ({ type, i18n_key: toI18nKey('bikeType', type) })),
           skipDuplicates: true,
         }),
       ]);

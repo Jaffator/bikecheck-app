@@ -1,7 +1,9 @@
 import { Anchor, Button, Checkbox, Divider, Group, Paper, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import type { PaperProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { upperFirst, useToggle } from "@mantine/hooks";
+import { useToggle } from "@mantine/hooks";
+import { useTranslation } from "react-i18next";
+import { detectLanguage } from "@/i18n";
 import { GoogleButton } from "./GoogleButton";
 import { Mail, Lock, User } from "lucide-react";
 import logoName from "../../assets/logo_name.svg";
@@ -10,6 +12,7 @@ import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 
 export function AuthenticationForm(props: PaperProps) {
+  const { t } = useTranslation();
   const login = useLogin();
   const registration = useRegistration();
   const googleToken = useGoogleNative();
@@ -23,10 +26,10 @@ export function AuthenticationForm(props: PaperProps) {
     },
 
     validate: {
-      name: (val) => (type === "register" && val.trim().length === 0 ? "Name is required" : null),
-      email: (val) => (/^\S+@\S+$/.test(val) ? null : "Invalid email"),
-      password: (val) => (val.length < 8 ? "Password should include at least 8 characters" : null),
-      terms: (val) => (type === "register" && !val ? "You must accept the terms and conditions" : null),
+      name: (val) => (type === "register" && val.trim().length === 0 ? t("auth.nameRequired") : null),
+      email: (val) => (/^\S+@\S+$/.test(val) ? null : t("auth.invalidEmail")),
+      password: (val) => (val.length < 8 ? t("auth.passwordTooShort") : null),
+      terms: (val) => (type === "register" && !val ? t("auth.termsRequired") : null),
     },
   });
 
@@ -65,7 +68,7 @@ export function AuthenticationForm(props: PaperProps) {
             } else {
               // Register only creates the account, so log in right afterwards.
               registration.mutate(
-                { name: values.name, email: values.email, password: values.password },
+                { name: values.name, email: values.email, password: values.password, language: detectLanguage() },
                 {
                   onSuccess: () => {
                     login.mutate({ email: values.email, password: values.password });
@@ -78,11 +81,11 @@ export function AuthenticationForm(props: PaperProps) {
           <Stack>
             {type === "register" && (
               <TextInput
-                placeholder="Enter your name"
+                placeholder={t("auth.namePlaceholder")}
                 leftSection={<User size={18} />}
                 value={form.values.name}
                 onChange={(event) => form.setFieldValue("name", event.currentTarget.value)}
-                error={form.errors.name && "Name is required"}
+                error={form.errors.name}
                 radius="lg"
                 styles={{
                   input: {
@@ -96,11 +99,11 @@ export function AuthenticationForm(props: PaperProps) {
             )}
 
             <TextInput
-              placeholder="Enter your email"
+              placeholder={t("auth.emailPlaceholder")}
               leftSection={<Mail size={18} />}
               value={form.values.email}
               onChange={(event) => form.setFieldValue("email", event.currentTarget.value)}
-              error={form.errors.email && "Invalid email"}
+              error={form.errors.email}
               radius="lg"
               styles={{
                 input: {
@@ -113,7 +116,7 @@ export function AuthenticationForm(props: PaperProps) {
             />
 
             <PasswordInput
-              placeholder="Enter your password"
+              placeholder={t("auth.passwordPlaceholder")}
               leftSection={<Lock size={18} />}
               value={form.values.password}
               onChange={(event) => form.setFieldValue("password", event.currentTarget.value)}
@@ -134,7 +137,7 @@ export function AuthenticationForm(props: PaperProps) {
               <Checkbox
                 ml="2px"
                 c="background.9"
-                label="I accept terms and conditions"
+                label={t("auth.acceptTerms")}
                 checked={form.values.terms}
                 onChange={(event) => form.setFieldValue("terms", event.currentTarget.checked)}
               />
@@ -144,12 +147,12 @@ export function AuthenticationForm(props: PaperProps) {
           <Stack justify="space-between" mt="xl">
             {login.isError && (
               <Text size="sm" c="red.6" ta="center">
-                {login.error.status === 401 ? "Invalid email or password" : "Something went wrong, try again"}
+                {login.error.status === 401 ? t("auth.invalidCredentials") : t("auth.genericError")}
               </Text>
             )}
             {registration.isError && (
               <Text size="sm" c="red.6" ta="center">
-                {registration.error.status === 409 ? "This email is already registered" : "Something went wrong, try again"}
+                {registration.error.status === 409 ? t("auth.emailTaken") : t("auth.genericError")}
               </Text>
             )}
             {form.errors.terms && (
@@ -159,12 +162,12 @@ export function AuthenticationForm(props: PaperProps) {
             )}
 
             <Button type="submit" radius="lg" style={{ height: "3rem" }} loading={login.isPending || registration.isPending}>
-              {upperFirst(type)}
+              {type === "login" ? t("auth.login") : t("auth.register")}
             </Button>
           </Stack>
         </form>
         <Divider
-          label="OR"
+          label={t("auth.or")}
           labelPosition="center"
           my="lg"
           w="100%"
@@ -182,7 +185,7 @@ export function AuthenticationForm(props: PaperProps) {
             radius="lg"
             h="3rem"
           >
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </GoogleButton>
         </Stack>
       </Paper>
@@ -194,10 +197,10 @@ export function AuthenticationForm(props: PaperProps) {
         mb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
       >
         <Text size="sm" lh={1} c="background.9">
-          {type === "register" ? "Already have an account?" : "Don't have an account?"}
+          {type === "register" ? t("auth.haveAccount") : t("auth.noAccount")}
         </Text>
         <Anchor component="button" type="button" lh={1} c="background.9" fw={600} size="md" onClick={switchType}>
-          {type === "register" ? "Login" : "Register"}
+          {type === "register" ? t("auth.login") : t("auth.register")}
         </Anchor>
       </Group>
     </>

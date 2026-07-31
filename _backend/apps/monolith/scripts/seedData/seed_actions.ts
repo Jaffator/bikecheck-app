@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { SeedData } from './seed_data.types';
 import seedDatJson from './seed_data.json';
+import { toI18nKey } from './i18n_key';
 
 const seedData: SeedData = seedDatJson as SeedData;
 
@@ -14,8 +15,12 @@ export class SeedActions {
           //  Save action and get id
           const save_action = await this.prisma.events_action.upsert({
             where: { action_name: event.action },
-            create: { action_name: event.action, replace_action: event.replace },
-            update: { replace_action: event.replace },
+            create: {
+              action_name: event.action,
+              replace_action: event.replace,
+              i18n_key: toI18nKey('action', event.action),
+            },
+            update: { replace_action: event.replace, i18n_key: toI18nKey('action', event.action) },
           });
           // Targets releated to define action targets relations
           if (event.targets) {
@@ -44,6 +49,7 @@ export class SeedActions {
               data: event.tags.map((tag: string) => ({
                 event_action_id: save_action.id,
                 event_action_tag: tag,
+                i18n_key: toI18nKey('actionTag', tag),
               })),
               skipDuplicates: true,
             });
