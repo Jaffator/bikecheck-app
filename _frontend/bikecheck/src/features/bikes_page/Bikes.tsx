@@ -1,31 +1,28 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { Card, Text, Image } from "@mantine/core";
-import garageImage from "../../assets/images/garage.png";
-// import { useBikes } from "./bikes.queries";
+import { Card, Loader, Text } from "@mantine/core";
+import { useBikes } from "../bikes/bikes.queries";
+import { EmptyGarage } from "./EmptyGarage";
 
 export function Bikes(): ReactElement {
-  // const { data: bikes, isLoading, error } = useBikes();
+  const { data: bikes, isLoading } = useBikes();
 
-  // if (isLoading) {
-  //   return <Loader />;
+  if (isLoading) {
+    return <Loader m="md" />;
+  }
+
+  // An empty garage has no list to show — the whole screen becomes the CTA.
+  // if (!bikes || bikes.length === 0) {
+  //   return <EmptyGarage />;
   // }
+  if (true) {
+    return <EmptyGarage />;
+  }
 
-  // if (error) {
-  //   return <Text c="red">Failed to load bikes.</Text>;
-  // }
-
+  // TODO: the bike list (bento grid with mileage and component health).
   return (
-    <>
-      {[...Array(10)].map((_, i) => (
-        <Card key={i} bg="cards.6" className="m-3 border h-100">
-          <Image src={garageImage}></Image>
-          <Text c="text.6">
-            BIKES PAGE: What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-            Lorem Ipsum has
-          </Text>
-        </Card>
-      ))}
-    </>
+    <Card bg="cards.6" className="m-3 border">
+      <Text c="text.6">BIKES PAGE</Text>
+    </Card>
   );
 }

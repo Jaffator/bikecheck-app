@@ -47,5 +47,22 @@
   "language": {
     "en": "English",
     "cs": "Čeština"
+  },
+  "common": {
+    "proTip": "PRO TIP"
+  },
+  "dashboard": {
+    "greeting": "Welcome, {{name}}! 👋",
+    "getStarted": "Start by adding your first bike",
+    "noActiveData": "NO ACTIVE DATA",
+    "addBike": "Add bike",
+    "proTipBody": "Adding components (chain, cassette, tires) lets <1>BikeCheck</1> predict maintenance based on real-world mileage."
+  },
+  "bikes": {
+    "noBikesFound": "0 BIKES FOUND",
+    "emptyTitle": "Your garage is currently empty",
+    "emptyBody": "Connect your Strava account or manually add a bike to start tracking component health and service intervals.",
+    "addFirstBike": "Add Your First Bike",
+    "proTipBody": "Adding your components (chain, cassette, tires) allows BikeCheck to predict maintenance before failure occurs based on real-world mileage."
   }
 }

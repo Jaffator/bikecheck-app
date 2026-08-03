@@ -114,6 +114,15 @@
   --color-primary-trans: rgba(147, 106, 59, 0.2);
   --color-muted: #a8a29e;
   --color-border: rgba(67, 71, 74, 0.3);
+  --color-text-bright: #e4e2e2;
+  --color-text-dim: #c3c7ca;
+  --color-accent: #b7c9d3;
+  --color-surface: #292a2b;
+  --color-border-solid: #43474a;
+  --color-border-strong: rgba(67, 71, 74, 0.4);
+  --color-border-subtle: rgba(67, 71, 74, 0.2);
+  --color-status-idle: #ffb4ab;
+  --color-decor: #343535;
 
   --font-sans: "Inter", sans-serif;
   --font-display: "Space Grotesk", sans-serif;

@@ -14,10 +14,6 @@
     "settings": "Nastavení",
     "notifications": "Oznámení"
   },
-  "action": {
-    "back": "Zpět",
-    "retry": "Zkusit znovu"
-  },
   "offline": {
     "title": "Jste offline",
     "description": "Ověřte připojení k internetu"
@@ -112,7 +108,26 @@
     "freeride": "Freeride",
     "ebike": "E-bike"
   },
+  "common": {
+    "proTip": "PRO TIP"
+  },
+  "dashboard": {
+    "greeting": "Vítej, {{name}}! 👋",
+    "getStarted": "Začni přidáním svého prvního kola",
+    "noActiveData": "ŽÁDNÁ AKTIVNÍ DATA",
+    "addBike": "Přidat kolo",
+    "proTipBody": "Přidáním komponentů (řetěz, kazeta, pláště) umožníš aplikaci <1>BikeCheck</1> předpovídat údržbu na základě reálného nájezdu."
+  },
+  "bikes": {
+    "noBikesFound": "ŽÁDNÁ KOLA",
+    "emptyTitle": "Tvoje garáž je zatím prázdná",
+    "emptyBody": "Připoj svůj účet Strava nebo přidej kolo ručně a začni sledovat stav komponentů a servisní intervaly.",
+    "addFirstBike": "Přidat první kolo",
+    "proTipBody": "Přidáním komponentů (řetěz, kazeta, pláště) umožníš aplikaci BikeCheck předpovídat údržbu dřív, než dojde k poruše — na základě reálného nájezdu."
+  },
   "action": {
+    "back": "Zpět",
+    "retry": "Zkusit znovu",
     "bleed": "Odvzdušnění",
     "padsReplacement": "Výměna destiček",
     "caliperService": "Servis třmenu",
