@@ -43,12 +43,13 @@ export class ComponentService {
           interval_id: undefined,
         },
         component_name: type.component_type,
+        component_i18n_key: type.i18n_key,
       };
 
       if (type.has_position) {
         return [
-          { component: { ...baseComponent.component, position: 'front' }, component_name: type.component_type },
-          { component: { ...baseComponent.component, position: 'rear' }, component_name: type.component_type },
+          { ...baseComponent, component: { ...baseComponent.component, position: 'front' } },
+          { ...baseComponent, component: { ...baseComponent.component, position: 'rear' } },
         ];
       }
       return [baseComponent];

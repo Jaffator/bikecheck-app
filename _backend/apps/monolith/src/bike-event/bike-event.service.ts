@@ -24,10 +24,12 @@ export class BikeEventService {
       select: {
         id: true,
         action_name: true,
+        i18n_key: true,
         replace_action: true,
         event_action_tags: {
           select: {
             event_action_tag: true,
+            i18n_key: true,
           },
         },
         event_action_targets: {
@@ -35,6 +37,7 @@ export class BikeEventService {
             component_types: {
               select: {
                 component_type: true,
+                i18n_key: true,
                 components_mounted: {
                   where: {
                     bike_id: bikeId,
@@ -56,14 +59,16 @@ export class BikeEventService {
     const mappedAction = actions.map((action) => ({
       id: action.id,
       action_name: action.action_name,
+      action_i18n_key: action.i18n_key,
       replace_action: action.replace_action,
-      tags: action.event_action_tags.map((tag) => tag.event_action_tag),
+      tags: action.event_action_tags.map((tag) => ({ tag: tag.event_action_tag, i18n_key: tag.i18n_key })),
       components: action.event_action_targets.flatMap((target) =>
         target.component_types.components_mounted.map((mounted) => ({
           id: mounted.id,
           component_desc: mounted.component_desc,
           position: mounted.position,
           component_type: target.component_types.component_type,
+          component_type_i18n_key: target.component_types.i18n_key,
           // No service performed yet in this context, so no frozen baselines.
           km_at_time: null,
           time_min_at_time: null,
@@ -76,6 +81,7 @@ export class BikeEventService {
     return {
       group_id: Number(group!.id),
       group_name: group!.group_name,
+      group_i18n_key: group!.i18n_key,
       side_choice: Boolean(group!.side_choice),
       actions: mappedAction,
     };
@@ -266,6 +272,7 @@ export class BikeEventService {
       actions_done: bikeEvent.event_actions_done.map((actionDone) => ({
         action_id: actionDone.event_action_id,
         action_name: actionDone.events_action.action_name,
+        action_i18n_key: actionDone.events_action.i18n_key,
         partial_cost: Number(actionDone.partial_cost),
         replace_action: actionDone.events_action.replace_action,
         note: actionDone.note ?? null,
@@ -274,6 +281,7 @@ export class BikeEventService {
           component_desc: junc.components_mounted.component_desc,
           position: junc.components_mounted.position,
           component_type: junc.components_mounted.component_types.component_type,
+          component_type_i18n_key: junc.components_mounted.component_types.i18n_key,
           km_at_time: junc.km_at_time,
           time_min_at_time: junc.time_min_at_time,
           drivetrain_km_at_time: junc.drivetrain_km_at_time,

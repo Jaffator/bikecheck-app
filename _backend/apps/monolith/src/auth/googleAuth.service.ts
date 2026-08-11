@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { OAuth2Client } from 'google-auth-library';
 import { LoginGoogleDto } from './dto/auth.dtos';
 import { users as UserFull } from '@prisma/client';
 import { UserService } from '../user/user.service';
@@ -10,7 +11,37 @@ type GoogleUserType = {
 
 @Injectable()
 export class GoogleAuthService {
+  private readonly oauthClient = new OAuth2Client();
+
   constructor(private userService: UserService) {}
+
+  // Verifies an ID token coming from the native app and unpacks the profile
+  // from it. The request body is attacker-controlled, the token payload is not:
+  // verifyIdToken checks Google's signature, the audience and the expiry, so
+  // anything read from it can be trusted. Throws on any mismatch.
+  async verifyIdToken(idToken: string): Promise<LoginGoogleDto> {
+    const ticket = await this.oauthClient
+      .verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID!,
+      })
+      .catch(() => {
+        throw new UnauthorizedException('Invalid Google ID token');
+      });
+
+    const payload = ticket.getPayload();
+    if (!payload?.email) {
+      throw new UnauthorizedException('Google ID token has no email');
+    }
+
+    return {
+      googleId: payload.sub,
+      email: payload.email,
+      emailVerified: payload.email_verified ?? false,
+      name: payload.name ?? '',
+      avatar_url: payload.picture ?? '',
+    };
+  }
 
   async googleLogin(dto: LoginGoogleDto): Promise<GoogleUserType> {
     // 1. Google user exist

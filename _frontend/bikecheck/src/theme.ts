@@ -104,6 +104,15 @@ export const otherColor = {
   primaryLight: "#B8A937",
   primaryTrans: "rgba(147, 106, 59, 0.2)",
   textMuted: "#A8A29E",
+  textBright: "#E4E2E2",
+  textDim: "#C3C7CA",
+  accent: "#B7C9D3",
+  surface: "#292A2B",
+  borderSolid: "#43474A",
+  borderStrong: "rgba(67, 71, 74, 0.4)",
+  borderSubtle: "rgba(67, 71, 74, 0.2)",
+  statusIdle: "#FFB4AB",
+  decor: "#343535",
 } as const;
 
 export const theme = createTheme({

@@ -30,6 +30,9 @@ export class MountedComponentDto {
   @ApiProperty({ example: 'Brake' })
   component_type!: string;
 
+  @ApiProperty({ example: 'component.brakeCaliper', nullable: true, description: 'null for user-created types' })
+  component_type_i18n_key!: string | null;
+
   @ApiProperty({ example: 1240, nullable: true, description: 'total_km frozen at service time' })
   km_at_time!: number | null;
 
@@ -52,6 +55,9 @@ export class ActionsDoneDto {
 
   @ApiProperty({ example: 'Brake bleed' })
   action_name!: string;
+
+  @ApiProperty({ example: 'action.bleed', nullable: true, description: 'null for user-created actions' })
+  action_i18n_key!: string | null;
 
   @ApiProperty({ example: 150, nullable: true })
   partial_cost?: number | null;
@@ -96,6 +102,15 @@ export class Response_BikeEvent_Dto {
   attachments?: AttachmentDto[];
 }
 
+// Tags are seeded alongside their action, so they carry a key of their own.
+export class ActionTagDto {
+  @ApiProperty({ example: 'Full Flush' })
+  tag!: string;
+
+  @ApiProperty({ example: 'actionTag.fullFlush', nullable: true })
+  i18n_key!: string | null;
+}
+
 // 1. Actions (used in Response_ActionsOnGroup_Dto) ----
 export class ActionDto {
   @ApiProperty({ example: 1 })
@@ -104,11 +119,14 @@ export class ActionDto {
   @ApiProperty({ example: 'Brake bleed' })
   action_name!: string;
 
+  @ApiProperty({ example: 'action.bleed', nullable: true, description: 'null for user-created actions' })
+  action_i18n_key!: string | null;
+
   @ApiProperty({ example: false })
   replace_action!: boolean;
 
-  @ApiProperty({ example: ['maintenance', 'hydraulic'], type: [String] })
-  tags!: string[];
+  @ApiProperty({ type: [ActionTagDto] })
+  tags!: ActionTagDto[];
 
   @ApiProperty({ type: [MountedComponentDto] })
   components!: MountedComponentDto[];
@@ -123,6 +141,9 @@ export class Response_ActionsOnGroup_Dto {
 
   @ApiProperty({ example: 'Brake System' })
   group_name!: string;
+
+  @ApiProperty({ example: 'componentGroup.brakes', nullable: true })
+  group_i18n_key!: string | null;
 
   @ApiProperty({ example: false })
   side_choice!: boolean;

@@ -11,7 +11,7 @@ service event. The owner can generate a shareable report (e.g. when selling a bi
 
 **Core user jobs**
 
-- See my bikes, their mileage and health indexes ("garage").
+- See my bikes, their mileage and health indexes ("bikes").
 - **Log service events — record what was done to the bike (the core of the app).**
 - Know when a component needs service (chain, brakes…) based on mileage / health.
 - Review rides synced from Strava (with an AI ride summary).
@@ -39,12 +39,12 @@ The top bar (everywhere) holds the **bell** (unread notifications) and the **use
 MOBILE                              DESKTOP
 ┌────────────────────────────┐      ┌──────────┬───────────────────────┐
 │ BikeCheck        🔔(3)  👤 │      │ 🏠 Home  │ BikeCheck    🔔(3)  👤 │
-├────────────────────────────┤      │ 🚲 Garage│                       │
+├────────────────────────────┤      │ 🚲 Bikes │                       │
 │                            │      │ 🔧 Service│    (active screen)    │
 │      (active screen)       │      │ 📋 Rides │                       │
 ├──────┬──────┬──────┬───────┤      └──────────┴───────────────────────┘
 │🏠    │🚲    │🔧    │📋     │
-│Home  │Garage│Servic│Rides  │  (Home/Garage/Service/Rides; sidebar on desktop)
+│Home  │Bikes │Servic│Rides  │  (Home/Bikes/Service/Rides; sidebar on desktop)
 └──────┴──────┴──────┴───────┘
 
 🔔 Bell (top bar, everywhere) → opens Inbox as a Drawer/Modal (not a tab)
@@ -56,9 +56,9 @@ MOBILE                              DESKTOP
    ├─ Needs attention (service due + health alerts)
    ├─ Last ride (AI summary + rating)
    ├─ Quick stats (bikes count, total km)
-   └─ Primary action button → "+ Log service" ("+ Add bike" when garage is empty)
+   └─ Primary action button → "+ Log service" ("+ Add bike" when there are no bikes)
 
-🚲 Garage (Bikes)
+🚲 Bikes
    └─ Bike list (name, mileage, health badge)
        └─ Bike detail
            ├─ Components (chain, brakes…) + mileage / health index
@@ -92,7 +92,7 @@ Public (outside the logged-in app)
 | Screen        | Key content                                                          | Primary action                  |
 | ------------- | ------------------------------------------------------------------- | ------------------------------- |
 | Home          | Needs attention (service due/health), last ride, quick stats        | "+ Log service" / "+ Add bike"  |
-| Garage        | List of bikes (image, name, total km, health badge)                 | Tap bike → detail; "+ Add bike" |
+| Bikes         | List of bikes (image, name, total km, health badge)                 | Tap bike → detail; "+ Add bike" |
 | Bike detail   | Components w/ mileage & health, service history, rides, Strava, reports | Generate report, mark service   |
 | Service       | Due/soon items **+ record a service event** (category → event → auto-filled actions/components → note + cost) | Log event; mark done / snooze |
 | Rides         | Recent rides feed across bikes, with AI summary + rating            | Open ride detail                |
@@ -142,7 +142,7 @@ Profile → connect Strava → unmatched gear notification
 
 ## 6. Navigation & routing
 
-- Tab destinations: `/home`, `/garage`, `/service`, `/rides`. Landing after login = `/home`.
+- Tab destinations: `/`, `/bikes`, `/service`, `/rides`. Landing after login = `/`.
 - Inbox opens from the **bell** as a Drawer/Modal over the current screen (no own tab); deep-linkable as `/inbox` if needed.
 - Account (`/profile`, settings, Strava, logout) opens from the **avatar menu** in the top bar — not a tab.
 - Detail routes: `/bikes/:id`, `/bikes/:id/maintenance`, `/bikes/:id/strava-link`, `/bikes/:id/rides` —
@@ -185,7 +185,7 @@ Profile → connect Strava → unmatched gear notification
 ## 11. Open questions / TODO
 
 - [ ] Audience: single rider only, or organizations/teams (backend has `organizations`)?
-- [ ] MVP scope: which screens ship first? (proposed: Garage → Bike detail.)
+- [ ] MVP scope: which screens ship first? (proposed: Bikes → Bike detail.)
 - [ ] Extract brand colors from logo; build the Mantine theme; pick accent.
 - [ ] Rides feed: include AI summary cards from MVP, or per-bike only first?
 - [ ] PDF: server-rendered (Puppeteer) vs client-side — decide when reports UI is built.

@@ -18,11 +18,12 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from './googleAuth.service';
 import { TokenService } from './token.service';
+import { AUTH_CONFIG } from './auth.config';
 import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateUserDto, UserResponseDto } from '../user/dto/user.dtos';
-import { LoginDto } from './dto/auth.dtos';
+import { GoogleTokenDto, LoginDto } from './dto/auth.dtos';
 import { users as UserFull } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { UAParser } from 'ua-parser-js';
@@ -61,7 +62,9 @@ export class AuthController {
   @ApiResponse({ status: 200, type: UserResponseDto })
   @Get('me')
   async getMe(@CurrentUser('userId') userId: string): Promise<UserResponseDto> {
+    console.log('Current userId:---------');
     const user = await this.userService.getUserbyId(Number(userId));
+    console.log('Current user:', user);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -79,10 +82,11 @@ export class AuthController {
     return res.status(200).json({ message: 'Refresh token done' });
   }
 
-  // --- LOGOUT user, classic email password endpoint
+  // --- LOGOUT user
   @ApiResponse({ status: 200 })
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
+    console.log('Logging out user...');
     const token = req.cookies['refresh_token'];
     await this.authService.logout(token);
     this.deleteAuthCookies(res);
@@ -109,11 +113,38 @@ export class AuthController {
   }
 
   // --- GOOGLE ask for auth
+  // @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google')
   googleAuth(): void {
     // initiates the Google OAuth2 login flow
+  }
+
+  // --- GOOGLE Endpoint for the ID token sent by the native app.
+  // The web flow redirects through Google, the native app already holds the
+  // token, so it posts it here. Everything past the verification is identical
+  // to google/callback, except there is no redirect — the app stays put.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Public()
+  @ApiBody({ type: GoogleTokenDto })
+  @ApiResponse({ status: 200 | 201, type: UserResponseDto })
+  @Post('google/token')
+  async googleReceiveToken(
+    @Body() data: GoogleTokenDto, //
+    @Req() req: Request, // deu to headers for device info
+    @Res({ passthrough: true }) res: Response,
+    @Ip() ip: string,
+  ): Promise<UserResponseDto> {
+    const profile = await this.googleService.verifyIdToken(data.idToken);
+    console.log('Google ID token verified, profile:', profile);
+    const { user, isNewUser } = await this.googleService.googleLogin(profile);
+    console.log('Google login successful:', user, 'Is new user:', isNewUser);
+    const deviceInfo = this.getDeviceInfo(req);
+    const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
+    res.status(isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
+    this.setAuthCookies(res, accessToken, refreshToken);
+    return this.mapToResponse(user);
   }
 
   // --- GOOGLE auth callback endpoint
@@ -125,7 +156,7 @@ export class AuthController {
     @Req() req: any,
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
-  ): Promise<UserResponseDto> {
+  ): Promise<void> {
     // 1. In req.user is now data from GoogleStrategy.validate()
     // 2. Find the user in the DB or create them (registration)
 
@@ -137,43 +168,47 @@ export class AuthController {
       name,
       avatar_url,
     });
-
+    console.log('Google login successful:', user, 'Is new user:', isNewUser);
     const deviceInfo = this.getDeviceInfo(req);
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
-    this.setAuthCookies(res, accessToken, refreshToken);
     const statusCode = isNewUser ? HttpStatus.CREATED : HttpStatus.ACCEPTED;
     res.status(statusCode);
-    return this.mapToResponse(user);
-    // Instead of redirecting to the frontend (res.redirect), just send the token as JSON
+    this.setAuthCookies(res, accessToken, refreshToken);
+    console.log(`Redirecting ------------ ${process.env.FRONTEND_URL}`);
+    return res.redirect(`${process.env.FRONTEND_URL}`);
   }
 
   // ---- Private methods ----
   private deleteAuthCookies(res: Response): void {
     res.clearCookie('access_token', {
       httpOnly: true,
-      secure: true, // Musí být stejné jako při vytváření
+      secure: process.env.NODE_ENV === 'production', // Musí být stejné jako při vytváření
       sameSite: 'lax', // Musí být stejné jako při vytváření
       path: '/', // Velmi důležité – musí sedět cesta!
     });
     res.clearCookie('refresh_token', {
       httpOnly: true,
-      secure: true, // Musí být stejné jako při vytváření
+      secure: process.env.NODE_ENV === 'production', // Musí být stejné jako při vytváření
       sameSite: 'lax', // Musí být stejné jako při vytváření
       path: '/', // Velmi důležité – musí sedět cesta!
     });
   }
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+    // maxAge mirrors the JWT lifetime. Without it this is a session cookie, so
+    // closing the browser or killing the app process drops it and the user
+    // lands back on the login screen despite having a valid session.
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
+      maxAge: AUTH_CONFIG.JWT_EXPIRATION * 1000,
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }

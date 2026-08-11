@@ -1,0 +1,68 @@
+{
+  "nav": {
+    "home": "Home",
+    "bikes": "Bikes",
+    "service": "Service",
+    "rides": "Rides"
+  },
+  "page": {
+    "home": "Home",
+    "bikes": "Bikes",
+    "service": "Service",
+    "rides": "Rides",
+    "profile": "Profile",
+    "settings": "Settings",
+    "notifications": "Notifications"
+  },
+  "action": {
+    "back": "Back",
+    "retry": "Try again"
+  },
+  "offline": {
+    "title": "You are offline",
+    "description": "Check your internet connection"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "namePlaceholder": "Enter your name",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter your password",
+    "nameRequired": "Name is required",
+    "invalidEmail": "Invalid email",
+    "passwordTooShort": "Password should include at least 8 characters",
+    "acceptTerms": "I accept terms and conditions",
+    "termsRequired": "You must accept the terms and conditions",
+    "invalidCredentials": "Invalid email or password",
+    "emailTaken": "This email is already registered",
+    "genericError": "Something went wrong, try again",
+    "or": "OR",
+    "continueWithGoogle": "Continue with Google",
+    "haveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?"
+  },
+  "settings": {
+    "language": "Language"
+  },
+  "language": {
+    "en": "English",
+    "cs": "Čeština"
+  },
+  "common": {
+    "proTip": "PRO TIP"
+  },
+  "dashboard": {
+    "greeting": "Welcome, {{name}}! 👋",
+    "getStarted": "Start by adding your first bike",
+    "noActiveData": "NO ACTIVE DATA",
+    "addBike": "Add bike",
+    "proTipBody": "Adding components (chain, cassette, tires) lets <1>BikeCheck</1> predict maintenance based on real-world mileage."
+  },
+  "bikes": {
+    "noBikesFound": "0 BIKES FOUND",
+    "emptyTitle": "Your garage is currently empty",
+    "emptyBody": "Connect your Strava account or manually add a bike to start tracking component health and service intervals.",
+    "addFirstBike": "Add Your First Bike",
+    "proTipBody": "Adding your components (chain, cassette, tires) allows BikeCheck to predict maintenance before failure occurs based on real-world mileage."
+  }
+}

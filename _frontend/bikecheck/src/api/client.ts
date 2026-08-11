@@ -1,7 +1,7 @@
 // Shared fetch wrapper for the whole app. This is the ONLY place that knows
 // the base URL, attaches the auth token, and turns non-2xx responses into
 // errors. Feature api files call this instead of using fetch directly.
-import { Network } from "@capacitor/network";
+import { Network } from "./network";
 import { useOfflineWhenCallApiStore } from "../store/store";
 const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
 
@@ -18,9 +18,11 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const { connected } = await Network.getStatus();
+  console.log(connected);
   let response: Response;
 
   if (!connected) {
+    console.log("No internet connection. Setting offlineWhenCallApi to true.");
     useOfflineWhenCallApiStore.getState().setOfflineWhenCallApi(true);
     throw new NetworkError();
   }

@@ -12,6 +12,9 @@ export class AssembleBikeComponentsDto {
   @ApiProperty({ example: 'Fork' })
   @IsString()
   component_name!: string;
+
+  @ApiProperty({ example: 'component.fork', nullable: true, description: 'null for user-created types' })
+  component_i18n_key!: string | null;
 }
 
 export class Response_MountedComponentsDto {
@@ -77,6 +80,9 @@ export class Response_ComponentGroupDto {
   @ApiProperty({ example: 'Drivetrain' })
   group_name!: string;
 
+  @ApiProperty({ example: 'componentGroup.drivetrain', nullable: true })
+  i18n_key!: string | null;
+
   @ApiProperty({ example: false })
   side_choice!: boolean;
 }
@@ -90,6 +96,9 @@ export class Response_ComponentDto {
 
   @ApiProperty({ example: 'Custom Component Name' })
   component_type!: string;
+
+  @ApiProperty({ example: 'component.chain', nullable: true, description: 'null for user-created types' })
+  i18n_key!: string | null;
 
   @ApiProperty({ example: false })
   ebike!: boolean;

@@ -186,6 +186,7 @@ export class BikeDataScrapeService {
         interval_id: undefined,
       },
       component_name: '',
+      component_i18n_key: null,
     };
     if (component && foundedPosititon) {
       // Position defined in description, return single component with position
@@ -193,6 +194,7 @@ export class BikeDataScrapeService {
         {
           component: { ...baseComponent.component, component_type_id: component.id, position: foundedPosititon },
           component_name: component.component_type,
+          component_i18n_key: component.i18n_key,
         },
       ];
     }
@@ -202,10 +204,12 @@ export class BikeDataScrapeService {
         {
           component: { ...baseComponent.component, component_type_id: component.id, position: 'rear' },
           component_name: component.component_type,
+          component_i18n_key: component.i18n_key,
         },
         {
           component: { ...baseComponent.component, component_type_id: component.id, position: 'front' },
           component_name: component.component_type,
+          component_i18n_key: component.i18n_key,
         },
       ];
     }
@@ -217,6 +221,7 @@ export class BikeDataScrapeService {
           component_type_id: component.id,
         },
         component_name: component.component_type,
+        component_i18n_key: component.i18n_key,
       },
     ];
   }
