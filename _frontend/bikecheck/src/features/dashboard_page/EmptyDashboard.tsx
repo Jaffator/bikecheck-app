@@ -1,15 +1,15 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { Box, Button, Group, Image, Stack, Text } from "@mantine/core";
+import { Box, Button, Group, Stack, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { Lightbulb, Plus } from "lucide-react";
+import { EmptyStateLayout } from "@/components/EmptyStateLayout";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useCurrentUser } from "@/features/users/users.queries";
 import graphPlaceholder from "@/assets/images/empty_dashboard_graph.png";
 
-// What a user with no bikes yet sees on the Home tab. The header and the tab
-// bar around it belong to AppLayout — this is only the AppShell.Main content.
+// What a user with no bikes yet sees on the Home tab.
 export function EmptyDashboard(): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -19,33 +19,18 @@ export function EmptyDashboard(): ReactElement {
   // The greeting is a first-name address — a full name would read as a form field.
   const firstName = user?.name.split(" ")[0] ?? "";
 
-  // AppShell.Main already reserves the tab bar's 64px, so pb adds the rest of
-  // the 129px the design leaves below the last card.
   return (
-    <Stack gap={24} px={16} pt={17} pb={64}>
-      {/* ----------- Greeting ----------- */}
-      <Stack gap={4}>
-        <Text fz={24} lh="32px" fw={600} c="var(--color-text-bright)">
-          {t("dashboard.greeting", { name: firstName })}
-        </Text>
-        <Text fz={16} lh="24px" c="var(--color-text-dim)">
-          {t("dashboard.getStarted")}
-        </Text>
-      </Stack>
-
-      {/* ----------- Empty chart ----------- */}
-      {/* Decorative stand-in for the stats the user has not generated yet, so
-          it is faded out and carries the "no data" badge instead of alt text. */}
-      <Box pos="relative" w="100%" style={{ aspectRatio: "1 / 1" }}>
-        <Image src={graphPlaceholder} alt="" radius={20} h="100%" w="100%" fit="cover" opacity={0.22} />
-        <Box pos="absolute" top={21} left={17}>
-          <StatusBadge label={t("dashboard.noActiveData")} />
-        </Box>
-      </Box>
-
+    <EmptyStateLayout
+      illustration={graphPlaceholder}
+      title={t("dashboard.greeting", { name: firstName })}
+      body={t("dashboard.getStarted")}
+      badge={<StatusBadge label={t("dashboard.noActiveData")} />}
+    >
       {/* ----------- Primary action ----------- */}
       {/* TODO: /bikes/new does not exist yet — the add-bike flow is its own feature. */}
+      {/* mt on top of the Stack gap gives the 32px the design puts here. */}
       <Button
+        mt={16}
         h={56}
         radius={12}
         fz={16}
@@ -93,6 +78,6 @@ export function EmptyDashboard(): ReactElement {
           </Stack>
         </Group>
       </Box>
-    </Stack>
+    </EmptyStateLayout>
   );
 }

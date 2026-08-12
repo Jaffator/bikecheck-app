@@ -12,10 +12,7 @@ export function Bikes(): ReactElement {
   }
 
   // An empty garage has no list to show — the whole screen becomes the CTA.
-  // if (!bikes || bikes.length === 0) {
-  //   return <EmptyGarage />;
-  // }
-  if (true) {
+  if (!bikes || bikes.length === 0) {
     return <EmptyGarage />;
   }
 

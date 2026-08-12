@@ -1,5 +1,5 @@
-import { useEffect, type ReactElement } from "react";
-import { Route, Routes } from "react-router-dom";
+import { useEffect, useRef, type ReactElement } from "react";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import { Center, Loader } from "@mantine/core";
 import { Dashboard } from "./features/dashboard_page/Dashboard";
 import { AppLayout } from "./layout/AppLayout";
@@ -27,8 +27,25 @@ function App(): ReactElement {
 function ProtectedApp(): ReactElement {
   const { data: user, isLoading: isUserLoading, isError: isUserError } = useCurrentUser();
   const { mutate: patchUser } = useUpdateUser();
+  const navigate = useNavigate();
   const userId = user?.id;
   const userLanguage = user?.language;
+  const isLoggedIn = Boolean(user);
+  // Null until the session check settles, so the first resolved state is not
+  // mistaken for a login. Restoring an existing session on app start must keep
+  // the current URL — only a real login redirects.
+  const wasLoggedIn = useRef<boolean | null>(null);
+
+  // The login page renders in place of the app, so the URL still points at
+  // whatever page was open before. Land on the dashboard whenever a login
+  // happens — covers email, native Google and the Google web redirect alike.
+  useEffect(() => {
+    if (isUserLoading) return;
+    if (isLoggedIn && wasLoggedIn.current === false) {
+      navigate("/", { replace: true });
+    }
+    wasLoggedIn.current = isLoggedIn;
+  }, [isLoggedIn, isUserLoading, navigate]);
 
   // The stored preference wins over the device locale i18n booted with, so the
   // choice follows the account across devices. A null language means the account

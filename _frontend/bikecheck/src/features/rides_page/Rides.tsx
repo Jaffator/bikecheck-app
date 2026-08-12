@@ -1,31 +1,9 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { Card, Text, Image } from "@mantine/core";
-import ridesImage from "../../assets/images/rides.png";
-// import { useBikes } from "./bikes.queries";
+import { EmptyRides } from "./EmptyRides";
 
+// Nothing to list until rides are recorded, so the empty state is the whole
+// page for now. The ride list arrives with the Strava/tracking feature.
 export function Rides(): ReactElement {
-  // const { data: bikes, isLoading, error } = useBikes();
-
-  // if (isLoading) {
-  //   return <Loader />;
-  // }
-
-  // if (error) {
-  //   return <Text c="red">Failed to load bikes.</Text>;
-  // }
-
-  return (
-    <>
-      {[...Array(10)].map((_, i) => (
-        <Card key={i} bg="cards.6" className="m-3 border h-100">
-          <Image src={ridesImage}></Image>
-          <Text c="text.6">
-            RIDES PAGE: What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem
-            Ipsum has
-          </Text>
-        </Card>
-      ))}
-    </>
-  );
+  return <EmptyRides />;
 }

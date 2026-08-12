@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   // assets locally instead of a remote dev server. Uncomment for live-reload
   // dev testing again.
   server: {
-    url: "http://192.168.1.111:5173",
+    url: "http://192.168.1.102:5173",
     cleartext: true,
   },
   plugins: {
