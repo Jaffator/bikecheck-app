@@ -111,8 +111,13 @@
   "common": {
     "proTip": "PRO TIP"
   },
+  "fab": {
+    "open": "Přidat",
+    "addBike": "Přidat kolo",
+    "addService": "Přidat servis"
+  },
   "dashboard": {
-    "greeting": "Vítej, {{name}}! 👋",
+    "greeting": "Vítej, {{name}}! 🤟",
     "getStarted": "Začni přidáním svého prvního kola",
     "noActiveData": "ŽÁDNÁ AKTIVNÍ DATA",
     "addBike": "Přidat kolo",

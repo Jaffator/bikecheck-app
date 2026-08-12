@@ -5,7 +5,7 @@ import { Box, Image, Stack, Text } from "@mantine/core";
 // lands at the same physical height on every phone — a width-relative offset
 // would drift with screen width, and an image-relative one would drift with the
 // illustration's aspect ratio.
-const COPY_TOP_OFFSET = "38dvh";
+const COPY_TOP_OFFSET = "40dvh";
 
 // The illustration is cropped to this height so its fade always meets the copy
 // at COPY_TOP_OFFSET, whatever the source image's aspect ratio is.
@@ -24,7 +24,7 @@ const ILLUSTRATION_TOP_OFFSET = 5;
 // The illustration is a backdrop, not content — kept dim so it never competes
 // with the copy sitting on top of it. The page background is near-black, so a
 // lower value reads as darker.
-const ILLUSTRATION_OPACITY = 0.25;
+const ILLUSTRATION_OPACITY = 0.2;
 
 interface EmptyStateLayoutProps {
   illustration: string;
@@ -75,10 +75,10 @@ export function EmptyStateLayout({ illustration, title, body, badge, children }:
       {/* pt drops the text onto the faded-out part of the illustration above it. */}
       <Stack pos="relative" pt={COPY_TOP_OFFSET} gap={16}>
         <Stack gap={16} ta="center">
-          <Text fz={24} lh="32px" fw={600} c="var(--color-text-bright)">
+          <Text fz={22} lh="32px" fw={600} c="var(--color-text-bright)">
             {title}
           </Text>
-          <Text fz={16} lh="26px" c="var(--color-text-dim)">
+          <Text fz={15} lh="26px" c="var(--color-text-dim)">
             {body}
           </Text>
         </Stack>

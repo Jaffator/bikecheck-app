@@ -9,13 +9,13 @@ import { PiPath, PiPathBold } from "react-icons/pi";
 import { PiPersonSimpleBike, PiPersonSimpleBikeBold } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
-import { Haptics, ImpactStyle } from "@capacitor/haptics";
-import { Capacitor } from "@capacitor/core";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAndroidBackButton } from "../hooks/useAndroidBackButton";
 import { OfflinePage } from "@/features/offline_page/OfflinePage";
 import { useOfflineWhenCallApiStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
+import { tapFeedback } from "@/utils/haptics";
+import { Fab } from "./Fab";
 import logo_mark from "@/assets/icons/bikecheck/onlylogo.svg";
 
 interface NavItem {
@@ -52,13 +52,6 @@ function isSubPage(pathname: string): boolean {
   return SUB_PAGE_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
-// Tab bar press feedback. Native only — the web implementation depends on the
-// vibration API, which desktop browsers do not have.
-function tapFeedback(): void {
-  if (!Capacitor.isNativePlatform()) return;
-  void Haptics.impact({ style: ImpactStyle.Light });
-}
-
 function getPageTitleKey(pathname: string): string | null {
   const match = Object.keys(PAGE_TITLE_KEYS).find((path) => pathname.startsWith(path));
   return match ? PAGE_TITLE_KEYS[match] : null;
@@ -72,6 +65,7 @@ function isActivePath(path: string, pathname: string): boolean {
 export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
   const [renderOfflinePage, setRenderOfflinePage] = useState(false);
+  const [fabMenuOpened, setFabMenuOpened] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -190,7 +184,7 @@ export function AppLayout(): ReactElement {
       </AppShell.Header>
 
       {/* ----------- Main Content ----------- */}
-      <AppShell.Main>
+      <AppShell.Main style={{ position: "relative" }}>
         {renderOfflinePage || isOffline ? (
           <OfflinePage />
         ) : (
@@ -203,7 +197,25 @@ export function AppLayout(): ReactElement {
             <Outlet />
           </div>
         )}
+        {/* Dims only the page content behind the Fab dropdown — Mantine's own
+            Menu overlay portals to the viewport and would cover the header,
+            footer and Fab too. */}
+        <Box
+          onClick={() => setFabMenuOpened(false)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.45)",
+            backdropFilter: "blur(1px)",
+            opacity: fabMenuOpened ? 1 : 0,
+            pointerEvents: fabMenuOpened ? "auto" : "none",
+            transition: "opacity 0.2s ease",
+            zIndex: 190,
+          }}
+        />
       </AppShell.Main>
+      {/* Hidden on sub-pages, which drop the chrome entirely. */}
+      {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {/* ----------- Footer -----------  */}
       {!subPage && (
         <AppShell.Footer

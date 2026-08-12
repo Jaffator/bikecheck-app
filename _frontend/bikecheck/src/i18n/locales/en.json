@@ -51,8 +51,13 @@
   "common": {
     "proTip": "PRO TIP"
   },
+  "fab": {
+    "open": "Add",
+    "addBike": "Add bike",
+    "addService": "Add service"
+  },
   "dashboard": {
-    "greeting": "Welcome, {{name}}! 👋",
+    "greeting": "Welcome, {{name}}! 🤟",
     "getStarted": "Start by adding your first bike",
     "noActiveData": "NO ACTIVE DATA",
     "addBike": "Add bike",
