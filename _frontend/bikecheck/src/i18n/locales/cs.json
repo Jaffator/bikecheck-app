@@ -140,6 +140,8 @@
     "title": "Přidat nové kolo",
     "stepOf": "Krok {{current}} z {{total}}",
     "stepIdentity": "Identifikace",
+    "stepSpecification": "Specifikace",
+    "stepPhotos": "Fotky",
     "identityTitle": "Zkus najít detail svého kola",
     "identityBody": "Zadej údaje o kole a načteme technickou specifikaci a výchozí servisní intervaly.",
     "brand": "Značka",

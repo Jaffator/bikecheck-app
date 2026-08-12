@@ -80,6 +80,8 @@
     "title": "Add new bike",
     "stepOf": "Step {{current}} of {{total}}",
     "stepIdentity": "Identity",
+    "stepSpecification": "Specification",
+    "stepPhotos": "Photos",
     "identityTitle": "Try to find your bike detail",
     "identityBody": "Enter your bike details to pull technical specifications and default service intervals.",
     "brand": "Brand",

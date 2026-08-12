@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { Box, Button, Group, Paper, Select, Stack, Text, TextInput } from "@mantine/core";
+import { Box, Button, Group, Paper, Select, Stack, Stepper, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -53,12 +53,17 @@ export function AddBikeIdentity(): ReactElement {
             {t("addBike.stepIdentity")}
           </Text>
         </Group>
-        <Box bg="other.decor" style={{ height: 8, borderRadius: 9999 }}>
-          <Box
-            bg="other.primaryLight"
-            style={{ height: "100%", width: `${(CURRENT_STEP / TOTAL_STEPS) * 100}%`, borderRadius: 9999 }}
-          />
-        </Box>
+        <Stepper
+          active={CURRENT_STEP - 1}
+          color="var(--mantine-color-other-primaryLight)"
+          size="xs"
+          iconSize={8}
+          completedIcon={null}
+        >
+          <Stepper.Step aria-label={t("addBike.stepIdentity")} withIcon />
+          <Stepper.Step aria-label={t("addBike.stepSpecification")} withIcon />
+          <Stepper.Step aria-label={t("addBike.stepPhotos")} withIcon />
+        </Stepper>
       </Stack>
 
       {/* ----------- Header ----------- */}
