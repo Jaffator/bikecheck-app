@@ -37,6 +37,9 @@ const NAV_ITEMS: NavItem[] = [
 // Header title per section. Home is absent on purpose — it shows the logo mark
 // instead of the tab icon.
 const PAGE_TITLE_KEYS: Record<string, string> = {
+  // More specific paths first — getPageTitleKey takes the first prefix match,
+  // so "/bikes/new" would otherwise resolve to the "/bikes" entry.
+  "/bikes/new": "addBike.title",
   "/bikes": "page.bikes",
   "/service": "page.service",
   "/rides": "page.rides",
@@ -46,7 +49,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 };
 
 // Sub-pages drop the tab bar and the header actions — just a back arrow and the title.
-const SUB_PAGE_ROUTES: string[] = ["/settings", "/profile", "/notifications"];
+const SUB_PAGE_ROUTES: string[] = ["/settings", "/profile", "/notifications", "/bikes/new"];
 
 function isSubPage(pathname: string): boolean {
   return SUB_PAGE_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));

@@ -136,6 +136,22 @@
     "emptyTitle": "Tvoje garáž je zatím prázdná",
     "emptyBody": "Připoj svůj účet Strava nebo přidej kolo ručně a začni sledovat stav komponentů a servisní intervaly."
   },
+  "addBike": {
+    "title": "Přidat nové kolo",
+    "stepOf": "Krok {{current}} z {{total}}",
+    "stepIdentity": "Identifikace",
+    "identityTitle": "Zkus najít detail svého kola",
+    "identityBody": "Zadej údaje o kole a načteme technickou specifikaci a výchozí servisní intervaly.",
+    "brand": "Značka",
+    "brandPlaceholder": "např. Specialized, Trek",
+    "model": "Model",
+    "modelPlaceholder": "např. Stumpjumper EVO",
+    "year": "Rok",
+    "yearPlaceholder": "Vyber rok",
+    "findSpecification": "Najít specifikaci",
+    "awaitingSpecs": "Čeká se na údaje k načtení specifikace komponentů...",
+    "nextStep": "Další krok"
+  },
   "action": {
     "back": "Zpět",
     "retry": "Zkusit znovu",

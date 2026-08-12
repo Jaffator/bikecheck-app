@@ -75,5 +75,21 @@
     "noBikesFound": "0 BIKES FOUND",
     "emptyTitle": "Your garage is currently empty",
     "emptyBody": "Connect your Strava account or manually add a bike to start tracking component health and service intervals."
+  },
+  "addBike": {
+    "title": "Add new bike",
+    "stepOf": "Step {{current}} of {{total}}",
+    "stepIdentity": "Identity",
+    "identityTitle": "Try to find your bike detail",
+    "identityBody": "Enter your bike details to pull technical specifications and default service intervals.",
+    "brand": "Brand",
+    "brandPlaceholder": "e.g. Specialized, Trek",
+    "model": "Model",
+    "modelPlaceholder": "e.g. Stumpjumper EVO",
+    "year": "Year",
+    "yearPlaceholder": "Select Year",
+    "findSpecification": "Find Specification",
+    "awaitingSpecs": "Awaiting details to fetch component specs...",
+    "nextStep": "Next Step"
   }
 }
