@@ -12,16 +12,26 @@ function toJson(value: unknown): string {
   return JSON.stringify(value, (_key, val) => (typeof val === 'bigint' ? val.toString() : val), 2);
 }
 
-async function main(): Promise<void> {
+async function main(): Promise<any> {
   // 2) dotaz z DB (uprav si podle potřeby)
-  const rides = await prisma.rides.findFirst({
-    where: { id: 47 },
-  });
-  const data = JSON.parse(rides?.json_data as string);
-  console.log(data);
+  // const rides = await prisma.rides.findFirst({
+  //   where: { id: 47 },
+  // });
+  const [bikeTypes, bikeBrands] = await Promise.all([
+    prisma.bike_types.findMany({
+      select: { type: true },
+    }),
+    prisma.bike_brands.findMany({
+      select: { bike_brand: true },
+    }),
+  ]);
+  const bikes = bikeBrands.map((brand) => brand.bike_brand);
+  const types = bikeTypes.map((type) => type.type);
+  return { bikes, types };
 }
 
 main()
+  .then((result) => console.log(result))
   .catch((err) => console.error(err))
   .finally(async () => {
     await prisma.$disconnect();

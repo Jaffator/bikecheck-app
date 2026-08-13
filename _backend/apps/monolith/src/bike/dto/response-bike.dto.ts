@@ -1,13 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { bikes } from '@prisma/client';
 
-export class BikeTypeDto {
-  @ApiProperty({ example: 1 }) id!: number;
-  @ApiProperty({ example: 'Enduro', nullable: true }) type!: string | null;
-}
-
 export class NewBikeFormDataDto {
-  @ApiProperty({ type: [BikeTypeDto] }) bikeTypes!: BikeTypeDto[];
+  @ApiProperty({ type: [String] })
+  bikeTypes!: string[];
+  @ApiProperty({ type: [String] })
+  bikeBrands!: string[];
 }
 
 export class SearchBikeExternalResponseDto {

@@ -1,8 +1,8 @@
 // React Query hooks. This is where loading / error / cache state lives —
 // the stuff you used to write by hand with useState + useEffect.
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { getBikes, getBike } from "./bikes.api";
-import type { Bike } from "./bikes.types";
+import { getBikes, getBike, getBikeFormOptions } from "./bikes.api";
+import type { Bike, BikeFormOptions } from "./bikes.types";
 
 export function useBikes(): UseQueryResult<Bike[]> {
   return useQuery({
@@ -15,5 +15,11 @@ export function useBike(id: number): UseQueryResult<Bike> {
   return useQuery({
     queryKey: ["bikes", id],
     queryFn: () => getBike(id),
+  });
+}
+export function useBikeFormOptions(): UseQueryResult<BikeFormOptions> {
+  return useQuery({
+    queryKey: ["bike-form-options"],
+    queryFn: getBikeFormOptions,
   });
 }

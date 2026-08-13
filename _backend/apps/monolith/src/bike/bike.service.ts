@@ -18,9 +18,19 @@ export class BikeService {
     @InjectPinoLogger(BikeService.name) private readonly logger: PinoLogger,
   ) {}
 
+  // bike.service.ts
   async getFormOptions(): Promise<NewBikeFormDataDto> {
-    const bikeTypes = await this.prisma.bike_types.findMany({});
-    return { bikeTypes };
+    const [types, brands] = await Promise.all([
+      this.prisma.bike_types.findMany({
+        select: { type: true },
+      }),
+      this.prisma.bike_brands.findMany({
+        select: { bike_brand: true },
+      }),
+    ]);
+    const bikeBrands = brands.map((brand) => brand.bike_brand).filter((brand): brand is string => brand !== null);
+    const bikeTypes = types.map((type) => type.type).filter((type): type is string => type !== null);
+    return { bikeTypes, bikeBrands };
   }
 
   async createBikeWithComponents(userId: number, dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {

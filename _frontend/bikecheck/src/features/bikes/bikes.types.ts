@@ -26,3 +26,8 @@ export interface Bike {
   strava_gear_id: string | null;
   strava_name: string | null;
 }
+
+export interface BikeFormOptions {
+  bikeBrands: string[];
+  bikeTypes: string[];
+}
