@@ -83,7 +83,7 @@
     "stepSpecification": "Specification",
     "stepPhotos": "Photos",
     "identityTitle": "Try to find your bike detail",
-    "identityBody": "Enter your bike details to pull technical specifications and default service intervals.",
+    "identityBody": "Enter your bike details to pull technical specifications",
     "brand": "Brand",
     "brandPlaceholder": "e.g. Specialized, Trek",
     "model": "Model",

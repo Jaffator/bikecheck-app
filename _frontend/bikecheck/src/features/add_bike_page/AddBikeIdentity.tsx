@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { Box, Button, Group, Paper, Select, Stack, Stepper, Text, TextInput } from "@mantine/core";
+import { Button, Group, Paper, Select, Stack, Stepper, Text, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -55,12 +55,24 @@ export function AddBikeIdentity(): ReactElement {
         </Group>
         <Stepper
           active={CURRENT_STEP - 1}
-          color="var(--mantine-color-other-primaryLight)"
+          color="var(--mantine-color-primary-6)"
           size="xs"
-          iconSize={8}
+          iconSize={25}
           completedIcon={null}
+          styles={{
+            stepIcon: { backgroundColor: "var(--mantine-color-cards-6)", borderColor: "var(--mantine-color-cards-6)" },
+            separator: { backgroundColor: "var(--mantine-color-cards-6)" },
+          }}
         >
-          <Stepper.Step aria-label={t("addBike.stepIdentity")} withIcon />
+          {/* The active step overrides the shared inactive styling with a filled primary icon. */}
+          <Stepper.Step
+            aria-label={t("addBike.stepIdentity")}
+            withIcon
+            styles={{
+              stepIcon: { backgroundColor: "var(--mantine-color-primary-6)", borderColor: "var(--mantine-color-primary-6)" },
+              stepIconContent: { color: "var(--mantine-color-textDark-6)" },
+            }}
+          />
           <Stepper.Step aria-label={t("addBike.stepSpecification")} withIcon />
           <Stepper.Step aria-label={t("addBike.stepPhotos")} withIcon />
         </Stepper>
@@ -133,23 +145,6 @@ export function AddBikeIdentity(): ReactElement {
           </Button>
         </Stack>
       </Paper>
-
-      {/* ----------- Placeholder awaiting a lookup ----------- */}
-      <Box
-        py="xl"
-        style={{
-          border: "1px dashed var(--mantine-color-other-borderSolid)",
-          borderRadius: 12,
-          backgroundColor: "color-mix(in srgb, var(--mantine-color-other-decor) 30%, transparent)",
-        }}
-      >
-        <Stack align="center" gap="xs">
-          <Search size={27} color="var(--mantine-color-other-borderSolid)" />
-          <Text size="sm" c="other.borderSolid" ta="center" style={{ maxWidth: "70%" }}>
-            {t("addBike.awaitingSpecs")}
-          </Text>
-        </Stack>
-      </Box>
 
       {/* ----------- Step footer ----------- */}
       <Group
