@@ -13,7 +13,7 @@ export class AssembleBikeComponentsDto {
   @IsString()
   component_name!: string;
 
-  @ApiProperty({ example: 'component.fork', nullable: true, description: 'null for user-created types' })
+  @ApiProperty({ type: String, example: 'component.fork', nullable: true, description: 'null for user-created types' })
   component_i18n_key!: string | null;
 }
 

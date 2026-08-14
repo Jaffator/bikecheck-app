@@ -738,7 +738,7 @@ export interface components {
             /** @example 12 */
             component_type_id: number;
             /** @example Fox 38 Factory Grip2 */
-            component_desc?: Record<string, never> | null;
+            component_desc?: string | null;
             /** @example Front */
             position?: string | null;
             /**
@@ -751,7 +751,7 @@ export interface components {
             /** @example true */
             is_active?: boolean | null;
             /** @example Mounted after spring service */
-            note?: Record<string, never> | null;
+            note?: string | null;
             /** @example 2 */
             interval_id?: number | null;
         };
@@ -812,6 +812,8 @@ export interface components {
         SearchBikeExternalResponseDto: {
             /** @example Orbea Rallon */
             name: string;
+            /** @example Orbea 2025 */
+            bikeBrand: string;
             /** @example https://example.com/bike-image.jpg */
             imageUrl: Record<string, never>;
             /** @example https://example.com/bike/1 */
@@ -825,7 +827,7 @@ export interface components {
              * @description null for user-created types
              * @example component.fork
              */
-            component_i18n_key: Record<string, never> | null;
+            component_i18n_key: string | null;
         };
         BikeBrands: {
             /** @example Santa Cruz */

@@ -12,7 +12,7 @@ import { App } from "@capacitor/app";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAndroidBackButton } from "../hooks/useAndroidBackButton";
 import { OfflinePage } from "@/features/offline_page/OfflinePage";
-import { useOfflineWhenCallApiStore } from "@/store/store";
+import { useOfflineWhenCallApiStore, useHeaderStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
@@ -75,13 +75,21 @@ export function AppLayout(): ReactElement {
   const { isOnline } = useNetworkStatus();
   // Already cached by the auth gate in App.tsx, so this is a read, not a fetch.
   const { data: user } = useCurrentUser();
+  // Set by a page that needs header chrome the route map cannot express.
+  const overrideTitleKey = useHeaderStore((state) => state.titleKey);
+  const overrideBack = useHeaderStore((state) => state.onBack);
   // null on Home, which gets the logo mark instead of a tab icon.
-  const pageTitleKey = getPageTitleKey(location.pathname);
+  const pageTitleKey = overrideTitleKey ?? getPageTitleKey(location.pathname);
   const subPage = isSubPage(location.pathname);
 
   // location.key is "default" only on the first history entry, i.e. a direct
   // landing (refresh, deep link) — going back there would leave the app.
   function goBack(): void {
+    // A page with internal steps handles its own back, one level at a time.
+    if (overrideBack) {
+      overrideBack();
+      return;
+    }
     if (location.key === "default") {
       navigate("/");
       return;
@@ -90,6 +98,10 @@ export function AppLayout(): ReactElement {
   }
 
   function handleHardwareBack(): void {
+    if (overrideBack) {
+      overrideBack();
+      return;
+    }
     // "default" is the first history entry — nothing left to go back to in-app,
     // so background the app the way Android 12+ does instead of killing it.
     if (location.key === "default") {

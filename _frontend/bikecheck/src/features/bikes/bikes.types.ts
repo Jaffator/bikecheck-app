@@ -34,3 +34,4 @@ export type BikeFormOptions = components["schemas"]["NewBikeFormDataDto"];
 export type BikeBrand = components["schemas"]["BikeBrands"];
 export type BikeModel = components["schemas"]["BikeModels"];
 export type BikeSearchResult = components["schemas"]["SearchBikeExternalResponseDto"];
+export type ExternalBikeComponent = components["schemas"]["AssembleBikeComponentsDto"];

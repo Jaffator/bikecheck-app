@@ -14,7 +14,7 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   component_type_id!: number;
 
   @IsOptional()
-  @ApiProperty({ example: 'Fox 38 Factory Grip2', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'Fox 38 Factory Grip2', required: false, nullable: true })
   @IsString()
   @MaxLength(255)
   component_desc?: string | null;
@@ -40,7 +40,7 @@ export class CreateMountedComponentsDto implements Prisma.components_mountedUnch
   is_active?: boolean;
 
   @IsOptional()
-  @ApiProperty({ example: 'Mounted after spring service', required: false, nullable: true })
+  @ApiProperty({ type: String, example: 'Mounted after spring service', required: false, nullable: true })
   @IsString()
   @MaxLength(255)
   note?: string | null;
