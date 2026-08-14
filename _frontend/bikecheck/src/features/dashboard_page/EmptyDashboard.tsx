@@ -44,7 +44,7 @@ export function EmptyDashboard(): ReactElement {
           style={{ top: 96, right: -22 }}
         />
         {Array.from({ length: 10 }).map((_, i) => (
-          <Group pos="relative" gap={12} align="flex-start" wrap="nowrap">
+          <Group key={i} pos="relative" gap={12} align="flex-start" wrap="nowrap">
             <Lightbulb size={20} color="var(--color-accent)" className="shrink-0" />
             <Stack gap={3}>
               <Text className="font-mono" fz={12} lh="16px" fw={500} lts="0.05em" c="var(--color-accent)">

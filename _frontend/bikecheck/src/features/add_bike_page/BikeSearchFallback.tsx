@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { type ReactElement } from "react";
-import { Anchor, Button, Group, Paper, Stack, Text } from "@mantine/core";
+import { Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { RefreshCw, SearchX, SquarePen, Terminal } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
@@ -23,7 +23,6 @@ export function BikeSearchFallback({
   diagnosticCode,
   onRetry,
   onEnterManually,
-  onSkip,
 }: BikeSearchFallbackProps): ReactElement {
   const { t } = useTranslation();
 
