@@ -96,6 +96,14 @@
     "yearPlaceholder": "Select Year",
     "findSpecification": "Find Specification",
     "awaitingSpecs": "Awaiting details to fetch component specs...",
-    "nextStep": "Next Step"
+    "nextStep": "Next Step",
+    "searchFailedTitle": "Sync Failure",
+    "searchFailedBody": "Unable to connect to the bike database. We couldn't retrieve the technical specification right now.",
+    "searchEmptyTitle": "No Matches Found",
+    "searchEmptyBody": "We found no bike for that brand, model and year. Check the details, or continue by entering them manually.",
+    "diagnosticCode": "Diagnostic Code",
+    "retrySearch": "Retry Sync",
+    "enterManually": "Enter Manually",
+    "skipStep": "Skip this step for now"
   }
 }

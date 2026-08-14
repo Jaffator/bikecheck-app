@@ -17,17 +17,23 @@ async function main(): Promise<any> {
   // const rides = await prisma.rides.findFirst({
   //   where: { id: 47 },
   // });
-  const [bikeTypes, bikeBrands] = await Promise.all([
+  const [types, brands, models] = await Promise.all([
     prisma.bike_types.findMany({
       select: { type: true },
     }),
     prisma.bike_brands.findMany({
-      select: { bike_brand: true },
+      select: { bike_brand: true, id: true },
+    }),
+    prisma.bike_models.findMany({
+      select: { model_name: true, brand_id: true },
     }),
   ]);
-  const bikes = bikeBrands.map((brand) => brand.bike_brand);
-  const types = bikeTypes.map((type) => type.type);
-  return { bikes, types };
+
+  return {
+    bikeTypes: types.map((t) => t.type).filter((type): type is string => type !== null),
+    bikeBrands: brands,
+    bikeModels: models,
+  };
 }
 
 main()

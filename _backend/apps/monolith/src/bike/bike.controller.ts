@@ -36,6 +36,7 @@ export class BikeController {
     @Query('bikeName') bikeName: string,
     @Query('year') year: string,
   ): Promise<SearchBikeExternalResponseDto[]> {
+    console.log('Searching for external bikes with name:', bikeName, 'and year:', year);
     return this.searchBikeExternalService.searchBikeList(bikeName, year);
   }
 

@@ -7,6 +7,7 @@
     "androidBuild_withTarget": "npm run build && npx cap sync android && npx cap run android --target MRH6V4DUFMF6PBRG",
     "androidBuild": "npm run build && npx cap sync android && npx cap run android",
     "dev": "vite",
+    "gen:api": "openapi-typescript http://localhost:3000/api-json -o src/api/schema.d.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -64,6 +65,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.5.20",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",

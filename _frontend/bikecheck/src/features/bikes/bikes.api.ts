@@ -2,7 +2,7 @@
 // apiFetch client — no fetch, base URL or token handling lives here.
 // Backend routes are under "/bike" (see bike.controller.ts).
 import { apiFetch } from "@/api/client";
-import type { Bike, BikeFormOptions } from "./bikes.types";
+import type { Bike, BikeFormOptions, BikeSearchResult } from "./bikes.types";
 
 // GET /bike — bikes of the current user.
 export async function getBikes(): Promise<Bike[]> {
@@ -16,4 +16,10 @@ export async function getBike(id: number): Promise<Bike> {
 
 export async function getBikeFormOptions(): Promise<BikeFormOptions> {
   return apiFetch<BikeFormOptions>(`/bike/form-options`);
+}
+
+// GET /bike/external — scrapes bike specs from an external source.
+export async function searchBikeExternal(bikeName: string, year: string): Promise<BikeSearchResult[]> {
+  const query = new URLSearchParams({ bikeName, year });
+  return apiFetch<BikeSearchResult[]>(`/bike/external?${query.toString()}`);
 }

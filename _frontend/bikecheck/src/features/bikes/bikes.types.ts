@@ -1,3 +1,5 @@
+import type { components } from "@/api/schema";
+
 // Mirrors the backend ResponseBikeDto (bike/dto/response-bike.dto.ts).
 // Dates arrive as ISO strings over JSON, so they are typed as string here.
 export interface Bike {
@@ -27,7 +29,8 @@ export interface Bike {
   strava_name: string | null;
 }
 
-export interface BikeFormOptions {
-  bikeBrands: string[];
-  bikeTypes: string[];
-}
+// Generated from the backend DTOs — run `npm run gen:api` after changing them.
+export type BikeFormOptions = components["schemas"]["NewBikeFormDataDto"];
+export type BikeBrand = components["schemas"]["BikeBrands"];
+export type BikeModel = components["schemas"]["BikeModels"];
+export type BikeSearchResult = components["schemas"]["SearchBikeExternalResponseDto"];

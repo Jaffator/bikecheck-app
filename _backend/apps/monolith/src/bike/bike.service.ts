@@ -20,17 +20,23 @@ export class BikeService {
 
   // bike.service.ts
   async getFormOptions(): Promise<NewBikeFormDataDto> {
-    const [types, brands] = await Promise.all([
+    const [types, brands, models] = await Promise.all([
       this.prisma.bike_types.findMany({
         select: { type: true },
       }),
       this.prisma.bike_brands.findMany({
-        select: { bike_brand: true },
+        select: { bike_brand: true, id: true },
+      }),
+      this.prisma.bike_models.findMany({
+        select: { model_name: true, brand_id: true },
       }),
     ]);
-    const bikeBrands = brands.map((brand) => brand.bike_brand).filter((brand): brand is string => brand !== null);
-    const bikeTypes = types.map((type) => type.type).filter((type): type is string => type !== null);
-    return { bikeTypes, bikeBrands };
+
+    return {
+      bikeTypes: types.map((t) => t.type).filter((type): type is string => type !== null),
+      bikeBrands: brands,
+      bikeModels: models,
+    };
   }
 
   async createBikeWithComponents(userId: number, dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
