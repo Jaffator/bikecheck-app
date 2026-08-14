@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { BadGatewayException, GatewayTimeoutException, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -8,7 +7,7 @@ import stealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { SearchBikeExternalResponseDto } from '../dto/response-bike.dto';
 import { AssembleBikeComponentsDto } from '../../component/dto/response-components';
 import type { component_types as ComponentType } from '@prisma/client';
-import { TimeoutError } from 'rxjs';
+import { errors as playwrightErrors } from 'playwright';
 
 chromium.use(stealthPlugin());
 
@@ -31,11 +30,14 @@ export class BikeDataScrapeService {
   async searchBikeList(bikeTitle: string, year: string): Promise<SearchBikeExternalResponseDto[]> {
     const url = this.buildSearchUrl(bikeTitle, year);
     const startedAt = Date.now();
-
+    console.log(url);
     try {
       const bikes = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
-        await page.waitForSelector('a[href*="/bikes/"]', { timeout: 8000 });
+        // A search with no hits renders no result cards, so the selector never
+        // appears. That is an empty result, not a failure — swallow the timeout
+        // and let the evaluate below return an empty array.
+        await page.waitForSelector('a[href*="/bikes/"]', { timeout: 4000 }).catch(() => null);
 
         return page.evaluate(() => {
           const cards = Array.from(document.querySelectorAll('a[href*="/bikes/"]'));
@@ -43,11 +45,13 @@ export class BikeDataScrapeService {
           return cards
             .map((card) => {
               const anchor = card as HTMLAnchorElement;
+              const bikeBrand = anchor.querySelector('p');
               const nameElement = anchor.querySelector('span');
               const imageElement = anchor.querySelector('img');
-
+              console.log(bikeBrand);
               return {
                 name: nameElement ? nameElement.innerText.trim() : 'Unknown name',
+                bikeBrand: bikeBrand ? bikeBrand.innerText.trim() : 'Unknown brand',
                 imageUrl: imageElement ? imageElement.getAttribute('src') : null,
                 bikeUrl: anchor.href.toString(),
               };
@@ -60,7 +64,7 @@ export class BikeDataScrapeService {
         { url, bikeTitle, year, resultCount: bikes.length, durationMs: Date.now() - startedAt },
         'Bike list fetched',
       );
-
+      console.log('Fetched bikes:', bikes);
       return bikes;
     } catch (error) {
       this.logger.error(
@@ -68,7 +72,7 @@ export class BikeDataScrapeService {
         'Failed to fetch bike list',
       );
 
-      if (error instanceof TimeoutError) {
+      if (error instanceof playwrightErrors.TimeoutError) {
         throw new GatewayTimeoutException('Bike provider did not respond in time');
       }
 
@@ -113,7 +117,7 @@ export class BikeDataScrapeService {
       });
       return mountedComponents;
     } catch (error) {
-      if (error instanceof TimeoutError) {
+      if (error instanceof playwrightErrors.TimeoutError) {
         throw new GatewayTimeoutException('Bike component provider timed out');
       }
 

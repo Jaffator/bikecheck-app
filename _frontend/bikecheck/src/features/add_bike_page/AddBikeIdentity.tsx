@@ -9,6 +9,7 @@ import { tapFeedback } from "@/utils/haptics";
 import { useBikeFormOptions, useSearchBikeExternal } from "../bikes/bikes.queries";
 import { ApiError } from "@/api/client";
 import { BikeSearchFallback } from "./BikeSearchFallback";
+import { BikeSearchResults } from "./BikeSearchResults";
 
 const TOTAL_STEPS = 3;
 
@@ -43,6 +44,7 @@ export function AddBikeIdentity(): ReactElement {
   const { data: bikeFormOptions } = useBikeFormOptions();
   const searchBike = useSearchBikeExternal();
   const [active, setActive] = useState(0);
+  const [selectedBikeUrl, setSelectedBikeUrl] = useState<string | null>(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const brandNames = bikeFormOptions?.bikeBrands.map((brand) => brand.bike_brand) ?? [];
@@ -85,8 +87,22 @@ export function AddBikeIdentity(): ReactElement {
     );
   }
 
+  // Only clears the failed result so the form comes back — the user decides
+  // when to search again, after correcting brand/model/year.
   function retrySearch(): void {
-    handleSubmit(form.values);
+    searchBike.reset();
+  }
+
+  // Drops the result list and the pick, bringing the search form back.
+  function changeSearch(): void {
+    tapFeedback();
+    setSelectedBikeUrl(null);
+    searchBike.reset();
+  }
+
+  function confirmSelection(): void {
+    tapFeedback();
+    console.log("selected bike", selectedBikeUrl);
   }
 
   // Manual entry and skipping both move on without a specification; the
@@ -106,10 +122,14 @@ export function AddBikeIdentity(): ReactElement {
       .filter((model) => model.brand_id === bikeFormOptions.bikeBrands.find((b) => b.bike_brand === form.values.brand)?.id)
       .map((model) => model.model_name) ?? [];
 
+  // Without a brand and model the scraper would return an unfiltered list.
+  const canSearch = form.values.brand.trim().length > 0 && form.values.model.trim().length > 0;
+
   // The provider answering with an empty list is a success, not an error, so
   // the two outcomes have to be told apart explicitly.
   const searchFailed = searchBike.isError;
   const searchEmpty = searchBike.isSuccess && searchBike.data.length === 0;
+  const searchResults = searchBike.isSuccess && searchBike.data.length > 0 ? searchBike.data : null;
 
   // The backend only reports an HTTP status, so that is what the user can quote
   // back to support — 502 from the scraper, 504 when the provider timed out.
@@ -136,14 +156,18 @@ export function AddBikeIdentity(): ReactElement {
         >
           <Stepper.Step aria-label={t("addBike.stepIdentity")} withIcon>
             {/* ----------- Header ----------- */}
-            <Stack gap="xs">
-              <Text fw={700} size="xl" c="text.6">
-                {t("addBike.identityTitle_step1")}
-              </Text>
-              <Text size="md" c="text.7">
-                {t("addBike.identityBody_step1")}
-              </Text>
-            </Stack>
+            {!searchFailed && !searchEmpty && (
+              <Stack gap="xs">
+                <Text fw={700} size="xl" c="text.6">
+                  {searchResults === null ? t("addBike.identityTitle_step1") : t("addBike.selectModelTitle")}
+                </Text>
+                {searchResults === null && (
+                  <Text size="md" c="text.7">
+                    {t("addBike.identityBody_step1")}
+                  </Text>
+                )}
+              </Stack>
+            )}
           </Stepper.Step>
           <Stepper.Step aria-label={t("addBike.stepSpecification")} withIcon>
             <Stack gap="xs">
@@ -169,75 +193,98 @@ export function AddBikeIdentity(): ReactElement {
       </Stack>
 
       {/* ----------- Form card ----------- */}
-      <Paper bg="cards.6" p="md" radius="md">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack gap="md">
-            <Stack gap={4}>
-              <Text size="xs" fw={600} c="text.7" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
-                {t("addBike.brand")}
-              </Text>
-              <Autocomplete
-                placeholder={t("addBike.brandPlaceholder")}
-                data={brandNames}
-                limit={8}
-                leftSection={<Tag size={18} />}
-                value={form.values.brand}
-                onChange={(value) => form.setFieldValue("brand", value)}
-                radius="sm"
-                styles={inputStyles}
-                comboboxProps={dropdownProps}
-              />
-            </Stack>
+      {/* Hidden once the search produced something to react to. */}
+      {!searchFailed && !searchEmpty && searchResults === null && (
+        <Paper bg="cards.6" p="md" radius="md">
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="md">
+              <Stack gap={4}>
+                <Text size="xs" fw={600} c="text.7" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+                  {t("addBike.brand")}
+                </Text>
+                <Autocomplete
+                  placeholder={t("addBike.brandPlaceholder")}
+                  data={brandNames}
+                  limit={8}
+                  leftSection={<Tag size={18} />}
+                  value={form.values.brand}
+                  onChange={(value) => form.setFieldValue("brand", value)}
+                  radius="sm"
+                  styles={inputStyles}
+                  comboboxProps={dropdownProps}
+                />
+              </Stack>
 
-            <Stack gap={4}>
-              <Text size="xs" fw={600} c="text.7" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
-                {t("addBike.model")}
-              </Text>
-              <Autocomplete
-                placeholder={t("addBike.modelPlaceholder")}
-                limit={8}
-                leftSection={<Tag size={18} />}
-                value={form.values.model}
-                onChange={(value) => form.setFieldValue("model", value)}
-                radius="sm"
-                styles={inputStyles}
-                comboboxProps={dropdownProps}
-                data={brandModels}
-              />
-            </Stack>
+              <Stack gap={4}>
+                <Text size="xs" fw={600} c="text.7" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+                  {t("addBike.model")}
+                </Text>
+                <Autocomplete
+                  placeholder={t("addBike.modelPlaceholder")}
+                  limit={8}
+                  leftSection={<Tag size={18} />}
+                  value={form.values.model}
+                  onChange={(value) => form.setFieldValue("model", value)}
+                  radius="sm"
+                  styles={inputStyles}
+                  comboboxProps={dropdownProps}
+                  data={brandModels}
+                />
+              </Stack>
 
-            <Stack gap={4}>
-              <Text size="xs" fw={600} c="text.7" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
-                {t("addBike.year")}
-              </Text>
-              <Select
-                placeholder={t("addBike.yearPlaceholder")}
-                leftSection={<Calendar size={18} />}
-                data={YEAR_OPTIONS}
-                value={form.values.year}
-                onChange={(value) => form.setFieldValue("year", value)}
-                radius="sm"
-                styles={inputStyles}
-                comboboxProps={dropdownProps}
-              />
-            </Stack>
+              <Stack gap={4}>
+                <Text size="xs" fw={600} c="text.7" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+                  {t("addBike.year")}
+                </Text>
+                <Select
+                  placeholder={t("addBike.yearPlaceholder")}
+                  leftSection={<Calendar size={18} />}
+                  data={YEAR_OPTIONS}
+                  value={form.values.year}
+                  onChange={(value) => form.setFieldValue("year", value)}
+                  radius="sm"
+                  styles={inputStyles}
+                  comboboxProps={dropdownProps}
+                />
+              </Stack>
 
-            <Button
-              type="submit"
-              leftSection={<Search size={18} />}
-              loading={searchBike.isPending}
-              fullWidth
-              radius="sm"
-              style={{
-                height: "3rem",
-                boxShadow: "0px 0px 10px 0px rgba(255, 255, 0, 0.25)",
-              }}
-            >
-              {t("addBike.findSpecification")}
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
+              <Button
+                type="submit"
+                leftSection={<Search size={18} />}
+                loading={searchBike.isPending}
+                disabled={!canSearch}
+                fullWidth
+                radius="sm"
+                styles={{
+                  root: {
+                    "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+                    "--mantine-color-disabled-color": "var(--mantine-color-text-9)",
+                  } as React.CSSProperties,
+                }}
+                style={{
+                  height: "3rem",
+                  // The glow belongs to the enabled state only.
+                  boxShadow: canSearch ? "0px 0px 10px 0px rgba(255, 255, 0, 0.25)" : "none",
+                }}
+              >
+                {t("addBike.findSpecification")}
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      )}
+
+      {/* ----------- Result picker ----------- */}
+      {/* Replaces the form: the user is done searching and now picks a match. */}
+      {searchResults !== null && (
+        <BikeSearchResults
+          results={searchResults}
+          selectedBikeUrl={selectedBikeUrl}
+          onSelect={setSelectedBikeUrl}
+          onConfirm={confirmSelection}
+          onChangeSearch={changeSearch}
+        />
+      )}
 
       {/* ----------- Lookup fallback ----------- */}
       {/* Kept below the form so the user can correct brand/model/year and retry. */}

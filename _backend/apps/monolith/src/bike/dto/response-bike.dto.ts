@@ -27,6 +27,8 @@ export class NewBikeFormDataDto {
 export class SearchBikeExternalResponseDto {
   @ApiProperty({ example: 'Orbea Rallon' })
   name!: string;
+  @ApiProperty({ example: 'Orbea 2025' })
+  bikeBrand!: string;
   @ApiProperty({ example: 'https://example.com/bike-image.jpg' })
   imageUrl!: string | null;
   @ApiProperty({ example: 'https://example.com/bike/1' })

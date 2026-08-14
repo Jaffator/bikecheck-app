@@ -102,8 +102,11 @@
     "searchEmptyTitle": "No Matches Found",
     "searchEmptyBody": "We found no bike for that brand, model and year. Check the details, or continue by entering them manually.",
     "diagnosticCode": "Diagnostic Code",
-    "retrySearch": "Retry Sync",
+    "retrySearch": "Try again",
     "enterManually": "Enter Manually",
-    "skipStep": "Skip this step for now"
+    "selectModelTitle": "Select Bike Model",
+    "selectModelBody": "We found multiple matches for your scan. Please verify the exact model below to ensure correct component tracking.",
+    "confirmSelection": "Confirm Selection",
+    "changeSearch": "Change search"
   }
 }

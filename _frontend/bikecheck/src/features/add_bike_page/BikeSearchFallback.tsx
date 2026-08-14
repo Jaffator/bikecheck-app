@@ -33,22 +33,13 @@ export function BikeSearchFallback({
   const bodyKey = isFailure ? "addBike.searchFailedBody" : "addBike.searchEmptyBody";
 
   return (
-    <Paper bg="cards.6" p="lg" radius="md">
+    <Paper bg="cards.6" p="xl" radius="md" my={20} py={40}>
       <Stack gap="md" align="center">
-        <Group
-          justify="center"
-          align="center"
-          w={64}
-          h={64}
-          style={{
-            borderRadius: "50%",
-            backgroundColor: "color-mix(in srgb, var(--mantine-color-other-statusIdle) 15%, transparent)",
-          }}
-        >
-          <Icon size={35} color="var(--mantine-color-red-5)" />
+        <Group>
+          <Icon size={35} color="var(--mantine-color-red-4)" />
         </Group>
 
-        <Text fw={700} size="lg" c="other.statusIdle" ta="center">
+        <Text fw={700} size="lg" c="red.4" ta="center">
           {t(titleKey)}
         </Text>
 
@@ -76,7 +67,7 @@ export function BikeSearchFallback({
           </Paper>
         )}
 
-        <Stack gap="sm" w="100%">
+        <Stack gap="md" w="100%">
           <Button leftSection={<RefreshCw size={16} />} onClick={onRetry} fullWidth radius="sm" style={{ height: "3rem" }}>
             {t("addBike.retrySearch")}
           </Button>
@@ -91,9 +82,6 @@ export function BikeSearchFallback({
           >
             {t("addBike.enterManually")}
           </Button>
-          <Anchor component="button" type="button" onClick={onSkip} c="text.7" size="sm" ta="center" underline="always">
-            {t("addBike.skipStep")}
-          </Anchor>
         </Stack>
       </Stack>
     </Paper>
