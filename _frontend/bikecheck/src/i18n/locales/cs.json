@@ -163,6 +163,8 @@
     "diagnosticCode": "Diagnostický kód",
     "retrySearch": "Zkusit znovu",
     "enterManually": "Zadat ručně",
+    "addPhoto": "Přidat fotku kola",
+    "changePhoto": "Změnit fotku",
     "selectModelTitle": "Vyber model kola",
     "selectModelBody": "Našli jsme víc shod. Vyber přesný model, ať sedí sledování komponentů.",
     "resultsFound_one": "Nalezeno {{count}} kolo",
@@ -196,7 +198,17 @@
     "componentsFound_one": "Nalezen {{count}} komponent",
     "componentsFound_few": "Nalezeny {{count}} komponenty",
     "componentsFound_many": "Nalezeno {{count}} komponentu",
-    "componentsFound_other": "Nalezeno {{count}} komponentů"
+    "componentsFound_other": "Nalezeno {{count}} komponentů",
+    "componentPlaceholder": "Značka + model",
+    "editingComponents": "Upravuješ komponenty",
+    "partsConfigured_one": "{{count}} z {{total}} dílů vyplněn",
+    "partsConfigured_few": "{{count}} z {{total}} dílů vyplněny",
+    "partsConfigured_many": "{{count}} z {{total}} dílů vyplněno",
+    "partsConfigured_other": "{{count}} z {{total}} dílů vyplněno",
+    "positionFront": "Přední",
+    "positionRear": "Zadní",
+    "splitSides": "Rozdělit",
+    "mergeSides": "Sloučit"
   },
   "action": {
     "back": "Zpět",

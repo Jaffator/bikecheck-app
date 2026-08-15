@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Ip,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -72,11 +73,18 @@ export class AuthController {
   }
 
   // --- REFRESH token
+  // @Public() on purpose: this is called precisely when the access token is
+  // expired, so requiring a valid one here would make the endpoint unreachable.
+  // The refresh token cookie is the credential being checked instead.
+  @Public()
   @ApiResponse({ status: 200 })
   @Post('refresh')
   async refreshUser(@Req() req: Request, @Res() res: Response, @Ip() ip: string) {
     const deviceInfo = this.getDeviceInfo(req);
     const currentRefreshToken = req.cookies['refresh_token'];
+    if (!currentRefreshToken) {
+      throw new UnauthorizedException('Session expired');
+    }
     const { refreshToken, accessToken } = await this.tokenService.refreshToken(currentRefreshToken, deviceInfo, ip);
     this.setAuthCookies(res, accessToken, refreshToken);
     return res.status(200).json({ message: 'Refresh token done' });
@@ -205,11 +213,13 @@ export class AuthController {
       maxAge: AUTH_CONFIG.JWT_EXPIRATION * 1000,
     });
 
+    // Mirrors the DB expiry. Hardcoding a shorter value would drop the cookie
+    // while the token is still valid, logging the user out for no reason.
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: AUTH_CONFIG.REFRESH_TOKEN_EXPIRATION_DAYS * 24 * 60 * 60 * 1000,
     });
   }
 

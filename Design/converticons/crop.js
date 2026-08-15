@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 
-const inputDir = "../../_frontend/bikecheck/src/assets/icons/cropped_icons"; // Složka s tvými černobílými PNG
-const outputDir = "../../_frontend/bikecheck/src/assets/icons/cropped_icons2"; // Složka, kam se uloží oříznuté PNG
+const inputDir = "D:\\Projects\\BikeCheck\\Design\\icons"; // Složka s tvými černobílými PNG
+const outputDir = "D:\\Projects\\BikeCheck\\Design\\icons\\cropped"; // Složka, kam se uloží oříznuté PNG
 
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir);

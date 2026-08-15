@@ -1,22 +1,47 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { type ReactElement } from "react";
-import { Group, Loader, Paper, Stack, Text } from "@mantine/core";
+import { Box, Group, Loader, Paper, Stack, Text, Textarea, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { SearchX, Wrench } from "lucide-react";
+import { ChevronUp, Merge, Pencil, Plus, SearchX, Split, Wrench } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
-import type { ExternalBikeComponent } from "../bikes/bikes.types";
+import { tapFeedback } from "@/utils/haptics";
+import type { AssembleBikeComponent, ComponentGroup } from "../components/components.types";
+import { autosizeInputStyles } from "./formStyles";
+import {
+  componentTypeId,
+  countConfigured,
+  countFields,
+  groupComponents,
+  isSplit,
+  positionsOf,
+  readEntry,
+  SIDED_POSITIONS,
+  type ComponentEntries,
+  type ComponentPosition,
+  type SplitComponents,
+} from "./bikeComponents.types";
+import { groupIcon } from "@/assets/icons/svg_icons/groups";
 
 interface BikeComponentListProps {
-  components: ExternalBikeComponent[] | undefined;
+  groups: ComponentGroup[] | undefined;
+  // Every trackable component type, already prefilled from the scrape.
+  components: AssembleBikeComponent[] | undefined;
+  entries: ComponentEntries;
+  onChangeDescription: (componentTypeId: number, position: ComponentPosition, description: string) => void;
+  // Sided parts the user asked to describe one end at a time.
+  splitComponents: SplitComponents;
+  onToggleSplit: (componentTypeId: number) => void;
+  // Only one group is open at a time — a phone cannot show two expanded ones.
+  openGroupId: number | null;
+  onToggleGroup: (groupId: number) => void;
   isLoading: boolean;
   isError: boolean;
 }
 
-// The scraper reports a translation key when it recognised the part, and the
-// raw scraped name when it did not.
-function componentLabel(component: ExternalBikeComponent, translate: (key: string) => string): string {
-  const key = component.component_i18n_key;
-  return key ? translate(key) : component.component_name;
+// Seeded data carries a translation key; a group or type the user created
+// himself has none, and then its own name is the label.
+function translatedName(i18nKey: string | null, fallback: string, translate: (key: string) => string): string {
+  return i18nKey ? translate(i18nKey) : fallback;
 }
 
 // Loading, failure and "nothing found" all replace the list with the same
@@ -49,7 +74,72 @@ function StatusPanel({
   );
 }
 
-export function BikeComponentList({ components, isLoading, isError }: BikeComponentListProps): ReactElement {
+// The round mark on the left of every group row. It carries the open/configured
+// state, so the row reads at a glance without opening it.
+function GroupMark({ highlighted, children }: { highlighted: boolean; children: ReactElement }): ReactElement {
+  return (
+    <Box
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "2.5rem",
+        height: "2.5rem",
+        flexShrink: 0,
+        borderRadius: "50%",
+        backgroundColor: highlighted
+          ? "color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)"
+          : "var(--mantine-color-cards-5)",
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+// Splits a paired part into a front and a rear field, or folds the two back
+// into one. Sits next to the part's name, since it changes what that part asks
+// for rather than what it is.
+function SplitToggle({ split, label, onToggle }: { split: boolean; label: string; onToggle: () => void }): ReactElement {
+  return (
+    <UnstyledButton
+      onClick={() => {
+        tapFeedback();
+        onToggle();
+      }}
+      aria-pressed={split}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.25rem",
+        flexShrink: 0,
+        padding: "0.25rem 0.5rem",
+        borderRadius: "var(--mantine-radius-sm)",
+        backgroundColor: split
+          ? "color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)"
+          : "var(--mantine-color-cards-5)",
+        color: split ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)",
+        fontSize: "0.7rem",
+      }}
+    >
+      {split ? <Merge size={12} /> : <Split size={12} />}
+      {label}
+    </UnstyledButton>
+  );
+}
+
+export function BikeComponentList({
+  groups,
+  components,
+  entries,
+  onChangeDescription,
+  splitComponents,
+  onToggleSplit,
+  openGroupId,
+  onToggleGroup,
+  isLoading,
+  isError,
+}: BikeComponentListProps): ReactElement {
   const { t } = useTranslation();
 
   if (isLoading) {
@@ -69,7 +159,9 @@ export function BikeComponentList({ components, isLoading, isError }: BikeCompon
     );
   }
 
-  if (components === undefined || components.length === 0) {
+  const grouped = groupComponents(groups ?? [], components ?? []);
+
+  if (grouped.length === 0) {
     return (
       <StatusPanel
         mark={<SearchX size={35} color="var(--mantine-color-text-8)" />}
@@ -80,49 +172,153 @@ export function BikeComponentList({ components, isLoading, isError }: BikeCompon
     );
   }
 
+  // Only the two sides are ever labelled — an unsided part has a single field
+  // and the component name above it already says what it is.
+  const positionLabels: Record<(typeof SIDED_POSITIONS)[number], string> = {
+    front: t("addBike.positionFront"),
+    rear: t("addBike.positionRear"),
+  };
+
   return (
-    <Stack gap="md">
-      <Text size="sm" c="text.7">
-        {t("addBike.componentsBody")}
-      </Text>
-
-      <Text size="sm" fw={600} c="text.7">
-        {t("addBike.componentsFound", { count: components.length })}
-      </Text>
-
-      {components.map((component, index) => {
-        // The rest of the mounted-component record is bookkeeping the user has
-        // not created yet, so only the scraped description is worth showing.
-        const description = component.component.component_desc;
+    <Stack gap="sm">
+      {grouped.map(({ group, components: groupComponentTypes }) => {
+        const isOpen = openGroupId === group.id;
+        const configured = countConfigured(entries, groupComponentTypes, splitComponents);
+        const fields = countFields(groupComponentTypes, splitComponents);
+        const groupName = translatedName(group.i18n_key, group.group_name, t);
+        // Closed rows preview what the group holds; the count replaces it once
+        // the user has described something, since that is the news.
+        const summary = groupComponentTypes
+          .slice(0, 3)
+          .map((component) => translatedName(component.component_i18n_key, component.component_name, t))
+          .join(", ");
 
         return (
           <Paper
-            // The scraper has no stable id per part, and the same type can
-            // appear twice (front/rear), so position in the list identifies it.
-            key={`${component.component_name}-${component.component.position ?? index}`}
+            key={group.id}
             bg="cards.6"
-            p="md"
             radius="md"
-            style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}
+            style={{
+              border: isOpen
+                ? "1px solid var(--mantine-color-primary-6)"
+                : "1px solid var(--mantine-color-other-borderSubtle)",
+            }}
           >
-            <Group gap="sm" wrap="nowrap" align="flex-start">
-              <Wrench size={18} color="var(--mantine-color-primary-6)" style={{ flexShrink: 0, marginTop: 2 }} />
-              <Stack gap={2}>
-                <Text fw={600} size="md" c="text.6">
-                  {componentLabel(component, t)}
-                </Text>
-                {description && (
-                  <Text size="sm" c="text.8">
-                    {description}
-                  </Text>
-                )}
-                {component.component.position && (
-                  <Text size="xs" c="text.9" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
-                    {component.component.position}
-                  </Text>
-                )}
+            {/* ----------- Group header ----------- */}
+            {/* The whole row is the tap target, so a thumb does not have to
+                find the small circle on the right. */}
+            <UnstyledButton
+              onClick={() => {
+                tapFeedback();
+                onToggleGroup(group.id);
+              }}
+              aria-expanded={isOpen}
+              style={{ display: "block", width: "100%", padding: "1rem" }}
+            >
+              <Group justify="space-between" wrap="nowrap" gap="sm">
+                <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+                  <GroupMark highlighted={isOpen || configured > 0}>
+                    {groupIcon(groupName)}
+                    {/* <Wrench
+                      size={18}
+                      color={isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
+                    /> */}
+                  </GroupMark>
+                  <Stack gap={2} style={{ minWidth: 0 }}>
+                    <Text fw={700} size="md" c="text.6">
+                      {groupName}
+                    </Text>
+                    {isOpen ? (
+                      <Text size="sm" c="primary.6">
+                        {t("addBike.editingComponents")}
+                      </Text>
+                    ) : configured > 0 ? (
+                      <Text size="sm" c="primary.6">
+                        {t("addBike.partsConfigured", { count: configured, total: fields })}
+                      </Text>
+                    ) : (
+                      <Text size="sm" c="text.8" truncate>
+                        {summary}
+                      </Text>
+                    )}
+                  </Stack>
+                </Group>
+
+                {/* Open, already-filled and untouched groups each get their own
+                    mark, so the state is readable without expanding. */}
+                <Box
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "2rem",
+                    height: "2rem",
+                    flexShrink: 0,
+                    borderRadius: "50%",
+                    border:
+                      isOpen || configured > 0
+                        ? "1px solid var(--mantine-color-primary-6)"
+                        : "1px solid var(--mantine-color-other-borderSolid)",
+                    color: isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)",
+                  }}
+                >
+                  {isOpen ? <ChevronUp size={16} /> : configured > 0 ? <Pencil size={14} /> : <Plus size={16} />}
+                </Box>
+              </Group>
+            </UnstyledButton>
+
+            {/* ----------- Group body ----------- */}
+            {isOpen && (
+              <Stack gap="md" px="md" pb="md">
+                {groupComponentTypes.map((component) => {
+                  const typeId = componentTypeId(component);
+                  const componentName = translatedName(component.component_i18n_key, component.component_name, t);
+
+                  const split = isSplit(component, splitComponents);
+
+                  return (
+                    <Stack key={typeId} gap={6}>
+                      <Group justify="space-between" wrap="nowrap" gap="xs">
+                        <Text size="sm" fw={600} c="text.7">
+                          {componentName}
+                        </Text>
+                        {/* A part that comes in pairs is usually the same at
+                            both ends, so it starts as one field and only splits
+                            when the user says the sides differ. */}
+                        {component.has_position && (
+                          <SplitToggle
+                            split={split}
+                            label={split ? t("addBike.mergeSides") : t("addBike.splitSides")}
+                            onToggle={() => onToggleSplit(typeId)}
+                          />
+                        )}
+                      </Group>
+                      {positionsOf(component, splitComponents).map((position) => (
+                        <Stack key={position} gap={4}>
+                          {position !== "none" && (
+                            <Text size="xs" c="text.8">
+                              {positionLabels[position]}
+                            </Text>
+                          )}
+                          {/* Scraped descriptions are long ("Campagnolo Bora
+                              Ultra WTO, Axle dimension…"), so the field wraps
+                              and grows instead of hiding the tail. */}
+                          <Textarea
+                            autosize
+                            minRows={1}
+                            placeholder={t("addBike.componentPlaceholder")}
+                            value={readEntry(entries, typeId, position).description}
+                            onChange={(event) => onChangeDescription(typeId, position, event.currentTarget.value)}
+                            radius="sm"
+                            styles={autosizeInputStyles}
+                          />
+                        </Stack>
+                      ))}
+                    </Stack>
+                  );
+                })}
               </Stack>
-            </Group>
+            )}
           </Paper>
         );
       })}

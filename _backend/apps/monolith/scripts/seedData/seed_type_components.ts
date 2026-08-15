@@ -43,7 +43,7 @@ export const components = [
   { component_type: 'Motor', component_group_name: 'E-bike', ebike: true, has_position: false },
   { component_type: 'Battery', component_group_name: 'E-bike', ebike: true, has_position: false },
   { component_type: 'Display', component_group_name: 'E-bike', ebike: true, has_position: false },
-  { component_type: 'Charger', component_group_name: 'E-bike', ebike: false, has_position: false },
+  { component_type: 'Charger', component_group_name: 'E-bike', ebike: true, has_position: false },
   { component_type: 'E-Bike System', component_group_name: 'E-bike', ebike: true, has_position: false },
   // Other
   { component_type: 'Pedals', component_group_name: 'Other', ebike: false, has_position: false },

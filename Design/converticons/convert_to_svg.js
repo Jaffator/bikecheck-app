@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const potrace = require("potrace");
 
-const inputDir = "../../_frontend/bikecheck/src/assets/icons/cropped_icons"; // Složka s tvými černobílými PNG
-const outputDir = "../../_frontend/bikecheck/src/assets/icons/svg_icons"; // Složka, kam se uloží oříznuté PNG
+const inputDir = "D:\\Projects\\BikeCheck\\Design\\icons"; // Složka s tvými černobílými PNG
+const outputDir = "D:\\Projects\\BikeCheck\\Design\\icons\\svg"; // Složka, kam se uloží oříznuté PNG
 
 // --- Normalizace: společný rám + live area pro celou sadu ikon ---
 const CANVAS = 48; // společný viewBox (48x48)

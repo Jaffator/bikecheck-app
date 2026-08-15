@@ -823,11 +823,18 @@ export interface components {
             component: components["schemas"]["CreateMountedComponentsDto"];
             /** @example Fork */
             component_name: string;
+            /** @example 15 */
+            component_group_id: number;
             /**
              * @description null for user-created types
              * @example component.fork
              */
             component_i18n_key: string | null;
+            /**
+             * @description The part sits on a side of the bike (front / rear)
+             * @example true
+             */
+            has_position: boolean;
         };
         BikeBrands: {
             /** @example Santa Cruz */

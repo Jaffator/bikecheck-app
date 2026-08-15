@@ -34,4 +34,7 @@ export type BikeFormOptions = components["schemas"]["NewBikeFormDataDto"];
 export type BikeBrand = components["schemas"]["BikeBrands"];
 export type BikeModel = components["schemas"]["BikeModels"];
 export type BikeSearchResult = components["schemas"]["SearchBikeExternalResponseDto"];
-export type ExternalBikeComponent = components["schemas"]["AssembleBikeComponentsDto"];
+
+// The scraper answers with the same DTO the component domain owns, so the type
+// lives there. The generated schema.d.ts is still one revision behind on it.
+export type { AssembleBikeComponent as ExternalBikeComponent } from "../components/components.types";

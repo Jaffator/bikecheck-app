@@ -10,6 +10,7 @@ import { AllExceptionsFilter } from './_filters/all-exceptions.filter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BikeModule } from './bike/bike.module';
 import { BikeEventModule } from './bike-event/bike-event.module';
+import { ComponentModuleModule } from './component/component.module';
 import { OrganizationModule } from './organization/organization.module';
 import { StorageModule } from './storage/storage.module';
 import { StravaModule } from './strava/strava.module';
@@ -93,6 +94,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     RefreshTokenModule,
     BikeModule,
     BikeEventModule,
+    ComponentModuleModule,
     StorageModule,
     OrganizationModule,
     StravaModule,

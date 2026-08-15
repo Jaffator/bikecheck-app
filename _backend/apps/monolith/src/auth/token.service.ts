@@ -88,10 +88,14 @@ export class TokenService {
     return { refreshToken, expiresAt };
   }
 
+  // Sliding window: an active user gets a fresh token well before the old one
+  // runs out, so the session only ends after a full period of inactivity.
+  // The threshold is generous on purpose — with a 1 year expiry, rotating only
+  // in the last 24 hours would leave a user who misses that single window
+  // logged out despite having been active for months.
   private validateTokenExpiracy(expireDate: Date): boolean {
     const timeDiff = expireDate.getTime() - new Date().getTime(); //difference in ms
     const hoursLeft = timeDiff / 1000 / 60 / 60;
-    if (hoursLeft > 24) return false;
-    else return true;
+    return hoursLeft <= AUTH_CONFIG.REFRESH_TOKEN_ROTATION_THRESHOLD_HOURS;
   }
 }

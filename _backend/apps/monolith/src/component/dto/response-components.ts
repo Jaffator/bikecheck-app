@@ -13,8 +13,14 @@ export class AssembleBikeComponentsDto {
   @IsString()
   component_name!: string;
 
+  @ApiProperty({ example: '15' })
+  component_group_id!: number;
+
   @ApiProperty({ type: String, example: 'component.fork', nullable: true, description: 'null for user-created types' })
   component_i18n_key!: string | null;
+
+  @ApiProperty({ example: true, description: 'The part sits on a side of the bike (front / rear)' })
+  has_position!: boolean;
 }
 
 export class Response_MountedComponentsDto {

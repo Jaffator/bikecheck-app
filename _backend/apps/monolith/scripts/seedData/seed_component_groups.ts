@@ -86,7 +86,7 @@ const componentGroups: ComponentGroupMapping[] = [
       { component_type: 'Motor', ebike: true, has_position: false },
       { component_type: 'Battery', ebike: true, has_position: false },
       { component_type: 'Display', ebike: true, has_position: false },
-      { component_type: 'Charger', ebike: false, has_position: false },
+      { component_type: 'Charger', ebike: true, has_position: false },
       { component_type: 'E-Bike System', ebike: true, has_position: false },
     ],
   },
