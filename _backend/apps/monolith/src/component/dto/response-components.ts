@@ -21,6 +21,9 @@ export class AssembleBikeComponentsDto {
 
   @ApiProperty({ example: true, description: 'The part sits on a side of the bike (front / rear)' })
   has_position!: boolean;
+
+  @ApiProperty({ example: true, description: 'Every bike carries it, so it is saved even when left blank' })
+  essential!: boolean;
 }
 
 export class Response_MountedComponentsDto {
@@ -111,4 +114,7 @@ export class Response_ComponentDto {
 
   @ApiProperty({ example: true })
   has_position!: boolean;
+
+  @ApiProperty({ example: true, description: 'Every bike carries it, so it is saved even when left blank' })
+  essential!: boolean;
 }

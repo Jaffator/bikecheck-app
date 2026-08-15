@@ -192,6 +192,8 @@
     "positionFront": "Front",
     "positionRear": "Rear",
     "splitSides": "Split",
-    "mergeSides": "Merge"
+    "mergeSides": "Merge",
+    "partAbsent": "Don't have",
+    "partAbsentUndo": "I have it"
   }
 }

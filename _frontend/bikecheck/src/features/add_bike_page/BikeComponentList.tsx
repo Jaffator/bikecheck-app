@@ -2,9 +2,10 @@
 import { type ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, Textarea, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ChevronUp, Merge, Pencil, Plus, SearchX, Split, Wrench } from "lucide-react";
+import { Ban, ChevronUp, Merge, Pencil, Plus, SearchX, Split, Undo2, Wrench } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
 import { tapFeedback } from "@/utils/haptics";
+import { groupIcon } from "@/assets/icons/svg_icons/groups";
 import type { AssembleBikeComponent, ComponentGroup } from "../components/components.types";
 import { autosizeInputStyles } from "./formStyles";
 import {
@@ -18,9 +19,9 @@ import {
   SIDED_POSITIONS,
   type ComponentEntries,
   type ComponentPosition,
+  type DisabledComponents,
   type SplitComponents,
 } from "./bikeComponents.types";
-import { groupIcon } from "@/assets/icons/svg_icons/groups";
 
 interface BikeComponentListProps {
   groups: ComponentGroup[] | undefined;
@@ -31,6 +32,9 @@ interface BikeComponentListProps {
   // Sided parts the user asked to describe one end at a time.
   splitComponents: SplitComponents;
   onToggleSplit: (componentTypeId: number) => void;
+  // Parts the user said his bike does not have; nothing is saved for them.
+  disabledComponents: DisabledComponents;
+  onToggleDisabled: (componentTypeId: number) => void;
   // Only one group is open at a time — a phone cannot show two expanded ones.
   openGroupId: number | null;
   onToggleGroup: (groupId: number) => void;
@@ -128,6 +132,42 @@ function SplitToggle({ split, label, onToggle }: { split: boolean; label: string
   );
 }
 
+// Says the bike does not carry this part at all. Without it an essential part
+// would be saved blank, so a singlespeed would end up tracking a derailleur.
+function AbsentToggle({
+  absent,
+  label,
+  onToggle,
+}: {
+  absent: boolean;
+  label: string;
+  onToggle: () => void;
+}): ReactElement {
+  return (
+    <UnstyledButton
+      onClick={() => {
+        tapFeedback();
+        onToggle();
+      }}
+      aria-pressed={absent}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.25rem",
+        flexShrink: 0,
+        padding: "0.25rem 0.5rem",
+        borderRadius: "var(--mantine-radius-sm)",
+        backgroundColor: absent ? "color-mix(in srgb, var(--mantine-color-red-4) 15%, transparent)" : "transparent",
+        color: absent ? "var(--mantine-color-red-4)" : "var(--mantine-color-text-9)",
+        fontSize: "0.7rem",
+      }}
+    >
+      {absent ? <Undo2 size={12} /> : <Ban size={12} />}
+      {label}
+    </UnstyledButton>
+  );
+}
+
 export function BikeComponentList({
   groups,
   components,
@@ -135,6 +175,8 @@ export function BikeComponentList({
   onChangeDescription,
   splitComponents,
   onToggleSplit,
+  disabledComponents,
+  onToggleDisabled,
   openGroupId,
   onToggleGroup,
   isLoading,
@@ -183,9 +225,12 @@ export function BikeComponentList({
     <Stack gap="sm">
       {grouped.map(({ group, components: groupComponentTypes }) => {
         const isOpen = openGroupId === group.id;
-        const configured = countConfigured(entries, groupComponentTypes, splitComponents);
-        const fields = countFields(groupComponentTypes, splitComponents);
+        const configured = countConfigured(entries, groupComponentTypes, splitComponents, disabledComponents);
+        const fields = countFields(groupComponentTypes, splitComponents, disabledComponents);
         const groupName = translatedName(group.i18n_key, group.group_name, t);
+        // Addressed by the seeded English name, not the translated one the row
+        // displays. A group without an icon of its own falls back to the tool.
+        const GroupIcon = groupIcon(group.group_name);
         // Closed rows preview what the group holds; the count replaces it once
         // the user has described something, since that is the news.
         const summary = groupComponentTypes
@@ -218,11 +263,18 @@ export function BikeComponentList({
               <Group justify="space-between" wrap="nowrap" gap="sm">
                 <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
                   <GroupMark highlighted={isOpen || configured > 0}>
-                    {groupIcon(groupName)}
-                    {/* <Wrench
-                      size={18}
-                      color={isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
-                    /> */}
+                    {GroupIcon ? (
+                      <GroupIcon
+                        width={26}
+                        height={26}
+                        color={isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
+                      />
+                    ) : (
+                      <Wrench
+                        size={18}
+                        color={isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
+                      />
+                    )}
                   </GroupMark>
                   <Stack gap={2} style={{ minWidth: 0 }}>
                     <Text fw={700} size="md" c="text.6">
@@ -233,7 +285,9 @@ export function BikeComponentList({
                         {t("addBike.editingComponents")}
                       </Text>
                     ) : configured > 0 ? (
-                      <Text size="sm" c="primary.6">
+                      // A group with every part described is done, and says so
+                      // in the accent colour; a partial count stays quiet.
+                      <Text size="sm" c={configured === fields ? "primary.6" : "text.8"}>
                         {t("addBike.partsConfigured", { count: configured, total: fields })}
                       </Text>
                     ) : (
@@ -275,45 +329,58 @@ export function BikeComponentList({
                   const componentName = translatedName(component.component_i18n_key, component.component_name, t);
 
                   const split = isSplit(component, splitComponents);
+                  const disabled = disabledComponents.has(typeId);
 
                   return (
                     <Stack key={typeId} gap={6}>
                       <Group justify="space-between" wrap="nowrap" gap="xs">
-                        <Text size="sm" fw={600} c="text.7">
+                        <Text size="sm" fw={600} c={disabled ? "text.9" : "text.7"} td={disabled ? "line-through" : undefined}>
                           {componentName}
                         </Text>
-                        {/* A part that comes in pairs is usually the same at
-                            both ends, so it starts as one field and only splits
-                            when the user says the sides differ. */}
-                        {component.has_position && (
-                          <SplitToggle
-                            split={split}
-                            label={split ? t("addBike.mergeSides") : t("addBike.splitSides")}
-                            onToggle={() => onToggleSplit(typeId)}
-                          />
-                        )}
-                      </Group>
-                      {positionsOf(component, splitComponents).map((position) => (
-                        <Stack key={position} gap={4}>
-                          {position !== "none" && (
-                            <Text size="xs" c="text.8">
-                              {positionLabels[position]}
-                            </Text>
+                        <Group gap="xs" wrap="nowrap">
+                          {/* A part that comes in pairs is usually the same at
+                              both ends, so it starts as one field and only splits
+                              when the user says the sides differ. */}
+                          {component.has_position && !disabled && (
+                            <SplitToggle
+                              split={split}
+                              label={split ? t("addBike.mergeSides") : t("addBike.splitSides")}
+                              onToggle={() => onToggleSplit(typeId)}
+                            />
                           )}
-                          {/* Scraped descriptions are long ("Campagnolo Bora
-                              Ultra WTO, Axle dimension…"), so the field wraps
-                              and grows instead of hiding the tail. */}
-                          <Textarea
-                            autosize
-                            minRows={1}
-                            placeholder={t("addBike.componentPlaceholder")}
-                            value={readEntry(entries, typeId, position).description}
-                            onChange={(event) => onChangeDescription(typeId, position, event.currentTarget.value)}
-                            radius="sm"
-                            styles={autosizeInputStyles}
+                          {/* Not every bike carries every part, and an essential
+                              one would otherwise be saved blank. */}
+                          <AbsentToggle
+                            absent={disabled}
+                            label={disabled ? t("addBike.partAbsentUndo") : t("addBike.partAbsent")}
+                            onToggle={() => onToggleDisabled(typeId)}
                           />
-                        </Stack>
-                      ))}
+                        </Group>
+                      </Group>
+                      {/* The fields go away with the part: there is nothing to
+                          describe about a part the bike does not have. */}
+                      {!disabled &&
+                        positionsOf(component, splitComponents).map((position) => (
+                          <Stack key={position} gap={4}>
+                            {position !== "none" && (
+                              <Text size="xs" c="text.8">
+                                {positionLabels[position]}
+                              </Text>
+                            )}
+                            {/* Scraped descriptions are long ("Campagnolo Bora
+                                Ultra WTO, Axle dimension…"), so the field wraps
+                                and grows instead of hiding the tail. */}
+                            <Textarea
+                              autosize
+                              minRows={1}
+                              placeholder={t("addBike.componentPlaceholder")}
+                              value={readEntry(entries, typeId, position).description}
+                              onChange={(event) => onChangeDescription(typeId, position, event.currentTarget.value)}
+                              radius="sm"
+                              styles={autosizeInputStyles}
+                            />
+                          </Stack>
+                        ))}
                     </Stack>
                   );
                 })}

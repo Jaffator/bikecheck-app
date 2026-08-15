@@ -194,6 +194,7 @@ export class BikeDataScrapeService {
       component_group_id: component.component_group_id,
       component_i18n_key: component.i18n_key,
       has_position: component.has_position,
+      essential: component.essential,
     };
     if (component && foundedPosititon) {
       // Position defined in description, return single component with position

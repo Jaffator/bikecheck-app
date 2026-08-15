@@ -166,6 +166,8 @@ export function AddBikeIdentity(): ReactElement {
           onChangeDescription={wizard.changeComponentDescription}
           splitComponents={wizard.splitComponents}
           onToggleSplit={wizard.toggleComponentSplit}
+          disabledComponents={wizard.disabledComponents}
+          onToggleDisabled={wizard.toggleComponentDisabled}
           openGroupId={wizard.openGroupId}
           onToggleGroup={wizard.toggleGroup}
           isLoading={wizard.componentsLoading}

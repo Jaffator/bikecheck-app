@@ -1,6 +1,30 @@
 // The shape step 3 collects, kept out of the component so the wizard can read
 // and submit it without importing the view.
 import type { AssembleBikeComponent, ComponentGroup } from "../components/components.types";
+import type { SuspensionLayout } from "./bikeSpecification.types";
+
+// Component types the user marked as "not on my bike", by component_type_id.
+// Nothing is written for them, so the part simply does not exist on the bike
+// and can be added later like any other.
+export type DisabledComponents = ReadonlySet<number>;
+
+// Parts a bike cannot have given how it is sprung. A rigid bike still carries a
+// fork — it just does not damp — so only the shock is ever dropped.
+const HIDDEN_BY_SUSPENSION: Record<SuspensionLayout, string[]> = {
+  full: [],
+  hardtail: ["component.shock"],
+  none: ["component.shock"],
+};
+
+// The suspension layout is only known from step 2; until then nothing is hidden.
+export function visibleComponents(
+  components: AssembleBikeComponent[],
+  suspension: SuspensionLayout | null,
+): AssembleBikeComponent[] {
+  if (suspension === null) return components;
+  const hidden = HIDDEN_BY_SUSPENSION[suspension];
+  return components.filter((component) => !hidden.includes(component.component_i18n_key ?? ""));
+}
 
 // Which side of the bike a part sits on. A part that has sides is asked for
 // both of them; "none" is what everything else carries.
@@ -151,8 +175,10 @@ export function countConfigured(
   entries: ComponentEntries,
   components: AssembleBikeComponent[],
   split: SplitComponents,
+  disabled: DisabledComponents,
 ): number {
   return components.reduce((total, component) => {
+    if (disabled.has(componentTypeId(component))) return total;
     const filled = positionsOf(component, split).filter(
       (position) => readEntry(entries, componentTypeId(component), position).description.trim() !== "",
     ).length;
@@ -161,13 +187,28 @@ export function countConfigured(
 }
 
 // How many parts a group could hold at all — the denominator of "2 / 7". A
-// split part counts as two, because it is asking for two answers.
-export function countFields(components: AssembleBikeComponent[], split: SplitComponents): number {
-  return components.reduce((total, component) => total + positionsOf(component, split).length, 0);
+// split part counts as two, because it is asking for two answers, and a part
+// the user does not have is not asking at all.
+export function countFields(
+  components: AssembleBikeComponent[],
+  split: SplitComponents,
+  disabled: DisabledComponents,
+): number {
+  return components.reduce(
+    (total, component) =>
+      disabled.has(componentTypeId(component)) ? total : total + positionsOf(component, split).length,
+    0,
+  );
 }
 
-// Only described parts are worth creating: an untouched input would become a
-// mounted component the user never owned.
+// An essential part is created whether or not it was described: the fork wears
+// out at the same rate whether or not the user knows which one it is, and a
+// part that was never saved cannot be tracked. Optional parts still need a
+// description — an untouched input would otherwise become a dropper post the
+// user never owned.
+//
+// Parts the user marked as absent are skipped outright, essential or not: a
+// singlespeed has no derailleur to track.
 //
 // A split part yields one record per side the user described. A merged sided
 // part describes both ends at once, so it yields a front and a rear carrying
@@ -176,30 +217,36 @@ export function toMountedComponents(
   entries: ComponentEntries,
   components: AssembleBikeComponent[],
   split: SplitComponents,
+  disabled: DisabledComponents,
 ): AssembleBikeComponent[] {
-  return components.flatMap((component) =>
-    positionsOf(component, split)
-      .map((position) => ({
-        position,
-        description: readEntry(entries, componentTypeId(component), position).description.trim(),
-      }))
-      .filter(({ description }) => description !== "")
-      .flatMap(({ position, description }) => {
-        // The merged field of a sided part stands for both ends; everything
-        // else is the one record it looks like.
-        const positions: ComponentPosition[] =
-          position === "none" && component.has_position ? [...SIDED_POSITIONS] : [position];
+  return components
+    .filter((component) => !disabled.has(componentTypeId(component)))
+    .flatMap((component) =>
+      positionsOf(component, split)
+        .map((position) => ({
+          position,
+          description: readEntry(entries, componentTypeId(component), position).description.trim(),
+        }))
+        .filter(({ description }) => description !== "" || component.essential)
+        .flatMap(({ position, description }) => {
+          // The merged field of a sided part stands for both ends; everything
+          // else is the one record it looks like.
+          const positions: ComponentPosition[] =
+            position === "none" && component.has_position ? [...SIDED_POSITIONS] : [position];
 
-        return positions.map((mountedPosition) => ({
-          ...component,
-          component: {
-            ...component.component,
-            component_desc: description,
-            // "none" is the absence of a side, which the backend stores as no
-            // position at all.
-            position: mountedPosition === "none" ? undefined : mountedPosition,
-          },
-        }));
-      }),
-  );
+          return positions.map((mountedPosition) => ({
+            ...component,
+            component: {
+              ...component.component,
+              // An essential part the user never described is stored without a
+              // name rather than with an empty one, so the UI can tell "not
+              // specified" from "described as nothing".
+              component_desc: description === "" ? null : description,
+              // "none" is the absence of a side, which the backend stores as no
+              // position at all.
+              position: mountedPosition === "none" ? undefined : mountedPosition,
+            },
+          }));
+        }),
+    );
 }

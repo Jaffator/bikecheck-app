@@ -14,8 +14,10 @@ import {
   entriesAfterSplitToggle,
   entryKey,
   scrapedSplitComponents,
+  visibleComponents,
   type ComponentEntries,
   type ComponentPosition,
+  type DisabledComponents,
   type SplitComponents,
 } from "./bikeComponents.types";
 
@@ -75,6 +77,8 @@ export interface AddBikeWizard {
   ) => void;
   splitComponents: SplitComponents;
   toggleComponentSplit: (componentTypeId: number) => void;
+  disabledComponents: DisabledComponents;
+  toggleComponentDisabled: (componentTypeId: number) => void;
   openGroupId: number | null;
   toggleGroup: (groupId: number) => void;
   componentsLoading: boolean;
@@ -111,6 +115,9 @@ export function useAddBikeWizard(): AddBikeWizard {
   // Separate from the scrape's own verdict so a deliberate merge is not undone
   // when the scrape resolves.
   const [splitOverrides, setSplitOverrides] = useState<Record<number, boolean>>({});
+  // Component types the user said his bike does not have. Nothing is written
+  // for them, so the part can be added later like any other.
+  const [disabledComponents, setDisabledComponents] = useState<ReadonlySet<number>>(new Set());
   // One group open at a time; a phone cannot show two expanded ones.
   const [openGroupId, setOpenGroupId] = useState<number | null>(null);
 
@@ -286,6 +293,16 @@ export function useAddBikeWizard(): AddBikeWizard {
     setSplitOverrides((current) => ({ ...current, [componentTypeId]: nowSplit }));
   }
 
+  // Marks a part as absent, or takes it back. What the user typed is kept
+  // either way, so re-enabling a part does not blank it.
+  function toggleComponentDisabled(componentTypeId: number): void {
+    setDisabledComponents((current) => {
+      const next = new Set(current);
+      if (!next.delete(componentTypeId)) next.add(componentTypeId);
+      return next;
+    });
+  }
+
   // Tapping the open group closes it, so the list can be collapsed entirely.
   function toggleGroup(groupId: number): void {
     setOpenGroupId((current) => (current === groupId ? null : groupId));
@@ -338,11 +355,17 @@ export function useAddBikeWizard(): AddBikeWizard {
     pickPhoto,
 
     componentGroups: groupsQuery.data,
-    defaultComponents: defaultComponentsQuery.data,
+    // A hardtail is never asked about its shock, so the row is dropped before
+    // the step ever sees it.
+    defaultComponents: defaultComponentsQuery.data
+      ? visibleComponents(defaultComponentsQuery.data, specification.suspension)
+      : undefined,
     componentEntries,
     changeComponentDescription,
     splitComponents,
     toggleComponentSplit,
+    disabledComponents,
+    toggleComponentDisabled,
     openGroupId,
     toggleGroup,
     // Without a scraped bike the scrape query never runs, so it stays pending

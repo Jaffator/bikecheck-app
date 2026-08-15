@@ -31,4 +31,7 @@ export interface AssembleBikeComponent {
   component_i18n_key: string | null;
   // The part sits on a side of the bike, so the form offers front / rear.
   has_position: boolean;
+  // Every bike carries it, so it is saved even when the user leaves the
+  // description blank — wear tracking starts before the part has a name.
+  essential: boolean;
 }

@@ -47,6 +47,7 @@ export class ComponentService {
       component_group_id: type.component_group_id,
       component_i18n_key: type.i18n_key,
       has_position: type.has_position,
+      essential: type.essential,
     }));
   }
 

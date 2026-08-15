@@ -208,7 +208,9 @@
     "positionFront": "Přední",
     "positionRear": "Zadní",
     "splitSides": "Rozdělit",
-    "mergeSides": "Sloučit"
+    "mergeSides": "Sloučit",
+    "partAbsent": "Nemám",
+    "partAbsentUndo": "Mám"
   },
   "action": {
     "back": "Zpět",

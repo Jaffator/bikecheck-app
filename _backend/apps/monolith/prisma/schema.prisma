@@ -155,6 +155,10 @@ model component_types {
   // Set on seeded rows only; null means user-created, so display the raw name.
   i18n_key             String?                @db.VarChar
   ebike                Boolean                @default(false)
+  // A part every bike carries. It is saved even when the user leaves it blank,
+  // so wear tracking starts on day one; optional parts are only saved once
+  // described.
+  essential            Boolean                @default(false)
   component_group_id   Int
   has_position         Boolean                @default(false)
   user_id              Int?
