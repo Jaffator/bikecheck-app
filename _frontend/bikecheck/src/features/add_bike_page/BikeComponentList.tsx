@@ -1,11 +1,13 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { type ReactElement } from "react";
+import { useEffect, useRef, type ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, Textarea, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Ban, ChevronUp, Merge, Pencil, Plus, SearchX, Split, Undo2, Wrench } from "lucide-react";
+import { Ban, ChevronUp, Merge, Pencil, Plus, SearchX, Split, Wrench, CircleCheckBig } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
 import { tapFeedback } from "@/utils/haptics";
+import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { groupIcon } from "@/assets/icons/svg_icons/groups";
+import { componentIcon } from "@/assets/icons/svg_icons/components";
 import type { AssembleBikeComponent, ComponentGroup } from "../components/components.types";
 import { autosizeInputStyles } from "./formStyles";
 import {
@@ -134,15 +136,7 @@ function SplitToggle({ split, label, onToggle }: { split: boolean; label: string
 
 // Says the bike does not carry this part at all. Without it an essential part
 // would be saved blank, so a singlespeed would end up tracking a derailleur.
-function AbsentToggle({
-  absent,
-  label,
-  onToggle,
-}: {
-  absent: boolean;
-  label: string;
-  onToggle: () => void;
-}): ReactElement {
+function AbsentToggle({ absent, label, onToggle }: { absent: boolean; label: string; onToggle: () => void }): ReactElement {
   return (
     <UnstyledButton
       onClick={() => {
@@ -157,12 +151,14 @@ function AbsentToggle({
         flexShrink: 0,
         padding: "0.25rem 0.5rem",
         borderRadius: "var(--mantine-radius-sm)",
-        backgroundColor: absent ? "color-mix(in srgb, var(--mantine-color-red-4) 15%, transparent)" : "transparent",
-        color: absent ? "var(--mantine-color-red-4)" : "var(--mantine-color-text-9)",
+        backgroundColor: absent
+          ? "color-mix(in srgb, var(--mantine-color-red-4) 15%, transparent)"
+          : "color-mix(in srgb, var(--mantine-color-green-8) 15%, transparent)",
+        color: absent ? "var(--mantine-color-red-4)" : "var(--mantine-color-green-9)",
         fontSize: "0.7rem",
       }}
     >
-      {absent ? <Undo2 size={12} /> : <Ban size={12} />}
+      {absent ? <Ban size={12} /> : <CircleCheckBig size={12} />}
       {label}
     </UnstyledButton>
   );
@@ -183,6 +179,25 @@ export function BikeComponentList({
   isError,
 }: BikeComponentListProps): ReactElement {
   const { t } = useTranslation();
+  // Keeps a focused field above the Android keyboard. On the list itself, so
+  // every Textarea inside is covered as groups open and close.
+  const listRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
+  const openGroupRef = useRef<HTMLDivElement>(null);
+
+  // An expanded group grows downwards, so on a phone its fields open below the
+  // fold and the user has to scroll to reach them. Only the header is pulled to
+  // the top — scrolling to the whole card would push a long group's header off
+  // screen. Runs after paint, when the expanded height is known.
+  useEffect(() => {
+    if (openGroupId === null) return;
+    const element = openGroupRef.current;
+    if (!element) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [openGroupId]);
 
   if (isLoading) {
     return <StatusPanel mark={<Loader color="primary.6" />} body={t("addBike.componentsLoading")} />;
@@ -222,7 +237,7 @@ export function BikeComponentList({
   };
 
   return (
-    <Stack gap="sm">
+    <Stack gap="sm" ref={listRef}>
       {grouped.map(({ group, components: groupComponentTypes }) => {
         const isOpen = openGroupId === group.id;
         const configured = countConfigured(entries, groupComponentTypes, splitComponents, disabledComponents);
@@ -241,12 +256,18 @@ export function BikeComponentList({
         return (
           <Paper
             key={group.id}
+            // Only the open card is tracked — the effect scrolls to whichever
+            // group is currently expanded.
+            ref={isOpen ? openGroupRef : undefined}
             bg="cards.6"
             radius="md"
             style={{
               border: isOpen
                 ? "1px solid var(--mantine-color-primary-6)"
                 : "1px solid var(--mantine-color-other-borderSubtle)",
+              // Clears the fixed AppShell header, which scrollIntoView does not
+              // know about — without it the row lands underneath it.
+              scrollMarginTop: "calc(4.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
             }}
           >
             {/* ----------- Group header ----------- */}
@@ -330,13 +351,32 @@ export function BikeComponentList({
 
                   const split = isSplit(component, splitComponents);
                   const disabled = disabledComponents.has(typeId);
+                  // Addressed by the seeded English name, like the group icon.
+                  // A type the user added himself has none, and then the name
+                  // alone carries the row.
+                  const ComponentIcon = componentIcon(component.component_name);
 
                   return (
                     <Stack key={typeId} gap={6}>
                       <Group justify="space-between" wrap="nowrap" gap="xs">
-                        <Text size="sm" fw={600} c={disabled ? "text.9" : "text.7"} td={disabled ? "line-through" : undefined}>
-                          {componentName}
-                        </Text>
+                        <Group gap="xs" wrap="nowrap">
+                          {ComponentIcon && (
+                            <ComponentIcon
+                              width={18}
+                              height={18}
+                              style={{ flexShrink: 0 }}
+                              color={disabled ? "var(--mantine-color-text-9)" : "var(--mantine-color-primary-7)"}
+                            />
+                          )}
+                          <Text
+                            size="md"
+                            fw={600}
+                            c={disabled ? "text.9" : "text.7"}
+                            td={disabled ? "line-through" : undefined}
+                          >
+                            {componentName}
+                          </Text>
+                        </Group>
                         <Group gap="xs" wrap="nowrap">
                           {/* A part that comes in pairs is usually the same at
                               both ends, so it starts as one field and only splits

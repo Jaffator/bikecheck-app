@@ -5,7 +5,7 @@ export const inputStyles = {
     border: "none",
     height: "3rem",
     color: "var(--mantine-color-text-6)",
-    "--input-placeholder-color": "var(--mantine-color-text-9)",
+    "--input-placeholder-color": "var(--mantine-color-cards-5)",
   } as React.CSSProperties,
 };
 

@@ -1,6 +1,7 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { type ReactElement } from "react";
 import {
+  Box,
   Button,
   FileButton,
   Group,
@@ -205,7 +206,14 @@ export function BikeSpecification({
           value={values.category}
           onChange={(value) => onChange("category", value)}
           radius="sm"
-          styles={inputStyles}
+          styles={{
+            input: {
+              backgroundColor: "var(--mantine-color-cards-6)",
+              border: "none",
+              color: "var(--mantine-color-text-6)",
+              height: "3rem",
+            },
+          }}
           comboboxProps={dropdownProps}
         />
       </Stack>
@@ -264,7 +272,10 @@ export function BikeSpecification({
       {/* ----------- Wheel size ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.wheelSize")}</FieldLabel>
-        <Group gap="xs">
+        {/* A fixed three-column grid, not a wrapping row: the six sizes then
+            sit 3+3 whatever the labels measure, and every button is the same
+            width instead of stretching to its own text. */}
+        <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.625rem" }}>
           {WHEEL_SIZES.map((size) => (
             <ChoiceButton
               key={size}
@@ -273,7 +284,7 @@ export function BikeSpecification({
               onSelect={() => onChange("wheelSize", size)}
             />
           ))}
-        </Group>
+        </Box>
       </Stack>
 
       {/* ----------- Power ----------- */}

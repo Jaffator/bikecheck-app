@@ -185,15 +185,15 @@
     "componentsEmptyBody": "This bike has no component list. You can add parts later.",
     "componentsFound_one": "{{count}} component found",
     "componentsFound_other": "{{count}} components found",
-    "componentPlaceholder": "Brand + Model",
+    "componentPlaceholder": "Description",
     "editingComponents": "Editing Components",
     "partsConfigured_one": "{{count}} of {{total}} Part Configured",
     "partsConfigured_other": "{{count}} of {{total}} Parts Configured",
     "positionFront": "Front",
     "positionRear": "Rear",
-    "splitSides": "Split",
+    "splitSides": "Rear/front",
     "mergeSides": "Merge",
-    "partAbsent": "Don't have",
-    "partAbsentUndo": "I have it"
+    "partAbsent": "Have it",
+    "partAbsentUndo": "Don't have it"
   }
 }

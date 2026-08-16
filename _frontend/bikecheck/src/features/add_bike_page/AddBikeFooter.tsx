@@ -34,6 +34,9 @@ export function AddBikeFooter({
     <Group
       justify="space-between"
       gap="sm"
+      // Marks the footer as covering the bottom of the page, so scrolling a
+      // focused field into view can clear it instead of stopping underneath.
+      data-fixed-footer
       style={{
         // Anchored to the viewport, not the page — the action stays reachable
         // however far down a long result list the user has scrolled.
