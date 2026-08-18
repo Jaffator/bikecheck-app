@@ -29,7 +29,7 @@ model action_done_component_map {
   time_min_at_time       Int? // total_time_min snapshot
   drivetrain_km_at_time  Int? // drivetrain_km snapshot
   suspension_min_at_time Int? // suspension_min snapshot
-  components_mounted     components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_mounted     components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   event_actions_done     event_actions_done @relation(fields: [event_action_done_id], references: [id], onDelete: Cascade)
 
   @@id([event_action_done_id, component_mounted_id])
@@ -385,7 +385,7 @@ model suspension_setup {
   compression_ls        Int?
   compression_hs        Int?
   notes                 String?            @db.VarChar
-  components_mounted    components_mounted @relation(fields: [mounted_component_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_mounted    components_mounted @relation(fields: [mounted_component_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model tire_setup {
@@ -393,7 +393,7 @@ model tire_setup {
   component_mounted_id Int
   tire_pressure_bar    Int?
   tire_pressure_psi    Int?
-  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model users {

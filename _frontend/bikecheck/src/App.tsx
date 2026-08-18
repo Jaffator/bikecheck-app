@@ -4,6 +4,7 @@ import { Center, Loader } from "@mantine/core";
 import { Dashboard } from "./features/dashboard_page/Dashboard";
 import { AppLayout } from "./layout/AppLayout";
 import { Bikes } from "./features/bikes_page/Bikes";
+import { BikeDetail } from "./features/bikes_page/BikeDetail";
 import { AddBikeIdentity } from "./features/add_bike_page/AddBikeIdentity";
 import { Service } from "./features/service_page/Service";
 import { Rides } from "./features/rides_page/Rides";
@@ -78,7 +79,9 @@ function ProtectedApp(): ReactElement {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/bikes" element={<Bikes />} />
+        {/* Before the ":id" route, which would otherwise match "new" itself. */}
         <Route path="/bikes/new" element={<AddBikeIdentity />} />
+        <Route path="/bikes/:id" element={<BikeDetail />} />
         <Route path="/service" element={<Service />} />
         <Route path="/rides" element={<Rides />} />
         <Route path="/profile" element={<Profile />} />

@@ -3,17 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm, type UseFormReturnType } from "@mantine/form";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { tapFeedback } from "@/utils/haptics";
 import { ApiError } from "@/api/client";
-import { useBikeFormOptions, useSearchBikeExternal, useExternalBikeComponents } from "../bikes/bikes.queries";
-import type { BikeSearchResult } from "../bikes/bikes.types";
+import { useBikeFormOptions, useSearchBikeExternal, useExternalBikeComponents, useCreateBike } from "../bikes/bikes.queries";
+import type { BikeSearchResult, CreateBikePayload } from "../bikes/bikes.types";
+import type { AssembleBikeComponent } from "../components/components.types";
 import { useComponentGroups, useDefaultComponents } from "../components/components.queries";
-import { isBikeSpecificationComplete, type BikeSpecificationValues } from "./bikeSpecification.types";
+import { isBikeSpecificationComplete, type BikeSpecificationValues, type SuspensionLayout } from "./bikeSpecification.types";
 import {
   buildInitialEntries,
   entriesAfterSplitToggle,
   entryKey,
   scrapedSplitComponents,
+  toMountedComponents,
   visibleComponents,
   type ComponentEntries,
   type ComponentPosition,
@@ -59,22 +62,24 @@ export interface AddBikeWizard {
   // Step 2 — specification.
   confirmedBike: BikeSearchResult | null;
   specification: BikeSpecificationValues;
-  changeSpecification: <K extends keyof BikeSpecificationValues>(
-    field: K,
-    value: BikeSpecificationValues[K],
-  ) => void;
+  changeSpecification: <K extends keyof BikeSpecificationValues>(field: K, value: BikeSpecificationValues[K]) => void;
   photoUrl: string | null;
+  // The file itself goes to the create call; photoUrl only feeds the preview.
+  photo: File | null;
+  // A pick opens the crop step rather than landing straight on the bike, so the
+  // photo is framed to the shape the app shows it in.
   pickPhoto: (file: File | null) => void;
+  // The photo waiting to be framed, and its preview URL.
+  photoToCrop: File | null;
+  photoToCropUrl: string | null;
+  cancelCrop: () => void;
+  confirmCrop: (cropped: File) => void;
 
   // Step 3 — components.
   componentGroups: ReturnType<typeof useComponentGroups>["data"];
   defaultComponents: ReturnType<typeof useDefaultComponents>["data"];
   componentEntries: ComponentEntries;
-  changeComponentDescription: (
-    componentTypeId: number,
-    position: ComponentPosition,
-    description: string,
-  ) => void;
+  changeComponentDescription: (componentTypeId: number, position: ComponentPosition, description: string) => void;
   splitComponents: SplitComponents;
   toggleComponentSplit: (componentTypeId: number) => void;
   disabledComponents: DisabledComponents;
@@ -83,9 +88,44 @@ export interface AddBikeWizard {
   toggleGroup: (groupId: number) => void;
   componentsLoading: boolean;
   componentsError: boolean;
+
+  // Saving — the summary confirms what step 3 assembled before it is written.
+  summaryOpen: boolean;
+  openSummary: () => void;
+  closeSummary: () => void;
+  // What the create call will actually write, already reduced: absent parts
+  // dropped, sided parts expanded into one record per side.
+  componentsToSave: AssembleBikeComponent[];
+  saveBike: () => void;
+  isSaving: boolean;
+  saveFailed: boolean;
+  // What the server said was wrong, so a rejected save can be corrected instead
+  // of only reporting that it failed.
+  saveErrorDetails: string[];
+
+  // The bike is written and the wizard has given way to its confirmation.
+  savedBike: boolean;
+  // What to call the saved bike on that screen: its own name if the user gave
+  // one, otherwise brand and model.
+  savedBikeName: string;
+  // The confirmation is done with and the Strava offer has taken over.
+  offeringStrava: boolean;
+  leaveAfterSave: () => void;
+  // Starting the sync. No connect endpoint exists yet, so this only leaves the
+  // wizard — the OAuth redirect goes here once the backend exposes one.
+  connectStrava: () => void;
 }
 
+// The step asks for one of three layouts, but a bike stores the two ends
+// independently.
+const SUSPENSION_FLAGS: Record<SuspensionLayout, { front: boolean; rear: boolean }> = {
+  full: { front: true, rear: true },
+  hardtail: { front: true, rear: false },
+  none: { front: false, rear: false },
+};
+
 export function useAddBikeWizard(): AddBikeWizard {
+  const { t } = useTranslation();
   const { data: bikeFormOptions } = useBikeFormOptions();
   const searchBike = useSearchBikeExternal();
   const navigate = useNavigate();
@@ -97,9 +137,15 @@ export function useAddBikeWizard(): AddBikeWizard {
   // The file is kept for the create call, which lands with the last step; the
   // URL only feeds the preview. Both live here rather than in the step so they
   // survive walking back to step 1.
-  const [, setPhoto] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  // A pick waiting to be framed. Held apart from the photo above so backing out
+  // of the crop leaves the previous photo untouched.
+  const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
+  const [photoToCropUrl, setPhotoToCropUrl] = useState<string | null>(null);
   const [specification, setSpecification] = useState<BikeSpecificationValues>({
+    bikeName: "",
+    currentMileage: "",
     category: null,
     suspension: null,
     frameSize: null,
@@ -120,6 +166,21 @@ export function useAddBikeWizard(): AddBikeWizard {
   const [disabledComponents, setDisabledComponents] = useState<ReadonlySet<number>>(new Set());
   // One group open at a time; a phone cannot show two expanded ones.
   const [openGroupId, setOpenGroupId] = useState<number | null>(null);
+  // The save goes through a summary first, so the last step confirms what the
+  // earlier ones collected instead of writing blind.
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  // The list as it was actually sent. A rejected component is reported by its
+  // index in that payload, and the live list is recomputed on every render — so
+  // resolving an index against it can miss.
+  const [sentComponents, setSentComponents] = useState<AssembleBikeComponent[]>([]);
+  // Set once the bike is written: the wizard is replaced by its confirmation,
+  // which owns the only way onwards from here.
+  const [savedBike, setSavedBike] = useState(false);
+  // Continuing from the confirmation offers the Strava sync rather than leaving
+  // straight for the garage — the mileage the app reasons about comes from
+  // rides, and this is the moment the user has a bike to sync.
+  const [offeringStrava, setOfferingStrava] = useState(false);
+  const createBike = useCreateBike();
 
   const form = useForm<AddBikeIdentityValues>({
     initialValues: {
@@ -197,10 +258,32 @@ export function useAddBikeWizard(): AddBikeWizard {
     nextStep();
   }
 
-  // Each pick replaces the previous preview, whose object URL would otherwise
-  // stay allocated for the life of the document.
+  // A picked photo is staged for framing rather than used as it is: a phone
+  // shoots 4:3 portrait and the app shows a wide strip, so without a crop the
+  // bike becomes a slice of its own photo. Clearing the pick (file === null)
+  // clears the photo outright, which is how "remove" still works.
   function pickPhoto(file: File | null): void {
     tapFeedback();
+    if (!file) {
+      setPhotoToCropUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return null;
+      });
+      setPhotoToCrop(null);
+      applyPhoto(null);
+      return;
+    }
+
+    setPhotoToCrop(file);
+    setPhotoToCropUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+  }
+
+  // Each photo replaces the previous preview, whose object URL would otherwise
+  // stay allocated for the life of the document.
+  function applyPhoto(file: File | null): void {
     setPhoto(file);
     setPhotoUrl((current) => {
       if (current) URL.revokeObjectURL(current);
@@ -208,10 +291,23 @@ export function useAddBikeWizard(): AddBikeWizard {
     });
   }
 
-  function changeSpecification<K extends keyof BikeSpecificationValues>(
-    field: K,
-    value: BikeSpecificationValues[K],
-  ): void {
+  // Backing out of the crop leaves whatever photo was already there, so a bad
+  // pick does not also throw away a good earlier one.
+  function cancelCrop(): void {
+    setPhotoToCropUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+    setPhotoToCrop(null);
+  }
+
+  // Only the cropped file is kept — the original was never the one being sent.
+  function confirmCrop(cropped: File): void {
+    applyPhoto(cropped);
+    cancelCrop();
+  }
+
+  function changeSpecification<K extends keyof BikeSpecificationValues>(field: K, value: BikeSpecificationValues[K]): void {
     setSpecification((current) => ({ ...current, [field]: value }));
   }
 
@@ -262,11 +358,7 @@ export function useAddBikeWizard(): AddBikeWizard {
 
   // A split part owns one entry per side, so the edit is addressed by both the
   // type and the field it was typed into.
-  function changeComponentDescription(
-    componentTypeId: number,
-    position: ComponentPosition,
-    description: string,
-  ): void {
+  function changeComponentDescription(componentTypeId: number, position: ComponentPosition, description: string): void {
     setComponentEdits((current) => ({
       ...current,
       [entryKey(componentTypeId, position)]: { description },
@@ -308,17 +400,129 @@ export function useAddBikeWizard(): AddBikeWizard {
     setOpenGroupId((current) => (current === groupId ? null : groupId));
   }
 
-  // pickPhoto frees the URL it replaces, which leaves the last one to free when
-  // the wizard goes away. Kept in a ref so this runs on unmount only.
+  // What step 3 collected, reduced to the records the create call will write.
+  const componentsToSave = defaultComponentsQuery.data
+    ? toMountedComponents(
+        componentEntries,
+        visibleComponents(defaultComponentsQuery.data, specification.suspension),
+        splitComponents,
+        disabledComponents,
+      )
+    : [];
+
+  function openSummary(): void {
+    tapFeedback();
+    setSummaryOpen(true);
+  }
+
+  function closeSummary(): void {
+    setSummaryOpen(false);
+  }
+
+  // The year is free text on the form but a number on the bike; anything that
+  // is not a year is left unset rather than sent as NaN.
+  function parsedYear(): number | undefined {
+    const year = Number(form.values.year);
+    return Number.isInteger(year) && year > 0 ? year : undefined;
+  }
+
+  function buildBikePayload(): CreateBikePayload {
+    const suspension = SUSPENSION_FLAGS[specification.suspension ?? "none"];
+    // A letter size answers the frame size on its own; "other" is when the free
+    // text is what the user actually gave.
+    const bikeSize =
+      specification.frameSize === "other" ? specification.sizeLength.trim() : (specification.frameSize ?? undefined);
+
+    return {
+      bike_brand: form.values.brand.trim(),
+      ebike: specification.ebike,
+      has_front_suspension: suspension.front,
+      has_rear_suspension: suspension.rear,
+      bike_model: form.values.model.trim() || undefined,
+      bikename: specification.bikeName.trim() || undefined,
+      year: parsedYear(),
+      wheel_size: specification.wheelSize ?? undefined,
+      bike_size: bikeSize || undefined,
+      // Digits only from the input, so an empty field means "not given" rather
+      // than zero kilometres.
+      total_km: specification.currentMileage ? Number(specification.currentMileage) : undefined,
+      // The category the user picked on step 2 is the bike type's name; the
+      // backend turns it into bike_type_id, which the default service intervals
+      // are keyed off.
+      bike_type: specification.category ?? undefined,
+      // The scraped photo travels as a URL; a photo picked on the device is
+      // uploaded as a file instead and overrides it on the backend.
+      image_url: confirmedBike?.imageUrl ? String(confirmedBike.imageUrl) : undefined,
+    };
+  }
+
+  function saveBike(): void {
+    tapFeedback();
+    // Frozen here so an error can be traced back to the exact list that was
+    // sent, whatever the live one looks like by the time the error arrives.
+    const sent = componentsToSave;
+    setSentComponents(sent);
+
+    createBike.mutate(
+      {
+        bike: buildBikePayload(),
+        components: sent.map((component) => ({
+          component_type_id: component.component.component_type_id,
+          component_desc: component.component.component_desc,
+          position: component.component.position,
+        })),
+        image: photo,
+      },
+      {
+        onSuccess: () => {
+          // The wizard gives way to its own confirmation rather than dropping
+          // the user back on the dashboard with nothing to show for the work.
+          setSummaryOpen(false);
+          setSavedBike(true);
+        },
+      },
+    );
+  }
+
+  // The backend addresses a rejected component by its position in the payload
+  // ("components.21.component_desc"), which says nothing to the user. Only the
+  // wizard knows what sits at that index, so the name is put back here.
+  function namedSaveErrors(): string[] {
+    if (!(createBike.error instanceof ApiError)) return [];
+
+    return createBike.error.details.map((detail) => {
+      const match = /^components\.(\d+)\.(\w+):\s*(.*)$/.exec(detail);
+      if (!match) return detail;
+
+      const [, index, , reason] = match;
+      const component = sentComponents[Number(index)];
+      if (!component) return detail;
+
+      const name = component.component_i18n_key
+        ? t(component.component_i18n_key)
+        : component.component_name;
+      const position = component.component.position;
+      const side = position === "front" || position === "rear" ? ` (${t(`addBike.position${position === "front" ? "Front" : "Rear"}`)})` : "";
+
+      return `${name}${side}: ${reason}`;
+    });
+  }
+
+  // Each handler frees the URL it replaces, which leaves the last of each to
+  // free when the wizard goes away — including a crop abandoned by leaving the
+  // page. Kept in a ref so this runs on unmount only.
   const photoUrlRef = useRef(photoUrl);
+  const photoToCropUrlRef = useRef(photoToCropUrl);
 
   useEffect(() => {
     photoUrlRef.current = photoUrl;
-  }, [photoUrl]);
+    photoToCropUrlRef.current = photoToCropUrl;
+  }, [photoUrl, photoToCropUrl]);
 
   useEffect(() => {
     return () => {
       if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
+      if (photoToCropUrlRef.current) URL.revokeObjectURL(photoToCropUrlRef.current);
     };
   }, []);
 
@@ -352,7 +556,12 @@ export function useAddBikeWizard(): AddBikeWizard {
     specification,
     changeSpecification,
     photoUrl,
+    photo,
     pickPhoto,
+    photoToCrop,
+    photoToCropUrl,
+    cancelCrop,
+    confirmCrop,
 
     componentGroups: groupsQuery.data,
     // A hardtail is never asked about its shock, so the row is dropped before
@@ -372,11 +581,37 @@ export function useAddBikeWizard(): AddBikeWizard {
     // forever — that is nothing to prefill, not a load in progress. The list
     // itself waits for groups and defaults.
     componentsLoading:
-      groupsQuery.isPending ||
-      defaultComponentsQuery.isPending ||
-      (confirmedBike !== null && componentsQuery.isPending),
+      groupsQuery.isPending || defaultComponentsQuery.isPending || (confirmedBike !== null && componentsQuery.isPending),
     // A failed scrape only costs the prefill; the form itself still works, so
     // only the two lists it is built from can break the step.
     componentsError: groupsQuery.isError || defaultComponentsQuery.isError,
+
+    summaryOpen,
+    openSummary,
+    closeSummary,
+    componentsToSave,
+    saveBike,
+    isSaving: createBike.isPending,
+    saveFailed: createBike.isError,
+    saveErrorDetails: namedSaveErrors(),
+
+    savedBike,
+    savedBikeName:
+      specification.bikeName.trim() ||
+      [form.values.brand.trim(), form.values.model.trim()].filter((part) => part !== "").join(" "),
+    offeringStrava,
+    // Continuing from the confirmation moves on to the Strava offer; from the
+    // offer itself there is nothing after it, so that leaves for the garage.
+    leaveAfterSave: () => {
+      if (offeringStrava) {
+        navigate("/bikes");
+        return;
+      }
+      setOfferingStrava(true);
+    },
+    // TODO: redirect into the Strava OAuth flow once the backend exposes a
+    // connect endpoint — only gear-linking exists today. Until then the offer
+    // cannot be acted on, so it ends like skipping it.
+    connectStrava: () => navigate("/bikes"),
   };
 }

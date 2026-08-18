@@ -1,0 +1,700 @@
+<title>Transitions & The Invisible Skill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+  :root {
+    --ground: #FAF8F5;
+    --raised: #FFFFFF;
+    --sunken: #F1EDE7;
+    --ink: #1A1714;
+    --ink-2: #4A443C;
+    --ink-3: #7A7268;
+    --rule: #E0DAD1;
+    --rule-2: #CFC7BB;
+    --accent: #A85614;
+    --accent-soft: #F5E9DC;
+
+    --fixed: #2F7A4E;
+    --fixed-bg: #E6F1E9;
+    --incomplete: #9A7412;
+    --incomplete-bg: #F7EFD9;
+    --broken: #B03B26;
+    --broken-bg: #F9E6E1;
+    --data: #4A6E93;
+    --data-bg: #E7EDF4;
+
+    --shadow: 0 1px 2px rgba(26, 23, 20, .06), 0 4px 14px rgba(26, 23, 20, .05);
+
+    --step--1: clamp(.76rem, .74rem + .1vw, .82rem);
+    --step-0: clamp(1rem, .97rem + .14vw, 1.08rem);
+    --step-1: clamp(1.2rem, 1.13rem + .32vw, 1.42rem);
+    --step-2: clamp(1.5rem, 1.36rem + .62vw, 1.95rem);
+    --step-3: clamp(2rem, 1.72rem + 1.3vw, 2.9rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12100E;
+      --raised: #1C1916;
+      --sunken: #191613;
+      --ink: #F2EDE6;
+      --ink-2: #BDB4A8;
+      --ink-3: #8A8176;
+      --rule: #2E2923;
+      --rule-2: #423B33;
+      --accent: #D98A3D;
+      --accent-soft: #2A1F14;
+
+      --fixed: #6DBF8E;
+      --fixed-bg: #14251B;
+      --incomplete: #D9B155;
+      --incomplete-bg: #26200F;
+      --broken: #E5806A;
+      --broken-bg: #2B1713;
+      --data: #8FB3D9;
+      --data-bg: #141D28;
+
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #12100E;
+    --raised: #1C1916;
+    --sunken: #191613;
+    --ink: #F2EDE6;
+    --ink-2: #BDB4A8;
+    --ink-3: #8A8176;
+    --rule: #2E2923;
+    --rule-2: #423B33;
+    --accent: #D98A3D;
+    --accent-soft: #2A1F14;
+
+    --fixed: #6DBF8E;
+    --fixed-bg: #14251B;
+    --incomplete: #D9B155;
+    --incomplete-bg: #26200F;
+    --broken: #E5806A;
+    --broken-bg: #2B1713;
+    --data: #8FB3D9;
+    --data-bg: #141D28;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 14px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: var(--step-0);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: clamp(1.75rem, 1.2rem + 2.4vw, 4rem) clamp(1.1rem, .7rem + 1.8vw, 2.5rem) 5rem;
+  }
+
+  .mono {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .eyebrow {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: var(--step--1);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .9rem;
+    align-items: baseline;
+  }
+
+  .eyebrow .branch { color: var(--accent); }
+
+  h1 {
+    font-family: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 800;
+    font-size: var(--step-3);
+    line-height: 1.02;
+    letter-spacing: -.022em;
+    text-wrap: balance;
+    margin: .7rem 0 0;
+  }
+
+  .standfirst {
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--ink-2);
+    max-width: 34ch;
+    margin: .85rem 0 0;
+    text-wrap: pretty;
+  }
+
+  /* ---------- alert ---------- */
+
+  .alert {
+    margin-top: 1.75rem;
+    border: 1px solid var(--rule-2);
+    border-left: 3px solid var(--broken);
+    background: var(--raised);
+    border-radius: 3px;
+    padding: .95rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    box-shadow: var(--shadow);
+  }
+
+  .alert strong {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  .alert p { margin: 0; color: var(--ink-2); font-size: .95em; }
+
+  /* ---------- totals ---------- */
+
+  .totals {
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--rule-2);
+    border-bottom: 1px solid var(--rule-2);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  }
+
+  .tot {
+    padding: 1rem .4rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    border-right: 1px solid var(--rule);
+  }
+
+  .tot:last-child { border-right: 0; }
+
+  .tot dt {
+    font-family: "JetBrains Mono", monospace;
+    font-size: .7rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .tot dd {
+    margin: 0;
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    font-size: var(--step-2);
+    line-height: 1;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tot dd .unit {
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--ink-3);
+    letter-spacing: 0;
+  }
+
+  .tot.flag dd { color: var(--broken); }
+
+  /* ---------- sections ---------- */
+
+  section { margin-top: 3.25rem; }
+
+  .sec-head {
+    display: flex;
+    gap: .9rem;
+    align-items: baseline;
+    border-bottom: 1px solid var(--rule-2);
+    padding-bottom: .6rem;
+  }
+
+  .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--accent);
+    flex: none;
+    padding-top: .3rem;
+  }
+
+  h2 {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    font-size: var(--step-2);
+    line-height: 1.12;
+    letter-spacing: -.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    font-size: var(--step-0);
+    letter-spacing: .01em;
+    margin: 2rem 0 .6rem;
+  }
+
+  p { margin: 0 0 .9rem; max-width: 66ch; text-wrap: pretty; }
+
+  .lede { margin-top: 1.2rem; }
+
+  code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: .84em;
+    background: var(--sunken);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .08em .34em;
+    color: var(--ink);
+    word-break: break-word;
+  }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  /* ---------- change rows ---------- */
+
+  .changes { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; margin: 1.4rem 0; }
+
+  .change { background: var(--raised); padding: .9rem 1.1rem; }
+
+  .change b {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    letter-spacing: -.005em;
+    display: block;
+    margin-bottom: .2rem;
+  }
+
+  .change p { margin: 0; color: var(--ink-2); font-size: .94em; max-width: 64ch; }
+
+  /* ---------- files table ---------- */
+
+  .tbl-scroll { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--rule); border-radius: 3px; }
+
+  table { border-collapse: collapse; width: 100%; min-width: 33rem; background: var(--raised); }
+
+  th, td {
+    text-align: left;
+    padding: .62rem .85rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: .92rem;
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+
+  th {
+    font-family: "JetBrains Mono", monospace;
+    font-size: .68rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 400;
+    background: var(--sunken);
+  }
+
+  td.path { font-family: "JetBrains Mono", monospace; font-size: .8rem; white-space: nowrap; }
+  td.role { color: var(--ink-2); }
+
+  .tag {
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: .64rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    padding: .16em .5em;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .tag.new { background: var(--fixed-bg); color: var(--fixed); }
+  .tag.edit { background: var(--sunken); color: var(--ink-3); }
+
+  /* ---------- findings ---------- */
+
+  .findings { display: flex; flex-direction: column; gap: .55rem; margin: 1.2rem 0; }
+
+  .f {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .1rem .85rem;
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--k);
+    border-radius: 3px;
+    padding: .8rem 1rem .85rem;
+  }
+
+  .f .kind {
+    grid-row: 1 / span 2;
+    font-family: "JetBrains Mono", monospace;
+    font-size: .62rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--k);
+    background: var(--kb);
+    border-radius: 2px;
+    padding: .3em .5em;
+    height: max-content;
+    white-space: nowrap;
+  }
+
+  .f b {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    font-size: .97rem;
+    letter-spacing: -.005em;
+  }
+
+  .f p { margin: .15rem 0 0; color: var(--ink-2); font-size: .92rem; max-width: 62ch; }
+
+  .f.broken { --k: var(--broken); --kb: var(--broken-bg); }
+  .f.incomplete { --k: var(--incomplete); --kb: var(--incomplete-bg); }
+  .f.unverified { --k: var(--data); --kb: var(--data-bg); }
+  .f.fixed { --k: var(--fixed); --kb: var(--fixed-bg); }
+
+  /* ---------- remaining ---------- */
+
+  .actor-group { margin-top: 1.5rem; }
+
+  .actor-head {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .8rem;
+  }
+
+  .actor-chip {
+    font-family: "JetBrains Mono", monospace;
+    font-size: .64rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 2px;
+    padding: .3em .6em;
+  }
+
+  .actor-head span:last-child { color: var(--ink-3); font-size: .88rem; }
+
+  ol.steps { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: .9rem; }
+  ol.steps li { padding-left: .2rem; }
+  ol.steps li::marker { font-family: "JetBrains Mono", monospace; font-size: .82rem; color: var(--accent); }
+  ol.steps b { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; }
+  ol.steps p { margin: .2rem 0 0; color: var(--ink-2); font-size: .93rem; }
+
+  pre {
+    background: var(--sunken);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .75rem .9rem;
+    overflow-x: auto;
+    margin: .6rem 0 0;
+    font-size: .82rem;
+    line-height: 1.55;
+  }
+
+  pre code { background: none; border: 0; padding: 0; font-size: 1em; }
+
+  ul.carry { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+
+  ul.carry li {
+    display: flex;
+    gap: .7rem;
+    align-items: baseline;
+    border-bottom: 1px dotted var(--rule-2);
+    padding-bottom: .5rem;
+    font-size: .94rem;
+    color: var(--ink-2);
+  }
+
+  ul.carry li:last-child { border-bottom: 0; }
+  ul.carry b { color: var(--ink); font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; }
+
+  .dot { flex: none; width: .45rem; height: .45rem; border-radius: 50%; background: var(--k, var(--ink-3)); transform: translateY(-.15em); }
+  li.broken { --k: var(--broken); }
+  li.incomplete { --k: var(--incomplete); }
+  li.decision { --k: var(--data); }
+
+  /* ---------- verification ---------- */
+
+  .checks { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; margin: 1.2rem 0; }
+
+  .check {
+    background: var(--raised);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem .8rem;
+    align-items: baseline;
+    padding: .6rem .95rem;
+  }
+
+  .check .what { font-family: "JetBrains Mono", monospace; font-size: .8rem; flex: 1 1 16rem; word-break: break-word; }
+  .check .res { font-family: "JetBrains Mono", monospace; font-size: .7rem; letter-spacing: .07em; text-transform: uppercase; padding: .2em .5em; border-radius: 2px; }
+  .check .res.pass { background: var(--fixed-bg); color: var(--fixed); }
+  .check .res.fail { background: var(--broken-bg); color: var(--broken); }
+  .check .res.skip { background: var(--sunken); color: var(--ink-3); }
+
+  footer {
+    margin-top: 3.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--rule-2);
+    color: var(--ink-3);
+    font-size: .88rem;
+  }
+
+  footer .mono { font-size: .78rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">
+      <span>Handover</span>
+      <span>18 Aug 2026</span>
+      <span class="branch">feat/add-bike-steps-2-3</span>
+      <span>on 38c4a9f</span>
+    </div>
+    <h1>Transitions &amp; the invisible skill</h1>
+    <p class="standfirst">A short day: the page slide was retuned, and a skill was found sitting in a directory nothing reads.</p>
+
+    <div class="alert">
+      <strong>Nothing on this branch is committed.</strong>
+      <p>That now includes yesterday&rsquo;s six sections as well. The whole branch can still be discarded with git. This document continues <em>2026-08-17-bike-upload-and-garage.md</em>; everything it lists as broken or pending is still broken or pending.</p>
+    </div>
+  </header>
+
+  <dl class="totals">
+    <div class="tot"><dt>Files edited</dt><dd>33</dd></div>
+    <div class="tot"><dt>Files new</dt><dd>12</dd></div>
+    <div class="tot"><dt>Changed today</dt><dd>3 <span class="unit">+ 1 move</span></dd></div>
+    <div class="tot flag"><dt>Migrations</dt><dd>1 <span class="unit">unapplied</span></dd></div>
+    <div class="tot flag"><dt>Seen running</dt><dd>No</dd></div>
+  </dl>
+
+  <section>
+    <div class="sec-head">
+      <span class="num">01</span>
+      <h2>The page transitions were retuned</h2>
+    </div>
+
+    <p class="lede">Section 6 of yesterday&rsquo;s document describes the slide transitions as they stood at 19:30. Three files changed after that, so parts of that description are now out of date. What is on disk today:</p>
+
+    <div class="changes">
+      <div class="change">
+        <b>Timing and easing changed together</b>
+        <p>Duration went from 260&thinsp;ms to <strong>480&thinsp;ms</strong>, easing to <code>cubic-bezier(0.16, 0.9, 0.55, 1)</code>. The reasoning is commented in place: the new curve finishes braking earlier, so the old budget would have left the panel sitting still at the end of its own animation. The comment records which way to push the second control point to lengthen or flatten the tail.</p>
+      </div>
+      <div class="change">
+        <b>Layers now paint their own background</b>
+        <p>Pages carry no background of their own &mdash; it lives on the AppShell &mdash; so two bare sliding layers showed through each other in flight. A new <code>surface</code> prop paints each layer for exactly as long as it animates, transparent at rest so the shell background and footer gradient still show.</p>
+      </div>
+      <div class="change">
+        <b>Same-route re-renders no longer restart the animation</b>
+        <p>When the pathname is unchanged but the children are not &mdash; a query resolving, a wizard step advancing &mdash; content swaps without starting a transition. An identity bail-out on the children stops it re-rendering on every parent render.</p>
+      </div>
+      <div class="change">
+        <b>Arriving pages no longer fade</b>
+        <p>The inbound keyframes animate transform only. An arriving page is the layer the eye lands on, and a translucent one showed the outgoing page straight through it. The page <em>underneath</em> still dims to 0.6 as it gives way &mdash; that one is meant to recede.</p>
+      </div>
+    </div>
+
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr><th>File</th><th>State</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="path">PageTransition.tsx</td>
+            <td><span class="tag new">New</span></td>
+            <td class="role">159 lines (134 yesterday) &mdash; <code>surface</code>, the same-route bail-out, retuned constants</td>
+          </tr>
+          <tr>
+            <td class="path">global.css</td>
+            <td><span class="tag edit">Edited</span></td>
+            <td class="role">Arriving keyframes lost their opacity ramp</td>
+          </tr>
+          <tr>
+            <td class="path">AppLayout.tsx</td>
+            <td><span class="tag edit">Edited</span></td>
+            <td class="role">Passes <code>surface</code> to the header instance</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Broken, incomplete, unverified</h3>
+
+    <div class="findings">
+      <div class="f unverified">
+        <span class="kind">Unverified</span>
+        <b>Never seen running</b>
+        <p>480&thinsp;ms, the 25% travel of the page underneath and the 0.6 dim are picked by feel, not measured against a design. 480&thinsp;ms is long for a mobile transition &mdash; the number most likely to feel wrong the first time you watch it. The easing comment tells you how to move it.</p>
+      </div>
+      <div class="f broken">
+        <span class="kind">Broken</span>
+        <b>The exit is timed by <code>setTimeout</code>, not <code>animationend</code></b>
+        <p>Unchanged from yesterday. A throttled animation still gets its outgoing frame pulled at the duration mark whether or not it finished.</p>
+      </div>
+      <div class="f broken">
+        <span class="kind">Broken</span>
+        <b>Header and content are two independent animations</b>
+        <p>Same pathname, same duration, nothing synchronising them. The longer 480&thinsp;ms window makes any drift easier to see, not harder.</p>
+      </div>
+      <div class="f incomplete">
+        <span class="kind">Incomplete</span>
+        <b>No <code>prefers-reduced-motion</code> handling</b>
+        <p>The slide plays regardless of the system setting, and the movement is now longer than when this gap was first noted.</p>
+      </div>
+      <div class="f incomplete">
+        <span class="kind">Incomplete</span>
+        <b><code>surface</code> must be kept in step with what is behind the slot</b>
+        <p>It is a hardcoded colour passed by the caller, so a future theme change to the header or shell background will silently desynchronise the in-flight layer from the surface it is meant to match.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="num">02</span>
+      <h2>The skill was in a directory Claude Code never reads</h2>
+    </div>
+
+    <p class="lede">The <code>what-was-done</code> skill existed at <code>.github/skills/what-was-done/SKILL.md</code> and was invisible. Claude Code only scans <code>.claude/skills/</code>. <code>.github/skills/</code> is a real location &mdash; for GitHub Copilot, not for Claude Code.</p>
+
+    <p>The directory was moved to <code>.claude/skills/what-was-done/</code>. <code>git mv</code> failed because the source was untracked and git therefore considered it empty; a plain <code>mv</code> did the move. The file is intact and unchanged at 5085 bytes.</p>
+
+    <div class="findings">
+      <div class="f fixed">
+        <span class="kind">Fixed</span>
+        <b><code>what-was-done</code> now loads</b>
+        <p>Moved to the directory Claude Code actually scans. This document is the first output of the skill running from its new home.</p>
+      </div>
+      <div class="f incomplete">
+        <span class="kind">Incomplete</span>
+        <b><code>review-domain-architecture</code> was left behind</b>
+        <p>It was not part of what you asked to move, so it is still in the Copilot location and still invisible to Claude Code. If it is also meant for Claude Code, it needs the same move.</p>
+      </div>
+      <div class="f incomplete">
+        <span class="kind">Incomplete</span>
+        <b><code>.claude/skills/</code> is untracked</b>
+        <p>The whole skill currently sits outside git.</p>
+      </div>
+    </div>
+
+    <h3>Decision</h3>
+    <p><strong>Which tool owns these skills.</strong> The two skill directories now live in two places for two different tools. If both are meant for Claude Code, move the second one. If both tools are meant to see them, they need a copy in each location &mdash; there is no shared directory that both read.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="num">&mdash;</span>
+      <h2>What is left</h2>
+    </div>
+
+    <p class="lede">Everything in yesterday&rsquo;s list is unchanged. Re-verified on disk today.</p>
+
+    <div class="actor-group">
+      <div class="actor-head">
+        <span class="actor-chip">You</span>
+        <span>Only you can run these</span>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>Apply the migration.</b>
+          <p><code>20260817120000_cascade_mounted_component_children</code> is still unapplied. Until then, deleting a bike with service history fails outright.</p>
+<pre><code>cd _backend
+npx prisma migrate deploy
+npx prisma generate</code></pre>
+          <p>The pre-change backup is at <code>~/db_backups/monolith_dev_2026-08-17_143228.dump</code>.</p>
+        </li>
+        <li>
+          <b>Look at the UI.</b>
+          <p>Add-bike step 2 and 3, the summary modal, the confirmation screen, the Bikes tab and now the retuned transitions have never been rendered. The transitions are where looking is not optional &mdash; a timing value cannot be reviewed any other way.</p>
+        </li>
+        <li>
+          <b>Re-run <code>gen:api</code></b> with the server up.
+          <p>The generated schema is still a revision behind: <code>bike_type</code>, the removed <code>frame_material</code> and the new length limits are missing from it.</p>
+        </li>
+      </ol>
+    </div>
+
+    <div class="actor-group">
+      <div class="actor-head">
+        <span class="actor-chip">Open</span>
+        <span>Carried over from yesterday, still true</span>
+      </div>
+
+      <ul class="carry">
+        <li class="broken"><span class="dot"></span><span><b>Component names in validation errors</b> &mdash; only the first error is rewritten, cause never found, work stopped on request.</span></li>
+        <li class="broken"><span class="dot"></span><span><b>The 7&thinsp;MB photo already in R2</b> &mdash; resizing only applies to new uploads.</span></li>
+        <li class="incomplete"><span class="dot"></span><span><b>The <code>CLOUDFARE_PUBLIC_URL</code> typo</b> &mdash; confirmed still present today on two <code>console.log</code> lines in <code>storage.service.ts:64-65</code>. The <code>return</code> uses the correct spelling, so only the log output is wrong.</span></li>
+        <li class="broken"><span class="dot"></span><span><b>Wear bars have no data source</b> &mdash; the badge reads &ldquo;Good&rdquo; for every bike.</span></li>
+        <li class="incomplete"><span class="dot"></span><span><b><code>frame_material</code></b> is still in the database and in <code>ResponseBikeDto</code> but no longer in the create path, so <code>BikeCard</code> shows it blank on every new bike.</span></li>
+        <li class="decision"><span class="dot"></span><span><b>Splitting the branch into commits</b> &mdash; now six concerns in one uncommitted block. The transitions remain the cleanest to split off.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="num">&mdash;</span>
+      <h2>Verification</h2>
+    </div>
+
+    <p class="lede">Re-run today, after the transition changes &mdash; not carried over from yesterday.</p>
+
+    <div class="checks">
+      <div class="check">
+        <span class="what">npx tsc -b &nbsp;<span style="opacity:.65">(frontend)</span></span>
+        <span class="res pass">Exit 0</span>
+      </div>
+      <div class="check">
+        <span class="what">npx tsc --noEmit -p apps/monolith/tsconfig.app.json</span>
+        <span class="res pass">Exit 0</span>
+      </div>
+      <div class="check">
+        <span class="what">npx eslint PageTransition.tsx AppLayout.tsx</span>
+        <span class="res pass">Exit 0</span>
+      </div>
+      <div class="check">
+        <span class="what">Test suites</span>
+        <span class="res skip">Not re-run</span>
+      </div>
+    </div>
+
+    <p>Plain <code>tsc --noEmit</code> checks <strong>nothing</strong> in this repo &mdash; the root tsconfig is <code>"files": []</code> with project references. Tests were not re-run today; nothing outside the two frontend layout files and the skill directory changed. Yesterday&rsquo;s result stands &mdash; <code>bike.service.unit.test.ts</code> has 4 tests failing for a pre-existing missing <code>PinoLogger</code> provider, confirmed by stashing at the time.</p>
+
+    <p><strong>None of this says anything about whether the app renders correctly.</strong></p>
+  </section>
+
+  <footer>
+    <p class="mono">what_was_done/2026-08-18-page-transitions-and-skill-location.md</p>
+  </footer>
+
+</div>

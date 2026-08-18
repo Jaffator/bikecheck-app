@@ -243,6 +243,12 @@ export function BikeComponentList({
         const configured = countConfigured(entries, groupComponentTypes, splitComponents, disabledComponents);
         const fields = countFields(groupComponentTypes, splitComponents, disabledComponents);
         const groupName = translatedName(group.i18n_key, group.group_name, t);
+        // The mark only goes to the accent colour once every part in the group is
+        // described — a half-answered group stays grey, so what is left to do is
+        // visible without opening the rows. A group with nothing to ask (every
+        // part marked absent) counts as done rather than permanently grey.
+        const complete = fields === 0 || configured === fields;
+        const highlighted = isOpen || complete;
         // Addressed by the seeded English name, not the translated one the row
         // displays. A group without an icon of its own falls back to the tool.
         const GroupIcon = groupIcon(group.group_name);
@@ -283,17 +289,17 @@ export function BikeComponentList({
             >
               <Group justify="space-between" wrap="nowrap" gap="sm">
                 <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                  <GroupMark highlighted={isOpen || configured > 0}>
+                  <GroupMark highlighted={highlighted}>
                     {GroupIcon ? (
                       <GroupIcon
                         width={26}
                         height={26}
-                        color={isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
+                        color={highlighted ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
                       />
                     ) : (
                       <Wrench
                         size={18}
-                        color={isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
+                        color={highlighted ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)"}
                       />
                     )}
                   </GroupMark>
@@ -308,7 +314,7 @@ export function BikeComponentList({
                     ) : configured > 0 ? (
                       // A group with every part described is done, and says so
                       // in the accent colour; a partial count stays quiet.
-                      <Text size="sm" c={configured === fields ? "primary.6" : "text.8"}>
+                      <Text size="sm" c={complete ? "primary.6" : "text.8"}>
                         {t("addBike.partsConfigured", { count: configured, total: fields })}
                       </Text>
                     ) : (

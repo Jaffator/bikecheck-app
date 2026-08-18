@@ -73,10 +73,10 @@ fs.readdir(inputDir, (err, files) => {
   if (err) return console.error(err);
 
   files
-    .filter((file) => path.extname(file).toLowerCase() === ".jpeg")
+    .filter((file) => path.extname(file).toLowerCase() === ".png")
     .forEach((file) => {
       const inputPath = path.join(inputDir, file);
-      const outputPath = path.join(outputDir, file.replace(".jpeg", ".svg"));
+      const outputPath = path.join(outputDir, file.replace(".png", ".svg"));
 
       potrace.trace(inputPath, params, (err, svg) => {
         if (err) {

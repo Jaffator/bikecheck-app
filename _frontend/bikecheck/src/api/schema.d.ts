@@ -407,6 +407,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Component createComponentType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/components/default-components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Component getDefaultComponents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/components/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Component getGroups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/components/mounted-components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Component getMountedComponents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/organizations": {
         parameters: {
             query?: never;
@@ -700,7 +764,7 @@ export interface components {
         };
         CreateBikeDto: {
             /** @example 1 */
-            user_id: number;
+            user_id?: number;
             /** @example Trek */
             bike_brand: string;
             /** @example true */
@@ -723,8 +787,8 @@ export interface components {
             wheel_size?: string;
             /** @example L */
             bike_size?: string;
-            /** @example 1 */
-            bike_type_id?: number;
+            /** @example Enduro */
+            bike_type?: string;
             /** @example 1540 */
             total_km?: number;
             /** @example Carbon */
@@ -734,7 +798,7 @@ export interface components {
         };
         CreateMountedComponentsDto: {
             /** @example 1 */
-            bike_id: number;
+            bike_id?: number;
             /** @example 12 */
             component_type_id: number;
             /** @example Fox 38 Factory Grip2 */
@@ -835,6 +899,11 @@ export interface components {
              * @example true
              */
             has_position: boolean;
+            /**
+             * @description Every bike carries it, so it is saved even when left blank
+             * @example true
+             */
+            essential: boolean;
         };
         BikeBrands: {
             /** @example Santa Cruz */
@@ -999,6 +1068,88 @@ export interface components {
             /** @example false */
             side_choice: boolean;
             actions: components["schemas"]["ActionDto"][];
+        };
+        CustomComponentsDto: {
+            /** @example 15 */
+            component_group_id: number;
+            /** @example 1 */
+            user_id: number;
+            /** @example Custom Component Name */
+            component_type: string;
+            /** @example false */
+            ebike: boolean;
+            /** @example true */
+            has_position?: boolean | null;
+        };
+        Response_ComponentDto: {
+            /** @example 15 */
+            component_group_id: number;
+            /** @example 1 */
+            user_id: Record<string, never>;
+            /** @example Custom Component Name */
+            component_type: string;
+            /**
+             * @description null for user-created types
+             * @example component.chain
+             */
+            i18n_key: Record<string, never> | null;
+            /** @example false */
+            ebike: boolean;
+            /** @example true */
+            has_position: boolean;
+            /**
+             * @description Every bike carries it, so it is saved even when left blank
+             * @example true
+             */
+            essential: boolean;
+        };
+        Response_ComponentGroupDto: {
+            /** @example 1 */
+            id: number;
+            /** @example Drivetrain */
+            group_name: string;
+            /** @example componentGroup.drivetrain */
+            i18n_key: Record<string, never> | null;
+            /** @example false */
+            side_choice: boolean;
+        };
+        Response_MountedComponentsDto: {
+            /** @example 1 */
+            id: number;
+            /** @example 1 */
+            bike_id: number;
+            /** @example 12 */
+            component_type_id: number;
+            /** @example rear */
+            position: Record<string, never> | null;
+            /** @example 2026-03-26T10:00:00.000Z */
+            mounted_at: Record<string, never> | null;
+            /** @example null */
+            removed_at: Record<string, never> | null;
+            /** @example 2026-03-26T10:00:00.000Z */
+            updated_at: Record<string, never> | null;
+            /** @example 2026-03-26T10:00:00.000Z */
+            created_at: Record<string, never> | null;
+            /** @example 1200 */
+            total_km: Record<string, never> | null;
+            /** @example Mounted after spring service */
+            note: Record<string, never> | null;
+            /** @example true */
+            is_active: Record<string, never> | null;
+            /** @example false */
+            is_deleted: Record<string, never> | null;
+            /** @example null */
+            deleted_at: Record<string, never> | null;
+            /** @example Fox 38 Factory Grip2 */
+            component_desc: Record<string, never> | null;
+            /** @example 1200 */
+            total_time_min: Record<string, never> | null;
+            /** @example 80000 */
+            drivetrain_km: Record<string, never> | null;
+            /** @example 480 */
+            suspension_min: Record<string, never> | null;
+            /** @example 85 */
+            health_index: Record<string, never> | null;
         };
         CreateOrganizationDto: {
             name: string;
@@ -1356,7 +1507,12 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateBikeWithComponentsDto"];
+                "multipart/form-data": {
+                    /** @description CreateBikeWithComponentsDto serialized as JSON */
+                    data: string;
+                    /** Format: binary */
+                    image?: string;
+                };
             };
         };
         responses: {
@@ -1664,6 +1820,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Response_BikeEvent_Dto"];
+                };
+            };
+        };
+    };
+    "Component createComponentType": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomComponentsDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_ComponentDto"];
+                };
+            };
+        };
+    };
+    "Component getDefaultComponents": {
+        parameters: {
+            query: {
+                ebike: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssembleBikeComponentsDto"][];
+                };
+            };
+        };
+    };
+    "Component getGroups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_ComponentGroupDto"][];
+                };
+            };
+        };
+    };
+    "Component getMountedComponents": {
+        parameters: {
+            query: {
+                bikeId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_MountedComponentsDto"][];
                 };
             };
         };

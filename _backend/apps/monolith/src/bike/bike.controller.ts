@@ -1,30 +1,87 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import path from 'path';
+import { plainToInstance } from 'class-transformer';
+import { validate, type ValidationError } from 'class-validator';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { BikeService } from './bike.service';
 import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.service';
-import { CreateBikeWithComponentsDto } from './dto/create-bike.dto';
+import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
-import { ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { ApiResponse, ApiBody, ApiQuery, ApiConsumes, ApiExtraModels } from '@nestjs/swagger';
 import { SearchBikeExternalResponseDto, ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
 import { AssembleBikeComponentsDto } from '../component/dto/response-components';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 // import { NewBikeFormData } from './types/bike.types';
 
+// The create body is declared as a raw multipart schema, so these DTOs are no
+// longer reachable from any decorator - listed here so the generated OpenAPI
+// schema (and the frontend types built from it) still contains them.
+@ApiExtraModels(CreateBikeWithComponentsDto, CreateBikeDto)
 @Controller('bike')
 export class BikeController {
   constructor(
     private readonly bikeService: BikeService,
     private readonly searchBikeExternalService: BikeDataScrapeService,
+    @InjectPinoLogger(BikeController.name) private readonly logger: PinoLogger,
   ) {}
 
-  // ---------- POST Create new bike with componenets - Image external URL ----------
+  // ---------- POST Create new bike with componenets - image as  URL or uploaded file ----------
+  // Multipart: "data" holds the JSON DTO as a string, "image" is the optional uploaded photo.
   @Post('/create')
-  @ApiBody({ type: CreateBikeWithComponentsDto })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        data: { type: 'string', description: 'CreateBikeWithComponentsDto serialized as JSON' },
+        image: { type: 'string', format: 'binary' },
+      },
+      required: ['data'],
+    },
+  })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      // Only guards the transfer: the image is resized before it is stored, so
+      // this caps what a phone may upload rather than what is kept.
+      limits: { fileSize: 15 * 1024 * 1024 },
+      // Phones send HEIC/HEIF and, through Capacitor, often no usable mime type
+      // at all - a blob read back from a webPath arrives as octet-stream. So the
+      // extension decides whenever the mime type is not an image one.
+      fileFilter: (_req, file, callback) => {
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.gif', '.avif'];
+        const extension = path.extname(file.originalname).toLowerCase();
+
+        if (file.mimetype.startsWith('image/') || allowedExtensions.includes(extension)) {
+          callback(null, true);
+          return;
+        }
+        callback(new BadRequestException(`Unsupported image type: ${file.mimetype || extension || 'unknown'}`), false);
+      },
+    }),
+  )
   async createBike(
     @CurrentUser('userId') userId: string,
-    @Body() dto: CreateBikeWithComponentsDto,
+    @Body('data') data: string,
+    @UploadedFile() image?: Express.Multer.File,
   ): Promise<ResponseBikeDto> {
-    return await this.bikeService.createBikeWithComponents(Number(userId), dto);
+    const dto = await this.parseCreateBikeDto(data);
+    return await this.bikeService.createBikeWithComponents(Number(userId), dto, image);
   }
 
   // ---------- GET External Bike List ----------
@@ -94,6 +151,43 @@ export class BikeController {
   deleteHard(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
     return this.bikeService.deleteHard(+id, Number(userId));
   }
+
+  // Multipart fields arrive as strings, so the global ValidationPipe is bypassed here.
+  private async parseCreateBikeDto(data: string): Promise<CreateBikeWithComponentsDto> {
+    if (!data) {
+      throw new BadRequestException('Missing "data" field');
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      throw new BadRequestException('Field "data" is not valid JSON');
+    }
+
+    const dto = plainToInstance(CreateBikeWithComponentsDto, parsed);
+    const errors = await validate(dto);
+
+    if (errors.length > 0) {
+      // Raw ValidationError objects are deeply nested and unreadable on the
+      // client, so they are flattened to "field: reason" lines instead.
+      const messages = flattenValidationErrors(errors);
+      this.logger.warn(`Rejected bike create: ${messages.join('; ')}`);
+      throw new BadRequestException({ message: messages, error: 'Validation failed' });
+    }
+
+    return dto;
+  }
+}
+
+// "bike.total_km: total_km must not be less than 0" - the path says which field,
+// including the index of the offending component.
+function flattenValidationErrors(errors: ValidationError[], parentPath = ''): string[] {
+  return errors.flatMap((error) => {
+    const path = parentPath ? `${parentPath}.${error.property}` : error.property;
+    const own = Object.values(error.constraints ?? {}).map((reason) => `${path}: ${String(reason)}`);
+    return [...own, ...flattenValidationErrors(error.children ?? [], path)];
+  });
 }
 // // ---------- Create new bike with componenets - Upload image ----------
 // @Post('/create/with-image')

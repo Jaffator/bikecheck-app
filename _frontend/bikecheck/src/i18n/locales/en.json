@@ -126,7 +126,21 @@
   "bikes": {
     "noBikesFound": "0 BIKES FOUND",
     "emptyTitle": "Your garage is currently empty",
-    "emptyBody": "Connect your Strava account or manually add a bike to start tracking component health and service intervals."
+    "emptyBody": "Connect your Strava account or manually add a bike to start tracking component health and service intervals.",
+    "intro": "Manage your high-performance machines and their technical health.",
+    "loadFailed": "Your bikes could not be loaded. Please try again.",
+    "cardMenu": "Bike actions",
+    "detailTitle": "Bike detail",
+    "detailComingSoon": "The full bike detail is coming soon.",
+    "kilometres_one": "{{count}} km",
+    "kilometres_other": "{{count}} km",
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "health": {
+      "good": "Good",
+      "warning": "Warning",
+      "critical": "Critical"
+    }
   },
   "addBike": {
     "title": "Add new bike",
@@ -148,6 +162,7 @@
     "findSpecification": "Find Specification",
     "awaitingSpecs": "Awaiting details to fetch component specs...",
     "nextStep": "Next Step",
+    "skipSearch": "Skip",
     "searchFailedTitle": "Sync Failure",
     "searchFailedBody": "Unable to connect to the bike database. We couldn't retrieve the technical specification right now.",
     "searchEmptyTitle": "No Matches Found",
@@ -157,6 +172,13 @@
     "enterManually": "Enter Manually",
     "addPhoto": "Add bike photo",
     "changePhoto": "Change photo",
+    "cropTitle": "Frame your photo",
+    "cropBody": "Pinch or use the slider to zoom, then drag the bike into the frame.",
+    "cropConfirm": "Use photo",
+    "bikeName": "Bike name",
+    "bikeNamePlaceholder": "e.g. Weekend trail bike",
+    "currentMileage": "Current mileage",
+    "currentMileagePlaceholder": "e.g. 1540",
     "selectModelTitle": "Select Bike Model",
     "selectModelBody": "We found multiple matches for your scan. Please verify the exact model below to ensure correct component tracking.",
     "resultsFound_one": "{{count}} bike found",
@@ -194,6 +216,25 @@
     "splitSides": "Rear/front",
     "mergeSides": "Merge",
     "partAbsent": "Have it",
-    "partAbsentUndo": "Don't have it"
+    "partAbsentUndo": "Don't have it",
+    "saveBike": "Save the bike",
+    "summaryTitle": "Summary",
+    "summaryBike": "Bike",
+    "summaryComponents": "Components",
+    "summaryNoComponents": "No components will be saved.",
+    "summaryNotSpecified": "Not specified",
+    "summaryEdit": "Edit",
+    "summaryConfirm": "Save",
+    "saveFailed": "The bike could not be saved. Please try again.",
+    "addedTitle": "New bike added",
+    "addedBody": "Your bike is in the garage. From now on you can track every service, keep an eye on component wear, and watch your costs add up — all in one place.",
+    "addedContinue": "Continue",
+    "stravaTitle": "Connect Strava for Smart Maintenance",
+    "stravaBenefitLifespan": "Estimated lifespan based on your performance",
+    "stravaBenefitSync": "Automatic ride data synchronization",
+    "stravaBenefitMonitoring": "Accurate monitoring of component life",
+    "stravaBenefitReminders": "Smart service reminders",
+    "stravaConnect": "Sync with Strava",
+    "stravaSkip": "Maybe later"
   }
 }

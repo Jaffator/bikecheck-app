@@ -12,11 +12,16 @@ interface AddBikeFooterProps {
   canConfirm: boolean;
   onConfirm: () => void;
   onBack: () => void;
-  // The last step has nothing to advance to yet — saving the bike lands with
-  // the create call.
+  // The last step has nothing to advance to, so it offers the save instead —
+  // which opens the summary rather than writing straight away.
   showsNext: boolean;
   canAdvance: boolean;
   onNext: () => void;
+  showsSave: boolean;
+  onSave: () => void;
+  // On step 1 this button bypasses the lookup rather than carrying its result
+  // forward, so it says so instead of reading like the way through the wizard.
+  skipsSearch: boolean;
 }
 
 export function AddBikeFooter({
@@ -27,6 +32,9 @@ export function AddBikeFooter({
   showsNext,
   canAdvance,
   onNext,
+  showsSave,
+  onSave,
+  skipsSearch,
 }: AddBikeFooterProps): ReactElement {
   const { t } = useTranslation();
 
@@ -76,14 +84,28 @@ export function AddBikeFooter({
           </Button>
           {showsNext && (
             <Button
-              color="primary.6"
+              // Skipping is the lesser path on step 1 — "Find specification"
+              // inside the form is the one that should draw the eye.
+              variant={skipsSearch ? "outline" : "filled"}
+              color={skipsSearch ? "secondary.6" : "primary.6"}
               rightSection={<ChevronRight size={14} />}
               disabled={!canAdvance}
               styles={disabledButtonStyles}
               style={{ flex: 1, height: "3rem" }}
               onClick={onNext}
             >
-              {t("addBike.nextStep")}
+              {skipsSearch ? t("addBike.skipSearch") : t("addBike.nextStep")}
+            </Button>
+          )}
+          {showsSave && (
+            <Button
+              leftSection={<Check size={18} />}
+              onClick={onSave}
+              radius="sm"
+              styles={disabledButtonStyles}
+              style={{ flex: 1, height: "3rem" }}
+            >
+              {t("addBike.saveBike")}
             </Button>
           )}
         </>

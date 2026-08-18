@@ -12,6 +12,12 @@ export const WHEEL_SIZES = ['26"', '27.5"', '29"', "700C", "650B", "Mullet"] as 
 export type WheelSize = (typeof WHEEL_SIZES)[number];
 
 export interface BikeSpecificationValues {
+  // What the user calls this bike, which is not the model name — "Enduro do
+  // lesa" next to a Stumpjumper. Optional: the model name heads the bike when
+  // it is left empty.
+  bikeName: string;
+  // Free text so the field can be cleared; parsed to total_km on save.
+  currentMileage: string;
   category: string | null;
   suspension: SuspensionLayout | null;
   frameSize: FrameSize | null;

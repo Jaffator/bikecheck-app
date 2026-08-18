@@ -9,6 +9,10 @@ import { BikeSpecification } from "./BikeSpecification";
 import { BikeComponentList } from "./BikeComponentList";
 import { BikeIdentityForm } from "./BikeIdentityForm";
 import { AddBikeFooter } from "./AddBikeFooter";
+import { AddBikeSummaryModal } from "./AddBikeSummaryModal";
+import { PhotoCropModal } from "./PhotoCropModal";
+import { BikeAddedScreen } from "./BikeAddedScreen";
+import { StravaConnectScreen } from "./StravaConnectScreen";
 import { TOTAL_STEPS, useAddBikeWizard } from "./useAddBikeWizard";
 
 // The "Add new bike" wizard: identity, specification, components. Each step is
@@ -18,8 +22,12 @@ export function AddBikeIdentity(): ReactElement {
   const { t } = useTranslation();
   const setHeaderTitleKey = useHeaderStore((state) => state.setTitleKey);
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
+  const setChromeHidden = useHeaderStore((state) => state.setChromeHidden);
 
-  const { active, searchReplacedForm, showsFallback, searchResults } = wizard;
+  const { active, searchReplacedForm, showsFallback, searchResults, savedBike, offeringStrava } = wizard;
+
+  // Both post-save screens take the whole viewport and own their own way on.
+  const wizardIsOver = savedBike || offeringStrava;
 
   // Both overrides are cleared on unmount so the header falls back to the
   // route title and the router's own back.
@@ -28,6 +36,21 @@ export function AddBikeIdentity(): ReactElement {
     return () => setHeaderTitleKey(null);
   }, [searchReplacedForm, setHeaderTitleKey]);
 
+  // The confirmation takes the whole screen, so the app chrome goes away with
+  // it — and comes back when the page does, however the user leaves.
+  useEffect(() => {
+    setChromeHidden(wizardIsOver);
+    return () => setChromeHidden(false);
+  }, [wizardIsOver, setChromeHidden]);
+
+  // A step change keeps the route, so the page holds whatever scroll position
+  // the previous step was left at — landing the next one mid-page with the
+  // stepper off screen. Jumping instead of smooth-scrolling: the new step should
+  // already be at the top when it appears, not travel there.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [active]);
+
   // Steps past the first have their own previous step, so the arrow walks the
   // wizard back rather than leaving the page.
   const headerGoesBackInPage = searchReplacedForm || active > 0;
@@ -35,19 +58,40 @@ export function AddBikeIdentity(): ReactElement {
   // prevStep is recreated every render; the ref keeps the registered handler
   // pointed at the current one without re-registering on each render.
   const prevStepRef = useRef(wizard.prevStep);
+  const leaveAfterSaveRef = useRef(wizard.leaveAfterSave);
 
   useEffect(() => {
     prevStepRef.current = wizard.prevStep;
+    leaveAfterSaveRef.current = wizard.leaveAfterSave;
   });
 
   useEffect(() => {
+    // Once the bike is written the wizard is gone, so back cannot walk into it —
+    // the post-save screens' own actions are the only way on, and back follows
+    // them forward. This also covers the Android hardware button, which routes
+    // through the same override.
+    if (wizardIsOver) {
+      setHeaderOnBack(() => leaveAfterSaveRef.current());
+      return () => setHeaderOnBack(null);
+    }
     if (!headerGoesBackInPage) {
       setHeaderOnBack(null);
       return;
     }
     setHeaderOnBack(() => prevStepRef.current());
     return () => setHeaderOnBack(null);
-  }, [headerGoesBackInPage, setHeaderOnBack]);
+  }, [wizardIsOver, headerGoesBackInPage, setHeaderOnBack]);
+
+  // The bike is saved: the wizard is done, and the two screens that follow take
+  // the screen on their own — no stepper, no footer, nothing to go back to. The
+  // Strava offer comes second, so it is checked first.
+  if (offeringStrava) {
+    return <StravaConnectScreen onConnect={wizard.connectStrava} onSkip={wizard.leaveAfterSave} />;
+  }
+
+  if (savedBike) {
+    return <BikeAddedScreen bikeName={wizard.savedBikeName} onContinue={wizard.leaveAfterSave} />;
+  }
 
   return (
     // Clears the fixed footer: its own 1rem + 3rem button + 1rem, plus the
@@ -184,6 +228,32 @@ export function AddBikeIdentity(): ReactElement {
         showsNext={active < TOTAL_STEPS - 1}
         canAdvance={wizard.canAdvance}
         onNext={wizard.nextStep}
+        showsSave={active === TOTAL_STEPS - 1}
+        onSave={wizard.openSummary}
+        skipsSearch={active === 0}
+      />
+
+      {/* ----------- Framing a picked photo ----------- */}
+      {/* Sits at wizard level rather than inside step 2: the pick is staged in
+          the wizard, so the crop outlives any step being re-rendered. */}
+      <PhotoCropModal
+        file={wizard.photoToCrop}
+        fileUrl={wizard.photoToCropUrl}
+        onCancel={wizard.cancelCrop}
+        onConfirm={wizard.confirmCrop}
+      />
+
+      {/* ----------- Summary before the bike is written ----------- */}
+      <AddBikeSummaryModal
+        opened={wizard.summaryOpen}
+        onClose={wizard.closeSummary}
+        identity={wizard.form.values}
+        specification={wizard.specification}
+        components={wizard.componentsToSave}
+        onConfirm={wizard.saveBike}
+        isSaving={wizard.isSaving}
+        isError={wizard.saveFailed}
+        errorDetails={wizard.saveErrorDetails}
       />
     </Stack>
   );

@@ -13,7 +13,7 @@ fs.readdir(inputDir, (err, files) => {
   if (err) return console.error(err);
 
   files
-    .filter((file) => path.extname(file).toLowerCase() === ".jpeg")
+    .filter((file) => path.extname(file).toLowerCase() === ".png")
     .forEach(async (file) => {
       const inputPath = path.join(inputDir, file);
       const outputPath = path.join(outputDir, file);

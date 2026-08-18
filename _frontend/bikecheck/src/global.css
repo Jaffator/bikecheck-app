@@ -190,6 +190,55 @@ body {
     opacity: 1;
   }
 }
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+/* Page push transitions. Only the wrapper of a page that is actually animating
+   carries these — a lingering transform would turn it into the containing block
+   for its position: fixed children. */
+@keyframes pageSlideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes pageSlideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+/* The page underneath does not travel the full width — it only gives way a
+   little, which reads as depth rather than as two pages racing each other.
+   No opacity on an arriving page: it is the layer the eye lands on, and a
+   translucent one shows the page it is replacing straight through it. */
+@keyframes pageSlideInLeft {
+  from {
+    transform: translateX(-25%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes pageSlideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-25%);
+    opacity: 0.6;
+  }
+}
 @keyframes wave {
   0%,
   100% {

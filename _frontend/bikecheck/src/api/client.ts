@@ -8,12 +8,25 @@ const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
 // Thrown for any non-2xx response so callers can inspect the status code.
 export class ApiError extends Error {
   readonly status: number;
+  // Whatever the server said went wrong. A 400 from validation carries one line
+  // per rejected field, which is the only way to tell what to fix.
+  readonly details: string[];
 
-  constructor(status: number, message: string) {
-    super(message);
+  constructor(status: number, message: string, details: string[] = []) {
+    super(details.length > 0 ? `${message} — ${details.join("; ")}` : message);
     this.name = "ApiError";
     this.status = status;
+    this.details = details;
   }
+}
+
+// Nest puts the reason in "message", either as a string or one entry per field.
+function extractErrorDetails(body: unknown): string[] {
+  if (typeof body !== "object" || body === null) return [];
+  const message = (body as { message?: unknown }).message;
+  if (typeof message === "string") return [message];
+  if (Array.isArray(message)) return message.map((entry) => String(entry));
+  return [];
 }
 
 // Endpoints whose own 401 means "bad credentials", not "expired access token".
@@ -63,12 +76,16 @@ export async function apiFetch<T>(path: string, options?: RequestInit, retried =
     throw new NetworkError();
   }
 
+  // FormData bodies must keep the browser-generated Content-Type: it carries the
+  // multipart boundary, which a hardcoded JSON header would destroy.
+  const isFormData = options?.body instanceof FormData;
+
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...options,
       credentials: "include",
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...options?.headers,
       },
     });
@@ -87,7 +104,14 @@ export async function apiFetch<T>(path: string, options?: RequestInit, retried =
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, `API request failed: ${response.status} ${response.statusText}`);
+    // Read the body before throwing: the status alone does not say which field
+    // the server rejected. A non-JSON error body is not worth failing over.
+    const body: unknown = await response.json().catch(() => null);
+    throw new ApiError(
+      response.status,
+      `API request failed: ${response.status} ${response.statusText}`,
+      extractErrorDetails(body),
+    );
   }
 
   return (await response.json()) as T;

@@ -15,7 +15,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Camera, ImagePlus, Shapes, Zap } from "lucide-react";
+import { Camera, Gauge, ImagePlus, Shapes, Tag, Zap } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
 import { inputStyles, dropdownProps } from "./formStyles";
@@ -104,7 +104,7 @@ export function BikeSpecification({
   // The user's own photo overrides the scraped one; entering the bike by hand
   // leaves both empty, and then the card offers an upload instead.
   const shownPhoto = photoUrl ?? bike?.imageUrl ?? null;
-
+  console.log(shownPhoto);
   const suspensionOptions: { value: SuspensionLayout; label: string }[] = [
     { value: "hardtail", label: t("addBike.suspensionHardtail") },
     { value: "full", label: t("addBike.suspensionFull") },
@@ -195,6 +195,40 @@ export function BikeSpecification({
           )}
         </Group>
       </Paper>
+
+      {/* ----------- Bike name ----------- */}
+      <Stack gap={4}>
+        <FieldLabel>{t("addBike.bikeName")}</FieldLabel>
+        <TextInput
+          placeholder={t("addBike.bikeNamePlaceholder")}
+          leftSection={<Tag size={18} />}
+          value={values.bikeName}
+          onChange={(event) => onChange("bikeName", event.currentTarget.value)}
+          radius="sm"
+          styles={inputStyles}
+        />
+      </Stack>
+
+      {/* ----------- Current mileage ----------- */}
+      <Stack gap={4}>
+        <FieldLabel>{t("addBike.currentMileage")}</FieldLabel>
+        <TextInput
+          placeholder={t("addBike.currentMileagePlaceholder")}
+          leftSection={<Gauge size={18} />}
+          // Digits only: the value becomes total_km, and a phone should offer
+          // the numeric keypad for it.
+          inputMode="numeric"
+          value={values.currentMileage}
+          onChange={(event) => onChange("currentMileage", event.currentTarget.value.replace(/\D/g, ""))}
+          rightSection={
+            <Text size="sm" c="text.8">
+              km
+            </Text>
+          }
+          radius="sm"
+          styles={inputStyles}
+        />
+      </Stack>
 
       {/* ----------- Category ----------- */}
       <Stack gap={4}>
