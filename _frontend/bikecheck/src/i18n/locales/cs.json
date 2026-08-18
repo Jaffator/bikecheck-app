@@ -152,7 +152,12 @@
       "good": "Dobrý",
       "warning": "Varování",
       "critical": "Kritický"
-    }
+    },
+    "delete": "Smazat kolo",
+    "deleteConfirmTitle": "Smazat toto kolo?",
+    "deleteConfirmBody": "Kolo se odstraní z garáže i s komponentami. Zaznamenané jízdy zůstanou v historii.",
+    "deleteConfirmCancel": "Nechat kolo",
+    "deleteFailed": "Kolo se nepodařilo smazat. Zkus to znovu."
   },
   "addBike": {
     "title": "Přidat nové kolo",
@@ -413,6 +418,12 @@
     "unpairBike": "Odpojit od Stravy",
     "unpairBikeNote": "Odpojením se přestanou načítat nové jízdy. Dosud zaznamenané jízdy u kola zůstanou.",
     "gearLinkingColumnBike": "Tvoje kolo",
-    "gearLinkingColumnGear": "Strava gear"
+    "gearLinkingColumnGear": "Strava gear",
+    "disconnectConfirmTitle": "Odpojit Stravu?",
+    "disconnectConfirmBody": "Nové jízdy se přestanou načítat ke tvým kolům. Dosud zaznamenané jízdy zůstanou a kdykoli se můžeš propojit znovu.",
+    "disconnectConfirmCancel": "Nechat propojené",
+    "unpairedBikesBody": "Propojení se Strava gearem automaticky hlídá kilometry a připomínky servisu tvých kol.",
+    "unpairedBikesAction": "Propojit kola",
+    "gearLinkingLoadFailed": "Strava gear se nepodařilo načíst. Zkus to znovu."
   }
 }

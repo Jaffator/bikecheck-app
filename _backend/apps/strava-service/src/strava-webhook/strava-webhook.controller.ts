@@ -33,6 +33,7 @@ export class WebhookController {
   @UseGuards(InternalAuthGuard)
   @Get('/gear/:athleteId')
   async getGear(@Param('athleteId') athleteId: string): Promise<StravaGearResponse> {
+    console.log('STRAVA MICROSERVICE CALLED');
     return this.stravaWebhookService.downloadGear(Number(athleteId));
   }
 

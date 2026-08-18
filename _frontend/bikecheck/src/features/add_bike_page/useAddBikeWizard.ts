@@ -558,7 +558,9 @@ export function useAddBikeWizard(): AddBikeWizard {
         image: photo,
       },
       {
-        onSuccess: () => {
+        // The saved bike comes back with the id the backend gave it, which is
+        // what the gear pairing sheet needs to offer this one bike.
+        onSuccess: (bike) => {
           // The wizard gives way to its own confirmation rather than dropping
           // the user back on the dashboard with nothing to show for the work.
           setSummaryOpen(false);

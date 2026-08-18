@@ -34,6 +34,7 @@ export class StravaController {
   @ApiResponse({ status: 200, type: ResponseUnmatchedStravaGearDto })
   @Get('gear-linking')
   listUnmatchedStravaGear(@CurrentUser('userId') userId: string): Promise<ResponseUnmatchedStravaGearDto> {
+    console.log('List  GEARLING STRAVA');
     return this.stravaEventService.listUnmatchedStravaGear(Number(userId));
   }
 

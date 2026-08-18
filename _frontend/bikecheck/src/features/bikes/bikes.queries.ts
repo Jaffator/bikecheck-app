@@ -14,6 +14,7 @@ import {
   searchBikeExternal,
   getExternalBikeComponents,
   createBike,
+  deleteBike,
 } from "./bikes.api";
 import type {
   Bike,
@@ -75,6 +76,10 @@ export function useCreateBike(): UseMutationResult<Bike, Error, CreateBikeInput>
     mutationFn: (input: CreateBikeInput) => createBike(input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      // The gear pairing sheet lists the user's bikes alongside their Strava
+      // gear, so a bike added while that answer is still fresh would be missing
+      // from it.
+      await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
     },
   });
 }
@@ -90,5 +95,19 @@ export function useExternalBikeComponents(bikeUrl: string | null): UseQueryResul
     // A failed scrape is reported straight away — retrying leaves the user
     // watching a spinner for the provider to fail three times over.
     retry: false,
+  });
+}
+
+// Removes a bike from the garage. The gear pairing sheet lists bikes too, so it
+// is refetched alongside the garage itself.
+export function useDeleteBike(): UseMutationResult<Bike, Error, number> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => deleteBike(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
+    },
   });
 }

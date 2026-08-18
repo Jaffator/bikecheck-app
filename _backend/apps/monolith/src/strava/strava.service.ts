@@ -138,8 +138,9 @@ export class StravaEventsService {
     const bikes = await this.prisma.bikes.findMany({
       where: { user_id: userId },
     });
-
     if (!user?.strava_athlete_id) throw new Error('User has no linked Strava account');
+    console.log('RESPONSEEEEEEEEEEEEEEE', `${process.env.STRAVA_SERVICE_URL}/strava/gear/${user.strava_athlete_id}`);
+    console.log('INTERVAL API SECRET', process.env.INTERNAL_API_SECRET);
 
     try {
       const response = await axios.get<StravaGearResponse>(
@@ -164,6 +165,24 @@ export class StravaEventsService {
 
       return unmatchedGear;
     } catch (error) {
+      // Axios puts the status line in message and the service's own answer in
+      // response.data — without the latter a 401 from the guard and a Strava
+      // token failure look identical.
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          {
+            custom: true,
+            userId,
+            athleteId: user.strava_athlete_id,
+            status: error.response?.status,
+            body: error.response?.data,
+            code: error.code,
+          },
+          'Failed to fetch gear from strava-service',
+        );
+      } else {
+        this.logger.error({ custom: true, userId, err: error }, 'Failed to fetch gear from strava-service');
+      }
       throw new Error(`Failed to fetch gear from strava-service: ${(error as Error).message}`);
     }
   }

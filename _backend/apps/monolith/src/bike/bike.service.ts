@@ -114,12 +114,14 @@ export class BikeService {
     });
   }
 
+  // Deleted bikes stay in the table so their rides and service history survive,
+  // which means every read has to exclude them or they come back to the garage.
   async findAll(): Promise<ResponseBikeDto[]> {
-    return this.prisma.bikes.findMany({});
+    return this.prisma.bikes.findMany({ where: { is_deleted: { not: true } } });
   }
 
   async findByUser(userId: number): Promise<ResponseBikeDto[]> {
-    return this.prisma.bikes.findMany({ where: { user_id: userId } });
+    return this.prisma.bikes.findMany({ where: { user_id: userId, is_deleted: { not: true } } });
   }
 
   async findByID(id: number, userId: number): Promise<ResponseBikeDto> {
@@ -146,7 +148,7 @@ export class BikeService {
 
   // Returns the bike only if it belongs to the user; otherwise 404 (no ownership leak).
   private async findOwnedBike(id: number, userId: number): Promise<ResponseBikeDto> {
-    const bike = await this.prisma.bikes.findFirst({ where: { id, user_id: userId } });
+    const bike = await this.prisma.bikes.findFirst({ where: { id, user_id: userId, is_deleted: { not: true } } });
     if (!bike) {
       throw new NotFoundException(`Bike with ID ${id} not found`);
     }

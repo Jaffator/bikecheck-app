@@ -1,20 +1,10 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import type { ReactElement } from "react";
-import {
-  Box,
-  Button,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
+import { useState, type ReactElement } from "react";
+import { Box, Button, Group, Modal, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { ChevronRight, CircleCheck } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { useBikes } from "@/features/bikes/bikes.queries";
 import { useConnectStrava, useDisconnectStrava } from "./strava.queries";
 import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
 
@@ -34,16 +24,13 @@ export function StravaStatusCard({
   allowDisconnect = false,
 }: StravaStatusCardProps): ReactElement | null {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { data: user } = useCurrentUser();
-  const { data: bikes } = useBikes();
   const connect = useConnectStrava();
   const disconnect = useDisconnectStrava();
 
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
+
   const connected = Boolean(user?.strava_athlete_id);
-  const unpairedCount = (bikes ?? []).filter(
-    (bike) => bike.strava_gear_id === null,
-  ).length;
 
   if (!connected && connectedOnly) return null;
 
@@ -73,19 +60,13 @@ export function StravaStatusCard({
               width: "4.5rem",
               height: "4.5rem",
               borderRadius: "9999px",
-              backgroundColor:
-                "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
-              border:
-                "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 35%, transparent)",
+              backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 35%, transparent)",
               boxShadow:
                 "0 0 0 8px color-mix(in srgb, var(--mantine-color-strava-6) 7%, transparent), 0 0 28px 0 color-mix(in srgb, var(--mantine-color-strava-6) 22%, transparent)",
             }}
           >
-            <StravaMark
-              width={32}
-              height={32}
-              color="var(--mantine-color-strava-6)"
-            />
+            <StravaMark width={32} height={32} color="var(--mantine-color-strava-6)" />
           </Box>
 
           <Stack gap={8} align="center">
@@ -98,21 +79,10 @@ export function StravaStatusCard({
             >
               {t("strava.statusTitle")}
             </Text>
-            <Text
-              fw={700}
-              fz={20}
-              c="text.6"
-              ta="center"
-              style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}
-            >
+            <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
               {t("strava.pitchTitle")}
             </Text>
-            <Text
-              size="sm"
-              c="var(--color-text-dim)"
-              ta="center"
-              style={{ lineHeight: 1.45 }}
-            >
+            <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
               {t("strava.pitchBody")}
             </Text>
           </Stack>
@@ -132,8 +102,7 @@ export function StravaStatusCard({
               root: {
                 height: "3.25rem",
                 transition: "transform 0.12s ease",
-                boxShadow:
-                  "0 6px 20px -6px color-mix(in srgb, var(--mantine-color-strava-6) 60%, transparent)",
+                boxShadow: "0 6px 20px -6px color-mix(in srgb, var(--mantine-color-strava-6) 60%, transparent)",
               },
               label: {
                 fontWeight: 700,
@@ -158,7 +127,7 @@ export function StravaStatusCard({
 
   return (
     <Paper
-      bg="cards.6"
+      bg="cards."
       radius="md"
       className="m-3"
       style={{
@@ -186,15 +155,10 @@ export function StravaStatusCard({
               width: "2.25rem",
               height: "2.25rem",
               borderRadius: "0.625rem",
-              backgroundColor:
-                "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
+              backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
             }}
           >
-            <StravaMark
-              width={18}
-              height={18}
-              color="var(--mantine-color-strava-6)"
-            />
+            <StravaMark width={18} height={18} color="var(--mantine-color-strava-6)" />
           </Box>
 
           <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
@@ -202,61 +166,40 @@ export function StravaStatusCard({
               {t("strava.statusTitle")}
             </Text>
             <Group gap={5} wrap="nowrap">
-              <CircleCheck size={13} color="var(--mantine-color-green-5)" />
-              <Text
-                className="font-mono"
-                fz={10}
-                tt="uppercase"
-                c="green.5"
-                style={{ letterSpacing: "0.08em" }}
-              >
+              <CircleCheck size={13} color="var(--mantine-color-green-8)" />
+              <Text className="font-mono" fz={10} c="green.8" style={{ letterSpacing: "0.08em" }}>
                 {t("strava.statusConnected")}
               </Text>
             </Group>
           </Stack>
+
+          {/* Sits opposite the title: unlinking is the one thing settings adds
+              over the dashboard copy, and it belongs out of the reading path. */}
+          {allowDisconnect && (
+            <Button
+              variant="outline"
+              color="red.5"
+              radius="md"
+              size="compact-sm"
+              loading={disconnect.isPending}
+              onClick={() => {
+                void tapFeedback();
+                setConfirmingDisconnect(true);
+              }}
+              styles={{
+                root: {
+                  // Transparent on purpose — the outline carries the meaning,
+                  // and a filled red would outweigh the status it sits beside.
+                  backgroundColor: "transparent",
+                  borderColor: "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
+                },
+                label: { fontSize: "0.75rem", fontWeight: 600 },
+              }}
+            >
+              {t("strava.disconnect")}
+            </Button>
+          )}
         </Group>
-
-        {/* Reads as information, not a task: an unpaired bike is a normal state,
-            and the count is the one thing a bike card cannot show on its own. */}
-        {unpairedCount > 0 && (
-          <UnstyledButton
-            onClick={() => navigate("/bikes")}
-            className="active:scale-[0.99]"
-            style={{
-              padding: "0.625rem 0.75rem",
-              borderRadius: "0.5rem",
-              backgroundColor: "var(--color-decor)",
-              transition: "transform 0.12s ease",
-            }}
-          >
-            <Group gap="xs" wrap="nowrap" justify="space-between">
-              <Text size="sm" c="var(--color-text-dim)">
-                {t("strava.unpairedBikes", { count: unpairedCount })}
-              </Text>
-              <ChevronRight size={14} color="var(--color-text-dim)" />
-            </Group>
-          </UnstyledButton>
-        )}
-
-        {allowDisconnect && (
-          <Button
-            variant="subtle"
-            color="red"
-            radius="md"
-            size="compact-sm"
-            loading={disconnect.isPending}
-            onClick={() => {
-              void tapFeedback();
-              disconnect.mutate();
-            }}
-            styles={{
-              root: { alignSelf: "flex-start", paddingInline: 0 },
-              label: { fontSize: "0.8125rem" },
-            }}
-          >
-            {t("strava.disconnect")}
-          </Button>
-        )}
 
         {disconnect.isError && (
           <Text size="xs" c="red.5">
@@ -264,6 +207,52 @@ export function StravaStatusCard({
           </Text>
         )}
       </Stack>
+
+      {/* Unlinking cannot be undone without going through Strava's consent
+          screen again, so it is worth one question. The body says what survives
+          it: the rides already recorded stay, only new ones stop arriving. */}
+      <Modal
+        opened={confirmingDisconnect}
+        onClose={() => setConfirmingDisconnect(false)}
+        title={t("strava.disconnectConfirmTitle")}
+        centered
+        radius="md"
+        styles={{
+          content: { backgroundColor: "var(--mantine-color-cards-6)" },
+          header: { backgroundColor: "var(--mantine-color-cards-6)" },
+          title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
+        }}
+      >
+        <Stack gap="lg">
+          <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
+            {t("strava.disconnectConfirmBody")}
+          </Text>
+
+          <Group gap="sm" grow>
+            <Button
+              variant="default"
+              radius="md"
+              onClick={() => setConfirmingDisconnect(false)}
+              disabled={disconnect.isPending}
+            >
+              {t("strava.disconnectConfirmCancel")}
+            </Button>
+            <Button
+              color="red.5"
+              radius="md"
+              loading={disconnect.isPending}
+              onClick={() => {
+                void tapFeedback();
+                disconnect.mutate(undefined, {
+                  onSuccess: () => setConfirmingDisconnect(false),
+                });
+              }}
+            >
+              {t("strava.disconnect")}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Paper>
   );
 }

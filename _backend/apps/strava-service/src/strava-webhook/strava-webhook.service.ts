@@ -89,11 +89,14 @@ export class StravaWebhookService {
    * @returns The athlete id and their bikes (id + name).
    */
   async downloadGear(athlete_id: number): Promise<StravaGearResponse> {
-    const access_token = await this.tokenService.getAccessToken(athlete_id);
+    // Inside the try on purpose: a missing or unrefreshable token throws here,
+    // and outside it that failure would never reach the logging below.
     try {
+      const access_token = await this.tokenService.getAccessToken(athlete_id);
       const gear = await axios.get(`https://www.strava.com/api/v3/athlete`, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
+      console.log('Fetched Strava gear for athlete:', athlete_id, 'Response:', gear);
       const athlete_bikes: StravaGearResponse = {
         athlete_id: gear.data.id,
         bikes: gear.data.bikes.map((bike: StravaBike) => ({
@@ -103,6 +106,24 @@ export class StravaWebhookService {
       };
       return athlete_bikes;
     } catch (error) {
+      // Axios keeps only the status line in message; Strava's own explanation
+      // ("Authorization Error", the offending field) sits in response.data.
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          {
+            custom: true,
+            athlete_id,
+            status: error.response?.status,
+            body: error.response?.data,
+            code: error.code,
+          },
+          'Error fetching gear from Strava',
+        );
+      } else {
+        // Typically "No tokens found for athlete_id": the account was never
+        // linked, or its tokens were removed by a disconnect.
+        this.logger.error({ custom: true, athlete_id, err: error }, 'Error resolving Strava access token');
+      }
       throw new Error(`Error fetching Gear from Strava, athlete id ${athlete_id}, error: ${(error as Error).message}`);
     }
   }

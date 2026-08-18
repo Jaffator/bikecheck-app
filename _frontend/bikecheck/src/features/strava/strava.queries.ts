@@ -2,13 +2,7 @@
 // the stuff you used to write by hand with useState + useEffect.
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import { Browser } from "@capacitor/browser";
-import {
-  getStravaAuthorizeUrl,
-  disconnectStrava,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- restored when the mock below goes
-  getGearLinking,
-  linkStravaGear,
-} from "./strava.api";
+import { getStravaAuthorizeUrl, disconnectStrava, getGearLinking, linkStravaGear } from "./strava.api";
 import type { GearLinkingData, GearLink } from "./strava.types";
 import type { ApiError } from "@/api/client";
 
@@ -79,7 +73,7 @@ async function getGearLinkingMock(): Promise<GearLinkingData> {
 export function useGearLinking(enabled: boolean): UseQueryResult<GearLinkingData> {
   return useQuery({
     queryKey: ["gearLinking"],
-    queryFn: getGearLinkingMock,
+    queryFn: getGearLinking,
     enabled,
   });
 }

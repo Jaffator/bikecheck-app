@@ -10,7 +10,11 @@ import {
   Text,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { inputStyles, dropdownProps } from "../add_bike_page/formStyles";
+import {
+  inputStyles,
+  dropdownProps,
+  disabledButtonStyles,
+} from "../add_bike_page/formStyles";
 import { tapFeedback } from "@/utils/haptics";
 import { useGearLinking, useLinkStravaGear } from "./strava.queries";
 import type { GearLink, GearLinkingBike } from "./strava.types";
@@ -41,14 +45,11 @@ function bikeLabel(bike: GearLinkingBike): string {
 export function GearLinkingSheet({
   opened,
   onClose,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used again once the mock goes
   bikeIds,
 }: GearLinkingSheetProps): ReactElement {
   const { t } = useTranslation();
-  const { data, isLoading } = useGearLinking(opened);
+  const { data, isLoading, isError } = useGearLinking(opened);
   const link = useLinkStravaGear();
-  // Bike id -> chosen gear id. Seeded from what is already stored, so reopening
-  // the sheet shows the current pairing rather than an empty picker.
   // Only what the user has touched. Anything absent falls back to what is stored,
   // so the sheet always opens showing the current pairing without an effect to
   // copy the fetched data into state.
@@ -58,15 +59,11 @@ export function GearLinkingSheet({
     return bike.id in changed ? changed[bike.id] : bike.strava_gear_id;
   }
 
-  // TEMPORARY: the bikeIds filter is bypassed while the sheet is styled against
-  // mock data, whose ids never match the real bike a caller asks for. Restore the
-  // commented line when useGearLinking goes back to the real endpoint.
-  const rows = (data?.bikecheck_bikes ?? []).filter(
-    (bike) => bike.strava_gear_id === null,
+  const rows = (data?.bikecheck_bikes ?? []).filter((bike) =>
+    bikeIds !== undefined
+      ? bikeIds.includes(bike.id)
+      : bike.strava_gear_id === null,
   );
-  // const rows = (data?.bikecheck_bikes ?? []).filter((bike) =>
-  //   bikeIds !== undefined ? bikeIds.includes(bike.id) : bike.strava_gear_id === null,
-  // );
 
   // Gear held by a bike that is not being edited here, so it cannot be taken.
   function takenBy(gearId: string): string | null {
@@ -100,9 +97,10 @@ export function GearLinkingSheet({
       opened={opened}
       onClose={onClose}
       position="bottom"
-      // Height, not width, for a bottom drawer — enough that the sheet reads as
-      // its own surface rather than a strip along the edge.
-      size="55%"
+      // Height follows the content: one bike should not leave half a screen of
+      // empty sheet, and ten should not push the confirm button out of reach.
+      // The cap below is what turns the list into a scroller instead.
+      size="auto"
       radius="md"
       title={t("strava.gearLinkingTitle")}
       // Darkened and blurred so the garage behind reads as out of reach while
@@ -116,6 +114,7 @@ export function GearLinkingSheet({
           backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
+          maxHeight: "85dvh",
         },
         header: { backgroundColor: "var(--mantine-color-cards-6)" },
         // The body takes the leftover height so the buttons can sit at the
@@ -142,6 +141,14 @@ export function GearLinkingSheet({
         </Text>
 
         {isLoading && <Loader size="sm" />}
+
+        {/* Without this the sheet is simply blank when the request fails: data
+            stays undefined, so every block below renders nothing. */}
+        {isError && (
+          <Text size="sm" c="red.5">
+            {t("strava.gearLinkingLoadFailed")}
+          </Text>
+        )}
 
         {/* Strava gear is created by hand on Strava, so an account with none is
             a normal state, not an error. */}
@@ -181,55 +188,63 @@ export function GearLinkingSheet({
             </Group>
           )}
 
-        {data !== undefined &&
-          data.strava_bikes.length > 0 &&
-          rows.map((bike) => {
-            const chosen = chosenFor(bike);
-            return (
-              <Group key={bike.id} gap="sm" wrap="nowrap" align="center">
-                <Text
-                  size="sm"
-                  fw={600}
-                  c="text.6"
-                  style={{ flex: 1, minWidth: 0 }}
-                  truncate
-                >
-                  {bikeLabel(bike)}
-                </Text>
-                <Select
-                  value={chosen}
-                  onChange={(value) =>
-                    setChanged((current) => ({ ...current, [bike.id]: value }))
-                  }
-                  placeholder={t("strava.gearLinkingPlaceholder")}
-                  data={data.strava_bikes.map((gear) => {
-                    const owner = takenBy(gear.id);
-                    return {
-                      value: gear.id,
-                      label:
-                        owner === null
-                          ? gear.name
-                          : t("strava.gearTakenBy", {
-                              name: gear.name,
-                              bike: owner,
-                            }),
-                      disabled: owner !== null,
-                    };
-                  })}
-                  // The wizard's field look, so a Strava field reads like any
-                  // other form field in the app. The dropdown and its options
-                  // are parts of Select, so they are styled here too — passing
-                  // them through comboboxProps has no effect.
-                  styles={inputStyles}
-                  rightSection={link.isPending && <Loader size="xs" />}
-                  rightSectionWidth={link.isPending ? 24 : undefined}
-                  style={{ flex: 1, minWidth: 0 }}
-                  radius="sm"
-                  comboboxProps={dropdownProps}
-                />
-              </Group>
-            );
-          })}
+        {/* Only the list scrolls: the heading above and the confirm button
+            below stay put, so the action never leaves the screen however
+            many bikes there are. */}
+        <Stack gap="md" style={{ overflowY: "auto", minHeight: 0 }}>
+          {data !== undefined &&
+            data.strava_bikes.length > 0 &&
+            rows.map((bike) => {
+              const chosen = chosenFor(bike);
+              return (
+                <Group key={bike.id} gap="sm" wrap="nowrap" align="center">
+                  <Text
+                    size="sm"
+                    fw={600}
+                    c="text.6"
+                    style={{ flex: 1, minWidth: 0 }}
+                    truncate
+                  >
+                    {bikeLabel(bike)}
+                  </Text>
+                  <Select
+                    value={chosen}
+                    onChange={(value) =>
+                      setChanged((current) => ({
+                        ...current,
+                        [bike.id]: value,
+                      }))
+                    }
+                    placeholder={t("strava.gearLinkingPlaceholder")}
+                    data={data.strava_bikes.map((gear) => {
+                      const owner = takenBy(gear.id);
+                      return {
+                        value: gear.id,
+                        label:
+                          owner === null
+                            ? gear.name
+                            : t("strava.gearTakenBy", {
+                                name: gear.name,
+                                bike: owner,
+                              }),
+                        disabled: owner !== null,
+                      };
+                    })}
+                    // The wizard's field look, so a Strava field reads like any
+                    // other form field in the app. The dropdown and its options
+                    // are parts of Select, so they are styled here too — passing
+                    // them through comboboxProps has no effect.
+                    styles={inputStyles}
+                    rightSection={link.isPending && <Loader size="xs" />}
+                    rightSectionWidth={link.isPending ? 24 : undefined}
+                    style={{ flex: 1, minWidth: 0 }}
+                    radius="sm"
+                    comboboxProps={dropdownProps}
+                  />
+                </Group>
+              );
+            })}
+        </Stack>
 
         {link.isError && (
           <Text size="xs" c="red.5">
@@ -248,6 +263,10 @@ export function GearLinkingSheet({
           mb="var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px))"
           loading={link.isPending}
           disabled={rows.length === 0}
+          // The wizard's disabled look: Mantine's own reads as missing rather
+          // than blocked on the dark theme.
+          styles={disabledButtonStyles}
+          style={{ height: "3rem" }}
           onClick={() => {
             void tapFeedback();
             submit();

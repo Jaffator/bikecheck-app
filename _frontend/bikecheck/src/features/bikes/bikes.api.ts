@@ -64,3 +64,9 @@ export async function createBike(input: CreateBikeInput): Promise<Bike> {
 
   return apiFetch<Bike>("/bike/create", { method: "POST", body: form });
 }
+
+// DELETE /bike/delsoft/:id — marks the bike deleted. Soft on purpose: the rides
+// and service history recorded against it stay in the database.
+export async function deleteBike(id: number): Promise<Bike> {
+  return apiFetch<Bike>(`/bike/delsoft/${id}`, { method: "DELETE" });
+}

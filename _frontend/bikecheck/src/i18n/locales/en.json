@@ -140,7 +140,12 @@
       "good": "Good",
       "warning": "Warning",
       "critical": "Critical"
-    }
+    },
+    "delete": "Delete bike",
+    "deleteConfirmTitle": "Delete this bike?",
+    "deleteConfirmBody": "The bike is removed from your garage along with its components. Rides already recorded stay in your history.",
+    "deleteConfirmCancel": "Keep bike",
+    "deleteFailed": "Could not delete the bike. Try again."
   },
   "addBike": {
     "title": "Add new bike",
@@ -265,6 +270,12 @@
     "unpairBike": "Unpair from Strava",
     "unpairBikeNote": "Unpairing stops new rides from syncing. Rides already recorded stay on this bike.",
     "gearLinkingColumnBike": "Your bike",
-    "gearLinkingColumnGear": "Strava gear"
+    "gearLinkingColumnGear": "Strava gear",
+    "disconnectConfirmTitle": "Disconnect Strava?",
+    "disconnectConfirmBody": "New rides will stop syncing to your bikes. Rides already recorded stay, and you can connect again at any time.",
+    "disconnectConfirmCancel": "Keep connected",
+    "unpairedBikesBody": "Connecting with Strava gear automates mileage tracking and service reminders for your bikes without picking a right bike after every ride.",
+    "unpairedBikesAction": "Pair gear",
+    "gearLinkingLoadFailed": "Could not load your Strava gear. Try again."
   }
 }

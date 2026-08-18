@@ -47,7 +47,7 @@ export class TokenService {
       response_type: 'code',
       redirect_uri: `${process.env.STRAVA_SERVICE_URL}/strava/exchange_token`,
       approval_prompt: 'force',
-      scope: 'profile:read_all,activity:read_all',
+      scope: 'profile:read_all,activity:read_all,activity:write,read_all',
       state,
     });
 
@@ -130,11 +130,7 @@ export class TokenService {
   async disconnect(athleteID: number): Promise<void> {
     try {
       const accessToken = await this.getAccessToken(athleteID);
-      await axios.post(
-        'https://www.strava.com/oauth/deauthorize',
-        { access_token: accessToken },
-        { timeout: 5000 },
-      );
+      await axios.post('https://www.strava.com/oauth/deauthorize', { access_token: accessToken }, { timeout: 5000 });
     } catch (err) {
       this.logger.warn({ err, athleteID }, 'Strava deauthorize failed, removing local tokens anyway');
     }
