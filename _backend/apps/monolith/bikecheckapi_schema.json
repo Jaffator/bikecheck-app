@@ -301,9 +301,22 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreateBikeWithComponentsDto"
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "string",
+                    "description": "CreateBikeWithComponentsDto serialized as JSON"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "data"
+                ]
               }
             }
           }
@@ -761,6 +774,127 @@
         },
         "tags": [
           "BikeEvent"
+        ]
+      }
+    },
+    "/api/components": {
+      "post": {
+        "operationId": "Component createComponentType",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomComponentsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_ComponentDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
+    "/api/components/default-components": {
+      "get": {
+        "operationId": "Component getDefaultComponents",
+        "parameters": [
+          {
+            "name": "ebike",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssembleBikeComponentsDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
+    "/api/components/groups": {
+      "get": {
+        "operationId": "Component getGroups",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_ComponentGroupDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
+    "/api/components/mounted-components": {
+      "get": {
+        "operationId": "Component getMountedComponents",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_MountedComponentsDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
         ]
       }
     },
@@ -1489,9 +1623,9 @@
             "type": "string",
             "example": "L"
           },
-          "bike_type_id": {
-            "type": "number",
-            "example": 1
+          "bike_type": {
+            "type": "string",
+            "example": "Enduro"
           },
           "total_km": {
             "type": "number",
@@ -1507,7 +1641,6 @@
           }
         },
         "required": [
-          "user_id",
           "bike_brand",
           "ebike",
           "has_front_suspension",
@@ -1526,7 +1659,7 @@
             "example": 12
           },
           "component_desc": {
-            "type": "object",
+            "type": "string",
             "example": "Fox 38 Factory Grip2",
             "nullable": true
           },
@@ -1552,7 +1685,7 @@
             "nullable": true
           },
           "note": {
-            "type": "object",
+            "type": "string",
             "example": "Mounted after spring service",
             "nullable": true
           },
@@ -1563,7 +1696,6 @@
           }
         },
         "required": [
-          "bike_id",
           "component_type_id"
         ]
       },
@@ -1738,6 +1870,10 @@
             "type": "string",
             "example": "Orbea Rallon"
           },
+          "bikeBrand": {
+            "type": "string",
+            "example": "Orbea 2025"
+          },
           "imageUrl": {
             "type": "object",
             "example": "https://example.com/bike-image.jpg"
@@ -1749,6 +1885,7 @@
         },
         "required": [
           "name",
+          "bikeBrand",
           "imageUrl",
           "bikeUrl"
         ]
@@ -1763,17 +1900,34 @@
             "type": "string",
             "example": "Fork"
           },
+          "component_group_id": {
+            "type": "number",
+            "example": "15"
+          },
           "component_i18n_key": {
-            "type": "object",
+            "type": "string",
             "example": "component.fork",
             "nullable": true,
             "description": "null for user-created types"
+          },
+          "has_position": {
+            "type": "boolean",
+            "example": true,
+            "description": "The part sits on a side of the bike (front / rear)"
+          },
+          "essential": {
+            "type": "boolean",
+            "example": true,
+            "description": "Every bike carries it, so it is saved even when left blank"
           }
         },
         "required": [
           "component",
           "component_name",
-          "component_i18n_key"
+          "component_group_id",
+          "component_i18n_key",
+          "has_position",
+          "essential"
         ]
       },
       "BikeBrands": {
@@ -2226,6 +2380,223 @@
           "group_i18n_key",
           "side_choice",
           "actions"
+        ]
+      },
+      "CustomComponentsDto": {
+        "type": "object",
+        "properties": {
+          "component_group_id": {
+            "type": "number",
+            "example": 15
+          },
+          "user_id": {
+            "type": "number",
+            "example": 1
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Custom Component Name"
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": false
+          },
+          "has_position": {
+            "type": "boolean",
+            "example": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "component_group_id",
+          "user_id",
+          "component_type",
+          "ebike"
+        ]
+      },
+      "Response_ComponentDto": {
+        "type": "object",
+        "properties": {
+          "component_group_id": {
+            "type": "number",
+            "example": 15
+          },
+          "user_id": {
+            "type": "object",
+            "example": 1
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Custom Component Name"
+          },
+          "i18n_key": {
+            "type": "object",
+            "example": "component.chain",
+            "nullable": true,
+            "description": "null for user-created types"
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": false
+          },
+          "has_position": {
+            "type": "boolean",
+            "example": true
+          },
+          "essential": {
+            "type": "boolean",
+            "example": true,
+            "description": "Every bike carries it, so it is saved even when left blank"
+          }
+        },
+        "required": [
+          "component_group_id",
+          "user_id",
+          "component_type",
+          "i18n_key",
+          "ebike",
+          "has_position",
+          "essential"
+        ]
+      },
+      "Response_ComponentGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "group_name": {
+            "type": "string",
+            "example": "Drivetrain"
+          },
+          "i18n_key": {
+            "type": "object",
+            "example": "componentGroup.drivetrain",
+            "nullable": true
+          },
+          "side_choice": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "group_name",
+          "i18n_key",
+          "side_choice"
+        ]
+      },
+      "Response_MountedComponentsDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 1
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12
+          },
+          "position": {
+            "type": "object",
+            "example": "rear",
+            "nullable": true
+          },
+          "mounted_at": {
+            "type": "object",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "removed_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "object",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "object",
+            "example": "2026-03-26T10:00:00.000Z",
+            "nullable": true
+          },
+          "total_km": {
+            "type": "object",
+            "example": 1200,
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "example": "Mounted after spring service",
+            "nullable": true
+          },
+          "is_active": {
+            "type": "object",
+            "example": true,
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "example": false,
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "component_desc": {
+            "type": "object",
+            "example": "Fox 38 Factory Grip2",
+            "nullable": true
+          },
+          "total_time_min": {
+            "type": "object",
+            "example": 1200,
+            "nullable": true
+          },
+          "drivetrain_km": {
+            "type": "object",
+            "example": 80000,
+            "nullable": true
+          },
+          "suspension_min": {
+            "type": "object",
+            "example": 480,
+            "nullable": true
+          },
+          "health_index": {
+            "type": "object",
+            "example": 85,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "bike_id",
+          "component_type_id",
+          "position",
+          "mounted_at",
+          "removed_at",
+          "updated_at",
+          "created_at",
+          "total_km",
+          "note",
+          "is_active",
+          "is_deleted",
+          "deleted_at",
+          "component_desc",
+          "total_time_min",
+          "drivetrain_km",
+          "suspension_min",
+          "health_index"
         ]
       },
       "CreateOrganizationDto": {

@@ -9,6 +9,7 @@ import type { StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
+import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
 
 interface SplitMetricEntry {
@@ -68,6 +69,65 @@ export class StravaEventsService {
     private readonly notificationService: NotificationService,
   ) {}
 
+  /**
+   * Asks strava-service for an authorize URL for the logged-in user. The user id
+   * is only ever passed over the internal call — the URL itself carries a random
+   * state, so nothing the browser can edit identifies the account.
+   */
+  async buildAuthorizeUrl(userId: number): Promise<ResponseStravaAuthorizeUrlDto> {
+    try {
+      const response = await axios.post<ResponseStravaAuthorizeUrlDto>(
+        `${process.env.STRAVA_SERVICE_URL}/strava/oauth-state`,
+        { userId },
+        {
+          headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
+          timeout: 5000,
+        },
+      );
+      return { url: response.data.url };
+    } catch (error) {
+      throw new Error(`Failed to start Strava authorization: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Unlinks the user's Strava account. strava-service owns the tokens and the
+   * revoke call, so it does that half; the user row here is what the frontend
+   * reads to know whether an account is linked, so it is cleared afterwards.
+   * Bikes keep their strava gear ids — reconnecting the same account then finds
+   * them still linked instead of asking the user to pair everything again.
+   */
+  async disconnect(userId: number): Promise<void> {
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      select: { strava_athlete_id: true },
+    });
+
+    if (!user?.strava_athlete_id) {
+      throw new NotFoundException('No Strava account is linked to this user');
+    }
+
+    try {
+      await axios.post(
+        `${process.env.STRAVA_SERVICE_URL}/strava/disconnect`,
+        { athleteId: Number(user.strava_athlete_id) },
+        {
+          headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
+          timeout: 5000,
+        },
+      );
+    } catch (error) {
+      throw new Error(`Failed to disconnect Strava: ${(error as Error).message}`);
+    }
+
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: { strava_athlete_id: null },
+    });
+
+    this.logger.info({ custom: true, userId, athleteId: user.strava_athlete_id }, 'Strava account unlinked');
+  }
+
   async listUnmatchedStravaGear(userId: number): Promise<ResponseUnmatchedStravaGearDto> {
     // Resolve athleteId from the logged-in user, never trust it from the FE (IDOR).
     const user = await this.prisma.users.findUnique({
@@ -78,8 +138,9 @@ export class StravaEventsService {
     const bikes = await this.prisma.bikes.findMany({
       where: { user_id: userId },
     });
-
     if (!user?.strava_athlete_id) throw new Error('User has no linked Strava account');
+    console.log('RESPONSEEEEEEEEEEEEEEE', `${process.env.STRAVA_SERVICE_URL}/strava/gear/${user.strava_athlete_id}`);
+    console.log('INTERVAL API SECRET', process.env.INTERNAL_API_SECRET);
 
     try {
       const response = await axios.get<StravaGearResponse>(
@@ -104,6 +165,24 @@ export class StravaEventsService {
 
       return unmatchedGear;
     } catch (error) {
+      // Axios puts the status line in message and the service's own answer in
+      // response.data — without the latter a 401 from the guard and a Strava
+      // token failure look identical.
+      if (axios.isAxiosError(error)) {
+        this.logger.error(
+          {
+            custom: true,
+            userId,
+            athleteId: user.strava_athlete_id,
+            status: error.response?.status,
+            body: error.response?.data,
+            code: error.code,
+          },
+          'Failed to fetch gear from strava-service',
+        );
+      } else {
+        this.logger.error({ custom: true, userId, err: error }, 'Failed to fetch gear from strava-service');
+      }
       throw new Error(`Failed to fetch gear from strava-service: ${(error as Error).message}`);
     }
   }
@@ -120,7 +199,7 @@ export class StravaEventsService {
         // Scope by user_id so a user can never link a bike they don't own (IDOR).
         const result = await tx.bikes.updateMany({
           where: { id: link.bikecheckBikeId, user_id: userId },
-          data: { strava_gear_id: link.stravaBikeId },
+          data: { strava_gear_id: link.stravaBikeId ?? null },
         });
         updatedCount += result.count;
       }

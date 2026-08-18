@@ -29,31 +29,26 @@ export class ComponentService {
       where: ebike ? {} : { ebike: false },
     });
 
-    return componentTypes.flatMap((type) => {
-      const baseComponent: AssembleBikeComponentsDto = {
-        component: {
-          bike_id: 0,
-          component_type_id: type.id,
-          component_desc: null,
-          mounted_at: undefined,
-          total_km: 0,
-          is_active: true,
-          note: null,
-          position: undefined,
-          interval_id: undefined,
-        },
-        component_name: type.component_type,
-        component_i18n_key: type.i18n_key,
-      };
-
-      if (type.has_position) {
-        return [
-          { ...baseComponent, component: { ...baseComponent.component, position: 'front' } },
-          { ...baseComponent, component: { ...baseComponent.component, position: 'rear' } },
-        ];
-      }
-      return [baseComponent];
-    });
+    // One entry per type — the caller picks the side through has_position,
+    // rather than the list carrying a front and a rear row for every part.
+    return componentTypes.map((type) => ({
+      component: {
+        bike_id: 0,
+        component_type_id: type.id,
+        component_desc: null,
+        mounted_at: undefined,
+        total_km: 0,
+        is_active: true,
+        note: null,
+        position: undefined,
+        interval_id: undefined,
+      },
+      component_name: type.component_type,
+      component_group_id: type.component_group_id,
+      component_i18n_key: type.i18n_key,
+      has_position: type.has_position,
+      essential: type.essential,
+    }));
   }
 
   async getMountedComponents(bikeId: string): Promise<Response_MountedComponentsDto[]> {

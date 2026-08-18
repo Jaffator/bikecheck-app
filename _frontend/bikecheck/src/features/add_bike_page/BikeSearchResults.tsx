@@ -1,27 +1,35 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { Button, Group, Image, Paper, Radio, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Check } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
+
+// Each card carries a full-size image, so a long list would pull down a lot of
+// data on mobile before the user has seen any of it.
+const PAGE_SIZE = 10;
 
 interface BikeSearchResultsProps {
   results: BikeSearchResult[];
   // bikeUrl identifies the pick — it is what the component lookup needs next.
   selectedBikeUrl: string | null;
   onSelect: (bikeUrl: string) => void;
-  onConfirm: () => void;
-  onChangeSearch: () => void;
 }
 
-export function BikeSearchResults({
-  results,
-  selectedBikeUrl,
-  onSelect,
-  onConfirm,
-  onChangeSearch,
-}: BikeSearchResultsProps): ReactElement {
+// Confirming the pick lives in the page's step footer, so this component only
+// owns the list itself.
+export function BikeSearchResults({ results, selectedBikeUrl, onSelect }: BikeSearchResultsProps): ReactElement {
   const { t } = useTranslation();
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const visibleResults = results.slice(0, visibleCount);
+  const remainingCount = results.length - visibleResults.length;
+
+  function showMore(): void {
+    tapFeedback();
+    setVisibleCount((current) => current + PAGE_SIZE);
+  }
 
   return (
     <Stack gap="md">
@@ -29,7 +37,11 @@ export function BikeSearchResults({
         {t("addBike.selectModelBody")}
       </Text>
 
-      {results.map((result) => {
+      <Text size="sm" fw={600} c="text.7">
+        {t("addBike.resultsFound", { count: results.length })}
+      </Text>
+
+      {visibleResults.map((result) => {
         const isSelected = result.bikeUrl === selectedBikeUrl;
 
         return (
@@ -46,37 +58,58 @@ export function BikeSearchResults({
             >
               <Stack gap="sm">
                 {result.imageUrl && (
-                  <Image src={result.imageUrl} alt={result.name} h={160} fit="contain" bg="white" radius="sm" />
+                  <Image
+                    src={result.imageUrl}
+                    alt={result.name}
+                    h={160}
+                    fit="contain"
+                    bg="white"
+                    radius="sm"
+                    loading="lazy"
+                  />
                 )}
-                <Group justify="space-between" wrap="nowrap" align="center">
-                  <Text fw={700} size="md" c="text.6">
-                    {result.}
+                <Stack gap={0}>
+                  <Text fw={500} size="md" c="text.8">
+                    {result.bikeBrand}
                   </Text>
-                  <Text fw={700} size="md" c="text.6">
-                    {result.name}
-                  </Text>
-                  <Radio checked={isSelected} onChange={() => onSelect(result.bikeUrl)} aria-label={result.name} />
-                </Group>
+                  <Group justify="space-between" wrap="nowrap" align="center">
+                    <Text fw={700} size="md" c="text.6">
+                      {result.name}
+                    </Text>
+                    <Radio
+                      checked={isSelected}
+                      onChange={() => onSelect(result.bikeUrl)}
+                      aria-label={result.name}
+                      styles={{
+                        radio: {
+                          backgroundColor: "transparent",
+                          borderWidth: 3,
+                          borderColor: isSelected ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-5)",
+                        },
+                        icon: { color: "var(--mantine-color-primary-6)" },
+                      }}
+                    />
+                  </Group>
+                </Stack>
               </Stack>
             </Paper>
           </UnstyledButton>
         );
       })}
 
-      <Button
-        leftSection={<Check size={18} />}
-        onClick={onConfirm}
-        disabled={selectedBikeUrl === null}
-        fullWidth
-        radius="sm"
-        style={{ height: "3rem" }}
-      >
-        {t("addBike.confirmSelection")}
-      </Button>
-
-      <Button variant="subtle" color="secondary.6" onClick={onChangeSearch} fullWidth radius="sm">
-        {t("addBike.changeSearch")}
-      </Button>
+      {remainingCount > 0 && (
+        <Button
+          variant="subtle"
+          color="secondary.6"
+          leftSection={<ChevronDown size={18} />}
+          onClick={showMore}
+          fullWidth
+          radius="sm"
+          style={{ height: "3rem" }}
+        >
+          {t("addBike.showMoreResults", { count: remainingCount })}
+        </Button>
+      )}
     </Stack>
   );
 }

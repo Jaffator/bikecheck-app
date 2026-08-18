@@ -4,6 +4,7 @@ import { Center, Loader } from "@mantine/core";
 import { Dashboard } from "./features/dashboard_page/Dashboard";
 import { AppLayout } from "./layout/AppLayout";
 import { Bikes } from "./features/bikes_page/Bikes";
+import { BikeDetail } from "./features/bikes_page/BikeDetail";
 import { AddBikeIdentity } from "./features/add_bike_page/AddBikeIdentity";
 import { Service } from "./features/service_page/Service";
 import { Rides } from "./features/rides_page/Rides";
@@ -11,6 +12,7 @@ import { Login } from "./features/login_page/Login";
 import { Profile } from "./features/profile_page/Profile";
 import { Settings } from "./features/settings_page/Settings";
 import { Notifications } from "./features/notification_page/Notifications";
+import { StravaConnected } from "./features/strava_connected_page/StravaConnected";
 import { useCurrentUser, useUpdateUser } from "./features/users/users.queries";
 import { applyLanguage, detectLanguage } from "./i18n";
 
@@ -26,7 +28,11 @@ function App(): ReactElement {
 
 // Everything else requires a logged-in user.
 function ProtectedApp(): ReactElement {
-  const { data: user, isLoading: isUserLoading, isError: isUserError } = useCurrentUser();
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isError: isUserError,
+  } = useCurrentUser();
   const { mutate: patchUser } = useUpdateUser();
   const navigate = useNavigate();
   const userId = user?.id;
@@ -69,7 +75,11 @@ function ProtectedApp(): ReactElement {
   }
 
   if (isUserError || !user) {
-    console.log("User not logged in or error fetching user:", isUserError, user);
+    console.log(
+      "User not logged in or error fetching user:",
+      isUserError,
+      user,
+    );
     return <Login />;
   }
 
@@ -78,12 +88,16 @@ function ProtectedApp(): ReactElement {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/bikes" element={<Bikes />} />
+        {/* Before the ":id" route, which would otherwise match "new" itself. */}
         <Route path="/bikes/new" element={<AddBikeIdentity />} />
+        <Route path="/bikes/:id" element={<BikeDetail />} />
         <Route path="/service" element={<Service />} />
         <Route path="/rides" element={<Rides />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
+        {/* Where the Strava OAuth deep link lands once the account is linked. */}
+        <Route path="/strava-connected" element={<StravaConnected />} />
       </Route>
     </Routes>
   );

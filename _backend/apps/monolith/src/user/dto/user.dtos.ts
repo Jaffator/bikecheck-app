@@ -86,6 +86,10 @@ export class UserResponseDto {
   weight_kg!: number | null;
   @ApiProperty({ example: true })
   is_active!: boolean;
+  // Set once the user completes the Strava OAuth flow. Null means not linked —
+  // this is what the app reads to tell the two states apart.
+  @ApiProperty({ example: '20678962', nullable: true })
+  strava_athlete_id!: string | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })
   last_login_at!: Date | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })

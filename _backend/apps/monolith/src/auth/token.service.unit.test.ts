@@ -45,8 +45,9 @@ describe('TokenService_testing', () => {
   describe('RefreshToken', () => {
     it('Should return new access token and reuse refresh token', async () => {
       // ARRANGE
+      // Comfortably past the rotation threshold, so the token is reused as is.
       const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 5); // + 5days
+      futureDate.setDate(futureDate.getDate() + 90); // + 90 days
 
       mockRepo.findByToken.mockResolvedValue({
         user_id: 1,

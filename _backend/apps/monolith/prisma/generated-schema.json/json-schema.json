@@ -440,6 +440,10 @@
           "type": "boolean",
           "default": false
         },
+        "essential": {
+          "type": "boolean",
+          "default": false
+        },
         "has_position": {
           "type": "boolean",
           "default": false

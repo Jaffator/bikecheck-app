@@ -179,10 +179,10 @@ body {
     break-inside: avoid;
   }
 }
-/* Opacity only — a transform here would make the animated wrapper the
-   containing block for any position: fixed child (e.g. a page footer),
-   which then jumps once the animation ends. */
-@keyframes fadeIn {
+/* Arriving page fades in so a route change does not snap. Opacity only — a
+   transform here would make the wrapper the containing block for any
+   position: fixed child, such as a page's own footer. */
+@keyframes pageEnter {
   from {
     opacity: 0;
   }

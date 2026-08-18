@@ -66,6 +66,7 @@ export class UserController {
       currency: user.currency,
       weight_kg: user.weight_kg,
       is_active: user.is_active || false,
+      strava_athlete_id: user.strava_athlete_id ?? null,
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
       created_at: user.created_at || new Date(),

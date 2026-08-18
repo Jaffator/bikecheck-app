@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
+import { randomUUID } from 'crypto';
 import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { DatabaseService } from '../database/database.service';
 import { Queue } from 'bullmq';
@@ -27,6 +28,51 @@ export class TokenService {
   //   console.log(await this.getAccessToken(20678962));
   // }
 
+  /**
+   * Starts the OAuth flow for a user the monolith has already authenticated.
+   * The returned URL carries a random state, never the user id — the user could
+   * edit the id in the browser and link their Strava account to someone else.
+   */
+  async buildAuthorizeUrl(userId: number): Promise<string> {
+    const state = randomUUID();
+
+    await this.databaseService.query(
+      `INSERT INTO oauth_states (state, user_id, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
+      [state, userId],
+    );
+
+    const params = new URLSearchParams({
+      client_id: String(process.env.STRAVA_CLIENT_ID),
+      response_type: 'code',
+      redirect_uri: `${process.env.STRAVA_SERVICE_URL}/strava/exchange_token`,
+      approval_prompt: 'force',
+      scope: 'profile:read_all,activity:read_all,activity:write,read_all',
+      state,
+    });
+
+    // this.logger.info({ custom: true, userId }, 'Strava authorize URL issued');
+    return `https://www.strava.com/oauth/authorize?${params.toString()}`;
+  }
+
+  /**
+   * Resolves a state from the callback back to the user who started the flow.
+   * DELETE ... RETURNING makes the lookup atomic and single-use, so a state
+   * cannot be replayed. Expired or unknown states resolve to null.
+   */
+  async consumeState(state: string): Promise<number | null> {
+    if (!state) return null;
+
+    const rows = await this.databaseService.query<{ user_id: number }>(
+      `DELETE FROM oauth_states
+       WHERE state = $1 AND expires_at > NOW()
+       RETURNING user_id`,
+      [state],
+    );
+
+    return rows[0]?.user_id ?? null;
+  }
+
   async getAccessToken(athleteID: number): Promise<string> {
     // get access token from db
     const tokenInfo: any = await this.databaseService.query(
@@ -49,7 +95,7 @@ export class TokenService {
     return tokenInfo[0].access_token;
   }
 
-  async exchangeToken(code: string, userID: string): Promise<boolean> {
+  async exchangeToken(code: string, userID: number): Promise<boolean> {
     // Get refresh and access tokens from Strava API
     const response = await axios.post('https://www.strava.com/oauth/token', {
       client_id: process.env.STRAVA_CLIENT_ID,
@@ -73,6 +119,28 @@ export class TokenService {
       expires_at: response.data.expires_at,
     });
     return result;
+  }
+
+  /**
+   * Drops the link to a Strava account: tells Strava to revoke the grant, then
+   * removes both tokens. The revoke is best effort — a grant the user already
+   * withdrew on Strava's own site answers with an error, and that must not stop
+   * the local rows from going away, or the account could never be unlinked.
+   */
+  async disconnect(athleteID: number): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken(athleteID);
+      await axios.post('https://www.strava.com/oauth/deauthorize', { access_token: accessToken }, { timeout: 5000 });
+    } catch (err) {
+      this.logger.warn({ err, athleteID }, 'Strava deauthorize failed, removing local tokens anyway');
+    }
+
+    await this.databaseService.transaction(async (client) => {
+      await client.query('DELETE FROM access_tokens WHERE athlete_id = $1', [athleteID]);
+      await client.query('DELETE FROM refresh_tokens WHERE athlete_id = $1', [athleteID]);
+    });
+
+    this.logger.info({ custom: true, athlete_id: athleteID }, 'Strava tokens removed');
   }
 
   private async _getNewAccessToken(athleteID: number): Promise<string> {
@@ -101,7 +169,6 @@ export class TokenService {
     });
     return response.data.access_token;
   }
-  private;
   private async _updateStravaAuthData(data: StravaTokenResponse): Promise<void> {
     try {
       await this.databaseService.transaction(async (client) => {

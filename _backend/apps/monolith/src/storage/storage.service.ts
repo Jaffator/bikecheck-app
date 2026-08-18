@@ -1,9 +1,23 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { randomUUID } from 'crypto';
+import sharp from 'sharp';
 import path from 'path';
 import 'dotenv/config';
 
 type CloudFolder = 'bikes';
+
+// One size for every use. Wide enough to stay sharp full-screen on a phone at
+// 3x, small enough that a card does not pull megabytes to draw 180px.
+const IMAGE_MAX_WIDTH = 1600;
+const IMAGE_QUALITY = 80;
+// Scraped product photos arrive two ways: transparent PNGs, and JPEGs with a
+// white studio background already baked into the pixels. WebP keeps the alpha of
+// the first kind, so the same garage showed some bikes on white and others on
+// whatever surface was behind them. White is the only colour that can match both
+// — the baked-in kind cannot be recoloured, so the transparent kind is flattened
+// to meet it. The frontend paints the same white behind these images.
+const IMAGE_BACKGROUND = '#FFFFFF';
 
 @Injectable()
 export class StorageService {
@@ -47,13 +61,43 @@ export class StorageService {
       if (response.$metadata.httpStatusCode !== 200) {
         throw new InternalServerErrorException('Failed to upload file to storage');
       }
-
-      return `${process.env.CLOUDFARE_PUBLIC_URL}/${key}`;
+      console.log('OK UPLOAD TO CLOUDFARE');
+      console.log(`FINAL URL${process.env.CLOUDFARE_PUBLIC_URL}/${key}`);
+      return `${process.env.CLOUDFLARE_PUBLIC_URL}/${key}`;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Storage upload failed: ${message}`);
     }
   }
+  /**
+   * Normalise an image and upload it. Phone cameras produce multi-megabyte
+   * originals in whatever format the device prefers (HEIC included), which the
+   * app then has to download in full to draw a 180px card. One size serves
+   * every use: cards, detail and full-screen alike, and every stored image is
+   * opaque so a transparent original cannot pick up the surface behind it.
+   * @param imageBuffer - The image as received, in any format sharp can read
+   * @param cloudFolder - Cloud folder to upload to (e.g. 'bikes')
+   * @returns Public URL of the uploaded file
+   */
+  async uploadImageR2CloudFare(imageBuffer: Buffer, cloudFolder: CloudFolder): Promise<string> {
+    try {
+      const optimised = await sharp(imageBuffer)
+        // Applies the EXIF orientation and drops the tag, so a photo taken on a
+        // phone is not left on its side once the metadata is gone.
+        .rotate()
+        .resize({ width: IMAGE_MAX_WIDTH, withoutEnlargement: true })
+        // No-op on an image that has no alpha, so device photos are untouched.
+        .flatten({ background: IMAGE_BACKGROUND })
+        .webp({ quality: IMAGE_QUALITY })
+        .toBuffer();
+
+      return await this.uploadFileR2CloudFare(optimised, `${randomUUID()}.webp`, cloudFolder);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(`Image processing failed: ${message}`);
+    }
+  }
+
   private getContentType(url: string): string {
     const ext = path.extname(url).toLowerCase();
     const map: Record<string, string> = {

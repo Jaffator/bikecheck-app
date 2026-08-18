@@ -23,6 +23,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Deep link back from an external browser. The Strava OAuth
+                 callback redirects here, which brings the running app to the
+                 front instead of leaving the user in the browser tab. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bikecheck" />
+            </intent-filter>
+
         </activity>
 
         <provider

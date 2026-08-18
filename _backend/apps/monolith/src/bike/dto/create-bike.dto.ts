@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, IsOptional, IsInt, IsPositive, IsBoolean } from 'class-validator';
+import { IsString, MaxLength, IsOptional, IsInt, IsPositive, IsBoolean, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ValidateNested, IsArray } from 'class-validator';
 import { CreateMountedComponentsDto } from '../../component/dto/create-components';
@@ -12,10 +12,13 @@ export class DefaultComponentsRequestDto {
 
 export class CreateBikeDto {
   // Required
-  @ApiProperty({ example: 1 })
+  // Not sent by the client: ownership is taken from the authenticated user, so
+  // the controller overwrites whatever arrives here.
+  @ApiProperty({ example: 1, required: false })
+  @IsOptional()
   @IsInt()
   @IsPositive()
-  user_id!: number;
+  user_id?: number;
 
   @ApiProperty({ example: 'Trek' })
   @IsString()
@@ -35,10 +38,11 @@ export class CreateBikeDto {
   has_rear_suspension!: boolean;
 
   // Optional
+  // Scraped model names carry the full trim and colourway, so they run long.
   @ApiProperty({ example: 'Domane SL7', required: false })
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(120)
   bike_model?: string;
 
   @ApiProperty({ example: 1, required: false })
@@ -47,10 +51,12 @@ export class CreateBikeDto {
   @IsPositive()
   organization_id?: number;
 
+  // The user's own name for the bike, typed freely on the wizard - 30 chars was
+  // too tight for what people actually write.
   @ApiProperty({ example: 'Tarmac SL7', required: false })
   @IsOptional()
   @IsString()
-  @MaxLength(30)
+  @MaxLength(100)
   bikename?: string;
 
   @ApiProperty({ example: 2024, required: false })
@@ -77,28 +83,25 @@ export class CreateBikeDto {
   @MaxLength(50)
   bike_size?: string;
 
-  @ApiProperty({ example: 1, required: false })
+  // The client picks the type by name; the service resolves it to bike_type_id,
+  // so the form never has to carry ids it cannot know.
+  @ApiProperty({ example: 'Enduro', required: false })
   @IsOptional()
-  @IsInt()
-  @IsPositive()
-  bike_type_id?: number;
+  @IsString()
+  @MaxLength(50)
+  bike_type?: string;
 
+  // A brand new bike has zero kilometres, so this is Min(0) rather than positive.
   @ApiProperty({ example: 1540, required: false })
   @IsOptional()
   @IsInt()
-  @IsPositive()
+  @Min(0)
   total_km?: number;
-
-  @ApiProperty({ example: 'Carbon', required: false })
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  frame_material?: string;
 
   @ApiProperty({ example: 'https://example.com/bike-image.jpg', required: false })
   @IsOptional()
   @IsString()
-  @MaxLength(200)
+  @MaxLength(400)
   image_url?: string;
 }
 

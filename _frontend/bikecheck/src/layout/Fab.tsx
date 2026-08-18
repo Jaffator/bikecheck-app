@@ -144,8 +144,8 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
           bg="cards.6"
           p={8}
           style={{
-            border: "none",
-            boxShadow: "0 0 10px 0 color-mix(in srgb, var(--mantine-color-primary-6) 35%, transparent)",
+            border: "1px solid var(--mantine-color-cards-5)",
+            boxShadow: "0 0 10px 0 color-mix(in srgb, var(--mantine-color-text-9) 35%, transparent)",
           }}
         >
           <Stack gap={MENU_ITEM_GAP}>

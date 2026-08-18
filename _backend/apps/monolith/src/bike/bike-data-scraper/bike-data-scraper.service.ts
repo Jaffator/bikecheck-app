@@ -105,6 +105,7 @@ export class BikeDataScrapeService {
       });
 
       const componentsTypes = await this.prisma.component_types.findMany({});
+
       const extractedBikeComponents = await this.assembleBikeComponents(bikeComponents.reverse(), componentsTypes);
 
       const mountedComponents = componentsTypes.flatMap((item) => {
@@ -189,16 +190,18 @@ export class BikeDataScrapeService {
         position: undefined,
         interval_id: undefined,
       },
-      component_name: '',
-      component_i18n_key: null,
+      component_name: component.component_type,
+      component_group_id: component.component_group_id,
+      component_i18n_key: component.i18n_key,
+      has_position: component.has_position,
+      essential: component.essential,
     };
     if (component && foundedPosititon) {
       // Position defined in description, return single component with position
       return [
         {
+          ...baseComponent,
           component: { ...baseComponent.component, component_type_id: component.id, position: foundedPosititon },
-          component_name: component.component_type,
-          component_i18n_key: component.i18n_key,
         },
       ];
     }
@@ -206,26 +209,20 @@ export class BikeDataScrapeService {
       // Position not defined, but components are in pair (front/rear), return two components with front/rear position
       return [
         {
+          ...baseComponent,
           component: { ...baseComponent.component, component_type_id: component.id, position: 'rear' },
-          component_name: component.component_type,
-          component_i18n_key: component.i18n_key,
         },
         {
+          ...baseComponent,
           component: { ...baseComponent.component, component_type_id: component.id, position: 'front' },
-          component_name: component.component_type,
-          component_i18n_key: component.i18n_key,
         },
       ];
     }
     // Just return component without position
     return [
       {
-        component: {
-          ...baseComponent.component,
-          component_type_id: component.id,
-        },
-        component_name: component.component_type,
-        component_i18n_key: component.i18n_key,
+        ...baseComponent,
+        component: { ...baseComponent.component, component_type_id: component.id },
       },
     ];
   }

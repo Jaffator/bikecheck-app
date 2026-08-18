@@ -5,6 +5,9 @@ interface Component {
   component_type: string;
   ebike: boolean;
   has_position: boolean;
+  // Saved even when left blank, so wear tracking starts on day one. Optional
+  // parts are only saved once the user describes them.
+  essential: boolean;
 }
 
 interface ComponentGroupMapping {
@@ -16,83 +19,89 @@ const componentGroups: ComponentGroupMapping[] = [
   {
     groupName: 'Suspension',
     componentTypes: [
-      { component_type: 'Fork', ebike: false, has_position: false },
-      { component_type: 'Shock', ebike: false, has_position: false },
+      { component_type: 'Fork', ebike: false, has_position: false, essential: true },
+      // Only full-suspension bikes are ever asked for it; the client hides the
+      // row for the rest, so it never reaches a hardtail as a blank essential.
+      { component_type: 'Shock', ebike: false, has_position: false, essential: true },
     ],
   },
   {
     groupName: 'Frame',
     componentTypes: [
-      { component_type: 'Frame', ebike: false, has_position: false },
-      { component_type: 'Hanger', ebike: false, has_position: false },
+      { component_type: 'Frame', ebike: false, has_position: false, essential: true },
+      { component_type: 'Hanger', ebike: false, has_position: false, essential: false },
     ],
   },
   {
     groupName: 'Cockpit',
     componentTypes: [
-      { component_type: 'Headset', ebike: false, has_position: false },
-      { component_type: 'Stem', ebike: false, has_position: false },
-      { component_type: 'Handlebar', ebike: false, has_position: false },
-      { component_type: 'Grips', ebike: false, has_position: false },
-      { component_type: 'Dropper Lever', ebike: false, has_position: false },
-      { component_type: 'Remote Lever', ebike: false, has_position: false },
+      { component_type: 'Headset', ebike: false, has_position: false, essential: true },
+      { component_type: 'Stem', ebike: false, has_position: false, essential: true },
+      { component_type: 'Handlebar', ebike: false, has_position: false, essential: true },
+      { component_type: 'Grips', ebike: false, has_position: false, essential: true },
+      { component_type: 'Dropper Lever', ebike: false, has_position: false, essential: false },
+      { component_type: 'Remote Lever', ebike: false, has_position: false, essential: false },
     ],
   },
   {
     groupName: 'Saddle & Seatpost',
     componentTypes: [
-      { component_type: 'Saddle', ebike: false, has_position: false },
-      { component_type: 'Seatpost', ebike: false, has_position: false },
+      { component_type: 'Saddle', ebike: false, has_position: false, essential: true },
+      { component_type: 'Seatpost', ebike: false, has_position: false, essential: true },
     ],
   },
   {
     groupName: 'Wheels',
     componentTypes: [
-      { component_type: 'Rim', ebike: false, has_position: true },
-      { component_type: 'Tire', ebike: false, has_position: true },
-      { component_type: 'Hub', ebike: false, has_position: true },
-      { component_type: 'Axle', ebike: false, has_position: true },
-      { component_type: 'Inserts', ebike: false, has_position: true },
-      { component_type: 'Valves', ebike: false, has_position: false },
-      { component_type: 'Sealant', ebike: false, has_position: true },
+      { component_type: 'Rim', ebike: false, has_position: true, essential: true },
+      { component_type: 'Tire', ebike: false, has_position: true, essential: true },
+      { component_type: 'Hub', ebike: false, has_position: true, essential: true },
+      // Often part of the hub rather than a part of its own, so asking for it
+      // by default would only add noise.
+      { component_type: 'Axle', ebike: false, has_position: true, essential: false },
+      { component_type: 'Inserts', ebike: false, has_position: true, essential: false },
+      { component_type: 'Valves', ebike: false, has_position: false, essential: false },
+      { component_type: 'Sealant', ebike: false, has_position: true, essential: false },
     ],
   },
   {
     groupName: 'Drivetrain',
     componentTypes: [
-      { component_type: 'Derailleur', ebike: false, has_position: true },
-      { component_type: 'Shifter', ebike: false, has_position: true },
-      { component_type: 'Crank', ebike: false, has_position: false },
-      { component_type: 'Chainring', ebike: false, has_position: false },
-      { component_type: 'Bashguard', ebike: false, has_position: false },
-      { component_type: 'Cassette', ebike: false, has_position: false },
-      { component_type: 'Chain', ebike: false, has_position: false },
-      { component_type: 'Chain Guide', ebike: false, has_position: false },
-      { component_type: 'Bottom Bracket', ebike: false, has_position: false },
+      { component_type: 'Derailleur', ebike: false, has_position: true, essential: true },
+      { component_type: 'Shifter', ebike: false, has_position: true, essential: true },
+      { component_type: 'Crank', ebike: false, has_position: false, essential: true },
+      { component_type: 'Chainring', ebike: false, has_position: false, essential: true },
+      { component_type: 'Bashguard', ebike: false, has_position: false, essential: false },
+      { component_type: 'Cassette', ebike: false, has_position: false, essential: true },
+      { component_type: 'Chain', ebike: false, has_position: false, essential: true },
+      { component_type: 'Chain Guide', ebike: false, has_position: false, essential: false },
+      { component_type: 'Bottom Bracket', ebike: false, has_position: false, essential: true },
     ],
   },
   {
     groupName: 'Brakes',
     componentTypes: [
-      { component_type: 'Brake Caliper', ebike: false, has_position: true },
-      { component_type: 'Brake Lever', ebike: false, has_position: true },
-      { component_type: 'Brake Rotor', ebike: false, has_position: true },
-      { component_type: 'Brake pad', ebike: false, has_position: true },
+      { component_type: 'Brake Caliper', ebike: false, has_position: true, essential: true },
+      { component_type: 'Brake Lever', ebike: false, has_position: true, essential: true },
+      { component_type: 'Brake Rotor', ebike: false, has_position: true, essential: true },
+      // The fastest-wearing part on the bike, so it is tracked from the start
+      // even when the user cannot name the compound.
+      { component_type: 'Brake pad', ebike: false, has_position: true, essential: true },
     ],
   },
   {
     groupName: 'E-bike',
     componentTypes: [
-      { component_type: 'Motor', ebike: true, has_position: false },
-      { component_type: 'Battery', ebike: true, has_position: false },
-      { component_type: 'Display', ebike: true, has_position: false },
-      { component_type: 'Charger', ebike: false, has_position: false },
-      { component_type: 'E-Bike System', ebike: true, has_position: false },
+      { component_type: 'Motor', ebike: true, has_position: false, essential: false },
+      { component_type: 'Battery', ebike: true, has_position: false, essential: false },
+      { component_type: 'Display', ebike: true, has_position: false, essential: false },
+      { component_type: 'Charger', ebike: true, has_position: false, essential: false },
+      { component_type: 'E-Bike System', ebike: true, has_position: false, essential: false },
     ],
   },
   {
     groupName: 'Other',
-    componentTypes: [{ component_type: 'Pedals', ebike: false, has_position: false }],
+    componentTypes: [{ component_type: 'Pedals', ebike: false, has_position: false, essential: true }],
   },
 ];
 

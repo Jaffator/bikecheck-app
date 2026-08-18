@@ -1,11 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayNotEmpty, IsArray, IsInt, IsString, ValidateNested } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class GearLinkDto {
-  @ApiProperty({ example: 'b1234567' })
+  // Null unpairs the bike: it stops collecting new rides, but the ones it already
+  // has stay — they were really ridden, and component wear is derived from them.
+  @ApiProperty({ example: 'b1234567', nullable: true })
+  @IsOptional()
   @IsString()
-  stravaBikeId!: string;
+  stravaBikeId!: string | null;
 
   @ApiProperty({ example: 1 })
   @IsInt()

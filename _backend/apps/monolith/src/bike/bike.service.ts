@@ -3,11 +3,9 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
-import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import 'dotenv/config';
-import path from 'path';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -39,22 +37,44 @@ export class BikeService {
     };
   }
 
-  async createBikeWithComponents(userId: number, dto: CreateBikeWithComponentsDto): Promise<ResponseBikeDto> {
-    let imageUrl = dto.bike.image_url;
-    if (imageUrl && !imageUrl.includes(process.env.CLOUDFARE_PUBLIC_URL!)) {
+  async createBikeWithComponents(
+    userId: number,
+    createBikeData: CreateBikeWithComponentsDto,
+    image?: Express.Multer.File,
+  ): Promise<ResponseBikeDto> {
+    let imageUrl = createBikeData.bike.image_url;
+    console.log('Image URL BEFORE:', imageUrl);
+    if (image) {
+      // Photo uploaded from the device
+      imageUrl = await this.storeFile(image);
+    } else if (imageUrl && !imageUrl.includes(process.env.CLOUDFLARE_PUBLIC_URL!)) {
+      // Photo provided as an external URL (not already stored in our cloud)
       imageUrl = await this.storeFileFromUrl(imageUrl);
+      console.log('Image URL after storing from external URL:', imageUrl);
+    }
+    // The client sends the type by name, so it is resolved to a row here - both
+    // the bike and its default intervals are keyed off it.
+    const { bike_type: bikeTypeName, ...bikeFields } = createBikeData.bike;
+    const bikeType = bikeTypeName ? await this.prisma.bike_types.findUnique({ where: { type: bikeTypeName } }) : null;
+
+    if (bikeTypeName && !bikeType) {
+      throw new NotFoundException(`Bike type "${bikeTypeName}" not found`);
     }
 
     // Ownership comes from the authenticated user, never from the request body.
     // Fork Basic Service, Fork Full Service, Shock Basic Service, Shock Full Service
-    const bikeToSave: CreateBikeDto = { ...dto.bike, user_id: userId, image_url: imageUrl };
-    console.log('bikeToSave', bikeToSave);
+    const bikeToSave: Prisma.bikesUncheckedCreateInput = {
+      ...bikeFields,
+      user_id: userId,
+      image_url: imageUrl,
+      bike_type_id: bikeType?.id,
+    };
     return await this.prisma.$transaction(async (db) => {
       // 1.create a new Bike
       const bike = await db.bikes.create({ data: { ...bikeToSave } });
 
       // 2.create mounted components for the bike
-      const validComponents = dto.components.filter((c) => c.component_type_id !== undefined);
+      const validComponents = createBikeData.components.filter((c) => c.component_type_id !== undefined);
       const componentData = validComponents.map((data) => ({
         ...data,
         bike_id: bike.id,
@@ -66,36 +86,42 @@ export class BikeService {
       const eventFilter: Prisma.events_actionWhereInput = {};
       if (!bike.has_front_suspension) eventFilter.req_front_suspension = false;
       if (!bike.has_rear_suspension) eventFilter.req_rear_suspension = false;
+      // The intervals are seeded per bike type, so a bike without one has nothing
+      // to copy - it is still created, and the intervals follow once its type is
+      // known.
+      if (bikeType?.type) {
+        const defaultIntervals = await db.default_service_intervals.findMany({
+          where: {
+            category: { has: bikeType.type },
+            events_action: eventFilter,
+          },
+        });
 
-      const biketype = await db.bike_types.findUnique({ where: { id: bikeToSave.bike_type_id } });
-      const defaultIntervals = await db.default_service_intervals.findMany({
-        where: {
-          category: { has: biketype?.type },
-          events_action: eventFilter,
-        },
-      });
-      console.log('defaultIntervals', defaultIntervals);
-
-      await db.bike_service_interval.createMany({
-        data: defaultIntervals.map((interval) => ({
-          bike_id: bike.id,
-          event_actions_id: interval.event_actions_id,
-          service_interval_km: interval.service_interval_km,
-          service_interval_min: interval.service_interval_min,
-          health_index_interval: interval.health_index_interval,
-        })),
-      });
+        await db.bike_service_interval.createMany({
+          data: defaultIntervals.map((interval) => ({
+            bike_id: bike.id,
+            event_actions_id: interval.event_actions_id,
+            service_interval_km: interval.service_interval_km,
+            service_interval_min: interval.service_interval_min,
+            health_index_interval: interval.health_index_interval,
+          })),
+        });
+      } else {
+        this.logger.warn(`Bike ${bike.id} created without a bike type - no default service intervals copied`);
+      }
 
       return bike as ResponseBikeDto;
     });
   }
 
+  // Deleted bikes stay in the table so their rides and service history survive,
+  // which means every read has to exclude them or they come back to the garage.
   async findAll(): Promise<ResponseBikeDto[]> {
-    return this.prisma.bikes.findMany({});
+    return this.prisma.bikes.findMany({ where: { is_deleted: { not: true } } });
   }
 
   async findByUser(userId: number): Promise<ResponseBikeDto[]> {
-    return this.prisma.bikes.findMany({ where: { user_id: userId } });
+    return this.prisma.bikes.findMany({ where: { user_id: userId, is_deleted: { not: true } } });
   }
 
   async findByID(id: number, userId: number): Promise<ResponseBikeDto> {
@@ -122,15 +148,25 @@ export class BikeService {
 
   // Returns the bike only if it belongs to the user; otherwise 404 (no ownership leak).
   private async findOwnedBike(id: number, userId: number): Promise<ResponseBikeDto> {
-    const bike = await this.prisma.bikes.findFirst({ where: { id, user_id: userId } });
+    const bike = await this.prisma.bikes.findFirst({ where: { id, user_id: userId, is_deleted: { not: true } } });
     if (!bike) {
       throw new NotFoundException(`Bike with ID ${id} not found`);
     }
     return bike;
   }
 
+  // Uploads a photo received as FILE to cloud storage.
+  private async storeFile(image: Express.Multer.File): Promise<string | undefined> {
+    try {
+      return await this.storageService.uploadImageR2CloudFare(image.buffer, 'bikes');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to upload image to cloud: ${message}`);
+      return undefined; // Return undefined to indicate failure
+    }
+  }
+  // Uploads a photo received as an EXTERNAL URL to cloud storage.
   private async storeFileFromUrl(url: string): Promise<string | undefined> {
-    const extname = path.extname(url);
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -139,9 +175,7 @@ export class BikeService {
     }
     try {
       const file = await response.arrayBuffer();
-      const buffer = Buffer.from(file);
-      const filename = `${randomUUID()}${extname}`;
-      return await this.storageService.uploadFileR2CloudFare(buffer, filename, 'bikes');
+      return await this.storageService.uploadImageR2CloudFare(Buffer.from(file), 'bikes');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to upload image to cloud: ${message}`);
