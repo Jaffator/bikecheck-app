@@ -25,15 +25,22 @@ export async function getBikeFormOptions(): Promise<BikeFormOptions> {
 }
 
 // GET /bike/external — scrapes bike specs from an external source.
-export async function searchBikeExternal(bikeName: string, year: string): Promise<BikeSearchResult[]> {
+export async function searchBikeExternal(
+  bikeName: string,
+  year: string,
+): Promise<BikeSearchResult[]> {
   const query = new URLSearchParams({ bikeName, year });
   return apiFetch<BikeSearchResult[]>(`/bike/external?${query.toString()}`);
 }
 
 // GET /bike/external/components — scrapes the component list of one bike.
-export async function getExternalBikeComponents(bikeUrl: string): Promise<ExternalBikeComponent[]> {
+export async function getExternalBikeComponents(
+  bikeUrl: string,
+): Promise<ExternalBikeComponent[]> {
   const query = new URLSearchParams({ bikeUrl });
-  return apiFetch<ExternalBikeComponent[]>(`/bike/external/components?${query.toString()}`);
+  return apiFetch<ExternalBikeComponent[]>(
+    `/bike/external/components?${query.toString()}`,
+  );
 }
 
 // A photo taken through Capacitor can arrive as a bare blob — no name, and
@@ -57,7 +64,10 @@ function uploadFilename(image: File): string {
 // picked a photo from the device (otherwise bike.image_url carries the URL).
 export async function createBike(input: CreateBikeInput): Promise<Bike> {
   const form = new FormData();
-  form.append("data", JSON.stringify({ bike: input.bike, components: input.components }));
+  form.append(
+    "data",
+    JSON.stringify({ bike: input.bike, components: input.components }),
+  );
   if (input.image) {
     form.append("image", input.image, uploadFilename(input.image));
   }

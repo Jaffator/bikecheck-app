@@ -4,15 +4,16 @@ import {
   Button,
   Group,
   Image,
+  Modal,
   Paper,
   Skeleton,
   Stack,
   Text,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router-dom";
-import { Clock, Gauge } from "lucide-react";
-import { useBike } from "../bikes/bikes.queries";
+import { useNavigate, useParams } from "react-router-dom";
+import { Clock, Gauge, Trash2 } from "lucide-react";
+import { useBike, useDeleteBike } from "../bikes/bikes.queries";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { useLinkStravaGear } from "../strava/strava.queries";
@@ -23,10 +24,13 @@ import { tapFeedback } from "@/utils/haptics";
 // history and wear are still to come.
 export function BikeDetail(): ReactElement {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { data: bike, isLoading, isError } = useBike(Number(id));
   const { data: user } = useCurrentUser();
   const [pairingGear, setPairingGear] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const remove = useDeleteBike();
   const unpair = useLinkStravaGear();
 
   // Only reached when the bike was opened without the garage list in cache (a
@@ -153,11 +157,92 @@ export function BikeDetail(): ReactElement {
         {t("bikes.detailComingSoon")}
       </Text>
 
+      {/* Last thing on the page: destructive, and nothing above it should be
+          reached by aiming for something else. */}
+      <Button
+        variant="outline"
+        color="red.5"
+        radius="md"
+        leftSection={<Trash2 size={16} />}
+        loading={remove.isPending}
+        onClick={() => {
+          void tapFeedback();
+          setConfirmingDelete(true);
+        }}
+        styles={{
+          root: {
+            alignSelf: "flex-start",
+            backgroundColor: "transparent",
+            borderColor:
+              "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
+          },
+        }}
+      >
+        {t("bikes.delete")}
+      </Button>
+
+      {remove.isError && (
+        <Text size="xs" c="red.5">
+          {t("bikes.deleteFailed")}
+        </Text>
+      )}
+
       <GearLinkingSheet
         opened={pairingGear}
         onClose={() => setPairingGear(false)}
         bikeIds={[bike.id]}
       />
+
+      {/* The bike leaves the garage for good, so it is worth one question. The
+          body says what survives it: the rides stay in the history. */}
+      <Modal
+        opened={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        title={t("bikes.deleteConfirmTitle")}
+        centered
+        radius="md"
+        styles={{
+          content: { backgroundColor: "var(--mantine-color-cards-6)" },
+          header: { backgroundColor: "var(--mantine-color-cards-6)" },
+          title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
+        }}
+      >
+        <Stack gap="lg">
+          <Text
+            size="sm"
+            c="var(--color-text-dim)"
+            style={{ lineHeight: 1.45 }}
+          >
+            {t("bikes.deleteConfirmBody")}
+          </Text>
+
+          <Group gap="sm" grow>
+            <Button
+              variant="default"
+              radius="md"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={remove.isPending}
+            >
+              {t("bikes.deleteConfirmCancel")}
+            </Button>
+            <Button
+              color="red.5"
+              radius="md"
+              loading={remove.isPending}
+              onClick={() => {
+                void tapFeedback();
+                remove.mutate(bike.id, {
+                  // Nothing to come back to once the bike is gone, so the garage
+                  // replaces this screen rather than sitting behind it.
+                  onSuccess: () => navigate("/bikes", { replace: true }),
+                });
+              }}
+            >
+              {t("bikes.delete")}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }

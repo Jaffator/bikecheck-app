@@ -46,11 +46,15 @@ export function useBike(id: number): UseQueryResult<Bike> {
     // from it instead of flashing a spinner. The full record is still fetched
     // underneath — the list carries every field the detail needs, but it is a
     // snapshot from whenever the list was loaded.
-    initialData: () => queryClient.getQueryData<Bike[]>(["bikes"])?.find((bike) => bike.id === id),
+    initialData: () =>
+      queryClient
+        .getQueryData<Bike[]>(["bikes"])
+        ?.find((bike) => bike.id === id),
     // Without this the seeded value counts as fresh for the usual staleTime and
     // the real fetch never runs. Dated to the list it came from, so the refetch
     // happens once that snapshot is itself stale.
-    initialDataUpdatedAt: () => queryClient.getQueryState(["bikes"])?.dataUpdatedAt,
+    initialDataUpdatedAt: () =>
+      queryClient.getQueryState(["bikes"])?.dataUpdatedAt,
   });
 }
 export function useBikeFormOptions(): UseQueryResult<BikeFormOptions> {
@@ -61,15 +65,24 @@ export function useBikeFormOptions(): UseQueryResult<BikeFormOptions> {
 }
 
 // A mutation, not a query — the search runs on submit, not on render.
-export function useSearchBikeExternal(): UseMutationResult<BikeSearchResult[], Error, BikeSearchInput> {
+export function useSearchBikeExternal(): UseMutationResult<
+  BikeSearchResult[],
+  Error,
+  BikeSearchInput
+> {
   return useMutation({
-    mutationFn: ({ bikeName, year }: BikeSearchInput) => searchBikeExternal(bikeName, year),
+    mutationFn: ({ bikeName, year }: BikeSearchInput) =>
+      searchBikeExternal(bikeName, year),
   });
 }
 
 // The new bike has to show up in the list the wizard returns to, so the cache
 // is invalidated on success.
-export function useCreateBike(): UseMutationResult<Bike, Error, CreateBikeInput> {
+export function useCreateBike(): UseMutationResult<
+  Bike,
+  Error,
+  CreateBikeInput
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -86,7 +99,9 @@ export function useCreateBike(): UseMutationResult<Bike, Error, CreateBikeInput>
 
 // Scraping is slow, so the result is cached per URL — going back and forth
 // between the wizard steps must not trigger it again.
-export function useExternalBikeComponents(bikeUrl: string | null): UseQueryResult<ExternalBikeComponent[]> {
+export function useExternalBikeComponents(
+  bikeUrl: string | null,
+): UseQueryResult<ExternalBikeComponent[]> {
   return useQuery({
     queryKey: ["bike-external-components", bikeUrl],
     queryFn: () => getExternalBikeComponents(bikeUrl ?? ""),
