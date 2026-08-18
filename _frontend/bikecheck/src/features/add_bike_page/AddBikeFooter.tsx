@@ -53,7 +53,8 @@ export function AddBikeFooter({
         right: 0,
         bottom: 0,
         padding: "1rem",
-        paddingBottom: "calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+        paddingBottom:
+          "calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
         backgroundColor: "var(--mantine-color-background-9)",
         borderTop: "1px solid var(--mantine-color-other-borderSubtle)",
         zIndex: 100,

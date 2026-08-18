@@ -11,15 +11,15 @@ import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAndroidBackButton } from "../hooks/useAndroidBackButton";
+import { useStravaDeepLink } from "../hooks/useStravaDeepLink";
 import { OfflinePage } from "@/features/offline_page/OfflinePage";
 import { useOfflineWhenCallApiStore, useHeaderStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
-import { PageTransition } from "./PageTransition";
 import logo_mark from "@/assets/icons/bikecheck/onlylogo.svg";
 // import { bikecheckIconType } from "@/assets/icons/bikecheck";
-
+// https://www.strava.com/oauth/authorize?client_id=235898&response_type=code&redirect_uri=https%3A%2F%2Fsyrup-latch-certainty.ngrok-free.dev%2Fstrava%2Fexchange_token&approval_prompt=force&scope=profile%3Aread_all%2Cactivity%3Aread_all&state=bc2c759c-541c-4d84-9023-94f60c472d6c
 interface NavItem {
   labelKey: string;
   path: string;
@@ -31,7 +31,12 @@ interface NavItem {
 // Paths, not labels, identify a section — labels are translated at render time.
 const NAV_ITEMS: NavItem[] = [
   { labelKey: "nav.home", path: "/", icon: GoHome, icon_fill: GoHomeFill },
-  { labelKey: "nav.bikes", path: "/bikes", icon: PiPersonSimpleBike, icon_fill: PiPersonSimpleBikeBold },
+  {
+    labelKey: "nav.bikes",
+    path: "/bikes",
+    icon: PiPersonSimpleBike,
+    icon_fill: PiPersonSimpleBikeBold,
+  },
   {
     labelKey: "nav.service",
     path: "/service",
@@ -39,7 +44,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: RiWrenchLine,
     icon_fill: RiWrenchFill,
   },
-  { labelKey: "nav.rides", path: "/rides", icon: PiPath, icon_fill: PiPathBold },
+  {
+    labelKey: "nav.rides",
+    path: "/rides",
+    icon: PiPath,
+    icon_fill: PiPathBold,
+  },
 ];
 
 // Header title per section. Home is absent on purpose — it shows the logo mark
@@ -57,7 +67,25 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 };
 
 // Sub-pages drop the tab bar and the header actions — just a back arrow and the title.
-const SUB_PAGE_ROUTES: string[] = ["/settings", "/profile", "/notifications", "/bikes/new"];
+const SUB_PAGE_ROUTES: string[] = [
+  "/settings",
+  "/profile",
+  "/notifications",
+  "/bikes/new",
+  // Owns the whole screen and carries its own single action — the Fab over it
+  // would offer a way out of a result the user has not acknowledged yet.
+  "/strava-connected",
+];
+
+// Pages that own the entire viewport: no title bar, no tab bar, no Fab. Derived
+// from the path rather than the header store, because the store is a single flag
+// two pages can own at once — an outgoing page's cleanup would otherwise undo
+// what the arriving one just set.
+const FULL_SCREEN_ROUTES: string[] = ["/strava-connected"];
+
+function isFullScreenRoute(pathname: string): boolean {
+  return FULL_SCREEN_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
 
 // One bike opened from the garage. Not a prefix in SUB_PAGE_ROUTES, because
 // "/bikes" would then make the garage list itself a sub-page.
@@ -97,7 +125,9 @@ export function AppLayout(): ReactElement {
   const overrideTitleKey = useHeaderStore((state) => state.titleKey);
   const overrideBack = useHeaderStore((state) => state.onBack);
   // A full-screen page (the add-bike confirmation) hides the app chrome entirely.
-  const chromeHidden = useHeaderStore((state) => state.chromeHidden);
+  const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
+  // Either source can hide the chrome; the route wins over a stale flag.
+  const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
   // null on Home, which gets the logo mark instead of a tab icon.
   const pageTitleKey = overrideTitleKey ?? getPageTitleKey(location.pathname);
   const subPage = isSubPage(location.pathname);
@@ -132,6 +162,10 @@ export function AppLayout(): ReactElement {
   }
 
   useAndroidBackButton(handleHardwareBack);
+  // Mounted here rather than on the Strava screen: the app is in the background
+  // while the user is on Strava, and the screen that started the flow may well
+  // be gone by the time the callback brings the app back.
+  useStravaDeepLink();
 
   function headerIcon() {
     // Home and anything outside PAGE_TITLE_KEYS show the logo, not a tab icon.
@@ -166,69 +200,62 @@ export function AppLayout(): ReactElement {
         {/* paddingTop keeps the title below the status bar while bg fills behind it.
             The bar itself stays put — only its contents travel with the page. */}
         <Box
-          className="bg-cards-700"
+          className="bg-cards-800"
           h="100%"
           px="md"
           style={{
             paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
           }}
         >
-          <PageTransition
-            pathname={location.pathname}
-            isSubPage={subPage}
-            fillHeight
-            surface="var(--mantine-color-cards-7)"
-          >
-            <Group h="100%" justify="space-between" w="100%">
-              {subPage ? (
+          <Group h="100%" justify="space-between" w="100%">
+            {subPage ? (
+              <Group gap="xs" c="text.6">
+                <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
+                  <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
+                </ActionIcon>
+                <Text fw={700} size="lg" c="text.6">
+                  {pageTitleKey && t(pageTitleKey)}
+                </Text>
+              </Group>
+            ) : (
+              <>
                 <Group gap="xs" c="text.6">
-                  <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
-                    <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
-                  </ActionIcon>
-                  <Text fw={700} size="lg" c="text.6">
-                    {pageTitleKey && t(pageTitleKey)}
+                  {/* Decorative next to the title, so no alt text. */}
+                  {headerIcon()}
+                  <Text fw={700} size="lg">
+                    {t(pageTitleKey ?? "page.home")}
                   </Text>
                 </Group>
-              ) : (
-                <>
-                  <Group gap="xs" c="text.6">
-                    {/* Decorative next to the title, so no alt text. */}
-                    {headerIcon()}
-                    <Text fw={700} size="lg">
-                      {t(pageTitleKey ?? "page.home")}
-                    </Text>
-                  </Group>
-                  {/* PROFILE ICON */}
-                  <Group gap="sm">
-                    <UnstyledButton onClick={() => navigate("/profile")} aria-label={t("page.profile")} mr="3">
-                      {/* name drives the initials fallback when the user has no picture */}
-                      <Avatar src={user?.avatar_url} name={user?.name} color="initials" radius="xl" size={32} />
-                    </UnstyledButton>
-                    {/* NOTIFICATION ICON */}
-                    <ActionIcon
-                      variant="transparent"
-                      radius="xl"
-                      size="lg"
-                      aria-label={t("page.notifications")}
-                      onClick={() => navigate("/notifications")}
-                    >
-                      <Bell size={25} color="var(--mantine-color-text-6)" />
-                    </ActionIcon>
-                    {/* SETTINGS ICON */}
-                    <ActionIcon
-                      variant="transparent"
-                      radius="xl"
-                      size="lg"
-                      aria-label={t("page.settings")}
-                      onClick={() => navigate("/settings")}
-                    >
-                      <Settings size={25} color="var(--mantine-color-text-6)" />
-                    </ActionIcon>
-                  </Group>
-                </>
-              )}
-            </Group>
-          </PageTransition>
+                {/* PROFILE ICON */}
+                <Group gap="sm">
+                  <UnstyledButton onClick={() => navigate("/profile")} aria-label={t("page.profile")} mr="3">
+                    {/* name drives the initials fallback when the user has no picture */}
+                    <Avatar src={user?.avatar_url} name={user?.name} color="initials" radius="xl" size={32} />
+                  </UnstyledButton>
+                  {/* NOTIFICATION ICON */}
+                  <ActionIcon
+                    variant="transparent"
+                    radius="xl"
+                    size="lg"
+                    aria-label={t("page.notifications")}
+                    onClick={() => navigate("/notifications")}
+                  >
+                    <Bell size={25} color="var(--mantine-color-text-6)" />
+                  </ActionIcon>
+                  {/* SETTINGS ICON */}
+                  <ActionIcon
+                    variant="transparent"
+                    radius="xl"
+                    size="lg"
+                    aria-label={t("page.settings")}
+                    onClick={() => navigate("/settings")}
+                  >
+                    <Settings size={25} color="var(--mantine-color-text-6)" />
+                  </ActionIcon>
+                </Group>
+              </>
+            )}
+          </Group>
         </Box>
       </AppShell.Header>
 
@@ -237,9 +264,10 @@ export function AppLayout(): ReactElement {
         {renderOfflinePage || isOffline ? (
           <OfflinePage />
         ) : (
-          <PageTransition pathname={location.pathname} isSubPage={subPage}>
+          // Keyed on the route so React remounts on navigation and the fade replays.
+          <Box key={location.pathname} style={{ animation: "pageEnter 350ms ease-out" }}>
             {outlet}
-          </PageTransition>
+          </Box>
         )}
         {/* Dims only the page content behind the Fab dropdown — Mantine's own
             Menu overlay portals to the viewport and would cover the header,
@@ -258,6 +286,7 @@ export function AppLayout(): ReactElement {
           }}
         />
       </AppShell.Main>
+
       {/* Hidden on sub-pages, which drop the chrome entirely. */}
       {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {/* ----------- Footer -----------  */}
@@ -288,7 +317,7 @@ export function AppLayout(): ReactElement {
             w="92%"
             grow
             px="xs"
-            className="rounded-3xl border border-gray-800 bg-cards-700/60 backdrop-blur-xs"
+            className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
             style={{
               boxShadow: "0 6px 20px color-mix(in srgb, var(--mantine-color-text-6) 15%, transparent)",
             }}

@@ -12,6 +12,7 @@ import { AddBikeFooter } from "./AddBikeFooter";
 import { AddBikeSummaryModal } from "./AddBikeSummaryModal";
 import { PhotoCropModal } from "./PhotoCropModal";
 import { BikeAddedScreen } from "./BikeAddedScreen";
+import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { StravaConnectScreen } from "./StravaConnectScreen";
 import { TOTAL_STEPS, useAddBikeWizard } from "./useAddBikeWizard";
 
@@ -24,7 +25,14 @@ export function AddBikeIdentity(): ReactElement {
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
   const setChromeHidden = useHeaderStore((state) => state.setChromeHidden);
 
-  const { active, searchReplacedForm, showsFallback, searchResults, savedBike, offeringStrava } = wizard;
+  const {
+    active,
+    searchReplacedForm,
+    showsFallback,
+    searchResults,
+    savedBike,
+    offeringStrava,
+  } = wizard;
 
   // Both post-save screens take the whole viewport and own their own way on.
   const wizardIsOver = savedBike || offeringStrava;
@@ -86,17 +94,43 @@ export function AddBikeIdentity(): ReactElement {
   // the screen on their own — no stepper, no footer, nothing to go back to. The
   // Strava offer comes second, so it is checked first.
   if (offeringStrava) {
-    return <StravaConnectScreen onConnect={wizard.connectStrava} onSkip={wizard.leaveAfterSave} />;
+    return (
+      <StravaConnectScreen
+        onConnect={wizard.connectStrava}
+        onSkip={wizard.leaveAfterSave}
+        connecting={wizard.connectingStrava}
+      />
+    );
   }
-
+  // return <StravaConnectScreen onConnect={wizard.connectStrava} onSkip={wizard.leaveAfterSave} />;
   if (savedBike) {
-    return <BikeAddedScreen bikeName={wizard.savedBikeName} onContinue={wizard.leaveAfterSave} />;
+    return (
+      <>
+        <BikeAddedScreen
+          bikeName={wizard.savedBikeName}
+          onContinue={wizard.leaveAfterSave}
+        />
+        {/* Offered over the confirmation rather than as another step: pairing is
+            optional, and the wizard is already long. Only the bike just saved is
+            listed — the rest can be paired from the garage. */}
+        <GearLinkingSheet
+          opened={wizard.pairingGear}
+          onClose={wizard.closeGearPairing}
+          bikeIds={wizard.savedBikeId === null ? [] : [wizard.savedBikeId]}
+        />
+      </>
+    );
   }
 
   return (
     // Clears the fixed footer: its own 1rem + 3rem button + 1rem, plus the
     // safe-area inset it also pads by, plus a gap so the last item is not flush.
-    <Stack gap="lg" px="md" pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+    <Stack
+      gap="lg"
+      px="md"
+      pt="md"
+      pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+    >
       {/* ----------- Progress indicator ----------- */}
       <Stack gap="xs">
         <Stepper
@@ -172,7 +206,11 @@ export function AddBikeIdentity(): ReactElement {
       {/* ----------- Result picker ----------- */}
       {/* Replaces the form: the user is done searching and now picks a match. */}
       {active === 0 && searchResults !== null && (
-        <BikeSearchResults results={searchResults} selectedBikeUrl={wizard.selectedBikeUrl} onSelect={wizard.selectBike} />
+        <BikeSearchResults
+          results={searchResults}
+          selectedBikeUrl={wizard.selectedBikeUrl}
+          onSelect={wizard.selectBike}
+        />
       )}
 
       {/* ----------- Lookup fallback ----------- */}
@@ -180,7 +218,9 @@ export function AddBikeIdentity(): ReactElement {
       {active === 0 && showsFallback && (
         <BikeSearchFallback
           variant={wizard.searchFailed ? "failed" : "empty"}
-          diagnosticCode={wizard.searchFailed ? wizard.diagnosticCode : undefined}
+          diagnosticCode={
+            wizard.searchFailed ? wizard.diagnosticCode : undefined
+          }
           onRetry={wizard.retrySearch}
           onEnterManually={wizard.enterManually}
           onSkip={wizard.skipStep}

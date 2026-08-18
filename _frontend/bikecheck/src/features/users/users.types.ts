@@ -37,6 +37,8 @@ export interface User {
   currency: string | null;
   weight_kg: number | null;
   is_active: boolean;
+  // Set once the Strava OAuth flow completes. Null means not linked.
+  strava_athlete_id: string | null;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;

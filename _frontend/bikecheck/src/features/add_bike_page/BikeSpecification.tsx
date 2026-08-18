@@ -20,7 +20,11 @@ import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
 import { inputStyles, dropdownProps } from "./formStyles";
 import { FRAME_SIZES, WHEEL_SIZES } from "./bikeSpecification.types";
-import type { BikeSpecificationValues, FrameSize, SuspensionLayout } from "./bikeSpecification.types";
+import type {
+  BikeSpecificationValues,
+  FrameSize,
+  SuspensionLayout,
+} from "./bikeSpecification.types";
 
 interface BikeSpecificationProps {
   // The pick from step 1, or null when the user chose to enter the bike by
@@ -30,16 +34,31 @@ interface BikeSpecificationProps {
   year: string | null;
   categories: string[];
   values: BikeSpecificationValues;
-  onChange: <K extends keyof BikeSpecificationValues>(field: K, value: BikeSpecificationValues[K]) => void;
+  onChange: <K extends keyof BikeSpecificationValues>(
+    field: K,
+    value: BikeSpecificationValues[K],
+  ) => void;
   // A photo the user picked on this device. It wins over the scraped one, so
   // a wrong or missing scrape can always be corrected by hand.
   photoUrl: string | null;
   onPickPhoto: (file: File | null) => void;
 }
 
-function FieldLabel({ children, dimmed = false }: { children: string; dimmed?: boolean }): ReactElement {
+function FieldLabel({
+  children,
+  dimmed = false,
+}: {
+  children: string;
+  dimmed?: boolean;
+}): ReactElement {
   return (
-    <Text size="xs" fw={600} c={dimmed ? "text.9" : "text.7"} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+    <Text
+      size="xs"
+      fw={600}
+      c={dimmed ? "text.9" : "text.7"}
+      tt="uppercase"
+      style={{ letterSpacing: "0.05em" }}
+    >
       {children}
     </Text>
   );
@@ -80,7 +99,9 @@ function ChoiceButton({
           border: selected
             ? "1px solid var(--mantine-color-primary-6)"
             : "1px solid var(--mantine-color-other-borderSubtle)",
-          color: selected ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
+          color: selected
+            ? "var(--mantine-color-primary-6)"
+            : "var(--mantine-color-text-6)",
         },
       }}
     >
@@ -127,9 +148,21 @@ export function BikeSpecification({
   return (
     <Stack gap="lg">
       {/* ----------- Picked bike ----------- */}
-      <Paper bg="cards.6" radius="md" style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
+      <Paper
+        bg="cards.6"
+        radius="md"
+        style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}
+      >
         {shownPhoto ? (
-          <Image src={shownPhoto} alt={displayName} h={180} fit="contain" bg="white" p="sm" radius="md" />
+          <Image
+            src={shownPhoto}
+            alt={displayName}
+            h={180}
+            fit="contain"
+            bg="white"
+            p="sm"
+            radius="md"
+          />
         ) : (
           // No scrape and no upload yet — the empty slot doubles as the button,
           // so the whole area is the tap target on a phone.
@@ -149,7 +182,8 @@ export function BikeSpecification({
                   gap: "0.5rem",
                   width: "100%",
                   height: 180,
-                  borderBottom: "1px solid var(--mantine-color-other-borderSubtle)",
+                  borderBottom:
+                    "1px solid var(--mantine-color-other-borderSubtle)",
                 }}
               >
                 <ImagePlus size={28} color="var(--mantine-color-primary-6)" />
@@ -219,7 +253,12 @@ export function BikeSpecification({
           // the numeric keypad for it.
           inputMode="numeric"
           value={values.currentMileage}
-          onChange={(event) => onChange("currentMileage", event.currentTarget.value.replace(/\D/g, ""))}
+          onChange={(event) =>
+            onChange(
+              "currentMileage",
+              event.currentTarget.value.replace(/\D/g, ""),
+            )
+          }
           rightSection={
             <Text size="sm" c="text.8">
               km
@@ -284,24 +323,22 @@ export function BikeSpecification({
       </Stack>
 
       {/* ----------- Size / length ----------- */}
-      <Stack gap={4}>
-        <FieldLabel dimmed={!acceptsSizeLength}>{t("addBike.sizeLength")}</FieldLabel>
-        <TextInput
-          placeholder={t("addBike.sizeLengthPlaceholder")}
-          value={values.sizeLength}
-          onChange={(event) => onChange("sizeLength", event.currentTarget.value)}
-          disabled={!acceptsSizeLength}
-          radius="sm"
-          // inputStyles pins the colours, so Mantine's own disabled shading
-          // would not show through — dim the field here instead.
-          styles={{
-            input: {
-              ...inputStyles.input,
-              opacity: acceptsSizeLength ? 1 : 0.45,
-            },
-          }}
-        />
-      </Stack>
+      {/* Only asked for once the frame size is "other" — a letter size already
+          answers the question on its own. */}
+      {acceptsSizeLength && (
+        <Stack gap={4}>
+          <FieldLabel>{t("addBike.sizeLength")}</FieldLabel>
+          <TextInput
+            placeholder={t("addBike.sizeLengthPlaceholder")}
+            value={values.sizeLength}
+            onChange={(event) =>
+              onChange("sizeLength", event.currentTarget.value)
+            }
+            radius="sm"
+            styles={{ input: inputStyles.input }}
+          />
+        </Stack>
+      )}
 
       {/* ----------- Wheel size ----------- */}
       <Stack gap={4}>
@@ -309,7 +346,13 @@ export function BikeSpecification({
         {/* A fixed three-column grid, not a wrapping row: the six sizes then
             sit 3+3 whatever the labels measure, and every button is the same
             width instead of stretching to its own text. */}
-        <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.625rem" }}>
+        <Box
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "0.625rem",
+          }}
+        >
           {WHEEL_SIZES.map((size) => (
             <ChoiceButton
               key={size}
@@ -324,7 +367,14 @@ export function BikeSpecification({
       {/* ----------- Power ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.power")}</FieldLabel>
-        <Paper bg="cards.6" p="md" radius="sm" style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
+        <Paper
+          bg="cards.6"
+          p="md"
+          radius="sm"
+          style={{
+            border: "1px solid var(--mantine-color-other-borderSubtle)",
+          }}
+        >
           <Group justify="space-between" wrap="nowrap">
             <Group gap="xs" wrap="nowrap">
               <Zap size={18} color="var(--mantine-color-primary-6)" />
@@ -342,11 +392,15 @@ export function BikeSpecification({
               aria-label={t("addBike.ebike")}
               styles={{
                 track: {
-                  backgroundColor: values.ebike ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
+                  backgroundColor: values.ebike
+                    ? "var(--mantine-color-primary-6)"
+                    : "var(--mantine-color-cards-4)",
                   borderColor: "var(--mantine-color-other-borderSolid)",
                 },
                 thumb: {
-                  backgroundColor: values.ebike ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
+                  backgroundColor: values.ebike
+                    ? "var(--mantine-color-black)"
+                    : "var(--mantine-color-text-6)",
                 },
               }}
             />

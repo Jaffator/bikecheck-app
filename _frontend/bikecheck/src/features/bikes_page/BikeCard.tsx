@@ -1,11 +1,26 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { ActionIcon, Box, Group, Image, Paper, Progress, Stack, Text, UnstyledButton } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  Group,
+  Image,
+  Paper,
+  Progress,
+  Stack,
+  Text,
+  UnstyledButton,
+} from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { Clock, EllipsisVertical, Gauge } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import type { Bike } from "../bikes/bikes.types";
-import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
+import {
+  HEALTH_COLORS,
+  overallLevel,
+  type HealthReading,
+} from "./bikeHealth.types";
 
 interface BikeCardProps {
   bike: Bike;
@@ -15,7 +30,11 @@ interface BikeCardProps {
 }
 
 // The pill over the photo, reporting the bike as a whole.
-function HealthBadge({ readings }: { readings: HealthReading[] }): ReactElement {
+function HealthBadge({
+  readings,
+}: {
+  readings: HealthReading[];
+}): ReactElement {
   const { t } = useTranslation();
   const level = overallLevel(readings);
   const color = HEALTH_COLORS[level];
@@ -32,7 +51,11 @@ function HealthBadge({ readings }: { readings: HealthReading[] }): ReactElement 
         backdropFilter: "blur(4px)",
       }}
     >
-      <Box w={7} h={7} style={{ borderRadius: "50%", backgroundColor: color }} />
+      <Box
+        w={7}
+        h={7}
+        style={{ borderRadius: "50%", backgroundColor: color }}
+      />
       <Text className="font-mono" fz={11} c={color}>
         {t(`bikes.health.${level}`)}
       </Text>
@@ -48,7 +71,13 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
   return (
     <Stack gap={6}>
       <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)" style={{ letterSpacing: "0.05em" }}>
+        <Text
+          className="font-mono"
+          fz={10}
+          tt="uppercase"
+          c="var(--color-text-dim)"
+          style={{ letterSpacing: "0.05em" }}
+        >
           {t(reading.labelKey)}
         </Text>
         <Text
@@ -68,19 +97,29 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
         value={reading.fill * 100}
         size={6}
         radius="xl"
-        styles={{ root: { backgroundColor: "var(--color-decor)" }, section: { backgroundColor: color } }}
+        styles={{
+          root: { backgroundColor: "var(--color-decor)" },
+          section: { backgroundColor: color },
+        }}
       />
     </Stack>
   );
 }
 
-export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactElement {
+export function BikeCard({
+  bike,
+  readings = [],
+  onOpen,
+}: BikeCardProps): ReactElement {
   const { t } = useTranslation();
 
   // The user's own name wins; a bike saved without one is known by its model.
   const title = bike.bikename ?? bike.bike_model ?? bike.bike_brand;
   // "Road · Carbon" — whichever of the two the bike actually carries.
-  const subtitle = [bike.bike_model === title ? null : bike.bike_brand, bike.frame_material]
+  const subtitle = [
+    bike.bike_model === title ? null : bike.bike_brand,
+    bike.frame_material,
+  ]
     .filter((part): part is string => part !== null && part !== "")
     .join(" • ");
 
@@ -128,7 +167,15 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
           />
         ) : (
           // No photo: the slot keeps its height so a garage of cards stays even.
-          <Box h={180} bg="cards.7" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Box
+            h={180}
+            bg="cards.7"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Gauge size={32} color="var(--mantine-color-text-9)" />
           </Box>
         )}
@@ -139,7 +186,12 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
 
       {/* ----------- Identity, totals and wear ----------- */}
       <Stack gap="sm" p="md">
-        <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
+        <Group
+          justify="space-between"
+          wrap="nowrap"
+          align="flex-start"
+          gap="sm"
+        >
           <UnstyledButton
             onClick={() => {
               tapFeedback();
@@ -152,7 +204,12 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
                 {title}
               </Text>
               {subtitle !== "" && (
-                <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)">
+                <Text
+                  className="font-mono"
+                  fz={11}
+                  tt="uppercase"
+                  c="var(--color-text-dim)"
+                >
                   {subtitle}
                 </Text>
               )}
@@ -161,7 +218,13 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
 
           {/* Per-bike actions land here once there are any; the button is the
               design's own affordance for them. */}
-          <ActionIcon variant="subtle" color="gray" radius="xl" aria-label={t("bikes.cardMenu")} disabled>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            radius="xl"
+            aria-label={t("bikes.cardMenu")}
+            disabled
+          >
             <EllipsisVertical size={18} />
           </ActionIcon>
         </Group>
@@ -176,9 +239,12 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
           <Group gap={6} wrap="nowrap">
             <Clock size={14} color="var(--color-text-dim)" />
             <Text fz={15} c="text.6">
-              {t("bikes.hours", { count: Math.round((bike.total_time_min ?? 0) / 60) })}
+              {t("bikes.hours", {
+                count: Math.round((bike.total_time_min ?? 0) / 60),
+              })}
             </Text>
           </Group>
+          <StravaPairingHint stravaGearId={bike.strava_gear_id} />
         </Group>
 
         {readings.length > 0 && (

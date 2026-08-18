@@ -4,13 +4,28 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, type UseFormReturnType } from "@mantine/form";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Browser } from "@capacitor/browser";
 import { tapFeedback } from "@/utils/haptics";
 import { ApiError } from "@/api/client";
-import { useBikeFormOptions, useSearchBikeExternal, useExternalBikeComponents, useCreateBike } from "../bikes/bikes.queries";
+import {
+  useBikeFormOptions,
+  useSearchBikeExternal,
+  useExternalBikeComponents,
+  useCreateBike,
+} from "../bikes/bikes.queries";
 import type { BikeSearchResult, CreateBikePayload } from "../bikes/bikes.types";
+import { getStravaAuthorizeUrl } from "../strava/strava.api";
+import { useCurrentUser } from "../users/users.queries";
 import type { AssembleBikeComponent } from "../components/components.types";
-import { useComponentGroups, useDefaultComponents } from "../components/components.queries";
-import { isBikeSpecificationComplete, type BikeSpecificationValues, type SuspensionLayout } from "./bikeSpecification.types";
+import {
+  useComponentGroups,
+  useDefaultComponents,
+} from "../components/components.queries";
+import {
+  isBikeSpecificationComplete,
+  type BikeSpecificationValues,
+  type SuspensionLayout,
+} from "./bikeSpecification.types";
 import {
   buildInitialEntries,
   entriesAfterSplitToggle,
@@ -62,7 +77,10 @@ export interface AddBikeWizard {
   // Step 2 — specification.
   confirmedBike: BikeSearchResult | null;
   specification: BikeSpecificationValues;
-  changeSpecification: <K extends keyof BikeSpecificationValues>(field: K, value: BikeSpecificationValues[K]) => void;
+  changeSpecification: <K extends keyof BikeSpecificationValues>(
+    field: K,
+    value: BikeSpecificationValues[K],
+  ) => void;
   photoUrl: string | null;
   // The file itself goes to the create call; photoUrl only feeds the preview.
   photo: File | null;
@@ -79,7 +97,11 @@ export interface AddBikeWizard {
   componentGroups: ReturnType<typeof useComponentGroups>["data"];
   defaultComponents: ReturnType<typeof useDefaultComponents>["data"];
   componentEntries: ComponentEntries;
-  changeComponentDescription: (componentTypeId: number, position: ComponentPosition, description: string) => void;
+  changeComponentDescription: (
+    componentTypeId: number,
+    position: ComponentPosition,
+    description: string,
+  ) => void;
   splitComponents: SplitComponents;
   toggleComponentSplit: (componentTypeId: number) => void;
   disabledComponents: DisabledComponents;
@@ -108,17 +130,27 @@ export interface AddBikeWizard {
   // What to call the saved bike on that screen: its own name if the user gave
   // one, otherwise brand and model.
   savedBikeName: string;
-  // The confirmation is done with and the Strava offer has taken over.
+  // The id the backend gave the saved bike, so it can be paired with Strava gear.
+  savedBikeId: number | null;
+  // The confirmation is done with and the Strava offer has taken over. Only ever
+  // true without a linked account — with one there is nothing left to offer.
   offeringStrava: boolean;
+  // The confirmation is done with and the gear pairing sheet is up.
+  pairingGear: boolean;
+  closeGearPairing: () => void;
   leaveAfterSave: () => void;
-  // Starting the sync. No connect endpoint exists yet, so this only leaves the
-  // wizard — the OAuth redirect goes here once the backend exposes one.
-  connectStrava: () => void;
+  // True while the authorize URL is being fetched, before the redirect leaves.
+  connectingStrava: boolean;
+  // Starts the sync: fetches the authorize URL and sends the browser to Strava.
+  connectStrava: () => Promise<void>;
 }
 
 // The step asks for one of three layouts, but a bike stores the two ends
 // independently.
-const SUSPENSION_FLAGS: Record<SuspensionLayout, { front: boolean; rear: boolean }> = {
+const SUSPENSION_FLAGS: Record<
+  SuspensionLayout,
+  { front: boolean; rear: boolean }
+> = {
   full: { front: true, rear: true },
   hardtail: { front: true, rear: false },
   none: { front: false, rear: false },
@@ -133,7 +165,9 @@ export function useAddBikeWizard(): AddBikeWizard {
   const [selectedBikeUrl, setSelectedBikeUrl] = useState<string | null>(null);
   // Held separately from the search result: going back to step 1 resets the
   // search, and the confirmed pick has to survive that.
-  const [confirmedBike, setConfirmedBike] = useState<BikeSearchResult | null>(null);
+  const [confirmedBike, setConfirmedBike] = useState<BikeSearchResult | null>(
+    null,
+  );
   // The file is kept for the create call, which lands with the last step; the
   // URL only feeds the preview. Both live here rather than in the step so they
   // survive walking back to step 1.
@@ -160,10 +194,14 @@ export function useAddBikeWizard(): AddBikeWizard {
   // Sided parts the user split or merged by hand, keyed by component_type_id.
   // Separate from the scrape's own verdict so a deliberate merge is not undone
   // when the scrape resolves.
-  const [splitOverrides, setSplitOverrides] = useState<Record<number, boolean>>({});
+  const [splitOverrides, setSplitOverrides] = useState<Record<number, boolean>>(
+    {},
+  );
   // Component types the user said his bike does not have. Nothing is written
   // for them, so the part can be added later like any other.
-  const [disabledComponents, setDisabledComponents] = useState<ReadonlySet<number>>(new Set());
+  const [disabledComponents, setDisabledComponents] = useState<
+    ReadonlySet<number>
+  >(new Set());
   // One group open at a time; a phone cannot show two expanded ones.
   const [openGroupId, setOpenGroupId] = useState<number | null>(null);
   // The save goes through a summary first, so the last step confirms what the
@@ -172,7 +210,9 @@ export function useAddBikeWizard(): AddBikeWizard {
   // The list as it was actually sent. A rejected component is reported by its
   // index in that payload, and the live list is recomputed on every render — so
   // resolving an index against it can miss.
-  const [sentComponents, setSentComponents] = useState<AssembleBikeComponent[]>([]);
+  const [sentComponents, setSentComponents] = useState<AssembleBikeComponent[]>(
+    [],
+  );
   // Set once the bike is written: the wizard is replaced by its confirmation,
   // which owns the only way onwards from here.
   const [savedBike, setSavedBike] = useState(false);
@@ -180,6 +220,13 @@ export function useAddBikeWizard(): AddBikeWizard {
   // straight for the garage — the mileage the app reasons about comes from
   // rides, and this is the moment the user has a bike to sync.
   const [offeringStrava, setOfferingStrava] = useState(false);
+  const [pairingGear, setPairingGear] = useState(false);
+  const [savedBikeId, setSavedBikeId] = useState<number | null>(null);
+  // Decides which of the two follow-ups the confirmation leads to.
+  const { data: currentUser } = useCurrentUser();
+  // The authorize URL is fetched on tap, so the button has to say it is working
+  // — the redirect only happens once the backend answers.
+  const [connectingStrava, setConnectingStrava] = useState(false);
   const createBike = useCreateBike();
 
   const form = useForm<AddBikeIdentityValues>({
@@ -239,7 +286,9 @@ export function useAddBikeWizard(): AddBikeWizard {
 
   // Locks in the pick from step 1 and moves on to specifying it.
   function confirmSelection(): void {
-    const picked = searchBike.data?.find((result) => result.bikeUrl === selectedBikeUrl);
+    const picked = searchBike.data?.find(
+      (result) => result.bikeUrl === selectedBikeUrl,
+    );
     if (!picked) return;
 
     setConfirmedBike(picked);
@@ -307,29 +356,43 @@ export function useAddBikeWizard(): AddBikeWizard {
     cancelCrop();
   }
 
-  function changeSpecification<K extends keyof BikeSpecificationValues>(field: K, value: BikeSpecificationValues[K]): void {
+  function changeSpecification<K extends keyof BikeSpecificationValues>(
+    field: K,
+    value: BikeSpecificationValues[K],
+  ): void {
     setSpecification((current) => ({ ...current, [field]: value }));
   }
 
-  const brandNames = bikeFormOptions?.bikeBrands.map((brand) => brand.bike_brand) ?? [];
+  const brandNames =
+    bikeFormOptions?.bikeBrands.map((brand) => brand.bike_brand) ?? [];
   const brandModels =
     bikeFormOptions?.bikeModels
-      .filter((model) => model.brand_id === bikeFormOptions.bikeBrands.find((b) => b.bike_brand === form.values.brand)?.id)
+      .filter(
+        (model) =>
+          model.brand_id ===
+          bikeFormOptions.bikeBrands.find(
+            (b) => b.bike_brand === form.values.brand,
+          )?.id,
+      )
       .map((model) => model.model_name) ?? [];
 
   // Without a brand and model the scraper would return an unfiltered list.
-  const canSearch = form.values.brand.trim().length > 0 && form.values.model.trim().length > 0;
+  const canSearch =
+    form.values.brand.trim().length > 0 && form.values.model.trim().length > 0;
 
   // The provider answering with an empty list is a success, not an error, so
   // the two outcomes have to be told apart explicitly.
   const searchFailed = searchBike.isError;
   const searchEmpty = searchBike.isSuccess && searchBike.data.length === 0;
-  const searchResults = searchBike.isSuccess && searchBike.data.length > 0 ? searchBike.data : null;
+  const searchResults =
+    searchBike.isSuccess && searchBike.data.length > 0 ? searchBike.data : null;
 
   // The backend only reports an HTTP status, so that is what the user can quote
   // back to support — 502 from the scraper, 504 when the provider timed out.
   const diagnosticCode =
-    searchBike.error instanceof ApiError ? `ERR_LOOKUP_${searchBike.error.status}` : "ERR_LOOKUP_UNKNOWN";
+    searchBike.error instanceof ApiError
+      ? `ERR_LOOKUP_${searchBike.error.status}`
+      : "ERR_LOOKUP_UNKNOWN";
 
   // Step 2 feeds the component tracking, so it cannot be left half-answered —
   // every other step advances freely.
@@ -339,11 +402,14 @@ export function useAddBikeWizard(): AddBikeWizard {
   // Once the search replaced the form, the step is no longer "add a bike" but
   // "pick the match" — and the header arrow has somewhere to go inside the
   // page: back to the form, not out of the wizard.
-  const searchReplacedForm = active === 0 && (showsFallback || searchResults !== null);
+  const searchReplacedForm =
+    active === 0 && (showsFallback || searchResults !== null);
 
   // Scraping the detail page is slow, so it starts as soon as the pick is
   // confirmed rather than when step 3 finally renders.
-  const componentsQuery = useExternalBikeComponents(confirmedBike?.bikeUrl ?? null);
+  const componentsQuery = useExternalBikeComponents(
+    confirmedBike?.bikeUrl ?? null,
+  );
   // Step 3 lists every trackable part, not only the scraped ones — the groups
   // say which category each belongs to, the defaults say what exists at all.
   const groupsQuery = useComponentGroups();
@@ -358,7 +424,11 @@ export function useAddBikeWizard(): AddBikeWizard {
 
   // A split part owns one entry per side, so the edit is addressed by both the
   // type and the field it was typed into.
-  function changeComponentDescription(componentTypeId: number, position: ComponentPosition, description: string): void {
+  function changeComponentDescription(
+    componentTypeId: number,
+    position: ComponentPosition,
+    description: string,
+  ): void {
     setComponentEdits((current) => ({
       ...current,
       [entryKey(componentTypeId, position)]: { description },
@@ -381,8 +451,13 @@ export function useAddBikeWizard(): AddBikeWizard {
     const nowSplit = !splitComponents.has(componentTypeId);
     // The fields taking over inherit what the user already typed, so flipping
     // the switch never blanks the part.
-    setComponentEdits(entriesAfterSplitToggle(componentEntries, componentTypeId, nowSplit));
-    setSplitOverrides((current) => ({ ...current, [componentTypeId]: nowSplit }));
+    setComponentEdits(
+      entriesAfterSplitToggle(componentEntries, componentTypeId, nowSplit),
+    );
+    setSplitOverrides((current) => ({
+      ...current,
+      [componentTypeId]: nowSplit,
+    }));
   }
 
   // Marks a part as absent, or takes it back. What the user typed is kept
@@ -404,7 +479,10 @@ export function useAddBikeWizard(): AddBikeWizard {
   const componentsToSave = defaultComponentsQuery.data
     ? toMountedComponents(
         componentEntries,
-        visibleComponents(defaultComponentsQuery.data, specification.suspension),
+        visibleComponents(
+          defaultComponentsQuery.data,
+          specification.suspension,
+        ),
         splitComponents,
         disabledComponents,
       )
@@ -431,7 +509,9 @@ export function useAddBikeWizard(): AddBikeWizard {
     // A letter size answers the frame size on its own; "other" is when the free
     // text is what the user actually gave.
     const bikeSize =
-      specification.frameSize === "other" ? specification.sizeLength.trim() : (specification.frameSize ?? undefined);
+      specification.frameSize === "other"
+        ? specification.sizeLength.trim()
+        : (specification.frameSize ?? undefined);
 
     return {
       bike_brand: form.values.brand.trim(),
@@ -445,14 +525,18 @@ export function useAddBikeWizard(): AddBikeWizard {
       bike_size: bikeSize || undefined,
       // Digits only from the input, so an empty field means "not given" rather
       // than zero kilometres.
-      total_km: specification.currentMileage ? Number(specification.currentMileage) : undefined,
+      total_km: specification.currentMileage
+        ? Number(specification.currentMileage)
+        : undefined,
       // The category the user picked on step 2 is the bike type's name; the
       // backend turns it into bike_type_id, which the default service intervals
       // are keyed off.
       bike_type: specification.category ?? undefined,
       // The scraped photo travels as a URL; a photo picked on the device is
       // uploaded as a file instead and overrides it on the backend.
-      image_url: confirmedBike?.imageUrl ? String(confirmedBike.imageUrl) : undefined,
+      image_url: confirmedBike?.imageUrl
+        ? String(confirmedBike.imageUrl)
+        : undefined,
     };
   }
 
@@ -479,6 +563,7 @@ export function useAddBikeWizard(): AddBikeWizard {
           // the user back on the dashboard with nothing to show for the work.
           setSummaryOpen(false);
           setSavedBike(true);
+          setSavedBikeId(bike.id);
         },
       },
     );
@@ -502,7 +587,10 @@ export function useAddBikeWizard(): AddBikeWizard {
         ? t(component.component_i18n_key)
         : component.component_name;
       const position = component.component.position;
-      const side = position === "front" || position === "rear" ? ` (${t(`addBike.position${position === "front" ? "Front" : "Rear"}`)})` : "";
+      const side =
+        position === "front" || position === "rear"
+          ? ` (${t(`addBike.position${position === "front" ? "Front" : "Rear"}`)})`
+          : "";
 
       return `${name}${side}: ${reason}`;
     });
@@ -522,7 +610,8 @@ export function useAddBikeWizard(): AddBikeWizard {
   useEffect(() => {
     return () => {
       if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
-      if (photoToCropUrlRef.current) URL.revokeObjectURL(photoToCropUrlRef.current);
+      if (photoToCropUrlRef.current)
+        URL.revokeObjectURL(photoToCropUrlRef.current);
     };
   }, []);
 
@@ -581,7 +670,9 @@ export function useAddBikeWizard(): AddBikeWizard {
     // forever — that is nothing to prefill, not a load in progress. The list
     // itself waits for groups and defaults.
     componentsLoading:
-      groupsQuery.isPending || defaultComponentsQuery.isPending || (confirmedBike !== null && componentsQuery.isPending),
+      groupsQuery.isPending ||
+      defaultComponentsQuery.isPending ||
+      (confirmedBike !== null && componentsQuery.isPending),
     // A failed scrape only costs the prefill; the form itself still works, so
     // only the two lists it is built from can break the step.
     componentsError: groupsQuery.isError || defaultComponentsQuery.isError,
@@ -598,20 +689,48 @@ export function useAddBikeWizard(): AddBikeWizard {
     savedBike,
     savedBikeName:
       specification.bikeName.trim() ||
-      [form.values.brand.trim(), form.values.model.trim()].filter((part) => part !== "").join(" "),
+      [form.values.brand.trim(), form.values.model.trim()]
+        .filter((part) => part !== "")
+        .join(" "),
+    savedBikeId,
     offeringStrava,
-    // Continuing from the confirmation moves on to the Strava offer; from the
-    // offer itself there is nothing after it, so that leaves for the garage.
+    pairingGear,
+    closeGearPairing: () => {
+      setPairingGear(false);
+      navigate("/bikes");
+    },
+    // Continuing from the confirmation branches on whether Strava is already
+    // linked: with an account the bike can be paired straight away, without one
+    // the offer to connect comes first. Either way the step after that is the
+    // garage — neither follow-up has anything behind it.
     leaveAfterSave: () => {
       if (offeringStrava) {
         navigate("/bikes");
         return;
       }
+      if (currentUser?.strava_athlete_id) {
+        setPairingGear(true);
+        return;
+      }
       setOfferingStrava(true);
     },
-    // TODO: redirect into the Strava OAuth flow once the backend exposes a
-    // connect endpoint — only gear-linking exists today. Until then the offer
-    // cannot be acted on, so it ends like skipping it.
-    connectStrava: () => navigate("/bikes"),
+    connectingStrava,
+    // Opens Strava's consent screen. The URL has to come from the backend: it
+    // carries a single-use state that ties the callback back to this user, which
+    // is the whole reason the client cannot assemble it itself.
+    connectStrava: async () => {
+      setConnectingStrava(true);
+      try {
+        const { url } = await getStravaAuthorizeUrl();
+        // A browser tab over the app, not a navigation away from it: the WebView
+        // would otherwise leave the app for good, and the OAuth callback lands
+        // on the backend rather than anywhere React could take over again.
+        await Browser.open({ url });
+      } catch {
+        // Nothing was linked, so the garage is still the right place to land.
+        setConnectingStrava(false);
+        navigate("/bikes");
+      }
+    },
   };
 }

@@ -4,6 +4,7 @@ import { Card, Group, SegmentedControl, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser, useUpdateUser } from "../users/users.queries";
 import { SUPPORTED_LANGUAGES, applyLanguage } from "@/i18n";
+import { StravaStatusCard } from "../strava/StravaStatusCard";
 
 export function Settings(): ReactElement {
   const { t, i18n } = useTranslation();
@@ -20,15 +21,23 @@ export function Settings(): ReactElement {
   }
 
   return (
-    <Card bg="cards.6" className="m-3 border">
-      <Group justify="space-between">
-        <Text c="text.6">{t("settings.language")}</Text>
-        <SegmentedControl
-          value={i18n.language}
-          onChange={changeLanguage}
-          data={SUPPORTED_LANGUAGES.map((language) => ({ value: language, label: t(`language.${language}`) }))}
-        />
-      </Group>
-    </Card>
+    <>
+      <Card bg="cards.6" className="m-3 border">
+        <Group justify="space-between">
+          <Text c="text.6">{t("settings.language")}</Text>
+          <SegmentedControl
+            value={i18n.language}
+            onChange={changeLanguage}
+            data={SUPPORTED_LANGUAGES.map((language) => ({
+              value: language,
+              label: t(`language.${language}`),
+            }))}
+          />
+        </Group>
+      </Card>
+      {/* Settings manages an existing link only — connecting is offered on the
+          dashboard, so nothing renders here until an account is linked. */}
+      <StravaStatusCard connectedOnly allowDisconnect />
+    </>
   );
 }

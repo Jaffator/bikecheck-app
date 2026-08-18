@@ -179,64 +179,15 @@ body {
     break-inside: avoid;
   }
 }
-/* Opacity only — a transform here would make the animated wrapper the
-   containing block for any position: fixed child (e.g. a page footer),
-   which then jumps once the animation ends. */
-@keyframes fadeIn {
+/* Arriving page fades in so a route change does not snap. Opacity only — a
+   transform here would make the wrapper the containing block for any
+   position: fixed child, such as a page's own footer. */
+@keyframes pageEnter {
   from {
     opacity: 0;
   }
   to {
     opacity: 1;
-  }
-}
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-/* Page push transitions. Only the wrapper of a page that is actually animating
-   carries these — a lingering transform would turn it into the containing block
-   for its position: fixed children. */
-@keyframes pageSlideInRight {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-@keyframes pageSlideOutRight {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-/* The page underneath does not travel the full width — it only gives way a
-   little, which reads as depth rather than as two pages racing each other.
-   No opacity on an arriving page: it is the layer the eye lands on, and a
-   translucent one shows the page it is replacing straight through it. */
-@keyframes pageSlideInLeft {
-  from {
-    transform: translateX(-25%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-@keyframes pageSlideOutLeft {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-25%);
-    opacity: 0.6;
   }
 }
 @keyframes wave {
