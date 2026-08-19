@@ -15,7 +15,7 @@ export interface UsePushNotificationsResult {
 // router of its own, and mounting it above the routes is what lets the whole
 // app share one registration.
 export function usePushNotifications(
-  onNotificationTapped?: (route: string) => void,
+  onNotificationTapped: (route: string) => void,
 ): UsePushNotificationsResult {
   const [foregroundNotification, setForegroundNotification] = useState<PushNotificationSchema | null>(null);
   const queryClient = useQueryClient();
@@ -59,7 +59,7 @@ export function usePushNotifications(
       // The route arrives already filled in by the backend's delivery job; a
       // push without one is a type that opens nothing in particular.
       const route = performed.notification.data?.route as string | undefined;
-      if (route) onNotificationTapped?.(route);
+      if (route) onNotificationTapped(route);
     });
 
     return () => {

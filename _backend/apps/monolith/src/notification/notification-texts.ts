@@ -10,14 +10,23 @@ export function resolveLanguage(language: string | null): NotificationLanguage {
   return language === 'cs' || language === 'en' ? language : FALLBACK_LANGUAGE;
 }
 
-// What a notification's text is built from. Every field is optional because a
-// payload only carries what its own type needs, and a notification created
-// before a field existed must still render.
+// What a notification carries besides its type: the facts its text is built
+// from, and the ids its route is filled in from. Every field is optional
+// because a payload only holds what its own type needs, and a notification
+// created before a field existed must still render.
+//
+// The id fields are what NOTIFICATION_CONFIG's route placeholders are named
+// after — ':bikeId' is filled from bikeId — so a placeholder with no field
+// here can never be filled, and the route is dropped rather than sent broken.
 export interface NotificationTextPayload {
+  // Route placeholders.
+  bikeId?: number;
+  activityId?: string;
+  gearId?: string;
+  // Text values.
   bikeName?: string;
   km?: number;
   gearName?: string;
-  activityName?: string;
 }
 
 interface NotificationText {

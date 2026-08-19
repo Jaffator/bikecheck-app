@@ -282,8 +282,7 @@
   "notifications": {
     "empty": "No notifications yet",
     "emptyBody": "Anything that happens to your bikes or rides shows up here.",
-    "loadFailed": "Notifications could not be loaded",
-    "markAllRead": "Mark all as read"
+    "loadFailed": "Notifications could not be loaded"
   },
   "pendingRides": {
     "title": "Unassigned rides",

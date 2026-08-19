@@ -430,8 +430,7 @@
   "notifications": {
     "empty": "Zatím žádné notifikace",
     "emptyBody": "Až se něco stane s tvými koly nebo jízdami, najdeš to tady.",
-    "loadFailed": "Notifikace se nepodařilo načíst",
-    "markAllRead": "Označit vše jako přečtené"
+    "loadFailed": "Notifikace se nepodařilo načíst"
   },
   "pendingRides": {
     "title": "Nepřiřazené jízdy",

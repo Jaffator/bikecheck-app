@@ -387,7 +387,11 @@ export class StravaEventsService {
    */
   async listPendingActivities(userId: number): Promise<ResponsePendingStravaDto[]> {
     const pending = await this.prisma.strava_pending_activities.findMany({
-      where: { user_id: userId, resolved_at: null },
+      // Only the rides this screen can actually answer for. One parked against a
+      // gear id is waiting on the gear being linked, not on being told which
+      // bike it was — offering it here would give the user an assign button
+      // that resolvePendingActivities_noGear refuses.
+      where: { user_id: userId, resolved_at: null, gear_id: null },
       orderBy: { created_at: 'desc' },
     });
     return pending.map((activity) => this.toPendingDto(activity));
@@ -398,7 +402,9 @@ export class StravaEventsService {
    */
   async getPendingActivity(userId: number, activityId: bigint): Promise<ResponsePendingStravaDto> {
     const pending = await this.prisma.strava_pending_activities.findFirst({
-      where: { user_id: userId, activity_id: activityId, resolved_at: null },
+      // Same filter as the list: the detail screen exists to resolve the ride,
+      // so it must not open one the resolve call would reject.
+      where: { user_id: userId, activity_id: activityId, resolved_at: null, gear_id: null },
     });
     if (!pending) throw new NotFoundException('Pending activity not found');
     return this.toPendingDto(pending);
@@ -430,7 +436,7 @@ export class StravaEventsService {
       const pending = await this.prisma.strava_pending_activities.findFirst({
         where: { user_id: params.userId, activity_id: params.activityId, resolved_at: null, gear_id: null },
       });
-      if (!pending) throw new Error('No pending activity found');
+      if (!pending) throw new NotFoundException('No pending activity found');
 
       const analyzedData = pending.analyzed_data as StravaActivityData['analyzedData'];
       await this.saveRide(params.bikeId, params.userId, Number(pending.activity_id), analyzedData);

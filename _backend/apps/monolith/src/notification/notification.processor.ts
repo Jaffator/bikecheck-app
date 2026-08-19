@@ -58,6 +58,10 @@ export class NotificationProcessor extends WorkerHost {
       return '';
     });
 
+    // An unfilled placeholder collapses into an empty segment. The root path is
+    // a real destination, so it is not judged by the trailing slash every other
+    // route would fail on.
+    if (filled === '/') return filled;
     return filled.includes('//') || filled.endsWith('/') ? null : filled;
   }
 

@@ -35,7 +35,10 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
   },
   strava_unmatched_gear: {
     channels: ['push', 'inApp'],
-    route: '/bikes/:bikeId/strava-link',
+    // The dashboard, not a bike: this notification fires precisely because no
+    // BikeCheck bike matches the gear, so there is no bike id to route to. The
+    // dashboard is where the pairing card and its sheet live.
+    route: '/',
   },
   strava_no_gear: {
     channels: ['push', 'inApp'],
@@ -45,7 +48,9 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
   },
   maintenance_due: {
     channels: ['push', 'email', 'inApp'],
-    route: '/bikes/:bikeId/maintenance',
+    // No maintenance sub-screen exists yet; the bike itself is the closest
+    // thing the app can actually open.
+    route: '/bikes/:bikeId',
   },
   achievement_unlocked: {
     channels: ['inApp'],
