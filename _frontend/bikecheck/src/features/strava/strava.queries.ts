@@ -2,8 +2,16 @@
 // the stuff you used to write by hand with useState + useEffect.
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import { Browser } from "@capacitor/browser";
-import { getStravaAuthorizeUrl, disconnectStrava, getGearLinking, linkStravaGear } from "./strava.api";
-import type { GearLinkingData, GearLink } from "./strava.types";
+import {
+  getStravaAuthorizeUrl,
+  disconnectStrava,
+  getGearLinking,
+  linkStravaGear,
+  getPendingRides,
+  getPendingRide,
+  resolvePendingRide,
+} from "./strava.api";
+import type { GearLinkingData, GearLink, PendingRide } from "./strava.types";
 import type { ApiError } from "@/api/client";
 
 // Opens the Strava authorize page in the system browser. The link itself is
@@ -87,6 +95,42 @@ export function useLinkStravaGear(): UseMutationResult<{ success: boolean }, Api
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["bikes"] });
       void queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
+    },
+  });
+}
+
+// Rides that arrived without a bike. Drives the dashboard card and the list the
+// notification opens, so it is asked for on the dashboard as well.
+export function usePendingRides(): UseQueryResult<PendingRide[]> {
+  return useQuery({
+    queryKey: ["pendingRides"],
+    queryFn: getPendingRides,
+  });
+}
+
+export function usePendingRide(activityId: string): UseQueryResult<PendingRide> {
+  return useQuery({
+    queryKey: ["pendingRides", activityId],
+    queryFn: () => getPendingRide(activityId),
+  });
+}
+
+// Assigns one pending ride to a bike. The ride's distance lands on the bike and
+// its components, and the notification that asked about it is dismissed, so the
+// bikes and the notification badge are refetched alongside the pending list.
+export function useResolvePendingRide(): UseMutationResult<
+  { success: boolean },
+  ApiError,
+  { activityId: string; bikeId: number }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ activityId, bikeId }: { activityId: string; bikeId: number }) =>
+      resolvePendingRide(activityId, bikeId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
+      void queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

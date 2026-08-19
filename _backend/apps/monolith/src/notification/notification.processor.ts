@@ -26,7 +26,11 @@ export class NotificationProcessor extends WorkerHost {
 
     if (config.channels.includes('push')) {
       const data: Record<string, string> = { type: notification.type };
-      if (config.route) data.route = config.route;
+      // The client navigates to whatever arrives here, so the placeholders have
+      // to be filled in before sending — a path with a literal ":bikeId" left in
+      // it lands on a broken screen.
+      const route = this.buildRoute(config.route, notification.payload);
+      if (route) data.route = route;
       await this.pushService.sendToUser(notification.user_id, notification.title, notification.body, data);
     }
 
@@ -35,6 +39,26 @@ export class NotificationProcessor extends WorkerHost {
       { custom: true, notificationId: notification.id, channels: config.channels },
       'Notification delivery requested: ' + notification.title,
     );
+  }
+
+  // Fills a route template from the notification's payload. Returns null when
+  // the type has no route, or when the payload is missing a value the template
+  // needs — sending no route is better than sending a broken one.
+  private buildRoute(template: string | undefined, payload: unknown): string | null {
+    if (!template) return null;
+
+    const values = (payload ?? {}) as Record<string, unknown>;
+    const filled = template.replace(/:(\w+)/g, (_match, key: string) => {
+      const value = values[key];
+      // Only a scalar can stand in for a path segment; anything else would
+      // stringify to "[object Object]" and produce a route that resolves
+      // to nothing.
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number' || typeof value === 'bigint') return String(value);
+      return '';
+    });
+
+    return filled.includes('//') || filled.endsWith('/') ? null : filled;
   }
 
   @OnWorkerEvent('completed')

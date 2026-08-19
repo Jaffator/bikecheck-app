@@ -278,5 +278,27 @@
     "unpairedBikesBody": "Connecting with Strava gear automates mileage tracking and service reminders for your bikes without picking a right bike after every ride.",
     "unpairedBikesAction": "Pair gear",
     "gearLinkingLoadFailed": "Could not load your Strava gear. Try again."
+  },
+  "notifications": {
+    "empty": "No notifications yet",
+    "emptyBody": "Anything that happens to your bikes or rides shows up here.",
+    "loadFailed": "Notifications could not be loaded",
+    "markAllRead": "Mark all as read"
+  },
+  "pendingRides": {
+    "title": "Unassigned rides",
+    "cardBody": "A Strava ride arrived without a bike. Pick the one it belongs to.",
+    "cardAction": "Resolve",
+    "listTitle": "Unassigned rides",
+    "empty": "No unassigned rides",
+    "emptyBody": "Every Strava ride has a bike assigned.",
+    "loadFailed": "Rides could not be loaded",
+    "chooseBike": "Which bike does this ride belong to?",
+    "assign": "Assign to bike",
+    "assignFailed": "Could not assign the ride",
+    "distance": "{{count}} km",
+    "duration": "{{count}} min",
+    "elevation": "{{count}} m elevation",
+    "noGear": "No Strava bike"
   }
 }

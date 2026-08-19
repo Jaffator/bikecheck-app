@@ -5,6 +5,7 @@ import { useBikes } from "../bikes/bikes.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
 import { StravaStatusCard } from "../strava/StravaStatusCard";
 import { UnpairedBikesCard } from "../strava/UnpairedBikesCard";
+import { PendingRidesCard } from "../strava/PendingRidesCard";
 
 export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();
@@ -26,6 +27,9 @@ export function Dashboard(): ReactElement {
       {/* Its own card rather than a line in the one above: pairing is an action
           to take, not a fact about the account. */}
       <UnpairedBikesCard />
+      {/* A separate problem from the one above: a bike can be paired and still
+          record a ride Strava sent with no gear on it. */}
+      <PendingRidesCard />
     </>
   );
 }

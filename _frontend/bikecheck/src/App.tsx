@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactElement } from "react";
+import { useCallback, useEffect, useRef, type ReactElement } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { Center, Loader } from "@mantine/core";
 import { Dashboard } from "./features/dashboard_page/Dashboard";
@@ -13,6 +13,10 @@ import { Profile } from "./features/profile_page/Profile";
 import { Settings } from "./features/settings_page/Settings";
 import { Notifications } from "./features/notification_page/Notifications";
 import { StravaConnected } from "./features/strava_connected_page/StravaConnected";
+import { PendingRides } from "./features/strava/PendingRides";
+import { PendingRideDetail } from "./features/strava/PendingRideDetail";
+import { InAppNotification } from "./components/InAppNotification";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 import { useCurrentUser, useUpdateUser } from "./features/users/users.queries";
 import { applyLanguage, detectLanguage } from "./i18n";
 
@@ -35,6 +39,18 @@ function ProtectedApp(): ReactElement {
   } = useCurrentUser();
   const { mutate: patchUser } = useUpdateUser();
   const navigate = useNavigate();
+
+  // Stable identity: the hook re-subscribes its native listeners whenever this
+  // changes, and a fresh arrow function every render would re-subscribe on
+  // every render.
+  const openNotificationRoute = useCallback(
+    (route: string): void => {
+      navigate(route);
+    },
+    [navigate],
+  );
+  const { foregroundNotification, dismiss: dismissNotification } =
+    usePushNotifications(openNotificationRoute);
   const userId = user?.id;
   const userLanguage = user?.language;
   const isLoggedIn = Boolean(user);
@@ -84,22 +100,33 @@ function ProtectedApp(): ReactElement {
   }
 
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/bikes" element={<Bikes />} />
-        {/* Before the ":id" route, which would otherwise match "new" itself. */}
-        <Route path="/bikes/new" element={<AddBikeIdentity />} />
-        <Route path="/bikes/:id" element={<BikeDetail />} />
-        <Route path="/service" element={<Service />} />
-        <Route path="/rides" element={<Rides />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/notifications" element={<Notifications />} />
-        {/* Where the Strava OAuth deep link lands once the account is linked. */}
-        <Route path="/strava-connected" element={<StravaConnected />} />
-      </Route>
-    </Routes>
+    <>
+      {/* Only the foreground case: a push arriving while the app is open shows
+          no tray notification of its own, so without this it would be silent. */}
+      {foregroundNotification && (
+        <InAppNotification notification={foregroundNotification} onDismiss={dismissNotification} />
+      )}
+
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/bikes" element={<Bikes />} />
+          {/* Before the ":id" route, which would otherwise match "new" itself. */}
+          <Route path="/bikes/new" element={<AddBikeIdentity />} />
+          <Route path="/bikes/:id" element={<BikeDetail />} />
+          <Route path="/service" element={<Service />} />
+          <Route path="/rides" element={<Rides />} />
+          {/* Before the ":activityId" route, which would match "pending". */}
+          <Route path="/rides/pending" element={<PendingRides />} />
+          <Route path="/rides/pending/:activityId" element={<PendingRideDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/notifications" element={<Notifications />} />
+          {/* Where the Strava OAuth deep link lands once the account is linked. */}
+          <Route path="/strava-connected" element={<StravaConnected />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 

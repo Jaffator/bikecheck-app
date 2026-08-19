@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorat
 import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationType } from './notification-types.config';
+import { buildNotificationText, NotificationTextPayload } from './notification-texts';
 import { notifications, Prisma } from '@prisma/client';
 import { DeviceTokenDto } from './dto/device-token-.dto';
 
@@ -13,9 +14,9 @@ export interface NotificationDeliveryJob {
 export interface CreateNotificationParams {
   userId: number;
   type: NotificationType;
-  title: string;
-  body: string;
-  payload?: Prisma.InputJsonObject;
+  // Fills in both the stored text and the route the client navigates to, so a
+  // caller never writes a sentence — only the facts one is built from.
+  payload?: NotificationTextPayload & Prisma.InputJsonObject;
   dedupKey?: string;
 }
 
@@ -42,12 +43,21 @@ export class NotificationService {
       if (existing) return;
     }
 
+    // The text is written in the user's language now, because a push is
+    // rendered by the OS with the app closed — there is no client left to
+    // translate it at display time.
+    const user = await this.prisma.users.findUnique({
+      where: { id: params.userId },
+      select: { language: true },
+    });
+    const { title, body } = buildNotificationText(params.type, user?.language ?? null, params.payload ?? {});
+
     const notification = await this.prisma.notifications.create({
       data: {
         user_id: params.userId,
         type: params.type,
-        title: params.title,
-        body: params.body,
+        title,
+        body,
         payload: params.payload,
         dedup_key: params.dedupKey,
       },

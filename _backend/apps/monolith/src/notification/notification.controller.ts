@@ -4,36 +4,23 @@ import { NotificationService } from './notification.service';
 import { ResponseNotificationDto } from './dto/response-notification.dto';
 import { DeviceTokenDto } from './dto/device-token-.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   // ---------- POST FCM token ----------
-  // ⚠️ TEMPORARY for local testing: @Public + hardcoded user 1 (no login yet).
-  // Revert to @CurrentUser('userId') once auth is wired on the frontend.
-  @Public()
   @ApiOperation({ summary: 'Register FCM token for the current user' })
   @ApiResponse({ status: 200 })
   @Post('fcm-token')
-  registerFcmToken(@Body() deviceTokenDto: DeviceTokenDto): Promise<void> {
-    console.log('Registering FCM token for user 47:', deviceTokenDto.token, deviceTokenDto.platform);
-    return this.notificationService.registerFcmToken(47, deviceTokenDto);
-  }
-
-  // ⚠️ TEMPORARY test endpoint: triggers a push notification for user 1. Remove before commit.
-  @Public()
-  @ApiOperation({ summary: 'TEST: send a push notification to user 1' })
-  @ApiResponse({ status: 201 })
-  @Post('test-push')
-  async testPush(): Promise<void> {
-    return this.notificationService.create({
-      userId: 47,
-      type: 'maintenance_due',
-      title: 'Test push 🔔',
-      body: 'Testovací notifikace z backendu',
-    });
+  // Returns a body on purpose: the shared frontend client parses every 2xx as
+  // JSON, and an empty response would leave it parsing nothing.
+  async registerFcmToken(
+    @CurrentUser('userId') userId: string,
+    @Body() deviceTokenDto: DeviceTokenDto,
+  ): Promise<{ success: boolean }> {
+    await this.notificationService.registerFcmToken(Number(userId), deviceTokenDto);
+    return { success: true };
   }
 
   // ---------- GET notifications for current user ----------
@@ -52,7 +39,10 @@ export class NotificationController {
   @ApiOperation({ summary: 'Mark a notification as read' })
   @ApiResponse({ status: 200 })
   @Patch(':id/read')
-  async markRead(@Param('id') id: string, @CurrentUser('userId') userId: string): Promise<void> {
-    return this.notificationService.markRead(+id, Number(userId));
+  // Returns a body on purpose: the shared frontend client parses every 2xx as
+  // JSON, and an empty response would leave it parsing nothing.
+  async markRead(@Param('id') id: string, @CurrentUser('userId') userId: string): Promise<{ success: boolean }> {
+    await this.notificationService.markRead(+id, Number(userId));
+    return { success: true };
   }
 }

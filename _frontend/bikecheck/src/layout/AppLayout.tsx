@@ -15,6 +15,7 @@ import { useStravaDeepLink } from "../hooks/useStravaDeepLink";
 import { OfflinePage } from "@/features/offline_page/OfflinePage";
 import { useOfflineWhenCallApiStore, useHeaderStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
+import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 import logo_mark from "@/assets/icons/bikecheck/onlylogo.svg";
@@ -60,6 +61,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/bikes/new": "addBike.title",
   "/bikes": "page.bikes",
   "/service": "page.service",
+  "/rides/pending": "pendingRides.listTitle",
   "/rides": "page.rides",
   "/profile": "page.profile",
   "/settings": "page.settings",
@@ -72,6 +74,9 @@ const SUB_PAGE_ROUTES: string[] = [
   "/profile",
   "/notifications",
   "/bikes/new",
+  // Reached from a notification or the dashboard card, not from the tab bar:
+  // the way out is back to where the question was asked.
+  "/rides/pending",
   // Owns the whole screen and carries its own single action — the Fab over it
   // would offer a way out of a result the user has not acknowledged yet.
   "/strava-connected",
@@ -122,6 +127,10 @@ export function AppLayout(): ReactElement {
   // Already cached by the auth gate in App.tsx, so this is a read, not a fetch.
   const { data: user } = useCurrentUser();
   // Set by a page that needs header chrome the route map cannot express.
+  // Drives the badge on the bell. Asked for on every screen, so opening the
+  // app anywhere shows what is waiting.
+  const { data: unreadNotifications } = useUnreadNotifications();
+  const unreadCount = unreadNotifications?.length ?? 0;
   const overrideTitleKey = useHeaderStore((state) => state.titleKey);
   const overrideBack = useHeaderStore((state) => state.onBack);
   // A full-screen page (the add-bike confirmation) hides the app chrome entirely.
@@ -239,8 +248,36 @@ export function AppLayout(): ReactElement {
                     size="lg"
                     aria-label={t("page.notifications")}
                     onClick={() => navigate("/notifications")}
+                    pos="relative"
                   >
                     <Bell size={25} color="var(--mantine-color-text-6)" />
+                    {/* A count, not a dot: how many are waiting is the reason to
+                        open the screen rather than ignore it. Past nine it stops
+                        being a number worth reading precisely. */}
+                    {unreadCount > 0 && (
+                      <Box
+                        pos="absolute"
+                        top={2}
+                        right={0}
+                        miw={16}
+                        h={16}
+                        px={4}
+                        style={{
+                          borderRadius: "9999px",
+                          backgroundColor: "var(--mantine-color-strava-6)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          // Against the header, so the badge reads as sitting on
+                          // top of the bell rather than beside it.
+                          border: "2px solid var(--mantine-color-body)",
+                        }}
+                      >
+                        <Text className="font-mono" fz={9} fw={700} c="#FFFFFF" lh={1}>
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </Text>
+                      </Box>
+                    )}
                   </ActionIcon>
                   {/* SETTINGS ICON */}
                   <ActionIcon

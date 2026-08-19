@@ -426,5 +426,27 @@
     "unpairedBikesBody": "Propojení se Strava gearem automaticky hlídá kilometry a připomínky servisu tvých kol.",
     "unpairedBikesAction": "Propojit kola",
     "gearLinkingLoadFailed": "Strava gear se nepodařilo načíst. Zkus to znovu."
+  },
+  "notifications": {
+    "empty": "Zatím žádné notifikace",
+    "emptyBody": "Až se něco stane s tvými koly nebo jízdami, najdeš to tady.",
+    "loadFailed": "Notifikace se nepodařilo načíst",
+    "markAllRead": "Označit vše jako přečtené"
+  },
+  "pendingRides": {
+    "title": "Nepřiřazené jízdy",
+    "cardBody": "Jízda ze Stravy dorazila bez kola. Vyber, ke kterému patří.",
+    "cardAction": "Vyřešit",
+    "listTitle": "Nepřiřazené jízdy",
+    "empty": "Žádné nepřiřazené jízdy",
+    "emptyBody": "Všechny jízdy ze Stravy mají přiřazené kolo.",
+    "loadFailed": "Jízdy se nepodařilo načíst",
+    "chooseBike": "Ke kterému kolu jízda patří?",
+    "assign": "Přiřadit ke kolu",
+    "assignFailed": "Přiřazení se nepodařilo",
+    "distance": "{{count}} km",
+    "duration": "{{count}} min",
+    "elevation": "{{count}} m převýšení",
+    "noGear": "Bez kola ze Stravy"
   }
 }

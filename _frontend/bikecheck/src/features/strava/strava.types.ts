@@ -30,3 +30,17 @@ export interface GearLink {
   stravaBikeId: string | null;
   bikecheckBikeId: number;
 }
+
+// Mirrors ResponsePendingStravaDto. A ride that arrived from Strava without a
+// bike the app could resolve, waiting for the user to say which one it was.
+// activity_id is a string because it is a BigInt on the backend — a JSON number
+// would lose precision.
+export interface PendingRide {
+  activity_id: string;
+  gear_id: string | null;
+  started_at: string;
+  distance_km: number;
+  duration_min: number;
+  elevation_up_m: number;
+  created_at: string;
+}

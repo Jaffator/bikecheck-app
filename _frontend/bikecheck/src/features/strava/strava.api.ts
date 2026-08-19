@@ -2,7 +2,7 @@
 // apiFetch client — no fetch, base URL or token handling lives here.
 // Backend routes are under "/strava" (see strava.controller.ts).
 import { apiFetch } from "@/api/client";
-import type { GearLinkingData, GearLink } from "./strava.types";
+import type { GearLinkingData, GearLink, PendingRide } from "./strava.types";
 
 export interface StravaAuthorizeUrl {
   url: string;
@@ -33,4 +33,26 @@ export async function linkStravaGear(links: GearLink[]): Promise<{ success: bool
     method: "PATCH",
     body: JSON.stringify({ links }),
   });
+}
+
+// GET /strava/pending-activities — rides waiting to be assigned to a bike.
+export async function getPendingRides(): Promise<PendingRide[]> {
+  return apiFetch<PendingRide[]>("/strava/pending-activities");
+}
+
+// GET /strava/pending-activities/:activityId — one of them, by Strava id.
+export async function getPendingRide(activityId: string): Promise<PendingRide> {
+  return apiFetch<PendingRide>(`/strava/pending-activities/${activityId}`);
+}
+
+// POST /strava/pending-activities/:activityId/resolve — assigns the ride to a
+// bike, which also dismisses the notification that asked about it.
+export async function resolvePendingRide(
+  activityId: string,
+  bikeId: number,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(
+    `/strava/pending-activities/${activityId}/resolve`,
+    { method: "POST", body: JSON.stringify({ bikeId }) },
+  );
 }
