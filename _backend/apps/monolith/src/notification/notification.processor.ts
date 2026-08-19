@@ -23,6 +23,15 @@ export class NotificationProcessor extends WorkerHost {
     if (!notification || notification.is_read) return;
 
     const config = NOTIFICATION_CONFIG[notification.type as NotificationType];
+    // Rows written before a type was renamed or retired still sit in the table,
+    // and reading one must not take the worker down with it.
+    if (!config) {
+      this.logger.warn(
+        { custom: true, notificationId: notification.id, type: notification.type },
+        'Notification has no delivery config; nothing to send',
+      );
+      return;
+    }
 
     if (config.channels.includes('push')) {
       const data: Record<string, string> = { type: notification.type };
@@ -48,21 +57,24 @@ export class NotificationProcessor extends WorkerHost {
     if (!template) return null;
 
     const values = (payload ?? {}) as Record<string, unknown>;
+    // Tracked rather than inferred from the result: a placeholder can sit in a
+    // query value as well as a path segment, where an empty string leaves no
+    // shape to detect afterwards.
+    let missing = false;
+
     const filled = template.replace(/:(\w+)/g, (_match, key: string) => {
       const value = values[key];
-      // Only a scalar can stand in for a path segment; anything else would
+      // Only a scalar can stand in for a placeholder; anything else would
       // stringify to "[object Object]" and produce a route that resolves
       // to nothing.
       if (typeof value === 'string') return value;
       if (typeof value === 'number' || typeof value === 'bigint') return String(value);
+      missing = true;
       return '';
     });
 
-    // An unfilled placeholder collapses into an empty segment. The root path is
-    // a real destination, so it is not judged by the trailing slash every other
-    // route would fail on.
-    if (filled === '/') return filled;
-    return filled.includes('//') || filled.endsWith('/') ? null : filled;
+    // Sending no route is better than sending one that lands on a blank screen.
+    return missing ? null : filled;
   }
 
   @OnWorkerEvent('completed')

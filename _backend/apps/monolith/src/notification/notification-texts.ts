@@ -52,30 +52,14 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
       body: (payload) => rideBody(payload, 'km', 'Ride added'),
     },
   },
-  strava_no_gear: {
+  strava_activity_unassigned: {
     cs: {
-      title: 'Jízda bez kola',
-      body: () => 'Nová jízda ze Stravy nemá přiřazené kolo. Vyber, ke kterému patří.',
+      title: 'Nová jízda čeká na kolo',
+      body: (payload) => unassignedBody(payload, 'km', 'Vyber, ke kterému kolu jízda patří.'),
     },
     en: {
-      title: 'Ride without a bike',
-      body: () => 'A new Strava ride has no bike assigned. Pick the one it belongs to.',
-    },
-  },
-  strava_unmatched_gear: {
-    cs: {
-      title: 'Neznámé kolo ze Stravy',
-      body: (payload) =>
-        payload.gearName
-          ? `Kolo "${payload.gearName}" ze Stravy zatím nemáš spárované s kolem v BikeCheck.`
-          : 'Kolo ze Stravy zatím nemáš spárované s kolem v BikeCheck.',
-    },
-    en: {
-      title: 'Unknown Strava bike',
-      body: (payload) =>
-        payload.gearName
-          ? `Your Strava bike "${payload.gearName}" is not linked to a BikeCheck bike yet.`
-          : 'A Strava bike is not linked to a BikeCheck bike yet.',
+      title: 'New ride needs a bike',
+      body: (payload) => unassignedBody(payload, 'km', 'Pick the bike this ride belongs to.'),
     },
   },
   maintenance_due: {
@@ -108,6 +92,13 @@ function rideBody(payload: NotificationTextPayload, unit: string, fallback: stri
   if (payload.km !== undefined) parts.push(`${payload.km} ${unit}`);
   if (payload.bikeName) parts.push(payload.bikeName);
   return parts.length > 0 ? parts.join(' · ') : fallback;
+}
+
+// The distance leads, because it is what identifies the ride; the ask follows,
+// because it is why the notification was sent. Without a distance the ask
+// carries the whole message on its own.
+function unassignedBody(payload: NotificationTextPayload, unit: string, ask: string): string {
+  return payload.km === undefined ? ask : `${payload.km} ${unit} · ${ask}`;
 }
 
 // Builds the stored title and body for a notification in the user's language.

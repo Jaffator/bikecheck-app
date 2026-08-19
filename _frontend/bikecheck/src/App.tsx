@@ -13,8 +13,6 @@ import { Profile } from "./features/profile_page/Profile";
 import { Settings } from "./features/settings_page/Settings";
 import { Notifications } from "./features/notification_page/Notifications";
 import { StravaConnected } from "./features/strava_connected_page/StravaConnected";
-import { PendingRides } from "./features/strava/PendingRides";
-import { PendingRideDetail } from "./features/strava/PendingRideDetail";
 import { InAppNotification } from "./components/InAppNotification";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { useCurrentUser, useUpdateUser } from "./features/users/users.queries";
@@ -116,9 +114,6 @@ function ProtectedApp(): ReactElement {
           <Route path="/bikes/:id" element={<BikeDetail />} />
           <Route path="/service" element={<Service />} />
           <Route path="/rides" element={<Rides />} />
-          {/* Before the ":activityId" route, which would match "pending". */}
-          <Route path="/rides/pending" element={<PendingRides />} />
-          <Route path="/rides/pending/:activityId" element={<PendingRideDetail />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />

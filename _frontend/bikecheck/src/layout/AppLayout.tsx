@@ -61,7 +61,6 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/bikes/new": "addBike.title",
   "/bikes": "page.bikes",
   "/service": "page.service",
-  "/rides/pending": "pendingRides.listTitle",
   "/rides": "page.rides",
   "/profile": "page.profile",
   "/settings": "page.settings",
@@ -74,9 +73,6 @@ const SUB_PAGE_ROUTES: string[] = [
   "/profile",
   "/notifications",
   "/bikes/new",
-  // Reached from a notification or the dashboard card, not from the tab bar:
-  // the way out is back to where the question was asked.
-  "/rides/pending",
   // Owns the whole screen and carries its own single action — the Fab over it
   // would offer a way out of a result the user has not acknowledged yet.
   "/strava-connected",
@@ -244,11 +240,12 @@ export function AppLayout(): ReactElement {
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
                     variant="transparent"
-                    radius="xl"
+                    radius="sm"
                     size="lg"
                     aria-label={t("page.notifications")}
                     onClick={() => navigate("/notifications")}
                     pos="relative"
+                    // style={{ border: "none" }}
                   >
                     <Bell size={25} color="var(--mantine-color-text-6)" />
                     {/* A count, not a dot: how many are waiting is the reason to
@@ -264,16 +261,16 @@ export function AppLayout(): ReactElement {
                         px={4}
                         style={{
                           borderRadius: "9999px",
-                          backgroundColor: "var(--mantine-color-strava-6)",
+                          backgroundColor: "var(--mantine-color-primary-6)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           // Against the header, so the badge reads as sitting on
                           // top of the bell rather than beside it.
-                          border: "2px solid var(--mantine-color-body)",
+                          border: "none",
                         }}
                       >
-                        <Text className="font-mono" fz={9} fw={700} c="#FFFFFF" lh={1}>
+                        <Text className="font-mono" fz={10} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
                           {unreadCount > 9 ? "9+" : unreadCount}
                         </Text>
                       </Box>

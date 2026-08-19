@@ -125,7 +125,9 @@
   },
   "rides": {
     "emptyTitle": "Zatím žádné jízdy",
-    "emptyBody": "Připoj svůj účet Strava nebo zaznamenej první jízdu a začni sledovat nájezd a opotřebení komponentů."
+    "emptyBody": "Připoj svůj účet Strava nebo zaznamenej první jízdu a začni sledovat nájezd a opotřebení komponentů.",
+    "tabRides": "Jízdy",
+    "tabPending": "Nepřiřazené"
   },
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",

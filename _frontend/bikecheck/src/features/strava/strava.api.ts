@@ -40,11 +40,6 @@ export async function getPendingRides(): Promise<PendingRide[]> {
   return apiFetch<PendingRide[]>("/strava/pending-activities");
 }
 
-// GET /strava/pending-activities/:activityId — one of them, by Strava id.
-export async function getPendingRide(activityId: string): Promise<PendingRide> {
-  return apiFetch<PendingRide>(`/strava/pending-activities/${activityId}`);
-}
-
 // POST /strava/pending-activities/:activityId/resolve — assigns the ride to a
 // bike, which also dismisses the notification that asked about it.
 export async function resolvePendingRide(

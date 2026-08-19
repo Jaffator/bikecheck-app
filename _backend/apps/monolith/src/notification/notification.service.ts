@@ -88,4 +88,21 @@ export class NotificationService {
       data: { is_read: true, read_at: new Date() },
     });
   }
+
+  /**
+   * Closes the ask about one Strava activity once the ride has been assigned.
+   * Matched on the payload rather than a dedup key: these notifications carry
+   * none, because every ride is its own event.
+   */
+  async resolveActivityAsk(userId: number, activityId: string): Promise<void> {
+    await this.prisma.notifications.updateMany({
+      where: {
+        user_id: userId,
+        type: 'strava_activity_unassigned',
+        is_read: false,
+        payload: { path: ['activityId'], equals: activityId },
+      },
+      data: { is_read: true, read_at: new Date() },
+    });
+  }
 }

@@ -6,8 +6,7 @@
 // notification-types.config.ts.
 export type NotificationType =
   | "strava_activity_saved"
-  | "strava_unmatched_gear"
-  | "strava_no_gear"
+  | "strava_activity_unassigned"
   | "maintenance_due"
   | "achievement_unlocked";
 

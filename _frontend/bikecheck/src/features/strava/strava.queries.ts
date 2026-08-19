@@ -8,7 +8,6 @@ import {
   getGearLinking,
   linkStravaGear,
   getPendingRides,
-  getPendingRide,
   resolvePendingRide,
 } from "./strava.api";
 import type { GearLinkingData, GearLink, PendingRide } from "./strava.types";
@@ -105,13 +104,6 @@ export function usePendingRides(): UseQueryResult<PendingRide[]> {
   return useQuery({
     queryKey: ["pendingRides"],
     queryFn: getPendingRides,
-  });
-}
-
-export function usePendingRide(activityId: string): UseQueryResult<PendingRide> {
-  return useQuery({
-    queryKey: ["pendingRides", activityId],
-    queryFn: () => getPendingRide(activityId),
   });
 }
 

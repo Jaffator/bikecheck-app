@@ -9,8 +9,7 @@ export type NotificationChannel = 'push' | 'email' | 'inApp';
 
 export type NotificationType =
   | 'strava_activity_saved'
-  | 'strava_unmatched_gear'
-  | 'strava_no_gear'
+  | 'strava_activity_unassigned'
   | 'maintenance_due'
   | 'achievement_unlocked';
 
@@ -28,23 +27,20 @@ export interface PendingActivities {
 
 export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfig> = {
   // A ride that landed on a bike by itself. No dedup key: every ride is its own
-  // event, unlike the problem notifications below which repeat until resolved.
+  // event, so every ride gets its own notification.
   strava_activity_saved: {
     channels: ['push', 'inApp'],
     route: '/bikes/:bikeId',
   },
-  strava_unmatched_gear: {
+  // A ride the app could not put on a bike by itself — whether Strava sent no
+  // gear at all, or gear that matches nothing here. Both leave the user with
+  // the same job, so they are one notification rather than two: the rider is
+  // not expected to keep gear tidy on Strava's side.
+  // No dedup key either, for the same reason as above.
+  strava_activity_unassigned: {
     channels: ['push', 'inApp'],
-    // The dashboard, not a bike: this notification fires precisely because no
-    // BikeCheck bike matches the gear, so there is no bike id to route to. The
-    // dashboard is where the pairing card and its sheet live.
-    route: '/',
-  },
-  strava_no_gear: {
-    channels: ['push', 'inApp'],
-    // Straight to the one ride that needs an answer, rather than to a list the
-    // user then has to search.
-    route: '/rides/pending/:activityId',
+    // Opens the Pending tab with this ride's sheet already up.
+    route: '/rides?pending=:activityId',
   },
   maintenance_due: {
     channels: ['push', 'email', 'inApp'],

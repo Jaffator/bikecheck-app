@@ -117,7 +117,9 @@
   },
   "rides": {
     "emptyTitle": "No Rides Yet",
-    "emptyBody": "Connect your Strava account or record your first ride to start tracking mileage and component wear."
+    "emptyBody": "Connect your Strava account or record your first ride to start tracking mileage and component wear.",
+    "tabRides": "Rides",
+    "tabPending": "Pending"
   },
   "service": {
     "emptyTitle": "No Components to Service",

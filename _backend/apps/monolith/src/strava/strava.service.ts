@@ -338,25 +338,19 @@ export class StravaEventsService {
         },
       });
 
-      // No gearID in Strava activity -> send notification -> user must link activity with bike.
-      // Keyed per activity, not per user: three unassigned rides are three
-      // separate questions, and answering one must not silence the others.
-      if (!data.gearid) {
-        await this.notificationService.create({
-          userId: user.id,
-          type: 'strava_no_gear',
-          payload: { activityId: String(data.activity_id) },
-          dedupKey: `strava_no_gear:${data.activity_id}`,
-        });
-      } else {
-        // No matching bike in BikeCheck -> send notification -> user must link the gear with bike
-        await this.notificationService.create({
-          userId: user.id,
-          type: 'strava_unmatched_gear',
-          payload: { gearId: data.gearid },
-          dedupKey: `strava_unmatched_gear:${data.gearid}`,
-        });
-      }
+      // Whether Strava sent no gear at all or gear that matches no bike here, the
+      // user is left with the same job: say which bike it was. One notification
+      // covers both — riders are not expected to keep gear tidy on Strava's side.
+      // No dedup key: every ride is its own event and gets its own ask.
+      await this.notificationService.create({
+        userId: user.id,
+        type: 'strava_activity_unassigned',
+        payload: {
+          activityId: String(data.activity_id),
+          km: Math.round(data.analyzedData.distance_km),
+          ...(data.gearid ? { gearId: data.gearid } : {}),
+        },
+      });
       return { message: 'Not linked bike, activity saved to pending' };
     } else if (bikeId && user) {
       const result = await this.saveRide(bikeId, user.id, data.activity_id, data.analyzedData);
@@ -387,11 +381,10 @@ export class StravaEventsService {
    */
   async listPendingActivities(userId: number): Promise<ResponsePendingStravaDto[]> {
     const pending = await this.prisma.strava_pending_activities.findMany({
-      // Only the rides this screen can actually answer for. One parked against a
-      // gear id is waiting on the gear being linked, not on being told which
-      // bike it was — offering it here would give the user an assign button
-      // that resolvePendingActivities_noGear refuses.
-      where: { user_id: userId, resolved_at: null, gear_id: null },
+      // Every unresolved ride, with or without a gear id: a gear that matches no
+      // bike here leaves the user the same job as no gear at all, and the sheet
+      // answers both the same way.
+      where: { user_id: userId, resolved_at: null },
       orderBy: { created_at: 'desc' },
     });
     return pending.map((activity) => this.toPendingDto(activity));
@@ -402,9 +395,7 @@ export class StravaEventsService {
    */
   async getPendingActivity(userId: number, activityId: bigint): Promise<ResponsePendingStravaDto> {
     const pending = await this.prisma.strava_pending_activities.findFirst({
-      // Same filter as the list: the detail screen exists to resolve the ride,
-      // so it must not open one the resolve call would reject.
-      where: { user_id: userId, activity_id: activityId, resolved_at: null, gear_id: null },
+      where: { user_id: userId, activity_id: activityId, resolved_at: null },
     });
     if (!pending) throw new NotFoundException('Pending activity not found');
     return this.toPendingDto(pending);
@@ -433,8 +424,11 @@ export class StravaEventsService {
   async resolvePendingActivities_noGear(params: PendingActivities): Promise<void> {
     if (params.activityId) {
       // Resolve only one selected activity
+      // No gear_id filter: the user assigns the ride by hand either way, and a
+      // ride parked against unknown gear is exactly one of the cases this is
+      // for.
       const pending = await this.prisma.strava_pending_activities.findFirst({
-        where: { user_id: params.userId, activity_id: params.activityId, resolved_at: null, gear_id: null },
+        where: { user_id: params.userId, activity_id: params.activityId, resolved_at: null },
       });
       if (!pending) throw new NotFoundException('No pending activity found');
 
@@ -445,7 +439,7 @@ export class StravaEventsService {
         data: { resolved_at: new Date() },
       });
       // Only this activity's question has been answered.
-      await this.notificationService.resolveByDedupKey(params.userId, `strava_no_gear:${pending.activity_id}`);
+      await this.notificationService.resolveActivityAsk(params.userId, String(pending.activity_id));
     } else {
       // Resolve all activities with no gearID
       const pending = await this.prisma.strava_pending_activities.findMany({
@@ -458,9 +452,9 @@ export class StravaEventsService {
           where: { id: activity.id },
           data: { resolved_at: new Date() },
         });
-        // Every activity carries its own notification now, so each one has to be
-        // dismissed by its own key rather than by a single per-user key.
-        await this.notificationService.resolveByDedupKey(params.userId, `strava_no_gear:${activity.activity_id}`);
+        // Every activity carries its own notification, so each has to be closed
+        // on its own rather than by one shared key.
+        await this.notificationService.resolveActivityAsk(params.userId, String(activity.activity_id));
       }
     }
   }
@@ -485,7 +479,6 @@ export class StravaEventsService {
     for (const bike of bikes) {
       if (!bike.strava_gear_id) continue;
 
-      let matched = false;
       for (const activity of pending) {
         if (activity.gear_id === bike.strava_gear_id) {
           const analyzedData = activity.analyzed_data as StravaActivityData['analyzedData'];
@@ -494,13 +487,10 @@ export class StravaEventsService {
             where: { id: activity.id },
             data: { resolved_at: new Date() },
           });
-          matched = true;
+          // Linking the gear answers the ask for every ride that was waiting on
+          // it, one notification per ride.
+          await this.notificationService.resolveActivityAsk(userId, String(activity.activity_id));
         }
-      }
-
-      // Dismiss notification only if at least one activity was resolved
-      if (matched) {
-        await this.notificationService.resolveByDedupKey(userId, `strava_unmatched_gear:${bike.strava_gear_id}`);
       }
     }
   }

@@ -77,7 +77,7 @@ export function PendingRidesCard(): ReactElement | null {
           c="#FFFFFF"
           onClick={() => {
             void tapFeedback();
-            navigate("/rides/pending");
+            navigate("/rides");
           }}
           className="active:scale-[0.985]"
           styles={{
