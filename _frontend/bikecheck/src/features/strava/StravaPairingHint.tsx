@@ -14,7 +14,8 @@ interface StravaPairingHintProps {
 // the dim stat colour on purpose: an unpaired bike is a normal state — one that
 // only ever ran on a trainer never needs gear — so it must not read as a fault
 // next to real warnings like a worn brake pad.
-// Renders nothing without a linked account: there is nothing to pair with.
+// Renders nothing without a linked account: there is nothing to pair with, and
+// nothing for a paired bike either — the badge over its photo already says so.
 export function StravaPairingHint({
   stravaGearId,
 }: StravaPairingHintProps): ReactElement | null {

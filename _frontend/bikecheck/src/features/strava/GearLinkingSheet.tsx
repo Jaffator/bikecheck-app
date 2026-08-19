@@ -65,11 +65,13 @@ export function GearLinkingSheet({
       : bike.strava_gear_id === null,
   );
 
-  // Gear held by a bike that is not being edited here, so it cannot be taken.
-  function takenBy(gearId: string): string | null {
+  // Gear already held by some other bike, so it cannot be taken. Rows being
+  // edited here count too: two rows picking the same gear would leave two bikes
+  // collecting one Strava gear. The row asking is excluded, or the Select would
+  // disable the value it is currently showing.
+  function takenBy(gearId: string, forBikeId: number): string | null {
     const owner = (data?.bikecheck_bikes ?? []).find(
-      (bike) =>
-        chosenFor(bike) === gearId && !rows.some((row) => row.id === bike.id),
+      (bike) => bike.id !== forBikeId && chosenFor(bike) === gearId,
     );
     return owner ? bikeLabel(owner) : null;
   }
@@ -217,7 +219,7 @@ export function GearLinkingSheet({
                     }
                     placeholder={t("strava.gearLinkingPlaceholder")}
                     data={data.strava_bikes.map((gear) => {
-                      const owner = takenBy(gear.id);
+                      const owner = takenBy(gear.id, bike.id);
                       return {
                         value: gear.id,
                         label:

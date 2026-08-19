@@ -68,3 +68,7 @@ export async function cropToFile(file: File, area: Area): Promise<File> {
   // Keeps the original name so the upload still reads as the user's own file.
   return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: OUTPUT_TYPE });
 }
+
+// The height every bike photo slot draws at. Card and detail share it so a
+// photo cropped for one is not letterboxed by the other.
+export const PHOTO_SLOT_HEIGHT = 180;

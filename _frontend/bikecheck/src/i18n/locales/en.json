@@ -264,6 +264,7 @@
     "gearLinkingSkip": "Not now",
     "gearLinkingFailed": "Could not save the pairing. Try again.",
     "notPaired": "Not paired",
+    "paired": "Linked",
     "unpairedBikes_one": "{{count}} bike is not paired",
     "unpairedBikes_other": "{{count}} bikes are not paired",
     "pairBike": "Pair with Strava gear",

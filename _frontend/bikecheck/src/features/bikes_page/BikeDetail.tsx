@@ -19,6 +19,7 @@ import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { useLinkStravaGear } from "../strava/strava.queries";
 import { useCurrentUser } from "../users/users.queries";
 import { tapFeedback } from "@/utils/haptics";
+import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
 
 // The bike a card opens. Identity and totals only so far — components, service
 // history and wear are still to come.
@@ -64,13 +65,13 @@ export function BikeDetail(): ReactElement {
     >
       {bike.image_url && (
         <Paper radius="md" style={{ overflow: "hidden" }}>
-          {/* Contained on white for the same reason as the card: product shots
-              carry their own margins, and cropping to fill cut the bike off. */}
+          {/* Same slot height and fit as the card, so opening a bike shows the
+              photo framed exactly as the garage showed it. */}
           <Image
             src={bike.image_url}
             alt={title}
-            h={220}
-            fit="contain"
+            h={PHOTO_SLOT_HEIGHT}
+            fit="cover"
             bg="#FFFFFF"
           />
         </Paper>

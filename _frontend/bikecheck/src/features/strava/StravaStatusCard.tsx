@@ -145,33 +145,54 @@ export function StravaStatusCard({
         }}
       />
 
-      <Stack gap="md" p="md">
+      {/* Without the disconnect button there is nothing to stack the status
+          under, so name and state sit on one line and the card stays a strip.
+          Settings keeps the taller layout, where the button needs the room. */}
+      <Stack gap="md" p={allowDisconnect ? "md" : "sm"}>
         <Group gap="sm" wrap="nowrap" align="center">
           <Box
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "2.25rem",
-              height: "2.25rem",
+              width: allowDisconnect ? "2.25rem" : "1.75rem",
+              height: allowDisconnect ? "2.25rem" : "1.75rem",
               borderRadius: "0.625rem",
               backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
             }}
           >
-            <StravaMark width={18} height={18} color="var(--mantine-color-strava-6)" />
+            <StravaMark
+              width={allowDisconnect ? 18 : 15}
+              height={allowDisconnect ? 18 : 15}
+              color="var(--mantine-color-strava-6)"
+            />
           </Box>
 
-          <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-            <Text fw={600} fz={15} c="text.6">
-              {t("strava.statusTitle")}
-            </Text>
-            <Group gap={5} wrap="nowrap">
-              <CircleCheck size={13} color="var(--mantine-color-green-8)" />
-              <Text className="font-mono" fz={10} c="green.8" style={{ letterSpacing: "0.08em" }}>
-                {t("strava.statusConnected")}
+          {allowDisconnect ? (
+            <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
+              <Text fw={600} fz={15} c="text.6">
+                {t("strava.statusTitle")}
               </Text>
+              <Group gap={5} wrap="nowrap">
+                <CircleCheck size={13} color="var(--mantine-color-green-8)" />
+                <Text className="font-mono" fz={10} c="green.8" style={{ letterSpacing: "0.08em" }}>
+                  {t("strava.statusConnected")}
+                </Text>
+              </Group>
+            </Stack>
+          ) : (
+            <Group gap="xs" wrap="nowrap" style={{ flex: 1, minWidth: 0 }} justify="space-between">
+              <Text fw={600} fz={14} c="text.6" truncate>
+                {t("strava.statusTitle")}
+              </Text>
+              <Group gap={5} wrap="nowrap">
+                <CircleCheck size={13} color="var(--mantine-color-green-8)" />
+                <Text className="font-mono" fz={10} c="green.8" style={{ letterSpacing: "0.08em" }}>
+                  {t("strava.statusConnected")}
+                </Text>
+              </Group>
             </Group>
-          </Stack>
+          )}
 
           {/* Sits opposite the title: unlinking is the one thing settings adds
               over the dashboard copy, and it belongs out of the reading path. */}

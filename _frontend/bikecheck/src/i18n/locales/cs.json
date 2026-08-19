@@ -410,6 +410,7 @@
     "gearLinkingSkip": "Teď ne",
     "gearLinkingFailed": "Propojení se nepodařilo uložit. Zkus to znovu.",
     "notPaired": "Nepropojeno",
+    "paired": "Propojeno",
     "unpairedBikes_one": "{{count}} kolo není propojeno",
     "unpairedBikes_few": "{{count}} kola nejsou propojena",
     "unpairedBikes_other": "{{count}} kol není propojeno",
