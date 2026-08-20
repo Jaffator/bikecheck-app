@@ -7,6 +7,7 @@ import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useConnectStrava, useDisconnectStrava } from "./strava.queries";
 import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
+import mapBackground from "@/assets/icons/svg_icons/mapbg.svg";
 
 interface StravaStatusCardProps {
   // Settings only manages a link that exists, so it renders nothing at all when
@@ -127,28 +128,41 @@ export function StravaStatusCard({
 
   return (
     <Paper
-      bg="cards."
+      bg="cards.6"
       radius="md"
       className="m-3"
       style={{
         overflow: "hidden",
         border: "1px solid var(--color-border-subtle)",
+        position: "relative",
       }}
     >
-      {/* A hairline in Strava orange along the top edge: enough to own the card
-          without the connected state having to shout. */}
+      {/* The map drawing carries its own black fill, which would vanish on this
+          card. Used as a mask instead: the file supplies the shape and the
+          colour comes from here, so the texture can sit at any weight. */}
       <Box
+        aria-hidden
         style={{
-          height: "2px",
-          background:
-            "linear-gradient(90deg, var(--mantine-color-strava-6) 0%, color-mix(in srgb, var(--mantine-color-strava-6) 15%, transparent) 100%)",
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          backgroundColor: "var(--mantine-color-text-6)",
+          opacity: 0.06,
+          maskImage: `url(${mapBackground})`,
+          WebkitMaskImage: `url(${mapBackground})`,
+          maskSize: "cover",
+          WebkitMaskSize: "cover",
+          maskPosition: "center",
+          WebkitMaskPosition: "center",
+          maskRepeat: "no-repeat",
+          WebkitMaskRepeat: "no-repeat",
         }}
       />
 
       {/* Without the disconnect button there is nothing to stack the status
           under, so name and state sit on one line and the card stays a strip.
           Settings keeps the taller layout, where the button needs the room. */}
-      <Stack gap="md" p={allowDisconnect ? "md" : "sm"}>
+      <Stack gap="md" p={allowDisconnect ? "md" : "sm"} style={{ position: "relative" }}>
         <Group gap="sm" wrap="nowrap" align="center">
           <Box
             style={{

@@ -1,26 +1,28 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { Box, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Link2Off, Link2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CalendarClock } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { useBikes } from "@/features/bikes/bikes.queries";
-import { GearLinkingSheet } from "./GearLinkingSheet";
+import { usePendingRides } from "./strava.queries";
 
-// Prompts the user to pair the bikes that collect no rides yet, and opens the
-// sheet that does it. Renders nothing without a linked Strava account, or once
-// every bike carries a gear id — a bike that is paired is not news.
-export function UnpairedBikesCard(): ReactElement | null {
+// Rides that arrived without a bike the app could resolve. Its own card rather
+// than a line in UnpairedBikesCard: a bike with no gear id and a ride with no
+// gear id are different problems with different answers, and a user can hit
+// both at once — a paired bike still records the odd ride Strava sends with no
+// gear on it at all.
+export function PendingRidesCard(): ReactElement | null {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: user } = useCurrentUser();
-  const { data: bikes } = useBikes();
-  const [pairingGear, setPairingGear] = useState(false);
+  const { data: rides } = usePendingRides();
 
-  const unpairedCount = (bikes ?? []).filter((bike) => bike.strava_gear_id === null).length;
+  const pendingCount = rides?.length ?? 0;
 
   if (!user?.strava_athlete_id) return null;
-  if (unpairedCount === 0) return null;
+  if (pendingCount === 0) return null;
 
   return (
     <Paper
@@ -49,28 +51,27 @@ export function UnpairedBikesCard(): ReactElement | null {
               backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
             }}
           >
-            <Link2Off size={18} color="var(--mantine-color-primary-6)" />
+            <CalendarClock size={18} color="var(--mantine-color-primary-6)" />
           </Box>
           <Text fw={600} fz={15} tt="uppercase" c="text.6" style={{ lineHeight: 1.15, letterSpacing: "-0.01em" }}>
-            {t("strava.unpairedBikes", { count: unpairedCount })}
+            {t("pendingRides.title")} ({pendingCount})
           </Text>
         </Group>
-        {/* <Stack gap={8} className="mb-3">
+
+        <Stack gap={8} className="mb-3">
           <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-            {t("strava.unpairedBikesBody")}
+            {t("pendingRides.cardBody")}
           </Text>
-        </Stack> */}
+        </Stack>
 
         <Button
           fullWidth
-          variant="outline"
           radius="md"
           color="primary.6"
-          c="primary.6"
-          leftSection={<Link2 size={16} />}
+          c="textDark.6"
           onClick={() => {
             void tapFeedback();
-            setPairingGear(true);
+            navigate("/rides?tab=pending");
           }}
           className="active:scale-[0.985]"
           styles={{
@@ -83,11 +84,9 @@ export function UnpairedBikesCard(): ReactElement | null {
             },
           }}
         >
-          {t("strava.unpairedBikesAction")}
+          {t("pendingRides.cardAction")}
         </Button>
       </Stack>
-
-      <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} />
     </Paper>
   );
 }

@@ -1,10 +1,11 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
-import { Button, Drawer, Group, Select, Stack, Text } from "@mantine/core";
+import { Button, Drawer, Group, Paper, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { Clock, Gauge, Mountain } from "lucide-react";
+import { ChevronDown, Clock, Mountain, Route } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
+import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
 import { useResolvePendingRide } from "./strava.queries";
@@ -45,74 +46,116 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
       opened={ride !== null}
       onClose={close}
       position="bottom"
-      // Height follows the content: one question should not leave half a screen
-      // of empty sheet below it.
-      size="auto"
+      size="lg"
       radius="md"
-      title={t("pendingRides.chooseBike")}
-      // Darkened and blurred so the list behind reads as out of reach while the
-      // sheet is up, rather than competing with it for attention.
+      // Names the sheet for both the reader and the screen reader.
+      // title={
+      //   <Text fw={600} fz={16} c="text.7">
+      //     {t("pendingRides.chooseBikeTitle")}
+      //   </Text>
+      // }
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
-      // Keyed by Drawer part, not by CSS property. The header carries its own
-      // background, so it has to be painted alongside the content or it stays a
-      // light band above the sheet.
       styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
-        title: {
-          fontWeight: 600,
-          color: "var(--mantine-color-text-6)",
-          // The close button sits beside it, so centring needs the title to
-          // take the full row and centre its own text.
-          flex: 1,
-          textAlign: "center",
+        content: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          display: "flex",
+          flexDirection: "column",
         },
+        body: { flex: 1, display: "flex", flexDirection: "column" },
+        header: { backgroundColor: "var(--mantine-color-cards-6)", marginBottom: "1.5rem" },
+        // The close button keeps its corner, so the title is centred against
+        // the whole header rather than against the space left over beside it.
+        title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
     >
-      <Stack gap="lg" pb="var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px))">
-        {/* Which ride is being assigned. A date alone does not tell you that,
-            so the figures that identify it come along. */}
+      <Stack gap={20} h="100%" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+        <Text fw={900} fz={20} c="text.8" ta="center">
+          {t("pendingRides.chooseBikeTitle")}
+        </Text>
+        {/* The row the user tapped, carried into the sheet as the same card —
+            same lighting as the list, so opening one enlarges the thing rather
+            than replacing it with a loose block of text. */}
         {ride !== null && (
-          <Stack gap="xs">
-            <Text fw={600} fz={15} c="text.6">
-              {dayjs(ride.started_at).format("D. M. YYYY H:mm")}
-            </Text>
-            <Group gap="lg" wrap="nowrap">
-              <Group gap={6} wrap="nowrap">
-                <Gauge size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.distance", { count: ride.distance_km })}
-                </Text>
-              </Group>
-              <Group gap={6} wrap="nowrap">
-                <Clock size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.duration", { count: ride.duration_min })}
-                </Text>
-              </Group>
-              <Group gap={6} wrap="nowrap">
-                <Mountain size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.elevation", { count: ride.elevation_up_m })}
-                </Text>
-              </Group>
+          <Paper
+            radius="lg"
+            p="md"
+            style={{
+              // Colour, glow and inner edge all live in this one object: `bg`
+              // would emit the `background` shorthand and wipe the gradient.
+              backgroundColor: "var(--mantine-color-cards-6)",
+              backgroundImage:
+                "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 10%, transparent) 0%, transparent 60%)",
+              border: "1px solid var(--color-border-subtle)",
+              boxShadow:
+                "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
+            }}
+          >
+            <Group gap="lg" wrap="nowrap" align="center" w="100%">
+              <RouteMap polyline={ride.summary_polyline} width={85} height={85} strokeWidth={3} />
+              {/* minWidth lets the column shrink below its content, without which
+                  the title's lineClamp has nothing to clamp against. */}
+              <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
+                <Stack gap={4}>
+                  <Text fw={600} fz={15} c="text.6" lineClamp={1}>
+                    {ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
+                  </Text>
+                  <Text fz={13} c="text.7">
+                    {dayjs(ride.started_at).format("D. M. YYYY H:mm")}
+                  </Text>
+                </Stack>
+                <Group gap="sm" wrap="nowrap">
+                  <Group gap={6} wrap="nowrap">
+                    <Route size={14} color="var(--mantine-color-text-7)" />
+                    <Text fz={14} c="text.7">
+                      {t("pendingRides.distance", { count: ride.distance_km })}
+                    </Text>
+                  </Group>
+                  <Group gap={6} wrap="nowrap">
+                    <Clock size={14} color="var(--mantine-color-text-7)" />
+                    <Text fz={14} c="text.7">
+                      {t("pendingRides.duration", { count: ride.duration_min })}
+                    </Text>
+                  </Group>
+                  <Group gap={6} wrap="nowrap">
+                    <Mountain size={14} color="var(--mantine-color-text-7)" />
+                    <Text fz={14} c="text.7">
+                      {t("pendingRides.elevation", { count: ride.elevation_up_m })}
+                    </Text>
+                  </Group>
+                </Group>
+              </Stack>
             </Group>
-          </Stack>
+          </Paper>
         )}
 
+        {/* Points from the ride to the field that answers it, so the sheet
+            reads as one question rather than two stacked blocks. */}
+        <Group justify="center">
+          <ChevronDown size={30} color="var(--mantine-color-text-7)" />
+        </Group>
+
         <Select
-          value={bikeId}
           onChange={setBikeId}
           placeholder={t("pendingRides.chooseBike")}
           data={(bikes ?? []).map((bike) => ({
             value: String(bike.id),
             label: bike.bikename ?? bike.bike_model ?? bike.bike_brand,
           }))}
-          // The wizard's field look, so this reads like any other form field in
-          // the app.
-          styles={inputStyles}
-          radius="sm"
-          comboboxProps={dropdownProps}
+          // The wizard's field look, given an edge of its own: on the sheet's
+          // card background a borderless input has nothing to read against.
+          styles={{ input: { ...inputStyles.input, border: "1px solid var(--mantine-color-cards-4)" } }}
+          radius="md"
+          // The shared dropdown look, with the same edge as the field above it
+          // so the open menu reads as an extension of it.
+          comboboxProps={{
+            ...dropdownProps,
+            styles: {
+              dropdown: {
+                ...dropdownProps.styles.dropdown,
+                border: "1px solid var(--mantine-color-cards-4)",
+              },
+            },
+          }}
         />
 
         {resolve.isError && (
@@ -122,8 +165,10 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
         )}
 
         <Button
+          // Sits on the sheet's bottom edge whatever the content above it does.
+          mt="auto"
           fullWidth
-          radius="sm"
+          radius="md"
           loading={resolve.isPending}
           disabled={bikeId === null}
           // The wizard's disabled look: Mantine's own reads as missing rather

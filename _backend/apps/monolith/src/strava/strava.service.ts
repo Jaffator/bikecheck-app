@@ -33,6 +33,8 @@ interface StravaActivityData {
   analyzedData: {
     rawJson: any;
     started_at: string;
+    name: string;
+    summary_polyline: string | null;
     suspension_minutes: number;
     health_index_brake_pad: number;
     drivetrain_km: number;
@@ -285,6 +287,8 @@ export class StravaEventsService {
       analyzedData: {
         rawJson: stravaData,
         started_at: stravaData.start_date,
+        name: stravaData.name,
+        summary_polyline: stravaData.map?.summary_polyline ?? null,
         suspension_minutes: Math.floor(suspension_minutes / 60),
         health_index_brake_pad: Math.floor(health_index_brake_pad),
         drivetrain_km: Math.floor(drivetrain_meters / 1000),
@@ -409,6 +413,15 @@ export class StravaEventsService {
       activity_id: String(activity.activity_id),
       gear_id: activity.gear_id,
       started_at: analyzed.started_at,
+      // Rides stored before the name was lifted out still carry it in the raw
+      // blob, so read that rather than showing them nameless.
+      name: analyzed.name ?? (analyzed.rawJson?.name as string | undefined) ?? '',
+      // Same fallback as the name: rides stored before the route was lifted out
+      // still carry it in the raw blob. Null for rides recorded without GPS.
+      summary_polyline:
+        analyzed.summary_polyline ??
+        (analyzed.rawJson?.map?.summary_polyline as string | undefined) ??
+        null,
       distance_km: Math.round(analyzed.distance_km),
       duration_min: Math.round(analyzed.duration_min),
       elevation_up_m: Math.round(analyzed.elevation_up_m),

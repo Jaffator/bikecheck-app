@@ -5,7 +5,7 @@ import { useBikes } from "../bikes/bikes.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
 import { StravaStatusCard } from "../strava/StravaStatusCard";
 import { UnpairedBikesCard } from "../strava/UnpairedBikesCard";
-import { PendingRidesCard } from "../strava/PendingRidesCard";
+import { PendingRidesCard } from "../strava/PendingRidesDashCard";
 
 export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();

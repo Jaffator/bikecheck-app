@@ -443,11 +443,12 @@
     "emptyBody": "Všechny jízdy ze Stravy mají přiřazené kolo.",
     "loadFailed": "Jízdy se nepodařilo načíst",
     "chooseBike": "Ke kterému kolu jízda patří?",
+    "chooseBikeTitle": "Vyber kolo pro tuto jízdu",
     "assign": "Přiřadit ke kolu",
     "assignFailed": "Přiřazení se nepodařilo",
     "distance": "{{count}} km",
     "duration": "{{count}} min",
-    "elevation": "{{count}} m převýšení",
+    "elevation": "{{count}} m",
     "noGear": "Bez kola ze Stravy"
   }
 }

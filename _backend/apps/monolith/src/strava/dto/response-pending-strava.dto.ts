@@ -17,6 +17,16 @@ export class ResponsePendingStravaDto {
   @ApiProperty({ example: '2026-08-19T06:12:00.000Z' })
   started_at!: string;
 
+  // Strava's own title for the ride — what tells one pending row apart from the
+  // next. Empty for rides stored before the name was kept.
+  @ApiProperty({ example: 'Morning Ride' })
+  name!: string;
+
+  // Strava's own simplified route, as an encoded polyline. Null for rides
+  // recorded without GPS — a turbo session has no shape to draw.
+  @ApiProperty({ example: 'snttH{s`|A[VJrD', nullable: true })
+  summary_polyline!: string | null;
+
   @ApiProperty({ example: 42 })
   distance_km!: number;
 

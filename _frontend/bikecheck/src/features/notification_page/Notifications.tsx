@@ -7,10 +7,7 @@ import { BellOff } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { tapFeedback } from "@/utils/haptics";
-import {
-  useNotifications,
-  useMarkNotificationRead,
-} from "@/features/notifications/notifications.queries";
+import { useNotifications, useMarkNotificationRead } from "@/features/notifications/notifications.queries";
 import { notificationRoute } from "@/features/notifications/notificationRoute";
 import type { Notification } from "@/features/notifications/notifications.types";
 
@@ -29,13 +26,10 @@ function NotificationRow({
   const unread = !notification.is_read;
 
   return (
-    <UnstyledButton
-      onClick={() => onOpen(notification)}
-      style={{ display: "block", width: "100%", textAlign: "left" }}
-    >
+    <UnstyledButton onClick={() => onOpen(notification)} style={{ display: "block", width: "100%", textAlign: "left" }}>
       <Paper
         bg="cards.6"
-        radius="md"
+        radius="lg"
         p="md"
         style={{
           border: "1px solid var(--color-border-subtle)",
@@ -53,7 +47,7 @@ function NotificationRow({
                 h={8}
                 style={{
                   borderRadius: "50%",
-                  backgroundColor: "var(--mantine-color-strava-6)",
+                  backgroundColor: "var(--mantine-color-primary-6)",
                 }}
               />
             )}

@@ -118,7 +118,7 @@
   "rides": {
     "emptyTitle": "No Rides Yet",
     "emptyBody": "Connect your Strava account or record your first ride to start tracking mileage and component wear.",
-    "tabRides": "Rides",
+    "tabRides": "Completed",
     "tabPending": "Pending"
   },
   "service": {
@@ -294,12 +294,13 @@
     "empty": "No unassigned rides",
     "emptyBody": "Every Strava ride has a bike assigned.",
     "loadFailed": "Rides could not be loaded",
-    "chooseBike": "Which bike does this ride belong to?",
+    "chooseBike": "Choose your bike",
+    "chooseBikeTitle": "Select a bike for this ride",
     "assign": "Assign to bike",
     "assignFailed": "Could not assign the ride",
     "distance": "{{count}} km",
     "duration": "{{count}} min",
-    "elevation": "{{count}} m elevation",
+    "elevation": "{{count}} m",
     "noGear": "No Strava bike"
   }
 }

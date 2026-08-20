@@ -39,6 +39,11 @@ export interface PendingRide {
   activity_id: string;
   gear_id: string | null;
   started_at: string;
+  // Strava's own title for the ride. Empty for rides stored before it was kept,
+  // so the row falls back to the date.
+  name: string;
+  // Strava's simplified route, encoded. Null for rides recorded without GPS.
+  summary_polyline: string | null;
   distance_km: number;
   duration_min: number;
   elevation_up_m: number;

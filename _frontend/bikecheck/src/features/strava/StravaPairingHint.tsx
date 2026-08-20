@@ -16,9 +16,7 @@ interface StravaPairingHintProps {
 // next to real warnings like a worn brake pad.
 // Renders nothing without a linked account: there is nothing to pair with, and
 // nothing for a paired bike either — the badge over its photo already says so.
-export function StravaPairingHint({
-  stravaGearId,
-}: StravaPairingHintProps): ReactElement | null {
+export function StravaPairingHint({ stravaGearId }: StravaPairingHintProps): ReactElement | null {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
 
