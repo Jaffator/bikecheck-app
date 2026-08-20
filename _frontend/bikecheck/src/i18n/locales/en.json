@@ -119,7 +119,15 @@
     "emptyTitle": "No Rides Yet",
     "emptyBody": "Connect your Strava account or record your first ride to start tracking mileage and component wear.",
     "tabRides": "Completed",
-    "tabPending": "Pending"
+    "tabPending": "Pending",
+    "unknownBike": "Unknown bike",
+    "loadFailed": "Could not load rides",
+    "statDistance": "Distance",
+    "statDuration": "Time",
+    "statElevation": "Elevation",
+    "statDescent": "Descent",
+    "statAvgSpeed": "Avg speed",
+    "statMaxSpeed": "Max speed"
   },
   "service": {
     "emptyTitle": "No Components to Service",

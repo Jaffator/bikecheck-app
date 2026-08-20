@@ -127,7 +127,15 @@
     "emptyTitle": "Zatím žádné jízdy",
     "emptyBody": "Připoj svůj účet Strava nebo zaznamenej první jízdu a začni sledovat nájezd a opotřebení komponentů.",
     "tabRides": "Jízdy",
-    "tabPending": "Nepřiřazené"
+    "tabPending": "Nepřiřazené",
+    "unknownBike": "Neznámé kolo",
+    "loadFailed": "Jízdy se nepodařilo načíst",
+    "statDistance": "Vzdálenost",
+    "statDuration": "Čas",
+    "statElevation": "Převýšení",
+    "statDescent": "Klesání",
+    "statAvgSpeed": "Prům. rychlost",
+    "statMaxSpeed": "Max. rychlost"
   },
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",

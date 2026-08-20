@@ -14,6 +14,7 @@ import { ComponentModuleModule } from './component/component.module';
 import { OrganizationModule } from './organization/organization.module';
 import { StorageModule } from './storage/storage.module';
 import { StravaModule } from './strava/strava.module';
+import { RideModule } from './ride/ride.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { NotificationModule } from './notification/notification.module';
 import { ReportModule } from './report/report.module';
@@ -98,6 +99,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     StorageModule,
     OrganizationModule,
     StravaModule,
+    RideModule,
     GeminiModule,
     NotificationModule,
     ReportModule,
