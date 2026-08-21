@@ -1,7 +1,6 @@
 import type { components } from "@/api/schema";
 
-// Mirrors the backend ResponseBikeDto (bike/dto/response-bike.dto.ts).
-// Dates arrive as ISO strings over JSON, so they are typed as string here.
+// Mirror backend bike responses with JSON date strings.
 export interface Bike {
   id: number;
   user_id: number;
@@ -29,19 +28,14 @@ export interface Bike {
   strava_name: string | null;
 }
 
-// What the wizard sends to POST /bike/create. The photo is kept apart from the
-// DTO because it travels as a multipart file, not as JSON.
+// Keep multipart photo data separate from the create DTO.
 export interface CreateBikeInput {
   bike: CreateBikePayload;
   components: CreateMountedComponentPayload[];
   image: File | null;
 }
 
-// Both payloads drop a field the client cannot know: user_id comes from the auth
-// token, bike_id exists only once the bike row is written.
-// CreateBikeDto is spelled out because the generated schema does not carry it:
-// the create body is declared as a raw multipart schema, so nothing references
-// the DTO. Re-derive this from the schema if that ever changes.
+// Model client-known fields missing from the raw multipart schema.
 export interface CreateBikePayload {
   bike_brand: string;
   ebike: boolean;
@@ -68,6 +62,5 @@ export type BikeBrand = components["schemas"]["BikeBrands"];
 export type BikeModel = components["schemas"]["BikeModels"];
 export type BikeSearchResult = components["schemas"]["SearchBikeExternalResponseDto"];
 
-// The scraper answers with the same DTO the component domain owns, so the type
-// lives there. The generated schema.d.ts is still one revision behind on it.
+// Reuse the component-domain DTO until generated schema catches up.
 export type { AssembleBikeComponent as ExternalBikeComponent } from "../components/components.types";

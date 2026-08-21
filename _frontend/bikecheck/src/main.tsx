@@ -6,7 +6,7 @@ import { Capacitor } from "@capacitor/core";
 import { EdgeToEdge } from "@capawesome/capacitor-android-edge-to-edge-support";
 import "@mantine/core/styles.css";
 import "./global.css";
-// Side-effect import: sets up i18next before the first render.
+// Initializes i18next before the first render.
 import "./i18n";
 import { theme } from "./theme";
 import { queryClient } from "./api/queryClient";

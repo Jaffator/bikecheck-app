@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Notifications page.
 import type { ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -13,9 +13,7 @@ import type { Notification } from "@/features/notifications/notifications.types"
 
 dayjs.extend(relativeTime);
 
-// One row. Unread carries a dot and a lit title; read fades back so the list
-// reads as a stack of things still wanting attention, not an undifferentiated
-// log.
+// Render one notification row.
 function NotificationRow({
   notification,
   onOpen,
@@ -38,8 +36,7 @@ function NotificationRow({
         className="active:scale-[0.985]"
       >
         <Group gap="sm" wrap="nowrap" align="flex-start">
-          {/* Holds its width whether or not the dot is drawn, so the text of a
-              read row starts on the same line as an unread one. */}
+          {/* Reserve space for the unread indicator. */}
           <Box w={8} pt={6} style={{ flexShrink: 0 }}>
             {unread && (
               <Box
@@ -76,8 +73,7 @@ export function Notifications(): ReactElement {
   const { data, isLoading, isError } = useNotifications();
   const markRead = useMarkNotificationRead();
 
-  // Reading and opening are one gesture: the tap answers the notification, so
-  // it should not still be waiting when the user comes back.
+  // Mark unread notifications as read when opened.
   function openNotification(notification: Notification): void {
     void tapFeedback();
     if (!notification.is_read) markRead.mutate(notification.id);

@@ -413,6 +413,10 @@ model users {
   deleted_at           DateTime?              @db.Timestamptz(6)
   googleId             String?                @unique @db.VarChar
   strava_athlete_id    String?                @unique @db.VarChar
+  strava_firstname     String?                @db.VarChar
+  strava_lastname      String?                @db.VarChar
+  strava_username      String?                @db.VarChar
+  strava_avatar_url    String?                @db.VarChar
   accounts             accounts[]
   bikes                bikes[]
   component_types      component_types[]

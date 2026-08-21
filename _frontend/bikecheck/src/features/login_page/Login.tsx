@@ -1,16 +1,10 @@
-// Placeholder — routing/auth-gate skeleton only. Real form (fields,
-// validation, POST /auth/login) is a separate follow-up task.
+// Login page shell.
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import { Stack } from "@mantine/core";
 import { AuthenticationForm } from "./Authentication";
 
-// The Android keyboard shrinks the window, so any %/vh/lvh-sized background
-// gets squashed with it. Report a px height that only ever grows instead: the
-// keyboard can only make the window smaller, so the largest height seen is the
-// keyboard-free one. Mounting while the keyboard is already open (vite HMR
-// does this) therefore self-corrects as soon as it closes. A width change is
-// an orientation change and resets the measurement.
+// Keep background height stable while the keyboard is open.
 function useStableViewportHeight(): number {
   const [height, setHeight] = useState(() => window.innerHeight);
 
@@ -40,8 +34,7 @@ export function Login(): ReactElement {
     <>
       <Stack className="bg-background-900 relative isolate" align="center" gap="md" py="xl" style={{ minHeight: "100dvh" }}>
         <AuthenticationForm mt="220"></AuthenticationForm>
-        {/* Anchored to the top with a fixed px height, so neither edge moves
-            when the keyboard shrinks the window. */}
+        {/* Keep the background stable during keyboard resize. */}
         <div
           className="w-full absolute top-0 left-0 -z-10"
           style={{

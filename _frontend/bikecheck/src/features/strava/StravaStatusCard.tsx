@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Renders Strava connection state through query hooks.
 import { useState, type ReactElement } from "react";
 import { Box, Button, Group, Modal, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -6,20 +6,18 @@ import { CircleCheck } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useConnectStrava, useDisconnectStrava } from "./strava.queries";
+import { stravaDisplayName } from "./strava.types";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import mapBackground from "@/assets/icons/svg_icons/mapbg.svg";
 
 interface StravaStatusCardProps {
-  // Settings only manages a link that exists, so it renders nothing at all when
-  // the account is not connected — the pitch belongs on the dashboard.
+  // Settings renders only for connected accounts; the dashboard owns the pitch.
   connectedOnly?: boolean;
-  // Settings offers the way back out; the dashboard only reports the state.
+  // Settings exposes disconnect; the dashboard only reports status.
   allowDisconnect?: boolean;
 }
 
-// strava_athlete_id on the user is the whole source of truth — the backend sets
-// it during the OAuth callback and clears it on disconnect. Unconnected, this
-// is a full pitch card; connected, a single status line.
+// User strava_athlete_id determines whether to show a pitch or connection state.
 export function StravaStatusCard({
   connectedOnly = false,
   allowDisconnect = false,
@@ -32,6 +30,8 @@ export function StravaStatusCard({
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
 
   const connected = Boolean(user?.strava_athlete_id);
+  // Linked athlete name, if Strava provided one.
+  const stravaName = user ? stravaDisplayName(user) : null;
 
   if (!connected && connectedOnly) return null;
 
@@ -45,17 +45,12 @@ export function StravaStatusCard({
           overflow: "hidden",
           border: "1px solid var(--color-border-subtle)",
           position: "relative",
-          // The Strava orange bleeds up from the bottom edge, so the card is
-          // recognisably about Strava before a word of it is read.
+          // Orange radial glow identifies the Strava connection pitch.
           backgroundImage:
             "radial-gradient(120% 90% at 50% 115%, color-mix(in srgb, var(--mantine-color-strava-6) 22%, transparent) 0%, transparent 70%)",
         }}
       >
-        {/* Same map texture as the connected card, so the two states read as
-            one card in two moods. Masked rather than drawn: the file carries a
-            black fill that would vanish here, so it supplies only the shape.
-            Tinted Strava orange instead of text, to sit with the gradient
-            under it rather than grey it out. */}
+        {/* Orange-masked map texture visually links both connection states. */}
         <Box
           aria-hidden
           style={{
@@ -76,8 +71,7 @@ export function StravaStatusCard({
         />
 
         <Stack gap="lg" align="center" p="lg" style={{ position: "relative" }}>
-          {/* Concentric rings rather than a flat disc: the mark reads as a
-              source the rest of the card radiates from. */}
+          {/* Concentric rings visually emphasize the Strava mark. */}
           <Box
             style={{
               display: "flex",
@@ -153,9 +147,7 @@ export function StravaStatusCard({
         position: "relative",
       }}
     >
-      {/* The map drawing carries its own black fill, which would vanish on this
-          card. Used as a mask instead: the file supplies the shape and the
-          colour comes from here, so the texture can sit at any weight. */}
+      {/* Uses the map drawing as a tintable mask. */}
       <Box
         aria-hidden
         style={{
@@ -175,9 +167,7 @@ export function StravaStatusCard({
         }}
       />
 
-      {/* Without the disconnect button there is nothing to stack the status
-          under, so name and state sit on one line and the card stays a strip.
-          Settings keeps the taller layout, where the button needs the room. */}
+      {/* Dashboard uses a compact strip; settings reserves room for disconnect. */}
       <Stack gap="md" p={allowDisconnect ? "md" : "sm"} style={{ position: "relative" }}>
         <Group gap="sm" wrap="nowrap" align="center">
           <Box
@@ -200,8 +190,9 @@ export function StravaStatusCard({
 
           {allowDisconnect ? (
             <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-              <Text fw={600} fz={15} c="text.6">
-                {t("strava.statusTitle")}
+              {/* Displays the linked athlete name or the Strava fallback title. */}
+              <Text fw={600} fz={15} c="text.6" truncate>
+                {stravaName ?? t("strava.statusTitle")}
               </Text>
               <Group gap={5} wrap="nowrap">
                 <CircleCheck size={13} color="var(--mantine-color-green-8)" />
@@ -224,8 +215,7 @@ export function StravaStatusCard({
             </Group>
           )}
 
-          {/* Sits opposite the title: unlinking is the one thing settings adds
-              over the dashboard copy, and it belongs out of the reading path. */}
+          {/* Settings positions the disconnect action opposite the title. */}
           {allowDisconnect && (
             <Button
               variant="outline"
@@ -239,8 +229,7 @@ export function StravaStatusCard({
               }}
               styles={{
                 root: {
-                  // Transparent on purpose — the outline carries the meaning,
-                  // and a filled red would outweigh the status it sits beside.
+                  // A transparent outline keeps disconnect secondary to status.
                   backgroundColor: "transparent",
                   borderColor: "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
                 },
@@ -259,9 +248,7 @@ export function StravaStatusCard({
         )}
       </Stack>
 
-      {/* Unlinking cannot be undone without going through Strava's consent
-          screen again, so it is worth one question. The body says what survives
-          it: the rides already recorded stay, only new ones stop arriving. */}
+      {/* Confirms disconnect because reconnecting requires Strava consent. */}
       <Modal
         opened={confirmingDisconnect}
         onClose={() => setConfirmingDisconnect(false)}

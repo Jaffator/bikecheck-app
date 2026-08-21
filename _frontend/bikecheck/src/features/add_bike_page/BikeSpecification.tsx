@@ -20,52 +20,30 @@ import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
 import { inputStyles, dropdownProps } from "./formStyles";
 import { FRAME_SIZES, WHEEL_SIZES } from "./bikeSpecification.types";
-import type {
-  BikeSpecificationValues,
-  FrameSize,
-  SuspensionLayout,
-} from "./bikeSpecification.types";
+import type { BikeSpecificationValues, FrameSize, SuspensionLayout } from "./bikeSpecification.types";
 
 interface BikeSpecificationProps {
-  // The pick from step 1, or null when the user chose to enter the bike by
-  // hand — then the name they typed heads the step instead of a scraped card.
+  // Selected lookup result, if available.
   bike: BikeSearchResult | null;
   fallbackName: string;
   year: string | null;
   categories: string[];
   values: BikeSpecificationValues;
-  onChange: <K extends keyof BikeSpecificationValues>(
-    field: K,
-    value: BikeSpecificationValues[K],
-  ) => void;
-  // A photo the user picked on this device. It wins over the scraped one, so
-  // a wrong or missing scrape can always be corrected by hand.
+  onChange: <K extends keyof BikeSpecificationValues>(field: K, value: BikeSpecificationValues[K]) => void;
+  // Locally selected photo overrides the scraped image.
   photoUrl: string | null;
   onPickPhoto: (file: File | null) => void;
 }
 
-function FieldLabel({
-  children,
-  dimmed = false,
-}: {
-  children: string;
-  dimmed?: boolean;
-}): ReactElement {
+function FieldLabel({ children, dimmed = false }: { children: string; dimmed?: boolean }): ReactElement {
   return (
-    <Text
-      size="xs"
-      fw={600}
-      c={dimmed ? "text.9" : "text.7"}
-      tt="uppercase"
-      style={{ letterSpacing: "0.05em" }}
-    >
+    <Text size="xs" fw={600} c={dimmed ? "text.9" : "text.7"} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
       {children}
     </Text>
   );
 }
 
-// Mantine's SegmentedControl keeps every option on one row, which does not fit
-// six wheel sizes on a phone — a wrapping row of buttons does.
+// Use wrapping buttons because wheel-size options exceed one mobile row.
 function ChoiceButton({
   label,
   selected,
@@ -99,9 +77,7 @@ function ChoiceButton({
           border: selected
             ? "1px solid var(--mantine-color-primary-6)"
             : "1px solid var(--mantine-color-other-borderSubtle)",
-          color: selected
-            ? "var(--mantine-color-primary-6)"
-            : "var(--mantine-color-text-6)",
+          color: selected ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
         },
       }}
     >
@@ -122,8 +98,7 @@ export function BikeSpecification({
 }: BikeSpecificationProps): ReactElement {
   const { t } = useTranslation();
   const displayName = bike?.name ?? fallbackName;
-  // The user's own photo overrides the scraped one; entering the bike by hand
-  // leaves both empty, and then the card offers an upload instead.
+  // Prefer local photo over scraped image.
   const shownPhoto = photoUrl ?? bike?.imageUrl ?? null;
   console.log(shownPhoto);
   const suspensionOptions: { value: SuspensionLayout; label: string }[] = [
@@ -132,12 +107,10 @@ export function BikeSpecification({
     { value: "none", label: t("addBike.suspensionNone") },
   ];
 
-  // The letter sizes already say how big the frame is; a number only adds
-  // something when the user picked "other".
+  // Request frame length only for custom size.
   const acceptsSizeLength = values.frameSize === "other";
 
-  // Switching back to a letter drops the number, so a stale value cannot be
-  // submitted from a field the user can no longer see.
+  // Clear custom length when switching to letter size.
   function selectFrameSize(size: FrameSize): void {
     onChange("frameSize", size);
     if (size !== "other" && values.sizeLength !== "") {
@@ -147,25 +120,11 @@ export function BikeSpecification({
 
   return (
     <Stack gap="lg">
-      {/* ----------- Picked bike ----------- */}
-      <Paper
-        bg="cards.6"
-        radius="md"
-        style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}
-      >
+      <Paper bg="cards.6" radius="md" style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
         {shownPhoto ? (
-          <Image
-            src={shownPhoto}
-            alt={displayName}
-            h={180}
-            fit="contain"
-            bg="white"
-            p="sm"
-            radius="md"
-          />
+          <Image src={shownPhoto} alt={displayName} h={180} fit="contain" bg="white" p="sm" radius="md" />
         ) : (
-          // No scrape and no upload yet — the empty slot doubles as the button,
-          // so the whole area is the tap target on a phone.
+          // Make an empty photo slot the mobile upload target.
           <FileButton onChange={onPickPhoto} accept="image/*">
             {(props) => (
               <UnstyledButton
@@ -182,8 +141,7 @@ export function BikeSpecification({
                   gap: "0.5rem",
                   width: "100%",
                   height: 180,
-                  borderBottom:
-                    "1px solid var(--mantine-color-other-borderSubtle)",
+                  borderBottom: "1px solid var(--mantine-color-other-borderSubtle)",
                 }}
               >
                 <ImagePlus size={28} color="var(--mantine-color-primary-6)" />
@@ -205,8 +163,7 @@ export function BikeSpecification({
               </Text>
             )}
           </Stack>
-          {/* A scraped photo can be wrong for the user's actual build, so
-              replacing it stays available once one is shown. */}
+          {/* Allow replacing scraped photos. */}
           {shownPhoto && (
             <FileButton onChange={onPickPhoto} accept="image/*">
               {(props) => (
@@ -230,7 +187,6 @@ export function BikeSpecification({
         </Group>
       </Paper>
 
-      {/* ----------- Bike name ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.bikeName")}</FieldLabel>
         <TextInput
@@ -243,22 +199,15 @@ export function BikeSpecification({
         />
       </Stack>
 
-      {/* ----------- Current mileage ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.currentMileage")}</FieldLabel>
         <TextInput
           placeholder={t("addBike.currentMileagePlaceholder")}
           leftSection={<Gauge size={18} />}
-          // Digits only: the value becomes total_km, and a phone should offer
-          // the numeric keypad for it.
+          // Use numeric keyboard for total mileage.
           inputMode="numeric"
           value={values.currentMileage}
-          onChange={(event) =>
-            onChange(
-              "currentMileage",
-              event.currentTarget.value.replace(/\D/g, ""),
-            )
-          }
+          onChange={(event) => onChange("currentMileage", event.currentTarget.value.replace(/\D/g, ""))}
           rightSection={
             <Text size="sm" c="text.8">
               km
@@ -269,7 +218,6 @@ export function BikeSpecification({
         />
       </Stack>
 
-      {/* ----------- Category ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.category")}</FieldLabel>
         <Select
@@ -291,7 +239,6 @@ export function BikeSpecification({
         />
       </Stack>
 
-      {/* ----------- Suspension ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.suspension")}</FieldLabel>
         <Group gap="xs" grow wrap="nowrap">
@@ -306,7 +253,6 @@ export function BikeSpecification({
         </Group>
       </Stack>
 
-      {/* ----------- Frame size ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.frameSize")}</FieldLabel>
         <Group gap={6} grow wrap="nowrap">
@@ -322,30 +268,23 @@ export function BikeSpecification({
         </Group>
       </Stack>
 
-      {/* ----------- Size / length ----------- */}
-      {/* Only asked for once the frame size is "other" — a letter size already
-          answers the question on its own. */}
+      {/* Show custom length only for other frame size. */}
       {acceptsSizeLength && (
         <Stack gap={4}>
           <FieldLabel>{t("addBike.sizeLength")}</FieldLabel>
           <TextInput
             placeholder={t("addBike.sizeLengthPlaceholder")}
             value={values.sizeLength}
-            onChange={(event) =>
-              onChange("sizeLength", event.currentTarget.value)
-            }
+            onChange={(event) => onChange("sizeLength", event.currentTarget.value)}
             radius="sm"
             styles={{ input: inputStyles.input }}
           />
         </Stack>
       )}
 
-      {/* ----------- Wheel size ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.wheelSize")}</FieldLabel>
-        {/* A fixed three-column grid, not a wrapping row: the six sizes then
-            sit 3+3 whatever the labels measure, and every button is the same
-            width instead of stretching to its own text. */}
+        {/* Keep wheel sizes in a stable three-column grid. */}
         <Box
           style={{
             display: "grid",
@@ -364,7 +303,6 @@ export function BikeSpecification({
         </Box>
       </Stack>
 
-      {/* ----------- Power ----------- */}
       <Stack gap={4}>
         <FieldLabel>{t("addBike.power")}</FieldLabel>
         <Paper
@@ -392,15 +330,11 @@ export function BikeSpecification({
               aria-label={t("addBike.ebike")}
               styles={{
                 track: {
-                  backgroundColor: values.ebike
-                    ? "var(--mantine-color-primary-6)"
-                    : "var(--mantine-color-cards-4)",
+                  backgroundColor: values.ebike ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
                   borderColor: "var(--mantine-color-other-borderSolid)",
                 },
                 thumb: {
-                  backgroundColor: values.ebike
-                    ? "var(--mantine-color-black)"
-                    : "var(--mantine-color-text-6)",
+                  backgroundColor: values.ebike ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
                 },
               }}
             />

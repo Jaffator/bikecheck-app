@@ -1,8 +1,5 @@
-// The shape step 2 collects, kept out of the component so the wizard can read
-// and validate it without importing the view.
-
-// Suspension is stored as two independent booleans on the bike, but the user
-// picks one of three mutually exclusive layouts.
+// Define step-two values independently from the view.
+// Map mutually exclusive UI suspension layouts to bike flags.
 export type SuspensionLayout = "hardtail" | "full" | "none";
 
 export const FRAME_SIZES = ["S", "M", "L", "XL", "other"] as const;
@@ -12,9 +9,7 @@ export const WHEEL_SIZES = ['26"', '27.5"', '29"', "700C", "650B", "Mullet"] as 
 export type WheelSize = (typeof WHEEL_SIZES)[number];
 
 export interface BikeSpecificationValues {
-  // What the user calls this bike, which is not the model name — "Enduro do
-  // lesa" next to a Stumpjumper. Optional: the model name heads the bike when
-  // it is left empty.
+  // Optional user-defined bike name.
   bikeName: string;
   // Free text so the field can be cleared; parsed to total_km on save.
   currentMileage: string;
@@ -27,9 +22,7 @@ export interface BikeSpecificationValues {
   ebike: boolean;
 }
 
-// Every field the step asks for has to be answered before moving on. `ebike` is
-// a switch that always holds an answer, and `sizeLength` only counts when the
-// frame size is "other" — the letter sizes already say how big the frame is.
+// Require every visible specification field before proceeding.
 export function isBikeSpecificationComplete(values: BikeSpecificationValues): boolean {
   if (values.category === null) return false;
   if (values.suspension === null) return false;

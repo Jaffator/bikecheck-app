@@ -253,8 +253,8 @@
     "stravaSkip": "Maybe later"
   },
   "strava": {
+    "accountTitle": "Account",
     "connectedTitle": "Strava connected",
-    "connectedAthlete": "Account {{id}}",
     "connectedBody": "Your rides will sync automatically from now on. Mileage and component wear fill themselves in.",
     "connectedContinue": "Continue",
     "statusTitle": "Strava",
@@ -265,11 +265,12 @@
     "disconnectFailed": "Could not disconnect. Try again.",
     "pitchTitle": "Connect Strava for smart service",
     "pitchBody": "Track component wear automatically, based on your real activities.",
-    "gearLinkingTitle": "Pair bikes with Strava",
+    "gearLinkingTitle": "Pair bikes with Strava gear",
     "gearLinkingBody": "Match your bikes to your Strava gear so rides land on the right bike.",
     "gearLinkingPlaceholder": "Pick Strava gear",
     "gearTakenBy": "{{name}} — used by {{bike}}",
     "gearLinkingNoGear": "You have no gear on Strava yet. Add a bike in your Strava profile, then come back.",
+    "gearLinkStrava": "https://www.strava.com/settings/gear",
     "gearLinkingConfirm": "Confirm",
     "gearLinkingSkip": "Not now",
     "gearLinkingFailed": "Could not save the pairing. Try again.",

@@ -6,21 +6,18 @@ import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { disabledButtonStyles } from "./formStyles";
 
 interface AddBikeFooterProps {
-  // Picking a match is the only move that makes sense on the result list, so
-  // the footer carries the confirm button alone there.
+  // Show only confirmation while choosing a search result.
   isPickingMatch: boolean;
   canConfirm: boolean;
   onConfirm: () => void;
   onBack: () => void;
-  // The last step has nothing to advance to, so it offers the save instead —
-  // which opens the summary rather than writing straight away.
+  // Replace next with save on the final step.
   showsNext: boolean;
   canAdvance: boolean;
   onNext: () => void;
   showsSave: boolean;
   onSave: () => void;
-  // On step 1 this button bypasses the lookup rather than carrying its result
-  // forward, so it says so instead of reading like the way through the wizard.
+  // Distinguish the optional lookup skip action.
   skipsSearch: boolean;
 }
 
@@ -42,25 +39,21 @@ export function AddBikeFooter({
     <Group
       justify="space-between"
       gap="sm"
-      // Marks the footer as covering the bottom of the page, so scrolling a
-      // focused field into view can clear it instead of stopping underneath.
+      // Exposes the fixed footer to focus-scrolling hooks.
       data-fixed-footer
       style={{
-        // Anchored to the viewport, not the page — the action stays reachable
-        // however far down a long result list the user has scrolled.
+        // Keep actions reachable while the page scrolls.
         position: "fixed",
         left: 0,
         right: 0,
         bottom: 0,
         padding: "1rem",
-        paddingBottom:
-          "calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+        paddingBottom: "calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
         backgroundColor: "var(--mantine-color-background-9)",
         borderTop: "1px solid var(--mantine-color-other-borderSubtle)",
         zIndex: 100,
       }}
     >
-      {/* The header arrow already covers going back from the result list. */}
       {isPickingMatch ? (
         <Button
           leftSection={<Check size={18} />}
@@ -85,8 +78,7 @@ export function AddBikeFooter({
           </Button>
           {showsNext && (
             <Button
-              // Skipping is the lesser path on step 1 — "Find specification"
-              // inside the form is the one that should draw the eye.
+              // Keep the lookup skip action secondary.
               variant={skipsSearch ? "outline" : "filled"}
               color={skipsSearch ? "secondary.6" : "primary.6"}
               rightSection={<ChevronRight size={14} />}

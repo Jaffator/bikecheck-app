@@ -1,18 +1,13 @@
-// Mirrors the backend ResponseNotificationDto
-// (notification/dto/response-notification.dto.ts). Dates arrive as ISO strings
-// over JSON, so they are typed as string here.
+// Backend notification response types.
 
-// The types the backend can send. Kept in step with NotificationType in
-// notification-types.config.ts.
+// Supported backend notification types.
 export type NotificationType =
   | "strava_activity_saved"
   | "strava_activity_unassigned"
   | "maintenance_due"
   | "achievement_unlocked";
 
-// What a notification carries besides its text. Every field is optional: a
-// payload only holds what its own type needs, and older rows predate newer
-// fields. The client reads these to build the route to open.
+// Optional data used to open notification routes.
 export interface NotificationPayload {
   bikeId?: number;
   activityId?: string;
@@ -24,8 +19,7 @@ export interface NotificationPayload {
 export interface Notification {
   id: number;
   type: NotificationType;
-  // Written by the backend in the user's language at creation time, because a
-  // push is rendered by the OS with the app closed. Shown as stored.
+  // Localized notification text from the backend.
   title: string;
   body: string;
   payload: NotificationPayload | null;

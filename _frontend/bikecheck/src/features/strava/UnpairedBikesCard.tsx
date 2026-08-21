@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Renders unpaired bike state through query hooks.
 import { useState, type ReactElement } from "react";
 import { Box, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -8,9 +8,7 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { GearLinkingSheet } from "./GearLinkingSheet";
 
-// Prompts the user to pair the bikes that collect no rides yet, and opens the
-// sheet that does it. Renders nothing without a linked Strava account, or once
-// every bike carries a gear id — a bike that is paired is not news.
+// Prompts pairing for bikes without Strava gear on linked accounts.
 export function UnpairedBikesCard(): ReactElement | null {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
@@ -28,9 +26,7 @@ export function UnpairedBikesCard(): ReactElement | null {
       className="m-3"
       style={{
         overflow: "hidden",
-        // The shared card surface — see docs/ui/card-surface.md. Colour, glow
-        // and inner edge all live in this one object: `bg` would emit the
-        // `background` shorthand and wipe the gradient.
+        // Uses the shared card surface without the bg shorthand.
         backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage:
           "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
@@ -58,12 +54,6 @@ export function UnpairedBikesCard(): ReactElement | null {
             {t("strava.unpairedBikes", { count: unpairedCount })}
           </Text>
         </Group>
-        {/* <Stack gap={8} className="mb-3">
-          <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-            {t("strava.unpairedBikesBody")}
-          </Text>
-        </Stack> */}
-
         <Button
           fullWidth
           variant="outline"

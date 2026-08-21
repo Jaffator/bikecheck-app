@@ -1,5 +1,4 @@
-/* Position only — the card's own look comes from the Paper inside, so it
-   matches the pending-ride card rather than drifting from it. */
+/* Positions the notification; Paper defines its card appearance. */
 .in-app-notification {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 64px);

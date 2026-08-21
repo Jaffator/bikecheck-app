@@ -6,8 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
 
-// Each card carries a full-size image, so a long list would pull down a lot of
-// data on mobile before the user has seen any of it.
+// Limit initially rendered image cards on mobile.
 const PAGE_SIZE = 10;
 
 interface BikeSearchResultsProps {
@@ -17,8 +16,7 @@ interface BikeSearchResultsProps {
   onSelect: (bikeUrl: string) => void;
 }
 
-// Confirming the pick lives in the page's step footer, so this component only
-// owns the list itself.
+// Render selection list while the footer confirms the pick.
 export function BikeSearchResults({ results, selectedBikeUrl, onSelect }: BikeSearchResultsProps): ReactElement {
   const { t } = useTranslation();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);

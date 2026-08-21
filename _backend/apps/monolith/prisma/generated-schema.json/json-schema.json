@@ -1364,6 +1364,30 @@
             "null"
           ]
         },
+        "strava_firstname": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strava_lastname": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strava_username": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strava_avatar_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "accounts": {
           "type": "array",
           "items": {

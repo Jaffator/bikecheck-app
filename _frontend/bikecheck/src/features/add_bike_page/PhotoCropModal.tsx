@@ -8,8 +8,7 @@ import { tapFeedback } from "@/utils/haptics";
 import { PHOTO_ASPECT, cropToFile } from "./photoCrop";
 
 interface PhotoCropModalProps {
-  // The file as picked from the device, still uncropped. Null closes the modal:
-  // there is nothing to frame until a photo is chosen.
+  // The uncropped file; null closes the modal.
   file: File | null;
   // The object URL for that file, owned by the caller so it is freed once.
   fileUrl: string | null;
@@ -20,20 +19,16 @@ interface PhotoCropModalProps {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 
-// Framing step between picking a photo and using it. A phone camera shoots
-// 4:3 portrait, while the card shows a wide strip — without a say in the crop
-// the bike ends up as a slice of its own photo.
+// Let users frame photos for the wide bike card slot.
 export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCropModalProps): ReactElement {
   const { t } = useTranslation();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(MIN_ZOOM);
-  // Where the crop landed, in the source image's own pixels — the only form
-  // the canvas cut can use.
+  // Store crop coordinates in source-image pixels.
   const [area, setArea] = useState<Area | null>(null);
   const [isCutting, setIsCutting] = useState(false);
 
-  // Each photo is framed from scratch; the previous one's zoom and offset mean
-  // nothing for a different image.
+  // Reset framing controls for each selected photo.
   function reset(): void {
     setCrop({ x: 0, y: 0 });
     setZoom(MIN_ZOOM);
@@ -78,8 +73,7 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
           {t("addBike.cropBody")}
         </Text>
 
-        {/* ----------- The frame ----------- */}
-        {/* Cropper positions itself absolutely, so it needs a sized parent. */}
+        {/* Provide a sized parent for the absolutely positioned cropper. */}
         <div style={{ position: "relative", width: "100%", height: "45dvh", backgroundColor: "#000000" }}>
           {fileUrl && (
             <Cropper
@@ -89,8 +83,7 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
               minZoom={MIN_ZOOM}
               maxZoom={MAX_ZOOM}
               aspect={PHOTO_ASPECT}
-              // The card contains rather than crops, so the whole framed area
-              // is what will be seen — restricting keeps it filled with photo.
+              // Keep the displayed crop area filled with image content.
               restrictPosition
               onCropChange={setCrop}
               onZoomChange={setZoom}
@@ -99,9 +92,7 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
           )}
         </div>
 
-        {/* ----------- Zoom ----------- */}
-        {/* Pinch works on the frame itself; the slider is for one-handed use and
-            for anyone on a mouse. */}
+        {/* Provide one-handed and mouse-accessible zoom control. */}
         <Group gap="md" wrap="nowrap">
           <ZoomIn size={18} color="var(--mantine-color-text-7)" />
           <Slider
@@ -115,7 +106,6 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
           />
         </Group>
 
-        {/* ----------- Confirm ----------- */}
         <Group grow>
           <Button variant="default" radius="sm" onClick={cancel} disabled={isCutting}>
             {t("action.back")}

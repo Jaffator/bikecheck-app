@@ -1,5 +1,4 @@
-// Mirrors the backend Response_ComponentGroupDto
-// (component/dto/response-components.ts).
+// Backend component group response.
 export interface ComponentGroup {
   id: number;
   group_name: string;
@@ -7,8 +6,7 @@ export interface ComponentGroup {
   side_choice: boolean;
 }
 
-// Mirrors the backend CreateMountedComponentsDto — the mounted-component record
-// the wizard assembles before the bike exists, so bike_id is still a placeholder.
+// Mounted component draft before bike creation.
 export interface MountedComponentDraft {
   bike_id: number;
   component_type_id: number;
@@ -21,17 +19,14 @@ export interface MountedComponentDraft {
   interval_id?: number;
 }
 
-// Mirrors the backend AssembleBikeComponentsDto. The generated schema.d.ts is
-// still missing component_group_id — re-run `npm run gen:api` once the backend
-// snapshot is refreshed, then this can move to components["schemas"].
+// Backend bike component assembly response.
 export interface AssembleBikeComponent {
   component: MountedComponentDraft;
   component_name: string;
   component_group_id: number;
   component_i18n_key: string | null;
-  // The part sits on a side of the bike, so the form offers front / rear.
+  // Whether the component supports a position.
   has_position: boolean;
-  // Every bike carries it, so it is saved even when the user leaves the
-  // description blank — wear tracking starts before the part has a name.
+  // Whether the component is required.
   essential: boolean;
 }

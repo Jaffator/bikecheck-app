@@ -26,8 +26,7 @@ interface NavItem {
   icon_fill?: IconType;
 }
 
-// Only sections that actually exist get a tab — add more as their features land.
-// Paths, not labels, identify a section — labels are translated at render time.
+// Defines available navigation tabs by stable route paths.
 const NAV_ITEMS: NavItem[] = [
   { labelKey: "nav.home", path: "/", icon: GoHome, icon_fill: GoHomeFill },
   {
@@ -39,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     labelKey: "nav.service",
     path: "/service",
-    // Own outline icon, falling back to the react-icons one if it is ever renamed.
+    // Uses the service tab outline icon.
     icon: RiWrenchLine,
     icon_fill: RiWrenchFill,
   },
@@ -51,10 +50,9 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-// Header title per section. Home is intentionally absent.
+// Maps routes to translated header titles; Home intentionally has none.
 const PAGE_TITLE_KEYS: Record<string, string> = {
-  // More specific paths first — getPageTitleKey takes the first prefix match,
-  // so "/bikes/new" would otherwise resolve to the "/bikes" entry.
+  // More specific route prefixes must precede their parent routes.
   "/bikes/new": "addBike.title",
   "/bikes": "page.bikes",
   "/service": "page.service",
@@ -64,29 +62,24 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/notifications": "page.notifications",
 };
 
-// Sub-pages drop the tab bar and the header actions — just a back arrow and the title.
+// Sub-pages display only a back arrow and title.
 const SUB_PAGE_ROUTES: string[] = [
   "/settings",
   "/profile",
   "/notifications",
   "/bikes/new",
-  // Owns the whole screen and carries its own single action — the Fab over it
-  // would offer a way out of a result the user has not acknowledged yet.
+  // This confirmation route owns its screen and action.
   "/strava-connected",
 ];
 
-// Pages that own the entire viewport: no title bar, no tab bar, no Fab. Derived
-// from the path rather than the header store, because the store is a single flag
-// two pages can own at once — an outgoing page's cleanup would otherwise undo
-// what the arriving one just set.
+// Routes that own the viewport hide all shared application chrome.
 const FULL_SCREEN_ROUTES: string[] = ["/strava-connected"];
 
 function isFullScreenRoute(pathname: string): boolean {
   return FULL_SCREEN_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
-// One bike opened from the garage. Not a prefix in SUB_PAGE_ROUTES, because
-// "/bikes" would then make the garage list itself a sub-page.
+// Matches bike details without treating the garage list as a sub-page.
 const BIKE_DETAIL_PATTERN = /^\/bikes\/\d+$/;
 
 function isSubPage(pathname: string): boolean {
@@ -100,7 +93,7 @@ function getPageTitleKey(pathname: string): string | null {
   return match ? PAGE_TITLE_KEYS[match] : null;
 }
 
-// Shared by the header icon and the tab bar so both stay on the same rule.
+// Shares active-route matching between the header and tab bar.
 function isActivePath(path: string, pathname: string): boolean {
   return path === "/" ? pathname === "/" : pathname.startsWith(path);
 }
@@ -113,31 +106,26 @@ export function AppLayout(): ReactElement {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isOnline } = useNetworkStatus();
-  // The resolved element for the current route, not a <Outlet /> placeholder —
-  // a placeholder re-reads the router on every render, so the page being
-  // animated away would render as the page that replaced it.
+  // Keeps the resolved route element stable during its exit animation.
   const outlet = useOutlet();
-  // Already cached by the auth gate in App.tsx, so this is a read, not a fetch.
+  // Reads the current user cached by the authentication gate.
   const { data: user } = useCurrentUser();
-  // Set by a page that needs header chrome the route map cannot express.
-  // Drives the badge on the bell. Asked for on every screen, so opening the
-  // app anywhere shows what is waiting.
+  // Loads unread notifications for the persistent bell badge.
   const { data: unreadNotifications } = useUnreadNotifications();
   const unreadCount = unreadNotifications?.length ?? 0;
   const overrideTitleKey = useHeaderStore((state) => state.titleKey);
   const overrideBack = useHeaderStore((state) => state.onBack);
-  // A full-screen page (the add-bike confirmation) hides the app chrome entirely.
+  // Lets a page suppress shared application chrome.
   const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
-  // Either source can hide the chrome; the route wins over a stale flag.
+  // Hides chrome when the route or page state requires it.
   const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
-  // null on Home, which has no header icon.
+  // Home has no header icon.
   const pageTitleKey = overrideTitleKey ?? getPageTitleKey(location.pathname);
   const subPage = isSubPage(location.pathname);
 
-  // location.key is "default" only on the first history entry, i.e. a direct
-  // landing (refresh, deep link) — going back there would leave the app.
+  // Direct entries use the dashboard instead of browser history.
   function goBack(): void {
-    // A page with internal steps handles its own back, one level at a time.
+    // Lets multi-step pages handle their own back navigation.
     if (overrideBack) {
       overrideBack();
       return;
@@ -154,8 +142,7 @@ export function AppLayout(): ReactElement {
       overrideBack();
       return;
     }
-    // "default" is the first history entry — nothing left to go back to in-app,
-    // so background the app the way Android 12+ does instead of killing it.
+    // Backgrounds Android when no in-app history remains.
     if (location.key === "default") {
       void App.minimizeApp();
       return;
@@ -164,13 +151,11 @@ export function AppLayout(): ReactElement {
   }
 
   useAndroidBackButton(handleHardwareBack);
-  // Mounted here rather than on the Strava screen: the app is in the background
-  // while the user is on Strava, and the screen that started the flow may well
-  // be gone by the time the callback brings the app back.
+  // Listens for Strava callbacks while the app is foregrounded again.
   useStravaDeepLink();
 
   function headerIcon() {
-    // Home and paths without a page title do not show a header icon.
+    // Omits the icon on Home and untitled routes.
     if (pageTitleKey === null) {
       return null;
     }
@@ -184,23 +169,19 @@ export function AppLayout(): ReactElement {
 
   return (
     <AppShell
-      // Header/footer are extended by the safe-area insets so their dark
-      // background fills the space behind the transparent system bars
-      // (edge-to-edge is enforced on Android 15+/targetSdk 35+).
+      // Extends header and footer backgrounds into system safe areas.
       header={{
         height: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
-        // A page that owns the whole screen gets no title bar, and no offset for
-        // one either.
+        // Full-screen routes have neither header nor header offset.
         collapsed: chromeHidden,
       }}
-      // collapsed also drops the Main bottom offset the tab bar would need
+      // Collapse the footer offset with the tab bar.
       footer={{ height: "4rem", collapsed: subPage || chromeHidden }}
       bg="background.9"
     >
-      {/* ----------- Header ----------- */}
+      {/* --------- HEADER --------- */}
       <AppShell.Header withBorder={false} bg="transparent">
-        {/* paddingTop keeps the title below the status bar while bg fills behind it.
-            The bar itself stays put — only its contents travel with the page. */}
+        {/* Keeps title content below the status bar. */}
         <Box
           className="bg-cards-800"
           h="100%"
@@ -222,7 +203,7 @@ export function AppLayout(): ReactElement {
             ) : (
               <>
                 <Group gap="xs" c="cards.1">
-                  {/* Decorative next to the title, so no alt text. */}
+                  {/* Decorative icon beside the title. */}
                   {headerIcon()}
                   <Text fw={700} size="lg">
                     {t(pageTitleKey ?? "page.home")}
@@ -245,9 +226,7 @@ export function AppLayout(): ReactElement {
                     // style={{ border: "none" }}
                   >
                     <Bell size={25} color="var(--mantine-color-cards-1)" />
-                    {/* A count, not a dot: how many are waiting is the reason to
-                        open the screen rather than ignore it. Past nine it stops
-                        being a number worth reading precisely. */}
+                    {/* Displays the unread count, capped at nine plus. */}
                     {unreadCount > 0 && (
                       <Box
                         pos="absolute"
@@ -262,8 +241,7 @@ export function AppLayout(): ReactElement {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          // Against the header, so the badge reads as sitting on
-                          // top of the bell rather than beside it.
+                          // Blends the badge border into the header.
                           border: "none",
                         }}
                       >
@@ -290,19 +268,17 @@ export function AppLayout(): ReactElement {
         </Box>
       </AppShell.Header>
 
-      {/* ----------- Main Content ----------- */}
+      {/* --------- MAIN CONTENT --------- */}
       <AppShell.Main style={{ position: "relative" }}>
         {renderOfflinePage || isOffline ? (
           <OfflinePage />
         ) : (
-          // Keyed on the route so React remounts on navigation and the fade replays.
+          // Remounts each route to replay its entry animation.
           <Box key={location.pathname} style={{ animation: "pageEnter 350ms ease-out" }}>
             {outlet}
           </Box>
         )}
-        {/* Dims only the page content behind the Fab dropdown — Mantine's own
-            Menu overlay portals to the viewport and would cover the header,
-            footer and Fab too. */}
+        {/* Dims page content without covering shared chrome. */}
         <Box
           onClick={() => setFabMenuOpened(false)}
           style={{
@@ -318,9 +294,9 @@ export function AppLayout(): ReactElement {
         />
       </AppShell.Main>
 
-      {/* Hidden on sub-pages, which drop the chrome entirely. */}
+      {/* Hides the create action on sub-pages. */}
       {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
-      {/* ----------- Footer -----------  */}
+      {/* --------- FOOTER --------- */}
       {!subPage && (
         <AppShell.Footer
           className="flex justify-center"
@@ -328,9 +304,7 @@ export function AppLayout(): ReactElement {
           withBorder={false}
           mb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
         >
-          {/* Fades page content into the safe-area edge behind the floating pill.
-            position: fixed anchors it to the physical viewport bottom, independent
-            of the footer's own margin-shifted box. */}
+          {/* Fades page content into the fixed safe-area edge. */}
           <Box
             style={{
               position: "fixed",
@@ -355,16 +329,15 @@ export function AppLayout(): ReactElement {
           >
             {NAV_ITEMS.map(({ labelKey, path, icon: Icon, icon_fill: IconFill }) => {
               const active = isActivePath(path, location.pathname);
-              // Filled variant marks the active tab; tabs without one keep the outline.
+              // Uses the filled icon for the active tab when available.
               const TabIcon = active ? (IconFill ?? Icon) : Icon;
               return (
                 <UnstyledButton
                   key={path}
                   onClick={() => {
-                    // Fires on every press, including the active tab — the tap itself
-                    // is what gets the feedback, not the navigation.
+                    // Provides feedback for every tab press.
                     tapFeedback();
-                    // Re-tapping the current tab would only stack duplicate history entries.
+                    // Avoids duplicate history entries for the active tab.
                     if (location.pathname === path) return;
                     if (!isOnline) setRenderOfflinePage(true);
                     navigate(path);

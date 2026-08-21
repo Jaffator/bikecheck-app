@@ -1,15 +1,9 @@
-/* Tailwind v4, CSS-first config. We import theme + utilities only (skip
-   preflight) because Mantine ships its own reset via @mantine/core/styles.css
-   — running both resets fights over base element styles. */
+/* Imports Tailwind theme and utilities without its reset because Mantine owns it. */
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 @import "tailwindcss";
 
-/* Color ramps alias the Mantine CSS variables generated from theme.ts, so
-   Mantine and Tailwind always share one source of truth. Mantine index N maps
-   to Tailwind shade N*100 (index 0 -> 50). Base (no number) = index 6 = the
-   exact Figma value. Uses @theme inline so utilities reference the live
-   Mantine variable directly instead of a copied value. */
+/* Aliases live Mantine ramps for matching Tailwind color utilities. */
 @theme inline {
   --color-primary: var(--mantine-color-primary-6);
   --color-primary-50: var(--mantine-color-primary-0);
@@ -140,11 +134,7 @@ body {
   color: #2d2d2d;
 }
 
-/* Per-page margins (top/bottom/left/right on EVERY page, including
-   continuation pages). MUST be top-level, not nested in @media print,
-   or some browsers ignore it. This is the ONLY thing that gives a top
-   margin on page 2+. Requires the print dialog "Margins" = "Default"
-   (the "None" option forces margins to 0 and overrides this). */
+/* Top-level print margin applies to all pages when print margins use Default. */
 @page {
   margin: 14mm;
 }
@@ -163,8 +153,7 @@ body {
     width: 100% !important;
     border: 0 !important;
   }
-  /* The report container must flow onto extra pages, not be clipped.
-     Drop its own screen padding so it doesn't double up with @page. */
+  /* Lets document previews flow across pages without duplicate padding. */
   [data-purpose="document-preview"] {
     overflow: visible !important;
     box-shadow: none !important;
@@ -179,9 +168,7 @@ body {
     break-inside: avoid;
   }
 }
-/* Arriving page fades in so a route change does not snap. Opacity only — a
-   transform here would make the wrapper the containing block for any
-   position: fixed child, such as a page's own footer. */
+/* Fades route changes without affecting fixed-position children. */
 @keyframes pageEnter {
   from {
     opacity: 0;
@@ -190,6 +177,37 @@ body {
     opacity: 1;
   }
 }
+/* Animates the connected Strava mark with a seamless pulse. */
+@keyframes stravaMarkPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 22px 0 color-mix(in srgb, var(--mantine-color-strava-6) 25%, transparent);
+  }
+  35% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mantine-color-strava-6) 45%, transparent);
+  }
+  75% {
+    box-shadow: 0 0 0 18px color-mix(in srgb, var(--mantine-color-strava-6) 0%, transparent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 22px 0 color-mix(in srgb, var(--mantine-color-strava-6) 25%, transparent);
+  }
+}
+
+.strava-mark-pulse {
+  animation: stravaMarkPulse 2s ease-in-out infinite;
+}
+
+/* Reduced motion disables the repeating Strava pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .strava-mark-pulse {
+    animation: none;
+    box-shadow: 0 0 20px 0 color-mix(in srgb, var(--mantine-color-strava-6) 25%, transparent);
+  }
+}
+
 @keyframes wave {
   0%,
   100% {

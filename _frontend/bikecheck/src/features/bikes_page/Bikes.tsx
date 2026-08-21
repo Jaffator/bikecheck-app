@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Garage page.
 import type { ReactElement } from "react";
 import { Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -12,8 +12,7 @@ export function Bikes(): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Card-shaped placeholders rather than a spinner: the list keeps its shape, so
-  // arriving bikes fill the layout instead of replacing it.
+  // Preserve layout while bikes load.
   if (isLoading) {
     return (
       <Stack gap="md" px="md" pt="md">
@@ -32,18 +31,14 @@ export function Bikes(): ReactElement {
     );
   }
 
-  // An empty garage has no list to show — the whole screen becomes the CTA.
+  // Show the empty state when no bikes exist.
   if (!bikes || bikes.length === 0) {
     return <EmptyGarage />;
   }
 
   return (
-    // Clears the tab bar and the Fab, which both sit over the bottom of the page.
+    // Reserve space for bottom navigation.
     <Stack gap="md" px="md" pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-      <Text fz={14} c="var(--color-text-dim)">
-        {t("bikes.intro")}
-      </Text>
-
       {bikes.map((bike) => (
         <BikeCard key={bike.id} bike={bike} onOpen={() => navigate(`/bikes/${bike.id}`)} />
       ))}

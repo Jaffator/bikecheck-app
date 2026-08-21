@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// UI component using feature hooks.
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -12,8 +12,7 @@ import { ridePolyline } from "./ridePolyline";
 import { RideDetailSheet } from "./RideDetailSheet";
 import type { Ride } from "./rides.types";
 
-// One confirmed ride, drawn as the pending row is: the same card carrying the
-// same figures, so a ride does not change shape when it stops being pending.
+// Displays one confirmed ride.
 function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactElement {
   const { t } = useTranslation();
 
@@ -23,15 +22,12 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
         radius="lg"
         p="sm"
         style={{
-          // The shared card surface — see docs/ui/card-surface.md. Colour, glow
-          // and inner edge all live in this one object: `bg` would emit the
-          // `background` shorthand and wipe the gradient beside it.
+          // Keep the gradient when setting the card color.
           backgroundColor: "var(--mantine-color-cards-6)",
           backgroundImage:
             "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
           border: "1px solid var(--color-border-subtle)",
-          // The list's flatter shadow rather than the doc's: a column of cards
-          // with the full lift reads as clutter.
+          // Use a subtle shadow for stacked cards.
           boxShadow:
             "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 4px 12px -6px rgba(0, 0, 0, 0.5)",
           transition: "transform 0.12s ease",
@@ -41,12 +37,10 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
         <Group gap="lg" wrap="nowrap" align="center">
           <RouteMap polyline={ridePolyline(ride.json_data)} width={50} height={50} />
 
-          {/* minWidth lets the column shrink below its content, without which
-              the title's lineClamp has nothing to clamp against. */}
+          {/* Allow the title to clamp. */}
           <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
             <Stack gap={2}>
-              {/* The bike leads: these rides are already answered, so what tells
-                  them apart is which bike carried them. */}
+              {/* Display the bike first. */}
               <Group gap={6} wrap="nowrap">
                 <Bike size={14} color="var(--mantine-color-primary-6)" style={{ flexShrink: 0 }} />
                 <Text fw={600} fz={15} c="text.6" lineClamp={1}>
@@ -84,20 +78,18 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
   );
 }
 
-// The list stores metres; the card has always shown kilometres.
+// Convert stored metres to displayed kilometres.
 function toKm(metres: number | null): number {
   return metres === null ? 0 : Math.round(metres / 1000);
 }
 
-// The rides the user has confirmed onto a bike, newest first. Pages arrive as
-// the user reaches the end of the list rather than all at once.
+// Lists confirmed rides with infinite scrolling.
 export function CompletedRides(): ReactElement {
   const { t } = useTranslation();
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } = useRides();
   const [openedRide, setOpenedRide] = useState<Ride | null>(null);
 
-  // Watches the end of the list: once the sentinel scrolls into view there is
-  // nothing below, which is the moment to ask for the next page.
+  // Load the next page when the sentinel is visible.
   const sentinel = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const node = sentinel.current;
@@ -129,7 +121,7 @@ export function CompletedRides(): ReactElement {
   }
 
   if (rides.length === 0) {
-    // The tab's own empty state, kept as it was before the list existed.
+    // Reuse the tab empty state.
     return <EmptyRides />;
   }
 
@@ -147,7 +139,7 @@ export function CompletedRides(): ReactElement {
           />
         ))}
 
-        {/* Sits below the last card, so seeing it means the list ran out. */}
+        {/* Sentinel for loading the next page. */}
         {hasNextPage && (
           <Group ref={sentinel} justify="center" p="md">
             {isFetchingNextPage && <Loader size="sm" />}

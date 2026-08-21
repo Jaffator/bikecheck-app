@@ -1,18 +1,10 @@
-// React Query hooks. This is where loading / error / cache state lives —
-// the stuff you used to write by hand with useState + useEffect.
+// React Query hooks own user loading, error, and cache state.
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import { getCurrentUser, loginUser, registerUser, sendGoogleToken, logoutUser, updateUser } from "./users.api";
-import type {
-  User,
-  LoginCredentials,
-  RegisterCredentials,
-  GoogleTokenCredentials,
-  UpdateUserPayload,
-} from "./users.types";
+import type { User, LoginCredentials, RegisterCredentials, GoogleTokenCredentials, UpdateUserPayload } from "./users.types";
 import type { ApiError } from "@/api/client";
 
-// Used by App.tsx to decide between the protected app and the login page.
-// No retry: a 401 means "not logged in", not a transient failure.
+// Drives the auth gate; 401 responses do not retry.
 export function useCurrentUser(): UseQueryResult<User> {
   return useQuery({
     queryKey: ["currentUser"],
@@ -27,20 +19,15 @@ export function useLogout(): UseMutationResult<void, ApiError, void> {
   return useMutation({
     mutationFn: logoutUser,
     onSuccess: () => {
-      // Order matters. This has to run while the mounted useCurrentUser is
-      // still attached to the query, so it gets notified and re-renders into
-      // the login page. clear() would destroy that query first, leaving the
-      // observer watching a dead object and the app on screen until a reload.
+      // Preserve the current-user observer so the auth gate rerenders.
       queryClient.setQueryData(["currentUser"], null);
-      // Everything else belonged to the user who just left, so drop it —
-      // except currentUser, which must keep the observer attached.
+      // Removes all user-scoped cached data except currentUser.
       queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== "currentUser" });
     },
   });
 }
 
-// Login is a user-triggered action, so it is a mutation, not a query.
-// On success we refresh currentUser, which flips the auth gate to the app.
+// Login writes the successful user into the auth-gate cache.
 export function useLogin(): UseMutationResult<User, ApiError, LoginCredentials> {
   const queryClient = useQueryClient();
   return useMutation({
@@ -51,17 +38,14 @@ export function useLogin(): UseMutationResult<User, ApiError, LoginCredentials> 
   });
 }
 
-// Registration only creates the account — the backend does not set the auth
-// cookies here, so currentUser is deliberately left untouched. The caller logs
-// the user in afterwards.
+// Registration creates an account but leaves currentUser untouched.
 export function useRegistration(): UseMutationResult<User, ApiError, RegisterCredentials> {
   return useMutation({
     mutationFn: registerUser,
   });
 }
 
-// Profile updates (language, currency, weight, …). The response is the full
-// user, so it replaces the cached one instead of triggering a refetch.
+// Profile updates replace the cached user with the returned record.
 export function useUpdateUser(): UseMutationResult<User, ApiError, { id: number; data: UpdateUserPayload }> {
   const queryClient = useQueryClient();
   return useMutation({
@@ -72,9 +56,7 @@ export function useUpdateUser(): UseMutationResult<User, ApiError, { id: number;
   });
 }
 
-// Native Google sign-in. The backend sets the auth cookies and returns the
-// user, so this behaves exactly like useLogin — there is no redirect, writing
-// currentUser is what flips the auth gate to the app.
+// Native Google sign-in writes the returned user into the auth cache.
 export function useGoogleNative(): UseMutationResult<User, ApiError, GoogleTokenCredentials> {
   const queryClient = useQueryClient();
   return useMutation({

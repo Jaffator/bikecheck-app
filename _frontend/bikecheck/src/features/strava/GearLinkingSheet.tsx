@@ -1,40 +1,36 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// UI component backed by Strava query hooks.
 import { useState, type ReactElement } from "react";
-import { Button, Drawer, Group, Loader, Select, Stack, Text } from "@mantine/core";
+import { Anchor, Button, Drawer, Group, Loader, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
 import { tapFeedback } from "@/utils/haptics";
 import { useGearLinking, useLinkStravaGear } from "./strava.queries";
 import type { GearLink, GearLinkingBike } from "./strava.types";
-import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
+// import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
+// import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
+import { TbBikeOff } from "react-icons/tb";
+import { Link2, TriangleAlert } from "lucide-react";
 
 interface GearLinkingSheetProps {
   opened: boolean;
   onClose: () => void;
-  // Which bikes to offer. Undefined means every bike without a gear id — that is
-  // what the automatic triggers want; the bike detail passes a single id.
+  // Undefined lists unpaired bikes; detail pages pass one id.
   bikeIds?: number[];
 }
 
-// Falls back through the names a bike can have, so a row is never blank.
+// Build a non-empty label from available bike names.
 function bikeLabel(bike: GearLinkingBike): string {
   if (bike.bikename !== null && bike.bikename.trim() !== "") return bike.bikename;
   return [bike.bike_brand, bike.bike_model].filter((part) => part !== null && part !== "").join(" ");
 }
 
-// Pairs BikeCheck bikes with Strava gear. One row per bike: the bike on the
-// left, a gear picker on the right. A gear belongs to one bike at a time, so
-// gear taken by another bike is offered disabled rather than hidden — hiding it
-// leaves the user wondering where their bike went.
+// Pair BikeCheck bikes with their Strava gear.
 export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetProps): ReactElement {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useGearLinking(opened);
   const link = useLinkStravaGear();
-  // Only what the user has touched. Anything absent falls back to what is stored,
-  // so the sheet always opens showing the current pairing without an effect to
-  // copy the fetched data into state.
+  // Keep only changes; untouched rows use their stored pairing.
   const [changed, setChanged] = useState<Record<number, string | null>>({});
 
   function chosenFor(bike: GearLinkingBike): string | null {
@@ -45,19 +41,13 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
     bikeIds !== undefined ? bikeIds.includes(bike.id) : bike.strava_gear_id === null,
   );
 
-  // Gear already held by some other bike, so it cannot be taken. Rows being
-  // edited here count too: two rows picking the same gear would leave two bikes
-  // collecting one Strava gear. The row asking is excluded, or the Select would
-  // disable the value it is currently showing.
+  // Excludes gear paired to another bike, including pending changes.
   function takenBy(gearId: string, forBikeId: number): string | null {
     const owner = (data?.bikecheck_bikes ?? []).find((bike) => bike.id !== forBikeId && chosenFor(bike) === gearId);
     return owner ? bikeLabel(owner) : null;
   }
-
   function submit(): void {
-    // Only rows the user actually changed: resending an unchanged pairing would
-    // rewrite what is already right, and an untouched empty row would unpair a
-    // bike nobody asked about.
+    // Submit only modified pairings.
     const links: GearLink[] = rows
       .filter((bike) => chosenFor(bike) !== bike.strava_gear_id)
       .map((bike) => ({
@@ -77,18 +67,13 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
       opened={opened}
       onClose={onClose}
       position="bottom"
-      // Height follows the content: one bike should not leave half a screen of
-      // empty sheet, and ten should not push the confirm button out of reach.
-      // The cap below is what turns the list into a scroller instead.
+      // Fits short lists and caps tall lists for scrolling.
       size="auto"
       radius="md"
       title={t("strava.gearLinkingTitle")}
-      // Darkened and blurred so the garage behind reads as out of reach while
-      // the sheet is up, rather than competing with it for attention.
+      // Keeps background content visually inactive.
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
-      // Keyed by Drawer part, not by CSS property. The header carries its own
-      // background, so it has to be painted alongside the content or it stays a
-      // light band above the sheet.
+      // Matches the header background to drawer content.
       styles={{
         content: {
           backgroundColor: "var(--mantine-color-cards-6)",
@@ -97,8 +82,7 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
           maxHeight: "85dvh",
         },
         header: { backgroundColor: "var(--mantine-color-cards-6)" },
-        // The body takes the leftover height so the buttons can sit at the
-        // bottom edge whatever the list above them measures.
+        // Pins actions below the scrollable list.
         body: {
           flex: 1,
           minHeight: 0,
@@ -107,70 +91,78 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
         },
         title: {
           fontWeight: 600,
-          color: "var(--mantine-color-text-6)",
-          // The close button sits beside it, so centring needs the title to
-          // take the full row and centre its own text.
+          color: "var(--mantine-color-text-7)",
+          // Centers independently of the close button.
           flex: 1,
           textAlign: "center",
         },
       }}
     >
-      <div className="align-center mb-4 -ml-2 flex w-full justify-center">
+      <div className="align-center mb-4 -ml-2 mt-5 flex w-full justify-center">
         <StravaConnectBike
           size={40}
-          stravaColor="var(--mantine-color-strava-6)"
-          stravaCircleColor="var(--mantine-color-strava-9)"
+          stravaColor="var(--mantine-color-strava-6"
+          stravaCircleColor="color-mix(in srgb, var(--mantine-color-strava-6) 20%, transparent)"
           connectColor="var(--mantine-color-text-6)"
           bikeColor="var(--mantine-color-cards-9)"
           bikeCircleColor="var(--mantine-color-primary-6)"
         />
       </div>
       <Stack gap="md" style={{ flex: 1, minHeight: 0 }}>
-        <Text size="sm" c="text.7">
+        {/* <Text size="sm" c="text.7">
           {t("strava.gearLinkingBody")}
-        </Text>
+        </Text> */}
 
+        {/* --------- LOADING --------- */}
         {isLoading && <Loader size="sm" />}
 
-        {/* Without this the sheet is simply blank when the request fails: data
-            stays undefined, so every block below renders nothing. */}
+        {/* --------- LOAD ERROR --------- */}
         {isError && (
-          <Text size="sm" c="red.5">
-            {t("strava.gearLinkingLoadFailed")}
-          </Text>
+          <Group gap="sm" wrap="nowrap" align="center" mt={10}>
+            <TriangleAlert color="var(--mantine-color-red-6)"></TriangleAlert>
+            <Text size="sm" c="red.5">
+              {t("strava.gearLinkingLoadFailed")}
+            </Text>
+          </Group>
         )}
 
-        {/* Strava gear is created by hand on Strava, so an account with none is
-            a normal state, not an error. */}
+        {/* --------- NO STRAVA GEAR --------- */}
         {!isLoading && data !== undefined && data.strava_bikes.length === 0 && (
-          <Text size="sm" c="text.7">
-            {t("strava.gearLinkingNoGear")}
-          </Text>
-        )}
-
-        {/* Names the two sides of every row below, so it is clear which way the
-            pairing runs: a bike on the left, the Strava gear it collects on the
-            right. */}
-        {data !== undefined && data.strava_bikes.length > 0 && rows.length > 0 && (
-          <Group gap="sm" wrap="nowrap" align="center">
-            <Group gap={6} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
-              <BikecheckMark width={16} height={16} style={{ color: "var(--mantine-color-primary-6)" }} />
-              <Text size="xs" tt="uppercase" fw={600} c="text.7">
-                {t("strava.gearLinkingColumnBike")}
+          <Stack mt={20}>
+            <Group gap="sm" wrap="nowrap" align="center">
+              <TbBikeOff size={40} color="var(--mantine-color-red-7)"></TbBikeOff>
+              <Text size="sm" c="text.7">
+                {t("strava.gearLinkingNoGear")}
               </Text>
             </Group>
+            <Group gap="sm" wrap="nowrap" align="center">
+              <Link2 size={25} color="var(--mantine-color-strava-6)"></Link2>
+              <Anchor href={t("strava.gearLinkStrava")} target="_blank" rel="noreferrer" size="sm" c="text.6">
+                {t("strava.gearLinkStrava")}
+              </Anchor>
+            </Group>
+          </Stack>
+        )}
+
+        {/* --------- PAIRING HEADERS --------- */}
+        {data !== undefined && data.strava_bikes.length > 0 && rows.length > 0 && (
+          <Group gap="sm" wrap="nowrap" align="center" mt={15}>
             <Group gap={6} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+              {/* <BikecheckMark width={16} height={16} style={{ color: "var(--mantine-color-primary-6)" }} /> */}
+              {/* <Text size="xs" tt="uppercase" fw={600} c="text.7">
+                {t("strava.gearLinkingColumnBike")}
+              </Text> */}
+            </Group>
+            {/* <Group gap={6} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
               <StravaMark width={16} height={16} color="var(--mantine-color-strava-6)" />
               <Text size="xs" tt="uppercase" fw={600} c="text.7">
                 {t("strava.gearLinkingColumnGear")}
               </Text>
-            </Group>
+            </Group> */}
           </Group>
         )}
 
-        {/* Only the list scrolls: the heading above and the confirm button
-            below stay put, so the action never leaves the screen however
-            many bikes there are. */}
+        {/* --------- PAIRING ROWS --------- */}
         <Stack gap="md" style={{ overflowY: "auto", minHeight: 0 }}>
           {data !== undefined &&
             data.strava_bikes.length > 0 &&
@@ -204,10 +196,7 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
                         disabled: owner !== null,
                       };
                     })}
-                    // The wizard's field look, so a Strava field reads like any
-                    // other form field in the app. The dropdown and its options
-                    // are parts of Select, so they are styled here too — passing
-                    // them through comboboxProps has no effect.
+                    // Reuses the wizard input style.
                     styles={inputStyles}
                     rightSection={link.isPending && <Loader size="xs" />}
                     rightSectionWidth={link.isPending ? 24 : undefined}
@@ -220,16 +209,14 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
             })}
         </Stack>
 
+        {/* --------- SAVE ERROR --------- */}
         {link.isError && (
-          <Text size="xs" c="red.5">
+          <Text size="sm" c="red.5">
             {t("strava.gearLinkingFailed")}
           </Text>
         )}
 
-        {/* Pushed to the bottom edge, then cleared of the Android navigation bar:
-            without the inset the button sits under the system gesture area.
-            Dismissing without pairing is the header close button's job, so the
-            one action here is the one that commits. */}
+        {/* Keeps confirmation above the Android gesture area. */}
         <Button
           fullWidth
           radius="sm"
@@ -237,8 +224,7 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
           mb="var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px))"
           loading={link.isPending}
           disabled={rows.length === 0}
-          // The wizard's disabled look: Mantine's own reads as missing rather
-          // than blocked on the dark theme.
+          // Reuses the wizard disabled state.
           styles={disabledButtonStyles}
           style={{ height: "3rem" }}
           onClick={() => {

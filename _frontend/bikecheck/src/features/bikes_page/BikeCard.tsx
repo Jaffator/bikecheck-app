@@ -17,10 +17,7 @@ interface BikeCardProps {
   onOpen: () => void;
 }
 
-// The mark over the photo's bottom corner, saying the bike collects its rides
-// from Strava. Only the linked state shows: an unpaired bike already says so in
-// its stats, and a badge for it here would put a nothing-to-see label on most
-// of the garage. Dark pill like the health badge, so both read over any photo.
+// Render the Strava badge for bikes linked to Strava gear.
 function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): ReactElement | null {
   const { t } = useTranslation();
 
@@ -28,9 +25,7 @@ function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): R
 
   return (
     <Group
-      // Padding, gap and type size all match HealthBadge: the two sit stacked
-      // in the same corner, so any difference reads as one of them being wrong
-      // rather than as a distinction worth making.
+      // Match health badge dimensions when badges stack.
       gap={5}
       px={8}
       py={3}
@@ -41,8 +36,6 @@ function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): R
         backdropFilter: "blur(4px)",
       }}
     >
-      {/* The mark is boxed to the health dot's size, so the taller glyph does
-          not push this pill past the one above it. */}
       <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
       <Text className="font-mono" fz={10} c="var(--mantine-color-strava-6)">
         {t("strava.paired")}
@@ -93,8 +86,7 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
           fz={10}
           tt="uppercase"
           ta="right"
-          // A good reading states a fact and stays quiet; anything worse is the
-          // point of the row, so it takes the colour.
+          // Emphasize non-good health readings.
           c={reading.level === "good" ? "var(--color-text-dim)" : color}
           style={{ letterSpacing: "0.05em" }}
         >
@@ -127,10 +119,8 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
   return (
     <Paper
       bg="cards.6"
-      radius="md"
-      // The whole card opens the bike, not just the photo: everything on it
-      // describes the one bike, so every part of it is the same target. The
-      // menu button inside stops the event rather than being carved out.
+      radius="lg"
+      // Open bike details from the entire card.
       onClick={() => {
         tapFeedback();
         onOpen();
@@ -146,36 +136,56 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
       style={{
         overflow: "hidden",
         border: "1px solid var(--color-border-subtle)",
-        // Answers the tap before the next screen arrives, so the press never
-        // feels like it went nowhere.
-        transition: "transform 0.12s ease",
+        // Same three-part shadow the other cards use, one step deeper because
+        // this card is the largest: a hairline of light along the top edge, a
+        // tight contact shadow, and a soft cast one that lifts it off the page.
+        boxShadow:
+          "inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.55)",
+        // Animate tap feedback before navigation.
+        transition: "transform 0.12s ease, box-shadow 0.12s ease",
         cursor: "pointer",
+        position: "relative",
       }}
       // Tailwind's active: variant handles the pressed state without tracking it.
-      className="active:scale-[0.985]"
+      className="bike-card active:scale-[0.985]"
     >
-      {/* ----------- Photo, with the overall verdict over it ----------- */}
-      {/* Positioned only so the health badge and the Strava mark can sit over
-          it; the card above carries the tap. */}
-      <Box style={{ position: "relative" }}>
+      {/* Its own layer rather than a background on the card: the photo and the
+          content sit on their own opaque backgrounds and would paint over a
+          card-level gradient, leaving only a sliver of it visible. */}
+      <Box
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 1,
+          background:
+            "radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--mantine-color-primary-6) 12%, transparent) 0%, transparent 55%)",
+        }}
+      />
+
+      {/* Position bike badges over the photo. */}
+      <Box
+        style={{
+          position: "relative",
+          // A shadow cast down from the photo's edge, so the content below reads
+          // as a recessed surface instead of a flat continuation of the image.
+          boxShadow: "0 6px 12px -6px rgba(0, 0, 0, 0.6)",
+        }}
+      >
         {bike.image_url ? (
           <Image
             src={bike.image_url}
             alt={title}
             h={PHOTO_SLOT_HEIGHT}
-            // Photos are cropped to the slot's shape on upload, so filling it
-            // costs only the rounding between that crop and the rendered width
-            // — and leaves none of the white edge contain used to show.
+            // Fill the slot with the upload-cropped photo.
             fit="cover"
-            // A garage of cards would otherwise fetch every photo at once on a
-            // phone connection; only the ones being scrolled to are needed.
+            // Load card images as they enter the viewport.
             loading="lazy"
-            // Reserves the slot before the photo arrives so the list does not
-            // jump as each one loads in.
             style={{ backgroundColor: "#FFFFFF" }}
           />
         ) : (
-          // No photo: the slot keeps its height so a garage of cards stays even.
+          // Preserve card height when no photo is available.
           <Box
             h={PHOTO_SLOT_HEIGHT}
             bg="cards.7"
@@ -188,18 +198,14 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
             <Gauge size={32} color="var(--mantine-color-text-9)" />
           </Box>
         )}
-        {/* Stacked in the photo's top right corner, verdict first: both are
-            badges about the bike as a whole, so they read as one column rather
-            than two things pinned to opposite corners. Right-aligned so their
-            differing widths still share an edge. */}
+        {/* Stack overall bike badges in the photo corner. */}
         <Stack gap={6} align="flex-end" style={{ position: "absolute", top: "0.75rem", right: "0.75rem" }}>
           <HealthBadge readings={readings} />
           <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
         </Stack>
       </Box>
 
-      {/* ----------- Identity, totals and wear ----------- */}
-      <Stack gap="sm" p="md">
+      <Stack gap="sm" p="md" style={{ position: "relative", zIndex: 2 }}>
         <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
           <Stack gap={2} style={{ minWidth: 0 }}>
             <Text fw={700} fz={20} c="text.6" lh={1.2}>
@@ -212,8 +218,6 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
             )}
           </Stack>
 
-          {/* Per-bike actions land here once there are any; the button is the
-              design's own affordance for them. */}
           <ActionIcon
             variant="transparent"
             color="gray"
@@ -221,8 +225,7 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
             // The card behind it opens the bike; its own actions are its own.
             onClick={(event) => event.stopPropagation()}
             disabled
-            // Mantine paints a disabled control its own grey plate, which reads
-            // as a hole in the card. The glyph alone carries the affordance.
+            // Keep the disabled action icon visually unobtrusive.
             styles={{
               root: {
                 backgroundColor: "transparent",

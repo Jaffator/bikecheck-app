@@ -104,10 +104,17 @@ export class TokenService {
       grant_type: 'authorization_code',
     });
 
-    // Send UserID and AthleteID to monolith
+    // Send UserID and the athlete profile to monolith. The profile travels with
+    // the link event because this is the only moment it is on hand — Strava
+    // returns it with the token, and nothing fetches it again later.
     await this.eventsQueue.add('strava-authorization', {
       athlete_id: response.data.athlete.id,
       user_id: userID,
+      firstname: response.data.athlete.firstname ?? null,
+      lastname: response.data.athlete.lastname ?? null,
+      username: response.data.athlete.username ?? null,
+      // 'profile' is the large picture; 'profile_medium' is the small one.
+      avatar_url: response.data.athlete.profile ?? null,
     });
 
     // Save the tokens data to the database

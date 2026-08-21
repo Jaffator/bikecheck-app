@@ -16,8 +16,7 @@ import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { StravaConnectScreen } from "./StravaConnectScreen";
 import { TOTAL_STEPS, useAddBikeWizard } from "./useAddBikeWizard";
 
-// The "Add new bike" wizard: identity, specification, components. Each step is
-// its own component; this one owns the frame around them.
+// Render the add-bike wizard frame around its step components.
 export function AddBikeIdentity(): ReactElement {
   const wizard = useAddBikeWizard();
   const { t } = useTranslation();
@@ -25,46 +24,32 @@ export function AddBikeIdentity(): ReactElement {
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
   const setChromeHidden = useHeaderStore((state) => state.setChromeHidden);
 
-  const {
-    active,
-    searchReplacedForm,
-    showsFallback,
-    searchResults,
-    savedBike,
-    offeringStrava,
-  } = wizard;
+  const { active, searchReplacedForm, showsFallback, searchResults, savedBike, offeringStrava } = wizard;
 
   // Both post-save screens take the whole viewport and own their own way on.
   const wizardIsOver = savedBike || offeringStrava;
 
-  // Both overrides are cleared on unmount so the header falls back to the
-  // route title and the router's own back.
+  // Restore the route header title when this view unmounts.
   useEffect(() => {
     setHeaderTitleKey(searchReplacedForm ? "addBike.selectModelTitle" : null);
     return () => setHeaderTitleKey(null);
   }, [searchReplacedForm, setHeaderTitleKey]);
 
-  // The confirmation takes the whole screen, so the app chrome goes away with
-  // it — and comes back when the page does, however the user leaves.
+  // Hide app chrome while post-save screens own the viewport.
   useEffect(() => {
     setChromeHidden(wizardIsOver);
     return () => setChromeHidden(false);
   }, [wizardIsOver, setChromeHidden]);
 
-  // A step change keeps the route, so the page holds whatever scroll position
-  // the previous step was left at — landing the next one mid-page with the
-  // stepper off screen. Jumping instead of smooth-scrolling: the new step should
-  // already be at the top when it appears, not travel there.
+  // Reset scroll position when changing wizard steps.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [active]);
 
-  // Steps past the first have their own previous step, so the arrow walks the
-  // wizard back rather than leaving the page.
+  // Use wizard back navigation after the first step.
   const headerGoesBackInPage = searchReplacedForm || active > 0;
 
-  // prevStep is recreated every render; the ref keeps the registered handler
-  // pointed at the current one without re-registering on each render.
+  // Keep registered header handlers current without repeated registration.
   const prevStepRef = useRef(wizard.prevStep);
   const leaveAfterSaveRef = useRef(wizard.leaveAfterSave);
 
@@ -74,10 +59,7 @@ export function AddBikeIdentity(): ReactElement {
   });
 
   useEffect(() => {
-    // Once the bike is written the wizard is gone, so back cannot walk into it —
-    // the post-save screens' own actions are the only way on, and back follows
-    // them forward. This also covers the Android hardware button, which routes
-    // through the same override.
+    // Prevent back navigation into the completed wizard.
     if (wizardIsOver) {
       setHeaderOnBack(() => leaveAfterSaveRef.current());
       return () => setHeaderOnBack(null);
@@ -90,9 +72,7 @@ export function AddBikeIdentity(): ReactElement {
     return () => setHeaderOnBack(null);
   }, [wizardIsOver, headerGoesBackInPage, setHeaderOnBack]);
 
-  // The bike is saved: the wizard is done, and the two screens that follow take
-  // the screen on their own — no stepper, no footer, nothing to go back to. The
-  // Strava offer comes second, so it is checked first.
+  // Post-save screens replace the completed wizard.
   if (offeringStrava) {
     return (
       <StravaConnectScreen
@@ -102,17 +82,11 @@ export function AddBikeIdentity(): ReactElement {
       />
     );
   }
-  // return <StravaConnectScreen onConnect={wizard.connectStrava} onSkip={wizard.leaveAfterSave} />;
   if (savedBike) {
     return (
       <>
-        <BikeAddedScreen
-          bikeName={wizard.savedBikeName}
-          onContinue={wizard.leaveAfterSave}
-        />
-        {/* Offered over the confirmation rather than as another step: pairing is
-            optional, and the wizard is already long. Only the bike just saved is
-            listed — the rest can be paired from the garage. */}
+        <BikeAddedScreen bikeName={wizard.savedBikeName} onContinue={wizard.leaveAfterSave} />
+        {/* Pair only the bike saved by this wizard. */}
         <GearLinkingSheet
           opened={wizard.pairingGear}
           onClose={wizard.closeGearPairing}
@@ -123,15 +97,8 @@ export function AddBikeIdentity(): ReactElement {
   }
 
   return (
-    // Clears the fixed footer: its own 1rem + 3rem button + 1rem, plus the
-    // safe-area inset it also pads by, plus a gap so the last item is not flush.
-    <Stack
-      gap="lg"
-      px="md"
-      pt="md"
-      pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
-    >
-      {/* ----------- Progress indicator ----------- */}
+    // Reserve space for the fixed footer and safe area.
+    <Stack gap="lg" px="md" pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
       <Stack gap="xs">
         <Stepper
           active={active}
@@ -145,17 +112,14 @@ export function AddBikeIdentity(): ReactElement {
               "--stepper-color": "var(--mantine-color-primary-6)",
               "--stepper-icon-color": "var(--mantine-color-text-6)",
             } as React.CSSProperties,
-            // The variables above colour the circle; the number inherits its
-            // colour from the icon element itself.
+            // Keep the step number color independent from its circle.
             stepIcon: {
               color: "var(--mantine-color-text-9)",
             },
           }}
         >
           <Stepper.Step aria-label={t("addBike.stepIdentity")} withIcon>
-            {/* ----------- Header ----------- */}
-            {/* Once the search replaced the form, the page header carries the
-                title instead, so repeating it here would duplicate it. */}
+            {/* Avoid duplicating the search-result page title. */}
             {!searchReplacedForm && (
               <Stack gap="xs">
                 <Text fw={700} size="xl" c="text.6">
@@ -190,8 +154,7 @@ export function AddBikeIdentity(): ReactElement {
         </Stepper>
       </Stack>
 
-      {/* ----------- Step 1: identity ----------- */}
-      {/* Hidden once the search produced something to react to. */}
+      {/* Hide identity fields after receiving lookup results. */}
       {active === 0 && !showsFallback && searchResults === null && (
         <BikeIdentityForm
           form={wizard.form}
@@ -203,31 +166,22 @@ export function AddBikeIdentity(): ReactElement {
         />
       )}
 
-      {/* ----------- Result picker ----------- */}
-      {/* Replaces the form: the user is done searching and now picks a match. */}
+      {/* Replace identity fields with selectable results. */}
       {active === 0 && searchResults !== null && (
-        <BikeSearchResults
-          results={searchResults}
-          selectedBikeUrl={wizard.selectedBikeUrl}
-          onSelect={wizard.selectBike}
-        />
+        <BikeSearchResults results={searchResults} selectedBikeUrl={wizard.selectedBikeUrl} onSelect={wizard.selectBike} />
       )}
 
-      {/* ----------- Lookup fallback ----------- */}
-      {/* Kept below the form so the user can correct brand/model/year and retry. */}
+      {/* Keep form context available when lookup needs retrying. */}
       {active === 0 && showsFallback && (
         <BikeSearchFallback
           variant={wizard.searchFailed ? "failed" : "empty"}
-          diagnosticCode={
-            wizard.searchFailed ? wizard.diagnosticCode : undefined
-          }
+          diagnosticCode={wizard.searchFailed ? wizard.diagnosticCode : undefined}
           onRetry={wizard.retrySearch}
           onEnterManually={wizard.enterManually}
           onSkip={wizard.skipStep}
         />
       )}
 
-      {/* ----------- Step 2: specification ----------- */}
       {active === 1 && (
         <BikeSpecification
           bike={wizard.confirmedBike}
@@ -241,7 +195,6 @@ export function AddBikeIdentity(): ReactElement {
         />
       )}
 
-      {/* ----------- Step 3: scraped components ----------- */}
       {active === 2 && (
         <BikeComponentList
           groups={wizard.componentGroups}
@@ -259,7 +212,6 @@ export function AddBikeIdentity(): ReactElement {
         />
       )}
 
-      {/* ----------- Step footer ----------- */}
       <AddBikeFooter
         isPickingMatch={active === 0 && searchResults !== null}
         canConfirm={wizard.selectedBikeUrl !== null}
@@ -273,9 +225,7 @@ export function AddBikeIdentity(): ReactElement {
         skipsSearch={active === 0}
       />
 
-      {/* ----------- Framing a picked photo ----------- */}
-      {/* Sits at wizard level rather than inside step 2: the pick is staged in
-          the wizard, so the crop outlives any step being re-rendered. */}
+      {/* Keep photo cropping state across step renders. */}
       <PhotoCropModal
         file={wizard.photoToCrop}
         fileUrl={wizard.photoToCropUrl}
@@ -283,7 +233,6 @@ export function AddBikeIdentity(): ReactElement {
         onConfirm={wizard.confirmCrop}
       />
 
-      {/* ----------- Summary before the bike is written ----------- */}
       <AddBikeSummaryModal
         opened={wizard.summaryOpen}
         onClose={wizard.closeSummary}

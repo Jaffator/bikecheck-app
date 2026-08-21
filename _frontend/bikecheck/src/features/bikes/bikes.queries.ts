@@ -1,12 +1,5 @@
-// React Query hooks. This is where loading / error / cache state lives —
-// the stuff you used to write by hand with useState + useEffect.
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryResult,
-  type UseMutationResult,
-} from "@tanstack/react-query";
+// Encapsulate bike loading, mutations, and cache state.
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import {
   getBikes,
   getBike,
@@ -16,13 +9,7 @@ import {
   createBike,
   deleteBike,
 } from "./bikes.api";
-import type {
-  Bike,
-  BikeFormOptions,
-  BikeSearchResult,
-  CreateBikeInput,
-  ExternalBikeComponent,
-} from "./bikes.types";
+import type { Bike, BikeFormOptions, BikeSearchResult, CreateBikeInput, ExternalBikeComponent } from "./bikes.types";
 
 interface BikeSearchInput {
   bikeName: string;
@@ -42,19 +29,10 @@ export function useBike(id: number): UseQueryResult<Bike> {
   return useQuery({
     queryKey: ["bikes", id],
     queryFn: () => getBike(id),
-    // The garage list already holds this bike, so opening one renders straight
-    // from it instead of flashing a spinner. The full record is still fetched
-    // underneath — the list carries every field the detail needs, but it is a
-    // snapshot from whenever the list was loaded.
-    initialData: () =>
-      queryClient
-        .getQueryData<Bike[]>(["bikes"])
-        ?.find((bike) => bike.id === id),
-    // Without this the seeded value counts as fresh for the usual staleTime and
-    // the real fetch never runs. Dated to the list it came from, so the refetch
-    // happens once that snapshot is itself stale.
-    initialDataUpdatedAt: () =>
-      queryClient.getQueryState(["bikes"])?.dataUpdatedAt,
+    // Seed details from the garage cache while refetching.
+    initialData: () => queryClient.getQueryData<Bike[]>(["bikes"])?.find((bike) => bike.id === id),
+    // Preserve the garage cache timestamp for stale-data refetching.
+    initialDataUpdatedAt: () => queryClient.getQueryState(["bikes"])?.dataUpdatedAt,
   });
 }
 export function useBikeFormOptions(): UseQueryResult<BikeFormOptions> {
@@ -65,56 +43,39 @@ export function useBikeFormOptions(): UseQueryResult<BikeFormOptions> {
 }
 
 // A mutation, not a query — the search runs on submit, not on render.
-export function useSearchBikeExternal(): UseMutationResult<
-  BikeSearchResult[],
-  Error,
-  BikeSearchInput
-> {
+export function useSearchBikeExternal(): UseMutationResult<BikeSearchResult[], Error, BikeSearchInput> {
   return useMutation({
-    mutationFn: ({ bikeName, year }: BikeSearchInput) =>
-      searchBikeExternal(bikeName, year),
+    mutationFn: ({ bikeName, year }: BikeSearchInput) => searchBikeExternal(bikeName, year),
   });
 }
 
-// The new bike has to show up in the list the wizard returns to, so the cache
-// is invalidated on success.
-export function useCreateBike(): UseMutationResult<
-  Bike,
-  Error,
-  CreateBikeInput
-> {
+// Refresh cached bike lists after creation.
+export function useCreateBike(): UseMutationResult<Bike, Error, CreateBikeInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: CreateBikeInput) => createBike(input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["bikes"] });
-      // The gear pairing sheet lists the user's bikes alongside their Strava
-      // gear, so a bike added while that answer is still fresh would be missing
-      // from it.
+      // Refresh bikes available to the gear-pairing sheet.
       await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
     },
   });
 }
 
-// Scraping is slow, so the result is cached per URL — going back and forth
-// between the wizard steps must not trigger it again.
-export function useExternalBikeComponents(
-  bikeUrl: string | null,
-): UseQueryResult<ExternalBikeComponent[]> {
+// Cache slow component scrapes by bike URL.
+export function useExternalBikeComponents(bikeUrl: string | null): UseQueryResult<ExternalBikeComponent[]> {
   return useQuery({
     queryKey: ["bike-external-components", bikeUrl],
     queryFn: () => getExternalBikeComponents(bikeUrl ?? ""),
     enabled: bikeUrl !== null,
     staleTime: Infinity,
-    // A failed scrape is reported straight away — retrying leaves the user
-    // watching a spinner for the provider to fail three times over.
+    // Report failed scrapes without automatic retries.
     retry: false,
   });
 }
 
-// Removes a bike from the garage. The gear pairing sheet lists bikes too, so it
-// is refetched alongside the garage itself.
+// Refresh garage and pairing caches after deletion.
 export function useDeleteBike(): UseMutationResult<Bike, Error, number> {
   const queryClient = useQueryClient();
 

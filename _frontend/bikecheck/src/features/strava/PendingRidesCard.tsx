@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Renders pending rides through query hooks.
 import { useState, type ReactElement } from "react";
 import { Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -12,8 +12,7 @@ import { usePendingRides } from "./strava.queries";
 import { PendingRideSheet } from "./PendingRideSheet";
 import type { PendingRide } from "./strava.types";
 
-// One waiting ride, shown by the figures that make it recognisable — a date
-// alone does not tell you which ride you are about to assign.
+// Renders a pending ride with recognizable route and metrics.
 function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => void }): ReactElement {
   const { t } = useTranslation();
 
@@ -23,37 +22,28 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
         radius="lg"
         p="sm"
         style={{
-          // Colour, glow and inner edge all live in this one object: `bg` would
-          // emit the `background` shorthand and wipe the gradient beside it.
+          // Uses separate background fields to preserve the gradient.
           backgroundColor: "var(--mantine-color-cards-6)",
-          // Warm light from the top-left corner, falling off across the card, so
-          // the row has a light source instead of sitting flat. The tint follows
-          // the route colour, which is the only other colour on the card.
+          // Top-left route-colored glow gives the card depth.
           backgroundImage:
             "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
           border: "1px solid var(--color-border-subtle)",
-          // A lit top edge and a shadow underneath: the pair is what reads as
-          // raised rather than drawn.
+          // Inner edge and shadow lift the card.
           boxShadow:
             "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 4px 12px -6px rgba(0, 0, 0, 0.5)",
           transition: "transform 0.12s ease",
         }}
         className="active:scale-[0.985]"
       >
-        {/* The route leads: nine cards of dates and figures look alike, and the
-            shape of where the ride went is what tells them apart at a glance. */}
+        {/* Route shape distinguishes otherwise similar ride rows. */}
         <Group gap="lg" wrap="nowrap" align="center">
           <RouteMap polyline={ride.summary_polyline} width={50} height={50} />
 
-          {/* minWidth lets the column shrink below its content, without which
-              the title's lineClamp has nothing to clamp against. */}
+          {/* minWidth allows title line clamping in the flexible column. */}
           <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
-            {/* Title and date are one unit — kept tight together so the gap that
-              reads as a break is the one before the figures. */}
+            {/* Keeps title and date visually grouped. */}
             <Stack gap={2}>
-              {/* The ride's own title leads: a column of dates alone gives the
-                user nothing to recognise a ride by. Clamped because Strava
-                titles run long and would otherwise change the card's height. */}
+              {/* Clamps long Strava titles to preserve row height. */}
               <Text fw={600} fz={15} c="text.6" lineClamp={1}>
                 {ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
               </Text>
@@ -89,9 +79,7 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
 }
 
 interface PendingRidesProps {
-  // The ride a notification asked for, if any. Opening it is the caller's job
-  // to hand over, because the id arrives in the URL, which this list does not
-  // read.
+  // Optional activity id from a notification URL.
   openActivityId?: string;
   onOpenedActivityHandled?: () => void;
 }
@@ -104,17 +92,14 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled }: Pendin
 
   const rides = data ?? [];
 
-  // A ride named in the URL opens as soon as the list carrying it arrives.
-  // Derived rather than stored by an effect: the sheet's own state is what the
-  // user opens by tapping, and this only supplies the first one.
+  // Resolves the notification-requested ride once list data arrives.
   const requested =
     openActivityId === undefined ? null : (rides.find((ride) => ride.activity_id === openActivityId) ?? null);
   const shownRide = openedRide ?? requested;
 
   function closeSheet(): void {
     setOpenedRide(null);
-    // Clears the URL, so closing the sheet does not leave a parameter that
-    // would reopen it on the next render.
+    // Clears the URL parameter to prevent reopening.
     onOpenedActivityHandled?.();
   }
 
@@ -135,8 +120,7 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled }: Pendin
   }
 
   if (rides.length === 0) {
-    // The same frame the Rides tab's empty state uses, so switching tabs does
-    // not move the copy or change its size.
+    // Reuses the rides tab empty-state layout.
     return (
       <EmptyStateLayout
         illustration={trailIllustration}

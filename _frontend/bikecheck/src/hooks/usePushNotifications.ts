@@ -5,18 +5,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { registerFcmToken } from "@/features/notifications/notifications.api";
 
 export interface UsePushNotificationsResult {
-  // Set only while the app is in the foreground; drives the in-app banner.
+  // Holds the push received while the app is in the foreground.
   foregroundNotification: PushNotificationSchema | null;
   dismiss: () => void;
 }
 
-// Registers the device for push and keeps the notification cache honest while
-// the app is open. Navigation on tap is the caller's job: this hook has no
-// router of its own, and mounting it above the routes is what lets the whole
-// app share one registration.
-export function usePushNotifications(
-  onNotificationTapped: (route: string) => void,
-): UsePushNotificationsResult {
+// Registers native push and synchronizes notification cache updates.
+export function usePushNotifications(onNotificationTapped: (route: string) => void): UsePushNotificationsResult {
   const [foregroundNotification, setForegroundNotification] = useState<PushNotificationSchema | null>(null);
   const queryClient = useQueryClient();
 
@@ -25,8 +20,7 @@ export function usePushNotifications(
   }, []);
 
   useEffect(() => {
-    // Push is a native capability; on the web there is nothing to register with
-    // and the plugin throws rather than no-opping.
+    // Skips native registration when running on the web.
     if (!Capacitor.isNativePlatform()) return;
 
     async function init(): Promise<void> {
@@ -38,26 +32,22 @@ export function usePushNotifications(
     void init();
 
     const registration = PushNotifications.addListener("registration", (token) => {
-      // Through the shared client, so the request carries the session cookie
-      // the backend reads the user from — the token belongs to whoever is
-      // logged in, and a failure here is not worth breaking the app over.
+      // Sends the token through the authenticated shared client.
       void registerFcmToken(token.value, Capacitor.getPlatform()).catch(() => undefined);
     });
 
-    // Fires ONLY when the app is in the foreground -> show our own in-app banner.
-    // When the app is in background/closed, the system shows the tray notification itself.
+    // Shows an in-app banner only for foreground pushes.
     const received = PushNotifications.addListener("pushNotificationReceived", (notification) => {
       setForegroundNotification(notification);
-      // The list and the bell badge are both a request behind at this point.
+      // Refreshes the notification list and bell badge.
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
       void queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
     });
 
-    // Fires when the user taps a tray notification (app was in background).
+    // Handles a system-tray notification tap.
     const action = PushNotifications.addListener("pushNotificationActionPerformed", (performed) => {
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      // The route arrives already filled in by the backend's delivery job; a
-      // push without one is a type that opens nothing in particular.
+      // Opens the backend-provided route when present.
       const route = performed.notification.data?.route as string | undefined;
       if (route) onNotificationTapped(route);
     });

@@ -399,8 +399,8 @@
     "newBearings": "Nová ložiska"
   },
   "strava": {
+    "accountTitle": "Účet",
     "connectedTitle": "Strava připojena",
-    "connectedAthlete": "Účet {{id}}",
     "connectedBody": "Tvoje jízdy se teď budou načítat automaticky. Kilometry a opotřebení komponent se doplní samy.",
     "connectedContinue": "Pokračovat",
     "statusTitle": "Strava",

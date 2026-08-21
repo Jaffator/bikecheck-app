@@ -1,23 +1,14 @@
-// Google's encoded polyline format, which is what Strava hands back in
-// activity.map.summary_polyline. Decoding it here keeps route drawing free of a
-// map library: the shape of a ride is enough to recognise it, and a shape needs
-// no tiles, no key and no network.
+// Decodes Strava's Google-encoded summary polylines without a map library.
 
 export type LatLng = [number, number];
 
-// Reads one varint out of the encoded string, starting at `index`. Returns the
-// value along with the position after it, because each coordinate is two of
-// these back to back.
-function readValue(
-  encoded: string,
-  index: number,
-): { value: number; next: number } {
+// Reads one encoded coordinate value and returns the next character index.
+function readValue(encoded: string, index: number): { value: number; next: number } {
   let result = 0;
   let shift = 0;
   let byte: number;
 
-  // Every chunk carries five bits and sets the continuation bit while more
-  // follow.
+  // Five-bit chunks continue while the high bit is set.
   do {
     byte = encoded.charCodeAt(index) - 63;
     index += 1;
@@ -29,8 +20,7 @@ function readValue(
   return { value: result & 1 ? ~(result >> 1) : result >> 1, next: index };
 }
 
-// Decodes to absolute coordinates. Values in the string are deltas from the
-// previous point, which is what keeps the format small.
+// Decodes delta-encoded coordinates into absolute latitude and longitude pairs.
 export function decodePolyline(encoded: string): LatLng[] {
   const points: LatLng[] = [];
   let index = 0;

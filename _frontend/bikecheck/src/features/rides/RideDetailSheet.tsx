@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// UI component using feature hooks.
 import type { ReactElement } from "react";
 import { Drawer, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -8,13 +8,12 @@ import { ridePolyline } from "./ridePolyline";
 import type { Ride } from "./rides.types";
 
 interface RideDetailSheetProps {
-  // The ride being shown. Null closes the sheet — the caller owns which one is
-  // open, as the list is what the user taps.
+  // Null closes the sheet.
   ride: Ride | null;
   onClose: () => void;
 }
 
-// One figure of the ride, as a label above its value.
+// Displays one ride statistic.
 function Stat({ label, value }: { label: string; value: string }): ReactElement {
   return (
     <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
@@ -28,8 +27,7 @@ function Stat({ label, value }: { label: string; value: string }): ReactElement 
   );
 }
 
-// What the app recorded for one ride. Everything shown here already travelled
-// with the list, so opening the sheet asks the backend for nothing.
+// Displays data already loaded with the ride.
 export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactElement {
   const { t } = useTranslation();
 
@@ -63,7 +61,7 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
             </Text>
           </Stack>
 
-          {/* The shared card surface — see docs/ui/card-surface.md. */}
+          {/* Shared card surface. */}
           <Paper
             radius="lg"
             p="md"
@@ -77,8 +75,7 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
             }}
           >
             <Stack gap="md">
-              {/* The route reads as the picture of the ride, so it takes the
-                  full width here rather than the list's thumbnail. */}
+              {/* Show the full route map. */}
               <RouteMap polyline={ridePolyline(ride.json_data)} width="100%" height={140} strokeWidth={3} />
 
               <Group gap="md" wrap="nowrap">
@@ -100,7 +97,7 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
   );
 }
 
-// The ride stores metres; the sheet shows kilometres, as the card does.
+// Convert stored metres to displayed kilometres.
 function toKm(metres: number | null): number {
   return metres === null ? 0 : Math.round(metres / 1000);
 }

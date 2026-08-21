@@ -90,6 +90,17 @@ export class UserResponseDto {
   // this is what the app reads to tell the two states apart.
   @ApiProperty({ example: '20678962', nullable: true })
   strava_athlete_id!: string | null;
+  // Snapshot of the linked athlete, taken when the account was linked. Strava
+  // returns no email, so these name the account instead of the athlete id.
+  // Any of them can be null — Strava guarantees none.
+  @ApiProperty({ example: 'Jaroslav', nullable: true })
+  strava_firstname!: string | null;
+  @ApiProperty({ example: 'Lufinka', nullable: true })
+  strava_lastname!: string | null;
+  @ApiProperty({ example: 'jlufinka', nullable: true })
+  strava_username!: string | null;
+  @ApiProperty({ example: 'https://dgalywyr863hv.cloudfront.net/pictures/athletes/.../large.jpg', nullable: true })
+  strava_avatar_url!: string | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })
   last_login_at!: Date | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })

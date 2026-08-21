@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Renders pending ride state through query hooks.
 import type { ReactElement } from "react";
 import { Box, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -8,11 +8,7 @@ import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { usePendingRides } from "./strava.queries";
 
-// Rides that arrived without a bike the app could resolve. Its own card rather
-// than a line in UnpairedBikesCard: a bike with no gear id and a ride with no
-// gear id are different problems with different answers, and a user can hit
-// both at once — a paired bike still records the odd ride Strava sends with no
-// gear on it at all.
+// Shows unresolved rides separately from bikes lacking Strava gear.
 export function PendingRidesCard(): ReactElement | null {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -30,9 +26,7 @@ export function PendingRidesCard(): ReactElement | null {
       className="m-3"
       style={{
         overflow: "hidden",
-        // The shared card surface — see docs/ui/card-surface.md. Colour, glow
-        // and inner edge all live in this one object: `bg` would emit the
-        // `background` shorthand and wipe the gradient.
+        // Uses the shared card surface without the bg shorthand.
         backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage:
           "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",

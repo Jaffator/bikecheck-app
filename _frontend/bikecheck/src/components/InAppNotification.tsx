@@ -18,8 +18,7 @@ export function InAppNotification({ notification, onDismiss, autoDismissMs = 500
 
   return (
     <div className="in-app-notification" role="alert" onClick={onDismiss}>
-      {/* The pending-ride card's lighting, so a push reads as the same surface
-          the app shows it on once opened. */}
+      {/* Matches the pending-ride card surface. */}
       <Paper
         radius="lg"
         p="md"
@@ -34,8 +33,7 @@ export function InAppNotification({ notification, onDismiss, autoDismissMs = 500
       >
         <Group gap="sm" wrap="nowrap" align="center" w="100%">
           <BikecheckMark width={40} height={40} style={{ flex: "none" }} aria-hidden />
-          {/* minWidth lets the column shrink below its content, without which
-              the title's lineClamp has nothing to clamp against. */}
+          {/* Allows title clamping within the notification column. */}
           <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
             <Text fw={600} fz={15} c="text.6" lineClamp={1}>
               {notification.title}

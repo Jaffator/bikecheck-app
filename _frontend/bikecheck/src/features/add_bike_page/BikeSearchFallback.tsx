@@ -5,8 +5,7 @@ import { useTranslation } from "react-i18next";
 import { RefreshCw, SearchX, SquarePen, Terminal } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
 
-// Both outcomes leave the user without a specification, but they differ in
-// cause and in what the user should do next, so the copy differs per variant.
+// Differentiate empty lookup results from lookup failures.
 export type BikeSearchFallbackVariant = "failed" | "empty";
 
 interface BikeSearchFallbackProps {

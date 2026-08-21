@@ -124,9 +124,17 @@ export class StravaEventsService {
       throw new Error(`Failed to disconnect Strava: ${(error as Error).message}`);
     }
 
+    // The cached profile goes with the link — leaving a name behind would have
+    // the app still showing an account it no longer has any claim to.
     await this.prisma.users.update({
       where: { id: userId },
-      data: { strava_athlete_id: null },
+      data: {
+        strava_athlete_id: null,
+        strava_firstname: null,
+        strava_lastname: null,
+        strava_username: null,
+        strava_avatar_url: null,
+      },
     });
 
     this.logger.info({ custom: true, userId, athleteId: user.strava_athlete_id }, 'Strava account unlinked');
@@ -622,10 +630,27 @@ export class StravaEventsService {
     });
     this.logger.info({ custom: true, user: user.id }, 'Strava activity deleted');
   }
-  async accountLinked(data: { athlete_id: number; user_id: string }): Promise<void> {
+  // The profile fields are a snapshot: Strava sends them with the token, so they
+  // are written here and refreshed only if the user links the account again.
+  // Optional so a job queued before they existed still processes.
+  async accountLinked(data: {
+    athlete_id: number;
+    user_id: string;
+    firstname?: string | null;
+    lastname?: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+  }): Promise<void> {
     await this.prisma.users.update({
       where: { id: Number(data.user_id) },
-      data: { strava_athlete_id: String(data.athlete_id) },
+      data: {
+        strava_athlete_id: String(data.athlete_id),
+        strava_firstname: data.firstname ?? null,
+        strava_lastname: data.lastname ?? null,
+        strava_username: data.username ?? null,
+        // Strava's own picture. users.avatar_url is the app avatar, never touched.
+        strava_avatar_url: data.avatar_url ?? null,
+      },
     });
     this.logger.info({ custom: true, userId: data.user_id, athleteId: data.athlete_id }, 'Strava account linked');
   }
