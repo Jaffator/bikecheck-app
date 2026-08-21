@@ -15,9 +15,7 @@ interface FabAction {
   icon: IconType;
 }
 
-// Create actions per section. Only what the backend can actually create has an
-// entry: bikes (POST /bike/create) and service records (POST /bike-event/create).
-// Rides come in from Strava, so they are absent — and so is /rides itself.
+// Defines create actions for sections supported by backend endpoints.
 const FAB_ACTIONS: Record<string, FabAction[]> = {
   "/": [
     { labelKey: "fab.addBike", path: "/bikes/new", icon: PiPersonSimpleBike },
@@ -27,62 +25,45 @@ const FAB_ACTIONS: Record<string, FabAction[]> = {
   "/service": [{ labelKey: "fab.addService", path: "/service/new", icon: RiWrenchLine }],
 };
 
-// Clearance above the tab bar pill, measured from the bottom of the viewport:
-//   4rem    the AppShell.Footer box (fixed to bottom: 0)
-//   0.4rem  the pill's overflow — it is h="110%" of that 4rem box
-//   0.75rem the footer's own margin-bottom
-//   inset   the home indicator
-//   1rem    the gap between the FAB and the pill
-// Keep the inset expression identical to the footer's — a different fallback
-// would drift the two apart on devices with a home indicator.
+// Clears the footer pill using its matching safe-area inset expression.
 const FAB_BOTTOM_OFFSET =
   "calc(4rem + 0.4rem + 0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)) + 1rem)";
 
 const FAB_SIZE = 55;
 
-// How far the FAB drops when hiding. Its own height plus the gap is enough to
-// clear the bottom edge; adding the full offset again would double the distance
-// and make the slide read as sluggish.
+// Moves the hidden button beyond the bottom edge.
 const FAB_HIDDEN_SHIFT = `calc(${FAB_SIZE}px + 1rem)`;
 
-// Gap between the FAB and the dropdown above it.
+// Separates the FAB and its dropdown.
 const MENU_OFFSET = 16;
 
-// Gap between the action items inside the dropdown.
+// Separates dropdown action items.
 const MENU_ITEM_GAP = 8;
 
 function getActions(pathname: string): FabAction[] {
-  // Exact match for "/" so it does not swallow every other route, prefix match
-  // for the rest — same rule the tab bar uses for the active tab.
+  // Matches Home exactly and other sections by route prefix.
   const match = Object.keys(FAB_ACTIONS).find((path) => (path === "/" ? pathname === "/" : pathname.startsWith(path)));
   return match ? FAB_ACTIONS[match] : [];
 }
 
 interface FabProps {
-  // Lifted to AppLayout so it can dim the Outlet behind the dropdown without
-  // Mantine's own overlay, which portals to the viewport and would cover the
-  // header/footer/Fab too.
+  // Lets AppLayout dim page content behind the portalled menu.
   menuOpened: boolean;
   onMenuOpenedChange: (opened: boolean) => void;
 }
 
-// The create-action entry point. Lives in the layout rather than in each page so
-// the offset above the tab bar is worked out once.
+// Renders the shared create-action entry point.
 export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement | null {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  // Every hook runs before the early return below — React requires the same
-  // hook order on every render.
+  // Runs before early returns to preserve hook order.
   const visible = useHideOnScrollDown();
   const [openedOn, setOpenedOn] = useState(location.pathname);
 
   const actions = getActions(location.pathname);
 
-  // The menu must close when the FAB hides and when the route changes. Both are
-  // adjustments to state already held, so they are made during render rather
-  // than in an effect — the portal keeps the dropdown outside this element, and
-  // a surviving `true` would spring it back open on the next scroll up.
+  // Closes the menu when its route changes or button hides.
   if (menuOpened && (!visible || openedOn !== location.pathname)) {
     onMenuOpenedChange(false);
   }
@@ -90,7 +71,7 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
     setOpenedOn(location.pathname);
   }
 
-  // Sections with nothing to create (Rides) get no button at all.
+  // Omits the button in sections without create actions.
   if (actions.length === 0) return null;
 
   function go(path: string): void {
@@ -116,8 +97,7 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
   return (
     <Affix
       position={{ bottom: FAB_BOTTOM_OFFSET, right: 35 }}
-      // Slides down past the tab bar rather than fading, and stops taking taps
-      // once it is out of sight.
+      // Moves offscreen and disables taps when hidden.
       style={{
         transform: visible ? "translateY(0)" : `translateY(${FAB_HIDDEN_SHIFT})`,
         opacity: visible ? 1 : 0,
@@ -125,11 +105,7 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
         transition: "transform 0.25s ease, opacity 0.25s ease",
       }}
     >
-      {/* offset lifts the dropdown clear of the FAB; the taller items and the
-          gap between them keep the list comfortable to hit with a thumb. */}
-      {/* Controlled so hiding the FAB takes the dropdown with it — the portal
-          renders it outside this element, so it would otherwise stay on screen
-          after the button slid away. */}
+      {/* Uses a controlled menu so it closes with the hidden FAB. */}
       <Menu
         opened={menuOpened && visible}
         onChange={onMenuOpenedChange}

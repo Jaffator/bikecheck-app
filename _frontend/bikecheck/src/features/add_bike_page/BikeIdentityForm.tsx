@@ -14,8 +14,7 @@ const YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => String(CURRENT_YEAR + 
 interface BikeIdentityFormProps {
   form: UseFormReturnType<AddBikeIdentityValues>;
   brandNames: string[];
-  // Only the models of the brand already picked — the full list would offer
-  // models that cannot belong to it.
+  // Limit models to the selected brand.
   brandModels: string[];
   canSearch: boolean;
   isSearching: boolean;
@@ -30,8 +29,7 @@ function FieldLabel({ children }: { children: string }): ReactElement {
   );
 }
 
-// Step 1 of the "Add new bike" wizard — brand/model/year used to look up the
-// bike's default specification.
+// Collect bike identity for the external specification lookup.
 export function BikeIdentityForm({
   form,
   brandNames,

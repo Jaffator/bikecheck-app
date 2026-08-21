@@ -125,7 +125,17 @@
   },
   "rides": {
     "emptyTitle": "Zatím žádné jízdy",
-    "emptyBody": "Připoj svůj účet Strava nebo zaznamenej první jízdu a začni sledovat nájezd a opotřebení komponentů."
+    "emptyBody": "Připoj svůj účet Strava nebo zaznamenej první jízdu a začni sledovat nájezd a opotřebení komponentů.",
+    "tabRides": "Jízdy",
+    "tabPending": "Nepřiřazené",
+    "unknownBike": "Neznámé kolo",
+    "loadFailed": "Jízdy se nepodařilo načíst",
+    "statDistance": "Vzdálenost",
+    "statDuration": "Čas",
+    "statElevation": "Převýšení",
+    "statDescent": "Klesání",
+    "statAvgSpeed": "Prům. rychlost",
+    "statMaxSpeed": "Max. rychlost"
   },
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",
@@ -389,8 +399,8 @@
     "newBearings": "Nová ložiska"
   },
   "strava": {
+    "accountTitle": "Účet",
     "connectedTitle": "Strava připojena",
-    "connectedAthlete": "Účet {{id}}",
     "connectedBody": "Tvoje jízdy se teď budou načítat automaticky. Kilometry a opotřebení komponent se doplní samy.",
     "connectedContinue": "Pokračovat",
     "statusTitle": "Strava",
@@ -410,6 +420,7 @@
     "gearLinkingSkip": "Teď ne",
     "gearLinkingFailed": "Propojení se nepodařilo uložit. Zkus to znovu.",
     "notPaired": "Nepropojeno",
+    "paired": "Propojeno",
     "unpairedBikes_one": "{{count}} kolo není propojeno",
     "unpairedBikes_few": "{{count}} kola nejsou propojena",
     "unpairedBikes_other": "{{count}} kol není propojeno",
@@ -425,5 +436,27 @@
     "unpairedBikesBody": "Propojení se Strava gearem automaticky hlídá kilometry a připomínky servisu tvých kol.",
     "unpairedBikesAction": "Propojit kola",
     "gearLinkingLoadFailed": "Strava gear se nepodařilo načíst. Zkus to znovu."
+  },
+  "notifications": {
+    "empty": "Zatím žádné notifikace",
+    "emptyBody": "Až se něco stane s tvými koly nebo jízdami, najdeš to tady.",
+    "loadFailed": "Notifikace se nepodařilo načíst"
+  },
+  "pendingRides": {
+    "title": "Nepřiřazené jízdy",
+    "cardBody": "Jízda ze Stravy dorazila bez kola. Vyber, ke kterému patří.",
+    "cardAction": "Vyřešit",
+    "listTitle": "Nepřiřazené jízdy",
+    "empty": "Žádné nepřiřazené jízdy",
+    "emptyBody": "Všechny jízdy ze Stravy mají přiřazené kolo.",
+    "loadFailed": "Jízdy se nepodařilo načíst",
+    "chooseBike": "Ke kterému kolu jízda patří?",
+    "chooseBikeTitle": "Vyber kolo pro tuto jízdu",
+    "assign": "Přiřadit ke kolu",
+    "assignFailed": "Přiřazení se nepodařilo",
+    "distance": "{{count}} km",
+    "duration": "{{count}} min",
+    "elevation": "{{count}} m",
+    "noGear": "Bez kola ze Stravy"
   }
 }

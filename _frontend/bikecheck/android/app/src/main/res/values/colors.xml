@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Accent color applied to the push notification small icon -->
-    <color name="notification_color">#1E88E5</color>
+    <!-- Accent color applied to the push notification small icon (Mantine "primary.6") -->
+    <color name="notification_color">#CEC053</color>
     <!-- App background (Mantine "inputs.6"). Shows behind the WebView in the
          gesture nav bar strip, which the web layout can't reach. -->
     <color name="app_background">#141414</color>

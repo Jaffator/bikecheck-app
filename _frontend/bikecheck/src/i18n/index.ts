@@ -13,13 +13,13 @@ export function isSupportedLanguage(language: string): language is SupportedLang
   return (SUPPORTED_LANGUAGES as readonly string[]).includes(language);
 }
 
-// The device reports locales like "cs-CZ" or "en-GB", so only the primary subtag matters.
+// Use the locale primary subtag.
 export function detectLanguage(): SupportedLanguage {
   const primary = navigator.language.split("-")[0];
   return isSupportedLanguage(primary) ? primary : "en";
 }
 
-// Single entry point for switching — i18next and dayjs must never drift apart.
+// Keep i18next and dayjs locales aligned.
 export async function applyLanguage(language: string): Promise<void> {
   const supported = isSupportedLanguage(language) ? language : "en";
   await i18n.changeLanguage(supported);
@@ -33,7 +33,7 @@ void i18n.use(initReactI18next).init({
   },
   lng: detectLanguage(),
   fallbackLng: "en",
-  // React already escapes everything it renders.
+  // React escapes rendered values.
   interpolation: { escapeValue: false },
 });
 

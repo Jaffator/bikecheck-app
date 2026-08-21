@@ -3,21 +3,17 @@ import logoDark from "../assets/icons/bikecheck/Logo_dark.svg";
 function ServiceReportA4() {
   return (
     <div className="antialiased min-h-screen py-4 px-2 sm:py-8 sm:px-4 flex justify-center">
-      {/* BEGIN: MainDocument */}
       <main
         className="w-full max-w-[710px] text-left bg-surface-paper shadow-lg rounded-sm report-container overflow-hidden"
         data-purpose="document-preview"
       >
         <div className="p-6 sm:p-10 flex flex-col gap-8">
-          {/* BEGIN: Header */}
           <header className="flex flex-col items-center gap-6" data-purpose="report-header">
             <img src={logoDark} alt="BikeCheck" className="h-10 w-auto" />
             <h2 className="font-display font-medium text-xl sm:text-3xl text-center tracking-tight text-text-muted uppercase">
               Service Report
             </h2>
           </header>
-          {/* END: Header */}
-          {/* BEGIN: MetaInfo Grid */}
           <section className=" py-4 flex justify-between gap-4 overflow-x-auto whitespace-nowrap" data-purpose="meta-info">
             <div className="flex flex-col pr-4">
               <span className="font-display font-bold text-xs uppercase text-text-main">Customer Bike</span>
@@ -40,16 +36,12 @@ function ServiceReportA4() {
               <span className="font-mono text-sm mt-1">68 H</span>
             </div>
           </section>
-          {/* END: MetaInfo Grid */}
-          {/* BEGIN: Service Summary */}
           <section className="flex flex-col gap-2" data-purpose="service-summary">
             <div className="flex items-baseline gap-2">
               <span className="font-display font-bold text-4xl sm:text-3xl text-brand">$85.00</span>
               <span className="font-sans text-lg text-text-main">Total</span>
             </div>
           </section>
-          {/* END: Service Summary */}
-          {/* BEGIN: Detailed Tasks Table */}
           <section className="flex flex-col gap-4" data-purpose="detailed-tasks">
             <h3 className="font-display font-bold text-lg uppercase text-brand border-b border-border-brand pb-2">
               Detailed Service Tasks
@@ -95,8 +87,6 @@ function ServiceReportA4() {
               </table>
             </div>
           </section>
-          {/* END: Detailed Tasks Table */}
-          {/* BEGIN: Observations */}
           <section className="flex flex-col gap-2" data-purpose="observations">
             <h3 className="font-display font-bold text-lg uppercase text-brand">Notes</h3>
             <text className="font-sans text-sm text-text-main whitespace-pre-line">
@@ -104,16 +94,12 @@ function ServiceReportA4() {
               tolerance).
             </text>
           </section>
-          {/* END: Observations */}
-          {/* BEGIN: Attachments */}
           <section className="flex flex-col gap-2" data-purpose="attachments">
             <h3 className="font-display font-bold text-lg uppercase text-brand">Attachments</h3>
             <ul className="list-disc list-inside font-sans text-sm text-text-main">
               <li>FAKTURA.PDF (1.2MB)</li>
             </ul>
           </section>
-          {/* END: Attachments */}
-          {/* BEGIN: Footer Signatures */}
           <footer className="mt-8 pt-8 flex flex-col gap-4 text-sm" data-purpose="report-footer">
             <div className="flex flex-col sm:flex-row justify-between gap-4">
               <div className="flex-1 flex items-end">
@@ -125,10 +111,8 @@ function ServiceReportA4() {
               BikeCheck Contact Info (e.g., bikecheck.com | contact@bikecheck.com)
             </div>
           </footer>
-          {/* END: Footer Signatures */}
         </div>
       </main>
-      {/* END: MainDocument */}
     </div>
   );
 }

@@ -542,6 +542,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/strava/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Build the Strava authorize URL for the current user */
+        get: operations["Strava connectStrava"];
+        put?: never;
+        post?: never;
+        /** Unlink the current user's Strava account */
+        delete: operations["Strava disconnectStrava"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strava/gear-linking": {
         parameters: {
             query?: never;
@@ -560,6 +578,57 @@ export interface paths {
         patch: operations["Strava linkStravaGear"];
         trace?: never;
     };
+    "/api/strava/pending-activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List rides that arrived without a bike the app could resolve */
+        get: operations["Strava listPendingActivities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/strava/pending-activities/{activityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one pending ride by its Strava activity id */
+        get: operations["Strava getPendingActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/strava/pending-activities/{activityId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign a pending ride to a BikeCheck bike */
+        post: operations["Strava resolvePendingActivity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notifications/fcm-token": {
         parameters: {
             query?: never;
@@ -571,23 +640,6 @@ export interface paths {
         put?: never;
         /** Register FCM token for the current user */
         post: operations["Notification registerFcmToken"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/notifications/test-push": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** TEST: send a push notification to user 1 */
-        post: operations["Notification testPush"];
         delete?: never;
         options?: never;
         head?: never;
@@ -717,6 +769,8 @@ export interface components {
             weight_kg: Record<string, never> | null;
             /** @example true */
             is_active: boolean;
+            /** @example 20678962 */
+            strava_athlete_id: Record<string, never> | null;
             /** @example 2024-01-01T12:00:00Z */
             last_login_at: Record<string, never>;
             /**
@@ -791,8 +845,6 @@ export interface components {
             bike_type?: string;
             /** @example 1540 */
             total_km?: number;
-            /** @example Carbon */
-            frame_material?: string;
             /** @example https://example.com/bike-image.jpg */
             image_url?: string;
         };
@@ -1174,6 +1226,10 @@ export interface components {
         UpdateOrganizationDto: {
             name?: string;
         };
+        ResponseStravaAuthorizeUrlDto: {
+            /** @example https://www.strava.com/oauth/authorize?client_id=235898&state=a3f2... */
+            url: string;
+        };
         ResponseUnmatchedStravaGearDto: {
             /** @example 1 */
             user_id: number;
@@ -1184,12 +1240,35 @@ export interface components {
         };
         GearLinkDto: {
             /** @example b1234567 */
-            stravaBikeId: string;
+            stravaBikeId: Record<string, never> | null;
             /** @example 1 */
             bikecheckBikeId: number;
         };
         LinkStravaGearDto: {
             links: components["schemas"]["GearLinkDto"][];
+        };
+        ResponsePendingStravaDto: {
+            /** @example 13579246810 */
+            activity_id: string;
+            /** @example b12345 */
+            gear_id: Record<string, never> | null;
+            /** @example 2026-08-19T06:12:00.000Z */
+            started_at: string;
+            /** @example 42 */
+            distance_km: number;
+            /** @example 96 */
+            duration_min: number;
+            /** @example 612 */
+            elevation_up_m: number;
+            /**
+             * Format: date-time
+             * @example 2026-08-19T06:40:00.000Z
+             */
+            created_at: string;
+        };
+        ResolvePendingActivityDto: {
+            /** @example 1 */
+            bikeId: number;
         };
         DeviceTokenDto: {
             /** @example caYcjw...:APA91b... */
@@ -2062,6 +2141,42 @@ export interface operations {
             };
         };
     };
+    "Strava connectStrava": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseStravaAuthorizeUrlDto"];
+                };
+            };
+        };
+    };
+    "Strava disconnectStrava": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "Strava listUnmatchedStravaGear": {
         parameters: {
             query?: never;
@@ -2102,6 +2217,69 @@ export interface operations {
             };
         };
     };
+    "Strava listPendingActivities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponsePendingStravaDto"][];
+                };
+            };
+        };
+    };
+    "Strava getPendingActivity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponsePendingStravaDto"];
+                };
+            };
+        };
+    };
+    "Strava resolvePendingActivity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolvePendingActivityDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "Notification registerFcmToken": {
         parameters: {
             query?: never;
@@ -2116,23 +2294,6 @@ export interface operations {
         };
         responses: {
             200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    "Notification testPush": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            201: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,34 +1,23 @@
-// Web-only replacement for @capacitor/network. Same shape as the plugin
-// (`const { connected } = await Network.getStatus()`), but it answers the
-// question the plugin does not: is the internet actually reachable?
-//
-// navigator.onLine only reports whether a network interface is up, so it stays
-// true when the router loses its uplink. Reaching a known-good public host is
-// the only way to tell for sure.
+// Web network probe matching the Capacitor Network API.
 
 export interface NetworkStatus {
   connected: boolean;
 }
 
-// Hosts that are always up and answer with a tiny body. More than one so a
-// blocked or regionally unreachable host does not produce a false negative.
+// Multiple lightweight probe hosts reduce false offline results.
 const PROBE_URLS: string[] = ["https://www.gstatic.com/generate_204", "https://cloudflare.com/cdn-cgi/trace"];
 
 const PROBE_TIMEOUT_MS = 3000;
 
 async function reachAny(urls: string[]): Promise<boolean> {
-  // no-cors: these hosts send no CORS headers, so a normal request would fail
-  // even when online. The response is opaque and unreadable, but that is fine —
-  // resolving means the host was reached, rejecting means it was not.
-  // The cache buster and no-store stop a single success from being replayed
-  // from cache forever.
+  // No-CORS probes only need to resolve; cache busting prevents stale success.
   const attempts = urls.map((url) =>
     fetch(`${url}?_=${Date.now()}`, {
       method: "GET",
       mode: "no-cors",
       cache: "no-store",
       signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-    })
+    }),
   );
 
   try {

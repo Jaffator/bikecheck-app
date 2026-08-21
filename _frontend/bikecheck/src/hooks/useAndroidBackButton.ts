@@ -2,8 +2,7 @@ import { useEffect, useRef } from "react";
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 
-// Android hardware/gesture back. Capacitor itself has no back handling, so without
-// this listener the system back finishes the activity and closes the app.
+// Handles Android hardware and gesture back without closing the activity.
 export function useAndroidBackButton(onBack: () => void): void {
   const handler = useRef(onBack);
 
@@ -11,7 +10,7 @@ export function useAndroidBackButton(onBack: () => void): void {
     handler.current = onBack;
   }, [onBack]);
 
-  // Registered once — the ref keeps the listener pointed at the latest closure.
+  // Registers once while the ref retains the latest callback.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 

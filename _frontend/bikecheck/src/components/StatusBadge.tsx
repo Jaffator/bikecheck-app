@@ -5,9 +5,7 @@ interface StatusBadgeProps {
   label: string;
 }
 
-// The small "no data yet" pill the empty states drop over their illustration
-// ("Bike counter batch" in Figma). Only the label ever changes, so that is the
-// only prop — a colour variant gets added when a second one actually exists.
+// Renders the reusable empty-state status pill.
 export function StatusBadge({ label }: StatusBadgeProps): ReactElement {
   return (
     <Group

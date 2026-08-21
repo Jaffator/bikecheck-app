@@ -1127,6 +1127,41 @@
         ]
       }
     },
+    "/api/strava/connect": {
+      "get": {
+        "operationId": "Strava connectStrava",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseStravaAuthorizeUrlDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Build the Strava authorize URL for the current user",
+        "tags": [
+          "Strava"
+        ]
+      },
+      "delete": {
+        "operationId": "Strava disconnectStrava",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Unlink the current user's Strava account",
+        "tags": [
+          "Strava"
+        ]
+      }
+    },
     "/api/strava/gear-linking": {
       "get": {
         "operationId": "Strava listUnmatchedStravaGear",
@@ -1172,6 +1207,96 @@
         ]
       }
     },
+    "/api/strava/pending-activities": {
+      "get": {
+        "operationId": "Strava listPendingActivities",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponsePendingStravaDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List rides that arrived without a bike the app could resolve",
+        "tags": [
+          "Strava"
+        ]
+      }
+    },
+    "/api/strava/pending-activities/{activityId}": {
+      "get": {
+        "operationId": "Strava getPendingActivity",
+        "parameters": [
+          {
+            "name": "activityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePendingStravaDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read one pending ride by its Strava activity id",
+        "tags": [
+          "Strava"
+        ]
+      }
+    },
+    "/api/strava/pending-activities/{activityId}/resolve": {
+      "post": {
+        "operationId": "Strava resolvePendingActivity",
+        "parameters": [
+          {
+            "name": "activityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolvePendingActivityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Assign a pending ride to a BikeCheck bike",
+        "tags": [
+          "Strava"
+        ]
+      }
+    },
     "/api/notifications/fcm-token": {
       "post": {
         "operationId": "Notification registerFcmToken",
@@ -1192,21 +1317,6 @@
           }
         },
         "summary": "Register FCM token for the current user",
-        "tags": [
-          "Notification"
-        ]
-      }
-    },
-    "/api/notifications/test-push": {
-      "post": {
-        "operationId": "Notification testPush",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "summary": "TEST: send a push notification to user 1",
         "tags": [
           "Notification"
         ]
@@ -1267,6 +1377,45 @@
         "summary": "Mark a notification as read",
         "tags": [
           "Notification"
+        ]
+      }
+    },
+    "/api/rides": {
+      "get": {
+        "operationId": "Ride listRides",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseRidePageDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the current user's rides, newest first",
+        "tags": [
+          "Ride"
         ]
       }
     },
@@ -1455,6 +1604,31 @@
             "type": "boolean",
             "example": true
           },
+          "strava_athlete_id": {
+            "type": "object",
+            "example": "20678962",
+            "nullable": true
+          },
+          "strava_firstname": {
+            "type": "object",
+            "example": "Jaroslav",
+            "nullable": true
+          },
+          "strava_lastname": {
+            "type": "object",
+            "example": "Lufinka",
+            "nullable": true
+          },
+          "strava_username": {
+            "type": "object",
+            "example": "jlufinka",
+            "nullable": true
+          },
+          "strava_avatar_url": {
+            "type": "object",
+            "example": "https://dgalywyr863hv.cloudfront.net/pictures/athletes/.../large.jpg",
+            "nullable": true
+          },
           "last_login_at": {
             "type": "object",
             "example": "2024-01-01T12:00:00Z"
@@ -1479,6 +1653,11 @@
           "currency",
           "weight_kg",
           "is_active",
+          "strava_athlete_id",
+          "strava_firstname",
+          "strava_lastname",
+          "strava_username",
+          "strava_avatar_url",
           "last_login_at",
           "created_at",
           "updated_at"
@@ -1630,10 +1809,6 @@
           "total_km": {
             "type": "number",
             "example": 1540
-          },
-          "frame_material": {
-            "type": "string",
-            "example": "Carbon"
           },
           "image_url": {
             "type": "string",
@@ -2680,6 +2855,18 @@
           }
         }
       },
+      "ResponseStravaAuthorizeUrlDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://www.strava.com/oauth/authorize?client_id=235898&state=a3f2..."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
       "ResponseUnmatchedStravaGearDto": {
         "type": "object",
         "properties": {
@@ -2715,8 +2902,9 @@
         "type": "object",
         "properties": {
           "stravaBikeId": {
-            "type": "string",
-            "example": "b1234567"
+            "type": "object",
+            "example": "b1234567",
+            "nullable": true
           },
           "bikecheckBikeId": {
             "type": "number",
@@ -2740,6 +2928,73 @@
         },
         "required": [
           "links"
+        ]
+      },
+      "ResponsePendingStravaDto": {
+        "type": "object",
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "example": "13579246810"
+          },
+          "gear_id": {
+            "type": "object",
+            "example": "b12345",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "string",
+            "example": "2026-08-19T06:12:00.000Z"
+          },
+          "name": {
+            "type": "string",
+            "example": "Morning Ride"
+          },
+          "summary_polyline": {
+            "type": "object",
+            "example": "snttH{s`|A[VJrD",
+            "nullable": true
+          },
+          "distance_km": {
+            "type": "number",
+            "example": 42
+          },
+          "duration_min": {
+            "type": "number",
+            "example": 96
+          },
+          "elevation_up_m": {
+            "type": "number",
+            "example": 612
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-19T06:40:00.000Z"
+          }
+        },
+        "required": [
+          "activity_id",
+          "gear_id",
+          "started_at",
+          "name",
+          "summary_polyline",
+          "distance_km",
+          "duration_min",
+          "elevation_up_m",
+          "created_at"
+        ]
+      },
+      "ResolvePendingActivityDto": {
+        "type": "object",
+        "properties": {
+          "bikeId": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "bikeId"
         ]
       },
       "DeviceTokenDto": {
@@ -2809,6 +3064,101 @@
           "is_read",
           "read_at",
           "created_at"
+        ]
+      },
+      "ResponseRideDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 42
+          },
+          "activity_strava_id": {
+            "type": "object",
+            "example": "13579246810",
+            "nullable": true
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 7
+          },
+          "bike_name": {
+            "type": "object",
+            "example": "S-Works Tarmac",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "object",
+            "example": "2026-08-19T06:12:00.000Z",
+            "nullable": true
+          },
+          "distance_m": {
+            "type": "object",
+            "example": 42000,
+            "nullable": true
+          },
+          "duration_min": {
+            "type": "object",
+            "example": 96,
+            "nullable": true
+          },
+          "elevation_up_m": {
+            "type": "object",
+            "example": 612,
+            "nullable": true
+          },
+          "elevation_down_m": {
+            "type": "object",
+            "example": 598,
+            "nullable": true
+          },
+          "speed_avg": {
+            "type": "object",
+            "example": 26,
+            "nullable": true
+          },
+          "max_speed_kmh": {
+            "type": "object",
+            "example": 54,
+            "nullable": true
+          },
+          "json_data": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "activity_strava_id",
+          "bike_id",
+          "bike_name",
+          "started_at",
+          "distance_m",
+          "duration_min",
+          "elevation_up_m",
+          "elevation_down_m",
+          "speed_avg",
+          "max_speed_kmh",
+          "json_data"
+        ]
+      },
+      "ResponseRidePageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseRideDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 137
+          }
+        },
+        "required": [
+          "items",
+          "total"
         ]
       },
       "ResponseReportDto": {

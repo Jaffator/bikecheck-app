@@ -1,20 +1,12 @@
 import { useEffect, useRef, type RefObject } from "react";
 
-// On Android the soft keyboard shrinks the viewport instead of scrolling the
-// page, so a field near the bottom ends up hidden behind it and the user has to
-// scroll by hand. The browser's own scroll-into-view runs before the keyboard
-// has resized anything, so it aims at the wrong place — visualViewport is what
-// reports the real, keyboard-adjusted height.
+// Keeps focused Android fields above the keyboard-adjusted visual viewport.
 const KEYBOARD_MARGIN_PX = 16;
 
-// The delay is not the keyboard animation itself: visualViewport fires while it
-// slides, and each event re-runs the check, so this only covers devices that
-// never fire one.
+// Covers devices that do not emit visual viewport resize events.
 const FALLBACK_DELAY_MS = 350;
 
-// A fixed footer sits on top of the page, so the space it covers is not usable
-// even though the viewport reports it as visible. Measured rather than hardcoded
-// so it keeps up with the footer's own padding and safe-area inset.
+// Measures fixed footer space that obscures the visual viewport.
 function obstructionHeight(selector: string | undefined): number {
   if (!selector) return 0;
   const element = document.querySelector(selector);
@@ -29,7 +21,7 @@ function scrollElementIntoView(element: HTMLElement, footerSelector: string | un
   }
 
   const rect = element.getBoundingClientRect();
-  // offsetTop is what the page is shifted by when the keyboard is open.
+  // Includes visual viewport offset while the keyboard is open.
   const visibleBottom = viewport.height + viewport.offsetTop - obstructionHeight(footerSelector);
   const hiddenBy = rect.bottom + KEYBOARD_MARGIN_PX - visibleBottom;
 
@@ -38,15 +30,10 @@ function scrollElementIntoView(element: HTMLElement, footerSelector: string | un
   }
 }
 
-// Keeps the focused field above the keyboard. Attach the returned ref to the
-// scrolling container; focus is caught as it bubbles, so fields added later are
-// covered without registering anything per input.
-// Pass a selector for any fixed element covering the bottom of the page (an
-// action footer, a tab bar) so the field is scrolled clear of it too.
+// Returns a container ref that keeps focused fields above the keyboard and footer.
 export function useScrollIntoViewOnFocus<T extends HTMLElement>(footerSelector?: string): RefObject<T | null> {
   const containerRef = useRef<T>(null);
-  // Kept across events so a viewport resize knows what to scroll to, and so the
-  // fallback timer can be cancelled when a resize arrives first.
+  // Retains focus and fallback timer state across viewport events.
   const focusedRef = useRef<HTMLElement | null>(null);
   const timeoutRef = useRef<number | null>(null);
 
@@ -70,8 +57,7 @@ export function useScrollIntoViewOnFocus<T extends HTMLElement>(footerSelector?:
       if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
     }
 
-    // Fires repeatedly while the keyboard animates, so the field lands in the
-    // right place even though the final height is not known up front.
+    // Repositions the focused field during keyboard animation.
     function handleViewportResize(): void {
       if (focusedRef.current) scrollElementIntoView(focusedRef.current, footerSelector);
     }

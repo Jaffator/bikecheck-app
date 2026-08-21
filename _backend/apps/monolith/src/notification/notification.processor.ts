@@ -23,10 +23,23 @@ export class NotificationProcessor extends WorkerHost {
     if (!notification || notification.is_read) return;
 
     const config = NOTIFICATION_CONFIG[notification.type as NotificationType];
+    // Rows written before a type was renamed or retired still sit in the table,
+    // and reading one must not take the worker down with it.
+    if (!config) {
+      this.logger.warn(
+        { custom: true, notificationId: notification.id, type: notification.type },
+        'Notification has no delivery config; nothing to send',
+      );
+      return;
+    }
 
     if (config.channels.includes('push')) {
       const data: Record<string, string> = { type: notification.type };
-      if (config.route) data.route = config.route;
+      // The client navigates to whatever arrives here, so the placeholders have
+      // to be filled in before sending — a path with a literal ":bikeId" left in
+      // it lands on a broken screen.
+      const route = this.buildRoute(config.route, notification.payload);
+      if (route) data.route = route;
       await this.pushService.sendToUser(notification.user_id, notification.title, notification.body, data);
     }
 
@@ -35,6 +48,33 @@ export class NotificationProcessor extends WorkerHost {
       { custom: true, notificationId: notification.id, channels: config.channels },
       'Notification delivery requested: ' + notification.title,
     );
+  }
+
+  // Fills a route template from the notification's payload. Returns null when
+  // the type has no route, or when the payload is missing a value the template
+  // needs — sending no route is better than sending a broken one.
+  private buildRoute(template: string | undefined, payload: unknown): string | null {
+    if (!template) return null;
+
+    const values = (payload ?? {}) as Record<string, unknown>;
+    // Tracked rather than inferred from the result: a placeholder can sit in a
+    // query value as well as a path segment, where an empty string leaves no
+    // shape to detect afterwards.
+    let missing = false;
+
+    const filled = template.replace(/:(\w+)/g, (_match, key: string) => {
+      const value = values[key];
+      // Only a scalar can stand in for a placeholder; anything else would
+      // stringify to "[object Object]" and produce a route that resolves
+      // to nothing.
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number' || typeof value === 'bigint') return String(value);
+      missing = true;
+      return '';
+    });
+
+    // Sending no route is better than sending one that lands on a blank screen.
+    return missing ? null : filled;
   }
 
   @OnWorkerEvent('completed')

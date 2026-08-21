@@ -3,13 +3,11 @@ import logoDark from "../assets/icons/bikecheck/Logo_dark.svg";
 function ServiceReportMobileMultiple() {
   return (
     <div className="antialiased min-h-screen py-4 px-0 sm:py-8 sm:px-4 flex justify-center">
-      {/* BEGIN: MainDocument */}
       <main
         className="w-full max-w-3xl text-left bg-white rounded-none sm:rounded-sm report-container overflow-hidden"
         data-purpose="document-preview"
       >
         <div className="p-4 sm:p-10 flex flex-col gap-6 sm:gap-8">
-          {/* BEGIN: Header */}
           <header>
             <div className="flex flex-col items-center gap-1">
               <img src={logoDark} alt="BikeCheck" className="h-10 w-auto" />
@@ -17,7 +15,6 @@ function ServiceReportMobileMultiple() {
             </div>
           </header>
 
-          {/* BEGIN: MetaInfo Grid */}
           <section className="pb-6 flex flex-col gap-6" data-purpose="meta-info">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="flex flex-col">
@@ -47,16 +44,12 @@ function ServiceReportMobileMultiple() {
               </div>
             </div>
           </section>
-          {/* END: MetaInfo Grid */}
-          {/* BEGIN: Service Timeline */}
           <section className="flex flex-col gap-8" data-purpose="service-timeline">
-            {/* 2023 Group */}
             <div className="flex flex-col">
               <h3 className="font-display font-bold text-lg uppercase text-branddark border-b border-border-brand pb-2 mb-2">
                 2023
               </h3>
               <div className="flex flex-col">
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Oct 12</span>
@@ -78,7 +71,6 @@ function ServiceReportMobileMultiple() {
                     <span className="font-mono text-sm font-semibold text-text-main">$25.00</span>
                   </div>
                 </div>
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3 border-t border-border-light">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Oct 05</span>
@@ -98,7 +90,6 @@ function ServiceReportMobileMultiple() {
                     <span className="font-display font-bold uppercase text-sm text-text-muted">No Charge</span>
                   </div>
                 </div>
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3 border-t border-border-light">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Sep 28</span>
@@ -118,7 +109,6 @@ function ServiceReportMobileMultiple() {
                     <span className="font-mono text-sm font-semibold text-text-main">$60.00</span>
                   </div>
                 </div>
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3 border-t border-border-light">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Sep 15</span>
@@ -140,13 +130,11 @@ function ServiceReportMobileMultiple() {
                 </div>
               </div>
             </div>
-            {/* 2022 Group */}
             <div className="flex flex-col">
               <h3 className="font-display font-bold text-lg uppercase text-branddark border-b border-border-brand pb-2 mb-2">
                 2022
               </h3>
               <div className="flex flex-col">
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Nov 20</span>
@@ -161,7 +149,6 @@ function ServiceReportMobileMultiple() {
                     <span className="font-mono text-sm font-semibold text-text-main">$250.00</span>
                   </div>
                 </div>
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3 border-t border-border-light">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Jun 10</span>
@@ -176,7 +163,6 @@ function ServiceReportMobileMultiple() {
                     <span className="font-mono text-sm font-semibold text-text-main">$85.00</span>
                   </div>
                 </div>
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3 border-t border-border-light">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Mar 05</span>
@@ -191,7 +177,6 @@ function ServiceReportMobileMultiple() {
                     <span className="font-mono text-sm font-semibold text-text-main">$65.00</span>
                   </div>
                 </div>
-                {/* Item */}
                 <div className="break-inside-avoid flex justify-between items-start gap-4 py-3 border-t border-border-light">
                   <div className="w-20 shrink-0">
                     <span className="font-mono text-sm text-text-muted">Jun 10</span>
@@ -209,8 +194,6 @@ function ServiceReportMobileMultiple() {
               </div>
             </div>
           </section>
-          {/* END: Service Timeline */}
-          {/* BEGIN: Footer Signatures */}
           <footer
             className="mt-6 pt-6 flex flex-col gap-6 text-sm border-t border-border-light"
             data-purpose="report-footer"
@@ -226,10 +209,8 @@ function ServiceReportMobileMultiple() {
               BikeCheck Certified Maintenance • bikecheck.cloud • contact@bikecheck.com
             </div>
           </footer>
-          {/* END: Footer Signatures */}
         </div>
       </main>
-      {/* END: MainDocument */}
     </div>
   );
 }

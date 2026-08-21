@@ -1,30 +1,28 @@
 // Shared by every field in the add-bike wizard so the steps look like one form.
 export const inputStyles = {
   input: {
+    borderRadius: "0.6rem",
     backgroundColor: "var(--mantine-color-inputs-6)",
-    border: "none",
+    border: "1px solid var(--mantine-color-inputs-5)",
     height: "3rem",
     color: "var(--mantine-color-text-6)",
     "--input-placeholder-color": "var(--mantine-color-cards-5)",
   } as React.CSSProperties,
 };
 
-// Same look as inputStyles, but for a field that grows with its content: the
-// fixed height would cap an autosize textarea at one line and hide the rest.
+// Extend input styles for autosizing textareas.
 export const autosizeInputStyles = {
   input: {
     ...inputStyles.input,
     height: undefined,
     minHeight: "3rem",
-    // The textarea keeps Mantine's own vertical padding, which the fixed-height
-    // input did not need.
+    // Preserve vertical padding for autosizing textareas.
     paddingTop: "0.75rem",
     paddingBottom: "0.75rem",
   } as React.CSSProperties,
 };
 
-// Mantine's default disabled button reads as missing rather than blocked on the
-// dark theme, so every gated action in the wizard dims to the card colour.
+// Use visible disabled states in the dark wizard theme.
 export const disabledButtonStyles = {
   root: {
     "--mantine-color-disabled": "var(--mantine-color-cards-5)",
@@ -38,7 +36,7 @@ export const dropdownProps = {
   styles: {
     dropdown: {
       backgroundColor: "var(--mantine-color-cards-6)",
-      border: "1px solid var(--mantine-color-cards-5)",
+      border: "1px solid var(--mantine-color-inputs-5)",
       color: "var(--mantine-color-text-6)",
     },
   },

@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Offline page.
 import { type ReactElement } from "react";
 import { Stack, Title, Text, Button } from "@mantine/core";
 import { Unplug } from "lucide-react";

@@ -16,8 +16,7 @@ export interface GoogleTokenCredentials {
   idToken: string;
 }
 
-// Mirrors the backend UpdateUserDto (user/dto/user.dtos.ts). Every field is
-// optional — the backend drops undefined ones and patches the rest.
+// Mirrors UpdateUserDto; the backend ignores undefined fields.
 export interface UpdateUserPayload {
   name?: string;
   language?: string;
@@ -26,8 +25,7 @@ export interface UpdateUserPayload {
   avatar_url?: string;
 }
 
-// Mirrors the backend UserResponseDto (user/dto/user.dtos.ts).
-// Dates arrive as ISO strings over JSON, so they are typed as string here.
+// Mirrors UserResponseDto with JSON dates represented as ISO strings.
 export interface User {
   id: number;
   name: string;
@@ -39,6 +37,11 @@ export interface User {
   is_active: boolean;
   // Set once the Strava OAuth flow completes. Null means not linked.
   strava_athlete_id: string | null;
+  // Optional linked-athlete snapshot cleared when Strava disconnects.
+  strava_firstname: string | null;
+  strava_lastname: string | null;
+  strava_username: string | null;
+  strava_avatar_url: string | null;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;

@@ -1,15 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
-import {
-  Button,
-  Group,
-  Image,
-  Modal,
-  Paper,
-  Skeleton,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Button, Group, Image, Modal, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { Clock, Gauge, Trash2 } from "lucide-react";
@@ -19,9 +10,9 @@ import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { useLinkStravaGear } from "../strava/strava.queries";
 import { useCurrentUser } from "../users/users.queries";
 import { tapFeedback } from "@/utils/haptics";
+import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
 
-// The bike a card opens. Identity and totals only so far — components, service
-// history and wear are still to come.
+// Render available identity and totals for the selected bike.
 export function BikeDetail(): ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -33,8 +24,7 @@ export function BikeDetail(): ReactElement {
   const remove = useDeleteBike();
   const unpair = useLinkStravaGear();
 
-  // Only reached when the bike was opened without the garage list in cache (a
-  // deep link or a reload); coming from the list, the data is already there.
+  // Show loading state for deep links without cached garage data.
   if (isLoading) {
     return (
       <Stack gap="md" px="md" pt="md">
@@ -56,23 +46,10 @@ export function BikeDetail(): ReactElement {
   const title = bike.bikename ?? bike.bike_model ?? bike.bike_brand;
 
   return (
-    <Stack
-      gap="md"
-      px="md"
-      pt="md"
-      pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
-    >
+    <Stack gap="md" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
       {bike.image_url && (
         <Paper radius="md" style={{ overflow: "hidden" }}>
-          {/* Contained on white for the same reason as the card: product shots
-              carry their own margins, and cropping to fill cut the bike off. */}
-          <Image
-            src={bike.image_url}
-            alt={title}
-            h={220}
-            fit="contain"
-            bg="#FFFFFF"
-          />
+          <Image src={bike.image_url} alt={title} h={PHOTO_SLOT_HEIGHT} fit="cover" bg="#FFFFFF" />
         </Paper>
       )}
 
@@ -80,15 +57,8 @@ export function BikeDetail(): ReactElement {
         <Text fw={700} fz={24} c="text.6" lh={1.2}>
           {title}
         </Text>
-        <Text
-          className="font-mono"
-          fz={11}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-        >
-          {[bike.bike_brand, bike.year]
-            .filter((part) => part !== null && part !== "")
-            .join(" • ")}
+        <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)">
+          {[bike.bike_brand, bike.year].filter((part) => part !== null && part !== "").join(" • ")}
         </Text>
       </Stack>
 
@@ -110,8 +80,6 @@ export function BikeDetail(): ReactElement {
         <StravaPairingHint stravaGearId={bike.strava_gear_id} />
       </Group>
 
-      {/* Pairing is only ever offered with a linked account — without one there
-          is no gear to pair against. */}
       {user?.strava_athlete_id && (
         <Group gap="sm">
           {bike.strava_gear_id === null ? (
@@ -134,9 +102,7 @@ export function BikeDetail(): ReactElement {
               loading={unpair.isPending}
               onClick={() => {
                 void tapFeedback();
-                unpair.mutate([
-                  { bikecheckBikeId: bike.id, stravaBikeId: null },
-                ]);
+                unpair.mutate([{ bikecheckBikeId: bike.id, stravaBikeId: null }]);
               }}
             >
               {t("strava.unpairBike")}
@@ -145,8 +111,7 @@ export function BikeDetail(): ReactElement {
         </Group>
       )}
 
-      {/* Unpairing stops new rides from arriving; the ones already recorded stay,
-          because component wear is derived from them. */}
+      {/* Existing rides remain after unpairing. */}
       {bike.strava_gear_id !== null && (
         <Text fz={12} c="var(--color-text-dim)">
           {t("strava.unpairBikeNote")}
@@ -157,8 +122,6 @@ export function BikeDetail(): ReactElement {
         {t("bikes.detailComingSoon")}
       </Text>
 
-      {/* Last thing on the page: destructive, and nothing above it should be
-          reached by aiming for something else. */}
       <Button
         variant="outline"
         color="red.5"
@@ -173,8 +136,7 @@ export function BikeDetail(): ReactElement {
           root: {
             alignSelf: "flex-start",
             backgroundColor: "transparent",
-            borderColor:
-              "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
+            borderColor: "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
           },
         }}
       >
@@ -187,14 +149,9 @@ export function BikeDetail(): ReactElement {
         </Text>
       )}
 
-      <GearLinkingSheet
-        opened={pairingGear}
-        onClose={() => setPairingGear(false)}
-        bikeIds={[bike.id]}
-      />
+      <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
 
-      {/* The bike leaves the garage for good, so it is worth one question. The
-          body says what survives it: the rides stay in the history. */}
+      {/* Confirm irreversible removal from the garage. */}
       <Modal
         opened={confirmingDelete}
         onClose={() => setConfirmingDelete(false)}
@@ -208,21 +165,12 @@ export function BikeDetail(): ReactElement {
         }}
       >
         <Stack gap="lg">
-          <Text
-            size="sm"
-            c="var(--color-text-dim)"
-            style={{ lineHeight: 1.45 }}
-          >
+          <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
             {t("bikes.deleteConfirmBody")}
           </Text>
 
           <Group gap="sm" grow>
-            <Button
-              variant="default"
-              radius="md"
-              onClick={() => setConfirmingDelete(false)}
-              disabled={remove.isPending}
-            >
+            <Button variant="default" radius="md" onClick={() => setConfirmingDelete(false)} disabled={remove.isPending}>
               {t("bikes.deleteConfirmCancel")}
             </Button>
             <Button
@@ -232,8 +180,7 @@ export function BikeDetail(): ReactElement {
               onClick={() => {
                 void tapFeedback();
                 remove.mutate(bike.id, {
-                  // Nothing to come back to once the bike is gone, so the garage
-                  // replaces this screen rather than sitting behind it.
+                  // Replace detail history with the garage after deletion.
                   onSuccess: () => navigate("/bikes", { replace: true }),
                 });
               }}

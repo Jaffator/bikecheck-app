@@ -1,14 +1,6 @@
-// Knows which endpoint to call and what type comes back. Uses the shared
-// apiFetch client — no fetch, base URL or token handling lives here.
-// Backend route is under "/auth" (see auth.controller.ts).
+// Typed user endpoints use the shared API client.
 import { apiFetch } from "@/api/client";
-import type {
-  User,
-  LoginCredentials,
-  RegisterCredentials,
-  GoogleTokenCredentials,
-  UpdateUserPayload,
-} from "./users.types";
+import type { User, LoginCredentials, RegisterCredentials, GoogleTokenCredentials, UpdateUserPayload } from "./users.types";
 
 // GET /auth/me — the currently logged-in user (401 if not authenticated).
 export async function getCurrentUser(): Promise<User> {
@@ -30,8 +22,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<User> {
   });
 }
 
-// POST /auth/register — creates the user and returns it. Note: it does NOT
-// set the auth cookies, so the caller still has to log in afterwards.
+// Creates a user without establishing auth cookies.
 export async function registerUser(credentials: RegisterCredentials): Promise<User> {
   return apiFetch<User>("/auth/register", {
     method: "POST",
@@ -47,8 +38,7 @@ export async function updateUser(id: number, data: UpdateUserPayload): Promise<U
   });
 }
 
-// POST /auth/google/token — when google sign-in is done natively, the app gets an ID token from Google and sends it to the backend. The backend verifies it and returns the logged-in user.
-// set the auth cookies, so the caller still has to log in afterwards.
+// Sends a native Google ID token for backend verification and login.
 export async function sendGoogleToken(credentials: GoogleTokenCredentials): Promise<User> {
   return apiFetch<User>("/auth/google/token", {
     method: "POST",

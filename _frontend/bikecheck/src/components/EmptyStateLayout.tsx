@@ -1,50 +1,37 @@
 import type { ReactElement, ReactNode } from "react";
 import { Box, Image, Stack, Text } from "@mantine/core";
 
-// Where the headline starts on every empty state. Viewport-relative so the copy
-// lands at the same physical height on every phone — a width-relative offset
-// would drift with screen width, and an image-relative one would drift with the
-// illustration's aspect ratio.
+// Positions empty-state copy consistently across viewport sizes.
 const COPY_TOP_OFFSET = "40dvh";
 
-// The illustration is cropped to this height so its fade always meets the copy
-// at COPY_TOP_OFFSET, whatever the source image's aspect ratio is.
+// Crops the illustration so its fade reaches the copy offset.
 const ILLUSTRATION_HEIGHT = "50dvh";
 
-// Dissolves both crop edges into full transparency, so the image ends in the
-// page background instead of a hard line at either end. Alpha, not a colour —
-// it needs no knowledge of what is behind it.
+// Fades illustration edges into transparent page background.
 const FADE_MASK =
   "linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 22%, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0) 96%)";
 
-// Just enough of a gap to keep the illustration off the header edge — the top
-// fade does the rest of the separation.
+// Separates the illustration from the header edge.
 const ILLUSTRATION_TOP_OFFSET = 5;
 
-// The illustration is a backdrop, not content — kept dim so it never competes
-// with the copy sitting on top of it. The page background is near-black, so a
-// lower value reads as darker.
+// Keeps the illustration visually subordinate to foreground copy.
 const ILLUSTRATION_OPACITY = 0.2;
 
 interface EmptyStateLayoutProps {
   illustration: string;
   title: string;
   body: string;
-  // The status pill some empty states drop over the illustration's top-right.
+  // Renders an optional status pill over the illustration.
   badge?: ReactNode;
-  // Anything below the copy — CTA button, pro tip card.
+  // Renders optional actions below the copy.
   children?: ReactNode;
 }
 
-// Shared frame for the "nothing here yet" pages (garage, service, rides). The
-// header and the tab bar around it belong to AppLayout — this is only the
-// AppShell.Main content.
+// Frames empty-state content inside AppShell.Main.
 export function EmptyStateLayout({ illustration, title, body, badge, children }: EmptyStateLayoutProps): ReactElement {
   return (
     <Box pos="relative" px={16} pb={64}>
-      {/* ----------- Illustration layer ----------- */}
-      {/* Sits behind the copy on purpose: the mask fades the lower half of the
-          illustration out so the heading sits on top of it. */}
+      {/* Places the masked illustration behind copy. */}
       <Box pos="absolute" top={ILLUSTRATION_TOP_OFFSET} left={0} right={0} className="pointer-events-none">
         <Image
           src={illustration}
@@ -53,11 +40,7 @@ export function EmptyStateLayout({ illustration, title, body, badge, children }:
           h={ILLUSTRATION_HEIGHT}
           fit="cover"
           opacity={ILLUSTRATION_OPACITY}
-          // Fading the image's own alpha rather than painting a matching
-          // gradient on top: the crop edges disappear whatever the page sits
-          // on, so nothing has to be kept in sync with the background colour.
-          // No boxShadow here — a glow would outline the very edges the mask
-          // is dissolving.
+          // Masks image alpha so crop edges blend into any background.
           style={{
             maskImage: FADE_MASK,
             WebkitMaskImage: FADE_MASK,
@@ -71,8 +54,7 @@ export function EmptyStateLayout({ illustration, title, body, badge, children }:
         </Box>
       )}
 
-      {/* ----------- Copy + actions ----------- */}
-      {/* pt drops the text onto the faded-out part of the illustration above it. */}
+      {/* Positions copy within the illustration fade. */}
       <Stack pos="relative" pt={COPY_TOP_OFFSET} gap={16}>
         <Stack gap={16} ta="center">
           <Text fz={22} lh="32px" fw={600} c="var(--color-text-bright)">

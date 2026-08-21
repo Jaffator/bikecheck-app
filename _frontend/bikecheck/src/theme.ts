@@ -1,7 +1,6 @@
 import { createTheme, type MantineColorsTuple } from "@mantine/core";
 
-// 10-shade ramps generated from the Figma "BikeCheck app" color styles.
-// Index 0 = lightest, 9 = darkest, index 6 = the exact Figma value.
+// Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
   "#fbfaf1",
   "#f4f0d7",

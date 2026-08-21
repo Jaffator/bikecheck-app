@@ -1,4 +1,3 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, type ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, Textarea, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -27,31 +26,24 @@ import {
 
 interface BikeComponentListProps {
   groups: ComponentGroup[] | undefined;
-  // Every trackable component type, already prefilled from the scrape.
   components: AssembleBikeComponent[] | undefined;
   entries: ComponentEntries;
   onChangeDescription: (componentTypeId: number, position: ComponentPosition, description: string) => void;
-  // Sided parts the user asked to describe one end at a time.
   splitComponents: SplitComponents;
   onToggleSplit: (componentTypeId: number) => void;
-  // Parts the user said his bike does not have; nothing is saved for them.
   disabledComponents: DisabledComponents;
   onToggleDisabled: (componentTypeId: number) => void;
-  // Only one group is open at a time — a phone cannot show two expanded ones.
   openGroupId: number | null;
   onToggleGroup: (groupId: number) => void;
   isLoading: boolean;
   isError: boolean;
 }
 
-// Seeded data carries a translation key; a group or type the user created
-// himself has none, and then its own name is the label.
+// Use the fallback name for user-created data without a translation key.
 function translatedName(i18nKey: string | null, fallback: string, translate: (key: string) => string): string {
   return i18nKey ? translate(i18nKey) : fallback;
 }
 
-// Loading, failure and "nothing found" all replace the list with the same
-// centred panel — only the mark and the wording differ.
 function StatusPanel({
   mark,
   title,
@@ -80,8 +72,6 @@ function StatusPanel({
   );
 }
 
-// The round mark on the left of every group row. It carries the open/configured
-// state, so the row reads at a glance without opening it.
 function GroupMark({ highlighted, children }: { highlighted: boolean; children: ReactElement }): ReactElement {
   return (
     <Box
@@ -103,9 +93,6 @@ function GroupMark({ highlighted, children }: { highlighted: boolean; children: 
   );
 }
 
-// Splits a paired part into a front and a rear field, or folds the two back
-// into one. Sits next to the part's name, since it changes what that part asks
-// for rather than what it is.
 function SplitToggle({ split, label, onToggle }: { split: boolean; label: string; onToggle: () => void }): ReactElement {
   return (
     <UnstyledButton
@@ -134,8 +121,6 @@ function SplitToggle({ split, label, onToggle }: { split: boolean; label: string
   );
 }
 
-// Says the bike does not carry this part at all. Without it an essential part
-// would be saved blank, so a singlespeed would end up tracking a derailleur.
 function AbsentToggle({ absent, label, onToggle }: { absent: boolean; label: string; onToggle: () => void }): ReactElement {
   return (
     <UnstyledButton
@@ -179,15 +164,11 @@ export function BikeComponentList({
   isError,
 }: BikeComponentListProps): ReactElement {
   const { t } = useTranslation();
-  // Keeps a focused field above the Android keyboard. On the list itself, so
-  // every Textarea inside is covered as groups open and close.
+  // Keep focused fields above the fixed footer and keyboard.
   const listRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
   const openGroupRef = useRef<HTMLDivElement>(null);
 
-  // An expanded group grows downwards, so on a phone its fields open below the
-  // fold and the user has to scroll to reach them. Only the header is pulled to
-  // the top — scrolling to the whole card would push a long group's header off
-  // screen. Runs after paint, when the expanded height is known.
+  // Scroll the expanded group header into view after layout.
   useEffect(() => {
     if (openGroupId === null) return;
     const element = openGroupRef.current;
@@ -203,8 +184,6 @@ export function BikeComponentList({
     return <StatusPanel mark={<Loader color="primary.6" />} body={t("addBike.componentsLoading")} />;
   }
 
-  // Scraping a detail page fails the same way the search does, and the user has
-  // the same way out — carry on and add the parts by hand later.
   if (isError) {
     return (
       <StatusPanel
@@ -229,8 +208,6 @@ export function BikeComponentList({
     );
   }
 
-  // Only the two sides are ever labelled — an unsided part has a single field
-  // and the component name above it already says what it is.
   const positionLabels: Record<(typeof SIDED_POSITIONS)[number], string> = {
     front: t("addBike.positionFront"),
     rear: t("addBike.positionRear"),
@@ -243,17 +220,9 @@ export function BikeComponentList({
         const configured = countConfigured(entries, groupComponentTypes, splitComponents, disabledComponents);
         const fields = countFields(groupComponentTypes, splitComponents, disabledComponents);
         const groupName = translatedName(group.i18n_key, group.group_name, t);
-        // The mark only goes to the accent colour once every part in the group is
-        // described — a half-answered group stays grey, so what is left to do is
-        // visible without opening the rows. A group with nothing to ask (every
-        // part marked absent) counts as done rather than permanently grey.
         const complete = fields === 0 || configured === fields;
         const highlighted = isOpen || complete;
-        // Addressed by the seeded English name, not the translated one the row
-        // displays. A group without an icon of its own falls back to the tool.
         const GroupIcon = groupIcon(group.group_name);
-        // Closed rows preview what the group holds; the count replaces it once
-        // the user has described something, since that is the news.
         const summary = groupComponentTypes
           .slice(0, 3)
           .map((component) => translatedName(component.component_i18n_key, component.component_name, t))
@@ -262,8 +231,6 @@ export function BikeComponentList({
         return (
           <Paper
             key={group.id}
-            // Only the open card is tracked — the effect scrolls to whichever
-            // group is currently expanded.
             ref={isOpen ? openGroupRef : undefined}
             bg="cards.6"
             radius="md"
@@ -271,14 +238,9 @@ export function BikeComponentList({
               border: isOpen
                 ? "1px solid var(--mantine-color-primary-6)"
                 : "1px solid var(--mantine-color-other-borderSubtle)",
-              // Clears the fixed AppShell header, which scrollIntoView does not
-              // know about — without it the row lands underneath it.
               scrollMarginTop: "calc(4.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
             }}
           >
-            {/* ----------- Group header ----------- */}
-            {/* The whole row is the tap target, so a thumb does not have to
-                find the small circle on the right. */}
             <UnstyledButton
               onClick={() => {
                 tapFeedback();
@@ -312,8 +274,6 @@ export function BikeComponentList({
                         {t("addBike.editingComponents")}
                       </Text>
                     ) : configured > 0 ? (
-                      // A group with every part described is done, and says so
-                      // in the accent colour; a partial count stays quiet.
                       <Text size="sm" c={complete ? "primary.6" : "text.8"}>
                         {t("addBike.partsConfigured", { count: configured, total: fields })}
                       </Text>
@@ -325,8 +285,6 @@ export function BikeComponentList({
                   </Stack>
                 </Group>
 
-                {/* Open, already-filled and untouched groups each get their own
-                    mark, so the state is readable without expanding. */}
                 <Box
                   style={{
                     display: "flex",
@@ -348,7 +306,6 @@ export function BikeComponentList({
               </Group>
             </UnstyledButton>
 
-            {/* ----------- Group body ----------- */}
             {isOpen && (
               <Stack gap="md" px="md" pb="md">
                 {groupComponentTypes.map((component) => {
@@ -357,9 +314,6 @@ export function BikeComponentList({
 
                   const split = isSplit(component, splitComponents);
                   const disabled = disabledComponents.has(typeId);
-                  // Addressed by the seeded English name, like the group icon.
-                  // A type the user added himself has none, and then the name
-                  // alone carries the row.
                   const ComponentIcon = componentIcon(component.component_name);
 
                   return (
@@ -384,9 +338,6 @@ export function BikeComponentList({
                           </Text>
                         </Group>
                         <Group gap="xs" wrap="nowrap">
-                          {/* A part that comes in pairs is usually the same at
-                              both ends, so it starts as one field and only splits
-                              when the user says the sides differ. */}
                           {component.has_position && !disabled && (
                             <SplitToggle
                               split={split}
@@ -394,8 +345,6 @@ export function BikeComponentList({
                               onToggle={() => onToggleSplit(typeId)}
                             />
                           )}
-                          {/* Not every bike carries every part, and an essential
-                              one would otherwise be saved blank. */}
                           <AbsentToggle
                             absent={disabled}
                             label={disabled ? t("addBike.partAbsentUndo") : t("addBike.partAbsent")}
@@ -403,8 +352,6 @@ export function BikeComponentList({
                           />
                         </Group>
                       </Group>
-                      {/* The fields go away with the part: there is nothing to
-                          describe about a part the bike does not have. */}
                       {!disabled &&
                         positionsOf(component, splitComponents).map((position) => (
                           <Stack key={position} gap={4}>
@@ -413,9 +360,6 @@ export function BikeComponentList({
                                 {positionLabels[position]}
                               </Text>
                             )}
-                            {/* Scraped descriptions are long ("Campagnolo Bora
-                                Ultra WTO, Axle dimension…"), so the field wraps
-                                and grows instead of hiding the tail. */}
                             <Textarea
                               autosize
                               minRows={1}

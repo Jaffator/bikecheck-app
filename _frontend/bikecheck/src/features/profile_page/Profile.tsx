@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Profile page.
 import type { ReactElement } from "react";
 import { Button, Card } from "@mantine/core";
 import { useLogout } from "../users/users.queries";

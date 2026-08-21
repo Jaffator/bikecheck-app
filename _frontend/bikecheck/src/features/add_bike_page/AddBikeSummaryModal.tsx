@@ -13,8 +13,7 @@ interface AddBikeSummaryModalProps {
   onClose: () => void;
   identity: AddBikeIdentityValues;
   specification: BikeSpecificationValues;
-  // Already reduced to what will actually be written — absent parts dropped and
-  // sided parts expanded into one record per side.
+  // Contains only persisted component records.
   components: AssembleBikeComponent[];
   onConfirm: () => void;
   isSaving: boolean;
@@ -23,8 +22,7 @@ interface AddBikeSummaryModalProps {
   errorDetails: string[];
 }
 
-// Seeded components carry a translation key; one the user created himself has
-// none, and then its own name is the label.
+// Use the local name when a component has no translation key.
 function translatedName(i18nKey: string | null, fallback: string, translate: (key: string) => string): string {
   return i18nKey ? translate(i18nKey) : fallback;
 }
@@ -59,8 +57,7 @@ export function AddBikeSummaryModal({
   const notSpecified = t("addBike.summaryNotSpecified");
   const bikeName = [identity.brand, identity.model].filter((part) => part.trim() !== "").join(" ");
 
-  // The frame size is a letter unless the user picked "other", which is when the
-  // free-text length is what he actually answered.
+  // Use custom frame length only for the other size option.
   const frameSize = specification.frameSize === "other" ? specification.sizeLength.trim() : (specification.frameSize ?? "");
 
   return (
@@ -70,8 +67,7 @@ export function AddBikeSummaryModal({
       title={t("addBike.summaryTitle")}
       centered
       radius="md"
-      // The component list can outgrow the viewport, so the body scrolls rather
-      // than pushing the confirm button off the screen.
+      // Scroll long component lists inside the modal.
       scrollAreaComponent={ScrollArea.Autosize}
       styles={{ title: { fontWeight: 600 } }}
     >
@@ -131,8 +127,7 @@ export function AddBikeSummaryModal({
 
                 return (
                   <Group
-                    // A sided part appears twice under the same type, so the
-                    // index is what keeps the two rows apart.
+                    // Include index to distinguish component sides.
                     key={`${component.component.component_type_id}:${position ?? "none"}:${index}`}
                     justify="space-between"
                     gap="sm"
@@ -156,8 +151,7 @@ export function AddBikeSummaryModal({
           <Alert color="red" variant="light" icon={<TriangleAlert size={16} />}>
             <Stack gap={4}>
               <Text size="sm">{t("addBike.saveFailed")}</Text>
-              {/* The server's own reason, so a rejected field can be corrected
-                  rather than guessed at. */}
+              {/* Show server validation details for correction. */}
               {errorDetails.map((detail) => (
                 <Text key={detail} size="xs" c="dimmed">
                   {detail}

@@ -110,12 +110,14 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<UserResponseDto> {
+    console.log('LOGIN-----------');
     const deviceInfo = this.getDeviceInfo(req);
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(
       req.user,
       deviceInfo,
       ip,
     );
+    console.log(deviceInfo);
     this.setAuthCookies(res, accessToken, refreshToken);
     return this.mapToResponse(req.user);
   }
@@ -242,6 +244,10 @@ export class AuthController {
       weight_kg: user.weight_kg,
       is_active: user.is_active || false,
       strava_athlete_id: user.strava_athlete_id ?? null,
+      strava_firstname: user.strava_firstname ?? null,
+      strava_lastname: user.strava_lastname ?? null,
+      strava_username: user.strava_username ?? null,
+      strava_avatar_url: user.strava_avatar_url ?? null,
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
       created_at: user.created_at || new Date(),

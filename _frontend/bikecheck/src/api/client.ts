@@ -1,6 +1,4 @@
-// Shared fetch wrapper for the whole app. This is the ONLY place that knows
-// the base URL, attaches the auth token, and turns non-2xx responses into
-// errors. Feature api files call this instead of using fetch directly.
+// Shared fetch wrapper centralizes URLs, credentials, and non-2xx errors.
 import { Network } from "./network";
 import { useOfflineWhenCallApiStore } from "../store/store";
 const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
@@ -8,8 +6,7 @@ const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
 // Thrown for any non-2xx response so callers can inspect the status code.
 export class ApiError extends Error {
   readonly status: number;
-  // Whatever the server said went wrong. A 400 from validation carries one line
-  // per rejected field, which is the only way to tell what to fix.
+  // Server-provided validation messages.
   readonly details: string[];
 
   constructor(status: number, message: string, details: string[] = []) {
@@ -29,18 +26,13 @@ function extractErrorDetails(body: unknown): string[] {
   return [];
 }
 
-// Endpoints whose own 401 means "bad credentials", not "expired access token".
-// Refreshing on these would either loop forever (/auth/refresh) or hide a real
-// login failure.
+// Auth endpoints whose 401 responses must not trigger token refresh.
 const NO_REFRESH_PATHS: string[] = ["/auth/refresh", "/auth/login", "/auth/register", "/auth/google/token"];
 
-// In-flight refresh, shared by every caller. The backend rotates the refresh
-// token, so two parallel refreshes would race and revoke each other's token —
-// everyone waits on the same promise instead.
+// Shared in-flight refresh prevents competing rotated-token requests.
 let refreshPromise: Promise<boolean> | null = null;
 
-// Called when the refresh token is gone too. Set by App bootstrap so this
-// module stays free of React Query imports.
+// App bootstrap sets this when refresh failure must end the session.
 let onSessionExpired: (() => void) | null = null;
 
 export function setOnSessionExpired(handler: () => void): void {
@@ -76,8 +68,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit, retried =
     throw new NetworkError();
   }
 
-  // FormData bodies must keep the browser-generated Content-Type: it carries the
-  // multipart boundary, which a hardcoded JSON header would destroy.
+  // FormData requires the browser-generated multipart Content-Type.
   const isFormData = options?.body instanceof FormData;
 
   try {
@@ -93,8 +84,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit, retried =
     throw new NetworkError();
   }
 
-  // Access token expired: refresh once, then replay the original request. A
-  // second 401 is a real authorization failure, so it is not retried again.
+  // Refresh expired access tokens once before replaying the request.
   if (response.status === 401 && !retried && !NO_REFRESH_PATHS.includes(path)) {
     const refreshed = await refreshSession();
     if (refreshed) {
@@ -104,8 +94,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit, retried =
   }
 
   if (!response.ok) {
-    // Read the body before throwing: the status alone does not say which field
-    // the server rejected. A non-JSON error body is not worth failing over.
+    // Read JSON error details when available.
     const body: unknown = await response.json().catch(() => null);
     throw new ApiError(
       response.status,

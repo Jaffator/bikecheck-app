@@ -6,14 +6,6 @@ import { useBikes } from "./bikes.queries";
 export function BikeList(): ReactElement {
   const { data: bikes } = useBikes();
 
-  // if (isLoading) {
-  //   return <Loader />;
-  // }
-
-  // if (error) {
-  //   return <Text c="red">Failed to load bikes.</Text>;
-  // }
-
   return (
     <>
       <Stack>

@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Settings page.
 import type { ReactElement } from "react";
 import { Card, Group, SegmentedControl, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -11,8 +11,7 @@ export function Settings(): ReactElement {
   const { data: user } = useCurrentUser();
   const updateUser = useUpdateUser();
 
-  // Switch first so the UI reacts immediately, then persist — the stored value
-  // is what other devices pick up on their next start.
+  // Update the UI before persisting the language.
   function changeLanguage(language: string): void {
     void applyLanguage(language);
     if (user) {
@@ -35,8 +34,7 @@ export function Settings(): ReactElement {
           />
         </Group>
       </Card>
-      {/* Settings manages an existing link only — connecting is offered on the
-          dashboard, so nothing renders here until an account is linked. */}
+      {/* Show only an existing Strava connection. */}
       <StravaStatusCard connectedOnly allowDisconnect />
     </>
   );

@@ -1,4 +1,4 @@
-// A component only talks to hooks — no fetch, no URL, no manual loading state.
+// Renders unpaired bike state through query hooks.
 import { useState, type ReactElement } from "react";
 import { Box, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -8,9 +8,7 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { GearLinkingSheet } from "./GearLinkingSheet";
 
-// Prompts the user to pair the bikes that collect no rides yet, and opens the
-// sheet that does it. Renders nothing without a linked Strava account, or once
-// every bike carries a gear id — a bike that is paired is not news.
+// Prompts pairing for bikes without Strava gear on linked accounts.
 export function UnpairedBikesCard(): ReactElement | null {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
@@ -24,16 +22,17 @@ export function UnpairedBikesCard(): ReactElement | null {
 
   return (
     <Paper
-      bg="cards.6"
-      radius="md"
+      radius="lg"
       className="m-3"
       style={{
         overflow: "hidden",
-        border: "1px solid var(--color-border-subtle)",
-        // A soft corner glow, so the card has a light source of its own rather
-        // than sitting flat next to the ones around it.
+        // Uses the shared card surface without the bg shorthand.
+        backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage:
-          "radial-gradient(80% 60% at 100% 0%, color-mix(in srgb, var(--mantine-color-strava-6) 12%, transparent) 0%, transparent 65%)",
+          "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
+        border: "1px solid var(--color-border-subtle)",
+        boxShadow:
+          "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
       }}
     >
       <Stack gap="sm" p="md">
@@ -46,26 +45,21 @@ export function UnpairedBikesCard(): ReactElement | null {
               width: "2.25rem",
               height: "2.25rem",
               borderRadius: "0.625rem",
-              backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
+              backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
             }}
           >
-            <Link2Off size={18} color="var(--mantine-color-strava-6)" />
+            <Link2Off size={18} color="var(--mantine-color-primary-6)" />
           </Box>
           <Text fw={600} fz={15} tt="uppercase" c="text.6" style={{ lineHeight: 1.15, letterSpacing: "-0.01em" }}>
             {t("strava.unpairedBikes", { count: unpairedCount })}
           </Text>
         </Group>
-        <Stack gap={8} className="mb-3">
-          <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-            {t("strava.unpairedBikesBody")}
-          </Text>
-        </Stack>
-
         <Button
           fullWidth
+          variant="outline"
           radius="md"
-          color="strava.6"
-          c="#FFFFFF"
+          color="primary.6"
+          c="primary.6"
           leftSection={<Link2 size={16} />}
           onClick={() => {
             void tapFeedback();

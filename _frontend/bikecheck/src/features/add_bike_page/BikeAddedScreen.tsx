@@ -12,8 +12,7 @@ interface BikeAddedScreenProps {
   onContinue: () => void;
 }
 
-// The confirmation after a bike is written. Full-bleed on purpose: the wizard is
-// over, and the tab bar would invite leaving before the one action is taken.
+// Render the full-screen confirmation after saving a bike.
 export function BikeAddedScreen({ bikeName, onContinue }: BikeAddedScreenProps): ReactElement {
   const { t } = useTranslation();
 
@@ -23,15 +22,13 @@ export function BikeAddedScreen({ bikeName, onContinue }: BikeAddedScreenProps):
       gap={0}
       style={{
         minHeight: "100dvh",
-        // Warmer than the app background — the design gives this screen its own
-        // ground so it reads as a moment, not another page.
+        // Use the dedicated confirmation background.
         backgroundColor: "var(--mantine-color-background-9)",
         padding: "1rem",
         paddingTop: "calc(1rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
         paddingBottom: "calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
       }}
     >
-      {/* ----------- Mark, heading and the bike it applies to ----------- */}
       <Stack align="center" gap="md" style={{ flex: 1, justifyContent: "center" }}>
         <Box
           style={{
@@ -62,7 +59,6 @@ export function BikeAddedScreen({ bikeName, onContinue }: BikeAddedScreenProps):
         </Text>
       </Stack>
 
-      {/* ----------- Explanation and the way on ----------- */}
       <Stack gap="lg" align="center">
         <Text ta="center" size="sm" c="#C7C6CA" opacity={0.6} maw={350} style={{ lineHeight: 1.4 }}>
           {t("addBike.addedBody")}

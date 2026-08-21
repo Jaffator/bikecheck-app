@@ -1,5 +1,4 @@
-// Component type icons. The "?react" suffix has svgr inline each file as a
-// component, so it draws in currentColor and takes the usual SVG props.
+// SVGR inlines component icons as currentColor React components.
 import type { FunctionComponent, SVGProps } from "react";
 import Axle from "./axle.svg?react";
 import Bashguard from "./bashguard.svg?react";
@@ -41,11 +40,7 @@ import Valve from "./valve.svg?react";
 
 export type ComponentIcon = FunctionComponent<SVGProps<SVGSVGElement>>;
 
-// Keyed by the seeded component_type, the same way groups are keyed by their
-// group_name — ids are reassigned on every reseed, so they cannot address an
-// icon. Renaming a type in the seed means renaming its key here too.
-// Battery and E-Bike System have no drawing of their own yet and borrow a
-// related part.
+// Maps seeded component types; battery and e-bike system borrow related icons.
 const BY_COMPONENT_TYPE: Record<string, ComponentIcon> = {
   Axle,
   Bashguard,
@@ -87,8 +82,7 @@ const BY_COMPONENT_TYPE: Record<string, ComponentIcon> = {
   Valves: Valve,
 };
 
-// A type the user created himself has a name of his own, and a seeded one can
-// outlive this map — both leave the caller to draw its own fallback.
+// Unknown component types use the caller's fallback icon.
 export function componentIcon(componentType: string): ComponentIcon | null {
   return BY_COMPONENT_TYPE[componentType] ?? null;
 }

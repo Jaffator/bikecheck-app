@@ -57,6 +57,21 @@ export class WebhookController {
     // event is in Redis queue
     return 'EVENT_RECEIVED';
   }
+  // ------------------------------------------------------------
+  // ---------- TEST Handle incoming MOCK webhook events from Strava ------
+  // ------------------------------------------------------------
+  @Post('/mock-webhook')
+  @HttpCode(200)
+  async handleTestWebhook(@Req() req: Request): Promise<string> {
+    console.log('Received TEST MOCK Strava webhook event:', req.body);
+
+    // Add the event to the BullMQ queue for processing
+    await this.webhookQueue.add('test-strava-event', req.body as StravaWebhookEventDto);
+
+    // response under 2sec with OK HTTP 200 to avoid retries from Strava
+    // event is in Redis queue
+    return 'EVENT_RECEIVED';
+  }
   @Get()
   test(): string {
     return 'Strava Microservice is online';

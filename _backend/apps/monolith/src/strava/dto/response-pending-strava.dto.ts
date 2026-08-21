@@ -1,27 +1,41 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+// A Strava ride waiting for the user to say which bike it belongs to. Carries
+// enough of the ride for the user to recognise it — a list of dates alone does
+// not tell you which ride you are assigning.
 export class ResponsePendingStravaDto {
-  @ApiProperty({ example: 1 })
-  id!: number;
+  // Strava's own activity id, which is what the resolve endpoint and the
+  // notification route address. Serialised as a string: it is a BigInt, and
+  // JSON numbers lose precision past 2^53.
+  @ApiProperty({ example: '13579246810' })
+  activity_id!: string;
 
-  @ApiProperty({ example: 'strava_unmatched_activity' })
-  type!: string;
+  // Null when Strava sent no gear at all; set when the gear is unknown here.
+  @ApiProperty({ example: 'b12345', nullable: true })
+  gear_id!: string | null;
 
-  @ApiProperty({ example: 'Nepřiřazená aktivita ze Stravy' })
-  title!: string;
+  @ApiProperty({ example: '2026-08-19T06:12:00.000Z' })
+  started_at!: string;
 
-  @ApiProperty({ example: 'Kolo "Trek Fuel EX" ještě nemáš přiřazené' })
-  body!: string;
+  // Strava's own title for the ride — what tells one pending row apart from the
+  // next. Empty for rides stored before the name was kept.
+  @ApiProperty({ example: 'Morning Ride' })
+  name!: string;
 
-  @ApiProperty({ example: { gearId: 'b12345' }, nullable: true })
-  payload!: unknown;
+  // Strava's own simplified route, as an encoded polyline. Null for rides
+  // recorded without GPS — a turbo session has no shape to draw.
+  @ApiProperty({ example: 'snttH{s`|A[VJrD', nullable: true })
+  summary_polyline!: string | null;
 
-  @ApiProperty({ example: false })
-  is_read!: boolean;
+  @ApiProperty({ example: 42 })
+  distance_km!: number;
 
-  @ApiProperty({ example: null, nullable: true })
-  read_at!: Date | null;
+  @ApiProperty({ example: 96 })
+  duration_min!: number;
 
-  @ApiProperty({ example: '2026-06-16T12:00:00.000Z' })
+  @ApiProperty({ example: 612 })
+  elevation_up_m!: number;
+
+  @ApiProperty({ example: '2026-08-19T06:40:00.000Z' })
   created_at!: Date;
 }

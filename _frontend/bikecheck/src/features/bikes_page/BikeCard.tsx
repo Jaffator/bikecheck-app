@@ -1,26 +1,14 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import {
-  ActionIcon,
-  Box,
-  Group,
-  Image,
-  Paper,
-  Progress,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
+import { ActionIcon, Box, Group, Image, Paper, Progress, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { Clock, EllipsisVertical, Gauge } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import type { Bike } from "../bikes/bikes.types";
-import {
-  HEALTH_COLORS,
-  overallLevel,
-  type HealthReading,
-} from "./bikeHealth.types";
+import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
+import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
 
 interface BikeCardProps {
   bike: Bike;
@@ -29,21 +17,44 @@ interface BikeCardProps {
   onOpen: () => void;
 }
 
+// Render the Strava badge for bikes linked to Strava gear.
+function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): ReactElement | null {
+  const { t } = useTranslation();
+
+  if (stravaGearId === null) return null;
+
+  return (
+    <Group
+      // Match health badge dimensions when badges stack.
+      gap={5}
+      px={8}
+      py={3}
+      style={{
+        borderRadius: "9999px",
+        backgroundColor: "rgba(20, 20, 20, 0.75)",
+        border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 55%, transparent)",
+        backdropFilter: "blur(4px)",
+      }}
+    >
+      <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
+      <Text className="font-mono" fz={10} c="var(--mantine-color-strava-6)">
+        {t("strava.paired")}
+      </Text>
+    </Group>
+  );
+}
+
 // The pill over the photo, reporting the bike as a whole.
-function HealthBadge({
-  readings,
-}: {
-  readings: HealthReading[];
-}): ReactElement {
+function HealthBadge({ readings }: { readings: HealthReading[] }): ReactElement {
   const { t } = useTranslation();
   const level = overallLevel(readings);
   const color = HEALTH_COLORS[level];
 
   return (
     <Group
-      gap={6}
-      px={10}
-      py={5}
+      gap={5}
+      px={8}
+      py={3}
       style={{
         borderRadius: "9999px",
         backgroundColor: "rgba(20, 20, 20, 0.75)",
@@ -51,12 +62,8 @@ function HealthBadge({
         backdropFilter: "blur(4px)",
       }}
     >
-      <Box
-        w={7}
-        h={7}
-        style={{ borderRadius: "50%", backgroundColor: color }}
-      />
-      <Text className="font-mono" fz={11} c={color}>
+      <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
+      <Text className="font-mono" fz={10} c={color}>
         {t(`bikes.health.${level}`)}
       </Text>
     </Group>
@@ -71,13 +78,7 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
   return (
     <Stack gap={6}>
       <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Text
-          className="font-mono"
-          fz={10}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-          style={{ letterSpacing: "0.05em" }}
-        >
+        <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)" style={{ letterSpacing: "0.05em" }}>
           {t(reading.labelKey)}
         </Text>
         <Text
@@ -85,8 +86,7 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
           fz={10}
           tt="uppercase"
           ta="right"
-          // A good reading states a fact and stays quiet; anything worse is the
-          // point of the row, so it takes the colour.
+          // Emphasize non-good health readings.
           c={reading.level === "good" ? "var(--color-text-dim)" : color}
           style={{ letterSpacing: "0.05em" }}
         >
@@ -106,69 +106,88 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
   );
 }
 
-export function BikeCard({
-  bike,
-  readings = [],
-  onOpen,
-}: BikeCardProps): ReactElement {
+export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactElement {
   const { t } = useTranslation();
 
   // The user's own name wins; a bike saved without one is known by its model.
   const title = bike.bikename ?? bike.bike_model ?? bike.bike_brand;
   // "Road · Carbon" — whichever of the two the bike actually carries.
-  const subtitle = [
-    bike.bike_model === title ? null : bike.bike_brand,
-    bike.frame_material,
-  ]
+  const subtitle = [bike.bike_model === title ? null : bike.bike_brand, bike.frame_material]
     .filter((part): part is string => part !== null && part !== "")
     .join(" • ");
 
   return (
     <Paper
       bg="cards.6"
-      radius="md"
+      radius="lg"
+      // Open bike details from the entire card.
+      onClick={() => {
+        tapFeedback();
+        onOpen();
+      }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        // Space would scroll the garage instead of opening the bike.
+        event.preventDefault();
+        onOpen();
+      }}
       style={{
         overflow: "hidden",
         border: "1px solid var(--color-border-subtle)",
-        // Answers the tap before the next screen arrives, so the press never
-        // feels like it went nowhere.
-        transition: "transform 0.12s ease",
+        // Same three-part shadow the other cards use, one step deeper because
+        // this card is the largest: a hairline of light along the top edge, a
+        // tight contact shadow, and a soft cast one that lifts it off the page.
+        boxShadow:
+          "inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.55)",
+        // Animate tap feedback before navigation.
+        transition: "transform 0.12s ease, box-shadow 0.12s ease",
+        cursor: "pointer",
+        position: "relative",
       }}
       // Tailwind's active: variant handles the pressed state without tracking it.
-      className="active:scale-[0.985]"
+      className="bike-card active:scale-[0.985]"
     >
-      {/* ----------- Photo, with the overall verdict over it ----------- */}
-      {/* The whole photo opens the bike, so a thumb has the largest possible
-          target; the menu button below stops short of it. */}
-      <UnstyledButton
-        onClick={() => {
-          tapFeedback();
-          onOpen();
+      {/* Its own layer rather than a background on the card: the photo and the
+          content sit on their own opaque backgrounds and would paint over a
+          card-level gradient, leaving only a sliver of it visible. */}
+      <Box
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 1,
+          background:
+            "radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--mantine-color-primary-6) 12%, transparent) 0%, transparent 55%)",
         }}
-        style={{ display: "block", width: "100%", position: "relative" }}
+      />
+
+      {/* Position bike badges over the photo. */}
+      <Box
+        style={{
+          position: "relative",
+          // A shadow cast down from the photo's edge, so the content below reads
+          // as a recessed surface instead of a flat continuation of the image.
+          boxShadow: "0 6px 12px -6px rgba(0, 0, 0, 0.6)",
+        }}
       >
         {bike.image_url ? (
           <Image
             src={bike.image_url}
             alt={title}
-            h={180}
-            // Product shots are wide and framed with their own margins, so
-            // cropping to fill cut the ends off the bike. Contained: the whole
-            // bike is visible and the slot's own colour fills what is left.
-            fit="contain"
-            // A garage of cards would otherwise fetch every photo at once on a
-            // phone connection; only the ones being scrolled to are needed.
+            h={PHOTO_SLOT_HEIGHT}
+            // Fill the slot with the upload-cropped photo.
+            fit="cover"
+            // Load card images as they enter the viewport.
             loading="lazy"
-            // Reserves the slot before the photo arrives so the list does not
-            // jump as each one loads in, and fills the letterbox a contained
-            // photo leaves. White to match the background baked into stored
-            // images, so the photo has no visible edge of its own.
             style={{ backgroundColor: "#FFFFFF" }}
           />
         ) : (
-          // No photo: the slot keeps its height so a garage of cards stays even.
+          // Preserve card height when no photo is available.
           <Box
-            h={180}
+            h={PHOTO_SLOT_HEIGHT}
             bg="cards.7"
             style={{
               display: "flex",
@@ -179,51 +198,40 @@ export function BikeCard({
             <Gauge size={32} color="var(--mantine-color-text-9)" />
           </Box>
         )}
-        <Box style={{ position: "absolute", top: "0.75rem", right: "0.75rem" }}>
+        {/* Stack overall bike badges in the photo corner. */}
+        <Stack gap={6} align="flex-end" style={{ position: "absolute", top: "0.75rem", right: "0.75rem" }}>
           <HealthBadge readings={readings} />
-        </Box>
-      </UnstyledButton>
+          <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
+        </Stack>
+      </Box>
 
-      {/* ----------- Identity, totals and wear ----------- */}
-      <Stack gap="sm" p="md">
-        <Group
-          justify="space-between"
-          wrap="nowrap"
-          align="flex-start"
-          gap="sm"
-        >
-          <UnstyledButton
-            onClick={() => {
-              tapFeedback();
-              onOpen();
-            }}
-            style={{ minWidth: 0, textAlign: "left" }}
-          >
-            <Stack gap={2}>
-              <Text fw={700} fz={20} c="text.6" lh={1.2}>
-                {title}
+      <Stack gap="sm" p="md" style={{ position: "relative", zIndex: 2 }}>
+        <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
+          <Stack gap={2} style={{ minWidth: 0 }}>
+            <Text fw={700} fz={20} c="text.6" lh={1.2}>
+              {title}
+            </Text>
+            {subtitle !== "" && (
+              <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)">
+                {subtitle}
               </Text>
-              {subtitle !== "" && (
-                <Text
-                  className="font-mono"
-                  fz={11}
-                  tt="uppercase"
-                  c="var(--color-text-dim)"
-                >
-                  {subtitle}
-                </Text>
-              )}
-            </Stack>
-          </UnstyledButton>
+            )}
+          </Stack>
 
-          {/* Per-bike actions land here once there are any; the button is the
-              design's own affordance for them. */}
           <ActionIcon
-            variant="subtle"
+            variant="transparent"
             color="gray"
-            radius="xl"
             aria-label={t("bikes.cardMenu")}
+            // The card behind it opens the bike; its own actions are its own.
+            onClick={(event) => event.stopPropagation()}
             disabled
+            // Keep the disabled action icon visually unobtrusive.
+            styles={{
+              root: {
+                backgroundColor: "transparent",
+                border: "none",
+              },
+            }}
           >
             <EllipsisVertical size={18} />
           </ActionIcon>

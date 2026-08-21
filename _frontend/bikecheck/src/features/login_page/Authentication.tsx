@@ -33,8 +33,7 @@ export function AuthenticationForm(props: PaperProps) {
     },
   });
 
-  // Switching between login and register must clear the errors of the previous
-  // mode, otherwise a stale message from the other form stays on screen.
+  // Clear state from the previous form mode.
   function switchType(): void {
     toggle();
     form.clearErrors();
@@ -61,12 +60,12 @@ export function AuthenticationForm(props: PaperProps) {
       />
       <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent">
         <form
-          // Click Login button to trigger event
+          // Submit the active form.
           onSubmit={form.onSubmit((values) => {
             if (type === "login") {
               login.mutate({ email: values.email, password: values.password });
             } else {
-              // Register only creates the account, so log in right afterwards.
+              // Sign in after successful registration.
               registration.mutate(
                 { name: values.name, email: values.email, password: values.password, language: detectLanguage() },
                 {
