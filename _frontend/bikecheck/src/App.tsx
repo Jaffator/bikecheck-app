@@ -30,11 +30,7 @@ function App(): ReactElement {
 
 // Everything else requires a logged-in user.
 function ProtectedApp(): ReactElement {
-  const {
-    data: user,
-    isLoading: isUserLoading,
-    isError: isUserError,
-  } = useCurrentUser();
+  const { data: user, isLoading: isUserLoading, isError: isUserError } = useCurrentUser();
   const { mutate: patchUser } = useUpdateUser();
   const navigate = useNavigate();
 
@@ -47,8 +43,7 @@ function ProtectedApp(): ReactElement {
     },
     [navigate],
   );
-  const { foregroundNotification, dismiss: dismissNotification } =
-    usePushNotifications(openNotificationRoute);
+  const { foregroundNotification, dismiss: dismissNotification } = usePushNotifications(openNotificationRoute);
   const userId = user?.id;
   const userLanguage = user?.language;
   const isLoggedIn = Boolean(user);
@@ -89,11 +84,7 @@ function ProtectedApp(): ReactElement {
   }
 
   if (isUserError || !user) {
-    console.log(
-      "User not logged in or error fetching user:",
-      isUserError,
-      user,
-    );
+    console.log("User not logged in or error fetching user:", isUserError, user);
     return <Login />;
   }
 
@@ -101,9 +92,13 @@ function ProtectedApp(): ReactElement {
     <>
       {/* Only the foreground case: a push arriving while the app is open shows
           no tray notification of its own, so without this it would be silent. */}
-      {foregroundNotification && (
-        <InAppNotification notification={foregroundNotification} onDismiss={dismissNotification} />
-      )}
+      {foregroundNotification && <InAppNotification notification={foregroundNotification} onDismiss={dismissNotification} />}
+      {/* TEMP: dev preview */}
+      {/* <InAppNotification
+        notification={{ id: "dev", title: "Nová jízda ze Stravy", body: "Ranní vyjížďka · 42 km" } as PushNotificationSchema}
+        onDismiss={() => {}}
+        autoDismissMs={Number.MAX_SAFE_INTEGER}
+      /> */}
 
       <Routes>
         <Route element={<AppLayout />}>

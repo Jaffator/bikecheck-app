@@ -6,7 +6,7 @@ import { CircleCheck } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useConnectStrava, useDisconnectStrava } from "./strava.queries";
-import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import mapBackground from "@/assets/icons/svg_icons/mapbg.svg";
 
 interface StravaStatusCardProps {
@@ -39,18 +39,43 @@ export function StravaStatusCard({
     return (
       <Paper
         bg="cards.6"
-        radius="md"
+        radius="lg"
         className="m-3"
         style={{
           overflow: "hidden",
           border: "1px solid var(--color-border-subtle)",
+          position: "relative",
           // The Strava orange bleeds up from the bottom edge, so the card is
           // recognisably about Strava before a word of it is read.
           backgroundImage:
             "radial-gradient(120% 90% at 50% 115%, color-mix(in srgb, var(--mantine-color-strava-6) 22%, transparent) 0%, transparent 70%)",
         }}
       >
-        <Stack gap="lg" align="center" p="lg">
+        {/* Same map texture as the connected card, so the two states read as
+            one card in two moods. Masked rather than drawn: the file carries a
+            black fill that would vanish here, so it supplies only the shape.
+            Tinted Strava orange instead of text, to sit with the gradient
+            under it rather than grey it out. */}
+        <Box
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            backgroundColor: "var(--mantine-color-strava-6)",
+            opacity: 0.08,
+            maskImage: `url(${mapBackground})`,
+            WebkitMaskImage: `url(${mapBackground})`,
+            maskSize: "cover",
+            WebkitMaskSize: "cover",
+            maskPosition: "center",
+            WebkitMaskPosition: "center",
+            maskRepeat: "no-repeat",
+            WebkitMaskRepeat: "no-repeat",
+          }}
+        />
+
+        <Stack gap="lg" align="center" p="lg" style={{ position: "relative" }}>
           {/* Concentric rings rather than a flat disc: the mark reads as a
               source the rest of the card radiates from. */}
           <Box
@@ -67,19 +92,10 @@ export function StravaStatusCard({
                 "0 0 0 8px color-mix(in srgb, var(--mantine-color-strava-6) 7%, transparent), 0 0 28px 0 color-mix(in srgb, var(--mantine-color-strava-6) 22%, transparent)",
             }}
           >
-            <StravaMark width={32} height={32} color="var(--mantine-color-strava-6)" />
+            <StravaMark width={40} height={40} color="var(--mantine-color-strava-6)" />
           </Box>
 
           <Stack gap={8} align="center">
-            <Text
-              className="font-mono"
-              fz={10}
-              tt="uppercase"
-              c="var(--mantine-color-strava-6)"
-              style={{ letterSpacing: "0.12em" }}
-            >
-              {t("strava.statusTitle")}
-            </Text>
             <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
               {t("strava.pitchTitle")}
             </Text>
@@ -101,7 +117,7 @@ export function StravaStatusCard({
             className="active:scale-[0.985]"
             styles={{
               root: {
-                height: "3.25rem",
+                height: "2.75rem",
                 transition: "transform 0.12s ease",
                 boxShadow: "0 6px 20px -6px color-mix(in srgb, var(--mantine-color-strava-6) 60%, transparent)",
               },
@@ -129,7 +145,7 @@ export function StravaStatusCard({
   return (
     <Paper
       bg="cards.6"
-      radius="md"
+      radius="lg"
       className="m-3"
       style={{
         overflow: "hidden",

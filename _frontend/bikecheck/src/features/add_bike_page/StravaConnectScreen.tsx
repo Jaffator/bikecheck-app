@@ -6,7 +6,7 @@ import { ArrowRight, ArrowRightLeft, Bell, History, LineChart, RefreshCw } from 
 import { tapFeedback } from "@/utils/haptics";
 import { useHeaderStore } from "@/store/store";
 import trailIllustration from "@/assets/images/rides.png";
-import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
 
 interface StravaConnectScreenProps {

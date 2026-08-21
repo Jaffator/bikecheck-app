@@ -30,7 +30,7 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
           // the row has a light source instead of sitting flat. The tint follows
           // the route colour, which is the only other colour on the card.
           backgroundImage:
-            "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 60%)",
+            "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
           border: "1px solid var(--color-border-subtle)",
           // A lit top edge and a shadow underneath: the pair is what reads as
           // raised rather than drawn.
@@ -54,10 +54,10 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
               {/* The ride's own title leads: a column of dates alone gives the
                 user nothing to recognise a ride by. Clamped because Strava
                 titles run long and would otherwise change the card's height. */}
-              <Text fw={600} fz={15} c="text.7" lineClamp={1}>
+              <Text fw={600} fz={15} c="text.6" lineClamp={1}>
                 {ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
               </Text>
-              <Text fz={13} c="text.8">
+              <Text fz={13} c="text.7">
                 {dayjs(ride.started_at).format("D. M. YYYY H:mm")}
               </Text>
             </Stack>

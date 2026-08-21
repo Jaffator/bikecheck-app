@@ -27,6 +27,7 @@ export interface NotificationTextPayload {
   bikeName?: string;
   km?: number;
   gearName?: string;
+  activityName?: string;
 }
 
 interface NotificationText {
@@ -94,11 +95,12 @@ function rideBody(payload: NotificationTextPayload, unit: string, fallback: stri
   return parts.length > 0 ? parts.join(' · ') : fallback;
 }
 
-// The distance leads, because it is what identifies the ride; the ask follows,
-// because it is why the notification was sent. Without a distance the ask
-// carries the whole message on its own.
+// The ride's own name identifies it better than anything else, so it takes the
+// place the ask used to hold. The distance still leads. A ride that arrived
+// without a name falls back to the ask, which is why the notification was sent.
 function unassignedBody(payload: NotificationTextPayload, unit: string, ask: string): string {
-  return payload.km === undefined ? ask : `${payload.km} ${unit} · ${ask}`;
+  const tail = payload.activityName ?? ask;
+  return payload.km === undefined ? tail : `${payload.km} ${unit} · ${tail}`;
 }
 
 // Builds the stored title and body for a notification in the user's language.

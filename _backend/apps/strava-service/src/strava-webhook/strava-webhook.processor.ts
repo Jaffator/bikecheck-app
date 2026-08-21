@@ -97,9 +97,9 @@ export class StravaProcessor extends WorkerHost {
 
     mockData.data.id = Math.floor(Math.random() * 1_000_000_000);
     mockData.data.start_date = new Date(Date.now() - Math.floor(Math.random() * 1_000_000_000)).toISOString();
-    mockData.data.distance = Math.floor(Math.random() * 100) * 1000;
+    mockData.data.distance = Math.floor(Math.random() * 200) * 10000;
     console.log(mockData.data.distance);
-    mockData.data.moving_time = Math.floor(Math.random() * 10000);
+    mockData.data.moving_time = Math.floor(Math.random() * 100000);
 
     return mockData.data;
   }

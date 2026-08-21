@@ -1,25 +1,14 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
-import {
-  Button,
-  Drawer,
-  Group,
-  Loader,
-  Select,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Button, Drawer, Group, Loader, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import {
-  inputStyles,
-  dropdownProps,
-  disabledButtonStyles,
-} from "../add_bike_page/formStyles";
+import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
 import { tapFeedback } from "@/utils/haptics";
 import { useGearLinking, useLinkStravaGear } from "./strava.queries";
 import type { GearLink, GearLinkingBike } from "./strava.types";
 import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
-import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
+import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
 
 interface GearLinkingSheetProps {
   opened: boolean;
@@ -31,22 +20,15 @@ interface GearLinkingSheetProps {
 
 // Falls back through the names a bike can have, so a row is never blank.
 function bikeLabel(bike: GearLinkingBike): string {
-  if (bike.bikename !== null && bike.bikename.trim() !== "")
-    return bike.bikename;
-  return [bike.bike_brand, bike.bike_model]
-    .filter((part) => part !== null && part !== "")
-    .join(" ");
+  if (bike.bikename !== null && bike.bikename.trim() !== "") return bike.bikename;
+  return [bike.bike_brand, bike.bike_model].filter((part) => part !== null && part !== "").join(" ");
 }
 
 // Pairs BikeCheck bikes with Strava gear. One row per bike: the bike on the
 // left, a gear picker on the right. A gear belongs to one bike at a time, so
 // gear taken by another bike is offered disabled rather than hidden — hiding it
 // leaves the user wondering where their bike went.
-export function GearLinkingSheet({
-  opened,
-  onClose,
-  bikeIds,
-}: GearLinkingSheetProps): ReactElement {
+export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetProps): ReactElement {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useGearLinking(opened);
   const link = useLinkStravaGear();
@@ -60,9 +42,7 @@ export function GearLinkingSheet({
   }
 
   const rows = (data?.bikecheck_bikes ?? []).filter((bike) =>
-    bikeIds !== undefined
-      ? bikeIds.includes(bike.id)
-      : bike.strava_gear_id === null,
+    bikeIds !== undefined ? bikeIds.includes(bike.id) : bike.strava_gear_id === null,
   );
 
   // Gear already held by some other bike, so it cannot be taken. Rows being
@@ -70,9 +50,7 @@ export function GearLinkingSheet({
   // collecting one Strava gear. The row asking is excluded, or the Select would
   // disable the value it is currently showing.
   function takenBy(gearId: string, forBikeId: number): string | null {
-    const owner = (data?.bikecheck_bikes ?? []).find(
-      (bike) => bike.id !== forBikeId && chosenFor(bike) === gearId,
-    );
+    const owner = (data?.bikecheck_bikes ?? []).find((bike) => bike.id !== forBikeId && chosenFor(bike) === gearId);
     return owner ? bikeLabel(owner) : null;
   }
 
@@ -137,6 +115,16 @@ export function GearLinkingSheet({
         },
       }}
     >
+      <div className="align-center mb-4 -ml-2 flex w-full justify-center">
+        <StravaConnectBike
+          size={40}
+          stravaColor="var(--mantine-color-strava-6)"
+          stravaCircleColor="var(--mantine-color-strava-9)"
+          connectColor="var(--mantine-color-text-6)"
+          bikeColor="var(--mantine-color-cards-9)"
+          bikeCircleColor="var(--mantine-color-primary-6)"
+        />
+      </div>
       <Stack gap="md" style={{ flex: 1, minHeight: 0 }}>
         <Text size="sm" c="text.7">
           {t("strava.gearLinkingBody")}
@@ -163,32 +151,22 @@ export function GearLinkingSheet({
         {/* Names the two sides of every row below, so it is clear which way the
             pairing runs: a bike on the left, the Strava gear it collects on the
             right. */}
-        {data !== undefined &&
-          data.strava_bikes.length > 0 &&
-          rows.length > 0 && (
-            <Group gap="sm" wrap="nowrap" align="center">
-              <Group gap={6} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
-                <BikecheckMark
-                  width={16}
-                  height={16}
-                  style={{ color: "var(--mantine-color-primary-6)" }}
-                />
-                <Text size="xs" tt="uppercase" fw={600} c="text.7">
-                  {t("strava.gearLinkingColumnBike")}
-                </Text>
-              </Group>
-              <Group gap={6} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
-                <StravaMark
-                  width={16}
-                  height={16}
-                  color="var(--mantine-color-strava-6)"
-                />
-                <Text size="xs" tt="uppercase" fw={600} c="text.7">
-                  {t("strava.gearLinkingColumnGear")}
-                </Text>
-              </Group>
+        {data !== undefined && data.strava_bikes.length > 0 && rows.length > 0 && (
+          <Group gap="sm" wrap="nowrap" align="center">
+            <Group gap={6} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+              <BikecheckMark width={16} height={16} style={{ color: "var(--mantine-color-primary-6)" }} />
+              <Text size="xs" tt="uppercase" fw={600} c="text.7">
+                {t("strava.gearLinkingColumnBike")}
+              </Text>
             </Group>
-          )}
+            <Group gap={6} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+              <StravaMark width={16} height={16} color="var(--mantine-color-strava-6)" />
+              <Text size="xs" tt="uppercase" fw={600} c="text.7">
+                {t("strava.gearLinkingColumnGear")}
+              </Text>
+            </Group>
+          </Group>
+        )}
 
         {/* Only the list scrolls: the heading above and the confirm button
             below stay put, so the action never leaves the screen however
@@ -200,13 +178,7 @@ export function GearLinkingSheet({
               const chosen = chosenFor(bike);
               return (
                 <Group key={bike.id} gap="sm" wrap="nowrap" align="center">
-                  <Text
-                    size="sm"
-                    fw={600}
-                    c="text.6"
-                    style={{ flex: 1, minWidth: 0 }}
-                    truncate
-                  >
+                  <Text size="sm" fw={600} c="text.6" style={{ flex: 1, minWidth: 0 }} truncate>
                     {bikeLabel(bike)}
                   </Text>
                   <Select

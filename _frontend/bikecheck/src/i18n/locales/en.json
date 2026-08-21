@@ -265,7 +265,7 @@
     "disconnectFailed": "Could not disconnect. Try again.",
     "pitchTitle": "Connect Strava for smart service",
     "pitchBody": "Track component wear automatically, based on your real activities.",
-    "gearLinkingTitle": "Pair with Strava",
+    "gearLinkingTitle": "Pair bikes with Strava",
     "gearLinkingBody": "Match your bikes to your Strava gear so rides land on the right bike.",
     "gearLinkingPlaceholder": "Pick Strava gear",
     "gearTakenBy": "{{name}} — used by {{bike}}",

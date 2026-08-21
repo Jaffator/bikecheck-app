@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { Group, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "@/features/users/users.queries";
-import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
 interface StravaPairingHintProps {
   // The bike's gear id. Null means it collects no rides from Strava.

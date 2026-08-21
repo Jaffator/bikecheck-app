@@ -1,27 +1,14 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import {
-  ActionIcon,
-  Box,
-  Group,
-  Image,
-  Paper,
-  Progress,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Box, Group, Image, Paper, Progress, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
-import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { Clock, EllipsisVertical, Gauge } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import type { Bike } from "../bikes/bikes.types";
 import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
-import {
-  HEALTH_COLORS,
-  overallLevel,
-  type HealthReading,
-} from "./bikeHealth.types";
+import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
 
 interface BikeCardProps {
   bike: Bike;
@@ -34,11 +21,7 @@ interface BikeCardProps {
 // from Strava. Only the linked state shows: an unpaired bike already says so in
 // its stats, and a badge for it here would put a nothing-to-see label on most
 // of the garage. Dark pill like the health badge, so both read over any photo.
-function StravaLinkedBadge({
-  stravaGearId,
-}: {
-  stravaGearId: string | null;
-}): ReactElement | null {
+function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): ReactElement | null {
   const { t } = useTranslation();
 
   if (stravaGearId === null) return null;
@@ -60,12 +43,7 @@ function StravaLinkedBadge({
     >
       {/* The mark is boxed to the health dot's size, so the taller glyph does
           not push this pill past the one above it. */}
-      <StravaMark
-        width={10}
-        height={10}
-        color="var(--mantine-color-strava-6)"
-        style={{ display: "block", flexShrink: 0 }}
-      />
+      <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
       <Text className="font-mono" fz={10} c="var(--mantine-color-strava-6)">
         {t("strava.paired")}
       </Text>
@@ -74,11 +52,7 @@ function StravaLinkedBadge({
 }
 
 // The pill over the photo, reporting the bike as a whole.
-function HealthBadge({
-  readings,
-}: {
-  readings: HealthReading[];
-}): ReactElement {
+function HealthBadge({ readings }: { readings: HealthReading[] }): ReactElement {
   const { t } = useTranslation();
   const level = overallLevel(readings);
   const color = HEALTH_COLORS[level];
@@ -95,11 +69,7 @@ function HealthBadge({
         backdropFilter: "blur(4px)",
       }}
     >
-      <Box
-        w={6}
-        h={6}
-        style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }}
-      />
+      <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
       <Text className="font-mono" fz={10} c={color}>
         {t(`bikes.health.${level}`)}
       </Text>
@@ -115,13 +85,7 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
   return (
     <Stack gap={6}>
       <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Text
-          className="font-mono"
-          fz={10}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-          style={{ letterSpacing: "0.05em" }}
-        >
+        <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)" style={{ letterSpacing: "0.05em" }}>
           {t(reading.labelKey)}
         </Text>
         <Text
@@ -150,20 +114,13 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
   );
 }
 
-export function BikeCard({
-  bike,
-  readings = [],
-  onOpen,
-}: BikeCardProps): ReactElement {
+export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactElement {
   const { t } = useTranslation();
 
   // The user's own name wins; a bike saved without one is known by its model.
   const title = bike.bikename ?? bike.bike_model ?? bike.bike_brand;
   // "Road · Carbon" — whichever of the two the bike actually carries.
-  const subtitle = [
-    bike.bike_model === title ? null : bike.bike_brand,
-    bike.frame_material,
-  ]
+  const subtitle = [bike.bike_model === title ? null : bike.bike_brand, bike.frame_material]
     .filter((part): part is string => part !== null && part !== "")
     .join(" • ");
 
@@ -235,11 +192,7 @@ export function BikeCard({
             badges about the bike as a whole, so they read as one column rather
             than two things pinned to opposite corners. Right-aligned so their
             differing widths still share an edge. */}
-        <Stack
-          gap={6}
-          align="flex-end"
-          style={{ position: "absolute", top: "0.75rem", right: "0.75rem" }}
-        >
+        <Stack gap={6} align="flex-end" style={{ position: "absolute", top: "0.75rem", right: "0.75rem" }}>
           <HealthBadge readings={readings} />
           <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
         </Stack>
@@ -247,23 +200,13 @@ export function BikeCard({
 
       {/* ----------- Identity, totals and wear ----------- */}
       <Stack gap="sm" p="md">
-        <Group
-          justify="space-between"
-          wrap="nowrap"
-          align="flex-start"
-          gap="sm"
-        >
+        <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
           <Stack gap={2} style={{ minWidth: 0 }}>
             <Text fw={700} fz={20} c="text.6" lh={1.2}>
               {title}
             </Text>
             {subtitle !== "" && (
-              <Text
-                className="font-mono"
-                fz={11}
-                tt="uppercase"
-                c="var(--color-text-dim)"
-              >
+              <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)">
                 {subtitle}
               </Text>
             )}

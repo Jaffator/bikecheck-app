@@ -110,12 +110,14 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<UserResponseDto> {
+    console.log('LOGIN-----------');
     const deviceInfo = this.getDeviceInfo(req);
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(
       req.user,
       deviceInfo,
       ip,
     );
+    console.log(deviceInfo);
     this.setAuthCookies(res, accessToken, refreshToken);
     return this.mapToResponse(req.user);
   }

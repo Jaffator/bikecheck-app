@@ -394,9 +394,14 @@ export function useAddBikeWizard(): AddBikeWizard {
       ? `ERR_LOOKUP_${searchBike.error.status}`
       : "ERR_LOOKUP_UNKNOWN";
 
-  // Step 2 feeds the component tracking, so it cannot be left half-answered —
-  // every other step advances freely.
-  const canAdvance = active !== 1 || isBikeSpecificationComplete(specification);
+  // Step 1 carries the bike's name even when the lookup is skipped, so brand
+  // and model have to be filled in before the wizard moves on. Step 2 feeds the
+  // component tracking, so it cannot be left half-answered — the rest advances
+  // freely.
+  const canAdvance =
+    active === 0
+      ? canSearch
+      : active !== 1 || isBikeSpecificationComplete(specification);
 
   const showsFallback = searchFailed || searchEmpty;
   // Once the search replaced the form, the step is no longer "add a bike" but

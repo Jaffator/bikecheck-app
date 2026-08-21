@@ -40,40 +40,40 @@ export function useDisconnectStrava(): UseMutationResult<{ success: boolean }, A
 // TEMPORARY: stands in for getGearLinking while the sheet is being styled, so
 // opening it does not call the backend. Delete this and point useGearLinking
 // back at getGearLinking when the styling is done.
-async function getGearLinkingMock(): Promise<GearLinkingData> {
-  return {
-    user_id: 1,
-    athlete_id: 1,
-    strava_bikes: [
-      { id: "b1234567", name: "S-Works Tarmac" },
-      { id: "b7654321", name: "Epic EVO" },
-      { id: "b9998887", name: "Crux Gravel" },
-    ],
-    bikecheck_bikes: [
-      {
-        id: 1,
-        strava_gear_id: null,
-        bikename: "S-Works Tarmac",
-        bike_brand: "Specialized",
-        bike_model: "Tarmac",
-      },
-      {
-        id: 2,
-        strava_gear_id: null,
-        bikename: null,
-        bike_brand: "Specialized",
-        bike_model: "Epic EVO",
-      },
-      {
-        id: 3,
-        strava_gear_id: "b9998887",
-        bikename: "Crux",
-        bike_brand: "Specialized",
-        bike_model: "Crux",
-      },
-    ],
-  };
-}
+// async function getGearLinkingMock(): Promise<GearLinkingData> {
+//   return {
+//     user_id: 1,
+//     athlete_id: 1,
+//     strava_bikes: [
+//       { id: "b1234567", name: "S-Works Tarmac" },
+//       { id: "b7654321", name: "Epic EVO" },
+//       { id: "b9998887", name: "Crux Gravel" },
+//     ],
+//     bikecheck_bikes: [
+//       {
+//         id: 1,
+//         strava_gear_id: null,
+//         bikename: "S-Works Tarmac",
+//         bike_brand: "Specialized",
+//         bike_model: "Tarmac",
+//       },
+//       {
+//         id: 2,
+//         strava_gear_id: null,
+//         bikename: null,
+//         bike_brand: "Specialized",
+//         bike_model: "Epic EVO",
+//       },
+//       {
+//         id: 3,
+//         strava_gear_id: "b9998887",
+//         bikename: "Crux",
+//         bike_brand: "Specialized",
+//         bike_model: "Crux",
+//       },
+//     ],
+//   };
+// }
 
 // The user's Strava gear next to their BikeCheck bikes. Only ever asked for once
 // an account is linked — without one the backend has no athlete to query.
@@ -117,8 +117,7 @@ export function useResolvePendingRide(): UseMutationResult<
 > {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ activityId, bikeId }: { activityId: string; bikeId: number }) =>
-      resolvePendingRide(activityId, bikeId),
+    mutationFn: ({ activityId, bikeId }: { activityId: string; bikeId: number }) => resolvePendingRide(activityId, bikeId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
       void queryClient.invalidateQueries({ queryKey: ["bikes"] });

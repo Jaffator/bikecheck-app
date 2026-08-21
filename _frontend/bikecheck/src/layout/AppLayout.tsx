@@ -1,5 +1,5 @@
 import { useState, type ReactElement } from "react";
-import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton, Image } from "@mantine/core";
+import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Settings, Bell, ArrowLeft } from "lucide-react";
@@ -18,9 +18,7 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
-import logo_mark from "@/assets/icons/bikecheck/onlylogo.svg";
-// import { bikecheckIconType } from "@/assets/icons/bikecheck";
-// https://www.strava.com/oauth/authorize?client_id=235898&response_type=code&redirect_uri=https%3A%2F%2Fsyrup-latch-certainty.ngrok-free.dev%2Fstrava%2Fexchange_token&approval_prompt=force&scope=profile%3Aread_all%2Cactivity%3Aread_all&state=bc2c759c-541c-4d84-9023-94f60c472d6c
+
 interface NavItem {
   labelKey: string;
   path: string;
@@ -53,8 +51,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-// Header title per section. Home is absent on purpose — it shows the logo mark
-// instead of the tab icon.
+// Header title per section. Home is intentionally absent.
 const PAGE_TITLE_KEYS: Record<string, string> = {
   // More specific paths first — getPageTitleKey takes the first prefix match,
   // so "/bikes/new" would otherwise resolve to the "/bikes" entry.
@@ -133,7 +130,7 @@ export function AppLayout(): ReactElement {
   const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
   // Either source can hide the chrome; the route wins over a stale flag.
   const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
-  // null on Home, which gets the logo mark instead of a tab icon.
+  // null on Home, which has no header icon.
   const pageTitleKey = overrideTitleKey ?? getPageTitleKey(location.pathname);
   const subPage = isSubPage(location.pathname);
 
@@ -173,14 +170,14 @@ export function AppLayout(): ReactElement {
   useStravaDeepLink();
 
   function headerIcon() {
-    // Home and anything outside PAGE_TITLE_KEYS show the logo, not a tab icon.
+    // Home and paths without a page title do not show a header icon.
     if (pageTitleKey === null) {
-      return <Image src={logo_mark} alt="BikeCheck" w={25} fit="contain" />;
+      return null;
     }
     const headerIcon = NAV_ITEMS.find((item) => isActivePath(item.path, location.pathname))?.icon_fill;
     if (headerIcon) {
       const HeaderIconComponent = headerIcon;
-      return <HeaderIconComponent size={22} />;
+      return <HeaderIconComponent size={25} />;
     }
     return null;
   }
@@ -224,7 +221,7 @@ export function AppLayout(): ReactElement {
               </Group>
             ) : (
               <>
-                <Group gap="xs" c="text.6">
+                <Group gap="xs" c="cards.1">
                   {/* Decorative next to the title, so no alt text. */}
                   {headerIcon()}
                   <Text fw={700} size="lg">
@@ -247,7 +244,7 @@ export function AppLayout(): ReactElement {
                     pos="relative"
                     // style={{ border: "none" }}
                   >
-                    <Bell size={25} color="var(--mantine-color-text-6)" />
+                    <Bell size={25} color="var(--mantine-color-cards-1)" />
                     {/* A count, not a dot: how many are waiting is the reason to
                         open the screen rather than ignore it. Past nine it stops
                         being a number worth reading precisely. */}
@@ -284,7 +281,7 @@ export function AppLayout(): ReactElement {
                     aria-label={t("page.settings")}
                     onClick={() => navigate("/settings")}
                   >
-                    <Settings size={25} color="var(--mantine-color-text-6)" />
+                    <Settings size={25} color="var(--mantine-color-cards-1)" />
                   </ActionIcon>
                 </Group>
               </>

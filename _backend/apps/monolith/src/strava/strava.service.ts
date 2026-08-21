@@ -352,6 +352,7 @@ export class StravaEventsService {
         payload: {
           activityId: String(data.activity_id),
           km: Math.round(data.analyzedData.distance_km),
+          ...(data.analyzedData.name ? { activityName: data.analyzedData.name } : {}),
           ...(data.gearid ? { gearId: data.gearid } : {}),
         },
       });
@@ -419,9 +420,7 @@ export class StravaEventsService {
       // Same fallback as the name: rides stored before the route was lifted out
       // still carry it in the raw blob. Null for rides recorded without GPS.
       summary_polyline:
-        analyzed.summary_polyline ??
-        (analyzed.rawJson?.map?.summary_polyline as string | undefined) ??
-        null,
+        analyzed.summary_polyline ?? (analyzed.rawJson?.map?.summary_polyline as string | undefined) ?? null,
       distance_km: Math.round(analyzed.distance_km),
       duration_min: Math.round(analyzed.duration_min),
       elevation_up_m: Math.round(analyzed.elevation_up_m),

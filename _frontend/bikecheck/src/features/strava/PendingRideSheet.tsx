@@ -69,7 +69,7 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
       }}
     >
       <Stack gap={20} h="100%" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-        <Text fw={900} fz={20} c="text.8" ta="center">
+        <Text fw={900} fz={20} c="text.7" ta="center">
           {t("pendingRides.chooseBikeTitle")}
         </Text>
         {/* The row the user tapped, carried into the sheet as the same card —
@@ -84,14 +84,14 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
               // would emit the `background` shorthand and wipe the gradient.
               backgroundColor: "var(--mantine-color-cards-6)",
               backgroundImage:
-                "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 10%, transparent) 0%, transparent 60%)",
+                "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
               border: "1px solid var(--color-border-subtle)",
               boxShadow:
                 "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
             }}
           >
-            <Group gap="lg" wrap="nowrap" align="center" w="100%">
-              <RouteMap polyline={ride.summary_polyline} width={85} height={85} strokeWidth={3} />
+            <Group gap="sm" wrap="nowrap" align="center" w="100%">
+              <RouteMap polyline={ride.summary_polyline} width={80} height={80} strokeWidth={3} />
               {/* minWidth lets the column shrink below its content, without which
                   the title's lineClamp has nothing to clamp against. */}
               <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
@@ -103,22 +103,25 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
                     {dayjs(ride.started_at).format("D. M. YYYY H:mm")}
                   </Text>
                 </Stack>
-                <Group gap="sm" wrap="nowrap">
-                  <Group gap={6} wrap="nowrap">
+                {/* The three metrics spread across whatever width the column
+                    has, so they stay evenly spaced instead of bunching up on
+                    the left at wider sizes. */}
+                <Group justify="space-between" wrap="nowrap" w="90%" style={{ flexShrink: 0 }}>
+                  <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
                     <Route size={14} color="var(--mantine-color-text-7)" />
-                    <Text fz={14} c="text.7">
+                    <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
                       {t("pendingRides.distance", { count: ride.distance_km })}
                     </Text>
                   </Group>
-                  <Group gap={6} wrap="nowrap">
+                  <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
                     <Clock size={14} color="var(--mantine-color-text-7)" />
-                    <Text fz={14} c="text.7">
+                    <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
                       {t("pendingRides.duration", { count: ride.duration_min })}
                     </Text>
                   </Group>
-                  <Group gap={6} wrap="nowrap">
+                  <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
                     <Mountain size={14} color="var(--mantine-color-text-7)" />
-                    <Text fz={14} c="text.7">
+                    <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
                       {t("pendingRides.elevation", { count: ride.elevation_up_m })}
                     </Text>
                   </Group>

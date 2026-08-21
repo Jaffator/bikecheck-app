@@ -26,16 +26,19 @@ export function PendingRidesCard(): ReactElement | null {
 
   return (
     <Paper
-      bg="cards.6"
-      radius="md"
+      radius="lg"
       className="m-3"
       style={{
         overflow: "hidden",
-        border: "1px solid var(--color-border-subtle)",
-        // A soft corner glow, so the card has a light source of its own rather
-        // than sitting flat next to the ones around it.
+        // The shared card surface — see docs/ui/card-surface.md. Colour, glow
+        // and inner edge all live in this one object: `bg` would emit the
+        // `background` shorthand and wipe the gradient.
+        backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage:
-          "radial-gradient(80% 80% at 100% 0%, color-mix(in srgb, var(--mantine-color-secondary-6) 10%, transparent) 0%, transparent 65%)",
+          "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
+        border: "1px solid var(--color-border-subtle)",
+        boxShadow:
+          "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
       }}
     >
       <Stack gap="sm" p="md">

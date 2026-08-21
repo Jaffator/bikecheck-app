@@ -8,7 +8,7 @@ import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useGearLinking } from "@/features/strava/strava.queries";
 import { GearLinkingSheet } from "@/features/strava/GearLinkingSheet";
-import StravaMark from "@/assets/icons/bikecheck/strava.svg?react";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
 // Where the OAuth deep link lands. The account is already linked by the time
 // this renders — the backend did that during the callback — so this screen only
@@ -41,18 +41,12 @@ export function StravaConnected(): ReactElement {
           minHeight: "100dvh",
           backgroundColor: "var(--mantine-color-background-9)",
           padding: "1rem",
-          paddingTop:
-            "calc(1rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
-          paddingBottom:
-            "calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+          paddingTop: "calc(1rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+          paddingBottom: "calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
         }}
       >
         {/* ----------- Mark and heading ----------- */}
-        <Stack
-          align="center"
-          gap="md"
-          style={{ flex: 1, justifyContent: "center" }}
-        >
+        <Stack align="center" gap="md" style={{ flex: 1, justifyContent: "center" }}>
           <Box
             style={{
               display: "flex",
@@ -60,19 +54,12 @@ export function StravaConnected(): ReactElement {
               justifyContent: "center",
               padding: "1rem",
               borderRadius: "9999px",
-              backgroundColor:
-                "color-mix(in srgb, var(--mantine-color-strava-6) 20%, transparent)",
-              border:
-                "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 45%, transparent)",
-              boxShadow:
-                "0 0 20px 0 color-mix(in srgb, var(--mantine-color-strava-6) 25%, transparent)",
+              backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 20%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 45%, transparent)",
+              boxShadow: "0 0 20px 0 color-mix(in srgb, var(--mantine-color-strava-6) 25%, transparent)",
             }}
           >
-            <StravaMark
-              width={33}
-              height={33}
-              style={{ color: "var(--mantine-color-strava-6)" }}
-            />
+            <StravaMark width={33} height={33} style={{ color: "var(--mantine-color-strava-6)" }} />
           </Box>
 
           <Title
@@ -92,13 +79,7 @@ export function StravaConnected(): ReactElement {
           {/* The athlete id is the proof the link actually landed, so it is worth
             showing — but the screen still reads correctly without it. */}
           {user?.strava_athlete_id && (
-            <Text
-              ta="center"
-              fw={600}
-              size="sm"
-              c="#E8E2D4"
-              style={{ letterSpacing: "-0.016em" }}
-            >
+            <Text ta="center" fw={600} size="sm" c="#E8E2D4" style={{ letterSpacing: "-0.016em" }}>
               {t("strava.connectedAthlete", { id: user.strava_athlete_id })}
             </Text>
           )}
@@ -106,14 +87,7 @@ export function StravaConnected(): ReactElement {
 
         {/* ----------- Explanation and the way on ----------- */}
         <Stack gap="lg" align="center">
-          <Text
-            ta="center"
-            size="sm"
-            c="#C7C6CA"
-            opacity={0.6}
-            maw={350}
-            style={{ lineHeight: 1.4 }}
-          >
+          <Text ta="center" size="sm" c="#C7C6CA" opacity={0.6} maw={350} style={{ lineHeight: 1.4 }}>
             {t("strava.connectedBody")}
           </Text>
 
