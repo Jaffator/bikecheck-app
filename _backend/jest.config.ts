@@ -5,7 +5,7 @@ const config: Config = {
     {
       displayName: 'UNIT',
       rootDir: '.',
-      roots: ['<rootDir>/src'],
+      roots: ['<rootDir>/apps'],
       testRegex: '.*\\.unit\\.test\\.ts$',
       moduleFileExtensions: ['js', 'json', 'ts'],
       testEnvironment: 'node',
@@ -19,7 +19,7 @@ const config: Config = {
     {
       displayName: 'INTEGRATION',
       rootDir: '.',
-      roots: ['<rootDir>/src'],
+      roots: ['<rootDir>/apps'],
       testRegex: '.*\\.int\\.test\\.ts$',
       globalSetup: '<rootDir>/tests/setup.ts',
       globalTeardown: '<rootDir>/tests/teardown.ts',
@@ -35,7 +35,7 @@ const config: Config = {
     {
       displayName: 'E2E',
       rootDir: '.',
-      roots: ['<rootDir>/src'],
+      roots: ['<rootDir>/apps'],
       testRegex: '.*\\.e2e\\.test\\.ts$',
       globalSetup: '<rootDir>/tests/setup.ts',
       globalTeardown: '<rootDir>/tests/teardown.ts',

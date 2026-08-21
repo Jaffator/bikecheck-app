@@ -800,6 +800,13 @@
             "null"
           ]
         },
+        "service_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "created_at": {
           "type": [
             "string",

@@ -10,6 +10,7 @@ import {
   IsBoolean,
   IsArray,
   ValidateNested,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -54,14 +55,14 @@ export class Actions_BikeEventDto {
   action_id!: number;
 
   @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ example: 'Replaced chain' })
-  description!: string;
+  @IsOptional()
+  @ApiProperty({ example: 'Replaced chain', required: false })
+  description?: string;
 
   @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty({ example: 50 })
-  partial_cost!: number;
+  @IsOptional()
+  @ApiProperty({ example: 50, required: false })
+  partial_cost?: number;
 
   @IsBoolean()
   @IsNotEmpty()
@@ -118,6 +119,12 @@ export class Create_BikeEventDto {
   @IsPositive()
   @ApiProperty({ example: 15 })
   total_cost!: number;
+
+  // When the work happened. Omitted means it happened now, which is the live-recorded case.
+  @IsDateString()
+  @IsOptional()
+  @ApiProperty({ example: '2026-07-01T00:00:00.000Z', required: false })
+  service_date?: string;
 
   @IsArray()
   @IsOptional()

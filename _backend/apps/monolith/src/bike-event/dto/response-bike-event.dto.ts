@@ -89,6 +89,10 @@ export class Response_BikeEvent_Dto {
   @ApiProperty({ example: 350.5 })
   total_cost!: number;
 
+  // When the work happened. created_at answers the different question of when it was written down.
+  @ApiProperty({ nullable: true })
+  service_date!: Date | null;
+
   @ApiProperty()
   created_at!: Date;
 
@@ -150,4 +154,40 @@ export class Response_ActionsOnGroup_Dto {
 
   @ApiProperty({ type: [ActionDto] })
   actions!: ActionDto[];
+}
+
+// ------------------------------------------------------------------
+// ------------ Service history, one entry per occasion --------------
+// ------------------------------------------------------------------
+
+// Only what a history card renders - the full picture comes from the detail endpoint.
+export class ServiceHistoryItemDto {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 15 })
+  bike_id!: number;
+
+  @ApiProperty({ example: 'Trail bike', nullable: true })
+  bike_name!: string | null;
+
+  @ApiProperty({ nullable: true, description: 'When the work happened, not when it was recorded' })
+  service_date!: Date | null;
+
+  @ApiProperty({ example: 2 })
+  action_count!: number;
+
+  @ApiProperty({ example: ['Chain Replacement', 'Brake bleed'], type: [String] })
+  action_names!: string[];
+
+  @ApiProperty({ example: 350.5, nullable: true })
+  total_cost!: number | null;
+}
+
+export class Response_ServiceHistory_Dto {
+  @ApiProperty({ type: [ServiceHistoryItemDto] })
+  items!: ServiceHistoryItemDto[];
+
+  @ApiProperty({ example: 12, description: 'Services matching the filter, ignoring limit and offset' })
+  total!: number;
 }
