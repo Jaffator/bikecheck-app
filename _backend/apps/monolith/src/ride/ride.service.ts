@@ -66,6 +66,28 @@ function clamp(value: number, fallback: number, min: number, max: number): numbe
   return Math.min(Math.max(Math.trunc(value), min), max);
 }
 
+// Strava's title for the ride, read out of the stored payload. It is written
+// with JSON.stringify, but Prisma hands a Json column back parsed, so both
+// shapes are accepted rather than assuming either. Strava always sends a name,
+// so the empty string is a type-level floor, not an expected state.
+function activityName(jsonData: unknown): string {
+  const activity = asActivity(jsonData);
+  const name = activity?.name;
+  return typeof name === 'string' ? name : '';
+}
+
+function asActivity(jsonData: unknown): { name?: unknown } | null {
+  if (typeof jsonData === 'string') {
+    try {
+      return asActivity(JSON.parse(jsonData) as unknown);
+    } catch {
+      // A payload that will not parse carries no name.
+      return null;
+    }
+  }
+  return typeof jsonData === 'object' && jsonData !== null ? (jsonData as { name?: unknown }) : null;
+}
+
 // A bike with no nickname is named by what it is. Both parts are optional, so
 // the pieces are joined rather than templated.
 function bikeName(bike: RideRow['bikes']): string | null {
@@ -82,6 +104,7 @@ function toRideDto(row: RideRow): ResponseRideDto {
     activity_strava_id: row.activity_strava_id === null ? null : String(row.activity_strava_id),
     bike_id: row.bike_id,
     bike_name: bikeName(row.bikes),
+    name: activityName(row.json_data),
     started_at: row.started_at ? row.started_at.toISOString() : null,
     distance_m: row.distance_m ?? null,
     duration_min: row.duration_min ?? null,

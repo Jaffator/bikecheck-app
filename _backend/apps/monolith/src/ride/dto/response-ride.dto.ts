@@ -20,6 +20,13 @@ export class ResponseRideDto {
   @ApiProperty({ example: 'S-Works Tarmac', nullable: true })
   bike_name!: string | null;
 
+  // Strava's own title for the activity, lifted out of the stored payload so
+  // the list does not have to parse the raw blob to draw a heading. Strava
+  // always sends one — it auto-names an untitled ride — so this is never null;
+  // the empty string is only the type-level floor.
+  @ApiProperty({ example: 'Morning Mountain Bike Ride' })
+  name!: string;
+
   @ApiProperty({ example: '2026-08-19T06:12:00.000Z', nullable: true })
   started_at!: string | null;
 

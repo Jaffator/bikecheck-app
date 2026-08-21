@@ -40,16 +40,22 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
           {/* Allow the title to clamp. */}
           <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
             <Stack gap={2}>
-              {/* Display the bike first. */}
-              <Group gap={6} wrap="nowrap">
-                <Bike size={14} color="var(--mantine-color-primary-6)" style={{ flexShrink: 0 }} />
-                <Text fw={600} fz={15} c="text.6" lineClamp={1}>
-                  {ride.bike_name ?? t("rides.unknownBike")}
-                </Text>
-              </Group>
+              {/* The activity's own title leads: it is what the user named the
+                  ride, so it identifies it faster than the bike or the date. */}
+              <Text fw={600} fz={15} c="text.6" lineClamp={1}>
+                {ride.name}
+              </Text>
               <Text fz={13} c="text.7">
                 {ride.started_at === null ? "" : dayjs(ride.started_at).format("D. M. YYYY H:mm")}
               </Text>
+              {/* The bike drops to metadata weight — it is no longer the heading,
+                  so it sits with the stats rather than competing with the title. */}
+              <Group gap={6} wrap="nowrap">
+                <Bike size={13} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+                <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
+                  {ride.bike_name ?? t("rides.unknownBike")}
+                </Text>
+              </Group>
             </Stack>
             <Group gap="lg" wrap="nowrap">
               <Group gap={6} wrap="nowrap">

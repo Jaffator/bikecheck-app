@@ -8,6 +8,9 @@ export interface Ride {
   bike_id: number;
   // Preserved when the bike is unavailable.
   bike_name: string | null;
+  // Strava's own title for the ride. Strava always sends one, so this is never
+  // null — the empty string is only the type-level floor.
+  name: string;
   started_at: string | null;
   distance_m: number | null;
   duration_min: number | null;
