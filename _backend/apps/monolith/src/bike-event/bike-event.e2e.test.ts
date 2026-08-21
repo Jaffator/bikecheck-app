@@ -111,6 +111,116 @@ describe('BikeEventController (e2e)', () => {
     );
   });
 
+  it('offers no categories on a bike with no parts mounted', async () => {
+    const ownerToken = await login(owner);
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/bike-events/categories?bikeId=${bikeId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+
+    // The bike was created without components, so every category is empty and none is offered.
+    expect(response.body).toEqual([]);
+  });
+
+  it("refuses to list the categories on another user's bike", async () => {
+    await request(app.getHttpServer())
+      .get(`/api/bike-events/categories?bikeId=${bikeId}`)
+      .set('Authorization', `Bearer ${strangerToken}`)
+      .expect(403);
+  });
+
+  it("refuses to list the actions available on another user's bike", async () => {
+    await request(app.getHttpServer())
+      .get(`/api/bike-events/group-actions?groupId=1&bikeId=${bikeId}`)
+      .set('Authorization', `Bearer ${strangerToken}`)
+      .expect(403);
+  });
+
+  it('changes the note, the total and the service date of a saved service', async () => {
+    const ownerToken = await login(owner);
+
+    // ARRANGE: a service of its own, so the edits cannot disturb the other tests.
+    const created = await request(app.getHttpServer())
+      .post('/api/bike-events/create')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        bike_id: bikeId,
+        total_cost: 100,
+        note: 'Typo',
+        service_date: '2026-07-01T00:00:00.000Z',
+        actions_done: [],
+      })
+      .expect(201);
+
+    // ACT
+    const response = await request(app.getHttpServer())
+      .patch(`/api/bike-events/${created.body.id}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ note: 'Bike Shop XY', total_cost: 2400, service_date: '2026-06-01T00:00:00.000Z' })
+      .expect(200);
+
+    // ASSERT
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        note: 'Bike Shop XY',
+        total_cost: 2400,
+        service_date: '2026-06-01T00:00:00.000Z',
+      }),
+    );
+  });
+
+  it('adds and removes an attachment on a saved service', async () => {
+    const ownerToken = await login(owner);
+
+    const created = await request(app.getHttpServer())
+      .post('/api/bike-events/create')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ bike_id: bikeId, total_cost: 100, note: 'With receipt', actions_done: [] })
+      .expect(201);
+
+    // ACT: the receipt turns up after the service was recorded.
+    const added = await request(app.getHttpServer())
+      .patch(`/api/bike-events/${created.body.id}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        attachments_added: [
+          { name: 'invoice.pdf', url: 'https://cdn.test/invoice.pdf', content_type: 'application/pdf' },
+        ],
+      })
+      .expect(200);
+
+    expect(added.body.attachments).toHaveLength(1);
+
+    // ACT: and turns out to be the wrong one.
+    const removed = await request(app.getHttpServer())
+      .patch(`/api/bike-events/${created.body.id}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ attachments_removed: [added.body.attachments[0].id] })
+      .expect(200);
+
+    // ASSERT
+    expect(removed.body.attachments).toEqual([]);
+  });
+
+  it('refuses an action that belongs to another service', async () => {
+    const ownerToken = await login(owner);
+
+    await request(app.getHttpServer())
+      .patch(`/api/bike-events/${bikeEventId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ actions_removed: [999999] })
+      .expect(400);
+  });
+
+  it("refuses to edit another user's service", async () => {
+    await request(app.getHttpServer())
+      .patch(`/api/bike-events/${bikeEventId}`)
+      .set('Authorization', `Bearer ${strangerToken}`)
+      .send({ note: 'Not mine' })
+      .expect(403);
+  });
+
   it("refuses to create a service on another user's bike", async () => {
     await request(app.getHttpServer())
       .post('/api/bike-events/create')

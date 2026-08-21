@@ -156,6 +156,46 @@ export class Response_ActionsOnGroup_Dto {
   actions!: ActionDto[];
 }
 
+// ---------------------------------------------------------------------
+// ------------ Component Categories a bike has parts in ---------------
+// ---------------------------------------------------------------------
+
+// One tile on the wizard's category step. A category the bike has no parts in never
+// reaches the client, so component_count is always at least one.
+export class Response_BikeCategory_Dto {
+  @ApiProperty({ example: 2 })
+  group_id!: number;
+
+  @ApiProperty({ example: 'Drivetrain' })
+  group_name!: string;
+
+  @ApiProperty({ example: 'componentGroup.drivetrain', nullable: true })
+  group_i18n_key!: string | null;
+
+  @ApiProperty({ example: false, description: 'Whether parts in this category are chosen per side' })
+  side_choice!: boolean;
+
+  @ApiProperty({ example: 3, description: 'Active Mounted Components the bike carries in this category' })
+  component_count!: number;
+}
+
+// ---------------------------------------------------------------------
+// ------------ One uploaded service attachment ------------------------
+// ---------------------------------------------------------------------
+
+// What the wizard holds on to until the Service is saved. The same three fields the
+// create DTO takes back, so an upload can be handed straight to it.
+export class Response_ServiceAttachment_Dto {
+  @ApiProperty({ example: 'receipt.jpg', description: 'The name the file arrived under' })
+  name!: string;
+
+  @ApiProperty({ example: 'https://cdn.example.com/service-attachments/abc.webp' })
+  url!: string;
+
+  @ApiProperty({ example: 'image/webp', description: 'The type as stored, not as uploaded' })
+  content_type!: string;
+}
+
 // ------------------------------------------------------------------
 // ------------ Service history, one entry per occasion --------------
 // ------------------------------------------------------------------

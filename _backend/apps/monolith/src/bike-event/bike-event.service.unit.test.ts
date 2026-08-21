@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BikeEventService } from './bike-event.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { Create_BikeEventDto } from './dto/create-bike-event.dto';
-import { ForbiddenException } from '@nestjs/common';
+import { Update_BikeEventDto } from './dto/update-bike-event.dto';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 // The service freezes wear baselines against ride data, so every test here fixes
@@ -17,14 +19,26 @@ describe('BikeEventService', () => {
   let service: BikeEventService;
 
   const mockTx = {
-    events_bikes: { create: jest.fn() },
-    event_actions_done: { create: jest.fn() },
-    action_done_component_map: { create: jest.fn(), createMany: jest.fn() },
-    components_mounted: { findMany: jest.fn(), create: jest.fn(), update: jest.fn() },
-    bike_event_attachments: { createMany: jest.fn() },
+    events_bikes: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    event_actions_done: { create: jest.fn(), updateMany: jest.fn(), deleteMany: jest.fn() },
+    action_done_component_map: { create: jest.fn(), createMany: jest.fn(), update: jest.fn() },
+    components_mounted: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      count: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    bike_event_attachments: { createMany: jest.fn(), deleteMany: jest.fn() },
     component_types: { findUnique: jest.fn() },
     rides: { aggregate: jest.fn() },
-    bikes: { findFirst: jest.fn() },
+    bikes: { findFirst: jest.fn(), findFirstOrThrow: jest.fn() },
+  };
+
+  const mockStorage = {
+    uploadImageR2CloudFare: jest.fn(),
+    uploadPdfR2CloudFare: jest.fn(),
   };
 
   const mockPrisma = {
@@ -39,6 +53,7 @@ describe('BikeEventService', () => {
     },
     component_groups: { findUnique: jest.fn() },
     events_action: { findMany: jest.fn() },
+    components_mounted: { findMany: jest.fn() },
     rides: { aggregate: jest.fn() },
     $transaction: jest.fn(),
   };
@@ -81,7 +96,11 @@ describe('BikeEventService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BikeEventService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        BikeEventService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: StorageService, useValue: mockStorage },
+      ],
     }).compile();
 
     service = module.get<BikeEventService>(BikeEventService);
@@ -92,9 +111,22 @@ describe('BikeEventService', () => {
       user_id: OWNER_ID,
       total_km: 5000,
       total_time_min: 12000,
+      has_front_suspension: true,
+      has_rear_suspension: true,
     });
     mockTx.bikes.findFirst.mockResolvedValue({ id: BIKE_ID, user_id: OWNER_ID, total_km: 5000, total_time_min: 12000 });
+    mockTx.bikes.findFirstOrThrow.mockResolvedValue({
+      id: BIKE_ID,
+      total_km: 5000,
+      total_time_min: 12000,
+      has_front_suspension: true,
+      has_rear_suspension: true,
+    });
     mockTx.events_bikes.create.mockResolvedValue({ id: 99 });
+    // Every component a test names is on the caller's bike unless the test says otherwise.
+    mockTx.components_mounted.count.mockImplementation((args: { where: { id: { in: number[] } } }) =>
+      Promise.resolve(args.where.id.in.length),
+    );
     mockTx.event_actions_done.create.mockResolvedValue({ id: 500 });
     rides({});
     mockPrisma.rides.aggregate.mockResolvedValue(ridesAfter({}));
@@ -314,8 +346,502 @@ describe('BikeEventService', () => {
       await expect(service.hardDelete(99, STRANGER_ID)).rejects.toThrow(ForbiddenException);
     });
 
+    it("refuses to edit someone else's service", async () => {
+      await expect(service.update(99, { note: 'Not mine' }, STRANGER_ID)).rejects.toThrow(ForbiddenException);
+    });
+
     it("refuses to list the actions available on someone else's bike", async () => {
       await expect(service.actionsGroupComponents(1, BIKE_ID, STRANGER_ID)).rejects.toThrow(ForbiddenException);
+    });
+
+    it("refuses to freeze a component that is not on the service's bike", async () => {
+      // ARRANGE: the caller owns the bike, but names a part that is not on it.
+      mockPrisma.bikes.findFirst.mockResolvedValue({
+        id: BIKE_ID,
+        user_id: OWNER_ID,
+        total_km: 5000,
+        total_time_min: 12000,
+        has_front_suspension: true,
+        has_rear_suspension: true,
+      });
+      mockTx.components_mounted.count.mockResolvedValue(0);
+
+      // ACT + ASSERT
+      await expect(
+        service.create(
+          dto({
+            actions_done: [{ action_id: 1, part_replaced: false, mounted_components_involved: [45] }],
+          } as Partial<Create_BikeEventDto>),
+          OWNER_ID,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockTx.action_done_component_map.createMany).not.toHaveBeenCalled();
+    });
+
+    it("refuses to replace a component that is not on the service's bike", async () => {
+      // ARRANGE
+      mockPrisma.bikes.findFirst.mockResolvedValue({
+        id: BIKE_ID,
+        user_id: OWNER_ID,
+        total_km: 5000,
+        total_time_min: 12000,
+        has_front_suspension: true,
+        has_rear_suspension: true,
+      });
+      mockTx.components_mounted.count.mockResolvedValue(0);
+
+      // ACT + ASSERT: the part is never deactivated, which is what the check is there for.
+      await expect(
+        service.create(
+          dto({
+            actions_replaced: [
+              {
+                old_component_mounted_id: 45,
+                component_type_id: 16,
+                new_component_desc: 'Shimano XT',
+                action_id: 2,
+              },
+            ],
+          } as Partial<Create_BikeEventDto>),
+          OWNER_ID,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockTx.components_mounted.update).not.toHaveBeenCalled();
+    });
+
+    it("refuses to list the categories on someone else's bike", async () => {
+      await expect(service.categoriesOnBike(BIKE_ID, STRANGER_ID)).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('categories on a bike', () => {
+    const DRIVETRAIN = {
+      id: 1,
+      group_name: 'Drivetrain',
+      i18n_key: 'componentGroup.drivetrain',
+      side_choice: false,
+    };
+    const BRAKES = { id: 2, group_name: 'Brakes', i18n_key: 'componentGroup.brakes', side_choice: true };
+
+    // One mounted part, in the shape the query selects it: only the category it belongs to.
+    const partIn = (group: typeof DRIVETRAIN): { component_types: { component_groups: typeof DRIVETRAIN } } => ({
+      component_types: { component_groups: group },
+    });
+
+    it('counts the parts in each category the bike actually has', async () => {
+      // ARRANGE: two drivetrain parts and one brake, nothing suspended.
+      mockPrisma.components_mounted.findMany.mockResolvedValue([
+        partIn(DRIVETRAIN),
+        partIn(BRAKES),
+        partIn(DRIVETRAIN),
+      ]);
+
+      // ACT
+      const categories = await service.categoriesOnBike(BIKE_ID, OWNER_ID);
+
+      // ASSERT: a category the bike has no parts in never appears, so it cannot be counted.
+      expect(categories).toEqual([
+        {
+          group_id: 1,
+          group_name: 'Drivetrain',
+          group_i18n_key: 'componentGroup.drivetrain',
+          side_choice: false,
+          component_count: 2,
+        },
+        {
+          group_id: 2,
+          group_name: 'Brakes',
+          group_i18n_key: 'componentGroup.brakes',
+          side_choice: true,
+          component_count: 1,
+        },
+      ]);
+    });
+
+    it('asks only for the parts still on the bike', async () => {
+      // ARRANGE
+      mockPrisma.components_mounted.findMany.mockResolvedValue([]);
+
+      // ACT
+      await service.categoriesOnBike(BIKE_ID, OWNER_ID);
+
+      // ASSERT: a part taken off, or deleted, is not something the bike can be serviced on.
+      expect(mockPrisma.components_mounted.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { bike_id: BIKE_ID, is_active: true, is_deleted: { not: true } },
+        }),
+      );
+    });
+  });
+
+  describe('actions offered on a bike', () => {
+    const bikeWithSuspension = (front: boolean, rear: boolean): void => {
+      mockPrisma.bikes.findFirst.mockResolvedValue({
+        id: BIKE_ID,
+        user_id: OWNER_ID,
+        total_km: 5000,
+        total_time_min: 12000,
+        has_front_suspension: front,
+        has_rear_suspension: rear,
+      });
+    };
+
+    // The where clause the catalogue was narrowed by, which is the whole point of the ticket.
+    const askedWhere = (): Record<string, unknown> =>
+      (mockPrisma.events_action.findMany.mock.calls[0][0] as { where: Record<string, unknown> }).where;
+
+    beforeEach(() => {
+      mockPrisma.component_groups.findUnique.mockResolvedValue({
+        id: 3,
+        group_name: 'Suspension',
+        i18n_key: 'componentGroup.suspension',
+        side_choice: false,
+      });
+      mockPrisma.events_action.findMany.mockResolvedValue([]);
+    });
+
+    it('offers only actions whose target parts are mounted on the bike', async () => {
+      // ACT
+      await service.actionsGroupComponents(3, BIKE_ID, OWNER_ID);
+
+      // ASSERT: an action for a part the bike does not carry is work it cannot receive.
+      expect(askedWhere()).toEqual(
+        expect.objectContaining({
+          event_action_targets: {
+            some: {
+              component_types: {
+                component_group_id: 3,
+                components_mounted: { some: { bike_id: BIKE_ID, is_active: true, is_deleted: { not: true } } },
+              },
+            },
+          },
+        }),
+      );
+    });
+
+    it('omits front suspension actions on a bike with a rigid fork', async () => {
+      // ARRANGE
+      bikeWithSuspension(false, true);
+
+      // ACT
+      await service.actionsGroupComponents(3, BIKE_ID, OWNER_ID);
+
+      // ASSERT: only the suspension the bike lacks is filtered out.
+      expect(askedWhere()).toEqual(expect.objectContaining({ req_front_suspension: false }));
+      expect(askedWhere().req_rear_suspension).toBeUndefined();
+    });
+
+    it('omits rear suspension actions on a hardtail', async () => {
+      // ARRANGE
+      bikeWithSuspension(true, false);
+
+      // ACT
+      await service.actionsGroupComponents(3, BIKE_ID, OWNER_ID);
+
+      // ASSERT
+      expect(askedWhere()).toEqual(expect.objectContaining({ req_rear_suspension: false }));
+      expect(askedWhere().req_front_suspension).toBeUndefined();
+    });
+
+    it('offers every suspension action on a full suspension bike', async () => {
+      // ARRANGE
+      bikeWithSuspension(true, true);
+
+      // ACT
+      await service.actionsGroupComponents(3, BIKE_ID, OWNER_ID);
+
+      // ASSERT: nothing to filter, so neither requirement is asked about.
+      expect(askedWhere().req_front_suspension).toBeUndefined();
+      expect(askedWhere().req_rear_suspension).toBeUndefined();
+    });
+  });
+
+  describe('attachment upload', () => {
+    // Only the fields the service reads - multer hands over far more than this.
+    const file = (originalname: string, mimetype: string): Express.Multer.File =>
+      ({ originalname, mimetype, buffer: Buffer.from('file') }) as Express.Multer.File;
+
+    it('compresses a photographed receipt on the way up', async () => {
+      // ARRANGE
+      mockStorage.uploadImageR2CloudFare.mockResolvedValue('https://cdn.test/service-attachments/abc.webp');
+
+      // ACT
+      const attachment = await service.uploadAttachment(file('receipt.jpg', 'image/jpeg'));
+
+      // ASSERT: attachments live apart from bike photos, and the stored file is the
+      // re-encoded one, so its type is no longer what the phone sent.
+      expect(mockStorage.uploadImageR2CloudFare).toHaveBeenCalledWith(expect.any(Buffer), 'service-attachments');
+      expect(attachment).toEqual({
+        name: 'receipt.jpg',
+        url: 'https://cdn.test/service-attachments/abc.webp',
+        content_type: 'image/webp',
+      });
+    });
+
+    it('stores a PDF invoice untouched', async () => {
+      // ARRANGE
+      mockStorage.uploadPdfR2CloudFare.mockResolvedValue('https://cdn.test/service-attachments/abc.pdf');
+
+      // ACT
+      const attachment = await service.uploadAttachment(file('invoice.pdf', 'application/pdf'));
+
+      // ASSERT: a PDF has nothing to resize, so it never reaches the image path.
+      expect(mockStorage.uploadPdfR2CloudFare).toHaveBeenCalledWith(expect.any(Buffer), 'service-attachments');
+      expect(mockStorage.uploadImageR2CloudFare).not.toHaveBeenCalled();
+      expect(attachment).toEqual({
+        name: 'invoice.pdf',
+        url: 'https://cdn.test/service-attachments/abc.pdf',
+        content_type: 'application/pdf',
+      });
+    });
+
+    it('refuses a file that is neither an image nor a PDF', async () => {
+      await expect(service.uploadAttachment(file('notes.txt', 'text/plain'))).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('editing a saved service', () => {
+    const EVENT_ID = 99;
+    // Where the work was said to have happened before the correction.
+    const OLD_DATE = new Date('2026-07-01T00:00:00.000Z');
+    const OLD_WINDOW_START = new Date('2026-07-01T23:59:59.999Z');
+    // Where the user moves it to: a month earlier.
+    const NEW_DATE = new Date('2026-06-01T00:00:00.000Z');
+    const NEW_WINDOW_START = new Date('2026-06-01T23:59:59.999Z');
+
+    // The service as it stands, in the shape the edit reads it back in.
+    const saved = (actions: unknown[] = []): Record<string, unknown> => ({
+      id: EVENT_ID,
+      bike_id: BIKE_ID,
+      service_date: OLD_DATE,
+      event_actions_done: actions,
+    });
+
+    const ordinaryAction = {
+      id: 500,
+      part_replaced: false,
+      action_done_component_map: [{ component_mounted_id: 45 }],
+    };
+
+    const replacementAction = {
+      id: 501,
+      part_replaced: true,
+      action_done_component_map: [{ component_mounted_id: 46 }],
+    };
+
+    // Rides answered per window, so the edit can tell the old date's wear from the new one's.
+    const ridesByWindow = (byStart: Record<string, RideSum>): void => {
+      mockTx.rides.aggregate.mockImplementation((args: { where: { started_at?: { gt?: Date; lte?: Date } } }) => {
+        const window = args.where.started_at;
+        const key = (window?.gt ?? window?.lte)?.toISOString() ?? '';
+        return Promise.resolve(aggregateResult(window?.gt ? (byStart[key] ?? {}) : {}));
+      });
+    };
+
+    beforeEach(() => {
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved());
+      mockTx.components_mounted.findUnique.mockResolvedValue({
+        id: 46,
+        bike_id: BIKE_ID,
+        component_type_id: 16,
+        total_km: 300,
+        total_time_min: 900,
+        drivetrain_km: 250,
+        suspension_min: 0,
+        component_types: { component_type: 'Chain' },
+      });
+    });
+
+    it('changes the note, the total and a price that turned out to be wrong', async () => {
+      // ARRANGE
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved([ordinaryAction]));
+
+      // ACT
+      await service.update(
+        EVENT_ID,
+        { note: 'Bike Shop XY', total_cost: 2400, actions_updated: [{ action_done_id: 500, partial_cost: 150 }] },
+        OWNER_ID,
+      );
+
+      // ASSERT: scoped to the service, so an id from someone else's cannot be edited through it.
+      expect(mockTx.event_actions_done.updateMany).toHaveBeenCalledWith({
+        where: { id: 500, bike_event_id: EVENT_ID },
+        data: { partial_cost: 150, note: undefined },
+      });
+      expect(mockTx.events_bikes.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: EVENT_ID },
+          data: expect.objectContaining({ note: 'Bike Shop XY', total_cost: 2400 }),
+        }),
+      );
+    });
+
+    it('refuses to remove an action that replaced a part', async () => {
+      // ARRANGE
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved([replacementAction]));
+
+      // ACT + ASSERT: the part it fitted may already carry rides or its own replacement,
+      // so the removal is refused with something the UI can show - see ADR 0003.
+      await expect(service.update(EVENT_ID, { actions_removed: [501] }, OWNER_ID)).rejects.toThrow(BadRequestException);
+      expect(mockTx.event_actions_done.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('removes an ordinary action', async () => {
+      // ARRANGE
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved([ordinaryAction]));
+
+      // ACT
+      await service.update(EVENT_ID, { actions_removed: [500] }, OWNER_ID);
+
+      // ASSERT
+      expect(mockTx.event_actions_done.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [500] }, bike_event_id: EVENT_ID },
+      });
+    });
+
+    it('rewinds every baseline when the service date moves earlier', async () => {
+      // ARRANGE: 500 km ridden since the new date, 200 of it since the old one.
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved([ordinaryAction]));
+      ridesByWindow({
+        [NEW_WINDOW_START.toISOString()]: { distance_m: 500_000, duration_min: 1500, drivetrain_meters: 400_000 },
+        [OLD_WINDOW_START.toISOString()]: { distance_m: 200_000, duration_min: 600, drivetrain_meters: 150_000 },
+      });
+      mockTx.components_mounted.findUnique.mockResolvedValue({
+        id: 45,
+        bike_id: BIKE_ID,
+        component_type_id: 16,
+        total_km: 1000,
+        total_time_min: 3000,
+        drivetrain_km: 900,
+        suspension_min: 0,
+        component_types: { component_type: 'Chain' },
+      });
+
+      // ACT
+      await service.update(EVENT_ID, { service_date: NEW_DATE.toISOString() }, OWNER_ID);
+
+      // ASSERT: the baseline is what the part read on the new date, not the old one.
+      expect(mockTx.action_done_component_map.update).toHaveBeenCalledWith({
+        where: { event_action_done_id_component_mounted_id: { event_action_done_id: 500, component_mounted_id: 45 } },
+        data: {
+          km_at_time: 500,
+          time_min_at_time: 1500,
+          drivetrain_km_at_time: 500,
+          suspension_min_at_time: 0,
+        },
+      });
+    });
+
+    it('carries a replaced part back to the new date, with the wear it picked up since', async () => {
+      // ARRANGE: the part was fitted on the old date carrying 200 km of wear; from the new
+      // date it would have been on the bike for 500.
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved([replacementAction]));
+      ridesByWindow({
+        [NEW_WINDOW_START.toISOString()]: { distance_m: 500_000, duration_min: 1500, drivetrain_meters: 400_000 },
+        [OLD_WINDOW_START.toISOString()]: { distance_m: 200_000, duration_min: 600, drivetrain_meters: 150_000 },
+      });
+
+      // ACT
+      await service.update(EVENT_ID, { service_date: NEW_DATE.toISOString() }, OWNER_ID);
+
+      // ASSERT: the part moves with the work, and gains the 300 km ridden between the two
+      // dates on top of the 300 it already carried.
+      expect(mockTx.components_mounted.update).toHaveBeenCalledWith({
+        where: { id: 46 },
+        data: expect.objectContaining({
+          mounted_at: NEW_DATE,
+          total_km: 600,
+          total_time_min: 1800,
+          drivetrain_km: 500,
+        }),
+      });
+
+      // Its baselines stay at zero: on the service date the part had been ridden nowhere.
+      expect(mockTx.action_done_component_map.update).not.toHaveBeenCalled();
+    });
+
+    it('takes the part that came off back to the new date with it', async () => {
+      // ARRANGE
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved([replacementAction]));
+
+      // ACT
+      await service.update(EVENT_ID, { service_date: NEW_DATE.toISOString() }, OWNER_ID);
+
+      // ASSERT: the old part stopped being worn when the work happened, wherever that was.
+      expect(mockTx.components_mounted.updateMany).toHaveBeenCalledWith({
+        where: { bike_id: BIKE_ID, is_active: false, removed_at: OLD_DATE, component_type_id: 16 },
+        data: { removed_at: NEW_DATE },
+      });
+    });
+
+    it('leaves the baselines alone when the date is not touched', async () => {
+      // ARRANGE
+      mockTx.events_bikes.findUnique.mockResolvedValue(saved([ordinaryAction]));
+
+      // ACT
+      await service.update(EVENT_ID, { note: 'Typo fixed' }, OWNER_ID);
+
+      // ASSERT
+      expect(mockTx.action_done_component_map.update).not.toHaveBeenCalled();
+      expect(mockTx.components_mounted.update).not.toHaveBeenCalled();
+    });
+
+    it('adds an action, freezing it at the service date like a new one', async () => {
+      // ARRANGE: the work was a month ago and 200 km have been ridden since.
+      mockTx.components_mounted.findMany.mockResolvedValue([
+        { id: 45, total_km: 1000, total_time_min: 3000, drivetrain_km: 900, suspension_min: 2000 },
+      ]);
+      rides({ distance_m: 200_000, duration_min: 600, drivetrain_meters: 150_000, suspension_min: 400 });
+
+      // ACT
+      await service.update(
+        EVENT_ID,
+        {
+          actions_done: [{ action_id: 1, part_replaced: false, mounted_components_involved: [45] }],
+        } as Update_BikeEventDto,
+        OWNER_ID,
+      );
+
+      // ASSERT: the same rewind a create would have applied.
+      expect(mockTx.action_done_component_map.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            event_action_done_id: 500,
+            component_mounted_id: 45,
+            km_at_time: 800,
+            time_min_at_time: 2400,
+            drivetrain_km_at_time: 750,
+            suspension_min_at_time: 1600,
+          },
+        ],
+      });
+    });
+
+    it('adds and removes attachments', async () => {
+      // ACT
+      await service.update(
+        EVENT_ID,
+        {
+          attachments_added: [{ name: 'invoice.pdf', url: 'https://cdn.test/a.pdf', content_type: 'application/pdf' }],
+          attachments_removed: [3],
+        },
+        OWNER_ID,
+      );
+
+      // ASSERT
+      expect(mockTx.bike_event_attachments.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [3] }, bike_event_id: EVENT_ID },
+      });
+      expect(mockTx.bike_event_attachments.createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            bike_event_id: EVENT_ID,
+            name: 'invoice.pdf',
+            url: 'https://cdn.test/a.pdf',
+            content_type: 'application/pdf',
+          },
+        ],
+      });
     });
   });
 

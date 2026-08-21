@@ -5,7 +5,9 @@ import sharp from 'sharp';
 import path from 'path';
 import 'dotenv/config';
 
-type CloudFolder = 'bikes';
+// Service attachments are receipts and invoices, kept apart from the bike photos so a
+// document is never served from the folder the garage reads.
+type CloudFolder = 'bikes' | 'service-attachments';
 
 // One size for every use. Wide enough to stay sharp full-screen on a phone at
 // 3x, small enough that a card does not pull megabytes to draw 180px.
@@ -96,6 +98,18 @@ export class StorageService {
       const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(`Image processing failed: ${message}`);
     }
+  }
+
+  /**
+   * Store a PDF exactly as it arrived. Unlike a photo there is nothing to resize or
+   * re-encode - a receipt is already as small as it is going to get, and rewriting it
+   * would risk losing the very thing it is kept as proof of.
+   * @param fileBuffer - The PDF as received
+   * @param cloudFolder - Cloud folder to upload to (e.g. 'service-attachments')
+   * @returns Public URL of the uploaded file
+   */
+  async uploadPdfR2CloudFare(fileBuffer: Buffer, cloudFolder: CloudFolder): Promise<string> {
+    return await this.uploadFileR2CloudFare(fileBuffer, `${randomUUID()}.pdf`, cloudFolder);
   }
 
   private getContentType(url: string): string {
