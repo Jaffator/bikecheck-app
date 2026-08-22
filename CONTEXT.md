@@ -43,7 +43,9 @@ _Avoid_: Task, job, event
 
 **Action Tag**:
 A sub-item describing what an action includes — "Dust seals replacement", "Piston Lube". Describes
-the action itself, not what was done on a given occasion, so it is never recorded per service.
+the action itself, so it is catalogue data and is never stored per service (ADR 0004). When
+recording work the user unticks the tags that were left out, and the ones kept are joined into a
+sentence stored as the action's note — prose about the occasion, not data (ADR 0005).
 
 **Replacement**:
 An action that swaps a part out. Ends the old mounted component and begins a new one; it is not an
@@ -52,6 +54,21 @@ edit of the existing part.
 **Service Date**:
 When the work actually happened, which may be earlier than when it was recorded.
 _Avoid_: Created at (that is when the record was written)
+
+**Category Block**:
+The Actions recorded against one Component Category within one Service. A wizard-only grouping —
+nothing in the schema represents it, and every block's actions land in the same Service (ADR 0002).
+_Avoid_: Sub-service, service part
+
+**Draft Block**:
+The Category Block being worked on, which reaches the Service only when the user confirms it. Either
+a category being added or one the Summary sent the user back to correct (ADR 0006).
+
+**Summary**:
+The step where a Service is assembled and saved — its date, note, total cost, attachments and the
+list of Category Blocks. The wizard's hub: the only way on, and the place another Action is added
+from (ADR 0006).
+_Avoid_: Review (it is where work is added, not only checked)
 
 **Wear Baseline**:
 A component's accumulators frozen at the moment of a service, so "how far since this was last

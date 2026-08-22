@@ -237,17 +237,18 @@ function ActionCard({
           </Text>
         ))}
 
-        {/* What the job included, from the catalogue — never recorded per occasion. */}
-        {action.tags.length > 0 && (
-          <Text fz={13} c="var(--color-text-dim)">
-            {tagLine(action.tags, t)}
-          </Text>
-        )}
-
-        {action.note && (
+        {/* What the job included. A recorded note says what the user kept of the
+            action's tags (ADR 0005); without one, the catalogue's tags stand in. */}
+        {action.note ? (
           <Text fz={13} c="var(--color-text-dim)" style={{ whiteSpace: "pre-wrap" }}>
             {action.note}
           </Text>
+        ) : (
+          action.tags.length > 0 && (
+            <Text fz={13} c="var(--color-text-dim)">
+              {tagLine(action.tags, t)}
+            </Text>
+          )
         )}
       </Stack>
     </Paper>

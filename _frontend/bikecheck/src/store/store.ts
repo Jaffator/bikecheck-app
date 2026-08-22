@@ -21,6 +21,9 @@ interface HeaderStore {
   // Hides shared chrome for a page that owns the full screen.
   chromeHidden: boolean;
   setChromeHidden: (value: boolean) => void;
+  // Hides the header's back arrow on a step that has no way back — see ADR 0006.
+  backHidden: boolean;
+  setBackHidden: (value: boolean) => void;
 }
 
 export const useHeaderStore = create<HeaderStore>((set) => ({
@@ -31,4 +34,6 @@ export const useHeaderStore = create<HeaderStore>((set) => ({
   setOnBack: (value) => set(() => ({ onBack: value })),
   chromeHidden: false,
   setChromeHidden: (value) => set({ chromeHidden: value }),
+  backHidden: false,
+  setBackHidden: (value) => set({ backHidden: value }),
 }));

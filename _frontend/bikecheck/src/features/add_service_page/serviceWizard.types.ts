@@ -9,8 +9,11 @@ export interface PickedAction {
   actionI18nKey: string | null;
   // A Replacement swaps a part out; it is not an edit of the existing one (ADR 0003).
   replaceAction: boolean;
-  // What the Action covers, from the catalogue — shown, never recorded (ADR 0004).
+  // What the Action covers, from the catalogue.
   tags: ActionTag[];
+  // The ones the user says were actually done. Tags carry no id of their own, and a tag
+  // name is unique within an action, so the name is the handle — see ADR 0005.
+  selectedTags: string[];
   // The parts on this bike the Action could have been performed on.
   candidates: MountedComponent[];
   // The ones it was performed on. Empty warns rather than blocks: work the user cannot
@@ -28,6 +31,12 @@ export interface CategoryBlock {
   categoryName: string;
   categoryI18nKey: string | null;
   actions: PickedAction[];
+}
+
+// The block being worked on, which reaches the Summary only when the user confirms it.
+// A null index means a category being added; a number means the block it will replace.
+export interface DraftBlock extends CategoryBlock {
+  editingIndex: number | null;
 }
 
 // The one candidate a single-part Action is preselected with; two candidates are never

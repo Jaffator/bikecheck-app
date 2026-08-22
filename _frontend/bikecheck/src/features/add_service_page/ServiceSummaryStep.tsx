@@ -11,23 +11,27 @@ import {
   Stack,
   Text,
   Textarea,
+  TextInput,
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Check, Paperclip, Pencil, X } from "lucide-react";
+import { Check, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useUploadServiceAttachment } from "@/features/service/service.queries";
 import type { UploadedAttachment } from "@/features/service/service.types";
-import { autosizeInputStyles, inputStyles } from "@/features/add_bike_page/formStyles";
-import { catalogueLabel } from "@/features/service/serviceLabels";
-import type { CategoryBlock } from "./serviceWizard.types";
+import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
+import { catalogueLabel, recordedTagLine } from "@/features/service/serviceLabels";
+import { today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
 
 // A receipt, an invoice and a few photos of the work is as many as one visit needs.
 const MAX_ATTACHMENTS = 10;
 
-interface ServiceReviewStepProps {
+interface ServiceSummaryStepProps {
   blocks: CategoryBlock[];
   onEditBlock: (index: number) => void;
+  onAnotherCategory: () => void;
+  serviceDate: string;
+  onServiceDateChange: (day: string) => void;
   note: string;
   onNoteChange: (note: string) => void;
   totalCost: number;
@@ -36,15 +40,21 @@ interface ServiceReviewStepProps {
   attachments: UploadedAttachment[];
   onAttachmentAdded: (attachment: UploadedAttachment) => void;
   onAttachmentRemoved: (url: string) => void;
+  canSave: boolean;
   onSave: () => void;
   saving: boolean;
   saveFailed: boolean;
 }
 
-// Everything the user assembled, in one view, before it is committed.
-export function ServiceReviewStep({
+// The wizard's hub: everything the user assembled, and the only way on — see ADR 0006.
+// Date, note, total and attachments belong to the occasion, so they live here rather
+// than beside the actions (ADR 0002).
+export function ServiceSummaryStep({
   blocks,
   onEditBlock,
+  onAnotherCategory,
+  serviceDate,
+  onServiceDateChange,
   note,
   onNoteChange,
   totalCost,
@@ -52,10 +62,11 @@ export function ServiceReviewStep({
   attachments,
   onAttachmentAdded,
   onAttachmentRemoved,
+  canSave,
   onSave,
   saving,
   saveFailed,
-}: ServiceReviewStepProps): ReactElement {
+}: ServiceSummaryStepProps): ReactElement {
   const { t } = useTranslation();
   const upload = useUploadServiceAttachment();
 
@@ -68,8 +79,19 @@ export function ServiceReviewStep({
   return (
     <Stack gap="md">
       <Text fw={600} fz={15} c="text.6">
-        {t("addService.reviewTitle")}
+        {t("addService.summaryTitle")}
       </Text>
+
+      {/* The date the work happened, which may be months before it was written down. */}
+      <TextInput
+        type="date"
+        label={t("addService.serviceDate")}
+        value={serviceDate}
+        // Work cannot have been done later than today.
+        max={today()}
+        styles={inputStyles}
+        onChange={(event) => onServiceDateChange(event.currentTarget.value)}
+      />
 
       {blocks.map((block, index) => (
         <UnstyledButton
@@ -95,14 +117,12 @@ export function ServiceReviewStep({
             }}
           >
             <Group justify="space-between" wrap="nowrap" align="flex-start">
-              <Stack gap={4} style={{ minWidth: 0 }}>
+              <Stack gap={6} style={{ minWidth: 0 }}>
                 <Text fw={600} fz={15} c="text.6">
                   {catalogueLabel(block.categoryI18nKey, block.categoryName, t)}
                 </Text>
                 {block.actions.map((action) => (
-                  <Text key={action.actionId} fz={13} c="var(--color-text-dim)">
-                    {catalogueLabel(action.actionI18nKey, action.actionName, t)}
-                  </Text>
+                  <ActionSummary key={action.actionId} action={action} />
                 ))}
               </Stack>
               {/* A correction should not cost the rest of the wizard. */}
@@ -111,6 +131,20 @@ export function ServiceReviewStep({
           </Paper>
         </UnstyledButton>
       ))}
+
+      <Button
+        variant="outline"
+        color="secondary.6"
+        radius="md"
+        leftSection={<Plus size={16} />}
+        onClick={() => {
+          void tapFeedback();
+          onAnotherCategory();
+        }}
+        style={{ alignSelf: "flex-start" }}
+      >
+        {t("addService.anotherServiceAction")}
+      </Button>
 
       <Textarea
         label={t("addService.note")}
@@ -186,6 +220,7 @@ export function ServiceReviewStep({
               radius="md"
               leftSection={<Paperclip size={16} />}
               disabled={attachments.length >= MAX_ATTACHMENTS || upload.isPending}
+              styles={disabledButtonStyles}
               style={{ alignSelf: "flex-start" }}
             >
               {t("addService.addAttachment")}
@@ -205,6 +240,8 @@ export function ServiceReviewStep({
         radius="md"
         leftSection={<Check size={18} />}
         loading={saving}
+        disabled={!canSave}
+        styles={disabledButtonStyles}
         onClick={() => {
           void tapFeedback();
           onSave();
@@ -213,6 +250,26 @@ export function ServiceReviewStep({
       >
         {t("addService.save")}
       </Button>
+    </Stack>
+  );
+}
+
+// One recorded action, with what the user kept of its tags underneath — the same
+// sentence that will be stored against it (ADR 0005).
+function ActionSummary({ action }: { action: PickedAction }): ReactElement {
+  const { t } = useTranslation();
+  const done = recordedTagLine(action.tags, action.selectedTags, t);
+
+  return (
+    <Stack gap={2}>
+      <Text fz={13} c="text.7">
+        {catalogueLabel(action.actionI18nKey, action.actionName, t)}
+      </Text>
+      {done !== "" && (
+        <Text fz={12} c="var(--color-text-dim)">
+          {done}
+        </Text>
+      )}
     </Stack>
   );
 }

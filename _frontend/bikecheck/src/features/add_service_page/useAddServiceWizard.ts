@@ -2,6 +2,7 @@
 // presentational and the assembled Service is built in a single readable pass.
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCreateService } from "@/features/service/service.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
@@ -13,9 +14,15 @@ import type {
   ServiceReplacementInput,
   UploadedAttachment,
 } from "@/features/service/service.types";
-import { preselectedComponents, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
+import { recordedTagLine } from "@/features/service/serviceLabels";
+import { preselectedComponents, today, type CategoryBlock, type DraftBlock, type PickedAction } from "./serviceWizard.types";
 
-export type WizardStep = "bike" | "category" | "actions" | "review";
+export type WizardStep = "bike" | "category" | "actions" | "summary";
+
+// What has to be confirmed before back is allowed to throw work away. Each names a
+// different loss: a draft category, the edits to a saved one, or the whole Service.
+// Null means back costs the user nothing and can just happen.
+export type BackPrompt = "discardAction" | "discardEdits" | "discardService" | null;
 
 // A day, sent as the instant the backend reads back as that day.
 function toIsoDate(day: string): string {
@@ -37,8 +44,7 @@ export interface AddServiceWizard {
   serviceDate: string;
   setServiceDate: (day: string) => void;
   blocks: CategoryBlock[];
-  activeBlock: CategoryBlock | undefined;
-  activeBlockIndex: number;
+  draft: DraftBlock | null;
   note: string;
   setNote: (note: string) => void;
   totalCost: number;
@@ -51,9 +57,16 @@ export interface AddServiceWizard {
   chooseCategory: (category: BikeCategory) => void;
   toggleAction: (action: CatalogueAction) => void;
   updateAction: (actionId: number, patch: Partial<PickedAction>) => void;
+  // Whether the draft can be written into the Service. An edited block may be emptied,
+  // which removes it; a new one has to carry work.
+  canCommit: boolean;
+  // Whether there is a Service to save at all.
+  canSave: boolean;
+  // Writes the draft into the Service and lands on the Summary.
+  commitDraft: () => void;
   addAnotherCategory: () => void;
   editBlock: (index: number) => void;
-  goToReview: () => void;
+  backPrompt: () => BackPrompt;
   back: () => void;
   save: () => void;
   saving: boolean;
@@ -62,6 +75,7 @@ export interface AddServiceWizard {
 
 export function useAddServiceWizard(): AddServiceWizard {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { data: bikes, isLoading: bikesLoading } = useBikes();
   const create = useCreateService();
@@ -73,7 +87,7 @@ export function useAddServiceWizard(): AddServiceWizard {
   const [chosenBikeId, setChosenBikeId] = useState<number | null>(null);
   const [serviceDate, setServiceDate] = useState<string>(today());
   const [blocks, setBlocks] = useState<CategoryBlock[]>([]);
-  const [activeBlockIndex, setActiveBlockIndex] = useState(0);
+  const [draft, setDraft] = useState<DraftBlock | null>(null);
   const [note, setNote] = useState("");
   const [totalCostOverride, setTotalCostOverride] = useState<number | null>(null);
   const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
@@ -85,7 +99,9 @@ export function useAddServiceWizard(): AddServiceWizard {
   const bikeId = chosenBikeId ?? (bikeStepSkipped ? (bikeFromUrl ?? bikes?.[0]?.id ?? null) : null);
   const step: WizardStep = requestedStep === "bike" && bikeStepSkipped ? "category" : requestedStep;
 
-  const activeBlock = blocks[activeBlockIndex];
+  const draftDirty = (draft?.actions.length ?? 0) > 0;
+  const canCommit = draft !== null && (draftDirty || draft.editingIndex !== null);
+  const canSave = blocks.length > 0;
 
   const suggestedTotal = useMemo(
     () =>
@@ -103,90 +119,96 @@ export function useAddServiceWizard(): AddServiceWizard {
     setStep("category");
   }, []);
 
-  // Picking a category the Service already covers returns to that block rather than
-  // opening a second one for the same parts.
+  // Picking a category the Service already covers reopens that block rather than opening
+  // a second one for the same parts. Nothing reaches the Summary until the draft is
+  // confirmed, so a category picked by mistake leaves no trace — see ADR 0006.
   const chooseCategory = useCallback(
     (category: BikeCategory): void => {
       const existing = blocks.findIndex((block) => block.categoryId === category.group_id);
-      if (existing >= 0) {
-        setActiveBlockIndex(existing);
-      } else {
-        setActiveBlockIndex(blocks.length);
-        setBlocks([
-          ...blocks,
-          {
-            categoryId: category.group_id,
-            categoryName: category.group_name,
-            categoryI18nKey: category.group_i18n_key,
-            actions: [],
-          },
-        ]);
-      }
+      setDraft(
+        existing >= 0
+          ? { ...blocks[existing], actions: [...blocks[existing].actions], editingIndex: existing }
+          : {
+              categoryId: category.group_id,
+              categoryName: category.group_name,
+              categoryI18nKey: category.group_i18n_key,
+              actions: [],
+              editingIndex: null,
+            },
+      );
       setStep("actions");
     },
     [blocks],
   );
 
-  const toggleAction = useCallback(
-    (action: CatalogueAction): void => {
-      setBlocks((current) =>
-        current.map((block, index) => {
-          if (index !== activeBlockIndex) return block;
-          const picked = block.actions.some((candidate) => candidate.actionId === action.id);
-          if (picked) {
-            return { ...block, actions: block.actions.filter((candidate) => candidate.actionId !== action.id) };
-          }
-          const componentIds = preselectedComponents(action.components);
-          const replaced = action.components.find((component) => component.id === componentIds[0]);
-          return {
-            ...block,
-            actions: [
-              ...block.actions,
-              {
-                actionId: action.id,
-                actionName: action.action_name,
-                actionI18nKey: action.action_i18n_key,
-                replaceAction: action.replace_action,
-                tags: action.tags,
-                candidates: action.components,
-                componentIds,
-                // Like for like takes no typing; an upgrade takes a little.
-                newDescription: action.replace_action ? (replaced?.component_desc ?? "") : "",
-                partialCost: null,
-              },
-            ],
-          };
-        }),
-      );
-    },
-    [activeBlockIndex],
-  );
+  const toggleAction = useCallback((action: CatalogueAction): void => {
+    setDraft((current) => {
+      if (current === null) return current;
+      const picked = current.actions.some((candidate) => candidate.actionId === action.id);
+      if (picked) {
+        return { ...current, actions: current.actions.filter((candidate) => candidate.actionId !== action.id) };
+      }
+      const componentIds = preselectedComponents(action.components);
+      const replaced = action.components.find((component) => component.id === componentIds[0]);
+      return {
+        ...current,
+        actions: [
+          ...current.actions,
+          {
+            actionId: action.id,
+            actionName: action.action_name,
+            actionI18nKey: action.action_i18n_key,
+            replaceAction: action.replace_action,
+            tags: action.tags,
+            // Ticking an action claims its full scope; the user removes what was left
+            // out — see ADR 0005.
+            selectedTags: action.tags.map((tag) => tag.tag),
+            candidates: action.components,
+            componentIds,
+            // Like for like takes no typing; an upgrade takes a little.
+            newDescription: action.replace_action ? (replaced?.component_desc ?? "") : "",
+            partialCost: null,
+          },
+        ],
+      };
+    });
+  }, []);
 
-  const updateAction = useCallback(
-    (actionId: number, patch: Partial<PickedAction>): void => {
-      setBlocks((current) =>
-        current.map((block, index) =>
-          index === activeBlockIndex
-            ? {
-                ...block,
-                actions: block.actions.map((action) =>
-                  action.actionId === actionId ? withPrefilledDescription({ ...action, ...patch }) : action,
-                ),
-              }
-            : block,
-        ),
-      );
-    },
-    [activeBlockIndex],
-  );
+  const updateAction = useCallback((actionId: number, patch: Partial<PickedAction>): void => {
+    setDraft((current) =>
+      current === null
+        ? current
+        : {
+            ...current,
+            actions: current.actions.map((action) =>
+              action.actionId === actionId ? withPrefilledDescription({ ...action, ...patch }) : action,
+            ),
+          },
+    );
+  }, []);
+
+  // An edited block left with no actions is a block the user removed.
+  const commitDraft = useCallback((): void => {
+    if (draft === null) return;
+    const { editingIndex, ...block } = draft;
+    setBlocks((current) => {
+      if (editingIndex === null) return [...current, block];
+      if (block.actions.length === 0) return current.filter((_, index) => index !== editingIndex);
+      return current.map((existing, index) => (index === editingIndex ? block : existing));
+    });
+    setDraft(null);
+    setStep("summary");
+  }, [draft]);
 
   const addAnotherCategory = useCallback((): void => setStep("category"), []);
-  const goToReview = useCallback((): void => setStep("review"), []);
 
-  const editBlock = useCallback((index: number): void => {
-    setActiveBlockIndex(index);
-    setStep("actions");
-  }, []);
+  const editBlock = useCallback(
+    (index: number): void => {
+      setDraft({ ...blocks[index], actions: [...blocks[index].actions], editingIndex: index });
+      setStep("actions");
+    },
+    [blocks],
+  );
 
   const addAttachment = useCallback((attachment: UploadedAttachment): void => {
     setAttachments((current) => [...current, attachment]);
@@ -196,22 +218,43 @@ export function useAddServiceWizard(): AddServiceWizard {
     setAttachments((current) => current.filter((attachment) => attachment.url !== url));
   }, []);
 
-  // Back walks the wizard, and only leaves it from the step the user entered on.
+  // What back would cost from here, asked before it happens rather than regretted after.
+  // The Summary always asks: reaching it took work, and the date, note, total and
+  // attachments it holds outlive the last block being removed.
+  const backPrompt = useCallback((): BackPrompt => {
+    if (step === "summary") return "discardService";
+    if (step !== "actions" || draft === null) return null;
+    // Any pass through an edited block may have changed it, emptying it included.
+    if (draft.editingIndex !== null) return "discardEdits";
+    return draftDirty ? "discardAction" : null;
+  }, [step, draft, draftDirty]);
+
+  // Back walks the wizard rather than the browser history, and only leaves it from the
+  // step the user entered on. The Summary has no way back into the wizard, so leaving it
+  // leaves the wizard — see ADR 0006.
   const back = useCallback((): void => {
-    if (step === "review") {
-      setStep("actions");
+    if (step === "summary") {
+      navigate("/service");
       return;
     }
     if (step === "actions") {
-      setStep("category");
+      const editing = draft !== null && draft.editingIndex !== null;
+      setDraft(null);
+      setStep(editing || blocks.length > 0 ? "summary" : "category");
       return;
     }
-    if (step === "category" && !bikeStepSkipped) {
-      setStep("bike");
-      return;
+    if (step === "category") {
+      if (blocks.length > 0) {
+        setStep("summary");
+        return;
+      }
+      if (!bikeStepSkipped) {
+        setStep("bike");
+        return;
+      }
     }
     navigate(-1);
-  }, [step, bikeStepSkipped, navigate]);
+  }, [step, draft, blocks.length, bikeStepSkipped, navigate]);
 
   const save = useCallback((): void => {
     if (bikeId === null) return;
@@ -222,12 +265,12 @@ export function useAddServiceWizard(): AddServiceWizard {
         total_cost: totalCost,
         note: note.trim() === "" ? undefined : note.trim(),
         attachment: attachments.length > 0 ? attachments : undefined,
-        ...splitActions(blocks),
+        ...splitActions(blocks, t),
       },
       // The user is dropped back where the new service now sits at the top.
       { onSuccess: () => navigate("/service", { replace: true }) },
     );
-  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate]);
+  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate, t]);
 
   return {
     step,
@@ -237,8 +280,7 @@ export function useAddServiceWizard(): AddServiceWizard {
     serviceDate,
     setServiceDate,
     blocks,
-    activeBlock,
-    activeBlockIndex,
+    draft,
     note,
     setNote,
     totalCost,
@@ -250,9 +292,12 @@ export function useAddServiceWizard(): AddServiceWizard {
     chooseCategory,
     toggleAction,
     updateAction,
+    canCommit,
+    canSave,
+    commitDraft,
     addAnotherCategory,
     editBlock,
-    goToReview,
+    backPrompt,
     back,
     save,
     saving: create.isPending,
@@ -272,30 +317,43 @@ function withPrefilledDescription(action: PickedAction): PickedAction {
 
 // Flattens every block into the two lists the API takes: ordinary work, and the
 // replacements that end one Mounted Component and begin another.
-function splitActions(blocks: CategoryBlock[]): Pick<CreateServiceInput, "actions_done" | "actions_replaced"> {
+function splitActions(
+  blocks: CategoryBlock[],
+  translate: (key: string) => string,
+): Pick<CreateServiceInput, "actions_done" | "actions_replaced"> {
   const actionsDone: ServiceActionInput[] = [];
   const replacements: ServiceReplacementInput[] = [];
 
   for (const block of blocks) {
     for (const action of block.actions) {
+      // What the user says was actually done, as the sentence stored on the action.
+      const tagNote = recordedTagLine(action.tags, action.selectedTags, translate);
+
       const replaced = action.replaceAction
         ? action.candidates.filter((component) => action.componentIds.includes(component.id))
         : [];
 
       if (replaced.length === 0) {
+        // A Replacement nobody attributed to a part creates no new component, so the
+        // description of the part going on has only this note to live in.
+        const description = [tagNote, action.replaceAction ? action.newDescription.trim() : ""]
+          .filter((part) => part !== "")
+          .join(" — ");
+
         actionsDone.push({
           action_id: action.actionId,
           part_replaced: action.replaceAction,
           mounted_components_involved: action.componentIds,
           ...(action.partialCost === null ? {} : { partial_cost: action.partialCost }),
-          ...(action.newDescription.trim() === "" ? {} : { description: action.newDescription.trim() }),
+          ...(description === "" ? {} : { description }),
         });
         continue;
       }
 
       // Two pads replaced in one action are two new parts, each with its own history.
       // The price covers the action, so the first of them carries it rather than each
-      // part being charged the same figure over again.
+      // part being charged the same figure over again. The note describes the work, so
+      // every part carries it.
       replaced.forEach((component, index) => {
         replacements.push({
           old_component_mounted_id: component.id,
@@ -305,6 +363,7 @@ function splitActions(blocks: CategoryBlock[]): Pick<CreateServiceInput, "action
               ? (component.component_desc ?? component.component_type)
               : action.newDescription.trim(),
           action_id: action.actionId,
+          ...(tagNote === "" ? {} : { note: tagNote }),
           ...(action.partialCost === null || index > 0 ? {} : { partial_cost: action.partialCost }),
         });
       });

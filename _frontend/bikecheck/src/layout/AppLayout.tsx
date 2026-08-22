@@ -130,6 +130,8 @@ export function AppLayout(): ReactElement {
   const overrideBack = useHeaderStore((state) => state.onBack);
   // Lets a page suppress shared application chrome.
   const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
+  // A step the user cannot walk back out of hides the arrow rather than lying about it.
+  const backHidden = useHeaderStore((state) => state.backHidden);
   // Hides chrome when the route or page state requires it.
   const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
   // Home has no header icon.
@@ -206,9 +208,11 @@ export function AppLayout(): ReactElement {
           <Group h="100%" justify="space-between" w="100%">
             {subPage ? (
               <Group gap="xs" c="text.6">
-                <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
-                  <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
-                </ActionIcon>
+                {!backHidden && (
+                  <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
+                    <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
+                  </ActionIcon>
+                )}
                 <Text fw={700} size="lg" c="text.6">
                   {pageTitleKey && t(pageTitleKey)}
                 </Text>

@@ -1,7 +1,7 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
 import {
-  Anchor,
+  Box,
   Button,
   Checkbox,
   Chip,
@@ -12,66 +12,54 @@ import {
   Stack,
   Text,
   TextInput,
+  UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useCategoryActions } from "@/features/service/service.queries";
 import type { CatalogueAction } from "@/features/service/service.types";
-import { inputStyles } from "@/features/add_bike_page/formStyles";
-import { catalogueLabel, componentLabel, tagLine } from "@/features/service/serviceLabels";
-import { today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
+import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
+import { catalogueLabel, componentLabel } from "@/features/service/serviceLabels";
+import type { DraftBlock, PickedAction } from "./serviceWizard.types";
 
 interface ServiceActionsStepProps {
   bikeId: number | null;
-  block: CategoryBlock | undefined;
-  blockIndex: number;
-  blockCount: number;
-  serviceDate: string;
-  onServiceDateChange: (day: string) => void;
+  draft: DraftBlock | null;
+  canCommit: boolean;
   onToggleAction: (action: CatalogueAction) => void;
   onUpdateAction: (actionId: number, patch: Partial<PickedAction>) => void;
-  onAnotherCategory: () => void;
-  onNext: () => void;
+  onCommit: () => void;
 }
 
-// What was done, to which parts, and when. One visit that touched three things is one
-// record, so this step is entered once per Component Category and adds to the same Service.
+// What was done and to which parts. The category being worked on is a draft until the
+// user confirms it, so a category opened by mistake never reaches the Summary (ADR 0006).
 export function ServiceActionsStep({
   bikeId,
-  block,
-  blockIndex,
-  blockCount,
-  serviceDate,
-  onServiceDateChange,
+  draft,
+  canCommit,
   onToggleAction,
   onUpdateAction,
-  onAnotherCategory,
-  onNext,
+  onCommit,
 }: ServiceActionsStepProps): ReactElement {
   const { t } = useTranslation();
-  const { data: category, isLoading, isError } = useCategoryActions(bikeId, block?.categoryId ?? null);
+  const { data: category, isLoading, isError } = useCategoryActions(bikeId, draft?.categoryId ?? null);
+  // One action open at a time, as on the bike's component step.
+  const [openActionId, setOpenActionId] = useState<number | null>(null);
 
-  const picked = block?.actions ?? [];
+  const picked = draft?.actions ?? [];
   const pickedById = new Map(picked.map((action) => [action.actionId, action]));
+  // Editing an existing block may end with every action removed, which removes the block.
+  const editing = draft !== null && draft.editingIndex !== null;
+
+  function toggleOpen(actionId: number): void {
+    setOpenActionId((current) => (current === actionId ? null : actionId));
+  }
 
   return (
     <Stack gap="md">
-      {/* The date belongs to the visit, not to the block, so it is asked once and then
-          shown as settled — openable, because a mistake on the first block is fixable. */}
-      <ServiceDateField
-        day={serviceDate}
-        settled={blockIndex > 0}
-        onChange={onServiceDateChange}
-      />
-
       <Text fw={600} fz={15} c="text.6">
-        {/* Tells the user which block they are in and how many the Service carries. */}
-        {t("addService.blockBreadcrumb", {
-          category: catalogueLabel(block?.categoryI18nKey ?? null, block?.categoryName ?? "", t),
-          current: blockIndex + 1,
-          total: blockCount,
-        })}
+        {catalogueLabel(draft?.categoryI18nKey ?? null, draft?.categoryName ?? "", t)}
       </Text>
 
       {isLoading && (
@@ -97,183 +85,193 @@ export function ServiceActionsStep({
           key={action.id}
           action={action}
           picked={pickedById.get(action.id)}
-          onToggle={() => onToggleAction(action)}
+          opened={openActionId === action.id}
+          onToggleOpen={() => toggleOpen(action.id)}
+          onToggle={() => {
+            onToggleAction(action);
+            setOpenActionId(pickedById.has(action.id) ? null : action.id);
+          }}
           onUpdate={(patch) => onUpdateAction(action.id, patch)}
         />
       ))}
 
       <Button
-        variant="outline"
-        color="secondary.6"
-        radius="md"
-        leftSection={<Plus size={16} />}
-        onClick={() => {
-          void tapFeedback();
-          onAnotherCategory();
-        }}
-        style={{ alignSelf: "flex-start" }}
-      >
-        {t("addService.anotherCategory")}
-      </Button>
-
-      <Button
         color="primary.6"
         radius="md"
-        disabled={picked.length === 0}
+        disabled={!canCommit}
+        styles={disabledButtonStyles}
         onClick={() => {
           void tapFeedback();
-          onNext();
+          onCommit();
         }}
         style={{ height: "3rem" }}
       >
-        {t("addService.toReview")}
+        {editing ? t("addService.saveChanges") : t("addService.addServiceAction")}
       </Button>
     </Stack>
   );
 }
 
-// The date the work happened, which may be months before it was written down.
-function ServiceDateField({
-  day,
-  settled,
-  onChange,
-}: {
-  day: string;
-  settled: boolean;
-  onChange: (day: string) => void;
-}): ReactElement {
-  const { t } = useTranslation();
-  const [opened, setOpened] = useState(false);
-
-  if (settled && !opened) {
-    return (
-      <Group gap="sm" wrap="nowrap">
-        <Text fz={14} c="var(--color-text-dim)">
-          {t("addService.serviceDate")}: {day}
-        </Text>
-        <Anchor component="button" type="button" fz={13} c="primary.5" onClick={() => setOpened(true)}>
-          {t("addService.changeDate")}
-        </Anchor>
-      </Group>
-    );
-  }
-
-  return (
-    <TextInput
-      type="date"
-      label={t("addService.serviceDate")}
-      value={day}
-      // Work cannot have been done later than today.
-      max={today()}
-      styles={inputStyles}
-      onChange={(event) => onChange(event.currentTarget.value)}
-    />
-  );
-}
-
-// One catalogue Action: a tick, and everything the tick reveals.
+// One catalogue Action: a tick, and everything the tick reveals. The header opens even
+// an unticked action, so the tags can be read before the user commits to it.
 function ActionRow({
   action,
   picked,
+  opened,
+  onToggleOpen,
   onToggle,
   onUpdate,
 }: {
   action: CatalogueAction;
   picked: PickedAction | undefined;
+  opened: boolean;
+  onToggleOpen: () => void;
   onToggle: () => void;
   onUpdate: (patch: Partial<PickedAction>) => void;
 }): ReactElement {
   const { t } = useTranslation();
 
+  // A closed but ticked action still says which parts it was performed on.
+  const summary =
+    picked && !opened
+      ? action.components
+          .filter((component) => picked.componentIds.includes(component.id))
+          .map((component) => componentLabel(component, t))
+          .join(", ")
+      : "";
+
   return (
     <Paper
       radius="lg"
-      p="md"
       style={{
         // Colour, glow and inner edge all live in this one object: `bg` would emit the
         // `background` shorthand and wipe the gradient - see docs/ui/card-surface.md.
         backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage:
           "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
-        border: "1px solid var(--color-border-subtle)",
+        border: opened ? "1px solid var(--mantine-color-primary-6)" : "1px solid var(--color-border-subtle)",
         boxShadow:
           "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
       }}
     >
-      <Stack gap="sm">
+      <Group gap="sm" wrap="nowrap" p="md" align="flex-start">
         <Checkbox
           checked={picked !== undefined}
           color="primary.6"
-          label={
-            <Text fw={600} fz={15} c="text.6">
-              {catalogueLabel(action.action_i18n_key, action.action_name, t)}
-            </Text>
-          }
+          aria-label={catalogueLabel(action.action_i18n_key, action.action_name, t)}
           onChange={() => {
             void tapFeedback();
             onToggle();
           }}
         />
 
-        {picked && (
-          <Stack gap="sm" pl="xl">
-            {/* Plain descriptive text: the tags say what the job covers, and are never
-                confirmed item by item — see ADR 0004. */}
-            {action.tags.length > 0 && (
-              <Text fz={13} c="var(--color-text-dim)">
-                {tagLine(action.tags, t)}
+        <UnstyledButton
+          onClick={() => {
+            void tapFeedback();
+            onToggleOpen();
+          }}
+          aria-expanded={opened}
+          style={{ flex: 1, minWidth: 0 }}
+        >
+          <Group justify="space-between" wrap="nowrap" gap="sm" align="flex-start">
+            <Stack gap={2} style={{ minWidth: 0 }}>
+              <Text fw={600} fz={15} c="text.6">
+                {catalogueLabel(action.action_i18n_key, action.action_name, t)}
               </Text>
-            )}
-
-            {action.components.length > 0 && (
-              <Chip.Group
-                multiple
-                value={picked.componentIds.map(String)}
-                onChange={(value) => onUpdate({ componentIds: value.map(Number) })}
-              >
-                <Group gap="xs">
-                  {action.components.map((component) => (
-                    <Chip key={component.id} value={String(component.id)} radius="xl" size="sm" color="primary.6">
-                      {componentLabel(component, t)}
-                    </Chip>
-                  ))}
-                </Group>
-              </Chip.Group>
-            )}
-
-            {/* A warning, not a block: work the user cannot attribute is still work. */}
-            {picked.componentIds.length === 0 && (
-              <Group gap={6} wrap="nowrap">
-                <AlertTriangle size={14} color="var(--mantine-color-yellow-5)" style={{ flexShrink: 0 }} />
-                <Text fz={13} c="yellow.5">
-                  {t("addService.noComponentWarning")}
+              {summary !== "" && (
+                <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
+                  {summary}
                 </Text>
-              </Group>
-            )}
+              )}
+            </Stack>
+            <Box c={opened ? "primary.6" : "var(--color-text-dim)"} style={{ flexShrink: 0, display: "flex" }}>
+              {opened ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </Box>
+          </Group>
+        </UnstyledButton>
+      </Group>
 
-            {action.replace_action && (
-              <TextInput
-                label={t("addService.newPart")}
-                placeholder={t("addService.newPartPlaceholder")}
-                value={picked.newDescription}
+      {opened && (
+        <Stack gap="sm" px="md" pb="md" pl="calc(1rem + 2.25rem)">
+          {/* The tags say what the job covers; the user removes what was left out, and
+              what remains is stored as the note on the action — see ADR 0005. */}
+          {action.tags.length > 0 && (
+            <Checkbox.Group
+              label={t("addService.tagsLabel")}
+              value={picked?.selectedTags ?? []}
+              onChange={(value) => onUpdate({ selectedTags: value })}
+            >
+              <Stack gap={6} pt={6}>
+                {action.tags.map((tag) => (
+                  <Checkbox
+                    key={tag.tag}
+                    value={tag.tag}
+                    size="xs"
+                    color="primary.6"
+                    disabled={picked === undefined}
+                    label={
+                      <Text fz={13} c="var(--color-text-dim)">
+                        {catalogueLabel(tag.i18n_key, tag.tag, t)}
+                      </Text>
+                    }
+                  />
+                ))}
+              </Stack>
+            </Checkbox.Group>
+          )}
+
+          {picked && (
+            <>
+              {action.components.length > 0 && (
+                <Chip.Group
+                  multiple
+                  value={picked.componentIds.map(String)}
+                  onChange={(value) => onUpdate({ componentIds: value.map(Number) })}
+                >
+                  <Group gap="xs">
+                    {action.components.map((component) => (
+                      <Chip key={component.id} value={String(component.id)} radius="xl" size="sm" color="primary.6">
+                        {componentLabel(component, t)}
+                      </Chip>
+                    ))}
+                  </Group>
+                </Chip.Group>
+              )}
+
+              {/* A warning, not a block: work the user cannot attribute is still work. */}
+              {picked.componentIds.length === 0 && (
+                <Group gap={6} wrap="nowrap">
+                  <AlertTriangle size={14} color="var(--mantine-color-yellow-5)" style={{ flexShrink: 0 }} />
+                  <Text fz={13} c="yellow.5">
+                    {t("addService.noComponentWarning")}
+                  </Text>
+                </Group>
+              )}
+
+              {action.replace_action && (
+                <TextInput
+                  label={t("addService.newPart")}
+                  placeholder={t("addService.newPartPlaceholder")}
+                  value={picked.newDescription}
+                  styles={inputStyles}
+                  onChange={(event) => onUpdate({ newDescription: event.currentTarget.value })}
+                />
+              )}
+
+              <NumberInput
+                label={t("addService.partialCost")}
+                placeholder={t("addService.partialCostPlaceholder")}
+                value={picked.partialCost ?? ""}
+                min={0}
+                hideControls
                 styles={inputStyles}
-                onChange={(event) => onUpdate({ newDescription: event.currentTarget.value })}
+                // An emptied field means no figure was recorded, not a price of zero.
+                onChange={(value) => onUpdate({ partialCost: value === "" ? null : Number(value) })}
               />
-            )}
-
-            <NumberInput
-              label={t("addService.partialCost")}
-              placeholder={t("addService.partialCostPlaceholder")}
-              value={picked.partialCost ?? ""}
-              min={0}
-              hideControls
-              styles={inputStyles}
-              // An emptied field means no figure was recorded, not a price of zero.
-              onChange={(value) => onUpdate({ partialCost: value === "" ? null : Number(value) })}
-            />
-          </Stack>
-        )}
-      </Stack>
+            </>
+          )}
+        </Stack>
+      )}
     </Paper>
   );
 }

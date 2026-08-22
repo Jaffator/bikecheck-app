@@ -18,8 +18,23 @@ export function componentLabel(component: MountedComponent, translate: (key: str
   return component.position ? `${name} (${component.position})` : name;
 }
 
-// What an Action covers, on one line. Describes the Action itself, so it is never
-// recorded per occasion — see ADR 0004.
+// What an Action covers, on one line, straight from the catalogue. Reads the same for
+// every service that used the action — see ADR 0004.
 export function tagLine(tags: ActionTag[], translate: (key: string) => string): string {
   return tags.map((tag) => catalogueLabel(tag.i18n_key, tag.tag, translate)).join(" · ");
+}
+
+// The tags the user says were actually done, as the sentence stored against the action.
+// Composed in the language the record was written in, and never translated again — see
+// ADR 0005. Tags carry no id, and a tag name is unique within an action, so names are
+// the handle.
+export function recordedTagLine(
+  tags: ActionTag[],
+  selected: string[],
+  translate: (key: string) => string,
+): string {
+  return tags
+    .filter((tag) => selected.includes(tag.tag))
+    .map((tag) => catalogueLabel(tag.i18n_key, tag.tag, translate))
+    .join(", ");
 }
