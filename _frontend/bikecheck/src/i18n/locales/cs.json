@@ -12,7 +12,8 @@
     "rides": "Jízdy",
     "profile": "Profil",
     "settings": "Nastavení",
-    "notifications": "Oznámení"
+    "notifications": "Oznámení",
+    "serviceHistory": "Historie servisů"
   },
   "offline": {
     "title": "Jste offline",
@@ -139,7 +140,18 @@
   },
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",
-    "emptyBody": "Nejdřív přidej kolo — pak můžeš zadávat servisy a sledovat stav údržby i přesný nájezd."
+    "emptyBody": "Nejdřív přidej kolo — pak můžeš zadávat servisy a sledovat stav údržby i přesný nájezd.",
+    "recentTitle": "Poslední servisy",
+    "viewAll": "Zobrazit celou historii",
+    "allBikes": "Všechna kola",
+    "actionCount_one": "{{count}} úkon",
+    "actionCount_few": "{{count}} úkony",
+    "actionCount_many": "{{count}} úkonu",
+    "actionCount_other": "{{count}} úkonů",
+    "noActions": "Žádné zaznamenané úkony",
+    "unknownBike": "Neznámé kolo",
+    "loadFailed": "Servisy se nepodařilo načíst",
+    "emptyForBike": "Pro toto kolo zatím nic zaznamenáno."
   },
   "bikes": {
     "noBikesFound": "ŽÁDNÁ KOLA",

@@ -30,11 +30,19 @@ read as the same material — a list card, a sheet, an in-app banner.
 
 ## Where it lives
 
-Duplicated inline at each site rather than extracted into a shared component:
+**List rows go through `HistoryCard`.** They carry the same surface at list weight —
+`p="sm"` and a shallower `0 4px 12px -6px` outer shadow, so a stack of them does not read
+as a stack of sheets. Completed rides, pending rides and service
+history are one row shape — leading visual, title, date, metadata, metric row,
+optional chevron — so they share `_frontend/bikecheck/src/components/HistoryCard.tsx`
+rather than repeating the surface. Use `HistoryMetric` for each reading in the
+metric row. New history lists belong here too.
+
+Everything that is *not* a list row still carries its own inline copy, because the
+surface is all they share:
 
 - `_frontend/bikecheck/src/features/strava/PendingRideSheet.tsx`
-- `_frontend/bikecheck/src/features/strava/PendingRidesCard.tsx`
 - `_frontend/bikecheck/src/components/InAppNotification.tsx`
 
-Keep the copies in step. Factoring it out into one component is a structural
-change — ask before doing it.
+Keep those copies in step with the snippet above. Pulling the bare surface out from
+under them into a component of its own is a structural change — ask before doing it.

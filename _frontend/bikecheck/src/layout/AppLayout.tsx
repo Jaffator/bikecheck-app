@@ -55,6 +55,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   // More specific route prefixes must precede their parent routes.
   "/bikes/new": "addBike.title",
   "/bikes": "page.bikes",
+  "/service/history": "page.serviceHistory",
   "/service": "page.service",
   "/rides": "page.rides",
   "/profile": "page.profile",
@@ -68,6 +69,7 @@ const SUB_PAGE_ROUTES: string[] = [
   "/profile",
   "/notifications",
   "/bikes/new",
+  "/service/history",
   // This confirmation route owns its screen and action.
   "/strava-connected",
 ];

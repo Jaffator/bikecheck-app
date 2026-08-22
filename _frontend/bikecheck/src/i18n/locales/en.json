@@ -12,7 +12,8 @@
     "rides": "Rides",
     "profile": "Profile",
     "settings": "Settings",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "serviceHistory": "Service history"
   },
   "action": {
     "back": "Back",
@@ -131,7 +132,16 @@
   },
   "service": {
     "emptyTitle": "No Components to Service",
-    "emptyBody": "Add your bike first — to start adding services and monitoring maintenance health and precision mileage."
+    "emptyBody": "Add your bike first — to start adding services and monitoring maintenance health and precision mileage.",
+    "recentTitle": "Recent services",
+    "viewAll": "View all history",
+    "allBikes": "All bikes",
+    "actionCount_one": "{{count}} action",
+    "actionCount_other": "{{count}} actions",
+    "noActions": "No actions recorded",
+    "unknownBike": "Unknown bike",
+    "loadFailed": "Could not load services",
+    "emptyForBike": "Nothing recorded for this bike yet."
   },
   "bikes": {
     "noBikesFound": "0 BIKES FOUND",

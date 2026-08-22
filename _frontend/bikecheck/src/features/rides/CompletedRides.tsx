@@ -1,11 +1,13 @@
 // UI component using feature hooks.
-import { useEffect, useRef, useState, type ReactElement } from "react";
-import { Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { useState, type ReactElement } from "react";
+import { Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Bike, Clock, Mountain, Route } from "lucide-react";
 import dayjs from "dayjs";
 import { tapFeedback } from "@/utils/haptics";
 import { RouteMap } from "@/components/RouteMap";
+import { HistoryCard, HistoryMetric } from "@/components/HistoryCard";
+import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
 import { useRides } from "./rides.queries";
 import { ridePolyline } from "./ridePolyline";
@@ -17,70 +19,33 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
   const { t } = useTranslation();
 
   return (
-    <UnstyledButton onClick={onOpen} style={{ display: "block", width: "100%", textAlign: "left" }}>
-      <Paper
-        radius="lg"
-        p="sm"
-        style={{
-          // Keep the gradient when setting the card color.
-          backgroundColor: "var(--mantine-color-cards-6)",
-          backgroundImage:
-            "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
-          border: "1px solid var(--color-border-subtle)",
-          // Use a subtle shadow for stacked cards.
-          boxShadow:
-            "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 4px 12px -6px rgba(0, 0, 0, 0.5)",
-          transition: "transform 0.12s ease",
-        }}
-        className="active:scale-[0.985]"
-      >
-        <Group gap="lg" wrap="nowrap" align="center">
-          <RouteMap polyline={ridePolyline(ride.json_data)} width={50} height={50} />
-
-          {/* Allow the title to clamp. */}
-          <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
-            <Stack gap={2}>
-              {/* The activity's own title leads: it is what the user named the
-                  ride, so it identifies it faster than the bike or the date. */}
-              <Text fw={600} fz={15} c="text.6" lineClamp={1}>
-                {ride.name}
-              </Text>
-              <Text fz={13} c="text.7">
-                {ride.started_at === null ? "" : dayjs(ride.started_at).format("D. M. YYYY H:mm")}
-              </Text>
-              {/* The bike drops to metadata weight — it is no longer the heading,
-                  so it sits with the stats rather than competing with the title. */}
-              <Group gap={6} wrap="nowrap">
-                <Bike size={13} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
-                <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
-                  {ride.bike_name ?? t("rides.unknownBike")}
-                </Text>
-              </Group>
-            </Stack>
-            <Group gap="lg" wrap="nowrap">
-              <Group gap={6} wrap="nowrap">
-                <Route size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.distance", { count: toKm(ride.distance_m) })}
-                </Text>
-              </Group>
-              <Group gap={6} wrap="nowrap">
-                <Clock size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.duration", { count: ride.duration_min ?? 0 })}
-                </Text>
-              </Group>
-              <Group gap={6} wrap="nowrap">
-                <Mountain size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.elevation", { count: ride.elevation_up_m ?? 0 })}
-                </Text>
-              </Group>
-            </Group>
-          </Stack>
+    <HistoryCard
+      onOpen={onOpen}
+      leading={<RouteMap polyline={ridePolyline(ride.json_data)} width={50} height={50} />}
+      /* The activity's own title leads: it is what the user named the ride, so it
+         identifies it faster than the bike or the date. */
+      title={ride.name}
+      subtitle={ride.started_at === null ? "" : dayjs(ride.started_at).format("D. M. YYYY H:mm")}
+      /* The bike sits at metadata weight — it is no longer the heading, so it goes with
+         the date rather than competing with the title. */
+      meta={
+        <Group gap={6} wrap="nowrap">
+          <Bike size={13} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+          <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
+            {ride.bike_name ?? t("rides.unknownBike")}
+          </Text>
         </Group>
-      </Paper>
-    </UnstyledButton>
+      }
+      metrics={
+        <>
+          <HistoryMetric icon={Route}>{t("pendingRides.distance", { count: toKm(ride.distance_m) })}</HistoryMetric>
+          <HistoryMetric icon={Clock}>{t("pendingRides.duration", { count: ride.duration_min ?? 0 })}</HistoryMetric>
+          <HistoryMetric icon={Mountain}>
+            {t("pendingRides.elevation", { count: ride.elevation_up_m ?? 0 })}
+          </HistoryMetric>
+        </>
+      }
+    />
   );
 }
 
@@ -96,17 +61,7 @@ export function CompletedRides(): ReactElement {
   const [openedRide, setOpenedRide] = useState<Ride | null>(null);
 
   // Load the next page when the sentinel is visible.
-  const sentinel = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const node = sentinel.current;
-    if (node === null || !hasNextPage) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) void fetchNextPage();
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [hasNextPage, fetchNextPage]);
+  const sentinel = useInfiniteScrollSentinel(hasNextPage, () => void fetchNextPage());
 
   const rides = data?.pages.flatMap((page) => page.items) ?? [];
 
