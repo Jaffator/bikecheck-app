@@ -3,7 +3,7 @@ import { useState, type ReactElement } from "react";
 import { Button, Group, Image, Modal, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { Clock, Gauge, Trash2 } from "lucide-react";
+import { Clock, Gauge, Plus, Trash2 } from "lucide-react";
 import { useBike, useDeleteBike } from "../bikes/bikes.queries";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
@@ -79,6 +79,21 @@ export function BikeDetail(): ReactElement {
         </Group>
         <StravaPairingHint stravaGearId={bike.strava_gear_id} />
       </Group>
+
+      {/* Records work on the bike already being looked at, so the wizard never asks
+          which one it was. */}
+      <Button
+        color="primary.6"
+        radius="md"
+        leftSection={<Plus size={16} />}
+        onClick={() => {
+          void tapFeedback();
+          navigate(`/service/new?bike=${bike.id}`);
+        }}
+        style={{ alignSelf: "flex-start" }}
+      >
+        {t("fab.addService")}
+      </Button>
 
       {user?.strava_athlete_id && (
         <Group gap="sm">

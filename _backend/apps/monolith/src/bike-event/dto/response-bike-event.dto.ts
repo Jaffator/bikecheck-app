@@ -15,11 +15,24 @@ export class AttachmentDto {
   url?: string;
 }
 
+// Tags are seeded alongside their action, so they carry a key of their own.
+export class ActionTagDto {
+  @ApiProperty({ example: 'Full Flush' })
+  tag!: string;
+
+  @ApiProperty({ example: 'actionTag.fullFlush', nullable: true })
+  i18n_key!: string | null;
+}
+
 // 2. Mounted components related to actions
 export class MountedComponentDto {
   // Mounted component ID
   @ApiProperty({ example: 45 })
   id!: number;
+
+  // What a Replacement needs to create the part that goes on in this one's place.
+  @ApiProperty({ example: 16 })
+  component_type_id!: number;
 
   @ApiProperty({ example: 'Shimano XT M8100', nullable: true })
   component_desc!: string | null;
@@ -48,6 +61,10 @@ export class MountedComponentDto {
 
 // 3. Action in Bike Event
 export class ActionsDoneDto {
+  // The recorded row, which is what an edit addresses - not the catalogue action.
+  @ApiProperty({ example: 500 })
+  action_done_id!: number;
+
   // Information about action
   // Action ID
   @ApiProperty({ example: 1 })
@@ -59,8 +76,14 @@ export class ActionsDoneDto {
   @ApiProperty({ example: 'action.bleed', nullable: true, description: 'null for user-created actions' })
   action_i18n_key!: string | null;
 
+  // Null when no price was recorded; the detail view reads that as work that carried no
+  // charge, rather than leaving the line blank.
   @ApiProperty({ example: 150, nullable: true })
-  partial_cost?: number | null;
+  partial_cost!: number | null;
+
+  // What the action covers, from the catalogue. Never recorded per occasion - see ADR 0004.
+  @ApiProperty({ type: [ActionTagDto] })
+  tags!: ActionTagDto[];
 
   @ApiProperty({ example: false })
   replace_action!: boolean;
@@ -83,6 +106,17 @@ export class Response_BikeEvent_Dto {
   @ApiProperty({ example: 15 })
   bike_id!: number;
 
+  @ApiProperty({ example: 'Trail bike', nullable: true })
+  bike_name!: string | null;
+
+  // The bike's odometer on the service date, frozen on every action when it was written.
+  // Null on a service that carries no actions, which has nothing to have frozen it.
+  @ApiProperty({ example: 2450, nullable: true })
+  bike_km_at_time!: number | null;
+
+  @ApiProperty({ example: 4080, nullable: true })
+  bike_minutes_at_time!: number | null;
+
   @ApiProperty({ example: 'Regular service', nullable: true })
   note?: string | null;
 
@@ -104,15 +138,6 @@ export class Response_BikeEvent_Dto {
 
   @ApiProperty({ type: [AttachmentDto] })
   attachments?: AttachmentDto[];
-}
-
-// Tags are seeded alongside their action, so they carry a key of their own.
-export class ActionTagDto {
-  @ApiProperty({ example: 'Full Flush' })
-  tag!: string;
-
-  @ApiProperty({ example: 'actionTag.fullFlush', nullable: true })
-  i18n_key!: string | null;
 }
 
 // 1. Actions (used in Response_ActionsOnGroup_Dto) ----

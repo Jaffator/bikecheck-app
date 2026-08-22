@@ -65,6 +65,12 @@ interface ServiceMoment {
   odometer: { km: number; minutes: number };
 }
 
+// One catalogue tag as the detail query reads it back.
+interface ActionTagRow {
+  event_action_tag: string;
+  i18n_key: string | null;
+}
+
 // A Service as an edit reads it back, once its bike is known to be there.
 interface SavedService {
   bike_id: number;
@@ -196,6 +202,7 @@ export class BikeEventService {
                   },
                   select: {
                     id: true,
+                    component_type_id: true,
                     component_desc: true,
                     position: true,
                   },
@@ -216,6 +223,7 @@ export class BikeEventService {
       components: action.event_action_targets.flatMap((target) =>
         target.component_types.components_mounted.map((mounted) => ({
           id: mounted.id,
+          component_type_id: mounted.component_type_id,
           component_desc: mounted.component_desc,
           position: mounted.position,
           component_type: target.component_types.component_type,
@@ -329,9 +337,10 @@ export class BikeEventService {
     const bikeEvents = await this.prisma.events_bikes.findMany({
       where: { bike_id: bikeId, is_deleted: false },
       include: {
+        bikes: { select: BIKE_SELECT },
         event_actions_done: {
           include: {
-            events_action: true,
+            events_action: { include: { event_action_tags: true } },
             action_done_component_map: {
               include: {
                 components_mounted: {
@@ -406,9 +415,12 @@ export class BikeEventService {
     const bikeEvent = await this.prisma.events_bikes.findUnique({
       where: { id: bikeEventId },
       include: {
+        bikes: { select: BIKE_SELECT },
         event_actions_done: {
           include: {
-            events_action: true,
+            // The tags come from the catalogue: what the job includes is a property of the
+            // action, never of the occasion - see ADR 0004.
+            events_action: { include: { event_action_tags: true } },
             action_done_component_map: {
               include: {
                 components_mounted: {
@@ -427,13 +439,17 @@ export class BikeEventService {
     return this.mapBikeEvent(bikeEvent);
   }
 
-  async softDelete(bikeEventId: number, userId: number): Promise<void> {
+  // The service leaves the history but stays on record. Returns what was removed, so the
+  // caller gets a body to parse rather than an empty response.
+  async softDelete(bikeEventId: number, userId: number): Promise<Response_BikeEvent_Dto> {
     await this.assertServiceOwned(bikeEventId, userId);
 
     await this.prisma.events_bikes.update({
       where: { id: bikeEventId },
       data: { is_deleted: true, deleted_at: new Date() },
     });
+
+    return await this.findById(bikeEventId, userId);
   }
 
   async hardDelete(bikeEventId: number, userId: number): Promise<void> {
@@ -880,9 +896,16 @@ export class BikeEventService {
   }
 
   private mapBikeEvent(bikeEvent: any): Response_BikeEvent_Dto {
+    // Every action on one service froze the same odometer, so the first one carries it for
+    // the whole occasion. A service with no actions never froze it at all.
+    const odometer = bikeEvent.event_actions_done[0];
+
     return {
       id: bikeEvent.id,
       bike_id: bikeEvent.bike_id!,
+      bike_name: bikeName(bikeEvent.bikes ?? null),
+      bike_km_at_time: odometer?.bike_km_at_time ?? null,
+      bike_minutes_at_time: odometer?.bike_minutes_at_time ?? null,
       note: bikeEvent.note,
       total_cost: Number(bikeEvent.total_cost),
       service_date: bikeEvent.service_date ?? null,
@@ -895,14 +918,21 @@ export class BikeEventService {
         url: a.url,
       })),
       actions_done: bikeEvent.event_actions_done.map((actionDone) => ({
+        action_done_id: actionDone.id,
         action_id: actionDone.event_action_id,
         action_name: actionDone.events_action.action_name,
         action_i18n_key: actionDone.events_action.i18n_key,
-        partial_cost: Number(actionDone.partial_cost),
+        // A price nobody recorded stays absent: Number(null) would read as free work.
+        partial_cost: actionDone.partial_cost === null ? null : Number(actionDone.partial_cost),
         replace_action: actionDone.events_action.replace_action,
         note: actionDone.note ?? null,
+        tags: (actionDone.events_action.event_action_tags ?? []).map((tag: ActionTagRow) => ({
+          tag: tag.event_action_tag,
+          i18n_key: tag.i18n_key,
+        })),
         mounted_components: actionDone.action_done_component_map.map((junc) => ({
           id: junc.components_mounted.id,
+          component_type_id: junc.components_mounted.component_type_id,
           component_desc: junc.components_mounted.component_desc,
           position: junc.components_mounted.position,
           component_type: junc.components_mounted.component_types.component_type,

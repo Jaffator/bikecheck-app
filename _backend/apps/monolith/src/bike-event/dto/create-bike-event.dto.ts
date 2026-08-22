@@ -7,6 +7,7 @@ import {
   MaxLength,
   IsNotEmpty,
   IsPositive,
+  Min,
   IsBoolean,
   IsArray,
   ValidateNested,
@@ -114,11 +115,13 @@ export class Create_BikeEventDto {
   @ApiProperty({ example: 15 })
   bike_id!: number;
 
+  // A job the user did themselves costs nothing, and a service whose receipt has not
+  // turned up yet costs nothing yet either - neither is a reason to refuse the record.
   @IsNumber()
-  @IsNotEmpty()
-  @IsPositive()
-  @ApiProperty({ example: 15 })
-  total_cost!: number;
+  @IsOptional()
+  @Min(0)
+  @ApiProperty({ example: 15, required: false })
+  total_cost?: number;
 
   // When the work happened. Omitted means it happened now, which is the live-recorded case.
   @IsDateString()
@@ -134,8 +137,9 @@ export class Create_BikeEventDto {
   attachment?: Attachment_BikeEventDto[];
 
   @IsString()
+  @IsOptional()
   @MaxLength(500)
-  @ApiProperty({ example: 'Replaced chain and cleaned drivetrain', nullable: true })
+  @ApiProperty({ example: 'Replaced chain and cleaned drivetrain', required: false })
   note?: string;
 
   @IsArray()

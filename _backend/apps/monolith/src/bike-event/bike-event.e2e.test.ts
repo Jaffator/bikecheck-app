@@ -97,6 +97,32 @@ describe('BikeEventController (e2e)', () => {
     expect(response.body.created_at).not.toBe(response.body.service_date);
   });
 
+  it('names the bike on the detail, so the view need not fetch it separately', async () => {
+    const ownerToken = await login(owner);
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/bike-events/${bikeEventId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+
+    expect(response.body.bike_name).toBe('Trail bike');
+    // Nothing was done on this service, so no action froze the odometer.
+    expect(response.body.bike_km_at_time).toBeNull();
+  });
+
+  it('records a service that cost nothing and carries no note', async () => {
+    const ownerToken = await login(owner);
+
+    // ACT: an evening in the garage - no receipt, no figure, nothing to write down.
+    const response = await request(app.getHttpServer())
+      .post('/api/bike-events/create')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ bike_id: bikeId, total_cost: 0, actions_done: [] })
+      .expect(201);
+
+    expect(response.body.total_cost).toBe(0);
+  });
+
   it('lists the history newest work first, with a total', async () => {
     const ownerToken = await login(owner);
 

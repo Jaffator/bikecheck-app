@@ -153,7 +153,10 @@ export class BikeEventController {
   // ---------- DELETE Soft delete a bike event ----------
   @Delete('/delsoft/:id')
   @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })
-  async softDelete(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<void> {
+  async softDelete(
+    @CurrentUser('userId') userId: string,
+    @Param('id') id: string,
+  ): Promise<Response_BikeEvent_Dto> {
     return this.bikeEventService.softDelete(+id, Number(userId));
   }
   // ---------- DELETE Hard delete a bike event ----------

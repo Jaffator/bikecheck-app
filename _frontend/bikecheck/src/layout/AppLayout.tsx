@@ -56,6 +56,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/bikes/new": "addBike.title",
   "/bikes": "page.bikes",
   "/service/history": "page.serviceHistory",
+  "/service/new": "addService.title",
   "/service": "page.service",
   "/rides": "page.rides",
   "/profile": "page.profile",
@@ -70,6 +71,7 @@ const SUB_PAGE_ROUTES: string[] = [
   "/notifications",
   "/bikes/new",
   "/service/history",
+  "/service/new",
   // This confirmation route owns its screen and action.
   "/strava-connected",
 ];
@@ -81,16 +83,25 @@ function isFullScreenRoute(pathname: string): boolean {
   return FULL_SCREEN_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
-// Matches bike details without treating the garage list as a sub-page.
-const BIKE_DETAIL_PATTERN = /^\/bikes\/\d+$/;
+// Detail routes are matched by shape rather than by prefix, so the list they hang under
+// is not itself read as a sub-page. Every one of them is a sub-page with its own title.
+const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
+  { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
+  { pattern: /^\/service\/\d+$/, titleKey: "service.detailTitle" },
+];
+
+function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | undefined {
+  return DETAIL_ROUTES.find((route) => route.pattern.test(pathname));
+}
 
 function isSubPage(pathname: string): boolean {
-  if (BIKE_DETAIL_PATTERN.test(pathname)) return true;
+  if (detailRoute(pathname)) return true;
   return SUB_PAGE_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 function getPageTitleKey(pathname: string): string | null {
-  if (BIKE_DETAIL_PATTERN.test(pathname)) return "bikes.detailTitle";
+  const detail = detailRoute(pathname);
+  if (detail) return detail.titleKey;
   const match = Object.keys(PAGE_TITLE_KEYS).find((path) => pathname.startsWith(path));
   return match ? PAGE_TITLE_KEYS[match] : null;
 }

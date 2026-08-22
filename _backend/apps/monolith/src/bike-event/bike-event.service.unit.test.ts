@@ -910,6 +910,104 @@ describe('BikeEventService', () => {
     });
   });
 
+  describe('the service detail', () => {
+    // One recorded action, as the detail query reads it back: the catalogue action it came
+    // from with its tags, and the component whose wear it froze.
+    const savedAction = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+      id: 500,
+      event_action_id: 3,
+      note: 'Shimano XT',
+      partial_cost: null,
+      bike_km_at_time: 2450,
+      bike_minutes_at_time: 4080,
+      events_action: {
+        action_name: 'Brake bleed',
+        i18n_key: 'action.bleed',
+        replace_action: false,
+        event_action_tags: [{ event_action_tag: 'Full Flush', i18n_key: 'actionTag.fullFlush' }],
+      },
+      action_done_component_map: [
+        {
+          km_at_time: 800,
+          time_min_at_time: 2400,
+          drivetrain_km_at_time: 750,
+          suspension_min_at_time: 1600,
+          components_mounted: {
+            id: 45,
+            component_type_id: 16,
+            component_desc: 'SRAM Code RSC',
+            position: 'front',
+            component_types: { component_type: 'Brake Caliper', i18n_key: 'component.brakeCaliper' },
+          },
+        },
+      ],
+      ...overrides,
+    });
+
+    const savedService = (actions: Record<string, unknown>[]): Record<string, unknown> => ({
+      id: 99,
+      bike_id: BIKE_ID,
+      note: 'Bike Shop XY',
+      total_cost: 2400,
+      service_date: SERVICE_DATE,
+      created_at: SERVICE_DATE,
+      updated_at: null,
+      bikes: { user_id: OWNER_ID, bikename: 'Trail bike', bike_brand: 'Santa Cruz', bike_model: 'Hightower' },
+      event_actions_done: actions,
+      bike_event_attachments: [],
+    });
+
+    it('names the bike and reports the odometer as it stood on the service date', async () => {
+      // ARRANGE
+      mockPrisma.events_bikes.findUnique.mockResolvedValue(savedService([savedAction()]));
+
+      // ACT
+      const detail = await service.findById(99, OWNER_ID);
+
+      // ASSERT: the bike at the time of the work, not as it reads today.
+      expect(detail.bike_name).toBe('Trail bike');
+      expect(detail.bike_km_at_time).toBe(2450);
+      expect(detail.bike_minutes_at_time).toBe(4080);
+    });
+
+    it('carries the catalogue tags of every action it lists', async () => {
+      // ARRANGE
+      mockPrisma.events_bikes.findUnique.mockResolvedValue(savedService([savedAction()]));
+
+      // ACT
+      const detail = await service.findById(99, OWNER_ID);
+
+      // ASSERT: what the job included, from the catalogue - it is never recorded per
+      // occasion, see ADR 0004.
+      expect(detail.actions_done[0].action_done_id).toBe(500);
+      expect(detail.actions_done[0].tags).toEqual([{ tag: 'Full Flush', i18n_key: 'actionTag.fullFlush' }]);
+      expect(detail.actions_done[0].mounted_components[0].component_type_id).toBe(16);
+    });
+
+    it('reports an action with no price recorded as having none', async () => {
+      // ARRANGE: work the user did themselves, entered without a figure.
+      mockPrisma.events_bikes.findUnique.mockResolvedValue(savedService([savedAction()]));
+
+      // ACT
+      const detail = await service.findById(99, OWNER_ID);
+
+      // ASSERT: no price is not the same as a price of zero.
+      expect(detail.actions_done[0].partial_cost).toBeNull();
+    });
+
+    it('has no odometer reading on a service that carries no actions', async () => {
+      // ARRANGE
+      mockPrisma.events_bikes.findUnique.mockResolvedValue(savedService([]));
+
+      // ACT
+      const detail = await service.findById(99, OWNER_ID);
+
+      // ASSERT: nothing froze the odometer, so there is nothing to report.
+      expect(detail.bike_km_at_time).toBeNull();
+      expect(detail.bike_minutes_at_time).toBeNull();
+    });
+  });
+
   it('subtracts nothing for a service dated today, whatever was ridden today', async () => {
     // ARRANGE: the wizard sends a day, so a service recorded this evening arrives as
     // midnight - with this morning's ride sitting after it.
