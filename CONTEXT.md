@@ -44,8 +44,9 @@ _Avoid_: Task, job, event
 **Action Tag**:
 A sub-item describing what an action includes — "Dust seals replacement", "Piston Lube". Describes
 the action itself, so it is catalogue data and is never stored per service (ADR 0004). In the wizard
-each tag is a chip that writes its own name into the action's note; what ends up stored is prose the
-user owns, not a record of which tags were picked (ADR 0005).
+each tag is a chip that writes its own name into the action's note, and is lit for as long as the
+note says it — tapping a lit chip takes the text back out. What ends up stored is prose the user
+owns, not a record of which tags were picked (ADR 0005).
 
 **Action Note**:
 What was done on one occasion, in the user's own words, against one Action. Tag chips write into it

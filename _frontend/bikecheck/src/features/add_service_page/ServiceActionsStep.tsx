@@ -20,9 +20,14 @@ import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useCategoryActions } from "@/features/service/service.queries";
 import type { CatalogueAction } from "@/features/service/service.types";
-import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
+import {
+  autosizeInputStyles,
+  disabledButtonStyles,
+  disabledChipStyles,
+  inputStyles,
+} from "@/features/add_bike_page/formStyles";
 import { catalogueLabel, componentLabel, shortComponentLabel } from "@/features/service/serviceLabels";
-import { preselectedComponents, type DraftBlock, type PickedAction } from "./serviceWizard.types";
+import { hasSegment, preselectedComponents, type DraftBlock, type PickedAction } from "./serviceWizard.types";
 
 interface ServiceActionsStepProps {
   bikeId: number | null;
@@ -30,7 +35,7 @@ interface ServiceActionsStepProps {
   canCommit: boolean;
   onToggleAction: (action: CatalogueAction) => void;
   onUpdateAction: (actionId: number, patch: Partial<PickedAction>) => void;
-  onAppendActionNote: (actionId: number, text: string) => void;
+  onToggleActionNote: (actionId: number, text: string) => void;
   onCommit: () => void;
 }
 
@@ -42,7 +47,7 @@ export function ServiceActionsStep({
   canCommit,
   onToggleAction,
   onUpdateAction,
-  onAppendActionNote,
+  onToggleActionNote,
   onCommit,
 }: ServiceActionsStepProps): ReactElement {
   const { t } = useTranslation();
@@ -95,7 +100,7 @@ export function ServiceActionsStep({
             setOpenActionId(pickedById.has(action.id) ? null : action.id);
           }}
           onUpdate={(patch) => onUpdateAction(action.id, patch)}
-          onAppendNote={(text) => onAppendActionNote(action.id, text)}
+          onToggleNote={(text) => onToggleActionNote(action.id, text)}
         />
       ))}
 
@@ -125,7 +130,7 @@ function ActionRow({
   onToggleOpen,
   onToggle,
   onUpdate,
-  onAppendNote,
+  onToggleNote,
 }: {
   action: CatalogueAction;
   picked: PickedAction | undefined;
@@ -133,7 +138,7 @@ function ActionRow({
   onToggleOpen: () => void;
   onToggle: () => void;
   onUpdate: (patch: Partial<PickedAction>) => void;
-  onAppendNote: (text: string) => void;
+  onToggleNote: (text: string) => void;
 }): ReactElement {
   const { t } = useTranslation();
 
@@ -220,6 +225,7 @@ function ActionRow({
                       size="sm"
                       color="primary.6"
                       disabled={picked === undefined}
+                      styles={picked === undefined ? disabledChipStyles : undefined}
                     >
                       {shortComponentLabel(component, t)}
                     </Chip>
@@ -239,9 +245,10 @@ function ActionRow({
             </Group>
           )}
 
-          {/* Tags hold no state: each is a shortcut that writes its own name into the
-              note, and taking a chip is itself a claim that the action happened — see
-              ADR 0005. */}
+          {/* A tag chip is lit while the note says what it says, so tapping it writes its
+              name in or takes it back out again. The note is the only thing either
+              direction reads, which is why editing the text by hand moves the chips —
+              see ADR 0005. Taking a chip is itself a claim that the action happened. */}
           {action.tags.length > 0 && (
             <Stack gap={6}>
               <Text fz={13} c="text.6">
@@ -251,14 +258,14 @@ function ActionRow({
                 {action.tags.map((tag) => (
                   <Chip
                     key={tag.tag}
-                    checked={false}
+                    checked={hasSegment(picked?.note ?? "", catalogueLabel(tag.i18n_key, tag.tag, t))}
                     radius="xl"
                     size="sm"
                     color="primary.6"
                     onChange={() => {
                       void tapFeedback();
                       if (picked === undefined) onToggle();
-                      onAppendNote(catalogueLabel(tag.i18n_key, tag.tag, t));
+                      onToggleNote(catalogueLabel(tag.i18n_key, tag.tag, t));
                     }}
                   >
                     {catalogueLabel(tag.i18n_key, tag.tag, t)}

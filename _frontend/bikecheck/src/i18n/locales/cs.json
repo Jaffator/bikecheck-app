@@ -316,7 +316,7 @@
     "noActions": "Pro tuto část není k dispozici žádný úkon.",
     "componentsLabel": "Komponenty",
     "tagsLabel": "Co bylo součástí",
-    "actionNote": "Co bylo uděláno",
+    "actionNote": "Detaily servisu",
     "actionNotePlaceholder": "Klikni na štítky výše nebo napiš vlastní",
     "serviceDate": "Datum servisu",
     "noComponentWarning": "Není vybraný díl — úkon se uloží bez něj.",

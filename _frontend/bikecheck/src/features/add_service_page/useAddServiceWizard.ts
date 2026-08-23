@@ -14,7 +14,7 @@ import type {
   UploadedAttachment,
 } from "@/features/service/service.types";
 import {
-  appendToNote,
+  toggleSegment,
   preselectedComponents,
   today,
   type CategoryBlock,
@@ -62,8 +62,9 @@ export interface AddServiceWizard {
   chooseCategory: (category: BikeCategory) => void;
   toggleAction: (action: CatalogueAction) => void;
   updateAction: (actionId: number, patch: Partial<PickedAction>) => void;
-  // A tag chip writes its own text into the action's note — see ADR 0005.
-  appendActionNote: (actionId: number, text: string) => void;
+  // A tag chip writes its own text into the action's note, or takes it back out when the
+  // note already says it — see ADR 0005.
+  toggleActionNote: (actionId: number, text: string) => void;
   // Whether the draft can be written into the Service. An edited block may be emptied,
   // which removes it; a new one has to carry work.
   canCommit: boolean;
@@ -180,15 +181,16 @@ export function useAddServiceWizard(): AddServiceWizard {
   }, []);
 
   // Reads the note as it stands rather than taking it from a stale render, so a run of
-  // quick taps on several chips all land.
-  const appendActionNote = useCallback((actionId: number, text: string): void => {
+  // quick taps on several chips all land - and so each tap sees whether the note already
+  // says its text, which is what decides between writing and unwriting it.
+  const toggleActionNote = useCallback((actionId: number, text: string): void => {
     setDraft((current) =>
       current === null
         ? current
         : {
             ...current,
             actions: current.actions.map((action) =>
-              action.actionId === actionId ? { ...action, note: appendToNote(action.note, text) } : action,
+              action.actionId === actionId ? { ...action, note: toggleSegment(action.note, text) } : action,
             ),
           },
     );
@@ -312,7 +314,7 @@ export function useAddServiceWizard(): AddServiceWizard {
     chooseCategory,
     toggleAction,
     updateAction,
-    appendActionNote,
+    toggleActionNote,
     canCommit,
     canSave,
     commitDraft,

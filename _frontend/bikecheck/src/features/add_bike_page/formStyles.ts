@@ -30,6 +30,18 @@ export const disabledButtonStyles = {
   } as React.CSSProperties,
 };
 
+// A disabled Chip defaults to a light fill that reads as white on the dark theme, brighter
+// than the surface it sits on. Mantine's --chip-bg and --chip-color reach the checked state
+// only, so the unchecked disabled chip is coloured directly. Apply to disabled chips only -
+// an enabled chip must keep its own fill. Same colours as the buttons above.
+export const disabledChipStyles = {
+  label: {
+    backgroundColor: "var(--mantine-color-cards-5)",
+    color: "var(--mantine-color-text-9)",
+    borderColor: "var(--mantine-color-cards-5)",
+  } as React.CSSProperties,
+};
+
 // The dropdown renders in a portal, so it needs its own styles.
 export const dropdownProps = {
   withinPortal: true,

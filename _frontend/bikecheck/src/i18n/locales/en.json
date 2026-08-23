@@ -300,7 +300,7 @@
     "noActions": "No work is available for this part.",
     "componentsLabel": "Components",
     "tagsLabel": "What it covered",
-    "actionNote": "What was done",
+    "actionNote": "Service details",
     "actionNotePlaceholder": "Tap the tags above or write your own",
     "serviceDate": "Date of service",
     "noComponentWarning": "No part chosen — the work is recorded without one.",
