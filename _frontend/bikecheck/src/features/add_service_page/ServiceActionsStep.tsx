@@ -11,6 +11,7 @@ import {
   Paper,
   Stack,
   Text,
+  Textarea,
   TextInput,
   UnstyledButton,
 } from "@mantine/core";
@@ -19,9 +20,9 @@ import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { tapFeedback } from "@/utils/haptics";
 import { useCategoryActions } from "@/features/service/service.queries";
 import type { CatalogueAction } from "@/features/service/service.types";
-import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
-import { catalogueLabel, componentLabel } from "@/features/service/serviceLabels";
-import type { DraftBlock, PickedAction } from "./serviceWizard.types";
+import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
+import { catalogueLabel, componentLabel, shortComponentLabel } from "@/features/service/serviceLabels";
+import { preselectedComponents, type DraftBlock, type PickedAction } from "./serviceWizard.types";
 
 interface ServiceActionsStepProps {
   bikeId: number | null;
@@ -29,6 +30,7 @@ interface ServiceActionsStepProps {
   canCommit: boolean;
   onToggleAction: (action: CatalogueAction) => void;
   onUpdateAction: (actionId: number, patch: Partial<PickedAction>) => void;
+  onAppendActionNote: (actionId: number, text: string) => void;
   onCommit: () => void;
 }
 
@@ -40,6 +42,7 @@ export function ServiceActionsStep({
   canCommit,
   onToggleAction,
   onUpdateAction,
+  onAppendActionNote,
   onCommit,
 }: ServiceActionsStepProps): ReactElement {
   const { t } = useTranslation();
@@ -92,6 +95,7 @@ export function ServiceActionsStep({
             setOpenActionId(pickedById.has(action.id) ? null : action.id);
           }}
           onUpdate={(patch) => onUpdateAction(action.id, patch)}
+          onAppendNote={(text) => onAppendActionNote(action.id, text)}
         />
       ))}
 
@@ -121,6 +125,7 @@ function ActionRow({
   onToggleOpen,
   onToggle,
   onUpdate,
+  onAppendNote,
 }: {
   action: CatalogueAction;
   picked: PickedAction | undefined;
@@ -128,6 +133,7 @@ function ActionRow({
   onToggleOpen: () => void;
   onToggle: () => void;
   onUpdate: (patch: Partial<PickedAction>) => void;
+  onAppendNote: (text: string) => void;
 }): ReactElement {
   const { t } = useTranslation();
 
@@ -193,61 +199,90 @@ function ActionRow({
 
       {opened && (
         <Stack gap="sm" px="md" pb="md" pl="calc(1rem + 2.25rem)">
-          {/* The tags say what the job covers; the user removes what was left out, and
-              what remains is stored as the note on the action — see ADR 0005. */}
-          {action.tags.length > 0 && (
-            <Checkbox.Group
-              label={t("addService.tagsLabel")}
-              value={picked?.selectedTags ?? []}
-              onChange={(value) => onUpdate({ selectedTags: value })}
-            >
-              <Stack gap={6} pt={6}>
-                {action.tags.map((tag) => (
-                  <Checkbox
-                    key={tag.tag}
-                    value={tag.tag}
-                    size="xs"
-                    color="primary.6"
-                    disabled={picked === undefined}
-                    label={
-                      <Text fz={13} c="var(--color-text-dim)">
-                        {catalogueLabel(tag.i18n_key, tag.tag, t)}
-                      </Text>
-                    }
-                  />
-                ))}
-              </Stack>
-            </Checkbox.Group>
+          {/* The parts are shown before the action is ticked, so the user can see what it
+              would be recorded against; until then they say nothing and take no input. */}
+          {action.components.length > 0 && (
+            <Stack gap={6}>
+              <Text fz={13} c="text.6">
+                {t("addService.componentsLabel")}
+              </Text>
+              <Chip.Group
+                multiple
+                value={(picked?.componentIds ?? preselectedComponents(action.components)).map(String)}
+                onChange={(value) => onUpdate({ componentIds: value.map(Number) })}
+              >
+                <Group gap="xs">
+                  {action.components.map((component) => (
+                    <Chip
+                      key={component.id}
+                      value={String(component.id)}
+                      radius="xl"
+                      size="sm"
+                      color="primary.6"
+                      disabled={picked === undefined}
+                    >
+                      {shortComponentLabel(component, t)}
+                    </Chip>
+                  ))}
+                </Group>
+              </Chip.Group>
+            </Stack>
           )}
+
+          {/* A warning, not a block: work the user cannot attribute is still work. */}
+          {picked && picked.componentIds.length === 0 && (
+            <Group gap={6} wrap="nowrap">
+              <AlertTriangle size={14} color="var(--mantine-color-yellow-5)" style={{ flexShrink: 0 }} />
+              <Text fz={13} c="yellow.5">
+                {t("addService.noComponentWarning")}
+              </Text>
+            </Group>
+          )}
+
+          {/* Tags hold no state: each is a shortcut that writes its own name into the
+              note, and taking a chip is itself a claim that the action happened — see
+              ADR 0005. */}
+          {action.tags.length > 0 && (
+            <Stack gap={6}>
+              <Text fz={13} c="text.6">
+                {t("addService.tagsLabel")}
+              </Text>
+              <Group gap="xs">
+                {action.tags.map((tag) => (
+                  <Chip
+                    key={tag.tag}
+                    checked={false}
+                    radius="xl"
+                    size="sm"
+                    color="primary.6"
+                    onChange={() => {
+                      void tapFeedback();
+                      if (picked === undefined) onToggle();
+                      onAppendNote(catalogueLabel(tag.i18n_key, tag.tag, t));
+                    }}
+                  >
+                    {catalogueLabel(tag.i18n_key, tag.tag, t)}
+                  </Chip>
+                ))}
+              </Group>
+            </Stack>
+          )}
+
+          {/* Whatever the chips wrote is the user's to rewrite. */}
+          <Textarea
+            label={t("addService.actionNote")}
+            placeholder={t("addService.actionNotePlaceholder")}
+            value={picked?.note ?? ""}
+            disabled={picked === undefined}
+            autosize
+            minRows={1}
+            maxLength={500}
+            styles={autosizeInputStyles}
+            onChange={(event) => onUpdate({ note: event.currentTarget.value })}
+          />
 
           {picked && (
             <>
-              {action.components.length > 0 && (
-                <Chip.Group
-                  multiple
-                  value={picked.componentIds.map(String)}
-                  onChange={(value) => onUpdate({ componentIds: value.map(Number) })}
-                >
-                  <Group gap="xs">
-                    {action.components.map((component) => (
-                      <Chip key={component.id} value={String(component.id)} radius="xl" size="sm" color="primary.6">
-                        {componentLabel(component, t)}
-                      </Chip>
-                    ))}
-                  </Group>
-                </Chip.Group>
-              )}
-
-              {/* A warning, not a block: work the user cannot attribute is still work. */}
-              {picked.componentIds.length === 0 && (
-                <Group gap={6} wrap="nowrap">
-                  <AlertTriangle size={14} color="var(--mantine-color-yellow-5)" style={{ flexShrink: 0 }} />
-                  <Text fz={13} c="yellow.5">
-                    {t("addService.noComponentWarning")}
-                  </Text>
-                </Group>
-              )}
-
               {action.replace_action && (
                 <TextInput
                   label={t("addService.newPart")}
@@ -272,6 +307,7 @@ function ActionRow({
           )}
         </Stack>
       )}
+
     </Paper>
   );
 }

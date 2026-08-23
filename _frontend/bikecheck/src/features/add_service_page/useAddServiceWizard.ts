@@ -2,7 +2,6 @@
 // presentational and the assembled Service is built in a single readable pass.
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCreateService } from "@/features/service/service.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
@@ -14,8 +13,14 @@ import type {
   ServiceReplacementInput,
   UploadedAttachment,
 } from "@/features/service/service.types";
-import { recordedTagLine } from "@/features/service/serviceLabels";
-import { preselectedComponents, today, type CategoryBlock, type DraftBlock, type PickedAction } from "./serviceWizard.types";
+import {
+  appendToNote,
+  preselectedComponents,
+  today,
+  type CategoryBlock,
+  type DraftBlock,
+  type PickedAction,
+} from "./serviceWizard.types";
 
 export type WizardStep = "bike" | "category" | "actions" | "summary";
 
@@ -57,6 +62,8 @@ export interface AddServiceWizard {
   chooseCategory: (category: BikeCategory) => void;
   toggleAction: (action: CatalogueAction) => void;
   updateAction: (actionId: number, patch: Partial<PickedAction>) => void;
+  // A tag chip writes its own text into the action's note — see ADR 0005.
+  appendActionNote: (actionId: number, text: string) => void;
   // Whether the draft can be written into the Service. An edited block may be emptied,
   // which removes it; a new one has to carry work.
   canCommit: boolean;
@@ -75,7 +82,6 @@ export interface AddServiceWizard {
 
 export function useAddServiceWizard(): AddServiceWizard {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { data: bikes, isLoading: bikesLoading } = useBikes();
   const create = useCreateService();
@@ -160,9 +166,8 @@ export function useAddServiceWizard(): AddServiceWizard {
             actionI18nKey: action.action_i18n_key,
             replaceAction: action.replace_action,
             tags: action.tags,
-            // Ticking an action claims its full scope; the user removes what was left
-            // out — see ADR 0005.
-            selectedTags: action.tags.map((tag) => tag.tag),
+            // Nothing is claimed on the user's behalf: what was done is what they write.
+            note: "",
             candidates: action.components,
             componentIds,
             // Like for like takes no typing; an upgrade takes a little.
@@ -172,6 +177,21 @@ export function useAddServiceWizard(): AddServiceWizard {
         ],
       };
     });
+  }, []);
+
+  // Reads the note as it stands rather than taking it from a stale render, so a run of
+  // quick taps on several chips all land.
+  const appendActionNote = useCallback((actionId: number, text: string): void => {
+    setDraft((current) =>
+      current === null
+        ? current
+        : {
+            ...current,
+            actions: current.actions.map((action) =>
+              action.actionId === actionId ? { ...action, note: appendToNote(action.note, text) } : action,
+            ),
+          },
+    );
   }, []);
 
   const updateAction = useCallback((actionId: number, patch: Partial<PickedAction>): void => {
@@ -265,12 +285,12 @@ export function useAddServiceWizard(): AddServiceWizard {
         total_cost: totalCost,
         note: note.trim() === "" ? undefined : note.trim(),
         attachment: attachments.length > 0 ? attachments : undefined,
-        ...splitActions(blocks, t),
+        ...splitActions(blocks),
       },
       // The user is dropped back where the new service now sits at the top.
       { onSuccess: () => navigate("/service", { replace: true }) },
     );
-  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate, t]);
+  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate]);
 
   return {
     step,
@@ -292,6 +312,7 @@ export function useAddServiceWizard(): AddServiceWizard {
     chooseCategory,
     toggleAction,
     updateAction,
+    appendActionNote,
     canCommit,
     canSave,
     commitDraft,
@@ -317,17 +338,14 @@ function withPrefilledDescription(action: PickedAction): PickedAction {
 
 // Flattens every block into the two lists the API takes: ordinary work, and the
 // replacements that end one Mounted Component and begin another.
-function splitActions(
-  blocks: CategoryBlock[],
-  translate: (key: string) => string,
-): Pick<CreateServiceInput, "actions_done" | "actions_replaced"> {
+function splitActions(blocks: CategoryBlock[]): Pick<CreateServiceInput, "actions_done" | "actions_replaced"> {
   const actionsDone: ServiceActionInput[] = [];
   const replacements: ServiceReplacementInput[] = [];
 
   for (const block of blocks) {
     for (const action of block.actions) {
-      // What the user says was actually done, as the sentence stored on the action.
-      const tagNote = recordedTagLine(action.tags, action.selectedTags, translate);
+      // What the user says was actually done, in their own words.
+      const actionNote = action.note.trim();
 
       const replaced = action.replaceAction
         ? action.candidates.filter((component) => action.componentIds.includes(component.id))
@@ -336,7 +354,7 @@ function splitActions(
       if (replaced.length === 0) {
         // A Replacement nobody attributed to a part creates no new component, so the
         // description of the part going on has only this note to live in.
-        const description = [tagNote, action.replaceAction ? action.newDescription.trim() : ""]
+        const description = [actionNote, action.replaceAction ? action.newDescription.trim() : ""]
           .filter((part) => part !== "")
           .join(" — ");
 
@@ -363,7 +381,7 @@ function splitActions(
               ? (component.component_desc ?? component.component_type)
               : action.newDescription.trim(),
           action_id: action.actionId,
-          ...(tagNote === "" ? {} : { note: tagNote }),
+          ...(actionNote === "" ? {} : { note: actionNote }),
           ...(action.partialCost === null || index > 0 ? {} : { partial_cost: action.partialCost }),
         });
       });

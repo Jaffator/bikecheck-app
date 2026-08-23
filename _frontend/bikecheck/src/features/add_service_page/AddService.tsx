@@ -87,6 +87,7 @@ export function AddService(): ReactElement {
           canCommit={wizard.canCommit}
           onToggleAction={wizard.toggleAction}
           onUpdateAction={wizard.updateAction}
+          onAppendActionNote={wizard.appendActionNote}
           onCommit={wizard.commitDraft}
         />
       )}

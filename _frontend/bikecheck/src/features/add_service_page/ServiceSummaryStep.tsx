@@ -20,7 +20,7 @@ import { tapFeedback } from "@/utils/haptics";
 import { useUploadServiceAttachment } from "@/features/service/service.queries";
 import type { UploadedAttachment } from "@/features/service/service.types";
 import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
-import { catalogueLabel, recordedTagLine } from "@/features/service/serviceLabels";
+import { catalogueLabel } from "@/features/service/serviceLabels";
 import { today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
 
 // A receipt, an invoice and a few photos of the work is as many as one visit needs.
@@ -254,20 +254,20 @@ export function ServiceSummaryStep({
   );
 }
 
-// One recorded action, with what the user kept of its tags underneath — the same
-// sentence that will be stored against it (ADR 0005).
+// One recorded action, with what the user wrote about it underneath — the note stored
+// against it (ADR 0005).
 function ActionSummary({ action }: { action: PickedAction }): ReactElement {
   const { t } = useTranslation();
-  const done = recordedTagLine(action.tags, action.selectedTags, t);
+  const note = action.note.trim();
 
   return (
     <Stack gap={2}>
       <Text fz={13} c="text.7">
         {catalogueLabel(action.actionI18nKey, action.actionName, t)}
       </Text>
-      {done !== "" && (
+      {note !== "" && (
         <Text fz={12} c="var(--color-text-dim)">
-          {done}
+          {note}
         </Text>
       )}
     </Stack>

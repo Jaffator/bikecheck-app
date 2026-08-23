@@ -11,7 +11,7 @@ import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useDeleteService, useServiceDetail } from "@/features/service/service.queries";
 import type { ServiceActionDone, ServiceAttachment } from "@/features/service/service.types";
-import { catalogueLabel, componentLabel, tagLine } from "@/features/service/serviceLabels";
+import { catalogueLabel, componentLabel } from "@/features/service/serviceLabels";
 
 // One recorded Service: the whole occasion in one view.
 export function ServiceDetail(): ReactElement {
@@ -237,18 +237,12 @@ function ActionCard({
           </Text>
         ))}
 
-        {/* What the job included. A recorded note says what the user kept of the
-            action's tags (ADR 0005); without one, the catalogue's tags stand in. */}
-        {action.note ? (
+        {/* What was done, in the user's own words. Nothing stands in for it: the
+            catalogue's tags describe the action, not the occasion — see ADR 0005. */}
+        {action.note && (
           <Text fz={13} c="var(--color-text-dim)" style={{ whiteSpace: "pre-wrap" }}>
             {action.note}
           </Text>
-        ) : (
-          action.tags.length > 0 && (
-            <Text fz={13} c="var(--color-text-dim)">
-              {tagLine(action.tags, t)}
-            </Text>
-          )
         )}
       </Stack>
     </Paper>

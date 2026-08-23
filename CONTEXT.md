@@ -43,9 +43,14 @@ _Avoid_: Task, job, event
 
 **Action Tag**:
 A sub-item describing what an action includes — "Dust seals replacement", "Piston Lube". Describes
-the action itself, so it is catalogue data and is never stored per service (ADR 0004). When
-recording work the user unticks the tags that were left out, and the ones kept are joined into a
-sentence stored as the action's note — prose about the occasion, not data (ADR 0005).
+the action itself, so it is catalogue data and is never stored per service (ADR 0004). In the wizard
+each tag is a chip that writes its own name into the action's note; what ends up stored is prose the
+user owns, not a record of which tags were picked (ADR 0005).
+
+**Action Note**:
+What was done on one occasion, in the user's own words, against one Action. Tag chips write into it
+as a shortcut; the user can rewrite it entirely. Distinct from the Service's own note, which covers
+the whole occasion.
 
 **Replacement**:
 An action that swaps a part out. Ends the old mounted component and begins a new one; it is not an

@@ -1,6 +1,9 @@
 // How the catalogue and the parts on a bike read on screen. Shared by the wizard that
 // records a Service and the detail that reads one back — both name the same things.
-import type { ActionTag, MountedComponent } from "./service.types";
+import type { MountedComponent } from "./service.types";
+
+// As much of a part's name as a chip can carry without crowding out its neighbours.
+const CHIP_LABEL_LIMIT = 30;
 
 // Catalogue entries carry a key; anything a user created carries only its own name.
 export function catalogueLabel(
@@ -12,29 +15,23 @@ export function catalogueLabel(
 }
 
 // A part reads as its description, falling back to its type when it has none.
-export function componentLabel(component: MountedComponent, translate: (key: string) => string): string {
+function partName(component: MountedComponent, translate: (key: string) => string): string {
   const type = catalogueLabel(component.component_type_i18n_key, component.component_type, translate);
-  const name = component.component_desc ?? type;
-  return component.position ? `${name} (${component.position})` : name;
+  return component.component_desc ?? type;
 }
 
-// What an Action covers, on one line, straight from the catalogue. Reads the same for
-// every service that used the action — see ADR 0004.
-export function tagLine(tags: ActionTag[], translate: (key: string) => string): string {
-  return tags.map((tag) => catalogueLabel(tag.i18n_key, tag.tag, translate)).join(" · ");
+// The part's full name, with the position that tells two otherwise identical parts apart.
+export function componentLabel(component: MountedComponent, translate: (key: string) => string): string {
+  const suffix = component.position ? ` (${component.position})` : "";
+  return `${partName(component, translate)}${suffix}`;
 }
 
-// The tags the user says were actually done, as the sentence stored against the action.
-// Composed in the language the record was written in, and never translated again — see
-// ADR 0005. Tags carry no id, and a tag name is unique within an action, so names are
-// the handle.
-export function recordedTagLine(
-  tags: ActionTag[],
-  selected: string[],
-  translate: (key: string) => string,
-): string {
-  return tags
-    .filter((tag) => selected.includes(tag.tag))
-    .map((tag) => catalogueLabel(tag.i18n_key, tag.tag, translate))
-    .join(", ");
+// The same label, cut to fit a chip. Only the name gives way: the position is what makes
+// the front brake readable as not the rear one, so it survives whatever the name loses.
+export function shortComponentLabel(component: MountedComponent, translate: (key: string) => string): string {
+  const suffix = component.position ? ` (${component.position})` : "";
+  const name = partName(component, translate);
+  const room = CHIP_LABEL_LIMIT - suffix.length;
+  if (name.length <= room) return `${name}${suffix}`;
+  return `${name.slice(0, Math.max(room - 1, 0)).trimEnd()}…${suffix}`;
 }

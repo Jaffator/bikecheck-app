@@ -9,11 +9,12 @@ export interface PickedAction {
   actionI18nKey: string | null;
   // A Replacement swaps a part out; it is not an edit of the existing one (ADR 0003).
   replaceAction: boolean;
-  // What the Action covers, from the catalogue.
+  // What the Action covers, from the catalogue. Chips the user taps to write into the
+  // note; they hold no state of their own — see ADR 0005.
   tags: ActionTag[];
-  // The ones the user says were actually done. Tags carry no id of their own, and a tag
-  // name is unique within an action, so the name is the handle — see ADR 0005.
-  selectedTags: string[];
+  // What was done on this occasion, in the user's own words. Tag chips write into it,
+  // and the user is free to rewrite what they wrote.
+  note: string;
   // The parts on this bike the Action could have been performed on.
   candidates: MountedComponent[];
   // The ones it was performed on. Empty warns rather than blocks: work the user cannot
@@ -43,6 +44,11 @@ export interface DraftBlock extends CategoryBlock {
 // guessed between, so the user says which brake was bled.
 export function preselectedComponents(candidates: MountedComponent[]): number[] {
   return candidates.length === 1 ? [candidates[0].id] : [];
+}
+
+// A tag chip appends to whatever the note already says, rather than replacing it.
+export function appendToNote(note: string, text: string): string {
+  return note.trim() === "" ? text : `${note.trimEnd()} · ${text}`;
 }
 
 // The wizard speaks days, which is also what a service date is.
