@@ -1,9 +1,9 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import { Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { tapFeedback } from "@/utils/haptics";
 import { useHeaderStore } from "@/store/store";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { ServiceBikeStep } from "./ServiceBikeStep";
 import { ServiceCategoryStep } from "./ServiceCategoryStep";
 import { ServiceActionsStep } from "./ServiceActionsStep";
@@ -139,39 +139,14 @@ function DiscardModal({
   const copy = prompt === null ? null : DISCARD_COPY[prompt];
 
   return (
-    <Modal
+    <ConfirmModal
       opened={prompt !== null}
-      onClose={onKeep}
+      onCancel={onKeep}
+      onConfirm={onDiscard}
       title={copy === null ? "" : t(copy.title)}
-      centered
-      radius="md"
-      styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
-        title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
-      }}
-    >
-      <Stack gap="lg">
-        <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-          {copy === null ? "" : t(copy.body)}
-        </Text>
-
-        <Group gap="sm" grow>
-          <Button variant="default" radius="md" onClick={onKeep}>
-            {t("addService.keep")}
-          </Button>
-          <Button
-            color="red.5"
-            radius="md"
-            onClick={() => {
-              void tapFeedback();
-              onDiscard();
-            }}
-          >
-            {t("addService.discard")}
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
+      body={copy === null ? "" : t(copy.body)}
+      cancelLabel={t("addService.keep")}
+      confirmLabel={t("addService.discard")}
+    />
   );
 }

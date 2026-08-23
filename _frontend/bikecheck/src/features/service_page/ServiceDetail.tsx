@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
-import { Button, Divider, Group, Modal, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Button, Divider, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
@@ -11,6 +11,7 @@ import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useDeleteService, useServiceDetail } from "@/features/service/service.queries";
 import type { ServiceActionDone, ServiceAttachment } from "@/features/service/service.types";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { catalogueLabel, componentLabel } from "@/features/service/serviceLabels";
 
 // One recorded Service: the whole occasion in one view.
@@ -146,44 +147,21 @@ export function ServiceDetail(): ReactElement {
         </Text>
       )}
 
-      <Modal
+      <ConfirmModal
         opened={confirmingDelete}
-        onClose={() => setConfirmingDelete(false)}
+        onCancel={() => setConfirmingDelete(false)}
+        onConfirm={() =>
+          remove.mutate(service.id, {
+            // Replace the detail in history with the list it just left.
+            onSuccess: () => navigate("/service", { replace: true }),
+          })
+        }
         title={t("service.deleteConfirmTitle")}
-        centered
-        radius="md"
-        styles={{
-          content: { backgroundColor: "var(--mantine-color-cards-6)" },
-          header: { backgroundColor: "var(--mantine-color-cards-6)" },
-          title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
-        }}
-      >
-        <Stack gap="lg">
-          <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-            {t("service.deleteConfirmBody")}
-          </Text>
-
-          <Group gap="sm" grow>
-            <Button variant="default" radius="md" onClick={() => setConfirmingDelete(false)} disabled={remove.isPending}>
-              {t("service.deleteConfirmCancel")}
-            </Button>
-            <Button
-              color="red.5"
-              radius="md"
-              loading={remove.isPending}
-              onClick={() => {
-                void tapFeedback();
-                remove.mutate(service.id, {
-                  // Replace the detail in history with the list it just left.
-                  onSuccess: () => navigate("/service", { replace: true }),
-                });
-              }}
-            >
-              {t("service.delete")}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        body={t("service.deleteConfirmBody")}
+        cancelLabel={t("service.deleteConfirmCancel")}
+        confirmLabel={t("service.delete")}
+        pending={remove.isPending}
+      />
     </Stack>
   );
 }

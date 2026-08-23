@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
-import { Button, Group, Image, Modal, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { Button, Group, Image, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { Clock, Gauge, Plus, Trash2 } from "lucide-react";
@@ -11,6 +11,7 @@ import { useLinkStravaGear } from "../strava/strava.queries";
 import { useCurrentUser } from "../users/users.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 // Render available identity and totals for the selected bike.
 export function BikeDetail(): ReactElement {
@@ -167,44 +168,21 @@ export function BikeDetail(): ReactElement {
       <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
 
       {/* Confirm irreversible removal from the garage. */}
-      <Modal
+      <ConfirmModal
         opened={confirmingDelete}
-        onClose={() => setConfirmingDelete(false)}
+        onCancel={() => setConfirmingDelete(false)}
+        onConfirm={() =>
+          remove.mutate(bike.id, {
+            // Replace detail history with the garage after deletion.
+            onSuccess: () => navigate("/bikes", { replace: true }),
+          })
+        }
         title={t("bikes.deleteConfirmTitle")}
-        centered
-        radius="md"
-        styles={{
-          content: { backgroundColor: "var(--mantine-color-cards-6)" },
-          header: { backgroundColor: "var(--mantine-color-cards-6)" },
-          title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
-        }}
-      >
-        <Stack gap="lg">
-          <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-            {t("bikes.deleteConfirmBody")}
-          </Text>
-
-          <Group gap="sm" grow>
-            <Button variant="default" radius="md" onClick={() => setConfirmingDelete(false)} disabled={remove.isPending}>
-              {t("bikes.deleteConfirmCancel")}
-            </Button>
-            <Button
-              color="red.5"
-              radius="md"
-              loading={remove.isPending}
-              onClick={() => {
-                void tapFeedback();
-                remove.mutate(bike.id, {
-                  // Replace detail history with the garage after deletion.
-                  onSuccess: () => navigate("/bikes", { replace: true }),
-                });
-              }}
-            >
-              {t("bikes.delete")}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        body={t("bikes.deleteConfirmBody")}
+        cancelLabel={t("bikes.deleteConfirmCancel")}
+        confirmLabel={t("bikes.delete")}
+        pending={remove.isPending}
+      />
     </Stack>
   );
 }
