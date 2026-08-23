@@ -211,26 +211,37 @@ Reference: `features/add_bike_page/AddBikeFooter.tsx`.
 
 ### Disabled chips (pattern)
 
-A `Chip` has the same problem and does not take the same fix. Mantine's `--chip-bg` and
-`--chip-color` reach the *checked* state only, so a disabled unchecked chip keeps its light
-default fill. Colour the label directly, and only while the chip is disabled — the same
-object on an enabled chip would override the fill it is supposed to have:
+A `Chip` takes the same variables as the buttons above, on `root`:
 
 ```tsx
 import { disabledChipStyles } from "../add_bike_page/formStyles";
 
-<Chip disabled={picked === undefined} styles={picked === undefined ? disabledChipStyles : undefined} ... />
+<Chip
+  disabled={picked === undefined}
+  styles={disabledChipStyles}
+  icon={picked === undefined ? false : undefined}
+  ...
+/>
 ```
 
 ```ts
 export const disabledChipStyles = {
-  label: {
-    backgroundColor: "var(--mantine-color-cards-5)",
-    color: "var(--mantine-color-text-9)",
-    borderColor: "var(--mantine-color-cards-5)",
+  root: {
+    "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+    "--mantine-color-disabled-color": "var(--mantine-color-text-9)",
   } as React.CSSProperties,
 };
 ```
+
+Do not colour the `label` directly. Every checked rule in Mantine's `Chip.css` is gated on
+`:not([data-disabled])`, so painting the label on top of a disabled chip buries whatever the
+checked state was drawing.
+
+`icon={false}` is for a chip that can be **checked while disabled** — a part preselected
+before its action is ticked. The tick would claim a choice the user has not made yet.
+Prefer it over hiding the icon with a colour: Mantine only renders the icon wrapper when an
+icon exists, so `false` drops the reserved width too, while a transparent icon leaves a gap
+where the tick would have been.
 
 Reference: `features/add_service_page/ServiceActionsStep.tsx`.
 

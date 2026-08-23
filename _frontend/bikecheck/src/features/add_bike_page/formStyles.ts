@@ -30,15 +30,14 @@ export const disabledButtonStyles = {
   } as React.CSSProperties,
 };
 
-// A disabled Chip defaults to a light fill that reads as white on the dark theme, brighter
-// than the surface it sits on. Mantine's --chip-bg and --chip-color reach the checked state
-// only, so the unchecked disabled chip is coloured directly. Apply to disabled chips only -
-// an enabled chip must keep its own fill. Same colours as the buttons above.
+// A disabled Chip reads as near-white on the dark theme. Mantine paints the disabled label
+// from --mantine-color-disabled, the same pair the buttons above use, so set those rather
+// than the label's own colours. Pair with icon={false} on a chip that can be checked while
+// disabled - see the chips pattern in docs/design.md.
 export const disabledChipStyles = {
-  label: {
-    backgroundColor: "var(--mantine-color-cards-5)",
-    color: "var(--mantine-color-text-9)",
-    borderColor: "var(--mantine-color-cards-5)",
+  root: {
+    "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+    "--mantine-color-disabled-color": "var(--mantine-color-text-9)",
   } as React.CSSProperties,
 };
 

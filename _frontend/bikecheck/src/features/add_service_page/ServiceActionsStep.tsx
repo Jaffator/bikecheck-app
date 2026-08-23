@@ -225,7 +225,10 @@ function ActionRow({
                       size="sm"
                       color="primary.6"
                       disabled={picked === undefined}
-                      styles={picked === undefined ? disabledChipStyles : undefined}
+                      styles={disabledChipStyles}
+                      // Preselected before the action is ticked: show the part as a
+                      // candidate, without a tick that would claim a choice not yet made.
+                      icon={picked === undefined ? false : undefined}
                     >
                       {shortComponentLabel(component, t)}
                     </Chip>
