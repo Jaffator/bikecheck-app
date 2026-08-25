@@ -127,6 +127,8 @@ export function AppLayout(): ReactElement {
   const { data: unreadNotifications } = useUnreadNotifications();
   const unreadCount = unreadNotifications?.length ?? 0;
   const overrideTitleKey = useHeaderStore((state) => state.titleKey);
+  // A title a translation key cannot express - a category the user named, with its icon.
+  const overrideTitleSlot = useHeaderStore((state) => state.titleSlot);
   const overrideBack = useHeaderStore((state) => state.onBack);
   // Lets a page suppress shared application chrome.
   const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
@@ -207,15 +209,17 @@ export function AppLayout(): ReactElement {
         >
           <Group h="100%" justify="space-between" w="100%">
             {subPage ? (
-              <Group gap="xs" c="text.6">
+              <Group gap="xs" c="text.6" wrap="nowrap" style={{ minWidth: 0 }}>
                 {!backHidden && (
                   <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
                     <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
                   </ActionIcon>
                 )}
-                <Text fw={700} size="lg" c="text.6">
-                  {pageTitleKey && t(pageTitleKey)}
-                </Text>
+                {overrideTitleSlot ?? (
+                  <Text fw={700} size="lg" c="text.6">
+                    {pageTitleKey && t(pageTitleKey)}
+                  </Text>
+                )}
               </Group>
             ) : (
               <>

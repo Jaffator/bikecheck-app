@@ -1,6 +1,7 @@
 // All wizard state and its transitions in one place, so the step components stay
 // presentational and the assembled Service is built in a single readable pass.
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCreateService } from "@/features/service/service.queries";
@@ -14,8 +15,10 @@ import type {
   UploadedAttachment,
 } from "@/features/service/service.types";
 import {
-  toggleSegment,
-  preselectedComponents,
+  actionNote,
+  actionsCost,
+  NO_ACTIONS,
+  sameActionLists,
   today,
   type CategoryBlock,
   type DraftBlock,
@@ -62,12 +65,15 @@ export interface AddServiceWizard {
   chooseCategory: (category: BikeCategory) => void;
   toggleAction: (action: CatalogueAction) => void;
   updateAction: (actionId: number, patch: Partial<PickedAction>) => void;
-  // A tag chip writes its own text into the action's note, or takes it back out when the
-  // note already says it — see ADR 0005.
-  toggleActionNote: (actionId: number, text: string) => void;
+  // Takes a tag or gives it back, by its catalogue name. Nothing is written until the
+  // Service is saved — see ADR 0007.
+  toggleActionTag: (actionId: number, tagName: string) => void;
   // Whether the draft can be written into the Service. An edited block may be emptied,
   // which removes it; a new one has to carry work.
   canCommit: boolean;
+  // What the draft's actions cost so far. A tally of what the user typed into them, never
+  // an input of its own — only the visit's total is overridable (ADR 0009).
+  draftCost: number;
   // Whether there is a Service to save at all.
   canSave: boolean;
   // Writes the draft into the Service and lands on the Summary.
@@ -83,6 +89,7 @@ export interface AddServiceWizard {
 
 export function useAddServiceWizard(): AddServiceWizard {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { data: bikes, isLoading: bikesLoading } = useBikes();
   const create = useCreateService();
@@ -110,12 +117,11 @@ export function useAddServiceWizard(): AddServiceWizard {
   const canCommit = draft !== null && (draftDirty || draft.editingIndex !== null);
   const canSave = blocks.length > 0;
 
+  // What the category being worked on costs so far, shown while the user works on it.
+  const draftCost = useMemo(() => (draft === null ? 0 : actionsCost(draft.actions)), [draft]);
+
   const suggestedTotal = useMemo(
-    () =>
-      blocks.reduce(
-        (total, block) => total + block.actions.reduce((sum, action) => sum + (action.partialCost ?? 0), 0),
-        0,
-      ),
+    () => blocks.reduce((total, block) => total + actionsCost(block.actions), 0),
     [blocks],
   );
   // The sum is the usual case; an overridden total covers labour and discounts.
@@ -155,42 +161,51 @@ export function useAddServiceWizard(): AddServiceWizard {
       if (picked) {
         return { ...current, actions: current.actions.filter((candidate) => candidate.actionId !== action.id) };
       }
-      const componentIds = preselectedComponents(action.components);
-      const replaced = action.components.find((component) => component.id === componentIds[0]);
       return {
         ...current,
         actions: [
           ...current.actions,
-          {
+          // Run through the same writer an edit uses, so the part going on is described
+          // from the part it replaces here too rather than in a second place.
+          withPrefilledDescriptions({
             actionId: action.id,
             actionName: action.action_name,
             actionI18nKey: action.action_i18n_key,
             replaceAction: action.replace_action,
             tags: action.tags,
             // Nothing is claimed on the user's behalf: what was done is what they write.
-            note: "",
+            customNote: "",
+            selectedTags: [],
             candidates: action.components,
-            componentIds,
-            // Like for like takes no typing; an upgrade takes a little.
-            newDescription: action.replace_action ? (replaced?.component_desc ?? "") : "",
+            // One candidate is no choice at all, so ticking the action makes it. Two are
+            // never guessed between - the user says which brake was bled.
+            componentIds: action.components.length === 1 ? [action.components[0].id] : [],
+            newDescriptions: {},
             partialCost: null,
-          },
+          }),
         ],
       };
     });
   }, []);
 
-  // Reads the note as it stands rather than taking it from a stale render, so a run of
-  // quick taps on several chips all land - and so each tap sees whether the note already
-  // says its text, which is what decides between writing and unwriting it.
-  const toggleActionNote = useCallback((actionId: number, text: string): void => {
+  // Reads the selection as it stands rather than taking it from a stale render, so a run
+  // of quick taps on several chips all land. The tag is held by its catalogue name; what
+  // it will say in the note is decided when the note is composed - see ADR 0007.
+  const toggleActionTag = useCallback((actionId: number, tagName: string): void => {
     setDraft((current) =>
       current === null
         ? current
         : {
             ...current,
             actions: current.actions.map((action) =>
-              action.actionId === actionId ? { ...action, note: toggleSegment(action.note, text) } : action,
+              action.actionId === actionId
+                ? {
+                    ...action,
+                    selectedTags: action.selectedTags.includes(tagName)
+                      ? action.selectedTags.filter((taken) => taken !== tagName)
+                      : [...action.selectedTags, tagName],
+                  }
+                : action,
             ),
           },
     );
@@ -203,7 +218,7 @@ export function useAddServiceWizard(): AddServiceWizard {
         : {
             ...current,
             actions: current.actions.map((action) =>
-              action.actionId === actionId ? withPrefilledDescription({ ...action, ...patch }) : action,
+              action.actionId === actionId ? withPrefilledDescriptions({ ...action, ...patch }) : action,
             ),
           },
     );
@@ -246,10 +261,19 @@ export function useAddServiceWizard(): AddServiceWizard {
   const backPrompt = useCallback((): BackPrompt => {
     if (step === "summary") return "discardService";
     if (step !== "actions" || draft === null) return null;
-    // Any pass through an edited block may have changed it, emptying it included.
-    if (draft.editingIndex !== null) return "discardEdits";
-    return draftDirty ? "discardAction" : null;
-  }, [step, draft, draftDirty]);
+    // One rule for both kinds of block: ask only when leaving would actually lose
+    // something. An edited block is measured against the block it was opened from, a new
+    // one against the empty block it started as, so passing through either and changing
+    // nothing costs nothing to leave. Emptying a block is a change like any other - it
+    // removes the category from the Service, which is work the user would lose.
+    const index = draft.editingIndex;
+    // A block opened for editing is measured against the one still sitting in blocks -
+    // nothing writes there until commit, so that is the state the user opened. A new block
+    // started empty, so its baseline is no actions at all.
+    const baseline = index === null ? NO_ACTIONS : blocks[index]?.actions;
+    if (baseline !== undefined && sameActionLists(draft.actions, baseline)) return null;
+    return index === null ? "discardAction" : "discardEdits";
+  }, [step, draft, blocks]);
 
   // Back walks the wizard rather than the browser history, and only leaves it from the
   // step the user entered on. The Summary has no way back into the wizard, so leaving it
@@ -287,12 +311,12 @@ export function useAddServiceWizard(): AddServiceWizard {
         total_cost: totalCost,
         note: note.trim() === "" ? undefined : note.trim(),
         attachment: attachments.length > 0 ? attachments : undefined,
-        ...splitActions(blocks),
+        ...splitActions(blocks, t),
       },
       // The user is dropped back where the new service now sits at the top.
       { onSuccess: () => navigate("/service", { replace: true }) },
     );
-  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate]);
+  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate, t]);
 
   return {
     step,
@@ -314,8 +338,9 @@ export function useAddServiceWizard(): AddServiceWizard {
     chooseCategory,
     toggleAction,
     updateAction,
-    toggleActionNote,
+    toggleActionTag,
     canCommit,
+    draftCost,
     canSave,
     commitDraft,
     addAnotherCategory,
@@ -328,26 +353,38 @@ export function useAddServiceWizard(): AddServiceWizard {
   };
 }
 
-// A Replacement describes the part going on, prefilled from the one coming off. The
-// prefill waits for a part to be picked, because with two candidates none is guessed.
-function withPrefilledDescription(action: PickedAction): PickedAction {
-  if (!action.replaceAction || action.newDescription.trim() !== "") {
-    return action;
+// A Replacement describes each part going on, prefilled from the one it replaces. The map
+// is rebuilt against the picked parts on every change, which is the whole invariant: a part
+// just picked arrives with the name of the one it replaces, and a part unpicked takes its
+// name with it rather than lingering as a change the user cannot see.
+function withPrefilledDescriptions(action: PickedAction): PickedAction {
+  if (!action.replaceAction) {
+    return Object.keys(action.newDescriptions).length === 0 ? action : { ...action, newDescriptions: {} };
   }
-  const replaced = action.candidates.find((component) => component.id === action.componentIds[0]);
-  return { ...action, newDescription: replaced?.component_desc ?? "" };
+
+  const next: Record<number, string> = {};
+  for (const id of action.componentIds) {
+    const replaced = action.candidates.find((component) => component.id === id);
+    // An emptied field stays empty - only a part with no entry at all is prefilled.
+    next[id] = action.newDescriptions[id] ?? replaced?.component_desc ?? "";
+  }
+  return { ...action, newDescriptions: next };
 }
 
 // Flattens every block into the two lists the API takes: ordinary work, and the
 // replacements that end one Mounted Component and begin another.
-function splitActions(blocks: CategoryBlock[]): Pick<CreateServiceInput, "actions_done" | "actions_replaced"> {
+function splitActions(
+  blocks: CategoryBlock[],
+  translate: (key: string) => string,
+): Pick<CreateServiceInput, "actions_done" | "actions_replaced"> {
   const actionsDone: ServiceActionInput[] = [];
   const replacements: ServiceReplacementInput[] = [];
 
   for (const block of blocks) {
     for (const action of block.actions) {
-      // What the user says was actually done, in their own words.
-      const actionNote = action.note.trim();
+      // Where the tags become prose: what the user wrote, then what they took. From here
+      // on it is one string, indistinguishable from a note typed in full - see ADR 0007.
+      const note = actionNote(action, translate);
 
       const replaced = action.replaceAction
         ? action.candidates.filter((component) => action.componentIds.includes(component.id))
@@ -356,16 +393,12 @@ function splitActions(blocks: CategoryBlock[]): Pick<CreateServiceInput, "action
       if (replaced.length === 0) {
         // A Replacement nobody attributed to a part creates no new component, so the
         // description of the part going on has only this note to live in.
-        const description = [actionNote, action.replaceAction ? action.newDescription.trim() : ""]
-          .filter((part) => part !== "")
-          .join(" — ");
-
         actionsDone.push({
           action_id: action.actionId,
           part_replaced: action.replaceAction,
           mounted_components_involved: action.componentIds,
           ...(action.partialCost === null ? {} : { partial_cost: action.partialCost }),
-          ...(description === "" ? {} : { description }),
+          ...(note === "" ? {} : { description: note }),
         });
         continue;
       }
@@ -379,11 +412,9 @@ function splitActions(blocks: CategoryBlock[]): Pick<CreateServiceInput, "action
           old_component_mounted_id: component.id,
           component_type_id: component.component_type_id,
           new_component_desc:
-            action.newDescription.trim() === ""
-              ? (component.component_desc ?? component.component_type)
-              : action.newDescription.trim(),
+            action.newDescriptions[component.id]?.trim() || (component.component_desc ?? component.component_type),
           action_id: action.actionId,
-          ...(actionNote === "" ? {} : { note: actionNote }),
+          ...(note === "" ? {} : { note }),
           ...(action.partialCost === null || index > 0 ? {} : { partial_cost: action.partialCost }),
         });
       });

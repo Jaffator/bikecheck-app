@@ -626,6 +626,16 @@
         },
         "events_action": {
           "$ref": "#/definitions/events_action"
+        },
+        "users": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/users"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -1417,6 +1427,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/device_tokens"
+          }
+        },
+        "event_action_tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event_action_tags"
           }
         },
         "events_action": {

@@ -3,9 +3,8 @@ import type { ReactElement } from "react";
 import { Button, Group, Loader, Paper, SimpleGrid, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Wrench } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
-import { groupIcon } from "@/assets/icons/svg_icons/groups";
+// import { tapFeedback } from "@/utils/haptics";
+import { categoryIcon } from "@/features/service/categoryIcon";
 import { useBikeCategories } from "@/features/service/service.queries";
 import type { BikeCategory } from "@/features/service/service.types";
 import { catalogueLabel } from "@/features/service/serviceLabels";
@@ -56,7 +55,6 @@ export function ServiceCategoryStep({ bikeId, onChoose }: ServiceCategoryStepPro
           color="secondary.6"
           radius="md"
           onClick={() => {
-            void tapFeedback();
             navigate(`/bikes/${bikeId}`);
           }}
         >
@@ -68,10 +66,6 @@ export function ServiceCategoryStep({ bikeId, onChoose }: ServiceCategoryStepPro
 
   return (
     <Stack gap="sm">
-      <Text fw={600} fz={15} c="text.6">
-        {t("addService.categoryTitle")}
-      </Text>
-
       <SimpleGrid cols={2} spacing="sm">
         {categories?.map((category) => (
           <CategoryTile key={category.group_id} category={category} onChoose={() => onChoose(category)} />
@@ -81,15 +75,6 @@ export function ServiceCategoryStep({ bikeId, onChoose }: ServiceCategoryStepPro
   );
 }
 
-// A seeded category has an icon of its own; anything else takes the generic one.
-function categoryIcon(groupName: string): ReactElement {
-  const Icon = groupIcon(groupName);
-  if (!Icon) {
-    return <Wrench size={TILE_ICON_SIZE} color="var(--mantine-color-primary-5)" />;
-  }
-  return <Icon width={TILE_ICON_SIZE} height={TILE_ICON_SIZE} color="var(--mantine-color-primary-5)" />;
-}
-
 // One category, with how many of the bike's parts sit in it.
 function CategoryTile({ category, onChoose }: { category: BikeCategory; onChoose: () => void }): ReactElement {
   const { t } = useTranslation();
@@ -97,7 +82,6 @@ function CategoryTile({ category, onChoose }: { category: BikeCategory; onChoose
   return (
     <UnstyledButton
       onClick={() => {
-        void tapFeedback();
         onChoose();
       }}
       style={{ display: "block", width: "100%" }}
@@ -119,7 +103,7 @@ function CategoryTile({ category, onChoose }: { category: BikeCategory; onChoose
         className="active:scale-[0.985]"
       >
         <Stack gap="xs" align="flex-start">
-          {categoryIcon(category.group_name)}
+          {categoryIcon(category.group_name, TILE_ICON_SIZE)}
           <Text fw={600} fz={15} c="text.6" lineClamp={2}>
             {catalogueLabel(category.group_i18n_key, category.group_name, t)}
           </Text>

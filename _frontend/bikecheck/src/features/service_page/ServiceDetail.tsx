@@ -215,8 +215,9 @@ function ActionCard({
           </Text>
         ))}
 
-        {/* What was done, in the user's own words. Nothing stands in for it: the
-            catalogue's tags describe the action, not the occasion — see ADR 0005. */}
+        {/* What was done, in the user's own words, with whatever tags they took already
+            part of the same prose. Nothing stands in for it: the catalogue's tags
+            describe the action, not the occasion — see ADR 0004. */}
         {action.note && (
           <Text fz={13} c="var(--color-text-dim)" style={{ whiteSpace: "pre-wrap" }}>
             {action.note}

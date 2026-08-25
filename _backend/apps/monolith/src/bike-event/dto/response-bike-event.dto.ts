@@ -15,13 +15,20 @@ export class AttachmentDto {
   url?: string;
 }
 
-// Tags are seeded alongside their action, so they carry a key of their own.
+// Tags are seeded alongside their action, so they carry a key of their own. A user may add
+// tags to an action for themselves; those carry no key and answer with custom: true.
 export class ActionTagDto {
+  @ApiProperty({ example: 12 })
+  id!: number;
+
   @ApiProperty({ example: 'Full Flush' })
   tag!: string;
 
   @ApiProperty({ example: 'actionTag.fullFlush', nullable: true })
   i18n_key!: string | null;
+
+  @ApiProperty({ example: false, description: 'true when the caller created this tag and may delete it' })
+  custom!: boolean;
 }
 
 // 2. Mounted components related to actions

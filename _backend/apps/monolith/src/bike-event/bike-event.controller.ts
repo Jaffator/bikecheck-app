@@ -16,12 +16,14 @@ import { memoryStorage } from 'multer';
 import { ApiResponse, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import { BikeEventService } from './bike-event.service';
 import {
+  ActionTagDto,
   Response_ActionsOnGroup_Dto,
   Response_BikeCategory_Dto,
   Response_BikeEvent_Dto,
   Response_ServiceAttachment_Dto,
   Response_ServiceHistory_Dto,
 } from './dto/response-bike-event.dto';
+import { Create_ActionTagDto } from './dto/create-action-tag.dto';
 import { Create_BikeEventDto } from './dto/create-bike-event.dto';
 import { Update_BikeEventDto } from './dto/update-bike-event.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -42,6 +44,7 @@ export class BikeEventController {
     @CurrentUser('userId') userId: string,
     @Body() dto: Create_BikeEventDto,
   ): Promise<Response_BikeEvent_Dto> {
+    console.log('Creating bike event with DTO:', dto);
     return this.bikeEventService.create(dto, Number(userId));
   }
 
@@ -96,6 +99,25 @@ export class BikeEventController {
     @Query('bikeId') bikeId: string,
   ): Promise<Response_BikeCategory_Dto[]> {
     return this.bikeEventService.categoriesOnBike(+bikeId, Number(userId));
+  }
+
+  // ---------- POST Add a tag of the caller's own to a catalogue action ----------
+  // Declared before ':id' routes so "action-tags" is never read as an event id.
+  @Post('/action-tags')
+  @ApiBody({ type: Create_ActionTagDto })
+  @ApiResponse({ status: 201, type: ActionTagDto })
+  async createActionTag(
+    @CurrentUser('userId') userId: string,
+    @Body() dto: Create_ActionTagDto,
+  ): Promise<ActionTagDto> {
+    return this.bikeEventService.createActionTag(dto, Number(userId));
+  }
+
+  // ---------- DELETE One of the caller's own action tags ----------
+  @Delete('/action-tags/:id')
+  @ApiResponse({ status: 200, type: ActionTagDto })
+  async deleteActionTag(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ActionTagDto> {
+    return this.bikeEventService.deleteActionTag(+id, Number(userId));
   }
 
   // ---------- GET All Bike Events for a bike ----------
@@ -153,10 +175,7 @@ export class BikeEventController {
   // ---------- DELETE Soft delete a bike event ----------
   @Delete('/delsoft/:id')
   @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })
-  async softDelete(
-    @CurrentUser('userId') userId: string,
-    @Param('id') id: string,
-  ): Promise<Response_BikeEvent_Dto> {
+  async softDelete(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<Response_BikeEvent_Dto> {
     return this.bikeEventService.softDelete(+id, Number(userId));
   }
   // ---------- DELETE Hard delete a bike event ----------

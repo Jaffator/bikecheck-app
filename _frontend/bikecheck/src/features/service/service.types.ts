@@ -34,10 +34,19 @@ export interface BikeCategory {
 }
 
 // What an Action covers. Describes the Action itself, so it is never recorded per
-// service — see ADR 0004.
+// service — see ADR 0004. A user can add tags of their own to an action; those carry no
+// key, and only those may be deleted — see ADR 0008.
 export interface ActionTag {
+  id: number;
   tag: string;
   i18n_key: string | null;
+  custom: boolean;
+}
+
+// What creating one of the caller's own tags needs.
+export interface CreateActionTagInput {
+  event_action_id: number;
+  tag: string;
 }
 
 // One part on the bike. The wear fields are filled only when it is read back from a

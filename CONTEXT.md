@@ -23,7 +23,9 @@ _Avoid_: Group, component group
 
 **Mounted Component**:
 One physical part on one bike, with its own wear accumulators. Replacing a part ends one mounted
-component and begins another, even when the new part is identical.
+component and begins another, even when the new part is identical. Named by its Component Type while
+work is being recorded — the user is looking for the fork — and in full, type and description
+together, when a Service is read back.
 _Avoid_: Component (ambiguous — could mean the type)
 
 ### Maintenance
@@ -44,14 +46,19 @@ _Avoid_: Task, job, event
 **Action Tag**:
 A sub-item describing what an action includes — "Dust seals replacement", "Piston Lube". Describes
 the action itself, so it is catalogue data and is never stored per service (ADR 0004). In the wizard
-each tag is a chip that writes its own name into the action's note, and is lit for as long as the
-note says it — tapping a lit chip takes the text back out. What ends up stored is prose the user
-owns, not a record of which tags were picked (ADR 0005).
+each tag is a chip the user takes or gives back; what is taken joins the Custom Note to make the
+Action Note when the Service is saved (ADR 0007). Most tags are seeded, but a user can add tags of
+their own to any action, which only they are offered and only they can delete (ADR 0008).
+
+**Custom Note**:
+What the user typed against one Action, and only that — nothing is written here on their behalf.
+Lives in the wizard alone: it is never stored, because saving composes it into the Action Note.
 
 **Action Note**:
-What was done on one occasion, in the user's own words, against one Action. Tag chips write into it
-as a shortcut; the user can rewrite it entirely. Distinct from the Service's own note, which covers
-the whole occasion.
+What was done on one occasion, against one Action — the Custom Note followed by the tags taken,
+joined into one piece of prose when the Service is saved. Once stored, what a tag contributed is
+indistinguishable from what was typed. Distinct from the Service's own note, which covers the whole
+occasion.
 
 **Replacement**:
 An action that swaps a part out. Ends the old mounted component and begins a new one; it is not an

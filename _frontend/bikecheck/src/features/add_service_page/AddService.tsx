@@ -85,9 +85,10 @@ export function AddService(): ReactElement {
           bikeId={wizard.bikeId}
           draft={wizard.draft}
           canCommit={wizard.canCommit}
+          draftCost={wizard.draftCost}
           onToggleAction={wizard.toggleAction}
           onUpdateAction={wizard.updateAction}
-          onToggleActionNote={wizard.toggleActionNote}
+          onToggleActionTag={wizard.toggleActionTag}
           onCommit={wizard.commitDraft}
         />
       )}

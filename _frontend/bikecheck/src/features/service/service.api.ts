@@ -1,8 +1,10 @@
 // Service API calls use the shared client.
 import { apiFetch } from "@/api/client";
 import type {
+  ActionTag,
   BikeCategory,
   CategoryActions,
+  CreateActionTagInput,
   CreateServiceInput,
   ServiceRecord,
   ServiceHistoryPage,
@@ -28,6 +30,18 @@ export async function getBikeCategories(bikeId: number): Promise<BikeCategory[]>
 // The endpoint still calls a Component Category a group.
 export async function getCategoryActions(bikeId: number, categoryId: number): Promise<CategoryActions> {
   return apiFetch<CategoryActions>(`/bike-events/group-actions?bikeId=${bikeId}&groupId=${categoryId}`);
+}
+
+// POST /bike-events/action-tags — adds a tag of the caller's own to a catalogue action.
+// Answers with the existing tag when the action already carries that name.
+export async function createActionTag(input: CreateActionTagInput): Promise<ActionTag> {
+  return apiFetch<ActionTag>("/bike-events/action-tags", { method: "POST", body: JSON.stringify(input) });
+}
+
+// DELETE /bike-events/action-tags/:id — drops one of the caller's own tags. Seeded tags
+// are not theirs to remove.
+export async function deleteActionTag(id: number): Promise<ActionTag> {
+  return apiFetch<ActionTag>(`/bike-events/action-tags/${id}`, { method: "DELETE" });
 }
 
 // GET /bike-events/:id — one Service in full.

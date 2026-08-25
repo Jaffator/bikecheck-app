@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { create } from "zustand";
 
 interface NetworkStore {
@@ -15,6 +16,10 @@ interface HeaderStore {
   // Overrides the route title when provided.
   titleKey: string | null;
   setTitleKey: (value: string | null) => void;
+  // Replaces the header title outright, for a page whose title is not a translation key
+  // - a name the user created, an icon beside it. Sub-pages only.
+  titleSlot: ReactNode | null;
+  setTitleSlot: (value: ReactNode | null) => void;
   // Overrides router back navigation when provided.
   onBack: (() => void) | null;
   setOnBack: (value: (() => void) | null) => void;
@@ -29,6 +34,8 @@ interface HeaderStore {
 export const useHeaderStore = create<HeaderStore>((set) => ({
   titleKey: null,
   setTitleKey: (value) => set({ titleKey: value }),
+  titleSlot: null,
+  setTitleSlot: (value) => set(() => ({ titleSlot: value })),
   onBack: null,
   // Prevents Zustand from treating the callback as a state updater.
   setOnBack: (value) => set(() => ({ onBack: value })),

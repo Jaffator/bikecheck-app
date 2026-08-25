@@ -8,8 +8,10 @@ import {
   Create_BikeEventDto,
   Replaced_ComponentsDto,
 } from './dto/create-bike-event.dto';
+import { Create_ActionTagDto } from './dto/create-action-tag.dto';
 import { Update_BikeEventDto } from './dto/update-bike-event.dto';
 import {
+  ActionTagDto,
   Response_ActionsOnGroup_Dto,
   Response_BikeCategory_Dto,
   Response_BikeEvent_Dto,
@@ -67,8 +69,30 @@ interface ServiceMoment {
 
 // One catalogue tag as the detail query reads it back.
 interface ActionTagRow {
+  id: number;
   event_action_tag: string;
   i18n_key: string | null;
+  user_id: number | null;
+}
+
+// The tags one user may see on an action: the seeded ones, which belong to everybody, plus
+// the ones they added themselves. Another user's tag is not theirs to read.
+function tagsVisibleTo(userId: number): Prisma.event_action_tagsWhereInput {
+  return { OR: [{ user_id: null }, { user_id: userId }] };
+}
+
+// What toTagDto needs, and no more.
+const TAG_SELECT = { id: true, event_action_tag: true, i18n_key: true, user_id: true } as const;
+
+// Every read of a tag answers with the same shape, so the mapping lives in one place.
+function toTagDto(tag: ActionTagRow): ActionTagDto {
+  return {
+    id: tag.id,
+    tag: tag.event_action_tag,
+    i18n_key: tag.i18n_key,
+    // What the drawer needs to know it may offer this one for deletion.
+    custom: tag.user_id !== null,
+  };
 }
 
 // A Service as an edit reads it back, once its bike is known to be there.
@@ -184,9 +208,12 @@ export class BikeEventService {
         i18n_key: true,
         replace_action: true,
         event_action_tags: {
+          where: tagsVisibleTo(userId),
           select: {
+            id: true,
             event_action_tag: true,
             i18n_key: true,
+            user_id: true,
           },
         },
         event_action_targets: {
@@ -219,7 +246,7 @@ export class BikeEventService {
       action_name: action.action_name,
       action_i18n_key: action.i18n_key,
       replace_action: action.replace_action,
-      tags: action.event_action_tags.map((tag) => ({ tag: tag.event_action_tag, i18n_key: tag.i18n_key })),
+      tags: action.event_action_tags.map(toTagDto),
       components: action.event_action_targets.flatMap((target) =>
         target.component_types.components_mounted.map((mounted) => ({
           id: mounted.id,
@@ -246,31 +273,90 @@ export class BikeEventService {
     };
   }
 
+  // Adds a tag of the caller's own to a catalogue action. Asking for a name the action
+  // already carries answers with that tag rather than a second one: the caller wanted the
+  // tag to exist, and it does - see ADR 0008.
+  async createActionTag(dto: Create_ActionTagDto, userId: number): Promise<ActionTagDto> {
+    const name = dto.tag.trim();
+    if (name === '') {
+      throw new BadRequestException('A tag needs a name');
+    }
+
+    const action = await this.prisma.events_action.findUnique({
+      where: { id: dto.event_action_id },
+      select: { id: true },
+    });
+    if (!action) {
+      throw new NotFoundException('Action not found');
+    }
+
+    const existing = await this.prisma.event_action_tags.findFirst({
+      where: {
+        event_action_id: dto.event_action_id,
+        event_action_tag: name,
+        ...tagsVisibleTo(userId),
+      },
+      select: TAG_SELECT,
+    });
+    if (existing) {
+      return toTagDto(existing);
+    }
+
+    const created = await this.prisma.event_action_tags.create({
+      // No key: a name the user wrote is displayed as they wrote it, never translated.
+      data: { event_action_id: dto.event_action_id, event_action_tag: name, i18n_key: null, user_id: userId },
+      select: TAG_SELECT,
+    });
+    return toTagDto(created);
+  }
+
+  // Removes a tag the caller created. A seeded tag belongs to everybody and to nobody, so
+  // it can never be deleted here. Services that already quoted the tag keep its name: what
+  // they hold is prose, not a reference - see ADR 0007.
+  async deleteActionTag(tagId: number, userId: number): Promise<ActionTagDto> {
+    const tag = await this.prisma.event_action_tags.findUnique({
+      where: { id: tagId },
+      select: TAG_SELECT,
+    });
+    if (!tag) {
+      throw new NotFoundException('Tag not found');
+    }
+    if (tag.user_id !== userId) {
+      throw new ForbiddenException('This tag is not yours');
+    }
+
+    await this.prisma.event_action_tags.delete({ where: { id: tagId } });
+    return toTagDto(tag);
+  }
+
   async create(dto: Create_BikeEventDto, userId: number): Promise<Response_BikeEvent_Dto> {
     const bike = await this.findOwnedBike(dto.bike_id, userId);
     // A service entered today reads "now"; a backfilled one carries the date the work happened.
     const serviceDate = dto.service_date ? new Date(dto.service_date) : new Date();
 
-    const bikeEventID = await this.prisma.$transaction(async (tx) => {
-      const moment = await this.serviceMoment(tx, dto.bike_id, bike, serviceDate);
+    try {
+      const bikeEventID = await this.prisma.$transaction(async (tx) => {
+        const moment = await this.serviceMoment(tx, dto.bike_id, bike, serviceDate);
 
-      const bikeEvent = await tx.events_bikes.create({
-        data: {
-          bike_id: dto.bike_id,
-          note: dto.note,
-          total_cost: dto.total_cost,
-          service_date: serviceDate,
-        },
+        const bikeEvent = await tx.events_bikes.create({
+          data: {
+            bike_id: dto.bike_id,
+            note: dto.note,
+            total_cost: dto.total_cost,
+            created_at: serviceDate,
+          },
+        });
+        await this.writeActions(tx, bikeEvent.id, dto.bike_id, dto.actions_done, moment);
+        await this.writeAttachments(tx, bikeEvent.id, dto.attachment);
+        await this.writeReplacements(tx, bikeEvent.id, dto.bike_id, dto.actions_replaced, serviceDate, moment);
+
+        return bikeEvent.id;
       });
-
-      await this.writeActions(tx, bikeEvent.id, dto.bike_id, dto.actions_done, moment);
-      await this.writeAttachments(tx, bikeEvent.id, dto.attachment);
-      await this.writeReplacements(tx, bikeEvent.id, dto.bike_id, dto.actions_replaced, serviceDate, moment);
-
-      return bikeEvent.id;
-    });
-
-    return await this.findById(bikeEventID, userId);
+      return await this.findById(bikeEventID, userId);
+    } catch (error) {
+      console.error('Failed to create bike event for user ID:', userId, 'Error:', error);
+      throw error;
+    }
   }
 
   // A receipt arrives later, a price was wrong, or an action was forgotten. Everything an
@@ -340,7 +426,7 @@ export class BikeEventService {
         bikes: { select: BIKE_SELECT },
         event_actions_done: {
           include: {
-            events_action: { include: { event_action_tags: true } },
+            events_action: { include: { event_action_tags: { where: tagsVisibleTo(userId) } } },
             action_done_component_map: {
               include: {
                 components_mounted: {
@@ -420,7 +506,7 @@ export class BikeEventService {
           include: {
             // The tags come from the catalogue: what the job includes is a property of the
             // action, never of the occasion - see ADR 0004.
-            events_action: { include: { event_action_tags: true } },
+            events_action: { include: { event_action_tags: { where: tagsVisibleTo(userId) } } },
             action_done_component_map: {
               include: {
                 components_mounted: {
@@ -926,10 +1012,7 @@ export class BikeEventService {
         partial_cost: actionDone.partial_cost === null ? null : Number(actionDone.partial_cost),
         replace_action: actionDone.events_action.replace_action,
         note: actionDone.note ?? null,
-        tags: (actionDone.events_action.event_action_tags ?? []).map((tag: ActionTagRow) => ({
-          tag: tag.event_action_tag,
-          i18n_key: tag.i18n_key,
-        })),
+        tags: (actionDone.events_action.event_action_tags ?? []).map(toTagDto),
         mounted_components: actionDone.action_done_component_map.map((junc) => ({
           id: junc.components_mounted.id,
           component_type_id: junc.components_mounted.component_type_id,

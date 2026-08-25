@@ -924,7 +924,7 @@ describe('BikeEventService', () => {
         action_name: 'Brake bleed',
         i18n_key: 'action.bleed',
         replace_action: false,
-        event_action_tags: [{ event_action_tag: 'Full Flush', i18n_key: 'actionTag.fullFlush' }],
+        event_action_tags: [{ id: 7, event_action_tag: 'Full Flush', i18n_key: 'actionTag.fullFlush', user_id: null }],
       },
       action_done_component_map: [
         {
@@ -980,7 +980,9 @@ describe('BikeEventService', () => {
       // ASSERT: what the job included, from the catalogue - it is never recorded per
       // occasion, see ADR 0004.
       expect(detail.actions_done[0].action_done_id).toBe(500);
-      expect(detail.actions_done[0].tags).toEqual([{ tag: 'Full Flush', i18n_key: 'actionTag.fullFlush' }]);
+      expect(detail.actions_done[0].tags).toEqual([
+        { id: 7, tag: 'Full Flush', i18n_key: 'actionTag.fullFlush', custom: false },
+      ]);
       expect(detail.actions_done[0].mounted_components[0].component_type_id).toBe(16);
     });
 

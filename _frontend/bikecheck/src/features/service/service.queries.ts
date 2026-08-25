@@ -10,7 +10,9 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 import {
+  createActionTag,
   createService,
+  deleteActionTag,
   deleteService,
   getBikeCategories,
   getCategoryActions,
@@ -19,8 +21,10 @@ import {
   uploadServiceAttachment,
 } from "./service.api";
 import type {
+  ActionTag,
   BikeCategory,
   CategoryActions,
+  CreateActionTagInput,
   CreateServiceInput,
   ServiceRecord,
   ServiceHistoryPage,
@@ -78,6 +82,31 @@ export function useCategoryActions(
     queryKey: ["services", "category-actions", bikeId, categoryId],
     queryFn: () => getCategoryActions(bikeId ?? 0, categoryId ?? 0),
     enabled: bikeId !== null && categoryId !== null,
+  });
+}
+
+// A tag the user added themselves joins the catalogue, so every open action step must
+// re-read it.
+export function useCreateActionTag(): UseMutationResult<ActionTag, Error, CreateActionTagInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateActionTagInput) => createActionTag(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["services", "category-actions"] });
+    },
+  });
+}
+
+// Removing one is the same refresh in the other direction.
+export function useDeleteActionTag(): UseMutationResult<ActionTag, Error, number> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => deleteActionTag(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["services", "category-actions"] });
+    },
   });
 }
 

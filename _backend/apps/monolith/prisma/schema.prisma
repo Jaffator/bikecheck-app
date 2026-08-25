@@ -211,9 +211,14 @@ model event_action_tags {
   event_action_tag String        @db.VarChar
   // Set on seeded rows only; null means user-created, so display the raw name.
   i18n_key         String?       @db.VarChar
+  // Null on seeded rows; set on a tag one user added to the action for themselves.
+  user_id          Int?
   events_action    events_action @relation(fields: [event_action_id], references: [id], onDelete: Cascade)
+  users            users?        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([event_action_id, event_action_tag])
+  // Postgres counts NULLs as distinct, so this guards a user's own tags only. What keeps
+  // the seeded rows unique is the partial index the migration adds alongside it.
+  @@unique([event_action_id, event_action_tag, user_id])
 }
 
 model event_action_targets {
@@ -424,6 +429,7 @@ model users {
   bikes                bikes[]
   component_types      component_types[]
   device_tokens        device_tokens[]
+  event_action_tags    event_action_tags[]
   events_action        events_action[]
   notifications        notifications[]
   organization_members organization_members[]
