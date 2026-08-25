@@ -26,14 +26,26 @@ import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/featur
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { categoryIcon } from "@/features/service/categoryIcon";
 import { actionNote, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
-import { bikecheckIconType } from "@/assets/icons/bikecheck";
-import { RefreshCcw } from "lucide-react";
-const BikecheckIcon = bikecheckIconType("Bikecheck")!;
+// import { bikecheckIconType } from "@/assets/icons/bikecheck";
+// import { RefreshCcw } from "lucide-react";
+// const BikecheckIcon = bikecheckIconType("Bikecheck")!;
 
 // A receipt, an invoice and a few photos of the work is as many as one visit needs.
 const MAX_ATTACHMENTS = 10;
 
 const CARD_ICON_SIZE = 20;
+
+// The Summary reads as a recap rather than a form, so its labels sit quieter and smaller
+// than the shared field label. Local on purpose: `fieldLabel` names controls everywhere
+// else and is not this step's to change.
+const summaryLabel = {
+  ...inputStyles.label,
+  color: "var(--color-text-dim)",
+  fontSize: 13,
+} as React.CSSProperties;
+
+const summaryInputStyles = { ...inputStyles, label: summaryLabel };
+const summaryAutosizeInputStyles = { ...autosizeInputStyles, label: summaryLabel };
 
 // The pinned bar floats over the page, so the last field needs room to scroll clear of it.
 // Adds to the bottom padding the page itself already carries in AddService.
@@ -132,12 +144,13 @@ export function ServiceSummaryStep({
                 boxShadow:
                   "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
               }}
+              className="active:scale-[0.985]"
             >
               <Group justify="space-between" wrap="nowrap" align="flex-start">
                 <Stack gap={6} style={{ minWidth: 0 }}>
                   <Group gap={8} align="center" wrap="nowrap">
                     {categoryIcon(block.categoryName, CARD_ICON_SIZE)}
-                    <Text fw={700} fz={18} c="primary.6" lineClamp={1}>
+                    <Text fw={700} fz={18} c="text.6" lineClamp={1}>
                       {catalogueLabel(block.categoryI18nKey, block.categoryName, t)}
                     </Text>
                   </Group>
@@ -152,18 +165,34 @@ export function ServiceSummaryStep({
           </UnstyledButton>
         ))}
         {/* ---------- Add another service action ---------- */}
-        <Button
-          variant="outline"
-          color="secondary.6"
-          radius="md"
-          fullWidth
-          leftSection={<Plus size={16} />}
+        {/* The next card in the stack, still empty: the shape of the blocks above, drawn as
+            an outline waiting to be filled rather than a surface that already holds
+            something. */}
+        <UnstyledButton
           onClick={() => {
             onAnotherCategory();
           }}
+          style={{ display: "block", width: "100%" }}
         >
-          {t("addService.anotherServiceAction")}
-        </Button>
+          <Paper
+            radius="lg"
+            p="sm"
+            style={{
+              // Half the cards' own surface, so it sits on the same material without
+              // claiming to hold anything yet.
+              backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-6) 75%, transparent)",
+              border: "1px solid var(--mantine-color-cards-5)",
+            }}
+            className="active:scale-[0.985]"
+          >
+            <Group gap={8} justify="center" wrap="nowrap" c="var(--color-text-dim)">
+              <Plus size={18} />
+              <Text fw={600} fz={15}>
+                {t("addService.anotherServiceAction")}
+              </Text>
+            </Group>
+          </Paper>
+        </UnstyledButton>
         {/* ---------- Service date ---------- */}
         <TextInput
           type="date"
@@ -171,7 +200,7 @@ export function ServiceSummaryStep({
           value={serviceDate}
           // Work cannot have been done later than today.
           max={today()}
-          styles={inputStyles}
+          styles={summaryInputStyles}
           onChange={(event) => onServiceDateChange(event.currentTarget.value)}
         />
         {/* ---------- Note ---------- */}
@@ -182,7 +211,7 @@ export function ServiceSummaryStep({
           autosize
           minRows={2}
           maxLength={500}
-          styles={autosizeInputStyles}
+          styles={summaryAutosizeInputStyles}
           onChange={(event) => onNoteChange(event.currentTarget.value)}
         />
 
@@ -190,7 +219,7 @@ export function ServiceSummaryStep({
           sight while the rest of the page scrolls. */}
         {/* ---------- Attachments ---------- */}
         <Stack gap="xs">
-          <Text fz={14} c="text.6">
+          <Text fz={13} c="text.7" fw={100}>
             {t("addService.attachments")}
           </Text>
 
@@ -231,21 +260,35 @@ export function ServiceSummaryStep({
             </Text>
           )}
 
+          {/* The same empty-card shape as "add another category" above: both are a slot
+              waiting to be filled, so they read as one kind of thing. */}
           <FileButton onChange={pickFile} accept="image/*,application/pdf">
-            {(props) => (
-              <Button
-                {...props}
-                variant="outline"
-                color="secondary.6"
-                radius="md"
-                leftSection={<Paperclip size={16} />}
-                disabled={attachments.length >= MAX_ATTACHMENTS || upload.isPending}
-                styles={disabledButtonStyles}
-                style={{ alignSelf: "flex-start" }}
-              >
-                {t("addService.addAttachment")}
-              </Button>
-            )}
+            {(props) => {
+              const full = attachments.length >= MAX_ATTACHMENTS || upload.isPending;
+              return (
+                <UnstyledButton {...props} disabled={full} style={{ display: "block", width: "100%" }}>
+                  <Paper
+                    radius="lg"
+                    p="sm"
+                    style={{
+                      // Half the cards' own surface, so it sits on the same material without
+                      // claiming to hold anything yet.
+                      backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-6) 80%, transparent)",
+                      border: "1px solid var(--mantine-color-cards-5)",
+                      opacity: full ? 0.5 : 1,
+                    }}
+                    className="active:scale-[0.985]"
+                  >
+                    <Group gap={8} justify="center" wrap="nowrap" c="var(--color-text-dim)">
+                      <Paperclip size={18} />
+                      <Text fw={600} fz={15}>
+                        {t("addService.addAttachment")}
+                      </Text>
+                    </Group>
+                  </Paper>
+                </UnstyledButton>
+              );
+            }}
           </FileButton>
         </Stack>
       </Stack>
@@ -364,7 +407,7 @@ function ActionSummary({ action }: { action: PickedAction }): ReactElement {
 
   return (
     <Stack gap={2}>
-      <Text fz={13} fw={500} c="text.6" lineClamp={1}>
+      <Text fz={14} fw={500} c="text.6" lineClamp={1}>
         {catalogueLabel(action.actionI18nKey, action.actionName, t)}
       </Text>
       {note !== "" && (

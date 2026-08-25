@@ -6,7 +6,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useCreateActionTag, useDeleteActionTag } from "@/features/service/service.queries";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { ActionTag } from "@/features/service/service.types";
-import { disabledButtonStyles, fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
+import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 
 interface CustomTagDrawerProps {
   opened: boolean;
