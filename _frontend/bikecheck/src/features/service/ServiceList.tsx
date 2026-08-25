@@ -3,7 +3,6 @@ import type { ReactElement, ReactNode } from "react";
 import { Group, Loader, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { tapFeedback } from "@/utils/haptics";
 import { ServiceHistoryCard } from "./ServiceHistoryCard";
 import type { ServiceHistoryItem } from "./service.types";
 
@@ -53,7 +52,6 @@ export function ServiceList({ services, isLoading, isError, footer }: ServiceLis
           key={service.id}
           service={service}
           onOpen={() => {
-            void tapFeedback();
             navigate(`/service/${service.id}`);
           }}
         />

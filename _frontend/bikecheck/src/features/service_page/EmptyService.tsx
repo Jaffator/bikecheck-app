@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
-import { tapFeedback } from "@/utils/haptics";
 import bikeIllustration from "@/assets/images/empty_service_bike.png";
 
 // Show the empty Service tab.
@@ -22,7 +21,6 @@ export function EmptyService(): ReactElement {
           radius="xl"
           leftSection={<Plus size={18} />}
           onClick={() => {
-            void tapFeedback();
             navigate("/service/new");
           }}
         >

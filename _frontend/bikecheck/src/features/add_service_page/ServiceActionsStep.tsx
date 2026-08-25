@@ -18,7 +18,6 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Banknote, Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { useHeaderStore } from "@/store/store";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
@@ -37,6 +36,9 @@ import { catalogueLabel, componentTypeLabel, shortComponentLabel } from "@/featu
 import { categoryIcon } from "@/features/service/categoryIcon";
 import { CustomTagDrawer } from "./CustomTagDrawer";
 import type { DraftBlock, PickedAction } from "./serviceWizard.types";
+import { bikecheckIconType } from "@/assets/icons/bikecheck";
+import { RefreshCcw } from "lucide-react";
+const BikecheckIcon = bikecheckIconType("Bikecheck")!;
 
 const HEADING_ICON_SIZE = 22;
 
@@ -103,7 +105,7 @@ export function ServiceActionsStep({
   const replacementActions = category?.actions.filter((action) => action.replace_action) ?? [];
   // A heading earns its place only against another one: a category holding just one kind
   // reads as the flat list it has always been.
-  const showGroupHeadings = serviceActions.length > 0 && replacementActions.length > 0;
+  const showGroupHeadings = true;
   // Editing an existing block may end with every action removed, which removes the block.
   const editing = draft !== null && draft.editingIndex !== null;
 
@@ -153,22 +155,28 @@ export function ServiceActionsStep({
 
         {serviceActions.length > 0 && (
           <Stack gap="md">
-            {showGroupHeadings && (
-              <Text fz={13} c="text.6">
-                {t("addService.groupService")}
-              </Text>
-            )}
+            <Group gap={6} wrap="nowrap" align="center">
+              <BikecheckIcon size={18} color="var(--mantine-color-text-6)" />
+              {showGroupHeadings && (
+                <Text fz={15} c="text.6" ff="Inter" fw={500}>
+                  {t("addService.groupService")}
+                </Text>
+              )}
+            </Group>
             {serviceActions.map(renderAction)}
           </Stack>
         )}
 
         {replacementActions.length > 0 && (
-          <Stack gap="md">
-            {showGroupHeadings && (
-              <Text fz={13} c="text.6">
-                {t("addService.groupReplacement")}
-              </Text>
-            )}
+          <Stack gap="md" mt="md">
+            <Group gap={6} wrap="nowrap" align="center">
+              <RefreshCcw size={18} color="var(--mantine-color-text-6)" />
+              {showGroupHeadings && (
+                <Text fz={15} c="text.6" ff="Inter" fw={800}>
+                  {t("addService.groupReplacement")}
+                </Text>
+              )}
+            </Group>
             {replacementActions.map(renderAction)}
           </Stack>
         )}
@@ -246,7 +254,6 @@ export function ServiceActionsStep({
             disabled={!canCommit}
             styles={disabledButtonStyles}
             onClick={() => {
-              void tapFeedback();
               onCommit();
             }}
             style={{ height: "2.75rem", flexShrink: 0 }}
@@ -371,7 +378,7 @@ function ActionRow({
           "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
       }}
     >
-      <Group gap="sm" wrap="nowrap" p="md" align="flex-start">
+      <Group gap="sm" wrap="nowrap" p="md" align="flex-start" justify="center">
         <Checkbox
           checked={picked !== undefined}
           vars={() => ({
@@ -396,7 +403,9 @@ function ActionRow({
             onToggle();
           }}
         />
-
+        {/* Maintenance carries the mark; a Replacement does not. */}
+        {/* {!action.replace_action && <BikecheckIcon size={20} color="var(--mantine-color-text-6)" />}
+        {action.replace_action && <RefreshCcw size={20} color="var(--mantine-color-text-6)" />} */}
         <UnstyledButton
           onClick={() => {
             onToggleOpen();
@@ -506,9 +515,8 @@ function ActionRow({
               ))}
               <ActionIcon
                 variant="subtle"
-                color="primary.6"
                 radius="xl"
-                size={33}
+                size="auto"
                 styles={{
                   root: {
                     border: "1px solid var(--mantine-color-cards-5)",
@@ -516,11 +524,15 @@ function ActionRow({
                 }}
                 aria-label={t("addService.addCustomTag")}
                 onClick={() => {
-                  void tapFeedback();
                   setTagDrawerOpen(true);
                 }}
               >
-                <Plus size={17} />
+                <Group gap={4} wrap="nowrap" align="center" pl="xs" pr="sm" py={4}>
+                  <Plus size={17} color="var(--mantine-color-text-7)" />
+                  <Text fz={13} c="var(--mantine-color-text-7)" fw={500}>
+                    {t("addService.addCustomTag")}
+                  </Text>
+                </Group>
               </ActionIcon>
             </Group>
           </Stack>
@@ -528,7 +540,6 @@ function ActionRow({
           {/* This field holds what the user wrote and nothing else. The tags join it on
               the way to the Service, which is where the two become one note. */}
           <Textarea
-            label={t("addService.customNote")}
             placeholder={t("addService.customNotePlaceholder")}
             value={picked?.customNote ?? ""}
             disabled={picked === undefined}
@@ -542,7 +553,7 @@ function ActionRow({
           {picked && (
             <>
               <NumberInput
-                label={t("addService.partialCost")}
+                // label={t("addService.partialCost")}
                 placeholder={t("addService.partialCostPlaceholder")}
                 value={picked.partialCost ?? ""}
                 min={0}

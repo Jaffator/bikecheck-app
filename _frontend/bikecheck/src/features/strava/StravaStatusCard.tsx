@@ -3,7 +3,6 @@ import { useState, type ReactElement } from "react";
 import { Box, Button, Group, Modal, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { CircleCheck } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useConnectStrava, useDisconnectStrava } from "./strava.queries";
 import { stravaDisplayName } from "./strava.types";
@@ -105,7 +104,6 @@ export function StravaStatusCard({
             c="#FFFFFF"
             loading={connect.isPending}
             onClick={() => {
-              void tapFeedback();
               connect.mutate();
             }}
             className="active:scale-[0.985]"
@@ -224,7 +222,6 @@ export function StravaStatusCard({
               size="compact-sm"
               loading={disconnect.isPending}
               onClick={() => {
-                void tapFeedback();
                 setConfirmingDisconnect(true);
               }}
               styles={{
@@ -280,7 +277,6 @@ export function StravaStatusCard({
               radius="md"
               loading={disconnect.isPending}
               onClick={() => {
-                void tapFeedback();
                 disconnect.mutate(undefined, {
                   onSuccess: () => setConfirmingDisconnect(false),
                 });

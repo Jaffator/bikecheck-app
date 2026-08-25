@@ -2,14 +2,18 @@
 import { createElement, type FunctionComponent, type ReactElement, type SVGProps } from "react";
 import type { IconType } from "react-icons";
 import Bikecheck_wrench from "./bikecheck_wrench.svg?react";
+import Bikecheck from "./bikecheck.svg?react";
+import Bikecheck_outline from "./bikecheck_outline.svg?react";
 
-export { Bikecheck_wrench };
+export { Bikecheck_wrench, Bikecheck, Bikecheck_outline };
 
 export type GroupIcon = FunctionComponent<SVGProps<SVGSVGElement>>;
 
 // Maps seeded group names because reseeded ids are unstable.
 const BY_NAME: Record<string, GroupIcon> = {
   Bikecheck_wrench,
+  Bikecheck,
+  Bikecheck_outline,
 };
 
 // Unknown groups use the caller's fallback icon.

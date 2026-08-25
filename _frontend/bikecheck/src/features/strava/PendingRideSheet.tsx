@@ -4,7 +4,6 @@ import { Button, Drawer, Group, Paper, Select, Stack, Text } from "@mantine/core
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { ChevronDown, Clock, Mountain, Route } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
@@ -33,7 +32,6 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
 
   function submit(): void {
     if (bikeId === null || ride === null) return;
-    void tapFeedback();
     resolve.mutate({ activityId: ride.activity_id, bikeId: Number(bikeId) }, { onSuccess: close });
   }
 

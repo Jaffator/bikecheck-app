@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
 import { Bike, Clock, Gauge, Paperclip, Trash2, Wrench } from "lucide-react";
 import dayjs from "dayjs";
-import { tapFeedback } from "@/utils/haptics";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useDeleteService, useServiceDetail } from "@/features/service/service.queries";
@@ -127,7 +126,6 @@ export function ServiceDetail(): ReactElement {
         leftSection={<Trash2 size={16} />}
         loading={remove.isPending}
         onClick={() => {
-          void tapFeedback();
           setConfirmingDelete(true);
         }}
         styles={{
@@ -235,7 +233,6 @@ function AttachmentRow({ attachment }: { attachment: ServiceAttachment }): React
   return (
     <UnstyledButton
       onClick={() => {
-        void tapFeedback();
         if (attachment.url) void Browser.open({ url: attachment.url });
       }}
     >

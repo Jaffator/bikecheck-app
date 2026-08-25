@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { Clock, EllipsisVertical, Gauge } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import type { Bike } from "../bikes/bikes.types";
 import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
 import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
@@ -122,7 +121,6 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
       radius="lg"
       // Open bike details from the entire card.
       onClick={() => {
-        tapFeedback();
         onOpen();
       }}
       role="button"

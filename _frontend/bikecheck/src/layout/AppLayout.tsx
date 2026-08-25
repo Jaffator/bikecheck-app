@@ -4,7 +4,8 @@ import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Settings, Bell, ArrowLeft } from "lucide-react";
 import { GoHomeFill, GoHome } from "react-icons/go";
-import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
+// import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
+import { bikecheckIconType } from "@/assets/icons/bikecheck";
 import { PiPath, PiPathBold } from "react-icons/pi";
 import { PiPersonSimpleBike, PiPersonSimpleBikeBold } from "react-icons/pi";
 import type { IconType } from "react-icons";
@@ -18,6 +19,9 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
+
+const BikecheckIcon = bikecheckIconType("Bikecheck")!;
+const BikecheckOutlineIcon = bikecheckIconType("Bikecheck_outline")!;
 
 interface NavItem {
   labelKey: string;
@@ -39,8 +43,8 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: "nav.service",
     path: "/service",
     // Uses the service tab outline icon.
-    icon: RiWrenchLine,
-    icon_fill: RiWrenchFill,
+    icon: BikecheckOutlineIcon!,
+    icon_fill: BikecheckIcon!,
   },
   {
     labelKey: "nav.rides",

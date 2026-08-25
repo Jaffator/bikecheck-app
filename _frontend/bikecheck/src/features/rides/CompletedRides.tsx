@@ -4,7 +4,6 @@ import { Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Bike, Clock, Mountain, Route } from "lucide-react";
 import dayjs from "dayjs";
-import { tapFeedback } from "@/utils/haptics";
 import { RouteMap } from "@/components/RouteMap";
 import { HistoryCard, HistoryMetric } from "@/components/HistoryCard";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
@@ -94,7 +93,6 @@ export function CompletedRides(): ReactElement {
             key={ride.id}
             ride={ride}
             onOpen={() => {
-              void tapFeedback();
               setOpenedRide(ride);
             }}
           />

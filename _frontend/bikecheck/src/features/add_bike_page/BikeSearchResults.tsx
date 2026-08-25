@@ -3,7 +3,6 @@ import { useState, type ReactElement } from "react";
 import { Button, Group, Image, Paper, Radio, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ChevronDown } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
 
 // Limit initially rendered image cards on mobile.
@@ -25,7 +24,6 @@ export function BikeSearchResults({ results, selectedBikeUrl, onSelect }: BikeSe
   const remainingCount = results.length - visibleResults.length;
 
   function showMore(): void {
-    tapFeedback();
     setVisibleCount((current) => current + PAGE_SIZE);
   }
 

@@ -8,6 +8,9 @@ import { RiWrenchLine } from "react-icons/ri";
 import type { IconType } from "react-icons";
 import { tapFeedback } from "@/utils/haptics";
 import { useHideOnScrollDown } from "@/hooks/useHideOnScrollDown";
+import { bikecheckIconType } from "@/assets/icons/bikecheck";
+
+const BikecheckIcon = bikecheckIconType("Bikecheck");
 
 interface FabAction {
   labelKey: string;
@@ -22,7 +25,7 @@ const FAB_ACTIONS: Record<string, FabAction[]> = {
     { labelKey: "fab.addService", path: "/service/new", icon: RiWrenchLine },
   ],
   "/bikes": [{ labelKey: "fab.addBike", path: "/bikes/new", icon: PiPersonSimpleBike }],
-  "/service": [{ labelKey: "fab.addService", path: "/service/new", icon: RiWrenchLine }],
+  "/service": [{ labelKey: "fab.addService", path: "/service/new", icon: BikecheckIcon! }],
 };
 
 // Clears the footer pill using its matching safe-area inset expression.

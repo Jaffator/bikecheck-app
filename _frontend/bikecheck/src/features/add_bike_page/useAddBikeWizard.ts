@@ -3,7 +3,6 @@ import { useForm, type UseFormReturnType } from "@mantine/form";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
-import { tapFeedback } from "@/utils/haptics";
 import { ApiError } from "@/api/client";
 import { useBikeFormOptions, useSearchBikeExternal, useExternalBikeComponents, useCreateBike } from "../bikes/bikes.queries";
 import type { BikeSearchResult, CreateBikePayload } from "../bikes/bikes.types";
@@ -155,19 +154,15 @@ export function useAddBikeWizard(): AddBikeWizard {
   });
 
   function nextStep(): void {
-    tapFeedback();
     setActive((current) => (current < TOTAL_STEPS - 1 ? current + 1 : current));
   }
 
   function goToStep(step: number): void {
     if (step > active) return;
-    tapFeedback();
     setActive(step);
   }
 
   function prevStep(): void {
-    tapFeedback();
-
     if (active === 0) {
       if (searchBike.isSuccess || searchBike.isError) {
         setSelectedBikeUrl(null);
@@ -181,7 +176,6 @@ export function useAddBikeWizard(): AddBikeWizard {
   }
 
   function submitSearch(values: AddBikeIdentityValues): void {
-    tapFeedback();
     searchBike.mutate({
       bikeName: `${values.brand} ${values.model}`.trim(),
       year: values.year ?? "",
@@ -211,7 +205,6 @@ export function useAddBikeWizard(): AddBikeWizard {
   }
 
   function pickPhoto(file: File | null): void {
-    tapFeedback();
     if (!file) {
       setPhotoToCropUrl((current) => {
         if (current) URL.revokeObjectURL(current);
@@ -331,7 +324,6 @@ export function useAddBikeWizard(): AddBikeWizard {
     : [];
 
   function openSummary(): void {
-    tapFeedback();
     setSummaryOpen(true);
   }
 
@@ -366,7 +358,6 @@ export function useAddBikeWizard(): AddBikeWizard {
   }
 
   function saveBike(): void {
-    tapFeedback();
     const sent = componentsToSave;
     setSentComponents(sent);
 

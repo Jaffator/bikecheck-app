@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { BellOff } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { tapFeedback } from "@/utils/haptics";
 import { useNotifications, useMarkNotificationRead } from "@/features/notifications/notifications.queries";
 import { notificationRoute } from "@/features/notifications/notificationRoute";
 import type { Notification } from "@/features/notifications/notifications.types";
@@ -75,7 +74,6 @@ export function Notifications(): ReactElement {
 
   // Mark unread notifications as read when opened.
   function openNotification(notification: Notification): void {
-    void tapFeedback();
     if (!notification.is_read) markRead.mutate(notification.id);
 
     const route = notificationRoute(notification.type, notification.payload);

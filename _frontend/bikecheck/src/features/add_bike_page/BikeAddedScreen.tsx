@@ -3,7 +3,6 @@ import { type ReactElement } from "react";
 import { Box, Button, Stack, Text, Title } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ArrowRight } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import BikeAddedCheck from "@/assets/icons/bikecheck/bike_added_check.svg?react";
 
 interface BikeAddedScreenProps {
@@ -69,7 +68,6 @@ export function BikeAddedScreen({ bikeName, onContinue }: BikeAddedScreenProps):
           radius="sm"
           rightSection={<ArrowRight size={12} />}
           onClick={() => {
-            tapFeedback();
             onContinue();
           }}
           styles={{

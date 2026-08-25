@@ -17,7 +17,7 @@ export const inputStyles = {
   label: fieldLabel,
   input: {
     borderRadius: "0.6rem",
-    backgroundColor: "var(--mantine-color-inputs-6)",
+    backgroundColor: "var(--mantine-color-inputs-9)",
     border: "1px solid var(--mantine-color-inputs-5)",
     height: "2.25rem",
     color: "var(--mantine-color-text-6)",

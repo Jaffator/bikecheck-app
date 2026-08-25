@@ -3,7 +3,6 @@ import { useState, type ReactElement } from "react";
 import { Anchor, Button, Drawer, Group, Loader, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
-import { tapFeedback } from "@/utils/haptics";
 import { useGearLinking, useLinkStravaGear } from "./strava.queries";
 import type { GearLink, GearLinkingBike } from "./strava.types";
 // import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
@@ -228,7 +227,6 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
           styles={disabledButtonStyles}
           style={{ height: "3rem" }}
           onClick={() => {
-            void tapFeedback();
             submit();
           }}
         >

@@ -3,7 +3,6 @@ import type { ReactElement } from "react";
 import { Box, Group, Image, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Gauge } from "lucide-react";
-// import { tapFeedback } from "@/utils/haptics";
 import type { Bike } from "@/features/bikes/bikes.types";
 
 // Keeps the row compact next to the garage's full-width photo cards.

@@ -3,7 +3,6 @@ import { Box, Group, Loader, Paper, Stack, Text, Textarea, UnstyledButton } from
 import { useTranslation } from "react-i18next";
 import { Ban, ChevronUp, Merge, Pencil, Plus, SearchX, Split, Wrench, CircleCheckBig } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
-import { tapFeedback } from "@/utils/haptics";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { groupIcon } from "@/assets/icons/svg_icons/groups";
 import { componentIcon } from "@/assets/icons/svg_icons/components";
@@ -97,7 +96,6 @@ function SplitToggle({ split, label, onToggle }: { split: boolean; label: string
   return (
     <UnstyledButton
       onClick={() => {
-        tapFeedback();
         onToggle();
       }}
       aria-pressed={split}
@@ -125,7 +123,6 @@ function AbsentToggle({ absent, label, onToggle }: { absent: boolean; label: str
   return (
     <UnstyledButton
       onClick={() => {
-        tapFeedback();
         onToggle();
       }}
       aria-pressed={absent}
@@ -243,7 +240,6 @@ export function BikeComponentList({
           >
             <UnstyledButton
               onClick={() => {
-                tapFeedback();
                 onToggleGroup(group.id);
               }}
               aria-expanded={isOpen}

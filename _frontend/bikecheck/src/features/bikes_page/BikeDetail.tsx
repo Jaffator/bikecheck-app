@@ -9,7 +9,6 @@ import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { useLinkStravaGear } from "../strava/strava.queries";
 import { useCurrentUser } from "../users/users.queries";
-import { tapFeedback } from "@/utils/haptics";
 import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
 import { ConfirmModal } from "@/components/ConfirmModal";
 
@@ -88,7 +87,6 @@ export function BikeDetail(): ReactElement {
         radius="md"
         leftSection={<Plus size={16} />}
         onClick={() => {
-          void tapFeedback();
           navigate(`/service/new?bike=${bike.id}`);
         }}
         style={{ alignSelf: "flex-start" }}
@@ -104,7 +102,6 @@ export function BikeDetail(): ReactElement {
               color="strava.6"
               radius="sm"
               onClick={() => {
-                void tapFeedback();
                 setPairingGear(true);
               }}
             >
@@ -117,7 +114,6 @@ export function BikeDetail(): ReactElement {
               radius="sm"
               loading={unpair.isPending}
               onClick={() => {
-                void tapFeedback();
                 unpair.mutate([{ bikecheckBikeId: bike.id, stravaBikeId: null }]);
               }}
             >
@@ -145,7 +141,6 @@ export function BikeDetail(): ReactElement {
         leftSection={<Trash2 size={16} />}
         loading={remove.isPending}
         onClick={() => {
-          void tapFeedback();
           setConfirmingDelete(true);
         }}
         styles={{

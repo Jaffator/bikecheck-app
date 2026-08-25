@@ -17,7 +17,6 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Banknote, Check, Paperclip, Pencil, Plus, X } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useUploadServiceAttachment } from "@/features/service/service.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
@@ -27,6 +26,9 @@ import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/featur
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { categoryIcon } from "@/features/service/categoryIcon";
 import { actionNote, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
+import { bikecheckIconType } from "@/assets/icons/bikecheck";
+import { RefreshCcw } from "lucide-react";
+const BikecheckIcon = bikecheckIconType("Bikecheck")!;
 
 // A receipt, an invoice and a few photos of the work is as many as one visit needs.
 const MAX_ATTACHMENTS = 10;
@@ -90,7 +92,6 @@ export function ServiceSummaryStep({
 
   function pickFile(file: File | null): void {
     if (file === null) return;
-    void tapFeedback();
     upload.mutate(file, { onSuccess: onAttachmentAdded });
   }
 
@@ -114,7 +115,6 @@ export function ServiceSummaryStep({
           <UnstyledButton
             key={block.categoryId}
             onClick={() => {
-              void tapFeedback();
               onEditBlock(index);
             }}
             style={{ display: "block", width: "100%", textAlign: "left" }}
@@ -159,7 +159,6 @@ export function ServiceSummaryStep({
           fullWidth
           leftSection={<Plus size={16} />}
           onClick={() => {
-            void tapFeedback();
             onAnotherCategory();
           }}
         >
@@ -208,7 +207,6 @@ export function ServiceSummaryStep({
                 color="red.5"
                 aria-label={t("addService.removeAttachment")}
                 onClick={() => {
-                  void tapFeedback();
                   onAttachmentRemoved(attachment.url);
                 }}
               >
@@ -345,7 +343,6 @@ export function ServiceSummaryStep({
               disabled={!canSave}
               styles={disabledButtonStyles}
               onClick={() => {
-                void tapFeedback();
                 onSave();
               }}
               style={{ height: "2.75rem", flexShrink: 0 }}
@@ -367,7 +364,7 @@ function ActionSummary({ action }: { action: PickedAction }): ReactElement {
 
   return (
     <Stack gap={2}>
-      <Text fz={13} fw={500} c="text.6">
+      <Text fz={13} fw={500} c="text.6" lineClamp={1}>
         {catalogueLabel(action.actionI18nKey, action.actionName, t)}
       </Text>
       {note !== "" && (

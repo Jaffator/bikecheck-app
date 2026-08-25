@@ -2,7 +2,6 @@
 import type { ReactElement } from "react";
 import { Chip, Group, ScrollArea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { tapFeedback } from "@/utils/haptics";
 import type { Bike } from "@/features/bikes/bikes.types";
 
 // The all-bikes chip has no id of its own, so it carries a value no bike can.
@@ -26,7 +25,6 @@ export function BikeFilterChips({ bikes, selected, onSelect }: BikeFilterChipsPr
         multiple={false}
         value={selected === null ? ALL_BIKES : String(selected)}
         onChange={(value) => {
-          void tapFeedback();
           onSelect(value === ALL_BIKES ? null : Number(value));
         }}
       >

@@ -3,7 +3,6 @@ import { useState, type ReactElement } from "react";
 import { Anchor, Group, Loader, Stack, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { tapFeedback } from "@/utils/haptics";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeFilterChips } from "@/features/service/BikeFilterChips";
 import { ServiceList } from "@/features/service/ServiceList";
@@ -54,7 +53,6 @@ export function Service(): ReactElement {
             fz={13}
             c="primary.5"
             onClick={() => {
-              void tapFeedback();
               // Carries the chip selection into the full list.
               navigate(bikeId === null ? "/service/history" : `/service/history?bike=${bikeId}`);
             }}

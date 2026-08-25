@@ -3,7 +3,6 @@
 // the cancel/confirm pair are decided once here so a fourth caller cannot drift.
 import type { ReactElement } from "react";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
-import { tapFeedback } from "@/utils/haptics";
 
 interface ConfirmModalProps {
   opened: boolean;
@@ -57,7 +56,6 @@ export function ConfirmModal({
             radius="md"
             loading={pending}
             onClick={() => {
-              void tapFeedback();
               onConfirm();
             }}
           >

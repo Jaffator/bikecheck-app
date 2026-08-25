@@ -3,7 +3,6 @@ import type { ReactElement } from "react";
 import { Button, Group, Loader, Paper, SimpleGrid, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-// import { tapFeedback } from "@/utils/haptics";
 import { categoryIcon } from "@/features/service/categoryIcon";
 import { useBikeCategories } from "@/features/service/service.queries";
 import type { BikeCategory } from "@/features/service/service.types";

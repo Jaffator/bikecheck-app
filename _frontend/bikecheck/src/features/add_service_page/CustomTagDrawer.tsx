@@ -2,8 +2,7 @@
 import { useState, type ReactElement } from "react";
 import { ActionIcon, Box, Button, Drawer, Group, Stack, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Trash2 } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
+import { Pencil, Trash2 } from "lucide-react";
 import { useCreateActionTag, useDeleteActionTag } from "@/features/service/service.queries";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { ActionTag } from "@/features/service/service.types";
@@ -47,7 +46,6 @@ export function CustomTagDrawer({
 
   function submit(): void {
     if (trimmed === "") return;
-    void tapFeedback();
     // A name the action already carries answers with that tag rather than a second one,
     // so writing an existing name simply takes it.
     create.mutate(
@@ -68,9 +66,14 @@ export function CustomTagDrawer({
       onClose={onClose}
       position="bottom"
       // Fits a short list and caps a long one for scrolling.
-      size="auto"
+      size="md"
       radius="md"
-      title={t("addService.customTagTitle")}
+      title={
+        <Group gap={6} justify="center" wrap="nowrap">
+          <Pencil size={16} />
+          <span>{t("addService.customTagTitle", { action: actionLabel })}</span>
+        </Group>
+      }
       // Keeps background content visually inactive.
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
@@ -96,13 +99,19 @@ export function CustomTagDrawer({
         },
       }}
     >
-      <Stack gap="md" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+      {/* Fills the drawer body so the save button keeps the bottom edge however short
+          the tag list is; the list above it shrinks and scrolls instead. */}
+      <Stack
+        gap="md"
+        pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+        style={{ flex: 1, minHeight: 0 }}
+      >
         <Text fz={13} c="var(--color-text-dim)">
           {t("addService.customTagFor", { action: actionLabel })}
         </Text>
 
         <TextInput
-          label={t("addService.customTagLabel")}
+          // label={t("addService.customTagLabel")}
           placeholder={t("addService.customTagPlaceholder")}
           value={name}
           maxLength={60}
@@ -121,21 +130,11 @@ export function CustomTagDrawer({
           </Text>
         )}
 
-        <Button
-          color="primary.6"
-          radius="md"
-          disabled={trimmed === "" || create.isPending}
-          loading={create.isPending}
-          styles={disabledButtonStyles}
-          onClick={submit}
-          style={{ height: "3rem" }}
-        >
-          {t("addService.customTagSave")}
-        </Button>
-
         {own.length > 0 && (
           <Stack gap={6} style={{ minHeight: 0, overflowY: "auto" }}>
-            <Text style={fieldLabel}>{t("addService.customTagYours")}</Text>
+            <Text fz={13} c="text.7">
+              {t("addService.customTagYours")} :
+            </Text>
             {own.map((tag) => (
               <Group key={tag.id} justify="space-between" wrap="nowrap" gap="sm">
                 <Box style={{ minWidth: 0 }}>
@@ -150,7 +149,6 @@ export function CustomTagDrawer({
                   aria-label={t("addService.customTagDelete")}
                   disabled={remove.isPending}
                   onClick={() => {
-                    void tapFeedback();
                     // Services that already quoted this tag keep its name: what they hold
                     // is prose, not a reference — see ADR 0007.
                     remove.mutate(tag.id, { onSuccess: () => onDeleted(tag) });
@@ -162,6 +160,18 @@ export function CustomTagDrawer({
             ))}
           </Stack>
         )}
+        <Button
+          color="primary.6"
+          radius="md"
+          mt="auto"
+          disabled={trimmed === "" || create.isPending}
+          loading={create.isPending}
+          styles={disabledButtonStyles}
+          onClick={submit}
+          style={{ height: "3rem" }}
+        >
+          {t("addService.customTagSave")}
+        </Button>
       </Stack>
     </Drawer>
   );

@@ -16,7 +16,6 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Camera, Gauge, ImagePlus, Shapes, Tag, Zap } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
 import { inputStyles, dropdownProps } from "./formStyles";
 import { FRAME_SIZES, WHEEL_SIZES } from "./bikeSpecification.types";
@@ -61,7 +60,6 @@ function ChoiceButton({
       variant="default"
       radius="sm"
       onClick={() => {
-        tapFeedback();
         onSelect();
       }}
       styles={{
@@ -130,7 +128,6 @@ export function BikeSpecification({
               <UnstyledButton
                 {...props}
                 onClick={() => {
-                  tapFeedback();
                   props.onClick();
                 }}
                 style={{
@@ -170,7 +167,6 @@ export function BikeSpecification({
                 <Button
                   {...props}
                   onClick={() => {
-                    tapFeedback();
                     props.onClick();
                   }}
                   variant="subtle"
@@ -324,7 +320,6 @@ export function BikeSpecification({
               withThumbIndicator={false}
               checked={values.ebike}
               onChange={(event) => {
-                tapFeedback();
                 onChange("ebike", event.currentTarget.checked);
               }}
               aria-label={t("addBike.ebike")}
