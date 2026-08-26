@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
 import { useGearLinking, useLinkStravaGear } from "./strava.queries";
 import type { GearLink, GearLinkingBike } from "./strava.types";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 // import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
 // import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
@@ -16,12 +17,6 @@ interface GearLinkingSheetProps {
   onClose: () => void;
   // Undefined lists unpaired bikes; detail pages pass one id.
   bikeIds?: number[];
-}
-
-// Build a non-empty label from available bike names.
-function bikeLabel(bike: GearLinkingBike): string {
-  if (bike.bikename !== null && bike.bikename.trim() !== "") return bike.bikename;
-  return [bike.bike_brand, bike.bike_model].filter((part) => part !== null && part !== "").join(" ");
 }
 
 // Pair BikeCheck bikes with their Strava gear.
@@ -43,7 +38,7 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
   // Excludes gear paired to another bike, including pending changes.
   function takenBy(gearId: string, forBikeId: number): string | null {
     const owner = (data?.bikecheck_bikes ?? []).find((bike) => bike.id !== forBikeId && chosenFor(bike) === gearId);
-    return owner ? bikeLabel(owner) : null;
+    return owner ? bikeTitle(owner) : null;
   }
   function submit(): void {
     // Submit only modified pairings.
@@ -100,10 +95,10 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
       <div className="align-center mb-4 -ml-2 mt-5 flex w-full justify-center">
         <StravaConnectBike
           size={40}
-          stravaColor="var(--mantine-color-strava-6"
+          stravaColor="var(--mantine-color-strava-6)"
           stravaCircleColor="color-mix(in srgb, var(--mantine-color-strava-6) 20%, transparent)"
           connectColor="var(--mantine-color-text-6)"
-          bikeColor="var(--mantine-color-cards-9)"
+          bikeColor="var(--mantine-color-cards-7)"
           bikeCircleColor="var(--mantine-color-primary-6)"
         />
       </div>
@@ -170,7 +165,7 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
               return (
                 <Group key={bike.id} gap="sm" wrap="nowrap" align="center">
                   <Text size="sm" fw={600} c="text.6" style={{ flex: 1, minWidth: 0 }} truncate>
-                    {bikeLabel(bike)}
+                    {bikeTitle(bike)}
                   </Text>
                   <Select
                     value={chosen}

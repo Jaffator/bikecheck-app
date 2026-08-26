@@ -8,16 +8,15 @@ const DEFAULT_LIMIT = 20;
 // a page of rows.
 const MAX_LIMIT = 100;
 
-// The bike as the list needs it — a nickname if the user gave one, the model
-// otherwise. Selected rather than included whole: the ride list has no use for
-// the rest of the bike.
-const BIKE_SELECT = { bikename: true, bike_brand: true, bike_model: true } as const;
+// The bike as the list needs it. Selected rather than included whole: the ride
+// list has no use for the rest of the bike.
+const BIKE_SELECT = { bike_brand: true, bike_model: true, year: true } as const;
 
 interface RideRow {
   id: number;
   activity_strava_id: bigint | null;
   bike_id: number;
-  bikes: { bikename: string | null; bike_brand?: string | null; bike_model?: string | null } | null;
+  bikes: { bike_brand?: string | null; bike_model?: string | null; year?: number | null } | null;
   started_at?: Date | null;
   distance_m?: number | null;
   duration_min?: number | null;
@@ -108,12 +107,14 @@ function asActivity(jsonData: unknown): StravaActivity | null {
   return typeof jsonData === 'object' && jsonData !== null ? (jsonData as StravaActivity) : null;
 }
 
-// A bike with no nickname is named by what it is. Both parts are optional, so
-// the pieces are joined rather than templated.
+// A ride is a record of what was ridden, so the bike is named by what it is -
+// never by the nickname its owner gave it. Every part is optional, so the pieces
+// are joined rather than templated.
 function bikeName(bike: RideRow['bikes']): string | null {
   if (bike === null) return null;
-  if (bike.bikename) return bike.bikename;
-  const parts = [bike.bike_brand, bike.bike_model].filter((part): part is string => Boolean(part));
+  const parts = [bike.bike_brand, bike.bike_model, bike.year].filter(
+    (part): part is string | number => Boolean(part),
+  );
   return parts.length > 0 ? parts.join(' ') : null;
 }
 

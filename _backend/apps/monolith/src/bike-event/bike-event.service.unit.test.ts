@@ -874,7 +874,7 @@ describe('BikeEventService', () => {
       service_date: SERVICE_DATE,
       created_at: SERVICE_DATE,
       total_cost: new Prisma.Decimal(350.5),
-      bikes: { bikename: 'Trail bike', bike_brand: 'Santa Cruz', bike_model: 'Hightower' },
+      bikes: { bike_brand: 'Santa Cruz', bike_model: 'Hightower', year: 2022 },
       event_actions_done: [
         { events_action: { action_name: 'Chain Replacement', i18n_key: 'action.chainReplacement' } },
         { events_action: { action_name: 'Brake bleed', i18n_key: 'action.bleed' } },
@@ -895,7 +895,7 @@ describe('BikeEventService', () => {
         {
           id: 99,
           bike_id: BIKE_ID,
-          bike_name: 'Trail bike',
+          bike_name: 'Santa Cruz Hightower 2022',
           service_date: SERVICE_DATE,
           action_count: 2,
           actions: [
@@ -978,12 +978,12 @@ describe('BikeEventService', () => {
       service_date: SERVICE_DATE,
       created_at: SERVICE_DATE,
       updated_at: null,
-      bikes: { user_id: OWNER_ID, bikename: 'Trail bike', bike_brand: 'Santa Cruz', bike_model: 'Hightower' },
+      bikes: { user_id: OWNER_ID, bike_brand: 'Santa Cruz', bike_model: 'Hightower', year: 2022 },
       event_actions_done: actions,
       bike_event_attachments: [],
     });
 
-    it('names the bike and reports the odometer as it stood on the service date', async () => {
+    it('names the bike by what it is and reports the odometer as it stood on the service date', async () => {
       // ARRANGE
       mockPrisma.events_bikes.findUnique.mockResolvedValue(savedService([savedAction()]));
 
@@ -991,7 +991,7 @@ describe('BikeEventService', () => {
       const detail = await service.findById(99, OWNER_ID);
 
       // ASSERT: the bike at the time of the work, not as it reads today.
-      expect(detail.bike_name).toBe('Trail bike');
+      expect(detail.bike_name).toBe('Santa Cruz Hightower 2022');
       expect(detail.bike_km_at_time).toBe(2450);
       expect(detail.bike_minutes_at_time).toBe(4080);
     });

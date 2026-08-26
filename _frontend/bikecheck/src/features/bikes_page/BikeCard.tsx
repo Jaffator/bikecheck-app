@@ -1,12 +1,13 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { ActionIcon, Box, Group, Image, Paper, Progress, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Group, Paper, Progress, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { Clock, EllipsisVertical, Gauge } from "lucide-react";
 import type { Bike } from "../bikes/bikes.types";
-import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
+import { bikeTitle } from "../bikes/bikeTitle";
+import { BikePhoto } from "./BikePhoto";
 import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
 
 interface BikeCardProps {
@@ -108,12 +109,7 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
 export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactElement {
   const { t } = useTranslation();
 
-  // The user's own name wins; a bike saved without one is known by its model.
-  const title = bike.bikename ?? bike.bike_model ?? bike.bike_brand;
-  // "Road · Carbon" — whichever of the two the bike actually carries.
-  const subtitle = [bike.bike_model === title ? null : bike.bike_brand, bike.frame_material]
-    .filter((part): part is string => part !== null && part !== "")
-    .join(" • ");
+  const title = bikeTitle(bike);
 
   return (
     <Paper
@@ -162,7 +158,6 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
         }}
       />
 
-      {/* Position bike badges over the photo. */}
       <Box
         style={{
           position: "relative",
@@ -171,70 +166,42 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
           boxShadow: "0 6px 12px -6px rgba(0, 0, 0, 0.6)",
         }}
       >
-        {bike.image_url ? (
-          <Image
-            src={bike.image_url}
-            alt={title}
-            h={PHOTO_SLOT_HEIGHT}
-            // Fill the slot with the upload-cropped photo.
-            fit="cover"
-            // Load card images as they enter the viewport.
-            loading="lazy"
-            style={{ backgroundColor: "#FFFFFF" }}
-          />
-        ) : (
-          // Preserve card height when no photo is available.
-          <Box
-            h={PHOTO_SLOT_HEIGHT}
-            bg="cards.7"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Gauge size={32} color="var(--mantine-color-text-9)" />
-          </Box>
-        )}
-        {/* Stack overall bike badges in the photo corner. */}
-        <Stack gap={6} align="flex-end" style={{ position: "absolute", top: "0.75rem", right: "0.75rem" }}>
-          <HealthBadge readings={readings} />
-          <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
-        </Stack>
+        {/* The garage and the bike detail are the only places a bike answers to
+            the nickname its owner gave it. */}
+        <BikePhoto
+          imageUrl={bike.image_url}
+          title={title}
+          subtitle={bike.bikename}
+          titleSize={20}
+          action={
+            <ActionIcon
+              variant="transparent"
+              aria-label={t("bikes.cardMenu")}
+              // The card behind it opens the bike; its own actions are its own.
+              onClick={(event) => event.stopPropagation()}
+              disabled
+              // Keep the disabled action icon visually unobtrusive.
+              styles={{
+                root: {
+                  backgroundColor: "transparent",
+                  border: "none",
+                  color: "rgba(255, 255, 255, 0.7)",
+                },
+              }}
+            >
+              <EllipsisVertical size={18} />
+            </ActionIcon>
+          }
+        >
+          {/* Stack overall bike badges in the photo corner. */}
+          <Stack gap={6} align="flex-end">
+            <HealthBadge readings={readings} />
+            <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
+          </Stack>
+        </BikePhoto>
       </Box>
 
       <Stack gap="sm" p="md" style={{ position: "relative", zIndex: 2 }}>
-        <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
-          <Stack gap={2} style={{ minWidth: 0 }}>
-            <Text fw={700} fz={20} c="text.6" lh={1.2}>
-              {title}
-            </Text>
-            {subtitle !== "" && (
-              <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)">
-                {subtitle}
-              </Text>
-            )}
-          </Stack>
-
-          <ActionIcon
-            variant="transparent"
-            color="gray"
-            aria-label={t("bikes.cardMenu")}
-            // The card behind it opens the bike; its own actions are its own.
-            onClick={(event) => event.stopPropagation()}
-            disabled
-            // Keep the disabled action icon visually unobtrusive.
-            styles={{
-              root: {
-                backgroundColor: "transparent",
-                border: "none",
-              },
-            }}
-          >
-            <EllipsisVertical size={18} />
-          </ActionIcon>
-        </Group>
-
         <Group gap="lg" wrap="nowrap">
           <Group gap={6} wrap="nowrap">
             <Gauge size={14} color="var(--color-text-dim)" />

@@ -40,7 +40,7 @@ const SUSPENSION_COMPONENT_TYPES: string[] = ['Shock', 'Fork'];
 
 // The bike as a history card needs it - a nickname if the user gave one, the model
 // otherwise. Selected rather than included whole: the card has no use for the rest.
-const BIKE_SELECT = { bikename: true, bike_brand: true, bike_model: true } as const;
+const BIKE_SELECT = { bike_brand: true, bike_model: true, year: true } as const;
 
 // What the caller's own bike tells the service: where its odometer stands, and which
 // actions it is physically able to receive.
@@ -1065,15 +1065,15 @@ function rewind(accumulator: number | null | undefined, riddenSince: number): nu
   return clampToZero(accumulator - riddenSince);
 }
 
-// A user names their bike, but not always - falling back to brand and model keeps the
-// history card from showing a nameless entry.
+// Service history names the bike by what it is - the nickname its owner gave it
+// has no place in a maintenance record.
 function bikeName(
-  bike: { bikename: string | null; bike_brand: string; bike_model: string | null } | null,
+  bike: { bike_brand: string; bike_model: string | null; year: number | null } | null,
 ): string | null {
   if (!bike) {
     return null;
   }
-  return bike.bikename ?? [bike.bike_brand, bike.bike_model].filter(Boolean).join(' ');
+  return [bike.bike_brand, bike.bike_model, bike.year].filter(Boolean).join(' ');
 }
 
 // A page size the caller left out arrives as NaN and takes the default; one they

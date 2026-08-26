@@ -3,6 +3,8 @@ import type { ReactElement } from "react";
 import { Chip, Group, ScrollArea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { Bike } from "@/features/bikes/bikes.types";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { chipStyles } from "../add_bike_page/formStyles";
 
 // The all-bikes chip has no id of its own, so it carries a value no bike can.
 const ALL_BIKES = "all";
@@ -29,13 +31,20 @@ export function BikeFilterChips({ bikes, selected, onSelect }: BikeFilterChipsPr
         }}
       >
         <Group gap="xs" wrap="nowrap" px="md" py="xs">
-          <Chip value={ALL_BIKES} radius="xl" size="sm" color="primary.6">
+          <Chip value={ALL_BIKES} radius="xl" size="sm" color="primary.6" styles={chipStyles(selected === null, { wrap: false })}>
             {t("service.allBikes")}
           </Chip>
           {bikes.map((bike) => (
-            <Chip key={bike.id} value={String(bike.id)} radius="xl" size="sm" color="primary.6">
+            <Chip
+              key={bike.id}
+              value={String(bike.id)}
+              radius="xl"
+              size="sm"
+              color="primary.6"
+              styles={chipStyles(selected === bike.id, { wrap: false })}
+            >
               {/* The same name the garage and the bike detail give it. */}
-              {bike.bikename ?? bike.bike_model ?? bike.bike_brand}
+              {bikeTitle(bike)}
             </Chip>
           ))}
         </Group>

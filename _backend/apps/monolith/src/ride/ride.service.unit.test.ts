@@ -46,7 +46,7 @@ describe('RideService', () => {
           id: 5,
           activity_strava_id: BigInt('13579246810'),
           bike_id: 7,
-          bikes: { bikename: 'Tarmac' },
+          bikes: { bike_brand: 'Specialized', bike_model: 'Tarmac SL7', year: 2022 },
           started_at: new Date('2026-08-19T06:12:00.000Z'),
           distance_m: 42000,
           duration_min: 96,
@@ -67,24 +67,30 @@ describe('RideService', () => {
 
     it('flattens the bike name onto the ride', async () => {
       mockPrisma.rides.findMany.mockResolvedValue([
-        { id: 5, activity_strava_id: null, bike_id: 7, bikes: { bikename: 'Tarmac' }, json_data: null },
+        {
+          id: 5,
+          activity_strava_id: null,
+          bike_id: 7,
+          bikes: { bike_brand: 'Specialized', bike_model: 'Tarmac SL7', year: 2022 },
+          json_data: null,
+        },
       ]);
       mockPrisma.rides.count.mockResolvedValue(1);
 
       const page = await service.findPage(1, 20, 0);
 
-      expect(page.items[0].bike_name).toBe('Tarmac');
+      expect(page.items[0].bike_name).toBe('Specialized Tarmac SL7 2022');
       // The relation itself does not travel to the client.
       expect(page.items[0]).not.toHaveProperty('bikes');
     });
 
-    it('falls back to the model when the bike has no nickname', async () => {
+    it('names the bike by what it is, never by the nickname its owner gave it', async () => {
       mockPrisma.rides.findMany.mockResolvedValue([
         {
           id: 5,
           activity_strava_id: null,
           bike_id: 7,
-          bikes: { bikename: null, bike_brand: 'Specialized', bike_model: 'Epic EVO' },
+          bikes: { bike_brand: 'Specialized', bike_model: 'Epic EVO', year: null },
           json_data: null,
         },
       ]);
@@ -103,7 +109,7 @@ describe('RideService', () => {
           id: 5,
           activity_strava_id: null,
           bike_id: 7,
-          bikes: { bikename: 'Tarmac' },
+          bikes: { bike_brand: 'Specialized', bike_model: 'Tarmac SL7', year: 2022 },
           json_data: JSON.stringify({
             name: 'Morning Mountain Bike Ride',
             map: { summary_polyline: 'ki}fHuqrbBGx@_@lA' },
@@ -127,7 +133,7 @@ describe('RideService', () => {
           id: 5,
           activity_strava_id: null,
           bike_id: 7,
-          bikes: { bikename: 'Tarmac' },
+          bikes: { bike_brand: 'Specialized', bike_model: 'Tarmac SL7', year: 2022 },
           json_data: { name: 'Indoor Ride', map: { summary_polyline: '' } },
         },
       ]);

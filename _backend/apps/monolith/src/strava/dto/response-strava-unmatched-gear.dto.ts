@@ -18,5 +18,6 @@ export class ResponseUnmatchedStravaGearDto {
     bikename: string | null;
     bike_brand: string;
     bike_model: string | null;
+    year: number | null;
   }[];
 }

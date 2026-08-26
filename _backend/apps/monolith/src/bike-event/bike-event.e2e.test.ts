@@ -53,6 +53,7 @@ describe('BikeEventController (e2e)', () => {
             bike_brand: 'Santa Cruz',
             bike_model: 'Hightower',
             bikename: 'Trail bike',
+            year: 2022,
             ebike: false,
             has_front_suspension: true,
             has_rear_suspension: true,
@@ -105,7 +106,7 @@ describe('BikeEventController (e2e)', () => {
       .set('Authorization', `Bearer ${ownerToken}`)
       .expect(200);
 
-    expect(response.body.bike_name).toBe('Trail bike');
+    expect(response.body.bike_name).toBe('Santa Cruz Hightower 2022');
     // Nothing was done on this service, so no action froze the odometer.
     expect(response.body.bike_km_at_time).toBeNull();
   });
@@ -133,7 +134,7 @@ describe('BikeEventController (e2e)', () => {
 
     expect(response.body.total).toBeGreaterThanOrEqual(1);
     expect(response.body.items[0]).toEqual(
-      expect.objectContaining({ bike_id: bikeId, bike_name: 'Trail bike', action_count: 0 }),
+      expect.objectContaining({ bike_id: bikeId, bike_name: 'Santa Cruz Hightower 2022', action_count: 0 }),
     );
   });
 

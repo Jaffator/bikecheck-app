@@ -4,6 +4,7 @@ import { Box, Group, Image, Loader, Paper, Stack, Text, UnstyledButton } from "@
 import { useTranslation } from "react-i18next";
 import { Gauge } from "lucide-react";
 import type { Bike } from "@/features/bikes/bikes.types";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 
 // Keeps the row compact next to the garage's full-width photo cards.
 const PHOTO_SIZE = 64;
@@ -42,7 +43,7 @@ export function ServiceBikeStep({ bikes, isLoading, onChoose }: ServiceBikeStepP
 // One bike, recognisable the same way the garage shows it.
 function BikeTile({ bike, onChoose }: { bike: Bike; onChoose: () => void }): ReactElement {
   const { t } = useTranslation();
-  const title = bike.bikename ?? bike.bike_model ?? bike.bike_brand;
+  const title = bikeTitle(bike);
 
   return (
     <UnstyledButton
@@ -93,9 +94,6 @@ function BikeTile({ bike, onChoose }: { bike: Bike; onChoose: () => void }): Rea
           <Stack gap={2} style={{ minWidth: 0 }}>
             <Text fw={600} fz={16} c="text.6" lineClamp={1}>
               {title}
-            </Text>
-            <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)">
-              {bike.bike_brand}
             </Text>
             <Text fz={13} c="var(--color-text-dim)">
               {t("bikes.kilometres", { count: bike.total_km ?? 0 })}

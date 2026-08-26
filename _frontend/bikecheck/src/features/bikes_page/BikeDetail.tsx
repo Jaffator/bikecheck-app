@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
-import { Button, Group, Image, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { Button, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { Clock, Gauge, Plus, Trash2 } from "lucide-react";
@@ -9,7 +9,8 @@ import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { useLinkStravaGear } from "../strava/strava.queries";
 import { useCurrentUser } from "../users/users.queries";
-import { PHOTO_SLOT_HEIGHT } from "../add_bike_page/photoCrop";
+import { BikePhoto } from "./BikePhoto";
+import { bikeTitle } from "../bikes/bikeTitle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 
 // Render available identity and totals for the selected bike.
@@ -28,7 +29,8 @@ export function BikeDetail(): ReactElement {
   if (isLoading) {
     return (
       <Stack gap="md" px="md" pt="md">
-        <Skeleton h={220} radius="md" />
+        {/* Match the photo slot, so the loaded hero lands where the skeleton stood. */}
+        <Skeleton radius="md" style={{ aspectRatio: 2 }} />
         <Skeleton h={28} w="60%" radius="sm" />
         <Skeleton h={18} w="40%" radius="sm" />
       </Stack>
@@ -43,24 +45,15 @@ export function BikeDetail(): ReactElement {
     );
   }
 
-  const title = bike.bikename ?? bike.bike_model ?? bike.bike_brand;
+  const title = bikeTitle(bike);
 
   return (
     <Stack gap="md" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-      {bike.image_url && (
-        <Paper radius="md" style={{ overflow: "hidden" }}>
-          <Image src={bike.image_url} alt={title} h={PHOTO_SLOT_HEIGHT} fit="cover" bg="#FFFFFF" />
-        </Paper>
-      )}
-
-      <Stack gap={4}>
-        <Text fw={700} fz={24} c="text.6" lh={1.2}>
-          {title}
-        </Text>
-        <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)">
-          {[bike.bike_brand, bike.year].filter((part) => part !== null && part !== "").join(" • ")}
-        </Text>
-      </Stack>
+      {/* The same slot the garage card uses, so opening a bike keeps the photo
+          and its title in place. */}
+      <Paper radius="md" style={{ overflow: "hidden" }}>
+        <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={24} />
+      </Paper>
 
       <Group gap="lg" wrap="nowrap">
         <Group gap={6} wrap="nowrap">
