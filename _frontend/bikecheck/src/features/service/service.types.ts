@@ -1,5 +1,12 @@
 // Mirrors the backend service history DTOs.
 
+// One Action as a history card names it. Catalogue actions carry a key, so the card reads
+// in the user's language; an action a user created carries only the name they gave it.
+export interface ServiceHistoryAction {
+  name: string;
+  i18n_key: string | null;
+}
+
 // One Service as a history card needs it — the full occasion comes from the detail endpoint.
 export interface ServiceHistoryItem {
   id: number;
@@ -9,7 +16,7 @@ export interface ServiceHistoryItem {
   // When the work happened, which may predate when it was recorded.
   service_date: string | null;
   action_count: number;
-  action_names: string[];
+  actions: ServiceHistoryAction[];
   total_cost: number | null;
 }
 

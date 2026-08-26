@@ -16,7 +16,8 @@ function parseBikeId(raw: string | null): number | null {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-// Every service the user has recorded, newest work first, paged in as they scroll.
+// Every service the user has recorded, newest work first, divided into Month Groups and
+// paged in as they scroll.
 export function ServiceHistory(): ReactElement {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: bikes } = useBikes();
@@ -47,8 +48,10 @@ export function ServiceHistory(): ReactElement {
     <Stack gap={0} pb="xl">
       {showChips && <BikeFilterChips bikes={bikes ?? []} selected={bikeId} onSelect={selectBike} />}
 
-      <Stack gap="sm" className="m-3">
+      {/* Month Groups need more air between them than cards do inside one. */}
+      <Stack gap="lg" className="m-3">
         <ServiceList
+          grouped
           services={services}
           isLoading={isLoading}
           isError={isError}

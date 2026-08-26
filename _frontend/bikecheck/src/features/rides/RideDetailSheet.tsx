@@ -4,7 +4,6 @@ import { Drawer, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
-import { ridePolyline } from "./ridePolyline";
 import type { Ride } from "./rides.types";
 
 interface RideDetailSheetProps {
@@ -75,8 +74,8 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
             }}
           >
             <Stack gap="md">
-              {/* Show the full route map. */}
-              <RouteMap polyline={ridePolyline(ride.json_data)} width="100%" height={140} strokeWidth={3} />
+              {/* Every point Strava gave us: this map is big enough to show them. */}
+              <RouteMap polyline={ride.summary_polyline} width="100%" height={140} strokeWidth={3} />
 
               <Group gap="md" wrap="nowrap">
                 <Stat label={t("rides.statDistance")} value={`${toKm(ride.distance_m)} km`} />

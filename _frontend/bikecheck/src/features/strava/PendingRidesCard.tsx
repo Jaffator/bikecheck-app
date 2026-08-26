@@ -12,6 +12,10 @@ import { usePendingRides } from "./strava.queries";
 import { PendingRideSheet } from "./PendingRideSheet";
 import type { PendingRide } from "./strava.types";
 
+// How far a point may stray before the thumbnail drops it, in viewBox units. Matches the
+// completed list: the same route drawn at the same fifty pixels.
+const CARD_SIMPLIFY = 1;
+
 // Renders a pending ride with recognizable route and metrics.
 function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => void }): ReactElement {
   const { t } = useTranslation();
@@ -20,7 +24,7 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
     <HistoryCard
       onOpen={onOpen}
       /* Route shape distinguishes otherwise similar ride rows. */
-      leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} />}
+      leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
       /* Clamps long Strava titles to preserve row height. */
       title={ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
       subtitle={dayjs(ride.started_at).format("D. M. YYYY H:mm")}

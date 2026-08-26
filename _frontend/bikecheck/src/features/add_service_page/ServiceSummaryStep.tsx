@@ -16,7 +16,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Banknote, Check, Paperclip, Pencil, Plus, X } from "lucide-react";
+import { Banknote, Calendar, Check, NotepadText, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useUploadServiceAttachment } from "@/features/service/service.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
@@ -34,6 +34,15 @@ import { actionNote, today, type CategoryBlock, type PickedAction } from "./serv
 const MAX_ATTACHMENTS = 10;
 
 const CARD_ICON_SIZE = 20;
+
+// What names a field rather than a card: the size the add-bike wizard already gives an
+// icon sitting inside an input.
+const ICON_SIZE = 18;
+
+// A section is centred over the whole input by default. An autosize textarea is only as
+// tall as what it holds, so the icon has to be pinned to the first line instead; the
+// padding matches the input's own top padding.
+const FIELD_ICON_TOP: React.CSSProperties = { alignItems: "flex-start", paddingTop: "0.45rem" };
 
 // The Summary reads as a recap rather than a form, so its labels sit quieter and smaller
 // than the shared field label. Local on purpose: `fieldLabel` names controls everywhere
@@ -118,6 +127,12 @@ export function ServiceSummaryStep({
     setTypedTotal(null);
   }
 
+  // The total field grows with what is typed into it. `ch` is the width of a zero in the
+  // element's own font, so the measurement has to be made on the input, which is bold and
+  // larger than the root the width prop would land on. The extra half leaves the caret a
+  // place to sit past the last digit.
+  const totalWidth = `${Math.max(String(typedTotal ?? totalCost).length, 1) + 0.2}ch`;
+
   return (
     <>
       <Stack gap="md" pb={BAR_CLEARANCE}>
@@ -201,6 +216,9 @@ export function ServiceSummaryStep({
           // Work cannot have been done later than today.
           max={today()}
           styles={summaryInputStyles}
+          // Decoration only. global.css hides the browser's own calendar indicator, so this
+          // is the one calendar in the field; the picker still opens on a tap anywhere in it.
+          rightSection={<Calendar size={ICON_SIZE} color="var(--color-text-dim)" />}
           onChange={(event) => onServiceDateChange(event.currentTarget.value)}
         />
         {/* ---------- Note ---------- */}
@@ -212,6 +230,10 @@ export function ServiceSummaryStep({
           minRows={2}
           maxLength={500}
           styles={summaryAutosizeInputStyles}
+          rightSection={<NotepadText size={ICON_SIZE} color="var(--color-text-dim)" />}
+          // The field grows as it is filled, and a centred section would drift down with it.
+          // Pinned to the top so the icon keeps sitting beside the first line.
+          rightSectionProps={{ style: FIELD_ICON_TOP }}
           onChange={(event) => onNoteChange(event.currentTarget.value)}
         />
 
@@ -351,28 +373,33 @@ export function ServiceSummaryStep({
                   {t("addService.totalCost")}:
                 </Text>
                 <Group gap={4} wrap="nowrap" align="center">
-                  {/* The total reads as the number it is, and is typed over in place. */}
+                  {/* The total reads as the number it is, and is typed over in place. Sized
+                      to the digits it holds rather than a fixed width, so the currency stays
+                      against the number the way the actions bar writes it. */}
                   <NumberInput
                     variant="unstyled"
                     aria-label={t("addService.totalCost")}
                     value={typedTotal ?? totalCost}
                     min={0}
                     hideControls
-                    w={72}
                     styles={{
+                      root: { width: "fit-content", flexShrink: 0 },
                       input: {
+                        width: totalWidth,
                         padding: 0,
                         height: "auto",
                         minHeight: 0,
+                        borderRadius: 0,
                         fontWeight: 700,
                         fontSize: "1.125rem",
+                        lineHeight: 1.1,
                         color: "var(--mantine-color-text-6)",
                       },
                     }}
                     onChange={changeTotal}
                     onBlur={blurTotal}
                   />
-                  <Text fw={700} fz={18} c="text.6">
+                  <Text fw={700} fz={18} c="text.6" lh={1.2}>
                     {currencySymbol(user?.currency ?? null, i18n.language)}
                   </Text>
                 </Group>

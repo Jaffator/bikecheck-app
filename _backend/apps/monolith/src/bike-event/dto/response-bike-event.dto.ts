@@ -232,6 +232,16 @@ export class Response_ServiceAttachment_Dto {
 // ------------ Service history, one entry per occasion --------------
 // ------------------------------------------------------------------
 
+// One Action named on a history card. The key is what lets the card read in the user's
+// language; the name is what a user-created action has instead.
+export class ServiceHistoryActionDto {
+  @ApiProperty({ example: 'Chain Replacement' })
+  name!: string;
+
+  @ApiProperty({ example: 'actions.chainReplacement', nullable: true })
+  i18n_key!: string | null;
+}
+
 // Only what a history card renders - the full picture comes from the detail endpoint.
 export class ServiceHistoryItemDto {
   @ApiProperty({ example: 1 })
@@ -249,8 +259,8 @@ export class ServiceHistoryItemDto {
   @ApiProperty({ example: 2 })
   action_count!: number;
 
-  @ApiProperty({ example: ['Chain Replacement', 'Brake bleed'], type: [String] })
-  action_names!: string[];
+  @ApiProperty({ type: [ServiceHistoryActionDto] })
+  actions!: ServiceHistoryActionDto[];
 
   @ApiProperty({ example: 350.5, nullable: true })
   total_cost!: number | null;

@@ -445,7 +445,8 @@ export class BikeEventService {
 
   // The caller's services across every bike they own, or one bike when asked. Ordered by
   // when the work happened, so a backfilled service sorts where it belongs rather than at
-  // the top. The total is what lets the UI page or scroll.
+  // the top, then by id so a day holding several services always reads the same way. The
+  // total is what lets the UI page or scroll.
   async history(userId: number, limit: number, offset: number, bikeId?: number): Promise<Response_ServiceHistory_Dto> {
     if (bikeId !== undefined) {
       await this.findOwnedBike(bikeId, userId);
@@ -466,7 +467,10 @@ export class BikeEventService {
         where,
         // Nulls last: service_date is nullable, and a service with no date belongs at
         // the bottom rather than ahead of work the user actually dated.
-        orderBy: { service_date: { sort: 'desc' as const, nulls: 'last' as const } },
+        // Newest work first. Two services on the same day would otherwise come back in
+        // whatever order Postgres chose, which lets paging repeat or skip one; the id
+        // breaks the tie and shows the most recently recorded of the day first.
+        orderBy: [{ service_date: { sort: 'desc' as const, nulls: 'last' as const } }, { id: 'desc' as const }],
         take,
         skip,
         select: {
@@ -475,7 +479,7 @@ export class BikeEventService {
           service_date: true,
           total_cost: true,
           bikes: { select: BIKE_SELECT },
-          event_actions_done: { select: { events_action: { select: { action_name: true } } } },
+          event_actions_done: { select: { events_action: { select: { action_name: true, i18n_key: true } } } },
         },
       }),
       this.prisma.events_bikes.count({ where }),
@@ -489,7 +493,10 @@ export class BikeEventService {
         bike_name: bikeName(service.bikes),
         service_date: service.service_date,
         action_count: service.event_actions_done.length,
-        action_names: service.event_actions_done.map((actionDone) => actionDone.events_action.action_name),
+        actions: service.event_actions_done.map((actionDone) => ({
+          name: actionDone.events_action.action_name,
+          i18n_key: actionDone.events_action.i18n_key,
+        })),
         total_cost: service.total_cost === null ? null : Number(service.total_cost),
       })),
     };

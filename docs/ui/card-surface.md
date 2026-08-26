@@ -38,6 +38,15 @@ optional chevron — so they share `_frontend/bikecheck/src/components/HistoryCa
 rather than repeating the surface. Use `HistoryMetric` for each reading in the
 metric row. New history lists belong here too.
 
+**Service rows are the exception.** They left `HistoryCard`: a service card leads with an
+eyebrow (`SERVICE · 3 ACTIONS`), puts its price at the top edge and lists its Actions as
+bullets, which is no longer the ride row's shape. They carry their own type scale too —
+mono for the eyebrow, date, bullets and price, and the headings face for the bike name —
+so the Inter rules above do not apply to them. Inside a Month Group the surface belongs to
+the month and the services are rows within it, so the surface itself lives in
+`_frontend/bikecheck/src/features/service/serviceCardSurface.ts` — the card and the month
+both wear it.
+
 Everything that is *not* a list row still carries its own inline copy, because the
 surface is all they share:
 

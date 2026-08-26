@@ -3,8 +3,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
 
 const DEFAULT_LIMIT = 20;
-// One request cannot drain the table: rides carry their raw Strava payload,
-// so a large page is a large response.
+// One request cannot drain the table. The raw Strava payload no longer leaves the
+// server - only the name and the route are lifted out of it - but a page is still
+// a page of rows.
 const MAX_LIMIT = 100;
 
 // The bike as the list needs it — a nickname if the user gave one, the model
@@ -66,26 +67,45 @@ function clamp(value: number, fallback: number, min: number, max: number): numbe
   return Math.min(Math.max(Math.trunc(value), min), max);
 }
 
-// Strava's title for the ride, read out of the stored payload. It is written
-// with JSON.stringify, but Prisma hands a Json column back parsed, so both
-// shapes are accepted rather than assuming either. Strava always sends a name,
-// so the empty string is a type-level floor, not an expected state.
-function activityName(jsonData: unknown): string {
-  const activity = asActivity(jsonData);
-  const name = activity?.name;
-  return typeof name === 'string' ? name : '';
+// What the list needs out of the stored Strava payload. Read together in one pass:
+// the blob is large, and parsing it twice to answer two questions is the cost this
+// endpoint is trying to avoid.
+interface ActivityFacts {
+  name: string;
+  summary_polyline: string | null;
 }
 
-function asActivity(jsonData: unknown): { name?: unknown } | null {
+interface StravaActivity {
+  name?: unknown;
+  map?: { summary_polyline?: unknown } | null;
+}
+
+// The title and the route, read out of the stored payload. It is written with
+// JSON.stringify, but Prisma hands a Json column back parsed, so both shapes are
+// accepted rather than assuming either. Strava always sends a name, so the empty
+// string is a type-level floor, not an expected state; the route is genuinely
+// absent for a ride recorded without GPS.
+function activityFacts(jsonData: unknown): ActivityFacts {
+  const activity = asActivity(jsonData);
+  const name = activity?.name;
+  const polyline = activity?.map?.summary_polyline;
+
+  return {
+    name: typeof name === 'string' ? name : '',
+    summary_polyline: typeof polyline === 'string' && polyline.length > 0 ? polyline : null,
+  };
+}
+
+function asActivity(jsonData: unknown): StravaActivity | null {
   if (typeof jsonData === 'string') {
     try {
       return asActivity(JSON.parse(jsonData) as unknown);
     } catch {
-      // A payload that will not parse carries no name.
+      // A payload that will not parse carries neither a name nor a route.
       return null;
     }
   }
-  return typeof jsonData === 'object' && jsonData !== null ? (jsonData as { name?: unknown }) : null;
+  return typeof jsonData === 'object' && jsonData !== null ? (jsonData as StravaActivity) : null;
 }
 
 // A bike with no nickname is named by what it is. Both parts are optional, so
@@ -98,13 +118,15 @@ function bikeName(bike: RideRow['bikes']): string | null {
 }
 
 function toRideDto(row: RideRow): ResponseRideDto {
+  const facts = activityFacts(row.json_data);
+
   return {
     id: row.id,
     // BigInt does not survive JSON, and the id is past 2^53 anyway.
     activity_strava_id: row.activity_strava_id === null ? null : String(row.activity_strava_id),
     bike_id: row.bike_id,
     bike_name: bikeName(row.bikes),
-    name: activityName(row.json_data),
+    name: facts.name,
     started_at: row.started_at ? row.started_at.toISOString() : null,
     distance_m: row.distance_m ?? null,
     duration_min: row.duration_min ?? null,
@@ -112,6 +134,6 @@ function toRideDto(row: RideRow): ResponseRideDto {
     elevation_down_m: row.elevation_down_m ?? null,
     speed_avg: row.speed_avg ?? null,
     max_speed_kmh: row.max_speed_kmh ?? null,
-    json_data: row.json_data ?? null,
+    summary_polyline: facts.summary_polyline,
   };
 }

@@ -18,8 +18,9 @@ export interface Ride {
   elevation_down_m: number | null;
   speed_avg: number | null;
   max_speed_kmh: number | null;
-  // Stored raw Strava activity.
-  json_data: unknown;
+  // Strava's own simplified route, lifted out of the stored activity by the API so the
+  // list never carries the raw payload. Null for a ride recorded without GPS.
+  summary_polyline: string | null;
 }
 
 export interface RidePage {

@@ -876,15 +876,19 @@ describe('BikeEventService', () => {
           bike_name: 'Trail bike',
           service_date: SERVICE_DATE,
           action_count: 2,
-          action_names: ['Chain Replacement', 'Brake bleed'],
+          actions: [
+            { name: 'Chain Replacement', i18n_key: 'action.chainReplacement' },
+            { name: 'Brake bleed', i18n_key: 'action.bleed' },
+          ],
           total_cost: 350.5,
         },
       ]);
 
-      // Sorted by when the work happened, not when it was typed in.
+      // Sorted by when the work happened, not when it was typed in, and by id after that
+      // so a day carrying several services pages the same way every time.
       expect(mockPrisma.events_bikes.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: { service_date: { sort: 'desc', nulls: 'last' } },
+          orderBy: [{ service_date: { sort: 'desc', nulls: 'last' } }, { id: 'desc' }],
           take: 3,
           skip: 0,
         }),

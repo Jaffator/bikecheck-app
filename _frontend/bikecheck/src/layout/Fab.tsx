@@ -22,7 +22,7 @@ interface FabAction {
 const FAB_ACTIONS: Record<string, FabAction[]> = {
   "/": [
     { labelKey: "fab.addBike", path: "/bikes/new", icon: PiPersonSimpleBike },
-    { labelKey: "fab.addService", path: "/service/new", icon: RiWrenchLine },
+    { labelKey: "fab.addService", path: "/service/new", icon: BikecheckIcon! },
   ],
   "/bikes": [{ labelKey: "fab.addBike", path: "/bikes/new", icon: PiPersonSimpleBike }],
   "/service": [{ labelKey: "fab.addService", path: "/service/new", icon: BikecheckIcon! }],

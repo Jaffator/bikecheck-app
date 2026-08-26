@@ -83,6 +83,12 @@ list of Category Blocks. The wizard's hub: the only way on, and the place anothe
 from (ADR 0006).
 _Avoid_: Review (it is where work is added, not only checked)
 
+**Month Group**:
+The Services sharing a calendar month of their Service Date — the division the full history
+reads in. A view-only grouping; nothing in the schema represents it, and a Service with no
+Service Date belongs to no month.
+_Avoid_: Period, section
+
 **Wear Baseline**:
 A component's accumulators frozen at the moment of a service, so "how far since this was last
 done" can be measured per action. Accumulators keep growing; the baseline is what they are

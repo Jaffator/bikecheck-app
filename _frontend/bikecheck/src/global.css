@@ -216,3 +216,11 @@ body {
     border-radius: 50% 50% 0 0 / 90px 40px 0 0;
   }
 }
+
+/* The field draws its own calendar in the right section, so the browser's built-in one
+   would be a second icon under it. Hidden here rather than per field: Mantine's `styles`
+   are inline objects and cannot reach a pseudo-element. Tapping the field still opens the
+   picker. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+}

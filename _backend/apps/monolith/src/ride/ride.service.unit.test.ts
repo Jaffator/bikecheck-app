@@ -95,6 +95,51 @@ describe('RideService', () => {
       expect(page.items[0].bike_name).toBe('Specialized Epic EVO');
     });
 
+    it('lifts the name and the route out of the payload, and leaves the payload behind', async () => {
+      // Stored the way the Strava sync writes it: a stringified activity in a Json
+      // column, which Prisma hands back as the string it was given.
+      mockPrisma.rides.findMany.mockResolvedValue([
+        {
+          id: 5,
+          activity_strava_id: null,
+          bike_id: 7,
+          bikes: { bikename: 'Tarmac' },
+          json_data: JSON.stringify({
+            name: 'Morning Mountain Bike Ride',
+            map: { summary_polyline: 'ki}fHuqrbBGx@_@lA' },
+            segment_efforts: ['the rest of the blob, which the client never sees'],
+          }),
+        },
+      ]);
+      mockPrisma.rides.count.mockResolvedValue(1);
+
+      const page = await service.findPage(1, 20, 0);
+
+      expect(page.items[0].name).toBe('Morning Mountain Bike Ride');
+      expect(page.items[0].summary_polyline).toBe('ki}fHuqrbBGx@_@lA');
+      // The whole point of lifting them out: the blob does not travel.
+      expect(page.items[0]).not.toHaveProperty('json_data');
+    });
+
+    it('reads a ride recorded without GPS as having no route', async () => {
+      mockPrisma.rides.findMany.mockResolvedValue([
+        {
+          id: 5,
+          activity_strava_id: null,
+          bike_id: 7,
+          bikes: { bikename: 'Tarmac' },
+          json_data: { name: 'Indoor Ride', map: { summary_polyline: '' } },
+        },
+      ]);
+      mockPrisma.rides.count.mockResolvedValue(1);
+
+      const page = await service.findPage(1, 20, 0);
+
+      // An empty polyline is no route, not a route of length zero.
+      expect(page.items[0].summary_polyline).toBeNull();
+      expect(page.items[0].name).toBe('Indoor Ride');
+    });
+
     it('clamps the page size, so one request cannot ask for the whole table', async () => {
       mockPrisma.rides.findMany.mockResolvedValue([]);
       mockPrisma.rides.count.mockResolvedValue(0);

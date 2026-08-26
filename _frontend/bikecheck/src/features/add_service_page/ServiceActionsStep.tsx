@@ -17,7 +17,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Banknote, Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { AlertTriangle, Banknote, Check, ChevronDown, ChevronUp, NotepadText, Plus } from "lucide-react";
 import { useHeaderStore } from "@/store/store";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
@@ -547,6 +547,10 @@ function ActionRow({
             minRows={1}
             maxLength={500}
             styles={autosizeInputStyles}
+            rightSection={<NotepadText size={18} color="var(--color-text-dim)" />}
+            // The field grows as it is filled, and a centred section would drift down with
+            // it. Pinned to the top so the icon keeps sitting beside the first line.
+            rightSectionProps={{ style: { alignItems: "flex-start", paddingTop: "0.45rem" } }}
             onChange={(event) => onUpdate({ customNote: event.currentTarget.value })}
           />
 
