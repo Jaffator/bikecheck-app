@@ -166,6 +166,12 @@
         "content_type": {
           "type": "string"
         },
+        "size_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "created_at": {
           "type": [
             "string",

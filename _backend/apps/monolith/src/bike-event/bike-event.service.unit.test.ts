@@ -558,23 +558,26 @@ describe('BikeEventService', () => {
 
   describe('attachment upload', () => {
     // Only the fields the service reads - multer hands over far more than this.
-    const file = (originalname: string, mimetype: string): Express.Multer.File =>
-      ({ originalname, mimetype, buffer: Buffer.from('file') }) as Express.Multer.File;
+    const file = (originalname: string, mimetype: string, size = 4): Express.Multer.File =>
+      ({ originalname, mimetype, size, buffer: Buffer.from('file') }) as Express.Multer.File;
 
     it('compresses a photographed receipt on the way up', async () => {
       // ARRANGE
       mockStorage.uploadImageR2CloudFare.mockResolvedValue('https://cdn.test/service-attachments/abc.webp');
 
       // ACT
-      const attachment = await service.uploadAttachment(file('receipt.jpg', 'image/jpeg'));
+      const attachment = await service.uploadAttachment(file('receipt.jpg', 'image/jpeg', 2_400_000));
 
       // ASSERT: attachments live apart from bike photos, and the stored file is the
-      // re-encoded one, so its type is no longer what the phone sent.
+      // re-encoded one, so its type is no longer what the phone sent. The size is the one
+      // that arrived - re-encoding happens inside the storage service, which answers with
+      // a URL alone.
       expect(mockStorage.uploadImageR2CloudFare).toHaveBeenCalledWith(expect.any(Buffer), 'service-attachments');
       expect(attachment).toEqual({
         name: 'receipt.jpg',
         url: 'https://cdn.test/service-attachments/abc.webp',
         content_type: 'image/webp',
+        size_bytes: 2_400_000,
       });
     });
 
@@ -583,15 +586,17 @@ describe('BikeEventService', () => {
       mockStorage.uploadPdfR2CloudFare.mockResolvedValue('https://cdn.test/service-attachments/abc.pdf');
 
       // ACT
-      const attachment = await service.uploadAttachment(file('invoice.pdf', 'application/pdf'));
+      const attachment = await service.uploadAttachment(file('invoice.pdf', 'application/pdf', 1_258_291));
 
-      // ASSERT: a PDF has nothing to resize, so it never reaches the image path.
+      // ASSERT: a PDF has nothing to resize, so it never reaches the image path - and its
+      // size is exactly what ends up stored.
       expect(mockStorage.uploadPdfR2CloudFare).toHaveBeenCalledWith(expect.any(Buffer), 'service-attachments');
       expect(mockStorage.uploadImageR2CloudFare).not.toHaveBeenCalled();
       expect(attachment).toEqual({
         name: 'invoice.pdf',
         url: 'https://cdn.test/service-attachments/abc.pdf',
         content_type: 'application/pdf',
+        size_bytes: 1_258_291,
       });
     });
 
@@ -822,7 +827,9 @@ describe('BikeEventService', () => {
       await service.update(
         EVENT_ID,
         {
-          attachments_added: [{ name: 'invoice.pdf', url: 'https://cdn.test/a.pdf', content_type: 'application/pdf' }],
+          attachments_added: [
+            { name: 'invoice.pdf', url: 'https://cdn.test/a.pdf', content_type: 'application/pdf', size_bytes: 1024 },
+          ],
           attachments_removed: [3],
         },
         OWNER_ID,
@@ -839,8 +846,23 @@ describe('BikeEventService', () => {
             name: 'invoice.pdf',
             url: 'https://cdn.test/a.pdf',
             content_type: 'application/pdf',
+            size_bytes: 1024,
           },
         ],
+      });
+    });
+
+    it('records an attachment with no size on it as having none', async () => {
+      // ACT: an older client, or a caller that never learned the field.
+      await service.update(
+        EVENT_ID,
+        { attachments_added: [{ name: 'invoice.pdf', url: 'https://cdn.test/a.pdf', content_type: 'application/pdf' }] },
+        OWNER_ID,
+      );
+
+      // ASSERT: null rather than zero - the size is unknown, not empty.
+      expect(mockTx.bike_event_attachments.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ size_bytes: null })],
       });
     });
   });

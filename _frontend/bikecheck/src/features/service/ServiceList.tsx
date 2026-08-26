@@ -1,12 +1,18 @@
 // UI component using feature hooks.
-import type { ReactElement, ReactNode } from "react";
+import { useRef, type ReactElement, type ReactNode } from "react";
 import { Box, Group, Loader, Stack, Text } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ServiceHistoryCard } from "./ServiceHistoryCard";
+import { ServiceDetailSheet } from "./ServiceDetailSheet";
 import { SERVICE_CARD_SURFACE } from "./serviceCardSurface";
 import { formatMonthHeading, groupServicesByMonth } from "./serviceDates";
 import type { ServiceHistoryItem } from "./service.types";
+
+// Which service is open, if any. The detail is a layer over the list rather than a page
+// of its own — see ADR 0010 — so it rides in the query string, where the path the list
+// lives on is left untouched and the hardware back button closes it for free.
+const OPEN_PARAM = "service";
 
 interface ServiceListProps {
   services: ServiceHistoryItem[];
@@ -19,16 +25,71 @@ interface ServiceListProps {
   footer?: ReactNode;
 }
 
+// An id nobody could have typed by hand reads as nothing open, so junk in the URL never
+// reaches the API.
+function parseServiceId(raw: string | null): number | null {
+  if (raw === null) return null;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 // The service rows themselves, with the loading, failed and nothing-here states that
-// stand in for them. Both the landing page and the full history render through this, so
-// the two screens cannot drift apart.
+// stand in for them, and the detail that opens over them. Both the landing page and the
+// full history render through this, so the two screens cannot drift apart.
 export function ServiceList({ services, isLoading, isError, grouped = false, footer }: ServiceListProps): ReactElement {
-  const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Opening pushes a history entry; closing should therefore pop it rather than stack a
+  // second one, or the back button would afterwards land on the list twice over. A sheet
+  // opened by a link has no entry of ours to pop.
+  const openedHere = useRef(false);
+
+  const openId = parseServiceId(searchParams.get(OPEN_PARAM));
+  // The row the user tapped, so the sheet can open with its heading already filled in.
+  const openSeed = services.find((service) => service.id === openId) ?? null;
 
   function open(service: ServiceHistoryItem): void {
-    navigate(`/service/${service.id}`);
+    const params = new URLSearchParams(searchParams);
+    params.set(OPEN_PARAM, String(service.id));
+    openedHere.current = true;
+    setSearchParams(params);
   }
+
+  function close(): void {
+    if (openedHere.current) {
+      openedHere.current = false;
+      navigate(-1);
+      return;
+    }
+    const params = new URLSearchParams(searchParams);
+    params.delete(OPEN_PARAM);
+    setSearchParams(params, { replace: true });
+  }
+
+  return (
+    <>
+      <ServiceRows services={services} isLoading={isLoading} isError={isError} grouped={grouped} onOpen={open} />
+      {footer}
+      <ServiceDetailSheet serviceId={openId} seed={openSeed} onClose={close} />
+    </>
+  );
+}
+
+// The list itself, in whichever state it is in.
+function ServiceRows({
+  services,
+  isLoading,
+  isError,
+  grouped,
+  onOpen,
+}: {
+  services: ServiceHistoryItem[];
+  isLoading: boolean;
+  isError: boolean;
+  grouped: boolean;
+  onOpen: (service: ServiceHistoryItem) => void;
+}): ReactElement {
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -77,7 +138,7 @@ export function ServiceList({ services, isLoading, isError, grouped = false, foo
                     grouped
                     service={service}
                     onOpen={() => {
-                      open(service);
+                      onOpen(service);
                     }}
                   />
                 </Box>
@@ -85,7 +146,6 @@ export function ServiceList({ services, isLoading, isError, grouped = false, foo
             </Box>
           </Stack>
         ))}
-        {footer}
       </>
     );
   }
@@ -97,11 +157,10 @@ export function ServiceList({ services, isLoading, isError, grouped = false, foo
           key={service.id}
           service={service}
           onOpen={() => {
-            open(service);
+            onOpen(service);
           }}
         />
       ))}
-      {footer}
     </>
   );
 }

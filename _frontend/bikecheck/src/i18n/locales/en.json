@@ -154,10 +154,17 @@
     "unknownBike": "Unknown bike",
     "loadFailed": "Could not load services",
     "emptyForBike": "Nothing recorded for this bike yet.",
-    "detailTitle": "Service detail",
     "detailFailed": "Could not load this service",
     "noDate": "No date recorded",
     "noCharge": "NO CHARGE",
+    "total": "Total",
+    "components": "Components:",
+    "share": "Share",
+    "fileType": {
+      "pdf": "PDF document",
+      "image": "Photo",
+      "file": "File"
+    },
     "note": "Note",
     "attachments": "Attachments",
     "attachment": "Attachment",
@@ -349,6 +356,7 @@
   },
   "action": {
     "back": "Back",
+    "close": "Close",
     "retry": "Try again",
     "bleed": "Bleed",
     "padsReplacement": "Pad replacement",

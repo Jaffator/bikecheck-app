@@ -158,10 +158,17 @@
     "unknownBike": "Neznámé kolo",
     "loadFailed": "Servisy se nepodařilo načíst",
     "emptyForBike": "Pro toto kolo zatím nic zaznamenáno.",
-    "detailTitle": "Detail servisu",
     "detailFailed": "Servis se nepodařilo načíst",
     "noDate": "Bez data",
     "noCharge": "ZDARMA",
+    "total": "Celkem",
+    "components": "Komponenty:",
+    "share": "Sdílet",
+    "fileType": {
+      "pdf": "PDF dokument",
+      "image": "Fotka",
+      "file": "Soubor"
+    },
     "note": "Poznámka",
     "attachments": "Přílohy",
     "attachment": "Příloha",
@@ -367,6 +374,7 @@
   },
   "action": {
     "back": "Zpět",
+    "close": "Zavřít",
     "retry": "Zkusit znovu",
     "bleed": "Odvzdušnění",
     "padsReplacement": "Výměna destiček",

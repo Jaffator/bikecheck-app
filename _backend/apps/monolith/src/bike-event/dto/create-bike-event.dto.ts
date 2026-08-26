@@ -94,6 +94,14 @@ export class Attachment_BikeEventDto {
   @IsNotEmpty()
   @ApiProperty({ example: 'https://cdn.example.com/files/faktura.pdf' })
   url?: string;
+
+  // Handed back from the upload rather than measured here - the file itself never reaches
+  // create, only the URL it was stored under.
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @ApiProperty({ example: 1258291, required: false })
+  size_bytes?: number;
 }
 
 export class Actions_OnGroupDto {

@@ -110,11 +110,12 @@ export function useDeleteActionTag(): UseMutationResult<ActionTag, Error, number
   });
 }
 
-// One recorded Service in full.
-export function useServiceDetail(id: number): UseQueryResult<ServiceRecord> {
+// One recorded Service in full. Null is the closed sheet, which asks for nothing.
+export function useServiceDetail(id: number | null): UseQueryResult<ServiceRecord> {
   return useQuery({
     queryKey: ["services", "detail", id],
-    queryFn: () => getServiceDetail(id),
+    queryFn: () => getServiceDetail(id ?? 0),
+    enabled: id !== null,
   });
 }
 

@@ -115,6 +115,9 @@ export interface ServiceAttachment {
   name?: string;
   url?: string;
   content_type?: string;
+  // Null on attachments stored before the size was recorded; the detail then names the
+  // type alone rather than inventing a weight.
+  size_bytes?: number | null;
 }
 
 export interface ServiceRecord {
@@ -142,6 +145,8 @@ export interface UploadedAttachment {
   name: string;
   url: string;
   content_type: string;
+  // The file as it was handed over; a photo is re-encoded smaller on the way up.
+  size_bytes: number;
 }
 
 export interface ServiceActionInput {

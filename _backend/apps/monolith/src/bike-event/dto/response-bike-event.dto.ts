@@ -13,6 +13,13 @@ export class AttachmentDto {
 
   @ApiProperty({ example: 'https://cdn.example.com/invoice.pdf' })
   url?: string;
+
+  @ApiProperty({
+    example: 1258291,
+    nullable: true,
+    description: 'Null on attachments stored before the size was recorded',
+  })
+  size_bytes?: number | null;
 }
 
 // Tags are seeded alongside their action, so they carry a key of their own. A user may add
@@ -226,6 +233,9 @@ export class Response_ServiceAttachment_Dto {
 
   @ApiProperty({ example: 'image/webp', description: 'The type as stored, not as uploaded' })
   content_type!: string;
+
+  @ApiProperty({ example: 1258291, description: 'The file as received; a photo is re-encoded on the way up' })
+  size_bytes!: number;
 }
 
 // ------------------------------------------------------------------

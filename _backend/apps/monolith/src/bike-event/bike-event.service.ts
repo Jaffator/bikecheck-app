@@ -124,6 +124,7 @@ export class BikeEventService {
         name: file.originalname,
         url: await this.storage.uploadPdfR2CloudFare(file.buffer, ATTACHMENT_FOLDER),
         content_type: PDF_TYPE,
+        size_bytes: file.size,
       };
     }
 
@@ -132,6 +133,9 @@ export class BikeEventService {
         name: file.originalname,
         url: await this.storage.uploadImageR2CloudFare(file.buffer, ATTACHMENT_FOLDER),
         content_type: STORED_IMAGE_TYPE,
+        // The size as it arrived. A photo is re-encoded inside the storage service, which
+        // answers with a URL alone, so the stored file is smaller than this says.
+        size_bytes: file.size,
       };
     }
 
@@ -730,6 +734,8 @@ export class BikeEventService {
         name: attachment.name ?? '',
         url: attachment.url ?? '',
         content_type: attachment.content_type ?? '',
+        // Unknown rather than empty when the caller sent no size.
+        size_bytes: attachment.size_bytes ?? null,
       })),
     });
   }
@@ -1009,6 +1015,7 @@ export class BikeEventService {
         name: a.name,
         content_type: a.content_type,
         url: a.url,
+        size_bytes: a.size_bytes,
       })),
       actions_done: bikeEvent.event_actions_done.map((actionDone) => ({
         action_done_id: actionDone.id,
