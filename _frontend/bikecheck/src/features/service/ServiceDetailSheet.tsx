@@ -37,8 +37,11 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
 
   const currency = user?.currency ?? null;
   // Whichever is further along: the detail once it lands, the tapped card until then.
-  const bikeName = service?.bike_name ?? seed?.bike_name ?? null;
-  const serviceDate = service?.service_date ?? seed?.service_date ?? null;
+  // Null while neither has arrived, which is the only state the heading waits in — a
+  // service whose bike is gone is known, it just has no name to give.
+  const known = service ?? seed;
+  const bikeName = known === null || known === undefined ? null : (known.bike_name ?? t("service.unknownBike"));
+  const serviceDate = known?.service_date ?? null;
   const actionCount = service?.actions_done.length ?? seed?.action_count ?? null;
   const totalCost = service?.total_cost ?? seed?.total_cost ?? null;
 
@@ -77,20 +80,23 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
       />
 
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-        {isError ? (
-          <Text c="red.5">{t("service.detailFailed")}</Text>
-        ) : (
-          <Stack gap="lg" pb="md">
-            <Header
-              bikeName={bikeName}
-              serviceDate={serviceDate}
-              actionCount={actionCount}
-              kmAtTime={service?.bike_km_at_time ?? null}
-              minutesAtTime={service?.bike_minutes_at_time ?? null}
-              onClose={close}
-            />
+        <Stack gap="lg" pb="md">
+          {/* Outside the failure branch: a sheet that could not load is still a sheet the
+              user has to be able to shut. */}
+          <Header
+            bikeName={bikeName}
+            serviceDate={serviceDate}
+            actionCount={actionCount}
+            kmAtTime={service?.bike_km_at_time ?? null}
+            minutesAtTime={service?.bike_minutes_at_time ?? null}
+            onClose={close}
+          />
 
-            <TotalRow cost={totalCost} currency={currency} language={i18n.language} />
+          {isError ? (
+            <Text c="red.5">{t("service.detailFailed")}</Text>
+          ) : (
+            <>
+              <TotalRow cost={totalCost} currency={currency} language={i18n.language} />
 
             {isLoading ? (
               <Stack gap="md">
@@ -143,15 +149,16 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
                   </Box>
                 )}
               </>
-            )}
+              )}
+            </>
+          )}
 
-            {remove.isError && (
-              <Text size="xs" c="red.5">
-                {t("service.deleteFailed")}
-              </Text>
-            )}
-          </Stack>
-        )}
+          {remove.isError && (
+            <Text size="xs" c="red.5">
+              {t("service.deleteFailed")}
+            </Text>
+          )}
+        </Stack>
       </Box>
 
       {/* The two things that can be done with a recorded service stay reachable however
@@ -251,7 +258,13 @@ function Header({
       </Group>
 
       <Group gap="md" wrap="nowrap">
-        <MetaText>{serviceDate === null ? t("service.noDate") : dayjs(serviceDate).format("D. M. YYYY")}</MetaText>
+        {/* Nothing knows the date yet while the heading is still a skeleton; saying "no
+            date" there would be a different claim than "not loaded". */}
+        {bikeName === null ? (
+          <Skeleton h={14} w={110} radius="sm" />
+        ) : (
+          <MetaText>{serviceDate === null ? t("service.noDate") : dayjs(serviceDate).format("D. M. YYYY")}</MetaText>
+        )}
         {/* The bike as it stood when the work happened, not as it reads today. Only the
             detail knows these, so they arrive a moment after the rest. */}
         {kmAtTime !== null && <MetaText>{t("bikes.kilometres", { count: kmAtTime })}</MetaText>}
