@@ -131,11 +131,11 @@ export class Create_BikeEventDto {
   @ApiProperty({ example: 15, required: false })
   total_cost?: number;
 
-  // When the work happened. Omitted means it happened now, which is the live-recorded case.
+  // When the work happened. The client always knows it - a live-recorded service
+  // carries today, a backfilled one the date the work was done.
   @IsDateString()
-  @IsOptional()
-  @ApiProperty({ example: '2026-07-01T00:00:00.000Z', required: false })
-  service_date?: string;
+  @ApiProperty({ example: '2026-07-01T00:00:00.000Z' })
+  service_date!: string;
 
   @IsArray()
   @IsOptional()

@@ -118,7 +118,7 @@ describe('BikeEventController (e2e)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/bike-events/create')
       .set('Authorization', `Bearer ${ownerToken}`)
-      .send({ bike_id: bikeId, total_cost: 0, actions_done: [] })
+      .send({ bike_id: bikeId, total_cost: 0, service_date: '2026-07-01T00:00:00.000Z', actions_done: [] })
       .expect(201);
 
     expect(response.body.total_cost).toBe(0);

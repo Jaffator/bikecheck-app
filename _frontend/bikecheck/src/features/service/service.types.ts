@@ -170,8 +170,8 @@ export interface ServiceReplacementInput {
 export interface CreateServiceInput {
   bike_id: number;
   total_cost?: number;
-  // When the work happened; omitted means it happened now.
-  service_date?: string;
+  // When the work happened.
+  service_date: string;
   note?: string;
   attachment?: UploadedAttachment[];
   actions_done: ServiceActionInput[];
