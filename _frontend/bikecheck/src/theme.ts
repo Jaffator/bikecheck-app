@@ -34,8 +34,8 @@ const background: MantineColorsTuple = [
   "#868688",
   "#7e7e83",
   "#6c6c71",
-  "#0e0e0f",
-  "#09090a",
+  "#0a0a24",
+  "#10161A",
 ];
 const cards: MantineColorsTuple = [
   "#ededed",
@@ -49,6 +49,20 @@ const cards: MantineColorsTuple = [
   "#121111",
   "#0d0c0c",
 ];
+
+const cards2: MantineColorsTuple = [
+  "#ededed",
+  "#cacaca",
+  "#a7a7a7",
+  "#848484",
+  "#626161",
+  "#2e2c2c",
+  "#2e2c2c",
+  "#171616",
+  "#121111",
+  "#0d0c0c",
+];
+
 const inputs: MantineColorsTuple = [
   "#ececec",
   "#c8c8c8",
@@ -123,6 +137,7 @@ export const theme = createTheme({
     secondary,
     background,
     cards,
+    cards2,
     inputs,
     strava,
     text,

@@ -4,8 +4,10 @@ import type { IconType } from "react-icons";
 import Bikecheck_wrench from "./bikecheck_wrench.svg?react";
 import Bikecheck from "./bikecheck.svg?react";
 import Bikecheck_outline from "./bikecheck_outline.svg?react";
+import BikeIcon from "./bike.svg?react";
+import BikeIcon_fill from "./bike_fill.svg?react";
 
-export { Bikecheck_wrench, Bikecheck, Bikecheck_outline };
+export { Bikecheck_wrench, Bikecheck, Bikecheck_outline, BikeIcon, BikeIcon_fill };
 
 export type GroupIcon = FunctionComponent<SVGProps<SVGSVGElement>>;
 
@@ -14,6 +16,8 @@ const BY_NAME: Record<string, GroupIcon> = {
   Bikecheck_wrench,
   Bikecheck,
   Bikecheck_outline,
+  BikeIcon,
+  BikeIcon_fill,
 };
 
 // Unknown groups use the caller's fallback icon.

@@ -7,6 +7,7 @@ import { useCreateActionTag, useDeleteActionTag } from "@/features/service/servi
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { ActionTag } from "@/features/service/service.types";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 
 interface CustomTagDrawerProps {
   opened: boolean;
@@ -38,6 +39,7 @@ export function CustomTagDrawer({
   const { t } = useTranslation();
   const [name, setName] = useState("");
   const create = useCreateActionTag();
+  const keyboardOffset = useKeyboardOffset();
   const remove = useDeleteActionTag();
 
   // Seeded tags belong to everybody and to nobody, so they are not the user's to remove.
@@ -82,6 +84,8 @@ export function CustomTagDrawer({
           display: "flex",
           flexDirection: "column",
           maxHeight: "85dvh",
+          // Rides above the software keyboard, which the webview does not resize for.
+          marginBottom: keyboardOffset,
         },
         header: { backgroundColor: "var(--mantine-color-cards-6)" },
         body: {

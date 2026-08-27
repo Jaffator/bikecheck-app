@@ -21,7 +21,7 @@ export const inputStyles = {
     border: "1px solid var(--mantine-color-inputs-5)",
     height: "2.25rem",
     color: "var(--mantine-color-text-6)",
-    "--input-placeholder-color": "var(--mantine-color-cards-5)",
+    "--input-placeholder-color": "var(--mantine-color-text-9)",
   } as React.CSSProperties,
 };
 
@@ -45,7 +45,17 @@ export const disabledButtonStyles = {
   } as React.CSSProperties,
 };
 
-export function chipStyles(checked: boolean): {
+interface ChipStyleOptions {
+  // Whether a label too long for one line breaks onto the next. A chip naming a phrase
+  // wants that; a chip in a row that scrolls sideways does not, because there is always
+  // more width to move into. Defaults to wrapping.
+  wrap?: boolean;
+}
+
+export function chipStyles(
+  checked: boolean,
+  { wrap = true }: ChipStyleOptions = {},
+): {
   root: React.CSSProperties;
   label?: React.CSSProperties;
 } {
@@ -62,9 +72,10 @@ export function chipStyles(checked: boolean): {
       // size prop, and the two would drift the moment one of them changed.
       fontSize: 14,
       // Chip.css pins a chip to one line: nowrap, a fixed height and a line-height sized to
-      // that height. A tag name is a phrase, not a word, so all three go - the chip grows to
-      // its text and a row fits several instead of one. Padding replaces the lost height.
-      whiteSpace: "normal",
+      // that height. A tag name is a phrase, not a word, so a wrapping chip gives up all
+      // three - it grows to its text and a row fits several instead of one. Padding
+      // replaces the lost height either way, so both kinds of chip are the same height.
+      whiteSpace: wrap ? "normal" : "nowrap",
       height: "auto",
       minHeight: "var(--chip-size)",
       lineHeight: 1.3,
@@ -73,13 +84,11 @@ export function chipStyles(checked: boolean): {
       paddingLeft: "0.8rem",
       paddingRight: "0.8rem",
       textAlign: "left",
-      // min-content is the width of the chip's longest word, so a one-word tag keeps its
-      // single line and anything longer breaks at its spaces instead of taking the row.
       width: "auto",
       ...(checked
         ? {
             "--chip-color": "var(--mantine-color-primary-6)",
-            backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)",
+            backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 12%, transparent)",
             borderColor: "var(--mantine-color-primary-7)",
             color: "var(--mantine-color-primary-6)",
           }

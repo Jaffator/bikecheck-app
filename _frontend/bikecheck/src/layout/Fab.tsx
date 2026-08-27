@@ -3,14 +3,13 @@ import { ActionIcon, Affix, Menu, Stack } from "@mantine/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { GoPlus } from "react-icons/go";
-import { PiPersonSimpleBike } from "react-icons/pi";
-import { RiWrenchLine } from "react-icons/ri";
 import type { IconType } from "react-icons";
 import { tapFeedback } from "@/utils/haptics";
 import { useHideOnScrollDown } from "@/hooks/useHideOnScrollDown";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
 
 const BikecheckIcon = bikecheckIconType("Bikecheck");
+const BikeIconFill = bikecheckIconType("BikeIcon_fill");
 
 interface FabAction {
   labelKey: string;
@@ -21,10 +20,10 @@ interface FabAction {
 // Defines create actions for sections supported by backend endpoints.
 const FAB_ACTIONS: Record<string, FabAction[]> = {
   "/": [
-    { labelKey: "fab.addBike", path: "/bikes/new", icon: PiPersonSimpleBike },
+    { labelKey: "fab.addBike", path: "/bikes/new", icon: BikeIconFill! },
     { labelKey: "fab.addService", path: "/service/new", icon: BikecheckIcon! },
   ],
-  "/bikes": [{ labelKey: "fab.addBike", path: "/bikes/new", icon: PiPersonSimpleBike }],
+  "/bikes": [{ labelKey: "fab.addBike", path: "/bikes/new", icon: BikeIconFill! }],
   "/service": [{ labelKey: "fab.addService", path: "/service/new", icon: BikecheckIcon! }],
 };
 

@@ -65,9 +65,7 @@ export class BikeDataScrapeService {
         // neither - a search with no hits renders no cards at all, so the
         // selector never appears. That is an empty result, not a failure:
         // swallow the timeout and let the evaluate below return an empty array.
-        await page
-          .waitForSelector('a[href*="/bikes/"], a[href*="family="]', { timeout: 4000 })
-          .catch(() => null);
+        await page.waitForSelector('a[href*="/bikes/"], a[href*="family="]', { timeout: 4000 }).catch(() => null);
 
         return page.evaluate(() => {
           const cards = Array.from(document.querySelectorAll('a[href*="/bikes"]'));

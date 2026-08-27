@@ -160,9 +160,9 @@
     "emptyForBike": "Pro toto kolo zatím nic zaznamenáno.",
     "detailFailed": "Servis se nepodařilo načíst",
     "noDate": "Bez data",
-    "noCharge": "ZDARMA",
     "total": "Celkem",
-    "components": "Komponenty:",
+    "components": "Komponenty",
+    "serviceDetails": "Detaily servisu",
     "share": "Sdílet",
     "fileType": {
       "pdf": "PDF dokument",

@@ -44,6 +44,8 @@ export function useScrollIntoViewOnFocus<T extends HTMLElement>(footerSelector?:
     function handleFocusIn(event: FocusEvent): void {
       const target = event.target;
       if (!(target instanceof HTMLTextAreaElement) && !(target instanceof HTMLInputElement)) return;
+      // A read-only field opens a dropdown, not the keyboard, so nothing is covered.
+      if (target.readOnly) return;
 
       focusedRef.current = target;
       if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);

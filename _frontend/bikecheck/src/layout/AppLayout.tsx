@@ -7,7 +7,6 @@ import { GoHomeFill, GoHome } from "react-icons/go";
 // import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
 import { PiPath, PiPathBold } from "react-icons/pi";
-import { PiPersonSimpleBike, PiPersonSimpleBikeBold } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
@@ -20,6 +19,8 @@ import { useUnreadNotifications } from "@/features/notifications/notifications.q
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 
+const BikeIcon = bikecheckIconType("BikeIcon");
+const BikeIconFill = bikecheckIconType("BikeIcon_fill");
 const BikecheckIcon = bikecheckIconType("Bikecheck")!;
 const BikecheckOutlineIcon = bikecheckIconType("Bikecheck_outline")!;
 
@@ -36,8 +37,8 @@ const NAV_ITEMS: NavItem[] = [
   {
     labelKey: "nav.bikes",
     path: "/bikes",
-    icon: PiPersonSimpleBike,
-    icon_fill: PiPersonSimpleBikeBold,
+    icon: BikeIcon!,
+    icon_fill: BikeIconFill!,
   },
   {
     labelKey: "nav.service",
@@ -91,7 +92,6 @@ function isFullScreenRoute(pathname: string): boolean {
 // is not itself read as a sub-page. Every one of them is a sub-page with its own title.
 const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
   { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
-  { pattern: /^\/service\/\d+$/, titleKey: "service.detailTitle" },
 ];
 
 function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | undefined {
@@ -109,6 +109,12 @@ function getPageTitleKey(pathname: string): string | null {
   const match = Object.keys(PAGE_TITLE_KEYS).find((path) => pathname.startsWith(path));
   return match ? PAGE_TITLE_KEYS[match] : null;
 }
+
+// TEMPORARY: swapping the routed subtree for the offline page unmounts whatever the user
+// was in the middle of - the add-service wizard loses every step and lands back on the bike
+// choice. Off while we work out whether that swap is what resets the wizard during an
+// attachment upload. Flip back to true to restore the offline screen.
+const OFFLINE_PAGE_ENABLED = false;
 
 // Shares active-route matching between the header and tab bar.
 function isActivePath(path: string, pathname: string): boolean {
@@ -295,7 +301,7 @@ export function AppLayout(): ReactElement {
 
       {/* --------- MAIN CONTENT --------- */}
       <AppShell.Main style={{ position: "relative" }}>
-        {renderOfflinePage || isOffline ? (
+        {OFFLINE_PAGE_ENABLED && (renderOfflinePage || isOffline) ? (
           <OfflinePage />
         ) : (
           // Remounts each route to replay its entry animation.

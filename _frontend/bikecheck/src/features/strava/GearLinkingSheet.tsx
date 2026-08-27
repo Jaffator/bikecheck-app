@@ -124,7 +124,7 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
         {!isLoading && data !== undefined && data.strava_bikes.length === 0 && (
           <Stack mt={20}>
             <Group gap="sm" wrap="nowrap" align="center">
-              <TbBikeOff size={40} color="var(--mantine-color-red-7)"></TbBikeOff>
+              <TbBikeOff size={40} color="var(--mantine-color-cards-4)"></TbBikeOff>
               <Text size="sm" c="text.7">
                 {t("strava.gearLinkingNoGear")}
               </Text>

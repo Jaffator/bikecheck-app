@@ -18,6 +18,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Banknote, Calendar, Check, NotepadText, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { useUploadServiceAttachment } from "@/features/service/service.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
@@ -105,6 +106,8 @@ export function ServiceSummaryStep({
   const { data: user } = useCurrentUser();
   const upload = useUploadServiceAttachment();
   const keyboardOffset = useKeyboardOffset();
+  // Keep focused fields above the pinned bar and keyboard.
+  const formRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
   // What the user has typed into the total, while they are typing it. Null the rest of the
   // time, so the field reads the wizard's own number. Emptying the field means "use the sum
   // again", but that only takes effect on blur - otherwise clearing a field to retype it
@@ -113,7 +116,16 @@ export function ServiceSummaryStep({
 
   function pickFile(file: File | null): void {
     if (file === null) return;
-    upload.mutate(file, { onSuccess: onAttachmentAdded });
+    upload.mutate(file, {
+      onSuccess: (uploaded) => {
+        onAttachmentAdded(uploaded);
+        // The mutation holds on to what it was called with, so a photo the size of a
+        // camera shot would stay in memory long after it reached the server. Android
+        // reclaims the app while the picker is open, and every megabyte still held makes
+        // that likelier on the next attachment.
+        upload.reset();
+      },
+    });
   }
 
   function changeTotal(value: string | number): void {
@@ -135,7 +147,7 @@ export function ServiceSummaryStep({
 
   return (
     <>
-      <Stack gap="md" pb={BAR_CLEARANCE}>
+      <Stack gap="md" pb={BAR_CLEARANCE} ref={formRef}>
         {/* The date the work happened, which may be months before it was written down. */}
         {/* ---------- Service actions ---------- */}
         {blocks.map((block, index) => (
@@ -320,6 +332,7 @@ export function ServiceSummaryStep({
         the number the user is watching as they add work, and Save is the only way out of
         the hub (ADR 0006, ADR 0009). */}
       <Box
+        data-fixed-footer
         style={{
           position: "fixed",
           left: 0,

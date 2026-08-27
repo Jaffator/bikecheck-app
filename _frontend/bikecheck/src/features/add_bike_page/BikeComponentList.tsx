@@ -233,7 +233,7 @@ export function BikeComponentList({
             radius="md"
             style={{
               border: isOpen
-                ? "1px solid var(--mantine-color-primary-6)"
+                ? "1px solid var(--mantine-color-primary-9)"
                 : "1px solid var(--mantine-color-other-borderSubtle)",
               scrollMarginTop: "calc(4.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
             }}
@@ -292,9 +292,9 @@ export function BikeComponentList({
                     borderRadius: "50%",
                     border:
                       isOpen || configured > 0
-                        ? "1px solid var(--mantine-color-primary-6)"
+                        ? "1px solid var(--mantine-color-cards-3)"
                         : "1px solid var(--mantine-color-other-borderSolid)",
-                    color: isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)",
+                    color: isOpen || configured > 0 ? "var(--mantine-color-cards-3)" : "var(--mantine-color-text-8)",
                   }}
                 >
                   {isOpen ? <ChevronUp size={16} /> : configured > 0 ? <Pencil size={14} /> : <Plus size={16} />}
@@ -321,7 +321,7 @@ export function BikeComponentList({
                               width={18}
                               height={18}
                               style={{ flexShrink: 0 }}
-                              color={disabled ? "var(--mantine-color-text-9)" : "var(--mantine-color-primary-7)"}
+                              color={disabled ? "var(--mantine-color-text-9)" : "var(--mantine-color-primary-6)"}
                             />
                           )}
                           <Text

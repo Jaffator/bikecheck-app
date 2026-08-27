@@ -9,6 +9,7 @@ import { SERVICE_CARD_SURFACE } from "./serviceCardSurface";
 import { catalogueLabel } from "./serviceLabels";
 import { formatServiceDate, formatServiceDateShort } from "./serviceDates";
 import type { ServiceHistoryItem } from "./service.types";
+import BikeIcon from "@/assets/icons/svg_icons/bike.svg?react";
 
 // As many Actions as a card names before it starts to read as a list of its own. What is
 // left over is counted, and the detail has them all.
@@ -52,17 +53,10 @@ export function ServiceHistoryCard({
       }}
       className="active:scale-[0.985]"
     >
-      <Stack gap={6}>
+      <Stack gap={5}>
         {/* What this row is and how much work it holds, with the price at the far edge. */}
         <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
-          <Text
-            className="font-mono uppercase"
-            fz={11}
-            fw={600}
-            c="primary.5"
-            lts="0.08em"
-            lineClamp={1}
-          >
+          <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>
             {`${t("nav.service")} · ${t("service.actionCount", { count: service.action_count })}`}
           </Text>
 
@@ -70,7 +64,7 @@ export function ServiceHistoryCard({
             {/* A service with no cost recorded shows no price; an explicit zero still
                 reads as zero, because the user said the work was free. */}
             {service.total_cost !== null && (
-              <Text className="font-mono" fz={14} fw={600} c="text.6">
+              <Text className="font-mono" fz={13} fw={600} c="text.7">
                 {formatCost(service.total_cost, user?.currency ?? null, i18n.language)}
               </Text>
             )}
@@ -80,31 +74,26 @@ export function ServiceHistoryCard({
 
         {/* The bike and when the work happened - the line that identifies the occasion.
             Uppercase is styling only, so the nickname keeps the case the user typed. */}
-        <Group gap="sm" align="baseline" wrap="nowrap">
-          <Text
-            className="uppercase"
-            ff="var(--mantine-font-family-headings)"
-            fz={17}
-            fw={600}
-            c="text.6"
-            lineClamp={1}
-          >
+        <Group gap={7} align="center" wrap="nowrap">
+          <BikeIcon
+            width={18}
+            height={18}
+            style={{
+              flexShrink: 0,
+              transform: "translateY(-1px)",
+            }}
+            color="var(--mantine-color-text-6)"
+          />
+          <Text className="uppercase" fz={16} fw={600} c="text.6" lineClamp={1}>
             {service.bike_name ?? t("service.unknownBike")}
           </Text>
           {date !== null &&
             (grouped ? (
-              <Text className="font-mono" fz={12} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
+              <Text className="font-mono" fz={12} c="var(--mantine-color-text-8)" style={{ flexShrink: 0 }}>
                 {date}
               </Text>
             ) : (
-              <Text
-                className="uppercase"
-                ff="var(--mantine-font-family-headings)"
-                fz={17}
-                fw={600}
-                c="text.6"
-                style={{ flexShrink: 0 }}
-              >
+              <Text className="font-mono" fz={12} fw={100} c="var(--mantine-color-text-8)" style={{ flexShrink: 0 }}>
                 {`· ${date}`}
               </Text>
             ))}
@@ -116,9 +105,9 @@ export function ServiceHistoryCard({
             {t("service.noActions")}
           </Text>
         ) : (
-          <Stack gap={2}>
+          <Stack gap={0}>
             {shown.map((action, index) => (
-              <Group key={`${action.name}-${index}`} gap={8} align="baseline" wrap="nowrap">
+              <Group key={`${action.name}-${index}`} lh={1.15} gap={6} align="baseline" wrap="nowrap">
                 <Box c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
                   ·
                 </Box>

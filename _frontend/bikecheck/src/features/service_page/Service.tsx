@@ -1,6 +1,7 @@
 // Service page.
 import { useState, type ReactElement } from "react";
-import { Anchor, Group, Loader, Stack, Text } from "@mantine/core";
+import { Group, Loader, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
@@ -37,31 +38,53 @@ export function Service(): ReactElement {
     return <EmptyService />;
   }
 
+  // A bike with nothing on it gets the same empty state, but keeps the chips above it:
+  // they are the only way back to the bikes that do have a history.
+  if (!isError && !isLoading && services.length === 0) {
+    return (
+      <Stack gap={0} pb="xl">
+        {showChips && <BikeFilterChips bikes={bikes ?? []} selected={bikeId} onSelect={setBikeId} />}
+        <EmptyService />
+      </Stack>
+    );
+  }
+
   return (
     // The needs-attention section will sit above the history; nothing renders there yet.
     <Stack gap={0} pb="xl">
       {showChips && <BikeFilterChips bikes={bikes ?? []} selected={bikeId} onSelect={setBikeId} />}
 
       <Stack gap="sm" className="m-3">
-        <Group justify="space-between" align="center" wrap="nowrap">
-          <Text fw={600} fz={15} c="text.6">
-            {t("service.recentTitle")}
-          </Text>
-          <Anchor
-            component="button"
-            type="button"
-            fz={13}
-            c="primary.5"
-            onClick={() => {
-              // Carries the chip selection into the full list.
-              navigate(bikeId === null ? "/service/history" : `/service/history?bike=${bikeId}`);
-            }}
-          >
-            {t("service.viewAll")}
-          </Anchor>
-        </Group>
+        <Text fw={600} fz={15} c="text.7">
+          {t("service.recentTitle")}
+        </Text>
 
         <ServiceList services={services} isLoading={isLoading} isError={isError} />
+
+        {/* The way out of the recent few, under the list it continues. */}
+        <UnstyledButton
+          onClick={() => {
+            // Carries the chip selection into the full list.
+            navigate(bikeId === null ? "/service/history" : `/service/history?bike=${bikeId}`);
+          }}
+          style={{
+            display: "block",
+            width: "100%",
+            padding: "0.875rem",
+            borderRadius: "var(--mantine-radius-lg)",
+            border: "1px solid var(--color-border-subtle)",
+            backgroundColor: "var(--mantine-color-cards-6)",
+            transition: "transform 0.12s ease",
+          }}
+          className="active:scale-[0.985]"
+        >
+          <Group justify="center" align="center" gap={8} wrap="nowrap">
+            <Text className="font-mono uppercase" fz={12} fw={500} c="text.6" lts="0.08em">
+              {t("service.viewAll")}
+            </Text>
+            <ArrowRight size={14} color="var(--mantine-color-text-6)" />
+          </Group>
+        </UnstyledButton>
       </Stack>
     </Stack>
   );

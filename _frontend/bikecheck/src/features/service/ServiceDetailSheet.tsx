@@ -3,19 +3,26 @@ import { useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Divider, Drawer, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
-import { FileText, Image as ImageIcon, Share2, Trash2, Wrench, X } from "lucide-react";
+import { FileText, Image as ImageIcon, NotebookText, Paperclip, Share2, Trash2, X } from "lucide-react";
 import dayjs from "dayjs";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useDeleteService, useServiceDetail } from "./service.queries";
 import { catalogueLabel, componentLabel } from "./serviceLabels";
+import { componentTypeIcon } from "./componentIcon";
 import { attachmentSubtitle } from "./attachmentLabels";
 import type { ServiceActionDone, ServiceAttachment, ServiceHistoryItem } from "./service.types";
+import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 
 // The sheet stands over the list rather than covering it, so the list is still there to
 // come back to. The strip left above it is what says so.
 const SHEET_HEIGHT = "85vh";
+
+// Mantine gives the Affix behind the FAB and this drawer the same z-index, which leaves
+// the order in the DOM to decide - and the FAB's portal is rebuilt at the end of the body
+// every time a sub-page hands the tab back. Saying it outright keeps the sheet on top.
+const SHEET_Z_INDEX = 300;
 
 interface ServiceDetailSheetProps {
   // Null closes the sheet.
@@ -31,19 +38,29 @@ interface ServiceDetailSheetProps {
 export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSheetProps): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
-  const { data: service, isLoading, isError } = useServiceDetail(serviceId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // The sheet is still on screen while it slides out. Held on to, what it was last showing
+  // stays drawn all the way down instead of emptying into skeletons on the way.
+  const [lastOpened, setLastOpened] = useState<{ id: number; seed: ServiceHistoryItem | null } | null>(null);
   const remove = useDeleteService();
+
+  if (serviceId !== null && (lastOpened === null || lastOpened.id !== serviceId || lastOpened.seed !== seed)) {
+    setLastOpened({ id: serviceId, seed });
+  }
+
+  const shownId = serviceId ?? lastOpened?.id ?? null;
+  const shownSeed = serviceId !== null ? seed : (lastOpened?.seed ?? null);
+  const { data: service, isLoading, isError } = useServiceDetail(shownId);
 
   const currency = user?.currency ?? null;
   // Whichever is further along: the detail once it lands, the tapped card until then.
   // Null while neither has arrived, which is the only state the heading waits in — a
   // service whose bike is gone is known, it just has no name to give.
-  const known = service ?? seed;
+  const known = service ?? shownSeed;
   const bikeName = known === null || known === undefined ? null : (known.bike_name ?? t("service.unknownBike"));
   const serviceDate = known?.service_date ?? null;
-  const actionCount = service?.actions_done.length ?? seed?.action_count ?? null;
-  const totalCost = service?.total_cost ?? seed?.total_cost ?? null;
+  const actionCount = service?.actions_done.length ?? shownSeed?.action_count ?? null;
+  const totalCost = service?.total_cost ?? shownSeed?.total_cost ?? null;
 
   function close(): void {
     setConfirmingDelete(false);
@@ -56,7 +73,15 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
       onClose={close}
       position="bottom"
       radius="lg"
+      zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
+      transitionProps={{
+        duration: 400,
+        exitDuration: 400,
+        transition: "slide-up",
+        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
+        onExited: () => setLastOpened(null),
+      }}
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
@@ -98,57 +123,47 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
             <>
               <TotalRow cost={totalCost} currency={currency} language={i18n.language} />
 
-            {isLoading ? (
-              <Stack gap="md">
-                <Skeleton h={56} radius="sm" />
-                <Skeleton h={56} radius="sm" />
-              </Stack>
-            ) : (
-              <>
-                <Stack gap="lg">
-                  {service?.actions_done.map((action) => (
-                    <ActionRow
-                      key={action.action_done_id}
-                      action={action}
-                      currency={currency}
-                      language={i18n.language}
-                    />
-                  ))}
+              {isLoading ? (
+                <Stack gap="md">
+                  <Skeleton h={56} radius="sm" />
+                  <Skeleton h={56} radius="sm" />
                 </Stack>
-
-                {service?.actions_done.length === 0 && (
-                  <Text fz={14} c="var(--color-text-dim)">
-                    {t("service.noActions")}
-                  </Text>
-                )}
-
-                {(service?.attachments?.length ?? 0) > 0 && (
-                  <Stack gap="xs">
-                    <SectionHeading>{t("service.attachments")}</SectionHeading>
-                    <Divider color="var(--color-border-subtle)" />
-                    {service?.attachments?.map((attachment) => (
-                      <AttachmentCard key={attachment.id} attachment={attachment} language={i18n.language} />
+              ) : (
+                <>
+                  <Stack gap="lg">
+                    {service?.actions_done.map((action) => (
+                      <ActionRow key={action.action_done_id} action={action} currency={currency} language={i18n.language} />
                     ))}
                   </Stack>
-                )}
 
-                {service?.note && (
-                  <Box
-                    p="md"
-                    style={{
-                      borderRadius: "var(--mantine-radius-lg)",
-                      border: "1px solid var(--color-border-subtle)",
-                    }}
-                  >
-                    <Stack gap={6}>
-                      <SectionHeading>{t("service.note")}</SectionHeading>
-                      <Text fz={14} c="text.7" style={{ whiteSpace: "pre-wrap" }}>
+                  {service?.actions_done.length === 0 && (
+                    <Text fz={14} c="var(--color-text-dim)">
+                      {t("service.noActions")}
+                    </Text>
+                  )}
+
+                  {/* What the user said about the occasion comes before what they filed
+                      under it. */}
+                  {service?.note && (
+                    <Stack gap="xs">
+                      <SectionHeading icon={<NotebookText size={14} />}>{t("service.note")}</SectionHeading>
+                      <Divider color="var(--mantine-color-inputs-5)" />
+                      <Text fz={14} c="text.8" style={{ whiteSpace: "pre-wrap" }}>
                         {service.note}
                       </Text>
                     </Stack>
-                  </Box>
-                )}
-              </>
+                  )}
+
+                  {(service?.attachments?.length ?? 0) > 0 && (
+                    <Stack gap="xs">
+                      <SectionHeading icon={<Paperclip size={14} />}>{t("service.attachments")}</SectionHeading>
+                      <Divider color="var(--mantine-color-inputs-5)" />
+                      {service?.attachments?.map((attachment) => (
+                        <AttachmentCard key={attachment.id} attachment={attachment} language={i18n.language} />
+                      ))}
+                    </Stack>
+                  )}
+                </>
               )}
             </>
           )}
@@ -250,7 +265,7 @@ function Header({
       </Group>
 
       <Group gap={8} wrap="nowrap">
-        <Wrench size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+        <Bikecheck width={15} height={15} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
         <MetaText>
           {t("page.service")}
           {actionCount !== null && ` · ${t("service.actionCount", { count: actionCount })}`}
@@ -298,7 +313,7 @@ function TotalRow({
           </Text>
         )}
       </Group>
-      <Divider color="var(--color-border-subtle)" />
+      <Divider color="var(--mantine-color-inputs-5)" />
     </Stack>
   );
 }
@@ -322,53 +337,56 @@ function ActionRow({
         <Text fw={600} fz={17} c="text.6" style={{ minWidth: 0 }}>
           {catalogueLabel(action.action_i18n_key, action.action_name, t)}
         </Text>
-        {/* Work with no price recorded is explicitly free rather than blank. */}
-        <Text
-          className="font-mono"
-          fz={14}
-          ta="right"
-          c={action.partial_cost === null ? "var(--color-text-dim)" : "text.6"}
-          style={{ flexShrink: 0 }}
-        >
-          {action.partial_cost === null ? t("service.noCharge") : formatCost(action.partial_cost, currency, language)}
+        {/* Work with no price recorded reads as the zero it came to. */}
+        <Text className="font-mono" fz={14} ta="right" c="text.7" style={{ flexShrink: 0 }}>
+          {formatCost(action.partial_cost ?? 0, currency, language)}
         </Text>
       </Group>
 
       {action.mounted_components.length > 0 && (
-        <Group gap={6} align="flex-start" wrap="nowrap">
-          <Text className="font-mono uppercase" fz={11} fw={600} c="primary.5" lts="0.06em" style={{ flexShrink: 0 }}>
-            {t("service.components")}
-          </Text>
+        <Stack gap={2}>
+          <RowLabel>{t("service.components")}</RowLabel>
           <Stack gap={0}>
             {action.mounted_components.map((component) => (
-              <Text key={component.id} fz={13} c="text.7">
+              // Icon set inline so a long part name wraps under it rather than beside it.
+              <Text key={component.id} fz={13} c="text.8">
+                <Box component="span" mr={6} style={{ display: "inline-block", verticalAlign: "-3px" }}>
+                  {componentTypeIcon(component.component_type)}
+                </Box>
                 {componentLabel(component, t)}
               </Text>
             ))}
           </Stack>
-        </Group>
+        </Stack>
       )}
 
       {/* What was done, in the user's own words, with whatever tags they took already
           part of the same prose. Nothing stands in for it: the catalogue's tags
           describe the action, not the occasion — see ADR 0004. */}
       {action.note && (
-        <Text fz={13} c="var(--color-text-dim)" style={{ whiteSpace: "pre-wrap" }}>
-          {action.note}
-        </Text>
+        <Stack gap={2}>
+          <RowLabel>{t("service.serviceDetails")}</RowLabel>
+          <Text fz={13} c="var(--mantine-color-text-8)" style={{ whiteSpace: "pre-wrap" }}>
+            {action.note}
+          </Text>
+        </Stack>
       )}
     </Stack>
   );
 }
 
+// Names one block inside an action — quieter than a section heading, which speaks for
+// the whole sheet.
+function RowLabel({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <Text className="font-mono uppercase" fz={11} fw={600} c="text.7" lts="0.06em">
+      {children}
+    </Text>
+  );
+}
+
 // A receipt is worth having when the part fails under warranty, so it opens.
-function AttachmentCard({
-  attachment,
-  language,
-}: {
-  attachment: ServiceAttachment;
-  language: string;
-}): ReactElement {
+function AttachmentCard({ attachment, language }: { attachment: ServiceAttachment; language: string }): ReactElement {
   const { t } = useTranslation();
   const isImage = attachment.content_type?.startsWith("image/") ?? false;
   const FileIcon = isImage ? ImageIcon : FileText;
@@ -380,6 +398,7 @@ function AttachmentCard({
       }}
       p="sm"
       style={{
+        backgroundColor: "var(--mantine-color-cards2-6)",
         borderRadius: "var(--mantine-radius-md)",
         border: "1px solid var(--color-border-subtle)",
       }}
@@ -387,10 +406,10 @@ function AttachmentCard({
       <Group gap="sm" wrap="nowrap">
         <FileIcon size={20} color="var(--mantine-color-primary-5)" style={{ flexShrink: 0 }} />
         <Stack gap={0} style={{ minWidth: 0 }}>
-          <Text className="uppercase" fw={600} fz={14} c="text.6" lineClamp={1}>
+          <Text className="uppercase" fw={600} fz={13} c="text.7" lineClamp={1}>
             {attachment.name ?? t("service.attachment")}
           </Text>
-          <Text fz={12} c="var(--color-text-dim)">
+          <Text fz={12} c="var(--mantine-color-text-8)" lineClamp={1}>
             {attachmentSubtitle(attachment, language, t)}
           </Text>
         </Stack>
@@ -399,12 +418,16 @@ function AttachmentCard({
   );
 }
 
-// The small capitals that name a section of the sheet.
-function SectionHeading({ children }: { children: ReactNode }): ReactElement {
+// The small capitals that name a section of the sheet, with an optional mark in front of
+// them for the sections that hold something rather than state a figure.
+function SectionHeading({ children, icon }: { children: ReactNode; icon?: ReactNode }): ReactElement {
   return (
-    <Text className="font-mono uppercase" fz={12} fw={600} c="var(--color-text-dim)" lts="0.08em">
-      {children}
-    </Text>
+    <Group gap={6} align="center" wrap="nowrap" c="var(--mantine-color-text-8)">
+      {icon}
+      <Text className="font-mono uppercase" fz={12} fw={600} c="var(--mantine-color-text-8)" lts="0.08em">
+        {children}
+      </Text>
+    </Group>
   );
 }
 

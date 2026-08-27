@@ -156,9 +156,9 @@
     "emptyForBike": "Nothing recorded for this bike yet.",
     "detailFailed": "Could not load this service",
     "noDate": "No date recorded",
-    "noCharge": "NO CHARGE",
     "total": "Total",
-    "components": "Components:",
+    "components": "Components",
+    "serviceDetails": "Service details",
     "share": "Share",
     "fileType": {
       "pdf": "PDF document",

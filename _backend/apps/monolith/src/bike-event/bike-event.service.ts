@@ -347,7 +347,8 @@ export class BikeEventService {
             bike_id: dto.bike_id,
             note: dto.note,
             total_cost: dto.total_cost,
-            created_at: serviceDate,
+            created_at: new Date(),
+            service_date: dto.service_date,
           },
         });
         await this.writeActions(tx, bikeEvent.id, dto.bike_id, dto.actions_done, moment);

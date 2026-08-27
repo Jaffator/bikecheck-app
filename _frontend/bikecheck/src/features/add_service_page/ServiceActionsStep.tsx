@@ -34,6 +34,7 @@ import {
 } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel, componentTypeLabel, shortComponentLabel } from "@/features/service/serviceLabels";
 import { categoryIcon } from "@/features/service/categoryIcon";
+import { componentTypeIcon } from "@/features/service/componentIcon";
 import { CustomTagDrawer } from "./CustomTagDrawer";
 import type { DraftBlock, PickedAction } from "./serviceWizard.types";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
@@ -342,7 +343,10 @@ function ActionRow({
         styles={chipStyles(selectedComponentIds.includes(String(component.id)))}
         icon={false}
       >
-        {shortComponentLabel(component, t)}
+        <Group gap={6} wrap="nowrap">
+          {componentTypeIcon(component.component_type)}
+          {shortComponentLabel(component, t)}
+        </Group>
       </Chip>
     );
   }
@@ -373,7 +377,7 @@ function ActionRow({
             ? "1px solid var(--mantine-color-primary-8)"
             : picked
               ? "1px solid var(--mantine-color-primary-8)"
-              : "1px solid var(--mantine-color-cards-5)",
+              : "1px solid var(--mantine-color-cards-4)",
         boxShadow:
           "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
       }}
@@ -527,7 +531,7 @@ function ActionRow({
                   setTagDrawerOpen(true);
                 }}
               >
-                <Group gap={4} wrap="nowrap" align="center" pl="xs" pr="sm" py={4}>
+                <Group gap={4} wrap="nowrap" align="center" pl="xs" pr="sm" py={5}>
                   <Plus size={17} color="var(--mantine-color-text-7)" />
                   <Text fz={13} c="var(--mantine-color-text-7)" fw={500}>
                     {t("addService.addCustomTag")}
@@ -547,7 +551,7 @@ function ActionRow({
             minRows={1}
             maxLength={500}
             styles={autosizeInputStyles}
-            rightSection={<NotepadText size={18} color="var(--color-text-dim)" />}
+            rightSection={<NotepadText size={18} color="var(--mantine-color-text-7)" />}
             // The field grows as it is filled, and a centred section would drift down with
             // it. Pinned to the top so the icon keeps sitting beside the first line.
             rightSectionProps={{ style: { alignItems: "flex-start", paddingTop: "0.45rem" } }}
