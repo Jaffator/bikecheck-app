@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
-import sharp from 'sharp';
+import sharp, { type ResizeOptions } from 'sharp';
 import path from 'path';
 import 'dotenv/config';
 
@@ -20,6 +20,13 @@ const IMAGE_QUALITY = 80;
 // — the baked-in kind cannot be recoloured, so the transparent kind is flattened
 // to meet it. The frontend paints the same white behind these images.
 const IMAGE_BACKGROUND = '#FFFFFF';
+
+// The garage frames every bike photo at 2:1. A photo picked from the device is
+// cropped to that ratio in the app before it is sent, but a scraped product shot
+// arrives in whatever ratio the manufacturer published — squarish, most of the
+// time. Filling the frame with it would cut the wheels and bars off the bike, so
+// it is letterboxed into the frame on the same white instead.
+const FRAME_ASPECT = 2;
 
 @Injectable()
 export class StorageService {
@@ -79,15 +86,17 @@ export class StorageService {
    * opaque so a transparent original cannot pick up the surface behind it.
    * @param imageBuffer - The image as received, in any format sharp can read
    * @param cloudFolder - Cloud folder to upload to (e.g. 'bikes')
+   * @param letterbox - Pad the image into the 2:1 bike frame instead of leaving
+   * its own ratio, for photos the app never got to crop
    * @returns Public URL of the uploaded file
    */
-  async uploadImageR2CloudFare(imageBuffer: Buffer, cloudFolder: CloudFolder): Promise<string> {
+  async uploadImageR2CloudFare(imageBuffer: Buffer, cloudFolder: CloudFolder, letterbox = false): Promise<string> {
     try {
       const optimised = await sharp(imageBuffer)
         // Applies the EXIF orientation and drops the tag, so a photo taken on a
         // phone is not left on its side once the metadata is gone.
         .rotate()
-        .resize({ width: IMAGE_MAX_WIDTH, withoutEnlargement: true })
+        .resize(letterbox ? await this.frameFit(imageBuffer) : { width: IMAGE_MAX_WIDTH, withoutEnlargement: true })
         // No-op on an image that has no alpha, so device photos are untouched.
         .flatten({ background: IMAGE_BACKGROUND })
         .webp({ quality: IMAGE_QUALITY })
@@ -110,6 +119,26 @@ export class StorageService {
    */
   async uploadPdfR2CloudFare(fileBuffer: Buffer, cloudFolder: CloudFolder): Promise<string> {
     return await this.uploadFileR2CloudFare(fileBuffer, `${randomUUID()}.pdf`, cloudFolder);
+  }
+
+  /**
+   * Size the 2:1 frame to the image being padded into it. `withoutEnlargement`
+   * cannot be used here - with `fit: contain` it shrinks the canvas along with
+   * the image and the padding is lost - so the frame is capped by the source
+   * width instead, and a small product shot is never blown up to 1600px.
+   * @param imageBuffer - The image about to be letterboxed
+   * @returns Resize options covering the whole frame
+   */
+  private async frameFit(imageBuffer: Buffer): Promise<ResizeOptions> {
+    const { width } = await sharp(imageBuffer).metadata();
+    const frameWidth = Math.min(IMAGE_MAX_WIDTH, width ?? IMAGE_MAX_WIDTH);
+
+    return {
+      width: frameWidth,
+      height: Math.round(frameWidth / FRAME_ASPECT),
+      fit: 'contain',
+      background: IMAGE_BACKGROUND,
+    };
   }
 
   private getContentType(url: string): string {

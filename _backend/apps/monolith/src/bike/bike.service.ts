@@ -175,7 +175,8 @@ export class BikeService {
     }
     try {
       const file = await response.arrayBuffer();
-      return await this.storageService.uploadImageR2CloudFare(Buffer.from(file), 'bikes');
+      // Nothing cropped this one to the frame the garage draws, so it is padded into it.
+      return await this.storageService.uploadImageR2CloudFare(Buffer.from(file), 'bikes', true);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to upload image to cloud: ${message}`);
