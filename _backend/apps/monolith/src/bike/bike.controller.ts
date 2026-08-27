@@ -97,6 +97,14 @@ export class BikeController {
     return this.searchBikeExternalService.searchBikeList(bikeName, year);
   }
 
+  // ---------- GET External Bikes Of One Collection ----------
+  @Get('/external/family')
+  @ApiResponse({ status: 200, type: SearchBikeExternalResponseDto, isArray: true })
+  @ApiQuery({ name: 'url', type: String })
+  async searchFamilyExternal(@Query('url') url: string): Promise<SearchBikeExternalResponseDto[]> {
+    return await this.searchBikeExternalService.searchFamilyList(url);
+  }
+
   // ---------- GET Search External Bike components ----------
   @Get('/external/components')
   @ApiResponse({ status: 200, type: AssembleBikeComponentsDto, isArray: true })

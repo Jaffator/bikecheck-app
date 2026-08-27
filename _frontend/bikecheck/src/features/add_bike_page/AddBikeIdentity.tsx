@@ -1,6 +1,7 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, type ReactElement } from "react";
-import { Stack, Stepper, Text } from "@mantine/core";
+import { Button, Loader, Stack, Stepper, Text } from "@mantine/core";
+import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useHeaderStore } from "@/store/store";
 import { BikeSearchFallback } from "./BikeSearchFallback";
@@ -155,7 +156,7 @@ export function AddBikeIdentity(): ReactElement {
       </Stack>
 
       {/* Hide identity fields after receiving lookup results. */}
-      {active === 0 && !showsFallback && searchResults === null && (
+      {active === 0 && !searchReplacedForm && (
         <BikeIdentityForm
           form={wizard.form}
           brandNames={wizard.brandNames}
@@ -168,7 +169,45 @@ export function AddBikeIdentity(): ReactElement {
 
       {/* Replace identity fields with selectable results. */}
       {active === 0 && searchResults !== null && (
-        <BikeSearchResults results={searchResults} selectedBikeUrl={wizard.selectedBikeUrl} onSelect={wizard.selectBike} />
+        <BikeSearchResults
+          results={searchResults}
+          selectedBikeUrl={wizard.selectedBikeUrl}
+          onSelect={wizard.selectBike}
+          openCollection={wizard.openCollection}
+          onOpenCollection={wizard.enterCollection}
+          onLeaveCollection={wizard.leaveCollection}
+        />
+      )}
+
+      {/* A collection with nothing to show keeps the results it was picked from. */}
+      {active === 0 && wizard.openCollection !== null && searchResults === null && (
+        <Stack gap="md">
+          <Button
+            variant="subtle"
+            color="secondary.6"
+            leftSection={<ChevronLeft size={18} />}
+            onClick={wizard.leaveCollection}
+            radius="sm"
+            style={{ alignSelf: "flex-start", paddingLeft: 0 }}
+          >
+            {t("addBike.backToResults")}
+          </Button>
+
+          {/* Name the collection here too — it is the only thing on screen. */}
+          <Text fw={700} size="lg" c="text.6">
+            {wizard.openCollection.name}
+          </Text>
+
+          {wizard.collectionLoading ? (
+            <Loader size="sm" color="primary.6" />
+          ) : (
+            <Text size="sm" c="text.7">
+              {wizard.collectionFailed
+                ? t("addBike.collectionFailed", { code: wizard.diagnosticCode })
+                : t("addBike.collectionEmpty")}
+            </Text>
+          )}
+        </Stack>
       )}
 
       {/* Keep form context available when lookup needs retrying. */}

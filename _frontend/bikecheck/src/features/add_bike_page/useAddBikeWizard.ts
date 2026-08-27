@@ -4,7 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
 import { ApiError } from "@/api/client";
-import { useBikeFormOptions, useSearchBikeExternal, useExternalBikeComponents, useCreateBike } from "../bikes/bikes.queries";
+import {
+  useBikeFormOptions,
+  useSearchBikeExternal,
+  useFamilyBikes,
+  useExternalBikeComponents,
+  useCreateBike,
+} from "../bikes/bikes.queries";
 import type { BikeSearchResult, CreateBikePayload } from "../bikes/bikes.types";
 import { getStravaAuthorizeUrl } from "../strava/strava.api";
 import { useCurrentUser } from "../users/users.queries";
@@ -52,6 +58,11 @@ export interface AddBikeWizard {
   diagnosticCode: string;
   selectedBikeUrl: string | null;
   selectBike: (bikeUrl: string | null) => void;
+  openCollection: BikeSearchResult | null;
+  collectionLoading: boolean;
+  collectionFailed: boolean;
+  enterCollection: (collection: BikeSearchResult) => void;
+  leaveCollection: () => void;
   submitSearch: (values: AddBikeIdentityValues) => void;
   retrySearch: () => void;
   confirmSelection: () => void;
@@ -117,6 +128,12 @@ export function useAddBikeWizard(): AddBikeWizard {
   const [active, setActive] = useState(0);
   const [selectedBikeUrl, setSelectedBikeUrl] = useState<string | null>(null);
   const [confirmedBike, setConfirmedBike] = useState<BikeSearchResult | null>(null);
+  // A search can answer with collections instead of bikes, and a collection can
+  // hold further collections. The stack is what the list currently shows: empty
+  // means the search results themselves, and going back is one pop.
+  const [collectionStack, setCollectionStack] = useState<BikeSearchResult[]>([]);
+  const openCollection = collectionStack.length > 0 ? collectionStack[collectionStack.length - 1] : null;
+  const collectionBikes = useFamilyBikes(openCollection?.bikeUrl ?? null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
@@ -164,6 +181,10 @@ export function useAddBikeWizard(): AddBikeWizard {
 
   function prevStep(): void {
     if (active === 0) {
+      if (openCollection !== null) {
+        leaveCollection();
+        return;
+      }
       if (searchBike.isSuccess || searchBike.isError) {
         setSelectedBikeUrl(null);
         searchBike.reset();
@@ -176,6 +197,8 @@ export function useAddBikeWizard(): AddBikeWizard {
   }
 
   function submitSearch(values: AddBikeIdentityValues): void {
+    setSelectedBikeUrl(null);
+    setCollectionStack([]);
     searchBike.mutate({
       bikeName: `${values.brand} ${values.model}`.trim(),
       year: values.year ?? "",
@@ -183,11 +206,27 @@ export function useAddBikeWizard(): AddBikeWizard {
   }
 
   function retrySearch(): void {
+    setSelectedBikeUrl(null);
+    setCollectionStack([]);
     searchBike.reset();
   }
 
+  // Opening a collection swaps the list for its contents, one level deeper.
+  function enterCollection(collection: BikeSearchResult): void {
+    setSelectedBikeUrl(null);
+    setCollectionStack((current) => [...current, collection]);
+  }
+
+  function leaveCollection(): void {
+    setSelectedBikeUrl(null);
+    setCollectionStack((current) => current.slice(0, -1));
+  }
+
   function confirmSelection(): void {
-    const picked = searchBike.data?.find((result) => result.bikeUrl === selectedBikeUrl);
+    // After drilling into a collection the pick lives in that list, not among
+    // the results the collection was picked from.
+    const shown = openCollection !== null ? collectionBikes.data : searchBike.data;
+    const picked = shown?.find((result) => result.bikeUrl === selectedBikeUrl);
     if (!picked) return;
 
     setConfirmedBike(picked);
@@ -195,11 +234,13 @@ export function useAddBikeWizard(): AddBikeWizard {
   }
 
   function enterManually(): void {
+    setCollectionStack([]);
     searchBike.reset();
     nextStep();
   }
 
   function skipStep(): void {
+    setCollectionStack([]);
     searchBike.reset();
     nextStep();
   }
@@ -257,15 +298,26 @@ export function useAddBikeWizard(): AddBikeWizard {
 
   const searchFailed = searchBike.isError;
   const searchEmpty = searchBike.isSuccess && searchBike.data.length === 0;
-  const searchResults = searchBike.isSuccess && searchBike.data.length > 0 ? searchBike.data : null;
+  const collectionFailed = openCollection !== null && collectionBikes.isError;
+  const collectionLoading = openCollection !== null && collectionBikes.isPending;
 
-  const diagnosticCode =
-    searchBike.error instanceof ApiError ? `ERR_LOOKUP_${searchBike.error.status}` : "ERR_LOOKUP_UNKNOWN";
+  // Whatever the list is showing right now: the contents of the open
+  // collection, or the search results it was picked from.
+  const shownResults = openCollection !== null ? collectionBikes.data : searchBike.data;
+  const searchResults = shownResults !== undefined && shownResults.length > 0 ? shownResults : null;
+
+  // A failed collection is reported on its own, so the code says which of the
+  // two lookups gave up.
+  const failedLookup = openCollection !== null ? collectionBikes.error : searchBike.error;
+  const codePrefix = openCollection !== null ? "ERR_FAMILY" : "ERR_LOOKUP";
+  const diagnosticCode = failedLookup instanceof ApiError ? `${codePrefix}_${failedLookup.status}` : `${codePrefix}_UNKNOWN`;
 
   const canAdvance = active === 0 ? canSearch : active !== 1 || isBikeSpecificationComplete(specification);
 
-  const showsFallback = searchFailed || searchEmpty;
-  const searchReplacedForm = active === 0 && (showsFallback || searchResults !== null);
+  // An empty or broken collection keeps the results behind it, so it never
+  // falls back to manual entry the way an empty search does.
+  const showsFallback = openCollection === null && (searchFailed || searchEmpty);
+  const searchReplacedForm = active === 0 && (showsFallback || searchResults !== null || openCollection !== null);
 
   const componentsQuery = useExternalBikeComponents(confirmedBike?.bikeUrl ?? null);
   const groupsQuery = useComponentGroups();
@@ -439,6 +491,11 @@ export function useAddBikeWizard(): AddBikeWizard {
     diagnosticCode,
     selectedBikeUrl,
     selectBike: setSelectedBikeUrl,
+    openCollection,
+    collectionLoading,
+    collectionFailed,
+    enterCollection,
+    leaveCollection,
     submitSearch,
     retrySearch,
     confirmSelection,
