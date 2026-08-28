@@ -5,7 +5,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ServiceHistoryCard } from "./ServiceHistoryCard";
 import { ServiceDetailSheet } from "./ServiceDetailSheet";
-import { SERVICE_CARD_SURFACE } from "./serviceCardSurface";
 import { formatMonthHeading, groupServicesByMonth } from "./serviceDates";
 import type { ServiceHistoryItem } from "./service.types";
 
@@ -36,7 +35,13 @@ function parseServiceId(raw: string | null): number | null {
 // The service rows themselves, with the loading, failed and nothing-here states that
 // stand in for them, and the detail that opens over them. Both the landing page and the
 // full history render through this, so the two screens cannot drift apart.
-export function ServiceList({ services, isLoading, isError, grouped = false, footer }: ServiceListProps): ReactElement {
+export function ServiceList({
+  services,
+  isLoading,
+  isError,
+  grouped = false,
+  footer,
+}: ServiceListProps): ReactElement {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Opening pushes a history entry; closing should therefore pop it rather than stack a
@@ -68,7 +73,13 @@ export function ServiceList({ services, isLoading, isError, grouped = false, foo
 
   return (
     <>
-      <ServiceRows services={services} isLoading={isLoading} isError={isError} grouped={grouped} onOpen={open} />
+      <ServiceRows
+        services={services}
+        isLoading={isLoading}
+        isError={isError}
+        grouped={grouped}
+        onOpen={open}
+      />
       {footer}
       <ServiceDetailSheet serviceId={openId} seed={openSeed} onClose={close} />
     </>
@@ -120,30 +131,46 @@ function ServiceRows({
       <>
         {groupServicesByMonth(services).map((group) => (
           <Stack key={group.key} gap="xs">
-            <Text className="font-mono uppercase" fz={12} fw={600} c="var(--color-text-dim)" lts="0.08em">
-              {group.month === null ? t("service.noDateGroup") : formatMonthHeading(group.month)}
-            </Text>
-
-            {/* The Month Group wears the card surface; its services are rows inside it. */}
-            <Box style={SERVICE_CARD_SURFACE}>
-              {group.services.map((service, index) => (
-                <Box
-                  key={service.id}
-                  style={{
-                    // A hairline between rows, never above the first one.
-                    borderTop: index === 0 ? undefined : "1px solid var(--color-border-subtle)",
-                  }}
-                >
-                  <ServiceHistoryCard
-                    grouped
-                    service={service}
-                    onOpen={() => {
-                      onOpen(service);
-                    }}
-                  />
-                </Box>
-              ))}
+            {/* The heading holds at the top of the screen while its own month scrolls
+                past, so the user is never looking at dates without knowing the month.
+                It carries the page background: the cards pass under it, not through it.
+                The offset is the app header's height - see AppLayout. */}
+            <Box
+              py={6}
+              style={{
+                position: "sticky",
+                top: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+                zIndex: 1,
+                backgroundColor: "var(--mantine-color-background-9)",
+              }}
+            >
+              <Text
+                className="font-mono uppercase"
+                fz={12}
+                fw={600}
+                c="var(--color-text-dim)"
+                lts="0.08em"
+              >
+                {group.month === null
+                  ? t("service.noDateGroup")
+                  : formatMonthHeading(group.month)}
+              </Text>
             </Box>
+
+            {/* Every service is its own card; the month only gathers them under a
+                heading. */}
+            <Stack gap="sm">
+              {group.services.map((service) => (
+                <ServiceHistoryCard
+                  key={service.id}
+                  grouped
+                  service={service}
+                  onOpen={() => {
+                    onOpen(service);
+                  }}
+                />
+              ))}
+            </Stack>
           </Stack>
         ))}
       </>

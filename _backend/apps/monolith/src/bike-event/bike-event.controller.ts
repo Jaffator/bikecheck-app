@@ -21,6 +21,7 @@ import {
   Response_BikeCategory_Dto,
   Response_BikeEvent_Dto,
   Response_ServiceAttachment_Dto,
+  Response_HistoryTotals_Dto,
   Response_ServiceHistory_Dto,
 } from './dto/response-bike-event.dto';
 import { Create_ActionTagDto } from './dto/create-action-tag.dto';
@@ -136,12 +137,16 @@ export class BikeEventController {
   @ApiQuery({ name: 'bikeId', type: Number, required: false })
   @ApiQuery({ name: 'limit', type: Number, required: false })
   @ApiQuery({ name: 'offset', type: Number, required: false })
+  @ApiQuery({ name: 'from', type: String, required: false, description: 'Inclusive YYYY-MM-DD' })
+  @ApiQuery({ name: 'to', type: String, required: false, description: 'Inclusive YYYY-MM-DD' })
   @ApiResponse({ status: 200, type: Response_ServiceHistory_Dto })
   async history(
     @CurrentUser('userId') userId: string,
     @Query('bikeId') bikeId?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ): Promise<Response_ServiceHistory_Dto> {
     // An absent or empty limit/offset must reach the service as NaN so it falls back to
     // its own default - Number('') is 0, which would ask for an empty page.
@@ -150,6 +155,29 @@ export class BikeEventController {
       toNumber(limit),
       toNumber(offset),
       bikeId === undefined || bikeId === '' ? undefined : Number(bikeId),
+      from,
+      to,
+    );
+  }
+
+  // ---------- GET the History Totals for the current filter ----------
+  // Declared before ':id' for the same reason as '/history'.
+  @Get('/history/totals')
+  @ApiQuery({ name: 'bikeId', type: Number, required: false })
+  @ApiQuery({ name: 'from', type: String, required: false, description: 'Inclusive YYYY-MM-DD' })
+  @ApiQuery({ name: 'to', type: String, required: false, description: 'Inclusive YYYY-MM-DD' })
+  @ApiResponse({ status: 200, type: Response_HistoryTotals_Dto })
+  async historyTotals(
+    @CurrentUser('userId') userId: string,
+    @Query('bikeId') bikeId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ): Promise<Response_HistoryTotals_Dto> {
+    return this.bikeEventService.historyTotals(
+      Number(userId),
+      bikeId === undefined || bikeId === '' ? undefined : Number(bikeId),
+      from,
+      to,
     );
   }
 

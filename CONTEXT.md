@@ -89,6 +89,18 @@ reads in. A view-only grouping; nothing in the schema represents it, and a Servi
 Service Date belongs to no month.
 _Avoid_: Period, section
 
+**History Totals**:
+What the service history currently on screen adds up to — total spend, how many Services, and
+how many Replacements. Always read under the filter the list itself runs on: one bike or all of
+them, one Period or all time.
+_Avoid_: Summary (that is the wizard's hub step), Overview
+
+**Period**:
+The span of Service Dates the history is read for. Either end may be left open; both open is
+all time, which is the only Period that counts a Service carrying no Service Date — such a
+Service falls in no bounded Period.
+_Avoid_: Range, timeframe
+
 **Wear Baseline**:
 A component's accumulators frozen at the moment of a service, so "how far since this was last
 done" can be measured per action. Accumulators keep growing; the baseline is what they are

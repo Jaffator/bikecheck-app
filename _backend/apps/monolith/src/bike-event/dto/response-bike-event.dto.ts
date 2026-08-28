@@ -276,6 +276,19 @@ export class ServiceHistoryItemDto {
   total_cost!: number | null;
 }
 
+// The History Totals: what the history the user is currently looking at adds up to.
+// Scoped by the same filter the list is - one bike or all of them, one period or all time.
+export class Response_HistoryTotals_Dto {
+  @ApiProperty({ example: 1245.5, description: 'Sum of the services matching the filter; services with no cost add nothing' })
+  total_cost!: number;
+
+  @ApiProperty({ example: 24, description: 'Services matching the filter' })
+  service_count!: number;
+
+  @ApiProperty({ example: 7, description: 'Replacements performed across those services' })
+  replacement_count!: number;
+}
+
 export class Response_ServiceHistory_Dto {
   @ApiProperty({ type: [ServiceHistoryItemDto] })
   items!: ServiceHistoryItemDto[];

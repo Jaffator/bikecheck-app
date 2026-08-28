@@ -16,8 +16,9 @@ const SHORT_DATE_BY_LANGUAGE: Record<string, string> = {
   en: "MMM D",
 };
 
-// The language dayjs is holding, which i18n keeps aligned with i18next.
-function pattern(table: Record<string, string>, language: string): string {
+// The language dayjs is holding, which i18n keeps aligned with i18next. Exported because
+// the Period's dates pick their pattern the same way - see servicePeriod.ts.
+export function pattern(table: Record<string, string>, language: string): string {
   return table[language.split("-")[0]] ?? table.en;
 }
 

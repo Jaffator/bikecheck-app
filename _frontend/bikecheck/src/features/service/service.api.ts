@@ -2,6 +2,8 @@
 import { apiFetch } from "@/api/client";
 import type {
   ActionTag,
+  HistoryTotals,
+  ServicePeriod,
   BikeCategory,
   CategoryActions,
   CreateActionTagInput,
@@ -13,12 +15,39 @@ import type {
 
 // Gets one page of the caller's services, newest work first. Omitting the bike asks
 // across every bike they own.
-export async function getServiceHistory(limit: number, offset: number, bikeId?: number): Promise<ServiceHistoryPage> {
+export async function getServiceHistory(
+  limit: number,
+  offset: number,
+  bikeId?: number,
+  period: ServicePeriod = { from: null, to: null },
+): Promise<ServiceHistoryPage> {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (bikeId !== undefined) {
     params.set("bikeId", String(bikeId));
   }
+  appendPeriod(params, period);
   return apiFetch<ServiceHistoryPage>(`/bike-events/history?${params.toString()}`);
+}
+
+// The period as the API takes it: an absent end is an absent parameter.
+function appendPeriod(params: URLSearchParams, period: ServicePeriod): void {
+  if (period.from !== null) {
+    params.set("from", period.from);
+  }
+  if (period.to !== null) {
+    params.set("to", period.to);
+  }
+}
+
+// GET /bike-events/history/totals — what the same filter the list runs on adds up to.
+export async function getHistoryTotals(bikeId: number | undefined, period: ServicePeriod): Promise<HistoryTotals> {
+  const params = new URLSearchParams();
+  if (bikeId !== undefined) {
+    params.set("bikeId", String(bikeId));
+  }
+  appendPeriod(params, period);
+  const query = params.toString();
+  return apiFetch<HistoryTotals>(`/bike-events/history/totals${query === "" ? "" : `?${query}`}`);
 }
 
 // GET /bike-events/categories — the Component Categories the bike has parts in.

@@ -29,6 +29,10 @@ interface HeaderStore {
   // Hides the header's back arrow on a step that has no way back — see ADR 0006.
   backHidden: boolean;
   setBackHidden: (value: boolean) => void;
+  // A control the page hangs at the right edge of the header — the history's period filter.
+  // Sub-pages only: the main tabs already carry the avatar, bell and settings there.
+  actionSlot: ReactNode | null;
+  setActionSlot: (value: ReactNode | null) => void;
 }
 
 export const useHeaderStore = create<HeaderStore>((set) => ({
@@ -43,4 +47,6 @@ export const useHeaderStore = create<HeaderStore>((set) => ({
   setChromeHidden: (value) => set({ chromeHidden: value }),
   backHidden: false,
   setBackHidden: (value) => set({ backHidden: value }),
+  actionSlot: null,
+  setActionSlot: (value) => set(() => ({ actionSlot: value })),
 }));

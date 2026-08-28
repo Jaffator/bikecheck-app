@@ -16,12 +16,15 @@ import {
   deleteService,
   getBikeCategories,
   getCategoryActions,
+  getHistoryTotals,
   getServiceDetail,
   getServiceHistory,
   uploadServiceAttachment,
 } from "./service.api";
 import type {
   ActionTag,
+  HistoryTotals,
+  ServicePeriod,
   BikeCategory,
   CategoryActions,
   CreateActionTagInput,
@@ -50,17 +53,34 @@ export function useRecentServices(bikeId?: number): UseQueryResult<ServiceHistor
   });
 }
 
+// Distinguishes an all-time cache from one narrowed to a period.
+function periodKey(period: ServicePeriod): string {
+  return `${period.from ?? "*"}..${period.to ?? "*"}`;
+}
+
 // The full history, paged in as the user scrolls.
-export function useServiceHistory(bikeId?: number): UseInfiniteQueryResult<InfiniteData<ServiceHistoryPage>, Error> {
+export function useServiceHistory(
+  bikeId: number | undefined,
+  period: ServicePeriod,
+): UseInfiniteQueryResult<InfiniteData<ServiceHistoryPage>, Error> {
   return useInfiniteQuery({
-    queryKey: ["services", "history", bikeKey(bikeId)],
-    queryFn: ({ pageParam }) => getServiceHistory(PAGE_SIZE, pageParam, bikeId),
+    queryKey: ["services", "history", bikeKey(bikeId), periodKey(period)],
+    queryFn: ({ pageParam }) => getServiceHistory(PAGE_SIZE, pageParam, bikeId, period),
     initialPageParam: 0,
     // Stop when every service is loaded.
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((count, page) => count + page.items.length, 0);
       return loaded < lastPage.total ? loaded : undefined;
     },
+  });
+}
+
+// The History Totals for the filter the history is showing. A key of its own, so paging
+// the list does not refetch them and they survive the scroll.
+export function useHistoryTotals(bikeId: number | undefined, period: ServicePeriod): UseQueryResult<HistoryTotals> {
+  return useQuery({
+    queryKey: ["services", "totals", bikeKey(bikeId), periodKey(period)],
+    queryFn: () => getHistoryTotals(bikeId, period),
   });
 }
 

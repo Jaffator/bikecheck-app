@@ -20,6 +20,20 @@ export interface ServiceHistoryItem {
   total_cost: number | null;
 }
 
+// The History Totals: what the history under the current filter adds up to.
+export interface HistoryTotals {
+  total_cost: number;
+  service_count: number;
+  replacement_count: number;
+}
+
+// The period the history is read for. Either end may be open; both open is all time.
+export interface ServicePeriod {
+  // Inclusive YYYY-MM-DD, or null for an open end.
+  from: string | null;
+  to: string | null;
+}
+
 export interface ServiceHistoryPage {
   items: ServiceHistoryItem[];
   // Services matching the filter, ignoring limit and offset.

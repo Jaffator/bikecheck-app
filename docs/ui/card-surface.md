@@ -42,10 +42,11 @@ metric row. New history lists belong here too.
 eyebrow (`SERVICE · 3 ACTIONS`), puts its price at the top edge and lists its Actions as
 bullets, which is no longer the ride row's shape. They carry their own type scale too —
 mono for the eyebrow, date, bullets and price, and the headings face for the bike name —
-so the Inter rules above do not apply to them. Inside a Month Group the surface belongs to
-the month and the services are rows within it, so the surface itself lives in
-`_frontend/bikecheck/src/features/service/serviceCardSurface.ts` — the card and the month
-both wear it.
+so the Inter rules above do not apply to them. Inside a Month Group each service keeps its
+own card — the month only gathers them under a heading, which sticks to the top of the
+screen while that month scrolls past. The surface itself lives in
+`_frontend/bikecheck/src/features/service/serviceCardSurface.ts`, so the standalone card
+and the cards inside a month cannot drift apart.
 
 Everything that is *not* a list row still carries its own inline copy, because the
 surface is all they share:

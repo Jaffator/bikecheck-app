@@ -48,9 +48,11 @@ describe('BikeEventService', () => {
       findFirst: jest.fn(),
       findMany: jest.fn(),
       count: jest.fn(),
+      aggregate: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
     },
+    event_actions_done: { count: jest.fn() },
     component_groups: { findUnique: jest.fn() },
     events_action: { findMany: jest.fn() },
     components_mounted: { findMany: jest.fn() },
@@ -933,6 +935,106 @@ describe('BikeEventService', () => {
       mockPrisma.bikes.findFirst.mockResolvedValue(null);
 
       await expect(service.history(OWNER_ID, Number.NaN, Number.NaN, 4711)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('narrows the list to the period asked for, with the closing day inside it', async () => {
+      // ARRANGE
+      mockPrisma.events_bikes.findMany.mockResolvedValue([]);
+      mockPrisma.events_bikes.count.mockResolvedValue(0);
+
+      // ACT
+      await service.history(OWNER_ID, Number.NaN, Number.NaN, undefined, '2025-03-01', '2025-03-31');
+
+      // ASSERT: the window closes at the end of 31 March, so work dated that day counts.
+      expect(mockPrisma.events_bikes.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            service_date: { gte: new Date(2025, 2, 1), lt: new Date(2025, 3, 1) },
+          }),
+        }),
+      );
+    });
+
+    it('leaves the period open at either end when only one date is given', async () => {
+      // ARRANGE
+      mockPrisma.events_bikes.findMany.mockResolvedValue([]);
+      mockPrisma.events_bikes.count.mockResolvedValue(0);
+
+      // ACT: everything from March onwards, with no closing date.
+      await service.history(OWNER_ID, Number.NaN, Number.NaN, undefined, '2025-03-01', undefined);
+
+      // ASSERT
+      expect(mockPrisma.events_bikes.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ service_date: { gte: new Date(2025, 2, 1) } }),
+        }),
+      );
+    });
+
+    it('asks for no date window at all when the period is every service', async () => {
+      // ARRANGE
+      mockPrisma.events_bikes.findMany.mockResolvedValue([]);
+      mockPrisma.events_bikes.count.mockResolvedValue(0);
+
+      // ACT
+      await service.history(OWNER_ID, Number.NaN, Number.NaN);
+
+      // ASSERT: no service_date key, so the services carrying no date are counted too.
+      const [call] = mockPrisma.events_bikes.findMany.mock.calls.at(-1) as [{ where: Record<string, unknown> }];
+      expect(call.where).not.toHaveProperty('service_date');
+    });
+  });
+
+  describe('the History Totals', () => {
+    beforeEach(() => {
+      mockPrisma.events_bikes.aggregate.mockResolvedValue({
+        _sum: { total_cost: new Prisma.Decimal(1245.5) },
+        _count: { _all: 24 },
+      });
+      mockPrisma.event_actions_done.count.mockResolvedValue(7);
+    });
+
+    it('sums the spend, the services and the replacements of the filtered history', async () => {
+      // ACT
+      const result = await service.historyTotals(OWNER_ID);
+
+      // ASSERT
+      expect(result).toEqual({ total_cost: 1245.5, service_count: 24, replacement_count: 7 });
+    });
+
+    it('reads a history that carries no costs as nothing spent rather than as nothing at all', async () => {
+      // ARRANGE: every service was recorded without a price.
+      mockPrisma.events_bikes.aggregate.mockResolvedValue({
+        _sum: { total_cost: null },
+        _count: { _all: 3 },
+      });
+
+      // ACT
+      const result = await service.historyTotals(OWNER_ID);
+
+      // ASSERT: three services, and a spend of zero - not a missing number.
+      expect(result.total_cost).toBe(0);
+      expect(result.service_count).toBe(3);
+    });
+
+    it('counts the same period the list is narrowed to', async () => {
+      // ACT
+      await service.historyTotals(OWNER_ID, undefined, '2025-01-01', '2025-12-31');
+
+      // ASSERT
+      expect(mockPrisma.events_bikes.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            service_date: { gte: new Date(2025, 0, 1), lt: new Date(2026, 0, 1) },
+          }),
+        }),
+      );
+    });
+
+    it("refuses to total up someone else's bike", async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+
+      await expect(service.historyTotals(OWNER_ID, 4711)).rejects.toThrow(ForbiddenException);
     });
   });
 

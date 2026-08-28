@@ -16,6 +16,7 @@ import {
   Response_BikeCategory_Dto,
   Response_BikeEvent_Dto,
   Response_ServiceAttachment_Dto,
+  Response_HistoryTotals_Dto,
   Response_ServiceHistory_Dto,
 } from './dto/response-bike-event.dto';
 
@@ -452,7 +453,14 @@ export class BikeEventService {
   // when the work happened, so a backfilled service sorts where it belongs rather than at
   // the top, then by id so a day holding several services always reads the same way. The
   // total is what lets the UI page or scroll.
-  async history(userId: number, limit: number, offset: number, bikeId?: number): Promise<Response_ServiceHistory_Dto> {
+  async history(
+    userId: number,
+    limit: number,
+    offset: number,
+    bikeId?: number,
+    from?: string,
+    to?: string,
+  ): Promise<Response_ServiceHistory_Dto> {
     if (bikeId !== undefined) {
       await this.findOwnedBike(bikeId, userId);
     }
@@ -465,6 +473,9 @@ export class BikeEventService {
     const where = {
       is_deleted: { not: true },
       ...(bikeId !== undefined ? { bike_id: bikeId } : { bikes: { user_id: userId } }),
+      // The period the History Totals are counted for narrows the list under them too,
+      // so the card can never disagree with what is on screen.
+      ...serviceDateInPeriod(from, to),
     };
 
     const [services, total] = await Promise.all([
@@ -504,6 +515,37 @@ export class BikeEventService {
         })),
         total_cost: service.total_cost === null ? null : Number(service.total_cost),
       })),
+    };
+  }
+
+  // What the history the user is looking at adds up to, under the same filter as the list
+  // itself. A period narrows it to work dated inside that period, which leaves out the
+  // services carrying no Service Date - they fall in no period, and only the unbounded
+  // totals can count them.
+  async historyTotals(userId: number, bikeId?: number, from?: string, to?: string): Promise<Response_HistoryTotals_Dto> {
+    if (bikeId !== undefined) {
+      await this.findOwnedBike(bikeId, userId);
+    }
+
+    const where = {
+      is_deleted: { not: true },
+      ...(bikeId !== undefined ? { bike_id: bikeId } : { bikes: { user_id: userId } }),
+      ...serviceDateInPeriod(from, to),
+    };
+
+    const [totals, replacementCount] = await Promise.all([
+      this.prisma.events_bikes.aggregate({ where, _sum: { total_cost: true }, _count: { _all: true } }),
+      // Counted on the actions rather than on the services: one service can replace
+      // several parts, and each of those is a Replacement of its own - see ADR 0003.
+      this.prisma.event_actions_done.count({ where: { part_replaced: true, events_bikes: where } }),
+    ]);
+
+    return {
+      // A history where nobody recorded a price has spent zero, which is a number - not
+      // an absent one.
+      total_cost: totals._sum.total_cost === null ? 0 : Number(totals._sum.total_cost),
+      service_count: totals._count._all,
+      replacement_count: replacementCount,
     };
   }
 
@@ -1075,6 +1117,41 @@ function bikeName(
     return null;
   }
   return [bike.bike_brand, bike.bike_model, bike.year].filter(Boolean).join(' ');
+}
+
+// The window a period of Service Dates falls in. Either end may be left open, and with
+// both open there is no window at all - which is what asks for every Service, including
+// the ones carrying no Service Date.
+//
+// Local time throughout: a service dated 1 January belongs to the day the user wrote
+// down, not to the one UTC would put it in. The closing day is inside the period, so the
+// window runs to the start of the day after it.
+function serviceDateInPeriod(from?: string, to?: string): { service_date?: { gte?: Date; lt?: Date } } {
+  const start = parseDay(from);
+  const end = parseDay(to);
+  if (start === undefined && end === undefined) return {};
+
+  return {
+    service_date: {
+      ...(start === undefined ? {} : { gte: start }),
+      ...(end === undefined ? {} : { lt: nextDay(end) }),
+    },
+  };
+}
+
+// One YYYY-MM-DD as local midnight. Anything else reads as no bound at all, so junk in
+// the query string widens the period rather than emptying it.
+function parseDay(day?: string): Date | undefined {
+  if (day === undefined || day === '') return undefined;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (match === null) return undefined;
+
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function nextDay(day: Date): Date {
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
 }
 
 // A page size the caller left out arrives as NaN and takes the default; one they

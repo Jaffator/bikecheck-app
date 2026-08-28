@@ -124,7 +124,12 @@
 
 html,
 body {
+  /* `hidden` here would make the page its own scroll container and kill every
+     `position: sticky` inside it - the service history's month headings among them.
+     `clip` cuts the same overflow off without scrolling; the `hidden` line stays as the
+     fallback for browsers that do not know `clip`. */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {

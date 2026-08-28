@@ -144,6 +144,7 @@ export function AppLayout(): ReactElement {
   const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
   // A step the user cannot walk back out of hides the arrow rather than lying about it.
   const backHidden = useHeaderStore((state) => state.backHidden);
+  const actionSlot = useHeaderStore((state) => state.actionSlot);
   // Hides chrome when the route or page state requires it.
   const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
   // Home has no header icon.
@@ -219,18 +220,22 @@ export function AppLayout(): ReactElement {
         >
           <Group h="100%" justify="space-between" w="100%">
             {subPage ? (
-              <Group gap="xs" c="text.6" wrap="nowrap" style={{ minWidth: 0 }}>
-                {!backHidden && (
-                  <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
-                    <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
-                  </ActionIcon>
-                )}
-                {overrideTitleSlot ?? (
-                  <Text fw={700} size="lg" c="text.6">
-                    {pageTitleKey && t(pageTitleKey)}
-                  </Text>
-                )}
-              </Group>
+              <>
+                <Group gap="xs" c="text.6" wrap="nowrap" style={{ minWidth: 0 }}>
+                  {!backHidden && (
+                    <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
+                      <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
+                    </ActionIcon>
+                  )}
+                  {overrideTitleSlot ?? (
+                    <Text fw={700} size="lg" c="text.6">
+                      {pageTitleKey && t(pageTitleKey)}
+                    </Text>
+                  )}
+                </Group>
+                {/* Whatever the page hung here; nothing renders when it hung nothing. */}
+                {actionSlot}
+              </>
             ) : (
               <>
                 <Group gap="xs" c="cards.1">
