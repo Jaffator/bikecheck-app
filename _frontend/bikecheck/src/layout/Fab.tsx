@@ -89,7 +89,7 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
         radius="xl"
         size={FAB_SIZE}
         aria-label={label}
-        style={{ boxShadow: "0 0 10px 0 color-mix(in srgb, var(--mantine-color-primary-6) 45%, transparent)" }}
+        style={{ boxShadow: "0 0 10px 0 color-mix(in srgb, var(--mantine-color-primary-6) 35%, transparent)" }}
       >
         <GoPlus size={35} />
       </ActionIcon>

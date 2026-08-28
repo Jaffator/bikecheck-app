@@ -142,6 +142,8 @@
   "service": {
     "emptyTitle": "No Components to Service",
     "emptyBody": "Add your bike first — to start adding services and monitoring maintenance health and precision mileage.",
+    "emptyBikeTitle": "No serviced yet",
+    "emptyBikeBody": "This bike has no service records yet — add one to start tracking its maintenance.",
     "recentTitle": "Recent services",
     "viewAll": "View all history",
     "allBikes": "All bikes",

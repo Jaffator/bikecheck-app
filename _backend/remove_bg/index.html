@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>remove-bg preview</title>
+    <style>
+      :root {
+        --checker: #2a2a2e;
+        --checker-alt: #232327;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px;
+        font:
+          14px/1.4 system-ui,
+          sans-serif;
+        color: #e6e6e6;
+        background: #17171a;
+      }
+
+      .bar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      button {
+        padding: 6px 12px;
+        border: 1px solid #3a3a40;
+        border-radius: 6px;
+        background: #232327;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button[aria-pressed='true'] {
+        border-color: #7a7aff;
+      }
+
+      /* The stage holds the cutout; its background is what the buttons swap, so the
+         transparent edges can be judged against light, dark and colored ground. */
+      .stage {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        border-radius: 12px;
+        min-height: 60vh;
+      }
+
+      .stage[data-bg='checker'] {
+        background-color: var(--checker);
+        background-image:
+          linear-gradient(45deg, var(--checker-alt) 25%, transparent 25%),
+          linear-gradient(-45deg, var(--checker-alt) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, var(--checker-alt) 75%),
+          linear-gradient(-45deg, transparent 75%, var(--checker-alt) 75%);
+        background-size: 24px 24px;
+        background-position:
+          0 0,
+          0 12px,
+          12px -12px,
+          -12px 0;
+      }
+
+      .stage[data-bg='white'] {
+        background: #ffffff;
+      }
+      .stage[data-bg='black'] {
+        background: #000000;
+      }
+      .stage[data-bg='brand'] {
+        background: linear-gradient(135deg, #3b82f6, #a855f7);
+      }
+      .stage[data-bg='photo'] {
+        background: url('test.jpeg') center / cover no-repeat;
+      }
+
+      img {
+        max-width: 100%;
+        max-height: 70vh;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <span>background:</span>
+      <button data-value="checker" aria-pressed="true">checker</button>
+      <button data-value="white" aria-pressed="false">white</button>
+      <button data-value="black" aria-pressed="false">black</button>
+      <button data-value="brand" aria-pressed="false">brand</button>
+      <button data-value="photo" aria-pressed="false">original photo</button>
+    </div>
+
+    <div class="stage" data-bg="checker">
+      <img src="testcutout.png" alt="background-removed cutout" />
+    </div>
+
+    <script>
+      const stage = document.querySelector('.stage');
+      const buttons = document.querySelectorAll('.bar button');
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          stage.dataset.bg = button.dataset.value;
+          buttons.forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -44,7 +44,7 @@ export function Service(): ReactElement {
     return (
       <Stack gap={0} pb="xl">
         {showChips && <BikeFilterChips bikes={bikes ?? []} selected={bikeId} onSelect={setBikeId} />}
-        <EmptyService />
+        <EmptyService forBike />
       </Stack>
     );
   }

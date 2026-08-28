@@ -8,8 +8,8 @@
 // The server takes the raw image bytes and answers with a PNG: a transparent cutout, or
 // the grayscale alpha matte when OUTPUT_KIND says so.
 
-import { readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, extname, join, resolve } from "node:path";
+import { readFile, writeFile } from 'node:fs/promises';
+import { basename, dirname, extname, join, resolve } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // What to run. Edit these.
@@ -17,24 +17,25 @@ import { basename, dirname, extname, join, resolve } from "node:path";
 
 // The photo to strip the background from. Only .jpg and .png; the server takes the bytes
 // as they are.
-const INPUT_PATH = "D:/Projects/BikeCheck/_frontend/bikecheck/src/assets/hero.png";
+const INPUT_PATH = 'D:\\Projects\\BikeCheck\\_backend\\remove_bg\\test3.jpg';
 
 // Where the result goes. Empty means beside the input, named after it.
-const OUTPUT_PATH = "";
+const OUTPUT_PATH = 'D:\\Projects\\BikeCheck\\_backend\\remove_bg\\testcutout.png';
 
 // "cutout" for the transparent PNG, "matte" for the grayscale alpha.
-const OUTPUT_KIND = "cutout";
+const OUTPUT_KIND = 'cutout';
 
 // Where the container listens.
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = 'http://localhost:8080';
 
 // ---------------------------------------------------------------------------
 
 // What the server accepts as a raw body; anything else has to be converted first.
 const CONTENT_TYPES = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
 };
 
 // The server refuses work until the model is loaded, so say that plainly rather than
@@ -50,14 +51,14 @@ async function removeBackground(inputPath) {
   const extension = extname(inputPath).toLowerCase();
   const contentType = CONTENT_TYPES[extension];
   if (!contentType) {
-    throw new Error(`Unsupported input ${extension || "(no extension)"}; use .jpg or .png.`);
+    throw new Error(`Unsupported input ${extension || '(no extension)'}; use .jpg or .png.`);
   }
 
   const image = await readFile(inputPath);
   const startedAt = Date.now();
   const response = await fetch(`${BASE_URL}/api/v1/remove-background?output=${OUTPUT_KIND}`, {
-    method: "POST",
-    headers: { "Content-Type": contentType },
+    method: 'POST',
+    headers: { 'Content-Type': contentType },
     body: image,
   });
   const roundTripMs = Date.now() - startedAt;
@@ -68,7 +69,7 @@ async function removeBackground(inputPath) {
   }
 
   const png = Buffer.from(await response.arrayBuffer());
-  return { png, roundTripMs, latencyMs: response.headers.get("X-Latency-Ms"), sentBytes: image.length };
+  return { png, roundTripMs, latencyMs: response.headers.get('X-Latency-Ms'), sentBytes: image.length };
 }
 
 async function main() {
@@ -85,7 +86,7 @@ async function main() {
 
   console.log(`sent:      ${inputPath} (${(result.sentBytes / 1024).toFixed(1)} kB)`);
   console.log(`received:  ${outputPath} (${(result.png.length / 1024).toFixed(1)} kB, ${OUTPUT_KIND})`);
-  console.log(`inference: ${result.latencyMs ?? "?"} ms, round trip ${result.roundTripMs} ms`);
+  console.log(`inference: ${result.latencyMs ?? '?'} ms, round trip ${result.roundTripMs} ms`);
 }
 
 main().catch((error) => {

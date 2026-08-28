@@ -35,13 +35,7 @@ function parseServiceId(raw: string | null): number | null {
 // The service rows themselves, with the loading, failed and nothing-here states that
 // stand in for them, and the detail that opens over them. Both the landing page and the
 // full history render through this, so the two screens cannot drift apart.
-export function ServiceList({
-  services,
-  isLoading,
-  isError,
-  grouped = false,
-  footer,
-}: ServiceListProps): ReactElement {
+export function ServiceList({ services, isLoading, isError, grouped = false, footer }: ServiceListProps): ReactElement {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // Opening pushes a history entry; closing should therefore pop it rather than stack a
@@ -73,13 +67,7 @@ export function ServiceList({
 
   return (
     <>
-      <ServiceRows
-        services={services}
-        isLoading={isLoading}
-        isError={isError}
-        grouped={grouped}
-        onOpen={open}
-      />
+      <ServiceRows services={services} isLoading={isLoading} isError={isError} grouped={grouped} onOpen={open} />
       {footer}
       <ServiceDetailSheet serviceId={openId} seed={openSeed} onClose={close} />
     </>
@@ -144,16 +132,8 @@ function ServiceRows({
                 backgroundColor: "var(--mantine-color-background-9)",
               }}
             >
-              <Text
-                className="font-mono uppercase"
-                fz={12}
-                fw={600}
-                c="var(--color-text-dim)"
-                lts="0.08em"
-              >
-                {group.month === null
-                  ? t("service.noDateGroup")
-                  : formatMonthHeading(group.month)}
+              <Text className="font-mono uppercase" fz={12} fw={600} c="var(--color-text-dim)" lts="0.08em">
+                {group.month === null ? t("service.noDateGroup") : formatMonthHeading(group.month)}
               </Text>
             </Box>
 

@@ -142,6 +142,8 @@
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",
     "emptyBody": "Nejdřív přidej kolo — pak můžeš zadávat servisy a sledovat stav údržby i přesný nájezd.",
+    "emptyBikeTitle": "Zatím žádný servis",
+    "emptyBikeBody": "U tohoto kola zatím není žádný servis — přidej první a začni sledovat údržbu.",
     "recentTitle": "Poslední servisy",
     "viewAll": "Zobrazit celou historii",
     "allBikes": "Všechna kola",

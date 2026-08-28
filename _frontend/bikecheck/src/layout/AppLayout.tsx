@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -249,7 +249,18 @@ export function AppLayout(): ReactElement {
                 <Group gap="sm">
                   <UnstyledButton onClick={() => navigate("/profile")} aria-label={t("page.profile")} mr="3">
                     {/* name drives the initials fallback when the user has no picture */}
-                    <Avatar src={user?.avatar_url} name={user?.name} color="initials" radius="xl" size={32} />
+                    <Avatar
+                      src={user?.avatar_url}
+                      name={user?.name}
+                      radius="xl"
+                      size={32}
+                      style={
+                        {
+                          "--avatar-bg": "color-mix(in srgb, var(--mantine-color-primary-5) 50%, transparent)",
+                          "--avatar-color": "var(--mantine-color-primary-3)",
+                        } as CSSProperties
+                      }
+                    />
                   </UnstyledButton>
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
