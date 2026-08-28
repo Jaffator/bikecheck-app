@@ -3,7 +3,6 @@ import { Box, Group, Loader, Paper, Stack, Text, Textarea, UnstyledButton } from
 import { useTranslation } from "react-i18next";
 import { Ban, ChevronUp, Merge, Pencil, Plus, SearchX, Split, Wrench, CircleCheckBig } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
-import { tapFeedback } from "@/utils/haptics";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { groupIcon } from "@/assets/icons/svg_icons/groups";
 import { componentIcon } from "@/assets/icons/svg_icons/components";
@@ -97,7 +96,6 @@ function SplitToggle({ split, label, onToggle }: { split: boolean; label: string
   return (
     <UnstyledButton
       onClick={() => {
-        tapFeedback();
         onToggle();
       }}
       aria-pressed={split}
@@ -125,7 +123,6 @@ function AbsentToggle({ absent, label, onToggle }: { absent: boolean; label: str
   return (
     <UnstyledButton
       onClick={() => {
-        tapFeedback();
         onToggle();
       }}
       aria-pressed={absent}
@@ -236,14 +233,13 @@ export function BikeComponentList({
             radius="md"
             style={{
               border: isOpen
-                ? "1px solid var(--mantine-color-primary-6)"
+                ? "1px solid var(--mantine-color-primary-9)"
                 : "1px solid var(--mantine-color-other-borderSubtle)",
               scrollMarginTop: "calc(4.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
             }}
           >
             <UnstyledButton
               onClick={() => {
-                tapFeedback();
                 onToggleGroup(group.id);
               }}
               aria-expanded={isOpen}
@@ -296,9 +292,9 @@ export function BikeComponentList({
                     borderRadius: "50%",
                     border:
                       isOpen || configured > 0
-                        ? "1px solid var(--mantine-color-primary-6)"
+                        ? "1px solid var(--mantine-color-cards-3)"
                         : "1px solid var(--mantine-color-other-borderSolid)",
-                    color: isOpen || configured > 0 ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)",
+                    color: isOpen || configured > 0 ? "var(--mantine-color-cards-3)" : "var(--mantine-color-text-8)",
                   }}
                 >
                   {isOpen ? <ChevronUp size={16} /> : configured > 0 ? <Pencil size={14} /> : <Plus size={16} />}
@@ -325,7 +321,7 @@ export function BikeComponentList({
                               width={18}
                               height={18}
                               style={{ flexShrink: 0 }}
-                              color={disabled ? "var(--mantine-color-text-9)" : "var(--mantine-color-primary-7)"}
+                              color={disabled ? "var(--mantine-color-text-9)" : "var(--mantine-color-primary-6)"}
                             />
                           )}
                           <Text

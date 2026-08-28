@@ -1,80 +1,41 @@
 // Renders pending rides through query hooks.
 import { useState, type ReactElement } from "react";
-import { Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Clock, Mountain, Route } from "lucide-react";
 import dayjs from "dayjs";
-import { tapFeedback } from "@/utils/haptics";
 import { RouteMap } from "@/components/RouteMap";
+import { HistoryCard, HistoryMetric } from "@/components/HistoryCard";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
 import trailIllustration from "@/assets/images/rides.png";
 import { usePendingRides } from "./strava.queries";
 import { PendingRideSheet } from "./PendingRideSheet";
 import type { PendingRide } from "./strava.types";
 
+// How far a point may stray before the thumbnail drops it, in viewBox units. Matches the
+// completed list: the same route drawn at the same fifty pixels.
+const CARD_SIMPLIFY = 1;
+
 // Renders a pending ride with recognizable route and metrics.
 function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => void }): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <UnstyledButton onClick={onOpen} style={{ display: "block", width: "100%", textAlign: "left" }}>
-      <Paper
-        radius="lg"
-        p="sm"
-        style={{
-          // Uses separate background fields to preserve the gradient.
-          backgroundColor: "var(--mantine-color-cards-6)",
-          // Top-left route-colored glow gives the card depth.
-          backgroundImage:
-            "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
-          border: "1px solid var(--color-border-subtle)",
-          // Inner edge and shadow lift the card.
-          boxShadow:
-            "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 4px 12px -6px rgba(0, 0, 0, 0.5)",
-          transition: "transform 0.12s ease",
-        }}
-        className="active:scale-[0.985]"
-      >
-        {/* Route shape distinguishes otherwise similar ride rows. */}
-        <Group gap="lg" wrap="nowrap" align="center">
-          <RouteMap polyline={ride.summary_polyline} width={50} height={50} />
-
-          {/* minWidth allows title line clamping in the flexible column. */}
-          <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
-            {/* Keeps title and date visually grouped. */}
-            <Stack gap={2}>
-              {/* Clamps long Strava titles to preserve row height. */}
-              <Text fw={600} fz={15} c="text.6" lineClamp={1}>
-                {ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
-              </Text>
-              <Text fz={13} c="text.7">
-                {dayjs(ride.started_at).format("D. M. YYYY H:mm")}
-              </Text>
-            </Stack>
-            <Group gap="lg" wrap="nowrap">
-              <Group gap={6} wrap="nowrap">
-                <Route size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.distance", { count: ride.distance_km })}
-                </Text>
-              </Group>
-              <Group gap={6} wrap="nowrap">
-                <Clock size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.duration", { count: ride.duration_min })}
-                </Text>
-              </Group>
-              <Group gap={6} wrap="nowrap">
-                <Mountain size={14} color="var(--color-text-dim)" />
-                <Text fz={14} c="var(--color-text-dim)">
-                  {t("pendingRides.elevation", { count: ride.elevation_up_m })}
-                </Text>
-              </Group>
-            </Group>
-          </Stack>
-        </Group>
-      </Paper>
-    </UnstyledButton>
+    <HistoryCard
+      onOpen={onOpen}
+      /* Route shape distinguishes otherwise similar ride rows. */
+      leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
+      /* Clamps long Strava titles to preserve row height. */
+      title={ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
+      subtitle={dayjs(ride.started_at).format("D. M. YYYY H:mm")}
+      metrics={
+        <>
+          <HistoryMetric icon={Route}>{t("pendingRides.distance", { count: ride.distance_km })}</HistoryMetric>
+          <HistoryMetric icon={Clock}>{t("pendingRides.duration", { count: ride.duration_min })}</HistoryMetric>
+          <HistoryMetric icon={Mountain}>{t("pendingRides.elevation", { count: ride.elevation_up_m })}</HistoryMetric>
+        </>
+      }
+    />
   );
 }
 
@@ -138,7 +99,6 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled }: Pendin
             key={ride.activity_id}
             ride={ride}
             onOpen={() => {
-              void tapFeedback();
               setOpenedRide(ride);
             }}
           />

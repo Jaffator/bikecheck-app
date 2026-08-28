@@ -33,6 +33,11 @@ export class SearchBikeExternalResponseDto {
   imageUrl!: string | null;
   @ApiProperty({ example: 'https://example.com/bike/1' })
   bikeUrl!: string;
+  // A search answers with both: links straight to one bike, and links to a
+  // collection of variants sold under one model name. A collection has to be
+  // opened before anything can be picked from it.
+  @ApiProperty({ enum: ['model', 'family'], example: 'model' })
+  kind!: 'model' | 'family';
 }
 
 export class BikeComponentExternalResponseDto {

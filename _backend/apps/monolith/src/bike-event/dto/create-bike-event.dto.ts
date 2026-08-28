@@ -7,9 +7,11 @@ import {
   MaxLength,
   IsNotEmpty,
   IsPositive,
+  Min,
   IsBoolean,
   IsArray,
   ValidateNested,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -54,14 +56,14 @@ export class Actions_BikeEventDto {
   action_id!: number;
 
   @IsString()
-  @IsNotEmpty()
-  @ApiProperty({ example: 'Replaced chain' })
-  description!: string;
+  @IsOptional()
+  @ApiProperty({ example: 'Replaced chain', required: false })
+  description?: string;
 
   @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty({ example: 50 })
-  partial_cost!: number;
+  @IsOptional()
+  @ApiProperty({ example: 50, required: false })
+  partial_cost?: number;
 
   @IsBoolean()
   @IsNotEmpty()
@@ -92,6 +94,14 @@ export class Attachment_BikeEventDto {
   @IsNotEmpty()
   @ApiProperty({ example: 'https://cdn.example.com/files/faktura.pdf' })
   url?: string;
+
+  // Handed back from the upload rather than measured here - the file itself never reaches
+  // create, only the URL it was stored under.
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @ApiProperty({ example: 1258291, required: false })
+  size_bytes?: number;
 }
 
 export class Actions_OnGroupDto {
@@ -113,11 +123,19 @@ export class Create_BikeEventDto {
   @ApiProperty({ example: 15 })
   bike_id!: number;
 
+  // A job the user did themselves costs nothing, and a service whose receipt has not
+  // turned up yet costs nothing yet either - neither is a reason to refuse the record.
   @IsNumber()
-  @IsNotEmpty()
-  @IsPositive()
-  @ApiProperty({ example: 15 })
-  total_cost!: number;
+  @IsOptional()
+  @Min(0)
+  @ApiProperty({ example: 15, required: false })
+  total_cost?: number;
+
+  // When the work happened. The client always knows it - a live-recorded service
+  // carries today, a backfilled one the date the work was done.
+  @IsDateString()
+  @ApiProperty({ example: '2026-07-01T00:00:00.000Z' })
+  service_date!: string;
 
   @IsArray()
   @IsOptional()
@@ -127,8 +145,9 @@ export class Create_BikeEventDto {
   attachment?: Attachment_BikeEventDto[];
 
   @IsString()
+  @IsOptional()
   @MaxLength(500)
-  @ApiProperty({ example: 'Replaced chain and cleaned drivetrain', nullable: true })
+  @ApiProperty({ example: 'Replaced chain and cleaned drivetrain', required: false })
   note?: string;
 
   @IsArray()

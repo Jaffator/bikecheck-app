@@ -3,7 +3,7 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "apps/monolith/src",
   "compilerOptions": {
-    "deleteOutDir": true,
+    "deleteOutDir": false,
     "watchAssets": false,
     "tsConfigPath": "apps/monolith/tsconfig.app.json"
   },

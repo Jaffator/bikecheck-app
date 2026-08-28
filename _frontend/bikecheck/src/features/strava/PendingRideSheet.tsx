@@ -4,9 +4,9 @@ import { Button, Drawer, Group, Paper, Select, Stack, Text } from "@mantine/core
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { ChevronDown, Clock, Mountain, Route } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
 import { useResolvePendingRide } from "./strava.queries";
 import type { PendingRide } from "./strava.types";
@@ -33,7 +33,6 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
 
   function submit(): void {
     if (bikeId === null || ride === null) return;
-    void tapFeedback();
     resolve.mutate({ activityId: ride.activity_id, bikeId: Number(bikeId) }, { onSuccess: close });
   }
 
@@ -124,7 +123,7 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
           placeholder={t("pendingRides.chooseBike")}
           data={(bikes ?? []).map((bike) => ({
             value: String(bike.id),
-            label: bike.bikename ?? bike.bike_model ?? bike.bike_brand,
+            label: bikeTitle(bike),
           }))}
           // Adds an edge to the wizard field on the card background.
           styles={{ input: { ...inputStyles.input, border: "1px solid var(--mantine-color-cards-4)" } }}

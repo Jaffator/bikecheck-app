@@ -934,6 +934,11 @@ export interface components {
             imageUrl: Record<string, never>;
             /** @example https://example.com/bike/1 */
             bikeUrl: string;
+            /**
+             * @example model
+             * @enum {string}
+             */
+            kind: "model" | "family";
         };
         AssembleBikeComponentsDto: {
             component: components["schemas"]["CreateMountedComponentsDto"];

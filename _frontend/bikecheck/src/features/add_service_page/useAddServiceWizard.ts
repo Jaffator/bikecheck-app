@@ -1,0 +1,428 @@
+// All wizard state and its transitions in one place, so the step components stay
+// presentational and the assembled Service is built in a single readable pass.
+import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useBikes } from "@/features/bikes/bikes.queries";
+import { useCreateService } from "@/features/service/service.queries";
+import type { Bike } from "@/features/bikes/bikes.types";
+import type {
+  BikeCategory,
+  CatalogueAction,
+  CreateServiceInput,
+  ServiceActionInput,
+  ServiceReplacementInput,
+  UploadedAttachment,
+} from "@/features/service/service.types";
+import {
+  actionNote,
+  actionsCost,
+  NO_ACTIONS,
+  sameActionLists,
+  today,
+  type CategoryBlock,
+  type DraftBlock,
+  type PickedAction,
+} from "./serviceWizard.types";
+
+export type WizardStep = "bike" | "category" | "actions" | "summary";
+
+// What has to be confirmed before back is allowed to throw work away. Each names a
+// different loss: a draft category, the edits to a saved one, or the whole Service.
+// Null means back costs the user nothing and can just happen.
+export type BackPrompt = "discardAction" | "discardEdits" | "discardService" | null;
+
+// A day, sent as the instant the backend reads back as that day.
+function toIsoDate(day: string): string {
+  return new Date(`${day}T00:00:00.000Z`).toISOString();
+}
+
+// A bike id in the URL the user could not have typed reads as no bike at all.
+function parseBikeId(raw: string | null): number | null {
+  if (raw === null) return null;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+export interface AddServiceWizard {
+  step: WizardStep;
+  bikes: Bike[] | undefined;
+  bikesLoading: boolean;
+  bikeId: number | null;
+  serviceDate: string;
+  setServiceDate: (day: string) => void;
+  blocks: CategoryBlock[];
+  draft: DraftBlock | null;
+  note: string;
+  setNote: (note: string) => void;
+  totalCost: number;
+  // Null hands the total back to the sum of the per-action prices.
+  setTotalCost: (value: number | null) => void;
+  attachments: UploadedAttachment[];
+  addAttachment: (attachment: UploadedAttachment) => void;
+  removeAttachment: (url: string) => void;
+  chooseBike: (bikeId: number) => void;
+  chooseCategory: (category: BikeCategory) => void;
+  toggleAction: (action: CatalogueAction) => void;
+  updateAction: (actionId: number, patch: Partial<PickedAction>) => void;
+  // Takes a tag or gives it back, by its catalogue name. Nothing is written until the
+  // Service is saved — see ADR 0007.
+  toggleActionTag: (actionId: number, tagName: string) => void;
+  // Whether the draft can be written into the Service. An edited block may be emptied,
+  // which removes it; a new one has to carry work.
+  canCommit: boolean;
+  // What the draft's actions cost so far. A tally of what the user typed into them, never
+  // an input of its own — only the visit's total is overridable (ADR 0009).
+  draftCost: number;
+  // Whether there is a Service to save at all.
+  canSave: boolean;
+  // Writes the draft into the Service and lands on the Summary.
+  commitDraft: () => void;
+  addAnotherCategory: () => void;
+  editBlock: (index: number) => void;
+  backPrompt: () => BackPrompt;
+  back: () => void;
+  save: () => void;
+  saving: boolean;
+  saveFailed: boolean;
+}
+
+export function useAddServiceWizard(): AddServiceWizard {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const { data: bikes, isLoading: bikesLoading } = useBikes();
+  const create = useCreateService();
+
+  // A bike carried in from its detail page is a bike the user has already chosen.
+  const bikeFromUrl = parseBikeId(searchParams.get("bike"));
+
+  const [requestedStep, setStep] = useState<WizardStep>("bike");
+  const [chosenBikeId, setChosenBikeId] = useState<number | null>(null);
+  const [serviceDate, setServiceDate] = useState<string>(today());
+  const [blocks, setBlocks] = useState<CategoryBlock[]>([]);
+  const [draft, setDraft] = useState<DraftBlock | null>(null);
+  const [note, setNote] = useState("");
+  const [totalCostOverride, setTotalCostOverride] = useState<number | null>(null);
+  const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
+
+  // A question with one answer is not worth asking: an owner of a single bike, or one
+  // arriving from a bike's detail, starts at the category step. Derived rather than set,
+  // so it settles as soon as the garage arrives instead of after an extra render.
+  const bikeStepSkipped = bikeFromUrl !== null || (bikes !== undefined && bikes.length === 1);
+  const bikeId = chosenBikeId ?? (bikeStepSkipped ? (bikeFromUrl ?? bikes?.[0]?.id ?? null) : null);
+  const step: WizardStep = requestedStep === "bike" && bikeStepSkipped ? "category" : requestedStep;
+
+  const draftDirty = (draft?.actions.length ?? 0) > 0;
+  const canCommit = draft !== null && (draftDirty || draft.editingIndex !== null);
+  const canSave = blocks.length > 0;
+
+  // What the category being worked on costs so far, shown while the user works on it.
+  const draftCost = useMemo(() => (draft === null ? 0 : actionsCost(draft.actions)), [draft]);
+
+  const suggestedTotal = useMemo(
+    () => blocks.reduce((total, block) => total + actionsCost(block.actions), 0),
+    [blocks],
+  );
+  // The sum is the usual case; an overridden total covers labour and discounts.
+  const totalCost = totalCostOverride ?? suggestedTotal;
+
+  const chooseBike = useCallback((chosen: number): void => {
+    setChosenBikeId(chosen);
+    setStep("category");
+  }, []);
+
+  // Picking a category the Service already covers reopens that block rather than opening
+  // a second one for the same parts. Nothing reaches the Summary until the draft is
+  // confirmed, so a category picked by mistake leaves no trace — see ADR 0006.
+  const chooseCategory = useCallback(
+    (category: BikeCategory): void => {
+      const existing = blocks.findIndex((block) => block.categoryId === category.group_id);
+      setDraft(
+        existing >= 0
+          ? { ...blocks[existing], actions: [...blocks[existing].actions], editingIndex: existing }
+          : {
+              categoryId: category.group_id,
+              categoryName: category.group_name,
+              categoryI18nKey: category.group_i18n_key,
+              actions: [],
+              editingIndex: null,
+            },
+      );
+      setStep("actions");
+    },
+    [blocks],
+  );
+
+  const toggleAction = useCallback((action: CatalogueAction): void => {
+    setDraft((current) => {
+      if (current === null) return current;
+      const picked = current.actions.some((candidate) => candidate.actionId === action.id);
+      if (picked) {
+        return { ...current, actions: current.actions.filter((candidate) => candidate.actionId !== action.id) };
+      }
+      return {
+        ...current,
+        actions: [
+          ...current.actions,
+          // Run through the same writer an edit uses, so the part going on is described
+          // from the part it replaces here too rather than in a second place.
+          withPrefilledDescriptions({
+            actionId: action.id,
+            actionName: action.action_name,
+            actionI18nKey: action.action_i18n_key,
+            replaceAction: action.replace_action,
+            tags: action.tags,
+            // Nothing is claimed on the user's behalf: what was done is what they write.
+            customNote: "",
+            selectedTags: [],
+            candidates: action.components,
+            // One candidate is no choice at all, so ticking the action makes it. Two are
+            // never guessed between - the user says which brake was bled.
+            componentIds: action.components.length === 1 ? [action.components[0].id] : [],
+            newDescriptions: {},
+            partialCost: null,
+          }),
+        ],
+      };
+    });
+  }, []);
+
+  // Reads the selection as it stands rather than taking it from a stale render, so a run
+  // of quick taps on several chips all land. The tag is held by its catalogue name; what
+  // it will say in the note is decided when the note is composed - see ADR 0007.
+  const toggleActionTag = useCallback((actionId: number, tagName: string): void => {
+    setDraft((current) =>
+      current === null
+        ? current
+        : {
+            ...current,
+            actions: current.actions.map((action) =>
+              action.actionId === actionId
+                ? {
+                    ...action,
+                    selectedTags: action.selectedTags.includes(tagName)
+                      ? action.selectedTags.filter((taken) => taken !== tagName)
+                      : [...action.selectedTags, tagName],
+                  }
+                : action,
+            ),
+          },
+    );
+  }, []);
+
+  const updateAction = useCallback((actionId: number, patch: Partial<PickedAction>): void => {
+    setDraft((current) =>
+      current === null
+        ? current
+        : {
+            ...current,
+            actions: current.actions.map((action) =>
+              action.actionId === actionId ? withPrefilledDescriptions({ ...action, ...patch }) : action,
+            ),
+          },
+    );
+  }, []);
+
+  // An edited block left with no actions is a block the user removed.
+  const commitDraft = useCallback((): void => {
+    if (draft === null) return;
+    const { editingIndex, ...block } = draft;
+    setBlocks((current) => {
+      if (editingIndex === null) return [...current, block];
+      if (block.actions.length === 0) return current.filter((_, index) => index !== editingIndex);
+      return current.map((existing, index) => (index === editingIndex ? block : existing));
+    });
+    setDraft(null);
+    setStep("summary");
+  }, [draft]);
+
+  const addAnotherCategory = useCallback((): void => setStep("category"), []);
+
+  const editBlock = useCallback(
+    (index: number): void => {
+      setDraft({ ...blocks[index], actions: [...blocks[index].actions], editingIndex: index });
+      setStep("actions");
+    },
+    [blocks],
+  );
+
+  const addAttachment = useCallback((attachment: UploadedAttachment): void => {
+    setAttachments((current) => [...current, attachment]);
+  }, []);
+
+  const removeAttachment = useCallback((url: string): void => {
+    setAttachments((current) => current.filter((attachment) => attachment.url !== url));
+  }, []);
+
+  // What back would cost from here, asked before it happens rather than regretted after.
+  // The Summary always asks: reaching it took work, and the date, note, total and
+  // attachments it holds outlive the last block being removed.
+  const backPrompt = useCallback((): BackPrompt => {
+    if (step === "summary") return "discardService";
+    if (step !== "actions" || draft === null) return null;
+    // One rule for both kinds of block: ask only when leaving would actually lose
+    // something. An edited block is measured against the block it was opened from, a new
+    // one against the empty block it started as, so passing through either and changing
+    // nothing costs nothing to leave. Emptying a block is a change like any other - it
+    // removes the category from the Service, which is work the user would lose.
+    const index = draft.editingIndex;
+    // A block opened for editing is measured against the one still sitting in blocks -
+    // nothing writes there until commit, so that is the state the user opened. A new block
+    // started empty, so its baseline is no actions at all.
+    const baseline = index === null ? NO_ACTIONS : blocks[index]?.actions;
+    if (baseline !== undefined && sameActionLists(draft.actions, baseline)) return null;
+    return index === null ? "discardAction" : "discardEdits";
+  }, [step, draft, blocks]);
+
+  // Back walks the wizard rather than the browser history, and only leaves it from the
+  // step the user entered on. The Summary has no way back into the wizard, so leaving it
+  // leaves the wizard — see ADR 0006.
+  const back = useCallback((): void => {
+    if (step === "summary") {
+      navigate("/service");
+      return;
+    }
+    if (step === "actions") {
+      const editing = draft !== null && draft.editingIndex !== null;
+      setDraft(null);
+      setStep(editing || blocks.length > 0 ? "summary" : "category");
+      return;
+    }
+    if (step === "category") {
+      if (blocks.length > 0) {
+        setStep("summary");
+        return;
+      }
+      if (!bikeStepSkipped) {
+        setStep("bike");
+        return;
+      }
+    }
+    navigate(-1);
+  }, [step, draft, blocks.length, bikeStepSkipped, navigate]);
+
+  const save = useCallback((): void => {
+    if (bikeId === null) return;
+    create.mutate(
+      {
+        bike_id: bikeId,
+        service_date: toIsoDate(serviceDate),
+        total_cost: totalCost,
+        note: note.trim() === "" ? undefined : note.trim(),
+        attachment: attachments.length > 0 ? attachments : undefined,
+        ...splitActions(blocks, t),
+      },
+      // The user is dropped back where the new service now sits at the top.
+      { onSuccess: () => navigate("/service", { replace: true }) },
+    );
+  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate, t]);
+
+  return {
+    step,
+    bikes,
+    bikesLoading,
+    bikeId,
+    serviceDate,
+    setServiceDate,
+    blocks,
+    draft,
+    note,
+    setNote,
+    totalCost,
+    setTotalCost: setTotalCostOverride,
+    attachments,
+    addAttachment,
+    removeAttachment,
+    chooseBike,
+    chooseCategory,
+    toggleAction,
+    updateAction,
+    toggleActionTag,
+    canCommit,
+    draftCost,
+    canSave,
+    commitDraft,
+    addAnotherCategory,
+    editBlock,
+    backPrompt,
+    back,
+    save,
+    saving: create.isPending,
+    saveFailed: create.isError,
+  };
+}
+
+// A Replacement describes each part going on, prefilled from the one it replaces. The map
+// is rebuilt against the picked parts on every change, which is the whole invariant: a part
+// just picked arrives with the name of the one it replaces, and a part unpicked takes its
+// name with it rather than lingering as a change the user cannot see.
+function withPrefilledDescriptions(action: PickedAction): PickedAction {
+  if (!action.replaceAction) {
+    return Object.keys(action.newDescriptions).length === 0 ? action : { ...action, newDescriptions: {} };
+  }
+
+  const next: Record<number, string> = {};
+  for (const id of action.componentIds) {
+    const replaced = action.candidates.find((component) => component.id === id);
+    // An emptied field stays empty - only a part with no entry at all is prefilled.
+    next[id] = action.newDescriptions[id] ?? replaced?.component_desc ?? "";
+  }
+  return { ...action, newDescriptions: next };
+}
+
+// Flattens every block into the two lists the API takes: ordinary work, and the
+// replacements that end one Mounted Component and begin another.
+function splitActions(
+  blocks: CategoryBlock[],
+  translate: (key: string) => string,
+): Pick<CreateServiceInput, "actions_done" | "actions_replaced"> {
+  const actionsDone: ServiceActionInput[] = [];
+  const replacements: ServiceReplacementInput[] = [];
+
+  for (const block of blocks) {
+    for (const action of block.actions) {
+      // Where the tags become prose: what the user wrote, then what they took. From here
+      // on it is one string, indistinguishable from a note typed in full - see ADR 0007.
+      const note = actionNote(action, translate);
+
+      const replaced = action.replaceAction
+        ? action.candidates.filter((component) => action.componentIds.includes(component.id))
+        : [];
+
+      if (replaced.length === 0) {
+        // A Replacement nobody attributed to a part creates no new component, so the
+        // description of the part going on has only this note to live in.
+        actionsDone.push({
+          action_id: action.actionId,
+          part_replaced: action.replaceAction,
+          mounted_components_involved: action.componentIds,
+          ...(action.partialCost === null ? {} : { partial_cost: action.partialCost }),
+          ...(note === "" ? {} : { description: note }),
+        });
+        continue;
+      }
+
+      // Two pads replaced in one action are two new parts, each with its own history.
+      // The price covers the action, so the first of them carries it rather than each
+      // part being charged the same figure over again. The note describes the work, so
+      // every part carries it.
+      replaced.forEach((component, index) => {
+        replacements.push({
+          old_component_mounted_id: component.id,
+          component_type_id: component.component_type_id,
+          new_component_desc:
+            action.newDescriptions[component.id]?.trim() || (component.component_desc ?? component.component_type),
+          action_id: action.actionId,
+          ...(note === "" ? {} : { note }),
+          ...(action.partialCost === null || index > 0 ? {} : { partial_cost: action.partialCost }),
+        });
+      });
+    }
+  }
+
+  return {
+    actions_done: actionsDone,
+    ...(replacements.length > 0 ? { actions_replaced: replacements } : {}),
+  };
+}

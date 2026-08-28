@@ -24,7 +24,6 @@ const BY_GROUP_NAME: Record<string, GroupIcon> = {
   Drivetrain,
   Brakes,
   "E-bike": Motor,
-  Other: Misc,
 };
 
 // Unknown groups use the caller's fallback icon.

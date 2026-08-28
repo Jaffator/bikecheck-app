@@ -5,6 +5,7 @@ import {
   getBike,
   getBikeFormOptions,
   searchBikeExternal,
+  getExternalFamilyBikes,
   getExternalBikeComponents,
   createBike,
   deleteBike,
@@ -46,6 +47,18 @@ export function useBikeFormOptions(): UseQueryResult<BikeFormOptions> {
 export function useSearchBikeExternal(): UseMutationResult<BikeSearchResult[], Error, BikeSearchInput> {
   return useMutation({
     mutationFn: ({ bikeName, year }: BikeSearchInput) => searchBikeExternal(bikeName, year),
+  });
+}
+
+// Collections are read by URL, so a list already opened comes back from cache.
+export function useFamilyBikes(url: string | null): UseQueryResult<BikeSearchResult[]> {
+  return useQuery({
+    queryKey: ["bike-external-family", url],
+    queryFn: () => getExternalFamilyBikes(url ?? ""),
+    enabled: url !== null,
+    staleTime: Infinity,
+    // Report failed scrapes without automatic retries.
+    retry: false,
   });
 }
 

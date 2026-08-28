@@ -48,10 +48,12 @@ export class ResponseRideDto {
   @ApiProperty({ example: 54, nullable: true })
   max_speed_kmh!: number | null;
 
-  // The raw Strava activity as it was stored. The client reads the route
-  // polyline out of it; everything else in there is unused for now.
-  @ApiProperty({ nullable: true })
-  json_data!: unknown;
+  // The route, lifted out of the stored payload for the same reason the name is:
+  // the raw Strava activity is tens of kilobytes and this is the only part of it
+  // the client draws. Strava's own simplified route - null for a ride recorded
+  // without GPS.
+  @ApiProperty({ example: 'ki}fHuqrbBGx@_@lAsA|Bi@n@', nullable: true })
+  summary_polyline!: string | null;
 }
 
 // One page of rides. The total is what tells the client whether another page

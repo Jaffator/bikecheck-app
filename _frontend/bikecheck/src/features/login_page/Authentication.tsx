@@ -10,6 +10,7 @@ import logoName from "../../assets/logo_name.svg";
 import { useLogin, useRegistration, useGoogleNative } from "../users/users.queries";
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
+import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 
 export function AuthenticationForm(props: PaperProps) {
   const { t } = useTranslation();
@@ -17,6 +18,8 @@ export function AuthenticationForm(props: PaperProps) {
   const registration = useRegistration();
   const googleToken = useGoogleNative();
   const [type, toggle] = useToggle(["login", "register"]);
+  // Keep focused fields above the keyboard.
+  const formRef = useScrollIntoViewOnFocus<HTMLDivElement>();
   const form = useForm({
     initialValues: {
       email: "",
@@ -58,7 +61,7 @@ export function AuthenticationForm(props: PaperProps) {
         alt="BikeCheck Logo"
         style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "6rem", left: 0, right: 0, margin: "0 auto" }}
       />
-      <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent">
+      <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent" ref={formRef}>
         <form
           // Submit the active form.
           onSubmit={form.onSubmit((values) => {

@@ -4,6 +4,8 @@ import { Autocomplete, Button, Paper, Select, Stack, Text } from "@mantine/core"
 import { type UseFormReturnType } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { Calendar, Search, Tag } from "lucide-react";
+import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
+import { usePinPageScroll } from "@/hooks/usePinPageScroll";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "./formStyles";
 import type { AddBikeIdentityValues } from "./useAddBikeWizard";
 
@@ -39,9 +41,12 @@ export function BikeIdentityForm({
   onSubmit,
 }: BikeIdentityFormProps): ReactElement {
   const { t } = useTranslation();
+  // Keep focused fields above the fixed footer and keyboard.
+  const formRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
+  const pinPageScroll = usePinPageScroll();
 
   return (
-    <Paper bg="cards.6" p="md" radius="md">
+    <Paper bg="cards.6" p="md" radius="md" ref={formRef}>
       <form onSubmit={form.onSubmit(onSubmit)}>
         <Stack gap="md">
           <Stack gap={4}>
@@ -77,6 +82,8 @@ export function BikeIdentityForm({
           <Stack gap={4}>
             <FieldLabel>{t("addBike.year")}</FieldLabel>
             <Select
+              // Opening the dropdown must not move the page under the finger.
+              onPointerDown={pinPageScroll}
               placeholder={t("addBike.yearPlaceholder")}
               leftSection={<Calendar size={18} />}
               data={YEAR_OPTIONS}

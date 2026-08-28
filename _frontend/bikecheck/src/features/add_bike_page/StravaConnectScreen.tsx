@@ -2,7 +2,6 @@ import { useEffect, type ReactElement } from "react";
 import { Box, Button, Group, Stack, Text, Title } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, ArrowRightLeft, Bell, History, LineChart, RefreshCw } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { useHeaderStore } from "@/store/store";
 import trailIllustration from "@/assets/images/rides.png";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
@@ -151,7 +150,6 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
           rightSection={<StravaMark width={14} height={14} />}
           loading={connecting}
           onClick={() => {
-            tapFeedback();
             onConnect();
           }}
           styles={{
@@ -173,7 +171,6 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
           variant="default"
           rightSection={<ArrowRight size={12} />}
           onClick={() => {
-            tapFeedback();
             onSkip();
           }}
           disabled={connecting}

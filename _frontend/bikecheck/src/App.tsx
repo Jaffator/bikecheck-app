@@ -7,6 +7,8 @@ import { Bikes } from "./features/bikes_page/Bikes";
 import { BikeDetail } from "./features/bikes_page/BikeDetail";
 import { AddBikeIdentity } from "./features/add_bike_page/AddBikeIdentity";
 import { Service } from "./features/service_page/Service";
+import { ServiceHistory } from "./features/service_page/ServiceHistory";
+import { AddService } from "./features/add_service_page/AddService";
 import { Rides } from "./features/rides_page/Rides";
 import { Login } from "./features/login_page/Login";
 import { Profile } from "./features/profile_page/Profile";
@@ -92,6 +94,8 @@ function ProtectedApp(): ReactElement {
           <Route path="/bikes/new" element={<AddBikeIdentity />} />
           <Route path="/bikes/:id" element={<BikeDetail />} />
           <Route path="/service" element={<Service />} />
+          <Route path="/service/new" element={<AddService />} />
+          <Route path="/service/history" element={<ServiceHistory />} />
           <Route path="/rides" element={<Rides />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />

@@ -174,6 +174,77 @@ Profile → connect Strava → unmatched gear notification
 - **Responsive:** Mantine breakpoints + `useMediaQuery` drive the mobile/desktop layout switch.
 - **Tone:** clean, functional, sporty. No overengineering.
 
+### Disabled buttons (pattern)
+
+Always use this pattern for a button that can be blocked — the Mantine default disabled state is
+unreadable on the dark background.
+
+1. The boolean lives in the feature hook, not in the component:
+
+```ts
+// useAddBikeWizard.ts
+const canAdvance = active === 0 ? canSearch : active !== 1 || isBikeSpecificationComplete(specification);
+```
+
+2. It is passed down as a prop (`canAdvance`, `canConfirm`, `canSave`…), never recomputed in the button.
+
+3. The button gets `disabled={!can…}` **plus** the shared styles:
+
+```tsx
+import { disabledButtonStyles } from "../add_bike_page/formStyles";
+
+<Button disabled={!canAdvance} styles={disabledButtonStyles} ... />
+```
+
+4. The look is defined once in `features/add_bike_page/formStyles.ts`:
+
+```ts
+export const disabledButtonStyles = {
+  root: {
+    "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+    "--mantine-color-disabled-color": "var(--mantine-color-text-9)",
+  } as React.CSSProperties,
+};
+```
+
+Reference: `features/add_bike_page/AddBikeFooter.tsx`.
+
+### Disabled chips (pattern)
+
+A `Chip` takes the same variables as the buttons above, on `root`:
+
+```tsx
+import { disabledChipStyles } from "../add_bike_page/formStyles";
+
+<Chip
+  disabled={picked === undefined}
+  styles={disabledChipStyles}
+  icon={picked === undefined ? false : undefined}
+  ...
+/>
+```
+
+```ts
+export const disabledChipStyles = {
+  root: {
+    "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+    "--mantine-color-disabled-color": "var(--mantine-color-text-9)",
+  } as React.CSSProperties,
+};
+```
+
+Do not colour the `label` directly. Every checked rule in Mantine's `Chip.css` is gated on
+`:not([data-disabled])`, so painting the label on top of a disabled chip buries whatever the
+checked state was drawing.
+
+`icon={false}` is for a chip that can be **checked while disabled** — a part preselected
+before its action is ticked. The tick would claim a choice the user has not made yet.
+Prefer it over hiding the icon with a colour: Mantine only renders the icon wrapper when an
+icon exists, so `false` drops the reserved width too, while a transparent icon leaves a gap
+where the tick would have been.
+
+Reference: `features/add_service_page/ServiceActionsStep.tsx`.
+
 ## 10. Frontend tech
 
 - React + TypeScript, functional components + hooks (per project rules).

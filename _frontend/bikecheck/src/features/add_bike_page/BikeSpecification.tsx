@@ -16,9 +16,10 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Camera, Gauge, ImagePlus, Shapes, Tag, Zap } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import type { BikeSearchResult } from "../bikes/bikes.types";
 import { inputStyles, dropdownProps } from "./formStyles";
+import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
+import { usePinPageScroll } from "@/hooks/usePinPageScroll";
 import { FRAME_SIZES, WHEEL_SIZES } from "./bikeSpecification.types";
 import type { BikeSpecificationValues, FrameSize, SuspensionLayout } from "./bikeSpecification.types";
 
@@ -61,7 +62,6 @@ function ChoiceButton({
       variant="default"
       radius="sm"
       onClick={() => {
-        tapFeedback();
         onSelect();
       }}
       styles={{
@@ -118,8 +118,12 @@ export function BikeSpecification({
     }
   }
 
+  // Keep focused fields above the fixed footer and keyboard.
+  const formRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
+  const pinPageScroll = usePinPageScroll();
+
   return (
-    <Stack gap="lg">
+    <Stack gap="lg" ref={formRef}>
       <Paper bg="cards.6" radius="md" style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
         {shownPhoto ? (
           <Image src={shownPhoto} alt={displayName} h={180} fit="contain" bg="white" p="sm" radius="md" />
@@ -130,7 +134,6 @@ export function BikeSpecification({
               <UnstyledButton
                 {...props}
                 onClick={() => {
-                  tapFeedback();
                   props.onClick();
                 }}
                 style={{
@@ -170,7 +173,6 @@ export function BikeSpecification({
                 <Button
                   {...props}
                   onClick={() => {
-                    tapFeedback();
                     props.onClick();
                   }}
                   variant="subtle"
@@ -221,6 +223,8 @@ export function BikeSpecification({
       <Stack gap={4}>
         <FieldLabel>{t("addBike.category")}</FieldLabel>
         <Select
+          // Opening the dropdown must not move the page under the finger.
+          onPointerDown={pinPageScroll}
           placeholder={t("addBike.categoryPlaceholder")}
           leftSection={<Shapes size={18} />}
           data={categories}
@@ -324,7 +328,6 @@ export function BikeSpecification({
               withThumbIndicator={false}
               checked={values.ebike}
               onChange={(event) => {
-                tapFeedback();
                 onChange("ebike", event.currentTarget.checked);
               }}
               aria-label={t("addBike.ebike")}

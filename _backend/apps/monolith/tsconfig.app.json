@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "declaration": false,
+    // Kept out of outDir so a cleaned dist does not take the incremental cache with it.
+    "tsBuildInfoFile": "../../node_modules/.cache/tsc/monolith.tsbuildinfo",
     "outDir": "../../dist/apps/monolith"
   },
   "include": ["src/**/*"],

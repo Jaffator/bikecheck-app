@@ -3,7 +3,6 @@ import { useState, type ReactElement } from "react";
 import { Box, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Link2Off, Link2 } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { GearLinkingSheet } from "./GearLinkingSheet";
@@ -62,7 +61,6 @@ export function UnpairedBikesCard(): ReactElement | null {
           c="primary.6"
           leftSection={<Link2 size={16} />}
           onClick={() => {
-            void tapFeedback();
             setPairingGear(true);
           }}
           className="active:scale-[0.985]"

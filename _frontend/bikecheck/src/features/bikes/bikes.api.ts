@@ -22,6 +22,12 @@ export async function searchBikeExternal(bikeName: string, year: string): Promis
   return apiFetch<BikeSearchResult[]>(`/bike/external?${query.toString()}`);
 }
 
+// GET /bike/external/family — scrapes the bikes filed under one collection.
+export async function getExternalFamilyBikes(url: string): Promise<BikeSearchResult[]> {
+  const query = new URLSearchParams({ url });
+  return apiFetch<BikeSearchResult[]>(`/bike/external/family?${query.toString()}`);
+}
+
 // GET /bike/external/components — scrapes the component list of one bike.
 export async function getExternalBikeComponents(bikeUrl: string): Promise<ExternalBikeComponent[]> {
   const query = new URLSearchParams({ bikeUrl });

@@ -1,12 +1,12 @@
-import { useState, type ReactElement } from "react";
+import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Settings, Bell, ArrowLeft } from "lucide-react";
 import { GoHomeFill, GoHome } from "react-icons/go";
-import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
+// import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
+import { bikecheckIconType } from "@/assets/icons/bikecheck";
 import { PiPath, PiPathBold } from "react-icons/pi";
-import { PiPersonSimpleBike, PiPersonSimpleBikeBold } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
@@ -18,6 +18,11 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
+
+const BikeIcon = bikecheckIconType("BikeIcon");
+const BikeIconFill = bikecheckIconType("BikeIcon_fill");
+const BikecheckIcon = bikecheckIconType("Bikecheck")!;
+const BikecheckOutlineIcon = bikecheckIconType("Bikecheck_outline")!;
 
 interface NavItem {
   labelKey: string;
@@ -32,15 +37,15 @@ const NAV_ITEMS: NavItem[] = [
   {
     labelKey: "nav.bikes",
     path: "/bikes",
-    icon: PiPersonSimpleBike,
-    icon_fill: PiPersonSimpleBikeBold,
+    icon: BikeIcon!,
+    icon_fill: BikeIconFill!,
   },
   {
     labelKey: "nav.service",
     path: "/service",
     // Uses the service tab outline icon.
-    icon: RiWrenchLine,
-    icon_fill: RiWrenchFill,
+    icon: BikecheckOutlineIcon!,
+    icon_fill: BikecheckIcon!,
   },
   {
     labelKey: "nav.rides",
@@ -55,6 +60,8 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   // More specific route prefixes must precede their parent routes.
   "/bikes/new": "addBike.title",
   "/bikes": "page.bikes",
+  "/service/history": "page.serviceHistory",
+  "/service/new": "addService.title",
   "/service": "page.service",
   "/rides": "page.rides",
   "/profile": "page.profile",
@@ -68,6 +75,8 @@ const SUB_PAGE_ROUTES: string[] = [
   "/profile",
   "/notifications",
   "/bikes/new",
+  "/service/history",
+  "/service/new",
   // This confirmation route owns its screen and action.
   "/strava-connected",
 ];
@@ -79,19 +88,33 @@ function isFullScreenRoute(pathname: string): boolean {
   return FULL_SCREEN_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
-// Matches bike details without treating the garage list as a sub-page.
-const BIKE_DETAIL_PATTERN = /^\/bikes\/\d+$/;
+// Detail routes are matched by shape rather than by prefix, so the list they hang under
+// is not itself read as a sub-page. Every one of them is a sub-page with its own title.
+const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
+  { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
+];
+
+function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | undefined {
+  return DETAIL_ROUTES.find((route) => route.pattern.test(pathname));
+}
 
 function isSubPage(pathname: string): boolean {
-  if (BIKE_DETAIL_PATTERN.test(pathname)) return true;
+  if (detailRoute(pathname)) return true;
   return SUB_PAGE_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 function getPageTitleKey(pathname: string): string | null {
-  if (BIKE_DETAIL_PATTERN.test(pathname)) return "bikes.detailTitle";
+  const detail = detailRoute(pathname);
+  if (detail) return detail.titleKey;
   const match = Object.keys(PAGE_TITLE_KEYS).find((path) => pathname.startsWith(path));
   return match ? PAGE_TITLE_KEYS[match] : null;
 }
+
+// TEMPORARY: swapping the routed subtree for the offline page unmounts whatever the user
+// was in the middle of - the add-service wizard loses every step and lands back on the bike
+// choice. Off while we work out whether that swap is what resets the wizard during an
+// attachment upload. Flip back to true to restore the offline screen.
+const OFFLINE_PAGE_ENABLED = false;
 
 // Shares active-route matching between the header and tab bar.
 function isActivePath(path: string, pathname: string): boolean {
@@ -114,9 +137,14 @@ export function AppLayout(): ReactElement {
   const { data: unreadNotifications } = useUnreadNotifications();
   const unreadCount = unreadNotifications?.length ?? 0;
   const overrideTitleKey = useHeaderStore((state) => state.titleKey);
+  // A title a translation key cannot express - a category the user named, with its icon.
+  const overrideTitleSlot = useHeaderStore((state) => state.titleSlot);
   const overrideBack = useHeaderStore((state) => state.onBack);
   // Lets a page suppress shared application chrome.
   const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
+  // A step the user cannot walk back out of hides the arrow rather than lying about it.
+  const backHidden = useHeaderStore((state) => state.backHidden);
+  const actionSlot = useHeaderStore((state) => state.actionSlot);
   // Hides chrome when the route or page state requires it.
   const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
   // Home has no header icon.
@@ -192,14 +220,22 @@ export function AppLayout(): ReactElement {
         >
           <Group h="100%" justify="space-between" w="100%">
             {subPage ? (
-              <Group gap="xs" c="text.6">
-                <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
-                  <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
-                </ActionIcon>
-                <Text fw={700} size="lg" c="text.6">
-                  {pageTitleKey && t(pageTitleKey)}
-                </Text>
-              </Group>
+              <>
+                <Group gap="xs" c="text.6" wrap="nowrap" style={{ minWidth: 0 }}>
+                  {!backHidden && (
+                    <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
+                      <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
+                    </ActionIcon>
+                  )}
+                  {overrideTitleSlot ?? (
+                    <Text fw={700} size="lg" c="text.6">
+                      {pageTitleKey && t(pageTitleKey)}
+                    </Text>
+                  )}
+                </Group>
+                {/* Whatever the page hung here; nothing renders when it hung nothing. */}
+                {actionSlot}
+              </>
             ) : (
               <>
                 <Group gap="xs" c="cards.1">
@@ -213,7 +249,18 @@ export function AppLayout(): ReactElement {
                 <Group gap="sm">
                   <UnstyledButton onClick={() => navigate("/profile")} aria-label={t("page.profile")} mr="3">
                     {/* name drives the initials fallback when the user has no picture */}
-                    <Avatar src={user?.avatar_url} name={user?.name} color="initials" radius="xl" size={32} />
+                    <Avatar
+                      src={user?.avatar_url}
+                      name={user?.name}
+                      radius="xl"
+                      size={32}
+                      style={
+                        {
+                          "--avatar-bg": "color-mix(in srgb, var(--mantine-color-primary-5) 50%, transparent)",
+                          "--avatar-color": "var(--mantine-color-primary-3)",
+                        } as CSSProperties
+                      }
+                    />
                   </UnstyledButton>
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
@@ -270,7 +317,7 @@ export function AppLayout(): ReactElement {
 
       {/* --------- MAIN CONTENT --------- */}
       <AppShell.Main style={{ position: "relative" }}>
-        {renderOfflinePage || isOffline ? (
+        {OFFLINE_PAGE_ENABLED && (renderOfflinePage || isOffline) ? (
           <OfflinePage />
         ) : (
           // Remounts each route to replay its entry animation.

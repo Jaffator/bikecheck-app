@@ -4,7 +4,6 @@ import { Button, Group, Modal, Slider, Stack, Text } from "@mantine/core";
 import Cropper, { type Area } from "react-easy-crop";
 import { useTranslation } from "react-i18next";
 import { ZoomIn } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { PHOTO_ASPECT, cropToFile } from "./photoCrop";
 
 interface PhotoCropModalProps {
@@ -36,7 +35,6 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
   }
 
   function cancel(): void {
-    tapFeedback();
     reset();
     onCancel();
   }
@@ -44,7 +42,6 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
   async function confirm(): Promise<void> {
     if (!file || !area) return;
 
-    tapFeedback();
     setIsCutting(true);
     try {
       onConfirm(await cropToFile(file, area));

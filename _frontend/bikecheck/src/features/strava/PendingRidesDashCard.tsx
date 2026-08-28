@@ -4,7 +4,6 @@ import { Box, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { CalendarClock } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { usePendingRides } from "./strava.queries";
 
@@ -67,7 +66,6 @@ export function PendingRidesCard(): ReactElement | null {
           color="primary.6"
           c="textDark.6"
           onClick={() => {
-            void tapFeedback();
             navigate("/rides?tab=pending");
           }}
           className="active:scale-[0.985]"

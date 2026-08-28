@@ -174,6 +174,7 @@ export class StravaEventsService {
           bikename: bike.bikename,
           bike_brand: bike.bike_brand,
           bike_model: bike.bike_model,
+          year: bike.year,
         })),
       };
 
@@ -373,7 +374,7 @@ export class StravaEventsService {
       if (result.isNew) {
         const bikeRow = await this.prisma.bikes.findUnique({
           where: { id: bikeId },
-          select: { bikename: true, bike_model: true, bike_brand: true },
+          select: { bike_brand: true, bike_model: true, year: true },
         });
         await this.notificationService.create({
           userId: user.id,
@@ -381,7 +382,7 @@ export class StravaEventsService {
           payload: {
             bikeId,
             km: Math.round(data.analyzedData.distance_km),
-            bikeName: bikeRow?.bikename ?? bikeRow?.bike_model ?? bikeRow?.bike_brand ?? '',
+            bikeName: bikeRow ? [bikeRow.bike_brand, bikeRow.bike_model, bikeRow.year].filter(Boolean).join(' ') : '',
           },
         });
       }

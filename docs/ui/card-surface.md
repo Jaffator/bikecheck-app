@@ -30,11 +30,29 @@ read as the same material — a list card, a sheet, an in-app banner.
 
 ## Where it lives
 
-Duplicated inline at each site rather than extracted into a shared component:
+**List rows go through `HistoryCard`.** They carry the same surface at list weight —
+`p="sm"` and a shallower `0 4px 12px -6px` outer shadow, so a stack of them does not read
+as a stack of sheets. Completed rides, pending rides and service
+history are one row shape — leading visual, title, date, metadata, metric row,
+optional chevron — so they share `_frontend/bikecheck/src/components/HistoryCard.tsx`
+rather than repeating the surface. Use `HistoryMetric` for each reading in the
+metric row. New history lists belong here too.
+
+**Service rows are the exception.** They left `HistoryCard`: a service card leads with an
+eyebrow (`SERVICE · 3 ACTIONS`), puts its price at the top edge and lists its Actions as
+bullets, which is no longer the ride row's shape. They carry their own type scale too —
+mono for the eyebrow, date, bullets and price, and the headings face for the bike name —
+so the Inter rules above do not apply to them. Inside a Month Group each service keeps its
+own card — the month only gathers them under a heading, which sticks to the top of the
+screen while that month scrolls past. The surface itself lives in
+`_frontend/bikecheck/src/features/service/serviceCardSurface.ts`, so the standalone card
+and the cards inside a month cannot drift apart.
+
+Everything that is *not* a list row still carries its own inline copy, because the
+surface is all they share:
 
 - `_frontend/bikecheck/src/features/strava/PendingRideSheet.tsx`
-- `_frontend/bikecheck/src/features/strava/PendingRidesCard.tsx`
 - `_frontend/bikecheck/src/components/InAppNotification.tsx`
 
-Keep the copies in step. Factoring it out into one component is a structural
-change — ask before doing it.
+Keep those copies in step with the snippet above. Pulling the bare surface out from
+under them into a component of its own is a structural change — ask before doing it.

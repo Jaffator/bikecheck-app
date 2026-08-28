@@ -4,7 +4,6 @@ import { Avatar, Box, Button, Group, Stack, Text, Title } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { tapFeedback } from "@/utils/haptics";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useGearLinking } from "@/features/strava/strava.queries";
 import { stravaDisplayName } from "@/features/strava/strava.types";
@@ -107,7 +106,6 @@ export function StravaConnected(): ReactElement {
             radius="sm"
             rightSection={<ArrowRight size={12} />}
             onClick={() => {
-              tapFeedback();
               // Opens pairing only when available Strava gear needs assignment.
               if (hasGearToPair) {
                 setPairingGear(true);

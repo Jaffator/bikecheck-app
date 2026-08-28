@@ -13,6 +13,7 @@ export interface GearLinkingBike {
   bikename: string | null;
   bike_brand: string;
   bike_model: string | null;
+  year: number | null;
 }
 
 // Mirrors ResponseUnmatchedStravaGearDto.

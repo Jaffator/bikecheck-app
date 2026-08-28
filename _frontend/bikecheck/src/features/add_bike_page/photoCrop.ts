@@ -50,5 +50,3 @@ export async function cropToFile(file: File, area: Area): Promise<File> {
   return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: OUTPUT_TYPE });
 }
 
-// Share a consistent bike photo slot height.
-export const PHOTO_SLOT_HEIGHT = 180;
