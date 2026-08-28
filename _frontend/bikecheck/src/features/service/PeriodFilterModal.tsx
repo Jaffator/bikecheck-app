@@ -19,6 +19,14 @@ const CALENDAR_Z_INDEX = MODAL_Z_INDEX + 1;
 // every other input in the app wears.
 const CALENDAR_STYLES = {
   ...inputStyles,
+  input: {
+    ...inputStyles.input,
+    // A date is taller than the wizard's one-line fields: two of these stand side by side,
+    // so the text has half the width to sit in and needs the room.
+    height: "3rem",
+    display: "flex",
+    alignItems: "center",
+  },
   calendarHeaderControl: { color: "var(--mantine-color-text-6)" },
   calendarHeaderLevel: {
     color: "var(--mantine-color-text-6)",
