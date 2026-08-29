@@ -24,7 +24,7 @@ import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateUserDto, UserResponseDto } from '../user/dto/user.dtos';
-import { GoogleTokenDto, LoginDto } from './dto/auth.dtos';
+import { AuthResponseDto, GoogleTokenDto, LoginDto, RefreshResponseDto, RefreshTokenDto } from './dto/auth.dtos';
 import { users as UserFull } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { UAParser } from 'ua-parser-js';
@@ -77,17 +77,24 @@ export class AuthController {
   // expired, so requiring a valid one here would make the endpoint unreachable.
   // The refresh token cookie is the credential being checked instead.
   @Public()
-  @ApiResponse({ status: 200 })
+  @ApiBody({ type: RefreshTokenDto, required: false })
+  @ApiResponse({ status: 200, type: RefreshResponseDto })
   @Post('refresh')
-  async refreshUser(@Req() req: Request, @Res() res: Response, @Ip() ip: string) {
+  async refreshUser(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() body: RefreshTokenDto,
+    @Ip() ip: string,
+  ): Promise<Response> {
     const deviceInfo = this.getDeviceInfo(req);
-    const currentRefreshToken = req.cookies['refresh_token'];
+    // Cookie first (web), body second (native clients have no cookie jar).
+    const currentRefreshToken = req.cookies?.['refresh_token'] ?? body?.refreshToken;
     if (!currentRefreshToken) {
       throw new UnauthorizedException('Session expired');
     }
     const { refreshToken, accessToken } = await this.tokenService.refreshToken(currentRefreshToken, deviceInfo, ip);
     this.setAuthCookies(res, accessToken, refreshToken);
-    return res.status(200).json({ message: 'Refresh token done' });
+    return res.status(200).json({ message: 'Refresh token done', accessToken, refreshToken });
   }
 
   // --- LOGOUT user
@@ -105,11 +112,11 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ status: 202, type: UserResponseDto })
+  @ApiResponse({ status: 202, type: AuthResponseDto })
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<UserResponseDto> {
+  async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Ip() ip: string): Promise<AuthResponseDto> {
     console.log('LOGIN-----------');
     const deviceInfo = this.getDeviceInfo(req);
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(
@@ -119,7 +126,7 @@ export class AuthController {
     );
     console.log(deviceInfo);
     this.setAuthCookies(res, accessToken, refreshToken);
-    return this.mapToResponse(req.user);
+    return { ...this.mapToResponse(req.user), accessToken, refreshToken };
   }
 
   // --- GOOGLE ask for auth
@@ -138,14 +145,14 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Public()
   @ApiBody({ type: GoogleTokenDto })
-  @ApiResponse({ status: 200 | 201, type: UserResponseDto })
+  @ApiResponse({ status: 200 | 201, type: AuthResponseDto })
   @Post('google/token')
   async googleReceiveToken(
     @Body() data: GoogleTokenDto, //
     @Req() req: Request, // deu to headers for device info
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
-  ): Promise<UserResponseDto> {
+  ): Promise<AuthResponseDto> {
     const profile = await this.googleService.verifyIdToken(data.idToken);
     console.log('Google ID token verified, profile:', profile);
     const { user, isNewUser } = await this.googleService.googleLogin(profile);
@@ -154,7 +161,7 @@ export class AuthController {
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
     res.status(isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
     this.setAuthCookies(res, accessToken, refreshToken);
-    return this.mapToResponse(user);
+    return { ...this.mapToResponse(user), accessToken, refreshToken };
   }
 
   // --- GOOGLE auth callback endpoint

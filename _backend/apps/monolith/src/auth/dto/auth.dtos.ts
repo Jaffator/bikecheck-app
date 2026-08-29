@@ -1,7 +1,8 @@
 // auth.dtos.ts is classes used like types becouse class validation techniques are used
 
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength, IsBoolean } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsBoolean, IsOptional } from 'class-validator';
+import { UserResponseDto } from '../../user/dto/user.dtos';
 
 export class LoginDto {
   @ApiProperty({ example: 'jaffa@jaffa.com' })
@@ -42,4 +43,38 @@ export class LoginGoogleDto {
   @IsString()
   @IsEmail()
   email!: string;
+}
+
+// Sent by a native client on refresh. The web client keeps using the cookie and
+// sends nothing, so the field is optional.
+export class RefreshTokenDto {
+  @ApiProperty({ example: 'a3f1c9...', required: false })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  refreshToken?: string;
+}
+
+// Login / Google response. Additive on purpose: the web client keeps reading
+// the same user fields and ignores the tokens, a native client has no cookie
+// jar and reads the tokens instead.
+export class AuthResponseDto extends UserResponseDto {
+  @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6...' })
+  accessToken!: string;
+
+  @ApiProperty({ example: 'a3f1c9...' })
+  refreshToken!: string;
+}
+
+// Refresh response. Same reasoning as AuthResponseDto: the message stays for
+// the web client, the rotated tokens are there for the native one.
+export class RefreshResponseDto {
+  @ApiProperty({ example: 'Refresh token done' })
+  message!: string;
+
+  @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6...' })
+  accessToken!: string;
+
+  @ApiProperty({ example: 'a3f1c9...' })
+  refreshToken!: string;
 }
