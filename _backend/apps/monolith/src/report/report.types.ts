@@ -1,3 +1,5 @@
+import { Readable } from 'stream';
+
 // The frozen shape of a Report. Stored as JSON in the `reports` table so the document
 // reads as it did the day it was made, however far the live data moves afterwards
 // (ADR 0011).
@@ -51,9 +53,28 @@ export interface StoredReportSnapshot {
 }
 
 export interface ReportSnapshotPrivate {
-  // Where each attachment's bytes live, by attachment id. Never emitted: the Report
-  // hands a stranger an id, and the attachment route resolves it here.
-  attachmentSources: Record<string, string>;
+  // The storage key each attachment's bytes live under, by attachment id. Never emitted:
+  // the Report hands a stranger an id, and the attachment route resolves it here. A key
+  // rather than the public address, so nothing the snapshot keeps is fetchable on its own
+  // (ADR 0013).
+  attachmentKeys: Record<string, string>;
+}
+
+// Where one attachment's bytes are, with the name and type the document froze for them.
+// Internal to the report domain: the key never leaves it.
+export interface ReportAttachmentSource {
+  key: string;
+  name: string;
+  contentType: string;
+}
+
+// The same attachment with its bytes in hand, ready to be handed to a reader.
+export interface ReportAttachmentFile {
+  body: Readable;
+  name: string;
+  contentType: string;
+  // Whatever storage reported, which it does not always do.
+  contentLength: number | null;
 }
 
 export interface ReportBike {

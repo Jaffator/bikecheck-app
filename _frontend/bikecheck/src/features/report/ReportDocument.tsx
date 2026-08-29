@@ -4,12 +4,18 @@ import type { ReactElement } from "react";
 import { ServiceReportDocument } from "./ServiceReportDocument";
 import { REPORT_PAPER } from "./reportFormat";
 import { reportHeadings } from "./reportHeadings";
-import type { ReportSnapshot } from "./report.types";
+import type { ReportAttachment, ReportSnapshot } from "./report.types";
 
-export function ReportDocument({ snapshot }: { snapshot: ReportSnapshot }): ReactElement {
+interface ReportDocumentProps {
+  snapshot: ReportSnapshot;
+  // How a reader opens one of the report's attachments, whichever page is showing it.
+  onOpenAttachment: (attachment: ReportAttachment) => void;
+}
+
+export function ReportDocument({ snapshot, onOpenAttachment }: ReportDocumentProps): ReactElement {
   switch (snapshot.kind) {
     case "SERVICE":
-      return <ServiceReportDocument snapshot={snapshot} />;
+      return <ServiceReportDocument snapshot={snapshot} onOpenAttachment={onOpenAttachment} />;
     default:
       // Unreachable: nothing can export the other kinds yet. It stays a readable page
       // rather than a blank one for a snapshot written by a newer server.

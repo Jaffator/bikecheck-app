@@ -1,6 +1,6 @@
 // Report API calls use the shared client. The public read is the one call in the app
 // that expects no session behind it.
-import { apiFetch } from "@/api/client";
+import { apiFetch, apiFetchBlob, apiUrl } from "@/api/client";
 import type { ExportReportInput, ExportedReport, ReportSnapshot, ReportSummary } from "./report.types";
 
 // POST /reports/export — makes one Report and hands back the document it just froze.
@@ -24,4 +24,18 @@ export async function discardReport(id: number): Promise<ReportSummary> {
 // answers 410 alike, so the reader is told the link is gone and never which way.
 export async function getPublicReport(token: string): Promise<ReportSnapshot> {
   return apiFetch<ReportSnapshot>(`/reports/public/${encodeURIComponent(token)}`);
+}
+
+// Where one attachment's bytes are read from behind a share link. The report serves its
+// own files, so a reader never gets the storage address and revoking closes the invoices
+// at the same instant as the page.
+export function publicAttachmentUrl(token: string, attachmentId: number): string {
+  return apiUrl(`/reports/public/${encodeURIComponent(token)}/attachment/${attachmentId}`);
+}
+
+// The same file on the owner's side, so the preview can open what it lists before any of
+// it is public. Fetched rather than linked: the route is behind the session, and a system
+// browser tab does not carry the app's cookies.
+export async function fetchOwnedAttachment(reportId: number, attachmentId: number): Promise<Blob> {
+  return apiFetchBlob(`/reports/${reportId}/attachment/${attachmentId}`);
 }

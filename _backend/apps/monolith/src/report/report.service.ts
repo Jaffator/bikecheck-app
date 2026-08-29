@@ -9,12 +9,15 @@ import {
 import { randomUUID } from 'crypto';
 import { Prisma, report_kind, reports } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { catalogueLabel, FALLBACK_REPORT_CURRENCY, reportLanguage } from './report-catalogue-labels';
 import { ExportReportDto } from './dto/export-report.dto';
 import {
   REPORT_SNAPSHOT_VERSION,
   ReportAction,
   ReportAttachment,
+  ReportAttachmentFile,
+  ReportAttachmentSource,
   ReportBike,
   ReportComponent,
   ReportService as ReportedService,
@@ -61,7 +64,10 @@ export interface ExportedReport {
 
 @Injectable()
 export class ReportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   // ---------- Export ----------
 
@@ -164,6 +170,51 @@ export class ReportService {
     return this.storedSnapshot(report).document;
   }
 
+  // One attachment behind a share link. The state is re-checked here, per file, on every
+  // request - which is what makes revoking close the invoices at the same instant as the
+  // page (ADR 0013). Fetching a file is not reading the page, so no view is counted.
+  async publicAttachment(token: string, attachmentId: number): Promise<ReportAttachmentFile> {
+    const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
+    if (report === null || !this.isOpen(report)) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    const attachment = this.findAttachment(report, attachmentId);
+    // An id from someone else's report answers exactly as a closed one does, so the route
+    // cannot be walked to find out which reports hold which files.
+    if (attachment === null) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return await this.read(attachment);
+  }
+
+  // The same file on the owner's side, so the preview can open what it lists before any
+  // of it is public. Their own report, their own receipt - published or not.
+  async ownedAttachment(id: number, userId: number, attachmentId: number): Promise<ReportAttachmentFile> {
+    const report = await this.findOwnedReport(id, userId);
+
+    const attachment = this.findAttachment(report, attachmentId);
+    if (attachment === null) {
+      throw new NotFoundException(`Attachment with ID ${attachmentId} is not part of report ${id}`);
+    }
+
+    return await this.read(attachment);
+  }
+
+  // The bytes come from storage; the name and type come from the document that froze them,
+  // so a receipt reads as what the report says it is rather than what storage holds today.
+  private async read(attachment: ReportAttachmentSource): Promise<ReportAttachmentFile> {
+    const file = await this.storage.downloadFileR2CloudFare(attachment.key);
+
+    return {
+      body: file.body,
+      name: attachment.name,
+      contentType: attachment.contentType,
+      contentLength: file.contentLength,
+    };
+  }
+
   // The public address a report is read at. Only ever the web origin: native builds route
   // by hash, and a link that opens nothing outside the app is not a share link.
   shareUrl(token: string): string {
@@ -173,9 +224,9 @@ export class ReportService {
   // ---------- Building the document ----------
 
   private buildServiceSnapshot(service: ServiceWithRelations, owner: OwnerVoice): StoredReportSnapshot {
-    const sources: ReportSnapshotPrivate = { attachmentSources: {} };
+    const sources: ReportSnapshotPrivate = { attachmentKeys: {} };
     for (const attachment of service.bike_event_attachments) {
-      sources.attachmentSources[String(attachment.id)] = attachment.url;
+      sources.attachmentKeys[String(attachment.id)] = this.storage.storageKeyFromUrl(attachment.url);
     }
 
     return {
@@ -323,6 +374,35 @@ export class ReportService {
   // carrying one from elsewhere is still honoured.
   private isOpen(report: reports): boolean {
     return report.is_public && !report.revoked && !(report.expires_at !== null && report.expires_at < new Date());
+  }
+
+  // The attachment an id names, or null when this report does not carry it. Name and type
+  // come from the document, which froze them; only the key comes from the private side.
+  private findAttachment(report: reports, attachmentId: number): ReportAttachmentSource | null {
+    const stored = this.storedSnapshot(report);
+    const key = stored.private.attachmentKeys[String(attachmentId)];
+    if (key === undefined) {
+      return null;
+    }
+
+    const listed = this.documentAttachments(stored.document).find((entry) => entry.id === attachmentId);
+    if (listed === undefined) {
+      return null;
+    }
+
+    return { key, name: listed.name, contentType: listed.contentType };
+  }
+
+  // Every attachment the document lists, whichever kind of document it is.
+  private documentAttachments(document: ReportSnapshot): ReportAttachment[] {
+    switch (document.kind) {
+      case 'SERVICE':
+        return document.service.attachments;
+      case 'PERIOD':
+        return document.services.flatMap((service) => service.attachments);
+      case 'BIKECHECK':
+        return [];
+    }
   }
 
   private storedSnapshot(report: reports): StoredReportSnapshot {

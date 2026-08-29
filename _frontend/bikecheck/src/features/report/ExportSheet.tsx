@@ -4,7 +4,7 @@ import { ActionIcon, Box, Button, Drawer, Group, Loader, Stack, Text } from "@ma
 import { useClipboard } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
 import { Check, Copy, Link2, Share2, Trash2, X } from "lucide-react";
-import { useDiscardReport, useExportReport, usePublishReport } from "./report.queries";
+import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "./report.queries";
 import { ReportDocument } from "./ReportDocument";
 import type { ExportReportInput, ExportedReport } from "./report.types";
 
@@ -38,6 +38,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   // Which input has already been exported. An export writes a row, so it must happen
   // once per opening however many times the effect runs.
   const exported = useRef<string | null>(null);
+  const openAttachment = useOwnedAttachmentOpener(report?.id);
 
   const opened = input !== null;
 
@@ -83,8 +84,9 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
         {report !== null && !isPublished && (
           <Stack gap="md" pb="md">
             {/* The document as the recipient would read it — nothing else is worth
-                previewing. */}
-            <ReportDocument snapshot={report.snapshot} />
+                previewing, receipts included. */}
+            {/* Their own report, so the owner reads its files before anyone else can. */}
+            <ReportDocument snapshot={report.snapshot} onOpenAttachment={openAttachment} />
             <Text fz={12} c="var(--color-text-dim)" ta="center">
               {t("report.previewHint")}
             </Text>

@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, StreamableFile } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { reports } from '@prisma/client';
 import { ReportService } from './report.service';
+import { ReportAttachmentFile, ReportSnapshot } from './report.types';
 import { ExportReportDto } from './dto/export-report.dto';
 import { ResponseExportedReportDto, ResponseReportDto } from './dto/response-report.dto';
-import { ReportSnapshot } from './report.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -88,6 +88,45 @@ export class ReportController {
   @Get('public/:token')
   async getPublic(@Param('token') token: string): Promise<ReportSnapshot> {
     return await this.reportService.getPublicSnapshot(token);
+  }
+
+  // ---------- GET one attachment behind a share link (no auth) ----------
+  @Public()
+  @ApiOperation({ summary: 'Stream one attachment of a published report' })
+  @ApiResponse({ status: 200 })
+  @Get('public/:token/attachment/:attachmentId')
+  async getPublicAttachment(
+    @Param('token') token: string,
+    @Param('attachmentId', ParseIntPipe) attachmentId: number,
+  ): Promise<StreamableFile> {
+    const attachment = await this.reportService.publicAttachment(token, attachmentId);
+    return this.stream(attachment);
+  }
+
+  // ---------- GET one attachment of the caller's own report ----------
+  @ApiOperation({ summary: "Stream one attachment of the caller's own report" })
+  @ApiResponse({ status: 200 })
+  @Get(':id/attachment/:attachmentId')
+  async getOwnedAttachment(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('attachmentId', ParseIntPipe) attachmentId: number,
+    @CurrentUser('userId') userId: string,
+  ): Promise<StreamableFile> {
+    const attachment = await this.reportService.ownedAttachment(id, Number(userId), attachmentId);
+    return this.stream(attachment);
+  }
+
+  // Wraps what the service read for the transport. The filename is given twice: the
+  // percent-encoded form every browser understands, and the plain one so a Czech receipt
+  // keeps its diacritics where UTF-8 filenames are supported.
+  private stream(attachment: ReportAttachmentFile): StreamableFile {
+    const encoded = encodeURIComponent(attachment.name);
+
+    return new StreamableFile(attachment.body, {
+      type: attachment.contentType,
+      disposition: `inline; filename="${encoded}"; filename*=UTF-8''${encoded}`,
+      length: attachment.contentLength ?? undefined,
+    });
   }
 
   // Maps a report row to the lightweight DTO (without the heavy snapshot).

@@ -1,7 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import sharp, { type ResizeOptions } from 'sharp';
+import { Readable } from 'stream';
 import path from 'path';
 import 'dotenv/config';
 
@@ -27,6 +28,17 @@ const IMAGE_BACKGROUND = '#FFFFFF';
 // time. Filling the frame with it would cut the wheels and bars off the bike, so
 // it is letterboxed into the frame on the same white instead.
 const FRAME_ASPECT = 2;
+
+// Said the same way however the read failed to find the file, so a caller cannot tell a
+// missing key from a key it was never allowed to ask for.
+const MISSING_OBJECT = 'Attachment not found in storage';
+
+// One stored object, read back. The length is whatever storage reported, which it does
+// not always do - and a missing one is not a reason to guess.
+export interface StoredFile {
+  body: Readable;
+  contentLength: number | null;
+}
 
 @Injectable()
 export class StorageService {
@@ -119,6 +131,72 @@ export class StorageService {
    */
   async uploadPdfR2CloudFare(fileBuffer: Buffer, cloudFolder: CloudFolder): Promise<string> {
     return await this.uploadFileR2CloudFare(fileBuffer, `${randomUUID()}.pdf`, cloudFolder);
+  }
+
+  /**
+   * Read one stored object back. Everything else here writes; a Report needs the read
+   * side so it can serve its own attachments rather than hand a stranger the storage
+   * address behind them - see ADR 0013.
+   * @param key - The object's key inside the bucket, as stored on the report snapshot
+   * @returns The bytes as a stream, with the length when storage reports one
+   */
+  async downloadFileR2CloudFare(key: string): Promise<StoredFile> {
+    let body: unknown;
+    let contentLength: number | undefined;
+
+    try {
+      const response = await this.s3Client.send(new GetObjectCommand({ Bucket: this.bucketName, Key: key }));
+      body = response.Body;
+      contentLength = response.ContentLength;
+    } catch (error) {
+      // A key the bucket does not hold is a missing file. Anything else - credentials,
+      // network, a bucket that is not there - is this server's fault, and saying 404
+      // would send the caller looking in the wrong place.
+      if (this.isMissingObject(error)) {
+        throw new NotFoundException(MISSING_OBJECT);
+      }
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException(`Storage read failed: ${message}`);
+    }
+
+    if (!(body instanceof Readable)) {
+      throw new NotFoundException(MISSING_OBJECT);
+    }
+
+    return { body, contentLength: contentLength ?? null };
+  }
+
+  /**
+   * The key an upload is stored under, taken back out of the address it is served from.
+   * The write path builds that address from the public origin and the key, so this is its
+   * inverse - and it lives here, beside it, rather than in whichever domain needs a key.
+   * @param url - A stored file's public URL, as recorded when it was uploaded
+   * @returns The object's key inside the bucket
+   */
+  storageKeyFromUrl(url: string): string {
+    const origin = process.env.CLOUDFLARE_PUBLIC_URL;
+    if (origin !== undefined && origin !== '' && url.startsWith(origin)) {
+      return url.slice(origin.length).replace(/^\/+/, '');
+    }
+
+    // Served from some other origin, or already a bare key. The path is the key either
+    // way, so a file uploaded before the origin changed is still found.
+    try {
+      return new URL(url).pathname.replace(/^\/+/, '');
+    } catch {
+      return url.replace(/^\/+/, '');
+    }
+  }
+
+  // R2 and S3 both say 404 for a key that is not there, under a handful of error names.
+  private isMissingObject(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+    const name = (error as { name?: string }).name;
+    const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+
+    return name === 'NoSuchKey' || name === 'NotFound' || status === 404;
   }
 
   /**

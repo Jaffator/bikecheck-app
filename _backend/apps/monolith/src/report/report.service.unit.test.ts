@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Readable } from 'stream';
 import { ConflictException, GoneException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { report_kind } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { ReportService } from './report.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { StoredReportSnapshot } from './report.types';
 
 // A report is frozen at the moment it is made, so every test here fixes that moment and
@@ -16,10 +18,19 @@ const BIKE_ID = 15;
 const SERVICE_ID = 42;
 const REPORT_ID = 99;
 const ORIGIN = 'https://app.bikecheck.cloud';
-const STORAGE_URL = 'https://storage.example.com/service-attachments/faktura.pdf';
+const STORAGE_ORIGIN = 'https://storage.example.com';
+const STORAGE_URL = `${STORAGE_ORIGIN}/service-attachments/faktura.pdf`;
+const STORAGE_KEY = 'service-attachments/faktura.pdf';
+const ATTACHMENT_ID = 900;
+const OTHER_REPORTS_ATTACHMENT_ID = 901;
 
 describe('ReportService', () => {
   let service: ReportService;
+
+  const mockStorage = {
+    downloadFileR2CloudFare: jest.fn(),
+    storageKeyFromUrl: jest.fn(),
+  };
 
   const mockPrisma = {
     reports: {
@@ -129,6 +140,24 @@ describe('ReportService', () => {
     ...overrides,
   });
 
+  // Another published report, carrying an attachment id that is genuinely valid - on it.
+  const otherReportRow = (): Record<string, unknown> => {
+    const stored = storedSnapshot();
+    stored.document = {
+      ...stored.document,
+      kind: 'SERVICE',
+      service: {
+        ...(stored.document as { service: Record<string, unknown> }).service,
+        attachments: [
+          { id: OTHER_REPORTS_ATTACHMENT_ID, name: 'ucet.pdf', contentType: 'application/pdf', sizeBytes: 400 },
+        ],
+      },
+    } as typeof stored.document;
+    stored.private = { attachmentKeys: { [String(OTHER_REPORTS_ATTACHMENT_ID)]: 'service-attachments/ucet.pdf' } };
+
+    return reportRow({ id: 100, public_token: 'token-2', is_public: true, snapshot: stored });
+  };
+
   // What the snapshot column holds: the document, and beside it what only the server sees.
   function storedSnapshot(): StoredReportSnapshot {
     return {
@@ -160,7 +189,7 @@ describe('ReportService', () => {
           attachments: [{ id: 900, name: 'faktura.pdf', contentType: 'application/pdf', sizeBytes: 125829 }],
         },
       },
-      private: { attachmentSources: { '900': STORAGE_URL } },
+      private: { attachmentKeys: { '900': STORAGE_KEY } },
     };
   }
 
@@ -174,12 +203,27 @@ describe('ReportService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     process.env.PUBLIC_APP_URL = ORIGIN;
+    // Uploads are served from this origin, so it is the part of an attachment address
+    // that is not the storage key.
+    process.env.CLOUDFLARE_PUBLIC_URL = STORAGE_ORIGIN;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ReportService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        ReportService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: StorageService, useValue: mockStorage },
+      ],
     }).compile();
 
     service = module.get<ReportService>(ReportService);
+
+    // Storage answers for the key it is given, and maps an upload address back to it the
+    // way the real one does.
+    mockStorage.storageKeyFromUrl.mockImplementation((url: string) => url.replace(`${STORAGE_ORIGIN}/`, ''));
+    mockStorage.downloadFileR2CloudFare.mockResolvedValue({
+      body: Readable.from([Buffer.from('%PDF-1.7')]),
+      contentLength: 8,
+    });
 
     // The caller owns the service and writes in English unless a test says otherwise.
     mockPrisma.users.findUnique.mockResolvedValue({ language: 'en', currency: 'CZK' });
@@ -357,7 +401,8 @@ describe('ReportService', () => {
       });
 
       expect(JSON.stringify(snapshot)).not.toContain(STORAGE_URL);
-      expect(writtenSnapshot().private.attachmentSources).toEqual({ '900': STORAGE_URL });
+      expect(JSON.stringify(snapshot)).not.toContain(STORAGE_KEY);
+      expect(writtenSnapshot().private.attachmentKeys).toEqual({ '900': STORAGE_KEY });
     });
 
     it('refuses the kinds that have no export yet', async () => {
@@ -497,6 +542,7 @@ describe('ReportService', () => {
 
       expect(snapshot).not.toHaveProperty('private');
       expect(JSON.stringify(snapshot)).not.toContain(STORAGE_URL);
+      expect(JSON.stringify(snapshot)).not.toContain(STORAGE_KEY);
     });
 
     // Freezing, proven by what the read never asks: the document comes out of the row it
@@ -539,6 +585,94 @@ describe('ReportService', () => {
       if (snapshot.kind !== 'SERVICE') throw new Error('expected a service report');
       expect(snapshot.service.note).toBe('Winter overhaul');
       expect(snapshot.service.attachments).toHaveLength(1);
+    });
+  });
+
+  // ADR 0013: what a Report hands a stranger is an id, and the bytes come back through the
+  // Report itself. The check runs per file, which is what gives revocation its meaning.
+  describe('publicAttachment', () => {
+    it('hands back the stored key and the content type frozen with it', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+
+      const attachment = await service.publicAttachment('token-1', ATTACHMENT_ID);
+
+      expect(mockStorage.downloadFileR2CloudFare).toHaveBeenCalledWith(STORAGE_KEY);
+      expect(attachment.contentType).toBe('application/pdf');
+      expect(attachment.name).toBe('faktura.pdf');
+      expect(attachment.body).toBeInstanceOf(Readable);
+    });
+
+    // The same three closed states, answered the same way, one file at a time.
+    it.each([
+      ['never published', { is_public: false }],
+      ['revoked', { is_public: true, revoked: true }],
+      ['expired', { is_public: true, expires_at: new Date('2020-01-01T00:00:00.000Z') }],
+    ])('refuses the file of a %s report with the same gone message', async (_state, overrides) => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow(overrides));
+
+      await expect(service.publicAttachment('token-1', ATTACHMENT_ID)).rejects.toThrow(GoneException);
+      await expect(service.publicAttachment('token-1', ATTACHMENT_ID)).rejects.toThrow(
+        'This report is no longer available',
+      );
+    });
+
+    it('serves the file, then refuses the very same file once the report is revoked', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+      await expect(service.publicAttachment('token-1', ATTACHMENT_ID)).resolves.toBeDefined();
+
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true, revoked: true }));
+      await expect(service.publicAttachment('token-1', ATTACHMENT_ID)).rejects.toThrow(GoneException);
+    });
+
+    it('refuses an attachment that is real, but belongs to a different report', async () => {
+      // The id opens fine on the report that carries it...
+      mockPrisma.reports.findUnique.mockResolvedValue(otherReportRow());
+      await expect(service.publicAttachment('token-2', OTHER_REPORTS_ATTACHMENT_ID)).resolves.toBeDefined();
+
+      // ...and not through the token of a report that does not.
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+      await expect(service.publicAttachment('token-1', OTHER_REPORTS_ATTACHMENT_ID)).rejects.toThrow(GoneException);
+    });
+
+    it('does not reach storage at all for a closed report', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
+
+      await expect(service.publicAttachment('token-1', ATTACHMENT_ID)).rejects.toThrow(GoneException);
+      expect(mockStorage.downloadFileR2CloudFare).not.toHaveBeenCalled();
+    });
+
+    it('does not count a view: fetching a file is not reading the page', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+
+      await service.publicAttachment('token-1', ATTACHMENT_ID);
+
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // The owner reads their own attachments out of the preview, before anything is public.
+  describe('ownedAttachment', () => {
+    it('opens a file on a report the caller made but has not published', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow());
+
+      const attachment = await service.ownedAttachment(REPORT_ID, OWNER_ID, ATTACHMENT_ID);
+
+      expect(mockStorage.downloadFileR2CloudFare).toHaveBeenCalledWith(STORAGE_KEY);
+      expect(attachment.name).toBe('faktura.pdf');
+    });
+
+    it('does not reach another user report', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(null);
+
+      await expect(service.ownedAttachment(REPORT_ID, STRANGER_ID, ATTACHMENT_ID)).rejects.toThrow(NotFoundException);
+    });
+
+    it('refuses an attachment that belongs to a different report', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow());
+
+      await expect(service.ownedAttachment(REPORT_ID, OWNER_ID, OTHER_REPORTS_ATTACHMENT_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

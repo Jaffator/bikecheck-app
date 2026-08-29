@@ -8,8 +8,14 @@ import type { ReportAction, ReportAttachment, ServiceReportSnapshot } from "./re
 import { REPORT_PAPER, reportBikeName, reportComponentLabel, reportCost, reportDate, reportNumber } from "./reportFormat";
 import { reportHeadings, type ReportHeadings } from "./reportHeadings";
 
+interface ServiceReportDocumentProps {
+  snapshot: ServiceReportSnapshot;
+  // How a receipt is opened. The bytes come through the report either way, so the reader
+  // never sees a storage address.
+  onOpenAttachment: (attachment: ReportAttachment) => void;
+}
 
-export function ServiceReportDocument({ snapshot }: { snapshot: ServiceReportSnapshot }): ReactElement {
+export function ServiceReportDocument({ snapshot, onOpenAttachment }: ServiceReportDocumentProps): ReactElement {
   const { service, bike, language } = snapshot;
   // The document prints in the language it was frozen in, never the reader's.
   const heading = reportHeadings(language);
@@ -70,7 +76,12 @@ export function ServiceReportDocument({ snapshot }: { snapshot: ServiceReportSna
         <Section icon={<Paperclip size={16} />} title={heading.attachments}>
           <ul className="flex flex-col gap-1.5">
             {service.attachments.map((attachment) => (
-              <AttachmentRow key={attachment.id} attachment={attachment} language={language} />
+              <AttachmentRow
+                key={attachment.id}
+                attachment={attachment}
+                language={language}
+                onOpen={onOpenAttachment}
+              />
             ))}
           </ul>
         </Section>
@@ -138,17 +149,35 @@ function ActionBlock({
   );
 }
 
-// A receipt names itself before it is opened. Opening it is served through the report
-// itself, never from storage — that route lands with the attachments ticket.
-function AttachmentRow({ attachment, language }: { attachment: ReportAttachment; language: string }): ReactElement {
+// A receipt is the proof rather than a claim of it, so it opens — through the report
+// itself, never from storage, so revoking the link closes the invoice with it.
+function AttachmentRow({
+  attachment,
+  language,
+  onOpen,
+}: {
+  attachment: ReportAttachment;
+  language: string;
+  onOpen: (attachment: ReportAttachment) => void;
+}): ReactElement {
+  const size =
+    attachment.sizeBytes === null ? null : (
+      <span className="font-mono text-xs shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
+        {formatFileSize(attachment.sizeBytes, language)}
+      </span>
+    );
+
   return (
     <li className="flex justify-between items-baseline gap-4 text-[13px]">
-      <span className="min-w-0 break-all">{attachment.name}</span>
-      {attachment.sizeBytes !== null && (
-        <span className="font-mono text-xs shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
-          {formatFileSize(attachment.sizeBytes, language)}
-        </span>
-      )}
+      <button
+        type="button"
+        onClick={() => onOpen(attachment)}
+        className="min-w-0 break-all text-left underline underline-offset-2"
+        style={{ color: REPORT_PAPER.accent }}
+      >
+        {attachment.name}
+      </button>
+      {size}
     </li>
   );
 }

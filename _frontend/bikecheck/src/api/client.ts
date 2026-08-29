@@ -3,6 +3,12 @@ import { Network } from "./network";
 import { useOfflineWhenCallApiStore } from "../store/store";
 const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
 
+// The absolute address of an API path, for the few things the browser fetches itself
+// rather than through apiFetch - a file opened in a new tab, an image drawn by src.
+export function apiUrl(path: string): string {
+  return `${BASE_URL}${path}`;
+}
+
 // Thrown for any non-2xx response so callers can inspect the status code.
 export class ApiError extends Error {
   readonly status: number;
@@ -59,7 +65,9 @@ async function refreshSession(): Promise<boolean> {
   return refreshPromise;
 }
 
-export async function apiFetch<T>(path: string, options?: RequestInit, retried = false): Promise<T> {
+// One request, with the session and the refresh-once dance around it. Callers pick what
+// to do with the body: JSON for the API, bytes for a file the browser has to be handed.
+async function apiRequest(path: string, options?: RequestInit, retried = false): Promise<Response> {
   const { connected } = await Network.getStatus();
   let response: Response;
 
@@ -88,7 +96,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit, retried =
   if (response.status === 401 && !retried && !NO_REFRESH_PATHS.includes(path)) {
     const refreshed = await refreshSession();
     if (refreshed) {
-      return apiFetch<T>(path, options, true);
+      return await apiRequest(path, options, true);
     }
     onSessionExpired?.();
   }
@@ -103,7 +111,22 @@ export async function apiFetch<T>(path: string, options?: RequestInit, retried =
     );
   }
 
+  return response;
+}
+
+export async function apiFetch<T>(path: string, options?: RequestInit, retried = false): Promise<T> {
+  const response = await apiRequest(path, options, retried);
+
   return (await response.json()) as T;
+}
+
+// The bytes of a file the app is allowed to read but the browser cannot ask for on its
+// own - an attachment served through a report, which needs the session cookie a system
+// browser tab would not carry.
+export async function apiFetchBlob(path: string, options?: RequestInit): Promise<Blob> {
+  const response = await apiRequest(path, options);
+
+  return await response.blob();
 }
 
 export class NetworkError extends Error {

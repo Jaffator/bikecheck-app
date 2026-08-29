@@ -6,7 +6,7 @@ import { useParams } from "react-router-dom";
 import { Loader } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Link2Off } from "lucide-react";
-import { usePublicReport } from "./report.queries";
+import { usePublicAttachmentOpener, usePublicReport } from "./report.queries";
 import { ReportDocument } from "./ReportDocument";
 import { REPORT_PAPER } from "./reportFormat";
 
@@ -17,6 +17,7 @@ const GONE_STATUS = 410;
 export function PublicReport(): ReactElement {
   const { token } = useParams<{ token: string }>();
   const { data: snapshot, isLoading, error } = usePublicReport(token);
+  const openAttachment = usePublicAttachmentOpener(token);
 
   if (isLoading) {
     return (
@@ -37,7 +38,9 @@ export function PublicReport(): ReactElement {
   // The document reads on a phone in the thread it arrived in, and on paper when printed.
   return (
     <main style={{ backgroundColor: REPORT_PAPER.sheet, minHeight: "100dvh" }} className="w-full flex justify-center">
-      <ReportDocument snapshot={snapshot} />
+      {/* The proof opens in its own tab, served through the report - so it closes the
+          moment the owner revokes the link. */}
+      <ReportDocument snapshot={snapshot} onOpenAttachment={openAttachment} />
     </main>
   );
 }
