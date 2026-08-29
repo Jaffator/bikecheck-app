@@ -109,3 +109,34 @@ measured against.
 **Service Interval**:
 How much wear may pass before an action is due again — expressed in kilometres, minutes or health
 index, depending on the action.
+
+### Sharing
+
+**Report**:
+A frozen document made from what the owner selected, shared outside the app. Its contents never
+change after it is made — the Services it was built from may be edited or deleted afterwards, and
+the Report still reads as it did the day it was made. Comes in three kinds: Service Report, Period
+Report and BikeCheck.
+_Avoid_: Export (that is the act, not the thing), snapshot, share
+
+**Service Report**:
+A Report covering one Service — the doc a workshop or a warranty claim asks for.
+
+**Period Report**:
+A Report covering the Services of one Bike within one Period, with their History Totals. May also
+carry the bike's mounted components with their wear and last service, at the owner's choice.
+_Avoid_: History report, multiple report
+
+**BikeCheck**:
+A Report describing a Bike and everything mounted on it — the machine's card, not its maintenance.
+A different document from the Service and Period Reports, which describe work rather than the bike.
+
+**Export**:
+The act of making a Report: choosing what it covers, reading it back and creating it. What the
+owner does; a Report is what results.
+
+**Share Link**:
+The public address a Report is read at. A Report has one from birth, but it stays closed until the
+owner publishes it, and the owner can revoke it afterwards — a revoked link is gone for good, and a
+new one means a new Report.
+_Avoid_: Public URL, share url, token

@@ -26,8 +26,8 @@ Architecture:
 Rules:
 
 - Follow existing domain structure
-- Do NOT introduce new layers or abstractions
-- No `any`, only if it's neccesary, like unknow response of api calls
+- You can introduce new layers or abstractions but only after discussion and approval
+- No `any`, only if it's necessary, like unknown response of API calls
 - Always use async/await
 - Explicit return types
 - Prefer composition over inheritance
@@ -39,11 +39,11 @@ Code style:
 - Explicit types
 - Small functions
 - No overengineering
-- Every code in English, comments too
+- Every code in English, comments too, comments short and concise, one liner if possible
 
 General:
 
-- When reporting information to me, be extremely concise and sacriface grammar for the sake of consision
+- When reporting information to me, be extremely concise and sacrifice grammar for the sake of concision
 - do not run dev server on background
 - Respect current project conventions
 - Reuse existing types and utilities
