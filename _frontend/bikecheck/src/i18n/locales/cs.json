@@ -579,5 +579,25 @@
     "duration": "{{count}} min",
     "elevation": "{{count}} m",
     "noGear": "Bez kola ze Stravy"
+  },
+  "report": {
+    "title": "Servisní report",
+    "exporting": "Připravuji report…",
+    "exportFailed": "Report se nepodařilo vytvořit. Zkuste to znovu.",
+    "previewHint": "Přesně tohle uvidí příjemce. Zatím není nic zveřejněné.",
+    "publish": "Zveřejnit",
+    "discard": "Zahodit",
+    "publishFailed": "Report se nepodařilo zveřejnit. Zkuste to znovu.",
+    "discardFailed": "Report se nepodařilo zahodit. Zkuste to znovu.",
+    "publishedTitle": "Odkaz ke sdílení",
+    "publishedBody": "Report si přes tento odkaz přečte kdokoli, i bez účtu. Odkaz můžete později zneplatnit.",
+    "copy": "Kopírovat odkaz",
+    "copied": "Zkopírováno",
+    "share": "Sdílet",
+    "done": "Hotovo",
+    "goneTitle": "Tento report už není dostupný",
+    "goneBody": "Majitel odkaz stáhl zpět, nebo nebyl nikdy zveřejněn.",
+    "loadFailedTitle": "Report se nepodařilo otevřít",
+    "loadFailedBody": "Zkontrolujte připojení a zkuste odkaz znovu."
   }
 }

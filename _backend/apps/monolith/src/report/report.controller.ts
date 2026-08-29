@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Patch, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { reports } from '@prisma/client';
 import { ReportService } from './report.service';
-import { ResponseReportDto } from './dto/response-report.dto';
+import { ExportReportDto } from './dto/export-report.dto';
+import { ResponseExportedReportDto, ResponseReportDto } from './dto/response-report.dto';
 import { ReportSnapshot } from './report.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -11,16 +12,16 @@ import { Public } from '../auth/decorators/public.decorator';
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
-  // ---------- POST generate a report for a bike ----------
-  @ApiOperation({ summary: 'Generate a shareable report for a bike' })
-  @ApiResponse({ status: 201, type: ResponseReportDto })
-  @Post('bikes/:bikeId')
-  async create(
+  // ---------- POST export a report ----------
+  @ApiOperation({ summary: 'Export a report and read it back for preview' })
+  @ApiResponse({ status: 201, type: ResponseExportedReportDto })
+  @Post('export')
+  async exportReport(
     @CurrentUser('userId') userId: string,
-    @Param('bikeId', ParseIntPipe) bikeId: number,
-  ): Promise<ResponseReportDto> {
-    const report = await this.reportService.create(Number(userId), bikeId);
-    return this.toDto(report);
+    @Body() dto: ExportReportDto,
+  ): Promise<ResponseExportedReportDto> {
+    const { report, snapshot } = await this.reportService.exportReport(Number(userId), dto);
+    return { ...this.toDto(report), snapshot };
   }
 
   // ---------- GET all reports for the current user ----------
@@ -44,12 +45,40 @@ export class ReportController {
     return reportsList.map((report) => this.toDto(report));
   }
 
+  // ---------- PATCH publish a report ----------
+  @ApiOperation({ summary: 'Open a report to the world' })
+  @ApiResponse({ status: 200, type: ResponseReportDto })
+  @Patch(':id/publish')
+  async publish(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('userId') userId: string,
+  ): Promise<ResponseReportDto> {
+    const report = await this.reportService.publish(id, Number(userId));
+    return this.toDto(report);
+  }
+
   // ---------- PATCH revoke a report link ----------
-  @ApiOperation({ summary: 'Revoke a report link' })
-  @ApiResponse({ status: 200 })
+  @ApiOperation({ summary: 'Revoke a report link, for good' })
+  @ApiResponse({ status: 200, type: ResponseReportDto })
   @Patch(':id/revoke')
-  async revoke(@Param('id', ParseIntPipe) id: number, @CurrentUser('userId') userId: string): Promise<void> {
-    return this.reportService.revoke(id, Number(userId));
+  async revoke(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('userId') userId: string,
+  ): Promise<ResponseReportDto> {
+    const report = await this.reportService.revoke(id, Number(userId));
+    return this.toDto(report);
+  }
+
+  // ---------- DELETE discard a report that was never published ----------
+  @ApiOperation({ summary: 'Discard a report nobody has seen' })
+  @ApiResponse({ status: 200, type: ResponseReportDto })
+  @Delete(':id')
+  async discard(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('userId') userId: string,
+  ): Promise<ResponseReportDto> {
+    const report = await this.reportService.discard(id, Number(userId));
+    return this.toDto(report);
   }
 
   // ---------- GET public report by token (no auth) ----------
@@ -58,17 +87,18 @@ export class ReportController {
   @ApiResponse({ status: 200 })
   @Get('public/:token')
   async getPublic(@Param('token') token: string): Promise<ReportSnapshot> {
-    return this.reportService.getPublicSnapshot(token);
+    return await this.reportService.getPublicSnapshot(token);
   }
 
   // Maps a report row to the lightweight DTO (without the heavy snapshot).
   private toDto(report: reports): ResponseReportDto {
-    const baseUrl = process.env.PUBLIC_APP_URL ?? '';
     return {
       id: report.id,
       public_token: report.public_token,
-      share_url: `${baseUrl}/r/${report.public_token}`,
+      share_url: this.reportService.shareUrl(report.public_token),
+      kind: report.kind,
       bike_id: report.bike_id,
+      is_public: report.is_public,
       view_count: report.view_count,
       last_viewed_at: report.last_viewed_at,
       revoked: report.revoked,

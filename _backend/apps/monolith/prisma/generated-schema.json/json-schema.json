@@ -1534,6 +1534,14 @@
         "bike_id": {
           "type": "integer"
         },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "SERVICE",
+            "PERIOD",
+            "BIKECHECK"
+          ]
+        },
         "snapshot": {
           "type": [
             "number",
@@ -1543,6 +1551,10 @@
             "array",
             "null"
           ]
+        },
+        "is_public": {
+          "type": "boolean",
+          "default": false
         },
         "view_count": {
           "type": "integer",

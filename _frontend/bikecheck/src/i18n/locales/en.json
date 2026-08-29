@@ -560,5 +560,25 @@
     "duration": "{{count}} min",
     "elevation": "{{count}} m",
     "noGear": "No Strava bike"
+  },
+  "report": {
+    "title": "Service report",
+    "exporting": "Preparing the report…",
+    "exportFailed": "Could not make the report. Try again.",
+    "previewHint": "This is exactly what the recipient will see. Nothing is public yet.",
+    "publish": "Publish",
+    "discard": "Discard",
+    "publishFailed": "Could not publish the report. Try again.",
+    "discardFailed": "Could not discard the report. Try again.",
+    "publishedTitle": "Share link",
+    "publishedBody": "Anyone with this link can read the report, without an account. You can revoke it later.",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "share": "Share",
+    "done": "Done",
+    "goneTitle": "This report is no longer available",
+    "goneBody": "The owner has taken the link back, or it was never opened to the public.",
+    "loadFailedTitle": "Could not open this report",
+    "loadFailedBody": "Check your connection and try the link again."
   }
 }

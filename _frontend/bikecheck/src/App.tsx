@@ -18,12 +18,15 @@ import { StravaConnected } from "./features/strava_connected_page/StravaConnecte
 import { InAppNotification } from "./components/InAppNotification";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { useCurrentUser, useUpdateUser } from "./features/users/users.queries";
+import { PublicReport } from "./features/report/PublicReport";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
   return (
     <Routes>
-      {/* Public routes remain outside the authentication gate. */}
+      {/* Public routes remain outside the authentication gate. A share link opens the
+          report and nothing else: no nav, no tab bar, no session fetch. */}
+      <Route path="/r/:token" element={<PublicReport />} />
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>
   );

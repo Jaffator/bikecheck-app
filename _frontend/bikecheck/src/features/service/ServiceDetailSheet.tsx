@@ -8,6 +8,8 @@ import dayjs from "dayjs";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { ExportSheet } from "@/features/report/ExportSheet";
+import type { ExportReportInput } from "@/features/report/report.types";
 import { useDeleteService, useServiceDetail } from "./service.queries";
 import { catalogueLabel, componentLabel } from "./serviceLabels";
 import { componentTypeIcon } from "./componentIcon";
@@ -39,6 +41,8 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // What the Share button is exporting. Null keeps the export sheet shut.
+  const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   // The sheet is still on screen while it slides out. Held on to, what it was last showing
   // stays drawn all the way down instead of emptying into skeletons on the way.
   const [lastOpened, setLastOpened] = useState<{ id: number; seed: ServiceHistoryItem | null } | null>(null);
@@ -205,11 +209,22 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         >
           {t("service.delete")}
         </Button>
-        {/* What it shares is settled separately; the button holds its place until then. */}
-        <Button variant="outline" color="primary.5" radius="md" leftSection={<Share2 size={16} />}>
+        {/* Exports the Service being read, which is the one the workshop asked about. */}
+        <Button
+          variant="outline"
+          color="primary.5"
+          radius="md"
+          leftSection={<Share2 size={16} />}
+          disabled={shownId === null}
+          onClick={() => {
+            if (shownId !== null) setExporting({ kind: "SERVICE", service_id: shownId });
+          }}
+        >
           {t("service.share")}
         </Button>
       </Group>
+
+      <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
       <ConfirmModal
         opened={confirmingDelete}
