@@ -1,7 +1,8 @@
 // How a Report writes its own figures. A document is read in the language and currency it
 // was frozen in, never the reader's — so nothing here takes the app's locale.
 import { formatCost } from "@/utils/money";
-import type { ReportBike, ReportComponent } from "./report.types";
+import type { ReportBike, ReportComponent, ReportPeriod } from "./report.types";
+import type { ReportHeadings } from "./reportHeadings";
 
 // The paper the document is printed on. Fixed values rather than theme tokens: the app is
 // dark and the document is not, and a report must read the same wherever it is opened.
@@ -50,4 +51,22 @@ export function reportComponentLabel(component: ReportComponent): string {
   const described = component.description?.trim();
   const kind = `${component.type}${position}`;
   return described ? `${kind}: ${described}` : kind;
+}
+
+// How the Period the document covers reads on it. Both ends open is all time, which is the
+// only Period that also counts the Services carrying no Service Date.
+export function reportPeriodLabel(period: ReportPeriod, heading: ReportHeadings, language: string): string {
+  const from = reportDate(period.from, language);
+  const to = reportDate(period.to, language);
+
+  if (from !== null && to !== null) return `${from} – ${to}`;
+  if (from !== null) return `${heading.periodFrom} ${from}`;
+  if (to !== null) return `${heading.periodTo} ${to}`;
+  return heading.allTime;
+}
+
+// The year a Service belongs to, which is the division a Period Report reads in. A Service
+// carrying no Service Date belongs to no year, and is listed last under its own heading.
+export function reportServiceYear(serviceDate: string | null): string | null {
+  return serviceDate === null ? null : serviceDate.slice(0, 4);
 }

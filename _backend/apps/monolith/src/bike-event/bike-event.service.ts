@@ -1126,7 +1126,7 @@ function bikeName(
 // Local time throughout: a service dated 1 January belongs to the day the user wrote
 // down, not to the one UTC would put it in. The closing day is inside the period, so the
 // window runs to the start of the day after it.
-function serviceDateInPeriod(from?: string, to?: string): { service_date?: { gte?: Date; lt?: Date } } {
+export function serviceDateInPeriod(from?: string, to?: string): { service_date?: { gte?: Date; lt?: Date } } {
   const start = parseDay(from);
   const end = parseDay(to);
   if (start === undefined && end === undefined) return {};

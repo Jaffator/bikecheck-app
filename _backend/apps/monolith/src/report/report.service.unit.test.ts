@@ -1,6 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'stream';
-import { ConflictException, GoneException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  GoneException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { report_kind } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { ReportService } from './report.service';
@@ -13,6 +19,9 @@ import { StoredReportSnapshot } from './report.types';
 // the date of the work it covers.
 const SERVICE_DATE = new Date('2026-07-01T00:00:00.000Z');
 const MOUNTED_AT = new Date('2026-01-15T00:00:00.000Z');
+const LATER_SERVICE_DATE = new Date('2026-08-01T00:00:00.000Z');
+const PERIOD_FROM = '2026-01-01';
+const PERIOD_TO = '2026-12-31';
 const OWNER_ID = 7;
 const STRANGER_ID = 8;
 const BIKE_ID = 15;
@@ -46,9 +55,49 @@ describe('ReportService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
-    events_bikes: { findFirst: jest.fn() },
+    events_bikes: { findFirst: jest.fn(), findMany: jest.fn() },
+    bikes: { findFirst: jest.fn() },
+    components_mounted: { findMany: jest.fn() },
     users: { findUnique: jest.fn() },
   };
+
+  // The bike a Period Report and a BikeCheck are written about.
+  const bikeRow = (): Record<string, unknown> => ({
+    id: BIKE_ID,
+    bikename: 'Firebird',
+    bike_brand: 'Pivot',
+    bike_model: 'Firebird',
+    year: 2023,
+    frame_material: 'Carbon',
+    ebike: false,
+    total_km: 5200,
+    total_time_min: 14000,
+    image_url: 'https://storage.example.com/bikes/firebird.webp',
+    bike_types: { id: 3, type: 'Enduro', i18n_key: 'bikeType.enduro' },
+  });
+
+  // One part on the bike, with the occasion that last touched it and a deleted one that
+  // no longer dates anything.
+  const mountedRow = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+    id: 71,
+    component_desc: 'Fox 38 Factory',
+    position: 'Front',
+    mounted_at: MOUNTED_AT,
+    total_km: 3100,
+    total_time_min: 9000,
+    health_index: 62,
+    component_types: {
+      id: 11,
+      component_type: 'Fork',
+      i18n_key: 'component.fork',
+      component_groups: { id: 2, group_name: 'Suspension', i18n_key: 'componentGroup.suspension' },
+    },
+    action_done_component_map: [
+      { event_actions_done: { events_bikes: { service_date: SERVICE_DATE, is_deleted: false } } },
+      { event_actions_done: { events_bikes: { service_date: LATER_SERVICE_DATE, is_deleted: true } } },
+    ],
+    ...overrides,
+  });
 
   // One recorded Service in the shape the export query asks for: a bleed on a fork that
   // was also replaced, with a receipt filed against the occasion.
@@ -245,6 +294,9 @@ describe('ReportService', () => {
     // The caller owns the service and writes in English unless a test says otherwise.
     mockPrisma.users.findUnique.mockResolvedValue({ language: 'en', currency: 'CZK' });
     mockPrisma.events_bikes.findFirst.mockResolvedValue(serviceRow());
+    mockPrisma.events_bikes.findMany.mockResolvedValue([serviceRow()]);
+    mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow());
+    mockPrisma.components_mounted.findMany.mockResolvedValue([mountedRow()]);
     mockPrisma.reports.create.mockImplementation((args: { data: Record<string, unknown> }) =>
       Promise.resolve({ ...reportRow(), ...args.data }),
     );
@@ -339,6 +391,8 @@ describe('ReportService', () => {
           totalTimeMin: 9000,
           healthIndex: null,
           mountedAt: MOUNTED_AT.toISOString(),
+          // One occasion knows nothing of the others.
+          lastServiceAt: null,
         },
       ]);
     });
@@ -422,12 +476,6 @@ describe('ReportService', () => {
       expect(writtenSnapshot().private.attachmentKeys).toEqual({ '900': STORAGE_KEY });
     });
 
-    it('refuses the kinds that have no export yet', async () => {
-      await expect(
-        service.exportReport(OWNER_ID, { kind: report_kind.PERIOD, service_id: SERVICE_ID }),
-      ).rejects.toThrow(/cannot be exported yet/);
-    });
-
     it('fails loudly, before writing a row, when there is no origin to address a link from', async () => {
       delete process.env.PUBLIC_APP_URL;
 
@@ -439,6 +487,174 @@ describe('ReportService', () => {
       await exportService();
 
       expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('exportReport - period', () => {
+    const exportPeriod = (overrides: Record<string, unknown> = {}) =>
+      service.exportReport(OWNER_ID, {
+        kind: report_kind.PERIOD,
+        bike_id: BIKE_ID,
+        from: PERIOD_FROM,
+        to: PERIOD_TO,
+        include_components: false,
+        ...overrides,
+      });
+
+    it('covers exactly the services that bike and that period cover', async () => {
+      await exportPeriod();
+
+      expect(mockPrisma.events_bikes.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            bike_id: BIKE_ID,
+            is_deleted: { not: true },
+            // The closing day is inside the period, so the window runs to the day after.
+            service_date: { gte: new Date(2026, 0, 1), lt: new Date(2027, 0, 1) },
+          }),
+        }),
+      );
+    });
+
+    it('leaves the window open at the end the caller left open', async () => {
+      await exportPeriod({ from: undefined, to: undefined });
+
+      const { where } = mockPrisma.events_bikes.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+      expect(where).not.toHaveProperty('service_date');
+    });
+
+    it('names the period it covers, so "no services" reads as "none in this window"', async () => {
+      const { snapshot } = await exportPeriod();
+      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+
+      expect(snapshot.period).toEqual({ from: PERIOD_FROM, to: PERIOD_TO });
+    });
+
+    it('carries the history totals of the services it froze', async () => {
+      mockPrisma.events_bikes.findMany.mockResolvedValue([serviceRow(), serviceRow({ id: 43 })]);
+
+      const { snapshot } = await exportPeriod();
+      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+
+      expect(snapshot.services).toHaveLength(2);
+      // Two services at 1800 each, and one replacement in each of them.
+      expect(snapshot.totals).toEqual({ totalCost: 3600, serviceCount: 2, replacementCount: 2 });
+    });
+
+    it('refuses an empty period rather than exporting a document of nothing', async () => {
+      mockPrisma.events_bikes.findMany.mockResolvedValue([]);
+
+      await expect(exportPeriod()).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.reports.create).not.toHaveBeenCalled();
+    });
+
+    it("refuses another user's bike", async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+
+      await expect(exportPeriod()).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.reports.create).not.toHaveBeenCalled();
+    });
+
+    it('leaves components null when they were not asked for, which is not an empty list', async () => {
+      const { snapshot } = await exportPeriod({ include_components: false });
+      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+
+      expect(snapshot.components).toBeNull();
+      expect(mockPrisma.components_mounted.findMany).not.toHaveBeenCalled();
+    });
+
+    it('freezes the components choice: a report made with them keeps exactly those', async () => {
+      const { snapshot } = await exportPeriod({ include_components: true });
+      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+
+      expect(snapshot.components).toHaveLength(1);
+      expect(snapshot.components?.[0]).toMatchObject({ type: 'Fork', description: 'Fox 38 Factory' });
+      // What was written down is what a reader is answered with, later and forever.
+      expect(writtenSnapshot().document).toEqual(snapshot);
+    });
+
+    it('keeps every attachment key of every service it covers, and none in the document', async () => {
+      const { snapshot } = await exportPeriod();
+
+      expect(JSON.stringify(snapshot)).not.toContain(STORAGE_URL);
+      expect(writtenSnapshot().private.attachmentKeys).toEqual({ '900': STORAGE_KEY });
+    });
+  });
+
+  describe('exportReport - bikecheck', () => {
+    const exportBikeCheck = (userId = OWNER_ID) =>
+      service.exportReport(userId, { kind: report_kind.BIKECHECK, bike_id: BIKE_ID });
+
+    it('refuses a bike the caller does not own', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+
+      await expect(exportBikeCheck(STRANGER_ID)).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.reports.create).not.toHaveBeenCalled();
+    });
+
+    it('asks only for a bike the caller owns', async () => {
+      await exportBikeCheck();
+
+      expect(mockPrisma.bikes.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: BIKE_ID, user_id: OWNER_ID, is_deleted: false } }),
+      );
+    });
+
+    it("carries the bike's identity, photo and odometer", async () => {
+      const { snapshot } = await exportBikeCheck();
+      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
+
+      expect(snapshot.bike).toEqual({
+        name: 'Firebird',
+        brand: 'Pivot',
+        model: 'Firebird',
+        year: 2023,
+        frameMaterial: 'Carbon',
+        type: 'Enduro',
+        ebike: false,
+        totalKm: 5200,
+        totalTimeMin: 14000,
+        imageUrl: 'https://storage.example.com/bikes/firebird.webp',
+      });
+    });
+
+    it('lists every active mounted component with its wear, its position and when it went on', async () => {
+      const { snapshot } = await exportBikeCheck();
+      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
+
+      expect(mockPrisma.components_mounted.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { bike_id: BIKE_ID, is_active: true, is_deleted: { not: true } },
+        }),
+      );
+      expect(snapshot.components[0]).toMatchObject({
+        type: 'Fork',
+        category: 'Suspension',
+        description: 'Fox 38 Factory',
+        position: 'Front',
+        totalKm: 3100,
+        totalTimeMin: 9000,
+        healthIndex: 62,
+        mountedAt: MOUNTED_AT.toISOString(),
+        // The later occasion was deleted, so it dates nothing.
+        lastServiceAt: SERVICE_DATE.toISOString(),
+      });
+    });
+
+    it("resolves the catalogue in the owner's language, not the reader's", async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ language: 'cs', currency: 'CZK' });
+
+      const { snapshot } = await exportBikeCheck();
+      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
+
+      expect(snapshot.language).toBe('cs');
+      expect(snapshot.components[0].type).not.toBe('Fork');
+    });
+
+    it('carries no attachments: it describes the machine, not the paperwork', async () => {
+      await exportBikeCheck();
+
+      expect(writtenSnapshot().private.attachmentKeys).toEqual({});
     });
   });
 

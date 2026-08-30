@@ -31,7 +31,7 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
     <article
       data-purpose="document-print"
       style={{ backgroundColor: REPORT_PAPER.sheet, color: REPORT_PAPER.ink }}
-      className="w-full max-w-[210mm] min-h-[297mm] px-[14mm] py-[16mm] flex flex-col gap-8 text-left"
+      className="w-full max-w-[182mm] min-h-[265mm] mx-auto flex flex-col gap-8 text-left"
     >
       <header className="flex flex-col items-center gap-4">
         <img src={logoDark} alt="BikeCheck" className="h-10 w-auto" />

@@ -137,6 +137,9 @@ export interface ReportComponent {
   totalTimeMin: number | null;
   healthIndex: number | null;
   mountedAt: string | null;
+  // When the part was last worked on. Only a document listing the bike's own components
+  // can know it; a component named inside one Service has no history beyond that occasion.
+  lastServiceAt: string | null;
 }
 
 // An id, a name, a type and a weight - never a storage address (ADR 0013).

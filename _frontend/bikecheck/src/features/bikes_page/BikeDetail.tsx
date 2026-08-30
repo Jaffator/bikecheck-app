@@ -3,7 +3,7 @@ import { useState, type ReactElement } from "react";
 import { Button, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { Clock, Gauge, Plus, Trash2 } from "lucide-react";
+import { Clock, Gauge, Plus, Share2, Trash2 } from "lucide-react";
 import { useBike, useDeleteBike } from "../bikes/bikes.queries";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
@@ -12,6 +12,8 @@ import { useCurrentUser } from "../users/users.queries";
 import { BikePhoto } from "./BikePhoto";
 import { bikeTitle } from "../bikes/bikeTitle";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { ExportSheet } from "@/features/report/ExportSheet";
+import type { ExportReportInput } from "@/features/report/report.types";
 
 // Render available identity and totals for the selected bike.
 export function BikeDetail(): ReactElement {
@@ -22,6 +24,8 @@ export function BikeDetail(): ReactElement {
   const { data: user } = useCurrentUser();
   const [pairingGear, setPairingGear] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // What the export button is exporting. Null keeps the export sheet shut.
+  const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   const remove = useDeleteBike();
   const unpair = useLinkStravaGear();
 
@@ -123,6 +127,19 @@ export function BikeDetail(): ReactElement {
         </Text>
       )}
 
+      {/* The machine's card: this bike and everything mounted on it, for whoever is
+          standing in front of it. */}
+      <Button
+        variant="outline"
+        color="primary.5"
+        radius="md"
+        leftSection={<Share2 size={16} />}
+        onClick={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+        style={{ alignSelf: "flex-start" }}
+      >
+        {t("report.exportBikeCheck")}
+      </Button>
+
       <Text fz={14} c="var(--color-text-dim)">
         {t("bikes.detailComingSoon")}
       </Text>
@@ -152,6 +169,8 @@ export function BikeDetail(): ReactElement {
           {t("bikes.deleteFailed")}
         </Text>
       )}
+
+      <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
       <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
 

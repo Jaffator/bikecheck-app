@@ -1,7 +1,7 @@
 // Full service history page.
 import { useEffect, useState, type ReactElement } from "react";
 import { ActionIcon, Group, Loader, Stack } from "@mantine/core";
-import { ListFilter } from "lucide-react";
+import { ListFilter, Share2 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
@@ -14,6 +14,8 @@ import { PeriodFilterModal } from "@/features/service/PeriodFilterModal";
 import { periodLabel } from "@/features/service/servicePeriod";
 import type { ServicePeriod } from "@/features/service/service.types";
 import { useHistoryTotals, useServiceHistory } from "@/features/service/service.queries";
+import { ExportSheet } from "@/features/report/ExportSheet";
+import type { ExportReportInput } from "@/features/report/report.types";
 
 // A bike id the user cannot have typed by hand reads as no filter at all, so junk in the
 // URL never reaches the API as ?bikeId=NaN.
@@ -39,6 +41,8 @@ export function ServiceHistory(): ReactElement {
   const { data: bikes } = useBikes();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const [filterOpened, setFilterOpened] = useState(false);
+  // What the Share button is exporting. Null keeps the export sheet shut.
+  const [exporting, setExporting] = useState<ExportReportInput | null>(null);
 
   // Both filters live in the URL, so arriving from the service page keeps the chip the
   // user had already chosen, and the back button undoes a filter rather than the page.
@@ -55,23 +59,51 @@ export function ServiceHistory(): ReactElement {
   const services = data?.pages.flatMap((page) => page.items) ?? [];
   const showChips = (bikes?.length ?? 0) > 1;
 
+  // A Period Report covers one bike, so a garage of one needs no chip to say which. With
+  // several bikes and none chosen there is nothing to export yet.
+  const exportBikeId = bikeId ?? (bikes?.length === 1 ? bikes[0].id : null);
+
   // The period filter hangs in the app header, which is the layout's to render - see the
   // header store. It leaves with the page.
   useEffect(() => {
     setActionSlot(
-      <ActionIcon
-        variant="subtle"
-        color="gray"
-        radius="md"
-        size="lg"
-        aria-label={t("service.periodTitle")}
-        onClick={() => setFilterOpened(true)}
-      >
-        <ListFilter size={20} color="var(--mantine-color-text-6)" />
-      </ActionIcon>,
+      <Group gap={2} wrap="nowrap">
+        {/* Exports exactly what is on screen: the same Bike and the same Period the list
+            below is already running on. */}
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          radius="md"
+          size="lg"
+          disabled={exportBikeId === null}
+          title={exportBikeId === null ? t("report.pickBikeFirst") : t("report.exportPeriod")}
+          aria-label={exportBikeId === null ? t("report.pickBikeFirst") : t("report.exportPeriod")}
+          onClick={() => {
+            if (exportBikeId === null) return;
+            setExporting({
+              kind: "PERIOD",
+              bike_id: exportBikeId,
+              from: period.from ?? undefined,
+              to: period.to ?? undefined,
+            });
+          }}
+        >
+          <Share2 size={20} color="var(--mantine-color-text-6)" />
+        </ActionIcon>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          radius="md"
+          size="lg"
+          aria-label={t("service.periodTitle")}
+          onClick={() => setFilterOpened(true)}
+        >
+          <ListFilter size={20} color="var(--mantine-color-text-6)" />
+        </ActionIcon>
+      </Group>,
     );
     return () => setActionSlot(null);
-  }, [setActionSlot, t]);
+  }, [setActionSlot, t, exportBikeId, period.from, period.to]);
 
   function setParams(next: Record<string, string | null>): void {
     const params = new URLSearchParams(searchParams);
@@ -118,6 +150,8 @@ export function ServiceHistory(): ReactElement {
           }
         />
       </Stack>
+
+      <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
       <PeriodFilterModal
         opened={filterOpened}

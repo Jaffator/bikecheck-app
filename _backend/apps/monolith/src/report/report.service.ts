@@ -9,6 +9,7 @@ import {
 import { randomUUID } from 'crypto';
 import { Prisma, report_kind, reports } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { serviceDateInPeriod } from '../bike-event/bike-event.service';
 import { StorageService } from '../storage/storage.service';
 import { ReportPdfService } from './report-pdf.service';
 import { catalogueLabel, FALLBACK_REPORT_CURRENCY, reportLanguage } from './report-catalogue-labels';
@@ -21,7 +22,9 @@ import {
   ReportAttachmentSource,
   ReportBike,
   ReportComponent,
+  ReportHistoryTotals,
   ReportPdfFile,
+  ReportPeriod,
   ReportService as ReportedService,
   ReportSnapshot,
   ReportSnapshotPrivate,
@@ -52,6 +55,23 @@ const serviceReportInclude = {
 
 type ServiceWithRelations = Prisma.events_bikesGetPayload<{ include: typeof serviceReportInclude }>;
 
+// The bike a Period Report or a BikeCheck is written about. Its type is a catalogue label,
+// so it comes along to be resolved at export time like every other one.
+const reportBikeInclude = { bike_types: true } satisfies Prisma.bikesInclude;
+
+type BikeWithRelations = Prisma.bikesGetPayload<{ include: typeof reportBikeInclude }>;
+
+// What one Mounted Component is written down as: what kind of part it is, and when it was
+// last worked on - which only the occasions it appears in can say.
+const mountedComponentInclude = {
+  component_types: { include: { component_groups: true } },
+  action_done_component_map: {
+    include: { event_actions_done: { include: { events_bikes: { select: { service_date: true, is_deleted: true } } } } },
+  },
+} satisfies Prisma.components_mountedInclude;
+
+type MountedWithRelations = Prisma.components_mountedGetPayload<{ include: typeof mountedComponentInclude }>;
+
 // The owner's language and currency, read once and frozen into the document.
 interface OwnerVoice {
   language: string;
@@ -81,27 +101,66 @@ export class ReportService {
     // origin is worse than no share link.
     this.publicAppOrigin();
 
-    if (dto.kind !== report_kind.SERVICE) {
-      throw new BadRequestException(`Reports of kind ${dto.kind} cannot be exported yet`);
-    }
-
     const owner = await this.ownerVoice(userId);
-    const service = await this.findOwnedService(dto.service_id, userId);
+
+    switch (dto.kind) {
+      case report_kind.SERVICE:
+        return await this.exportService(userId, dto, owner);
+      case report_kind.PERIOD:
+        return await this.exportPeriod(userId, dto, owner);
+      case report_kind.BIKECHECK:
+        return await this.exportBikeCheck(userId, dto, owner);
+    }
+  }
+
+  private async exportService(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
+    const serviceId = required(dto.service_id, 'service_id');
+    const service = await this.findOwnedService(serviceId, userId);
 
     // Informative only on the report, but a report of nothing is not a document.
     const bikeId = service.bike_id;
     if (bikeId === null) {
-      throw new NotFoundException(`Service with ID ${dto.service_id} has no bike to report on`);
+      throw new NotFoundException(`Service with ID ${serviceId} has no bike to report on`);
     }
 
-    const stored = this.buildServiceSnapshot(service, owner);
+    return await this.store(userId, bikeId, this.buildServiceSnapshot(service, owner));
+  }
 
+  // The services one bike ran up inside one Period. An empty Period is refused before a
+  // row is written, so an empty document is never made - let alone published.
+  private async exportPeriod(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
+    const bike = await this.findOwnedBike(required(dto.bike_id, 'bike_id'), userId);
+    const services = await this.findServicesInPeriod(bike.id, dto.from, dto.to);
+    if (services.length === 0) {
+      throw new BadRequestException('There are no services in this period to export');
+    }
+
+    const period: ReportPeriod = { from: dto.from ?? null, to: dto.to ?? null };
+    // The choice is read once, here, and frozen: a report exported without components
+    // never grows them (ADR 0011).
+    const components = required(dto.include_components, 'include_components')
+      ? await this.findMountedComponents(bike.id, owner.language)
+      : null;
+
+    return await this.store(userId, bike.id, this.buildPeriodSnapshot(bike, services, period, components, owner));
+  }
+
+  // The machine's card: the bike, and everything mounted on it right now.
+  private async exportBikeCheck(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
+    const bike = await this.findOwnedBike(required(dto.bike_id, 'bike_id'), userId);
+    const components = await this.findMountedComponents(bike.id, owner.language);
+
+    return await this.store(userId, bike.id, this.buildBikeCheckSnapshot(bike, components, owner));
+  }
+
+  // Writes the document down. Closed, whichever kind it is.
+  private async store(userId: number, bikeId: number, stored: StoredReportSnapshot): Promise<ExportedReport> {
     const report = await this.prisma.reports.create({
       data: {
         public_token: randomUUID(),
         user_id: userId,
         bike_id: bikeId,
-        kind: report_kind.SERVICE,
+        kind: stored.document.kind,
         snapshot: stored as unknown as Prisma.InputJsonObject,
       },
     });
@@ -242,11 +301,6 @@ export class ReportService {
   // ---------- Building the document ----------
 
   private buildServiceSnapshot(service: ServiceWithRelations, owner: OwnerVoice): StoredReportSnapshot {
-    const sources: ReportSnapshotPrivate = { attachmentKeys: {} };
-    for (const attachment of service.bike_event_attachments) {
-      sources.attachmentKeys[String(attachment.id)] = this.storage.storageKeyFromUrl(attachment.url);
-    }
-
     return {
       document: {
         version: REPORT_SNAPSHOT_VERSION,
@@ -257,11 +311,85 @@ export class ReportService {
         bike: this.buildBike(service.bikes, owner.language),
         service: this.buildService(service, owner.language),
       },
-      private: sources,
+      private: this.attachmentKeys([service]),
     };
   }
 
-  private buildBike(bike: ServiceWithRelations['bikes'], language: string): ReportBike {
+  private buildPeriodSnapshot(
+    bike: BikeWithRelations,
+    services: ServiceWithRelations[],
+    period: ReportPeriod,
+    components: ReportComponent[] | null,
+    owner: OwnerVoice,
+  ): StoredReportSnapshot {
+    const reported = services.map((service) => this.buildService(service, owner.language));
+
+    return {
+      document: {
+        version: REPORT_SNAPSHOT_VERSION,
+        kind: 'PERIOD',
+        generatedAt: new Date().toISOString(),
+        language: owner.language,
+        currency: owner.currency,
+        bike: this.buildBike(bike, owner.language),
+        period,
+        services: reported,
+        totals: this.buildTotals(reported),
+        components,
+      },
+      private: this.attachmentKeys(services),
+    };
+  }
+
+  private buildBikeCheckSnapshot(
+    bike: BikeWithRelations,
+    components: ReportComponent[],
+    owner: OwnerVoice,
+  ): StoredReportSnapshot {
+    return {
+      document: {
+        version: REPORT_SNAPSHOT_VERSION,
+        kind: 'BIKECHECK',
+        generatedAt: new Date().toISOString(),
+        language: owner.language,
+        currency: owner.currency,
+        bike: this.buildBike(bike, owner.language),
+        components,
+      },
+      // A BikeCheck describes the machine, not the paperwork - it carries no files.
+      private: { attachmentKeys: {} },
+    };
+  }
+
+  // What the document itself adds up to, counted off the services it froze rather than
+  // queried again - so the totals and the list under them can never disagree.
+  private buildTotals(services: ReportedService[]): ReportHistoryTotals {
+    return {
+      totalCost: services.reduce((sum, service) => sum + service.totalCost, 0),
+      serviceCount: services.length,
+      // One service can replace several parts, and each of those is a Replacement of its
+      // own - see ADR 0003.
+      replacementCount: services.reduce(
+        (count, service) => count + service.actions.filter((action) => action.replacement).length,
+        0,
+      ),
+    };
+  }
+
+  // Where every attachment the document lists keeps its bytes. Held apart from the
+  // document so the public read cannot leak an address by omission (ADR 0013).
+  private attachmentKeys(services: ServiceWithRelations[]): ReportSnapshotPrivate {
+    const sources: ReportSnapshotPrivate = { attachmentKeys: {} };
+    for (const service of services) {
+      for (const attachment of service.bike_event_attachments) {
+        sources.attachmentKeys[String(attachment.id)] = this.storage.storageKeyFromUrl(attachment.url);
+      }
+    }
+
+    return sources;
+  }
+
+  private buildBike(bike: BikeWithRelations | null, language: string): ReportBike {
     // A report outlives the bike it describes, so the bike may already be gone.
     if (bike === null) {
       return {
@@ -337,6 +465,9 @@ export class ReportService {
           totalTimeMin: junction.time_min_at_time,
           healthIndex: null,
           mountedAt: mounted.mounted_at?.toISOString() ?? null,
+          // One occasion knows nothing of the others, so a part named inside a Service
+          // carries no service history of its own.
+          lastServiceAt: null,
         } satisfies ReportComponent;
       }),
     };
@@ -363,6 +494,68 @@ export class ReportService {
     }
 
     return service;
+  }
+
+  private async findOwnedBike(bikeId: number, userId: number): Promise<BikeWithRelations> {
+    const bike = await this.prisma.bikes.findFirst({
+      where: { id: bikeId, user_id: userId, is_deleted: false },
+      include: reportBikeInclude,
+    });
+    if (bike === null) {
+      throw new NotFoundException(`Bike with ID ${bikeId} not found`);
+    }
+
+    return bike;
+  }
+
+  // Exactly the Services the history list reads under the same bike and the same Period,
+  // so the Report and the screen it was exported from can never disagree.
+  private async findServicesInPeriod(
+    bikeId: number,
+    from: string | undefined,
+    to: string | undefined,
+  ): Promise<ServiceWithRelations[]> {
+    return await this.prisma.events_bikes.findMany({
+      // is_deleted is nullable, so `not: true` is what covers both false and the null rows
+      // written before the column existed. The window is the history's own, borrowed rather
+      // than restated - a second copy of it is a second thing to keep in step.
+      where: { bike_id: bikeId, is_deleted: { not: true }, ...serviceDateInPeriod(from, to) },
+      // Newest work first, the way the history reads. The id breaks a tie so a day holding
+      // several services always reads the same way.
+      orderBy: [{ service_date: { sort: 'desc', nulls: 'last' } }, { id: 'desc' }],
+      include: serviceReportInclude,
+    });
+  }
+
+  // Everything mounted on the bike right now, so a buyer can check the build against what
+  // is in front of them.
+  private async findMountedComponents(bikeId: number, language: string): Promise<ReportComponent[]> {
+    const mounted = await this.prisma.components_mounted.findMany({
+      where: { bike_id: bikeId, is_active: true, is_deleted: { not: true } },
+      orderBy: [{ component_type_id: 'asc' }, { id: 'asc' }],
+      include: mountedComponentInclude,
+    });
+
+    return mounted.map((component) => this.buildMountedComponent(component, language));
+  }
+
+  private buildMountedComponent(mounted: MountedWithRelations, language: string): ReportComponent {
+    return {
+      type: catalogueLabel(language, mounted.component_types.i18n_key, mounted.component_types.component_type),
+      category: catalogueLabel(
+        language,
+        mounted.component_types.component_groups.i18n_key,
+        mounted.component_types.component_groups.group_name,
+      ),
+      description: mounted.component_desc,
+      position: mounted.position,
+      // What the part reads today, unlike the baselines a Service froze against it.
+      totalKm: mounted.total_km,
+      totalTimeMin: mounted.total_time_min,
+      healthIndex: mounted.health_index,
+      mountedAt: mounted.mounted_at?.toISOString() ?? null,
+      lastServiceAt: lastServiceOf(mounted),
+    };
   }
 
   private async findOwnedReport(id: number, userId: number): Promise<reports> {
@@ -463,4 +656,28 @@ export class ReportService {
 
     return origin.replace(/\/+$/, '');
   }
+}
+
+// A field the body's own kind makes mandatory. Validation has already refused a body
+// without it; this only carries that guarantee into the types.
+function required<T>(value: T | undefined, field: string): T {
+  if (value === undefined) {
+    throw new BadRequestException(`${field} is required for this kind of report`);
+  }
+
+  return value;
+}
+
+// The most recent occasion this part was worked on, or null for one nobody has serviced
+// yet. A deleted Service is no longer part of the record, so it does not date one either.
+function lastServiceOf(mounted: MountedWithRelations): string | null {
+  const dates = mounted.action_done_component_map
+    .map((junction) => junction.event_actions_done.events_bikes)
+    .filter((service) => service.is_deleted !== true)
+    .map((service) => service.service_date)
+    .filter((date): date is Date => date !== null);
+
+  if (dates.length === 0) return null;
+
+  return new Date(Math.max(...dates.map((date) => date.getTime()))).toISOString();
 }

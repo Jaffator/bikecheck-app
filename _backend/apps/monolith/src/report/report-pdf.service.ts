@@ -13,8 +13,9 @@ const SETTLED_MARKER = '[data-report-settled="true"]';
 // wedged browser answers the caller rather than holding the request open.
 const PAGE_TIMEOUT_MS = 20_000;
 
-// The document carries its own margins, so the sheet is printed edge to edge.
-const NO_MARGIN = { top: '0', right: '0', bottom: '0', left: '0' };
+// The paper's own margins rather than the document's own padding: padding is laid out once
+// per box, so a report running past one page would otherwise print page two edge to edge.
+const A4_MARGIN = { top: '16mm', right: '14mm', bottom: '16mm', left: '14mm' };
 
 @Injectable()
 export class ReportPdfService {
@@ -34,7 +35,7 @@ export class ReportPdfService {
       await page.goto(url, { waitUntil: 'load', timeout: PAGE_TIMEOUT_MS });
       await page.waitForSelector(SETTLED_MARKER, { state: 'attached', timeout: PAGE_TIMEOUT_MS });
 
-      return await page.pdf({ format: 'A4', printBackground: true, margin: NO_MARGIN });
+      return await page.pdf({ format: 'A4', printBackground: true, margin: A4_MARGIN });
     } catch (error) {
       // A page of ours that never settles is a render that failed, not a document.
       if (error instanceof playwrightErrors.TimeoutError) {

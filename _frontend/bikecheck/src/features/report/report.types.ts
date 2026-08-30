@@ -30,7 +30,24 @@ export interface ExportServiceReportInput {
   service_id: number;
 }
 
-export type ExportReportInput = ExportServiceReportInput;
+// The Period Report is asked for with the same Bike and Period the history list is already
+// running on, so the Report and the screen can never disagree.
+export interface ExportPeriodReportInput {
+  kind: "PERIOD";
+  bike_id: number;
+  from?: string;
+  to?: string;
+  // Answered on the Export sheet's Options step rather than by whatever opened it, because
+  // the choice is frozen into the Report: one exported without components never grows them.
+  include_components?: boolean;
+}
+
+export interface ExportBikeCheckInput {
+  kind: "BIKECHECK";
+  bike_id: number;
+}
+
+export type ExportReportInput = ExportServiceReportInput | ExportPeriodReportInput | ExportBikeCheckInput;
 
 // ------------------------------------------------------------------
 // The frozen document
@@ -126,6 +143,9 @@ export interface ReportComponent {
   totalTimeMin: number | null;
   healthIndex: number | null;
   mountedAt: string | null;
+  // When the part was last worked on. Only a document listing the bike's own components
+  // knows it; a component named inside one Service has no history beyond that occasion.
+  lastServiceAt: string | null;
 }
 
 // An id, a name, a type and a weight — never a storage address. The bytes are served

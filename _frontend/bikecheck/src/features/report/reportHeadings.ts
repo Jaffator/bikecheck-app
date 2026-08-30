@@ -9,6 +9,30 @@
 
 export interface ReportHeadings {
   serviceDocument: string;
+  periodDocument: string;
+  bikeCheckDocument: string;
+  period: string;
+  allTime: string;
+  // Prefixes, put in front of the day they open or close on.
+  periodFrom: string;
+  periodTo: string;
+  services: string;
+  replacements: string;
+  spent: string;
+  build: string;
+  brand: string;
+  model: string;
+  year: string;
+  frameMaterial: string;
+  bikeType: string;
+  ebike: string;
+  yes: string;
+  mounted: string;
+  lastService: string;
+  wear: string;
+  neverServiced: string;
+  noComponents: string;
+  noServices: string;
   bike: string;
   date: string;
   odometer: string;
@@ -32,6 +56,29 @@ export interface ReportHeadings {
 
 const en: ReportHeadings = {
   serviceDocument: "Service Report",
+  periodDocument: "Period Report",
+  bikeCheckDocument: "BikeCheck",
+  period: "Period",
+  allTime: "All time",
+  periodFrom: "From",
+  periodTo: "Until",
+  services: "Services",
+  replacements: "Replacements",
+  spent: "Total spent",
+  build: "Build",
+  brand: "Brand",
+  model: "Model",
+  year: "Year",
+  frameMaterial: "Frame",
+  bikeType: "Type",
+  ebike: "E-bike",
+  yes: "Yes",
+  mounted: "Mounted",
+  lastService: "Last service",
+  wear: "Wear",
+  neverServiced: "Never serviced",
+  noComponents: "No components on record",
+  noServices: "No services in this period",
   bike: "Bike",
   date: "Service date",
   odometer: "Odometer",
@@ -55,6 +102,29 @@ const en: ReportHeadings = {
 
 const cs: ReportHeadings = {
   serviceDocument: "Servisní report",
+  periodDocument: "Report za období",
+  bikeCheckDocument: "BikeCheck",
+  period: "Období",
+  allTime: "Celá historie",
+  periodFrom: "Od",
+  periodTo: "Do",
+  services: "Servisy",
+  replacements: "Výměny",
+  spent: "Celkem utraceno",
+  build: "Osazení",
+  brand: "Značka",
+  model: "Model",
+  year: "Rok",
+  frameMaterial: "Rám",
+  bikeType: "Typ",
+  ebike: "Elektrokolo",
+  yes: "Ano",
+  mounted: "Namontováno",
+  lastService: "Poslední servis",
+  wear: "Nájezd",
+  neverServiced: "Zatím neservisováno",
+  noComponents: "Žádné komponenty v evidenci",
+  noServices: "V tomto období žádné servisy",
   bike: "Kolo",
   date: "Datum servisu",
   odometer: "Nájezd",
