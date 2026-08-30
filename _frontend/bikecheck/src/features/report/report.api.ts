@@ -9,9 +9,23 @@ export async function exportReport(input: ExportReportInput): Promise<ExportedRe
   return apiFetch<ExportedReport>("/reports/export", { method: "POST", body: JSON.stringify(input) });
 }
 
+// GET /reports/mine — everything the owner has out in their name, newest first. Metadata
+// only: the list says what each link is, never what is behind it. Omitting the bike asks
+// across the whole garage.
+export async function listMyReports(bikeId?: number): Promise<ReportSummary[]> {
+  const query = bikeId === undefined ? "" : `?bikeId=${String(bikeId)}`;
+  return apiFetch<ReportSummary[]>(`/reports/mine${query}`);
+}
+
 // PATCH /reports/:id/publish — opens the Share Link. The deliberate second act.
 export async function publishReport(id: number): Promise<ReportSummary> {
   return apiFetch<ReportSummary>(`/reports/${id}/publish`, { method: "PATCH" });
+}
+
+// PATCH /reports/:id/revoke — takes the link back. Final: the page and every attachment
+// behind it close at the same instant, and a revoked Report is never published again.
+export async function revokeReport(id: number): Promise<ReportSummary> {
+  return apiFetch<ReportSummary>(`/reports/${id}/revoke`, { method: "PATCH" });
 }
 
 // DELETE /reports/:id — throws away a Report nobody has seen. Answers with what it

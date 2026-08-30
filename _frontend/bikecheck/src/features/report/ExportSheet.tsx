@@ -1,29 +1,21 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Drawer, Group, Loader, Stack, Switch, Text } from "@mantine/core";
-import { useClipboard } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Check, Copy, Link2, Share2, Trash2, X } from "lucide-react";
+import { ArrowRight, Link2, Share2, Trash2, X } from "lucide-react";
 import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "./report.queries";
+import { CopyLinkButton } from "./CopyLinkButton";
 import { ReportDocument } from "./ReportDocument";
+import { REPORT_KIND_KEY } from "./reportListLabels";
 import type { ExportReportInput, ExportedReport, ReportKind } from "./report.types";
 import { ApiError } from "@/api/client";
 
 // The sheet stands over what it was opened from, the same way the service detail does.
 const SHEET_HEIGHT = "92vh";
 const SHEET_Z_INDEX = 320;
-const COPIED_FOR_MS = 1500;
 
 // What the server answers with when the period it was handed covers no services.
 const EMPTY_PERIOD_STATUS = 400;
-
-// What the sheet calls the document it is making. Only the Period Report has anything to
-// ask before it is made; the other two go straight to the preview.
-const TITLE_KEY: Record<ReportKind, string> = {
-  SERVICE: "report.titleService",
-  PERIOD: "report.titlePeriod",
-  BIKECHECK: "report.titleBikecheck",
-};
 
 interface ExportSheetProps {
   // Null closes the sheet. What is being exported, once open.
@@ -127,7 +119,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     <Sheet
       opened={opened}
       onClose={close}
-      title={isPublished ? t("report.publishedTitle") : t(TITLE_KEY[titleKind.current])}
+      title={isPublished ? t("report.publishedTitle") : t(REPORT_KIND_KEY[titleKind.current])}
     >
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {/* The one question a Period Report asks, before anything is written down. */}
@@ -246,7 +238,6 @@ function Options({ checked, onChange }: { checked: boolean; onChange: (value: bo
 // The link, and the two ways anyone actually sends one.
 function Published({ shareUrl }: { shareUrl: string }): ReactElement {
   const { t } = useTranslation();
-  const clipboard = useClipboard({ timeout: COPIED_FOR_MS });
   // Only offered where the device has a share sheet to hand it to.
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
@@ -270,15 +261,7 @@ function Published({ shareUrl }: { shareUrl: string }): ReactElement {
       </Box>
 
       <Group gap="sm" grow wrap="nowrap">
-        <Button
-          variant="outline"
-          color="primary.5"
-          radius="md"
-          leftSection={clipboard.copied ? <Check size={16} /> : <Copy size={16} />}
-          onClick={() => clipboard.copy(shareUrl)}
-        >
-          {clipboard.copied ? t("report.copied") : t("report.copy")}
-        </Button>
+        <CopyLinkButton shareUrl={shareUrl} />
         {canShare && (
           <Button
             color="primary.6"

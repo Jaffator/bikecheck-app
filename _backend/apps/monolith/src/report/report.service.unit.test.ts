@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { report_kind } from '@prisma/client';
+import { report_kind, reports } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { ReportService } from './report.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -655,6 +655,77 @@ describe('ReportService', () => {
       await exportBikeCheck();
 
       expect(writtenSnapshot().private.attachmentKeys).toEqual({});
+    });
+  });
+
+  describe('listMine', () => {
+    it('answers the caller reports, newest first', async () => {
+      mockPrisma.reports.findMany.mockResolvedValue([reportRow()]);
+
+      const listed = await service.listMine(OWNER_ID);
+
+      expect(listed).toHaveLength(1);
+      expect(mockPrisma.reports.findMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+
+    it('narrows to one bike when asked', async () => {
+      mockPrisma.reports.findMany.mockResolvedValue([]);
+
+      await service.listMine(OWNER_ID, BIKE_ID);
+
+      expect(mockPrisma.reports.findMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, bike_id: BIKE_ID },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+  });
+
+  describe('covers', () => {
+    it('reads a service report as the one day it covers', () => {
+      const covers = service.covers(reportRow() as unknown as reports);
+
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: '2026-07-01', to: '2026-07-01' });
+    });
+
+    it('reads a period report as the period it was exported for', () => {
+      const stored = storedSnapshot();
+      stored.document = {
+        ...stored.document,
+        kind: 'PERIOD',
+        period: { from: PERIOD_FROM, to: PERIOD_TO },
+        services: [],
+        totals: { totalCost: 0, serviceCount: 0, replacementCount: 0 },
+        components: null,
+      } as unknown as typeof stored.document;
+
+      const covers = service.covers(reportRow({ kind: report_kind.PERIOD, snapshot: stored }) as unknown as reports);
+
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: PERIOD_TO });
+    });
+
+    it('reads a bikecheck as covering no span', () => {
+      const stored = storedSnapshot();
+      stored.document = { ...stored.document, kind: 'BIKECHECK', components: [] } as unknown as typeof stored.document;
+
+      const covers = service.covers(reportRow({ kind: report_kind.BIKECHECK, snapshot: stored }) as unknown as reports);
+
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null });
+    });
+
+    it('names the bike from the frozen document, so a deleted bike still reads', () => {
+      const stored = storedSnapshot();
+      stored.document = {
+        ...stored.document,
+        bike: { ...stored.document.bike, model: null, year: null },
+      } as typeof stored.document;
+
+      const covers = service.covers(reportRow({ snapshot: stored }) as unknown as reports);
+
+      expect(covers.bike).toBe('Pivot');
+      expect(mockPrisma.bikes.findFirst).not.toHaveBeenCalled();
     });
   });
 

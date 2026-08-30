@@ -77,6 +77,19 @@ export interface ReportAttachmentFile {
   contentLength: number | null;
 }
 
+// What one Report is about, as the owner's list reads it: the bike the document named,
+// and the span it covers. Read off the frozen document rather than looked up live, because
+// a Report outlives the bike it describes.
+export interface ReportCovers {
+  // The bike as the document froze it - brand, model and year, the app's one name for it.
+  bike: string;
+  // The day the document opens on: a Service's date, a Period's start. Null is an open end.
+  from: string | null;
+  // The day it closes on. A Service opens and closes on the same day; a BikeCheck covers no
+  // span at all and leaves both ends null.
+  to: string | null;
+}
+
 export interface ReportBike {
   name: string | null;
   brand: string;

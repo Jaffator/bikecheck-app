@@ -13,7 +13,8 @@
     "profile": "Profile",
     "settings": "Settings",
     "notifications": "Notifications",
-    "serviceHistory": "Service history"
+    "serviceHistory": "Service history",
+    "reports": "Reports"
   },
   "offline": {
     "title": "You are offline",
@@ -590,6 +591,27 @@
     "goneBody": "The owner has taken the link back, or it was never opened to the public.",
     "loadFailedTitle": "Could not open this report",
     "loadFailedBody": "Check your connection and try the link again.",
-    "downloadPdf": "Download PDF"
+    "downloadPdf": "Download PDF",
+    "myReports": "My reports",
+    "listEmpty": "Nothing shared yet. Export a report to make a link.",
+    "listFailed": "Could not load your shared links. Try again.",
+    "coversNow": "As it stands today",
+    "coversFrom": "From {{date}}",
+    "coversTo": "Until {{date}}",
+    "coversAll": "All time",
+    "statePublished": "Published",
+    "stateUnpublished": "Not published",
+    "stateRevoked": "Revoked",
+    "made": "Made {{date}}",
+    "views_one": "{{count}} view",
+    "views_other": "{{count}} views",
+    "neverViewed": "Never opened",
+    "lastViewed": "Last opened {{date}}",
+    "open": "Open",
+    "revoke": "Revoke",
+    "revokeConfirmTitle": "Revoke this link?",
+    "revokeConfirmBody": "The page and its attachments stop opening at once, for everyone who has the link. This cannot be undone — a new link means a new export.",
+    "revokeConfirmCancel": "Keep it",
+    "revokeFailed": "Could not revoke the link. Try again."
   }
 }

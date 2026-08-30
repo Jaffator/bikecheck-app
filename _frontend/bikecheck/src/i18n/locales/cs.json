@@ -13,7 +13,8 @@
     "profile": "Profil",
     "settings": "Nastavení",
     "notifications": "Oznámení",
-    "serviceHistory": "Historie servisů"
+    "serviceHistory": "Historie servisů",
+    "reports": "Reporty"
   },
   "offline": {
     "title": "Jste offline",
@@ -609,6 +610,29 @@
     "goneBody": "Majitel odkaz stáhl zpět, nebo nebyl nikdy zveřejněn.",
     "loadFailedTitle": "Report se nepodařilo otevřít",
     "loadFailedBody": "Zkontrolujte připojení a zkuste odkaz znovu.",
-    "downloadPdf": "Stáhnout PDF"
+    "downloadPdf": "Stáhnout PDF",
+    "myReports": "Moje reporty",
+    "listEmpty": "Zatím nic nesdílíte. Odkaz vznikne exportem reportu.",
+    "listFailed": "Sdílené odkazy se nepodařilo načíst. Zkuste to znovu.",
+    "coversNow": "K dnešnímu dni",
+    "coversFrom": "Od {{date}}",
+    "coversTo": "Do {{date}}",
+    "coversAll": "Celá historie",
+    "statePublished": "Zveřejněno",
+    "stateUnpublished": "Nezveřejněno",
+    "stateRevoked": "Zneplatněno",
+    "made": "Vytvořeno {{date}}",
+    "views_one": "{{count}} zobrazení",
+    "views_few": "{{count}} zobrazení",
+    "views_many": "{{count}} zobrazení",
+    "views_other": "{{count}} zobrazení",
+    "neverViewed": "Zatím neotevřeno",
+    "lastViewed": "Naposledy otevřeno {{date}}",
+    "open": "Otevřít",
+    "revoke": "Zneplatnit",
+    "revokeConfirmTitle": "Zneplatnit odkaz?",
+    "revokeConfirmBody": "Stránka i její přílohy se okamžitě zavřou pro všechny, kdo odkaz mají. Nelze vrátit zpět — nový odkaz znamená nový export.",
+    "revokeConfirmCancel": "Ponechat",
+    "revokeFailed": "Odkaz se nepodařilo zneplatnit. Zkuste to znovu."
   }
 }

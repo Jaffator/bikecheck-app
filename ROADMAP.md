@@ -20,7 +20,7 @@ placeholder cards.
 
 | Backend domain | Missing in UI |
 | -------------- | ------------- |
-| `report` | Generate a shareable report, list and revoke existing links (spec already in FUTURE_FEATURES.md) |
+| `report` | ~~Shipped~~ — export, publish, share, print and revoke the three Report kinds (PRD #38) |
 | `gemini` | No AI entry point anywhere in the app |
 | `storage` | Bike and component photos, attachments on service events |
 | `organization` | Bike shop / mechanic mode, roles, inviting a mechanic |
@@ -64,7 +64,8 @@ Ordered by how much they differentiate the app, not by effort.
   "3000 km per chain". The `rides` data needed for this is already stored.
 - **Cost / total cost of ownership** — spend per season, cost per kilometer. Derivable from
   `event_actions_done`.
-- **QR code on the frame** → opens the public BikeCheck. Cheap, demos well, builds on `reports`.
+- **QR code on the frame** → opens the public BikeCheck. Cheap, demos well, and the Reports it
+  builds on have shipped.
 - **Garmin / Wahoo integration** alongside Strava — `strava-service` is already a separate app,
   so a second provider is a structural change rather than a rewrite.
 

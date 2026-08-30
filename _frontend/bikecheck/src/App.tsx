@@ -19,6 +19,7 @@ import { InAppNotification } from "./components/InAppNotification";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { useCurrentUser, useUpdateUser } from "./features/users/users.queries";
 import { PublicReport } from "./features/report/PublicReport";
+import { Reports } from "./features/report_page/Reports";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
@@ -96,6 +97,7 @@ function ProtectedApp(): ReactElement {
           {/* Must precede the parameterized bike route. */}
           <Route path="/bikes/new" element={<AddBikeIdentity />} />
           <Route path="/bikes/:id" element={<BikeDetail />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/service" element={<Service />} />
           <Route path="/service/new" element={<AddService />} />
           <Route path="/service/history" element={<ServiceHistory />} />

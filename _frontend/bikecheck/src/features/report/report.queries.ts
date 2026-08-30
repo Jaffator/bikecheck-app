@@ -6,12 +6,23 @@ import {
   exportReport,
   fetchOwnedAttachment,
   getPublicReport,
+  listMyReports,
   publicAttachmentUrl,
   publicReportPdfUrl,
   publishReport,
+  revokeReport,
 } from "./report.api";
 import type { ExportReportInput, ExportedReport, ReportAttachment, ReportSnapshot, ReportSummary } from "./report.types";
 import type { ApiError } from "@/api/client";
+
+// Every Report the owner has made, newest first. Metadata only, so the list stays cheap
+// however many links they have out. Omitting the bike asks across the whole garage.
+export function useMyReports(bikeId?: number): UseQueryResult<ReportSummary[]> {
+  return useQuery({
+    queryKey: ["reports", "mine", bikeId ?? "all"],
+    queryFn: () => listMyReports(bikeId),
+  });
+}
 
 // Making a Report adds one to what the owner has out in their name.
 export function useExportReport(): UseMutationResult<ExportedReport, Error, ExportReportInput> {
@@ -31,6 +42,19 @@ export function usePublishReport(): UseMutationResult<ReportSummary, Error, numb
 
   return useMutation({
     mutationFn: (id: number) => publishReport(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+  });
+}
+
+// Revoking closes the page and its attachments at the same instant, which changes what
+// the list says about the row for good.
+export function useRevokeReport(): UseMutationResult<ReportSummary, Error, number> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => revokeReport(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["reports"] });
     },

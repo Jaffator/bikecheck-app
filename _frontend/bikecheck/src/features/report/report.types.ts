@@ -11,12 +11,24 @@ export interface ReportSummary {
   share_url: string;
   kind: ReportKind;
   bike_id: number;
+  covers: ReportCovers;
   is_public: boolean;
   view_count: number;
   last_viewed_at: string | null;
   revoked: boolean;
   expires_at: string | null;
   created_at: string;
+}
+
+// What a Report is about, frozen with the document rather than read off live data — so a
+// Report for a bike its owner has since deleted still says which bike it was.
+export interface ReportCovers {
+  // The bike as the document named it.
+  bike: string;
+  // The day the document opens on: a Service's date, a Period's start. Null is an open end,
+  // and a BikeCheck covers no span at all.
+  from: string | null;
+  to: string | null;
 }
 
 // What Export answers with: the report, and the document it just made. The snapshot rides

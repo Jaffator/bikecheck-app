@@ -2,7 +2,25 @@ import { ApiProperty } from '@nestjs/swagger';
 import { report_kind } from '@prisma/client';
 import { ReportSnapshot } from '../report.types';
 
-// Report metadata for the owner's management list (no heavy snapshot payload).
+// What a Report is about, frozen with the document rather than read off live data - so a
+// Report for a bike its owner has since deleted still says which bike it was.
+export class ResponseReportCoversDto {
+  @ApiProperty({ example: 'Pivot Firebird 2023' })
+  bike!: string;
+
+  @ApiProperty({
+    example: '2026-01-01',
+    nullable: true,
+    description: "Inclusive YYYY-MM-DD. A Service's date, a Period's start; null is an open end",
+  })
+  from!: string | null;
+
+  @ApiProperty({ example: '2026-12-31', nullable: true, description: 'Inclusive YYYY-MM-DD' })
+  to!: string | null;
+}
+
+// Report metadata for the owner's management list. The frozen document itself never
+// leaves the server here - only what `covers` reads off it.
 export class ResponseReportDto {
   @ApiProperty({ example: 1 })
   id!: number;
@@ -18,6 +36,9 @@ export class ResponseReportDto {
 
   @ApiProperty({ example: 42 })
   bike_id!: number;
+
+  @ApiProperty({ type: ResponseReportCoversDto })
+  covers!: ResponseReportCoversDto;
 
   @ApiProperty({ example: false, description: 'A report stays closed until it is published' })
   is_public!: boolean;

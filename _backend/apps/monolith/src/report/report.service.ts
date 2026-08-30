@@ -22,6 +22,7 @@ import {
   ReportAttachmentSource,
   ReportBike,
   ReportComponent,
+  ReportCovers,
   ReportHistoryTotals,
   ReportPdfFile,
   ReportPeriod,
@@ -202,18 +203,39 @@ export class ReportService {
 
   // ---------- Reading ----------
 
-  async listMine(userId: number): Promise<reports[]> {
+  // Everything the owner has out in their name, newest first. The rows carry their frozen
+  // documents, which the caller reads `covers` off and does not pass on. An absent bike asks
+  // across the whole garage.
+  async listMine(userId: number, bikeId?: number): Promise<reports[]> {
     return await this.prisma.reports.findMany({
-      where: { user_id: userId },
+      where: { user_id: userId, ...(bikeId === undefined ? {} : { bike_id: bikeId }) },
       orderBy: { created_at: 'desc' },
     });
   }
 
-  async listForBike(userId: number, bikeId: number): Promise<reports[]> {
-    return await this.prisma.reports.findMany({
-      where: { user_id: userId, bike_id: bikeId },
-      orderBy: { created_at: 'desc' },
-    });
+  // What a row is about, read off the frozen document. Nothing here is looked up live, so a
+  // Report for a bike its owner has sold and deleted still says which bike it was.
+  covers(report: reports): ReportCovers {
+    const document = this.storedSnapshot(report).document;
+    const bike = this.bikeLabel(document.bike);
+
+    switch (document.kind) {
+      case 'SERVICE': {
+        // One occasion: the document opens and closes on the day the work happened.
+        const day = document.service.serviceDate === null ? null : this.day(document.service.serviceDate);
+        return { bike, from: day, to: day };
+      }
+      case 'PERIOD':
+        return { bike, from: document.period.from, to: document.period.to };
+      case 'BIKECHECK':
+        return { bike, from: null, to: null };
+    }
+  }
+
+  // One name for a bike, the same one the rest of the app uses: what the bike is, not what
+  // its owner calls it. Everything but the brand is optional, so the parts are joined.
+  private bikeLabel(bike: ReportBike): string {
+    return [bike.brand, bike.model, bike.year].filter(Boolean).join(' ');
   }
 
   // Public access by token: the only path that counts a view, and only when a reader is
@@ -597,15 +619,16 @@ export class ReportService {
   private pdfFilename(document: ReportSnapshot): string {
     switch (document.kind) {
       case 'SERVICE':
-        return `service-report-${this.fileDate(document.service.serviceDate ?? document.generatedAt)}.pdf`;
+        return `service-report-${this.day(document.service.serviceDate ?? document.generatedAt)}.pdf`;
       case 'PERIOD':
-        return `period-report-${this.fileDate(document.period.from ?? document.generatedAt)}.pdf`;
+        return `period-report-${this.day(document.period.from ?? document.generatedAt)}.pdf`;
       case 'BIKECHECK':
-        return `bikecheck-${this.fileDate(document.generatedAt)}.pdf`;
+        return `bikecheck-${this.day(document.generatedAt)}.pdf`;
     }
   }
 
-  private fileDate(iso: string): string {
+  // The calendar day an instant falls on, which is all a filename or a list row needs.
+  private day(iso: string): string {
     return iso.slice(0, 10);
   }
 

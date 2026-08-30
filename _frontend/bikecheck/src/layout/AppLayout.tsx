@@ -63,6 +63,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/service/history": "page.serviceHistory",
   "/service/new": "addService.title",
   "/service": "page.service",
+  "/reports": "page.reports",
   "/rides": "page.rides",
   "/profile": "page.profile",
   "/settings": "page.settings",
@@ -71,6 +72,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 
 // Sub-pages display only a back arrow and title.
 const SUB_PAGE_ROUTES: string[] = [
+  "/reports",
   "/settings",
   "/profile",
   "/notifications",

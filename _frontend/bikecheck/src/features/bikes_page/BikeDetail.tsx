@@ -3,7 +3,7 @@ import { useState, type ReactElement } from "react";
 import { Button, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { Clock, Gauge, Plus, Share2, Trash2 } from "lucide-react";
+import { Clock, Gauge, Link2, Plus, Share2, Trash2 } from "lucide-react";
 import { useBike, useDeleteBike } from "../bikes/bikes.queries";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
@@ -138,6 +138,21 @@ export function BikeDetail(): ReactElement {
         style={{ alignSelf: "flex-start" }}
       >
         {t("report.exportBikeCheck")}
+      </Button>
+
+      {/* What is already out in the owner's name for this bike, so a link can be taken
+          back without hunting through every one they ever made. */}
+      <Button
+        variant="subtle"
+        color="primary.5"
+        radius="md"
+        leftSection={<Link2 size={16} />}
+        onClick={() => {
+          navigate(`/reports?bike=${String(bike.id)}`);
+        }}
+        style={{ alignSelf: "flex-start" }}
+      >
+        {t("report.myReports")}
       </Button>
 
       <Text fz={14} c="var(--color-text-dim)">

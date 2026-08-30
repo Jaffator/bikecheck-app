@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, StreamableFile } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { reports } from '@prisma/client';
 import { ReportService } from './report.service';
 import { ReportAttachmentFile, ReportSnapshot } from './report.types';
@@ -28,24 +28,18 @@ export class ReportController {
     return { ...this.toDto(report), snapshot };
   }
 
-  // ---------- GET all reports for the current user ----------
-  @ApiOperation({ summary: 'List all reports for the current user' })
+  // ---------- GET the reports the caller has made ----------
+  // Metadata only, newest first. The bike filter is what the bike detail page arrives with,
+  // so the owner is not hunting through every link they ever made.
+  @ApiOperation({ summary: 'List the reports the caller has made, newest first' })
+  @ApiQuery({ name: 'bikeId', type: Number, required: false })
   @ApiResponse({ status: 200, type: ResponseReportDto, isArray: true })
   @Get('mine')
-  async listMine(@CurrentUser('userId') userId: string): Promise<ResponseReportDto[]> {
-    const reportsList = await this.reportService.listMine(Number(userId));
-    return reportsList.map((report) => this.toDto(report));
-  }
-
-  // ---------- GET reports for a specific bike ----------
-  @ApiOperation({ summary: 'List reports for a specific bike' })
-  @ApiResponse({ status: 200, type: ResponseReportDto, isArray: true })
-  @Get('bikes/:bikeId')
-  async listForBike(
+  async listMine(
     @CurrentUser('userId') userId: string,
-    @Param('bikeId', ParseIntPipe) bikeId: number,
+    @Query('bikeId', new ParseIntPipe({ optional: true })) bikeId?: number,
   ): Promise<ResponseReportDto[]> {
-    const reportsList = await this.reportService.listForBike(Number(userId), bikeId);
+    const reportsList = await this.reportService.listMine(Number(userId), bikeId);
     return reportsList.map((report) => this.toDto(report));
   }
 
@@ -161,6 +155,7 @@ export class ReportController {
       share_url: this.reportService.shareUrl(report.public_token),
       kind: report.kind,
       bike_id: report.bike_id,
+      covers: this.reportService.covers(report),
       is_public: report.is_public,
       view_count: report.view_count,
       last_viewed_at: report.last_viewed_at,

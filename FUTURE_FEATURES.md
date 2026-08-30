@@ -89,39 +89,25 @@ model component_reminder {
 
 ---
 
-## Public Shareable BikeCheck Report
+## Public Shareable BikeCheck Report — shipped
 
-A public, shareable document showing the whole BikeCheck for a bike:
-the full component list plus the ability to generate a link to the
-**service history + BikeCheck**.
+Delivered as **Reports** (PRD #38), not as the single "whole BikeCheck" document sketched
+here. What shipped instead:
 
-### Foundation already exists
+- **Three kinds**, not one with a toggle: a **Service Report** (one service, the doc a
+  workshop or warranty claim asks for), a **Period Report** (a bike's services within a
+  period, with History Totals and optionally its components), and a **BikeCheck** (the bike
+  and everything mounted on it). The `reports.kind` column carries which.
+- **Snapshot, not live** — the open question is settled: `reports.snapshot` freezes the
+  document at Export, catalogue labels resolved into the owner's language and currency, so
+  a Report reads as it did the day it was made and survives the bike being deleted
+  (ADR 0011).
+- **Made and published are two acts** — a Report is closed until its Share Link is opened,
+  and revoking is final: the page and every attachment behind it close at the same instant
+  (ADR 0011, ADR 0013).
+- **Printed from its own public page** to A4, rather than built a second time (ADR 0012).
+- **Managed from a list** — `GET /reports/mine`, reachable from the bike detail filtered to
+  that bike, where a link is opened, copied or revoked.
 
-The `reports` model (schema.prisma) is already the backbone for this:
-
-- `public_token` — unguessable token for the public URL
-- `snapshot` (Json) — frozen copy of bike + components + service history
-  (survives bike deletion; `bike_id` is informative, not a relation)
-- `view_count` / `last_viewed_at` — basic view analytics
-- `revoked` — let the user kill a shared link
-- `expires_at` — optional expiry
-
-So the DB layer is largely in place; what remains is the generation flow and
-the public view.
-
-### What to build
-
-1. **Generate a report** — endpoint that materializes the current bike into a
-   `snapshot` (bike + component list + service history) and returns the public
-   link. Frozen so later changes don't alter an already-shared proof.
-2. **Public view** — a no-auth page served by `public_token` that renders the
-   snapshot: bike overview, component list, and full service history.
-3. **Manage / revoke** — user can see their shared links, revoke (`revoked`) or
-   set `expires_at`.
-
-### Open questions
-
-- Content scope: whole BikeCheck vs. a service-history-only variant — could be
-  one report type with a toggle, or two.
-- Snapshot vs. live: snapshot (current model) is the right call for a "proof"
-  that must not change after sharing.
+The vocabulary lives in [CONTEXT.md](CONTEXT.md#sharing); the decisions in
+[docs/adr/](docs/adr/) 0011–0013.
