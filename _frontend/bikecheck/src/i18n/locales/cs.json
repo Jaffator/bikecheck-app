@@ -598,6 +598,7 @@
     "goneTitle": "Tento report už není dostupný",
     "goneBody": "Majitel odkaz stáhl zpět, nebo nebyl nikdy zveřejněn.",
     "loadFailedTitle": "Report se nepodařilo otevřít",
-    "loadFailedBody": "Zkontrolujte připojení a zkuste odkaz znovu."
+    "loadFailedBody": "Zkontrolujte připojení a zkuste odkaz znovu.",
+    "downloadPdf": "Stáhnout PDF"
   }
 }

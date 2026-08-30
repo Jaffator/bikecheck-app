@@ -21,9 +21,12 @@ export async function discardReport(id: number): Promise<ReportSummary> {
 }
 
 // GET /reports/public/:token — the document behind a Share Link. Every closed state
-// answers 410 alike, so the reader is told the link is gone and never which way.
-export async function getPublicReport(token: string): Promise<ReportSnapshot> {
-  return apiFetch<ReportSnapshot>(`/reports/public/${encodeURIComponent(token)}`);
+// answers 410 alike, so the reader is told the link is gone and never which way. Asked for
+// as the print variant, the same document comes back without counting a view: the server
+// drawing the page for a file is not a reader opening it.
+export async function getPublicReport(token: string, print: boolean): Promise<ReportSnapshot> {
+  const variant = print ? "?print=1" : "";
+  return apiFetch<ReportSnapshot>(`/reports/public/${encodeURIComponent(token)}${variant}`);
 }
 
 // Where one attachment's bytes are read from behind a share link. The report serves its
@@ -31,6 +34,12 @@ export async function getPublicReport(token: string): Promise<ReportSnapshot> {
 // at the same instant as the page.
 export function publicAttachmentUrl(token: string, attachmentId: number): string {
   return apiUrl(`/reports/public/${encodeURIComponent(token)}/attachment/${attachmentId}`);
+}
+
+// Where the report is printed to A4. The reader downloads the very page they are on, so
+// the document is designed once and printed rather than built a second time.
+export function publicReportPdfUrl(token: string): string {
+  return apiUrl(`/reports/public/${encodeURIComponent(token)}/pdf`);
 }
 
 // The same file on the owner's side, so the preview can open what it lists before any of

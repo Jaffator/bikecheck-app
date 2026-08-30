@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 import { ReportService } from './report.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ReportPdfService } from './report-pdf.service';
 import { StoredReportSnapshot } from './report.types';
 
 // A report is frozen at the moment it is made, so every test here fixes that moment and
@@ -26,6 +27,10 @@ const OTHER_REPORTS_ATTACHMENT_ID = 901;
 
 describe('ReportService', () => {
   let service: ReportService;
+
+  const mockPdf = {
+    print: jest.fn(),
+  };
 
   const mockStorage = {
     downloadFileR2CloudFare: jest.fn(),
@@ -123,6 +128,15 @@ describe('ReportService', () => {
     ...overrides,
   });
 
+  // The three closed states must be indistinguishable, or a token can be probed for which
+  // one it is in. Every public path is held to the same list.
+  const closedStates: [string, Record<string, unknown>][] = [
+    ['never published', { is_public: false }],
+    ['revoked', { is_public: true, revoked: true }],
+    ['expired', { is_public: true, expires_at: new Date('2020-01-01T00:00:00.000Z') }],
+    ['unknown', {}],
+  ];
+
   // A stored report row, in whichever of the three states the test needs.
   const reportRow = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
     id: REPORT_ID,
@@ -212,6 +226,7 @@ describe('ReportService', () => {
         ReportService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: StorageService, useValue: mockStorage },
+        { provide: ReportPdfService, useValue: mockPdf },
       ],
     }).compile();
 
@@ -224,6 +239,8 @@ describe('ReportService', () => {
       body: Readable.from([Buffer.from('%PDF-1.7')]),
       contentLength: 8,
     });
+
+    mockPdf.print.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
 
     // The caller owns the service and writes in English unless a test says otherwise.
     mockPrisma.users.findUnique.mockResolvedValue({ language: 'en', currency: 'CZK' });
@@ -501,16 +518,7 @@ describe('ReportService', () => {
       expect(snapshot.kind).toBe('SERVICE');
     });
 
-    // The three closed states must be indistinguishable, or a token can be probed for
-    // which one it is in.
-    const closed: [string, Record<string, unknown>][] = [
-      ['never published', { is_public: false }],
-      ['revoked', { is_public: true, revoked: true }],
-      ['expired', { is_public: true, expires_at: new Date('2020-01-01T00:00:00.000Z') }],
-      ['unknown', {}],
-    ];
-
-    it.each(closed)('answers a %s token with the same gone message', async (state, overrides) => {
+    it.each(closedStates)('answers a %s token with the same gone message', async (state, overrides) => {
       mockPrisma.reports.findUnique.mockResolvedValue(state === 'unknown' ? null : reportRow(overrides));
 
       await expect(service.getPublicSnapshot('token-1')).rejects.toThrow(GoneException);
@@ -532,6 +540,17 @@ describe('ReportService', () => {
       mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
 
       await expect(service.getPublicSnapshot('token-1')).rejects.toThrow(GoneException);
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    // The printer opens the page like anyone else, so the read has to know the difference
+    // between a reader and the server drawing the document for a file.
+    it('counts nothing when the page is being drawn for print', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+
+      const snapshot = await service.getPublicSnapshot('token-1', false);
+
+      expect(snapshot.kind).toBe('SERVICE');
       expect(mockPrisma.reports.update).not.toHaveBeenCalled();
     });
 
@@ -673,6 +692,48 @@ describe('ReportService', () => {
       await expect(service.ownedAttachment(REPORT_ID, OWNER_ID, OTHER_REPORTS_ATTACHMENT_ID)).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('publicPdf', () => {
+    it('prints the print variant of the very page the reader is on', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+
+      await service.publicPdf('token-1');
+
+      expect(mockPdf.print).toHaveBeenCalledWith(`${ORIGIN}/r/token-1?print=1`);
+    });
+
+    it('names the file after the document and the day it covers, never the token', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+
+      const file = await service.publicPdf('token-1');
+
+      expect(file.filename).toBe('service-report-2026-07-01.pdf');
+      expect(file.filename).not.toContain('token-1');
+      expect(file.body.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it.each(closedStates)('answers a %s token with the same gone message', async (state, overrides) => {
+      mockPrisma.reports.findUnique.mockResolvedValue(state === 'unknown' ? null : reportRow(overrides));
+
+      await expect(service.publicPdf('token-1')).rejects.toThrow(GoneException);
+      await expect(service.publicPdf('token-1')).rejects.toThrow('This report is no longer available');
+    });
+
+    it('never reaches the browser for a closed report', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
+
+      await expect(service.publicPdf('token-1')).rejects.toThrow(GoneException);
+      expect(mockPdf.print).not.toHaveBeenCalled();
+    });
+
+    it('does not count a view: printing the page is not a reader opening it', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true }));
+
+      await service.publicPdf('token-1');
+
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
     });
   });
 

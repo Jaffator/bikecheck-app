@@ -10,6 +10,7 @@ import { randomUUID } from 'crypto';
 import { Prisma, report_kind, reports } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ReportPdfService } from './report-pdf.service';
 import { catalogueLabel, FALLBACK_REPORT_CURRENCY, reportLanguage } from './report-catalogue-labels';
 import { ExportReportDto } from './dto/export-report.dto';
 import {
@@ -20,6 +21,7 @@ import {
   ReportAttachmentSource,
   ReportBike,
   ReportComponent,
+  ReportPdfFile,
   ReportService as ReportedService,
   ReportSnapshot,
   ReportSnapshotPrivate,
@@ -67,6 +69,7 @@ export class ReportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly pdf: ReportPdfService,
   ) {}
 
   // ---------- Export ----------
@@ -154,18 +157,18 @@ export class ReportService {
     });
   }
 
-  // Public access by token: the only path that counts a view. Answers the document alone,
-  // never what the snapshot keeps back from a reader.
-  async getPublicSnapshot(token: string): Promise<ReportSnapshot> {
-    const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
-    if (report === null || !this.isOpen(report)) {
-      throw new GoneException(REPORT_CLOSED_MESSAGE);
-    }
+  // Public access by token: the only path that counts a view, and only when a reader is
+  // the one asking. Answers the document alone, never what the snapshot keeps back from a
+  // reader.
+  async getPublicSnapshot(token: string, countView = true): Promise<ReportSnapshot> {
+    const report = await this.openReport(token);
 
-    await this.prisma.reports.update({
-      where: { id: report.id },
-      data: { view_count: { increment: 1 }, last_viewed_at: new Date() },
-    });
+    if (countView) {
+      await this.prisma.reports.update({
+        where: { id: report.id },
+        data: { view_count: { increment: 1 }, last_viewed_at: new Date() },
+      });
+    }
 
     return this.storedSnapshot(report).document;
   }
@@ -174,10 +177,7 @@ export class ReportService {
   // request - which is what makes revoking close the invoices at the same instant as the
   // page (ADR 0013). Fetching a file is not reading the page, so no view is counted.
   async publicAttachment(token: string, attachmentId: number): Promise<ReportAttachmentFile> {
-    const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
-    if (report === null || !this.isOpen(report)) {
-      throw new GoneException(REPORT_CLOSED_MESSAGE);
-    }
+    const report = await this.openReport(token);
 
     const attachment = this.findAttachment(report, attachmentId);
     // An id from someone else's report answers exactly as a closed one does, so the route
@@ -187,6 +187,18 @@ export class ReportService {
     }
 
     return await this.read(attachment);
+  }
+
+  // The document as a file: the public page printed to A4, so the reader files, prints or
+  // attaches the very page they were reading. A print is a server-side visit rather than a
+  // reader, so it counts no view.
+  async publicPdf(token: string): Promise<ReportPdfFile> {
+    const report = await this.openReport(token);
+    const document = this.storedSnapshot(report).document;
+
+    const body = await this.pdf.print(this.printUrl(token));
+
+    return { body, filename: this.pdfFilename(document) };
   }
 
   // The same file on the owner's side, so the preview can open what it lists before any
@@ -219,6 +231,12 @@ export class ReportService {
   // by hash, and a link that opens nothing outside the app is not a share link.
   shareUrl(token: string): string {
     return `${this.publicAppOrigin()}/r/${token}`;
+  }
+
+  // The same page, asked for as it is drawn for print. The variant is chosen in the
+  // address rather than left to a print stylesheet, so the render is explicit (ADR 0012).
+  printUrl(token: string): string {
+    return `${this.shareUrl(token)}?print=1`;
   }
 
   // ---------- Building the document ----------
@@ -368,6 +386,34 @@ export class ReportService {
       language: reportLanguage(user?.language),
       currency: user?.currency ?? FALLBACK_REPORT_CURRENCY,
     };
+  }
+
+  // Every public path starts here. Unpublished, revoked, expired and unknown all leave by
+  // the same door, so a token cannot be probed for which of them it is.
+  private async openReport(token: string): Promise<reports> {
+    const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
+    if (report === null || !this.isOpen(report)) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return report;
+  }
+
+  // What the reader saves the file under: which document it is and which day it covers.
+  // The token stays out of it - a filename is passed on, and a share link is not.
+  private pdfFilename(document: ReportSnapshot): string {
+    switch (document.kind) {
+      case 'SERVICE':
+        return `service-report-${this.fileDate(document.service.serviceDate ?? document.generatedAt)}.pdf`;
+      case 'PERIOD':
+        return `period-report-${this.fileDate(document.period.from ?? document.generatedAt)}.pdf`;
+      case 'BIKECHECK':
+        return `bikecheck-${this.fileDate(document.generatedAt)}.pdf`;
+    }
+  }
+
+  private fileDate(iso: string): string {
+    return iso.slice(0, 10);
   }
 
   // Open means published, not revoked and not expired. Nothing sets an expiry, but a row

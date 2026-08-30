@@ -18,6 +18,11 @@ export interface ReportHeadings {
   components: string;
   note: string;
   attachments: string;
+  rideTime: string;
+  task: string;
+  details: string;
+  cost: string;
+  signature: string;
   noDate: string;
   noBike: string;
   noWork: string;
@@ -36,6 +41,11 @@ const en: ReportHeadings = {
   components: "Components",
   note: "Note",
   attachments: "Attachments",
+  rideTime: "Ride time",
+  task: "Task",
+  details: "Details & notes",
+  cost: "Cost",
+  signature: "Signature",
   noDate: "No date recorded",
   noBike: "Bike no longer on record",
   noWork: "No work recorded",
@@ -54,6 +64,11 @@ const cs: ReportHeadings = {
   components: "Komponenty",
   note: "Poznámka",
   attachments: "Přílohy",
+  rideTime: "Doba jízdy",
+  task: "Úkon",
+  details: "Podrobnosti a poznámky",
+  cost: "Cena",
+  signature: "Podpis",
   noDate: "Datum neuvedeno",
   noBike: "Kolo už není v evidenci",
   noWork: "Žádné práce nezaznamenány",

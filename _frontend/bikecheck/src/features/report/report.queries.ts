@@ -1,7 +1,15 @@
 // React Query hooks for making, publishing and reading Reports.
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
-import { discardReport, exportReport, fetchOwnedAttachment, getPublicReport, publicAttachmentUrl, publishReport } from "./report.api";
+import {
+  discardReport,
+  exportReport,
+  fetchOwnedAttachment,
+  getPublicReport,
+  publicAttachmentUrl,
+  publicReportPdfUrl,
+  publishReport,
+} from "./report.api";
 import type { ExportReportInput, ExportedReport, ReportAttachment, ReportSnapshot, ReportSummary } from "./report.types";
 import type { ApiError } from "@/api/client";
 
@@ -42,11 +50,15 @@ export function useDiscardReport(): UseMutationResult<ReportSummary, Error, numb
 }
 
 // The document behind a Share Link. A closed link is an answer, not a fault worth
-// retrying, and the read counts a view — so it is asked once and held.
-export function usePublicReport(token: string | undefined): UseQueryResult<ReportSnapshot, ApiError> {
+// retrying, and the read counts a view — so it is asked once and held. The print variant
+// asks for the same document without being counted.
+export function usePublicReport(
+  token: string | undefined,
+  print: boolean,
+): UseQueryResult<ReportSnapshot, ApiError> {
   return useQuery<ReportSnapshot, ApiError>({
-    queryKey: ["reports", "public", token],
-    queryFn: () => getPublicReport(token ?? ""),
+    queryKey: ["reports", "public", token, print],
+    queryFn: () => getPublicReport(token ?? "", print),
     enabled: token !== undefined && token !== "",
     retry: false,
     staleTime: Infinity,
@@ -62,6 +74,12 @@ export function usePublicAttachmentOpener(token: string | undefined): (attachmen
     },
     [token],
   );
+}
+
+// Where the reader downloads the document as a file. Public, so the address is simply
+// followed - and it stops answering the instant the link is revoked.
+export function usePublicReportPdfUrl(token: string | undefined): string {
+  return useMemo(() => publicReportPdfUrl(token ?? ""), [token]);
 }
 
 // The same for the owner, before anything is public. The bytes are pulled through the

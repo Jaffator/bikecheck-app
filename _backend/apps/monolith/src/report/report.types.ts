@@ -146,3 +146,10 @@ export interface ReportAttachment {
   contentType: string;
   sizeBytes: number | null;
 }
+
+// A printed Report: the bytes, and the name the reader saves them under - which names the
+// document and its date, never the token behind it.
+export interface ReportPdfFile {
+  body: Buffer;
+  filename: string;
+}

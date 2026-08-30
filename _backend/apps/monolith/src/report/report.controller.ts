@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, StreamableFile } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, StreamableFile } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { reports } from '@prisma/client';
 import { ReportService } from './report.service';
@@ -7,6 +8,9 @@ import { ExportReportDto } from './dto/export-report.dto';
 import { ResponseExportedReportDto, ResponseReportDto } from './dto/response-report.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+
+// What the page asks for when it is being drawn for print rather than read.
+const PRINT_VARIANT = '1';
 
 @Controller('reports')
 export class ReportController {
@@ -86,8 +90,28 @@ export class ReportController {
   @ApiOperation({ summary: 'Public view of a report by its share token' })
   @ApiResponse({ status: 200 })
   @Get('public/:token')
-  async getPublic(@Param('token') token: string): Promise<ReportSnapshot> {
-    return await this.reportService.getPublicSnapshot(token);
+  async getPublic(@Param('token') token: string, @Query('print') print?: string): Promise<ReportSnapshot> {
+    // The print variant is the server drawing the page for a file, not a reader opening
+    // it, so the same document is read without counting a view.
+    return await this.reportService.getPublicSnapshot(token, print !== PRINT_VARIANT);
+  }
+
+  // ---------- GET the report as an A4 PDF (no auth) ----------
+  // One request launches a browser, so this route is held well below the global limit.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Public()
+  @ApiOperation({ summary: 'Print a published report to an A4 PDF' })
+  @ApiResponse({ status: 200 })
+  @Get('public/:token/pdf')
+  async getPublicPdf(@Param('token') token: string): Promise<StreamableFile> {
+    const file = await this.reportService.publicPdf(token);
+    const encoded = encodeURIComponent(file.filename);
+
+    return new StreamableFile(file.body, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${encoded}"; filename*=UTF-8''${encoded}`,
+      length: file.body.length,
+    });
   }
 
   // ---------- GET one attachment behind a share link (no auth) ----------

@@ -31,6 +31,12 @@ export function reportNumber(value: number, language: string): string {
   return new Intl.NumberFormat(language).format(value);
 }
 
+// Ride time as the document reports it: whole hours, which is the resolution a reader of a
+// maintenance record cares about.
+export function reportRideTime(minutes: number, language: string): string {
+  return `${reportNumber(Math.round(minutes / 60), language)} h`;
+}
+
 // The bike as a maintenance record names it: what it is, not the nickname its owner gave
 // it. A report of a bike that has since been deleted has nothing left to name it with.
 export function reportBikeName(bike: ReportBike): string | null {
