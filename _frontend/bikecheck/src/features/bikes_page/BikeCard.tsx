@@ -37,12 +37,7 @@ function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): R
         backdropFilter: "blur(4px)",
       }}
     >
-      <StravaMark
-        width={10}
-        height={10}
-        color="var(--mantine-color-strava-6)"
-        style={{ display: "block", flexShrink: 0 }}
-      />
+      <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
       <Text className="font-mono" fz={10} c="var(--mantine-color-strava-6)">
         {t("strava.paired")}
       </Text>
@@ -58,13 +53,7 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
   return (
     <Stack gap={6}>
       <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Text
-          className="font-mono"
-          fz={10}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-          style={{ letterSpacing: "0.05em" }}
-        >
+        <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)" style={{ letterSpacing: "0.05em" }}>
           {t(reading.labelKey)}
         </Text>
         <Text
@@ -115,7 +104,7 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
       }}
       style={{
         overflow: "hidden",
-        border: "1px solid var(--color-border-subtle)",
+        border: "none",
         // Same three-part shadow the other cards use, one step deeper because
         // this card is the largest: a hairline of light along the top edge, a
         // tight contact shadow, and a soft cast one that lifts it off the page.

@@ -62,7 +62,12 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
         header: { backgroundColor: "var(--mantine-color-cards-7)" },
         title: { fontWeight: 700, color: "var(--mantine-color-text-6)" },
         body: { backgroundColor: "var(--mantine-color-cards-7)", padding: "1rem" },
-        content: { backgroundColor: "var(--mantine-color-cards-7)" },
+        content: {
+          backgroundColor: "var(--mantine-color-cards-7)",
+          // A fullscreen modal starts at the very top of the window, which on Android is
+          // where the status bar clock sits. The whole sheet drops below it.
+          paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
+        },
       }}
     >
       <Stack gap="lg">
@@ -104,7 +109,7 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
         </Group>
 
         <Group grow>
-          <Button variant="default" radius="sm" onClick={cancel} disabled={isCutting}>
+          <Button variant="outline" radius="sm" onClick={cancel} disabled={isCutting}>
             {t("action.back")}
           </Button>
           <Button radius="sm" onClick={confirm} loading={isCutting} disabled={area === null}>

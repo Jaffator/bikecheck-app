@@ -1,10 +1,10 @@
-// The row every history list is built from — completed rides, pending rides and service
-// history are the same card with different content in its slots.
+// The row the ride lists are built from — completed and pending rides are the same card
+// with different content in its slots.
 import type { ReactElement, ReactNode } from "react";
 import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 
-interface HistoryCardProps {
+interface CompletedRideCardProps {
   // The visual that identifies the row at a glance: a route map, a photo, an icon.
   leading?: ReactNode;
   // Leads the row, so it should be whatever names the occasion.
@@ -20,8 +20,8 @@ interface HistoryCardProps {
   onOpen: () => void;
 }
 
-// Renders one history row on the standard card surface — see docs/ui/card-surface.md.
-export function HistoryCard({
+// Renders one ride row on the standard card surface — see docs/ui/card-surface.md.
+export function CompletedRideCard({
   leading,
   title,
   subtitle,
@@ -29,7 +29,7 @@ export function HistoryCard({
   metrics,
   chevron = false,
   onOpen,
-}: HistoryCardProps): ReactElement {
+}: CompletedRideCardProps): ReactElement {
   return (
     <UnstyledButton onClick={onOpen} style={{ display: "block", width: "100%", textAlign: "left" }}>
       <Paper
@@ -38,12 +38,10 @@ export function HistoryCard({
         style={{
           // Keep the gradient when setting the card color.
           backgroundColor: "var(--mantine-color-cards-6)",
-          backgroundImage:
-            "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
-          border: "1px solid var(--color-border-subtle)",
+          backgroundImage: "var(--card-glow)",
+          border: "none",
           // Use a subtle shadow for stacked cards.
-          boxShadow:
-            "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 4px 12px -6px rgba(0, 0, 0, 0.5)",
+          boxShadow: "var(--elev-row)",
           transition: "transform 0.12s ease",
         }}
         className="active:scale-[0.985]"
@@ -55,7 +53,7 @@ export function HistoryCard({
           <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
             {/* Keeps title, date and metadata visually grouped. */}
             <Stack gap={2}>
-              <Text fw={600} fz={15} c="text.6" lineClamp={1}>
+              <Text fw={600} fz={16} c="text.6" lineClamp={1}>
                 {title}
               </Text>
               {subtitle !== undefined && (
@@ -84,7 +82,7 @@ export function HistoryMetric({ icon: Icon, children }: { icon: LucideIcon; chil
   return (
     <Group gap={6} wrap="nowrap">
       <Icon size={14} color="var(--color-text-dim)" />
-      <Text fz={14} c="var(--color-text-dim)">
+      <Text fz={13} c="var(--color-text-dim)">
         {children}
       </Text>
     </Group>

@@ -2,16 +2,17 @@
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Drawer, Group, Loader, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Link2, Share2, Trash2, X } from "lucide-react";
+import { ArrowRight, Check, Link2, Share2, Trash2, X } from "lucide-react";
 import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "./report.queries";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { ReportDocument } from "./ReportDocument";
 import { REPORT_KIND_KEY } from "./reportListLabels";
 import type { ExportReportInput, ExportedReport, ReportKind } from "./report.types";
 import { ApiError } from "@/api/client";
+import { canShareLink, shareLink } from "@/utils/shareLink";
 
 // The sheet stands over what it was opened from, the same way the service detail does.
-const SHEET_HEIGHT = "92vh";
+const SHEET_HEIGHT = "90%";
 const SHEET_Z_INDEX = 320;
 
 // What the server answers with when the period it was handed covers no services.
@@ -119,13 +120,21 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     <Sheet
       opened={opened}
       onClose={close}
-      title={isPublished ? t("report.publishedTitle") : t(REPORT_KIND_KEY[titleKind.current])}
+      title={
+        isPublished ? (
+          // Once the link exists, the sheet says so where its name was.
+          <Group gap="xs" wrap="nowrap">
+            <Check size={20} color="var(--mantine-color-primary-6)" />
+            <span>{t("report.publishedConfirm")}</span>
+          </Group>
+        ) : (
+          t(REPORT_KIND_KEY[titleKind.current])
+        )
+      }
     >
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {/* The one question a Period Report asks, before anything is written down. */}
-        {needsOptions && (
-          <Options checked={includeComponents} onChange={setIncludeComponents} />
-        )}
+        {needsOptions && <Options checked={includeComponents} onChange={setIncludeComponents} />}
 
         {made.isPending && <Waiting label={t("report.exporting")} />}
 
@@ -143,7 +152,9 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
           </Stack>
         )}
 
-        {isPublished && report !== null && <Published shareUrl={shareUrl} />}
+        {isPublished && report !== null && (
+          <Published shareUrl={shareUrl} kindLabel={t(REPORT_KIND_KEY[titleKind.current])} bike={report.covers.bike} />
+        )}
 
         {publish.isError && <Failure>{t("report.publishFailed")}</Failure>}
         {discard.isError && <Failure>{t("report.discardFailed")}</Failure>}
@@ -189,7 +200,11 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
             radius="md"
             leftSection={<Link2 size={16} />}
             loading={publish.isPending}
-            onClick={() => publish.mutate(report.id, { onSuccess: (published) => setShareUrl(published.share_url) })}
+            onClick={() =>
+              publish.mutate(report.id, {
+                onSuccess: (published) => setShareUrl(published.share_url),
+              })
+            }
           >
             {t("report.publish")}
           </Button>
@@ -198,8 +213,8 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
 
       {isPublished && (
         <Footer>
-          <Button variant="outline" color="primary.5" radius="md" onClick={reset}>
-            {t("report.done")}
+          <Button variant="outline" color="text.8" radius="md" onClick={reset}>
+            {t("action.close")}
           </Button>
         </Footer>
       )}
@@ -210,7 +225,9 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
 // A period holding no services is refused before a report is made, and that is worth saying
 // plainly: "try again" is advice that cannot work.
 function exportFailureKey(error: Error): string {
-  return error instanceof ApiError && error.status === EMPTY_PERIOD_STATUS ? "report.emptyPeriod" : "report.exportFailed";
+  return error instanceof ApiError && error.status === EMPTY_PERIOD_STATUS
+    ? "report.emptyPeriod"
+    : "report.exportFailed";
 }
 
 // What a Period Report may also carry. The choice is frozen into the document, so it is
@@ -223,23 +240,61 @@ function Options({ checked, onChange }: { checked: boolean; onChange: (value: bo
       <Text fz={14} c="text.8">
         {t("report.optionsBody")}
       </Text>
-
       <Switch
-        checked={checked}
-        onChange={(event) => onChange(event.currentTarget.checked)}
-        color="primary.6"
+        pt={20}
+        withThumbIndicator={false}
         label={t("report.includeComponents")}
         description={t("report.includeComponentsHint")}
+        checked={checked}
+        onChange={(event) => onChange(event.currentTarget.checked)}
+        aria-label={t("addBike.ebike")}
+        styles={{
+          label: {
+            color: "var(--mantine-color-text-6)",
+          },
+          track: {
+            backgroundColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
+            borderColor: "var(--mantine-color-other-borderSolid)",
+          },
+          thumb: {
+            backgroundColor: checked ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
+          },
+        }}
       />
     </Stack>
   );
 }
 
 // The link, and the two ways anyone actually sends one.
-function Published({ shareUrl }: { shareUrl: string }): ReactElement {
+function Published({
+  shareUrl,
+  kindLabel,
+  bike,
+}: {
+  shareUrl: string;
+  // What the document is, and which bike it is about — the share sheet carries both, so a
+  // link landing in a chat says what it is before anyone opens it.
+  kindLabel: string;
+  bike: string;
+}): ReactElement {
   const { t } = useTranslation();
   // Only offered where the device has a share sheet to hand it to.
-  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const canShare = canShareLink();
+  // A share sheet that refuses to open says so. Backing out of one is not a failure.
+  const [shareFailed, setShareFailed] = useState(false);
+
+  async function send(): Promise<void> {
+    setShareFailed(false);
+    try {
+      await shareLink({
+        title: kindLabel,
+        text: t("report.shareText", { kind: kindLabel, bike }),
+        url: shareUrl,
+      });
+    } catch (error) {
+      setShareFailed(!wasDismissed(error));
+    }
+  }
 
   return (
     <Stack gap="md" pb="md">
@@ -268,16 +323,22 @@ function Published({ shareUrl }: { shareUrl: string }): ReactElement {
             c="textDark.6"
             radius="md"
             leftSection={<Share2 size={16} />}
-            onClick={() => {
-              void navigator.share({ url: shareUrl });
-            }}
+            onClick={() => void send()}
           >
             {t("report.share")}
           </Button>
         )}
       </Group>
+
+      {shareFailed && <Failure>{t("report.shareFailed")}</Failure>}
     </Stack>
   );
+}
+
+// Backing out of the share sheet leaves by the same door as a failure, and is not one.
+function wasDismissed(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /cancel|abort|dismiss/i.test(message);
 }
 
 // ------------------------------------------------------------------
@@ -292,7 +353,7 @@ function Sheet({
 }: {
   opened: boolean;
   onClose: () => void;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
 }): ReactElement {
   const { t } = useTranslation();
@@ -319,14 +380,28 @@ function Sheet({
           display: "flex",
           flexDirection: "column",
         },
-        body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
+        body: {
+          flex: 1,
+          minHeight: 0,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+        },
       }}
     >
       <Group justify="space-between" align="center" px="md" pt="md" wrap="nowrap" style={{ flexShrink: 0 }}>
-        <Text fw={700} fz={20} c="text.6">
+        <Text component="div" fw={700} fz={20} c="text.6">
+          {" "}
           {title}
         </Text>
-        <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label={t("action.close")} onClick={onClose}>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          radius="xl"
+          size="lg"
+          aria-label={t("action.close")}
+          onClick={onClose}
+        >
           <X size={20} color="var(--mantine-color-text-6)" />
         </ActionIcon>
       </Group>
@@ -344,7 +419,7 @@ function Footer({ children }: { children: ReactNode }): ReactElement {
       pt="sm"
       pb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
       wrap="nowrap"
-      style={{ flexShrink: 0, borderTop: "1px solid var(--color-border-subtle)" }}
+      style={{ flexShrink: 0 }}
     >
       {children}
     </Group>

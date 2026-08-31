@@ -189,16 +189,48 @@ export class ReportService {
     return await this.prisma.reports.update({ where: { id }, data: { revoked: true } });
   }
 
-  // Throws away a report nobody has seen. A published one is revoked instead: the link is
-  // already out, and deleting the row would leave nothing to take back. Answers with what
-  // it removed, so the caller gets a body to parse rather than an empty response.
+  // Throws away a report nobody can read: one never published, or one already revoked. A
+  // live link is revoked first — deleting the row while it is out would leave nothing to
+  // take back. Answers with what it removed, so the caller gets a body to parse rather
+  // than an empty response.
   async discard(id: number, userId: number): Promise<reports> {
     const report = await this.findOwnedReport(id, userId);
-    if (report.is_public) {
-      throw new ConflictException('A published report is revoked, not deleted');
+    if (report.is_public && !report.revoked) {
+      throw new ConflictException('A published report is revoked before it is deleted');
     }
 
     return await this.prisma.reports.delete({ where: { id } });
+  }
+
+  // Closes every link the caller has out, in one act. Only links that are actually open:
+  // a report never published stays publishable, and a revoked one is already closed. An
+  // absent bike reaches across the whole garage.
+  async revokeAll(userId: number, bikeId?: number): Promise<number> {
+    const { count } = await this.prisma.reports.updateMany({
+      where: {
+        user_id: userId,
+        ...(bikeId === undefined ? {} : { bike_id: bikeId }),
+        is_public: true,
+        revoked: false,
+      },
+      data: { revoked: true },
+    });
+
+    return count;
+  }
+
+  // Throws away every report nobody can read - never published, or already revoked. A live
+  // link is left standing, the same way the single discard refuses one.
+  async discardAll(userId: number, bikeId?: number): Promise<number> {
+    const { count } = await this.prisma.reports.deleteMany({
+      where: {
+        user_id: userId,
+        ...(bikeId === undefined ? {} : { bike_id: bikeId }),
+        NOT: { is_public: true, revoked: false },
+      },
+    });
+
+    return count;
   }
 
   // ---------- Reading ----------

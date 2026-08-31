@@ -72,7 +72,7 @@ export function Service(): ReactElement {
             width: "100%",
             padding: "0.875rem",
             borderRadius: "var(--mantine-radius-lg)",
-            border: "1px solid var(--color-border-subtle)",
+            border: "1px solid var(--mantine-color-cards-5)",
             backgroundColor: "var(--mantine-color-cards-6)",
             transition: "transform 0.12s ease",
           }}

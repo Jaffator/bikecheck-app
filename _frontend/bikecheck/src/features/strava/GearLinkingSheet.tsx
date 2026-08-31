@@ -10,7 +10,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 // import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
 import { TbBikeOff } from "react-icons/tb";
-import { Link2, TriangleAlert } from "lucide-react";
+import { Link2, TriangleAlert, MoveRight } from "lucide-react";
 
 interface GearLinkingSheetProps {
   opened: boolean;
@@ -164,9 +164,10 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
               const chosen = chosenFor(bike);
               return (
                 <Group key={bike.id} gap="sm" wrap="nowrap" align="center">
-                  <Text size="sm" fw={600} c="text.6" style={{ flex: 1, minWidth: 0 }} truncate>
+                  <Text size="sm" fw={600} c="text.6" style={{ minWidth: 0 }} truncate>
                     {bikeTitle(bike)}
                   </Text>
+                  <MoveRight color="var(--mantine-color-text-7)"></MoveRight>
                   <Select
                     value={chosen}
                     onChange={(value) =>

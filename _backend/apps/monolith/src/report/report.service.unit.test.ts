@@ -53,7 +53,9 @@ describe('ReportService', () => {
       findFirst: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(),
     },
     events_bikes: { findFirst: jest.fn(), findMany: jest.fn() },
     bikes: { findFirst: jest.fn() },
@@ -781,11 +783,19 @@ describe('ReportService', () => {
       expect(mockPrisma.reports.delete).toHaveBeenCalledWith({ where: { id: REPORT_ID } });
     });
 
-    it('refuses a published report, which is revoked rather than deleted', async () => {
+    it('refuses a live published report, which is revoked before it is deleted', async () => {
       mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: true }));
 
       await expect(service.discard(REPORT_ID, OWNER_ID)).rejects.toThrow(ConflictException);
       expect(mockPrisma.reports.delete).not.toHaveBeenCalled();
+    });
+
+    it('removes a revoked report, whose link is already closed', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: true, revoked: true }));
+
+      await service.discard(REPORT_ID, OWNER_ID);
+
+      expect(mockPrisma.reports.delete).toHaveBeenCalledWith({ where: { id: REPORT_ID } });
     });
 
     it('does not reach another user report', async () => {
@@ -793,6 +803,91 @@ describe('ReportService', () => {
 
       await expect(service.discard(REPORT_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
       expect(mockPrisma.reports.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('revokeAll', () => {
+    it('closes every open link at once', async () => {
+      mockPrisma.reports.updateMany.mockResolvedValue({ count: 3 });
+
+      const count = await service.revokeAll(OWNER_ID);
+
+      expect(count).toBe(3);
+      expect(mockPrisma.reports.updateMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, is_public: true, revoked: false },
+        data: { revoked: true },
+      });
+    });
+
+    it('leaves a report that was never published publishable', async () => {
+      mockPrisma.reports.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.revokeAll(OWNER_ID);
+
+      expect(mockPrisma.reports.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ is_public: true }) }),
+      );
+    });
+
+    it('narrows to one bike when asked', async () => {
+      mockPrisma.reports.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.revokeAll(OWNER_ID, BIKE_ID);
+
+      expect(mockPrisma.reports.updateMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, bike_id: BIKE_ID, is_public: true, revoked: false },
+        data: { revoked: true },
+      });
+    });
+
+    it('does not reach another user reports', async () => {
+      mockPrisma.reports.updateMany.mockResolvedValue({ count: 0 });
+
+      const count = await service.revokeAll(STRANGER_ID);
+
+      expect(count).toBe(0);
+      expect(mockPrisma.reports.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ user_id: STRANGER_ID }) }),
+      );
+    });
+  });
+
+  describe('discardAll', () => {
+    it('removes every report nobody can read, and leaves the live links standing', async () => {
+      mockPrisma.reports.deleteMany.mockResolvedValue({ count: 2 });
+
+      const count = await service.discardAll(OWNER_ID);
+
+      expect(count).toBe(2);
+      expect(mockPrisma.reports.deleteMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, NOT: { is_public: true, revoked: false } },
+      });
+    });
+
+    it('narrows to one bike when asked', async () => {
+      mockPrisma.reports.deleteMany.mockResolvedValue({ count: 1 });
+
+      await service.discardAll(OWNER_ID, BIKE_ID);
+
+      expect(mockPrisma.reports.deleteMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, bike_id: BIKE_ID, NOT: { is_public: true, revoked: false } },
+      });
+    });
+
+    it('answers nothing removed when there is nothing closed to remove', async () => {
+      mockPrisma.reports.deleteMany.mockResolvedValue({ count: 0 });
+
+      expect(await service.discardAll(OWNER_ID)).toBe(0);
+    });
+
+    it('does not reach another user reports', async () => {
+      mockPrisma.reports.deleteMany.mockResolvedValue({ count: 0 });
+
+      await service.discardAll(STRANGER_ID);
+
+      expect(mockPrisma.reports.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ user_id: STRANGER_ID }) }),
+      );
     });
   });
 

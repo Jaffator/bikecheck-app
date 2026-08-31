@@ -5,7 +5,7 @@ import { reports } from '@prisma/client';
 import { ReportService } from './report.service';
 import { ReportAttachmentFile, ReportSnapshot } from './report.types';
 import { ExportReportDto } from './dto/export-report.dto';
-import { ResponseExportedReportDto, ResponseReportDto } from './dto/response-report.dto';
+import { ResponseExportedReportDto, ResponseReportBulkDto, ResponseReportDto } from './dto/response-report.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -43,6 +43,33 @@ export class ReportController {
     return reportsList.map((report) => this.toDto(report));
   }
 
+  // ---------- PATCH revoke every live link ----------
+  // Declared before the parameterized routes, so `mine` is never read as an id.
+  @ApiOperation({ summary: 'Revoke every open link the caller has out, for good' })
+  @ApiQuery({ name: 'bikeId', type: Number, required: false })
+  @ApiResponse({ status: 200, type: ResponseReportBulkDto })
+  @Patch('mine/revoke')
+  async revokeAll(
+    @CurrentUser('userId') userId: string,
+    @Query('bikeId', new ParseIntPipe({ optional: true })) bikeId?: number,
+  ): Promise<ResponseReportBulkDto> {
+    const count = await this.reportService.revokeAll(Number(userId), bikeId);
+    return { count };
+  }
+
+  // ---------- DELETE every report nobody can read ----------
+  @ApiOperation({ summary: 'Discard every report of the caller that was never published, or already revoked' })
+  @ApiQuery({ name: 'bikeId', type: Number, required: false })
+  @ApiResponse({ status: 200, type: ResponseReportBulkDto })
+  @Delete('mine')
+  async discardAll(
+    @CurrentUser('userId') userId: string,
+    @Query('bikeId', new ParseIntPipe({ optional: true })) bikeId?: number,
+  ): Promise<ResponseReportBulkDto> {
+    const count = await this.reportService.discardAll(Number(userId), bikeId);
+    return { count };
+  }
+
   // ---------- PATCH publish a report ----------
   @ApiOperation({ summary: 'Open a report to the world' })
   @ApiResponse({ status: 200, type: ResponseReportDto })
@@ -67,8 +94,8 @@ export class ReportController {
     return this.toDto(report);
   }
 
-  // ---------- DELETE discard a report that was never published ----------
-  @ApiOperation({ summary: 'Discard a report nobody has seen' })
+  // ---------- DELETE discard a report nobody can read ----------
+  @ApiOperation({ summary: 'Discard a report that was never published, or one already revoked' })
   @ApiResponse({ status: 200, type: ResponseReportDto })
   @Delete(':id')
   async discard(

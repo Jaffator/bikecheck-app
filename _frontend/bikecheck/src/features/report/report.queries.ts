@@ -1,7 +1,14 @@
 // React Query hooks for making, publishing and reading Reports.
 import { useCallback, useMemo } from "react";
-import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
+import {
+  discardAllReports,
   discardReport,
   exportReport,
   fetchOwnedAttachment,
@@ -10,9 +17,17 @@ import {
   publicAttachmentUrl,
   publicReportPdfUrl,
   publishReport,
+  revokeAllReports,
   revokeReport,
 } from "./report.api";
-import type { ExportReportInput, ExportedReport, ReportAttachment, ReportSnapshot, ReportSummary } from "./report.types";
+import type {
+  ExportReportInput,
+  ExportedReport,
+  ReportAttachment,
+  ReportBulkResult,
+  ReportSnapshot,
+  ReportSummary,
+} from "./report.types";
 import type { ApiError } from "@/api/client";
 
 // Every Report the owner has made, newest first. Metadata only, so the list stays cheap
@@ -73,13 +88,35 @@ export function useDiscardReport(): UseMutationResult<ReportSummary, Error, numb
   });
 }
 
+// The same act across the whole list. The bike it was asked for travels with it, so what
+// is closed is what the owner was looking at.
+export function useRevokeAllReports(): UseMutationResult<ReportBulkResult, Error, number | undefined> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bikeId: number | undefined) => revokeAllReports(bikeId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+  });
+}
+
+// And the same for throwing away what nobody can read any more.
+export function useDiscardAllReports(): UseMutationResult<ReportBulkResult, Error, number | undefined> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bikeId: number | undefined) => discardAllReports(bikeId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+  });
+}
+
 // The document behind a Share Link. A closed link is an answer, not a fault worth
 // retrying, and the read counts a view — so it is asked once and held. The print variant
 // asks for the same document without being counted.
-export function usePublicReport(
-  token: string | undefined,
-  print: boolean,
-): UseQueryResult<ReportSnapshot, ApiError> {
+export function usePublicReport(token: string | undefined, print: boolean): UseQueryResult<ReportSnapshot, ApiError> {
   return useQuery<ReportSnapshot, ApiError>({
     queryKey: ["reports", "public", token, print],
     queryFn: () => getPublicReport(token ?? "", print),

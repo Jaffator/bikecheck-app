@@ -1,12 +1,21 @@
 // Report API calls use the shared client. The public read is the one call in the app
 // that expects no session behind it.
 import { apiFetch, apiFetchBlob, apiUrl } from "@/api/client";
-import type { ExportReportInput, ExportedReport, ReportSnapshot, ReportSummary } from "./report.types";
+import type {
+  ExportReportInput,
+  ExportedReport,
+  ReportBulkResult,
+  ReportSnapshot,
+  ReportSummary,
+} from "./report.types";
 
 // POST /reports/export — makes one Report and hands back the document it just froze.
 // Nothing is public yet.
 export async function exportReport(input: ExportReportInput): Promise<ExportedReport> {
-  return apiFetch<ExportedReport>("/reports/export", { method: "POST", body: JSON.stringify(input) });
+  return apiFetch<ExportedReport>("/reports/export", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 // GET /reports/mine — everything the owner has out in their name, newest first. Metadata
@@ -32,6 +41,25 @@ export async function revokeReport(id: number): Promise<ReportSummary> {
 // removed. A published Report is revoked instead.
 export async function discardReport(id: number): Promise<ReportSummary> {
   return apiFetch<ReportSummary>(`/reports/${id}`, { method: "DELETE" });
+}
+
+// PATCH /reports/mine/revoke - closes every link the owner still has open, in one act.
+// Only open links: a Report never published stays publishable. Answers with how many it
+// actually reached, which the list the owner was looking at cannot know.
+export async function revokeAllReports(bikeId?: number): Promise<ReportBulkResult> {
+  const query = bikeId === undefined ? "" : `?bikeId=${String(bikeId)}`;
+  return apiFetch<ReportBulkResult>(`/reports/mine/revoke${query}`, {
+    method: "PATCH",
+  });
+}
+
+// DELETE /reports/mine - throws away every Report nobody can read. A live link is left
+// standing, exactly as the single delete refuses one.
+export async function discardAllReports(bikeId?: number): Promise<ReportBulkResult> {
+  const query = bikeId === undefined ? "" : `?bikeId=${String(bikeId)}`;
+  return apiFetch<ReportBulkResult>(`/reports/mine${query}`, {
+    method: "DELETE",
+  });
 }
 
 // GET /reports/public/:token — the document behind a Share Link. Every closed state

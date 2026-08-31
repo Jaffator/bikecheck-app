@@ -17,11 +17,11 @@ export const inputStyles = {
   label: fieldLabel,
   input: {
     borderRadius: "0.6rem",
-    backgroundColor: "var(--mantine-color-inputs-9)",
-    border: "1px solid var(--mantine-color-inputs-5)",
+    backgroundColor: "var(--mantine-color-inputs-6)",
+    border: "1px solid var(--mantine-color-inputs-4)",
     height: "2.25rem",
     color: "var(--mantine-color-text-6)",
-    "--input-placeholder-color": "var(--mantine-color-text-9)",
+    "--input-placeholder-color": "var(--mantine-color-text-8)",
   } as React.CSSProperties,
 };
 
@@ -106,8 +106,8 @@ export const dropdownProps = {
   withinPortal: true,
   styles: {
     dropdown: {
-      backgroundColor: "var(--mantine-color-cards-6)",
-      border: "1px solid var(--mantine-color-inputs-5)",
+      backgroundColor: "var(--mantine-color-background-8)",
+      border: "1px solid var(--mantine-color-inputs-4)",
       color: "var(--mantine-color-text-6)",
     },
   },

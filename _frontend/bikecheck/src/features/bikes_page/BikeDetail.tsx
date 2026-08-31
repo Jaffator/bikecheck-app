@@ -1,16 +1,32 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useState, type ReactElement } from "react";
-import { ActionIcon, Box, Menu, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  Group,
+  Menu,
+  Paper,
+  Skeleton,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { MoreVertical, Pencil, Trash2, Unlink } from "lucide-react";
+import {
+  ArrowUpRight,
+  Clock,
+  MoreVertical,
+  Pencil,
+  Route,
+  Trash2,
+  Unlink,
+} from "lucide-react";
 import { useBike, useDeleteBike } from "../bikes/bikes.queries";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
 import { useConnectStrava, useLinkStravaGear } from "../strava/strava.queries";
 import { useCurrentUser } from "../users/users.queries";
 import { BikePhoto } from "./BikePhoto";
 import { BikeActionTiles } from "./BikeActionTiles";
-import { BikeMetricsCard } from "./BikeMetricsCard";
 import { BikeStravaCard } from "./BikeStravaCard";
 import { HealthBadge } from "./HealthBadge";
 import { bikeTitle, splitBikeTitle } from "../bikes/bikeTitle";
@@ -37,7 +53,9 @@ export function BikeDetail(): ReactElement {
   const unpair = useLinkStravaGear();
   const connect = useConnectStrava();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
-  const setHeaderTransparent = useHeaderStore((state) => state.setHeaderTransparent);
+  const setHeaderTransparent = useHeaderStore(
+    (state) => state.setHeaderTransparent,
+  );
 
   const paired = bike?.strava_gear_id != null;
 
@@ -55,7 +73,12 @@ export function BikeDetail(): ReactElement {
     setActionSlot(
       <Menu position="bottom-end" radius="md" withinPortal>
         <Menu.Target>
-          <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("bikes.cardMenu")}>
+          <ActionIcon
+            variant="transparent"
+            radius="xl"
+            size="lg"
+            aria-label={t("bikes.cardMenu")}
+          >
             <MoreVertical size={22} color="var(--mantine-color-text-6)" />
           </ActionIcon>
         </Menu.Target>
@@ -64,7 +87,10 @@ export function BikeDetail(): ReactElement {
         <Menu.Dropdown
           bg="cards.6"
           p={8}
-          style={{ border: "1px solid var(--mantine-color-cards-5)", boxShadow: "var(--elev-panel)" }}
+          style={{
+            border: "1px solid var(--mantine-color-cards-6)",
+            boxShadow: "var(--elev-panel)",
+          }}
         >
           <Menu.Item
             color="text"
@@ -78,12 +104,24 @@ export function BikeDetail(): ReactElement {
 
           {/* Only a paired bike can be detached, so an unpaired one is not offered it. */}
           {bike.strava_gear_id !== null && (
-            <Menu.Item color="text" py={12} fw={600} leftSection={<Unlink size={18} />} onClick={() => setConfirmingUnpair(true)}>
+            <Menu.Item
+              color="text"
+              py={12}
+              fw={600}
+              leftSection={<Unlink size={18} />}
+              onClick={() => setConfirmingUnpair(true)}
+            >
               {t("strava.unpairBike")}
             </Menu.Item>
           )}
 
-          <Menu.Item color="red.5" py={12} fw={600} leftSection={<Trash2 size={18} />} onClick={() => setConfirmingDelete(true)}>
+          <Menu.Item
+            color="red.5"
+            py={12}
+            fw={600}
+            leftSection={<Trash2 size={18} />}
+            onClick={() => setConfirmingDelete(true)}
+          >
             {t("bikes.delete")}
           </Menu.Item>
         </Menu.Dropdown>
@@ -97,10 +135,10 @@ export function BikeDetail(): ReactElement {
   if (isLoading) {
     return (
       <Stack gap="md" px="md" pt="md">
-        <Skeleton h={14} w="30%" radius="sm" />
-        <Skeleton h={28} w="65%" radius="sm" />
         {/* Match the photo slot, so the loaded hero lands where the skeleton stood. */}
         <Skeleton radius="md" style={{ aspectRatio: 2 }} />
+        <Skeleton h={14} w="30%" radius="sm" />
+        <Skeleton h={28} w="65%" radius="sm" />
         <Skeleton h={92} radius="lg" />
       </Stack>
     );
@@ -124,35 +162,83 @@ export function BikeDetail(): ReactElement {
       pt="calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.5rem)"
       pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
     >
-      {/* The bike, read the way it is written on the frame. */}
-      <Stack gap={2}>
-        {kicker !== null && (
-          <Text className="font-mono uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
-            {kicker}
-          </Text>
-        )}
-        <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
-          {heading}
-        </Text>
-        {/* The garage and this page are the only places a bike answers to its nickname. */}
-        {bike.bikename !== null && bike.bikename !== "" && (
-          <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
-            {bike.bikename}
-          </Text>
-        )}
-      </Stack>
-
-      {/* The name is carried above, so the photo is left bare but for its badge. */}
-      <Paper radius="lg" style={{ overflow: "hidden" }}>
-        <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
+      {/* The bike, read the way it is written on the frame: photo and name are one object,
+          so they sit on one card rather than two stacked surfaces. */}
+      <Paper
+        radius="lg"
+        style={{
+          overflow: "hidden",
+          backgroundColor: "var(--mantine-color-cards-6)",
+          backgroundImage: "var(--card-glow)",
+          border: "none",
+          boxShadow: "var(--elev-hero)",
+        }}
+      >
+        {/* The name is carried below, so the photo is left bare but for its badge. */}
+        <BikePhoto
+          imageUrl={bike.image_url}
+          title={bikeTitle(bike)}
+          subtitle={null}
+          titleSize={24}
+          showCaption={false}
+        >
           <Box style={{ marginRight: "auto" }}>
             <HealthBadge readings={[]} />
           </Box>
         </BikePhoto>
+
+        <Stack gap={8} p="md">
+          {/* Three readings the bike keeps by itself, units only: with no room for labels
+              the icon and the unit have to carry what each number is. */}
+          <Group gap="lg" wrap="nowrap">
+            <Metric
+              icon={<Route size={14} color="var(--color-text-dim)" />}
+              value={t("bikes.kilometres", { count: bike.total_km ?? 0 })}
+            />
+            <Metric
+              icon={<ArrowUpRight size={14} color="var(--color-text-dim)" />}
+              value={t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
+            />
+            <Metric
+              icon={<Clock size={14} color="var(--color-text-dim)" />}
+              value={t("bikes.hours", {
+                count: Math.round((bike.total_time_min ?? 0) / 60),
+              })}
+            />
+          </Group>
+
+          {/* The name reads as one block, so it keeps its own tighter rhythm. */}
+          <Stack gap={2}>
+            {kicker !== null && (
+              <Text
+                className="font-mono uppercase"
+                fz={11}
+                fw={400}
+                c="var(--color-text-dim)"
+                lts="0.08em"
+                lineClamp={1}
+              >
+                {kicker}
+              </Text>
+            )}
+            <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
+              {heading}
+            </Text>
+            {/* The garage and this page are the only places a bike answers to its nickname. */}
+            {bike.bikename !== null && bike.bikename !== "" && (
+              <Text
+                className="font-mono"
+                fz={11}
+                tt="uppercase"
+                c="var(--color-text-dim)"
+                lineClamp={1}
+              >
+                {bike.bikename}
+              </Text>
+            )}
+          </Stack>
+        </Stack>
       </Paper>
-
-      <BikeMetricsCard bike={bike} onEditWeight={() => navigate(`/bikes/${String(bike.id)}/edit`)} />
-
       <BikeStravaCard
         bike={bike}
         accountConnected={user?.strava_athlete_id != null}
@@ -164,10 +250,14 @@ export function BikeDetail(): ReactElement {
       <BikeActionTiles
         paired={paired}
         onAddService={() => navigate(`/service/new?bike=${String(bike.id)}`)}
-        onExportReport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+        onExportReport={() =>
+          setExporting({ kind: "BIKECHECK", bike_id: bike.id })
+        }
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onPairGear={() => setPairingGear(true)}
-        onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
+        onOpenHistory={() =>
+          navigate(`/service/history?bike=${String(bike.id)}`)
+        }
       />
 
       {remove.isError && (
@@ -184,7 +274,11 @@ export function BikeDetail(): ReactElement {
 
       <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
-      <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
+      <GearLinkingSheet
+        opened={pairingGear}
+        onClose={() => setPairingGear(false)}
+        bikeIds={[bike.id]}
+      />
 
       {/* Detaching keeps the rides already recorded, which the question is the only place
           with room to say. */}
@@ -223,5 +317,22 @@ export function BikeDetail(): ReactElement {
         pending={remove.isPending}
       />
     </Stack>
+  );
+}
+
+function Metric({
+  icon,
+  value,
+}: {
+  icon: ReactElement;
+  value: string;
+}): ReactElement {
+  return (
+    <Group gap={6} wrap="nowrap">
+      {icon}
+      <Text className="font-mono" fz={13} c="text.6" lineClamp={1}>
+        {value}
+      </Text>
+    </Group>
   );
 }

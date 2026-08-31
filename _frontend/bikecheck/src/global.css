@@ -107,19 +107,47 @@
   --color-primary-light: #b8a937;
   --color-primary-trans: rgba(147, 106, 59, 0.2);
   --color-muted: #a8a29e;
-  --color-border: rgba(67, 71, 74, 0.3);
+  --color-border: rgba(120, 110, 99, 0.32);
   --color-text-bright: #e4e2e2;
-  --color-text-dim: #c3c7ca;
+  --color-text-dim: #cec7bf;
   --color-accent: #b7c9d3;
-  --color-surface: #292a2b;
-  --color-border-solid: #43474a;
-  --color-border-strong: rgba(67, 71, 74, 0.4);
-  --color-border-subtle: rgba(67, 71, 74, 0.2);
+  --color-surface: #2a241f;
+  --color-border-solid: #786e63;
+  --color-border-strong: rgba(120, 110, 99, 0.42);
+  --color-border-subtle: rgba(120, 110, 99, 0.22);
   --color-status-idle: #ffb4ab;
-  --color-decor: #343535;
+  --color-decor: #352e28;
 
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+}
+
+/* The card material, in one place. Three elevations and no more: a list row, a panel or
+   sheet, and the one hero card a screen is allowed - see docs/ui/card-surface.md. Each is
+   a hairline of light along the top edge, a tight contact shadow, and a soft cast one. */
+:root {
+  --elev-row: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35),
+    0 4px 12px -6px rgba(0, 0, 0, 0.5);
+  --elev-panel: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.38),
+    0 8px 16px -6px rgba(0, 0, 0, 0.5);
+  --elev-hero: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.4),
+    0 12px 24px -8px rgba(0, 0, 0, 0.55);
+  /* The light every card is lit from the top-left corner by. */
+  --card-glow: radial-gradient(
+    90% 120% at 0% 0%,
+    color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%,
+    transparent 45%
+  );
+}
+
+/* The provider forces no colour scheme, so Mantine reaches for its light-mode skeleton:
+   a white block and a pale sweep. Both are repainted in the card's own material. */
+.mantine-Skeleton-root[data-visible]::before {
+  background-color: var(--mantine-color-cards-6);
+}
+
+.mantine-Skeleton-root[data-visible]::after {
+  background-color: var(--mantine-color-cards-5);
 }
 
 html,

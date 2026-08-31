@@ -3,6 +3,7 @@ import { useEffect, useRef, type ReactElement } from "react";
 import { Button, Loader, Stack, Stepper, Text } from "@mantine/core";
 import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useHeaderStore } from "@/store/store";
 import { BikeSearchFallback } from "./BikeSearchFallback";
 import { BikeSearchResults } from "./BikeSearchResults";
@@ -21,6 +22,10 @@ import { TOTAL_STEPS, useAddBikeWizard } from "./useAddBikeWizard";
 export function AddBikeIdentity(): ReactElement {
   const wizard = useAddBikeWizard();
   const { t } = useTranslation();
+  // The webview does not shrink for the keyboard, so a step short enough to fit the screen
+  // has nothing to scroll and the focused field stays covered. This much extra floor is
+  // what gives useScrollIntoViewOnFocus somewhere to scroll to.
+  const keyboardOffset = useKeyboardOffset();
   const setHeaderTitleKey = useHeaderStore((state) => state.setTitleKey);
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
   const setChromeHidden = useHeaderStore((state) => state.setChromeHidden);
@@ -99,7 +104,12 @@ export function AddBikeIdentity(): ReactElement {
 
   return (
     // Reserve space for the fixed footer and safe area.
-    <Stack gap="lg" px="md" pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+    <Stack
+      gap="lg"
+      px="md"
+      pt="md"
+      pb={`calc(6rem + ${keyboardOffset}px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
+    >
       <Stack gap="xs">
         <Stepper
           active={active}

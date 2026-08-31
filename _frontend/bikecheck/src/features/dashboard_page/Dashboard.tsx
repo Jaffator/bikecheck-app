@@ -1,6 +1,6 @@
 // Dashboard page.
 import type { ReactElement } from "react";
-import { Loader } from "@mantine/core";
+import { Loader, Stack } from "@mantine/core";
 import { useBikes } from "../bikes/bikes.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
 import { StravaStatusCard } from "../strava/StravaStatusCard";
@@ -19,13 +19,13 @@ export function Dashboard(): ReactElement {
   }
   // TODO: Add the populated dashboard.
   return (
-    <>
+    <Stack gap="sm" p="md">
       {/* Show Strava connection status. */}
       <StravaStatusCard />
       {/* Show bikes awaiting Strava pairing. */}
       <UnpairedBikesCard />
       {/* Show rides awaiting bike assignment. */}
       <PendingRidesCard />
-    </>
+    </Stack>
   );
 }

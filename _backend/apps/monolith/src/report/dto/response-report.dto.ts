@@ -59,6 +59,13 @@ export class ResponseReportDto {
   created_at!: Date;
 }
 
+// What a bulk act answers with: how many rows it actually reached. The server decides the
+// count, not the list the caller was looking at when they asked.
+export class ResponseReportBulkDto {
+  @ApiProperty({ example: 3, description: 'How many reports the act reached' })
+  count!: number;
+}
+
 // What Export answers with. The snapshot rides along so the owner previews the document
 // they just made without a second round trip, and without the public route counting a
 // view on a report only they have seen.

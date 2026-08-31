@@ -50,7 +50,7 @@ export function BikeStravaCard({
       style={{
         backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage: "var(--card-glow)",
-        border: "1px solid var(--color-border-subtle)",
+        border: "none",
         boxShadow: "var(--elev-panel)",
         cursor: onClick ? "pointer" : undefined,
       }}

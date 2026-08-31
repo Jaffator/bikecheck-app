@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Bike, Clock, Mountain, Route } from "lucide-react";
 import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
-import { HistoryCard, HistoryMetric } from "@/components/HistoryCard";
+import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
 import { useRides } from "./rides.queries";
@@ -22,7 +22,7 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
   const { t } = useTranslation();
 
   return (
-    <HistoryCard
+    <CompletedRideCard
       onOpen={onOpen}
       leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
       /* The activity's own title leads: it is what the user named the ride, so it

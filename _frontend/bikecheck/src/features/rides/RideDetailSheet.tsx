@@ -45,7 +45,10 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
           flexDirection: "column",
         },
         body: { flex: 1, display: "flex", flexDirection: "column" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)", marginBottom: "1.5rem" },
+        header: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          marginBottom: "1.5rem",
+        },
         title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
     >
@@ -66,11 +69,9 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
             p="md"
             style={{
               backgroundColor: "var(--mantine-color-cards-6)",
-              backgroundImage:
-                "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
+              backgroundImage: "var(--card-glow)",
               border: "1px solid var(--color-border-subtle)",
-              boxShadow:
-                "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
+              boxShadow: "var(--elev-panel)",
             }}
           >
             <Stack gap="md">

@@ -22,19 +22,17 @@ export function UnpairedBikesCard(): ReactElement | null {
   return (
     <Paper
       radius="lg"
-      className="m-3"
+      p="md"
       style={{
         overflow: "hidden",
         // Uses the shared card surface without the bg shorthand.
         backgroundColor: "var(--mantine-color-cards-6)",
-        backgroundImage:
-          "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
-        border: "1px solid var(--color-border-subtle)",
-        boxShadow:
-          "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
+        backgroundImage: "var(--card-glow)",
+        border: "none",
+        boxShadow: "var(--elev-panel)",
       }}
     >
-      <Stack gap="sm" p="md">
+      <Stack gap="sm">
         <Group>
           <Box
             style={{

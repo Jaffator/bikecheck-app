@@ -1,5 +1,6 @@
 // React Query hooks for the service history.
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -81,6 +82,9 @@ export function useHistoryTotals(bikeId: number | undefined, period: ServicePeri
   return useQuery({
     queryKey: ["services", "totals", bikeKey(bikeId), periodKey(period)],
     queryFn: () => getHistoryTotals(bikeId, period),
+    // The filter above the card changes often. The last total holds its place until the
+    // next one lands, so a chip tap dims the number rather than blanking it.
+    placeholderData: keepPreviousData,
   });
 }
 

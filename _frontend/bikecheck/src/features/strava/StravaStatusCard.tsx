@@ -39,7 +39,6 @@ export function StravaStatusCard({
       <Paper
         bg="cards.6"
         radius="lg"
-        className="m-3"
         style={{
           overflow: "hidden",
           border: "1px solid var(--color-border-subtle)",
@@ -101,7 +100,7 @@ export function StravaStatusCard({
             fullWidth
             radius="md"
             color="strava.6"
-            c="#FFFFFF"
+            c="#1A1A1A"
             loading={connect.isPending}
             onClick={() => {
               connect.mutate();
@@ -138,7 +137,6 @@ export function StravaStatusCard({
     <Paper
       bg="cards.6"
       radius="lg"
-      className="m-3"
       style={{
         overflow: "hidden",
         border: "1px solid var(--color-border-subtle)",

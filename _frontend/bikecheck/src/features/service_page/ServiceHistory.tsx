@@ -1,7 +1,7 @@
 // Full service history page.
 import { useEffect, useState, type ReactElement } from "react";
 import { ActionIcon, Group, Loader, Stack } from "@mantine/core";
-import { ListFilter, Share2 } from "lucide-react";
+import { ListFilter } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
@@ -53,7 +53,11 @@ export function ServiceHistory(): ReactElement {
     bikeId ?? undefined,
     period,
   );
-  const { data: totals, isLoading: totalsLoading } = useHistoryTotals(bikeId ?? undefined, period);
+  const {
+    data: totals,
+    isLoading: totalsLoading,
+    isPlaceholderData: totalsStale,
+  } = useHistoryTotals(bikeId ?? undefined, period);
   const sentinel = useInfiniteScrollSentinel(hasNextPage, () => void fetchNextPage());
 
   const services = data?.pages.flatMap((page) => page.items) ?? [];
@@ -67,43 +71,21 @@ export function ServiceHistory(): ReactElement {
   // header store. It leaves with the page.
   useEffect(() => {
     setActionSlot(
-      <Group gap={2} wrap="nowrap">
-        {/* Exports exactly what is on screen: the same Bike and the same Period the list
-            below is already running on. */}
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          radius="md"
-          size="lg"
-          disabled={exportBikeId === null}
-          title={exportBikeId === null ? t("report.pickBikeFirst") : t("report.exportPeriod")}
-          aria-label={exportBikeId === null ? t("report.pickBikeFirst") : t("report.exportPeriod")}
-          onClick={() => {
-            if (exportBikeId === null) return;
-            setExporting({
-              kind: "PERIOD",
-              bike_id: exportBikeId,
-              from: period.from ?? undefined,
-              to: period.to ?? undefined,
-            });
-          }}
-        >
-          <Share2 size={20} color="var(--mantine-color-text-6)" />
-        </ActionIcon>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          radius="md"
-          size="lg"
-          aria-label={t("service.periodTitle")}
-          onClick={() => setFilterOpened(true)}
-        >
-          <ListFilter size={20} color="var(--mantine-color-text-6)" />
-        </ActionIcon>
-      </Group>,
+      // Exporting lives on the Totals card, which states what it is summing. The header
+      // carries only what changes that summary.
+      <ActionIcon
+        variant="subtle"
+        color="gray"
+        radius="md"
+        size="lg"
+        aria-label={t("service.periodTitle")}
+        onClick={() => setFilterOpened(true)}
+      >
+        <ListFilter size={20} color="var(--mantine-color-text-6)" />
+      </ActionIcon>,
     );
     return () => setActionSlot(null);
-  }, [setActionSlot, t, exportBikeId, period.from, period.to]);
+  }, [setActionSlot, t]);
 
   function setParams(next: Record<string, string | null>): void {
     const params = new URLSearchParams(searchParams);
@@ -132,6 +114,18 @@ export function ServiceHistory(): ReactElement {
           totals={totals}
           periodLabel={periodLabel(period, t, i18n.language)}
           isLoading={totalsLoading}
+          isStale={totalsStale}
+          onShare={
+            exportBikeId === null
+              ? null
+              : () =>
+                  setExporting({
+                    kind: "PERIOD",
+                    bike_id: exportBikeId,
+                    from: period.from ?? undefined,
+                    to: period.to ?? undefined,
+                  })
+          }
         />
 
         {/* Month Groups need more air between them than cards do inside one. */}

@@ -2,6 +2,12 @@
 
 export type ReportKind = "SERVICE" | "PERIOD" | "BIKECHECK";
 
+// What a bulk act answers with: how many reports it actually reached. The server counts,
+// not the list the owner was looking at when they asked.
+export interface ReportBulkResult {
+  count: number;
+}
+
 // One Report as its owner manages it. A report has three states, and it takes both flags
 // to tell them apart: made but closed, published and open, revoked and closed for good.
 export interface ReportSummary {

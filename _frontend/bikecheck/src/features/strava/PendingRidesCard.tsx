@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Clock, Mountain, Route } from "lucide-react";
 import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
-import { HistoryCard, HistoryMetric } from "@/components/HistoryCard";
+import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
 import trailIllustration from "@/assets/images/rides.png";
 import { usePendingRides } from "./strava.queries";
@@ -21,7 +21,7 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
   const { t } = useTranslation();
 
   return (
-    <HistoryCard
+    <CompletedRideCard
       onOpen={onOpen}
       /* Route shape distinguishes otherwise similar ride rows. */
       leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}

@@ -54,7 +54,7 @@ export function ServiceHistoryCard({
       <Stack gap={5}>
         {/* What this row is and how much work it holds, with the price at the far edge. */}
         <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
-          <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>
+          <Text className="font-mono uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
             {`${t("nav.service")} · ${t("service.actionCount", { count: service.action_count })}`}
           </Text>
 
@@ -67,8 +67,7 @@ export function ServiceHistoryCard({
           )}
         </Group>
 
-        {/* The bike and when the work happened - the line that identifies the occasion.
-            Uppercase is styling only, so the nickname keeps the case the user typed. */}
+        {/* The bike and when the work happened - the line that identifies the occasion. */}
         <Group gap={7} align="center" wrap="nowrap">
           <BikeIcon
             width={18}
@@ -77,18 +76,18 @@ export function ServiceHistoryCard({
               flexShrink: 0,
               transform: "translateY(-1px)",
             }}
-            color="var(--mantine-color-text-6)"
+            color="var(--mantine-color-primary-5)"
           />
-          <Text className="uppercase" fz={16} fw={600} c="text.6" lineClamp={1}>
+          <Text fz={16} fw={600} c="text.6" lineClamp={1}>
             {service.bike_name ?? t("service.unknownBike")}
           </Text>
           {date !== null &&
             (grouped ? (
-              <Text className="font-mono" fz={12} c="var(--mantine-color-text-8)" style={{ flexShrink: 0 }}>
+              <Text className="font-mono" fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
                 {date}
               </Text>
             ) : (
-              <Text className="font-mono" fz={12} fw={100} c="var(--mantine-color-text-8)" style={{ flexShrink: 0 }}>
+              <Text className="font-mono" fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
                 {`· ${date}`}
               </Text>
             ))}
@@ -106,13 +105,13 @@ export function ServiceHistoryCard({
                 <Box c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
                   ·
                 </Box>
-                <Text className="font-mono" fz={13} c="var(--color-text-dim)" lineClamp={1}>
+                <Text className="font-sans" fz={13} c="var(--color-text-dim)" lineClamp={1}>
                   {catalogueLabel(action.i18n_key, action.name, t)}
                 </Text>
               </Group>
             ))}
             {hidden > 0 && (
-              <Text className="font-mono" fz={13} c="text.7" pl={20}>
+              <Text className="font-sans" fz={13} c="text.7" pl={20}>
                 {t("service.moreActions", { count: hidden })}
               </Text>
             )}

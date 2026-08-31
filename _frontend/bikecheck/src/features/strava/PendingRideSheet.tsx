@@ -51,7 +51,10 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
           flexDirection: "column",
         },
         body: { flex: 1, display: "flex", flexDirection: "column" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)", marginBottom: "1.5rem" },
+        header: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          marginBottom: "1.5rem",
+        },
         // Centers the title against the complete header.
         title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
@@ -68,11 +71,9 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
             style={{
               // Uses separate background fields to preserve the gradient.
               backgroundColor: "var(--mantine-color-cards-6)",
-              backgroundImage:
-                "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
+              backgroundImage: "var(--card-glow)",
               border: "1px solid var(--color-border-subtle)",
-              boxShadow:
-                "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
+              boxShadow: "var(--elev-panel)",
             }}
           >
             <Group gap="sm" wrap="nowrap" align="center" w="100%">
@@ -104,7 +105,9 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
                   <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
                     <Mountain size={14} color="var(--mantine-color-text-7)" />
                     <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
-                      {t("pendingRides.elevation", { count: ride.elevation_up_m })}
+                      {t("pendingRides.elevation", {
+                        count: ride.elevation_up_m,
+                      })}
                     </Text>
                   </Group>
                 </Group>
@@ -126,7 +129,12 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
             label: bikeTitle(bike),
           }))}
           // Adds an edge to the wizard field on the card background.
-          styles={{ input: { ...inputStyles.input, border: "1px solid var(--mantine-color-cards-4)" } }}
+          styles={{
+            input: {
+              ...inputStyles.input,
+              border: "1px solid var(--mantine-color-cards-4)",
+            },
+          }}
           radius="md"
           // Matches the dropdown edge to its input field.
           comboboxProps={{

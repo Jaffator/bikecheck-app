@@ -34,20 +34,22 @@ const background: MantineColorsTuple = [
   "#868688",
   "#7e7e83",
   "#6c6c71",
-  "#0a0a24",
-  "#10161A",
+  "#21201f",
+  "#1a1816",
 ];
+// The dark end runs warm on purpose: the primary yellow and the Strava orange are both
+// warm, so a cool grey card read as a different material behind them.
 const cards: MantineColorsTuple = [
   "#ededed",
   "#cacaca",
   "#a7a7a7",
   "#848484",
-  "#626161",
-  "#3f3e3e",
-  "#242222",
-  "#171616",
-  "#121111",
-  "#0d0c0c",
+  "#6b6764",
+  "#403e3c",
+  "#262524",
+  "#1a1612",
+  "#14100b",
+  "#0f0c08",
 ];
 
 const cards2: MantineColorsTuple = [
@@ -55,9 +57,9 @@ const cards2: MantineColorsTuple = [
   "#cacaca",
   "#a7a7a7",
   "#848484",
-  "#626161",
-  "#2e2c2c",
-  "#2e2c2c",
+  "#696058",
+  "#2d2722",
+  "#2d2722",
   "#171616",
   "#121111",
   "#0d0c0c",
@@ -69,11 +71,11 @@ const inputs: MantineColorsTuple = [
   "#a4a4a4",
   "#808080",
   "#5c5c5c",
-  "#383838",
-  "#141414",
-  "#101010",
-  "#0d0d0d",
-  "#090909",
+  "#39312a",
+  "#13100d",
+  "#100d0b",
+  "#0c0a08",
+  "#0a0806",
 ];
 const strava: MantineColorsTuple = [
   "#fff2ed",
@@ -118,14 +120,15 @@ export const otherColor = {
   primaryTrans: "rgba(147, 106, 59, 0.2)",
   textMuted: "#A8A29E",
   textBright: "#E4E2E2",
-  textDim: "#C3C7CA",
+  textDim: "#CEC7BF",
   accent: "#B7C9D3",
-  surface: "#292A2B",
-  borderSolid: "#43474A",
-  borderStrong: "rgba(67, 71, 74, 0.4)",
-  borderSubtle: "rgba(67, 71, 74, 0.2)",
+  surface: "#2A241F",
+  // 3.24:1 on a card, so a border can be the only thing outlining a control.
+  borderSolid: "#786E63",
+  borderStrong: "rgba(120, 110, 99, 0.42)",
+  borderSubtle: "rgba(120, 110, 99, 0.22)",
   statusIdle: "#FFB4AB",
-  decor: "#343535",
+  decor: "#352E28",
 } as const;
 
 export const theme = createTheme({

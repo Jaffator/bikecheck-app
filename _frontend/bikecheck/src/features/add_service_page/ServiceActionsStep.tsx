@@ -370,16 +370,14 @@ function ActionRow({
         // Colour, glow and inner edge all live in this one object: `bg` would emit the
         // `background` shorthand and wipe the gradient - see docs/ui/card-surface.md.
         backgroundColor: "var(--mantine-color-cards-6)",
-        backgroundImage:
-          "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
+        backgroundImage: "var(--card-glow)",
         border:
           opened && picked
             ? "1px solid var(--mantine-color-primary-8)"
             : picked
               ? "1px solid var(--mantine-color-primary-8)"
-              : "1px solid var(--mantine-color-cards-4)",
-        boxShadow:
-          "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
+              : "1px solid var(--mantine-color-cards-6)",
+        boxShadow: "var(--elev-panel)",
       }}
     >
       <Group gap="sm" wrap="nowrap" p="md" align="flex-start" justify="center">
@@ -554,7 +552,9 @@ function ActionRow({
             rightSection={<NotepadText size={18} color="var(--mantine-color-text-7)" />}
             // The field grows as it is filled, and a centred section would drift down with
             // it. Pinned to the top so the icon keeps sitting beside the first line.
-            rightSectionProps={{ style: { alignItems: "flex-start", paddingTop: "0.45rem" } }}
+            rightSectionProps={{
+              style: { alignItems: "flex-start", paddingTop: "0.45rem" },
+            }}
             onChange={(event) => onUpdate({ customNote: event.currentTarget.value })}
           />
 

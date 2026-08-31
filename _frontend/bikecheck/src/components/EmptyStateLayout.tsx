@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { Box, Image, Stack, Text } from "@mantine/core";
+import { Box, Center, Image, Stack, Text } from "@mantine/core";
 
 // Positions empty-state copy consistently across viewport sizes.
 const COPY_TOP_OFFSET = "40dvh";
@@ -17,8 +17,14 @@ const ILLUSTRATION_TOP_OFFSET = 5;
 // Keeps the illustration visually subordinate to foreground copy.
 const ILLUSTRATION_OPACITY = 0.2;
 
+// An icon carries far less ink than an illustration, so it may sit stronger.
+const ICON_OPACITY = 0.45;
+
 interface EmptyStateLayoutProps {
-  illustration: string;
+  // The illustration behind the copy. Pages without one pass an icon instead.
+  illustration?: string;
+  // Stands in for the illustration, occupying the same band above the copy.
+  icon?: ReactNode;
   title: string;
   body: string;
   // Renders an optional status pill over the illustration.
@@ -28,24 +34,39 @@ interface EmptyStateLayoutProps {
 }
 
 // Frames empty-state content inside AppShell.Main.
-export function EmptyStateLayout({ illustration, title, body, badge, children }: EmptyStateLayoutProps): ReactElement {
+export function EmptyStateLayout({
+  illustration,
+  icon,
+  title,
+  body,
+  badge,
+  children,
+}: EmptyStateLayoutProps): ReactElement {
   return (
     <Box pos="relative" px={16} pb={64}>
       {/* Places the masked illustration behind copy. */}
       <Box pos="absolute" top={ILLUSTRATION_TOP_OFFSET} left={0} right={0} className="pointer-events-none">
-        <Image
-          src={illustration}
-          alt=""
-          w="100%"
-          h={ILLUSTRATION_HEIGHT}
-          fit="cover"
-          opacity={ILLUSTRATION_OPACITY}
-          // Masks image alpha so crop edges blend into any background.
-          style={{
-            maskImage: FADE_MASK,
-            WebkitMaskImage: FADE_MASK,
-          }}
-        />
+        {illustration === undefined ? (
+          // Centres the icon in the band the illustration would have filled, so the copy
+          // below lands at the same offset on every empty page.
+          <Center h={ILLUSTRATION_HEIGHT} opacity={ICON_OPACITY} c="var(--color-text-dim)">
+            {icon}
+          </Center>
+        ) : (
+          <Image
+            src={illustration}
+            alt=""
+            w="100%"
+            h={ILLUSTRATION_HEIGHT}
+            fit="cover"
+            opacity={ILLUSTRATION_OPACITY}
+            // Masks image alpha so crop edges blend into any background.
+            style={{
+              maskImage: FADE_MASK,
+              WebkitMaskImage: FADE_MASK,
+            }}
+          />
+        )}
       </Box>
 
       {badge && (

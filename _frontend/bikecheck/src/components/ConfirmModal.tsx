@@ -4,6 +4,9 @@
 import type { ReactElement } from "react";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 
+// Above every sheet it can be opened from, so the dialog is never left behind an overlay.
+const CONFIRM_Z_INDEX = 400;
+
 interface ConfirmModalProps {
   opened: boolean;
   // Runs when the user backs out: the cancel button, the close control or the overlay.
@@ -36,6 +39,7 @@ export function ConfirmModal({
       title={title}
       centered
       radius="md"
+      zIndex={CONFIRM_Z_INDEX}
       styles={{
         content: { backgroundColor: "var(--mantine-color-cards-6)" },
         header: { backgroundColor: "var(--mantine-color-cards-6)" },

@@ -43,7 +43,10 @@ const ICON_SIZE = 18;
 // A section is centred over the whole input by default. An autosize textarea is only as
 // tall as what it holds, so the icon has to be pinned to the first line instead; the
 // padding matches the input's own top padding.
-const FIELD_ICON_TOP: React.CSSProperties = { alignItems: "flex-start", paddingTop: "0.45rem" };
+const FIELD_ICON_TOP: React.CSSProperties = {
+  alignItems: "flex-start",
+  paddingTop: "0.45rem",
+};
 
 // The Summary reads as a recap rather than a form, so its labels sit quieter and smaller
 // than the shared field label. Local on purpose: `fieldLabel` names controls everywhere
@@ -55,7 +58,10 @@ const summaryLabel = {
 } as React.CSSProperties;
 
 const summaryInputStyles = { ...inputStyles, label: summaryLabel };
-const summaryAutosizeInputStyles = { ...autosizeInputStyles, label: summaryLabel };
+const summaryAutosizeInputStyles = {
+  ...autosizeInputStyles,
+  label: summaryLabel,
+};
 
 // The pinned bar floats over the page, so the last field needs room to scroll clear of it.
 // Adds to the bottom padding the page itself already carries in AddService.
@@ -165,11 +171,9 @@ export function ServiceSummaryStep({
                 // Colour, glow and inner edge all live in this one object: `bg` would emit the
                 // `background` shorthand and wipe the gradient - see docs/ui/card-surface.md.
                 backgroundColor: "var(--mantine-color-cards-6)",
-                backgroundImage:
-                  "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%, transparent 45%)",
-                border: "1px solid var(--color-border-subtle)",
-                boxShadow:
-                  "inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 16px -6px rgba(0, 0, 0, 0.5)",
+                backgroundImage: "var(--card-glow)",
+                border: "1px solid var(--mantine-color-cards-6)",
+                boxShadow: "var(--elev-panel)",
               }}
               className="active:scale-[0.985]"
             >

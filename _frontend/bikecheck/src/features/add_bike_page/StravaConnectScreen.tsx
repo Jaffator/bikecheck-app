@@ -146,7 +146,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
           fullWidth
           radius="sm"
           color="strava.6"
-          c="#FFFFFF"
+          c="#1A1A1A"
           rightSection={<StravaMark width={14} height={14} />}
           loading={connecting}
           onClick={() => {

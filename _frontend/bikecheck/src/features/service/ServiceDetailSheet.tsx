@@ -45,7 +45,10 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   // The sheet is still on screen while it slides out. Held on to, what it was last showing
   // stays drawn all the way down instead of emptying into skeletons on the way.
-  const [lastOpened, setLastOpened] = useState<{ id: number; seed: ServiceHistoryItem | null } | null>(null);
+  const [lastOpened, setLastOpened] = useState<{
+    id: number;
+    seed: ServiceHistoryItem | null;
+  } | null>(null);
   const remove = useDeleteService();
 
   if (serviceId !== null && (lastOpened === null || lastOpened.id !== serviceId || lastOpened.seed !== seed)) {
@@ -96,7 +99,13 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         },
         // The body carries the scroll and the pinned bar, so it takes the padding away
         // from Mantine and hands it back per section.
-        body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
+        body: {
+          flex: 1,
+          minHeight: 0,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+        },
       }}
     >
       {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
@@ -105,7 +114,11 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         mt="xs"
         w={36}
         h={4}
-        style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)", flexShrink: 0 }}
+        style={{
+          borderRadius: 9999,
+          backgroundColor: "var(--color-border-subtle)",
+          flexShrink: 0,
+        }}
       />
 
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
@@ -136,7 +149,12 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
                 <>
                   <Stack gap="lg">
                     {service?.actions_done.map((action) => (
-                      <ActionRow key={action.action_done_id} action={action} currency={currency} language={i18n.language} />
+                      <ActionRow
+                        key={action.action_done_id}
+                        action={action}
+                        currency={currency}
+                        language={i18n.language}
+                      />
                     ))}
                   </Stack>
 
@@ -189,7 +207,10 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         pt="sm"
         pb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
         wrap="nowrap"
-        style={{ flexShrink: 0, borderTop: "1px solid var(--color-border-subtle)" }}
+        style={{
+          flexShrink: 0,
+          borderTop: "1px solid var(--color-border-subtle)",
+        }}
       >
         <Button
           variant="outline"
@@ -211,8 +232,8 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         </Button>
         {/* Exports the Service being read, which is the one the workshop asked about. */}
         <Button
-          variant="outline"
-          color="primary.5"
+          variant="filled"
+          color="primary.6"
           radius="md"
           leftSection={<Share2 size={16} />}
           disabled={shownId === null}
@@ -274,7 +295,14 @@ function Header({
             {bikeName}
           </Text>
         )}
-        <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label={t("action.close")} onClick={onClose}>
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          radius="xl"
+          size="lg"
+          aria-label={t("action.close")}
+          onClick={onClose}
+        >
           <X size={20} color="var(--mantine-color-text-6)" />
         </ActionIcon>
       </Group>

@@ -333,6 +333,18 @@
             "null"
           ]
         },
+        "bike_weight_kg": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "total_elevation_m": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "strava_gear_id": {
           "type": [
             "string",
