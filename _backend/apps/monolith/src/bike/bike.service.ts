@@ -6,7 +6,7 @@ import { ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import 'dotenv/config';
-import { Prisma } from '@prisma/client';
+import { Prisma, bikes } from '@prisma/client';
 
 @Injectable()
 export class BikeService {
@@ -110,49 +110,90 @@ export class BikeService {
         this.logger.warn(`Bike ${bike.id} created without a bike type - no default service intervals copied`);
       }
 
-      return bike as ResponseBikeDto;
+      return toBikeDto(bike);
     });
   }
 
   // Deleted bikes stay in the table so their rides and service history survive,
   // which means every read has to exclude them or they come back to the garage.
   async findAll(): Promise<ResponseBikeDto[]> {
-    return this.prisma.bikes.findMany({ where: { is_deleted: { not: true } } });
+    const bikes = await this.prisma.bikes.findMany({ where: { is_deleted: { not: true } }, include: bikeInclude });
+    return bikes.map(toBikeDto);
   }
 
   async findByUser(userId: number): Promise<ResponseBikeDto[]> {
-    return this.prisma.bikes.findMany({ where: { user_id: userId, is_deleted: { not: true } } });
+    const bikes = await this.prisma.bikes.findMany({
+      where: { user_id: userId, is_deleted: { not: true } },
+      include: bikeInclude,
+    });
+    return bikes.map(toBikeDto);
   }
 
   async findByID(id: number, userId: number): Promise<ResponseBikeDto> {
     return this.findOwnedBike(id, userId);
   }
 
-  async update(id: number, userId: number, updateBikeDto: UpdateBikeDto): Promise<ResponseBikeDto> {
+  // Corrects a bike the caller owns. The client sends the type by name and the photo as a
+  // file, exactly as create does, so both are resolved here rather than by the caller. Only
+  // the fields that arrived are written: a form that did not ask about a field must never
+  // blank it.
+  async update(
+    id: number,
+    userId: number,
+    updateBikeDto: UpdateBikeDto,
+    image?: Express.Multer.File,
+  ): Promise<ResponseBikeDto> {
     await this.findOwnedBike(id, userId);
-    return this.prisma.bikes.update({ where: { id }, data: updateBikeDto });
+
+    const { bike_type: bikeTypeName, ...bikeFields } = updateBikeDto;
+    const data: Prisma.bikesUncheckedUpdateInput = { ...bikeFields };
+
+    if (bikeTypeName !== undefined) {
+      const bikeType = await this.prisma.bike_types.findUnique({ where: { type: bikeTypeName } });
+      if (!bikeType) {
+        throw new NotFoundException(`Bike type "${bikeTypeName}" not found`);
+      }
+      data.bike_type_id = bikeType.id;
+    }
+
+    if (image) {
+      const imageUrl = await this.storeFile(image);
+      // A failed upload leaves the photo the bike already has; the rest of the form still
+      // saves, so the owner does not lose what they typed to a storage outage.
+      if (imageUrl) {
+        data.image_url = imageUrl;
+      }
+    }
+
+    return toBikeDto(await this.prisma.bikes.update({ where: { id }, data, include: bikeInclude }));
   }
 
   async deleteSoft(id: number, userId: number): Promise<ResponseBikeDto> {
     await this.findOwnedBike(id, userId);
-    return this.prisma.bikes.update({
-      where: { id },
-      data: { is_deleted: true, deleted_at: new Date() },
-    });
+    return toBikeDto(
+      await this.prisma.bikes.update({
+        where: { id },
+        data: { is_deleted: true, deleted_at: new Date() },
+        include: bikeInclude,
+      }),
+    );
   }
 
   async deleteHard(id: number, userId: number): Promise<ResponseBikeDto> {
     await this.findOwnedBike(id, userId);
-    return this.prisma.bikes.delete({ where: { id } });
+    return toBikeDto(await this.prisma.bikes.delete({ where: { id }, include: bikeInclude }));
   }
 
   // Returns the bike only if it belongs to the user; otherwise 404 (no ownership leak).
   private async findOwnedBike(id: number, userId: number): Promise<ResponseBikeDto> {
-    const bike = await this.prisma.bikes.findFirst({ where: { id, user_id: userId, is_deleted: { not: true } } });
+    const bike = await this.prisma.bikes.findFirst({
+      where: { id, user_id: userId, is_deleted: { not: true } },
+      include: bikeInclude,
+    });
     if (!bike) {
       throw new NotFoundException(`Bike with ID ${id} not found`);
     }
-    return bike;
+    return toBikeDto(bike);
   }
 
   // Uploads a photo received as FILE to cloud storage.
@@ -183,4 +224,22 @@ export class BikeService {
       return undefined; // Return undefined to indicate failure
     }
   }
+}
+
+// Every bike read carries its type row, so the response can name the type rather than hand
+// out an id the client has no way to resolve.
+const bikeInclude = { bike_types: true } satisfies Prisma.bikesInclude;
+
+type BikeRow = bikes & { bike_types?: { type: string | null } | null };
+
+// Prisma hands a Decimal column back as a Decimal object, which serialises as neither a
+// number nor anything a client can do arithmetic on. Costs are narrowed the same way, so
+// the weight follows them rather than inventing a second convention.
+function toBikeDto(bike: BikeRow): ResponseBikeDto {
+  const { bike_types, ...fields } = bike;
+  return {
+    ...fields,
+    bike_weight_kg: bike.bike_weight_kg === null ? null : Number(bike.bike_weight_kg),
+    bike_type: bike_types?.type ?? null,
+  };
 }

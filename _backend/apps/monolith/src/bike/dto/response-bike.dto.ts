@@ -51,7 +51,9 @@ export class BikeComponentExternalResponseDto {
   component_desc!: string;
 }
 
-export class ResponseBikeDto implements bikes {
+// Mirrors the bikes row, except for the weight: a Decimal column is narrowed to a number
+// before it goes out, so that one field is declared here rather than inherited.
+export class ResponseBikeDto implements Omit<bikes, 'bike_weight_kg'> {
   @ApiProperty({ example: 1 })
   id!: number;
 
@@ -76,6 +78,11 @@ export class ResponseBikeDto implements bikes {
   @ApiProperty({ example: 1, nullable: true })
   bike_type_id!: number | null;
 
+  // The type by name, which is how the client speaks about it - the edit form is offered a
+  // list of names and sends one back, and never sees an id it could not have known.
+  @ApiProperty({ example: 'Enduro', nullable: true })
+  bike_type!: string | null;
+
   @ApiProperty({ example: 'Tarmac SL7', nullable: true })
   bikename!: string | null;
 
@@ -96,6 +103,13 @@ export class ResponseBikeDto implements bikes {
 
   @ApiProperty({ example: 3600, nullable: true })
   total_time_min!: number | null;
+
+  // A Decimal column, narrowed to a number at the service boundary the way costs are.
+  @ApiProperty({ example: 7.25, nullable: true })
+  bike_weight_kg!: number | null;
+
+  @ApiProperty({ example: 15623, nullable: true })
+  total_elevation_m!: number | null;
 
   @ApiProperty({ example: false })
   has_front_suspension!: boolean;

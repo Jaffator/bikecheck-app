@@ -11,3 +11,16 @@ interface NamedBike {
 export function bikeTitle(bike: NamedBike): string {
   return [bike.bike_brand, bike.bike_model, bike.year].filter(Boolean).join(" ");
 }
+
+// The same name, split the way the bike detail reads it: the brand as a kicker above, and
+// everything else as the heading. A bike with no model is named by its brand alone, so the
+// heading is never empty - the kicker is what gives way.
+export interface SplitBikeTitle {
+  kicker: string | null;
+  heading: string;
+}
+
+export function splitBikeTitle(bike: NamedBike): SplitBikeTitle {
+  const rest = [bike.bike_model, bike.year].filter(Boolean).join(" ");
+  return rest === "" ? { kicker: null, heading: bike.bike_brand } : { kicker: bike.bike_brand, heading: rest };
+}

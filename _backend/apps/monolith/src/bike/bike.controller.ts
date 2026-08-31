@@ -12,6 +12,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { memoryStorage } from 'multer';
 import path from 'path';
 import { plainToInstance } from 'class-transformer';
@@ -26,6 +27,28 @@ import { SearchBikeExternalResponseDto, ResponseBikeDto, NewBikeFormDataDto } fr
 import { AssembleBikeComponentsDto } from '../component/dto/response-components';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 // import { NewBikeFormData } from './types/bike.types';
+
+// How a bike photo is accepted, on create and on update alike - one definition, so the
+// two routes cannot drift apart on what they let through.
+const BIKE_IMAGE_UPLOAD: MulterOptions = {
+  storage: memoryStorage(),
+  // Only guards the transfer: the image is resized before it is stored, so
+  // this caps what a phone may upload rather than what is kept.
+  limits: { fileSize: 15 * 1024 * 1024 },
+  // Phones send HEIC/HEIF and, through Capacitor, often no usable mime type
+  // at all - a blob read back from a webPath arrives as octet-stream. So the
+  // extension decides whenever the mime type is not an image one.
+  fileFilter: (_req, file, callback) => {
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.gif', '.avif'];
+    const extension = path.extname(file.originalname).toLowerCase();
+
+    if (file.mimetype.startsWith('image/') || allowedExtensions.includes(extension)) {
+      callback(null, true);
+      return;
+    }
+    callback(new BadRequestException(`Unsupported image type: ${file.mimetype || extension || 'unknown'}`), false);
+  },
+};
 
 // The create body is declared as a raw multipart schema, so these DTOs are no
 // longer reachable from any decorator - listed here so the generated OpenAPI
@@ -54,33 +77,13 @@ export class BikeController {
     },
   })
   @ApiResponse({ status: 201, type: ResponseBikeDto })
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: memoryStorage(),
-      // Only guards the transfer: the image is resized before it is stored, so
-      // this caps what a phone may upload rather than what is kept.
-      limits: { fileSize: 15 * 1024 * 1024 },
-      // Phones send HEIC/HEIF and, through Capacitor, often no usable mime type
-      // at all - a blob read back from a webPath arrives as octet-stream. So the
-      // extension decides whenever the mime type is not an image one.
-      fileFilter: (_req, file, callback) => {
-        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.gif', '.avif'];
-        const extension = path.extname(file.originalname).toLowerCase();
-
-        if (file.mimetype.startsWith('image/') || allowedExtensions.includes(extension)) {
-          callback(null, true);
-          return;
-        }
-        callback(new BadRequestException(`Unsupported image type: ${file.mimetype || extension || 'unknown'}`), false);
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('image', BIKE_IMAGE_UPLOAD))
   async createBike(
     @CurrentUser('userId') userId: string,
     @Body('data') data: string,
     @UploadedFile() image?: Express.Multer.File,
   ): Promise<ResponseBikeDto> {
-    const dto = await this.parseCreateBikeDto(data);
+    const dto = await this.parseDto(CreateBikeWithComponentsDto, data, 'bike create');
     return await this.bikeService.createBikeWithComponents(Number(userId), dto, image);
   }
 
@@ -135,15 +138,31 @@ export class BikeController {
   }
 
   // ---------- UPDATE bike by ID ----------
+  // Multipart, the same shape as create: "data" holds the JSON DTO as a string, "image" is
+  // the optional replacement photo. One request, so a saved photo can never outlive an
+  // unsaved form.
   @Patch(':id')
-  @ApiBody({ type: UpdateBikeDto })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        data: { type: 'string', description: 'UpdateBikeDto serialized as JSON' },
+        image: { type: 'string', format: 'binary' },
+      },
+      required: ['data'],
+    },
+  })
   @ApiResponse({ status: 200, type: ResponseBikeDto })
-  update(
+  @UseInterceptors(FileInterceptor('image', BIKE_IMAGE_UPLOAD))
+  async update(
     @CurrentUser('userId') userId: string,
     @Param('id') id: string,
-    @Body() updateBikeDto: UpdateBikeDto,
+    @Body('data') data: string,
+    @UploadedFile() image?: Express.Multer.File,
   ): Promise<ResponseBikeDto> {
-    return this.bikeService.update(+id, Number(userId), updateBikeDto);
+    const dto = await this.parseDto(UpdateBikeDto, data, 'bike update', true);
+    return await this.bikeService.update(+id, Number(userId), dto, image);
   }
 
   // ---------- DELETE soft bike by ID ----------
@@ -161,7 +180,15 @@ export class BikeController {
   }
 
   // Multipart fields arrive as strings, so the global ValidationPipe is bypassed here.
-  private async parseCreateBikeDto(data: string): Promise<CreateBikeWithComponentsDto> {
+  // Both the create and the update body come through this.
+  private async parseDto<T extends object>(
+    type: new () => T,
+    data: string,
+    what: string,
+    // An update DTO is all-optional, so a request naming no field at all would otherwise
+    // pass validation and write nothing. Only the update asks for this.
+    forbidEmpty = false,
+  ): Promise<T> {
     if (!data) {
       throw new BadRequestException('Missing "data" field');
     }
@@ -173,15 +200,19 @@ export class BikeController {
       throw new BadRequestException('Field "data" is not valid JSON');
     }
 
-    const dto = plainToInstance(CreateBikeWithComponentsDto, parsed);
+    const dto = plainToInstance(type, parsed);
     const errors = await validate(dto);
 
     if (errors.length > 0) {
       // Raw ValidationError objects are deeply nested and unreadable on the
       // client, so they are flattened to "field: reason" lines instead.
       const messages = flattenValidationErrors(errors);
-      this.logger.warn(`Rejected bike create: ${messages.join('; ')}`);
+      this.logger.warn(`Rejected ${what}: ${messages.join('; ')}`);
       throw new BadRequestException({ message: messages, error: 'Validation failed' });
+    }
+
+    if (forbidEmpty && Object.keys(dto).length === 0) {
+      throw new BadRequestException('Field "data" names nothing to change');
     }
 
     return dto;

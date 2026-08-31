@@ -5,6 +5,7 @@ import { Dashboard } from "./features/dashboard_page/Dashboard";
 import { AppLayout } from "./layout/AppLayout";
 import { Bikes } from "./features/bikes_page/Bikes";
 import { BikeDetail } from "./features/bikes_page/BikeDetail";
+import { BikeEdit } from "./features/bike_edit_page/BikeEdit";
 import { AddBikeIdentity } from "./features/add_bike_page/AddBikeIdentity";
 import { Service } from "./features/service_page/Service";
 import { ServiceHistory } from "./features/service_page/ServiceHistory";
@@ -97,6 +98,7 @@ function ProtectedApp(): ReactElement {
           {/* Must precede the parameterized bike route. */}
           <Route path="/bikes/new" element={<AddBikeIdentity />} />
           <Route path="/bikes/:id" element={<BikeDetail />} />
+          <Route path="/bikes/:id/edit" element={<BikeEdit />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/service" element={<Service />} />
           <Route path="/service/new" element={<AddService />} />

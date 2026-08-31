@@ -8,7 +8,8 @@ import { Clock, Gauge } from "lucide-react";
 import type { Bike } from "../bikes/bikes.types";
 import { bikeTitle } from "../bikes/bikeTitle";
 import { BikePhoto } from "./BikePhoto";
-import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
+import { HEALTH_COLORS, type HealthReading } from "./bikeHealth.types";
+import { HealthBadge } from "./HealthBadge";
 
 interface BikeCardProps {
   bike: Bike;
@@ -36,35 +37,14 @@ function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): R
         backdropFilter: "blur(4px)",
       }}
     >
-      <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
+      <StravaMark
+        width={10}
+        height={10}
+        color="var(--mantine-color-strava-6)"
+        style={{ display: "block", flexShrink: 0 }}
+      />
       <Text className="font-mono" fz={10} c="var(--mantine-color-strava-6)">
         {t("strava.paired")}
-      </Text>
-    </Group>
-  );
-}
-
-// The pill over the photo, reporting the bike as a whole.
-function HealthBadge({ readings }: { readings: HealthReading[] }): ReactElement {
-  const { t } = useTranslation();
-  const level = overallLevel(readings);
-  const color = HEALTH_COLORS[level];
-
-  return (
-    <Group
-      gap={5}
-      px={8}
-      py={3}
-      style={{
-        borderRadius: "9999px",
-        backgroundColor: "rgba(20, 20, 20, 0.75)",
-        border: `1px solid ${color}`,
-        backdropFilter: "blur(4px)",
-      }}
-    >
-      <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
-      <Text className="font-mono" fz={10} c={color}>
-        {t(`bikes.health.${level}`)}
       </Text>
     </Group>
   );
@@ -78,7 +58,13 @@ function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
   return (
     <Stack gap={6}>
       <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)" style={{ letterSpacing: "0.05em" }}>
+        <Text
+          className="font-mono"
+          fz={10}
+          tt="uppercase"
+          c="var(--color-text-dim)"
+          style={{ letterSpacing: "0.05em" }}
+        >
           {t(reading.labelKey)}
         </Text>
         <Text
@@ -133,8 +119,7 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
         // Same three-part shadow the other cards use, one step deeper because
         // this card is the largest: a hairline of light along the top edge, a
         // tight contact shadow, and a soft cast one that lifts it off the page.
-        boxShadow:
-          "inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.55)",
+        boxShadow: "var(--elev-hero)",
         // Animate tap feedback before navigation.
         transition: "transform 0.12s ease, box-shadow 0.12s ease",
         cursor: "pointer",
@@ -154,7 +139,7 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
           pointerEvents: "none",
           zIndex: 1,
           background:
-            "radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--mantine-color-primary-6) 12%, transparent) 0%, transparent 55%)",
+            "radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--mantine-color-primary-6) 8%, transparent) 0%, transparent 50%)",
         }}
       />
 
@@ -167,13 +152,7 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
         }}
       >
         {/* The card names the bike under the photo, not over it. */}
-        <BikePhoto
-          imageUrl={bike.image_url}
-          title={title}
-          subtitle={bike.bikename}
-          titleSize={20}
-          showCaption={false}
-        >
+        <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={20} showCaption={false}>
           {/* Stack overall bike badges in the photo's bottom corner. */}
           <Stack gap={6} align="flex-end">
             <HealthBadge readings={readings} />

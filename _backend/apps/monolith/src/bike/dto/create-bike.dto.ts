@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, IsOptional, IsInt, IsPositive, IsBoolean, Min } from 'class-validator';
+import { IsString, MaxLength, IsOptional, IsInt, IsPositive, IsBoolean, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ValidateNested, IsArray } from 'class-validator';
 import { CreateMountedComponentsDto } from '../../component/dto/create-components';
@@ -83,6 +83,14 @@ export class CreateBikeDto {
   @MaxLength(50)
   bike_size?: string;
 
+  // A column since the wizard was written, but never sent by it - the edit form is the
+  // first thing that lets an owner state what the frame is made of.
+  @ApiProperty({ example: 'Carbon', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  frame_material?: string;
+
   // The client picks the type by name; the service resolves it to bike_type_id,
   // so the form never has to carry ids it cannot know.
   @ApiProperty({ example: 'Enduro', required: false })
@@ -97,6 +105,22 @@ export class CreateBikeDto {
   @IsInt()
   @Min(0)
   total_km?: number;
+
+  // What the bike itself weighs, in kilograms. A decimal, because a tenth is exactly what
+  // an owner quotes about a road bike. Distinct from users.weight_kg, the rider's weight.
+  @ApiProperty({ example: 7.25, required: false })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(999)
+  bike_weight_kg?: number;
+
+  // Accumulated from rides, so a bike is normally created without one.
+  @ApiProperty({ example: 15623, required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  total_elevation_m?: number;
 
   @ApiProperty({ example: 'https://example.com/bike-image.jpg', required: false })
   @IsOptional()

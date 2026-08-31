@@ -198,7 +198,6 @@
     "loadFailed": "Your bikes could not be loaded. Please try again.",
     "cardMenu": "Bike actions",
     "detailTitle": "Bike detail",
-    "detailComingSoon": "The full bike detail is coming soon.",
     "kilometres_one": "{{count}} km",
     "kilometres_other": "{{count}} km",
     "hours_one": "{{count}} h",
@@ -212,7 +211,16 @@
     "deleteConfirmTitle": "Delete this bike?",
     "deleteConfirmBody": "The bike is removed from your garage along with its components. Rides already recorded stay in your history.",
     "deleteConfirmCancel": "Keep bike",
-    "deleteFailed": "Could not delete the bike. Try again."
+    "deleteFailed": "Could not delete the bike. Try again.",
+    "edit": "Edit bike",
+    "metres_one": "{{count}} m",
+    "metres_other": "{{count}} m",
+    "kilograms": "{{weight}} kg",
+    "metricDistance": "Total distance",
+    "metricElevation": "Total elevation",
+    "metricRideTime": "Ride time",
+    "metricWeight": "Weight",
+    "tileServiceHistory": "Service history"
   },
   "addBike": {
     "title": "Add new bike",
@@ -538,7 +546,16 @@
     "disconnectConfirmCancel": "Keep connected",
     "unpairedBikesBody": "Connecting with Strava gear automates mileage tracking and service reminders for your bikes without picking a right bike after every ride.",
     "unpairedBikesAction": "Pair gear",
-    "gearLinkingLoadFailed": "Could not load your Strava gear. Try again."
+    "gearLinkingLoadFailed": "Could not load your Strava gear. Try again.",
+    "notConnectedTitle": "Strava not connected",
+    "notConnectedBody": "Connect your account to sync rides automatically",
+    "notPairedTitle": "Not paired",
+    "notPairedBody": "Connect your bike to Strava gear",
+    "pairedTitle": "Linked",
+    "pairedBodyUnnamed": "Paired with Strava gear",
+    "unpairConfirmTitle": "Unpair this bike?",
+    "unpairConfirmCancel": "Keep it paired",
+    "unpairFailed": "Could not unpair the bike. Try again."
   },
   "notifications": {
     "empty": "No notifications yet",
@@ -613,5 +630,21 @@
     "revokeConfirmBody": "The page and its attachments stop opening at once, for everyone who has the link. This cannot be undone — a new link means a new export.",
     "revokeConfirmCancel": "Keep it",
     "revokeFailed": "Could not revoke the link. Try again."
+  },
+  "bikeEdit": {
+    "title": "Edit bike",
+    "bikeType": "Bike type",
+    "bikeTypePlaceholder": "Select a type",
+    "frameMaterial": "Frame material",
+    "frameMaterialPlaceholder": "e.g. Carbon, Aluminium",
+    "weight": "Weight (kg)",
+    "weightPlaceholder": "e.g. 7.25",
+    "description": "Description",
+    "descriptionPlaceholder": "Anything you want to remember about this bike",
+    "notSet": "Not set",
+    "brandRequired": "A bike needs a brand.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saveFailed": "Could not save the bike. Try again."
   }
 }

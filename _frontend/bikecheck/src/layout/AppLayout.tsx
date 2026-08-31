@@ -93,6 +93,8 @@ function isFullScreenRoute(pathname: string): boolean {
 // Detail routes are matched by shape rather than by prefix, so the list they hang under
 // is not itself read as a sub-page. Every one of them is a sub-page with its own title.
 const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
+  // The edit form is matched first: it is a longer shape than the detail it hangs under.
+  { pattern: /^\/bikes\/\d+\/edit$/, titleKey: "bikeEdit.title" },
   { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
 ];
 
@@ -147,6 +149,8 @@ export function AppLayout(): ReactElement {
   // A step the user cannot walk back out of hides the arrow rather than lying about it.
   const backHidden = useHeaderStore((state) => state.backHidden);
   const actionSlot = useHeaderStore((state) => state.actionSlot);
+  // A page leading with an image runs its content up under the header - see the store.
+  const headerTransparent = useHeaderStore((state) => state.headerTransparent);
   // Hides chrome when the route or page state requires it.
   const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
   // Home has no header icon.
@@ -202,8 +206,10 @@ export function AppLayout(): ReactElement {
       // Extends header and footer backgrounds into system safe areas.
       header={{
         height: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
-        // Full-screen routes have neither header nor header offset.
+        // Full-screen routes have neither header nor header offset. A transparent header
+        // keeps its controls but stops reserving its height, so content passes beneath it.
         collapsed: chromeHidden,
+        offset: !headerTransparent,
       }}
       // Collapse the footer offset with the tab bar.
       footer={{ height: "4rem", collapsed: subPage || chromeHidden }}
@@ -213,14 +219,21 @@ export function AppLayout(): ReactElement {
       <AppShell.Header withBorder={false} bg="transparent">
         {/* Keeps title content below the status bar. */}
         <Box
-          className="bg-cards-800"
+          className={headerTransparent ? undefined : "bg-cards-800"}
           h="100%"
           px="md"
           style={{
             paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
+            // Nothing sits behind the controls now, so they are given their own shade to
+            // stand on - enough to read a dark arrow against a bright photo.
+            backgroundImage: headerTransparent
+              ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 60%, transparent 100%)"
+              : undefined,
+            // The scrim is decoration; what is underneath stays reachable.
+            pointerEvents: headerTransparent ? "none" : undefined,
           }}
         >
-          <Group h="100%" justify="space-between" w="100%">
+          <Group h="100%" justify="space-between" w="100%" style={{ pointerEvents: "auto" }}>
             {subPage ? (
               <>
                 <Group gap="xs" c="text.6" wrap="nowrap" style={{ minWidth: 0 }}>

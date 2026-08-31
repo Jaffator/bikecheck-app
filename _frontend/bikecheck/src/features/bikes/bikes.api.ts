@@ -1,6 +1,13 @@
 // Access bike endpoints through the shared authenticated API client.
 import { apiFetch } from "@/api/client";
-import type { Bike, BikeFormOptions, BikeSearchResult, CreateBikeInput, ExternalBikeComponent } from "./bikes.types";
+import type {
+  Bike,
+  BikeFormOptions,
+  BikeSearchResult,
+  CreateBikeInput,
+  ExternalBikeComponent,
+  UpdateBikeInput,
+} from "./bikes.types";
 
 // GET /bike — bikes of the current user.
 export async function getBikes(): Promise<Bike[]> {
@@ -57,6 +64,18 @@ export async function createBike(input: CreateBikeInput): Promise<Bike> {
   }
 
   return apiFetch<Bike>("/bike/create", { method: "POST", body: form });
+}
+
+// PATCH /bike/:id - corrects a bike. Multipart, exactly like create: the fields as a JSON
+// string beside the optional replacement photo, so text and photo save as one act.
+export async function updateBike(input: UpdateBikeInput): Promise<Bike> {
+  const form = new FormData();
+  form.append("data", JSON.stringify(input.bike));
+  if (input.image) {
+    form.append("image", input.image, uploadFilename(input.image));
+  }
+
+  return apiFetch<Bike>(`/bike/${String(input.id)}`, { method: "PATCH", body: form });
 }
 
 // Soft-delete a bike while preserving ride and service history.

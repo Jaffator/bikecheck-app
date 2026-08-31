@@ -26,6 +26,11 @@ interface HeaderStore {
   // Hides shared chrome for a page that owns the full screen.
   chromeHidden: boolean;
   setChromeHidden: (value: boolean) => void;
+  // Lets a page run its content up under the header: the controls stay, the background
+  // goes, and a scrim keeps them legible over whatever passes beneath. The bike detail
+  // page is the first to use it; any detail page that leads with an image can.
+  headerTransparent: boolean;
+  setHeaderTransparent: (value: boolean) => void;
   // Hides the header's back arrow on a step that has no way back — see ADR 0006.
   backHidden: boolean;
   setBackHidden: (value: boolean) => void;
@@ -45,6 +50,8 @@ export const useHeaderStore = create<HeaderStore>((set) => ({
   setOnBack: (value) => set(() => ({ onBack: value })),
   chromeHidden: false,
   setChromeHidden: (value) => set({ chromeHidden: value }),
+  headerTransparent: false,
+  setHeaderTransparent: (value) => set({ headerTransparent: value }),
   backHidden: false,
   setBackHidden: (value) => set({ backHidden: value }),
   actionSlot: null,

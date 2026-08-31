@@ -202,7 +202,6 @@
     "loadFailed": "Kola se nepodařilo načíst. Zkuste to prosím znovu.",
     "cardMenu": "Akce kola",
     "detailTitle": "Detail kola",
-    "detailComingSoon": "Podrobný detail kola bude doplněn.",
     "kilometres_one": "{{count}} km",
     "kilometres_few": "{{count}} km",
     "kilometres_many": "{{count}} km",
@@ -220,7 +219,17 @@
     "deleteConfirmTitle": "Smazat toto kolo?",
     "deleteConfirmBody": "Kolo se odstraní z garáže i s komponentami. Zaznamenané jízdy zůstanou v historii.",
     "deleteConfirmCancel": "Nechat kolo",
-    "deleteFailed": "Kolo se nepodařilo smazat. Zkus to znovu."
+    "deleteFailed": "Kolo se nepodařilo smazat. Zkus to znovu.",
+    "edit": "Upravit kolo",
+    "metres_one": "{{count}} m",
+    "metres_few": "{{count}} m",
+    "metres_other": "{{count}} m",
+    "kilograms": "{{weight}} kg",
+    "metricDistance": "Najeto celkem",
+    "metricElevation": "Převýšení celkem",
+    "metricRideTime": "Čas v sedle",
+    "metricWeight": "Hmotnost",
+    "tileServiceHistory": "Historie servisu"
   },
   "addBike": {
     "title": "Přidat nové kolo",
@@ -557,7 +566,16 @@
     "disconnectConfirmCancel": "Nechat propojené",
     "unpairedBikesBody": "Propojení se Strava gearem automaticky hlídá kilometry a připomínky servisu tvých kol.",
     "unpairedBikesAction": "Propojit kola",
-    "gearLinkingLoadFailed": "Strava gear se nepodařilo načíst. Zkus to znovu."
+    "gearLinkingLoadFailed": "Strava gear se nepodařilo načíst. Zkus to znovu.",
+    "notConnectedTitle": "Strava není propojena",
+    "notConnectedBody": "Propoj účet a jízdy se budou načítat samy",
+    "notPairedTitle": "Nespárováno",
+    "notPairedBody": "Spáruj kolo s vybavením na Stravě",
+    "pairedTitle": "Spárováno",
+    "pairedBodyUnnamed": "Spárováno s vybavením na Stravě",
+    "unpairConfirmTitle": "Odpárovat toto kolo?",
+    "unpairConfirmCancel": "Nechat spárované",
+    "unpairFailed": "Kolo se nepodařilo odpárovat. Zkus to znovu."
   },
   "notifications": {
     "empty": "Zatím žádné notifikace",
@@ -634,5 +652,21 @@
     "revokeConfirmBody": "Stránka i její přílohy se okamžitě zavřou pro všechny, kdo odkaz mají. Nelze vrátit zpět — nový odkaz znamená nový export.",
     "revokeConfirmCancel": "Ponechat",
     "revokeFailed": "Odkaz se nepodařilo zneplatnit. Zkuste to znovu."
+  },
+  "bikeEdit": {
+    "title": "Upravit kolo",
+    "bikeType": "Typ kola",
+    "bikeTypePlaceholder": "Vyber typ",
+    "frameMaterial": "Materiál rámu",
+    "frameMaterialPlaceholder": "např. karbon, hliník",
+    "weight": "Hmotnost (kg)",
+    "weightPlaceholder": "např. 7,25",
+    "description": "Popis",
+    "descriptionPlaceholder": "Cokoli, co si chceš o kole pamatovat",
+    "notSet": "Nenastaveno",
+    "brandRequired": "Kolo musí mít značku.",
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "saveFailed": "Kolo se nepodařilo uložit. Zkus to znovu."
   }
 }

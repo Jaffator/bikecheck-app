@@ -535,6 +535,7 @@ export class StravaEventsService {
         drivetrain_meters: true,
         suspension_min: true,
         health_index_brake_pad: true,
+        elevation_up_m: true,
       },
     });
 
@@ -578,6 +579,7 @@ export class StravaEventsService {
           drivetrain_km: analyzedData.drivetrain_km - Math.floor((existingRide.drivetrain_meters ?? 0) / 1000),
           suspension_min: analyzedData.suspension_minutes - (existingRide.suspension_min ?? 0),
           health_index_brake_pad: analyzedData.health_index_brake_pad - (existingRide.health_index_brake_pad ?? 0),
+          elevation_up_m: analyzedData.elevation_up_m - (existingRide.elevation_up_m ?? 0),
         }
       : {
           total_km: analyzedData.distance_km,
@@ -585,6 +587,7 @@ export class StravaEventsService {
           drivetrain_km: analyzedData.drivetrain_km,
           suspension_min: analyzedData.suspension_minutes,
           health_index_brake_pad: analyzedData.health_index_brake_pad,
+          elevation_up_m: analyzedData.elevation_up_m,
         };
 
     await this.prisma.components_mounted.updateMany({
@@ -609,6 +612,15 @@ export class StravaEventsService {
     await this.prisma.components_mounted.updateMany({
       where: { bike_id: bikeId, is_deleted: false },
       data: { drivetrain_km: { increment: diff.drivetrain_km } },
+    });
+
+    // The bike's own climbing, which nothing else accumulates - the readings above belong
+    // to the components mounted on it. Only ever moved by the difference, so re-syncing a
+    // ride does not count its metres twice. Never backfilled: a bike ridden before this
+    // existed reads lower than it has actually climbed.
+    await this.prisma.bikes.update({
+      where: { id: bikeId },
+      data: { total_elevation_m: { increment: Math.round(diff.elevation_up_m) } },
     });
 
     await this.geminiQueue.add('generate-ride-summary', {

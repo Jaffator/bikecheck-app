@@ -127,6 +127,12 @@ model bikes {
   has_rear_suspension   Boolean                 @default(false)
   total_km              Int?
   total_time_min        Int?
+  // What the bike itself weighs. Distinct from users.weight_kg, which is the rider's and
+  // feeds the wear calculation - the two must never be read for one another.
+  bike_weight_kg        Decimal?                @db.Decimal(5, 2)
+  // How much the bike has climbed, accumulated from rides as they arrive. Not backfilled,
+  // so a bike that was ridden before this existed reads lower than it has climbed.
+  total_elevation_m     Int?
   strava_gear_id        String?                 @db.VarChar
   strava_name           String?                 @db.VarChar
   bike_types            bike_types?             @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)

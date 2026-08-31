@@ -11,6 +11,22 @@ the owner when a part needs attention.
 **Bike**:
 A single bicycle owned by a user. Carries its own odometer (`total_km`, `total_time_min`).
 
+**Bike Weight**:
+What the bike itself weighs, typed in by its owner and shown on the bike's detail. Never measured
+or derived — a bike with no weight on record shows a dash rather than a zero.
+_Avoid_: Weight on its own (ambiguous — see Rider Weight)
+
+**Rider Weight**:
+What the rider weighs, held on the user and fed into the wear calculation. A different number from
+Bike Weight, living on a different row, and the two are never read for one another.
+_Avoid_: Weight on its own
+
+**Total Elevation**:
+How much a Bike has climbed, accumulated from rides as they arrive. Joins the odometer as a reading
+the Bike carries rather than one its components do. Not backfilled (ADR 0014), so a Bike ridden
+before the reading existed reads lower than it has truly climbed.
+_Avoid_: Elevation gain, ascent
+
 **Component Type**:
 A kind of part that can be mounted on a bike — Chain, Fork, Brake Caliper. A catalogue entry,
 not a physical object.

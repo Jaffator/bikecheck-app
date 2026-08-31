@@ -8,9 +8,17 @@ import {
   getExternalFamilyBikes,
   getExternalBikeComponents,
   createBike,
+  updateBike,
   deleteBike,
 } from "./bikes.api";
-import type { Bike, BikeFormOptions, BikeSearchResult, CreateBikeInput, ExternalBikeComponent } from "./bikes.types";
+import type {
+  Bike,
+  BikeFormOptions,
+  BikeSearchResult,
+  CreateBikeInput,
+  ExternalBikeComponent,
+  UpdateBikeInput,
+} from "./bikes.types";
 
 interface BikeSearchInput {
   bikeName: string;
@@ -71,6 +79,21 @@ export function useCreateBike(): UseMutationResult<Bike, Error, CreateBikeInput>
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["bikes"] });
       // Refresh bikes available to the gear-pairing sheet.
+      await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
+    },
+  });
+}
+
+// Refresh the garage, the bike itself and the pairing sheet after a correction.
+export function useUpdateBike(): UseMutationResult<Bike, Error, UpdateBikeInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateBikeInput) => updateBike(input),
+    onSuccess: async (bike) => {
+      // The detail page reads this key, so it is written before anything is invalidated.
+      queryClient.setQueryData(["bikes", bike.id], bike);
+      await queryClient.invalidateQueries({ queryKey: ["bikes"] });
       await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
     },
   });

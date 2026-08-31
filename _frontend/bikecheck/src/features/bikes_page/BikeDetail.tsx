@@ -1,21 +1,25 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { useState, type ReactElement } from "react";
-import { Button, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { useEffect, useState, type ReactElement } from "react";
+import { ActionIcon, Box, Menu, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { Clock, Gauge, Link2, Plus, Share2, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Unlink } from "lucide-react";
 import { useBike, useDeleteBike } from "../bikes/bikes.queries";
-import { StravaPairingHint } from "../strava/StravaPairingHint";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
-import { useLinkStravaGear } from "../strava/strava.queries";
+import { useConnectStrava, useLinkStravaGear } from "../strava/strava.queries";
 import { useCurrentUser } from "../users/users.queries";
 import { BikePhoto } from "./BikePhoto";
-import { bikeTitle } from "../bikes/bikeTitle";
+import { BikeActionTiles } from "./BikeActionTiles";
+import { BikeMetricsCard } from "./BikeMetricsCard";
+import { BikeStravaCard } from "./BikeStravaCard";
+import { HealthBadge } from "./HealthBadge";
+import { bikeTitle, splitBikeTitle } from "../bikes/bikeTitle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ExportSheet } from "@/features/report/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
+import { useHeaderStore } from "@/store/store";
 
-// Render available identity and totals for the selected bike.
+// The machine's own page: what it is, what it has done, and what can be done with it.
 export function BikeDetail(): ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -24,19 +28,80 @@ export function BikeDetail(): ReactElement {
   const { data: user } = useCurrentUser();
   const [pairingGear, setPairingGear] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // Unpairing is destructive enough to ask about, and the question is where the note about
+  // rides staying finally has room to be read.
+  const [confirmingUnpair, setConfirmingUnpair] = useState(false);
   // What the export button is exporting. Null keeps the export sheet shut.
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   const remove = useDeleteBike();
   const unpair = useLinkStravaGear();
+  const connect = useConnectStrava();
+  const setActionSlot = useHeaderStore((state) => state.setActionSlot);
+  const setHeaderTransparent = useHeaderStore((state) => state.setHeaderTransparent);
+
+  const paired = bike?.strava_gear_id != null;
+
+  // The page leads with its photo, so the header steps out of the way of it.
+  useEffect(() => {
+    setHeaderTransparent(true);
+    return () => setHeaderTransparent(false);
+  }, [setHeaderTransparent]);
+
+  // The header carries what is run rarely: correcting the bike, detaching it, throwing it
+  // away. None of them belong under the thumb that is scrolling.
+  useEffect(() => {
+    if (!bike) return;
+
+    setActionSlot(
+      <Menu position="bottom-end" radius="md" withinPortal>
+        <Menu.Target>
+          <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("bikes.cardMenu")}>
+            <MoreVertical size={22} color="var(--mantine-color-text-6)" />
+          </ActionIcon>
+        </Menu.Target>
+
+        {/* Wears the same surface as the Reports menu, so the app has one dropdown. */}
+        <Menu.Dropdown
+          bg="cards.6"
+          p={8}
+          style={{ border: "1px solid var(--mantine-color-cards-5)", boxShadow: "var(--elev-panel)" }}
+        >
+          <Menu.Item
+            color="text"
+            py={12}
+            fw={600}
+            leftSection={<Pencil size={18} />}
+            onClick={() => navigate(`/bikes/${String(bike.id)}/edit`)}
+          >
+            {t("bikes.edit")}
+          </Menu.Item>
+
+          {/* Only a paired bike can be detached, so an unpaired one is not offered it. */}
+          {bike.strava_gear_id !== null && (
+            <Menu.Item color="text" py={12} fw={600} leftSection={<Unlink size={18} />} onClick={() => setConfirmingUnpair(true)}>
+              {t("strava.unpairBike")}
+            </Menu.Item>
+          )}
+
+          <Menu.Item color="red.5" py={12} fw={600} leftSection={<Trash2 size={18} />} onClick={() => setConfirmingDelete(true)}>
+            {t("bikes.delete")}
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>,
+    );
+
+    return () => setActionSlot(null);
+  }, [setActionSlot, t, navigate, bike]);
 
   // Show loading state for deep links without cached garage data.
   if (isLoading) {
     return (
       <Stack gap="md" px="md" pt="md">
+        <Skeleton h={14} w="30%" radius="sm" />
+        <Skeleton h={28} w="65%" radius="sm" />
         {/* Match the photo slot, so the loaded hero lands where the skeleton stood. */}
         <Skeleton radius="md" style={{ aspectRatio: 2 }} />
-        <Skeleton h={28} w="60%" radius="sm" />
-        <Skeleton h={18} w="40%" radius="sm" />
+        <Skeleton h={92} radius="lg" />
       </Stack>
     );
   }
@@ -49,135 +114,61 @@ export function BikeDetail(): ReactElement {
     );
   }
 
-  const title = bikeTitle(bike);
+  const { kicker, heading } = splitBikeTitle(bike);
 
   return (
-    <Stack gap="md" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-      {/* The same slot the garage card uses, so opening a bike keeps the photo
-          and its title in place. */}
-      <Paper radius="md" style={{ overflow: "hidden" }}>
-        <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={24} />
+    <Stack
+      gap="md"
+      px="md"
+      // Clears the transparent header, which no longer holds a place open for the page.
+      pt="calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.5rem)"
+      pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+    >
+      {/* The bike, read the way it is written on the frame. */}
+      <Stack gap={2}>
+        {kicker !== null && (
+          <Text className="font-mono uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
+            {kicker}
+          </Text>
+        )}
+        <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
+          {heading}
+        </Text>
+        {/* The garage and this page are the only places a bike answers to its nickname. */}
+        {bike.bikename !== null && bike.bikename !== "" && (
+          <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
+            {bike.bikename}
+          </Text>
+        )}
+      </Stack>
+
+      {/* The name is carried above, so the photo is left bare but for its badge. */}
+      <Paper radius="lg" style={{ overflow: "hidden" }}>
+        <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
+          <Box style={{ marginRight: "auto" }}>
+            <HealthBadge readings={[]} />
+          </Box>
+        </BikePhoto>
       </Paper>
 
-      <Group gap="lg" wrap="nowrap">
-        <Group gap={6} wrap="nowrap">
-          <Gauge size={14} color="var(--color-text-dim)" />
-          <Text fz={15} c="text.6">
-            {t("bikes.kilometres", { count: bike.total_km ?? 0 })}
-          </Text>
-        </Group>
-        <Group gap={6} wrap="nowrap">
-          <Clock size={14} color="var(--color-text-dim)" />
-          <Text fz={15} c="text.6">
-            {t("bikes.hours", {
-              count: Math.round((bike.total_time_min ?? 0) / 60),
-            })}
-          </Text>
-        </Group>
-        <StravaPairingHint stravaGearId={bike.strava_gear_id} />
-      </Group>
+      <BikeMetricsCard bike={bike} onEditWeight={() => navigate(`/bikes/${String(bike.id)}/edit`)} />
 
-      {/* Records work on the bike already being looked at, so the wizard never asks
-          which one it was. */}
-      <Button
-        color="primary.6"
-        radius="md"
-        leftSection={<Plus size={16} />}
-        onClick={() => {
-          navigate(`/service/new?bike=${bike.id}`);
-        }}
-        style={{ alignSelf: "flex-start" }}
-      >
-        {t("fab.addService")}
-      </Button>
+      <BikeStravaCard
+        bike={bike}
+        accountConnected={user?.strava_athlete_id != null}
+        onConnectAccount={() => connect.mutate()}
+        onPairGear={() => setPairingGear(true)}
+        connectFailed={connect.isError}
+      />
 
-      {user?.strava_athlete_id && (
-        <Group gap="sm">
-          {bike.strava_gear_id === null ? (
-            <Button
-              variant="light"
-              color="strava.6"
-              radius="sm"
-              onClick={() => {
-                setPairingGear(true);
-              }}
-            >
-              {t("strava.pairBike")}
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              color="red"
-              radius="sm"
-              loading={unpair.isPending}
-              onClick={() => {
-                unpair.mutate([{ bikecheckBikeId: bike.id, stravaBikeId: null }]);
-              }}
-            >
-              {t("strava.unpairBike")}
-            </Button>
-          )}
-        </Group>
-      )}
-
-      {/* Existing rides remain after unpairing. */}
-      {bike.strava_gear_id !== null && (
-        <Text fz={12} c="var(--color-text-dim)">
-          {t("strava.unpairBikeNote")}
-        </Text>
-      )}
-
-      {/* The machine's card: this bike and everything mounted on it, for whoever is
-          standing in front of it. */}
-      <Button
-        variant="outline"
-        color="primary.5"
-        radius="md"
-        leftSection={<Share2 size={16} />}
-        onClick={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
-        style={{ alignSelf: "flex-start" }}
-      >
-        {t("report.exportBikeCheck")}
-      </Button>
-
-      {/* What is already out in the owner's name for this bike, so a link can be taken
-          back without hunting through every one they ever made. */}
-      <Button
-        variant="subtle"
-        color="primary.5"
-        radius="md"
-        leftSection={<Link2 size={16} />}
-        onClick={() => {
-          navigate(`/reports?bike=${String(bike.id)}`);
-        }}
-        style={{ alignSelf: "flex-start" }}
-      >
-        {t("report.myReports")}
-      </Button>
-
-      <Text fz={14} c="var(--color-text-dim)">
-        {t("bikes.detailComingSoon")}
-      </Text>
-
-      <Button
-        variant="outline"
-        color="red.5"
-        radius="md"
-        leftSection={<Trash2 size={16} />}
-        loading={remove.isPending}
-        onClick={() => {
-          setConfirmingDelete(true);
-        }}
-        styles={{
-          root: {
-            alignSelf: "flex-start",
-            backgroundColor: "transparent",
-            borderColor: "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
-          },
-        }}
-      >
-        {t("bikes.delete")}
-      </Button>
+      <BikeActionTiles
+        paired={paired}
+        onAddService={() => navigate(`/service/new?bike=${String(bike.id)}`)}
+        onExportReport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+        onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
+        onPairGear={() => setPairingGear(true)}
+        onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
+      />
 
       {remove.isError && (
         <Text size="xs" c="red.5">
@@ -185,18 +176,44 @@ export function BikeDetail(): ReactElement {
         </Text>
       )}
 
+      {unpair.isError && (
+        <Text size="xs" c="red.5">
+          {t("strava.unpairFailed")}
+        </Text>
+      )}
+
       <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
       <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
 
-      {/* Confirm irreversible removal from the garage. */}
+      {/* Detaching keeps the rides already recorded, which the question is the only place
+          with room to say. */}
+      <ConfirmModal
+        opened={confirmingUnpair}
+        onCancel={() => setConfirmingUnpair(false)}
+        onConfirm={() =>
+          unpair.mutate([{ bikecheckBikeId: bike.id, stravaBikeId: null }], {
+            onSuccess: () => setConfirmingUnpair(false),
+          })
+        }
+        title={t("strava.unpairConfirmTitle")}
+        body={t("strava.unpairBikeNote")}
+        cancelLabel={t("strava.unpairConfirmCancel")}
+        confirmLabel={t("strava.unpairBike")}
+        pending={unpair.isPending}
+      />
+
       <ConfirmModal
         opened={confirmingDelete}
         onCancel={() => setConfirmingDelete(false)}
         onConfirm={() =>
           remove.mutate(bike.id, {
-            // Replace detail history with the garage after deletion.
-            onSuccess: () => navigate("/bikes", { replace: true }),
+            // Replace detail history with the garage: back must not return to a bike
+            // that is no longer there.
+            onSuccess: () => {
+              setConfirmingDelete(false);
+              navigate("/bikes", { replace: true });
+            },
           })
         }
         title={t("bikes.deleteConfirmTitle")}
