@@ -26,6 +26,7 @@ import { BikeStravaCard } from "./BikeStravaCard";
 import { HealthBadge } from "./HealthBadge";
 import { StravaLinkedBadge } from "./StravaLinkedBadge";
 import { BikeSpecsDrawer } from "./BikeSpecsDrawer";
+import { BikeComponentsSection } from "./BikeComponentsSection";
 import { bikeTitle } from "../bikes/bikeTitle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ExportSheet } from "@/features/report/ExportSheet";
@@ -277,6 +278,10 @@ export function BikeDetail(): ReactElement {
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
       />
+
+      {/* What the machine is made of, under what can be done with it: the tiles are the
+          daily act, the build is read less often. */}
+      <BikeComponentsSection bikeId={bike.id} ebike={bike.ebike} />
 
       {remove.isError && (
         <Text size="xs" c="red.5">
