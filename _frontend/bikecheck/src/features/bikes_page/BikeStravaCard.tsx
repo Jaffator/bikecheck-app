@@ -1,15 +1,15 @@
-// Where this bike stands with Strava, in one card that is always there. Three states, one
-// shape: the layout must not move under the owner's thumb as the answer changes.
+// The one thing left to do about Strava on this bike, in one card. A paired bike has nothing
+// left to offer, so the page drops the card entirely and the photo wears the badge instead.
 import type { ReactElement } from "react";
-import { Group, Paper, Stack, Text } from "@mantine/core";
+import { Box, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Link2, Link2Off, Unlink } from "lucide-react";
-import type { Bike } from "../bikes/bikes.types";
+import { Link2Off, Unlink } from "lucide-react";
+import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
+import StravaUnconnectMark from "@/assets/icons/svg_icons/strava_unconnect.svg?react";
 
-type StravaState = "disconnected" | "unpaired" | "paired";
+type StravaState = "disconnected" | "unpaired";
 
 interface BikeStravaCardProps {
-  bike: Bike;
   // Whether the owner has a Strava account connected at all.
   accountConnected: boolean;
   onConnectAccount: () => void;
@@ -19,7 +19,6 @@ interface BikeStravaCardProps {
 }
 
 export function BikeStravaCard({
-  bike,
   accountConnected,
   onConnectAccount,
   onPairGear,
@@ -27,18 +26,13 @@ export function BikeStravaCard({
 }: BikeStravaCardProps): ReactElement {
   const { t } = useTranslation();
 
-  const state: StravaState = !accountConnected ? "disconnected" : bike.strava_gear_id === null ? "unpaired" : "paired";
-  // A paired bike is a statement, not an offer; the other two lead somewhere.
-  const onClick = state === "disconnected" ? onConnectAccount : state === "unpaired" ? onPairGear : undefined;
+  const state: StravaState = accountConnected ? "unpaired" : "disconnected";
+  // Both states lead somewhere: to Strava itself, or to picking the gear.
+  const onClick = state === "disconnected" ? onConnectAccount : onPairGear;
 
   const COPY: Record<StravaState, { title: string; body: string }> = {
     disconnected: { title: t("strava.notConnectedTitle"), body: t("strava.notConnectedBody") },
     unpaired: { title: t("strava.notPairedTitle"), body: t("strava.notPairedBody") },
-    paired: {
-      title: t("strava.pairedTitle"),
-      // Strava names the gear; without a name the bike is still linked, just unnamed.
-      body: bike.strava_name ?? t("strava.pairedBodyUnnamed"),
-    },
   };
 
   return (
@@ -46,23 +40,44 @@ export function BikeStravaCard({
       radius="lg"
       p="md"
       onClick={onClick}
-      role={onClick ? "button" : undefined}
+      role="button"
       style={{
-        backgroundColor: "var(--mantine-color-cards-6)",
-        backgroundImage: "var(--card-glow)",
+        backgroundColor: "var(--mantine-color-strava-6)",
         border: "none",
         boxShadow: "var(--elev-panel)",
-        cursor: onClick ? "pointer" : undefined,
+        cursor: "pointer",
+        // Holds the oversized mark, which is cropped by the card rather than laid out by it.
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <Group gap="md" wrap="nowrap" align="center">
-        <StateIcon state={state} />
+      {/* A flat colour block takes its depth from scale and overlap, not from lighting: the
+          mark is far larger than the card and runs off its right edge - see
+          docs/ui/card-surface.md. Decorative, so it is hidden from assistive tech. */}
+      <Box
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: "50%",
+          right: -44,
+          transform: "translateY(-50%) rotate(-12deg)",
+          // Dark rather than light, so the shape stays a shade of the fill.
+          color: "var(--mantine-color-textDark-6)",
+          opacity: 0.12,
+          pointerEvents: "none",
+        }}
+      >
+        <StravaMark width={148} height={148} />
+      </Box>
 
+      {/* Positioned, so it stacks above the mark. */}
+      <Group gap="md" wrap="nowrap" align="center" style={{ position: "relative" }}>
+        <StateIcon state={state} />
         <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-          <Text fz={16} fw={600} c="text.6" lineClamp={1}>
+          <Text fz={16} fw={600} c="textDark.6" lineClamp={1}>
             {COPY[state].title}
           </Text>
-          <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
+          <Text fz={13} c="textDark.6" lineClamp={1}>
             {COPY[state].body}
           </Text>
           {connectFailed && (
@@ -76,13 +91,10 @@ export function BikeStravaCard({
   );
 }
 
-// A paired bike wears Strava's own colour; the two open states stay quiet.
+// Both states are open questions, so both icons stay quiet.
 function StateIcon({ state }: { state: StravaState }): ReactElement {
-  if (state === "paired") {
-    return <Link2 size={22} color="var(--mantine-color-strava-6)" style={{ flexShrink: 0 }} />;
-  }
   if (state === "unpaired") {
-    return <Unlink size={22} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />;
+    return <Unlink size={22} color="var(--mantine-color-textDark-6)" style={{ flexShrink: 0 }} />;
   }
-  return <Link2Off size={22} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />;
+  return <StravaUnconnectMark width={25} height={25} color="var(--mantine-color-textDark-6)" style={{ flexShrink: 0 }} />;
 }

@@ -126,12 +126,12 @@
    sheet, and the one hero card a screen is allowed - see docs/ui/card-surface.md. Each is
    a hairline of light along the top edge, a tight contact shadow, and a soft cast one. */
 :root {
-  --elev-row: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35),
-    0 4px 12px -6px rgba(0, 0, 0, 0.5);
-  --elev-panel: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.38),
-    0 8px 16px -6px rgba(0, 0, 0, 0.5);
-  --elev-hero: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.4),
-    0 12px 24px -8px rgba(0, 0, 0, 0.55);
+  --elev-row:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 4px 12px -6px rgba(0, 0, 0, 0.5);
+  --elev-panel:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.38), 0 8px 16px -6px rgba(0, 0, 0, 0.5);
+  --elev-hero:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.55);
   /* The light every card is lit from the top-left corner by. */
   --card-glow: radial-gradient(
     90% 120% at 0% 0%,
@@ -256,4 +256,24 @@ body {
    picker. */
 input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
+}
+
+/* The content under the bike chips arrives from the side the selection moved, so a chip
+   tap or a swipe reads as the page travelling rather than swapping. The distance is set
+   per panel, signed by the direction - see the bike filter transition. */
+@keyframes bikePanelIn {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--bike-panel-slide, 16px), 0, 0);
+  }
+}
+
+.bike-panel-in {
+  animation: bikePanelIn 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bike-panel-in {
+    animation: none;
+  }
 }

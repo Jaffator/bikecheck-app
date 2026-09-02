@@ -10,6 +10,13 @@ export class GearLinkDto {
   @IsString()
   stravaBikeId!: string | null;
 
+  // Strava names the gear, we only hold the id — so the name travels with the pairing
+  // and is stored beside it. Null when unpairing, or when the caller has no name.
+  @ApiProperty({ example: 'My Enduro Bike', nullable: true, required: false })
+  @IsOptional()
+  @IsString()
+  stravaBikeName?: string | null;
+
   @ApiProperty({ example: 1 })
   @IsInt()
   bikecheckBikeId!: number;

@@ -19,9 +19,10 @@ export function StravaPairingHint({ stravaGearId }: StravaPairingHintProps): Rea
   if (stravaGearId !== null) return null;
 
   return (
-    <Group gap={6} wrap="nowrap">
-      <StravaMark width={14} height={14} color="var(--color-text-dim)" />
-      <Text fz={15} c="var(--color-text-dim)">
+    <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+      <StravaMark width={14} height={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+      {/* The card's data voice, so the hint sits level with the figures beside it. */}
+      <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
         {t("strava.notPaired")}
       </Text>
     </Group>

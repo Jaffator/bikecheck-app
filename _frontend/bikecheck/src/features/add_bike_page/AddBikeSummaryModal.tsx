@@ -7,6 +7,7 @@ import type { AssembleBikeComponent } from "../components/components.types";
 import type { BikeSpecificationValues } from "./bikeSpecification.types";
 import type { AddBikeIdentityValues } from "./useAddBikeWizard";
 import { disabledButtonStyles } from "./formStyles";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface AddBikeSummaryModalProps {
   opened: boolean;
@@ -59,6 +60,9 @@ export function AddBikeSummaryModal({
 
   // Use custom frame length only for the other size option.
   const frameSize = specification.frameSize === "other" ? specification.sizeLength.trim() : (specification.frameSize ?? "");
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(opened, onClose);
 
   return (
     <Modal

@@ -3,6 +3,7 @@
 // the cancel/confirm pair are decided once here so a fourth caller cannot drift.
 import type { ReactElement } from "react";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above every sheet it can be opened from, so the dialog is never left behind an overlay.
 const CONFIRM_Z_INDEX = 400;
@@ -32,6 +33,9 @@ export function ConfirmModal({
   confirmLabel,
   pending = false,
 }: ConfirmModalProps): ReactElement {
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(opened, onCancel);
+
   return (
     <Modal
       opened={opened}

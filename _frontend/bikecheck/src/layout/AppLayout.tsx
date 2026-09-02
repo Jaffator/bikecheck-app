@@ -13,7 +13,7 @@ import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useAndroidBackButton } from "../hooks/useAndroidBackButton";
 import { useStravaDeepLink } from "../hooks/useStravaDeepLink";
 import { OfflinePage } from "@/features/offline_page/OfflinePage";
-import { useOfflineWhenCallApiStore, useHeaderStore } from "@/store/store";
+import { useOfflineWhenCallApiStore, useHeaderStore, useOverlayStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { tapFeedback } from "@/utils/haptics";
@@ -144,6 +144,7 @@ export function AppLayout(): ReactElement {
   // A title a translation key cannot express - a category the user named, with its icon.
   const overrideTitleSlot = useHeaderStore((state) => state.titleSlot);
   const overrideBack = useHeaderStore((state) => state.onBack);
+  const closeTopOverlay = useOverlayStore((state) => state.closeTopOverlay);
   // Lets a page suppress shared application chrome.
   const chromeHiddenByPage = useHeaderStore((state) => state.chromeHidden);
   // A step the user cannot walk back out of hides the arrow rather than lying about it.
@@ -172,6 +173,9 @@ export function AppLayout(): ReactElement {
   }
 
   function handleHardwareBack(): void {
+    // A sheet standing over the page is what the gesture means, so it goes first and the
+    // route stays where it is.
+    if (closeTopOverlay()) return;
     if (overrideBack) {
       overrideBack();
       return;

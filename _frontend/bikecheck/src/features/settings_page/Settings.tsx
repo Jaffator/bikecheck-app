@@ -53,9 +53,10 @@ export function Settings(): ReactElement {
           />
         </Group>
       </Card>
-
       {/* Show only an existing Strava connection. */}
-      <StravaStatusCard connectedOnly allowDisconnect />
+      <div className="m-3">
+        <StravaStatusCard connectedOnly allowDisconnect />
+      </div>
     </>
   );
 }

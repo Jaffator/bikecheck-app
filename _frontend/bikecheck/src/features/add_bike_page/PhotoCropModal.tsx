@@ -5,6 +5,7 @@ import Cropper, { type Area } from "react-easy-crop";
 import { useTranslation } from "react-i18next";
 import { ZoomIn } from "lucide-react";
 import { PHOTO_ASPECT, cropToFile } from "./photoCrop";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface PhotoCropModalProps {
   // The uncropped file; null closes the modal.
@@ -50,6 +51,9 @@ export function PhotoCropModal({ file, fileUrl, onCancel, onConfirm }: PhotoCrop
       setIsCutting(false);
     }
   }
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(file !== null, cancel);
 
   return (
     <Modal

@@ -5,7 +5,7 @@ import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorat
 import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
-import type { StravaGearResponse } from '@contracts/strava-gear.contract';
+import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
@@ -164,6 +164,10 @@ export class StravaEventsService {
           timeout: 5000,
         },
       );
+      // This is the only call that knows what Strava calls each gear, so it is where a
+      // bike paired before the name was stored gets it filled in.
+      await this.backfillGearNames(bikes, response.data.bikes);
+
       const unmatchedGear: ResponseUnmatchedStravaGearDto = {
         user_id: userId,
         athlete_id: response.data.athlete_id,
@@ -203,6 +207,38 @@ export class StravaEventsService {
   }
 
   /**
+   * Stores the Strava gear name on bikes paired before the name was kept, so the bike
+   * detail can read the gear by name rather than by id.
+   */
+  private async backfillGearNames(
+    bikes: { id: number; strava_gear_id: string | null; strava_name: string | null }[],
+    gear: StravaBike[],
+  ): Promise<void> {
+    const nameById = new Map(gear.map((item) => [item.id, item.name]));
+
+    const stale = bikes.filter((bike) => {
+      if (!bike.strava_gear_id) return false;
+      const name = nameById.get(bike.strava_gear_id);
+      return name !== undefined && name !== bike.strava_name;
+    });
+    if (stale.length === 0) return;
+
+    // Cosmetic, so a failure here must never cost the caller its gear list.
+    try {
+      await this.prisma.$transaction(
+        stale.map((bike) =>
+          this.prisma.bikes.update({
+            where: { id: bike.id },
+            data: { strava_name: nameById.get(bike.strava_gear_id as string) },
+          }),
+        ),
+      );
+    } catch (error) {
+      this.logger.error({ custom: true, err: error }, 'Failed to backfill Strava gear names');
+    }
+  }
+
+  /**
    * Links Strava bikes (gear ids) to the user's BikeCheck bikes in one transaction.
    */
   async linkStravaGear(userId: number, links: GearLinkDto[]): Promise<void> {
@@ -214,7 +250,11 @@ export class StravaEventsService {
         // Scope by user_id so a user can never link a bike they don't own (IDOR).
         const result = await tx.bikes.updateMany({
           where: { id: link.bikecheckBikeId, user_id: userId },
-          data: { strava_gear_id: link.stravaBikeId ?? null },
+          // The name is only meaningful while the gear is attached, so unpairing clears it.
+          data: {
+            strava_gear_id: link.stravaBikeId ?? null,
+            strava_name: link.stravaBikeId === null ? null : (link.stravaBikeName ?? null),
+          },
         });
         updatedCount += result.count;
       }

@@ -51,6 +51,9 @@ export function useRecentServices(bikeId?: number): UseQueryResult<ServiceHistor
   return useQuery({
     queryKey: ["services", "recent", bikeKey(bikeId)],
     queryFn: () => getServiceHistory(RECENT_SERVICE_COUNT, 0, bikeId),
+    // The bike chip above the list changes often. The list the user was reading holds its
+    // place until the next one lands, so a chip tap dims it rather than blanking the page.
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -73,6 +76,9 @@ export function useServiceHistory(
       const loaded = allPages.reduce((count, page) => count + page.items.length, 0);
       return loaded < lastPage.total ? loaded : undefined;
     },
+    // Same as the totals above it: the previous history stays on screen while the next
+    // one loads, so switching bikes never flashes an empty page.
+    placeholderData: keepPreviousData,
   });
 }
 

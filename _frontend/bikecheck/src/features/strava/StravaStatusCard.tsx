@@ -8,6 +8,7 @@ import { useConnectStrava, useDisconnectStrava } from "./strava.queries";
 import { stravaDisplayName } from "./strava.types";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import mapBackground from "@/assets/icons/svg_icons/mapbg.svg";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface StravaStatusCardProps {
   // Settings renders only for connected accounts; the dashboard owns the pitch.
@@ -31,6 +32,9 @@ export function StravaStatusCard({
   const connected = Boolean(user?.strava_athlete_id);
   // Linked athlete name, if Strava provided one.
   const stravaName = user ? stravaDisplayName(user) : null;
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(confirmingDisconnect, () => setConfirmingDisconnect(false));
 
   if (!connected && connectedOnly) return null;
 

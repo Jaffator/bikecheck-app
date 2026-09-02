@@ -7,11 +7,15 @@ const DIRECTION_LOCK_PX = 10;
 
 // The share of a panel's width a drag must cover to land on the neighbour rather than
 // spring back.
-const COMMIT_RATIO = 0.25;
+const COMMIT_RATIO = 0.15;
 
 // A short flick lands too, even when it never covered the distance, in pixels per
-// millisecond.
-const FLICK_VELOCITY = 0.5;
+// millisecond. Measured from the moment the gesture turned out to be horizontal, so
+// hesitating before the flick does not count against it.
+const FLICK_VELOCITY = 0.25;
+
+// A flick has to cover at least this much, so a twitch on a wide panel never lands.
+const FLICK_MIN_PX = 24;
 
 // How long the track takes to settle once the finger lifts.
 export const SETTLE_MS = 220;
@@ -35,15 +39,27 @@ interface SwipePanels {
   moving: boolean;
 }
 
+interface Gesture {
+  x: number;
+  y: number;
+  time: number;
+  // Which way the gesture turned out to be. Decided once and then left alone, so a drag
+  // that starts sideways is not stolen back by a wobble.
+  axis: "undecided" | "horizontal" | "vertical";
+  // When the axis turned out to be horizontal, for the flick.
+  lockTime: number;
+  // How far the track has been dragged. Kept here rather than read back from state: the
+  // move that ends a fast swipe may not have rendered by the time the finger lifts, and
+  // a stale distance reads as a swipe that never happened.
+  offset: number;
+}
+
 // Drives a horizontal swipe between `count` panels. The caller owns which panel is
 // current: a completed swipe asks for a neighbour and the panel changes when the caller
 // says so, exactly as if its tab had been tapped.
 export function useSwipePanels(index: number, count: number, onSelect: (next: number) => void): SwipePanels {
-  // Where the finger went down, and when, so a flick can be told from a slow drag.
-  const origin = useRef<{ x: number; y: number; time: number } | null>(null);
-  // Which way the gesture turned out to be. Decided once and then left alone, so a drag
-  // that starts sideways is not stolen back by a wobble.
-  const axis = useRef<"undecided" | "horizontal" | "vertical">("undecided");
+  // Everything the gesture is measured against. Null between gestures.
+  const gesture = useRef<Gesture | null>(null);
   const [offset, setOffset] = useState(0);
   const [settling, setSettling] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -58,61 +74,68 @@ export function useSwipePanels(index: number, count: number, onSelect: (next: nu
   const onPointerDown = useCallback((event: PointerEvent<HTMLDivElement>): void => {
     // A right-click drag is not a swipe.
     if (event.pointerType === "mouse" && event.buttons !== 1) return;
-    origin.current = { x: event.clientX, y: event.clientY, time: event.timeStamp };
-    axis.current = "undecided";
+    gesture.current = {
+      x: event.clientX,
+      y: event.clientY,
+      time: event.timeStamp,
+      axis: "undecided",
+      lockTime: event.timeStamp,
+      offset: 0,
+    };
   }, []);
 
   const onPointerMove = useCallback(
     (event: PointerEvent<HTMLDivElement>): void => {
-      const from = origin.current;
-      if (from === null) return;
+      const current = gesture.current;
+      if (current === null) return;
 
-      const dx = event.clientX - from.x;
-      const dy = event.clientY - from.y;
+      const dx = event.clientX - current.x;
+      const dy = event.clientY - current.y;
 
-      if (axis.current === "undecided") {
+      if (current.axis === "undecided") {
         // Wait until the finger has said which way it is going.
         if (Math.abs(dx) < DIRECTION_LOCK_PX && Math.abs(dy) < DIRECTION_LOCK_PX) return;
-        axis.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
-        if (axis.current === "horizontal") {
+        current.axis = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+        if (current.axis === "horizontal") {
+          current.lockTime = event.timeStamp;
           setDragging(true);
           // Keeps the gesture even if the finger leaves the track mid-drag.
           event.currentTarget.setPointerCapture(event.pointerId);
         }
       }
 
-      if (axis.current !== "horizontal") return;
+      if (current.axis !== "horizontal") return;
 
       const width = event.currentTarget.clientWidth || 1;
       // The ends do not wrap, so there is nothing to drag towards past them.
       const furthestLeft = index === count - 1 ? 0 : -width;
       const furthestRight = index === 0 ? 0 : width;
-      setOffset(Math.min(furthestRight, Math.max(furthestLeft, dx)));
+      current.offset = Math.min(furthestRight, Math.max(furthestLeft, dx));
+      setOffset(current.offset);
     },
     [count, index],
   );
 
   const finish = useCallback(
     (event: PointerEvent<HTMLDivElement>): void => {
-      const from = origin.current;
-      origin.current = null;
-      const wasHorizontal = axis.current === "horizontal";
-      axis.current = "undecided";
-      if (!wasHorizontal || from === null) return;
+      const current = gesture.current;
+      gesture.current = null;
+      if (current === null || current.axis !== "horizontal") return;
 
       const width = event.currentTarget.clientWidth || 1;
-      const elapsed = Math.max(1, event.timeStamp - from.time);
-      const travelled = Math.abs(offset);
-      const landed = travelled > width * COMMIT_RATIO || travelled / elapsed > FLICK_VELOCITY;
+      const elapsed = Math.max(1, event.timeStamp - current.lockTime);
+      const travelled = Math.abs(current.offset);
+      const flicked = travelled >= FLICK_MIN_PX && travelled / elapsed > FLICK_VELOCITY;
+      const landed = travelled > width * COMMIT_RATIO || flicked;
 
       setDragging(false);
       setSettling(true);
       // Dropping the offset in the same commit as the new panel leaves the track to
       // animate only the distance the finger did not cover.
       setOffset(0);
-      if (landed) onSelect(offset < 0 ? index + 1 : index - 1);
+      if (landed) onSelect(current.offset < 0 ? index + 1 : index - 1);
     },
-    [index, offset, onSelect],
+    [index, onSelect],
   );
 
   return {

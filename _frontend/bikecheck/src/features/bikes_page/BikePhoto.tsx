@@ -41,7 +41,8 @@ export function BikePhoto({
           fit="cover"
           // Load card images as they enter the viewport.
           loading="lazy"
-          style={{ backgroundColor: "#FFFFFF" }}
+          // Absolute, so a rounded-down cover height cannot leave a white strip below it.
+          style={{ backgroundColor: "#FFFFFF", position: "absolute", inset: 0, display: "block" }}
         />
       ) : (
         // A bike with no photo keeps the slot, so the list never changes shape.

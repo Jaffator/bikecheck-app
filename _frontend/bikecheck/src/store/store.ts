@@ -57,3 +57,33 @@ export const useHeaderStore = create<HeaderStore>((set) => ({
   actionSlot: null,
   setActionSlot: (value) => set(() => ({ actionSlot: value })),
 }));
+
+// The overlays standing over the page, oldest first. Android's back gesture means "dismiss
+// the thing on top", so the hardware handler empties this before it touches the router -
+// see useOverlayBack and AppLayout.
+interface Overlay {
+  id: number;
+  close: () => void;
+}
+
+interface OverlayStore {
+  stack: Overlay[];
+  pushOverlay: (overlay: Overlay) => void;
+  removeOverlay: (id: number) => void;
+  // True when there was one to close, which is also when the router must stay put.
+  closeTopOverlay: () => boolean;
+}
+
+export const useOverlayStore = create<OverlayStore>((set, get) => ({
+  stack: [],
+  pushOverlay: (overlay) => set((state) => ({ stack: [...state.stack, overlay] })),
+  removeOverlay: (id) => set((state) => ({ stack: state.stack.filter((item) => item.id !== id) })),
+  closeTopOverlay: () => {
+    const { stack } = get();
+    const top = stack[stack.length - 1];
+    if (!top) return false;
+    // The owner's state change unmounts the entry, which removes it from the stack.
+    top.close();
+    return true;
+  },
+}));

@@ -31,6 +31,33 @@ Three steps, and nothing between them:
 Do not write a shadow literal into a component. A new shadow means a fourth elevation,
 which is a change to this file first.
 
+## Cards on a saturated surface
+
+`--card-glow` is lit for the near-black `cards.6`: a 7% primary tint that disappears on a
+brand-coloured fill, leaving the card flat. `BikeStravaCard` on `strava.6` was the first to
+hit it.
+
+Do not answer that by lighting the surface. Every tool for it fails on a bright fill: a white
+inset hairline reads as a 2008 bevel, a white sheen across the top reads as a glossy iOS 6
+button, and a tonal gradient long enough to model the card crosses the luminance point where
+the readable text colour flips — over `strava.6` to `strava.8`, dark text falls to 3.10:1 at
+the bottom while light text is at 2.74:1 at the top, so no single colour passes at both ends.
+
+A coloured card is a **block**, and a block takes its depth from scale and overlap:
+
+```tsx
+// The card crops the mark rather than laying it out.
+position: "relative",
+overflow: "hidden",
+```
+
+`BikeStravaCard` keeps a flat `strava.6` fill and the standard `--elev-panel`, and puts an
+oversized Strava mark behind the content, running off the right edge. The mark is a **darker
+shade of the fill**, not a lighter one — `textDark.6` at 12% opacity — so the card stays
+duotone and the contrast floor moves the safe way.
+
+Check the text against the mark, not the fill: `textDark.6` over the blended shape is 5.32:1
+at 12% opacity, and 4.53:1 at 20%, which is where this technique runs out.
 ## Type scale
 
 Four roles carry every card. Anything else is drift.

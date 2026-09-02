@@ -11,6 +11,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
 import { TbBikeOff } from "react-icons/tb";
 import { Link2, TriangleAlert, MoveRight } from "lucide-react";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface GearLinkingSheetProps {
   opened: boolean;
@@ -44,10 +45,15 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
     // Submit only modified pairings.
     const links: GearLink[] = rows
       .filter((bike) => chosenFor(bike) !== bike.strava_gear_id)
-      .map((bike) => ({
-        bikecheckBikeId: bike.id,
-        stravaBikeId: chosenFor(bike),
-      }));
+      .map((bike) => {
+        const gearId = chosenFor(bike);
+        return {
+          bikecheckBikeId: bike.id,
+          stravaBikeId: gearId,
+          // This sheet is the only place holding the gear's name, so it sends it.
+          stravaBikeName: data?.strava_bikes.find((gear) => gear.id === gearId)?.name ?? null,
+        };
+      });
 
     if (links.length === 0) {
       onClose();
@@ -55,6 +61,9 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
     }
     link.mutate(links, { onSuccess: onClose });
   }
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(opened, onClose);
 
   return (
     <Drawer

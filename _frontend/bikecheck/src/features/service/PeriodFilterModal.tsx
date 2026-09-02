@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { chipStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { PERIOD_PRESETS, matchPreset } from "./servicePeriod";
 import type { ServicePeriod } from "./service.types";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above the service detail sheet, which the history can also have open.
 const MODAL_Z_INDEX = 400;
@@ -75,6 +76,9 @@ function PeriodFilterModalBody({ opened, onClose, period, onApply }: PeriodFilte
   const [draft, setDraft] = useState<ServicePeriod>(period);
 
   const selectedPreset = matchPreset(draft);
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(opened, onClose);
 
   return (
     <Modal

@@ -44,6 +44,22 @@ work is being recorded — the user is looking for the fork — and in full, typ
 together, when a Service is read back.
 _Avoid_: Component (ambiguous — could mean the type)
 
+**Unserviced Component**:
+A Mounted Component no Service has yet recorded work against. Its readings may still be corrected
+and the row deleted outright, because nothing has frozen a Wear Baseline against it. The first
+Service to touch it settles it (ADR 0016): from then on the part can only be dismounted, never
+deleted or rewritten.
+_Avoid_: Draft component (Draft already means the wizard's Draft Block), new component
+
+**Dismount**:
+Taking a part off a bike while keeping everything it did. The Mounted Component stops accumulating
+and leaves the build, and its wear history stays readable against the bike it served. What a
+Replacement does to the old part (ADR 0003), and what an owner does by hand when a part comes off
+with nothing fitted in its place. Distinct from deleting a Mounted Component, which is only offered
+while it is still Unserviced. The schema calls the moment `removed_at`.
+_Avoid_: Remove (that is deleting a row that should never have existed), retire (a dismounted part
+may be fitted to another bike)
+
 ### Maintenance
 
 **Service**:

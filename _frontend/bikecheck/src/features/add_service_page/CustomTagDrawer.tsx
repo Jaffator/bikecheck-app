@@ -8,6 +8,7 @@ import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { ActionTag } from "@/features/service/service.types";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface CustomTagDrawerProps {
   opened: boolean;
@@ -61,6 +62,9 @@ export function CustomTagDrawer({
       },
     );
   }
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(opened, onClose);
 
   return (
     <Drawer

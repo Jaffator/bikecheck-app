@@ -27,6 +27,9 @@ export interface GearLinkingData {
 // GearLinkDto row; null gear id unpairs the bike while retaining existing rides.
 export interface GearLink {
   stravaBikeId: string | null;
+  // Only the gear list knows what Strava calls the gear, so the name is sent along with
+  // the pairing and stored on the bike. Null when unpairing.
+  stravaBikeName: string | null;
   bikecheckBikeId: number;
 }
 

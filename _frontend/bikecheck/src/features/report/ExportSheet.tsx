@@ -10,6 +10,7 @@ import { REPORT_KIND_KEY } from "./reportListLabels";
 import type { ExportReportInput, ExportedReport, ReportKind } from "./report.types";
 import { ApiError } from "@/api/client";
 import { canShareLink, shareLink } from "@/utils/shareLink";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // The sheet stands over what it was opened from, the same way the service detail does.
 const SHEET_HEIGHT = "90%";
@@ -115,6 +116,9 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   }
 
   const isPublished = shareUrl !== null;
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(opened, close);
 
   return (
     <Sheet

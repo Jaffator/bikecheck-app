@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
 import type { Ride } from "./rides.types";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface RideDetailSheetProps {
   // Null closes the sheet.
@@ -29,6 +30,9 @@ function Stat({ label, value }: { label: string; value: string }): ReactElement 
 // Displays data already loaded with the ride.
 export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactElement {
   const { t } = useTranslation();
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(ride !== null, onClose);
 
   return (
     <Drawer

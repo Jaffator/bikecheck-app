@@ -10,6 +10,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
 import { useResolvePendingRide } from "./strava.queries";
 import type { PendingRide } from "./strava.types";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface PendingRideSheetProps {
   // Selected ride; null closes the sheet.
@@ -35,6 +36,9 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
     if (bikeId === null || ride === null) return;
     resolve.mutate({ activityId: ride.activity_id, bikeId: Number(bikeId) }, { onSuccess: close });
   }
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(ride !== null, close);
 
   return (
     <Drawer

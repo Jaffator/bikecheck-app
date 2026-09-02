@@ -1,25 +1,20 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useState, type ReactElement } from "react";
-import {
-  ActionIcon,
-  Box,
-  Group,
-  Menu,
-  Paper,
-  Skeleton,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Group, Menu, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowUpRight,
+  ChevronRight,
   Clock,
+  Gauge,
+  Info,
   MoreVertical,
   Pencil,
-  Route,
+  Ruler,
   Trash2,
   Unlink,
+  Weight,
 } from "lucide-react";
 import { useBike, useDeleteBike } from "../bikes/bikes.queries";
 import { GearLinkingSheet } from "../strava/GearLinkingSheet";
@@ -29,17 +24,31 @@ import { BikePhoto } from "./BikePhoto";
 import { BikeActionTiles } from "./BikeActionTiles";
 import { BikeStravaCard } from "./BikeStravaCard";
 import { HealthBadge } from "./HealthBadge";
-import { bikeTitle, splitBikeTitle } from "../bikes/bikeTitle";
+import { StravaLinkedBadge } from "./StravaLinkedBadge";
+import { BikeSpecsDrawer } from "./BikeSpecsDrawer";
+import { bikeTitle } from "../bikes/bikeTitle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ExportSheet } from "@/features/report/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
 import { useHeaderStore } from "@/store/store";
 
+// One hue per reading, so the line is read by colour before it is read by number. The
+// green is the one the health badge already uses; the yellow is the brand's own. The
+// Strava orange stays reserved for Strava, so the ride time takes a warmer orange of its
+// own. All five clear 4.5:1 on the card.
+const METRIC_COLORS = {
+  distance: "#4ADE80",
+  elevation: "#60A5FA",
+  time: "#FB923C",
+  size: "var(--mantine-color-primary-6)",
+  weight: "var(--color-accent)",
+} as const;
+
 // The machine's own page: what it is, what it has done, and what can be done with it.
 export function BikeDetail(): ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: bike, isLoading, isError } = useBike(Number(id));
   const { data: user } = useCurrentUser();
   const [pairingGear, setPairingGear] = useState(false);
@@ -49,13 +58,13 @@ export function BikeDetail(): ReactElement {
   const [confirmingUnpair, setConfirmingUnpair] = useState(false);
   // What the export button is exporting. Null keeps the export sheet shut.
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
+  // The full spec list, which is read once and then left alone.
+  const [showingSpecs, setShowingSpecs] = useState(false);
   const remove = useDeleteBike();
   const unpair = useLinkStravaGear();
   const connect = useConnectStrava();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
-  const setHeaderTransparent = useHeaderStore(
-    (state) => state.setHeaderTransparent,
-  );
+  const setHeaderTransparent = useHeaderStore((state) => state.setHeaderTransparent);
 
   const paired = bike?.strava_gear_id != null;
 
@@ -73,12 +82,7 @@ export function BikeDetail(): ReactElement {
     setActionSlot(
       <Menu position="bottom-end" radius="md" withinPortal>
         <Menu.Target>
-          <ActionIcon
-            variant="transparent"
-            radius="xl"
-            size="lg"
-            aria-label={t("bikes.cardMenu")}
-          >
+          <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("bikes.cardMenu")}>
             <MoreVertical size={22} color="var(--mantine-color-text-6)" />
           </ActionIcon>
         </Menu.Target>
@@ -152,14 +156,16 @@ export function BikeDetail(): ReactElement {
     );
   }
 
-  const { kicker, heading } = splitBikeTitle(bike);
+  // Both are the owner's to fill in, so the frame line appears only once one of them is.
+  const hasSize = bike.bike_size !== null && bike.bike_size !== "";
+  const hasWeight = bike.bike_weight_kg !== null;
 
   return (
     <Stack
       gap="md"
       px="md"
       // Clears the transparent header, which no longer holds a place open for the page.
-      pt="calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.5rem)"
+      pt="calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.4rem)"
       pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
     >
       {/* The bike, read the way it is written on the frame: photo and name are one object,
@@ -175,89 +181,101 @@ export function BikeDetail(): ReactElement {
         }}
       >
         {/* The name is carried below, so the photo is left bare but for its badge. */}
-        <BikePhoto
-          imageUrl={bike.image_url}
-          title={bikeTitle(bike)}
-          subtitle={null}
-          titleSize={24}
-          showCaption={false}
-        >
-          <Box style={{ marginRight: "auto" }}>
+        <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
+          {/* The same corner, in the same order, as the garage card keeps its badges. */}
+          <Stack gap={6} align="flex-end">
             <HealthBadge readings={[]} />
-          </Box>
+            <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
+          </Stack>
         </BikePhoto>
 
         <Stack gap={8} p="md">
-          {/* Three readings the bike keeps by itself, units only: with no room for labels
-              the icon and the unit have to carry what each number is. */}
-          <Group gap="lg" wrap="nowrap">
-            <Metric
-              icon={<Route size={14} color="var(--color-text-dim)" />}
-              value={t("bikes.kilometres", { count: bike.total_km ?? 0 })}
-            />
-            <Metric
-              icon={<ArrowUpRight size={14} color="var(--color-text-dim)" />}
-              value={t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
-            />
-            <Metric
-              icon={<Clock size={14} color="var(--color-text-dim)" />}
-              value={t("bikes.hours", {
-                count: Math.round((bike.total_time_min ?? 0) / 60),
-              })}
-            />
-          </Group>
-
-          {/* The name reads as one block, so it keeps its own tighter rhythm. */}
+          {/* The name leads and holds one line: brand, model and year are one label. */}
           <Stack gap={2}>
-            {kicker !== null && (
-              <Text
-                className="font-mono uppercase"
-                fz={11}
-                fw={400}
-                c="var(--color-text-dim)"
-                lts="0.08em"
-                lineClamp={1}
-              >
-                {kicker}
-              </Text>
-            )}
-            <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
-              {heading}
+            <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={1}>
+              {bikeTitle(bike)}
             </Text>
             {/* The garage and this page are the only places a bike answers to its nickname. */}
             {bike.bikename !== null && bike.bikename !== "" && (
-              <Text
-                className="font-mono"
-                fz={11}
-                tt="uppercase"
-                c="var(--color-text-dim)"
-                lineClamp={1}
-              >
+              <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
                 {bike.bikename}
               </Text>
             )}
           </Stack>
+
+          {/* Everything the bike is and has done, on one line: units only, so the icon and
+              its colour carry what each number is. It folds onto a second line rather than
+              running off a narrow screen. */}
+          <Group gap="md" wrap="wrap">
+            <Metric
+              icon={<Gauge size={14} color={METRIC_COLORS.distance} />}
+              value={t("bikes.kilometres", { count: bike.total_km ?? 0 })}
+            />
+            <Metric
+              icon={<ArrowUpRight size={14} color={METRIC_COLORS.elevation} />}
+              value={t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
+            />
+            <Metric
+              icon={<Clock size={14} color={METRIC_COLORS.time} />}
+              value={t("bikes.hours", {
+                count: Math.round((bike.total_time_min ?? 0) / 60),
+              })}
+            />
+            {/* The frame's own figures, which the owner fills in or leaves empty. */}
+            {hasSize && <Metric icon={<Ruler size={14} color={METRIC_COLORS.size} />} value={bike.bike_size ?? ""} />}
+            {hasWeight && (
+              <Metric
+                icon={<Weight size={14} color={METRIC_COLORS.weight} />}
+                value={t("bikes.kilograms", {
+                  // The language writes its own decimal mark - 7,25 kg, not 7.25 kg.
+                  weight: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(
+                    bike.bike_weight_kg ?? 0,
+                  ),
+                })}
+              />
+            )}
+          </Group>
         </Stack>
       </Paper>
-      <BikeStravaCard
-        bike={bike}
-        accountConnected={user?.strava_athlete_id != null}
-        onConnectAccount={() => connect.mutate()}
-        onPairGear={() => setPairingGear(true)}
-        connectFailed={connect.isError}
-      />
+      {/* The specs are read once and the actions daily, so the list stays behind a row
+          rather than pushing the tiles below the fold. */}
+      <UnstyledButton
+        onClick={() => setShowingSpecs(true)}
+        px="md"
+        py={12}
+        style={{
+          borderRadius: "var(--mantine-radius-lg)",
+          backgroundColor: "var(--mantine-color-cards-6)",
+          border: "1px solid var(--color-border-subtle)",
+        }}
+      >
+        <Group justify="space-between" wrap="nowrap">
+          <Group gap={8} wrap="nowrap">
+            <Info size={16} color="var(--color-text-dim)" />
+            <Text fz={13} fw={600} c="text.6">
+              {t("bikes.specsAction")}
+            </Text>
+          </Group>
+          <ChevronRight size={16} color="var(--color-text-dim)" />
+        </Group>
+      </UnstyledButton>
+
+      {/* A paired bike has nothing left to ask of Strava, so the card goes away — which
+          gear it answers to is read in the spec sheet. */}
+      {!paired && (
+        <BikeStravaCard
+          accountConnected={user?.strava_athlete_id != null}
+          onConnectAccount={() => connect.mutate()}
+          onPairGear={() => setPairingGear(true)}
+          connectFailed={connect.isError}
+        />
+      )}
 
       <BikeActionTiles
-        paired={paired}
         onAddService={() => navigate(`/service/new?bike=${String(bike.id)}`)}
-        onExportReport={() =>
-          setExporting({ kind: "BIKECHECK", bike_id: bike.id })
-        }
+        onExportReport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
-        onPairGear={() => setPairingGear(true)}
-        onOpenHistory={() =>
-          navigate(`/service/history?bike=${String(bike.id)}`)
-        }
+        onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
       />
 
       {remove.isError && (
@@ -272,13 +290,11 @@ export function BikeDetail(): ReactElement {
         </Text>
       )}
 
+      <BikeSpecsDrawer opened={showingSpecs} onClose={() => setShowingSpecs(false)} bike={bike} />
+
       <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
-      <GearLinkingSheet
-        opened={pairingGear}
-        onClose={() => setPairingGear(false)}
-        bikeIds={[bike.id]}
-      />
+      <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
 
       {/* Detaching keeps the rides already recorded, which the question is the only place
           with room to say. */}
@@ -286,7 +302,7 @@ export function BikeDetail(): ReactElement {
         opened={confirmingUnpair}
         onCancel={() => setConfirmingUnpair(false)}
         onConfirm={() =>
-          unpair.mutate([{ bikecheckBikeId: bike.id, stravaBikeId: null }], {
+          unpair.mutate([{ bikecheckBikeId: bike.id, stravaBikeId: null, stravaBikeName: null }], {
             onSuccess: () => setConfirmingUnpair(false),
           })
         }
@@ -320,13 +336,7 @@ export function BikeDetail(): ReactElement {
   );
 }
 
-function Metric({
-  icon,
-  value,
-}: {
-  icon: ReactElement;
-  value: string;
-}): ReactElement {
+function Metric({ icon, value }: { icon: ReactElement; value: string }): ReactElement {
   return (
     <Group gap={6} wrap="nowrap">
       {icon}

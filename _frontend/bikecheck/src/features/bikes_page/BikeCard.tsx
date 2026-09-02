@@ -1,15 +1,15 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { Box, Group, Paper, Progress, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { StravaPairingHint } from "../strava/StravaPairingHint";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
-import { Clock, Gauge } from "lucide-react";
+import { ArrowUpRight, Clock, Gauge } from "lucide-react";
 import type { Bike } from "../bikes/bikes.types";
 import { bikeTitle } from "../bikes/bikeTitle";
 import { BikePhoto } from "./BikePhoto";
-import { HEALTH_COLORS, type HealthReading } from "./bikeHealth.types";
+import { HEALTH_COLORS, worstReading, type HealthReading } from "./bikeHealth.types";
 import { HealthBadge } from "./HealthBadge";
+import { StravaLinkedBadge } from "./StravaLinkedBadge";
 
 interface BikeCardProps {
   bike: Bike;
@@ -18,66 +18,62 @@ interface BikeCardProps {
   onOpen: () => void;
 }
 
-// Render the Strava badge for bikes linked to Strava gear.
-function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | null }): ReactElement | null {
-  const { t } = useTranslation();
+// How wide the health bar runs. Short enough to read as a gauge beside its label rather
+// than a progress bar the card is waiting on.
+const METER_WIDTH = 72;
 
-  if (stravaGearId === null) return null;
+// A hairline between two figures on the data line, the only divider the card carries.
+function Rule(): ReactElement {
+  return <Box aria-hidden w={1} h={12} style={{ backgroundColor: "var(--mantine-color-cards-5)", flexShrink: 0 }} />;
+}
 
+// One figure on the data line: its icon and the number, in the card's data voice.
+function Metric({ icon, children }: { icon: ReactNode; children: ReactNode }): ReactElement {
   return (
-    <Group
-      // Match health badge dimensions when badges stack.
-      gap={5}
-      px={8}
-      py={3}
-      style={{
-        borderRadius: "9999px",
-        backgroundColor: "rgba(20, 20, 20, 0.75)",
-        border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 55%, transparent)",
-        backdropFilter: "blur(4px)",
-      }}
-    >
-      <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
-      <Text className="font-mono" fz={10} c="var(--mantine-color-strava-6)">
-        {t("strava.paired")}
+    <Group gap={6} wrap="nowrap">
+      {icon}
+      <Text className="font-mono" fz={13} tt="uppercase" c="text.6" lts="0.02em" style={{ whiteSpace: "nowrap" }}>
+        {children}
       </Text>
     </Group>
   );
 }
 
-// One wear reading: label, its own figure, and how much is left.
-function HealthBar({ reading }: { reading: HealthReading }): ReactElement {
+// The part that needs attention first, as one line: how much of its life is left, what it
+// is, and the figure behind it.
+function HealthMeter({ reading }: { reading: HealthReading }): ReactElement {
   const { t } = useTranslation();
   const color = HEALTH_COLORS[reading.level];
 
   return (
-    <Stack gap={6}>
-      <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)" style={{ letterSpacing: "0.05em" }}>
-          {t(reading.labelKey)}
-        </Text>
-        <Text
-          className="font-mono"
-          fz={10}
-          tt="uppercase"
-          ta="right"
-          // Emphasize non-good health readings.
-          c={reading.level === "good" ? "var(--color-text-dim)" : color}
-          style={{ letterSpacing: "0.05em" }}
-        >
-          {reading.value}
-        </Text>
-      </Group>
+    <Group gap="sm" wrap="nowrap">
       <Progress
         value={reading.fill * 100}
-        size={6}
+        size={5}
         radius="xl"
+        w={METER_WIDTH}
+        style={{ flexShrink: 0 }}
         styles={{
           root: { backgroundColor: "var(--color-decor)" },
           section: { backgroundColor: color },
         }}
       />
-    </Stack>
+      <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
+        {t(reading.labelKey)}
+      </Text>
+      <Text
+        className="font-mono"
+        fz={11}
+        tt="uppercase"
+        lts="0.08em"
+        ml="auto"
+        // Emphasize a reading that is no longer good.
+        c={reading.level === "good" ? "var(--color-text-dim)" : color}
+        style={{ whiteSpace: "nowrap" }}
+      >
+        {reading.value}
+      </Text>
+    </Group>
   );
 }
 
@@ -85,10 +81,12 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
   const { t } = useTranslation();
 
   const title = bikeTitle(bike);
+  // The garage leads with the part that needs attention first; the whole list is on the
+  // bike's own page.
+  const worst = worstReading(readings);
 
   return (
     <Paper
-      bg="cards.6"
       radius="lg"
       // Open bike details from the entire card.
       onClick={() => {
@@ -104,10 +102,12 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
       }}
       style={{
         overflow: "hidden",
-        border: "none",
-        // Same three-part shadow the other cards use, one step deeper because
-        // this card is the largest: a hairline of light along the top edge, a
-        // tight contact shadow, and a soft cast one that lifts it off the page.
+        // `bg` would emit the `background` shorthand - see docs/ui/card-surface.md.
+        backgroundColor: "var(--mantine-color-cards-6)",
+        // The hairline every card wears, so the edge does not dissolve into the page.
+        border: "1px solid var(--mantine-color-cards-5)",
+        // Same three-part shadow the other cards use, one step deeper because this card is
+        // the largest on the screen.
         boxShadow: "var(--elev-hero)",
         // Animate tap feedback before navigation.
         transition: "transform 0.12s ease, box-shadow 0.12s ease",
@@ -117,9 +117,10 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
       // Tailwind's active: variant handles the pressed state without tracking it.
       className="bike-card active:scale-[0.985]"
     >
-      {/* Its own layer rather than a background on the card: the photo and the
-          content sit on their own opaque backgrounds and would paint over a
-          card-level gradient, leaving only a sliver of it visible. */}
+      {/* Its own layer rather than a background on the card: the photo and the content sit
+          on their own opaque backgrounds and would paint over a card-level gradient,
+          leaving only a sliver of it visible. The card's own glow is lit from the top-left
+          corner, which the photo covers, so this one comes up from under the data line. */}
       <Box
         aria-hidden
         style={{
@@ -132,63 +133,35 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
         }}
       />
 
-      <Box
-        style={{
-          position: "relative",
-          // A shadow cast down from the photo's edge, so the content below reads
-          // as a recessed surface instead of a flat continuation of the image.
-          boxShadow: "0 6px 12px -6px rgba(0, 0, 0, 0.6)",
-        }}
-      >
-        {/* The card names the bike under the photo, not over it. */}
-        <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={20} showCaption={false}>
-          {/* Stack overall bike badges in the photo's bottom corner. */}
-          <Stack gap={6} align="flex-end">
-            <HealthBadge readings={readings} />
-            <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
-          </Stack>
-        </BikePhoto>
-      </Box>
-
-      <Stack gap="sm" p="md" style={{ position: "relative", zIndex: 2 }}>
-        <Stack gap={2}>
-          <Text fw={700} fz={20} c="text.4" lh={1.2} lineClamp={1}>
-            {title}
-          </Text>
-          {/* The garage and the bike detail are the only places a bike answers
-              to the nickname its owner gave it. */}
-          {bike.bikename !== null && bike.bikename !== "" && (
-            <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
-              {bike.bikename}
-            </Text>
-          )}
+      {/* The photo carries the name: the gradient that evens the photos out is already
+          there, and the card below it is left to the numbers. */}
+      <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={20}>
+        {/* Stack overall bike badges in the photo's bottom corner. */}
+        <Stack gap={6} align="flex-end">
+          <HealthBadge readings={readings} />
+          <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
         </Stack>
+      </BikePhoto>
 
-        <Group gap="lg" wrap="nowrap">
-          <Group gap={6} wrap="nowrap">
-            <Gauge size={14} color="var(--color-text-dim)" />
-            <Text fz={15} c="text.6">
-              {t("bikes.kilometres", { count: bike.total_km ?? 0 })}
-            </Text>
-          </Group>
-          <Group gap={6} wrap="nowrap">
-            <Clock size={14} color="var(--color-text-dim)" />
-            <Text fz={15} c="text.6">
-              {t("bikes.hours", {
-                count: Math.round((bike.total_time_min ?? 0) / 60),
-              })}
-            </Text>
-          </Group>
+      <Stack gap="xs" px="md" py="sm" style={{ position: "relative", zIndex: 2 }}>
+        {/* The three readings a bike keeps by itself, in the order the bike's own page
+            gives them. The pairing hint takes whatever room is left. */}
+        <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+          <Metric icon={<Gauge size={14} color="var(--color-text-dim)" />}>
+            {t("bikes.kilometres", { count: bike.total_km ?? 0 })}
+          </Metric>
+          <Rule />
+          <Metric icon={<ArrowUpRight size={14} color="var(--color-text-dim)" />}>
+            {t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
+          </Metric>
+          <Rule />
+          <Metric icon={<Clock size={14} color="var(--color-text-dim)" />}>
+            {t("bikes.hours", { count: Math.round((bike.total_time_min ?? 0) / 60) })}
+          </Metric>
           <StravaPairingHint stravaGearId={bike.strava_gear_id} />
         </Group>
 
-        {readings.length > 0 && (
-          <Stack gap="xs" pt={4}>
-            {readings.map((reading) => (
-              <HealthBar key={reading.labelKey} reading={reading} />
-            ))}
-          </Stack>
-        )}
+        {worst !== null && <HealthMeter reading={worst} />}
       </Stack>
     </Paper>
   );

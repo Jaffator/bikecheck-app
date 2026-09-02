@@ -1,29 +1,22 @@
 // What the owner can do with this bike, as a 2x2 grid. Two weights: a filled tile is a
-// branded act, an outlined one goes somewhere. Every tile carries a chevron on its right.
+// branded act, an outlined one goes somewhere. Tiles that navigate carry a chevron on their right.
 import type { ReactElement, ReactNode } from "react";
 import { Box, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, FileText, History, Share2 } from "lucide-react";
 import { Bikecheck } from "@/assets/icons/bikecheck";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
 interface BikeActionTilesProps {
-  // The fourth tile switches on this: an unpaired bike is offered pairing, a paired one
-  // its service history. The grid stays full either way.
-  paired: boolean;
   onAddService: () => void;
   onExportReport: () => void;
   onOpenReports: () => void;
-  onPairGear: () => void;
   onOpenHistory: () => void;
 }
 
 export function BikeActionTiles({
-  paired,
   onAddService,
   onExportReport,
   onOpenReports,
-  onPairGear,
   onOpenHistory,
 }: BikeActionTilesProps): ReactElement {
   const { t } = useTranslation();
@@ -39,22 +32,9 @@ export function BikeActionTiles({
         fill="var(--mantine-color-primary-6)"
         textColor="var(--mantine-color-black)"
       />
-
-      {paired ? (
-        <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} />
-      ) : (
-        <Tile
-          // Pairing is Strava's act, so it wears Strava's mark on Strava's colour.
-          icon={<StravaMark width={20} height={20} />}
-          label={t("strava.pairBike")}
-          onClick={onPairGear}
-          fill="var(--mantine-color-strava-6)"
-          textColor="var(--mantine-color-white)"
-        />
-      )}
-
-      <Tile icon={<Share2 size={20} />} label={t("report.exportBikeCheck")} onClick={onExportReport} />
-      <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} />
+      <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} chevron />
+      <Tile icon={<Share2 size={20} />} label={t("report.exportBikeCheck")} onClick={onExportReport} chevron />
+      <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron />
     </SimpleGrid>
   );
 }
@@ -67,12 +47,14 @@ function Tile({
   onClick,
   fill,
   textColor,
+  chevron = false,
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
   fill?: string;
   textColor?: string;
+  chevron?: boolean;
 }): ReactElement {
   const filled = fill !== undefined;
 
@@ -102,7 +84,9 @@ function Tile({
           </Text>
         </Stack>
         {/* Says "this goes somewhere" rather than "this does something". */}
-        <ChevronRight size={16} color={filled ? textColor : "var(--color-text-dim)"} style={{ flexShrink: 0 }} />
+        {chevron && (
+          <ChevronRight size={16} color={filled ? textColor : "var(--color-text-dim)"} style={{ flexShrink: 0 }} />
+        )}
       </Box>
     </Paper>
   );

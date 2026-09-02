@@ -16,6 +16,7 @@ import { componentTypeIcon } from "./componentIcon";
 import { attachmentSubtitle } from "./attachmentLabels";
 import type { ServiceActionDone, ServiceAttachment, ServiceHistoryItem } from "./service.types";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // The sheet stands over the list rather than covering it, so the list is still there to
 // come back to. The strip left above it is what says so.
@@ -73,6 +74,9 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
     setConfirmingDelete(false);
     onClose();
   }
+
+  // Android's back gesture dismisses this rather than the page under it.
+  useOverlayBack(serviceId !== null, close);
 
   return (
     <Drawer
