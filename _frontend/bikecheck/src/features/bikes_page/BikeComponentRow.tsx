@@ -24,6 +24,7 @@ export function BikeComponentRow({ component, readOnly = false, onOpen }: BikeCo
 
   const position = positionLabel(component.position, t);
   const described = component.component_desc?.trim();
+  const wear = wearLabel(component, t);
 
   return (
     // The card is the category around it, so the row carries no surface of its own — only
@@ -64,17 +65,22 @@ export function BikeComponentRow({ component, readOnly = false, onOpen }: BikeCo
             </Text>
           )}
 
-          {/* What the part has accumulated, in the mono face. */}
-          <Group gap={10} wrap="wrap" mt={2}>
-            <Text className="font-mono" fz={13} c="var(--color-text-dim)">
-              {wearLabel(component, t)}
-            </Text>
-            {readOnly && (
-              <Text className="font-mono" fz={13} c="var(--color-text-dim)">
-                {removedLabel(component, t)}
-              </Text>
-            )}
-          </Group>
+          {/* What the part has accumulated, in the mono face. A part with nothing on
+              record yet has no line at all, rather than one holding a placeholder. */}
+          {(wear !== null || readOnly) && (
+            <Group gap={10} wrap="wrap" mt={2}>
+              {wear !== null && (
+                <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+                  {wear}
+                </Text>
+              )}
+              {readOnly && (
+                <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+                  {removedLabel(component, t)}
+                </Text>
+              )}
+            </Group>
+          )}
         </Stack>
 
         <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
@@ -84,9 +90,9 @@ export function BikeComponentRow({ component, readOnly = false, onOpen }: BikeCo
 }
 
 // The wear the part carries, in whatever it has accumulated: distance for a chain, hours
-// for a fork, both where both were recorded. A part with nothing on record reads as a dash
-// rather than as a zero, the way the bike's own weight does.
-function wearLabel(component: BikeComponent, t: TFunction): string {
+// for a fork, both where both were recorded. A part with nothing on record has no wear to
+// report, and returns null so the row leaves the line out.
+function wearLabel(component: BikeComponent, t: TFunction): string | null {
   const parts: string[] = [];
   if (component.total_km !== null && component.total_km > 0) {
     parts.push(t("bikes.kilometres", { count: component.total_km }));
@@ -94,7 +100,7 @@ function wearLabel(component: BikeComponent, t: TFunction): string {
   if (component.total_time_min !== null && component.total_time_min > 0) {
     parts.push(t("bikes.hours", { count: Math.round(component.total_time_min / 60) }));
   }
-  return parts.length === 0 ? "—" : parts.join(" · ");
+  return parts.length === 0 ? null : parts.join(" · ");
 }
 
 // Which season the part served, for one that has come off.
