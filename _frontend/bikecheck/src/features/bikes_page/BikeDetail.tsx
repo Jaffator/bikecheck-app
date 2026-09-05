@@ -38,11 +38,11 @@ import { useHeaderStore } from "@/store/store";
 // Strava orange stays reserved for Strava, so the ride time takes a warmer orange of its
 // own. All five clear 4.5:1 on the card.
 const METRIC_COLORS = {
-  distance: "#4ADE80",
-  elevation: "#60A5FA",
-  time: "#FB923C",
-  size: "var(--mantine-color-primary-6)",
-  weight: "var(--color-accent)",
+  distance: "var(--mantine-color-text-8)",
+  elevation: "var(--mantine-color-text-8)",
+  time: "var(--mantine-color-text-8)",
+  size: "var(--mantine-color-text-8)",
+  weight: "var(--mantine-color-text-8)",
 } as const;
 
 // The machine's own page: what it is, what it has done, and what can be done with it.
@@ -243,11 +243,15 @@ export function BikeDetail(): ReactElement {
       <UnstyledButton
         onClick={() => setShowingSpecs(true)}
         px="md"
-        py={12}
+        py={15}
         style={{
           borderRadius: "var(--mantine-radius-lg)",
           backgroundColor: "var(--mantine-color-cards-6)",
-          border: "1px solid var(--color-border-subtle)",
+          backgroundImage: "var(--card-glow)",
+          boxShadow: "var(--elev-row)",
+          color: "var(--mantine-color-text-6)",
+          cursor: "pointer",
+          transition: "transform 120ms ease",
         }}
       >
         <Group justify="space-between" wrap="nowrap">
