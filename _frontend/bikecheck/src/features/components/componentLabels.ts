@@ -31,6 +31,8 @@ export function isDismounted(component: BikeComponent): boolean {
 export interface ComponentCategory {
   id: number;
   name: string;
+  // The seeded English name, which is what the category icons are keyed on.
+  groupName: string;
   mounted: BikeComponent[];
   dismounted: BikeComponent[];
 }
@@ -47,6 +49,7 @@ export function groupByCategory(
     const existing = categories.get(component.component_group_id) ?? {
       id: component.component_group_id,
       name: componentCategoryName(component, translate),
+      groupName: component.component_group,
       mounted: [],
       dismounted: [],
     };

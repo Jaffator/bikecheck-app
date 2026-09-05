@@ -1735,6 +1735,13 @@
         "tags": null,
         "replace": true,
         "reset_interval": false
+      },
+      {
+        "action": "Brakes Part Replacement",
+        "targets": ["Brake Rotor"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Drivetrain": [
@@ -1890,6 +1897,13 @@
         "tags": null,
         "replace": true,
         "reset_interval": false
+      },
+      {
+        "action": "Drivetrain Part Replacement",
+        "targets": ["Bashguard", "Bottom Bracket", "Chain Guide", "Crank"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Suspension": [
@@ -2009,6 +2023,13 @@
         "tags": ["Adjustment of control lever from handlebars"],
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Suspension Part Replacement",
+        "targets": ["Fork", "Shock"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Wheels": [
@@ -2053,6 +2074,13 @@
         "tags": ["6902-2RS", "6802-2RS", "6803-2RS", "15267-2RS", "6903-2RS", "Enduro Bearings"],
         "replace": true,
         "reset_interval": true
+      },
+      {
+        "action": "Wheels Part Replacement",
+        "targets": ["Axle", "Inserts", "Rim", "Valves"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Cockpit": [
@@ -2083,6 +2111,13 @@
         "tags": null,
         "replace": true,
         "reset_interval": true
+      },
+      {
+        "action": "Cockpit Part Replacement",
+        "targets": ["Dropper Lever", "Handlebar", "Remote Lever", "Stem"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Saddle & Seatpost": [
@@ -2099,6 +2134,13 @@
         "tags": null,
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Saddle Part Replacement",
+        "targets": ["Saddle", "Seatpost"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Frame": [
@@ -2129,6 +2171,13 @@
         "tags": null,
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Frame Part Replacement",
+        "targets": ["Frame", "Hanger"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "E-bike": [
@@ -2159,6 +2208,13 @@
         "tags": ["No Errors Found", "Error Log Cleared", "Sensor Calibration"],
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Ebike Part Replacement",
+        "targets": ["Battery", "Charger", "Display", "E-Bike System", "Motor"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Other": [
@@ -2168,6 +2224,13 @@
         "tags": ["Regrease", "Pins Replaced", "New Bearings"],
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Other Part Replacement",
+        "targets": ["Pedals"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ]
   }

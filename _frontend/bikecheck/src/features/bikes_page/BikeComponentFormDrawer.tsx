@@ -25,8 +25,8 @@ import { chipStyles, dropdownProps, inputStyles } from "@/features/add_bike_page
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
-// Above the section it is opened from, below the confirmations it can raise.
-const FORM_Z_INDEX = 300;
+// Above the detail sheet it is opened from, below the confirmations it can raise.
+const FORM_Z_INDEX = 320;
 const CALENDAR_Z_INDEX = 350;
 
 // A day, sent as the instant the backend reads back as that day — the same conversion the
@@ -146,6 +146,9 @@ function BikeComponentFormBody({
           backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
+          // Sized by the form rather than by Mantine's 27.5rem default, which cut the
+          // longer add form off; the cap is what stops it filling the screen.
+          height: "auto",
           maxHeight: "88dvh",
           // Rides above the software keyboard, which the webview does not resize for.
           marginBottom: keyboardOffset,

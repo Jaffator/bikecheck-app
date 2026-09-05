@@ -2,13 +2,15 @@
 // presentational and the assembled Service is built in a single readable pass.
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import { useCreateService } from "@/features/service/service.queries";
+import { categoryActionsKey, useCreateService } from "@/features/service/service.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
 import type {
   BikeCategory,
   CatalogueAction,
+  CategoryActions,
   CreateServiceInput,
   ServiceActionInput,
   ServiceReplacementInput,
@@ -37,8 +39,8 @@ function toIsoDate(day: string): string {
   return new Date(`${day}T00:00:00.000Z`).toISOString();
 }
 
-// A bike id in the URL the user could not have typed reads as no bike at all.
-function parseBikeId(raw: string | null): number | null {
+// An id in the URL the user could not have typed reads as no id at all.
+function parseId(raw: string | null): number | null {
   if (raw === null) return null;
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
@@ -91,17 +93,30 @@ export function useAddServiceWizard(): AddServiceWizard {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const { data: bikes, isLoading: bikesLoading } = useBikes();
   const create = useCreateService();
 
   // A bike carried in from its detail page is a bike the user has already chosen.
-  const bikeFromUrl = parseBikeId(searchParams.get("bike"));
+  const bikeFromUrl = parseId(searchParams.get("bike"));
+  // A part carried in from its detail sheet: the category it sits in, the Replacement that
+  // fits it, and the part itself — see ADR 0017.
+  const categoryFromUrl = parseId(searchParams.get("category"));
+  const actionFromUrl = parseId(searchParams.get("action"));
+  const componentFromUrl = parseId(searchParams.get("component"));
 
-  const [requestedStep, setStep] = useState<WizardStep>("bike");
+  // The Replacement the URL names, built from the catalogue the component's detail sheet
+  // already read to find it. Taken once, as the wizard is created: the block belongs to the
+  // user from then on, and a param left in the URL never rebuilds one they have emptied.
+  const [seededDraft] = useState<DraftBlock | null>(() =>
+    seedDraft(queryClient, bikeFromUrl, categoryFromUrl, actionFromUrl, componentFromUrl),
+  );
+
+  const [requestedStep, setStep] = useState<WizardStep>(seededDraft === null ? "bike" : "actions");
   const [chosenBikeId, setChosenBikeId] = useState<number | null>(null);
   const [serviceDate, setServiceDate] = useState<string>(today());
   const [blocks, setBlocks] = useState<CategoryBlock[]>([]);
-  const [draft, setDraft] = useState<DraftBlock | null>(null);
+  const [draft, setDraft] = useState<DraftBlock | null>(seededDraft);
   const [note, setNote] = useState("");
   const [totalCostOverride, setTotalCostOverride] = useState<number | null>(null);
   const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
@@ -165,24 +180,9 @@ export function useAddServiceWizard(): AddServiceWizard {
         ...current,
         actions: [
           ...current.actions,
-          // Run through the same writer an edit uses, so the part going on is described
-          // from the part it replaces here too rather than in a second place.
-          withPrefilledDescriptions({
-            actionId: action.id,
-            actionName: action.action_name,
-            actionI18nKey: action.action_i18n_key,
-            replaceAction: action.replace_action,
-            tags: action.tags,
-            // Nothing is claimed on the user's behalf: what was done is what they write.
-            customNote: "",
-            selectedTags: [],
-            candidates: action.components,
-            // One candidate is no choice at all, so ticking the action makes it. Two are
-            // never guessed between - the user says which brake was bled.
-            componentIds: action.components.length === 1 ? [action.components[0].id] : [],
-            newDescriptions: {},
-            partialCost: null,
-          }),
+          // One candidate is no choice at all, so ticking the action makes it. Two are
+          // never guessed between - the user says which brake was bled.
+          pickAction(action, action.components.length === 1 ? [action.components[0].id] : []),
         ],
       };
     });
@@ -313,10 +313,14 @@ export function useAddServiceWizard(): AddServiceWizard {
         attachment: attachments.length > 0 ? attachments : undefined,
         ...splitActions(blocks, t),
       },
-      // The user is dropped back where the new service now sits at the top.
-      { onSuccess: () => navigate("/service", { replace: true }) },
+      // Back where the work was started from: the bike whose build has just changed when
+      // the wizard was entered from one, otherwise the list the new service tops.
+      {
+        onSuccess: () =>
+          navigate(bikeFromUrl === null ? "/service" : `/bikes/${String(bikeFromUrl)}`, { replace: true }),
+      },
     );
-  }, [bikeId, serviceDate, totalCost, note, attachments, blocks, create, navigate, t]);
+  }, [bikeId, bikeFromUrl, serviceDate, totalCost, note, attachments, blocks, create, navigate, t]);
 
   return {
     step,
@@ -357,6 +361,55 @@ export function useAddServiceWizard(): AddServiceWizard {
 // is rebuilt against the picked parts on every change, which is the whole invariant: a part
 // just picked arrives with the name of the one it replaces, and a part unpicked takes its
 // name with it rather than lingering as a change the user cannot see.
+// The Replacement a component's detail sheet linked to, as a Draft Block. Read out of the
+// cache rather than fetched: the sheet had to read this very catalogue to find the Action,
+// so it is in hand the moment the wizard is created. A link opened cold has no catalogue to
+// read and returns null, which starts the user at the category step instead.
+function seedDraft(
+  client: QueryClient,
+  bikeId: number | null,
+  categoryId: number | null,
+  actionId: number | null,
+  componentId: number | null,
+): DraftBlock | null {
+  if (bikeId === null || categoryId === null || actionId === null || componentId === null) return null;
+
+  const category = client.getQueryData<CategoryActions>(categoryActionsKey(bikeId, categoryId));
+  if (category === undefined) return null;
+
+  const action = category.actions.find((candidate) => candidate.id === actionId);
+  // The catalogue has moved on since the link was built, so the user picks for themselves.
+  if (action === undefined) return null;
+
+  return {
+    categoryId: category.group_id,
+    categoryName: category.group_name,
+    categoryI18nKey: category.group_i18n_key,
+    actions: [pickAction(action, action.components.some((part) => part.id === componentId) ? [componentId] : [])],
+    editingIndex: null,
+  };
+}
+
+// One catalogue Action as the draft holds it, performed on the given parts. Run through
+// the same writer an edit uses, so the part going on is described from the part it
+// replaces here too rather than in a second place.
+function pickAction(action: CatalogueAction, componentIds: number[]): PickedAction {
+  return withPrefilledDescriptions({
+    actionId: action.id,
+    actionName: action.action_name,
+    actionI18nKey: action.action_i18n_key,
+    replaceAction: action.replace_action,
+    tags: action.tags,
+    // Nothing is claimed on the user's behalf: what was done is what they write.
+    customNote: "",
+    selectedTags: [],
+    candidates: action.components,
+    componentIds,
+    newDescriptions: {},
+    partialCost: null,
+  });
+}
+
 function withPrefilledDescriptions(action: PickedAction): PickedAction {
   if (!action.replaceAction) {
     return Object.keys(action.newDescriptions).length === 0 ? action : { ...action, newDescriptions: {} };
