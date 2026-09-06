@@ -2,14 +2,29 @@
 // ask for the same things, and only the Component Type picker differs — a part's kind is
 // chosen once and is not a correction afterwards.
 import { useState, type ReactElement } from "react";
-import { Button, Chip, Drawer, Group, NumberInput, Select, Stack, Text, TextInput } from "@mantine/core";
+import {
+  Button,
+  Chip,
+  Drawer,
+  Group,
+  NumberInput,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+  type ComboboxItem,
+  type ComboboxParsedItem,
+} from "@mantine/core";
 import { DatePickerInput, DatesProvider } from "@mantine/dates";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Lock } from "lucide-react";
+import { ApiError } from "@/api/client";
 import {
+  useBikeComponents,
   useComponentGroups,
   useCreateBikeComponent,
+  useCreateComponentType,
   useDefaultComponents,
   useUpdateBikeComponent,
 } from "@/features/components/components.queries";
@@ -21,13 +36,22 @@ import type {
 } from "@/features/components/components.types";
 import { componentTypeName } from "@/features/components/componentLabels";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import { chipStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
+import { chipStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
+import { SIDED_POSITIONS } from "@/features/add_bike_page/bikeComponents.types";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above the detail sheet it is opened from, below the confirmations it can raise.
 const FORM_Z_INDEX = 320;
 const CALENDAR_Z_INDEX = 350;
+
+// The picker entry that stands for a kind of part the catalogue does not carry. Not an id,
+// so it can never be mistaken for one.
+const CREATE_VALUE = "create";
+
+// A part recorded without a side holds a slot of its own, which is neither front nor rear
+// (ADR 0020). Keyed as the empty string, because a Set cannot hold null usefully here.
+const NO_SIDE = "";
 
 // A day, sent as the instant the backend reads back as that day — the same conversion the
 // service wizard makes.
@@ -68,8 +92,12 @@ function BikeComponentFormBody({
   const keyboardOffset = useKeyboardOffset();
   const { data: catalogue } = useDefaultComponents(ebike);
   const { data: groups } = useComponentGroups();
+  // The build the section has already loaded, read from the same cache entry: what is on
+  // the bike is what says which slots are free.
+  const { data: mounted } = useBikeComponents(bikeId);
   const create = useCreateBikeComponent();
   const update = useUpdateBikeComponent();
+  const createType = useCreateComponentType();
 
   const editing = component !== null;
   // A part a Service has touched keeps its wear and its mounted date (ADR 0016).
@@ -79,6 +107,11 @@ function BikeComponentFormBody({
   const [typeId, setTypeId] = useState<string | null>(
     component === null ? null : String(component.component_type_id),
   );
+  // What the owner typed into the picker, and the name they are naming a new kind of part
+  // with — kept apart, because the search box is retyped and the name must not be.
+  const [search, setSearch] = useState("");
+  const [customName, setCustomName] = useState("");
+  const [customGroupId, setCustomGroupId] = useState<string | null>(null);
   const [description, setDescription] = useState(component?.component_desc ?? "");
   const [position, setPosition] = useState(component?.position ?? "");
   const [distance, setDistance] = useState<number | string>(component?.total_km ?? "");
@@ -92,14 +125,42 @@ function BikeComponentFormBody({
   // Android's back gesture dismisses this rather than the page under it.
   useOverlayBack(opened, onClose);
 
+  const naming = typeId === CREATE_VALUE;
+  const taken = takenSlots(mounted);
   // On an edit the picker is gone, so the type is the part's own; either way the entry in
   // the catalogue is what says whether the kind of part sits on a side of the bike.
   const selected = catalogue?.find((entry) => String(entry.component.component_type_id) === typeId);
+  const customGroup = groups?.find((group) => String(group.id) === customGroupId);
   // A part already recorded with a side keeps its picker even if the catalogue disagrees,
-  // so a position that exists can always be corrected.
-  const takesPosition = (selected?.has_position ?? false) || (component?.position ?? null) !== null;
-  const pending = create.isPending || update.isPending;
-  const failed = create.isError || update.isError;
+  // so a position that exists can always be corrected. A part being named takes its side
+  // from the category it is put in, which is where side_choice lives.
+  const takesPosition = naming
+    ? (customGroup?.side_choice ?? false)
+    : (selected?.has_position ?? false) || (component?.position ?? null) !== null;
+  // The side is half the slot key, so a new part cannot leave it out. An existing one can:
+  // demanding it before a description may be corrected would be work for somebody else's
+  // omission (ADR 0020).
+  const positionRequired = !editing && takesPosition;
+  const takenSides = typeId === null || naming ? new Set<string>() : (taken.get(Number(typeId)) ?? new Set<string>());
+  const options = catalogueOptions(catalogue, groups, taken, t);
+  const someTypeTaken = options.some((option) => option.items.some((item) => item.disabled === true));
+  const pending = create.isPending || update.isPending || createType.isPending;
+  const failed = create.isError || update.isError || createType.isError;
+  const incomplete =
+    !editing &&
+    (typeId === null ||
+      (naming && (customName === "" || customGroupId === null)) ||
+      (positionRequired && position === ""));
+
+  function pickType(value: string | null): void {
+    // The name is taken from the search box at the moment the option is chosen, because
+    // Mantine rewrites the search to the chosen option's label straight afterwards.
+    setCustomName(value === CREATE_VALUE ? search.trim() : "");
+    setCustomGroupId(null);
+    setTypeId(value);
+    // A side free on one kind of part is not free on the next.
+    setPosition("");
+  }
 
   function fieldsToSave(): BikeComponentFields {
     const written: BikeComponentFields = {
@@ -122,14 +183,43 @@ function BikeComponentFormBody({
     };
   }
 
-  function submit(): void {
+  // Naming a kind of part is a write of its own, made just before the part that uses it.
+  // A type that survives a failed mount is kept rather than unwound — it is the owner's
+  // either way — and the picker moves onto it, so a second Save only mounts.
+  async function submit(): Promise<void> {
     if (editing) {
       update.mutate({ id: component.id, bikeId, fields: fieldsToSave() }, { onSuccess: onClose });
       return;
     }
 
-    if (typeId === null) return;
-    create.mutate({ bike_id: bikeId, component_type_id: Number(typeId), ...fieldsToSave() }, { onSuccess: onClose });
+    let mountedTypeId = typeId;
+
+    if (naming) {
+      if (customGroup === undefined || customName === "") return;
+
+      try {
+        const created = await createType.mutateAsync({
+          component_group_id: customGroup.id,
+          component_type: customName,
+          // Never e-bike-only: that would hide the owner's own part on their other bikes.
+          ebike: false,
+          has_position: customGroup.side_choice,
+        });
+        mountedTypeId = String(created.id);
+        setTypeId(mountedTypeId);
+        setSearch(customName);
+        setCustomName("");
+      } catch {
+        // The mutation carries the failure; the form keeps everything the owner typed.
+        return;
+      }
+    }
+
+    if (mountedTypeId === null) return;
+    create.mutate(
+      { bike_id: bikeId, component_type_id: Number(mountedTypeId), ...fieldsToSave() },
+      { onSuccess: onClose },
+    );
   }
 
   return (
@@ -162,13 +252,42 @@ function BikeComponentFormBody({
         <Stack gap="md" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
           {/* The kind of part is chosen once. Correcting it would be a different part. */}
           {!editing && (
+            <Stack gap={6}>
+              <Select
+                label={t("bikeComponents.typeLabel")}
+                placeholder={t("bikeComponents.typePlaceholder")}
+                data={withCreateOption(options, search, naming, customName, t)}
+                value={typeId}
+                onChange={pickType}
+                searchable
+                searchValue={search}
+                onSearchChange={setSearch}
+                // Naming a part is never a match for what was typed, so the default filter
+                // would drop the one option the owner is reaching for.
+                filter={keepCreateOption}
+                styles={inputStyles}
+                comboboxProps={dropdownProps}
+              />
+
+              {/* A greyed option with no reason beside it reads as a missing part. */}
+              {someTypeTaken && (
+                <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
+                  {t("bikeComponents.slotTakenHint")}
+                </Text>
+              )}
+            </Stack>
+          )}
+
+          {/* Which category a newly named part belongs to. Asked for because the catalogue
+              cannot guess it, and because a Replacement is offered per category. */}
+          {naming && (
             <Select
-              label={t("bikeComponents.typeLabel")}
-              placeholder={t("bikeComponents.typePlaceholder")}
-              data={catalogueOptions(catalogue, groups, t)}
-              value={typeId}
-              onChange={setTypeId}
-              searchable
+              label={t("bikeComponents.categoryLabel")}
+              placeholder={t("bikeComponents.categoryPlaceholder")}
+              withAsterisk
+              data={groupOptions(groups, t)}
+              value={customGroupId}
+              onChange={setCustomGroupId}
               styles={inputStyles}
               comboboxProps={dropdownProps}
             />
@@ -186,17 +305,33 @@ function BikeComponentFormBody({
           {/* Offered only for a kind of part that sits on a side of the bike. */}
           {takesPosition && (
             <Stack gap={6}>
-              <Text style={inputStyles.label}>{t("bikeComponents.positionLabel")}</Text>
+              <Text style={inputStyles.label}>
+                {t("bikeComponents.positionLabel")}
+                {/* Half the slot key, so a new part cannot be saved without it. */}
+                {positionRequired && <span style={{ color: "var(--mantine-color-error)" }}> *</span>}
+              </Text>
               <Chip.Group multiple={false} value={position} onChange={setPosition}>
                 <Group gap="xs">
-                  <Chip value="front" radius="xl" size="sm" styles={chipStyles(position === "front", { wrap: false })}>
-                    {t("addBike.positionFront")}
-                  </Chip>
-                  <Chip value="rear" radius="xl" size="sm" styles={chipStyles(position === "rear", { wrap: false })}>
-                    {t("addBike.positionRear")}
-                  </Chip>
+                  {SIDED_POSITIONS.map((side) => (
+                    <Chip
+                      key={side}
+                      value={side}
+                      radius="xl"
+                      size="sm"
+                      disabled={!editing && takenSides.has(side)}
+                      styles={chipStyles(position === side, { wrap: false })}
+                    >
+                      {side === "front" ? t("addBike.positionFront") : t("addBike.positionRear")}
+                    </Chip>
+                  ))}
                 </Group>
               </Chip.Group>
+
+              {!editing && SIDED_POSITIONS.some((side) => takenSides.has(side)) && (
+                <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
+                  {t("bikeComponents.sideTakenHint")}
+                </Text>
+              )}
             </Stack>
           )}
 
@@ -264,7 +399,7 @@ function BikeComponentFormBody({
               and nothing is closed. */}
           {failed && (
             <Text fz={13} c="red.5">
-              {t("bikeComponents.saveFailed")}
+              {t(saveFailureKey(create.error ?? createType.error))}
             </Text>
           )}
 
@@ -273,9 +408,10 @@ function BikeComponentFormBody({
             radius="md"
             mt="xs"
             h="3rem"
-            disabled={(!editing && typeId === null) || pending}
+            disabled={incomplete || pending}
             loading={pending}
-            onClick={submit}
+            styles={disabledButtonStyles}
+            onClick={() => void submit()}
           >
             {t("bikeComponents.save")}
           </Button>
@@ -289,13 +425,97 @@ function minutesFrom(hours: number | string): number | null {
   return hours === "" ? null : Math.round(Number(hours) * 60);
 }
 
+// A slot refused by the server rather than by the form — a build that changed in another
+// tab, or a part added twice in quick succession — says so in its own words.
+function saveFailureKey(error: Error | null): string {
+  if (error instanceof ApiError && error.status === 409) return "bikeComponents.slotTaken";
+  return "bikeComponents.saveFailed";
+}
+
+// Which slots each kind of part already holds on this bike, by type id. Only the parts
+// still on the bike count: dismounting is what frees a slot (ADR 0020).
+function takenSlots(mounted: BikeComponent[] | undefined): Map<number, Set<string>> {
+  const slots = new Map<number, Set<string>>();
+  if (mounted === undefined) return slots;
+
+  for (const part of mounted) {
+    if (part.is_active === false) continue;
+    const sides = slots.get(part.component_type_id) ?? new Set<string>();
+    sides.add(part.position?.toLowerCase() ?? NO_SIDE);
+    slots.set(part.component_type_id, sides);
+  }
+
+  return slots;
+}
+
+// A kind of part is out of slots when both sides are taken, or — for one that does not sit
+// on a side — when the bike already carries it.
+function fullyTaken(sides: Set<string> | undefined, hasPosition: boolean): boolean {
+  if (sides === undefined) return false;
+  return hasPosition ? SIDED_POSITIONS.every((side) => sides.has(side)) : sides.has(NO_SIDE);
+}
+
+// The default filter matches on the label, and "Name your own part" matches nothing the
+// owner is typing. It is kept whatever the search says; everything else filters normally.
+function keepCreateOption({ options, search }: { options: ComboboxParsedItem[]; search: string }): ComboboxParsedItem[] {
+  const query = search.trim().toLowerCase();
+
+  function matches(item: ComboboxItem): boolean {
+    return item.value === CREATE_VALUE || item.label.toLowerCase().includes(query);
+  }
+
+  return options
+    .map((option) => ("group" in option ? { ...option, items: option.items.filter(matches) } : option))
+    .filter((option) => ("group" in option ? option.items.length > 0 : matches(option)));
+}
+
+interface OptionGroup {
+  group: string;
+  items: ComboboxItem[];
+}
+
+// The catalogue plus the way out of it: the part the owner is about to name, offered under
+// the search they typed. Kept in the list once chosen, so the picker can still show it.
+function withCreateOption(
+  options: OptionGroup[],
+  search: string,
+  naming: boolean,
+  customName: string,
+  t: (key: string, values?: Record<string, string>) => string,
+): OptionGroup[] {
+  const name = naming ? customName : search.trim();
+  if (name === "" || nameInCatalogue(options, name)) return options;
+
+  return [
+    ...options,
+    { group: t("bikeComponents.customGroup"), items: [{ value: CREATE_VALUE, label: t("bikeComponents.createType", { name }) }] },
+  ];
+}
+
+function nameInCatalogue(options: OptionGroup[], name: string): boolean {
+  return options.some((option) => option.items.some((item) => item.label.toLowerCase() === name.toLowerCase()));
+}
+
+// The categories a newly named part can be put into, in the order they were seeded.
+function groupOptions(groups: ComponentGroup[] | undefined, t: (key: string) => string): ComboboxItem[] {
+  if (groups === undefined) return [];
+
+  return groups.map((group) => ({
+    value: String(group.id),
+    label: catalogueLabel(group.i18n_key, group.group_name, t),
+  }));
+}
+
 // The catalogue as the picker reads it: types under the category they belong to, in the
-// order the categories were seeded. A category with nothing in it is not offered.
+// order the categories were seeded. A category with nothing in it is not offered, and a
+// type with no slot left is greyed rather than dropped — a vanished part reads as one the
+// app does not know (ADR 0020).
 function catalogueOptions(
   catalogue: AssembleBikeComponent[] | undefined,
   groups: ComponentGroup[] | undefined,
+  taken: Map<number, Set<string>>,
   t: (key: string) => string,
-): { group: string; items: { value: string; label: string }[] }[] {
+): OptionGroup[] {
   if (catalogue === undefined || groups === undefined) return [];
 
   return groups
@@ -306,6 +526,7 @@ function catalogueOptions(
         .map((entry) => ({
           value: String(entry.component.component_type_id),
           label: catalogueLabel(entry.component_i18n_key, entry.component_name, t),
+          disabled: fullyTaken(taken.get(entry.component.component_type_id), entry.has_position),
         })),
     }))
     .filter((option) => option.items.length > 0);

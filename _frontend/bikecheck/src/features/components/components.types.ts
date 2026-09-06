@@ -6,6 +6,28 @@ export interface ComponentGroup {
   side_choice: boolean;
 }
 
+// A kind of part, as the catalogue holds it. Read back when an owner names one of their
+// own, so the form can pick it the moment it exists.
+export interface ComponentType {
+  id: number;
+  component_group_id: number;
+  user_id: number | null;
+  component_type: string;
+  i18n_key: string | null;
+  ebike: boolean;
+  has_position: boolean;
+}
+
+// A part an owner names themselves. The side is not asked for — it follows the category's
+// side_choice — and the type is never marked e-bike-only, which would hide it on the rest
+// of their bikes.
+export interface CreateComponentTypeInput {
+  component_group_id: number;
+  component_type: string;
+  ebike: boolean;
+  has_position: boolean;
+}
+
 // Mounted component draft before bike creation.
 export interface MountedComponentDraft {
   bike_id: number;

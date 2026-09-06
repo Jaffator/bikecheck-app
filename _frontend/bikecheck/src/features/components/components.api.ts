@@ -4,7 +4,9 @@ import type {
   AssembleBikeComponent,
   BikeComponent,
   ComponentGroup,
+  ComponentType,
   CreateBikeComponentInput,
+  CreateComponentTypeInput,
   DeleteBikeComponentInput,
   DismountBikeComponentInput,
   UpdateBikeComponentInput,
@@ -13,6 +15,15 @@ import type {
 // Get component groups.
 export async function getComponentGroups(): Promise<ComponentGroup[]> {
   return apiFetch<ComponentGroup[]>("/components/groups");
+}
+
+// Name a kind of part the catalogue does not carry. The caller owns it, so no user is
+// sent — the server reads that off the session.
+export async function createComponentType(input: CreateComponentTypeInput): Promise<ComponentType> {
+  return apiFetch<ComponentType>("/components", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 // Get default components for the bike type.

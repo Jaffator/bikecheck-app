@@ -41,6 +41,10 @@ export class Response_ComponentGroupDto {
 }
 
 export class Response_ComponentDto {
+  // What the caller picks the new type with straight after naming it.
+  @ApiProperty({ example: 91 })
+  id!: number;
+
   @ApiProperty({ example: 15 })
   component_group_id!: number;
 

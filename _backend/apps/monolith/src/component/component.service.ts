@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -135,6 +135,28 @@ export class ComponentService {
   // Service is created (ADR 0015).
   async createMountedComponent(dto: CreateBikeComponentDto, userId: number): Promise<Response_BikeComponentDto> {
     await this.findOwnedBike(dto.bike_id, userId);
+
+    // One active part per Slot (ADR 0020). The side is part of the key, so a rear caliper
+    // still fits a bike that already has a front one, and a part recorded with no side
+    // holds only the slot for no side.
+    const side = dto.position ?? null;
+    const taken = await this.prisma.components_mounted.findFirst({
+      where: {
+        bike_id: dto.bike_id,
+        component_type_id: dto.component_type_id,
+        // A side written as Front holds the same slot as one written as front, so the
+        // screen and the server never disagree over a row stored before either rule.
+        position: side === null ? null : { equals: side, mode: 'insensitive' },
+        // Rows predating the default read as still mounted, which is what they are.
+        is_active: { not: false },
+        is_deleted: { not: true },
+      },
+      select: { id: true },
+    });
+
+    if (taken !== null) {
+      throw new ConflictException('This part is already on the bike. Dismount or replace it first.');
+    }
 
     const created = await this.prisma.components_mounted.create({
       data: {

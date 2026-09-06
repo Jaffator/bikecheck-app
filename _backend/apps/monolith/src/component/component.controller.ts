@@ -58,6 +58,7 @@ export class ComponentController {
   // ---------- POST a part onto a bike that already exists ----------
   @Post('mounted-components')
   @ApiResponse({ status: 201, type: Response_BikeComponentDto })
+  @ApiResponse({ status: 409, description: 'The slot already holds an active part (ADR 0020)' })
   async createMountedComponent(
     @CurrentUser('userId') userId: string,
     @Body() dto: CreateBikeComponentDto,

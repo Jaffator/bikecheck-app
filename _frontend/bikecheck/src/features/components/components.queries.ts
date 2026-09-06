@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import {
   createBikeComponent,
+  createComponentType,
   deleteBikeComponent,
   dismountBikeComponent,
   getBikeComponents,
@@ -19,7 +20,9 @@ import type {
   AssembleBikeComponent,
   BikeComponent,
   ComponentGroup,
+  ComponentType,
   CreateBikeComponentInput,
+  CreateComponentTypeInput,
   DeleteBikeComponentInput,
   DismountBikeComponentInput,
   UpdateBikeComponentInput,
@@ -38,6 +41,19 @@ export function useDefaultComponents(ebike: boolean): UseQueryResult<AssembleBik
   return useQuery({
     queryKey: ["default-components", ebike],
     queryFn: () => getDefaultComponents(ebike),
+  });
+}
+
+// A newly named type has to be in the catalogue before the part using it can be saved, so
+// both e-bike and acoustic lists are dropped rather than only the one in front of us.
+export function useCreateComponentType(): UseMutationResult<ComponentType, Error, CreateComponentTypeInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateComponentTypeInput) => createComponentType(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["default-components"] });
+    },
   });
 }
 

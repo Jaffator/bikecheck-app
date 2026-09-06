@@ -25,7 +25,7 @@ export class CreateMountedComponentsDto {
   component_desc?: string | null;
 
   @IsOptional()
-  @ApiProperty({ example: 'Front', required: false, nullable: true })
+  @ApiProperty({ example: 'front', required: false, nullable: true })
   @IsString()
   position?: string;
 

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { ComponentService } from './component.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -79,6 +79,9 @@ describe('ComponentService', () => {
     mockPrismaService.$transaction.mockImplementation(async (run: (tx: typeof mockPrismaService) => Promise<unknown>) =>
       run(mockPrismaService),
     );
+
+    // Every slot free unless a test says otherwise (ADR 0020).
+    mockPrismaService.components_mounted.findFirst.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -455,6 +458,60 @@ describe('ComponentService', () => {
         service.createMountedComponent({ bike_id: BIKE_ID, component_type_id: 12 }, OWNER_ID),
       ).rejects.toThrow(NotFoundException);
       expect(mockPrismaService.components_mounted.create).not.toHaveBeenCalled();
+    });
+
+    // A slot is the bike, the kind of part and the side together, and one active part
+    // holds it (ADR 0020). Freeing it is Dismount's job.
+    it('refuses a part whose slot is already taken', async () => {
+      // ARRANGE
+      mockPrismaService.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrismaService.components_mounted.findFirst.mockResolvedValue(mountedRow());
+
+      // ACT & ASSERT
+      await expect(
+        service.createMountedComponent({ bike_id: BIKE_ID, component_type_id: 12, position: 'front' }, OWNER_ID),
+      ).rejects.toThrow(ConflictException);
+      expect(mockPrismaService.components_mounted.create).not.toHaveBeenCalled();
+    });
+
+    it('looks for the taken slot among the parts still on the bike', async () => {
+      // ARRANGE
+      mockPrismaService.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrismaService.components_mounted.create.mockResolvedValue(mountedRow());
+
+      // ACT
+      await service.createMountedComponent(
+        { bike_id: BIKE_ID, component_type_id: 12, position: 'rear' },
+        OWNER_ID,
+      );
+
+      // ASSERT
+      expect(mockPrismaService.components_mounted.findFirst).toHaveBeenCalledWith({
+        where: {
+          bike_id: BIKE_ID,
+          component_type_id: 12,
+          position: { equals: 'rear', mode: 'insensitive' },
+          is_active: { not: false },
+          is_deleted: { not: true },
+        },
+        select: { id: true },
+      });
+    });
+
+    // A part recorded with no side holds the slot for no side, and leaves front and rear
+    // open — which is what keeps rows written before ADR 0020 from blocking new parts.
+    it('treats a part with no side as holding its own slot', async () => {
+      // ARRANGE
+      mockPrismaService.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrismaService.components_mounted.create.mockResolvedValue(mountedRow());
+
+      // ACT
+      await service.createMountedComponent({ bike_id: BIKE_ID, component_type_id: 12 }, OWNER_ID);
+
+      // ASSERT
+      expect(mockPrismaService.components_mounted.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ position: null }) }),
+      );
     });
   });
 

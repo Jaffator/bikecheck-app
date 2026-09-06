@@ -51,12 +51,21 @@ Service to touch it settles it (ADR 0016): from then on the part can only be dis
 deleted or rewritten.
 _Avoid_: Draft component (Draft already means the wizard's Draft Block), new component
 
+**Slot**:
+A place on a bike a part occupies — the bike, the Component Type and the position together. At most
+one active Mounted Component holds a slot (ADR 0020), so a bike cannot carry two chains, while a
+type that sits on both ends carries one part per side. A part recorded with no position holds the
+slot for no position, leaving front and rear open.
+_Avoid_: Position on its own (that is only the side, one third of the key), mount point
+
 **Dismount**:
 Taking a part off a bike while keeping everything it did. The Mounted Component stops accumulating
 and leaves the build, and its wear history stays readable against the bike it served. What a
 Replacement does to the old part (ADR 0003), and what an owner does by hand when a part comes off
-with nothing fitted in its place. Distinct from deleting a Mounted Component, which is only offered
-while it is still Unserviced. The schema calls the moment `removed_at`.
+with nothing fitted in its place. Frees the Slot, which is what separates it from a Replacement:
+Dismount leaves the slot empty, a Replacement changes what fills it. Distinct from deleting a
+Mounted Component, which is only offered while it is still Unserviced. The schema calls the moment
+`removed_at`.
 _Avoid_: Remove (that is deleting a row that should never have existed), retire (a dismounted part
 may be fitted to another bike)
 
