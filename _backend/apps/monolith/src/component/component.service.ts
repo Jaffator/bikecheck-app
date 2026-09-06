@@ -24,20 +24,62 @@ const bikeComponentInclude = {
 
 type MountedWithRelations = Prisma.components_mountedGetPayload<{ include: typeof bikeComponentInclude }>;
 
+// The seeded Replacement that covers a whole Component Category — the `<Category> Part
+// Replacement` catch-all every category has. It is found through the types it already
+// targets rather than by templating the category name, because two categories name their
+// catch-all differently from themselves (Saddle & Seatpost, E-bike).
+async function findCategoryCatchAllReplacement(
+  tx: Prisma.TransactionClient,
+  componentGroupId: number,
+): Promise<{ id: number } | null> {
+  return tx.events_action.findFirst({
+    where: {
+      replace_action: true,
+      user_id: null,
+      action_name: { endsWith: 'Part Replacement' },
+      // Targets this category and nothing else. A catch-all is one row per category
+      // (ADR 0017), so an Action reaching into a second group is not this one's.
+      event_action_targets: {
+        some: { component_types: { component_group_id: componentGroupId } },
+        none: { component_types: { component_group_id: { not: componentGroupId } } },
+      },
+    },
+    // The backfill picks the same row, so a category that ever grows a second catch-all
+    // is answered the same way on both paths.
+    orderBy: { id: 'asc' },
+    select: { id: true },
+  });
+}
+
 @Injectable()
 export class ComponentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // The owner is the caller, never whoever the body names.
+  // The owner is the caller, never whoever the body names. The type also joins its
+  // category's catch-all Replacement, so Replace is offered on it like on a seeded one
+  // (ADR 0018). One transaction, so a type never half-exists.
   async createComponentType(dto: CustomComponentsDto, userId: number): Promise<Response_ComponentDto> {
-    return this.prisma.component_types.create({
-      data: {
-        component_type: dto.component_type,
-        component_group_id: dto.component_group_id,
-        user_id: userId,
-        ebike: dto.ebike,
-        has_position: dto.has_position,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const created = await tx.component_types.create({
+        data: {
+          component_type: dto.component_type,
+          component_group_id: dto.component_group_id,
+          user_id: userId,
+          ebike: dto.ebike,
+          has_position: dto.has_position,
+        },
+      });
+
+      const catchAll = await findCategoryCatchAllReplacement(tx, dto.component_group_id);
+      // A catalogue with no catch-all for the category leaves the type uncovered rather
+      // than refusing to create it: naming a part must never fail on the catalogue.
+      if (catchAll !== null) {
+        await tx.event_action_targets.create({
+          data: { event_action_id: catchAll.id, component_type_id: created.id },
+        });
+      }
+
+      return created;
     });
   }
 

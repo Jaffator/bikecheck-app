@@ -96,3 +96,12 @@ export interface DeleteBikeComponentInput {
   id: number;
   bikeId: number;
 }
+
+// The four things an owner can do to a part on the build, which travel together from the
+// components section down to the part's own row (ADR 0018).
+export interface PartActions {
+  onReplace: (component: BikeComponent, actionId: number) => void;
+  onEdit: (component: BikeComponent) => void;
+  onDismount: (component: BikeComponent) => void;
+  onDelete: (component: BikeComponent) => void;
+}

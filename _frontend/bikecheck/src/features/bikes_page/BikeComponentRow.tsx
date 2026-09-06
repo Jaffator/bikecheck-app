@@ -1,25 +1,35 @@
 // One part on the bike, as the build lists it: what it is, what the owner called it, and
-// how far it has come. Everything else about the part — when it went on, when it was last
-// serviced, how healthy it is — and everything that can be done to it live in the detail
-// sheet the row opens, so the row is one tap target with nothing competing inside it.
+// how far it has come. The text is the button that opens the part's detail sheet; the
+// kebab beside it is its sibling, carrying everything that can be done to the part
+// (ADR 0018). A part that has come off is a record, so it carries no kebab at all.
 import type { ReactElement } from "react";
 import type { TFunction } from "i18next";
-import { Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Group, Menu, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { ChevronRight } from "lucide-react";
-import type { BikeComponent } from "@/features/components/components.types";
+import { ArrowLeftRight, MoreVertical, PackageMinus, Pencil, Trash2 } from "lucide-react";
+import type { BikeComponent, PartActions } from "@/features/components/components.types";
 import { componentTypeName, positionLabel } from "@/features/components/componentLabels";
 
 interface BikeComponentRowProps {
   component: BikeComponent;
-  // A part that has come off says which season it served; a mounted one has nothing to say
-  // there that the sheet does not say better.
+  // A part that has come off says which season it served. It is a record rather than a
+  // build item, so it is given no actions and renders no kebab.
   readOnly?: boolean;
+  // The Action a Replacement of this part would be recorded under, resolved by the
+  // category card. Null while the catalogue is still arriving.
+  replacementActionId?: number | null;
   onOpen: (component: BikeComponent) => void;
+  actions?: PartActions;
 }
 
-export function BikeComponentRow({ component, readOnly = false, onOpen }: BikeComponentRowProps): ReactElement {
+export function BikeComponentRow({
+  component,
+  readOnly = false,
+  replacementActionId = null,
+  onOpen,
+  actions,
+}: BikeComponentRowProps): ReactElement {
   const { t } = useTranslation();
 
   const position = positionLabel(component.position, t);
@@ -29,14 +39,23 @@ export function BikeComponentRow({ component, readOnly = false, onOpen }: BikeCo
   return (
     // The card is the category around it, so the row carries no surface of its own — only
     // the hairline that tells it from the row above, or from the category header.
-    <UnstyledButton
-      onClick={() => onOpen(component)}
-      px="md"
-      py={12}
-      style={{ display: "block", width: "100%", borderTop: "1px solid var(--color-border-subtle)" }}
+    <Group
+      justify="space-between"
+      wrap="nowrap"
+      gap="sm"
+      pr={readOnly ? "md" : 6}
+      style={{ borderTop: "1px solid var(--color-border-subtle)" }}
     >
-      <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+      {/* The reading half of the row. The kebab is beside it, never inside it: a button
+          within a button is not valid markup. */}
+      <UnstyledButton
+        onClick={() => onOpen(component)}
+        pl="md"
+        pr={readOnly ? 0 : "xs"}
+        py={12}
+        style={{ display: "block", minWidth: 0, flex: 1 }}
+      >
+        <Stack gap={2} style={{ minWidth: 0 }}>
           {/* The kind of part leads, in the body face. The side it sits on rides with it,
               because that is what makes the front brake readable as not the rear one. */}
           <Group gap={6} wrap="nowrap">
@@ -82,10 +101,108 @@ export function BikeComponentRow({ component, readOnly = false, onOpen }: BikeCo
             </Group>
           )}
         </Stack>
+      </UnstyledButton>
 
-        <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
-      </Group>
-    </UnstyledButton>
+      {/* A part off the bike cannot be replaced, corrected, dismounted or deleted, so it
+          is offered none of them. */}
+      {!readOnly && actions !== undefined && (
+        <RowMenu component={component} replacementActionId={replacementActionId} actions={actions} />
+      )}
+    </Group>
+  );
+}
+
+// The four things an owner can do to a mounted part, in one fixed order so muscle memory
+// carries across parts. All four are always listed; only Delete is ever disabled, and it
+// says why rather than going missing (ADR 0018).
+function RowMenu({
+  component,
+  replacementActionId,
+  actions,
+}: {
+  component: BikeComponent;
+  replacementActionId: number | null;
+  actions: PartActions;
+}): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Menu position="bottom-end" radius="md" withinPortal>
+      <Menu.Target>
+        <ActionIcon
+          variant="transparent"
+          radius="xl"
+          size="md"
+          aria-label={t("bikeComponents.rowMenu")}
+          style={{ flexShrink: 0 }}
+        >
+          <MoreVertical size={18} color="var(--color-text-dim)" />
+        </ActionIcon>
+      </Menu.Target>
+
+      {/* Wears the same surface as the bike's own menu, so the app has one dropdown. */}
+      <Menu.Dropdown
+        bg="cards.6"
+        p={8}
+        style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
+      >
+        {/* Replacing leads, because it is the one that records real work. Every Component
+            Type is covered by a Replacement (ADR 0018), so the only reason it is not yet
+            actionable is the category's catalogue still being on its way. */}
+        <Menu.Item
+          color="text"
+          py={12}
+          fw={600}
+          leftSection={<ArrowLeftRight size={18} />}
+          disabled={replacementActionId === null}
+          onClick={() => {
+            if (replacementActionId !== null) actions.onReplace(component, replacementActionId);
+          }}
+        >
+          {t("bikeComponents.replace")}
+        </Menu.Item>
+
+        <Menu.Item
+          color="text"
+          py={12}
+          fw={600}
+          leftSection={<Pencil size={18} />}
+          onClick={() => actions.onEdit(component)}
+        >
+          {t("bikeComponents.edit")}
+        </Menu.Item>
+
+        <Menu.Item
+          color="text"
+          py={12}
+          fw={600}
+          leftSection={<PackageMinus size={18} />}
+          onClick={() => actions.onDismount(component)}
+        >
+          {t("bikeComponents.dismount")}
+        </Menu.Item>
+
+        {/* Only a part no Service has touched may be taken back; deleting a serviced one
+            would orphan the work recorded against it (ADR 0016). The item stays listed
+            and disabled, so the rule is taught rather than hidden. */}
+        <Menu.Item
+          color="red.5"
+          py={12}
+          fw={600}
+          leftSection={<Trash2 size={18} />}
+          disabled={!component.unserviced}
+          onClick={() => actions.onDelete(component)}
+        >
+          {t("bikeComponents.delete")}
+        </Menu.Item>
+
+        {!component.unserviced && (
+          <Text fz={11} c="var(--color-text-dim)" px={12} pb={4} style={{ maxWidth: 220 }}>
+            {t("bikeComponents.deleteBlocked")}
+          </Text>
+        )}
+      </Menu.Dropdown>
+    </Menu>
   );
 }
 

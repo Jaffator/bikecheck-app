@@ -1,21 +1,19 @@
 // One Mounted Component in full, over the build it was opened from. Everything the row
-// had no room for is read here, and everything that can be done to the part is done from
-// here — including a Replacement, which leaves for the service wizard rather than being
-// written by this section (ADR 0017).
+// had no room for is read here, and nothing more: the four things that can be done to the
+// part live on its row's kebab, so the sheet is purely a read (ADR 0018).
 import { useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Divider, Drawer, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Divider, Drawer, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { ArrowLeftRight, PackageMinus, Pencil, Trash2, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { TFunction } from "i18next";
-import { useCategoryActions } from "@/features/service/service.queries";
 import type { BikeComponent } from "@/features/components/components.types";
 import { componentTypeName, isDismounted, positionLabel } from "@/features/components/componentLabels";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
-// The same height the service detail stands at, for the same reason: the strip left above
-// it says the build is still there to come back to.
-const SHEET_HEIGHT = "85vh";
+// Half the screen, fixed rather than content-sized, so the sheet does not jump in height
+// between parts and the build it was opened from stays visible behind it.
+const SHEET_HEIGHT = "50vh";
 
 // Above the section, below the form the sheet opens and the confirmations that form raises.
 const SHEET_Z_INDEX = 300;
@@ -23,25 +21,10 @@ const SHEET_Z_INDEX = 300;
 interface BikeComponentDetailSheetProps {
   // Null closes the sheet.
   component: BikeComponent | null;
-  bikeId: number;
   onClose: () => void;
-  onEdit: (component: BikeComponent) => void;
-  onDismount: (component: BikeComponent) => void;
-  onDelete: (component: BikeComponent) => void;
-  onReplace: (component: BikeComponent, actionId: number) => void;
 }
 
-export function BikeComponentDetailSheet({
-  component,
-  bikeId,
-  onClose,
-  onEdit,
-  onDismount,
-  onDelete,
-  onReplace,
-}: BikeComponentDetailSheetProps): ReactElement {
-  const { t } = useTranslation();
-
+export function BikeComponentDetailSheet({ component, onClose }: BikeComponentDetailSheetProps): ReactElement {
   // The sheet is still on screen while it slides out, so what it was last showing stays
   // drawn all the way down instead of emptying mid-animation.
   const shown = useLastShown(component);
@@ -50,9 +33,6 @@ export function BikeComponentDetailSheet({
   useOverlayBack(component !== null, onClose);
 
   const removed = shown !== null && isDismounted(shown);
-  // What the wizard would prefill, asked of the catalogue rather than guessed here. Only
-  // a part still on the bike can be replaced, so nothing is asked for one that came off.
-  const replacementActionId = useReplacementAction(bikeId, removed ? null : shown);
 
   return (
     <Drawer
@@ -91,79 +71,8 @@ export function BikeComponentDetailSheet({
         )}
       </Box>
 
-      {/* A part that has come off is a record, not a build item: nothing is done to it. */}
-      {shown !== null && !removed && (
-        <Stack
-          gap="sm"
-          px="md"
-          pt="sm"
-          pb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
-          style={{ flexShrink: 0, borderTop: "1px solid var(--color-border-subtle)" }}
-        >
-          {/* Replacing is the loudest thing here because it is the one that records work.
-              It is absent, rather than disabled, when the catalogue has nothing to fit. */}
-          {replacementActionId !== null && (
-            <Button
-              variant="filled"
-              color="primary.6"
-              radius="md"
-              leftSection={<ArrowLeftRight size={16} />}
-              onClick={() => onReplace(shown, replacementActionId)}
-            >
-              {t("bikeComponents.replace")}
-            </Button>
-          )}
-
-          <Group gap="sm" grow wrap="nowrap">
-            <Button
-              variant="default"
-              radius="md"
-              leftSection={<Pencil size={16} />}
-              onClick={() => onEdit(shown)}
-              styles={outlineButton()}
-            >
-              {t("bikeComponents.edit")}
-            </Button>
-            <Button
-              variant="default"
-              radius="md"
-              leftSection={<PackageMinus size={16} />}
-              onClick={() => onDismount(shown)}
-              styles={outlineButton()}
-            >
-              {t("bikeComponents.dismount")}
-            </Button>
-          </Group>
-
-          {/* Only a part no Service has touched may be taken back; deleting a serviced one
-              would orphan the work recorded against it (ADR 0016). */}
-          {shown.unserviced && (
-            <Button
-              variant="subtle"
-              color="red.5"
-              radius="md"
-              leftSection={<Trash2 size={16} />}
-              onClick={() => onDelete(shown)}
-            >
-              {t("bikeComponents.delete")}
-            </Button>
-          )}
-        </Stack>
-      )}
     </Drawer>
   );
-}
-
-// The outline weight the app's secondary buttons wear, which Mantine's `default` variant
-// does not reach on this surface.
-function outlineButton(): { root: Record<string, string> } {
-  return {
-    root: {
-      backgroundColor: "transparent",
-      borderColor: "var(--color-border-subtle)",
-      color: "var(--mantine-color-text-6)",
-    },
-  };
 }
 
 // What the part is, and what the owner called it.
@@ -313,19 +222,4 @@ function useLastShown(component: BikeComponent | null): BikeComponent | null {
   const [last, setLast] = useState<BikeComponent | null>(null);
   if (component !== null && component !== last) setLast(component);
   return component ?? last;
-}
-
-// The Action the wizard would open prefilled: a Replacement this bike can receive that
-// names this very part. Where a category offers both a specific replacement and its
-// catch-all, the specific one wins — it is the one covering fewer of the bike's parts.
-function useReplacementAction(bikeId: number, component: BikeComponent | null): number | null {
-  const { data: category } = useCategoryActions(bikeId, component?.component_group_id ?? null);
-  if (component === null || category === undefined) return null;
-
-  const fitting = category.actions.filter(
-    (action) => action.replace_action && action.components.some((candidate) => candidate.id === component.id),
-  );
-  if (fitting.length === 0) return null;
-
-  return fitting.reduce((best, action) => (action.components.length < best.components.length ? action : best)).id;
 }

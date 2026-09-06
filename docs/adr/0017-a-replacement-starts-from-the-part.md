@@ -47,7 +47,11 @@ in the other.
 - The wizard seeds its block from the catalogue the detail sheet had already fetched to find the
   Action, read straight out of the query cache as the wizard is created. A link opened cold — a
   reload, or a pasted URL — finds no catalogue and starts at the category step with the bike
-  chosen, which is where the tiles land too.
+  chosen, which is where the tiles land too. Amended by ADR 0018: the catalogue is now fetched by
+  the unrolled category card rather than by the sheet, which warms the same cache entry earlier.
+  The URL contract and the synchronous seed are unchanged.
+- Amended by ADR 0018: Replace no longer lives in the detail sheet's footer. It is the first item
+  of the kebab on the part's row, and the sheet keeps no actions at all.
 - `Battery Swap` is `replace_action` and targets Derailleur and Shifter, so those two count as
   covered and their Replace opens an AXS battery swap. That is a seeding question, not one this
   decision settles.

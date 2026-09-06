@@ -238,6 +238,7 @@
     "edit": "Edit part",
     "dismount": "Dismount",
     "delete": "Delete part",
+    "deleteBlocked": "This part has been serviced, so it cannot be deleted. Dismount it instead.",
     "replace": "Replace part",
     "detailDistance": "Distance",
     "detailTime": "Time",

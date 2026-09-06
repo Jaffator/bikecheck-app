@@ -1,10 +1,10 @@
 // What the machine is made of, read as its Component Categories. The build arrives folded:
 // each category is a card that opens on its own and closes the one before it, so the whole
 // build is legible at a glance and only one category is ever unrolled. The section lets the
-// owner add, correct, dismount and delete a part. It still writes no maintenance of its own:
-// a Replacement leaves for the service wizard, prefilled, from the part's detail sheet
-// (ADR 0015, amended by ADR 0017).
-import { useEffect, useRef, useState, type ReactElement, type RefObject } from "react";
+// owner add, correct, dismount and delete a part, from the kebab on the part's own row. It
+// still writes no maintenance of its own: a Replacement leaves for the service wizard,
+// prefilled (ADR 0015, amended by ADR 0017 and ADR 0018).
+import { useEffect, useMemo, useRef, useState, type ReactElement, type RefObject } from "react";
 import {
   ActionIcon,
   Box,
@@ -30,7 +30,8 @@ import {
   useDeleteBikeComponent,
   useDismountBikeComponent,
 } from "@/features/components/components.queries";
-import type { BikeComponent } from "@/features/components/components.types";
+import { useCategoryActions } from "@/features/service/service.queries";
+import type { BikeComponent, PartActions } from "@/features/components/components.types";
 import { groupByCategory, type ComponentCategory } from "@/features/components/componentLabels";
 import { BikeComponentRow } from "./BikeComponentRow";
 import { BikeComponentFormDrawer } from "./BikeComponentFormDrawer";
@@ -121,6 +122,14 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
 
   const categories = groupByCategory(components ?? [], t);
 
+  // The four writes the section owns, handed down to every mounted part's kebab.
+  const partActions: PartActions = {
+    onReplace: startReplacement,
+    onEdit: openEdit,
+    onDismount: askToDismount,
+    onDelete: setDeleting,
+  };
+
   return (
     <Stack gap="sm">
       <Group justify="space-between" wrap="nowrap">
@@ -166,10 +175,12 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
         <Category
           key={category.id}
           category={category}
+          bikeId={bikeId}
           open={openCategoryId === category.id}
           onToggle={() => toggleCategory(category.id)}
           cardRef={openCategoryId === category.id ? openCardRef : undefined}
           onOpen={setViewing}
+          actions={partActions}
         />
       ))}
 
@@ -179,15 +190,7 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
         </Text>
       )}
 
-      <BikeComponentDetailSheet
-        component={viewing}
-        bikeId={bikeId}
-        onClose={() => setViewing(null)}
-        onEdit={openEdit}
-        onDismount={askToDismount}
-        onDelete={setDeleting}
-        onReplace={startReplacement}
-      />
+      <BikeComponentDetailSheet component={viewing} onClose={() => setViewing(null)} />
 
       <BikeComponentFormDrawer
         opened={formOpen}
@@ -281,19 +284,28 @@ function categoryIcon(groupName: string): ReactElement {
 // The build is what the section is for, so the history does not crowd it.
 function Category({
   category,
+  bikeId,
   open,
   onToggle,
   cardRef,
   onOpen,
+  actions,
 }: {
   category: ComponentCategory;
+  bikeId: number;
   open: boolean;
   onToggle: () => void;
   cardRef?: RefObject<HTMLDivElement | null>;
   onOpen: (component: BikeComponent) => void;
+  actions: PartActions;
 }): ReactElement {
   const { t } = useTranslation();
   const [showDismounted, setShowDismounted] = useState(false);
+
+  // The catalogue is asked for when the category unrolls — exactly when its rows come into
+  // view — so Replace is ready before the menu opens, and a closed category costs nothing.
+  // It also warms the cache the service wizard seeds its draft from (ADR 0018).
+  const replacementActions = useReplacementActionByComponent(bikeId, open ? category.id : null);
 
   // A category with nothing fitted still holds the bike's history, so it counts what came
   // off rather than reading as an empty zero.
@@ -355,7 +367,13 @@ function Category({
       {open && (
         <Stack gap={0}>
           {category.mounted.map((component) => (
-            <BikeComponentRow key={component.id} component={component} onOpen={onOpen} />
+            <BikeComponentRow
+              key={component.id}
+              component={component}
+              replacementActionId={replacementActions.get(component.id) ?? null}
+              onOpen={onOpen}
+              actions={actions}
+            />
           ))}
 
           {category.dismounted.length > 0 && (
@@ -389,4 +407,28 @@ function Category({
       )}
     </Paper>
   );
+}
+
+// The Action a Replacement of each part in this category would be recorded under, looked
+// up by Mounted Component id. Where a category offers both a specific replacement and its
+// catch-all, the specific one wins — it is the one covering fewer of the bike's parts.
+function useReplacementActionByComponent(bikeId: number, categoryId: number | null): Map<number, number> {
+  const { data: category } = useCategoryActions(bikeId, categoryId);
+
+  return useMemo(() => {
+    const chosen = new Map<number, { actionId: number; coverage: number }>();
+    if (category === undefined) return new Map<number, number>();
+
+    for (const action of category.actions) {
+      if (!action.replace_action) continue;
+      for (const candidate of action.components) {
+        const best = chosen.get(candidate.id);
+        if (best === undefined || action.components.length < best.coverage) {
+          chosen.set(candidate.id, { actionId: action.id, coverage: action.components.length });
+        }
+      }
+    }
+
+    return new Map([...chosen].map(([componentId, best]) => [componentId, best.actionId]));
+  }, [category]);
 }

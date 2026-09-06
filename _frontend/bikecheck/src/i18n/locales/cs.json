@@ -247,6 +247,7 @@
     "edit": "Upravit komponentu",
     "dismount": "Sundat z kola",
     "delete": "Smazat komponentu",
+    "deleteBlocked": "Tato komponenta už prošla servisem, takže ji nelze smazat. Místo toho ji sundej z kola.",
     "replace": "Vyměnit komponentu",
     "detailDistance": "Nájezd",
     "detailTime": "Čas",

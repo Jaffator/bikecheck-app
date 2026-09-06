@@ -50,6 +50,13 @@ describe('ComponentService', () => {
       findMany: jest.fn(),
       create: jest.fn(),
     },
+    events_action: {
+      findFirst: jest.fn(),
+    },
+    event_action_targets: {
+      create: jest.fn(),
+    },
+    $transaction: jest.fn(),
     components_mounted: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -67,6 +74,11 @@ describe('ComponentService', () => {
     }).compile();
 
     service = module.get<ComponentService>(ComponentService);
+
+    // The transaction is the same client to the caller, so the mock just runs the body.
+    mockPrismaService.$transaction.mockImplementation(async (run: (tx: typeof mockPrismaService) => Promise<unknown>) =>
+      run(mockPrismaService),
+    );
   });
 
   afterEach(() => {
@@ -163,16 +175,17 @@ describe('ComponentService', () => {
   });
 
   // A type an owner names is theirs. Who owns it is read off the token, never off the body.
+  // It also joins its category's catch-all Replacement, so Replace works on it (ADR 0018).
   describe('createComponentType', () => {
+    const CUSTOM_TYPE = { component_group_id: 3, component_type: 'Dropper remote', ebike: false, has_position: false };
+
     it('makes the caller the owner of the type they name', async () => {
       // ARRANGE
-      mockPrismaService.component_types.create.mockResolvedValue({});
+      mockPrismaService.component_types.create.mockResolvedValue({ id: 91 });
+      mockPrismaService.events_action.findFirst.mockResolvedValue(null);
 
       // ACT
-      await service.createComponentType(
-        { component_group_id: 3, component_type: 'Dropper remote', ebike: false, has_position: false },
-        7,
-      );
+      await service.createComponentType(CUSTOM_TYPE, 7);
 
       // ASSERT
       expect(mockPrismaService.component_types.create).toHaveBeenCalledWith({
@@ -184,6 +197,45 @@ describe('ComponentService', () => {
           has_position: false,
         },
       });
+    });
+
+    it('binds the new type to its category catch-all Replacement', async () => {
+      // ARRANGE
+      mockPrismaService.component_types.create.mockResolvedValue({ id: 91 });
+      mockPrismaService.events_action.findFirst.mockResolvedValue({ id: 44 });
+
+      // ACT
+      await service.createComponentType(CUSTOM_TYPE, 7);
+
+      // ASSERT
+      expect(mockPrismaService.event_action_targets.create).toHaveBeenCalledWith({
+        data: { event_action_id: 44, component_type_id: 91 },
+      });
+    });
+
+    it('still creates the type when the category has no catch-all Replacement', async () => {
+      // ARRANGE
+      mockPrismaService.component_types.create.mockResolvedValue({ id: 91, component_type: 'Dropper remote' });
+      mockPrismaService.events_action.findFirst.mockResolvedValue(null);
+
+      // ACT
+      const created = await service.createComponentType(CUSTOM_TYPE, 7);
+
+      // ASSERT
+      expect(created).toEqual({ id: 91, component_type: 'Dropper remote' });
+      expect(mockPrismaService.event_action_targets.create).not.toHaveBeenCalled();
+    });
+
+    it('answers with the created type, unchanged by the binding', async () => {
+      // ARRANGE
+      mockPrismaService.component_types.create.mockResolvedValue({ id: 91, component_type: 'Dropper remote' });
+      mockPrismaService.events_action.findFirst.mockResolvedValue({ id: 44 });
+
+      // ACT
+      const created = await service.createComponentType(CUSTOM_TYPE, 7);
+
+      // ASSERT
+      expect(created).toEqual({ id: 91, component_type: 'Dropper remote' });
     });
   });
 
