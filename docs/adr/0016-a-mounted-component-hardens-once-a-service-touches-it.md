@@ -19,6 +19,8 @@ work. One rule covers both: the state of a part's service history decides whethe
   is null. Nothing extra is computed to enforce the rule.
 - The components section shows different affordances for two rows that look identical. An Unserviced
   part offers Delete and editable mileage; a serviced one offers neither, and has to say why.
+  Amended by ADR 0018: Delete is now always listed and disabled with its reason, rather than
+  absent, so the rule is taught instead of hidden. Editable mileage is unchanged.
 - Correcting a serviced part's mileage is impossible by design. The way out is to dismount it and
   mount a replacement — which is the truthful record anyway if the numbers were that wrong.
 - Nothing hardens a part except a Service. Rides accumulate against it freely and it stays

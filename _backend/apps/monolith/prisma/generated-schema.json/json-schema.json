@@ -436,6 +436,12 @@
           "items": {
             "$ref": "#/definitions/component_types"
           }
+        },
+        "events_action": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/events_action"
+          }
         }
       }
     },
@@ -465,6 +471,20 @@
         "has_position": {
           "type": "boolean",
           "default": false
+        },
+        "is_deleted": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "deleted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
         },
         "component_groups": {
           "$ref": "#/definitions/component_groups"
@@ -760,6 +780,16 @@
           "type": [
             "string",
             "null"
+          ]
+        },
+        "component_groups": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/component_groups"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "default_service_intervals": {

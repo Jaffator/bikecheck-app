@@ -215,6 +215,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bike/external/family": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Bike searchFamilyExternal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bike/external/components": {
         parameters: {
             query?: never;
@@ -327,6 +343,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bike-events/attachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["BikeEvent uploadAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bike-events/group-actions": {
         parameters: {
             query?: never;
@@ -338,6 +370,54 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bike-events/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["BikeEvent categories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bike-events/action-tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["BikeEvent createActionTag"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bike-events/action-tags/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["BikeEvent deleteActionTag"];
         options?: never;
         head?: never;
         patch?: never;
@@ -359,6 +439,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bike-events/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["BikeEvent history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bike-events/history/totals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["BikeEvent historyTotals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bike-events/{id}": {
         parameters: {
             query?: never;
@@ -372,7 +484,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["BikeEvent update"];
         trace?: never;
     };
     "/api/bike-events/delsoft/{id}": {
@@ -464,11 +576,43 @@ export interface paths {
         };
         get: operations["Component getMountedComponents"];
         put?: never;
-        post?: never;
+        post: operations["Component createMountedComponent"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/components/mounted-components/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["Component deleteMountedComponent"];
+        options?: never;
+        head?: never;
+        patch: operations["Component updateMountedComponent"];
+        trace?: never;
+    };
+    "/api/components/mounted-components/{id}/dismount": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["Component dismountComponent"];
         trace?: never;
     };
     "/api/organizations": {
@@ -680,18 +824,34 @@ export interface paths {
         patch: operations["Notification markRead"];
         trace?: never;
     };
-    "/api/reports/bikes/{bikeId}": {
+    "/api/rides": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List reports for a specific bike */
-        get: operations["Report listForBike"];
+        /** List the current user's rides, newest first */
+        get: operations["Ride listRides"];
         put?: never;
-        /** Generate a shareable report for a bike */
-        post: operations["Report create"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Export a report and read it back for preview */
+        post: operations["Report exportReport"];
         delete?: never;
         options?: never;
         head?: never;
@@ -705,14 +865,49 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List all reports for the current user */
+        /** List the reports the caller has made, newest first */
         get: operations["Report listMine"];
+        put?: never;
+        post?: never;
+        /** Discard every report of the caller that was never published, or already revoked */
+        delete: operations["Report discardAll"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/mine/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Revoke every open link the caller has out, for good */
+        patch: operations["Report revokeAll"];
+        trace?: never;
+    };
+    "/api/reports/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Open a report to the world */
+        patch: operations["Report publish"];
         trace?: never;
     };
     "/api/reports/{id}/revoke": {
@@ -728,8 +923,25 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Revoke a report link */
+        /** Revoke a report link, for good */
         patch: operations["Report revoke"];
+        trace?: never;
+    };
+    "/api/reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Discard a report that was never published, or one already revoked */
+        delete: operations["Report discard"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/reports/public/{token}": {
@@ -741,6 +953,57 @@ export interface paths {
         };
         /** Public view of a report by its share token */
         get: operations["Report getPublic"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/public/{token}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Print a published report to an A4 PDF */
+        get: operations["Report getPublicPdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/public/{token}/attachment/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream one attachment of a published report */
+        get: operations["Report getPublicAttachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/{id}/attachment/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream one attachment of the caller's own report */
+        get: operations["Report getOwnedAttachment"];
         put?: never;
         post?: never;
         delete?: never;
@@ -771,6 +1034,14 @@ export interface components {
             is_active: boolean;
             /** @example 20678962 */
             strava_athlete_id: Record<string, never> | null;
+            /** @example Jaroslav */
+            strava_firstname: Record<string, never> | null;
+            /** @example Lufinka */
+            strava_lastname: Record<string, never> | null;
+            /** @example jlufinka */
+            strava_username: Record<string, never> | null;
+            /** @example https://dgalywyr863hv.cloudfront.net/pictures/athletes/.../large.jpg */
+            strava_avatar_url: Record<string, never> | null;
             /** @example 2024-01-01T12:00:00Z */
             last_login_at: Record<string, never>;
             /**
@@ -841,10 +1112,16 @@ export interface components {
             wheel_size?: string;
             /** @example L */
             bike_size?: string;
+            /** @example Carbon */
+            frame_material?: string;
             /** @example Enduro */
             bike_type?: string;
             /** @example 1540 */
             total_km?: number;
+            /** @example 7.25 */
+            bike_weight_kg?: number;
+            /** @example 15623 */
+            total_elevation_m?: number;
             /** @example https://example.com/bike-image.jpg */
             image_url?: string;
         };
@@ -864,6 +1141,8 @@ export interface components {
             mounted_at?: string | null;
             /** @example 1200 */
             total_km?: number | null;
+            /** @example 600 */
+            total_time_min?: number | null;
             /** @example true */
             is_active?: boolean | null;
             /** @example Mounted after spring service */
@@ -892,6 +1171,8 @@ export interface components {
             image_url: Record<string, never> | null;
             /** @example 1 */
             bike_type_id: Record<string, never> | null;
+            /** @example Enduro */
+            bike_type: Record<string, never> | null;
             /** @example Tarmac SL7 */
             bikename: Record<string, never> | null;
             /** @example 2024 */
@@ -906,6 +1187,10 @@ export interface components {
             total_km: Record<string, never> | null;
             /** @example 3600 */
             total_time_min: Record<string, never> | null;
+            /** @example 7.25 */
+            bike_weight_kg: Record<string, never> | null;
+            /** @example 15623 */
+            total_elevation_m: Record<string, never> | null;
             /** @example false */
             has_front_suspension: boolean;
             /** @example false */
@@ -979,7 +1264,6 @@ export interface components {
             bikeBrands: components["schemas"]["BikeBrands"][];
             bikeModels: components["schemas"]["BikeModels"][];
         };
-        UpdateBikeDto: Record<string, never>;
         Attachment_BikeEventDto: {
             /** @example faktura.pdf */
             name: string;
@@ -987,14 +1271,16 @@ export interface components {
             content_type: string;
             /** @example https://cdn.example.com/files/faktura.pdf */
             url: string;
+            /** @example 1258291 */
+            size_bytes?: number;
         };
         Actions_BikeEventDto: {
             /** @example 1 */
             action_id: number;
             /** @example Replaced chain */
-            description: string;
+            description?: string;
             /** @example 50 */
-            partial_cost: number;
+            partial_cost?: number;
             /** @example false */
             part_replaced: boolean;
             /**
@@ -1010,15 +1296,32 @@ export interface components {
             /** @example 15 */
             bike_id: number;
             /** @example 15 */
-            total_cost: number;
+            total_cost?: number;
+            /** @example 2026-07-01T00:00:00.000Z */
+            service_date: string;
             attachment: components["schemas"]["Attachment_BikeEventDto"][] | null;
             /** @example Replaced chain and cleaned drivetrain */
-            note: string | null;
+            note?: string;
             actions_done: components["schemas"]["Actions_BikeEventDto"][];
+        };
+        ActionTagDto: {
+            /** @example 12 */
+            id: number;
+            /** @example Full Flush */
+            tag: string;
+            /** @example actionTag.fullFlush */
+            i18n_key: Record<string, never> | null;
+            /**
+             * @description true when the caller created this tag and may delete it
+             * @example false
+             */
+            custom: boolean;
         };
         MountedComponentDto: {
             /** @example 45 */
             id: number;
+            /** @example 16 */
+            component_type_id: number;
             /** @example Shimano XT M8100 */
             component_desc: Record<string, never> | null;
             /** @example front */
@@ -1052,6 +1355,8 @@ export interface components {
             suspension_min_at_time: Record<string, never> | null;
         };
         ActionsDoneDto: {
+            /** @example 500 */
+            action_done_id: number;
             /** @example 1 */
             action_id: number;
             /** @example Brake bleed */
@@ -1063,6 +1368,7 @@ export interface components {
             action_i18n_key: Record<string, never> | null;
             /** @example 150 */
             partial_cost: Record<string, never> | null;
+            tags: components["schemas"]["ActionTagDto"][];
             /** @example false */
             replace_action: boolean;
             /** @example Replaced brake pads */
@@ -1078,27 +1384,52 @@ export interface components {
             content_type: string;
             /** @example https://cdn.example.com/invoice.pdf */
             url: string;
+            /**
+             * @description Null on attachments stored before the size was recorded
+             * @example 1258291
+             */
+            size_bytes: Record<string, never> | null;
         };
         Response_BikeEvent_Dto: {
             /** @example 1 */
             id: number;
             /** @example 15 */
             bike_id: number;
+            /** @example Trail bike */
+            bike_name: Record<string, never> | null;
+            /** @example 2450 */
+            bike_km_at_time: Record<string, never> | null;
+            /** @example 4080 */
+            bike_minutes_at_time: Record<string, never> | null;
             /** @example Regular service */
             note: Record<string, never> | null;
             /** @example 350.5 */
             total_cost: number;
+            service_date: Record<string, never> | null;
             /** Format: date-time */
             created_at: string;
             updated_at: Record<string, never> | null;
             actions_done: components["schemas"]["ActionsDoneDto"][];
             attachments: components["schemas"]["AttachmentDto"][];
         };
-        ActionTagDto: {
-            /** @example Full Flush */
-            tag: string;
-            /** @example actionTag.fullFlush */
-            i18n_key: Record<string, never> | null;
+        Response_ServiceAttachment_Dto: {
+            /**
+             * @description The name the file arrived under
+             * @example receipt.jpg
+             */
+            name: string;
+            /** @example https://cdn.example.com/service-attachments/abc.webp */
+            url: string;
+            /**
+             * @description The type as stored, not as uploaded
+             * @example image/webp
+             */
+            content_type: string;
+            /**
+             * @description The file as received; a photo is re-encoded on the way up
+             * @example 1258291
+             */
+            size_bytes: number;
         };
         ActionDto: {
             /** @example 1 */
@@ -1126,11 +1457,135 @@ export interface components {
             side_choice: boolean;
             actions: components["schemas"]["ActionDto"][];
         };
+        Response_BikeCategory_Dto: {
+            /** @example 2 */
+            group_id: number;
+            /** @example Drivetrain */
+            group_name: string;
+            /** @example componentGroup.drivetrain */
+            group_i18n_key: Record<string, never> | null;
+            /**
+             * @description Whether parts in this category are chosen per side
+             * @example false
+             */
+            side_choice: boolean;
+            /**
+             * @description Active Mounted Components the bike carries in this category
+             * @example 3
+             */
+            component_count: number;
+        };
+        Create_ActionTagDto: {
+            /**
+             * @description The catalogue action the tag belongs to
+             * @example 42
+             */
+            event_action_id: number;
+            /** @example Bearing check */
+            tag: string;
+        };
+        ServiceHistoryActionDto: {
+            /** @example Chain Replacement */
+            name: string;
+            /** @example actions.chainReplacement */
+            i18n_key: Record<string, never> | null;
+        };
+        ServiceHistoryItemDto: {
+            /** @example 1 */
+            id: number;
+            /** @example 15 */
+            bike_id: number;
+            /** @example Trail bike */
+            bike_name: Record<string, never> | null;
+            /** @description When the work happened, not when it was recorded */
+            service_date: Record<string, never> | null;
+            /** @example 2 */
+            action_count: number;
+            actions: components["schemas"]["ServiceHistoryActionDto"][];
+            /** @example 350.5 */
+            total_cost: Record<string, never> | null;
+        };
+        Response_ServiceHistory_Dto: {
+            items: components["schemas"]["ServiceHistoryItemDto"][];
+            /**
+             * @description Services matching the filter, ignoring limit and offset
+             * @example 12
+             */
+            total: number;
+        };
+        Response_HistoryTotals_Dto: {
+            /**
+             * @description Sum of the services matching the filter; services with no cost add nothing
+             * @example 1245.5
+             */
+            total_cost: number;
+            /**
+             * @description Services matching the filter
+             * @example 24
+             */
+            service_count: number;
+            /**
+             * @description Replacements performed across those services
+             * @example 7
+             */
+            replacement_count: number;
+        };
+        Update_ActionDoneDto: {
+            /**
+             * @description event_actions_done id, as returned by the detail endpoint
+             * @example 500
+             */
+            action_done_id: number;
+            /** @example 150 */
+            partial_cost?: number;
+            /** @example Shimano XT chain, not the SLX */
+            description?: string;
+        };
+        Replaced_ComponentsDto: {
+            /** @example 45 */
+            old_component_mounted_id: number;
+            /** @example 16 */
+            component_type_id: number;
+            /** @example Shimano XT Chain HG-701 */
+            new_component_desc: string;
+            /** @example 150 */
+            partial_cost: number;
+            /** @example Old chain worn out */
+            note: string;
+            /** @example 2 */
+            action_id: number;
+        };
+        Update_BikeEventDto: {
+            /** @example Bike Shop XY, next time check the bearing */
+            note?: string;
+            /** @example 2400 */
+            total_cost?: number;
+            /** @example 2026-07-01T00:00:00.000Z */
+            service_date?: string;
+            actions_updated?: components["schemas"]["Update_ActionDoneDto"][];
+            /**
+             * @description event_actions_done ids to remove
+             * @example [
+             *       501
+             *     ]
+             */
+            actions_removed?: number[];
+            /** @description Actions to add to this Service */
+            actions_done?: components["schemas"]["Actions_BikeEventDto"][];
+            /** @description Replacements to add to this Service */
+            actions_replaced?: components["schemas"]["Replaced_ComponentsDto"][];
+            attachments_added?: components["schemas"]["Attachment_BikeEventDto"][];
+            /**
+             * @description bike_event_attachments ids to remove
+             * @example [
+             *       3
+             *     ]
+             */
+            attachments_removed?: number[];
+        };
         CustomComponentsDto: {
             /** @example 15 */
             component_group_id: number;
-            /** @example 1 */
-            user_id: number;
             /** @example Custom Component Name */
             component_type: string;
             /** @example false */
@@ -1170,43 +1625,122 @@ export interface components {
             /** @example false */
             side_choice: boolean;
         };
-        Response_MountedComponentsDto: {
-            /** @example 1 */
+        Response_BikeComponentDto: {
+            /** @example 55 */
             id: number;
-            /** @example 1 */
+            /** @example 21 */
             bike_id: number;
             /** @example 12 */
             component_type_id: number;
-            /** @example rear */
-            position: Record<string, never> | null;
-            /** @example 2026-03-26T10:00:00.000Z */
-            mounted_at: Record<string, never> | null;
-            /** @example null */
-            removed_at: Record<string, never> | null;
-            /** @example 2026-03-26T10:00:00.000Z */
-            updated_at: Record<string, never> | null;
-            /** @example 2026-03-26T10:00:00.000Z */
-            created_at: Record<string, never> | null;
-            /** @example 1200 */
-            total_km: Record<string, never> | null;
-            /** @example Mounted after spring service */
-            note: Record<string, never> | null;
-            /** @example true */
-            is_active: Record<string, never> | null;
-            /** @example false */
-            is_deleted: Record<string, never> | null;
-            /** @example null */
-            deleted_at: Record<string, never> | null;
+            /** @example Fork */
+            component_type: string;
+            /**
+             * @description null for user-created types
+             * @example component.fork
+             */
+            component_type_i18n_key: string | null;
+            /** @example 3 */
+            component_group_id: number;
+            /** @example Suspension */
+            component_group: string;
+            /** @example componentGroup.suspension */
+            component_group_i18n_key: string | null;
+            /**
+             * @description The category takes a front / rear choice
+             * @example true
+             */
+            side_choice: boolean;
             /** @example Fox 38 Factory Grip2 */
-            component_desc: Record<string, never> | null;
+            component_desc: string | null;
+            /** @example front */
+            position: string | null;
+            /** @example Mounted after spring service */
+            note: string | null;
+            /**
+             * Format: date-time
+             * @example 2024-04-01T00:00:00.000Z
+             */
+            mounted_at: string | null;
+            /**
+             * Format: date-time
+             * @description The day the part came off
+             * @example null
+             */
+            removed_at: string | null;
+            /** @example true */
+            is_active: boolean | null;
             /** @example 1200 */
-            total_time_min: Record<string, never> | null;
-            /** @example 80000 */
-            drivetrain_km: Record<string, never> | null;
+            total_km: number | null;
             /** @example 480 */
-            suspension_min: Record<string, never> | null;
+            total_time_min: number | null;
+            /** @example 800 */
+            drivetrain_km: number | null;
+            /** @example 480 */
+            suspension_min: number | null;
             /** @example 85 */
-            health_index: Record<string, never> | null;
+            health_index: number | null;
+            /**
+             * Format: date-time
+             * @description The most recent Service that worked on this part; null for one nobody has serviced
+             * @example 2025-06-10T00:00:00.000Z
+             */
+            last_service_at: string | null;
+            /**
+             * @description No Service has recorded work against the part, so its wear may still be corrected and the row deleted
+             * @example true
+             */
+            unserviced: boolean;
+        };
+        CreateBikeComponentDto: {
+            /** @example 12 */
+            component_type_id: number;
+            /** @example Fox 38 Factory Grip2 */
+            component_desc?: string | null;
+            /** @example Front */
+            position?: string | null;
+            /**
+             * Format: date-time
+             * @example 2026-03-26T10:00:00.000Z
+             */
+            mounted_at?: string | null;
+            /** @example 1200 */
+            total_km?: number | null;
+            /** @example 600 */
+            total_time_min?: number | null;
+            /** @example true */
+            is_active?: boolean | null;
+            /** @example Mounted after spring service */
+            note?: string | null;
+            /** @example 2 */
+            interval_id?: number | null;
+            /** @example 1 */
+            bike_id: number;
+        };
+        UpdateMountedComponentDto: {
+            /** @example Fox 38 Factory Grip2 */
+            component_desc?: string | null;
+            /** @example front */
+            position?: string | null;
+            /**
+             * Format: date-time
+             * @example 2024-04-01T00:00:00.000Z
+             */
+            mounted_at?: string | null;
+            /** @example 2000 */
+            total_km?: number | null;
+            /** @example 900 */
+            total_time_min?: number | null;
+            /** @example 800 */
+            drivetrain_km?: number | null;
+            /** @example 480 */
+            suspension_min?: number | null;
+        };
+        DismountComponentDto: {
+            /**
+             * Format: date-time
+             * @example 2025-02-02T00:00:00.000Z
+             */
+            removed_at?: string | null;
         };
         CreateOrganizationDto: {
             name: string;
@@ -1246,6 +1780,8 @@ export interface components {
         GearLinkDto: {
             /** @example b1234567 */
             stravaBikeId: Record<string, never> | null;
+            /** @example My Enduro Bike */
+            stravaBikeName?: Record<string, never> | null;
             /** @example 1 */
             bikecheckBikeId: number;
         };
@@ -1259,6 +1795,10 @@ export interface components {
             gear_id: Record<string, never> | null;
             /** @example 2026-08-19T06:12:00.000Z */
             started_at: string;
+            /** @example Morning Ride */
+            name: string;
+            /** @example snttH{s`|A[VJrD */
+            summary_polyline: Record<string, never> | null;
             /** @example 42 */
             distance_km: number;
             /** @example 96 */
@@ -1306,15 +1846,105 @@ export interface components {
              */
             created_at: string;
         };
-        ResponseReportDto: {
+        ResponseRideDto: {
+            /** @example 42 */
+            id: number;
+            /** @example 13579246810 */
+            activity_strava_id: Record<string, never> | null;
+            /** @example 7 */
+            bike_id: number;
+            /** @example S-Works Tarmac */
+            bike_name: Record<string, never> | null;
+            /** @example Morning Mountain Bike Ride */
+            name: string;
+            /** @example 2026-08-19T06:12:00.000Z */
+            started_at: Record<string, never> | null;
+            /** @example 42000 */
+            distance_m: Record<string, never> | null;
+            /** @example 96 */
+            duration_min: Record<string, never> | null;
+            /** @example 612 */
+            elevation_up_m: Record<string, never> | null;
+            /** @example 598 */
+            elevation_down_m: Record<string, never> | null;
+            /** @example 26 */
+            speed_avg: Record<string, never> | null;
+            /** @example 54 */
+            max_speed_kmh: Record<string, never> | null;
+            /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
+            summary_polyline: Record<string, never> | null;
+        };
+        ResponseRidePageDto: {
+            items: components["schemas"]["ResponseRideDto"][];
+            /** @example 137 */
+            total: number;
+        };
+        ExportReportDto: {
+            /**
+             * @example SERVICE
+             * @enum {string}
+             */
+            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            /**
+             * @description Required when kind is SERVICE
+             * @example 42
+             */
+            service_id: number;
+            /**
+             * @description Required when kind is PERIOD or BIKECHECK
+             * @example 15
+             */
+            bike_id: number;
+            /**
+             * @description Inclusive YYYY-MM-DD
+             * @example 2026-01-01
+             */
+            from?: string;
+            /**
+             * @description Inclusive YYYY-MM-DD
+             * @example 2026-12-31
+             */
+            to?: string;
+            /**
+             * @description Required when kind is PERIOD
+             * @example false
+             */
+            include_components: boolean;
+        };
+        ResponseReportCoversDto: {
+            /** @example Pivot Firebird 2023 */
+            bike: string;
+            /**
+             * @description Inclusive YYYY-MM-DD. A Service's date, a Period's start; null is an open end
+             * @example 2026-01-01
+             */
+            from: Record<string, never> | null;
+            /**
+             * @description Inclusive YYYY-MM-DD
+             * @example 2026-12-31
+             */
+            to: Record<string, never> | null;
+        };
+        ResponseExportedReportDto: {
             /** @example 1 */
             id: number;
             /** @example b1f7c0e2-2a3d-4e5f-8a9b-0c1d2e3f4a5b */
             public_token: string;
             /** @example https://app.bikecheck.com/r/b1f7c0e2-2a3d-4e5f-8a9b-0c1d2e3f4a5b */
             share_url: string;
+            /**
+             * @example SERVICE
+             * @enum {string}
+             */
+            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
             /** @example 42 */
             bike_id: number;
+            covers: components["schemas"]["ResponseReportCoversDto"];
+            /**
+             * @description A report stays closed until it is published
+             * @example false
+             */
+            is_public: boolean;
             /** @example 3 */
             view_count: number;
             /** @example null */
@@ -1328,6 +1958,49 @@ export interface components {
              * @example 2026-06-23T12:00:00.000Z
              */
             created_at: string;
+            /** @description The frozen document, exactly as a reader would receive it */
+            snapshot: Record<string, never>;
+        };
+        ResponseReportDto: {
+            /** @example 1 */
+            id: number;
+            /** @example b1f7c0e2-2a3d-4e5f-8a9b-0c1d2e3f4a5b */
+            public_token: string;
+            /** @example https://app.bikecheck.com/r/b1f7c0e2-2a3d-4e5f-8a9b-0c1d2e3f4a5b */
+            share_url: string;
+            /**
+             * @example SERVICE
+             * @enum {string}
+             */
+            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            /** @example 42 */
+            bike_id: number;
+            covers: components["schemas"]["ResponseReportCoversDto"];
+            /**
+             * @description A report stays closed until it is published
+             * @example false
+             */
+            is_public: boolean;
+            /** @example 3 */
+            view_count: number;
+            /** @example null */
+            last_viewed_at: Record<string, never> | null;
+            /** @example false */
+            revoked: boolean;
+            /** @example null */
+            expires_at: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2026-06-23T12:00:00.000Z
+             */
+            created_at: string;
+        };
+        ResponseReportBulkDto: {
+            /**
+             * @description How many reports the act reached
+             * @example 3
+             */
+            count: number;
         };
     };
     responses: never;
@@ -1632,6 +2305,27 @@ export interface operations {
             };
         };
     };
+    "Bike searchFamilyExternal": {
+        parameters: {
+            query: {
+                url: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchBikeExternalResponseDto"][];
+                };
+            };
+        };
+    };
     "Bike searchComponentsExternal": {
         parameters: {
             query: {
@@ -1723,7 +2417,12 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateBikeDto"];
+                "multipart/form-data": {
+                    /** @description UpdateBikeDto serialized as JSON */
+                    data: string;
+                    /** Format: binary */
+                    image?: string;
+                };
             };
         };
         responses: {
@@ -1802,6 +2501,32 @@ export interface operations {
             };
         };
     };
+    "BikeEvent uploadAttachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_ServiceAttachment_Dto"];
+                };
+            };
+        };
+    };
     "BikeEvent getActionsOnGroup": {
         parameters: {
             query: {
@@ -1820,6 +2545,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Response_ActionsOnGroup_Dto"];
+                };
+            };
+        };
+    };
+    "BikeEvent categories": {
+        parameters: {
+            query: {
+                bikeId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_BikeCategory_Dto"][];
+                };
+            };
+        };
+    };
+    "BikeEvent createActionTag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Create_ActionTagDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionTagDto"];
+                };
+            };
+        };
+    };
+    "BikeEvent deleteActionTag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionTagDto"];
                 };
             };
         };
@@ -1845,6 +2635,58 @@ export interface operations {
             };
         };
     };
+    "BikeEvent history": {
+        parameters: {
+            query?: {
+                bikeId?: number;
+                limit?: number;
+                offset?: number;
+                /** @description Inclusive YYYY-MM-DD */
+                from?: string;
+                /** @description Inclusive YYYY-MM-DD */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_ServiceHistory_Dto"];
+                };
+            };
+        };
+    };
+    "BikeEvent historyTotals": {
+        parameters: {
+            query?: {
+                bikeId?: number;
+                /** @description Inclusive YYYY-MM-DD */
+                from?: string;
+                /** @description Inclusive YYYY-MM-DD */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_HistoryTotals_Dto"];
+                };
+            };
+        };
+    };
     "BikeEvent findOne": {
         parameters: {
             query?: never;
@@ -1855,6 +2697,31 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_BikeEvent_Dto"];
+                };
+            };
+        };
+    };
+    "BikeEvent update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Update_BikeEventDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -1974,7 +2841,7 @@ export interface operations {
     "Component getMountedComponents": {
         parameters: {
             query: {
-                bikeId: string;
+                bikeId: number;
             };
             header?: never;
             path?: never;
@@ -1987,7 +2854,101 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Response_MountedComponentsDto"][];
+                    "application/json": components["schemas"]["Response_BikeComponentDto"][];
+                };
+            };
+        };
+    };
+    "Component createMountedComponent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBikeComponentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_BikeComponentDto"];
+                };
+            };
+        };
+    };
+    "Component deleteMountedComponent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_BikeComponentDto"];
+                };
+            };
+        };
+    };
+    "Component updateMountedComponent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMountedComponentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_BikeComponentDto"];
+                };
+            };
+        };
+    };
+    "Component dismountComponent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DismountComponentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_BikeComponentDto"];
                 };
             };
         };
@@ -2346,13 +3307,14 @@ export interface operations {
             };
         };
     };
-    "Report listForBike": {
+    "Ride listRides": {
         parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                bikeId: number;
+            query?: {
+                limit?: number;
+                offset?: number;
             };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -2362,35 +3324,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResponseReportDto"][];
+                    "application/json": components["schemas"]["ResponseRidePageDto"];
                 };
             };
         };
     };
-    "Report create": {
+    "Report exportReport": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                bikeId: number;
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExportReportDto"];
+            };
+        };
         responses: {
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResponseReportDto"];
+                    "application/json": components["schemas"]["ResponseExportedReportDto"];
                 };
             };
         };
     };
     "Report listMine": {
         parameters: {
-            query?: never;
+            query?: {
+                bikeId?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2403,6 +3369,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResponseReportDto"][];
+                };
+            };
+        };
+    };
+    "Report discardAll": {
+        parameters: {
+            query?: {
+                bikeId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseReportBulkDto"];
+                };
+            };
+        };
+    };
+    "Report revokeAll": {
+        parameters: {
+            query?: {
+                bikeId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseReportBulkDto"];
+                };
+            };
+        };
+    };
+    "Report publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseReportDto"];
                 };
             };
         };
@@ -2422,16 +3451,100 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ResponseReportDto"];
+                };
+            };
+        };
+    };
+    "Report discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseReportDto"];
+                };
             };
         };
     };
     "Report getPublic": {
         parameters: {
+            query: {
+                print: string;
+            };
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Report getPublicPdf": {
+        parameters: {
             query?: never;
             header?: never;
             path: {
                 token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Report getPublicAttachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+                attachmentId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Report getOwnedAttachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                attachmentId: number;
             };
             cookie?: never;
         };

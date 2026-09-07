@@ -1733,8 +1733,30 @@
         "action": "Brake Hose Replacement",
         "targets": ["Brake Caliper", "Brake Lever"],
         "tags": null,
-        "replace": true,
+        "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Brakes Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Brake Caliper Replacement",
+        "targets": ["Brake Caliper"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Brake Rotor Replacement",
+        "targets": ["Brake Rotor"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Drivetrain": [
@@ -1888,8 +1910,58 @@
         "action": "Battery Swap",
         "targets": ["Derailleur", "Shifter"],
         "tags": null,
-        "replace": true,
+        "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Drivetrain Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Derailleur Replacement",
+        "targets": ["Derailleur"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Shifter Replacement",
+        "targets": ["Shifter"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Crank Replacement",
+        "targets": ["Crank"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Bashguard Replacement",
+        "targets": ["Bashguard"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Chain Guide Replacement",
+        "targets": ["Chain Guide"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Bottom Bracket Replacement",
+        "targets": ["Bottom Bracket"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Suspension": [
@@ -2009,6 +2081,28 @@
         "tags": ["Adjustment of control lever from handlebars"],
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Suspension Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Fork Replacement",
+        "targets": ["Fork"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Shock Replacement",
+        "targets": ["Shock"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Wheels": [
@@ -2051,6 +2145,49 @@
         "action": "Hub Bearing Replacement",
         "targets": ["Hub"],
         "tags": ["6902-2RS", "6802-2RS", "6803-2RS", "15267-2RS", "6903-2RS", "Enduro Bearings"],
+        "replace": false,
+        "reset_interval": true
+      },
+      {
+        "action": "Wheels Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Rim Replacement",
+        "targets": ["Rim"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Hub Replacement",
+        "targets": ["Hub"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Axle Replacement",
+        "targets": ["Axle"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Inserts Replacement",
+        "targets": ["Inserts"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Valves Replacement",
+        "targets": ["Valves"],
+        "tags": null,
         "replace": true,
         "reset_interval": true
       }
@@ -2067,7 +2204,7 @@
         "action": "Headset Bearing Replacement",
         "targets": ["Headset"],
         "tags": null,
-        "replace": true,
+        "replace": false,
         "reset_interval": true
       },
       {
@@ -2078,8 +2215,51 @@
         "reset_interval": true
       },
       {
-        "action": "Grip Replecament",
+        "action": "Grips Replacement",
         "targets": ["Grips"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Cockpit Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Headset Replacement",
+        "targets": ["Headset"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Stem Replacement",
+        "targets": ["Stem"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Handlebar Replacement",
+        "targets": ["Handlebar"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Dropper Lever Replacement",
+        "targets": ["Dropper Lever"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Remote Lever Replacement",
+        "targets": ["Remote Lever"],
         "tags": null,
         "replace": true,
         "reset_interval": true
@@ -2099,6 +2279,28 @@
         "tags": null,
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Saddle Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Saddle Replacement",
+        "targets": ["Saddle"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Seatpost Replacement",
+        "targets": ["Seatpost"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Frame": [
@@ -2113,7 +2315,7 @@
         "action": "Hanger Replacement",
         "targets": ["Hanger"],
         "tags": null,
-        "replace": false,
+        "replace": true,
         "reset_interval": false
       },
       {
@@ -2129,6 +2331,21 @@
         "tags": null,
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Frame Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Frame Replacement",
+        "targets": ["Frame"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "E-bike": [
@@ -2159,6 +2376,49 @@
         "tags": ["No Errors Found", "Error Log Cleared", "Sensor Calibration"],
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Ebike Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Motor Replacement",
+        "targets": ["Motor"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Battery Replacement",
+        "targets": ["Battery"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Display Replacement",
+        "targets": ["Display"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "Charger Replacement",
+        "targets": ["Charger"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
+      },
+      {
+        "action": "E-Bike System Replacement",
+        "targets": ["E-Bike System"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ],
     "Other": [
@@ -2168,6 +2428,21 @@
         "tags": ["Regrease", "Pins Replaced", "New Bearings"],
         "replace": false,
         "reset_interval": false
+      },
+      {
+        "action": "Other Part Replacement",
+        "targets": [],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true,
+        "catch_all": true
+      },
+      {
+        "action": "Pedals Replacement",
+        "targets": ["Pedals"],
+        "tags": null,
+        "replace": true,
+        "reset_interval": true
       }
     ]
   }

@@ -148,7 +148,8 @@ export class BikeDataScrapeService {
         });
       });
 
-      const componentsTypes = await this.prisma.component_types.findMany({});
+      // A removed type is offered to nobody, here as in the picker (ADR 0021).
+      const componentsTypes = await this.prisma.component_types.findMany({ where: { is_deleted: { not: true } } });
 
       const extractedBikeComponents = await this.assembleBikeComponents(bikeComponents.reverse(), componentsTypes);
 

@@ -1,5 +1,9 @@
 # The components section does not touch maintenance
 
+> Amended by [ADR 0017](0017-a-replacement-starts-from-the-part.md): the prefilled wizard shortcut
+> rejected below is now offered from a part's detail sheet. The rule this ADR exists for still
+> stands — the section writes no replacement, and every Replacement carries a Service.
+
 The bike detail's components section lists what is mounted and lets the owner add a part, correct
 its description and dismount it. It deliberately cannot replace a part, record a service, or link
 to the service wizard — the reasonable-looking button "Replace" is absent on purpose, and so is

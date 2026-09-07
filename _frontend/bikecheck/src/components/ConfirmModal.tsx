@@ -1,7 +1,7 @@
 // The dialog shown before something is thrown away — deleting a bike, deleting a service,
 // discarding wizard work. Every caller passes its own copy; the surface, the dim body and
 // the cancel/confirm pair are decided once here so a fourth caller cannot drift.
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
@@ -20,6 +20,9 @@ interface ConfirmModalProps {
   confirmLabel: string;
   // While the confirmed work runs, the confirm button spins and cancel is refused.
   pending?: boolean;
+  // What the question still needs answering before it can be confirmed — a dismount asks
+  // for the day the part came off. Sits between the body and the buttons.
+  children?: ReactNode;
 }
 
 // Renders one confirmation dialog on the standard modal surface.
@@ -32,6 +35,7 @@ export function ConfirmModal({
   cancelLabel,
   confirmLabel,
   pending = false,
+  children,
 }: ConfirmModalProps): ReactElement {
   // Android's back gesture dismisses this rather than the page under it.
   useOverlayBack(opened, onCancel);
@@ -54,6 +58,8 @@ export function ConfirmModal({
         <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
           {body}
         </Text>
+
+        {children}
 
         <Group gap="sm" grow>
           <Button variant="default" radius="md" onClick={onCancel} disabled={pending}>

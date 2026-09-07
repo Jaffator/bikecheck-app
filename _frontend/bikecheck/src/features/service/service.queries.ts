@@ -103,13 +103,22 @@ export function useBikeCategories(bikeId: number | null): UseQueryResult<BikeCat
   });
 }
 
+// Named once, because the service wizard also reads this catalogue straight out of the
+// cache to seed a Replacement carried in from a component's detail sheet (ADR 0017).
+export function categoryActionsKey(
+  bikeId: number | null,
+  categoryId: number | null,
+): [string, string, number | null, number | null] {
+  return ["services", "category-actions", bikeId, categoryId];
+}
+
 // The work the bike can receive in one category — the wizard's third step.
 export function useCategoryActions(
   bikeId: number | null,
   categoryId: number | null,
 ): UseQueryResult<CategoryActions> {
   return useQuery({
-    queryKey: ["services", "category-actions", bikeId, categoryId],
+    queryKey: categoryActionsKey(bikeId, categoryId),
     queryFn: () => getCategoryActions(bikeId ?? 0, categoryId ?? 0),
     enabled: bikeId !== null && categoryId !== null,
   });

@@ -1,7 +1,36 @@
 // Component query hooks.
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { getComponentGroups, getDefaultComponents } from "./components.api";
-import type { AssembleBikeComponent, ComponentGroup } from "./components.types";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+  type UseMutationResult,
+} from "@tanstack/react-query";
+import {
+  createBikeComponent,
+  createComponentType,
+  deleteBikeComponent,
+  deleteComponentType,
+  dismountBikeComponent,
+  getBikeComponents,
+  getComponentGroups,
+  getCustomComponentTypes,
+  getDefaultComponents,
+  updateBikeComponent,
+} from "./components.api";
+import type {
+  AssembleBikeComponent,
+  BikeComponent,
+  ComponentGroup,
+  ComponentType,
+  CreateBikeComponentInput,
+  CreateComponentTypeInput,
+  CustomComponentType,
+  DeleteBikeComponentInput,
+  DeleteComponentTypeInput,
+  DismountBikeComponentInput,
+  UpdateBikeComponentInput,
+} from "./components.types";
 
 // Use default cache timing for seeded data.
 export function useComponentGroups(): UseQueryResult<ComponentGroup[]> {
@@ -17,4 +46,108 @@ export function useDefaultComponents(ebike: boolean): UseQueryResult<AssembleBik
     queryKey: ["default-components", ebike],
     queryFn: () => getDefaultComponents(ebike),
   });
+}
+
+// The owner's own catalogue entries. Named apart from the picker's catalogue: this one is
+// read for managing types, that one for choosing a part.
+export function useCustomComponentTypes(): UseQueryResult<CustomComponentType[]> {
+  return useQuery({
+    queryKey: ["custom-component-types"],
+    queryFn: getCustomComponentTypes,
+  });
+}
+
+// Removing a type changes what the picker offers on every bike, e-bike and acoustic alike,
+// so both catalogue lists go along with the settings list.
+export function useDeleteComponentType(): UseMutationResult<ComponentType, Error, DeleteComponentTypeInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: DeleteComponentTypeInput) => deleteComponentType(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["custom-component-types"] });
+      await queryClient.invalidateQueries({ queryKey: ["default-components"] });
+    },
+  });
+}
+
+// A newly named type has to be in the catalogue before the part using it can be saved, so
+// both e-bike and acoustic lists are dropped rather than only the one in front of us.
+export function useCreateComponentType(): UseMutationResult<ComponentType, Error, CreateComponentTypeInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateComponentTypeInput) => createComponentType(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["default-components"] });
+      await queryClient.invalidateQueries({ queryKey: ["custom-component-types"] });
+    },
+  });
+}
+
+// The build of one bike. Read on its own key, so the section loads without holding up the
+// photo and the readings above it.
+export function useBikeComponents(bikeId: number): UseQueryResult<BikeComponent[]> {
+  return useQuery({
+    queryKey: bikeComponentsKey(bikeId),
+    queryFn: () => getBikeComponents(bikeId),
+  });
+}
+
+export function useCreateBikeComponent(): UseMutationResult<BikeComponent, Error, CreateBikeComponentInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateBikeComponentInput) => createBikeComponent(input),
+    onSuccess: async (_component, input) => {
+      await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bike_id) });
+    },
+  });
+}
+
+export function useUpdateBikeComponent(): UseMutationResult<BikeComponent, Error, UpdateBikeComponentInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateBikeComponentInput) => updateBikeComponent(input),
+    onSuccess: async (_component, input) => {
+      await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bikeId) });
+    },
+  });
+}
+
+// Taking a part off changes the build, which the BikeCheck describes — so the bike itself
+// is refreshed alongside its components.
+export function useDismountBikeComponent(): UseMutationResult<BikeComponent, Error, DismountBikeComponentInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: DismountBikeComponentInput) => dismountBikeComponent(input),
+    onSuccess: async (_component, input) => {
+      await invalidateBuild(queryClient, input.bikeId);
+    },
+  });
+}
+
+export function useDeleteBikeComponent(): UseMutationResult<BikeComponent, Error, DeleteBikeComponentInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: DeleteBikeComponentInput) => deleteBikeComponent(input),
+    onSuccess: async (_component, input) => {
+      await invalidateBuild(queryClient, input.bikeId);
+    },
+  });
+}
+
+function bikeComponentsKey(bikeId: number): [string, number] {
+  return ["bike-components", bikeId];
+}
+
+async function invalidateBuild(
+  queryClient: ReturnType<typeof useQueryClient>,
+  bikeId: number,
+): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(bikeId) });
+  await queryClient.invalidateQueries({ queryKey: ["bikes", bikeId] });
 }

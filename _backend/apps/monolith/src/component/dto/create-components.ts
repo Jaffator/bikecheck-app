@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsInt, IsOptional, IsPositive, IsString, MaxLength } from 'class-validator';
 import { Prisma } from '@prisma/client';
 
@@ -25,7 +25,7 @@ export class CreateMountedComponentsDto {
   component_desc?: string | null;
 
   @IsOptional()
-  @ApiProperty({ example: 'Front', required: false, nullable: true })
+  @ApiProperty({ example: 'front', required: false, nullable: true })
   @IsString()
   position?: string;
 
@@ -38,6 +38,12 @@ export class CreateMountedComponentsDto {
   @ApiProperty({ example: 1200, required: false, nullable: true })
   @IsInt()
   total_km?: number;
+
+  // The hours a part arrives with, for the ones that wear by time rather than by distance.
+  @IsOptional()
+  @ApiProperty({ example: 600, required: false, nullable: true })
+  @IsInt()
+  total_time_min?: number;
 
   @IsOptional()
   @ApiProperty({ example: true, required: false, nullable: true })
@@ -57,16 +63,22 @@ export class CreateMountedComponentsDto {
   interval_id?: number;
 }
 
+// Who owns a custom type is read off the caller's token, so it carries no user id: a
+// body cannot mint a type in somebody else's name.
+// Adding a part to a bike that already exists. The same request as bike creation sends,
+// except that the bike is named rather than supplied by the transaction that made it.
+export class CreateBikeComponentDto extends OmitType(CreateMountedComponentsDto, ['bike_id'] as const) {
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  @IsPositive()
+  bike_id!: number;
+}
+
 export class CustomComponentsDto {
   @ApiProperty({ example: 15 })
   @IsInt()
   @IsPositive()
   component_group_id!: number;
-
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  @IsPositive()
-  user_id!: number;
 
   @ApiProperty({ example: 'Custom Component Name' })
   @IsString()

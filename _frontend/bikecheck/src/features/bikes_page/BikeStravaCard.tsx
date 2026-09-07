@@ -3,7 +3,7 @@
 import type { ReactElement } from "react";
 import { Box, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Link2Off, Unlink } from "lucide-react";
+import { Unlink } from "lucide-react";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import StravaUnconnectMark from "@/assets/icons/svg_icons/strava_unconnect.svg?react";
 

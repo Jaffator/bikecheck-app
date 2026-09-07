@@ -12,6 +12,9 @@ export interface SeedAction {
   replace: boolean;
   reset_interval: boolean;
   intervals?: SeedInterval[];
+  // A category's catch-all Replacement, kept for owner-created Component Types alone
+  // (ADR 0022). It carries no targets, so its category is stored on the Action itself.
+  catch_all?: boolean;
 }
 
 export interface SeedBikeModel {
