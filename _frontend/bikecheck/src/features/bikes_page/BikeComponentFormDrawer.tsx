@@ -16,6 +16,7 @@ import {
   type ComboboxParsedItem,
 } from "@mantine/core";
 import { DatePickerInput, DatesProvider } from "@mantine/dates";
+import { CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Lock } from "lucide-react";
@@ -81,13 +82,7 @@ function formKey({ opened, component }: BikeComponentFormDrawerProps): string {
   return component === null ? "add" : `edit-${String(component.id)}`;
 }
 
-function BikeComponentFormBody({
-  opened,
-  onClose,
-  bikeId,
-  ebike,
-  component,
-}: BikeComponentFormDrawerProps): ReactElement {
+function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: BikeComponentFormDrawerProps): ReactElement {
   const { t, i18n } = useTranslation();
   const keyboardOffset = useKeyboardOffset();
   const { data: catalogue } = useDefaultComponents(ebike);
@@ -104,9 +99,7 @@ function BikeComponentFormBody({
   const wearLocked = editing && !component.unserviced;
 
   // What is on the bike now is where every field starts.
-  const [typeId, setTypeId] = useState<string | null>(
-    component === null ? null : String(component.component_type_id),
-  );
+  const [typeId, setTypeId] = useState<string | null>(component === null ? null : String(component.component_type_id));
   // What the owner typed into the picker, and the name they are naming a new kind of part
   // with — kept apart, because the search box is retyped and the name must not be.
   const [search, setSearch] = useState("");
@@ -118,9 +111,7 @@ function BikeComponentFormBody({
   const initialHours: number | string =
     component === null || component.total_time_min === null ? "" : Math.round(component.total_time_min / 60);
   const [hours, setHours] = useState<number | string>(initialHours);
-  const [mountedOn, setMountedOn] = useState<string | null>(
-    component?.mounted_at == null ? null : dayjs(component.mounted_at).format("YYYY-MM-DD"),
-  );
+  const [mountedOn, setMountedOn] = useState<string | null>(initialMountedOn(component));
 
   // Android's back gesture dismisses this rather than the page under it.
   useOverlayBack(opened, onClose);
@@ -148,9 +139,7 @@ function BikeComponentFormBody({
   const failed = create.isError || update.isError || createType.isError;
   const incomplete =
     !editing &&
-    (typeId === null ||
-      (naming && (customName === "" || customGroupId === null)) ||
-      (positionRequired && position === ""));
+    (typeId === null || (naming && (customName === "" || customGroupId === null)) || (positionRequired && position === ""));
 
   function pickType(value: string | null): void {
     // The name is taken from the search box at the moment the option is chosen, because
@@ -216,10 +205,7 @@ function BikeComponentFormBody({
     }
 
     if (mountedTypeId === null) return;
-    create.mutate(
-      { bike_id: bikeId, component_type_id: Number(mountedTypeId), ...fieldsToSave() },
-      { onSuccess: onClose },
-    );
+    create.mutate({ bike_id: bikeId, component_type_id: Number(mountedTypeId), ...fieldsToSave() }, { onSuccess: onClose });
   }
 
   return (
@@ -346,6 +332,7 @@ function BikeComponentFormBody({
               min={0}
               allowNegative={false}
               decimalScale={0}
+              hideControls
               disabled={wearLocked}
               styles={inputStyles}
               onChange={setDistance}
@@ -357,6 +344,7 @@ function BikeComponentFormBody({
               min={0}
               allowNegative={false}
               decimalScale={0}
+              hideControls
               disabled={wearLocked}
               styles={inputStyles}
               onChange={setHours}
@@ -366,13 +354,25 @@ function BikeComponentFormBody({
           <DatePickerInput
             label={t("bikeComponents.mountedLabel")}
             placeholder={t("bikeComponents.mountedPlaceholder")}
+            leftSection={<CalendarDays size={18} />}
             value={mountedOn}
             onChange={setMountedOn}
-            clearable={!wearLocked}
+            // clearable={!wearLocked}
             disabled={wearLocked}
-            // A part cannot have gone on after today.
             maxDate={dayjs().format("YYYY-MM-DD")}
-            styles={inputStyles}
+            styles={{
+              ...inputStyles,
+              calendarHeaderLevel: { color: "var(--mantine-color-text-6)" },
+              calendarHeaderControl: { color: "var(--mantine-color-text-6)" },
+              monthsListControl: { color: "var(--mantine-color-text-6)" },
+              yearsListControl: { color: "var(--mantine-color-text-6)" },
+              weekday: { color: "var(--color-text-dim)" },
+
+              day: {
+                color: "var(--mantine-color-text-6)",
+                "--mantine-primary-color-filled": "var(--mantine-color-primary-6)",
+              } as React.CSSProperties,
+            }}
             popoverProps={{
               zIndex: CALENDAR_Z_INDEX,
               styles: {
@@ -419,6 +419,14 @@ function BikeComponentFormBody({
       </DatesProvider>
     </Drawer>
   );
+}
+
+// A part being added went on today unless the owner says otherwise, which is true of nearly
+// every one. An existing part with no day on record keeps none: inventing one would date a
+// part the owner never dated.
+function initialMountedOn(component: BikeComponent | null): string | null {
+  if (component === null) return dayjs().format("YYYY-MM-DD");
+  return component.mounted_at == null ? null : dayjs(component.mounted_at).format("YYYY-MM-DD");
 }
 
 function minutesFrom(hours: number | string): number | null {

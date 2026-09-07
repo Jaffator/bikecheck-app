@@ -156,6 +156,7 @@ model component_groups {
   i18n_key        String?           @db.VarChar
   side_choice     Boolean           @default(false)
   component_types component_types[]
+  events_action   events_action[]
 }
 
 model component_types {
@@ -275,6 +276,10 @@ model events_action {
   req_front_suspension      Boolean                     @default(false)
   req_rear_suspension       Boolean                     @default(false)
   warning_message           String?                     @db.VarChar
+  // Set on the nine catch-all Replacements alone (ADR 0022). Every other Action answers
+  // "which category?" through its targets; a catch-all is the one row left with none.
+  component_group_id        Int?
+  component_groups          component_groups?           @relation(fields: [component_group_id], references: [id], onDelete: SetNull)
   default_service_intervals default_service_intervals[]
   bike_service_interval     bike_service_interval[]
   event_action_tags         event_action_tags[]

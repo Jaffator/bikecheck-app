@@ -18,10 +18,10 @@ export const inputStyles = {
   input: {
     borderRadius: "0.6rem",
     backgroundColor: "var(--mantine-color-inputs-6)",
-    border: "1px solid var(--mantine-color-inputs-4)",
+    border: "1px solid var(--mantine-color-inputs-5)",
     height: "2.25rem",
     color: "var(--mantine-color-text-6)",
-    "--input-placeholder-color": "var(--mantine-color-text-8)",
+    "--input-placeholder-color": "var(--mantine-color-text-9)",
   } as React.CSSProperties,
 };
 
@@ -101,9 +101,12 @@ export function chipStyles(
   };
 }
 
-// The dropdown renders in a portal, so it needs its own styles.
+// The dropdown renders in a portal, so it needs its own styles - and its own z-index:
+// Mantine's default for a popover is 300, which the sheets it opens inside sit at or above.
+// Kept under ConfirmModal at 400, which must stay over everything.
 export const dropdownProps = {
   withinPortal: true,
+  zIndex: 350,
   styles: {
     dropdown: {
       backgroundColor: "var(--mantine-color-background-8)",

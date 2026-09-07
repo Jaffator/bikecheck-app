@@ -10,8 +10,15 @@ export class SeedActions {
 
   private async actions(): Promise<void> {
     try {
-      for (const [, actions] of Object.entries(seedData.actions)) {
+      for (const [categoryName, actions] of Object.entries(seedData.actions)) {
         for (const event of actions as any[]) {
+          // A catch-all carries no targets, so its category cannot be derived from them.
+          // It is stored on the Action instead (ADR 0022) - that is how the next
+          // owner-created type in the category finds a Replacement to join.
+          const componentGroupId: number | null = event.catch_all
+            ? await this.categoryId(categoryName)
+            : null;
+
           //  Save action and get id
           const save_action = await this.prisma.events_action.upsert({
             where: { action_name: event.action },
@@ -19,8 +26,13 @@ export class SeedActions {
               action_name: event.action,
               replace_action: event.replace,
               i18n_key: toI18nKey('action', event.action),
+              component_group_id: componentGroupId,
             },
-            update: { replace_action: event.replace, i18n_key: toI18nKey('action', event.action) },
+            update: {
+              replace_action: event.replace,
+              i18n_key: toI18nKey('action', event.action),
+              component_group_id: componentGroupId,
+            },
           });
           // Targets releated to define action targets relations
           if (event.targets) {
@@ -74,6 +86,19 @@ export class SeedActions {
     } catch (error) {
       console.error('Error seeding actions:', error);
     }
+  }
+
+  // The category a catch-all belongs to. Seeded groups only - the names come from
+  // seed_data.json's own keys, so a drift between the two files stops the seed.
+  private async categoryId(categoryName: string): Promise<number> {
+    const group = await this.prisma.component_groups.findFirst({
+      where: { group_name: categoryName },
+      select: { id: true },
+    });
+    if (group === null) {
+      throw new Error(`Component group "${categoryName}" not found; its catch-all Replacement has no category (ADR 0022).`);
+    }
+    return group.id;
   }
 
   async run(): Promise<void> {

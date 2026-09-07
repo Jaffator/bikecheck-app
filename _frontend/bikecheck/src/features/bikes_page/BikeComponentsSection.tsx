@@ -5,18 +5,7 @@
 // still writes no maintenance of its own: a Replacement leaves for the service wizard,
 // prefilled (ADR 0015, amended by ADR 0017 and ADR 0018).
 import { useEffect, useMemo, useRef, useState, type ReactElement, type RefObject } from "react";
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Collapse,
-  Group,
-  Paper,
-  Skeleton,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
+import { ActionIcon, Box, Button, Collapse, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { DatePickerInput, DatesProvider } from "@mantine/dates";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -151,8 +140,7 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
       {/* The section stands on its own request, so the photo and the readings above it are
           already on screen while this is still arriving. It arrives as the folded cards it
           will settle into. */}
-      {isLoading &&
-        Array.from({ length: SKELETON_CARDS }, (_, index) => <Skeleton key={index} h={60} radius="lg" />)}
+      {isLoading && Array.from({ length: SKELETON_CARDS }, (_, index) => <Skeleton key={index} h={60} radius="lg" />)}
 
       {isError && (
         <Text fz={13} c="red.5">
@@ -237,7 +225,7 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
               styles: {
                 dropdown: {
                   backgroundColor: "var(--mantine-color-cards-6)",
-                  border: "1px solid var(--mantine-color-inputs-5)",
+                  border: "1px solid var(--mantine-color-inputs-9)",
                 },
               },
             }}
@@ -324,7 +312,7 @@ function Category({
       style={{
         backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage: "var(--card-glow)",
-        border: open ? "1px solid var(--mantine-color-primary-9)" : "1px solid var(--color-border-subtle)",
+        border: open ? "1px solid var(--mantine-color-primary-9)" : "none",
         boxShadow: "var(--elev-row)",
         overflow: "hidden",
         transition: "transform 120ms ease",

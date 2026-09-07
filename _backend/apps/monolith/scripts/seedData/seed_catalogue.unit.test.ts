@@ -22,6 +22,20 @@ const MIGRATION_SQL: string = fs.readFileSync(
   'utf8',
 );
 
+// The migration that gives each Component Type a Replacement of its own (ADR 0022).
+const SPLIT_SQL: string = fs.readFileSync(
+  path.join(
+    REPO_ROOT,
+    '_backend/apps/monolith/prisma/migrations/20260907140000_split_replacements_per_component_type/migration.sql',
+  ),
+  'utf8',
+);
+
+// [component_type, action_name, i18n_key] as the split migration lists them.
+const SPLIT_ROWS: string[][] = [...SPLIT_SQL.matchAll(/jsonb_build_array\('([^']+)',\s*'([^']+)',\s*'([^']+)'\)/g)].map(
+  (match) => [match[1], match[2], match[3]],
+);
+
 // Read, not imported: the locale files belong to the frontend and stay out of this build.
 function readLocale(language: string): Record<string, Record<string, string>> {
   const file: string = path.join(REPO_ROOT, `_frontend/bikecheck/src/i18n/locales/${language}.json`);
@@ -45,16 +59,71 @@ const CATCH_ALL_BY_CATEGORY: Record<string, string> = {
   Other: 'Other Part Replacement',
 };
 
+const CATCH_ALL_NAMES: Set<string> = new Set(Object.values(CATCH_ALL_BY_CATEGORY));
+
 describe('seed catalogue', () => {
-  it('offers a Replacement for every Component Type (ADR 0018)', () => {
-    const replaceable = new Set<string>();
+  // ADR 0018 asked for at least one; ADR 0022 asks for exactly one. Two Replacements on a
+  // type would put the same part on two rows of the wizard's action step - the picker the
+  // split removed, rebuilt as a list. None leaves the part unreplaceable.
+  it('gives every Component Type exactly one Replacement (ADR 0022)', () => {
+    const counts = new Map<string, number>();
     for (const action of allActions) {
       if (!action.replace) continue;
-      for (const target of action.targets) replaceable.add(target);
+      for (const target of action.targets) counts.set(target, (counts.get(target) ?? 0) + 1);
     }
 
-    const uncovered: string[] = typeNames.filter((name) => !replaceable.has(name));
-    expect(uncovered).toEqual([]);
+    const wrong: [string, number][] = typeNames
+      .map((name): [string, number] => [name, counts.get(name) ?? 0])
+      .filter(([, count]) => count !== 1);
+
+    expect(wrong).toEqual([]);
+  });
+
+  // The catch-alls outlive the split, serving owner-created types alone. They hold no
+  // seeded target, which is why their category moved onto the Action itself.
+  it('keeps a targetless catch-all per category (ADR 0022)', () => {
+    const catchAlls = allActions.filter((action) => action.catch_all === true);
+
+    expect(catchAlls.map((action) => action.action).sort()).toEqual([...CATCH_ALL_NAMES].sort());
+    expect(catchAlls.filter((action) => action.targets.length > 0).map((action) => action.action)).toEqual([]);
+    expect(catchAlls.filter((action) => !action.replace).map((action) => action.action)).toEqual([]);
+  });
+
+  // The migration is what reaches a deployed database (ADR 0019), so its list and the seed
+  // file have to say the same thing.
+  it('mints the same per-type Replacements the seed file declares (ADR 0022)', () => {
+    const seeded = new Map<string, string[]>(
+      allActions.filter((action) => action.replace && action.catch_all !== true).map((action) => [action.action, action.targets]),
+    );
+    const known = new Set<string>(typeNames);
+    const problems: string[] = [];
+
+    expect(SPLIT_ROWS.length).toBeGreaterThan(0);
+
+    for (const [typeName, actionName, key] of SPLIT_ROWS) {
+      if (!known.has(typeName)) problems.push(`${typeName}: not a Component Type`);
+      if (!seeded.has(actionName)) problems.push(`${actionName}: not a Replacement in seed_data.json`);
+      else if (!seeded.get(actionName)!.includes(typeName)) problems.push(`${actionName}: does not target ${typeName}`);
+      // The key is derived from the English name at seed time and hardcoded in the SQL, so
+      // a rename must reach both.
+      if (key !== toI18nKey('action', actionName)) problems.push(`${actionName}: key ${key} is not derived from the name`);
+    }
+
+    expect(problems).toEqual([]);
+  });
+
+  it('has a locale entry for every Replacement key (ADR 0022)', () => {
+    const locales = [readLocale('cs'), readLocale('en')];
+    const untranslated: string[] = [];
+
+    for (const action of allActions.filter((entry) => entry.replace)) {
+      const key: string = toI18nKey('action', action.action);
+      for (const locale of locales) {
+        if (locale.action[key.replace('action.', '')] === undefined) untranslated.push(key);
+      }
+    }
+
+    expect([...new Set(untranslated)]).toEqual([]);
   });
 
   it('targets only Component Types that exist', () => {

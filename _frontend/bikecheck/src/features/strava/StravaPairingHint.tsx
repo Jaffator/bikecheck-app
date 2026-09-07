@@ -19,7 +19,7 @@ export function StravaPairingHint({ stravaGearId }: StravaPairingHintProps): Rea
   if (stravaGearId !== null) return null;
 
   return (
-    <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+    <Group gap={6} wrap="nowrap" ml="auto" style={{ minWidth: 0 }}>
       <StravaMark width={14} height={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
       {/* The card's data voice, so the hint sits level with the figures beside it. */}
       <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>

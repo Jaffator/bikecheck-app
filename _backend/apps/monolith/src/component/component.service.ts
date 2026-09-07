@@ -37,15 +37,12 @@ async function findCategoryCatchAllReplacement(
     where: {
       replace_action: true,
       user_id: null,
-      action_name: { endsWith: 'Part Replacement' },
-      // Targets this category and nothing else. A catch-all is one row per category
-      // (ADR 0017), so an Action reaching into a second group is not this one's.
-      event_action_targets: {
-        some: { component_types: { component_group_id: componentGroupId } },
-        none: { component_types: { component_group_id: { not: componentGroupId } } },
-      },
+      // The category is stored, not derived from the targets (ADR 0022). Every seeded
+      // Component Type now owns its Replacement, so a catch-all keeps no seeded target to
+      // read a category from - it serves owner-created types alone.
+      component_group_id: componentGroupId,
     },
-    // The backfill picks the same row, so a category that ever grows a second catch-all
+    // The migration picks the same row, so a category that ever grows a second catch-all
     // is answered the same way on both paths.
     orderBy: { id: 'asc' },
     select: { id: true },
@@ -58,7 +55,8 @@ export class ComponentService {
 
   // The owner is the caller, never whoever the body names. The type also joins its
   // category's catch-all Replacement, so Replace is offered on it like on a seeded one
-  // (ADR 0018). One transaction, so a type never half-exists.
+  // (ADR 0018). Seeded types stopped using the catch-alls in ADR 0022; owner-created ones
+  // are all they still serve. One transaction, so a type never half-exists.
   async createComponentType(dto: CustomComponentsDto, userId: number): Promise<Response_ComponentDto> {
     return this.prisma.$transaction(async (tx) => {
       const created = await tx.component_types.create({

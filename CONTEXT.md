@@ -104,7 +104,11 @@ occasion.
 
 **Replacement**:
 An action that swaps a part out. Ends the old mounted component and begins a new one; it is not an
-edit of the existing part.
+edit of the existing part. Every Component Type has exactly one, named after the part it replaces
+(ADR 0022) — `Fork Replacement`, `Rim Replacement` — so choosing the action is choosing the part.
+An action that swaps a sub-part the app does not track, such as a hose, a bearing or an AXS cell, is
+ordinary work rather than a Replacement: it would otherwise end the part it sits on.
+_Avoid_: Swap (that is a sub-part job, which is not a Replacement)
 
 **Service Date**:
 When the work actually happened, which may be earlier than when it was recorded.

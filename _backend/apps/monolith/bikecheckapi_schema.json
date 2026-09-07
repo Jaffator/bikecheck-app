@@ -1171,6 +1171,60 @@
         ]
       }
     },
+    "/api/components/custom-types": {
+      "get": {
+        "operationId": "Component getCustomComponentTypes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_CustomComponentTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
+    "/api/components/custom-types/{id}": {
+      "delete": {
+        "operationId": "Component deleteComponentType",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_ComponentDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Component"
+        ]
+      }
+    },
     "/api/components/groups": {
       "get": {
         "operationId": "Component getGroups",
@@ -1250,6 +1304,9 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "The slot already holds an active part (ADR 0020)"
           }
         },
         "tags": [
@@ -2522,7 +2579,7 @@
           },
           "position": {
             "type": "string",
-            "example": "Front",
+            "example": "front",
             "nullable": true
           },
           "mounted_at": {
@@ -3673,6 +3730,10 @@
       "Response_ComponentDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "number",
+            "example": 91
+          },
           "component_group_id": {
             "type": "number",
             "example": 15
@@ -3706,6 +3767,7 @@
           }
         },
         "required": [
+          "id",
           "component_group_id",
           "user_id",
           "component_type",
@@ -3713,6 +3775,51 @@
           "ebike",
           "has_position",
           "essential"
+        ]
+      },
+      "Response_CustomComponentTypeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 91
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Chain Guard"
+          },
+          "component_group_id": {
+            "type": "number",
+            "example": 3
+          },
+          "component_group": {
+            "type": "string",
+            "example": "Drivetrain"
+          },
+          "component_group_i18n_key": {
+            "type": "string",
+            "example": "componentGroup.drivetrain",
+            "nullable": true
+          },
+          "parts_in_use": {
+            "type": "number",
+            "example": 2,
+            "description": "Parts on the owner bikes still named by this type"
+          },
+          "bikes_in_use": {
+            "type": "number",
+            "example": 1,
+            "description": "How many bikes those parts sit on"
+          }
+        },
+        "required": [
+          "id",
+          "component_type",
+          "component_group_id",
+          "component_group",
+          "component_group_i18n_key",
+          "parts_in_use",
+          "bikes_in_use"
         ]
       },
       "Response_ComponentGroupDto": {
@@ -3896,7 +4003,7 @@
           },
           "position": {
             "type": "string",
-            "example": "Front",
+            "example": "front",
             "nullable": true
           },
           "mounted_at": {

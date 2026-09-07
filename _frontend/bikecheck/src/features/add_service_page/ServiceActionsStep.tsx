@@ -351,9 +351,17 @@ function ActionRow({
     );
   }
 
-  // A closed but ticked action still says which parts it was performed on.
+  // One candidate is no choice at all: ticking the Action already picked it
+  // (useAddServiceWizard.toggleAction). Since ADR 0022 gave every Component Type its own
+  // Replacement that is the ordinary case, and only a part the bike carries at both ends
+  // still needs choosing between.
+  const soleReplacementTarget =
+    action.replace_action && action.components.length === 1 ? action.components[0] : null;
+
+  // A closed but ticked action still says which parts it was performed on. A Replacement
+  // naming its own part says it twice, so that one stays quiet.
   const summary =
-    picked && !opened
+    picked && !opened && soleReplacementTarget === null
       ? action.components
           .filter((component) => picked.componentIds.includes(component.id))
           .map((component) => componentTypeLabel(component, t))
@@ -438,7 +446,25 @@ function ActionRow({
         <Stack gap="sm" px="md" pb="md">
           {/* The parts are live before the action is ticked: picking one is how the user
               says the work happened, so it ticks the action on the way through. */}
-          {action.components.length > 0 && (
+          {/* Nothing to choose between: straight to describing the part going on. */}
+          {soleReplacementTarget !== null && picked !== undefined && (
+            <TextInput
+              label={t("addService.newPart")}
+              placeholder={t("addService.newPartPlaceholder")}
+              value={picked.newDescriptions[soleReplacementTarget.id] ?? ""}
+              styles={inputStyles}
+              onChange={(event) =>
+                onUpdate({
+                  newDescriptions: {
+                    ...picked.newDescriptions,
+                    [soleReplacementTarget.id]: event.currentTarget.value,
+                  },
+                })
+              }
+            />
+          )}
+
+          {soleReplacementTarget === null && action.components.length > 0 && (
             <Stack gap={6}>
               <Text style={fieldLabel}>{t("addService.componentsLabel")}</Text>
               <Chip.Group
