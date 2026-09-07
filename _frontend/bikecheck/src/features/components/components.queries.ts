@@ -10,9 +10,11 @@ import {
   createBikeComponent,
   createComponentType,
   deleteBikeComponent,
+  deleteComponentType,
   dismountBikeComponent,
   getBikeComponents,
   getComponentGroups,
+  getCustomComponentTypes,
   getDefaultComponents,
   updateBikeComponent,
 } from "./components.api";
@@ -23,7 +25,9 @@ import type {
   ComponentType,
   CreateBikeComponentInput,
   CreateComponentTypeInput,
+  CustomComponentType,
   DeleteBikeComponentInput,
+  DeleteComponentTypeInput,
   DismountBikeComponentInput,
   UpdateBikeComponentInput,
 } from "./components.types";
@@ -44,6 +48,29 @@ export function useDefaultComponents(ebike: boolean): UseQueryResult<AssembleBik
   });
 }
 
+// The owner's own catalogue entries. Named apart from the picker's catalogue: this one is
+// read for managing types, that one for choosing a part.
+export function useCustomComponentTypes(): UseQueryResult<CustomComponentType[]> {
+  return useQuery({
+    queryKey: ["custom-component-types"],
+    queryFn: getCustomComponentTypes,
+  });
+}
+
+// Removing a type changes what the picker offers on every bike, e-bike and acoustic alike,
+// so both catalogue lists go along with the settings list.
+export function useDeleteComponentType(): UseMutationResult<ComponentType, Error, DeleteComponentTypeInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: DeleteComponentTypeInput) => deleteComponentType(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["custom-component-types"] });
+      await queryClient.invalidateQueries({ queryKey: ["default-components"] });
+    },
+  });
+}
+
 // A newly named type has to be in the catalogue before the part using it can be saved, so
 // both e-bike and acoustic lists are dropped rather than only the one in front of us.
 export function useCreateComponentType(): UseMutationResult<ComponentType, Error, CreateComponentTypeInput> {
@@ -53,6 +80,7 @@ export function useCreateComponentType(): UseMutationResult<ComponentType, Error
     mutationFn: (input: CreateComponentTypeInput) => createComponentType(input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["default-components"] });
+      await queryClient.invalidateQueries({ queryKey: ["custom-component-types"] });
     },
   });
 }

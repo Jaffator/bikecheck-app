@@ -466,6 +466,20 @@
           "type": "boolean",
           "default": false
         },
+        "is_deleted": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "deleted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "component_groups": {
           "$ref": "#/definitions/component_groups"
         },

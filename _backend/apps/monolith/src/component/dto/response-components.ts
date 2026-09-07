@@ -146,3 +146,29 @@ export class Response_BikeComponentDto {
   })
   unserviced!: boolean;
 }
+
+// One of the owner's own catalogue entries, as the settings list reads it. The counts are
+// what the list says out loud before a type is removed: removing it never touches the parts
+// still carrying its name (ADR 0021).
+export class Response_CustomComponentTypeDto {
+  @ApiProperty({ example: 91 })
+  id!: number;
+
+  @ApiProperty({ example: 'Chain Guard' })
+  component_type!: string;
+
+  @ApiProperty({ example: 3 })
+  component_group_id!: number;
+
+  @ApiProperty({ example: 'Drivetrain' })
+  component_group!: string;
+
+  @ApiProperty({ type: String, example: 'componentGroup.drivetrain', nullable: true })
+  component_group_i18n_key!: string | null;
+
+  @ApiProperty({ example: 2, description: 'Parts on the owner bikes still named by this type' })
+  parts_in_use!: number;
+
+  @ApiProperty({ example: 1, description: 'How many bikes those parts sit on' })
+  bikes_in_use!: number;
+}

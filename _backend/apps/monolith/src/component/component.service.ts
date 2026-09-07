@@ -6,6 +6,7 @@ import {
   AssembleBikeComponentsDto,
   Response_BikeComponentDto,
   Response_ComponentDto,
+  Response_CustomComponentTypeDto,
 } from './dto/response-components';
 import { CreateBikeComponentDto, CustomComponentsDto } from './dto/create-components';
 import { DismountComponentDto, UpdateMountedComponentDto } from './dto/update-components';
@@ -84,11 +85,13 @@ export class ComponentService {
   }
 
   // The catalogue as this owner sees it: everything seeded, plus the types they named
-  // themselves. A type another owner created is not theirs to be offered.
+  // themselves. A type another owner created is not theirs to be offered, and one they
+  // have removed is offered to nobody (ADR 0021).
   async getComponentsDefaults(ebike: boolean, userId: number): Promise<AssembleBikeComponentsDto[]> {
     const componentTypes = await this.prisma.component_types.findMany({
       where: {
         ...(ebike ? {} : { ebike: false }),
+        is_deleted: { not: true },
         OR: [{ user_id: null }, { user_id: userId }],
       },
     });
@@ -254,6 +257,71 @@ export class ComponentService {
     });
 
     return toBikeComponentDto(deleted);
+  }
+
+  // The owner's own corner of the catalogue, which is the only part of it they may remove.
+  // Each entry carries what still leans on it: the parts naming it and the bikes those sit
+  // on, so the list can say what removing it will and will not touch (ADR 0021).
+  async getCustomComponentTypes(userId: number): Promise<Response_CustomComponentTypeDto[]> {
+    const types = await this.prisma.component_types.findMany({
+      where: { user_id: userId, is_deleted: { not: true } },
+      include: {
+        component_groups: true,
+        // Only what the owner can still see counts here: a part they deleted, or one on a
+        // bike they deleted, is not a reason to hesitate over the name.
+        components_mounted: {
+          where: { is_deleted: { not: true }, bikes: { is_deleted: { not: true } } },
+          select: { bike_id: true },
+        },
+      },
+      orderBy: { component_type: 'asc' },
+    });
+
+    return types.map((type) => ({
+      id: type.id,
+      component_type: type.component_type,
+      component_group_id: type.component_group_id,
+      component_group: type.component_groups.group_name,
+      component_group_i18n_key: type.component_groups.i18n_key,
+      parts_in_use: type.components_mounted.length,
+      bikes_in_use: new Set(type.components_mounted.map((part) => part.bike_id)).size,
+    }));
+  }
+
+  // Removing a type from the owner's catalogue. Deleted outright where nothing references
+  // it — the ordinary case, a name typed wrongly — taking the catch-all Replacement target
+  // written alongside it. Where any part still holds the type by its foreign key,
+  // deleted or not, the row is kept and marked instead, so that part goes on resolving its
+  // name and its history (ADR 0021).
+  async deleteComponentType(id: number, userId: number): Promise<Response_ComponentDto> {
+    // One transaction, because the count decides the delete: a part mounted between the two
+    // would leave the hard branch deleting a row something now references.
+    return this.prisma.$transaction(async (tx) => {
+      // A seeded type carries no owner, so it is not found here and cannot be removed.
+      const type = await tx.component_types.findFirst({
+        where: { id, user_id: userId, is_deleted: { not: true } },
+      });
+
+      if (!type) {
+        throw new NotFoundException(`Component type with ID ${id} not found`);
+      }
+
+      const referencing = await tx.components_mounted.count({ where: { component_type_id: id } });
+
+      if (referencing === 0) {
+        // The catch-all Replacement target written with the type goes with it: the foreign
+        // key cascades, so deleting the row is the whole of it.
+        await tx.component_types.delete({ where: { id } });
+        return type;
+      }
+
+      await tx.component_types.update({
+        where: { id },
+        data: { is_deleted: true, deleted_at: new Date() },
+      });
+
+      return type;
+    });
   }
 
   async getAllComponentGroups(): Promise<Response_ComponentGroupDto[]> {

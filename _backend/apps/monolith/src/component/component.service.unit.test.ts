@@ -48,7 +48,10 @@ describe('ComponentService', () => {
   const mockPrismaService = {
     component_types: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     },
     events_action: {
       findFirst: jest.fn(),
@@ -62,6 +65,7 @@ describe('ComponentService', () => {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
     bikes: {
       findFirst: jest.fn(),
@@ -118,7 +122,7 @@ describe('ComponentService', () => {
 
       // ASSERT
       expect(mockPrismaService.component_types.findMany).toHaveBeenCalledWith({
-        where: { ebike: false, OR: [{ user_id: null }, { user_id: OWNER_ID }] },
+        where: { ebike: false, is_deleted: { not: true }, OR: [{ user_id: null }, { user_id: OWNER_ID }] },
       });
     });
 
@@ -131,7 +135,7 @@ describe('ComponentService', () => {
 
       // ASSERT
       expect(mockPrismaService.component_types.findMany).toHaveBeenCalledWith({
-        where: { OR: [{ user_id: null }, { user_id: OWNER_ID }] },
+        where: { is_deleted: { not: true }, OR: [{ user_id: null }, { user_id: OWNER_ID }] },
       });
     });
 
@@ -739,6 +743,152 @@ describe('ComponentService', () => {
       // ACT & ASSERT
       await expect(service.deleteMountedComponent(COMPONENT_ID, OWNER_ID)).rejects.toThrow(NotFoundException);
       expect(mockPrismaService.components_mounted.update).not.toHaveBeenCalled();
+    });
+  });
+  // The owner's own catalogue, and the way back out of it. A type is a catalogue entry
+  // rather than a part, so it leaves the catalogue on its own say-so (ADR 0021).
+  describe('custom component types', () => {
+    const TYPE_ID = 91;
+
+    function customTypeRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+      return {
+        id: TYPE_ID,
+        component_type: 'Chain Guard',
+        i18n_key: null,
+        component_group_id: 3,
+        ebike: false,
+        has_position: false,
+        essential: false,
+        user_id: OWNER_ID,
+        component_groups: { group_name: 'Drivetrain', i18n_key: 'componentGroup.drivetrain' },
+        components_mounted: [],
+        ...overrides,
+      };
+    }
+
+    describe('getCustomComponentTypes', () => {
+      it('reads the caller own live types and nothing seeded', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findMany.mockResolvedValue([]);
+
+        // ACT
+        await service.getCustomComponentTypes(OWNER_ID);
+
+        // ASSERT
+        expect(mockPrismaService.component_types.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { user_id: OWNER_ID, is_deleted: { not: true } } }),
+        );
+      });
+
+      it('counts the parts still carrying the name, and the bikes they sit on', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findMany.mockResolvedValue([
+          customTypeRow({
+            components_mounted: [{ bike_id: 1 }, { bike_id: 1 }, { bike_id: 2 }],
+          }),
+        ]);
+
+        // ACT
+        const result = await service.getCustomComponentTypes(OWNER_ID);
+
+        // ASSERT
+        expect(result).toEqual([
+          {
+            id: TYPE_ID,
+            component_type: 'Chain Guard',
+            component_group_id: 3,
+            component_group: 'Drivetrain',
+            component_group_i18n_key: 'componentGroup.drivetrain',
+            parts_in_use: 3,
+            bikes_in_use: 2,
+          },
+        ]);
+      });
+
+      it('reads a type nothing uses as free to remove', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findMany.mockResolvedValue([customTypeRow()]);
+
+        // ACT
+        const result = await service.getCustomComponentTypes(OWNER_ID);
+
+        // ASSERT
+        expect(result[0]).toMatchObject({ parts_in_use: 0, bikes_in_use: 0 });
+      });
+    });
+
+    describe('deleteComponentType', () => {
+      // The catch-all Replacement target goes with the row by the foreign key's own
+      // cascade, so the delete is the whole of it.
+      it('deletes a type nothing references outright', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findFirst.mockResolvedValue(customTypeRow());
+        mockPrismaService.components_mounted.count.mockResolvedValue(0);
+
+        // ACT
+        await service.deleteComponentType(TYPE_ID, OWNER_ID);
+
+        // ASSERT
+        expect(mockPrismaService.component_types.delete).toHaveBeenCalledWith({ where: { id: TYPE_ID } });
+        expect(mockPrismaService.component_types.update).not.toHaveBeenCalled();
+      });
+
+      it('keeps a type parts still name, marked deleted, so those parts go on resolving', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findFirst.mockResolvedValue(customTypeRow());
+        mockPrismaService.components_mounted.count.mockResolvedValue(2);
+
+        // ACT
+        await service.deleteComponentType(TYPE_ID, OWNER_ID);
+
+        // ASSERT
+        expect(mockPrismaService.component_types.update).toHaveBeenCalledWith({
+          where: { id: TYPE_ID },
+          data: { is_deleted: true, deleted_at: expect.any(Date) as Date },
+        });
+        expect(mockPrismaService.component_types.delete).not.toHaveBeenCalled();
+      });
+
+      // A part the owner deleted still holds the type by its foreign key, so the row cannot
+      // go even though nothing the owner can see uses it.
+      it('keeps a type held only by a deleted part', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findFirst.mockResolvedValue(customTypeRow());
+        mockPrismaService.components_mounted.count.mockResolvedValue(1);
+
+        // ACT
+        await service.deleteComponentType(TYPE_ID, OWNER_ID);
+
+        // ASSERT
+        expect(mockPrismaService.components_mounted.count).toHaveBeenCalledWith({
+          where: { component_type_id: TYPE_ID },
+        });
+        expect(mockPrismaService.component_types.delete).not.toHaveBeenCalled();
+      });
+
+      it('refuses a type the caller does not own, seeded ones included', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findFirst.mockResolvedValue(null);
+
+        // ACT + ASSERT
+        await expect(service.deleteComponentType(TYPE_ID, OWNER_ID)).rejects.toThrow(NotFoundException);
+        expect(mockPrismaService.component_types.delete).not.toHaveBeenCalled();
+        expect(mockPrismaService.component_types.update).not.toHaveBeenCalled();
+      });
+
+      it('looks the type up as the caller own and not already removed', async () => {
+        // ARRANGE
+        mockPrismaService.component_types.findFirst.mockResolvedValue(customTypeRow());
+        mockPrismaService.components_mounted.count.mockResolvedValue(0);
+
+        // ACT
+        await service.deleteComponentType(TYPE_ID, OWNER_ID);
+
+        // ASSERT
+        expect(mockPrismaService.component_types.findFirst).toHaveBeenCalledWith({
+          where: { id: TYPE_ID, user_id: OWNER_ID, is_deleted: { not: true } },
+        });
+      });
     });
   });
 });

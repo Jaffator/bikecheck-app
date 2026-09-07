@@ -28,6 +28,22 @@ export interface CreateComponentTypeInput {
   has_position: boolean;
 }
 
+// One of the owner's own catalogue entries, as the settings list reads it. The counts say
+// what still leans on the type: removing it leaves every one of those parts alone (ADR 0021).
+export interface CustomComponentType {
+  id: number;
+  component_type: string;
+  component_group_id: number;
+  component_group: string;
+  component_group_i18n_key: string | null;
+  parts_in_use: number;
+  bikes_in_use: number;
+}
+
+export interface DeleteComponentTypeInput {
+  id: number;
+}
+
 // Mounted component draft before bike creation.
 export interface MountedComponentDraft {
   bike_id: number;

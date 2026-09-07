@@ -41,7 +41,21 @@
   },
   "settings": {
     "currency": "Currency",
-    "language": "Language"
+    "language": "Language",
+    "customParts": "My parts"
+  },
+  "customParts": {
+    "title": "My parts",
+    "empty": "You have not named any parts of your own yet. Name one while adding a part to a bike and it will show up here.",
+    "unused": "not used anywhere",
+    "onBikes_one": "on {{count}} bike",
+    "onBikes_other": "on {{count}} bikes",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "removeConfirmTitle": "Remove {{name}} from your parts?",
+    "removeConfirmBody": "It stops being offered when you add a part to a bike. You can name it again any time.",
+    "removeConfirmInUse_one": "{{count}} part on your bikes keeps this name and is not affected.",
+    "removeConfirmInUse_other": "{{count}} parts on your bikes keep this name and are not affected."
   },
   "language": {
     "en": "English",

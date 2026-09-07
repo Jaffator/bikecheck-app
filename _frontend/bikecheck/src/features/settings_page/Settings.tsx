@@ -1,16 +1,19 @@
 // Settings page.
-import type { ReactElement } from "react";
-import { Card, Group, SegmentedControl, Text } from "@mantine/core";
+import { useState, type ReactElement } from "react";
+import { Card, Group, SegmentedControl, Text, UnstyledButton } from "@mantine/core";
+import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser, useUpdateUser } from "../users/users.queries";
 import { SUPPORTED_LANGUAGES, applyLanguage } from "@/i18n";
 import { StravaStatusCard } from "../strava/StravaStatusCard";
 import { FALLBACK_CURRENCY, SUPPORTED_CURRENCIES } from "@/utils/money";
+import { CustomPartsDrawer } from "./CustomPartsDrawer";
 
 export function Settings(): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
   const updateUser = useUpdateUser();
+  const [customParts, setCustomParts] = useState(false);
 
   // Update the UI before persisting the language.
   function changeLanguage(language: string): void {
@@ -53,6 +56,19 @@ export function Settings(): ReactElement {
           />
         </Group>
       </Card>
+      {/* The parts the owner named themselves. A list rather than a setting, so it opens
+          over the page instead of resolving in place. */}
+      <Card bg="cards.6" className="m-3 border" p={0}>
+        <UnstyledButton onClick={() => setCustomParts(true)} className="w-full" p="md">
+          <Group justify="space-between" wrap="nowrap">
+            <Text c="text.6">{t("settings.customParts")}</Text>
+            <ChevronRight size={18} color="var(--color-text-dim)" />
+          </Group>
+        </UnstyledButton>
+      </Card>
+
+      <CustomPartsDrawer opened={customParts} onClose={() => setCustomParts(false)} />
+
       {/* Show only an existing Strava connection. */}
       <div className="m-3">
         <StravaStatusCard connectedOnly allowDisconnect />

@@ -41,7 +41,25 @@
   },
   "settings": {
     "currency": "Měna",
-    "language": "Jazyk"
+    "language": "Jazyk",
+    "customParts": "Moje díly"
+  },
+  "customParts": {
+    "title": "Moje díly",
+    "empty": "Zatím jsi nepojmenoval žádný vlastní díl. Až nějaký pojmenuješ při přidávání dílu na kolo, objeví se tady.",
+    "unused": "nikde nepoužitý",
+    "onBikes_one": "na {{count}} kole",
+    "onBikes_few": "na {{count}} kolech",
+    "onBikes_many": "na {{count}} kolech",
+    "onBikes_other": "na {{count}} kolech",
+    "remove": "Odebrat",
+    "cancel": "Zrušit",
+    "removeConfirmTitle": "Odebrat {{name}} z mých dílů?",
+    "removeConfirmBody": "Přestane se nabízet při přidávání dílu na kolo. Pojmenovat ho znovu můžeš kdykoliv.",
+    "removeConfirmInUse_one": "{{count}} díl na tvých kolech si název ponechá a nic se s ním nestane.",
+    "removeConfirmInUse_few": "{{count}} díly na tvých kolech si název ponechají a nic se s nimi nestane.",
+    "removeConfirmInUse_many": "{{count}} dílu na tvých kolech si název ponechá a nic se s ním nestane.",
+    "removeConfirmInUse_other": "{{count}} dílů na tvých kolech si název ponechá a nic se s nimi nestane."
   },
   "language": {
     "en": "English",

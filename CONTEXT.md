@@ -29,7 +29,8 @@ _Avoid_: Elevation gain, ascent
 
 **Component Type**:
 A kind of part that can be mounted on a bike — Chain, Fork, Brake Caliper. A catalogue entry,
-not a physical object.
+not a physical object. One an owner names themselves is theirs, outlives every part that used it,
+and leaves their catalogue only when they remove it (ADR 0021).
 _Avoid_: Part type
 
 **Component Category**:

@@ -7,7 +7,9 @@ import type {
   ComponentType,
   CreateBikeComponentInput,
   CreateComponentTypeInput,
+  CustomComponentType,
   DeleteBikeComponentInput,
+  DeleteComponentTypeInput,
   DismountBikeComponentInput,
   UpdateBikeComponentInput,
 } from "./components.types";
@@ -24,6 +26,17 @@ export async function createComponentType(input: CreateComponentTypeInput): Prom
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+// The owner's own catalogue entries, with what still leans on each.
+export async function getCustomComponentTypes(): Promise<CustomComponentType[]> {
+  return apiFetch<CustomComponentType[]>("/components/custom-types");
+}
+
+// Take a kind of part out of the owner's catalogue. The parts already named by it are not
+// touched; the server decides whether the row can go outright (ADR 0021).
+export async function deleteComponentType({ id }: DeleteComponentTypeInput): Promise<ComponentType> {
+  return apiFetch<ComponentType>(`/components/custom-types/${String(id)}`, { method: "DELETE" });
 }
 
 // Get default components for the bike type.

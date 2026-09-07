@@ -171,11 +171,18 @@ model component_types {
   component_group_id   Int
   has_position         Boolean                @default(false)
   user_id              Int?
+  // Set only on a removed type parts still name (ADR 0021). One nothing references is
+  // deleted outright, so a removed type is usually simply gone.
+  is_deleted           Boolean?               @default(false)
+  deleted_at           DateTime?              @db.Timestamptz(6)
   component_groups     component_groups       @relation(fields: [component_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                users?                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
   components_mounted   components_mounted[]
   event_action_targets event_action_targets[]
 
+  // In the database this is partial — one *live* row per name, so a removed type never
+  // blocks the owner naming the same part again. Prisma cannot say `WHERE is_deleted IS
+  // NOT TRUE` here; the real index is in the 20260907120000 migration.
   @@unique([component_type, user_id])
 }
 

@@ -6,6 +6,7 @@ import {
   AssembleBikeComponentsDto,
   Response_BikeComponentDto,
   Response_ComponentDto,
+  Response_CustomComponentTypeDto,
 } from './dto/response-components';
 import { CreateBikeComponentDto, CustomComponentsDto } from './dto/create-components';
 import { DismountComponentDto, UpdateMountedComponentDto } from './dto/update-components';
@@ -36,6 +37,25 @@ export class ComponentController {
   ): Promise<AssembleBikeComponentsDto[]> {
     const isEbike = ebike === 'true';
     return await this.componentService.getComponentsDefaults(isEbike, Number(userId));
+  }
+
+  // ---------- GET the caller own catalogue entries, for the settings list ----------
+  @Get('custom-types')
+  @ApiResponse({ status: 200, type: Response_CustomComponentTypeDto, isArray: true })
+  async getCustomComponentTypes(
+    @CurrentUser('userId') userId: string,
+  ): Promise<Response_CustomComponentTypeDto[]> {
+    return await this.componentService.getCustomComponentTypes(Number(userId));
+  }
+
+  // ---------- DELETE a custom type from the caller catalogue ----------
+  @Delete('custom-types/:id')
+  @ApiResponse({ status: 200, type: Response_ComponentDto })
+  async deleteComponentType(
+    @CurrentUser('userId') userId: string,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Response_ComponentDto> {
+    return await this.componentService.deleteComponentType(id, Number(userId));
   }
 
   // ---------- GET All Groups ----------
