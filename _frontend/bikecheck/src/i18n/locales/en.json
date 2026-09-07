@@ -261,7 +261,6 @@
     "dismountedCount_other": "{{count}} taken off",
     "typeLabel": "Part",
     "typePlaceholder": "Choose a part",
-    "customGroup": "Your own part",
     "createType": "Name your own part “{{name}}”",
     "categoryLabel": "Category",
     "categoryPlaceholder": "Where the part belongs",

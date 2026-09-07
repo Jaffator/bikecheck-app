@@ -274,7 +274,6 @@
     "dismountedCount_other": "{{count}} sundaných",
     "typeLabel": "Komponenta",
     "typePlaceholder": "Vyber komponentu",
-    "customGroup": "Vlastní díl",
     "createType": "Pojmenovat vlastní díl „{{name}}“",
     "categoryLabel": "Kategorie",
     "categoryPlaceholder": "Kam díl patří",

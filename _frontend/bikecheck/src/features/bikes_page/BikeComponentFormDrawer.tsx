@@ -142,8 +142,8 @@ function BikeComponentFormBody({
   // omission (ADR 0020).
   const positionRequired = !editing && takesPosition;
   const takenSides = typeId === null || naming ? new Set<string>() : (taken.get(Number(typeId)) ?? new Set<string>());
-  const options = catalogueOptions(catalogue, groups, taken, t);
-  const someTypeTaken = options.some((option) => option.items.some((item) => item.disabled === true));
+  const options = catalogueOptions(catalogue, taken, t, i18n.language);
+  const someTypeTaken = options.some((option) => option.disabled === true);
   const pending = create.isPending || update.isPending || createType.isPending;
   const failed = create.isError || update.isError || createType.isError;
   const incomplete =
@@ -460,40 +460,28 @@ function fullyTaken(sides: Set<string> | undefined, hasPosition: boolean): boole
 function keepCreateOption({ options, search }: { options: ComboboxParsedItem[]; search: string }): ComboboxParsedItem[] {
   const query = search.trim().toLowerCase();
 
-  function matches(item: ComboboxItem): boolean {
-    return item.value === CREATE_VALUE || item.label.toLowerCase().includes(query);
-  }
-
-  return options
-    .map((option) => ("group" in option ? { ...option, items: option.items.filter(matches) } : option))
-    .filter((option) => ("group" in option ? option.items.length > 0 : matches(option)));
+  return options.filter(
+    (option) => !("group" in option) && (option.value === CREATE_VALUE || option.label.toLowerCase().includes(query)),
+  );
 }
 
-interface OptionGroup {
-  group: string;
-  items: ComboboxItem[];
-}
-
-// The catalogue plus the way out of it: the part the owner is about to name, offered under
-// the search they typed. Kept in the list once chosen, so the picker can still show it.
+// The catalogue plus the way out of it: the part the owner is about to name, offered last
+// under the search they typed. Kept in the list once chosen, so the picker can still show it.
 function withCreateOption(
-  options: OptionGroup[],
+  options: ComboboxItem[],
   search: string,
   naming: boolean,
   customName: string,
   t: (key: string, values?: Record<string, string>) => string,
-): OptionGroup[] {
+): ComboboxItem[] {
   const name = naming ? customName : search.trim();
   if (name === "" || nameInCatalogue(options, name)) return options;
 
-  return [
-    ...options,
-    { group: t("bikeComponents.customGroup"), items: [{ value: CREATE_VALUE, label: t("bikeComponents.createType", { name }) }] },
-  ];
+  return [...options, { value: CREATE_VALUE, label: t("bikeComponents.createType", { name }) }];
 }
 
-function nameInCatalogue(options: OptionGroup[], name: string): boolean {
-  return options.some((option) => option.items.some((item) => item.label.toLowerCase() === name.toLowerCase()));
+function nameInCatalogue(options: ComboboxItem[], name: string): boolean {
+  return options.some((item) => item.label.toLowerCase() === name.toLowerCase());
 }
 
 // The categories a newly named part can be put into, in the order they were seeded.
@@ -506,28 +494,22 @@ function groupOptions(groups: ComponentGroup[] | undefined, t: (key: string) => 
   }));
 }
 
-// The catalogue as the picker reads it: types under the category they belong to, in the
-// order the categories were seeded. A category with nothing in it is not offered, and a
-// type with no slot left is greyed rather than dropped — a vanished part reads as one the
-// app does not know (ADR 0020).
+// The catalogue as the picker reads it: one flat list, alphabetical in the names the owner
+// actually reads, so the order holds in either language. A type with no slot left is greyed
+// rather than dropped — a vanished part reads as one the app does not know (ADR 0020).
 function catalogueOptions(
   catalogue: AssembleBikeComponent[] | undefined,
-  groups: ComponentGroup[] | undefined,
   taken: Map<number, Set<string>>,
   t: (key: string) => string,
-): OptionGroup[] {
-  if (catalogue === undefined || groups === undefined) return [];
+  language: string,
+): ComboboxItem[] {
+  if (catalogue === undefined) return [];
 
-  return groups
-    .map((group) => ({
-      group: catalogueLabel(group.i18n_key, group.group_name, t),
-      items: catalogue
-        .filter((entry) => entry.component_group_id === group.id)
-        .map((entry) => ({
-          value: String(entry.component.component_type_id),
-          label: catalogueLabel(entry.component_i18n_key, entry.component_name, t),
-          disabled: fullyTaken(taken.get(entry.component.component_type_id), entry.has_position),
-        })),
+  return catalogue
+    .map((entry) => ({
+      value: String(entry.component.component_type_id),
+      label: catalogueLabel(entry.component_i18n_key, entry.component_name, t),
+      disabled: fullyTaken(taken.get(entry.component.component_type_id), entry.has_position),
     }))
-    .filter((option) => option.items.length > 0);
+    .sort((left, right) => left.label.localeCompare(right.label, language));
 }
