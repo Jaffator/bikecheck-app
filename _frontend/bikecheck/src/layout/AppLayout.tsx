@@ -6,7 +6,7 @@ import { Settings, Bell, ArrowLeft } from "lucide-react";
 import { GoHomeFill, GoHome } from "react-icons/go";
 // import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
-import { PiPath, PiPathBold } from "react-icons/pi";
+import { PiPath, PiPathBold, PiChatCircle, PiChatCircleFill } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
@@ -52,6 +52,13 @@ const NAV_ITEMS: NavItem[] = [
     path: "/rides",
     icon: PiPath,
     icon_fill: PiPathBold,
+  },
+  // PROTOTYPE ONLY (#58): fifth tab, points at the throwaway chat route. Remove with the branch.
+  {
+    labelKey: "nav.chat",
+    path: "/prototype/chat",
+    icon: PiChatCircle,
+    icon_fill: PiChatCircleFill,
   },
 ];
 

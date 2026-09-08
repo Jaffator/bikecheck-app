@@ -21,6 +21,8 @@ import { usePushNotifications } from "./hooks/usePushNotifications";
 import { useCurrentUser, useUpdateUser } from "./features/users/users.queries";
 import { PublicReport } from "./features/report/PublicReport";
 import { Reports } from "./features/report_page/Reports";
+// PROTOTYPE ONLY (#58) - remove with branch prototype/chat-page.
+import { ChatPrototype } from "./features/chat_page_prototype/ChatPrototype";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
@@ -109,6 +111,8 @@ function ProtectedApp(): ReactElement {
           <Route path="/notifications" element={<Notifications />} />
           {/* Handles the completed Strava OAuth deep link. */}
           <Route path="/strava-connected" element={<StravaConnected />} />
+          {/* PROTOTYPE ONLY (#58) */}
+          <Route path="/prototype/chat" element={<ChatPrototype />} />
         </Route>
       </Routes>
     </>
