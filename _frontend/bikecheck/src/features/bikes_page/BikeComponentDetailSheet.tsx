@@ -17,7 +17,7 @@ import {
   tracksSuspension,
 } from "@/features/components/componentLabels";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
-import { HEALTH_COLORS } from "./bikeHealth.types";
+import { ATTENTION_COLORS } from "@/features/service_tracking/attentionLevel";
 
 // Half the screen, fixed rather than content-sized, so the sheet does not jump in height
 // between parts and the build it was opened from stays visible behind it.
@@ -162,7 +162,7 @@ function Header({
             h={8}
             style={{
               borderRadius: "50%",
-              backgroundColor: removed ? "var(--color-muted)" : HEALTH_COLORS.good,
+              backgroundColor: removed ? "var(--color-muted)" : ATTENTION_COLORS.good,
               flexShrink: 0,
             }}
           />

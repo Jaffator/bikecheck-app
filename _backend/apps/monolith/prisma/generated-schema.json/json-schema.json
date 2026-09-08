@@ -403,12 +403,6 @@
           "items": {
             "$ref": "#/definitions/rides"
           }
-        },
-        "service_snooze": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/service_snooze"
-          }
         }
       }
     },
@@ -627,6 +621,12 @@
             "$ref": "#/definitions/action_done_component_map"
           }
         },
+        "tracked_action_state": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/tracked_action_state"
+          }
+        },
         "bikes": {
           "$ref": "#/definitions/bikes"
         },
@@ -832,10 +832,10 @@
             }
           ]
         },
-        "service_snooze": {
+        "tracked_action_state": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/service_snooze"
+            "$ref": "#/definitions/tracked_action_state"
           }
         }
       }
@@ -1521,7 +1521,7 @@
         }
       }
     },
-    "service_snooze": {
+    "tracked_action_state": {
       "type": "object",
       "properties": {
         "id": {
@@ -1541,6 +1541,24 @@
           ],
           "default": 0
         },
+        "extended_by_healthIndex": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": 0
+        },
+        "reached_threshold": {
+          "type": "integer",
+          "default": 0
+        },
+        "announced_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -1549,15 +1567,8 @@
           "type": "string",
           "format": "date-time"
         },
-        "extended_by_healthIndex": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "bikes": {
-          "$ref": "#/definitions/bikes"
+        "components_mounted": {
+          "$ref": "#/definitions/components_mounted"
         },
         "events_action": {
           "$ref": "#/definitions/events_action"
@@ -1772,8 +1783,8 @@
     "users": {
       "$ref": "#/definitions/users"
     },
-    "service_snooze": {
-      "$ref": "#/definitions/service_snooze"
+    "tracked_action_state": {
+      "$ref": "#/definitions/tracked_action_state"
     },
     "reports": {
       "$ref": "#/definitions/reports"

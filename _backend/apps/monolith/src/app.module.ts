@@ -18,6 +18,7 @@ import { RideModule } from './ride/ride.module';
 import { GeminiModule } from './gemini/gemini.module';
 import { NotificationModule } from './notification/notification.module';
 import { ReportModule } from './report/report.module';
+import { ServiceTrackingModule } from './service-tracking/service-tracking.module';
 import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from 'nestjs-pino';
 import { BullBoardModule } from '@bull-board/nestjs';
@@ -103,6 +104,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     GeminiModule,
     NotificationModule,
     ReportModule,
+    ServiceTrackingModule,
   ],
   providers: [
     {

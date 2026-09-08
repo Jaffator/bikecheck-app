@@ -3,18 +3,19 @@
 import type { ReactElement } from "react";
 import { Box, Group, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
+import { ATTENTION_COLORS, overallLevel } from "@/features/service_tracking/attentionLevel";
+import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface HealthBadgeProps {
-  // Empty until the API serves per-bike wear, which reads as "good" - see the ticket that
-  // fills these; the badge is not the place to hide it.
-  readings: HealthReading[];
+  // The bike's Tracked Actions. The badge shows the worst Attention Level among them, so a
+  // bike with nothing tracked — and only such a bike — reads "good".
+  actions: TrackedAction[];
 }
 
-export function HealthBadge({ readings }: HealthBadgeProps): ReactElement {
+export function HealthBadge({ actions }: HealthBadgeProps): ReactElement {
   const { t } = useTranslation();
-  const level = overallLevel(readings);
-  const color = HEALTH_COLORS[level];
+  const level = overallLevel(actions);
+  const color = ATTENTION_COLORS[level];
 
   return (
     <Group

@@ -29,6 +29,8 @@ import { BikePhoto } from "./BikePhoto";
 import { BikeActionTiles } from "./BikeActionTiles";
 import { BikeStravaCard } from "./BikeStravaCard";
 import { HealthBadge } from "./HealthBadge";
+import { TrackedActionsSection } from "./TrackedActionsSection";
+import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
 import { StravaLinkedBadge } from "./StravaLinkedBadge";
 import { BikeSpecsDrawer } from "./BikeSpecsDrawer";
 import { BikeComponentsSection } from "./BikeComponentsSection";
@@ -84,6 +86,9 @@ export function BikeDetail(): ReactElement {
   // corrects itself is a sentence the owner can agree to while it is still wrong.
   const { data: rideCount } = useBikeRideCount(bike?.id ?? null);
   const { data: pendingRides } = usePendingRides();
+  // Feeds the badge over the photo. The section below reads the same key, so the two are
+  // one request and can never disagree.
+  const { data: trackedActions } = useBikeTrackedActions(bike?.id ?? null);
   const pendingForBike =
     bike?.strava_gear_id == null ? 0 : (pendingRides ?? []).filter((ride) => ride.gear_id === bike.strava_gear_id).length;
 
@@ -213,7 +218,7 @@ export function BikeDetail(): ReactElement {
         <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
           {/* The same corner, in the same order, as the garage card keeps its badges. */}
           <Stack gap={6} align="flex-end">
-            <HealthBadge readings={[]} />
+            <HealthBadge actions={trackedActions ?? []} />
             <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
           </Stack>
         </BikePhoto>
@@ -335,6 +340,10 @@ export function BikeDetail(): ReactElement {
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
       />
+
+      {/* What the bike still owes, above what it is made of: the readings are what the
+          owner came to check, the build is read less often. */}
+      <TrackedActionsSection bikeId={bike.id} />
 
       {/* What the machine is made of, under what can be done with it: the tiles are the
           daily act, the build is read less often. */}

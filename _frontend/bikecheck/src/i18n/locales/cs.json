@@ -1,4 +1,9 @@
 {
+  "tracking": {
+    "title": "Sledování servisu",
+    "percentage": "{{value}} %",
+    "loadFailed": "Sledování servisu se nepodařilo načíst."
+  },
   "nav": {
     "home": "Domů",
     "bikes": "Kola",
@@ -249,7 +254,8 @@
     "health": {
       "good": "Dobrý",
       "warning": "Varování",
-      "critical": "Kritický"
+      "critical": "Kritický",
+      "overdue": "Po termínu"
     },
     "edit": "Upravit kolo",
     "metres_one": "{{count}} m",

@@ -469,7 +469,16 @@
     "/api/bike": {
       "get": {
         "operationId": "Bike findUserBikes",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "archived",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -573,7 +582,37 @@
     },
     "/api/bike/delsoft/{id}": {
       "delete": {
-        "operationId": "Bike deleteSoft",
+        "operationId": "Bike archive",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Bike"
+        ]
+      }
+    },
+    "/api/bike/unarchive/{id}": {
+      "post": {
+        "operationId": "Bike unarchive",
         "parameters": [
           {
             "name": "id",
@@ -624,6 +663,9 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Bike is not archived"
           }
         },
         "tags": [
@@ -1918,6 +1960,14 @@
           },
           {
             "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "bikeId",
             "required": false,
             "in": "query",
             "schema": {
@@ -3951,6 +4001,11 @@
             "example": 85,
             "nullable": true
           },
+          "tracks_health_index": {
+            "type": "boolean",
+            "example": true,
+            "description": "The bike watches a wear index on this kind of part, so the reading is one to show. Decided by the service intervals the bike carries"
+          },
           "last_service_at": {
             "format": "date-time",
             "type": "string",
@@ -3985,6 +4040,7 @@
           "drivetrain_km",
           "suspension_min",
           "health_index",
+          "tracks_health_index",
           "last_service_at",
           "unserviced"
         ]

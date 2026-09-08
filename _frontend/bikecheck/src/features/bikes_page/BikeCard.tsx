@@ -7,14 +7,15 @@ import { ArrowUpRight, Clock, Gauge } from "lucide-react";
 import type { Bike } from "../bikes/bikes.types";
 import { bikeTitle } from "../bikes/bikeTitle";
 import { BikePhoto } from "./BikePhoto";
-import { HEALTH_COLORS, worstReading, type HealthReading } from "./bikeHealth.types";
+import { ATTENTION_COLORS, axisReading, barFill, worstAction } from "@/features/service_tracking/attentionLevel";
+import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
+import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import { catalogueLabel } from "@/features/service/serviceLabels";
 import { HealthBadge } from "./HealthBadge";
 import { StravaLinkedBadge } from "./StravaLinkedBadge";
 
 interface BikeCardProps {
   bike: Bike;
-  // Empty until the API serves per-bike wear; the card simply omits the section.
-  readings?: HealthReading[];
   onOpen: () => void;
 }
 
@@ -39,16 +40,16 @@ function Metric({ icon, children }: { icon: ReactNode; children: ReactNode }): R
   );
 }
 
-// The part that needs attention first, as one line: how much of its life is left, what it
-// is, and the figure behind it.
-function HealthMeter({ reading }: { reading: HealthReading }): ReactElement {
-  const { t } = useTranslation();
-  const color = HEALTH_COLORS[reading.level];
+// The part that needs attention first, as one line: how far it has come, what the job is,
+// and the figures behind it.
+function AttentionMeter({ action }: { action: TrackedAction }): ReactElement {
+  const { t, i18n } = useTranslation();
+  const color = ATTENTION_COLORS[action.level];
 
   return (
     <Group gap="sm" wrap="nowrap">
       <Progress
-        value={reading.fill * 100}
+        value={barFill(action) * 100}
         size={5}
         radius="xl"
         w={METER_WIDTH}
@@ -59,7 +60,7 @@ function HealthMeter({ reading }: { reading: HealthReading }): ReactElement {
         }}
       />
       <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
-        {t(reading.labelKey)}
+        {catalogueLabel(action.action_i18n_key, action.action_name, t)}
       </Text>
       <Text
         className="font-mono"
@@ -68,22 +69,25 @@ function HealthMeter({ reading }: { reading: HealthReading }): ReactElement {
         lts="0.08em"
         ml="auto"
         // Emphasize a reading that is no longer good.
-        c={reading.level === "good" ? "var(--color-text-dim)" : color}
+        c={action.level === "good" ? "var(--color-text-dim)" : color}
         style={{ whiteSpace: "nowrap" }}
       >
-        {reading.value}
+        {axisReading(action, i18n.language)}
       </Text>
     </Group>
   );
 }
 
-export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactElement {
+export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
   const { t } = useTranslation();
+  // The card reads its own bike's Service Tracking: the badge over the photo and the meter
+  // below it are two views of one answer, so they come from one request.
+  const { data: actions } = useBikeTrackedActions(bike.id);
 
   const title = bikeTitle(bike);
   // The garage leads with the part that needs attention first; the whole list is on the
   // bike's own page.
-  const worst = worstReading(readings);
+  const worst = worstAction(actions ?? []);
 
   return (
     <Paper
@@ -138,7 +142,7 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
       <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={20}>
         {/* Stack overall bike badges in the photo's bottom corner. */}
         <Stack gap={6} align="flex-end">
-          <HealthBadge readings={readings} />
+          <HealthBadge actions={actions ?? []} />
           <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
         </Stack>
       </BikePhoto>
@@ -161,7 +165,7 @@ export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactE
           <StravaPairingHint stravaGearId={bike.strava_gear_id} />
         </Group>
 
-        {worst !== null && <HealthMeter reading={worst} />}
+        {worst !== null && <AttentionMeter action={worst} />}
       </Stack>
     </Paper>
   );

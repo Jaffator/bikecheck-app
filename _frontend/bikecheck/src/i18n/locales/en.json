@@ -1,4 +1,9 @@
 {
+  "tracking": {
+    "title": "Service tracking",
+    "percentage": "{{value}} %",
+    "loadFailed": "Service tracking could not be loaded."
+  },
   "nav": {
     "home": "Home",
     "bikes": "Bikes",
@@ -237,7 +242,8 @@
     "health": {
       "good": "Good",
       "warning": "Warning",
-      "critical": "Critical"
+      "critical": "Critical",
+      "overdue": "Overdue"
     },
     "edit": "Edit bike",
     "metres_one": "{{count}} m",
