@@ -1,8 +1,8 @@
 // What the whole garage needs doing: every Tracked Action at 80% or above, on any bike in
 // use, in one flat list worst first. A place the owner goes rather than something that
 // interrupts them — nothing here notifies. A component only talks to hooks.
-import { useState, type ReactElement } from "react";
-import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Fragment, useState, type ReactElement } from "react";
+import { Divider, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Wrench } from "lucide-react";
@@ -52,18 +52,20 @@ export function AttentionDashCard(): ReactElement | null {
           </Text>
         </Group>
 
-        <Stack gap="md">
-          {shown.map((action) => (
+        <Stack gap="sm">
+          {shown.map((action, index) => (
             // The list is flat across the garage, so every row names the bike it belongs
-            // to and opening it lands there.
-            <TrackedActionRow
-              key={trackedActionKey(action)}
-              action={action}
-              prefix={bikeTitle(action)}
-              onOpen={() => {
-                navigate(`/bikes/${String(action.bike_id)}`);
-              }}
-            />
+            // to and opening it lands there. A hairline between them, never after the last.
+            <Fragment key={trackedActionKey(action)}>
+              {index > 0 && <Divider color="var(--color-border-subtle)" />}
+              <TrackedActionRow
+                action={action}
+                prefix={bikeTitle(action)}
+                onOpen={() => {
+                  navigate(`/bikes/${String(action.bike_id)}`);
+                }}
+              />
+            </Fragment>
           ))}
         </Stack>
 

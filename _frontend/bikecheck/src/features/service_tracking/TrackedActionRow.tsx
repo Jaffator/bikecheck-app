@@ -1,7 +1,8 @@
-// One Tracked Action, wherever it is read: the part and the job on top, the percentage
-// beside them, and the figures the percentage came from underneath. The bike's own page
-// and the dashboard show the same row — the dashboard only leads its meta line with the
-// bike, because its list spans the whole garage.
+// One Tracked Action, wherever it is read: the job on top, the percentage beside it, and
+// underneath the part it is owed on with the figures behind the reading. The job leads
+// because the row is about work waiting, not about a part. The bike's own page and the
+// dashboard show the same row — the dashboard only leads its meta line with the bike,
+// because its list spans the whole garage.
 import type { ReactElement } from "react";
 import { Group, Progress, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -14,7 +15,7 @@ import type { TrackedAction } from "./tracking.types";
 
 interface TrackedActionRowProps {
   action: TrackedAction;
-  // What the meta line leads with before the job. Null on a bike's own page, where every
+  // What the meta line leads with before the part. Null on a bike's own page, where every
   // row is about the same bike and naming it on each would say nothing.
   prefix: string | null;
   // Where the row leads. Null where it leads nowhere, and then it is not a control at all.
@@ -25,14 +26,16 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
   const { t, i18n } = useTranslation();
   const color = ATTENTION_COLORS[action.level];
   const side = positionLabel(action.position, t);
-  const part = catalogueLabel(action.component_type_i18n_key, action.component_type, t);
   const job = catalogueLabel(action.action_i18n_key, action.action_name, t);
+  // Which part owes it: the side is what tells two tyres apart, so it never leaves the name.
+  const type = catalogueLabel(action.component_type_i18n_key, action.component_type, t);
+  const part = side === null ? type : `${type} (${side})`;
 
   const reading = (
     <Stack gap={6}>
       <Group gap="sm" wrap="nowrap" align="baseline">
         <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
-          {side === null ? part : `${part} (${side})`}
+          {job}
         </Text>
         <Text className="font-mono" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
           {t("tracking.percentage", { value: action.percentage })}
@@ -60,7 +63,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
           lineClamp={1}
           style={{ minWidth: 0 }}
         >
-          {prefix === null ? job : `${prefix} · ${job}`}
+          {prefix === null ? part : `${prefix} · ${part}`}
         </Text>
         <Group gap="sm" wrap="nowrap" ml="auto" style={{ whiteSpace: "nowrap" }}>
           {/* What a tap on the control left behind: the interval beside it is longer for it. */}
