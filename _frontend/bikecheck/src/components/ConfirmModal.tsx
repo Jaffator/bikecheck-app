@@ -3,6 +3,7 @@
 // the cancel/confirm pair are decided once here so a fourth caller cannot drift.
 import type { ReactElement, ReactNode } from "react";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above every sheet it can be opened from, so the dialog is never left behind an overlay.
@@ -20,6 +21,9 @@ interface ConfirmModalProps {
   confirmLabel: string;
   // While the confirmed work runs, the confirm button spins and cancel is refused.
   pending?: boolean;
+  // Holds the destructive button inert until the question in `children` is answered - the
+  // permanent deletion of a bike asks for its name to be typed first (ADR 0024).
+  confirmDisabled?: boolean;
   // What the question still needs answering before it can be confirmed — a dismount asks
   // for the day the part came off. Sits between the body and the buttons.
   children?: ReactNode;
@@ -35,6 +39,7 @@ export function ConfirmModal({
   cancelLabel,
   confirmLabel,
   pending = false,
+  confirmDisabled = false,
   children,
 }: ConfirmModalProps): ReactElement {
   // Android's back gesture dismisses this rather than the page under it.
@@ -62,13 +67,15 @@ export function ConfirmModal({
         {children}
 
         <Group gap="sm" grow>
-          <Button variant="default" radius="md" onClick={onCancel} disabled={pending}>
+          <Button variant="default" radius="md" styles={{ root: inputStyles.input }} onClick={onCancel} disabled={pending}>
             {cancelLabel}
           </Button>
           <Button
             color="red.5"
             radius="md"
+            styles={{ root: { ...disabledButtonStyles.root, "--button-color": "black" } as React.CSSProperties }}
             loading={pending}
+            disabled={confirmDisabled}
             onClick={() => {
               onConfirm();
             }}

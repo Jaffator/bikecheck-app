@@ -1038,6 +1038,87 @@ describe('BikeEventService', () => {
     });
   });
 
+  // An Archived Bike keeps its whole history and stops counting anywhere else (ADR 0024).
+  describe('an archived bike', () => {
+    beforeEach(() => {
+      mockPrisma.events_bikes.findMany.mockResolvedValue([]);
+      mockPrisma.events_bikes.count.mockResolvedValue(0);
+      mockPrisma.events_bikes.aggregate.mockResolvedValue({
+        _sum: { total_cost: new Prisma.Decimal(0) },
+        _count: { _all: 0 },
+      });
+      mockPrisma.event_actions_done.count.mockResolvedValue(0);
+    });
+
+    it('leaves its services out of the history list', async () => {
+      await service.history(OWNER_ID, 20, 0);
+
+      const { where } = mockPrisma.events_bikes.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
+      expect(where.bikes).toEqual({ user_id: OWNER_ID, is_deleted: { not: true } });
+    });
+
+    it('leaves its services out of the count under that list', async () => {
+      await service.history(OWNER_ID, 20, 0);
+
+      const listWhere = (mockPrisma.events_bikes.findMany.mock.calls[0][0] as { where: unknown }).where;
+      expect(mockPrisma.events_bikes.count).toHaveBeenCalledWith({ where: listWhere });
+    });
+
+    it('leaves its spend out of the History Totals and out of the Replacement count', async () => {
+      await service.historyTotals(OWNER_ID);
+
+      const { where } = mockPrisma.events_bikes.aggregate.mock.calls[0][0] as { where: Record<string, unknown> };
+      expect(where.bikes).toEqual({ user_id: OWNER_ID, is_deleted: { not: true } });
+      expect(mockPrisma.event_actions_done.count).toHaveBeenCalledWith({
+        where: { part_replaced: true, events_bikes: where },
+      });
+    });
+
+    it('still serves its own service history', async () => {
+      await service.findAllBikeEvents(BIKE_ID, OWNER_ID);
+
+      expect(mockPrisma.bikes.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: BIKE_ID, user_id: OWNER_ID } }),
+      );
+    });
+
+    it('refuses a service on it being edited or deleted', async () => {
+      // The service is unreachable to a write, so ownership answers with nothing.
+      mockPrisma.events_bikes.findFirst.mockResolvedValue(null);
+
+      await expect(service.update(99, { note: 'Forgotten' }, OWNER_ID)).rejects.toThrow(ForbiddenException);
+      await expect(service.softDelete(99, OWNER_ID)).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.events_bikes.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 99, bikes: { user_id: OWNER_ID, is_deleted: { not: true } } },
+        }),
+      );
+    });
+
+    // Reading the record is the point of keeping it, so the detail is not refused the way
+    // the edit above is.
+    it('does not refuse the detail of a service it kept', async () => {
+      mockPrisma.events_bikes.findFirst.mockResolvedValue({ id: 99 });
+      mockPrisma.events_bikes.findUnique.mockResolvedValue(null);
+
+      await service.findById(99, OWNER_ID).catch(() => undefined);
+
+      expect(mockPrisma.events_bikes.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 99, bikes: { user_id: OWNER_ID } } }),
+      );
+    });
+
+    it('refuses a new service recorded against it', async () => {
+      // The archived bike is unreachable to a write, so ownership answers with nothing.
+      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+
+      await expect(service.create(dto(), OWNER_ID)).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.bikes.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: BIKE_ID, user_id: OWNER_ID, is_deleted: { not: true } } }),
+      );
+    });
+  });
+
   describe('the service detail', () => {
     // One recorded action, as the detail query reads it back: the catalogue action it came
     // from with its tags, and the component whose wear it froze.

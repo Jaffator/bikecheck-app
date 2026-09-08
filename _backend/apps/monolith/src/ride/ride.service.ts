@@ -32,15 +32,21 @@ export class RideService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * One page of the user's confirmed rides, newest first.
+   * One page of the user's confirmed rides, newest first. Narrowed to one bike when the
+   * caller names one - which is how the archive dialog says how many rides stop counting.
    */
-  async findPage(userId: number, limit: number, offset: number): Promise<ResponseRidePageDto> {
+  async findPage(userId: number, limit: number, offset: number, bikeId?: number): Promise<ResponseRidePageDto> {
     const take = clamp(limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
     const skip = clamp(offset, 0, 0, Number.MAX_SAFE_INTEGER);
 
     // is_deleted is nullable, so `not: true` is what covers both false and the
-    // null rows written before the column existed.
-    const where = { user_id: userId, is_deleted: { not: true } };
+    // null rows written before the column existed. Across every bike an Archived Bike's
+    // rides leave the list with it; asked for by id its own rides still read (ADR 0024).
+    const where = {
+      user_id: userId,
+      is_deleted: { not: true },
+      ...(bikeId === undefined ? { bikes: { is_deleted: { not: true } } } : { bike_id: bikeId }),
+    };
 
     const [rows, total] = await Promise.all([
       this.prisma.rides.findMany({

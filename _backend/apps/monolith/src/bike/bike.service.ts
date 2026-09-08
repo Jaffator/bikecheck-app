@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ownedBikeWhere, OwnedBikeOptions } from './owned-bike.where';
 import { StorageService } from '../storage/storage.service';
 import 'dotenv/config';
 import { Prisma, bikes } from '@prisma/client';
@@ -114,23 +115,27 @@ export class BikeService {
     });
   }
 
-  // Deleted bikes stay in the table so their rides and service history survive,
+  // Archived bikes stay in the table so their rides and service history survive,
   // which means every read has to exclude them or they come back to the garage.
   async findAll(): Promise<ResponseBikeDto[]> {
     const bikes = await this.prisma.bikes.findMany({ where: { is_deleted: { not: true } }, include: bikeInclude });
     return bikes.map(toBikeDto);
   }
 
-  async findByUser(userId: number): Promise<ResponseBikeDto[]> {
+  // The garage, or the archive behind the Settings row - one list, one DTO, told apart
+  // by the flag alone.
+  async findByUser(userId: number, archived = false): Promise<ResponseBikeDto[]> {
     const bikes = await this.prisma.bikes.findMany({
-      where: { user_id: userId, is_deleted: { not: true } },
+      where: { user_id: userId, is_deleted: archived ? true : { not: true } },
       include: bikeInclude,
     });
     return bikes.map(toBikeDto);
   }
 
+  // Serves an Archived Bike too: its detail, its parts and its history stay readable, and
+  // the client derives the read-only state from is_deleted.
   async findByID(id: number, userId: number): Promise<ResponseBikeDto> {
-    return this.findOwnedBike(id, userId);
+    return this.findOwnedBike(id, userId, { includeArchived: true });
   }
 
   // Corrects a bike the caller owns. The client sends the type by name and the photo as a
@@ -168,26 +173,64 @@ export class BikeService {
     return toBikeDto(await this.prisma.bikes.update({ where: { id }, data, include: bikeInclude }));
   }
 
-  async deleteSoft(id: number, userId: number): Promise<ResponseBikeDto> {
-    await this.findOwnedBike(id, userId);
+  // Archiving. The bike leaves the garage and every total, keeping its whole history.
+  // The Strava pairing goes with it: strava.service resolves a bike by gear id without
+  // asking whether it is archived, so a paired Archived Bike would go on collecting
+  // kilometres onto parts nobody is watching. Its unresolved pending activities are
+  // discarded for the same reason - left alone they ask which bike a ride belongs to,
+  // a question whose only answer is the bike just archived (ADR 0024).
+  async archive(id: number, userId: number): Promise<ResponseBikeDto> {
+    const { strava_gear_id: gearId } = await this.findOwnedBike(id, userId);
+
+    return await this.prisma.$transaction(async (db) => {
+      const bike = await db.bikes.update({
+        where: { id },
+        data: { is_deleted: true, deleted_at: new Date(), strava_gear_id: null, strava_name: null },
+        include: bikeInclude,
+      });
+
+      // Only the rides parked against this bike's own gear. A pending activity carrying
+      // no gear, or another bike's, still has an answer the owner can give.
+      if (gearId) {
+        await db.strava_pending_activities.deleteMany({
+          where: { user_id: userId, gear_id: gearId, resolved_at: null },
+        });
+      }
+
+      return toBikeDto(bike);
+    });
+  }
+
+  // Back into use. The Strava pairing is not restored - the owner picks the gear again.
+  async unarchive(id: number, userId: number): Promise<ResponseBikeDto> {
+    await this.findOwnedBike(id, userId, { includeArchived: true });
     return toBikeDto(
       await this.prisma.bikes.update({
         where: { id },
-        data: { is_deleted: true, deleted_at: new Date() },
+        data: { is_deleted: false, deleted_at: null },
         include: bikeInclude,
       }),
     );
   }
 
+  // Destroys the bike and, by the foreign keys, everything belonging to it. Archiving
+  // comes first and the server holds that order however the request is made, so the
+  // irreversible act is never one call away from a live bike.
   async deleteHard(id: number, userId: number): Promise<ResponseBikeDto> {
-    await this.findOwnedBike(id, userId);
+    const bike = await this.findOwnedBike(id, userId, { includeArchived: true });
+    if (bike.is_deleted !== true) {
+      throw new ConflictException(`Bike with ID ${id} must be archived before it can be deleted`);
+    }
+    // The foreign keys take the rides, services, parts, intervals and snoozes with it. The
+    // files in R2 are not reached by any cascade: this is the single point where their keys
+    // are handed to the deletion queue once ADR 0025 builds it.
     return toBikeDto(await this.prisma.bikes.delete({ where: { id }, include: bikeInclude }));
   }
 
   // Returns the bike only if it belongs to the user; otherwise 404 (no ownership leak).
-  private async findOwnedBike(id: number, userId: number): Promise<ResponseBikeDto> {
+  private async findOwnedBike(id: number, userId: number, options?: OwnedBikeOptions): Promise<ResponseBikeDto> {
     const bike = await this.prisma.bikes.findFirst({
-      where: { id, user_id: userId, is_deleted: { not: true } },
+      where: ownedBikeWhere(id, userId, options),
       include: bikeInclude,
     });
     if (!bike) {

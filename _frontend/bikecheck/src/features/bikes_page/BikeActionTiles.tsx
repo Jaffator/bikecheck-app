@@ -7,7 +7,8 @@ import { ChevronRight, FileText, History, Share2 } from "lucide-react";
 import { Bikecheck } from "@/assets/icons/bikecheck";
 
 interface BikeActionTilesProps {
-  onAddService: () => void;
+  // Absent on an Archived Bike, which takes no new work - the grid is then reads only.
+  onAddService?: () => void;
   onExportReport: () => void;
   onOpenReports: () => void;
   onOpenHistory: () => void;
@@ -23,15 +24,17 @@ export function BikeActionTiles({
 
   return (
     <SimpleGrid cols={2} spacing="sm">
-      <Tile
-        // Servicing is the app's own act, so the tile wears the app's own mark.
-        icon={<Bikecheck width={26} height={20} />}
-        label={t("fab.addService")}
-        onClick={onAddService}
-        // The act run most often, so it is the loudest thing on the grid.
-        fill="var(--mantine-color-primary-6)"
-        textColor="var(--mantine-color-black)"
-      />
+      {onAddService !== undefined && (
+        <Tile
+          // Servicing is the app's own act, so the tile wears the app's own mark.
+          icon={<Bikecheck width={26} height={20} />}
+          label={t("fab.addService")}
+          onClick={onAddService}
+          // The act run most often, so it is the loudest thing on the grid.
+          fill="var(--mantine-color-primary-6)"
+          textColor="var(--mantine-color-black)"
+        />
+      )}
       <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} chevron />
       <Tile icon={<Share2 size={20} />} label={t("report.exportBikeCheck")} onClick={onExportReport} chevron />
       <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron />

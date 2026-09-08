@@ -27,6 +27,18 @@ the Bike carries rather than one its components do. Not backfilled (ADR 0014), s
 before the reading existed reads lower than it has truly climbed.
 _Avoid_: Elevation gain, ascent
 
+**Archived Bike**:
+A Bike its owner has taken out of use. It leaves the garage, the dashboard and every list and
+total, keeps its whole history, and is reached only through the archive. Reversible, and nothing
+expires it. Read-only while archived, and unpaired from Strava (ADR 0024).
+_Avoid_: Deleted bike, retired bike, bin
+
+**Deleting a Bike**:
+Destroying a Bike and everything belonging to it — its Rides, Services, parts and setups. Reachable
+only from the archive and only after the owner types the bike's name, so the irreversible act is
+always preceded by the reversible one. Frozen Reports are not destroyed with it (ADR 0024).
+_Avoid_: Hard delete, purge, permanent archive
+
 **Component Type**:
 A kind of part that can be mounted on a bike — Chain, Fork, Brake Caliper. A catalogue entry,
 not a physical object. One an owner names themselves is theirs, outlives every part that used it,

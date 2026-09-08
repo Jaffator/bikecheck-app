@@ -10,6 +10,7 @@ import {
 } from './dto/response-components';
 import { CreateBikeComponentDto, CustomComponentsDto } from './dto/create-components';
 import { DismountComponentDto, UpdateMountedComponentDto } from './dto/update-components';
+import { ownedBikeWhere, OwnedBikeOptions } from '../bike/owned-bike.where';
 
 // What one Mounted Component is read with: the kind of part it is, the category that kind
 // sits in, and every occasion work was recorded against it — which is what dates the part
@@ -47,6 +48,13 @@ async function findCategoryCatchAllReplacement(
     orderBy: { id: 'asc' },
     select: { id: true },
   });
+}
+
+// The bike's own interval for an Action, kept only where a wear index is part of it. An
+// interval without one measures the part in kilometres or hours instead, and says nothing
+// about a wear index.
+function healthIndexInterval(bikeId: number): Prisma.bike_service_intervalWhereInput {
+  return { bike_id: bikeId, health_index_interval: { not: null } };
 }
 
 @Injectable()
@@ -119,7 +127,8 @@ export class ComponentService {
   // The build of one bike: what is on it now and what has come off it, read the way the
   // components section groups it. Soft-deleted rows are not part of either.
   async getBikeComponents(bikeId: number, userId: number): Promise<Response_BikeComponentDto[]> {
-    await this.findOwnedBike(bikeId, userId);
+    // An Archived Bike's build stays readable; only the writes below refuse it.
+    await this.findOwnedBike(bikeId, userId, { includeArchived: true });
 
     const mounted = await this.prisma.components_mounted.findMany({
       where: { bike_id: bikeId, is_deleted: { not: true } },
@@ -128,7 +137,9 @@ export class ComponentService {
       include: bikeComponentInclude,
     });
 
-    return mounted.map(toBikeComponentDto);
+    const watched = await this.healthIndexTypeIds(bikeId);
+
+    return mounted.map((row) => toBikeComponentDto(row, watched.has(row.component_type_id)));
   }
 
   // A part joins a bike that already exists. It carries the wear it arrived with, so a
@@ -175,7 +186,7 @@ export class ComponentService {
       include: bikeComponentInclude,
     });
 
-    return toBikeComponentDto(created);
+    return toBikeComponentDto(created, await this.tracksHealthIndex(created.bike_id, created.component_type_id));
   }
 
   // Correcting a part. Its description and position are always the owner's to fix; its
@@ -215,7 +226,7 @@ export class ComponentService {
       include: bikeComponentInclude,
     });
 
-    return toBikeComponentDto(updated);
+    return toBikeComponentDto(updated, await this.tracksHealthIndex(updated.bike_id, updated.component_type_id));
   }
 
   // A part comes off with nothing fitted in its place. It stops accumulating and keeps
@@ -232,7 +243,7 @@ export class ComponentService {
       include: bikeComponentInclude,
     });
 
-    return toBikeComponentDto(dismounted);
+    return toBikeComponentDto(dismounted, await this.tracksHealthIndex(dismounted.bike_id, dismounted.component_type_id));
   }
 
   // The way back out of a row that should never have existed — the same fork added twice.
@@ -254,7 +265,7 @@ export class ComponentService {
       include: bikeComponentInclude,
     });
 
-    return toBikeComponentDto(deleted);
+    return toBikeComponentDto(deleted, await this.tracksHealthIndex(deleted.bike_id, deleted.component_type_id));
   }
 
   // The owner's own corner of the catalogue, which is the only part of it they may remove.
@@ -326,11 +337,36 @@ export class ComponentService {
     return this.prisma.component_groups.findMany({});
   }
 
+  // The kinds of part this bike watches a wear index on. An interval the bike carries with
+  // a health_index_interval set names an Action, and that Action's targets name the types
+  // — so the reading is shown exactly where the bike is configured to expect one.
+  private async healthIndexTypeIds(bikeId: number): Promise<Set<number>> {
+    const targets = await this.prisma.event_action_targets.findMany({
+      where: { events_action: { bike_service_interval: { some: healthIndexInterval(bikeId) } } },
+      select: { component_type_id: true },
+    });
+
+    return new Set(targets.map((target) => target.component_type_id));
+  }
+
+  // The same question asked of one part, which is all a single write reads back.
+  private async tracksHealthIndex(bikeId: number, componentTypeId: number): Promise<boolean> {
+    const target = await this.prisma.event_action_targets.findFirst({
+      where: {
+        component_type_id: componentTypeId,
+        events_action: { bike_service_interval: { some: healthIndexInterval(bikeId) } },
+      },
+      select: { id: true },
+    });
+
+    return target !== null;
+  }
+
   // A bike is only reachable through its owner; otherwise 404, which leaks nothing about
   // whether it exists at all.
-  private async findOwnedBike(bikeId: number, userId: number): Promise<void> {
+  private async findOwnedBike(bikeId: number, userId: number, options?: OwnedBikeOptions): Promise<void> {
     const bike = await this.prisma.bikes.findFirst({
-      where: { id: bikeId, user_id: userId, is_deleted: { not: true } },
+      where: ownedBikeWhere(bikeId, userId, options),
       select: { id: true },
     });
     if (!bike) {
@@ -352,7 +388,10 @@ export class ComponentService {
   }
 }
 
-function toBikeComponentDto(mounted: MountedWithRelations): Response_BikeComponentDto {
+function toBikeComponentDto(
+  mounted: MountedWithRelations,
+  tracksHealthIndex: boolean,
+): Response_BikeComponentDto {
   return {
     id: mounted.id,
     bike_id: mounted.bike_id,
@@ -374,6 +413,7 @@ function toBikeComponentDto(mounted: MountedWithRelations): Response_BikeCompone
     drivetrain_km: mounted.drivetrain_km,
     suspension_min: mounted.suspension_min,
     health_index: mounted.health_index,
+    tracks_health_index: tracksHealthIndex,
     last_service_at: lastServiceOf(mounted),
     unserviced: isUnserviced(mounted),
   };

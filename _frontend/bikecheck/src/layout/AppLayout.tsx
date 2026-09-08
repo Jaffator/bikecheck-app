@@ -120,6 +120,13 @@ function getPageTitleKey(pathname: string): string | null {
 // attachment upload. Flip back to true to restore the offline screen.
 const OFFLINE_PAGE_ENABLED = false;
 
+// Controls standing on a photo get their own shade; the page-wide scrim alone is not
+// enough to read them against a bright image.
+export const TRANSPARENT_HEADER_CONTROL: CSSProperties = {
+  background: "rgba(0, 0, 0, 0.45)",
+  backdropFilter: "blur(8px)",
+};
+
 // Shares active-route matching between the header and tab bar.
 function isActivePath(path: string, pathname: string): boolean {
   return path === "/" ? pathname === "/" : pathname.startsWith(path);
@@ -231,7 +238,7 @@ export function AppLayout(): ReactElement {
             // Nothing sits behind the controls now, so they are given their own shade to
             // stand on - enough to read a dark arrow against a bright photo.
             backgroundImage: headerTransparent
-              ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 60%, transparent 100%)"
+              ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 45%, transparent 100%)"
               : undefined,
             // The scrim is decoration; what is underneath stays reachable.
             pointerEvents: headerTransparent ? "none" : undefined,
@@ -242,12 +249,26 @@ export function AppLayout(): ReactElement {
               <>
                 <Group gap="xs" c="text.6" wrap="nowrap" style={{ minWidth: 0 }}>
                   {!backHidden && (
-                    <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
+                    <ActionIcon
+                      variant="transparent"
+                      radius="xl"
+                      size="lg"
+                      aria-label={t("action.back")}
+                      onClick={goBack}
+                      style={headerTransparent ? TRANSPARENT_HEADER_CONTROL : undefined}
+                    >
                       <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
                     </ActionIcon>
                   )}
                   {overrideTitleSlot ?? (
-                    <Text fw={700} size="lg" c="text.6">
+                    <Text
+                      fw={700}
+                      size="lg"
+                      c="text.6"
+                      px={headerTransparent ? 10 : undefined}
+                      py={headerTransparent ? 2 : undefined}
+                      style={headerTransparent ? { ...TRANSPARENT_HEADER_CONTROL, borderRadius: "9999px" } : undefined}
+                    >
                       {pageTitleKey && t(pageTitleKey)}
                     </Text>
                   )}

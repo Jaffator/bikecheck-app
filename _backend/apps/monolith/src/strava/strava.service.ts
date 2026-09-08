@@ -365,7 +365,9 @@ export class StravaEventsService {
 
     const bike = data.gearid
       ? await this.prisma.bikes.findFirst({
-          where: { strava_gear_id: data.gearid, user_id: user.id },
+          // An Archived Bike collects nothing. Archiving clears the gear id anyway, so
+          // this only guards a row archived by some other route (ADR 0024).
+          where: { strava_gear_id: data.gearid, user_id: user.id, is_deleted: { not: true } },
           select: { id: true },
         })
       : null;
@@ -650,7 +652,11 @@ export class StravaEventsService {
     });
 
     await this.prisma.components_mounted.updateMany({
-      where: { bike_id: bikeId, is_deleted: false },
+      where: {
+        bike_id: bikeId,
+        is_deleted: false,
+        component_types: { component_type: { in: ['Chain', 'Cassette', 'Chainring'] } },
+      },
       data: { drivetrain_km: { increment: diff.drivetrain_km } },
     });
 

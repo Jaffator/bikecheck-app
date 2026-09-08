@@ -27,6 +27,22 @@ export function isDismounted(component: BikeComponent): boolean {
   return component.is_active === false || component.removed_at !== null;
 }
 
+// The seeded part types the ride analysis actually accumulates these two readings
+// against — the same lists the sync writes with, so a part only shows a reading that is
+// being fed. A user-created type is not on either list and reads neither.
+const DRIVETRAIN_TYPES = ["Chain", "Chainring", "Cassette"];
+const SUSPENSION_TYPES = ["Fork", "Shock"];
+
+// Does the ride sync add drivetrain kilometres to this part?
+export function tracksDrivetrain(component: BikeComponent): boolean {
+  return DRIVETRAIN_TYPES.includes(component.component_type);
+}
+
+// Does the ride sync add suspension minutes to this part?
+export function tracksSuspension(component: BikeComponent): boolean {
+  return SUSPENSION_TYPES.includes(component.component_type);
+}
+
 // One Component Category, holding what is on the bike now and what has come off it.
 export interface ComponentCategory {
   id: number;

@@ -33,11 +33,42 @@ describe('RideService', () => {
       await service.findPage(1, 20, 0);
 
       const args = mockPrisma.rides.findMany.mock.calls[0][0];
-      expect(args.where).toEqual({ user_id: 1, is_deleted: { not: true } });
+      expect(args.where).toEqual({
+        user_id: 1,
+        is_deleted: { not: true },
+        bikes: { is_deleted: { not: true } },
+      });
       // Nulls last: a ride with no start date must not head the list.
       expect(args.orderBy).toEqual({ started_at: { sort: 'desc', nulls: 'last' } });
       expect(args.take).toBe(20);
       expect(args.skip).toBe(0);
+    });
+
+    // An Archived Bike leaves the garage, so its rides leave the list with it - and the
+    // count under the list has to agree with what is in it.
+    it('leaves an archived bike rides out of the page and out of its total', async () => {
+      mockPrisma.rides.findMany.mockResolvedValue([]);
+      mockPrisma.rides.count.mockResolvedValue(0);
+
+      await service.findPage(1, 20, 0);
+
+      const listWhere = mockPrisma.rides.findMany.mock.calls[0][0].where;
+      const countWhere = mockPrisma.rides.count.mock.calls[0][0].where;
+      expect(listWhere).toMatchObject({ bikes: { is_deleted: { not: true } } });
+      expect(countWhere).toEqual(listWhere);
+    });
+
+    // What the archive dialog counts before it asks: this bike's rides, and only its own.
+    it('narrows to one bike when asked for one', async () => {
+      mockPrisma.rides.findMany.mockResolvedValue([]);
+      mockPrisma.rides.count.mockResolvedValue(3);
+
+      const page = await service.findPage(1, 1, 0, 7);
+
+      expect(mockPrisma.rides.count).toHaveBeenCalledWith({
+        where: { user_id: 1, is_deleted: { not: true }, bike_id: 7 },
+      });
+      expect(page.total).toBe(3);
     });
 
     it('serialises the BigInt activity id as a string', async () => {

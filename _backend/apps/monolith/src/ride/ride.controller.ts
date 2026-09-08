@@ -12,17 +12,25 @@ export class RideController {
   @ApiOperation({ summary: "List the current user's rides, newest first" })
   @ApiQuery({ name: 'limit', type: Number, required: false })
   @ApiQuery({ name: 'offset', type: Number, required: false })
+  @ApiQuery({ name: 'bikeId', type: Number, required: false })
   @ApiResponse({ status: 200, type: ResponseRidePageDto })
   @Get()
   listRides(
     @CurrentUser('userId') userId: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('bikeId') bikeId?: string,
   ): Promise<ResponseRidePageDto> {
     // An absent or empty parameter must reach the service as NaN, so it falls
     // back to its own default — Number('') is 0, which would clamp to a
     // one-ride page instead.
-    return this.rideService.findPage(Number(userId), toNumber(limit), toNumber(offset));
+    const bike = toNumber(bikeId);
+    return this.rideService.findPage(
+      Number(userId),
+      toNumber(limit),
+      toNumber(offset),
+      Number.isNaN(bike) ? undefined : bike,
+    );
   }
 }
 

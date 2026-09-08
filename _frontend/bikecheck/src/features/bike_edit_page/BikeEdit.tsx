@@ -158,6 +158,8 @@ export function BikeEdit(): ReactElement {
       px="md"
       pt="md"
       pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+      bg="cards.6"
+      mih="100dvh"
     >
       {/* The photo, and the one control that replaces it. */}
       <Stack gap="xs">
@@ -304,7 +306,13 @@ export function BikeEdit(): ReactElement {
       )}
 
       <Group gap="sm" wrap="nowrap" mt="xs">
-        <Button variant="outline" color="text.8" radius="md" onClick={() => navigate(-1)} style={{ flex: 1 }}>
+        <Button
+          variant="outline"
+          color="var(--mantine-color-cards-2)"
+          radius="md"
+          onClick={() => navigate(-1)}
+          style={{ flex: 1 }}
+        >
           {t("bikeEdit.cancel")}
         </Button>
         <Button

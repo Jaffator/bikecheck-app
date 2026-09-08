@@ -125,7 +125,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
               align="center"
               style={{
                 padding: "0.75rem 1rem",
-                borderRadius: "0.5rem",
+                borderRadius: "0.8rem",
                 backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-7) 15%, transparent)",
                 backdropFilter: "blur(8px)",
                 WebkitBackdropFilter: "blur(8px)",
@@ -144,7 +144,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
       <Stack gap="sm" style={{ position: "relative", flexShrink: 0 }}>
         <Button
           fullWidth
-          radius="sm"
+          radius="lg"
           color="strava.6"
           c="#1A1A1A"
           rightSection={<StravaMark width={14} height={14} />}
@@ -167,7 +167,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
 
         <Button
           fullWidth
-          radius="sm"
+          radius="lg"
           variant="default"
           rightSection={<ArrowRight size={12} />}
           onClick={() => {

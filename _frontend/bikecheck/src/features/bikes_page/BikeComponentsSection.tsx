@@ -41,17 +41,21 @@ interface BikeComponentsSectionProps {
   bikeId: number;
   // Which catalogue the add flow offers.
   ebike: boolean;
+  // An Archived Bike is a frozen record: the build is read, never changed, so the writes
+  // are absent rather than disabled (ADR 0024).
+  readOnly?: boolean;
 }
 
-export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionProps): ReactElement {
+export function BikeComponentsSection({ bikeId, ebike, readOnly = false }: BikeComponentsSectionProps): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: components, isLoading, isError } = useBikeComponents(bikeId);
   const dismount = useDismountBikeComponent();
   const remove = useDeleteBikeComponent();
 
-  // The part being read, over the build. Null closes the sheet.
-  const [viewing, setViewing] = useState<BikeComponent | null>(null);
+  // The part being read, over the build. Held by id rather than by value, so a correction
+  // saved over the sheet is what the sheet goes on showing. Null closes it.
+  const [viewingId, setViewingId] = useState<number | null>(null);
   // Null closes the form; a part opens it as an edit, and "add" opens it empty.
   const [editing, setEditing] = useState<BikeComponent | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -111,13 +115,19 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
 
   const categories = groupByCategory(components ?? [], t);
 
+  // A part deleted or dismounted out from under the sheet is no longer in the build, so
+  // the sheet has nothing to read and closes with it.
+  const viewing = components?.find((part) => part.id === viewingId) ?? null;
+
   // The four writes the section owns, handed down to every mounted part's kebab.
-  const partActions: PartActions = {
-    onReplace: startReplacement,
-    onEdit: openEdit,
-    onDismount: askToDismount,
-    onDelete: setDeleting,
-  };
+  const partActions: PartActions | undefined = readOnly
+    ? undefined
+    : {
+        onReplace: startReplacement,
+        onEdit: openEdit,
+        onDismount: askToDismount,
+        onDelete: setDeleting,
+      };
 
   return (
     <Stack gap="sm">
@@ -125,16 +135,28 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
         <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
           {t("bikeComponents.title")}
         </Text>
-        <ActionIcon
-          variant="subtle"
-          radius="xl"
-          size="md"
-          color="primary.6"
-          aria-label={t("bikeComponents.addTitle")}
-          onClick={openAdd}
-        >
-          <Plus size={18} />
-        </ActionIcon>
+        {!readOnly && (
+          <Paper
+            radius="md"
+            style={{
+              backgroundColor: "var(--mantine-color-cards-6)",
+              backgroundImage: "var(--card-glow)",
+              border: "none",
+              boxShadow: "var(--elev-row)",
+            }}
+          >
+            <ActionIcon
+              variant="subtle"
+              radius="xl"
+              size="lg"
+              color="primary.6"
+              aria-label={t("bikeComponents.addTitle")}
+              onClick={openAdd}
+            >
+              <Plus size={20} />
+            </ActionIcon>
+          </Paper>
+        )}
       </Group>
 
       {/* The section stands on its own request, so the photo and the readings above it are
@@ -153,9 +175,11 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
           <Text fz={13} c="var(--color-text-dim)">
             {t("bikeComponents.emptyBody")}
           </Text>
-          <Button variant="light" color="primary.6" radius="md" leftSection={<Plus size={16} />} onClick={openAdd}>
-            {t("bikeComponents.addTitle")}
-          </Button>
+          {!readOnly && (
+            <Button variant="light" color="primary.6" radius="md" leftSection={<Plus size={16} />} onClick={openAdd}>
+              {t("bikeComponents.addTitle")}
+            </Button>
+          )}
         </Stack>
       )}
 
@@ -167,7 +191,7 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
           open={openCategoryId === category.id}
           onToggle={() => toggleCategory(category.id)}
           cardRef={openCategoryId === category.id ? openCardRef : undefined}
-          onOpen={setViewing}
+          onOpen={(part) => setViewingId(part.id)}
           actions={partActions}
         />
       ))}
@@ -178,7 +202,11 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
         </Text>
       )}
 
-      <BikeComponentDetailSheet component={viewing} onClose={() => setViewing(null)} />
+      <BikeComponentDetailSheet
+        component={viewing}
+        onClose={() => setViewingId(null)}
+        onEdit={readOnly ? undefined : openEdit}
+      />
 
       <BikeComponentFormDrawer
         opened={formOpen}
@@ -201,7 +229,7 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
             {
               onSuccess: () => {
                 setDismounting(null);
-                setViewing(null);
+                setViewingId(null);
               },
             },
           );
@@ -243,7 +271,7 @@ export function BikeComponentsSection({ bikeId, ebike }: BikeComponentsSectionPr
             {
               onSuccess: () => {
                 setDeleting(null);
-                setViewing(null);
+                setViewingId(null);
               },
             },
           );
@@ -285,7 +313,8 @@ function Category({
   onToggle: () => void;
   cardRef?: RefObject<HTMLDivElement | null>;
   onOpen: (component: BikeComponent) => void;
-  actions: PartActions;
+  // Absent on an Archived Bike, which renders every row as the record it now is.
+  actions?: PartActions;
 }): ReactElement {
   const { t } = useTranslation();
   const [showDismounted, setShowDismounted] = useState(false);
@@ -358,6 +387,7 @@ function Category({
             <BikeComponentRow
               key={component.id}
               component={component}
+              readOnly={actions === undefined}
               replacementActionId={replacementActions.get(component.id) ?? null}
               onOpen={onOpen}
               actions={actions}

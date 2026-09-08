@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { getLoggerToken } from 'nestjs-pino';
 import { Prisma } from '@prisma/client';
 import { BikeService } from './bike.service';
@@ -29,6 +29,7 @@ describe('BikeService', () => {
     },
     bike_types: { findMany: jest.fn(), findUnique: jest.fn() },
     components_mounted: { createMany: jest.fn() },
+    strava_pending_activities: { deleteMany: jest.fn() },
     $transaction: jest.fn(),
   };
 
@@ -87,6 +88,10 @@ describe('BikeService', () => {
       Promise.resolve({ ...bikeRow(), ...data }),
     );
     mockStorageService.uploadImageR2CloudFare.mockResolvedValue(NEW_IMAGE);
+    mockPrisma.bikes.delete.mockImplementation(() => Promise.resolve(bikeRow({ is_deleted: true })));
+    mockPrisma.strava_pending_activities.deleteMany.mockResolvedValue({ count: 0 });
+    // Archiving runs in one transaction, handed the same mocked client.
+    mockPrisma.$transaction.mockImplementation((work: (db: typeof mockPrisma) => unknown) => work(mockPrisma));
   });
 
   it('should be defined', () => {
@@ -198,6 +203,146 @@ describe('BikeService', () => {
         where: { id: BIKE_ID, user_id: OWNER_ID, is_deleted: { not: true } },
         include: WITH_TYPE,
       });
+    });
+  });
+  describe('findByUser', () => {
+    it('serves the garage by default', async () => {
+      mockPrisma.bikes.findMany.mockResolvedValue([bikeRow()]);
+
+      await service.findByUser(OWNER_ID);
+
+      expect(mockPrisma.bikes.findMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, is_deleted: { not: true } },
+        include: WITH_TYPE,
+      });
+    });
+
+    it('serves the archive when asked for it', async () => {
+      mockPrisma.bikes.findMany.mockResolvedValue([bikeRow({ is_deleted: true })]);
+
+      await service.findByUser(OWNER_ID, true);
+
+      expect(mockPrisma.bikes.findMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, is_deleted: true },
+        include: WITH_TYPE,
+      });
+    });
+  });
+
+  describe('findByID', () => {
+    // The detail of an Archived Bike is what the archive opens; the client reads the
+    // read-only state off is_deleted.
+    it('serves an archived bike', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: true }));
+
+      const bike = await service.findByID(BIKE_ID, OWNER_ID);
+
+      expect(mockPrisma.bikes.findFirst).toHaveBeenCalledWith({
+        where: { id: BIKE_ID, user_id: OWNER_ID },
+        include: WITH_TYPE,
+      });
+      expect(bike.is_deleted).toBe(true);
+    });
+  });
+
+  describe('archive', () => {
+    it('sets the flag and the moment it was archived', async () => {
+      await service.archive(BIKE_ID, OWNER_ID);
+
+      const { data } = mockPrisma.bikes.update.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data.is_deleted).toBe(true);
+      expect(data.deleted_at).toBeInstanceOf(Date);
+    });
+
+    it('unpairs the bike from Strava, so it collects no more kilometres', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ strava_gear_id: 'b123', strava_name: 'Tarmac' }));
+
+      await service.archive(BIKE_ID, OWNER_ID);
+
+      const { data } = mockPrisma.bikes.update.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data).toMatchObject({ strava_gear_id: null, strava_name: null });
+    });
+
+    it('discards the rides still waiting on that gear, rather than asking about them', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ strava_gear_id: 'b123' }));
+
+      await service.archive(BIKE_ID, OWNER_ID);
+
+      expect(mockPrisma.strava_pending_activities.deleteMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, gear_id: 'b123', resolved_at: null },
+      });
+    });
+
+    it('leaves pending rides alone when the bike was never paired', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ strava_gear_id: null }));
+
+      await service.archive(BIKE_ID, OWNER_ID);
+
+      expect(mockPrisma.strava_pending_activities.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('does not reach another user bike', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+
+      await expect(service.archive(BIKE_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.bikes.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('unarchive', () => {
+    it('clears the flag and the timestamp', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: true, deleted_at: new Date() }));
+
+      await service.unarchive(BIKE_ID, OWNER_ID);
+
+      expect(mockPrisma.bikes.update).toHaveBeenCalledWith({
+        where: { id: BIKE_ID },
+        data: { is_deleted: false, deleted_at: null },
+        include: WITH_TYPE,
+      });
+    });
+
+    // The owner picks the gear again; nothing here hands the pairing back.
+    it('does not restore the Strava pairing', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: true }));
+
+      await service.unarchive(BIKE_ID, OWNER_ID);
+
+      const { data } = mockPrisma.bikes.update.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data).not.toHaveProperty('strava_gear_id');
+      expect(data).not.toHaveProperty('strava_name');
+    });
+  });
+
+  describe('deleteHard', () => {
+    it('refuses a bike that is not archived', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: false }));
+
+      await expect(service.deleteHard(BIKE_ID, OWNER_ID)).rejects.toThrow(ConflictException);
+      expect(mockPrisma.bikes.delete).not.toHaveBeenCalled();
+    });
+
+    // Rows written before the flag existed hold null, and those are live bikes too.
+    it('refuses a bike whose flag was never written', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: null }));
+
+      await expect(service.deleteHard(BIKE_ID, OWNER_ID)).rejects.toThrow(ConflictException);
+      expect(mockPrisma.bikes.delete).not.toHaveBeenCalled();
+    });
+
+    it('destroys an archived bike', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: true }));
+
+      await service.deleteHard(BIKE_ID, OWNER_ID);
+
+      expect(mockPrisma.bikes.delete).toHaveBeenCalledWith({ where: { id: BIKE_ID }, include: WITH_TYPE });
+    });
+
+    it('does not reach another user bike', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+
+      await expect(service.deleteHard(BIKE_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.bikes.delete).not.toHaveBeenCalled();
     });
   });
 });

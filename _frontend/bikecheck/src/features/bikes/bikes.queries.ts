@@ -1,5 +1,12 @@
 // Encapsulate bike loading, mutations, and cache state.
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import {
   getBikes,
   getBike,
@@ -9,7 +16,9 @@ import {
   getExternalBikeComponents,
   createBike,
   updateBike,
-  deleteBike,
+  archiveBike,
+  unarchiveBike,
+  deleteBikePermanently,
 } from "./bikes.api";
 import type {
   Bike,
@@ -28,7 +37,17 @@ interface BikeSearchInput {
 export function useBikes(): UseQueryResult<Bike[]> {
   return useQuery({
     queryKey: ["bikes"],
-    queryFn: getBikes,
+    queryFn: () => getBikes(),
+  });
+}
+
+// The archive behind the Settings row. Its own key, so putting a bike aside never has to
+// be reconciled into the garage list.
+export function useArchivedBikes(enabled = true): UseQueryResult<Bike[]> {
+  return useQuery({
+    queryKey: ["bikes", "archived"],
+    queryFn: () => getBikes(true),
+    enabled,
   });
 }
 
@@ -111,15 +130,46 @@ export function useExternalBikeComponents(bikeUrl: string | null): UseQueryResul
   });
 }
 
-// Refresh garage and pairing caches after deletion.
-export function useDeleteBike(): UseMutationResult<Bike, Error, number> {
+// Everything an archived bike leaves: the garage, the rides list, the service history and
+// its totals, the pairing sheet and the pending rides archiving discarded.
+async function refreshAfterArchiveChange(queryClient: QueryClient): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: ["bikes"] });
+  await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
+  await queryClient.invalidateQueries({ queryKey: ["rides"] });
+  await queryClient.invalidateQueries({ queryKey: ["services"] });
+  await queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
+}
+
+// Archiving: the bike leaves the garage, keeping its whole history (ADR 0024).
+export function useArchiveBike(): UseMutationResult<Bike, Error, number> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => deleteBike(id),
+    mutationFn: (id: number) => archiveBike(id),
+    onSuccess: () => refreshAfterArchiveChange(queryClient),
+  });
+}
+
+// Back into use, from the archive.
+export function useUnarchiveBike(): UseMutationResult<Bike, Error, number> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => unarchiveBike(id),
+    onSuccess: () => refreshAfterArchiveChange(queryClient),
+  });
+}
+
+// The irreversible act, offered nowhere but the archive.
+export function useDeleteBikePermanently(): UseMutationResult<Bike, Error, number> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => deleteBikePermanently(id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["bikes"] });
-      await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
+      await refreshAfterArchiveChange(queryClient);
+      // The documents made from it survive it, but the list is read again all the same.
+      await queryClient.invalidateQueries({ queryKey: ["reports"] });
     },
   });
 }
