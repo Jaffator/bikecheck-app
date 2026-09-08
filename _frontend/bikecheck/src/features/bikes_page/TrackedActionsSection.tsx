@@ -1,8 +1,8 @@
 // What the bike still owes: every Tracked Action on it, worst first, the quiet ones
 // included — work that is not urgent yet is what the owner plans around. A component only
 // talks to hooks — no fetch, no URL, no manual loading state.
-import { Fragment, type ReactElement } from "react";
-import { Divider, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import type { ReactElement } from "react";
+import { Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Wrench } from "lucide-react";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
@@ -48,14 +48,11 @@ export function TrackedActionsSection({ bikeId }: TrackedActionsSectionProps): R
 
   return (
     <SectionShell>
-      <Stack gap="sm">
-        {actions.map((action, index) => (
+      <Stack gap="md">
+        {actions.map((action) => (
           // Every row is about this bike, and it is already open - so no prefix, and
-          // nowhere to go. A hairline between them, never after the last.
-          <Fragment key={trackedActionKey(action)}>
-            {index > 0 && <Divider color="var(--color-border-subtle)" />}
-            <TrackedActionRow action={action} prefix={null} onOpen={null} />
-          </Fragment>
+          // nowhere to go.
+          <TrackedActionRow key={trackedActionKey(action)} action={action} prefix={null} onOpen={null} />
         ))}
       </Stack>
     </SectionShell>
