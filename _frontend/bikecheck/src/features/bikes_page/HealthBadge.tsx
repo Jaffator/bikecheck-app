@@ -3,7 +3,7 @@
 import type { ReactElement } from "react";
 import { Box, Group, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ATTENTION_COLORS, overallLevel } from "@/features/service_tracking/attentionLevel";
+import { attentionColor, overallLevel, worstAction } from "@/features/service_tracking/attentionLevel";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface HealthBadgeProps {
@@ -14,8 +14,10 @@ interface HealthBadgeProps {
 
 export function HealthBadge({ actions }: HealthBadgeProps): ReactElement {
   const { t } = useTranslation();
+  // What it says is the band the server drew; what colour it says it in is the ramp, which
+  // warms earlier. A bike with nothing tracked reads quiet on both counts.
   const level = overallLevel(actions);
-  const color = ATTENTION_COLORS[level];
+  const color = attentionColor(worstAction(actions)?.percentage ?? 0);
 
   return (
     <Group

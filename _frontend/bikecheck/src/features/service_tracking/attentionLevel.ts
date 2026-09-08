@@ -1,17 +1,31 @@
-// How an Attention Level reads on screen, and how a Tracked Action is turned into the one
-// line that describes it. The bands themselves are the server's — the frontend never
-// decides what is overdue, it only colours what it is told.
+// How a reading looks on screen, and how a Tracked Action is turned into the one line that
+// describes it. What a reading *means* is still the server's: it decides what the dashboard
+// lists (80), what announces (95 and 100) and what may be put off (100). The colour is the
+// frontend's own, and it warns earlier than any of those act — see ADR 0026.
 import type { AttentionLevel, TrackedAction } from "./tracking.types";
 
-// One ramp, four steps: nothing to do, worth planning, order the part, riding on borrowed
-// time. Read by colour before it is read by number, so each step has to be its own hue —
-// and every one of them stands up on the app's dark surfaces.
-export const ATTENTION_COLORS: Record<AttentionLevel, string> = {
-  good: "#4ADE80",
-  warning: "#EAB308",
-  critical: "#F97316",
-  overdue: "#EF4444",
-};
+// The colour a reading is read by before it is read as a number. Five steps, warming as the
+// part runs out: quiet, first tint, clearly hot, reddening, and out of interval. Highest
+// stop first, so the first one a reading clears is the one it wears. Every hue stands up on
+// the app's dark surfaces.
+const ATTENTION_RAMP: { from: number; color: string }[] = [
+  { from: 100, color: "#EF4444" },
+  { from: 90, color: "#F87171" },
+  { from: 70, color: "#F97316" },
+  { from: 60, color: "#EAB308" },
+];
+
+// The quiet end of the ramp, worn below the first stop — and by the dot that stands for a
+// part with nothing to answer for.
+export const QUIET_COLOR = "#4ADE80";
+
+// Below this a reading carries no warning at all. Anything reading it has to read it here,
+// so a row can never be tinted and dimmed at the same time.
+export const QUIET_BELOW = 60;
+
+export function attentionColor(percentage: number): string {
+  return ATTENTION_RAMP.find((step) => percentage >= step.from)?.color ?? QUIET_COLOR;
+}
 
 // The bike's condition as a whole: the worst level among its Tracked Actions. The level is
 // the server's own function of the percentage, so the highest percentage always carries the

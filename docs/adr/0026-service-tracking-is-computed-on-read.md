@@ -63,8 +63,19 @@ and would read overdue while the part still has kilometres left on it, so it flo
 
 good below 80 · warning 80–94 · critical 95–99 · overdue at 100 and above.
 
-The three numbers are constants in one place. They are shared by the colour bands, the dashboard's
-cutoff and the announcements, so a row cannot change colour for one reason and notify for another.
+The three numbers are constants in one place on the server. They are shared by the dashboard's
+cutoff and the announcements, so what is listed and what interrupts can never disagree — and the
+Attention Level is what every one of those reads.
+
+**Colour is not one of them.** It warns earlier than any of them act, on its own ramp in
+`attentionLevel.ts`: quiet below 60, a first tint at 60, clearly hot at 70, reddening at 90, and
+the fullest red once the interval is out at 100. A reading at 65% is coloured while the server
+still calls it good — it is not on the dashboard, nothing has announced, and it cannot be put off.
+That is the point: the eye should catch a part running down before the app starts acting on it,
+and a colour that only appeared at 80 was arriving with the notification rather than ahead of it.
+
+The cost is that a colour no longer tells you what will happen, only how far along the part is.
+Nothing branches on colour, so nothing reads the ramp for a decision.
 
 ## The axis is whichever the bike's interval fills in
 

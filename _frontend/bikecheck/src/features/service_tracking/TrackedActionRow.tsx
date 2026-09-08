@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { positionLabel } from "@/features/components/componentLabels";
-import { ATTENTION_COLORS, axisReading, barFill } from "./attentionLevel";
+import { attentionColor, axisReading, barFill } from "./attentionLevel";
 import { PostponeControl } from "./PostponeControl";
 import type { TrackedAction } from "./tracking.types";
 
@@ -24,7 +24,7 @@ interface TrackedActionRowProps {
 
 export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowProps): ReactElement {
   const { t, i18n } = useTranslation();
-  const color = ATTENTION_COLORS[action.level];
+  const color = attentionColor(action.percentage);
   const side = positionLabel(action.position, t);
   const job = catalogueLabel(action.action_i18n_key, action.action_name, t);
   // Which part owes it: the side is what tells two tyres apart, so it never leaves the name.

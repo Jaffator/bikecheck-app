@@ -7,7 +7,7 @@ import { ArrowUpRight, Clock, Gauge } from "lucide-react";
 import type { Bike } from "../bikes/bikes.types";
 import { bikeTitle } from "../bikes/bikeTitle";
 import { BikePhoto } from "./BikePhoto";
-import { ATTENTION_COLORS, axisReading, barFill, worstAction } from "@/features/service_tracking/attentionLevel";
+import { attentionColor, barFill, QUIET_BELOW, worstAction } from "@/features/service_tracking/attentionLevel";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { catalogueLabel } from "@/features/service/serviceLabels";
@@ -40,11 +40,12 @@ function Metric({ icon, children }: { icon: ReactNode; children: ReactNode }): R
   );
 }
 
-// The part that needs attention first, as one line: how far it has come, what the job is,
-// and the figures behind it.
+// The part that needs attention first, as one line: how far it has come and what the job
+// is. The percentage rather than the figures behind it - the card has one line to say how
+// bad it is, and a wear index has no unit to make "133 / 600" mean anything on it.
 function AttentionMeter({ action }: { action: TrackedAction }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const color = ATTENTION_COLORS[action.level];
+  const { t } = useTranslation();
+  const color = attentionColor(action.percentage);
 
   return (
     <Group gap="sm" wrap="nowrap">
@@ -55,7 +56,8 @@ function AttentionMeter({ action }: { action: TrackedAction }): ReactElement {
         w={METER_WIDTH}
         style={{ flexShrink: 0 }}
         styles={{
-          root: { backgroundColor: "var(--color-decor)" },
+          // Its own track, a shade deeper than a row's: the hero card carries more light.
+          root: { backgroundColor: "var(--color-decor-deep)" },
           section: { backgroundColor: color },
         }}
       />
@@ -68,11 +70,11 @@ function AttentionMeter({ action }: { action: TrackedAction }): ReactElement {
         tt="uppercase"
         lts="0.08em"
         ml="auto"
-        // Emphasize a reading that is no longer good.
-        c={action.level === "good" ? "var(--color-text-dim)" : color}
+        // Emphasize a reading the ramp has started to warm.
+        c={action.percentage < QUIET_BELOW ? "var(--color-text-dim)" : color}
         style={{ whiteSpace: "nowrap" }}
       >
-        {axisReading(action, i18n.language)}
+        {t("tracking.percentage", { value: action.percentage })}
       </Text>
     </Group>
   );
