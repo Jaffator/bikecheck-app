@@ -2,7 +2,10 @@
   "tracking": {
     "title": "Service tracking",
     "percentage": "{{value}} %",
-    "loadFailed": "Service tracking could not be loaded."
+    "loadFailed": "Service tracking could not be loaded.",
+    "needsAttention": "Needs attention",
+    "showLess": "Show less",
+    "showRemaining": "Show remaining ({{value}})"
   },
   "nav": {
     "home": "Home",

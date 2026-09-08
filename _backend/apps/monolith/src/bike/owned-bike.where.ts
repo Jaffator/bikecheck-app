@@ -10,14 +10,18 @@ export type OwnedBikeOptions = {
 
 // is_deleted is nullable, so `not: true` is what covers both false and the null rows
 // written before the column existed.
-export function ownedBikeWhere(
-  bikeId: number,
+export function ownedBikesWhere(
   userId: number,
   { includeArchived = false }: OwnedBikeOptions = {},
 ): Prisma.bikesWhereInput {
   return {
-    id: bikeId,
     user_id: userId,
     ...(includeArchived ? {} : { is_deleted: { not: true } }),
   };
+}
+
+// One bike out of the same set, so a read of the garage and a read of one of its bikes can
+// never disagree about which bikes exist.
+export function ownedBikeWhere(bikeId: number, userId: number, options: OwnedBikeOptions = {}): Prisma.bikesWhereInput {
+  return { id: bikeId, ...ownedBikesWhere(userId, options) };
 }

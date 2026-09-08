@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ownedBikeWhere } from '../bike/owned-bike.where';
+import { ownedBikeWhere, ownedBikesWhere } from '../bike/owned-bike.where';
 import { attentionLevel, type WearAxis } from './attention-level';
 import { Response_TrackedActionDto } from './dto/response-tracked-action';
+import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 
 // What a Tracked Action is read from: the part's accumulators, everything ever recorded
 // against it, and the state of its own row. Nothing here is a percentage - the percentage
@@ -38,6 +39,10 @@ const trackedIntervalInclude = {
 } satisfies Prisma.bike_service_intervalInclude;
 
 type TrackedInterval = Prisma.bike_service_intervalGetPayload<{ include: typeof trackedIntervalInclude }>;
+
+// Only what is on the machine now: a part that came off, or one that should never have
+// existed, is not part of it any more and owes it nothing.
+const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
 
 // A Wear Baseline as one recorded occasion froze it, per axis.
 type Baseline = TrackedPart['action_done_component_map'][number];
@@ -91,22 +96,60 @@ export class ServiceTrackingService {
         include: trackedIntervalInclude,
       }),
       this.prisma.components_mounted.findMany({
-        // A part that came off the bike, or one that should never have existed, is not part
-        // of the machine any more and owes it nothing.
-        where: { bike_id: bikeId, is_active: true, is_deleted: { not: true } },
+        where: { bike_id: bikeId, ...MOUNTED },
         include: trackedPartInclude,
       }),
     ]);
 
-    const tracked = parts.flatMap((part) =>
-      intervals
-        .filter((interval) => targets(interval).has(part.component_type_id))
-        .map((interval) => toTrackedAction(part, interval))
-        .filter((action): action is Response_TrackedActionDto => action !== null),
-    );
-
-    return tracked.sort((one, other) => other.percentage - one.percentage);
+    return worstFirst(trackedActions(parts, intervals));
   }
+
+  // Everything across the owner's bikes that has come at least as far as the caller asks
+  // about - the dashboard asks for 80. One flat list, worst first: the question it answers
+  // is "what needs doing?", not "what needs doing on which bike?".
+  async getGarageTrackedActions(userId: number, minPercentage: number): Promise<Response_GarageTrackedActionDto[]> {
+    // An Archived Bike stays put away, so it is never even loaded.
+    const bikes = await this.prisma.bikes.findMany({
+      where: ownedBikesWhere(userId),
+      select: { id: true, bike_brand: true, bike_model: true, year: true },
+    });
+    if (bikes.length === 0) return [];
+
+    const bike_id = { in: bikes.map((bike) => bike.id) };
+    const [intervals, parts] = await Promise.all([
+      this.prisma.bike_service_interval.findMany({ where: { bike_id }, include: trackedIntervalInclude }),
+      this.prisma.components_mounted.findMany({ where: { bike_id, ...MOUNTED }, include: trackedPartInclude }),
+    ]);
+
+    // The pieces of each bike's name, without its id: how a bike is written out is the
+    // frontend's one rule, and it already has it.
+    const naming = new Map(bikes.map(({ id, ...name }) => [id, name]));
+
+    const needingAttention = trackedActions(parts, intervals)
+      .filter((action) => action.percentage >= minPercentage)
+      .flatMap((action) => {
+        const name = naming.get(action.bike_id);
+        return name === undefined ? [] : [{ ...action, ...name }];
+      });
+
+    return worstFirst(needingAttention);
+  }
+}
+
+// Every pairing of these parts with these plans, each read as it stands. A plan belongs to
+// one bike, so a bike's parts are only ever read against that bike's own intervals.
+function trackedActions(parts: TrackedPart[], intervals: TrackedInterval[]): Response_TrackedActionDto[] {
+  return parts.flatMap((part) =>
+    intervals
+      .filter((interval) => interval.bike_id === part.bike_id && targets(interval).has(part.component_type_id))
+      .map((interval) => toTrackedAction(part, interval))
+      .filter((action): action is Response_TrackedActionDto => action !== null),
+  );
+}
+
+// Worst first, which is the only order any of these lists is read in.
+function worstFirst<T extends { percentage: number }>(actions: T[]): T[] {
+  return [...actions].sort((one, other) => other.percentage - one.percentage);
 }
 
 // The kinds of part an action applies to. An action targeting none of what is mounted

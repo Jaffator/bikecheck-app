@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 const OWNER_ID = 7;
 const BIKE_ID = 21;
+const OTHER_BIKE_ID = 22;
 
 // The kinds of part the fixtures build on. A Chain carries its own drivetrain reading, a
 // Fork its own suspension reading, a Brake pad a wear index, and a Tyre none of the three.
@@ -57,10 +58,11 @@ function intervalRow(
   actionId: number,
   axes: { km?: number; min?: number; healthIndex?: number },
   targets: number[],
+  bikeId = BIKE_ID,
 ): Record<string, unknown> {
   return {
     id: actionId,
-    bike_id: BIKE_ID,
+    bike_id: bikeId,
     event_actions_id: actionId,
     service_interval_km: axes.km ?? null,
     service_interval_min: axes.min ?? null,
@@ -107,35 +109,69 @@ function stateRow(
   };
 }
 
+// What a read hands the mock: the filters it puts on the rows it loads.
+interface WhereArg {
+  is_active?: unknown;
+  is_deleted?: unknown;
+  bike_id?: unknown;
+}
+
 // The two filters the read puts on the parts it loads. Applied here rather than asserted
 // on, so "a dismounted part produces nothing" is exercised as behaviour.
 function applyWhere(
   rows: Record<string, unknown>[],
-  where: { is_active?: unknown; is_deleted?: unknown } = {},
+  where: { is_active?: unknown; is_deleted?: unknown; bike_id?: unknown } = {},
 ): Record<string, unknown>[] {
   return rows.filter((row) => {
     if (where.is_active === true && row.is_active !== true) return false;
     if (typeof where.is_deleted === 'object' && row.is_deleted === true) return false;
+    if (!onBike(row.bike_id, where.bike_id)) return false;
     return true;
   });
+}
+
+// The read asks for one bike by id, or for the whole garage at once.
+function onBike(bikeId: unknown, filter: unknown): boolean {
+  if (filter === undefined) return true;
+  if (typeof filter === 'number') return bikeId === filter;
+  return ((filter as { in?: number[] }).in ?? []).includes(bikeId as number);
+}
+
+// One bike as the garage read loads it, named well enough for a row to say where it belongs.
+function bikeRow(id: number, brand: string, isDeleted = false): Record<string, unknown> {
+  return { id, bike_brand: brand, bike_model: 'Hightower', year: 2022, is_deleted: isDeleted };
 }
 
 describe('ServiceTrackingService', () => {
   let service: ServiceTrackingService;
 
   const mockPrismaService = {
-    bikes: { findFirst: jest.fn() },
+    bikes: { findFirst: jest.fn(), findMany: jest.fn() },
     bike_service_interval: { findMany: jest.fn() },
     components_mounted: { findMany: jest.fn() },
   };
 
-  // The bike, its plan and its parts - the three reads every case sets up.
+  // The plans and the parts, filtered the way the database would filter them - so what a
+  // read leaves out is exercised as behaviour rather than asserted on.
   function garage(intervals: Record<string, unknown>[], parts: Record<string, unknown>[]): void {
-    mockPrismaService.bike_service_interval.findMany.mockResolvedValue(intervals);
-    mockPrismaService.components_mounted.findMany.mockImplementation(
-      ({ where }: { where?: { is_active?: unknown; is_deleted?: unknown } }) =>
-        Promise.resolve(applyWhere(parts, where)),
+    mockPrismaService.bike_service_interval.findMany.mockImplementation(({ where }: { where?: WhereArg }) =>
+      Promise.resolve(applyWhere(intervals, where)),
     );
+    mockPrismaService.components_mounted.findMany.mockImplementation(({ where }: { where?: WhereArg }) =>
+      Promise.resolve(applyWhere(parts, where)),
+    );
+  }
+
+  // The same, with the owner's bikes in front of it - only the unarchived ones are served.
+  function fleet(
+    bikes: Record<string, unknown>[],
+    intervals: Record<string, unknown>[],
+    parts: Record<string, unknown>[],
+  ): void {
+    mockPrismaService.bikes.findMany.mockImplementation(({ where }: { where?: { is_deleted?: unknown } }) =>
+      Promise.resolve(bikes.filter((bike) => where?.is_deleted === undefined || bike.is_deleted !== true)),
+    );
+    garage(intervals, parts);
   }
 
   beforeEach(async () => {
@@ -569,6 +605,155 @@ describe('ServiceTrackingService', () => {
       expect(action.current).toBe(0);
       expect(action.percentage).toBe(0);
       expect(action.level).toBe('good');
+    });
+  });
+
+  describe('getGarageTrackedActions', () => {
+    // The dashboard asks only about what has come far enough to be worth showing; the
+    // quiet ones belong on the bike's own page.
+    it('returns only the readings at or above the percentage asked for', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE]),
+          intervalRow(TYRE_REPLACEMENT, { km: 1000 }, [TYRE_TYPE]),
+        ],
+        [
+          mountedPart({ drivetrain_km: 850 }),
+          mountedPart({
+            id: 60,
+            component_type_id: TYRE_TYPE,
+            component_types: typeRow(TYRE_TYPE),
+            total_km: 300,
+          }),
+        ],
+      );
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 80);
+
+      expect(actions).toHaveLength(1);
+      expect(actions[0].percentage).toBe(85);
+    });
+
+    // The cutoff is the caller's, not the service's.
+    it('honours a percentage other than 80', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 500 })],
+      );
+
+      await expect(service.getGarageTrackedActions(OWNER_ID, 50)).resolves.toHaveLength(1);
+      await expect(service.getGarageTrackedActions(OWNER_ID, 51)).resolves.toEqual([]);
+    });
+
+    // A reading exactly on the cutoff is worth showing - the bands and the cutoff read the
+    // same number, so 80% is a warning and appears.
+    it('includes a reading exactly on the cutoff', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 800 })],
+      );
+
+      const [action] = await service.getGarageTrackedActions(OWNER_ID, 80);
+
+      expect(action.percentage).toBe(80);
+      expect(action.level).toBe('warning');
+    });
+
+    // One flat list across the whole garage, worst first - not a list per bike.
+    it('sorts worst first across every bike', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek')],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE]),
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE], OTHER_BIKE_ID),
+        ],
+        [
+          mountedPart({ drivetrain_km: 850 }),
+          mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 1320 }),
+          mountedPart({ id: 71, bike_id: OTHER_BIKE_ID, drivetrain_km: 960 }),
+        ],
+      );
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 80);
+
+      expect(actions.map((action) => [action.bike_id, action.percentage])).toEqual([
+        [OTHER_BIKE_ID, 132],
+        [OTHER_BIKE_ID, 96],
+        [BIKE_ID, 85],
+      ]);
+    });
+
+    // A row names the bike it belongs to, so the owner knows what is being asked of them
+    // without opening anything.
+    it('names the bike on every row', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek')],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE]),
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE], OTHER_BIKE_ID),
+        ],
+        [mountedPart({ drivetrain_km: 850 }), mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 900 })],
+      );
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 80);
+
+      expect(actions.map((action) => [action.bike_id, action.bike_brand, action.bike_model, action.year])).toEqual([
+        [OTHER_BIKE_ID, 'Trek', 'Hightower', 2022],
+        [BIKE_ID, 'Santa Cruz', 'Hightower', 2022],
+      ]);
+    });
+
+    // A bike's plan is its own: one bike's interval says nothing about another bike's part.
+    it('reads each bike against its own plan', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 850 }), mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 5000 })],
+      );
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 80);
+
+      expect(actions.map((action) => action.bike_id)).toEqual([BIKE_ID]);
+    });
+
+    // A bike put away contributes nothing, however overdue it was when it was put away.
+    it('leaves out an Archived Bike', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek', true)],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE]),
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE], OTHER_BIKE_ID),
+        ],
+        [mountedPart({ drivetrain_km: 850 }), mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 5000 })],
+      );
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 80);
+
+      expect(actions.map((action) => action.bike_id)).toEqual([BIKE_ID]);
+    });
+
+    // The list matches what is actually on the bikes.
+    it('leaves out a part that has been taken off or deleted', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({ drivetrain_km: 900, is_active: false }),
+          mountedPart({ id: 56, drivetrain_km: 900, is_deleted: true }),
+        ],
+      );
+
+      await expect(service.getGarageTrackedActions(OWNER_ID, 80)).resolves.toEqual([]);
+    });
+
+    // An owner with no bikes has nothing to be told about.
+    it('returns nothing for an owner with no bikes', async () => {
+      fleet([], [], []);
+
+      await expect(service.getGarageTrackedActions(OWNER_ID, 80)).resolves.toEqual([]);
     });
   });
 });

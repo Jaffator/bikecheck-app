@@ -6,6 +6,7 @@ import { EmptyDashboard } from "./EmptyDashboard";
 import { StravaStatusCard } from "../strava/StravaStatusCard";
 import { UnpairedBikesCard } from "../strava/UnpairedBikesCard";
 import { PendingRidesCard } from "../strava/PendingRidesDashCard";
+import { AttentionDashCard } from "../service_tracking/AttentionDashCard";
 export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();
 
@@ -26,6 +27,8 @@ export function Dashboard(): ReactElement {
       <UnpairedBikesCard />
       {/* Show rides awaiting bike assignment. */}
       <PendingRidesCard />
+      {/* Show what the garage needs doing, worst first. */}
+      <AttentionDashCard />
     </Stack>
   );
 }

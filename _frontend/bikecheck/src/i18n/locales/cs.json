@@ -2,7 +2,10 @@
   "tracking": {
     "title": "Sledování servisu",
     "percentage": "{{value}} %",
-    "loadFailed": "Sledování servisu se nepodařilo načíst."
+    "loadFailed": "Sledování servisu se nepodařilo načíst.",
+    "needsAttention": "Vyžaduje pozornost",
+    "showLess": "Zobrazit méně",
+    "showRemaining": "Zobrazit zbývající ({{value}})"
   },
   "nav": {
     "home": "Domů",

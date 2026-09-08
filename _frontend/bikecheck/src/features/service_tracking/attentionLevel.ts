@@ -49,3 +49,9 @@ export function axisReading(action: TrackedAction, language: string): string {
   }
   return `${format(action.current)} / ${format(action.interval)}`;
 }
+
+// What identifies a reading in a list: the part it is on and the job it is about. Neither
+// alone is unique — one part owes several jobs, and one job is owed by several parts.
+export function trackedActionKey(action: TrackedAction): string {
+  return `${String(action.component_mounted_id)}-${String(action.event_action_id)}`;
+}

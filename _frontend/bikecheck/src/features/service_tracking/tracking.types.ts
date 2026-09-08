@@ -33,3 +33,12 @@ export interface TrackedAction {
   // The action has been put off, which lengthened the interval above.
   extended: boolean;
 }
+
+// The same reading on the dashboard, where the list is flat across the whole garage and a
+// row has to name the bike it belongs to. The pieces of the name rather than the name, so
+// bikeTitle stays the one place a bike is written out.
+export interface GarageTrackedAction extends TrackedAction {
+  bike_brand: string;
+  bike_model: string | null;
+  year: number | null;
+}

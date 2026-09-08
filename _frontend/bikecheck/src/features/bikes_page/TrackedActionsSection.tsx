@@ -2,14 +2,12 @@
 // included — work that is not urgent yet is what the owner plans around. A component only
 // talks to hooks — no fetch, no URL, no manual loading state.
 import type { ReactElement } from "react";
-import { Group, Paper, Progress, Skeleton, Stack, Text } from "@mantine/core";
+import { Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Wrench } from "lucide-react";
-import { catalogueLabel } from "@/features/service/serviceLabels";
-import { positionLabel } from "@/features/components/componentLabels";
-import { ATTENTION_COLORS, axisReading, barFill } from "@/features/service_tracking/attentionLevel";
+import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
+import { TrackedActionRow } from "@/features/service_tracking/TrackedActionRow";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
-import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 // How many rows stand in for the list while it is arriving.
 const SKELETON_ROWS = 3;
@@ -52,7 +50,9 @@ export function TrackedActionsSection({ bikeId }: TrackedActionsSectionProps): R
     <SectionShell>
       <Stack gap="md">
         {actions.map((action) => (
-          <TrackedActionRow key={`${String(action.component_mounted_id)}-${String(action.event_action_id)}`} action={action} />
+          // Every row is about this bike, and it is already open - so no prefix, and
+          // nowhere to go.
+          <TrackedActionRow key={trackedActionKey(action)} action={action} prefix={null} onOpen={null} />
         ))}
       </Stack>
     </SectionShell>
@@ -83,68 +83,5 @@ function SectionShell({ children }: { children: ReactElement }): ReactElement {
         {children}
       </Stack>
     </Paper>
-  );
-}
-
-// One Tracked Action: the part and the job on top, the percentage beside them, and the
-// figures the percentage came from underneath.
-function TrackedActionRow({ action }: { action: TrackedAction }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const color = ATTENTION_COLORS[action.level];
-  const side = positionLabel(action.position, t);
-  const part = catalogueLabel(action.component_type_i18n_key, action.component_type, t);
-
-  return (
-    <Stack gap={6}>
-      <Group gap="sm" wrap="nowrap" align="baseline">
-        <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
-          {side === null ? part : `${part} (${side})`}
-        </Text>
-        <Text
-          className="font-mono"
-          fz={12}
-          c={color}
-          ml="auto"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          {t("tracking.percentage", { value: action.percentage })}
-        </Text>
-      </Group>
-
-      <Progress
-        value={barFill(action) * 100}
-        size={5}
-        radius="xl"
-        styles={{
-          root: { backgroundColor: "var(--color-decor)" },
-          section: { backgroundColor: color },
-        }}
-      />
-
-      <Group gap="sm" wrap="nowrap" align="baseline">
-        <Text
-          className="font-mono"
-          fz={11}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-          lts="0.08em"
-          lineClamp={1}
-          style={{ minWidth: 0 }}
-        >
-          {catalogueLabel(action.action_i18n_key, action.action_name, t)}
-        </Text>
-        <Text
-          className="font-mono"
-          fz={11}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-          lts="0.08em"
-          ml="auto"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          {axisReading(action, i18n.language)}
-        </Text>
-      </Group>
-    </Stack>
   );
 }
