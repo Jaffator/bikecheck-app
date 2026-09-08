@@ -40,23 +40,21 @@ export function EmptyDashboard(): ReactElement {
           className="pointer-events-none absolute opacity-20"
           style={{ top: 96, right: -22 }}
         />
-        {Array.from({ length: 10 }).map((_, i) => (
-          <Group key={i} pos="relative" gap={12} align="flex-start" wrap="nowrap">
-            <Lightbulb size={20} color="var(--color-accent)" className="shrink-0" />
-            <Stack gap={3}>
-              <Text className="font-mono" fz={12} lh="16px" fw={500} lts="0.05em" c="var(--color-accent)">
-                {t("common.proTip")}
-              </Text>
-              <Text fz={14} lh="22.75px" c="var(--color-text-dim)">
-                {/* Preserve a single translatable sentence. */}
-                <Trans
-                  i18nKey="dashboard.proTipBody"
-                  components={{ 1: <span style={{ color: "var(--color-text-bright)" }} /> }}
-                />
-              </Text>
-            </Stack>
-          </Group>
-        ))}
+        <Group pos="relative" gap={12} align="flex-start" wrap="nowrap">
+          <Lightbulb size={20} color="var(--color-accent)" className="shrink-0" />
+          <Stack gap={3}>
+            <Text className="font-mono" fz={12} lh="16px" fw={500} lts="0.05em" c="var(--color-accent)">
+              {t("common.proTip")}
+            </Text>
+            <Text fz={14} lh="22.75px" c="var(--color-text-dim)">
+              {/* Preserve a single translatable sentence. */}
+              <Trans
+                i18nKey="dashboard.proTipBody"
+                components={{ 1: <span style={{ color: "var(--color-text-bright)" }} /> }}
+              />
+            </Text>
+          </Stack>
+        </Group>
       </Box>
     </EmptyStateLayout>
   );

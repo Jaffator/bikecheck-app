@@ -5,15 +5,16 @@ import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser, useUpdateUser } from "../users/users.queries";
 import { SUPPORTED_LANGUAGES, applyLanguage } from "@/i18n";
-import { StravaStatusCard } from "../strava/StravaStatusCard";
 import { FALLBACK_CURRENCY, SUPPORTED_CURRENCIES } from "@/utils/money";
 import { CustomPartsDrawer } from "./CustomPartsDrawer";
+import { BikeArchiveDrawer } from "./BikeArchiveDrawer";
 
 export function Settings(): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
   const updateUser = useUpdateUser();
   const [customParts, setCustomParts] = useState(false);
+  const [archive, setArchive] = useState(false);
 
   // Update the UI before persisting the language.
   function changeLanguage(language: string): void {
@@ -33,7 +34,7 @@ export function Settings(): ReactElement {
 
   return (
     <>
-      <Card bg="cards.6" className="m-3 border">
+      <Card bg="cards.6" className="m-3" radius="lg" style={{ border: "1px solid var(--mantine-color-cards-5)" }}>
         <Group justify="space-between">
           <Text c="text.6">{t("settings.language")}</Text>
           <SegmentedControl
@@ -46,7 +47,7 @@ export function Settings(): ReactElement {
           />
         </Group>
       </Card>
-      <Card bg="cards.6" className="m-3 border">
+      <Card bg="cards.6" className="m-3" radius="lg" style={{ border: "1px solid var(--mantine-color-cards-5)" }}>
         <Group justify="space-between">
           <Text c="text.6">{t("settings.currency")}</Text>
           <SegmentedControl
@@ -58,7 +59,7 @@ export function Settings(): ReactElement {
       </Card>
       {/* The parts the owner named themselves. A list rather than a setting, so it opens
           over the page instead of resolving in place. */}
-      <Card bg="cards.6" className="m-3 border" p={0}>
+      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-cards-5)" }}>
         <UnstyledButton onClick={() => setCustomParts(true)} className="w-full" p="md">
           <Group justify="space-between" wrap="nowrap">
             <Text c="text.6">{t("settings.customParts")}</Text>
@@ -67,12 +68,20 @@ export function Settings(): ReactElement {
         </UnstyledButton>
       </Card>
 
+      {/* The bikes taken out of use. A list rather than a setting, so it opens over the
+          page the way the custom parts do - and it is the only door to the archive. */}
+      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-cards-5)" }}>
+        <UnstyledButton onClick={() => setArchive(true)} className="w-full" p="md">
+          <Group justify="space-between" wrap="nowrap">
+            <Text c="text.6">{t("settings.bikeArchive")}</Text>
+            <ChevronRight size={18} color="var(--color-text-dim)" />
+          </Group>
+        </UnstyledButton>
+      </Card>
+
       <CustomPartsDrawer opened={customParts} onClose={() => setCustomParts(false)} />
 
-      {/* Show only an existing Strava connection. */}
-      <div className="m-3">
-        <StravaStatusCard connectedOnly allowDisconnect />
-      </div>
+      <BikeArchiveDrawer opened={archive} onClose={() => setArchive(false)} />
     </>
   );
 }

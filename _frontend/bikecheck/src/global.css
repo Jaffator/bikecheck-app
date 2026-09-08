@@ -272,6 +272,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   animation: bikePanelIn 200ms ease-out;
 }
 
+/* The login screen arrives after the app it replaced has faded out, so it fades in a touch
+   slower than a route change. */
+.auth-enter {
+  animation: pageEnter 450ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-enter {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bike-panel-in {
     animation: none;

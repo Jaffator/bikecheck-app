@@ -95,6 +95,9 @@ export interface BikeComponent {
   drivetrain_km: number | null;
   suspension_min: number | null;
   health_index: number | null;
+  // The bike watches a wear index on this kind of part, so the reading is one to show.
+  // Decided by the server from the bike's own service intervals, never re-derived here.
+  tracks_health_index: boolean;
   last_service_at: string | null;
   // No Service has recorded work against the part, so its wear may still be corrected and
   // the row deleted. Decided by the server, never re-derived here — see ADR 0016.

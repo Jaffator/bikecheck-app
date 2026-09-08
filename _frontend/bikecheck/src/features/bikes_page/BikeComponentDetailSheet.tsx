@@ -1,30 +1,45 @@
-// One Mounted Component in full, over the build it was opened from. Everything the row
-// had no room for is read here, and nothing more: the four things that can be done to the
-// part live on its row's kebab, so the sheet is purely a read (ADR 0018).
+// One Mounted Component in full, over the build it was opened from. Reading a part and
+// deciding what to do to it stay separate (ADR 0018) with one exception: correcting what
+// you are looking at. The sheet carries Edit and nothing else — Replace, Dismount and
+// Delete stay on the row's kebab (ADR 0023).
 import { useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Divider, Drawer, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Divider, Drawer, Group, Modal, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { X } from "lucide-react";
+import { Info, Pencil, X } from "lucide-react";
 import type { TFunction } from "i18next";
 import type { BikeComponent } from "@/features/components/components.types";
-import { componentTypeName, isDismounted, positionLabel } from "@/features/components/componentLabels";
+import {
+  componentTypeName,
+  isDismounted,
+  positionLabel,
+  tracksDrivetrain,
+  tracksSuspension,
+} from "@/features/components/componentLabels";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
+import { HEALTH_COLORS } from "./bikeHealth.types";
 
 // Half the screen, fixed rather than content-sized, so the sheet does not jump in height
 // between parts and the build it was opened from stays visible behind it.
-const SHEET_HEIGHT = "50vh";
+const SHEET_HEIGHT = "70vh";
 
 // Above the section, below the form the sheet opens and the confirmations that form raises.
 const SHEET_Z_INDEX = 300;
+
+// Above the sheet that raises it, on the layer the app's confirmations already use.
+const EXPLANATION_Z_INDEX = 400;
 
 interface BikeComponentDetailSheetProps {
   // Null closes the sheet.
   component: BikeComponent | null;
   onClose: () => void;
+  // Opens the form over the sheet. A part that has come off the bike is a record rather
+  // than a build item, so it is never offered this.
+  // Absent on an Archived Bike: the part is a record there, not something to correct.
+  onEdit?: (component: BikeComponent) => void;
 }
 
-export function BikeComponentDetailSheet({ component, onClose }: BikeComponentDetailSheetProps): ReactElement {
+export function BikeComponentDetailSheet({ component, onClose, onEdit }: BikeComponentDetailSheetProps): ReactElement {
   // The sheet is still on screen while it slides out, so what it was last showing stays
   // drawn all the way down instead of emptying mid-animation.
   const shown = useLastShown(component);
@@ -65,103 +80,225 @@ export function BikeComponentDetailSheet({ component, onClose }: BikeComponentDe
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {shown !== null && (
           <Stack gap="lg" pb="md">
-            <Header component={shown} onClose={onClose} />
-            <Readings component={shown} removed={removed} />
+            <Header
+              component={shown}
+              removed={removed}
+              onClose={onClose}
+              onEdit={removed || onEdit === undefined ? undefined : () => onEdit(shown)}
+            />
+            <Wear component={shown} />
+            <Record component={shown} removed={removed} />
           </Stack>
         )}
       </Box>
-
     </Drawer>
   );
 }
 
-// What the part is, and what the owner called it.
-function Header({ component, onClose }: { component: BikeComponent; onClose: () => void }): ReactElement {
+// What the part is, what the owner called it, and where it stands. The two things reachable
+// from here sit opposite the name: close, and correct.
+function Header({
+  component,
+  removed,
+  onClose,
+  onEdit,
+}: {
+  component: BikeComponent;
+  removed: boolean;
+  onClose: () => void;
+  // Absent on a part that has come off the bike.
+  onEdit?: () => void;
+}): ReactElement {
   const { t } = useTranslation();
   const position = positionLabel(component.position, t);
   const described = component.component_desc?.trim();
 
   return (
-    <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
-      <Stack gap={4} style={{ minWidth: 0, flex: 1 }}>
-        <Group gap={8} wrap="nowrap">
-          <Text fz={20} fw={700} c="text.6" lineClamp={2}>
-            {componentTypeName(component, t)}
-          </Text>
-          {position !== null && (
-            <Text
-              className="font-mono"
-              fz={11}
-              fw={400}
-              tt="uppercase"
-              lts="0.08em"
-              c="var(--color-text-dim)"
-              style={{ flexShrink: 0 }}
-            >
-              {position}
-            </Text>
-          )}
+    <Stack gap="sm">
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
+        <Group gap="sm" wrap="nowrap" align="flex-start" style={{ minWidth: 0, flex: 1 }}>
+          <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+            {/* The correction sits on the name it corrects, not out at the edge with the
+                close button. */}
+            <Group gap={6} wrap="nowrap" align="center">
+              <Text fz={20} fw={700} c="text.6" lineClamp={2}>
+                {t("bikeComponents.detailTitle", { type: componentTypeName(component, t) })}
+              </Text>
+              {onEdit !== undefined && (
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  radius="xl"
+                  size="md"
+                  aria-label={t("bikeComponents.edit")}
+                  onClick={onEdit}
+                  style={{ flexShrink: 0 }}
+                >
+                  <Pencil size={17} color="var(--color-text-dim)" />
+                </ActionIcon>
+              )}
+            </Group>
+            {described !== undefined && described !== "" && (
+              <Text fz={14} c="text.8" lineClamp={2}>
+                {described}
+              </Text>
+            )}
+          </Stack>
         </Group>
-        {described !== undefined && described !== "" && (
-          <Text fz={14} c="text.8">
-            {described}
+
+        <Group gap={5} wrap="nowrap" style={{ flexShrink: 0 }}>
+          <ActionIcon variant="subtle" color="gray" radius="xl" size="md" aria-label={t("action.close")} onClick={onClose}>
+            <X size={18} color="var(--color-text-dim)" />
+          </ActionIcon>
+        </Group>
+      </Group>
+
+      {/* On the bike or off it, and which side it holds. A part recorded without a side
+          says nothing rather than saying "none". */}
+      <Group gap="lg" wrap="wrap">
+        <Group gap={8} wrap="nowrap">
+          <Box
+            w={8}
+            h={8}
+            style={{
+              borderRadius: "50%",
+              backgroundColor: removed ? "var(--color-muted)" : HEALTH_COLORS.good,
+              flexShrink: 0,
+            }}
+          />
+          <Text className="font-mono" fz={12} c="text.7">
+            {t(removed ? "bikeComponents.stateDismounted" : "bikeComponents.stateActive")}
+          </Text>
+        </Group>
+        {position !== null && (
+          <Text className="font-mono" fz={12} c="var(--color-text-dim)">
+            {t("bikeComponents.detailPositionValue", { position })}
           </Text>
         )}
-      </Stack>
-
-      <ActionIcon
-        variant="subtle"
-        color="gray"
-        radius="xl"
-        size="md"
-        aria-label={t("action.close")}
-        onClick={onClose}
-        style={{ flexShrink: 0 }}
-      >
-        <X size={18} color="var(--color-text-dim)" />
-      </ActionIcon>
-    </Group>
+      </Group>
+    </Stack>
   );
 }
 
-// Everything the read carries about the part. A reading the part has nothing on record for
-// is left out rather than shown as a zero — except the service, which says so in words.
-function Readings({ component, removed }: { component: BikeComponent; removed: boolean }): ReactElement {
+// What the ride analysis has added up against this part. Distance and time are kept on
+// every part; the rest only where something feeds them, and each is shown from the first
+// ride rather than once it passes zero.
+function Wear({ component }: { component: BikeComponent }): ReactElement {
+  const { t, i18n } = useTranslation();
+
+  // The reading the info button is explaining right now. Null while none is.
+  const [explained, setExplained] = useState<Tile | null>(null);
+
+  const tiles: Tile[] = [
+    { label: t("bikeComponents.detailTime"), value: hours(component.total_time_min, i18n.language) },
+    { label: t("bikeComponents.detailDistance"), value: kilometres(component.total_km, i18n.language) },
+  ];
+
+  // Distance and time are what the odometer says; these two are what the ride analysis
+  // made of the terrain, which no owner can be expected to guess. They say so themselves.
+  if (tracksDrivetrain(component)) {
+    tiles.push({
+      label: t("bikeComponents.detailDrivetrain"),
+      value: kilometres(component.drivetrain_km, i18n.language),
+      explanation: t("bikeComponents.detailDrivetrainInfo"),
+    });
+  }
+
+  if (tracksSuspension(component)) {
+    tiles.push({
+      label: t("bikeComponents.detailSuspension"),
+      value: hours(component.suspension_min, i18n.language),
+      explanation: t("bikeComponents.detailSuspensionInfo"),
+    });
+  }
+
+  // Not a score out of a hundred but an accumulator like the others, and shown only where
+  // the bike's own service intervals watch one. Decided by the server, never re-derived
+  // here (ADR 0023).
+  if (component.tracks_health_index) {
+    tiles.push({
+      label: t("bikeComponents.detailHealthIndex"),
+      value: figure(component.health_index, i18n.language),
+    });
+  }
+
+  return (
+    <>
+      <SimpleGrid cols={2} spacing="md" verticalSpacing="lg">
+        {tiles.map((tile) => (
+          <Stack key={tile.label} gap={4}>
+            <Group gap={4} wrap="nowrap" align="center">
+              <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+                {tile.label}
+              </Text>
+              {tile.explanation !== undefined && (
+                <ActionIcon
+                  variant="transparent"
+                  color="gray"
+                  size="xs"
+                  aria-label={t("bikeComponents.detailInfo", { reading: tile.label })}
+                  onClick={() => setExplained(tile)}
+                  style={{ flexShrink: 0 }}
+                >
+                  <Info size={13} color="var(--color-text-dim)" />
+                </ActionIcon>
+              )}
+            </Group>
+            <Text className="font-mono" fz={18} fw={100} c="text.6" lh={1.1}>
+              {tile.value}
+            </Text>
+          </Stack>
+        ))}
+      </SimpleGrid>
+
+      <ExplanationModal tile={explained} onClose={() => setExplained(null)} />
+    </>
+  );
+}
+
+// One reading in the grid. An explanation is carried only by the two the ride analysis
+// derives, which is what earns them the info button.
+interface Tile {
+  label: string;
+  value: string;
+  explanation?: string;
+}
+
+// What a derived reading means, over the sheet that raised it. Reading only: it says what
+// the number is and closes, so it wears the confirmation layer without its buttons.
+function ExplanationModal({ tile, onClose }: { tile: Tile | null; onClose: () => void }): ReactElement {
+  // Android's back gesture dismisses this rather than the sheet under it.
+  useOverlayBack(tile !== null, onClose);
+
+  return (
+    <Modal
+      opened={tile !== null}
+      onClose={onClose}
+      title={tile?.label ?? ""}
+      centered
+      radius="md"
+      zIndex={EXPLANATION_Z_INDEX}
+      styles={{
+        content: { backgroundColor: "var(--mantine-color-cards-6)" },
+        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
+      }}
+    >
+      <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
+        {tile?.explanation}
+      </Text>
+    </Modal>
+  );
+}
+
+// The dates the part carries, and whatever the owner wrote on it. Facts rather than
+// readings, so they keep the row shape the tiles took over from.
+function Record({ component, removed }: { component: BikeComponent; removed: boolean }): ReactElement {
   const { t } = useTranslation();
 
   return (
     <Stack gap={0}>
       <Divider color="var(--mantine-color-inputs-5)" />
-
-      {component.total_km !== null && component.total_km > 0 && (
-        <Reading
-          label={t("bikeComponents.detailDistance")}
-          value={t("bikes.kilometres", { count: component.total_km })}
-        />
-      )}
-      {component.total_time_min !== null && component.total_time_min > 0 && (
-        <Reading
-          label={t("bikeComponents.detailTime")}
-          value={t("bikes.hours", { count: Math.round(component.total_time_min / 60) })}
-        />
-      )}
-      {component.drivetrain_km !== null && component.drivetrain_km > 0 && (
-        <Reading
-          label={t("bikeComponents.detailDrivetrain")}
-          value={t("bikes.kilometres", { count: component.drivetrain_km })}
-        />
-      )}
-      {component.suspension_min !== null && component.suspension_min > 0 && (
-        <Reading
-          label={t("bikeComponents.detailSuspension")}
-          value={t("bikes.hours", { count: Math.round(component.suspension_min / 60) })}
-        />
-      )}
-      {/* An accumulator like the others, not a score out of a hundred: it is what the ride
-          analysis has added up against this part. */}
-      {component.health_index !== null && component.health_index > 0 && (
-        <Reading label={t("bikeComponents.detailHealthIndex")} value={String(component.health_index)} />
-      )}
 
       <Reading label={t("bikeComponents.detailMounted")} value={dayLabel(component.mounted_at)} />
       {removed && <Reading label={t("bikeComponents.detailRemoved")} value={dayLabel(component.removed_at)} />}
@@ -203,6 +340,21 @@ function Reading({ label, value, wrap = false }: { label: string; value: ReactNo
       <Divider color="var(--mantine-color-inputs-5)" />
     </>
   );
+}
+
+// A tile is read at a glance, so its thousands are grouped the way the owner's language
+// writes them. A reading with nothing on record yet is a zero, not a gap.
+function figure(value: number | null, language: string): string {
+  return new Intl.NumberFormat(language).format(value ?? 0);
+}
+
+// The two units the app writes everywhere else, the report included.
+function kilometres(value: number | null, language: string): string {
+  return `${figure(value, language)} km`;
+}
+
+function hours(minutes: number | null, language: string): string {
+  return `${figure(Math.round((minutes ?? 0) / 60), language)} h`;
 }
 
 // A day the app may not have on record, which reads as a dash rather than as today.

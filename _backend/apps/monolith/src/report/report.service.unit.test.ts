@@ -64,7 +64,7 @@ describe('ReportService', () => {
   };
 
   // The bike a Period Report and a BikeCheck are written about.
-  const bikeRow = (): Record<string, unknown> => ({
+  const bikeRow = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
     id: BIKE_ID,
     bikename: 'Firebird',
     bike_brand: 'Pivot',
@@ -76,6 +76,7 @@ describe('ReportService', () => {
     total_time_min: 14000,
     image_url: 'https://storage.example.com/bikes/firebird.webp',
     bike_types: { id: 3, type: 'Enduro', i18n_key: 'bikeType.enduro' },
+    ...overrides,
   });
 
   // One part on the bike, with the occasion that last touched it and a deleted one that
@@ -336,7 +337,7 @@ describe('ReportService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             id: SERVICE_ID,
-            bikes: { user_id: OWNER_ID, is_deleted: false },
+            bikes: { user_id: OWNER_ID },
           }),
         }),
       );
@@ -594,11 +595,28 @@ describe('ReportService', () => {
       expect(mockPrisma.reports.create).not.toHaveBeenCalled();
     });
 
+    // A sold bike is archived, and its buyer still wants the document. The Export reads
+    // the bike and writes a row belonging to the owner, so nothing about the bike changes.
+    it('exports from an archived bike', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: true }));
+
+      await expect(exportBikeCheck()).resolves.toBeDefined();
+    });
+
+    // reports.bike_id is deliberately not a relation, so a frozen document outlives the
+    // bike - and the name it froze is what still says which bike it describes (ADR 0011).
+    it('names the bike as text, so the document survives the bike', async () => {
+      const { snapshot } = await exportBikeCheck();
+      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
+
+      expect(typeof snapshot.bike.name).toBe('string');
+    });
+
     it('asks only for a bike the caller owns', async () => {
       await exportBikeCheck();
 
       expect(mockPrisma.bikes.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: BIKE_ID, user_id: OWNER_ID, is_deleted: false } }),
+        expect.objectContaining({ where: { id: BIKE_ID, user_id: OWNER_ID } }),
       );
     });
 

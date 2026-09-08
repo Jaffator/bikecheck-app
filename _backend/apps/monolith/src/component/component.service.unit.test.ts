@@ -58,6 +58,8 @@ describe('ComponentService', () => {
     },
     event_action_targets: {
       create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
     },
     $transaction: jest.fn(),
     components_mounted: {
@@ -86,6 +88,10 @@ describe('ComponentService', () => {
 
     // Every slot free unless a test says otherwise (ADR 0020).
     mockPrismaService.components_mounted.findFirst.mockResolvedValue(null);
+
+    // No bike watches a wear index unless a test sets one up, so the reading is off.
+    mockPrismaService.event_action_targets.findMany.mockResolvedValue([]);
+    mockPrismaService.event_action_targets.findFirst.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -257,6 +263,19 @@ describe('ComponentService', () => {
       expect(mockPrismaService.components_mounted.findMany).not.toHaveBeenCalled();
     });
 
+    // An Archived Bike's build stays readable - that record is the point of keeping it.
+    it('reads the parts of an archived bike', async () => {
+      mockPrismaService.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrismaService.components_mounted.findMany.mockResolvedValue([]);
+
+      await service.getBikeComponents(BIKE_ID, OWNER_ID);
+
+      expect(mockPrismaService.bikes.findFirst).toHaveBeenCalledWith({
+        where: { id: BIKE_ID, user_id: OWNER_ID },
+        select: { id: true },
+      });
+    });
+
     it('names the part, its category and the wear it carries', async () => {
       // ARRANGE
       mockPrismaService.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
@@ -289,6 +308,7 @@ describe('ComponentService', () => {
         drivetrain_km: 0,
         suspension_min: 480,
         health_index: 85,
+        tracks_health_index: false,
         last_service_at: new Date('2025-06-10T00:00:00.000Z'),
         unserviced: false,
       });
@@ -521,6 +541,22 @@ describe('ComponentService', () => {
 
   // Correcting a part. What may be corrected is decided by its service history alone,
   // and by the server as well as the screen (ADR 0016).
+  // Reading an Archived Bike is allowed; mounting a part on it is not.
+  describe('an archived bike', () => {
+    it('refuses a part mounted on it', async () => {
+      // Unreachable to a write, so ownership answers with nothing.
+      mockPrismaService.bikes.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.createMountedComponent({ bike_id: BIKE_ID, component_type_id: 12 }, OWNER_ID),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrismaService.bikes.findFirst).toHaveBeenCalledWith({
+        where: { id: BIKE_ID, user_id: OWNER_ID, is_deleted: { not: true } },
+        select: { id: true },
+      });
+    });
+  });
+
   describe('updateMountedComponent', () => {
     const COMPONENT_ID = 55;
     const hardened = mountedRow({ action_done_component_map: [serviceJunction('2025-06-10T00:00:00.000Z')] });

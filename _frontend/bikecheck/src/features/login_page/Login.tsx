@@ -32,7 +32,7 @@ export function Login(): ReactElement {
   const pageHeight = useStableViewportHeight();
   return (
     <>
-      <Stack className="bg-background-900 relative isolate" align="center" gap="md" py="xl" style={{ minHeight: "100dvh" }}>
+      <Stack className="bg-background-900 auth-enter relative isolate" align="center" gap="md" py="xl" style={{ minHeight: "100dvh" }}>
         <AuthenticationForm mt="220"></AuthenticationForm>
         {/* Keep the background stable during keyboard resize. */}
         <div

@@ -10,6 +10,7 @@ import {
 } from './dto/create-bike-event.dto';
 import { Create_ActionTagDto } from './dto/create-action-tag.dto';
 import { Update_BikeEventDto } from './dto/update-bike-event.dto';
+import { ownedBikeWhere, OwnedBikeOptions } from '../bike/owned-bike.where';
 import {
   ActionTagDto,
   Response_ActionsOnGroup_Dto,
@@ -424,7 +425,8 @@ export class BikeEventService {
   }
 
   async findAllBikeEvents(bikeId: number, userId: number): Promise<Response_BikeEvent_Dto[]> {
-    await this.findOwnedBike(bikeId, userId);
+    // An Archived Bike keeps its whole history, and the point of keeping it is reading it.
+    await this.findOwnedBike(bikeId, userId, { includeArchived: true });
 
     const bikeEvents = await this.prisma.events_bikes.findMany({
       where: { bike_id: bikeId, is_deleted: false },
@@ -462,17 +464,18 @@ export class BikeEventService {
     to?: string,
   ): Promise<Response_ServiceHistory_Dto> {
     if (bikeId !== undefined) {
-      await this.findOwnedBike(bikeId, userId);
+      await this.findOwnedBike(bikeId, userId, { includeArchived: true });
     }
 
     const take = clamp(limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
     const skip = clamp(offset, 0, 0, Number.MAX_SAFE_INTEGER);
 
     // is_deleted is nullable, so `not: true` is what covers both false and the null
-    // rows written before the column existed.
+    // rows written before the column existed. Across every bike an Archived Bike drops
+    // out; asked for by id its own history still reads (ADR 0024).
     const where = {
       is_deleted: { not: true },
-      ...(bikeId !== undefined ? { bike_id: bikeId } : { bikes: { user_id: userId } }),
+      ...(bikeId !== undefined ? { bike_id: bikeId } : { bikes: { user_id: userId, is_deleted: { not: true } } }),
       // The period the History Totals are counted for narrows the list under them too,
       // so the card can never disagree with what is on screen.
       ...serviceDateInPeriod(from, to),
@@ -524,12 +527,12 @@ export class BikeEventService {
   // totals can count them.
   async historyTotals(userId: number, bikeId?: number, from?: string, to?: string): Promise<Response_HistoryTotals_Dto> {
     if (bikeId !== undefined) {
-      await this.findOwnedBike(bikeId, userId);
+      await this.findOwnedBike(bikeId, userId, { includeArchived: true });
     }
 
     const where = {
       is_deleted: { not: true },
-      ...(bikeId !== undefined ? { bike_id: bikeId } : { bikes: { user_id: userId } }),
+      ...(bikeId !== undefined ? { bike_id: bikeId } : { bikes: { user_id: userId, is_deleted: { not: true } } }),
       ...serviceDateInPeriod(from, to),
     };
 
@@ -982,9 +985,9 @@ export class BikeEventService {
   // A service is only ever read or written through its bike, so ownership is checked there.
   // Someone else's bike is forbidden rather than missing: the caller knows the bike exists,
   // they just may not touch it.
-  private async findOwnedBike(bikeId: number, userId: number): Promise<OwnedBike> {
+  private async findOwnedBike(bikeId: number, userId: number, options?: OwnedBikeOptions): Promise<OwnedBike> {
     const bike = await this.prisma.bikes.findFirst({
-      where: { id: bikeId, user_id: userId, is_deleted: { not: true } },
+      where: ownedBikeWhere(bikeId, userId, options),
       select: { total_km: true, total_time_min: true, has_front_suspension: true, has_rear_suspension: true },
     });
     if (!bike) {

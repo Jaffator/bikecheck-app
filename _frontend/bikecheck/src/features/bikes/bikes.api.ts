@@ -9,9 +9,9 @@ import type {
   UpdateBikeInput,
 } from "./bikes.types";
 
-// GET /bike — bikes of the current user.
-export async function getBikes(): Promise<Bike[]> {
-  return apiFetch<Bike[]>("/bike");
+// GET /bike — the garage, or the archive behind the Settings row. Same shape either way.
+export async function getBikes(archived = false): Promise<Bike[]> {
+  return apiFetch<Bike[]>(archived ? "/bike?archived=true" : "/bike");
 }
 
 // GET /bike/:id — one bike by id.
@@ -78,7 +78,19 @@ export async function updateBike(input: UpdateBikeInput): Promise<Bike> {
   return apiFetch<Bike>(`/bike/${String(input.id)}`, { method: "PATCH", body: form });
 }
 
-// Soft-delete a bike while preserving ride and service history.
-export async function deleteBike(id: number): Promise<Bike> {
+// DELETE /bike/delsoft/:id — archives the bike. It leaves the garage and every total,
+// keeps its whole history, and is unpaired from Strava for good (ADR 0024).
+export async function archiveBike(id: number): Promise<Bike> {
   return apiFetch<Bike>(`/bike/delsoft/${id}`, { method: "DELETE" });
+}
+
+// POST /bike/unarchive/:id — back into use. The Strava gear is picked again by hand.
+export async function unarchiveBike(id: number): Promise<Bike> {
+  return apiFetch<Bike>(`/bike/unarchive/${id}`, { method: "POST" });
+}
+
+// DELETE /bike/delhard/:id — destroys the bike and everything belonging to it. The typed
+// name guards this dialog only; the server refuses a bike that is not archived.
+export async function deleteBikePermanently(id: number): Promise<Bike> {
+  return apiFetch<Bike>(`/bike/delhard/${id}`, { method: "DELETE" });
 }

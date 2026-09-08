@@ -132,6 +132,13 @@ export class Response_BikeComponentDto {
   health_index!: number | null;
 
   @ApiProperty({
+    example: true,
+    description:
+      'The bike watches a wear index on this kind of part, so the reading is one to show. Decided by the service intervals the bike carries',
+  })
+  tracks_health_index!: boolean;
+
+  @ApiProperty({
     type: Date,
     example: '2025-06-10T00:00:00.000Z',
     nullable: true,

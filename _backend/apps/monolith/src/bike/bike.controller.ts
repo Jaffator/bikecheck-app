@@ -124,10 +124,15 @@ export class BikeController {
   }
 
   // ---------- GET current user's bikes ----------
+  // The garage by default; the archive behind the Settings row when asked for it.
   @Get()
   @ApiResponse({ status: 200, type: ResponseBikeDto, isArray: true })
-  findUserBikes(@CurrentUser('userId') userId: string): Promise<ResponseBikeDto[]> {
-    return this.bikeService.findByUser(Number(userId));
+  @ApiQuery({ name: 'archived', type: Boolean, required: false })
+  findUserBikes(
+    @CurrentUser('userId') userId: string,
+    @Query('archived') archived?: string,
+  ): Promise<ResponseBikeDto[]> {
+    return this.bikeService.findByUser(Number(userId), archived === 'true');
   }
 
   // ---------- GET bike by ID ----------
@@ -165,16 +170,26 @@ export class BikeController {
     return await this.bikeService.update(+id, Number(userId), dto, image);
   }
 
-  // ---------- DELETE soft bike by ID ----------
+  // ---------- ARCHIVE bike by ID ----------
+  // Takes the bike out of use, keeping its whole history. Reversible (ADR 0024).
   @Delete('/delsoft/:id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
-  deleteSoft(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
-    return this.bikeService.deleteSoft(+id, Number(userId));
+  archive(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
+    return this.bikeService.archive(+id, Number(userId));
+  }
+
+  // ---------- UNARCHIVE bike by ID ----------
+  @Post('/unarchive/:id')
+  @ApiResponse({ status: 200, type: ResponseBikeDto })
+  unarchive(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
+    return this.bikeService.unarchive(+id, Number(userId));
   }
 
   // ---------- DELETE hard bike by ID ----------
+  // Only an archived bike can be destroyed; anything else answers 409.
   @Delete('/delhard/:id')
   @ApiResponse({ status: 200, type: ResponseBikeDto })
+  @ApiResponse({ status: 409, description: 'Bike is not archived' })
   deleteHard(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
     return this.bikeService.deleteHard(+id, Number(userId));
   }

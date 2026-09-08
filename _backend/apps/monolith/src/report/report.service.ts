@@ -14,6 +14,7 @@ import { StorageService } from '../storage/storage.service';
 import { ReportPdfService } from './report-pdf.service';
 import { catalogueLabel, FALLBACK_REPORT_CURRENCY, reportLanguage } from './report-catalogue-labels';
 import { ExportReportDto } from './dto/export-report.dto';
+import { ownedBikeWhere } from '../bike/owned-bike.where';
 import {
   REPORT_SNAPSHOT_VERSION,
   ReportAction,
@@ -540,7 +541,9 @@ export class ReportService {
 
   private async findOwnedService(serviceId: number, userId: number): Promise<ServiceWithRelations> {
     const service = await this.prisma.events_bikes.findFirst({
-      where: { id: serviceId, is_deleted: false, bikes: { user_id: userId, is_deleted: false } },
+      // Same reach as findOwnedBike: an Archived Bike's service is still exportable, and
+      // `not: true` keeps the null rows written before either flag existed.
+      where: { id: serviceId, is_deleted: { not: true }, bikes: { user_id: userId } },
       include: serviceReportInclude,
     });
     if (service === null) {
@@ -550,9 +553,12 @@ export class ReportService {
     return service;
   }
 
+  // Exporting from an Archived Bike is allowed: the Export reads the bike and writes a
+  // reports row belonging to the owner, so nothing about the bike changes - and the sold
+  // bike whose buyer wants the document is exactly the case the archive exists for.
   private async findOwnedBike(bikeId: number, userId: number): Promise<BikeWithRelations> {
     const bike = await this.prisma.bikes.findFirst({
-      where: { id: bikeId, user_id: userId, is_deleted: false },
+      where: ownedBikeWhere(bikeId, userId, { includeArchived: true }),
       include: reportBikeInclude,
     });
     if (bike === null) {

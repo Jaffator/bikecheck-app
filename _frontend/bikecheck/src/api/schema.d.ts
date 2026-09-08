@@ -551,6 +551,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/components/custom-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Component getCustomComponentTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/components/custom-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["Component deleteComponentType"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/components/groups": {
         parameters: {
             query?: never;
@@ -1132,7 +1164,7 @@ export interface components {
             component_type_id: number;
             /** @example Fox 38 Factory Grip2 */
             component_desc?: string | null;
-            /** @example Front */
+            /** @example front */
             position?: string | null;
             /**
              * Format: date-time
@@ -1594,6 +1626,8 @@ export interface components {
             has_position?: boolean | null;
         };
         Response_ComponentDto: {
+            /** @example 91 */
+            id: number;
             /** @example 15 */
             component_group_id: number;
             /** @example 1 */
@@ -1614,6 +1648,28 @@ export interface components {
              * @example true
              */
             essential: boolean;
+        };
+        Response_CustomComponentTypeDto: {
+            /** @example 91 */
+            id: number;
+            /** @example Chain Guard */
+            component_type: string;
+            /** @example 3 */
+            component_group_id: number;
+            /** @example Drivetrain */
+            component_group: string;
+            /** @example componentGroup.drivetrain */
+            component_group_i18n_key: string | null;
+            /**
+             * @description Parts on the owner bikes still named by this type
+             * @example 2
+             */
+            parts_in_use: number;
+            /**
+             * @description How many bikes those parts sit on
+             * @example 1
+             */
+            bikes_in_use: number;
         };
         Response_ComponentGroupDto: {
             /** @example 1 */
@@ -1680,6 +1736,11 @@ export interface components {
             /** @example 85 */
             health_index: number | null;
             /**
+             * @description The bike watches a wear index on this kind of part, so the reading is one to show. Decided by the service intervals the bike carries
+             * @example true
+             */
+            tracks_health_index: boolean;
+            /**
              * Format: date-time
              * @description The most recent Service that worked on this part; null for one nobody has serviced
              * @example 2025-06-10T00:00:00.000Z
@@ -1696,7 +1757,7 @@ export interface components {
             component_type_id: number;
             /** @example Fox 38 Factory Grip2 */
             component_desc?: string | null;
-            /** @example Front */
+            /** @example front */
             position?: string | null;
             /**
              * Format: date-time
@@ -2819,6 +2880,46 @@ export interface operations {
             };
         };
     };
+    "Component getCustomComponentTypes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_CustomComponentTypeDto"][];
+                };
+            };
+        };
+    };
+    "Component deleteComponentType": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_ComponentDto"];
+                };
+            };
+        };
+    };
     "Component getGroups": {
         parameters: {
             query?: never;
@@ -2879,6 +2980,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Response_BikeComponentDto"];
                 };
+            };
+            /** @description The slot already holds an active part (ADR 0020) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
