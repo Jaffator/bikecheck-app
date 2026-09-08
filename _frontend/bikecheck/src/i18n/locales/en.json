@@ -8,7 +8,8 @@
     "showRemaining": "Show remaining ({{value}})",
     "postpone": "Put off",
     "extended": "Extended",
-    "postponeFailed": "Could not be put off."
+    "postponeFailed": "Could not be put off.",
+    "axisWearIndex": "Wear index"
   },
   "nav": {
     "home": "Home",
@@ -304,6 +305,7 @@
     "detailHealthIndex": "Wear index",
     "detailDrivetrainInfo": "Kilometres the drivetrain was actually working for. Every kilometre of a ride is weighted by its gradient — climbing and flat riding load the chain, cassette and chainring, descending barely does — so this figure runs behind the total distance. It is the one to judge a chain by: 1 000 km of an alpine descent wears it far less than 1 000 km of climbing.",
     "detailSuspensionInfo": "Hours the suspension was doing work. Descending counts in full, flat and uphill riding at a fifth of the time, so a bike ground up a fire road does not age its fork as if it had been ridden down one. Service intervals for a fork or shock are written in these hours, not in kilometres ridden.",
+    "detailHealthIndexInfo": "Brake pads are not worn by the kilometres ridden but by braking on the way down. Every ride's descent is added up weighted by its gradient and by the rider's weight — a steep run counts up to double — and that sum is the index. A pad's service interval is written in it, not in kilometres.",
     "detailInfo": "What {{reading}} means",
     "detailMounted": "Mounted",
     "detailRemoved": "Taken off",

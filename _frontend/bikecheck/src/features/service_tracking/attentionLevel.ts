@@ -50,9 +50,15 @@ export function barFill(action: TrackedAction): number {
 }
 
 // The figures behind the percentage — "3 200 / 4 000 km" — so the reading is checkable.
-// Minutes are read as hours, which is the unit the rest of the app gives ride time in; a
-// wear index is a bare count and carries no unit at all.
-export function axisReading(action: TrackedAction, language: string): string {
+// Minutes are read as hours, which is the unit the rest of the app gives ride time in.
+//
+// A wear index has no unit and no scale an owner can hold: "0 / 50 000" says nothing about
+// brake pads. It is named instead, and what it means is behind the info button beside it.
+export function axisReading(
+  action: TrackedAction,
+  language: string,
+  translate: (key: string) => string,
+): string {
   const format = (value: number): string => new Intl.NumberFormat(language).format(value);
 
   if (action.axis === "min") {
@@ -61,7 +67,7 @@ export function axisReading(action: TrackedAction, language: string): string {
   if (action.axis === "km") {
     return `${format(action.current)} / ${format(action.interval)} km`;
   }
-  return `${format(action.current)} / ${format(action.interval)}`;
+  return translate("tracking.axisWearIndex");
 }
 
 // What identifies a reading in a list: the part it is on and the job it is about. Neither

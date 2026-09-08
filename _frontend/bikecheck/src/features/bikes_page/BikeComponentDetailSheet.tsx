@@ -3,7 +3,7 @@
 // you are looking at. The sheet carries Edit and nothing else — Replace, Dismount and
 // Delete stay on the row's kebab (ADR 0023).
 import { useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Divider, Drawer, Group, Modal, SimpleGrid, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Divider, Drawer, Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Info, Pencil, X } from "lucide-react";
@@ -17,6 +17,7 @@ import {
   tracksSuspension,
 } from "@/features/components/componentLabels";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
+import { ExplanationModal } from "@/components/ExplanationModal";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
 
 // Half the screen, fixed rather than content-sized, so the sheet does not jump in height
@@ -26,8 +27,6 @@ const SHEET_HEIGHT = "70vh";
 // Above the section, below the form the sheet opens and the confirmations that form raises.
 const SHEET_Z_INDEX = 300;
 
-// Above the sheet that raises it, on the layer the app's confirmations already use.
-const EXPLANATION_Z_INDEX = 400;
 
 interface BikeComponentDetailSheetProps {
   // Null closes the sheet.
@@ -219,6 +218,7 @@ function Wear({ component }: { component: BikeComponent }): ReactElement {
     tiles.push({
       label: t("bikeComponents.detailHealthIndex"),
       value: figure(component.health_index, i18n.language),
+      explanation: t("bikeComponents.detailHealthIndexInfo"),
     });
   }
 
@@ -251,7 +251,10 @@ function Wear({ component }: { component: BikeComponent }): ReactElement {
         ))}
       </SimpleGrid>
 
-      <ExplanationModal tile={explained} onClose={() => setExplained(null)} />
+      <ExplanationModal
+        explained={explained === null ? null : { title: explained.label, body: explained.explanation ?? "" }}
+        onClose={() => setExplained(null)}
+      />
     </>
   );
 }
@@ -264,32 +267,6 @@ interface Tile {
   explanation?: string;
 }
 
-// What a derived reading means, over the sheet that raised it. Reading only: it says what
-// the number is and closes, so it wears the confirmation layer without its buttons.
-function ExplanationModal({ tile, onClose }: { tile: Tile | null; onClose: () => void }): ReactElement {
-  // Android's back gesture dismisses this rather than the sheet under it.
-  useOverlayBack(tile !== null, onClose);
-
-  return (
-    <Modal
-      opened={tile !== null}
-      onClose={onClose}
-      title={tile?.label ?? ""}
-      centered
-      radius="md"
-      zIndex={EXPLANATION_Z_INDEX}
-      styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
-        title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
-      }}
-    >
-      <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-        {tile?.explanation}
-      </Text>
-    </Modal>
-  );
-}
 
 // The dates the part carries, and whatever the owner wrote on it. Facts rather than
 // readings, so they keep the row shape the tiles took over from.

@@ -9,6 +9,10 @@ export type AttentionLevel = "good" | "warning" | "critical" | "overdue";
 // Which measure the Service Interval behind a reading is expressed in.
 export type WearAxis = "km" | "min" | "health_index";
 
+// Which accumulator the reading was actually taken from — not implied by the axis, since a
+// chain and a tyre are both measured in kilometres but only the chain's are the drivetrain's.
+export type WearMeasure = "total_km" | "drivetrain_km" | "total_time_min" | "suspension_min" | "health_index";
+
 // One mounted part paired with one action the bike keeps a Service Interval for, and how
 // far the part has come towards that action being due.
 export interface TrackedAction {
@@ -23,6 +27,7 @@ export interface TrackedAction {
   action_name: string;
   action_i18n_key: string | null;
   axis: WearAxis;
+  measure: WearMeasure;
   // Wear on that axis since the Wear Baseline, and the interval it is measured against —
   // the two numbers behind the percentage, so it can be checked rather than trusted.
   current: number;
