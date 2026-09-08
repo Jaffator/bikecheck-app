@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ServiceTrackingService } from './service-tracking.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationService } from '../notification/notification.service';
 
 const OWNER_ID = 7;
 const BIKE_ID = 21;
@@ -96,16 +97,19 @@ function baseline(
   };
 }
 
-// An Extension in force on one Tracked Action, which lengthens its interval.
+// The state of one Tracked Action: any Extension in force, which lengthens its interval,
+// and the band that has already been announced for it.
 function stateRow(
   actionId: number,
   extension: { km?: number; min?: number; healthIndex?: number },
+  reachedThreshold = 0,
 ): Record<string, unknown> {
   return {
     event_actions_id: actionId,
     extended_by_km: extension.km ?? 0,
     extended_by_min: extension.min ?? 0,
     extended_by_healthIndex: extension.healthIndex ?? 0,
+    reached_threshold: reachedThreshold,
   };
 }
 
@@ -149,7 +153,10 @@ describe('ServiceTrackingService', () => {
     bikes: { findFirst: jest.fn(), findMany: jest.fn() },
     bike_service_interval: { findMany: jest.fn() },
     components_mounted: { findMany: jest.fn() },
+    tracked_action_state: { upsert: jest.fn() },
   };
+
+  const mockNotifications = { create: jest.fn() };
 
   // The plans and the parts, filtered the way the database would filter them - so what a
   // read leaves out is exercised as behaviour rather than asserted on.
@@ -176,13 +183,24 @@ describe('ServiceTrackingService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ServiceTrackingService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        ServiceTrackingService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: NotificationService, useValue: mockNotifications },
+      ],
     }).compile();
 
     service = module.get<ServiceTrackingService>(ServiceTrackingService);
 
     // The owner's own bike, in use, unless a test says otherwise.
-    mockPrismaService.bikes.findFirst.mockResolvedValue({ id: BIKE_ID, is_deleted: false });
+    mockPrismaService.bikes.findFirst.mockResolvedValue({
+      id: BIKE_ID,
+      is_deleted: false,
+      bike_brand: 'Santa Cruz',
+      bike_model: 'Hightower',
+      year: 2022,
+    });
+    mockPrismaService.tracked_action_state.upsert.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -754,6 +772,293 @@ describe('ServiceTrackingService', () => {
       fleet([], [], []);
 
       await expect(service.getGarageTrackedActions(OWNER_ID, 80)).resolves.toEqual([]);
+    });
+  });
+
+  // The announcements. Everything below turns on one rule: the stored band is moved to
+  // whichever band the reading now falls in, and only a move up to 95 or 100 says anything.
+  describe('evaluateBike', () => {
+    // What the evaluation wrote, by pairing - which is what "always set to the band the
+    // current percentage falls in" means in the table.
+    interface UpsertCall {
+      where: { component_mounted_id_event_actions_id: { component_mounted_id: number; event_actions_id: number } };
+      update: { reached_threshold: number };
+    }
+
+    function bandsWritten(): Record<string, number> {
+      const written: Record<string, number> = {};
+      for (const [call] of mockPrismaService.tracked_action_state.upsert.mock.calls as [UpsertCall][]) {
+        const pair = call.where.component_mounted_id_event_actions_id;
+        written[`${pair.component_mounted_id}:${pair.event_actions_id}`] = call.update.reached_threshold;
+      }
+      return written;
+    }
+
+    // The counts one notification carried, or null when none was sent.
+    function announced(): Record<string, number> | null {
+      const calls = mockNotifications.create.mock.calls as [{ payload: Record<string, number> }][];
+      if (calls.length === 0) return null;
+      const { bikeId, dueCount, overdueCount } = calls[0][0].payload;
+      return { bikeId, dueCount, overdueCount };
+    }
+
+    // Order the part before it is needed: this is the first band worth interrupting for.
+    it('announces a Tracked Action reaching 95%', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 3800 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 1, overdueCount: 0 });
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: OWNER_ID, type: 'maintenance_due' }),
+      );
+    });
+
+    // Riding on borrowed time now, which is its own piece of news.
+    it('announces a Tracked Action reaching 100%', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 4000 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 0, overdueCount: 1 });
+    });
+
+    // 80 pulls the row onto the dashboard, which is a place the owner goes. It does not
+    // come to them.
+    it('says nothing about a Tracked Action reaching only 80%', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 3200 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(bandsWritten()).toEqual({ '55:101': 80 });
+    });
+
+    // Every threshold is announced once. A second ride in the same band is not news.
+    it('says nothing on a second evaluation in the same band', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 3900, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 95)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(bandsWritten()).toEqual({ '55:101': 95 });
+    });
+
+    // The band is written whether it moved or not, so the stored band is always the one
+    // the current reading falls in.
+    it('writes the current band on every evaluation', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 5300, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 95)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(bandsWritten()).toEqual({ '55:101': 100 });
+    });
+
+    // A pairing sitting quietly in the good band has nothing to record that the absent
+    // row does not already say.
+    it('writes no row for a quiet Tracked Action that has none', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 100 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // Finished work stops nagging, and is armed again for the next time round.
+    it('re-arms silently after a Service resets the reading', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 4100,
+            action_done_component_map: [baseline(CHAIN_REPLACEMENT, { drivetrainKm: 4000 })],
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 100)],
+          }),
+        ],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(bandsWritten()).toEqual({ '55:101': 0 });
+    });
+
+    // A new chain starts from zero and gets the same warnings the old one did.
+    it('re-arms silently after a Replacement puts a fresh part on', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ id: 56, drivetrain_km: 0, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 100)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(bandsWritten()).toEqual({ '56:101': 0 });
+    });
+
+    // Putting a job off lengthens its interval, which drops the percentage - and the
+    // longer interval is what the next crossing is measured against.
+    it('re-arms silently after an Extension is granted', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 4000, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 400 }, 100)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(bandsWritten()).toEqual({ '55:101': 80 });
+    });
+
+    // Adjusting a plan is not the same as turning a job off.
+    it('re-arms silently after the Service Interval is lengthened', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 8000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 4000, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 100)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(bandsWritten()).toEqual({ '55:101': 0 });
+    });
+
+    // A re-armed Tracked Action warns again once it passes the threshold a second time.
+    it('announces again once a re-armed Tracked Action crosses back up', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 8000,
+            action_done_component_map: [baseline(CHAIN_REPLACEMENT, { drivetrainKm: 4000 })],
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 0)],
+          }),
+        ],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 0, overdueCount: 1 });
+    });
+
+    // Syncing a month of rides must not fire a dozen pushes: one line says the size of
+    // the job instead.
+    it('sends one notification per bike, naming the counts', async () => {
+      garage(
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+          intervalRow(FORK_SERVICE, { min: 6000 }, [FORK_TYPE]),
+          intervalRow(PADS_REPLACEMENT, { healthIndex: 100 }, [PAD_TYPE]),
+        ],
+        [
+          mountedPart({ drivetrain_km: 3900 }),
+          mountedPart({
+            id: 56,
+            component_type_id: FORK_TYPE,
+            component_types: typeRow(FORK_TYPE),
+            suspension_min: 5800,
+          }),
+          mountedPart({ id: 57, component_type_id: PAD_TYPE, component_types: typeRow(PAD_TYPE), health_index: 140 }),
+        ],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).toHaveBeenCalledTimes(1);
+      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 2, overdueCount: 1 });
+    });
+
+    // A crossing makes the app speak; what it says is the size of the job, which includes
+    // the work already announced and still waiting.
+    it('counts what is waiting, not only what just crossed', async () => {
+      garage(
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+          intervalRow(FORK_SERVICE, { min: 6000 }, [FORK_TYPE]),
+        ],
+        [
+          // Announced as overdue last week, and still overdue.
+          mountedPart({ drivetrain_km: 9000, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 100)] }),
+          // The fork is what crossed just now.
+          mountedPart({
+            id: 56,
+            component_type_id: FORK_TYPE,
+            component_types: typeRow(FORK_TYPE),
+            suspension_min: 5800,
+          }),
+        ],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 1, overdueCount: 1 });
+    });
+
+    // A backfill lands in the band it ends in. The owner is told where the bike stands
+    // now, not about every threshold it blew past on the way there.
+    it('settles a backfill into the band it ends in', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 9000 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).toHaveBeenCalledTimes(1);
+      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 0, overdueCount: 1 });
+      expect(bandsWritten()).toEqual({ '55:101': 100 });
+    });
+
+    // A ride Strava sent again, or corrected, moves nothing across a band.
+    it('announces nothing when a re-synced ride crosses no band', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 4100, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 100)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    // A bike put away stays put away, however overdue it was when it was put away.
+    it('never announces on an Archived Bike', async () => {
+      mockPrismaService.bikes.findFirst.mockResolvedValue(null);
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 9000 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // A part that came off, or one that should never have existed, owes the bike nothing.
+    it('never announces on a removed or deleted part', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({ drivetrain_km: 9000, is_active: false }),
+          mountedPart({ id: 56, drivetrain_km: 9000, is_deleted: true }),
+        ],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // A backfill can spread across the garage. Each bike is still evaluated once, so each
+    // sends at most one notification.
+    it('evaluates every bike a backfill touched, once each', async () => {
+      garage([], []);
+
+      await service.evaluateBikes([BIKE_ID, OTHER_BIKE_ID, BIKE_ID], OWNER_ID);
+
+      expect(mockPrismaService.bikes.findFirst).toHaveBeenCalledTimes(2);
     });
   });
 });

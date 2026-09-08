@@ -5,6 +5,7 @@ import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorat
 import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
@@ -71,6 +72,7 @@ export class StravaEventsService {
     @InjectQueue('gemini-queue') private readonly geminiQueue: Queue,
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    private readonly serviceTracking: ServiceTrackingService,
   ) {}
 
   /**
@@ -410,6 +412,10 @@ export class StravaEventsService {
       return { message: 'Not linked bike, activity saved to pending' };
     } else if (bikeId && user) {
       const result = await this.saveRide(bikeId, user.id, data.activity_id, data.analyzedData);
+      // The ride has just moved every accumulator on the bike, so the readings that grew
+      // with it are announced now. A re-sync runs this too: it moves nothing across a
+      // band, so it announces nothing.
+      await this.serviceTracking.evaluateBike(bikeId, user.id);
       // Only a ride the user has not been told about yet. An update webhook or a
       // re-sync runs the same upsert, and announcing those would report news
       // that already happened.
@@ -520,6 +526,10 @@ export class StravaEventsService {
         await this.notificationService.resolveActivityAsk(params.userId, String(activity.activity_id));
       }
     }
+
+    // Once, after the whole backfill rather than after each ride in it: the owner is told
+    // where the bike stands now, not about every threshold it passed on the way.
+    await this.serviceTracking.evaluateBike(params.bikeId, params.userId);
   }
   /**
    * Called when user links a Strava gear to a BikeCheck bike in settings.
@@ -539,6 +549,7 @@ export class StravaEventsService {
     });
 
     // Try to solve all pending activities with matching gearID
+    const touched: number[] = [];
     for (const bike of bikes) {
       if (!bike.strava_gear_id) continue;
 
@@ -553,9 +564,14 @@ export class StravaEventsService {
           // Linking the gear answers the ask for every ride that was waiting on
           // it, one notification per ride.
           await this.notificationService.resolveActivityAsk(userId, String(activity.activity_id));
+          touched.push(bike.id);
         }
       }
     }
+
+    // Linking gear can backfill a season onto several bikes at once. Each is evaluated
+    // once, at the end, so each says where it stands rather than how it got there.
+    await this.serviceTracking.evaluateBikes(touched, userId);
   }
 
   /**

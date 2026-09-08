@@ -2,7 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, ownedBikesWhere } from '../bike/owned-bike.where';
-import { attentionLevel, type WearAxis } from './attention-level';
+import { NotificationService } from '../notification/notification.service';
+import { announces, attentionLevel, ATTENTION_THRESHOLDS, reachedBand, type WearAxis } from './attention-level';
 import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 
@@ -74,7 +75,10 @@ interface Reading {
 // (ADR 0027), and it reads as a percentage of the way to being due.
 @Injectable()
 export class ServiceTrackingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   // Every Tracked Action on one bike, worst first - the quiet ones included, so work that
   // is not urgent yet can still be planned.
@@ -90,16 +94,7 @@ export class ServiceTrackingService {
     }
     if (bike.is_deleted === true) return [];
 
-    const [intervals, parts] = await Promise.all([
-      this.prisma.bike_service_interval.findMany({
-        where: { bike_id: bikeId },
-        include: trackedIntervalInclude,
-      }),
-      this.prisma.components_mounted.findMany({
-        where: { bike_id: bikeId, ...MOUNTED },
-        include: trackedPartInclude,
-      }),
-    ]);
+    const [intervals, parts] = await this.loadTracking(bikeId);
 
     return worstFirst(trackedActions(parts, intervals));
   }
@@ -115,11 +110,7 @@ export class ServiceTrackingService {
     });
     if (bikes.length === 0) return [];
 
-    const bike_id = { in: bikes.map((bike) => bike.id) };
-    const [intervals, parts] = await Promise.all([
-      this.prisma.bike_service_interval.findMany({ where: { bike_id }, include: trackedIntervalInclude }),
-      this.prisma.components_mounted.findMany({ where: { bike_id, ...MOUNTED }, include: trackedPartInclude }),
-    ]);
+    const [intervals, parts] = await this.loadTracking({ in: bikes.map((bike) => bike.id) });
 
     // The pieces of each bike's name, without its id: how a bike is written out is the
     // frontend's one rule, and it already has it.
@@ -134,6 +125,137 @@ export class ServiceTrackingService {
 
     return worstFirst(needingAttention);
   }
+
+  // Announcements, run at the end of every write that moves an input Service Tracking
+  // reads - a ride, a Service, a Replacement, a corrected accumulator, an Extension. Every
+  // one of those axes moves only through a write the app itself makes, so there is no
+  // scheduler and nothing to poll.
+  //
+  // One rule covers all of them: `reached_threshold` is moved to whichever band the
+  // reading now falls in, up or down. A move up to 95 or 100 announces; a move up to 80
+  // does not, because 80 only pulls the row onto the dashboard. A move down - which is
+  // what a Service, a Replacement, an Extension or a lengthened interval produces - is
+  // silent, and by lowering the band it re-arms the next crossing.
+  async evaluateBike(bikeId: number, userId: number): Promise<void> {
+    // An Archived Bike stays put away: it produces no readings, so it announces nothing.
+    const bike = await this.prisma.bikes.findFirst({
+      where: ownedBikeWhere(bikeId, userId),
+      select: { id: true, bike_brand: true, bike_model: true, year: true },
+    });
+    if (!bike) return;
+
+    const [intervals, parts] = await this.loadTracking(bikeId);
+
+    const stored = announcedBands(parts);
+    const evaluated = trackedActions(parts, intervals).map((action) => moved(action, stored));
+    const crossings = evaluated.filter((reading) => reading.crossed);
+    const announcedAt = new Date();
+
+    await Promise.all(
+      // A reading in the quiet band with no row of its own has nothing to record that the
+      // absent row does not already say.
+      evaluated
+        .filter((reading) => reading.band !== 0 || reading.stored !== undefined)
+        .map((reading) => this.writeBand(reading, reading.crossed ? announcedAt : null)),
+    );
+
+    // At most one notification per bike per evaluation, however many Tracked Actions
+    // crossed in it: syncing a month of rides must not fire a dozen pushes.
+    if (crossings.length === 0) return;
+
+    // A crossing is what makes the app speak; what it then says is where the bike stands.
+    // An action announced last week is still an action waiting, so it is counted too -
+    // one line has to size the job, not only report the last thing to move.
+    const overdue = countIn(evaluated, ATTENTION_THRESHOLDS.overdue);
+    const due = countIn(evaluated, ATTENTION_THRESHOLDS.critical);
+
+    await this.notificationService.create({
+      userId,
+      type: 'maintenance_due',
+      payload: {
+        bikeId,
+        bikeName: [bike.bike_brand, bike.bike_model, bike.year].filter(Boolean).join(' '),
+        dueCount: due,
+        overdueCount: overdue,
+      },
+    });
+  }
+
+  // The same, for a write that touched several bikes - a backfill of pending rides spread
+  // across the garage. Each bike is still evaluated once, so each sends at most one.
+  async evaluateBikes(bikeIds: number[], userId: number): Promise<void> {
+    for (const bikeId of new Set(bikeIds)) {
+      await this.evaluateBike(bikeId, userId);
+    }
+  }
+
+  // The band this Tracked Action now stands in, written whether it moved or not, so the
+  // stored band is always the one the current reading falls in. The timestamp is only
+  // touched when something was actually announced.
+  private async writeBand(reading: Moved, announcedAt: Date | null): Promise<void> {
+    const pair = {
+      component_mounted_id: reading.action.component_mounted_id,
+      event_actions_id: reading.action.event_action_id,
+    };
+
+    await this.prisma.tracked_action_state.upsert({
+      where: { component_mounted_id_event_actions_id: pair },
+      create: { ...pair, reached_threshold: reading.band, announced_at: announcedAt },
+      update: { reached_threshold: reading.band, ...(announcedAt === null ? {} : { announced_at: announcedAt }) },
+    });
+  }
+
+  // The plans and the parts, which are the two halves of every Tracked Action. Loaded
+  // together by every read, for one bike or for a whole garage.
+  private async loadTracking(bikeId: number | { in: number[] }): Promise<[TrackedInterval[], TrackedPart[]]> {
+    return await Promise.all([
+      this.prisma.bike_service_interval.findMany({ where: { bike_id: bikeId }, include: trackedIntervalInclude }),
+      this.prisma.components_mounted.findMany({ where: { bike_id: bikeId, ...MOUNTED }, include: trackedPartInclude }),
+    ]);
+  }
+}
+
+// Where one Tracked Action now stands against what was last announced for it.
+interface Moved {
+  action: Response_TrackedActionDto;
+  band: number;
+  // Absent when the pairing has no row yet, which is not the same as a row reading 0.
+  stored: number | undefined;
+  crossed: boolean;
+}
+
+// How many Tracked Actions stand in one band right now.
+function countIn(readings: Moved[], band: number): number {
+  return readings.filter((reading) => reading.band === band).length;
+}
+
+// A move up into a band worth interrupting for is the only thing that announces. A
+// backfill of a whole season lands in the band it ends in, so the thresholds it blew past
+// on the way are not announced one by one.
+function moved(action: Response_TrackedActionDto, storedBands: Map<string, number>): Moved {
+  const band = reachedBand(action.percentage);
+  const stored = storedBands.get(pairKey(action.component_mounted_id, action.event_action_id));
+
+  return { action, band, stored, crossed: announces(band) && band > (stored ?? 0) };
+}
+
+// What has already been announced for each pairing. A pairing with no row has been
+// announced nothing, which is the same as band 0 - but the two are told apart, because a
+// row that does not exist yet and does not need to exist is not written.
+function announcedBands(parts: TrackedPart[]): Map<string, number> {
+  return new Map(
+    parts.flatMap((part) =>
+      part.tracked_action_state.map((state): [string, number] => [
+        pairKey(part.id, state.event_actions_id),
+        state.reached_threshold,
+      ]),
+    ),
+  );
+}
+
+// One Tracked Action is a part and an action (ADR 0027), which is what identifies its row.
+function pairKey(componentMountedId: number, eventActionId: number): string {
+  return `${componentMountedId}:${eventActionId}`;
 }
 
 // Every pairing of these parts with these plans, each read as it stands. A plan belongs to

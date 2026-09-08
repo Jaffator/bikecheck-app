@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import {
   Actions_BikeEventDto,
   Attachment_BikeEventDto,
@@ -116,6 +117,7 @@ export class BikeEventService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly serviceTracking: ServiceTrackingService,
   ) {}
 
   // A receipt or invoice, stored before the Service exists so the wizard's Save is not a
@@ -359,6 +361,9 @@ export class BikeEventService {
 
         return bikeEvent.id;
       });
+      // The work is on record, so the readings it reset - and the parts a Replacement put
+      // on at zero - are re-armed for the next time round.
+      await this.serviceTracking.evaluateBike(dto.bike_id, userId);
       return await this.findById(bikeEventID, userId);
     } catch (error) {
       console.error('Failed to create bike event for user ID:', userId, 'Error:', error);
@@ -373,7 +378,7 @@ export class BikeEventService {
   async update(bikeEventId: number, dto: Update_BikeEventDto, userId: number): Promise<Response_BikeEvent_Dto> {
     await this.assertServiceOwned(bikeEventId, userId);
 
-    await this.prisma.$transaction(async (tx) => {
+    const bikeId = await this.prisma.$transaction(async (tx) => {
       const saved = await this.loadSavedService(tx, bikeEventId);
 
       const removed = dto.actions_removed ?? [];
@@ -419,8 +424,13 @@ export class BikeEventService {
           updated_at: new Date(),
         },
       });
+
+      return saved.bike_id;
     });
 
+    // An edit can move a baseline in either direction: a corrected date, a removed action
+    // or an added one all change what the readings measure from.
+    await this.serviceTracking.evaluateBike(bikeId, userId);
     return await this.findById(bikeEventId, userId);
   }
 
@@ -586,20 +596,31 @@ export class BikeEventService {
   // The service leaves the history but stays on record. Returns what was removed, so the
   // caller gets a body to parse rather than an empty response.
   async softDelete(bikeEventId: number, userId: number): Promise<Response_BikeEvent_Dto> {
-    await this.assertServiceOwned(bikeEventId, userId);
+    const service = await this.assertServiceOwned(bikeEventId, userId);
 
     await this.prisma.events_bikes.update({
       where: { id: bikeEventId },
       data: { is_deleted: true, deleted_at: new Date() },
     });
 
+    // A deleted service holds no Wear Baseline, so every reading it was holding down
+    // climbs again - and has to be able to announce that.
+    await this.evaluateService(service, userId);
     return await this.findById(bikeEventId, userId);
   }
 
   async hardDelete(bikeEventId: number, userId: number): Promise<void> {
-    await this.assertServiceOwned(bikeEventId, userId);
+    const service = await this.assertServiceOwned(bikeEventId, userId);
 
     await this.prisma.events_bikes.delete({ where: { id: bikeEventId } });
+    await this.evaluateService(service, userId);
+  }
+
+  // A service with no bike on it is a row the schema still allows and nothing can be
+  // measured against, so it is left alone rather than guessed at.
+  private async evaluateService(service: { bike_id: number | null }, userId: number): Promise<void> {
+    if (service.bike_id === null) return;
+    await this.serviceTracking.evaluateBike(service.bike_id, userId);
   }
 
   // Everything the service date decides. Computed once and handed to every writer, so one
@@ -1000,18 +1021,25 @@ export class BikeEventService {
   // A service reached by its own id still belongs to a bike, and that bike still has to be
   // the caller's. Writes also require the bike to be in use: an Archived Bike's history is
   // frozen, so a service on one is read but never edited or deleted (ADR 0024).
-  private async assertServiceOwned(bikeEventId: number, userId: number, options?: OwnedBikeOptions): Promise<void> {
+  // Returns the bike the service sits on, which is what a caller has to evaluate once it
+  // has finished writing - a deleted service leaves no other way to reach it.
+  private async assertServiceOwned(
+    bikeEventId: number,
+    userId: number,
+    options?: OwnedBikeOptions,
+  ): Promise<{ bike_id: number | null }> {
     const { includeArchived = false } = options ?? {};
     const service = await this.prisma.events_bikes.findFirst({
       where: {
         id: bikeEventId,
         bikes: { user_id: userId, ...(includeArchived ? {} : { is_deleted: { not: true } }) },
       },
-      select: { id: true },
+      select: { id: true, bike_id: true },
     });
     if (!service) {
       throw new ForbiddenException(`Service with ID ${bikeEventId} does not belong to this user`);
     }
+    return service;
   }
 
   // Sums the rides taken after the window opened. A bike with no rides yields zeroes,

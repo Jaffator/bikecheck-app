@@ -25,3 +25,17 @@ export function attentionLevel(percentage: number): AttentionLevel {
   if (percentage >= ATTENTION_THRESHOLDS.warning) return 'warning';
   return 'good';
 }
+
+// The band a reading has reached, as `reached_threshold` stores it: 0, 80, 95 or 100.
+// The same numbers the colours are drawn from, so a Tracked Action can never change
+// colour for one reason and announce for another.
+export function reachedBand(percentage: number): number {
+  const level = attentionLevel(percentage);
+  return level === 'good' ? 0 : ATTENTION_THRESHOLDS[level];
+}
+
+// Which bands are worth interrupting for. 80 only pulls the row onto the dashboard, which
+// is a place the owner goes; 95 and 100 come to them.
+export function announces(band: number): boolean {
+  return band >= ATTENTION_THRESHOLDS.critical;
+}
