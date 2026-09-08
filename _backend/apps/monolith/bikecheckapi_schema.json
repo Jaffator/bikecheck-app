@@ -3904,6 +3904,18 @@
             ],
             "example": "km"
           },
+          "measure": {
+            "type": "string",
+            "enum": [
+              "total_km",
+              "drivetrain_km",
+              "total_time_min",
+              "suspension_min",
+              "health_index"
+            ],
+            "example": "drivetrain_km",
+            "description": "Which accumulator the reading was taken from, which is not implied by the axis"
+          },
           "current": {
             "type": "number",
             "example": 3200,
@@ -3947,6 +3959,7 @@
           "action_name",
           "action_i18n_key",
           "axis",
+          "measure",
           "current",
           "interval",
           "percentage",
@@ -4011,6 +4024,18 @@
             ],
             "example": "km"
           },
+          "measure": {
+            "type": "string",
+            "enum": [
+              "total_km",
+              "drivetrain_km",
+              "total_time_min",
+              "suspension_min",
+              "health_index"
+            ],
+            "example": "drivetrain_km",
+            "description": "Which accumulator the reading was taken from, which is not implied by the axis"
+          },
           "current": {
             "type": "number",
             "example": 3200,
@@ -4068,6 +4093,7 @@
           "action_name",
           "action_i18n_key",
           "axis",
+          "measure",
           "current",
           "interval",
           "percentage",

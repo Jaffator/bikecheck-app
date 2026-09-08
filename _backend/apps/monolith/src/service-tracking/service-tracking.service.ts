@@ -3,7 +3,14 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, ownedBikesWhere } from '../bike/owned-bike.where';
 import { NotificationService } from '../notification/notification.service';
-import { announces, attentionLevel, ATTENTION_THRESHOLDS, reachedBand, type WearAxis } from './attention-level';
+import {
+  announces,
+  attentionLevel,
+  ATTENTION_THRESHOLDS,
+  reachedBand,
+  type WearAxis,
+  type WearMeasure,
+} from './attention-level';
 import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 
@@ -54,9 +61,11 @@ type Baseline = TrackedPart['action_done_component_map'][number];
 const DRIVETRAIN_TYPES = new Set(['Chain', 'Cassette', 'Chainring']);
 const SUSPENSION_TYPES = new Set(['Fork', 'Shock']);
 
-// What one axis is measured from on one part: the accumulator that grows, and the value
-// frozen against that same column when the job was last recorded.
+// What one axis is measured from on one part: which accumulator it is, the value that
+// accumulator has reached, and the value frozen against that same column when the job was
+// last recorded.
 interface Wear {
+  measure: WearMeasure;
   accumulator: number | null;
   baseline: number | null | undefined;
 }
@@ -64,6 +73,7 @@ interface Wear {
 // One axis of one Tracked Action, before the axes are compared.
 interface Reading {
   axis: WearAxis;
+  measure: WearMeasure;
   current: number;
   interval: number;
   percentage: number;
@@ -378,6 +388,7 @@ function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response
     action_name: interval.events_action.action_name,
     action_i18n_key: interval.events_action.i18n_key,
     axis: reading.axis,
+    measure: reading.measure,
     current: reading.current,
     interval: reading.interval,
     percentage: reading.percentage,
@@ -418,12 +429,12 @@ function wearColumns(part: TrackedPart, frozen: Baseline | null): Record<WearAxi
 
   return {
     km: DRIVETRAIN_TYPES.has(type)
-      ? { accumulator: part.drivetrain_km, baseline: frozen?.drivetrain_km_at_time }
-      : { accumulator: part.total_km, baseline: frozen?.km_at_time },
+      ? { measure: 'drivetrain_km', accumulator: part.drivetrain_km, baseline: frozen?.drivetrain_km_at_time }
+      : { measure: 'total_km', accumulator: part.total_km, baseline: frozen?.km_at_time },
     min: SUSPENSION_TYPES.has(type)
-      ? { accumulator: part.suspension_min, baseline: frozen?.suspension_min_at_time }
-      : { accumulator: part.total_time_min, baseline: frozen?.time_min_at_time },
-    health_index: { accumulator: part.health_index, baseline: 0 },
+      ? { measure: 'suspension_min', accumulator: part.suspension_min, baseline: frozen?.suspension_min_at_time }
+      : { measure: 'total_time_min', accumulator: part.total_time_min, baseline: frozen?.time_min_at_time },
+    health_index: { measure: 'health_index', accumulator: part.health_index, baseline: 0 },
   };
 }
 
@@ -467,6 +478,7 @@ function readingOn(axis: WearAxis, intervalValue: number | null, extension: numb
 
   return {
     axis,
+    measure: wear.measure,
     current,
     interval,
     percentage: Math.floor((current / interval) * 100),

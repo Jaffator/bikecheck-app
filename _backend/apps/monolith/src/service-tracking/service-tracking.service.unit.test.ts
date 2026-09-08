@@ -625,6 +625,35 @@ describe('ServiceTrackingService', () => {
       expect(action.level).toBe('good');
     });
 
+    // Which accumulator a reading came from is not implied by the axis it is on: a chain
+    // and a tyre are both read in kilometres, but only the chain's are the drivetrain's.
+    it('names the accumulator each reading was taken from', async () => {
+      garage(
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+          intervalRow(TYRE_REPLACEMENT, { km: 3000 }, [TYRE_TYPE]),
+          intervalRow(FORK_SERVICE, { min: 6000 }, [FORK_TYPE]),
+          intervalRow(PADS_REPLACEMENT, { healthIndex: 50000 }, [PAD_TYPE]),
+        ],
+        [
+          mountedPart({ id: 55 }),
+          mountedPart({ id: 56, component_type_id: TYRE_TYPE, component_types: typeRow(TYRE_TYPE) }),
+          mountedPart({ id: 57, component_type_id: FORK_TYPE, component_types: typeRow(FORK_TYPE) }),
+          mountedPart({ id: 58, component_type_id: PAD_TYPE, component_types: typeRow(PAD_TYPE) }),
+        ],
+      );
+
+      const actions = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+      const measures = Object.fromEntries(actions.map((action) => [action.component_mounted_id, action.measure]));
+
+      expect(measures).toEqual({
+        55: 'drivetrain_km',
+        56: 'total_km',
+        57: 'suspension_min',
+        58: 'health_index',
+      });
+    });
+
     // A new chain is never born already deferred: the Extension was granted on the part
     // that came off, and stays with it.
     it('reads no Extension on the part that replaced an extended one', async () => {

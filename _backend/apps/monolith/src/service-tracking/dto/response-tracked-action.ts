@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { AttentionLevel, WearAxis } from '../attention-level';
+import type { AttentionLevel, WearAxis, WearMeasure } from '../attention-level';
 
 // One Tracked Action as it reads right now: a mounted part, one action the bike keeps a
 // Service Interval for, and how far the part has come towards that action being due.
@@ -38,6 +38,13 @@ export class Response_TrackedActionDto {
 
   @ApiProperty({ enum: ['km', 'min', 'health_index'], example: 'km' })
   axis!: WearAxis;
+
+  @ApiProperty({
+    enum: ['total_km', 'drivetrain_km', 'total_time_min', 'suspension_min', 'health_index'],
+    example: 'drivetrain_km',
+    description: 'Which accumulator the reading was taken from, which is not implied by the axis',
+  })
+  measure!: WearMeasure;
 
   @ApiProperty({ example: 3200, description: 'Wear on that axis since the Wear Baseline' })
   current!: number;

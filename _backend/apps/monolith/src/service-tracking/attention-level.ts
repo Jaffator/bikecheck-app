@@ -6,6 +6,12 @@
 // whichever applies; the part's matching accumulator is read against it.
 export type WearAxis = 'km' | 'min' | 'health_index';
 
+// Which accumulator a reading was actually taken from. Not the same question as the axis:
+// a chain and a tyre are both measured in kilometres, but only the chain's are the ones the
+// drivetrain worked for. The three derived ones are what the ride analysis made of the
+// terrain, and the only ones an owner cannot be expected to guess at.
+export type WearMeasure = 'total_km' | 'drivetrain_km' | 'total_time_min' | 'suspension_min' | 'health_index';
+
 // How much attention one Tracked Action is asking for.
 export type AttentionLevel = 'good' | 'warning' | 'critical' | 'overdue';
 
