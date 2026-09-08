@@ -39,25 +39,29 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
   const reading = (
     <Stack gap={6}>
       <Group gap="sm" wrap="nowrap" align="baseline">
-        <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
-          {job}
-        </Text>
-        {explanation !== null && (
-          <ActionIcon
-            variant="transparent"
-            color="gray"
-            size="xs"
-            aria-label={explanation.aria}
-            onClick={(event) => {
-              // The row around it leads to the bike; asking what a reading is does not.
-              event.stopPropagation();
-              setExplained(true);
-            }}
-            style={{ flexShrink: 0, alignSelf: "center" }}
-          >
-            <Info size={13} color="var(--color-text-dim)" />
-          </ActionIcon>
-        )}
+        {/* The button belongs to the name, so it keeps the name's company rather than the
+            line's own spacing. */}
+        <Group gap={2} wrap="nowrap" align="center" style={{ minWidth: 0 }}>
+          <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
+            {job}
+          </Text>
+          {explanation !== null && (
+            <ActionIcon
+              variant="transparent"
+              color="gray"
+              size="xs"
+              aria-label={explanation.aria}
+              onClick={(event) => {
+                // The row around it leads to the bike; asking what a reading is does not.
+                event.stopPropagation();
+                setExplained(true);
+              }}
+              style={{ flexShrink: 0 }}
+            >
+              <Info size={13} color="var(--color-text-dim)" />
+            </ActionIcon>
+          )}
+        </Group>
         <Text className="font-mono" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
