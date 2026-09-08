@@ -3,6 +3,7 @@
 // the cancel/confirm pair are decided once here so a fourth caller cannot drift.
 import type { ReactElement, ReactNode } from "react";
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above every sheet it can be opened from, so the dialog is never left behind an overlay.
@@ -66,12 +67,13 @@ export function ConfirmModal({
         {children}
 
         <Group gap="sm" grow>
-          <Button variant="default" radius="md" onClick={onCancel} disabled={pending}>
+          <Button variant="default" radius="md" styles={{ root: inputStyles.input }} onClick={onCancel} disabled={pending}>
             {cancelLabel}
           </Button>
           <Button
             color="red.5"
             radius="md"
+            styles={{ root: { ...disabledButtonStyles.root, "--button-color": "black" } as React.CSSProperties }}
             loading={pending}
             disabled={confirmDisabled}
             onClick={() => {

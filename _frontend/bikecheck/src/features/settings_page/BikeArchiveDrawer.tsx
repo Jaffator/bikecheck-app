@@ -7,6 +7,7 @@ import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useArchivedBikes, useDeleteBikePermanently, useUnarchiveBike } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
@@ -18,6 +19,12 @@ const DRAWER_Z_INDEX = 320;
 
 // How large the photo runs beside a name. A thumbnail, not a hero.
 const THUMBNAIL = 56;
+
+// The wizard's field, with the label dimmed to sit quietly above the typed-back name.
+const confirmInputStyles = {
+  ...inputStyles,
+  label: { ...fieldLabel, color: "var(--mantine-color-cards-4)" },
+};
 
 interface BikeArchiveDrawerProps {
   opened: boolean;
@@ -123,10 +130,17 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
                   </UnstyledButton>
 
                   <Group gap="sm" grow>
-                    <Button variant="default" radius="md" size="xs" onClick={() => setRestoring(bike)}>
+                    <Button variant="outline" color="primary.6" radius="md" size="xs" onClick={() => setRestoring(bike)}>
                       {t("archive.unarchive")}
                     </Button>
-                    <Button variant="light" color="red.5" radius="md" size="xs" onClick={() => askToDestroy(bike)}>
+                    <Button
+                      variant="filled"
+                      color="red.5"
+                      radius="md"
+                      size="xs"
+                      styles={{ root: { "--button-color": "black" } as React.CSSProperties }}
+                      onClick={() => askToDestroy(bike)}
+                    >
                       {t("archive.deleteForever")}
                     </Button>
                   </Group>
@@ -179,6 +193,7 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
           onChange={(event) => setTypedName(event.currentTarget.value)}
           placeholder={destroying === null ? "" : bikeTitle(destroying)}
           label={t("archive.deleteConfirmTypeName")}
+          styles={confirmInputStyles}
           autoCapitalize="none"
           autoCorrect="off"
         />

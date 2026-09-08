@@ -80,7 +80,9 @@ export function BikeDetail(): ReactElement {
   // What archiving costs, read before it is agreed to rather than discovered afterwards.
   // All three come from what the bike's own screens already serve.
   const { data: totals } = useHistoryTotals(bike?.id, ALL_TIME);
-  const { data: rideCount } = useBikeRideCount(confirmingArchive && bike ? bike.id : null);
+  // Read with the page, not when the dialog opens: a body that first says "0 rides" and
+  // corrects itself is a sentence the owner can agree to while it is still wrong.
+  const { data: rideCount } = useBikeRideCount(bike?.id ?? null);
   const { data: pendingRides } = usePendingRides();
   const pendingForBike =
     bike?.strava_gear_id == null ? 0 : (pendingRides ?? []).filter((ride) => ride.gear_id === bike.strava_gear_id).length;

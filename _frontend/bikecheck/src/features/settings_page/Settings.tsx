@@ -1,5 +1,6 @@
 // Settings page.
 import { useState, type ReactElement } from "react";
+import { useLocation } from "react-router-dom";
 import { Card, Group, SegmentedControl, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -14,7 +15,9 @@ export function Settings(): ReactElement {
   const { data: user } = useCurrentUser();
   const updateUser = useUpdateUser();
   const [customParts, setCustomParts] = useState(false);
-  const [archive, setArchive] = useState(false);
+  // The empty garage links straight into the archive, so it arrives already open.
+  const location = useLocation();
+  const [archive, setArchive] = useState((location.state as { openArchive?: boolean } | null)?.openArchive === true);
 
   // Update the UI before persisting the language.
   function changeLanguage(language: string): void {

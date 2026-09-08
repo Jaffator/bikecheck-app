@@ -553,7 +553,8 @@ export class BikeEventService {
   }
 
   async findById(bikeEventId: number, userId: number): Promise<Response_BikeEvent_Dto> {
-    await this.assertServiceOwned(bikeEventId, userId);
+    // A read: the record an Archived Bike kept is the point of keeping it.
+    await this.assertServiceOwned(bikeEventId, userId, { includeArchived: true });
 
     const bikeEvent = await this.prisma.events_bikes.findUnique({
       where: { id: bikeEventId },
@@ -996,11 +997,16 @@ export class BikeEventService {
     return bike;
   }
 
-  // A service reached by its own id still belongs to a bike, and that bike still has to
-  // be the caller's.
-  private async assertServiceOwned(bikeEventId: number, userId: number): Promise<void> {
+  // A service reached by its own id still belongs to a bike, and that bike still has to be
+  // the caller's. Writes also require the bike to be in use: an Archived Bike's history is
+  // frozen, so a service on one is read but never edited or deleted (ADR 0024).
+  private async assertServiceOwned(bikeEventId: number, userId: number, options?: OwnedBikeOptions): Promise<void> {
+    const { includeArchived = false } = options ?? {};
     const service = await this.prisma.events_bikes.findFirst({
-      where: { id: bikeEventId, bikes: { user_id: userId } },
+      where: {
+        id: bikeEventId,
+        bikes: { user_id: userId, ...(includeArchived ? {} : { is_deleted: { not: true } }) },
+      },
       select: { id: true },
     });
     if (!service) {

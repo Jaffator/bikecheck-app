@@ -24,7 +24,13 @@ export function EmptyGarage(): ReactElement {
       badge={<StatusBadge label={t("bikes.noBikesFound")} />}
     >
       {archivedCount > 0 && (
-        <Button variant="default" radius="md" onClick={() => navigate("/settings")}>
+        <Button
+          variant="default"
+          radius="md"
+          // Settings is the archive's only door, so this opens the drawer rather than
+          // dropping the owner on the page and asking them to find the row.
+          onClick={() => navigate("/settings", { state: { openArchive: true } })}
+        >
           {t("bikes.emptyOpenArchive")}
         </Button>
       )}

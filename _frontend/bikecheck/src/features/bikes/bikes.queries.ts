@@ -1,5 +1,12 @@
 // Encapsulate bike loading, mutations, and cache state.
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import {
   getBikes,
   getBike,
@@ -125,7 +132,7 @@ export function useExternalBikeComponents(bikeUrl: string | null): UseQueryResul
 
 // Everything an archived bike leaves: the garage, the rides list, the service history and
 // its totals, the pairing sheet and the pending rides archiving discarded.
-async function refreshAfterArchiveChange(queryClient: ReturnType<typeof useQueryClient>): Promise<void> {
+async function refreshAfterArchiveChange(queryClient: QueryClient): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: ["bikes"] });
   await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
   await queryClient.invalidateQueries({ queryKey: ["rides"] });

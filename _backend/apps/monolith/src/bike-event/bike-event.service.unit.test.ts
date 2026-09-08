@@ -1082,6 +1082,32 @@ describe('BikeEventService', () => {
       );
     });
 
+    it('refuses a service on it being edited or deleted', async () => {
+      // The service is unreachable to a write, so ownership answers with nothing.
+      mockPrisma.events_bikes.findFirst.mockResolvedValue(null);
+
+      await expect(service.update(99, { note: 'Forgotten' }, OWNER_ID)).rejects.toThrow(ForbiddenException);
+      await expect(service.softDelete(99, OWNER_ID)).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.events_bikes.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 99, bikes: { user_id: OWNER_ID, is_deleted: { not: true } } },
+        }),
+      );
+    });
+
+    // Reading the record is the point of keeping it, so the detail is not refused the way
+    // the edit above is.
+    it('does not refuse the detail of a service it kept', async () => {
+      mockPrisma.events_bikes.findFirst.mockResolvedValue({ id: 99 });
+      mockPrisma.events_bikes.findUnique.mockResolvedValue(null);
+
+      await service.findById(99, OWNER_ID).catch(() => undefined);
+
+      expect(mockPrisma.events_bikes.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 99, bikes: { user_id: OWNER_ID } } }),
+      );
+    });
+
     it('refuses a new service recorded against it', async () => {
       // The archived bike is unreachable to a write, so ownership answers with nothing.
       mockPrisma.bikes.findFirst.mockResolvedValue(null);

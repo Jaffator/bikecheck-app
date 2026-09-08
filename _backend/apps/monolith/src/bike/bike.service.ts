@@ -221,6 +221,9 @@ export class BikeService {
     if (bike.is_deleted !== true) {
       throw new ConflictException(`Bike with ID ${id} must be archived before it can be deleted`);
     }
+    // The foreign keys take the rides, services, parts, intervals and snoozes with it. The
+    // files in R2 are not reached by any cascade: this is the single point where their keys
+    // are handed to the deletion queue once ADR 0025 builds it.
     return toBikeDto(await this.prisma.bikes.delete({ where: { id }, include: bikeInclude }));
   }
 

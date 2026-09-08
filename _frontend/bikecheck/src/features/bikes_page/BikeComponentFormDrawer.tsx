@@ -525,13 +525,12 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
           flexShrink: 0,
         }}
       >
-        <Button variant="outline" color="text.8" radius="md" h="3rem" disabled={pending} onClick={onClose}>
+        <Button variant="outline" color="var(--mantine-color-cards-2)" radius="md" disabled={pending} onClick={onClose}>
           {t("bikeComponents.cancel")}
         </Button>
         <Button
           color="primary.6"
           radius="md"
-          h="3rem"
           disabled={incomplete || pending}
           loading={pending}
           styles={disabledButtonStyles}
