@@ -22,6 +22,7 @@ import {
   getServiceHistory,
   uploadServiceAttachment,
 } from "./service.api";
+import { trackedActionsKey } from "@/features/service_tracking/serviceTracking.queries";
 import type {
   ActionTag,
   HistoryTotals,
@@ -165,7 +166,8 @@ export function useUploadServiceAttachment(): UseMutationResult<UploadedAttachme
   });
 }
 
-// Refresh every history list after a Service is written.
+// Refresh every history list after a Service is written. Recorded work freezes a new Wear
+// Baseline, so the readings it reset are read again with it.
 export function useCreateService(): UseMutationResult<ServiceRecord, Error, CreateServiceInput> {
   const queryClient = useQueryClient();
 
@@ -173,11 +175,13 @@ export function useCreateService(): UseMutationResult<ServiceRecord, Error, Crea
     mutationFn: (input: CreateServiceInput) => createService(input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["services"] });
+      await queryClient.invalidateQueries({ queryKey: trackedActionsKey() });
     },
   });
 }
 
-// Refresh every history list after a Service is removed from it.
+// Refresh every history list after a Service is removed from it. A deleted Service freezes
+// nothing, so the readings it was holding down come back up.
 export function useDeleteService(): UseMutationResult<ServiceRecord, Error, number> {
   const queryClient = useQueryClient();
 
@@ -185,6 +189,7 @@ export function useDeleteService(): UseMutationResult<ServiceRecord, Error, numb
     mutationFn: (id: number) => deleteService(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["services"] });
+      await queryClient.invalidateQueries({ queryKey: trackedActionsKey() });
     },
   });
 }

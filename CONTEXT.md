@@ -166,7 +166,33 @@ measured against.
 
 **Service Interval**:
 How much wear may pass before an action is due again — expressed in kilometres, minutes or health
-index, depending on the action.
+index, depending on the action. Held per bike and per action, and stretched by an Extension when
+the owner puts a Tracked Action off.
+
+**Service Tracking**:
+Reading how far each piece of maintenance has come since it was last done, as a percentage of its
+Service Interval, and telling the owner when that crosses a threshold. What the owner is sold as
+"smart tracking"; in the language it is Service Tracking.
+_Avoid_: Smart tracking (marketing), health (that is the badge's wording, not the mechanism)
+
+**Tracked Action**:
+One mounted component paired with one action the bike keeps a Service Interval for — a chain and
+its replacement, a fork and its service. This is what Service Tracking measures: it carries the
+percentage, the Attention Level, the highest threshold already announced, and any Extension. A
+component with no interval for an action has no Tracked Action, and two parts of the same kind on
+one bike are two Tracked Actions rather than one.
+_Avoid_: Reading, health item, due item
+
+**Attention Level**:
+Which of four bands a Tracked Action's percentage falls in — good, warning, critical, overdue. The
+bands sit on the same numbers Service Tracking announces at, so a colour change and a notification
+always have the same cause. A bike wears the worst level among its Tracked Actions.
+
+**Extension**:
+What putting a Tracked Action off adds to its Service Interval, in whatever the interval is
+measured in. The percentage falls by what was added; nothing about the work already done changes.
+Extensions accumulate, and they die with the part they were granted on.
+_Avoid_: Snooze (that is the button), postpone
 
 ### Sharing
 

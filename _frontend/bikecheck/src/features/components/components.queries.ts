@@ -31,6 +31,7 @@ import type {
   DismountBikeComponentInput,
   UpdateBikeComponentInput,
 } from "./components.types";
+import { trackedActionsKey } from "@/features/service_tracking/serviceTracking.queries";
 
 // Use default cache timing for seeded data.
 export function useComponentGroups(): UseQueryResult<ComponentGroup[]> {
@@ -101,6 +102,8 @@ export function useCreateBikeComponent(): UseMutationResult<BikeComponent, Error
     mutationFn: (input: CreateBikeComponentInput) => createBikeComponent(input),
     onSuccess: async (_component, input) => {
       await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bike_id) });
+      // A part added to the bike is a part being measured from now on.
+      await queryClient.invalidateQueries({ queryKey: trackedActionsKey(input.bike_id) });
     },
   });
 }
@@ -112,6 +115,8 @@ export function useUpdateBikeComponent(): UseMutationResult<BikeComponent, Error
     mutationFn: (input: UpdateBikeComponentInput) => updateBikeComponent(input),
     onSuccess: async (_component, input) => {
       await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bikeId) });
+      // A corrected mileage is a corrected percentage.
+      await queryClient.invalidateQueries({ queryKey: trackedActionsKey(input.bikeId) });
     },
   });
 }
@@ -150,4 +155,6 @@ async function invalidateBuild(
 ): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(bikeId) });
   await queryClient.invalidateQueries({ queryKey: ["bikes", bikeId] });
+  // A part off the bike is a part with nothing left to measure.
+  await queryClient.invalidateQueries({ queryKey: trackedActionsKey(bikeId) });
 }

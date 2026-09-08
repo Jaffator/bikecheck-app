@@ -6,8 +6,8 @@ import { useTranslation } from "react-i18next";
 import { HEALTH_COLORS, overallLevel, type HealthReading } from "./bikeHealth.types";
 
 interface HealthBadgeProps {
-  // Empty until the API serves per-bike wear, which reads as "good" - see the ticket that
-  // fills these; the badge is not the place to hide it.
+  // The bike's Tracked Actions. A bike that tracks nothing has none, which reads as good -
+  // and so does a bike whose worst reading is still under 80%.
   readings: HealthReading[];
 }
 

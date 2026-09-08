@@ -29,6 +29,8 @@ import { BikePhoto } from "./BikePhoto";
 import { BikeActionTiles } from "./BikeActionTiles";
 import { BikeStravaCard } from "./BikeStravaCard";
 import { HealthBadge } from "./HealthBadge";
+import { BikeTrackedActionsSection } from "@/features/service_tracking/BikeTrackedActionsSection";
+import { useBikeHealthReadings } from "@/features/service_tracking/serviceTracking.queries";
 import { StravaLinkedBadge } from "./StravaLinkedBadge";
 import { BikeSpecsDrawer } from "./BikeSpecsDrawer";
 import { BikeComponentsSection } from "./BikeComponentsSection";
@@ -72,6 +74,10 @@ export function BikeDetail(): ReactElement {
   const connect = useConnectStrava();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const setHeaderTransparent = useHeaderStore((state) => state.setHeaderTransparent);
+
+  // The same readings the section below lists, so the badge and the list can never
+  // disagree about the state of the bike.
+  const readings = useBikeHealthReadings(Number(id));
 
   const paired = bike?.strava_gear_id != null;
   // An Archived Bike is a frozen record: readable, exportable, and written to by nothing.
@@ -213,7 +219,7 @@ export function BikeDetail(): ReactElement {
         <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
           {/* The same corner, in the same order, as the garage card keeps its badges. */}
           <Stack gap={6} align="flex-end">
-            <HealthBadge readings={[]} />
+            <HealthBadge readings={readings} />
             <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
           </Stack>
         </BikePhoto>
@@ -335,6 +341,10 @@ export function BikeDetail(): ReactElement {
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
       />
+
+      {/* How far the bike's maintenance has come, above the build: this is what the owner
+          came to find out, and the parts list is what they read afterwards. */}
+      <BikeTrackedActionsSection bikeId={bike.id} />
 
       {/* What the machine is made of, under what can be done with it: the tiles are the
           daily act, the build is read less often. */}

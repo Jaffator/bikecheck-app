@@ -8,13 +8,12 @@ import type { Bike } from "../bikes/bikes.types";
 import { bikeTitle } from "../bikes/bikeTitle";
 import { BikePhoto } from "./BikePhoto";
 import { HEALTH_COLORS, worstReading, type HealthReading } from "./bikeHealth.types";
+import { useBikeHealthReadings } from "@/features/service_tracking/serviceTracking.queries";
 import { HealthBadge } from "./HealthBadge";
 import { StravaLinkedBadge } from "./StravaLinkedBadge";
 
 interface BikeCardProps {
   bike: Bike;
-  // Empty until the API serves per-bike wear; the card simply omits the section.
-  readings?: HealthReading[];
   onOpen: () => void;
 }
 
@@ -42,7 +41,6 @@ function Metric({ icon, children }: { icon: ReactNode; children: ReactNode }): R
 // The part that needs attention first, as one line: how much of its life is left, what it
 // is, and the figure behind it.
 function HealthMeter({ reading }: { reading: HealthReading }): ReactElement {
-  const { t } = useTranslation();
   const color = HEALTH_COLORS[reading.level];
 
   return (
@@ -59,7 +57,7 @@ function HealthMeter({ reading }: { reading: HealthReading }): ReactElement {
         }}
       />
       <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
-        {t(reading.labelKey)}
+        {reading.label}
       </Text>
       <Text
         className="font-mono"
@@ -77,8 +75,11 @@ function HealthMeter({ reading }: { reading: HealthReading }): ReactElement {
   );
 }
 
-export function BikeCard({ bike, readings = [], onOpen }: BikeCardProps): ReactElement {
+export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
   const { t } = useTranslation();
+  // The bike's own Tracked Actions, on their own request: the garage list is already on
+  // screen while these arrive, and a bike that tracks nothing simply reads good.
+  const readings = useBikeHealthReadings(bike.id);
 
   const title = bikeTitle(bike);
   // The garage leads with the part that needs attention first; the whole list is on the

@@ -238,7 +238,8 @@
     "health": {
       "good": "Good",
       "warning": "Warning",
-      "critical": "Critical"
+      "critical": "Critical",
+      "overdue": "Overdue"
     },
     "edit": "Edit bike",
     "metres_one": "{{count}} m",
@@ -836,5 +837,12 @@
     "deleteConfirmTitle": "Delete {{name}} forever?",
     "deleteConfirmBody": "The bike is destroyed with its rides, services, parts, intervals and attachments. This cannot be undone. Reports you already exported stay in your list.",
     "deleteConfirmTypeName": "Type the bike name to confirm"
+  },
+  "serviceTracking": {
+    "title": "Service tracking",
+    "loadFailed": "Service tracking could not be loaded",
+    "percentage": "{{value}}%",
+    "unitKm": "km",
+    "unitHours": "h"
   }
 }

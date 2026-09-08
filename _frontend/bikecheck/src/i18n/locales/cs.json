@@ -250,7 +250,8 @@
     "health": {
       "good": "Dobrý",
       "warning": "Varování",
-      "critical": "Kritický"
+      "critical": "Kritický",
+      "overdue": "Po termínu"
     },
     "edit": "Upravit kolo",
     "metres_one": "{{count}} m",
@@ -880,5 +881,12 @@
     "deleteConfirmTitle": "Smazat {{name}} natrvalo?",
     "deleteConfirmBody": "Kolo se zničí i s jízdami, servisy, díly, intervaly a přílohami. Nejde to vrátit. Reporty, které jsi už vyexportoval, ti v seznamu zůstanou.",
     "deleteConfirmTypeName": "Pro potvrzení napiš název kola"
+  },
+  "serviceTracking": {
+    "title": "Sledování servisu",
+    "loadFailed": "Sledování servisu se nepodařilo načíst",
+    "percentage": "{{value}} %",
+    "unitKm": "km",
+    "unitHours": "h"
   }
 }

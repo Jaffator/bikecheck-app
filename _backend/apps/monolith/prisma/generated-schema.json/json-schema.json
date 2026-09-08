@@ -403,12 +403,6 @@
           "items": {
             "$ref": "#/definitions/rides"
           }
-        },
-        "service_snooze": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/service_snooze"
-          }
         }
       }
     },
@@ -632,6 +626,12 @@
         },
         "component_types": {
           "$ref": "#/definitions/component_types"
+        },
+        "service_snooze": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/service_snooze"
+          }
         },
         "suspension_setup": {
           "type": "array",
@@ -1541,6 +1541,24 @@
           ],
           "default": 0
         },
+        "extended_by_healthIndex": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": 0
+        },
+        "reached_threshold": {
+          "type": "integer",
+          "default": 0
+        },
+        "announced_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -1549,15 +1567,8 @@
           "type": "string",
           "format": "date-time"
         },
-        "extended_by_healthIndex": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "bikes": {
-          "$ref": "#/definitions/bikes"
+        "components_mounted": {
+          "$ref": "#/definitions/components_mounted"
         },
         "events_action": {
           "$ref": "#/definitions/events_action"
