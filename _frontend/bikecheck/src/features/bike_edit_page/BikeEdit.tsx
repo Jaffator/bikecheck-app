@@ -7,7 +7,7 @@ import { ImagePlus } from "lucide-react";
 import { useBike, useBikeFormOptions, useUpdateBike } from "../bikes/bikes.queries";
 import { PhotoCropModal } from "../add_bike_page/PhotoCropModal";
 import { FRAME_SIZES, WHEEL_SIZES } from "../add_bike_page/bikeSpecification.types";
-import { autosizeInputStyles, dropdownProps, inputStyles } from "../add_bike_page/formStyles";
+import { autosizeInputStyles, disabledButtonStyles, dropdownProps, inputStyles } from "../add_bike_page/formStyles";
 import { PHOTO_ASPECT } from "../add_bike_page/photoCrop";
 import type { Bike, UpdateBikePayload } from "../bikes/bikes.types";
 
@@ -318,6 +318,7 @@ export function BikeEdit(): ReactElement {
         <Button
           color="primary.6"
           radius="md"
+          styles={disabledButtonStyles}
           loading={save.isPending}
           disabled={values.bike_brand.trim() === ""}
           onClick={submit}

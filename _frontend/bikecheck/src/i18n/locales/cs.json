@@ -40,6 +40,8 @@
     "noAccount": "Nemáte účet?"
   },
   "settings": {
+    "sectionGeneral": "Obecné",
+    "sectionBikes": "Kola",
     "currency": "Měna",
     "language": "Jazyk",
     "customParts": "Moje díly",
@@ -231,7 +233,7 @@
   "bikes": {
     "noBikesFound": "ŽÁDNÁ KOLA",
     "emptyTitle": "Tvoje garáž je zatím prázdná",
-    "emptyBody": "Připoj svůj účet Strava nebo přidej kolo ručně a začni sledovat stav komponentů a servisní intervaly.",
+    "emptyBody": "Přidej svoje první kolo a začni sledovat stav komponentů, servisní intervaly a sdílet svuj BikeCheck s ostaními.",
     "intro": "Spravuj svá kola a jejich technický stav.",
     "loadFailed": "Kola se nepodařilo načíst. Zkuste to prosím znovu.",
     "cardMenu": "Akce kola",

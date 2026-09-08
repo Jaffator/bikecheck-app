@@ -57,7 +57,7 @@ export function Profile(): ReactElement | null {
       </Stack>
 
       {/* Name and weight are one form, so both rows open the same drawer. */}
-      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-cards-5)" }}>
+      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
         <UnstyledButton onClick={() => setEditing(true)} className="w-full" p="md">
           <Group justify="space-between" wrap="nowrap">
             <Text fw={600} fz={15} c="text.6">

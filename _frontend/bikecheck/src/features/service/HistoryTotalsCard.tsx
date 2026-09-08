@@ -52,16 +52,34 @@ export function HistoryTotalsCard({
 
   // A period with no work in it would export an empty document, so it is refused here
   // rather than in the sheet. Totals still on their way disable it without a word.
-  const blockedBy =
-    onShare === null ? t("report.pickBikeFirst") : totals?.service_count === 0 ? t("report.emptyPeriod") : null;
+  // Across all bikes there is nothing a Period Report could be about, so the button is not
+  // there at all - only a chosen bike with an empty period gets the button and the reason.
+  const blockedBy = onShare !== null && totals?.service_count === 0 ? t("report.emptyPeriod") : null;
   const canShare = onShare !== null && totals !== undefined && totals.service_count > 0;
 
   return (
     <Box style={{ ...SERVICE_CARD_SURFACE, padding: "var(--mantine-spacing-md)" }}>
       <Stack gap="xs">
-        <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>
-          {`${t("service.totalsTitle")} · ${periodLabel}`}
-        </Text>
+        <Group gap="sm" wrap="nowrap" align="center">
+          <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>n
+            {`${t("service.totalsTitle")} · ${periodLabel}`}
+          </Text>
+          {/* Exports exactly what is summed above: the same Bike and the same Period. */}
+          {onShare !== null && (
+            <Button
+              variant="outline"
+              color="primary.6"
+              radius="md"
+              size="xs"
+              ml="auto"
+              leftSection={<Share2 size={16} />}
+              disabled={!canShare}
+              onClick={() => onShare?.()}
+            >
+              {t("report.share")}
+            </Button>
+          )}
+        </Group>
 
         {isLoading || totals === undefined ? (
           <Skeleton height={34} width="60%" radius="sm" />
@@ -76,19 +94,6 @@ export function HistoryTotalsCard({
           <Divider orientation="vertical" color="var(--color-border-subtle)" />
           <Metric label={t("service.totalsReplacements")} value={totals?.replacement_count ?? 0} isStale={isStale} />
 
-          {/* Exports exactly what is summed above: the same Bike and the same Period. */}
-          <Button
-            variant="outline"
-            color="primary.5"
-            radius="md"
-            size="xs"
-            ml="auto"
-            leftSection={<Share2 size={16} />}
-            disabled={!canShare}
-            onClick={() => onShare?.()}
-          >
-            {t("report.share")}
-          </Button>
         </Group>
 
         {blockedBy !== null && (

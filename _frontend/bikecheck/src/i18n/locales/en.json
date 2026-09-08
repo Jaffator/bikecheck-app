@@ -40,6 +40,8 @@
     "noAccount": "Don't have an account?"
   },
   "settings": {
+    "sectionGeneral": "General",
+    "sectionBikes": "Bikes",
     "currency": "Currency",
     "language": "Language",
     "customParts": "My custom components",
@@ -152,7 +154,7 @@
     "getStarted": "Start by adding your first bike",
     "noActiveData": "NO ACTIVE DATA",
     "addBike": "Add bike",
-    "proTipBody": "Adding components (chain, cassette, tires) lets <1>BikeCheck</1> predict maintenance based on real-world mileage."
+    "proTipBody": "Add a bike and components (chain, cassette, tires) <1>BikeCheck</1> predicts maintenance based on your mileage and lets you SHARE your setup with others."
   },
   "rides": {
     "emptyTitle": "No Rides Yet",
@@ -223,7 +225,7 @@
   "bikes": {
     "noBikesFound": "0 BIKES FOUND",
     "emptyTitle": "Your garage is currently empty",
-    "emptyBody": "Connect your Strava account or manually add a bike to start tracking component health and service intervals.",
+    "emptyBody": "Add your first bike and start tracking component wear, service intervals, and sharing your BikeCheck with others.",
     "intro": "Manage your high-performance machines and their technical health.",
     "loadFailed": "Your bikes could not be loaded. Please try again.",
     "cardMenu": "Bike actions",
