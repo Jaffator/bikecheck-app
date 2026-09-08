@@ -5,7 +5,10 @@
     "loadFailed": "Service tracking could not be loaded.",
     "needsAttention": "Needs attention",
     "showLess": "Show less",
-    "showRemaining": "Show remaining ({{value}})"
+    "showRemaining": "Show remaining ({{value}})",
+    "postpone": "Put off",
+    "extended": "Extended",
+    "postponeFailed": "Could not be put off."
   },
   "nav": {
     "home": "Home",

@@ -42,3 +42,11 @@ export interface GarageTrackedAction extends TrackedAction {
   bike_model: string | null;
   year: number | null;
 }
+
+// What putting one Tracked Action off asks for: the part and the job, which is what
+// identifies one. What the Extension is worth is the server's rule — there is no number
+// to enter and no dialog to enter it in.
+export interface PostponeTrackedActionInput {
+  component_mounted_id: number;
+  event_action_id: number;
+}

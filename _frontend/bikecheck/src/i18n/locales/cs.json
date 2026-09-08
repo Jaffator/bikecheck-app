@@ -5,7 +5,10 @@
     "loadFailed": "Sledování servisu se nepodařilo načíst.",
     "needsAttention": "Vyžaduje pozornost",
     "showLess": "Zobrazit méně",
-    "showRemaining": "Zobrazit zbývající ({{value}})"
+    "showRemaining": "Zobrazit zbývající ({{value}})",
+    "postpone": "Odložit",
+    "extended": "Prodlouženo",
+    "postponeFailed": "Nepodařilo se odložit."
   },
   "nav": {
     "home": "Domů",

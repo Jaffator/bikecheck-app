@@ -94,9 +94,7 @@ export class ServiceTrackingService {
     }
     if (bike.is_deleted === true) return [];
 
-    const [intervals, parts] = await this.loadTracking(bikeId);
-
-    return worstFirst(trackedActions(parts, intervals));
+    return worstFirst(await this.readBike(bikeId));
   }
 
   // Everything across the owner's bikes that has come at least as far as the caller asks
@@ -124,6 +122,62 @@ export class ServiceTrackingService {
       });
 
     return worstFirst(needingAttention);
+  }
+
+  // Putting one Tracked Action off, which grants it an Extension: a tenth of the Service
+  // Interval the bike's plan sets, on the axis the reading is taken on. Added to the
+  // interval and never taken off the wear, so the reading still says how far the part has
+  // actually gone. Granted again it accumulates, so putting the same job off three times
+  // reads as a growing Extension rather than a cleared flag.
+  //
+  // Which readings are worth offering the control on is the frontend's rule - the write
+  // refuses only what nobody may put off: a bike that is not the caller's or is archived,
+  // and a part that came off or was deleted.
+  async postponeTrackedAction(
+    componentMountedId: number,
+    eventActionId: number,
+    userId: number,
+  ): Promise<Response_TrackedActionDto> {
+    // One question answers all of it: whose bike carries this part, and is it still on it.
+    const bike = await this.prisma.bikes.findFirst({
+      where: { ...ownedBikesWhere(userId), components_mounted: { some: { id: componentMountedId, ...MOUNTED } } },
+      select: { id: true },
+    });
+    if (!bike) {
+      throw new NotFoundException(`Tracked Action on component ${componentMountedId} not found`);
+    }
+
+    const [intervals, parts] = await this.loadTracking(bike.id);
+    const part = parts.find((row) => row.id === componentMountedId);
+    const interval = intervals.find((row) => row.event_actions_id === eventActionId);
+
+    // A pairing the bike keeps no Service Interval for, or one this kind of part is not a
+    // target of, is not a Tracked Action at all - so there is nothing to put off.
+    if (part === undefined || interval === undefined || !targets(interval).has(part.component_type_id)) {
+      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} not found`);
+    }
+
+    const reading = worstAxis(part, interval);
+    if (reading === null) {
+      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} has no Service Interval`);
+    }
+
+    await this.grantExtension(componentMountedId, eventActionId, reading.axis, extensionOn(interval, reading.axis));
+
+    // An Extension lowers the reading, which moves the band down and re-arms the next
+    // crossing - the same rule a Service and a Replacement go through.
+    await this.evaluateBike(bike.id, userId);
+
+    // Answered from the read every other caller uses, so what the tap returns and what the
+    // next page load shows can never disagree.
+    const updated = (await this.readBike(bike.id)).find(
+      (row) => row.component_mounted_id === componentMountedId && row.event_action_id === eventActionId,
+    );
+    if (updated === undefined) {
+      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} not found`);
+    }
+
+    return updated;
   }
 
   // Announcements, run at the end of every write that moves an input Service Tracking
@@ -187,6 +241,32 @@ export class ServiceTrackingService {
     for (const bikeId of new Set(bikeIds)) {
       await this.evaluateBike(bikeId, userId);
     }
+  }
+
+  // The Extension itself: a fresh row carrying it, or the slice added to what the pairing
+  // already holds on that axis.
+  private async grantExtension(
+    componentMountedId: number,
+    eventActionId: number,
+    axis: WearAxis,
+    granted: number,
+  ): Promise<void> {
+    const pair = { component_mounted_id: componentMountedId, event_actions_id: eventActionId };
+    const column = EXTENSION_COLUMNS[axis];
+
+    await this.prisma.tracked_action_state.upsert({
+      where: { component_mounted_id_event_actions_id: pair },
+      create: { ...pair, [column]: granted },
+      update: { [column]: { increment: granted } },
+    });
+  }
+
+  // Every Tracked Action on one bike as it stands, in no particular order. Whose bike it is
+  // and whether it is archived are the caller's question, not this one's.
+  private async readBike(bikeId: number): Promise<Response_TrackedActionDto[]> {
+    const [intervals, parts] = await this.loadTracking(bikeId);
+
+    return trackedActions(parts, intervals);
   }
 
   // The band this Tracked Action now stands in, written whether it moved or not, so the
@@ -345,6 +425,30 @@ function wearColumns(part: TrackedPart, frozen: Baseline | null): Record<WearAxi
       : { accumulator: part.total_time_min, baseline: frozen?.time_min_at_time },
     health_index: { accumulator: part.health_index, baseline: 0 },
   };
+}
+
+// How much of the Service Interval one Extension is worth.
+const EXTENSION_SHARE = 0.1;
+
+// Which column each axis is read from on the bike's plan, and which one it is put off in on
+// the state row. Named beside each other because they are the same three axes twice.
+const INTERVAL_COLUMNS = {
+  km: 'service_interval_km',
+  min: 'service_interval_min',
+  health_index: 'health_index_interval',
+} as const satisfies Record<WearAxis, keyof TrackedInterval>;
+
+const EXTENSION_COLUMNS = {
+  km: 'extended_by_km',
+  min: 'extended_by_min',
+  health_index: 'extended_by_healthIndex',
+} as const;
+
+// What putting one job off adds on one axis: a tenth of the interval the bike's plan sets,
+// never of the interval an earlier Extension already lengthened - so putting the same job
+// off twice adds the same slice twice, and a third time has put it off by 30%.
+function extensionOn(interval: TrackedInterval, axis: WearAxis): number {
+  return Math.round((interval[INTERVAL_COLUMNS[axis]] ?? 0) * EXTENSION_SHARE);
 }
 
 // One axis, or null where the bike keeps no interval on it. Never capped: 132% reads as

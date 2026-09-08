@@ -624,6 +624,25 @@ describe('ServiceTrackingService', () => {
       expect(action.percentage).toBe(0);
       expect(action.level).toBe('good');
     });
+
+    // A new chain is never born already deferred: the Extension was granted on the part
+    // that came off, and stays with it.
+    it('reads no Extension on the part that replaced an extended one', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({ id: 55, is_active: false, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 400 })] }),
+          mountedPart({ id: 56, drivetrain_km: 100 }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.component_mounted_id).toBe(56);
+      expect(action.interval).toBe(4000);
+      expect(action.extended).toBe(false);
+    });
+
   });
 
   describe('getGarageTrackedActions', () => {
@@ -1059,6 +1078,151 @@ describe('ServiceTrackingService', () => {
       await service.evaluateBikes([BIKE_ID, OTHER_BIKE_ID, BIKE_ID], OWNER_ID);
 
       expect(mockPrismaService.bikes.findFirst).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('postponeTrackedAction', () => {
+    // What one write asked of the state row, whichever column it landed on.
+    interface StateUpsertArgs {
+      where: { component_mounted_id_event_actions_id: { component_mounted_id: number; event_actions_id: number } };
+      create: Record<string, unknown>;
+      update: Record<string, unknown>;
+    }
+
+    // The state rows a write leaves behind, kept on the fixtures the read then loads. A
+    // postponement answers with the reading as it now stands, so the stand-in database has
+    // to actually keep what was written to it.
+    function keepState(parts: Record<string, unknown>[]): void {
+      mockPrismaService.tracked_action_state.upsert.mockImplementation(({ where, create, update }: StateUpsertArgs) => {
+        const { component_mounted_id, event_actions_id } = where.component_mounted_id_event_actions_id;
+        const part = parts.find((row) => row.id === component_mounted_id);
+        const rows = (part?.tracked_action_state ?? []) as Record<string, unknown>[];
+        const existing = rows.find((row) => row.event_actions_id === event_actions_id);
+
+        if (existing === undefined) {
+          rows.push({ ...stateRow(event_actions_id, {}), ...create });
+          return Promise.resolve({});
+        }
+
+        for (const [column, value] of Object.entries(update)) {
+          const increment = (value as { increment?: number }).increment;
+          existing[column] = increment === undefined ? value : (existing[column] as number) + increment;
+        }
+        return Promise.resolve({});
+      });
+    }
+
+    // The Extension each pairing now carries on one axis.
+    function extensions(parts: Record<string, unknown>[], column: string): Record<string, unknown> {
+      const held: Record<string, unknown> = {};
+      for (const part of parts) {
+        for (const state of part.tracked_action_state as Record<string, unknown>[]) {
+          held[`${String(part.id)}:${String(state.event_actions_id)}`] = state[column];
+        }
+      }
+      return held;
+    }
+
+    // A tenth of the interval the bike's plan sets, on the axis the reading is taken on.
+    it('grants an Extension of a tenth of the Service Interval', async () => {
+      const parts = [mountedPart({ drivetrain_km: 4400 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(extensions(parts, 'extended_by_km')).toEqual({ '55:101': 400 });
+    });
+
+    // A job measured in minutes is put off in minutes: the axis the interval is expressed
+    // in is the axis the Extension lands on.
+    it('extends a job measured in minutes on its own axis', async () => {
+      const parts = [
+        mountedPart({ component_type_id: FORK_TYPE, component_types: typeRow(FORK_TYPE), suspension_min: 7000 }),
+      ];
+      garage([intervalRow(FORK_SERVICE, { min: 6000 }, [FORK_TYPE])], parts);
+      keepState(parts);
+
+      await service.postponeTrackedAction(55, FORK_SERVICE, OWNER_ID);
+
+      expect(extensions(parts, 'extended_by_min')).toEqual({ '55:102': 600 });
+      expect(extensions(parts, 'extended_by_km')).toEqual({ '55:102': 0 });
+    });
+
+    // The Extension is added to the interval, never taken off the wear: the reading still
+    // says how far the part has actually gone.
+    it('drops the percentage by what it added, leaving the wear alone', async () => {
+      const parts = [mountedPart({ drivetrain_km: 4200 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(action.current).toBe(4200);
+      expect(action.interval).toBe(4400);
+      expect(action.percentage).toBe(95);
+      expect(action.extended).toBe(true);
+    });
+
+    // Three deferrals of the same job read as a growing Extension, not a cleared flag.
+    it('accumulates when the same job is put off again', async () => {
+      const parts = [mountedPart({ drivetrain_km: 4400 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+      const action = await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(extensions(parts, 'extended_by_km')).toEqual({ '55:101': 800 });
+      expect(action.interval).toBe(4800);
+      expect(action.percentage).toBe(91);
+    });
+
+    // An Extension belongs to one part, not to the job: putting off one tyre leaves the
+    // other tyre exactly where it was.
+    it('leaves the other part of the same kind untouched', async () => {
+      const parts = [
+        mountedPart({ id: 55, component_type_id: TYRE_TYPE, component_types: typeRow(TYRE_TYPE), total_km: 3300 }),
+        mountedPart({ id: 56, component_type_id: TYRE_TYPE, component_types: typeRow(TYRE_TYPE), total_km: 3300 }),
+      ];
+      garage([intervalRow(TYRE_REPLACEMENT, { km: 3000 }, [TYRE_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.postponeTrackedAction(55, TYRE_REPLACEMENT, OWNER_ID);
+      const [other] = (await service.getBikeTrackedActions(BIKE_ID, OWNER_ID)).filter(
+        (row) => row.component_mounted_id === 56,
+      );
+
+      expect(action.percentage).toBe(100);
+      expect(other.interval).toBe(3000);
+      expect(other.percentage).toBe(110);
+      expect(other.extended).toBe(false);
+    });
+
+    // A bike put away is not ridden, and nothing on it can be put off. The fixture answers
+    // as the database would, so it is the write's own filter that has to keep the archive
+    // out - a read that let it in would find the bike and put the job off.
+    it('refuses on an Archived Bike', async () => {
+      mockPrismaService.bikes.findFirst.mockImplementation(({ where }: { where: { is_deleted?: unknown } }) =>
+        Promise.resolve(where.is_deleted === undefined ? bikeRow(BIKE_ID, 'Santa Cruz', true) : null),
+      );
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 4400 })]);
+
+      await expect(service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // A pairing the bike keeps no Service Interval for is not a Tracked Action at all, so
+    // there is nothing to put off.
+    it('refuses a pairing that is not a Tracked Action', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 4400 })]);
+
+      await expect(service.postponeTrackedAction(55, TYRE_REPLACEMENT, OWNER_ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
     });
   });
 });

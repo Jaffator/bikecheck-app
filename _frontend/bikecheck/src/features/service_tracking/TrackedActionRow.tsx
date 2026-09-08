@@ -9,6 +9,7 @@ import { ChevronRight } from "lucide-react";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { positionLabel } from "@/features/components/componentLabels";
 import { ATTENTION_COLORS, axisReading, barFill } from "./attentionLevel";
+import { PostponeControl } from "./PostponeControl";
 import type { TrackedAction } from "./tracking.types";
 
 interface TrackedActionRowProps {
@@ -61,30 +62,44 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
         >
           {prefix === null ? job : `${prefix} · ${job}`}
         </Text>
-        <Text
-          className="font-mono"
-          fz={11}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-          lts="0.08em"
-          ml="auto"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          {axisReading(action, i18n.language)}
-        </Text>
+        <Group gap="sm" wrap="nowrap" ml="auto" style={{ whiteSpace: "nowrap" }}>
+          {/* What a tap on the control left behind: the interval beside it is longer for it. */}
+          {action.extended && (
+            <Text className="font-mono" fz={11} tt="uppercase" c="primary.6" lts="0.08em">
+              {t("tracking.extended")}
+            </Text>
+          )}
+          <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em">
+            {axisReading(action, i18n.language)}
+          </Text>
+        </Group>
       </Group>
     </Stack>
   );
 
-  if (onOpen === null) return reading;
+  const body =
+    onOpen === null ? (
+      reading
+    ) : (
+      <UnstyledButton
+        onClick={onOpen}
+        className="active:scale-[0.985]"
+        style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
+      >
+        {reading}
+      </UnstyledButton>
+    );
+
+  // Only a job already past due is worth putting off — anything else is not being ridden
+  // on borrowed time yet. Its own control, outside whatever the row leads to, so a tap on
+  // it is never a tap into the bike.
+  if (action.level !== "overdue") return body;
 
   return (
-    <UnstyledButton
-      onClick={onOpen}
-      className="active:scale-[0.985]"
-      style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
-    >
-      {reading}
-    </UnstyledButton>
+    <Stack gap={8}>
+      {body}
+
+      <PostponeControl action={action} />
+    </Stack>
   );
 }

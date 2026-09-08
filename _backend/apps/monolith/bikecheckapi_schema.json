@@ -1149,6 +1149,186 @@
         ]
       }
     },
+    "/api/service-tracking/tracked-actions": {
+      "get": {
+        "operationId": "ServiceTracking getBikeTrackedActions",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_TrackedActionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "ServiceTracking"
+        ]
+      }
+    },
+    "/api/service-tracking/attention": {
+      "get": {
+        "operationId": "ServiceTracking getGarageTrackedActions",
+        "parameters": [
+          {
+            "name": "minPercentage",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_GarageTrackedActionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "ServiceTracking"
+        ]
+      }
+    },
+    "/api/service-tracking/postpone": {
+      "post": {
+        "operationId": "ServiceTracking postponeTrackedAction",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostponeTrackedActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_TrackedActionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "ServiceTracking"
+        ]
+      }
+    },
+    "/api/notifications/fcm-token": {
+      "post": {
+        "operationId": "Notification registerFcmToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Register FCM token for the current user",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "operationId": "Notification list",
+        "parameters": [
+          {
+            "name": "unread",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseNotificationDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List notifications for the current user",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "patch": {
+        "operationId": "Notification markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark a notification as read",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
     "/api/components": {
       "post": {
         "operationId": "Component createComponentType",
@@ -1863,89 +2043,6 @@
         ]
       }
     },
-    "/api/notifications/fcm-token": {
-      "post": {
-        "operationId": "Notification registerFcmToken",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeviceTokenDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Register FCM token for the current user",
-        "tags": [
-          "Notification"
-        ]
-      }
-    },
-    "/api/notifications": {
-      "get": {
-        "operationId": "Notification list",
-        "parameters": [
-          {
-            "name": "unread",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResponseNotificationDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "List notifications for the current user",
-        "tags": [
-          "Notification"
-        ]
-      }
-    },
-    "/api/notifications/{id}/read": {
-      "patch": {
-        "operationId": "Notification markRead",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Mark a notification as read",
-        "tags": [
-          "Notification"
-        ]
-      }
-    },
     "/api/rides": {
       "get": {
         "operationId": "Ride listRides",
@@ -2329,72 +2426,6 @@
         "summary": "Stream one attachment of the caller's own report",
         "tags": [
           "Report"
-        ]
-      }
-    },
-    "/api/service-tracking/tracked-actions": {
-      "get": {
-        "operationId": "ServiceTracking getBikeTrackedActions",
-        "parameters": [
-          {
-            "name": "bikeId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Response_TrackedActionDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "ServiceTracking"
-        ]
-      }
-    },
-    "/api/service-tracking/attention": {
-      "get": {
-        "operationId": "ServiceTracking getGarageTrackedActions",
-        "parameters": [
-          {
-            "name": "minPercentage",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Response_GarageTrackedActionDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "ServiceTracking"
         ]
       }
     }
@@ -3816,6 +3847,323 @@
           }
         }
       },
+      "Response_TrackedActionDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 21,
+            "description": "The bike carrying the part, which a row opens"
+          },
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Chain"
+          },
+          "component_type_i18n_key": {
+            "type": "string",
+            "example": "component.chain",
+            "nullable": true
+          },
+          "component_desc": {
+            "type": "string",
+            "example": "Shimano XT M8100",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "example": "front",
+            "nullable": true
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Chain Replacement"
+          },
+          "action_i18n_key": {
+            "type": "string",
+            "example": "action.chainReplacement",
+            "nullable": true
+          },
+          "axis": {
+            "type": "string",
+            "enum": [
+              "km",
+              "min",
+              "health_index"
+            ],
+            "example": "km"
+          },
+          "current": {
+            "type": "number",
+            "example": 3200,
+            "description": "Wear on that axis since the Wear Baseline"
+          },
+          "interval": {
+            "type": "number",
+            "example": 4000,
+            "description": "The Service Interval on that axis, including any Extension in force"
+          },
+          "percentage": {
+            "type": "number",
+            "example": 80,
+            "description": "Whole percent of the way to being due. Never capped"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "good",
+              "warning",
+              "critical",
+              "overdue"
+            ],
+            "example": "warning"
+          },
+          "extended": {
+            "type": "boolean",
+            "example": false,
+            "description": "The action has been put off, lengthening its interval"
+          }
+        },
+        "required": [
+          "bike_id",
+          "component_mounted_id",
+          "component_type_id",
+          "component_type",
+          "component_type_i18n_key",
+          "component_desc",
+          "position",
+          "event_action_id",
+          "action_name",
+          "action_i18n_key",
+          "axis",
+          "current",
+          "interval",
+          "percentage",
+          "level",
+          "extended"
+        ]
+      },
+      "Response_GarageTrackedActionDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 21,
+            "description": "The bike carrying the part, which a row opens"
+          },
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Chain"
+          },
+          "component_type_i18n_key": {
+            "type": "string",
+            "example": "component.chain",
+            "nullable": true
+          },
+          "component_desc": {
+            "type": "string",
+            "example": "Shimano XT M8100",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "example": "front",
+            "nullable": true
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Chain Replacement"
+          },
+          "action_i18n_key": {
+            "type": "string",
+            "example": "action.chainReplacement",
+            "nullable": true
+          },
+          "axis": {
+            "type": "string",
+            "enum": [
+              "km",
+              "min",
+              "health_index"
+            ],
+            "example": "km"
+          },
+          "current": {
+            "type": "number",
+            "example": 3200,
+            "description": "Wear on that axis since the Wear Baseline"
+          },
+          "interval": {
+            "type": "number",
+            "example": 4000,
+            "description": "The Service Interval on that axis, including any Extension in force"
+          },
+          "percentage": {
+            "type": "number",
+            "example": 80,
+            "description": "Whole percent of the way to being due. Never capped"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "good",
+              "warning",
+              "critical",
+              "overdue"
+            ],
+            "example": "warning"
+          },
+          "extended": {
+            "type": "boolean",
+            "example": false,
+            "description": "The action has been put off, lengthening its interval"
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Santa Cruz"
+          },
+          "bike_model": {
+            "type": "string",
+            "example": "Hightower",
+            "nullable": true
+          },
+          "year": {
+            "type": "number",
+            "example": 2022,
+            "nullable": true
+          }
+        },
+        "required": [
+          "bike_id",
+          "component_mounted_id",
+          "component_type_id",
+          "component_type",
+          "component_type_i18n_key",
+          "component_desc",
+          "position",
+          "event_action_id",
+          "action_name",
+          "action_i18n_key",
+          "axis",
+          "current",
+          "interval",
+          "percentage",
+          "level",
+          "extended",
+          "bike_brand",
+          "bike_model",
+          "year"
+        ]
+      },
+      "PostponeTrackedActionDto": {
+        "type": "object",
+        "properties": {
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          }
+        },
+        "required": [
+          "component_mounted_id",
+          "event_action_id"
+        ]
+      },
+      "DeviceTokenDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "caYcjw...:APA91b..."
+          },
+          "platform": {
+            "type": "string",
+            "example": "android"
+          }
+        },
+        "required": [
+          "token",
+          "platform"
+        ]
+      },
+      "ResponseNotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "type": {
+            "type": "string",
+            "example": "strava_unmatched_activity"
+          },
+          "title": {
+            "type": "string",
+            "example": "Nepřiřazená aktivita ze Stravy"
+          },
+          "body": {
+            "type": "string",
+            "example": "Kolo \"Trek Fuel EX\" ještě nemáš přiřazené"
+          },
+          "payload": {
+            "type": "object",
+            "example": {
+              "gearId": "b12345"
+            },
+            "nullable": true
+          },
+          "is_read": {
+            "type": "boolean",
+            "example": false
+          },
+          "read_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "payload",
+          "is_read",
+          "read_at",
+          "created_at"
+        ]
+      },
       "CustomComponentsDto": {
         "type": "object",
         "properties": {
@@ -4449,75 +4797,6 @@
           "bikeId"
         ]
       },
-      "DeviceTokenDto": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "example": "caYcjw...:APA91b..."
-          },
-          "platform": {
-            "type": "string",
-            "example": "android"
-          }
-        },
-        "required": [
-          "token",
-          "platform"
-        ]
-      },
-      "ResponseNotificationDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "example": 1
-          },
-          "type": {
-            "type": "string",
-            "example": "strava_unmatched_activity"
-          },
-          "title": {
-            "type": "string",
-            "example": "Nepřiřazená aktivita ze Stravy"
-          },
-          "body": {
-            "type": "string",
-            "example": "Kolo \"Trek Fuel EX\" ještě nemáš přiřazené"
-          },
-          "payload": {
-            "type": "object",
-            "example": {
-              "gearId": "b12345"
-            },
-            "nullable": true
-          },
-          "is_read": {
-            "type": "boolean",
-            "example": false
-          },
-          "read_at": {
-            "type": "object",
-            "example": null,
-            "nullable": true
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-06-16T12:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "title",
-          "body",
-          "payload",
-          "is_read",
-          "read_at",
-          "created_at"
-        ]
-      },
       "ResponseRideDto": {
         "type": "object",
         "properties": {
@@ -4856,237 +5135,6 @@
         },
         "required": [
           "count"
-        ]
-      },
-      "Response_TrackedActionDto": {
-        "type": "object",
-        "properties": {
-          "bike_id": {
-            "type": "number",
-            "example": 21,
-            "description": "The bike carrying the part, which a row opens"
-          },
-          "component_mounted_id": {
-            "type": "number",
-            "example": 55
-          },
-          "component_type_id": {
-            "type": "number",
-            "example": 12
-          },
-          "component_type": {
-            "type": "string",
-            "example": "Chain"
-          },
-          "component_type_i18n_key": {
-            "type": "string",
-            "example": "component.chain",
-            "nullable": true
-          },
-          "component_desc": {
-            "type": "string",
-            "example": "Shimano XT M8100",
-            "nullable": true
-          },
-          "position": {
-            "type": "string",
-            "example": "front",
-            "nullable": true
-          },
-          "event_action_id": {
-            "type": "number",
-            "example": 42
-          },
-          "action_name": {
-            "type": "string",
-            "example": "Chain Replacement"
-          },
-          "action_i18n_key": {
-            "type": "string",
-            "example": "action.chainReplacement",
-            "nullable": true
-          },
-          "axis": {
-            "type": "string",
-            "enum": [
-              "km",
-              "min",
-              "health_index"
-            ],
-            "example": "km"
-          },
-          "current": {
-            "type": "number",
-            "example": 3200,
-            "description": "Wear on that axis since the Wear Baseline"
-          },
-          "interval": {
-            "type": "number",
-            "example": 4000,
-            "description": "The Service Interval on that axis, including any Extension in force"
-          },
-          "percentage": {
-            "type": "number",
-            "example": 80,
-            "description": "Whole percent of the way to being due. Never capped"
-          },
-          "level": {
-            "type": "string",
-            "enum": [
-              "good",
-              "warning",
-              "critical",
-              "overdue"
-            ],
-            "example": "warning"
-          },
-          "extended": {
-            "type": "boolean",
-            "example": false,
-            "description": "The action has been put off, lengthening its interval"
-          }
-        },
-        "required": [
-          "bike_id",
-          "component_mounted_id",
-          "component_type_id",
-          "component_type",
-          "component_type_i18n_key",
-          "component_desc",
-          "position",
-          "event_action_id",
-          "action_name",
-          "action_i18n_key",
-          "axis",
-          "current",
-          "interval",
-          "percentage",
-          "level",
-          "extended"
-        ]
-      },
-      "Response_GarageTrackedActionDto": {
-        "type": "object",
-        "properties": {
-          "bike_id": {
-            "type": "number",
-            "example": 21,
-            "description": "The bike carrying the part, which a row opens"
-          },
-          "component_mounted_id": {
-            "type": "number",
-            "example": 55
-          },
-          "component_type_id": {
-            "type": "number",
-            "example": 12
-          },
-          "component_type": {
-            "type": "string",
-            "example": "Chain"
-          },
-          "component_type_i18n_key": {
-            "type": "string",
-            "example": "component.chain",
-            "nullable": true
-          },
-          "component_desc": {
-            "type": "string",
-            "example": "Shimano XT M8100",
-            "nullable": true
-          },
-          "position": {
-            "type": "string",
-            "example": "front",
-            "nullable": true
-          },
-          "event_action_id": {
-            "type": "number",
-            "example": 42
-          },
-          "action_name": {
-            "type": "string",
-            "example": "Chain Replacement"
-          },
-          "action_i18n_key": {
-            "type": "string",
-            "example": "action.chainReplacement",
-            "nullable": true
-          },
-          "axis": {
-            "type": "string",
-            "enum": [
-              "km",
-              "min",
-              "health_index"
-            ],
-            "example": "km"
-          },
-          "current": {
-            "type": "number",
-            "example": 3200,
-            "description": "Wear on that axis since the Wear Baseline"
-          },
-          "interval": {
-            "type": "number",
-            "example": 4000,
-            "description": "The Service Interval on that axis, including any Extension in force"
-          },
-          "percentage": {
-            "type": "number",
-            "example": 80,
-            "description": "Whole percent of the way to being due. Never capped"
-          },
-          "level": {
-            "type": "string",
-            "enum": [
-              "good",
-              "warning",
-              "critical",
-              "overdue"
-            ],
-            "example": "warning"
-          },
-          "extended": {
-            "type": "boolean",
-            "example": false,
-            "description": "The action has been put off, lengthening its interval"
-          },
-          "bike_brand": {
-            "type": "string",
-            "example": "Santa Cruz"
-          },
-          "bike_model": {
-            "type": "string",
-            "example": "Hightower",
-            "nullable": true
-          },
-          "year": {
-            "type": "number",
-            "example": 2022,
-            "nullable": true
-          }
-        },
-        "required": [
-          "bike_id",
-          "component_mounted_id",
-          "component_type_id",
-          "component_type",
-          "component_type_i18n_key",
-          "component_desc",
-          "position",
-          "event_action_id",
-          "action_name",
-          "action_i18n_key",
-          "axis",
-          "current",
-          "interval",
-          "percentage",
-          "level",
-          "extended",
-          "bike_brand",
-          "bike_model",
-          "year"
         ]
       }
     }
