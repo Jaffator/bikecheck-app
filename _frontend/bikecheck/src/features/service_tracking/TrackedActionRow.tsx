@@ -42,6 +42,22 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
         <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
           {job}
         </Text>
+        {explanation !== null && (
+          <ActionIcon
+            variant="transparent"
+            color="gray"
+            size="xs"
+            aria-label={explanation.aria}
+            onClick={(event) => {
+              // The row around it leads to the bike; asking what a reading is does not.
+              event.stopPropagation();
+              setExplained(true);
+            }}
+            style={{ flexShrink: 0, alignSelf: "center" }}
+          >
+            <Info size={13} color="var(--color-text-dim)" />
+          </ActionIcon>
+        )}
         <Text className="font-mono" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
@@ -85,35 +101,30 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
     </Stack>
   );
 
-  // The info button sits beside the reading, never inside it: a button within a button is
-  // not valid markup - the same reason a part's row keeps its menu outside its own tap.
+  // The info button sits on the heading it explains, which puts it inside whatever the row
+  // leads through - so the row carries the tap as a div rather than as a <button>, since a
+  // button within a button is not valid markup. It keeps the keyboard by declaring what it
+  // is: a control that answers to Enter and to Space, the way the real button did.
   const body = (
-    <Group gap="xs" wrap="nowrap" align="flex-start">
+    <>
       {onOpen === null ? (
-        <Box style={{ flex: 1, minWidth: 0 }}>{reading}</Box>
+        <Box>{reading}</Box>
       ) : (
         <UnstyledButton
+          component="div"
+          role="button"
+          tabIndex={0}
           onClick={onOpen}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            onOpen();
+          }}
           className="active:scale-[0.985]"
-          style={{ display: "block", flex: 1, minWidth: 0, transition: "transform 0.12s ease" }}
+          style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
         >
           {reading}
         </UnstyledButton>
-      )}
-
-      {explanation !== null && (
-        <ActionIcon
-          variant="transparent"
-          color="gray"
-          size="xs"
-          aria-label={explanation.aria}
-          onClick={() => {
-            setExplained(true);
-          }}
-          style={{ flexShrink: 0 }}
-        >
-          <Info size={13} color="var(--color-text-dim)" />
-        </ActionIcon>
       )}
 
       <ExplanationModal
@@ -122,7 +133,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
           setExplained(false);
         }}
       />
-    </Group>
+    </>
   );
 
   // Only a job already past due is worth putting off — anything else is not being ridden
