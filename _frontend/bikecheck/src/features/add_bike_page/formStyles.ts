@@ -26,7 +26,7 @@ export const inputStyles = {
   } as React.CSSProperties,
   input: {
     borderRadius: "0.6rem",
-    backgroundColor: "var(--mantine-color-inputs-6)",
+    backgroundColor: "var(--mantine-color-cards-7)",
     border: "1px solid var(--mantine-color-inputs-5)",
     height: "2.4rem",
     color: "var(--mantine-color-text-6)",

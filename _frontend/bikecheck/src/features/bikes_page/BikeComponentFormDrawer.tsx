@@ -643,7 +643,7 @@ function CategoryCard({
           backgroundColor: selected
             ? "color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)"
             : "var(--mantine-color-cards-6)",
-          border: `1px solid ${selected ? "var(--mantine-color-primary-6)" : "var(--color-border-subtle)"}`,
+          border: `1px solid ${selected ? "var(--mantine-color-primary-6)" : "var(--mantine-color-inputs-4)"}`,
         }}
       >
         {categoryIcon(group.group_name, CATEGORY_ICON_SIZE)}

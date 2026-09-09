@@ -354,8 +354,8 @@ function Category({
         // Half a step below the card it sits on (cards.6 to cards.7), which is as far as an
         // open block can sink before it reads as a hole rather than as depth.
         backgroundColor: open ? "#201b1b" : "transparent",
-        border: open ? "1px solid var(--mantine-color-primary-9)" : "1px solid transparent",
-        borderTopColor: open ? "var(--mantine-color-primary-9)" : "var(--color-border-subtle)",
+        border: open ? "1px solid var(--mantine-color-primary-8)" : "1px solid transparent",
+        borderTopColor: open ? "var(--mantine-color-primary-8)" : "var(--color-border-subtle)",
         borderRadius: open ? "var(--mantine-radius-sm" : undefined,
         overflow: "hidden",
         transition: "border-color 120ms ease, background-color 120ms ease",
