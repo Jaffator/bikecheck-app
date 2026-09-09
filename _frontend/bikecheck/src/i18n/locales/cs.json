@@ -188,6 +188,7 @@
     "stepTrackedActions": "Kontroluju opotřebení…",
     "failed": "Odpověď se nepodařilo získat. Zkus to prosím znovu.",
     "timeout": "Odpověď trvala moc dlouho. Zkus otázku zjednodušit.",
+    "budget": "Dnešní limit pro dotazy je vyčerpaný. Zkus to znovu v {{time}}.",
     "loadFailed": "Vlákno se nepodařilo načíst",
     "emptyTitle": "Zeptej se mechanika",
     "emptyBody": "Napiš vlastními slovy, co chceš vědět o svých kolech, dílech, servisech nebo jízdách — odpověď dostane souvislou větou."

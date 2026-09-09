@@ -184,6 +184,7 @@
     "stepTrackedActions": "Checking wear…",
     "failed": "The answer could not be fetched. Please try again.",
     "timeout": "The answer took too long. Try a simpler question.",
+    "budget": "Today's question limit is spent. Try again at {{time}}.",
     "loadFailed": "Could not load the thread",
     "emptyTitle": "Ask your mechanic",
     "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides — the answer comes back as plain prose."

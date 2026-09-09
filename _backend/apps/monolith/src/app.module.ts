@@ -7,7 +7,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core/constants';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './_filters/all-exceptions.filter';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { UserThrottlerGuard } from './_guards/user-throttler.guard';
 import { BikeModule } from './bike/bike.module';
 import { BikeEventModule } from './bike-event/bike-event.module';
 import { ComponentModuleModule } from './component/component.module';
@@ -45,7 +46,8 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
       adapter: BullMQAdapter,
     }),
     ConfigModule.forRoot({ envFilePath: 'apps/monolith/.env', isGlobal: true }),
-    // Global rate limit: 100 requests / 60s per IP. Stricter limits set per-route (e.g. auth).
+    // Global rate limit: 100 requests / 60s, per user where there is one and per IP otherwise
+    // (UserThrottlerGuard). Stricter limits set per-route (e.g. auth).
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     BullModule.forRoot({
       connection: {
@@ -115,7 +117,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     },
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: UserThrottlerGuard,
     },
     {
       provide: APP_FILTER,

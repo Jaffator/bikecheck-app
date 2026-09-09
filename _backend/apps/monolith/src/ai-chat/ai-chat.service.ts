@@ -30,6 +30,13 @@ const TIMEOUT_MS = 60_000;
 const DEFAULT_LANGUAGE = 'cs';
 const DEFAULT_CURRENCY = 'CZK';
 
+// What one user may spend on answers, summed over a rolling window rather than reset at
+// midnight: what was spent at noon is given back at noon, so the user is always told a time
+// rather than "tomorrow". The default lives in code, the real cap in the environment - raising
+// it is a restart, never a new build.
+const DEFAULT_DAILY_TOKEN_BUDGET = 200_000;
+const BUDGET_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 // How much of the thread the model is told about. The cap is in tokens, not in messages: two
 // long turns cost what ten short ones do, and it is the cost that is being held down.
 const HISTORY_TOKEN_BUDGET = 4_000;
@@ -142,6 +149,15 @@ export class AiChatService {
   // saved either way.
   async ask(userId: number, dto: AskChatDto, emit: EmitChatEvent): Promise<void> {
     const question = dto.question.trim();
+
+    // Over the cap the model is not called at all, so the refusal costs nothing but one sum.
+    const freesUpAt = await this.overBudgetUntil(userId);
+    if (freesUpAt !== null) {
+      this.logger.warn({ custom: true, reason: 'budget' }, 'ai-chat turn refused: the daily budget is spent');
+      emit({ type: 'error', reason: 'budget', retry_at: freesUpAt.toISOString() });
+      return;
+    }
+
     const [user, selectedBike, history] = await Promise.all([
       this.prisma.users.findUnique({ where: { id: userId }, select: { language: true, currency: true } }),
       this.selectedBike(userId, dto.bike_id),
@@ -338,6 +354,26 @@ export class AiChatService {
     return trimmedHistory(rows.reverse());
   }
 
+  // Whether this user is over the cap, and if so when the window frees up. The check is made
+  // before the turn, never during it: one question may cross the cap and the next one is
+  // stopped, so the overshoot is at most a single expensive answer.
+  private async overBudgetUntil(userId: number): Promise<Date | null> {
+    const since = new Date(Date.now() - BUDGET_WINDOW_MS);
+    const window = await this.prisma.chat_messages.aggregate({
+      where: { user_id: userId, created_at: { gte: since }, total_tokens: { not: null } },
+      _sum: { total_tokens: true },
+      _min: { created_at: true },
+    });
+
+    if ((window._sum.total_tokens ?? 0) < dailyTokenBudget()) return null;
+
+    // The oldest answer in the window is the one that frees room, and its moment plus the
+    // window is the time the user is given.
+    const oldest = window._min.created_at ?? since;
+
+    return new Date(oldest.getTime() + BUDGET_WINDOW_MS);
+  }
+
   // The picker's choice, resolved against the garage: an id that matches no bike of this
   // user's reads as no selection, which is all bikes.
   private async selectedBike(userId: number, bikeId: number | undefined): Promise<SelectedBike | null> {
@@ -378,6 +414,15 @@ export class AiChatService {
 
     return toMessageDto(message);
   }
+}
+
+// The cap, read on every turn so it can be raised without a new build. The same number for
+// everyone - there is no tariff on `users`. Anything that is not a positive number reads as
+// the default.
+function dailyTokenBudget(): number {
+  const configured = Number(process.env.AI_CHAT_DAILY_TOKEN_BUDGET);
+
+  return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_DAILY_TOKEN_BUDGET;
 }
 
 // A bike is named by what it is, not by what its owner calls it: `bikename` never reaches the

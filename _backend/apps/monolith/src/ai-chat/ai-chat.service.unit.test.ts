@@ -100,7 +100,7 @@ describe('AiChatService', () => {
   const mockPrisma = {
     users: { findUnique: jest.fn() },
     bikes: { findFirst: jest.fn(), findMany: jest.fn() },
-    chat_messages: { create: jest.fn(), findMany: jest.fn() },
+    chat_messages: { create: jest.fn(), findMany: jest.fn(), aggregate: jest.fn() },
     $transaction: jest.fn(),
   };
 
@@ -143,6 +143,7 @@ describe('AiChatService', () => {
     mockPrisma.bikes.findFirst.mockResolvedValue(null);
     mockPrisma.bikes.findMany.mockResolvedValue(GARAGE);
     mockPrisma.chat_messages.findMany.mockResolvedValue([]);
+    mockPrisma.chat_messages.aggregate.mockResolvedValue({ _sum: { total_tokens: 0 }, _min: { created_at: null } });
     mockServiceTracking.getGarageTrackedActions.mockResolvedValue([]);
     mockPrisma.$transaction.mockImplementation((work: (tx: typeof mockPrisma) => Promise<unknown>) => work(mockPrisma));
     mockPrisma.chat_messages.create.mockImplementation(({ data }: CreateArg) =>
@@ -250,6 +251,38 @@ describe('AiChatService', () => {
     expect(events).toEqual([{ type: 'error', reason: 'failed' }]);
     expect(mockPrisma.chat_messages.create).not.toHaveBeenCalled();
     expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('does not call the model at all over the daily budget, and says when the window frees up', async () => {
+    // The cap spent, and the oldest of it paid for at six in the morning.
+    mockPrisma.chat_messages.aggregate.mockResolvedValue({
+      _sum: { total_tokens: 200_000 },
+      _min: { created_at: new Date('2026-09-09T06:00:00.000Z') },
+    });
+    const model = stub([saysText('Never asked.')]);
+
+    await service.ask(OWNER_ID, { question: 'Jaká mám kola?' }, emit);
+
+    expect(model.doGenerateCalls).toHaveLength(0);
+    // A concrete time, twenty-four hours after the oldest answer in the window.
+    expect(events).toEqual([{ type: 'error', reason: 'budget', retry_at: '2026-09-10T06:00:00.000Z' }]);
+    expect(mockPrisma.chat_messages.create).not.toHaveBeenCalled();
+  });
+
+  it('lets one question cross the cap and stops the one after it', async () => {
+    mockPrisma.chat_messages.aggregate.mockResolvedValue({
+      _sum: { total_tokens: 199_999 },
+      _min: { created_at: new Date('2026-09-09T06:00:00.000Z') },
+    });
+    stub([saysText('You have a Santa Cruz Hightower.')]);
+
+    await service.ask(OWNER_ID, { question: 'Jaká mám kola?' }, emit);
+
+    // A token under the cap is under it: the turn runs, however much it goes on to spend.
+    expect(events.at(-1)).toEqual({
+      type: 'done',
+      message: expect.objectContaining({ content: 'You have a Santa Cruz Hightower.' }),
+    });
   });
 
   it('reads a bike that is not the caller as no selection at all', async () => {

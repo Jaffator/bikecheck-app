@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AiChatService } from './ai-chat.service';
@@ -24,7 +25,10 @@ export class AiChatController {
   // ---------- POST one question, answered on a held connection ----------
   // NDJSON, one JSON per line: `step` on every tool round, then `done` with the saved message
   // or `error` with a reason. No job and no polling - the state is the connection.
+  // Ten questions a minute, counted per user rather than per address - see
+  // UserThrottlerGuard. The daily token budget is the cost limit; this is only the burst.
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiResponse({
     status: 200,
     description: 'NDJSON stream, one JSON per line: {"type":"step"|"done"|"error", ...}',

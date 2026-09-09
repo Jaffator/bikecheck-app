@@ -15,10 +15,16 @@ export interface PendingTurn {
   answer: string | null;
 }
 
+// Why the last turn produced nothing, so the page can say so beside the send button. A
+// refusal on the daily budget carries the moment the window frees up; nothing else does.
+export interface ChatFailure {
+  reason: ChatErrorReason;
+  retryAt: string | null;
+}
+
 export interface ChatTurn {
   pending: PendingTurn | null;
-  // Why the last turn produced nothing, so the page can say so beside the send button.
-  failed: ChatErrorReason | null;
+  failed: ChatFailure | null;
   ask: (question: string) => void;
 }
 
@@ -27,7 +33,7 @@ export interface ChatTurn {
 export function useChatTurn(onFailed: (question: string) => void): ChatTurn {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<PendingTurn | null>(null);
-  const [failed, setFailed] = useState<ChatErrorReason | null>(null);
+  const [failed, setFailed] = useState<ChatFailure | null>(null);
   // Read synchronously, so mashing send cannot put a second question on the wire.
   const running = useRef(false);
   const connection = useRef<AbortController | null>(null);
@@ -47,7 +53,7 @@ export function useChatTurn(onFailed: (question: string) => void): ChatTurn {
       const controller = new AbortController();
       connection.current = controller;
 
-      let reason: ChatErrorReason | null = null;
+      let failure: ChatFailure | null = null;
       let answered = false;
 
       function onEvent(event: ChatStreamEvent): void {
@@ -56,7 +62,7 @@ export function useChatTurn(onFailed: (question: string) => void): ChatTurn {
           return;
         }
         if (event.type === "error") {
-          reason = event.reason;
+          failure = { reason: event.reason, retryAt: event.retry_at ?? null };
           return;
         }
         answered = true;
@@ -65,7 +71,7 @@ export function useChatTurn(onFailed: (question: string) => void): ChatTurn {
 
       void askChat(question, onEvent, controller.signal)
         .catch(() => {
-          reason = "failed";
+          failure = { reason: "failed", retryAt: null };
         })
         .then(async () => {
           running.current = false;
@@ -73,7 +79,7 @@ export function useChatTurn(onFailed: (question: string) => void): ChatTurn {
           if (controller.signal.aborted) return;
           if (!answered) {
             setPending(null);
-            setFailed(reason ?? "failed");
+            setFailed(failure ?? { reason: "failed", retryAt: null });
             onFailed(question);
             return;
           }

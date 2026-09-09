@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Send } from "lucide-react";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { QUESTION_MAX_LENGTH } from "../aiChat.api";
-import type { ChatErrorReason } from "../aiChat.types";
+import type { ChatFailure } from "../useChatTurn";
 
 // Clears the footer pill, written the way the FAB writes the same gap.
 const TAB_BAR_CLEARANCE =
@@ -29,11 +29,11 @@ interface ChatComposerProps {
   onSend: () => void;
   // A turn is already on the wire; a second one is not started while it is.
   running: boolean;
-  failed: ChatErrorReason | null;
+  failed: ChatFailure | null;
 }
 
 export function ChatComposer({ value, onChange, onSend, running, failed }: ChatComposerProps): ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const keyboardOffset = useKeyboardOffset();
   const empty = value.trim().length === 0;
 
@@ -81,7 +81,9 @@ export function ChatComposer({ value, onChange, onSend, running, failed }: ChatC
         {/* The failure belongs beside the button that failed, not in thread the bar covers. */}
         {failed !== null && (
           <Text fz={13} c="red.5">
-            {t(failed === "timeout" ? "chat.timeout" : "chat.failed")}
+            {failed.reason === "budget"
+              ? t("chat.budget", { time: retryTime(failed.retryAt, i18n.language) })
+              : t(failed.reason === "timeout" ? "chat.timeout" : "chat.failed")}
           </Text>
         )}
         <Group gap={8} wrap="nowrap" align="flex-end">
@@ -113,4 +115,12 @@ export function ChatComposer({ value, onChange, onSend, running, failed }: ChatC
       </Stack>
     </Box>
   );
+}
+
+// When the budget window frees up. Only the clock time: the window is a rolling day, so the
+// moment is never more than a day away and the date would say nothing.
+function retryTime(iso: string | null, language: string): string {
+  if (iso === null) return "";
+
+  return new Intl.DateTimeFormat(language, { hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 }
