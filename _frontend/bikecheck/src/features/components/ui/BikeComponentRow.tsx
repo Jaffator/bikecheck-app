@@ -7,7 +7,7 @@ import type { TFunction } from "i18next";
 import { ActionIcon, Group, Menu, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { ArrowLeftRight, MoreVertical, PackageMinus, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeftRight, ChevronRight, MoreVertical, PackageMinus, Pencil, Trash2 } from "lucide-react";
 import type { BikeComponent, PartActions } from "@/features/components/components.types";
 import { componentTypeName, positionLabel } from "@/features/components/componentLabels";
 
@@ -53,6 +53,9 @@ export function BikeComponentRow({
         pl="md"
         pr={readOnly ? 0 : "xs"}
         py={12}
+        // Lights up while held, so the reading half reads as a press target rather than as
+        // text sitting next to the only button in the row.
+        className="transition-colors active:bg-[var(--mantine-color-cards2-6)]"
         style={{ display: "block", minWidth: 0, flex: 1 }}
       >
         <Stack gap={2} style={{ minWidth: 0 }}>
@@ -75,6 +78,9 @@ export function BikeComponentRow({
                 {position}
               </Text>
             )}
+            {/* The mark that the row opens. It follows the name and the side it sits on,
+                because those read as one thing - and the line's right edge is the kebab's. */}
+            <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
           </Group>
 
           {/* What the owner called it — how two wheelsets are told apart. */}
