@@ -1,6 +1,6 @@
-// What the machine is made of, read as its Component Categories. The build arrives folded:
-// each category is a card that opens on its own and closes the one before it, so the whole
-// build is legible at a glance and only one category is ever unrolled. The section lets the
+// What the machine is made of, read as its Component Categories. The build is one card
+// carrying its own heading, and the categories are the folded rows inside it: one opens at
+// a time and closes the one before it, so the whole build is legible at a glance. The section lets the
 // owner add, correct, dismount and delete a part, from the kebab on the part's own row. It
 // still writes no maintenance of its own: a Replacement leaves for the service wizard,
 // prefilled (ADR 0015, amended by ADR 0017 and ADR 0018).
@@ -131,20 +131,25 @@ export function BikeComponentsSection({ bikeId, ebike, readOnly = false }: BikeC
 
   return (
     <Stack gap="sm">
-      <Group justify="space-between" wrap="nowrap">
-        <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
-          {t("bikeComponents.title")}
-        </Text>
-        {!readOnly && (
-          <Paper
-            radius="md"
-            style={{
-              backgroundColor: "var(--mantine-color-cards-6)",
-              backgroundImage: "var(--card-glow)",
-              border: "none",
-              boxShadow: "var(--elev-row)",
-            }}
-          >
+      {/* One card for the whole build, heading included - the categories inside it are rows
+          rather than cards of their own, so the page reads as one panel and not as a stack
+          of tiles. It carries no padding: the heading and the states below bring their own,
+          and the rows run edge to edge the way a list should. */}
+      <Paper
+        radius="lg"
+        style={{
+          overflow: "hidden",
+          backgroundColor: "var(--mantine-color-cards-6)",
+          backgroundImage: "var(--card-glow)",
+          border: "none",
+          boxShadow: "var(--elev-panel)",
+        }}
+      >
+        <Group justify="space-between" wrap="nowrap" px="md" pt="md" pb="xs">
+          <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+            {t("bikeComponents.title")}
+          </Text>
+          {!readOnly && (
             <ActionIcon
               variant="subtle"
               radius="xl"
@@ -155,52 +160,60 @@ export function BikeComponentsSection({ bikeId, ebike, readOnly = false }: BikeC
             >
               <Plus size={20} />
             </ActionIcon>
-          </Paper>
-        )}
-      </Group>
-
-      {/* The section stands on its own request, so the photo and the readings above it are
-          already on screen while this is still arriving. It arrives as the folded cards it
-          will settle into. */}
-      {isLoading && Array.from({ length: SKELETON_CARDS }, (_, index) => <Skeleton key={index} h={60} radius="lg" />)}
-
-      {isError && (
-        <Text fz={13} c="red.5">
-          {t("bikeComponents.loadFailed")}
-        </Text>
-      )}
-
-      {!isLoading && !isError && categories.length === 0 && (
-        <Stack gap="sm" align="flex-start">
-          <Text fz={13} c="var(--color-text-dim)">
-            {t("bikeComponents.emptyBody")}
-          </Text>
-          {!readOnly && (
-            <Button variant="light" color="primary.6" radius="md" leftSection={<Plus size={16} />} onClick={openAdd}>
-              {t("bikeComponents.addTitle")}
-            </Button>
           )}
+        </Group>
+
+        {/* The section stands on its own request, so the photo and the readings above it are
+            already on screen while this is still arriving. It arrives as the folded rows it
+            will settle into. */}
+        {isLoading && (
+          <Stack gap="sm" px="md" pb="md">
+            {Array.from({ length: SKELETON_CARDS }, (_, index) => (
+              <Skeleton key={index} h={44} radius="md" />
+            ))}
+          </Stack>
+        )}
+
+        {isError && (
+          <Text fz={13} c="red.5" px="md" pb="md">
+            {t("bikeComponents.loadFailed")}
+          </Text>
+        )}
+
+        {!isLoading && !isError && categories.length === 0 && (
+          <Stack gap="sm" align="flex-start" px="md" pb="md">
+            <Text fz={13} c="var(--color-text-dim)">
+              {t("bikeComponents.emptyBody")}
+            </Text>
+            {!readOnly && (
+              <Button variant="light" color="primary.6" radius="md" leftSection={<Plus size={16} />} onClick={openAdd}>
+                {t("bikeComponents.addTitle")}
+              </Button>
+            )}
+          </Stack>
+        )}
+
+        <Stack gap={0}>
+          {categories.map((category) => (
+            <Category
+              key={category.id}
+              category={category}
+              bikeId={bikeId}
+              open={openCategoryId === category.id}
+              onToggle={() => toggleCategory(category.id)}
+              cardRef={openCategoryId === category.id ? openCardRef : undefined}
+              onOpen={(part) => setViewingId(part.id)}
+              actions={partActions}
+            />
+          ))}
         </Stack>
-      )}
 
-      {categories.map((category) => (
-        <Category
-          key={category.id}
-          category={category}
-          bikeId={bikeId}
-          open={openCategoryId === category.id}
-          onToggle={() => toggleCategory(category.id)}
-          cardRef={openCategoryId === category.id ? openCardRef : undefined}
-          onOpen={(part) => setViewingId(part.id)}
-          actions={partActions}
-        />
-      ))}
-
-      {(dismount.isError || remove.isError) && (
-        <Text fz={13} c="red.5">
-          {t("bikeComponents.actionFailed")}
-        </Text>
-      )}
+        {(dismount.isError || remove.isError) && (
+          <Text fz={13} c="red.5" px="md" pb="md">
+            {t("bikeComponents.actionFailed")}
+          </Text>
+        )}
+      </Paper>
 
       <BikeComponentDetailSheet
         component={viewing}
@@ -332,19 +345,16 @@ function Category({
       : t("bikeComponents.partsCount", { count: category.mounted.length });
 
   return (
-    <Paper
+    <Box
       ref={cardRef}
-      radius="lg"
-      // A closed card is itself one button, so it presses like an action tile does. An open
-      // one carries the parts' own menus, so it stops pressing — see docs/ui/card-surface.md.
-      className={open ? undefined : "active:scale-[0.985]"}
+      // The card is the section around it, so a category carries no surface of its own -
+      // only the hairline that tells it from the one above, the way a part's row does
+      // inside it. The one being read sinks a shade, which is what marks it open.
       style={{
-        backgroundColor: "var(--mantine-color-cards-6)",
-        backgroundImage: "var(--card-glow)",
-        border: open ? "1px solid var(--mantine-color-primary-9)" : "none",
-        boxShadow: "var(--elev-row)",
+        backgroundColor: open ? "var(--mantine-color-cards-7)" : "transparent",
+        borderTop: "1px solid var(--color-border-subtle)",
         overflow: "hidden",
-        transition: "transform 120ms ease",
+        transition: "background-color 120ms ease",
       }}
     >
       <UnstyledButton
@@ -423,7 +433,7 @@ function Category({
           )}
         </Stack>
       )}
-    </Paper>
+    </Box>
   );
 }
 
