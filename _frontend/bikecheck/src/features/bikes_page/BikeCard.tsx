@@ -167,7 +167,9 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
           <StravaPairingHint stravaGearId={bike.strava_gear_id} />
         </Group>
 
-        {worst !== null && <AttentionMeter action={worst} />}
+        {/* A bike whose worst reading is still 0% has nothing to report: the meter would
+            say so with an empty bar and a zero, which is a line of card spent on nothing. */}
+        {worst !== null && worst.percentage > 0 && <AttentionMeter action={worst} />}
       </Stack>
     </Paper>
   );
