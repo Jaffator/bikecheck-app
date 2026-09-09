@@ -19,6 +19,7 @@ import { GeminiModule } from './gemini/gemini.module';
 import { NotificationModule } from './notification/notification.module';
 import { ReportModule } from './report/report.module';
 import { ServiceTrackingModule } from './service-tracking/service-tracking.module';
+import { ProbeModule } from './probe/probe.module';
 import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from 'nestjs-pino';
 import { BullBoardModule } from '@bull-board/nestjs';
@@ -105,6 +106,8 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     NotificationModule,
     ReportModule,
     ServiceTrackingModule,
+    // Throwaway probe for #76, gone with this branch.
+    ProbeModule,
   ],
   providers: [
     {

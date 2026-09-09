@@ -71,6 +71,25 @@ Ordered by how much they differentiate the app, not by effort.
 
 ---
 
+## Release blockers
+
+Not features — things the app cannot ship without.
+
+- **Deleting an account.** Google Play has required an in-app path to it since March 2023, and the
+  app has none. `users.is_deleted` / `deleted_at` exist and nothing reads them. It belongs on the
+  Profile page, next to the identity it destroys, but the UI is the small half: the design question
+  is what happens to the owner's bikes, to Reports already shared by link (frozen and public, ADR
+  0011 and 0012) and to their files, which are deleted through a queue rather than inline (ADR
+  0025). Deserves its own session.
+- **A privacy policy and terms of use**, served at `/privacy` and `/terms` on the public build the
+  Reports already need (ADR 0012). Settings links to both; until they are deployed the links are
+  dead. The store asks for the privacy URL as well.
+- **A release that bumps the version.** Settings reads `versionName` / `versionCode` from the
+  native shell, which are still `1.0` / `1` — the number a user reports back is only useful once
+  publishing moves it.
+
+---
+
 ## Suggested order
 
 1. **Finish the UI for existing APIs** — garage, components, logging service, photos. Everything

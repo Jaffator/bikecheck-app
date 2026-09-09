@@ -104,6 +104,13 @@ each tag is a chip the user takes or gives back; what is taken joins the Custom 
 Action Note when the Service is saved (ADR 0007). Most tags are seeded, but a user can add tags of
 their own to any action, which only they are offered and only they can delete (ADR 0008).
 
+**Own Catalogue**:
+The catalogue entries an owner named themselves — their own Component Types and their own Action
+Tags. Only they are offered them, only they can remove them, and removal is the only thing that can
+be done to one. Seeded entries are never part of it, and a Service that already quoted an entry
+keeps what it read.
+_Avoid_: Custom items, my stuff
+
 **Custom Note**:
 What the user typed against one Action, and only that — nothing is written here on their behalf.
 Lives in the wizard alone: it is never stored, because saving composes it into the Action Note.

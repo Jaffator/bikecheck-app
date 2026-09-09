@@ -21,6 +21,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
+import { Probe } from "@/features/probe_page/Probe";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
@@ -29,6 +30,12 @@ function App(): ReactElement {
       {/* Public routes remain outside the authentication gate. A share link opens the
           report and nothing else: no nav, no tab bar, no session fetch. */}
       <Route path="/r/:token" element={<PublicReport />} />
+      {/* Throwaway probe for #76, outside the gate so a missing session cookie cannot
+          be mistaken for a broken stream. It also takes over the root, because a
+          standalone build with no session lands on the login screen and a WebView has
+          no address bar to reach /probe with. Gone with this branch. */}
+      <Route path="/" element={<Probe />} />
+      <Route path="/probe" element={<Probe />} />
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>
   );
