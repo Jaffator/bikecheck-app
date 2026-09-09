@@ -4,6 +4,7 @@ import { MockLanguageModelV3 } from 'ai/test';
 import type { LanguageModelV3CallOptions, LanguageModelV3GenerateResult, LanguageModelV3Usage } from '@ai-sdk/provider';
 import { AiChatService } from './ai-chat.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import type { ChatStreamEvent } from './ai-chat.types';
 
 const OWNER_ID = 7;
@@ -94,6 +95,9 @@ describe('AiChatService', () => {
     $transaction: jest.fn(),
   };
 
+  // The wear readings are the one tool the loop does not read through Prisma.
+  const mockServiceTracking = { getGarageTrackedActions: jest.fn() };
+
   const mockLogger = { info: jest.fn(), debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
   // The model in the service's place, which is the seam the loop is tested through.
@@ -119,6 +123,7 @@ describe('AiChatService', () => {
       providers: [
         AiChatService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: ServiceTrackingService, useValue: mockServiceTracking },
         { provide: getLoggerToken(AiChatService.name), useValue: mockLogger },
       ],
     }).compile();
@@ -128,6 +133,7 @@ describe('AiChatService', () => {
     mockPrisma.users.findUnique.mockResolvedValue({ language: 'cs', currency: 'CZK' });
     mockPrisma.bikes.findFirst.mockResolvedValue(null);
     mockPrisma.bikes.findMany.mockResolvedValue(GARAGE);
+    mockServiceTracking.getGarageTrackedActions.mockResolvedValue([]);
     mockPrisma.$transaction.mockImplementation((work: (tx: typeof mockPrisma) => Promise<unknown>) => work(mockPrisma));
     mockPrisma.chat_messages.create.mockImplementation(({ data }: CreateArg) =>
       Promise.resolve({
