@@ -18,10 +18,10 @@ import {
   useBikeComponents,
   useDeleteBikeComponent,
   useDismountBikeComponent,
-} from "@/features/components/components.queries";
+} from "../components.queries";
 import { useCategoryActions } from "@/features/service/service.queries";
-import type { BikeComponent, PartActions } from "@/features/components/components.types";
-import { groupByCategory, type ComponentCategory } from "@/features/components/componentLabels";
+import type { BikeComponent, PartActions } from "../components.types";
+import { groupByCategory, type ComponentCategory } from "../componentLabels";
 import { BikeComponentRow } from "./BikeComponentRow";
 import { BikeComponentFormDrawer } from "./BikeComponentFormDrawer";
 import { BikeComponentDetailSheet } from "./BikeComponentDetailSheet";

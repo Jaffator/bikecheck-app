@@ -31,14 +31,14 @@ import {
   useCreateComponentType,
   useDefaultComponents,
   useUpdateBikeComponent,
-} from "@/features/components/components.queries";
+} from "../components.queries";
 import type {
   AssembleBikeComponent,
   BikeComponent,
   BikeComponentFields,
   ComponentGroup,
-} from "@/features/components/components.types";
-import { componentTypeName } from "@/features/components/componentLabels";
+} from "../components.types";
+import { componentTypeName } from "../componentLabels";
 import { categoryIcon } from "@/features/service/categoryIcon";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { chipStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";

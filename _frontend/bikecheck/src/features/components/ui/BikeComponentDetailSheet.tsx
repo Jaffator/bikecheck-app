@@ -8,14 +8,14 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Info, Pencil, X } from "lucide-react";
 import type { TFunction } from "i18next";
-import type { BikeComponent } from "@/features/components/components.types";
+import type { BikeComponent } from "../components.types";
 import {
   componentTypeName,
   isDismounted,
   positionLabel,
   tracksDrivetrain,
   tracksSuspension,
-} from "@/features/components/componentLabels";
+} from "../componentLabels";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { ExplanationModal } from "@/components/ExplanationModal";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";

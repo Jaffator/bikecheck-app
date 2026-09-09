@@ -3,7 +3,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Box, Group, Image, Stack, Text } from "@mantine/core";
 import { Gauge } from "lucide-react";
-import { PHOTO_ASPECT } from "../add_bike_page/photoCrop";
+import { PHOTO_ASPECT } from "@/features/add_bike_page/photoCrop";
 
 interface BikePhotoProps {
   imageUrl: string | null;

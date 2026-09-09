@@ -5,8 +5,8 @@ import { ActionIcon, Box, Divider, Drawer, Group, Stack, Text } from "@mantine/c
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import dayjs from "dayjs";
-import type { Bike } from "../bikes/bikes.types";
-import { bikeTitle } from "../bikes/bikeTitle";
+import type { Bike } from "../bikes.types";
+import { bikeTitle } from "../bikeTitle";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
