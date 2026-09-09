@@ -11,6 +11,7 @@ import {
 import { CreateBikeComponentDto, CustomComponentsDto } from './dto/create-components';
 import { DismountComponentDto, UpdateMountedComponentDto } from './dto/update-components';
 import { ownedBikeWhere, OwnedBikeOptions } from '../bike/owned-bike.where';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 
 // What one Mounted Component is read with: the kind of part it is, the category that kind
 // sits in, and every occasion work was recorded against it — which is what dates the part
@@ -59,7 +60,10 @@ function healthIndexInterval(bikeId: number): Prisma.bike_service_intervalWhereI
 
 @Injectable()
 export class ComponentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly serviceTracking: ServiceTrackingService,
+  ) {}
 
   // The owner is the caller, never whoever the body names. The type also joins its
   // category's catch-all Replacement, so Replace is offered on it like on a seeded one
@@ -226,6 +230,9 @@ export class ComponentService {
       include: bikeComponentInclude,
     });
 
+    // A corrected accumulator is a corrected reading, so what the part now says about
+    // itself is answered for straight away.
+    await this.serviceTracking.evaluateBike(updated.bike_id, userId);
     return toBikeComponentDto(updated, await this.tracksHealthIndex(updated.bike_id, updated.component_type_id));
   }
 

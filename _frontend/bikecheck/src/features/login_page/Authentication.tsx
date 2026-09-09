@@ -7,7 +7,7 @@ import { detectLanguage } from "@/i18n";
 import { GoogleButton } from "./GoogleButton";
 import { Mail, Lock, User } from "lucide-react";
 import logoName from "../../assets/logo_name.svg";
-import { useLogin, useRegistration, useGoogleNative } from "../users/users.queries";
+import { useLogin, useRegistration, useGoogleNative } from "@/features/users/users.queries";
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";

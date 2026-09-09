@@ -3,8 +3,8 @@ import type { ReactElement } from "react";
 import { Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useBikes } from "../bikes/bikes.queries";
-import { BikeCard } from "./BikeCard";
+import { useBikes } from "@/features/bikes/bikes.queries";
+import { BikeCard } from "@/features/bikes/ui/BikeCard";
 import { EmptyGarage } from "./EmptyGarage";
 
 export function Bikes(): ReactElement {

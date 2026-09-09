@@ -3,8 +3,8 @@ import { useCallback, useState, type ReactElement, type ReactNode } from "react"
 import { Box, Tabs } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import { CompletedRides } from "@/features/rides/CompletedRides";
-import { PendingRides } from "@/features/strava/PendingRidesCard";
+import { CompletedRides } from "@/features/rides/ui/CompletedRides";
+import { PendingRides } from "@/features/strava/ui/PendingRidesCard";
 import { usePendingRides } from "@/features/strava/strava.queries";
 import { SETTLE_MS, useSwipePanels } from "@/hooks/useSwipePanels";
 

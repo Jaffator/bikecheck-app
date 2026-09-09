@@ -16,25 +16,27 @@ import {
   Unlink,
   Weight,
 } from "lucide-react";
-import { useBike, useArchiveBike } from "../bikes/bikes.queries";
-import { useBikeRideCount } from "../rides/rides.queries";
-import { useHistoryTotals } from "../service/service.queries";
-import { usePendingRides } from "../strava/strava.queries";
-import { ALL_TIME } from "../service/servicePeriod";
+import { useBike, useArchiveBike } from "@/features/bikes/bikes.queries";
+import { useBikeRideCount } from "@/features/rides/rides.queries";
+import { useHistoryTotals } from "@/features/service/service.queries";
+import { usePendingRides } from "@/features/strava/strava.queries";
+import { ALL_TIME } from "@/features/service/servicePeriod";
 import { formatCost } from "@/utils/money";
-import { GearLinkingSheet } from "../strava/GearLinkingSheet";
-import { useConnectStrava, useLinkStravaGear } from "../strava/strava.queries";
-import { useCurrentUser } from "../users/users.queries";
-import { BikePhoto } from "./BikePhoto";
-import { BikeActionTiles } from "./BikeActionTiles";
-import { BikeStravaCard } from "./BikeStravaCard";
-import { HealthBadge } from "./HealthBadge";
-import { StravaLinkedBadge } from "./StravaLinkedBadge";
-import { BikeSpecsDrawer } from "./BikeSpecsDrawer";
-import { BikeComponentsSection } from "./BikeComponentsSection";
-import { bikeTitle } from "../bikes/bikeTitle";
+import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
+import { useConnectStrava, useLinkStravaGear } from "@/features/strava/strava.queries";
+import { useCurrentUser } from "@/features/users/users.queries";
+import { BikePhoto } from "@/features/bikes/ui/BikePhoto";
+import { BikeActionTiles } from "@/features/bikes/ui/BikeActionTiles";
+import { BikeStravaCard } from "@/features/strava/ui/BikeStravaCard";
+import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
+import { TrackedActionsSection } from "@/features/service_tracking/ui/TrackedActionsSection";
+import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
+import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
+import { BikeSpecsDrawer } from "@/features/bikes/ui/BikeSpecsDrawer";
+import { BikeComponentsSection } from "@/features/components/ui/BikeComponentsSection";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { ExportSheet } from "@/features/report/ExportSheet";
+import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
 import { useHeaderStore } from "@/store/store";
 import { TRANSPARENT_HEADER_CONTROL } from "@/layout/AppLayout";
@@ -84,6 +86,9 @@ export function BikeDetail(): ReactElement {
   // corrects itself is a sentence the owner can agree to while it is still wrong.
   const { data: rideCount } = useBikeRideCount(bike?.id ?? null);
   const { data: pendingRides } = usePendingRides();
+  // Feeds the badge over the photo. The section below reads the same key, so the two are
+  // one request and can never disagree.
+  const { data: trackedActions } = useBikeTrackedActions(bike?.id ?? null);
   const pendingForBike =
     bike?.strava_gear_id == null ? 0 : (pendingRides ?? []).filter((ride) => ride.gear_id === bike.strava_gear_id).length;
 
@@ -213,7 +218,7 @@ export function BikeDetail(): ReactElement {
         <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
           {/* The same corner, in the same order, as the garage card keeps its badges. */}
           <Stack gap={6} align="flex-end">
-            <HealthBadge readings={[]} />
+            <HealthBadge actions={trackedActions ?? []} />
             <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
           </Stack>
         </BikePhoto>
@@ -265,6 +270,31 @@ export function BikeDetail(): ReactElement {
             )}
           </Group>
         </Stack>
+
+        {/* The specs are read once and the actions daily, so the list stays behind a row
+            rather than pushing the tiles below the fold. It belongs to the bike above it,
+            so it sits on the same card, parted from it only by a rule. */}
+        <UnstyledButton
+          onClick={() => setShowingSpecs(true)}
+          px="md"
+          py={15}
+          w="100%"
+          style={{
+            borderTop: "1px solid var(--color-border-subtle)",
+            color: "var(--mantine-color-text-6)",
+            cursor: "pointer",
+          }}
+        >
+          <Group justify="space-between" wrap="nowrap">
+            <Group gap={8} wrap="nowrap">
+              <Info size={16} color="var(--color-text-dim)" />
+              <Text fz={15} fw={600} c="text.6">
+                {t("bikes.specsAction")}
+              </Text>
+            </Group>
+            <ChevronRight size={16} color="var(--color-text-dim)" />
+          </Group>
+        </UnstyledButton>
       </Paper>
       {/* Says plainly what this page now is, so nobody looks for the actions that are gone. */}
       {archived && (
@@ -291,32 +321,6 @@ export function BikeDetail(): ReactElement {
         </Paper>
       )}
 
-      {/* The specs are read once and the actions daily, so the list stays behind a row
-          rather than pushing the tiles below the fold. */}
-      <UnstyledButton
-        onClick={() => setShowingSpecs(true)}
-        px="md"
-        py={15}
-        style={{
-          borderRadius: "var(--mantine-radius-lg)",
-          backgroundColor: "var(--mantine-color-cards-6)",
-          backgroundImage: "var(--card-glow)",
-          boxShadow: "var(--elev-row)",
-          color: "var(--mantine-color-text-6)",
-          cursor: "pointer",
-          transition: "transform 120ms ease",
-        }}
-      >
-        <Group justify="space-between" wrap="nowrap">
-          <Group gap={8} wrap="nowrap">
-            <Info size={16} color="var(--color-text-dim)" />
-            <Text fz={13} fw={600} c="text.6">
-              {t("bikes.specsAction")}
-            </Text>
-          </Group>
-          <ChevronRight size={16} color="var(--color-text-dim)" />
-        </Group>
-      </UnstyledButton>
 
       {/* A paired bike has nothing left to ask of Strava, so the card goes away — which
           gear it answers to is read in the spec sheet. */}
@@ -335,6 +339,10 @@ export function BikeDetail(): ReactElement {
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
       />
+
+      {/* What the bike still owes, above what it is made of: the readings are what the
+          owner came to check, the build is read less often. */}
+      <TrackedActionsSection bikeId={bike.id} />
 
       {/* What the machine is made of, under what can be done with it: the tiles are the
           daily act, the build is read less often. */}

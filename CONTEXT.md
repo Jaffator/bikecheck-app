@@ -168,6 +168,32 @@ measured against.
 How much wear may pass before an action is due again — expressed in kilometres, minutes or health
 index, depending on the action.
 
+### Service Tracking
+
+**Service Tracking**:
+Reading each Tracked Action as a percentage of the way to being due, and telling the owner when it
+matters. Everything it reports is derived at the moment of the read; nothing about a reading is
+stored (ADR 0026).
+_Avoid_: Maintenance tracking, wear tracking (that is the accumulators, which Service Tracking reads)
+
+**Tracked Action**:
+One mounted part paired with one action the bike keeps a Service Interval for — the unit Service
+Tracking measures. A part and an action, never an action on a bike, so two tyres are two Tracked
+Actions (ADR 0027). A pairing the bike keeps no Service Interval for is not one at all.
+_Avoid_: Due item, maintenance item, service item
+
+**Attention Level**:
+How much attention one Tracked Action is asking for, from its percentage: good below 80, warning
+80–94, critical 95–99, overdue at 100 and above. The colour a reading is read by before it is read
+by number.
+_Avoid_: Health level, severity, status
+
+**Extension**:
+What putting off an overdue Tracked Action added to its Service Interval — 10% of the interval, on
+the axis it is measured in. Accumulates when granted again, and dies with the part it was granted
+on, so a new chain is never born already deferred.
+_Avoid_: Snooze, postponement, deferral
+
 ### Sharing
 
 **Report**:

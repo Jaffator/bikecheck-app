@@ -5,6 +5,7 @@ import { StravaEventsService } from './strava.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { NotificationModule } from '../notification/notification.module';
 import { StravaController } from './strava.controller';
+import { ServiceTrackingModule } from '../service-tracking/service-tracking.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { StravaController } from './strava.controller';
     BullModule.registerQueue({ name: 'gemini-queue' }),
     PrismaModule,
     NotificationModule,
+    ServiceTrackingModule,
   ],
   controllers: [StravaController],
   providers: [StravaEventsProcessor, StravaEventsService],

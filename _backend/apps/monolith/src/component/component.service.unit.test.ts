@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { ComponentService } from './component.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 
 const OWNER_ID = 7;
 const BIKE_ID = 21;
@@ -45,6 +46,8 @@ function serviceJunction(serviceDate: string, isDeleted = false): Record<string,
 describe('ComponentService', () => {
   let service: ComponentService;
 
+  const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn() };
+
   const mockPrismaService = {
     component_types: {
       findMany: jest.fn(),
@@ -76,7 +79,11 @@ describe('ComponentService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ComponentService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        ComponentService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ServiceTrackingService, useValue: mockServiceTracking },
+      ],
     }).compile();
 
     service = module.get<ComponentService>(ComponentService);
@@ -647,6 +654,20 @@ describe('ComponentService', () => {
         service.updateMountedComponent(COMPONENT_ID, { component_desc: 'Mine now' }, OWNER_ID),
       ).rejects.toThrow(NotFoundException);
       expect(mockPrismaService.components_mounted.update).not.toHaveBeenCalled();
+    });
+
+    // A corrected accumulator is a corrected reading, so the bike is re-read straight
+    // away. What the new reading says is Service Tracking's answer, and tested there.
+    it('has Service Tracking re-read the bike after a correction', async () => {
+      // ARRANGE
+      mockPrismaService.components_mounted.findFirst.mockResolvedValue(mountedRow());
+      mockPrismaService.components_mounted.update.mockResolvedValue(mountedRow());
+
+      // ACT
+      await service.updateMountedComponent(COMPONENT_ID, { total_km: 2000 }, OWNER_ID);
+
+      // ASSERT
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
     });
 
     it('looks the part up through its owner', async () => {

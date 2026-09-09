@@ -1,7 +1,8 @@
 // Dashboard empty state.
 import type { ReactElement } from "react";
-import { Box, Group, Stack, Text } from "@mantine/core";
+import { Box, Button, Group, Stack, Text } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Lightbulb } from "lucide-react";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -11,6 +12,7 @@ import graphPlaceholder from "@/assets/images/empty_dashboard_graph.png";
 // Show the empty Home tab.
 export function EmptyDashboard(): ReactElement {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   // Read the cached user.
   const { data: user } = useCurrentUser();
 
@@ -24,6 +26,11 @@ export function EmptyDashboard(): ReactElement {
       body={t("dashboard.getStarted")}
       badge={<StatusBadge label={t("dashboard.noActiveData")} />}
     >
+      {/* Nothing here works until there is a bike, so the one way forward is a button. */}
+      <Button variant="filled" radius="md" size="md" fullWidth onClick={() => navigate("/bikes/new")}>
+        {t("dashboard.addBike")}
+      </Button>
+
       {/* Display a pro tip. */}
       <Box
         mt={16}

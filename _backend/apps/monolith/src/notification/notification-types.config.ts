@@ -42,8 +42,10 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     // Opens the Pending tab with this ride's sheet already up.
     route: '/rides?pending=:activityId',
   },
+  // Recurring by nature: the same job comes due again every season, so it belongs on
+  // the lock screen and in the list, and never in an inbox.
   maintenance_due: {
-    channels: ['push', 'email', 'inApp'],
+    channels: ['push', 'inApp'],
     // No maintenance sub-screen exists yet; the bike itself is the closest
     // thing the app can actually open.
     route: '/bikes/:bikeId',

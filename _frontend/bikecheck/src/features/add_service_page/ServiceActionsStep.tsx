@@ -33,8 +33,8 @@ import {
   inputStyles,
 } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel, componentTypeLabel, shortComponentLabel } from "@/features/service/serviceLabels";
-import { categoryIcon } from "@/features/service/categoryIcon";
-import { componentTypeIcon } from "@/features/service/componentIcon";
+import { categoryIcon } from "@/features/service/ui/categoryIcon";
+import { componentTypeIcon } from "@/features/service/ui/componentIcon";
 import { CustomTagDrawer } from "./CustomTagDrawer";
 import type { DraftBlock, PickedAction } from "./serviceWizard.types";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";

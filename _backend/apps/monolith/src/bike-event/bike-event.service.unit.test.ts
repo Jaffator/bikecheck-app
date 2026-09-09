@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BikeEventService } from './bike-event.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import { Create_BikeEventDto } from './dto/create-bike-event.dto';
 import { Update_BikeEventDto } from './dto/update-bike-event.dto';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
@@ -35,6 +36,8 @@ describe('BikeEventService', () => {
     rides: { aggregate: jest.fn() },
     bikes: { findFirst: jest.fn(), findFirstOrThrow: jest.fn() },
   };
+
+  const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn() };
 
   const mockStorage = {
     uploadImageR2CloudFare: jest.fn(),
@@ -102,6 +105,7 @@ describe('BikeEventService', () => {
         BikeEventService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: StorageService, useValue: mockStorage },
+        { provide: ServiceTrackingService, useValue: mockServiceTracking },
       ],
     }).compile();
 
@@ -132,7 +136,7 @@ describe('BikeEventService', () => {
     mockTx.event_actions_done.create.mockResolvedValue({ id: 500 });
     rides({});
     mockPrisma.rides.aggregate.mockResolvedValue(ridesAfter({}));
-    mockPrisma.events_bikes.findFirst.mockResolvedValue({ id: 99 });
+    mockPrisma.events_bikes.findFirst.mockResolvedValue({ id: 99, bike_id: BIKE_ID });
     mockPrisma.events_bikes.findUnique.mockResolvedValue({
       id: 99,
       bike_id: BIKE_ID,
@@ -1266,5 +1270,36 @@ describe('BikeEventService', () => {
         data: expect.objectContaining({ total_km: 200, drivetrain_km: 150, suspension_min: 0 }),
       }),
     );
+  });
+
+  // Recording, correcting or removing a service moves the Wear Baselines the readings are
+  // measured from, so each path hands Service Tracking the bike to re-read. What the new
+  // readings say, and whether they announce anything, is decided there and tested there.
+  describe('the Service Tracking evaluation', () => {
+    it('evaluates the bike a service was recorded on', async () => {
+      await service.create(dto(), OWNER_ID);
+
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
+    });
+
+    it('evaluates the bike a service was edited on', async () => {
+      await service.update(99, { note: 'Corrected' }, OWNER_ID);
+
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
+    });
+
+    // A deleted service holds no baseline, so every reading it was holding down climbs
+    // again - and has to be able to announce that.
+    it('evaluates the bike a service was deleted from', async () => {
+      await service.softDelete(99, OWNER_ID);
+
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
+    });
+
+    it('evaluates the bike a service was hard deleted from', async () => {
+      await service.hardDelete(99, OWNER_ID);
+
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
+    });
   });
 });

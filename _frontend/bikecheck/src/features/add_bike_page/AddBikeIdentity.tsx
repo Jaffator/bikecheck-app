@@ -14,7 +14,7 @@ import { AddBikeFooter } from "./AddBikeFooter";
 import { AddBikeSummaryModal } from "./AddBikeSummaryModal";
 import { PhotoCropModal } from "./PhotoCropModal";
 import { BikeAddedScreen } from "./BikeAddedScreen";
-import { GearLinkingSheet } from "../strava/GearLinkingSheet";
+import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import { StravaConnectScreen } from "./StravaConnectScreen";
 import { TOTAL_STEPS, useAddBikeWizard } from "./useAddBikeWizard";
 

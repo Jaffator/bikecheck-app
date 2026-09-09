@@ -4,7 +4,7 @@ import { Stack, Title, Text, Button } from "@mantine/core";
 import { Unplug } from "lucide-react";
 import { Network } from "@capacitor/network";
 import { useTranslation } from "react-i18next";
-import { useOfflineWhenCallApiStore } from "../../store/store";
+import { useOfflineWhenCallApiStore } from "@/store/store";
 
 async function tryAgainConnection(): Promise<void> {
   const { connected } = await Network.getStatus();

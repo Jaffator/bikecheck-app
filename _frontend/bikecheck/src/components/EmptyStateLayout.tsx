@@ -1,8 +1,8 @@
 import type { ReactElement, ReactNode } from "react";
 import { Box, Center, Image, Stack, Text } from "@mantine/core";
 
-// Positions empty-state copy consistently across viewport sizes.
-const COPY_TOP_OFFSET = "40dvh";
+// The band the copy is centred in, so the group sits mid-screen rather than at a fixed offset.
+const COPY_BAND_HEIGHT = "78dvh";
 
 // Crops the illustration so its fade reaches the copy offset.
 const ILLUSTRATION_HEIGHT = "50dvh";
@@ -76,7 +76,7 @@ export function EmptyStateLayout({
       )}
 
       {/* Positions copy within the illustration fade. */}
-      <Stack pos="relative" pt={COPY_TOP_OFFSET} gap={16}>
+      <Stack pos="relative" mih={COPY_BAND_HEIGHT} justify="center" gap={16}>
         <Stack gap={16} ta="center">
           <Text fz={22} lh="32px" fw={600} c="var(--color-text-bright)">
             {title}

@@ -6,7 +6,7 @@ export const fieldLabel = {
   fontSize: 14,
   // Input.css gives its own label font-weight: medium. Stated here so a Text above a row of
   // chips carries the same weight instead of falling back to the body's.
-  fontWeight: 400,
+  fontWeight: 600,
   // The display face rather than the body one: a label names a control, it is not prose.
   // Taken from the variable so it follows whatever the theme calls its display font.
   fontFamily: "var(--font-sans)",
@@ -15,11 +15,20 @@ export const fieldLabel = {
 // Shared by every field in the add-bike wizard so the steps look like one form.
 export const inputStyles = {
   label: fieldLabel,
+  // The clear cross on a clearable field is a transparent ActionIcon; left alone it takes the
+  // theme's primary. Set on the wrapper so it inherits down without touching the button itself.
+  wrapper: { "--ai-color": "var(--mantine-color-text-7)" } as React.CSSProperties,
+  // NumberInput's increment/decrement: the chevrons and the rule that splits them off
+  // from the field, both grey rather than the theme's text colour.
+  control: {
+    color: "var(--mantine-color-text-7)",
+    "--control-border": "1px solid var(--mantine-color-inputs-5)",
+  } as React.CSSProperties,
   input: {
     borderRadius: "0.6rem",
-    backgroundColor: "var(--mantine-color-inputs-6)",
+    backgroundColor: "var(--mantine-color-cards-7)",
     border: "1px solid var(--mantine-color-inputs-5)",
-    height: "2.25rem",
+    height: "2.4rem",
     color: "var(--mantine-color-text-6)",
     "--input-placeholder-color": "var(--mantine-color-text-9)",
   } as React.CSSProperties,

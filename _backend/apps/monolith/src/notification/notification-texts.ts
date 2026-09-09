@@ -28,10 +28,17 @@ export interface NotificationTextPayload {
   km?: number;
   gearName?: string;
   activityName?: string;
+  // How many Tracked Actions on the bike are due, and how many are past due. Where the
+  // bike stands, not only what just moved - the line has to size the job, and an action
+  // announced last week is still an action waiting.
+  dueCount?: number;
+  overdueCount?: number;
 }
 
+// Both halves are written from the payload, because a maintenance reminder's headline
+// turns on whether anything is past due and not only on how much.
 interface NotificationText {
-  title: string;
+  title: (payload: NotificationTextPayload) => string;
   body: (payload: NotificationTextPayload) => string;
 }
 
@@ -45,41 +52,55 @@ type NotificationTexts = Record<NotificationLanguage, NotificationText>;
 const TEXTS: Record<NotificationType, NotificationTexts> = {
   strava_activity_saved: {
     cs: {
-      title: 'Nová jízda',
+      title: () => 'Nová jízda',
       body: (payload) => rideBody(payload, 'km', 'Jízda byla přidána'),
     },
     en: {
-      title: 'New ride',
+      title: () => 'New ride',
       body: (payload) => rideBody(payload, 'km', 'Ride added'),
     },
   },
   strava_activity_unassigned: {
     cs: {
-      title: 'Nová jízda čeká na kolo',
+      title: () => 'Nová jízda čeká na kolo',
       body: (payload) => unassignedBody(payload, 'km', 'Vyber, ke kterému kolu jízda patří.'),
     },
     en: {
-      title: 'New ride needs a bike',
+      title: () => 'New ride needs a bike',
       body: (payload) => unassignedBody(payload, 'km', 'Pick the bike this ride belongs to.'),
     },
   },
   maintenance_due: {
     cs: {
-      title: 'Čas na servis',
-      body: (payload) => (payload.bikeName ? `Kolo ${payload.bikeName} potřebuje servis.` : 'Kolo potřebuje servis.'),
+      // 95 asks the owner to order the part; 100 tells them they are riding on borrowed
+      // time. One notification can carry both, and the worse of the two names it.
+      title: (payload) => (payload.overdueCount ? 'Servis po termínu' : 'Čas na servis'),
+      body: (payload) =>
+        maintenanceBody(payload, {
+          due: 'k servisu',
+          overdue: 'po termínu',
+          named: (bike) => `Kolo ${bike} potřebuje servis.`,
+          fallback: 'Kolo potřebuje servis.',
+        }),
     },
     en: {
-      title: 'Service due',
-      body: (payload) => (payload.bikeName ? `${payload.bikeName} needs a service.` : 'A bike needs a service.'),
+      title: (payload) => (payload.overdueCount ? 'Service overdue' : 'Service due'),
+      body: (payload) =>
+        maintenanceBody(payload, {
+          due: 'due',
+          overdue: 'overdue',
+          named: (bike) => `${bike} needs a service.`,
+          fallback: 'A bike needs a service.',
+        }),
     },
   },
   achievement_unlocked: {
     cs: {
-      title: 'Nový úspěch',
+      title: () => 'Nový úspěch',
       body: () => 'Odemkl jsi nový úspěch.',
     },
     en: {
-      title: 'Achievement unlocked',
+      title: () => 'Achievement unlocked',
       body: () => 'You unlocked a new achievement.',
     },
   },
@@ -93,6 +114,21 @@ function rideBody(payload: NotificationTextPayload, unit: string, fallback: stri
   if (payload.km !== undefined) parts.push(`${payload.km} ${unit}`);
   if (payload.bikeName) parts.push(payload.bikeName);
   return parts.length > 0 ? parts.join(' · ') : fallback;
+}
+
+// "Canyon Grail · 2 due, 1 overdue": the bike, then the size of the job, so one line says
+// whether this is an errand or an afternoon. A notification written before the counts
+// existed carries none, and still has to read as a sentence.
+function maintenanceBody(
+  payload: NotificationTextPayload,
+  words: { due: string; overdue: string; named: (bike: string) => string; fallback: string },
+): string {
+  const counts: string[] = [];
+  if (payload.dueCount) counts.push(`${payload.dueCount} ${words.due}`);
+  if (payload.overdueCount) counts.push(`${payload.overdueCount} ${words.overdue}`);
+
+  if (counts.length === 0) return payload.bikeName ? words.named(payload.bikeName) : words.fallback;
+  return payload.bikeName ? `${payload.bikeName} · ${counts.join(', ')}` : counts.join(', ');
 }
 
 // The ride's own name identifies it better than anything else, so it takes the
@@ -110,5 +146,5 @@ export function buildNotificationText(
   payload: NotificationTextPayload = {},
 ): { title: string; body: string } {
   const text = TEXTS[type][resolveLanguage(language)];
-  return { title: text.title, body: text.body(payload) };
+  return { title: text.title(payload), body: text.body(payload) };
 }

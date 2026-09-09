@@ -4,8 +4,8 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { Avatar, Button, Card, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { StravaStatusCard } from "../strava/StravaStatusCard";
-import { useCurrentUser, useLogout } from "../users/users.queries";
+import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
+import { useCurrentUser, useLogout } from "@/features/users/users.queries";
 import { ProfileEditDrawer } from "./ProfileEditDrawer";
 
 export function Profile(): ReactElement | null {
@@ -57,7 +57,7 @@ export function Profile(): ReactElement | null {
       </Stack>
 
       {/* Name and weight are one form, so both rows open the same drawer. */}
-      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-cards-5)" }}>
+      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
         <UnstyledButton onClick={() => setEditing(true)} className="w-full" p="md">
           <Group justify="space-between" wrap="nowrap">
             <Text fw={600} fz={15} c="text.6">

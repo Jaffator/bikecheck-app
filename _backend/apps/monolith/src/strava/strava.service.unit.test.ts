@@ -5,6 +5,7 @@ import axios from 'axios';
 import { StravaEventsService } from './strava.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 
 jest.mock('axios');
 
@@ -21,10 +22,11 @@ describe('StravaEventsService', () => {
   const mockPrisma = {
     users: { findFirst: jest.fn(), findUnique: jest.fn() },
     bikes: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    strava_pending_activities: { upsert: jest.fn(), findMany: jest.fn() },
+    strava_pending_activities: { upsert: jest.fn(), findMany: jest.fn(), update: jest.fn() },
   };
 
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
+  const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn() };
   const mockQueue = { add: jest.fn() };
   const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 
@@ -45,6 +47,7 @@ describe('StravaEventsService', () => {
         StravaEventsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: ServiceTrackingService, useValue: mockServiceTracking },
         { provide: getQueueToken('gemini-queue'), useValue: mockQueue },
         { provide: getLoggerToken(StravaEventsService.name), useValue: mockLogger },
       ],
@@ -79,6 +82,55 @@ describe('StravaEventsService', () => {
       await service.saveAnalyzedData(activity());
 
       expect(saveRide).toHaveBeenCalledWith(BIKE_ID, OWNER_ID, 98765, expect.anything());
+    });
+  });
+
+  // The ride has just moved every accumulator on the bike; what those readings now say is
+  // Service Tracking's answer, not this service's. All that is asserted here is that it is
+  // asked - the arithmetic has its own tests.
+  describe('the Service Tracking evaluation', () => {
+    it('evaluates the bike a ride was saved against', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      jest.spyOn(service, 'saveRide').mockResolvedValue({ message: 'saved', isNew: true });
+
+      await service.saveAnalyzedData(activity());
+
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
+    });
+
+    // A re-synced ride is still an evaluation: it may have moved a reading down, which
+    // re-arms the next crossing even though nothing is announced.
+    it('evaluates a re-synced ride as well as a new one', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      jest.spyOn(service, 'saveRide').mockResolvedValue({ message: 'saved', isNew: false });
+
+      await service.saveAnalyzedData(activity());
+
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
+    });
+
+    // A ride nobody could place moves no accumulator, so there is nothing to evaluate.
+    it('evaluates nothing for a ride parked as pending', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+
+      await service.saveAnalyzedData(activity());
+
+      expect(mockServiceTracking.evaluateBike).not.toHaveBeenCalled();
+    });
+
+    // A backfill is evaluated once, at the end, rather than after each ride in it.
+    it('evaluates once after backfilling every pending ride', async () => {
+      jest.spyOn(service, 'saveRide').mockResolvedValue({ message: 'saved', isNew: true });
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([
+        { id: 1, activity_id: 1n, analyzed_data: {} },
+        { id: 2, activity_id: 2n, analyzed_data: {} },
+      ]);
+      mockPrisma.strava_pending_activities.update.mockResolvedValue({});
+
+      await service.resolvePendingActivities_noGear({ bikeId: BIKE_ID, userId: OWNER_ID, gearId: null });
+
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledTimes(1);
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(BIKE_ID, OWNER_ID);
     });
   });
 

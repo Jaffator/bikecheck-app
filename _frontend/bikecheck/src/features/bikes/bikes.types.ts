@@ -82,4 +82,4 @@ export type BikeModel = components["schemas"]["BikeModels"];
 export type BikeSearchResult = components["schemas"]["SearchBikeExternalResponseDto"];
 
 // Reuse the component-domain DTO until generated schema catches up.
-export type { AssembleBikeComponent as ExternalBikeComponent } from "../components/components.types";
+export type { AssembleBikeComponent as ExternalBikeComponent } from "@/features/components/components.types";

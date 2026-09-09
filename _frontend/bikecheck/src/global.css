@@ -117,6 +117,9 @@
   --color-border-subtle: rgba(120, 110, 99, 0.22);
   --color-status-idle: #ffb4ab;
   --color-decor: #352e28;
+  /* A track sunk below the hero card's own surface (cards.6, #262524) rather than beside
+     it, so the bar reads as a groove the meter fills. */
+  --color-decor-deep: #1a1612;
 
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
