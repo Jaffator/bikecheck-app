@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import { ownedBikesWhere } from '../../bike/owned-bike.where';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
+import { dateRange, isoDay } from './tool-dates';
 import type { PageTool, ToolPage } from './tool-page';
 
 // A part that is on the machine, or one that came off. Derived from `removed_at`; `is_active`
@@ -219,36 +220,4 @@ function toPartHistoryRow(part: PartRecord, serviceCount: number): PartHistoryRo
     total_time_min: part.total_time_min ?? 0,
     service_count: serviceCount,
   };
-}
-
-function isoDay(date: Date | null): string | null {
-  return date === null ? null : date.toISOString().slice(0, 10);
-}
-
-// A from/to pair as one filter, or nothing when neither end is a date. Unparseable text is no
-// filter rather than a failure, on the rule the cursor already follows.
-function dateRange(from: string | undefined, to: string | undefined): Prisma.DateTimeNullableFilter | undefined {
-  const gte = dayStart(from);
-  const lte = dayEnd(to);
-  if (gte === undefined && lte === undefined) return undefined;
-
-  return { ...(gte === undefined ? {} : { gte }), ...(lte === undefined ? {} : { lte }) };
-}
-
-function dayStart(text: string | undefined): Date | undefined {
-  return atTime(text, 'T00:00:00.000Z');
-}
-
-function dayEnd(text: string | undefined): Date | undefined {
-  return atTime(text, 'T23:59:59.999Z');
-}
-
-// An ISO day from the model, read at one end of that day. A full timestamp is trimmed to its
-// day, and anything else reads as no date at all.
-function atTime(text: string | undefined, time: string): Date | undefined {
-  if (text === undefined || !/^\d{4}-\d{2}-\d{2}/.test(text)) return undefined;
-
-  const date = new Date(`${text.slice(0, 10)}${time}`);
-
-  return Number.isNaN(date.getTime()) ? undefined : date;
 }

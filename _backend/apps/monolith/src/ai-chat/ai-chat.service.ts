@@ -10,6 +10,7 @@ import { ResponseChatMessageDto } from './dto/response-chat-message.dto';
 import type { ChatErrorReason, EmitChatEvent } from './ai-chat.types';
 import { garageTools, type GarageToolSet } from './tools/garage.tools';
 import { partsTools, type PartsToolSet } from './tools/parts.tools';
+import { ridesTools, type RidesToolSet } from './tools/rides.tools';
 import { servicesTools, type ServicesToolSet } from './tools/services.tools';
 import type { PageTool, ToolPage } from './tools/tool-page';
 
@@ -61,7 +62,7 @@ interface ToolCallRecord {
 type SelectedBike = { id: number; bike_brand: string; bike_model: string | null };
 
 // Every tool the model sees in a turn. There is no router: the AI SDK dispatches by name.
-type ChatToolSet = GarageToolSet & PartsToolSet & ServicesToolSet;
+type ChatToolSet = GarageToolSet & PartsToolSet & ServicesToolSet & RidesToolSet;
 
 const MESSAGE_SELECT = {
   id: true,
@@ -213,11 +214,13 @@ export class AiChatService {
     const garage = garageTools(this.prisma, userId);
     const parts = partsTools(this.prisma, userId);
     const services = servicesTools(this.prisma, userId);
+    const rides = ridesTools(this.prisma, userId);
 
     return {
       get_garage: this.instrument('get_garage', garage.get_garage, turn, emit),
       list_parts: this.instrument('list_parts', parts.list_parts, turn, emit),
       list_services: this.instrument('list_services', services.list_services, turn, emit),
+      list_rides: this.instrument('list_rides', rides.list_rides, turn, emit),
     };
   }
 
