@@ -9,6 +9,9 @@ import type { ChatErrorReason, ChatStreamEvent } from "./aiChat.types";
 // is held here instead of in the query cache.
 export interface PendingTurn {
   question: string;
+  // The bike the picker had bound when the question went out; null is all bikes. The thread
+  // reads it to know whether this turn changed the subject.
+  bikeId: number | null;
   // The tool the current round started with; null until the first step arrives.
   tool: string | null;
   // The answer as it arrived, shown while the saved thread is fetched back.
@@ -25,7 +28,7 @@ export interface ChatFailure {
 export interface ChatTurn {
   pending: PendingTurn | null;
   failed: ChatFailure | null;
-  ask: (question: string) => void;
+  ask: (question: string, bikeId: number | null) => void;
 }
 
 // A turn is started, watched and settled here. `onFailed` hands the question back, because a
@@ -44,11 +47,11 @@ export function useChatTurn(onFailed: (question: string) => void): ChatTurn {
   }, []);
 
   const ask = useCallback(
-    (question: string): void => {
+    (question: string, bikeId: number | null): void => {
       if (running.current) return;
       running.current = true;
       setFailed(null);
-      setPending({ question, tool: null, answer: null });
+      setPending({ question, bikeId, tool: null, answer: null });
 
       const controller = new AbortController();
       connection.current = controller;
@@ -69,7 +72,7 @@ export function useChatTurn(onFailed: (question: string) => void): ChatTurn {
         setPending((turn) => (turn === null ? turn : { ...turn, answer: event.message.content }));
       }
 
-      void askChat(question, onEvent, controller.signal)
+      void askChat(question, bikeId, onEvent, controller.signal)
         .catch(() => {
           failure = { reason: "failed", retryAt: null };
         })

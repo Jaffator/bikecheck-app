@@ -1,35 +1,76 @@
 // The thread itself: alternating turns, and one muted line while a turn is still being worked
 // out. No cards and no tables - an answer is prose, so it is drawn as prose.
-import type { ReactElement } from "react";
-import { Box, Group, Loader, Stack, Text } from "@mantine/core";
+import { Fragment, type ReactElement } from "react";
+import { Box, Divider, Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
+import type { Bike } from "@/features/bikes/bikes.types";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { toolStepKey } from "../toolStepLabels";
 import type { ChatMessage } from "../aiChat.types";
 import type { PendingTurn } from "../useChatTurn";
 
 interface ChatThreadProps {
   messages: ChatMessage[];
+  // The garage, so the bike a turn was asked about can be read back as a name.
+  bikes: Bike[];
   // The turn on the wire, drawn after the saved ones.
   pending: PendingTurn | null;
 }
 
-export function ChatThread({ messages, pending }: ChatThreadProps): ReactElement {
+export function ChatThread({ messages, bikes, pending }: ChatThreadProps): ReactElement {
+  const { t } = useTranslation();
+  // What the thread was about when the last saved message was written, which is what the turn
+  // on the wire is compared against.
+  const subject = messages.length === 0 ? null : messages[messages.length - 1].bike_id;
+
   return (
     <Stack gap={20}>
-      {messages.map((message) =>
-        message.role === "user" ? (
-          <Question key={message.id} text={message.content} />
-        ) : (
-          <Answer key={message.id} text={message.content} />
-        ),
-      )}
+      {messages.map((message, index) => {
+        // The message before it is the one it changed the subject from.
+        const changed = index > 0 && message.bike_id !== messages[index - 1].bike_id;
+
+        return (
+          <Fragment key={message.id}>
+            {changed && <SubjectDivider label={bikeLabel(bikes, message.bike_id, t)} />}
+            {message.role === "user" ? <Question text={message.content} /> : <Answer text={message.content} />}
+          </Fragment>
+        );
+      })}
       {pending !== null && (
         <>
+          {messages.length > 0 && pending.bikeId !== subject && (
+            <SubjectDivider label={bikeLabel(bikes, pending.bikeId, t)} />
+          )}
           <Question text={pending.question} />
           {pending.answer === null ? <ProgressLine tool={pending.tool} /> : <Answer text={pending.answer} />}
         </>
       )}
     </Stack>
+  );
+}
+
+// The bike a turn was asked about, by the name the garage gives it. An id no bike of the
+// user's answers to - an archived one among them - reads as all bikes, as the picker does.
+function bikeLabel(bikes: Bike[], bikeId: number | null, t: TFunction): string {
+  const bike = bikeId === null ? undefined : bikes.find((candidate) => candidate.id === bikeId);
+
+  return bike === undefined ? t("service.allBikes") : bikeTitle(bike);
+}
+
+// Where the thread changed subject. It names what follows it, never what came before: the
+// turns under it are the ones asked about this bike.
+function SubjectDivider({ label }: { label: string }): ReactElement {
+  return (
+    <Divider
+      color="var(--mantine-color-inputs-5)"
+      labelPosition="center"
+      label={
+        <Text fz={12} c="var(--color-text-dim)">
+          {label}
+        </Text>
+      }
+    />
   );
 }
 

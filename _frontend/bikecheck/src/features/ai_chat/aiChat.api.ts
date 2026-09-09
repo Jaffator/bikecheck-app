@@ -11,15 +11,17 @@ export async function getChatThread(): Promise<ChatMessage[]> {
 }
 
 // One question, answered while the caller holds the line. Every line of the NDJSON body is
-// handed to `onEvent` as it arrives, so a progress line reads as progress.
+// handed to `onEvent` as it arrives, so a progress line reads as progress. `bikeId` is what the
+// picker had bound when send was pressed - null is all bikes, and the field is left out.
 export async function askChat(
   question: string,
+  bikeId: number | null,
   onEvent: (event: ChatStreamEvent) => void,
   signal: AbortSignal,
 ): Promise<void> {
   const response = await apiFetchStream("/ai-chat", {
     method: "POST",
-    body: JSON.stringify({ question }),
+    body: JSON.stringify(bikeId === null ? { question } : { question, bike_id: bikeId }),
     signal,
   });
   if (response.body === null) return;

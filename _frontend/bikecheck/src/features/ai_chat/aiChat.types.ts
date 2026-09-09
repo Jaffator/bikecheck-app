@@ -9,7 +9,8 @@ export interface ChatMessage {
   id: number;
   role: ChatRole;
   content: string;
-  // The bike bound when the question was asked; the picker that binds it is not built yet.
+  // The bike the picker had bound when the question was asked; a change between consecutive
+  // turns is where the thread draws its divider. Null is all bikes.
   bike_id: number | null;
   created_at: string;
 }
