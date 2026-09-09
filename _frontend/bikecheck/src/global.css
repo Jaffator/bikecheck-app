@@ -117,6 +117,8 @@
   --color-border-subtle: rgba(120, 110, 99, 0.22);
   --color-status-idle: #ffb4ab;
   --color-decor: #352e28;
+  /* The same decor, sunk a shade, for a track on a hero card. */
+  --color-decor-deep: #2a241f;
 
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;

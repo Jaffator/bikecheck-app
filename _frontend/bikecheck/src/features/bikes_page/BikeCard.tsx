@@ -56,9 +56,8 @@ function AttentionMeter({ action }: { action: TrackedAction }): ReactElement {
         w={METER_WIDTH}
         style={{ flexShrink: 0 }}
         styles={{
-          // The same track a Tracked Action row wears, so one reading looks like one
-          // reading wherever it is read.
-          root: { backgroundColor: "var(--color-decor)" },
+          // Its own track, a shade deeper than a row's: the hero card carries more light.
+          root: { backgroundColor: "var(--color-decor-deep)" },
           section: { backgroundColor: color },
         }}
       />
