@@ -6,7 +6,7 @@ import { Settings, Bell, ArrowLeft } from "lucide-react";
 import { GoHomeFill, GoHome } from "react-icons/go";
 // import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
-import { PiPath, PiPathBold } from "react-icons/pi";
+import { PiPath, PiPathBold, PiChatCircleDots, PiChatCircleDotsFill } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -53,6 +53,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: PiPath,
     icon_fill: PiPathBold,
   },
+  {
+    labelKey: "nav.chat",
+    path: "/chat",
+    icon: PiChatCircleDots,
+    icon_fill: PiChatCircleDotsFill,
+  },
 ];
 
 // Maps routes to translated header titles; Home intentionally has none.
@@ -65,6 +71,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/service": "page.service",
   "/reports": "page.reports",
   "/rides": "page.rides",
+  "/chat": "page.chat",
   "/profile": "page.profile",
   "/settings": "page.settings",
   "/notifications": "page.notifications",

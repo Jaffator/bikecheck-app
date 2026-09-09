@@ -15,7 +15,8 @@
     "home": "Home",
     "bikes": "Bikes",
     "service": "Service",
-    "rides": "Rides"
+    "rides": "Rides",
+    "chat": "Mechanic"
   },
   "page": {
     "home": "Home",
@@ -26,7 +27,8 @@
     "settings": "Settings",
     "notifications": "Notifications",
     "serviceHistory": "Service history",
-    "reports": "Reports"
+    "reports": "Reports",
+    "chat": "Mechanic"
   },
   "offline": {
     "title": "You are offline",
@@ -167,6 +169,24 @@
     "noActiveData": "NO ACTIVE DATA",
     "addBike": "Add bike",
     "proTipBody": "Add a bike and components (chain, cassette, tires) <1>BikeCheck</1> predicts maintenance based on your mileage and lets you SHARE your setup with others."
+  },
+  "chat": {
+    "placeholder": "Ask anything…",
+    "question": "Question",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "stepGarage": "Looking through the garage…",
+    "stepParts": "Tracing parts…",
+    "stepServices": "Reading services…",
+    "stepRides": "Looking through rides…",
+    "stepSetup": "Reading the bike setup…",
+    "stepReports": "Looking through reports…",
+    "stepTrackedActions": "Checking wear…",
+    "failed": "The answer could not be fetched. Please try again.",
+    "timeout": "The answer took too long. Try a simpler question.",
+    "loadFailed": "Could not load the thread",
+    "emptyTitle": "Ask your mechanic",
+    "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides — the answer comes back as plain prose."
   },
   "rides": {
     "emptyTitle": "No Rides Yet",
