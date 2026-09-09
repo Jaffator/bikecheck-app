@@ -3,7 +3,7 @@ import { type ReactElement } from "react";
 import { Alert, Button, Divider, Group, Modal, ScrollArea, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Check, Pencil, TriangleAlert } from "lucide-react";
-import type { AssembleBikeComponent } from "../components/components.types";
+import type { AssembleBikeComponent } from "@/features/components/components.types";
 import type { BikeSpecificationValues } from "./bikeSpecification.types";
 import type { AddBikeIdentityValues } from "./useAddBikeWizard";
 import { disabledButtonStyles } from "./formStyles";

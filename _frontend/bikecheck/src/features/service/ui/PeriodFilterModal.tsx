@@ -4,8 +4,8 @@ import { Button, Chip, Group, Modal, Stack, Text } from "@mantine/core";
 import { DatePickerInput, DatesProvider } from "@mantine/dates";
 import { useTranslation } from "react-i18next";
 import { chipStyles, inputStyles } from "@/features/add_bike_page/formStyles";
-import { PERIOD_PRESETS, matchPreset } from "./servicePeriod";
-import type { ServicePeriod } from "./service.types";
+import { PERIOD_PRESETS, matchPreset } from "@/features/service/servicePeriod";
+import type { ServicePeriod } from "@/features/service/service.types";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above the service detail sheet, which the history can also have open.

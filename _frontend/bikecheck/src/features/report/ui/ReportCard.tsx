@@ -5,8 +5,8 @@ import { Browser } from "@capacitor/browser";
 import { useTranslation } from "react-i18next";
 import { ExternalLink, Link2Off, Trash2 } from "lucide-react";
 import { CopyLinkButton } from "./CopyLinkButton";
-import { REPORT_KIND_KEY, coversLabel, reportDay } from "./reportListLabels";
-import type { ReportSummary } from "./report.types";
+import { REPORT_KIND_KEY, coversLabel, reportDay } from "@/features/report/reportListLabels";
+import type { ReportSummary } from "@/features/report/report.types";
 
 // The three states a Report is in. It takes both flags to tell them apart: made but closed,
 // published and open, revoked and closed for good.

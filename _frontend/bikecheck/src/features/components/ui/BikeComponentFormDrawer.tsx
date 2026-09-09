@@ -31,15 +31,15 @@ import {
   useCreateComponentType,
   useDefaultComponents,
   useUpdateBikeComponent,
-} from "../components.queries";
+} from "@/features/components/components.queries";
 import type {
   AssembleBikeComponent,
   BikeComponent,
   BikeComponentFields,
   ComponentGroup,
-} from "../components.types";
-import { componentTypeName } from "../componentLabels";
-import { categoryIcon } from "@/features/service/categoryIcon";
+} from "@/features/components/components.types";
+import { componentTypeName } from "@/features/components/componentLabels";
+import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { chipStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
 import { SIDED_POSITIONS } from "@/features/add_bike_page/bikeComponents.types";

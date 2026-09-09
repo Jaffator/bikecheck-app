@@ -4,8 +4,8 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { Avatar, Button, Card, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { StravaStatusCard } from "../strava/StravaStatusCard";
-import { useCurrentUser, useLogout } from "../users/users.queries";
+import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
+import { useCurrentUser, useLogout } from "@/features/users/users.queries";
 import { ProfileEditDrawer } from "./ProfileEditDrawer";
 
 export function Profile(): ReactElement | null {

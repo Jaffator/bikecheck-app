@@ -8,9 +8,9 @@ import { RouteMap } from "@/components/RouteMap";
 import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
-import { useRides } from "./rides.queries";
+import { useRides } from "@/features/rides/rides.queries";
 import { RideDetailSheet } from "./RideDetailSheet";
-import type { Ride } from "./rides.types";
+import type { Ride } from "@/features/rides/rides.types";
 
 // How far a point may stray before the thumbnail drops it, in viewBox units. The card
 // draws the route at fifty pixels, where one unit is half a pixel - a quarter of the

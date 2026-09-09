@@ -7,9 +7,9 @@ import { ChevronDown, Clock, Mountain, Route } from "lucide-react";
 import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
-import { useResolvePendingRide } from "./strava.queries";
-import type { PendingRide } from "./strava.types";
+import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
+import { useResolvePendingRide } from "@/features/strava/strava.queries";
+import type { PendingRide } from "@/features/strava/strava.types";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface PendingRideSheetProps {

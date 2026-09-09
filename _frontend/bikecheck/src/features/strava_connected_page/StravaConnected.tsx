@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useGearLinking } from "@/features/strava/strava.queries";
 import { stravaDisplayName } from "@/features/strava/strava.types";
-import { GearLinkingSheet } from "@/features/strava/GearLinkingSheet";
+import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
 // OAuth deep-link destination after the backend links the account.

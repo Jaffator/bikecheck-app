@@ -1,6 +1,6 @@
 // Shared fetch wrapper centralizes URLs, credentials, and non-2xx errors.
 import { Network } from "./network";
-import { useOfflineWhenCallApiStore } from "../store/store";
+import { useOfflineWhenCallApiStore } from "@/store/store";
 const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
 
 // The absolute address of an API path, for the few things the browser fetches itself

@@ -2,9 +2,9 @@
 // mounted on it, so a buyer can check the build against what is in front of them.
 import type { ReactElement } from "react";
 import { Cog } from "lucide-react";
-import type { BikeCheckSnapshot } from "./report.types";
-import { REPORT_PAPER, reportBikeName, reportNumber, reportRideTime } from "./reportFormat";
-import { reportHeadings } from "./reportHeadings";
+import type { BikeCheckSnapshot } from "@/features/report/report.types";
+import { REPORT_PAPER, reportBikeName, reportNumber, reportRideTime } from "@/features/report/reportFormat";
+import { reportHeadings } from "@/features/report/reportHeadings";
 import { ComponentRow } from "./ComponentRow";
 import { DocumentFooter, DocumentHeader, Field, ScreenSheet, Section } from "./ReportPaper";
 

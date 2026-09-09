@@ -1,5 +1,5 @@
 // Define step-three component state outside the view.
-import type { AssembleBikeComponent, ComponentGroup } from "../components/components.types";
+import type { AssembleBikeComponent, ComponentGroup } from "@/features/components/components.types";
 import type { SuspensionLayout } from "./bikeSpecification.types";
 
 // Track component types excluded from the bike.

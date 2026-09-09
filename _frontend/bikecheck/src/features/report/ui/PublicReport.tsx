@@ -6,11 +6,11 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { Button, Loader } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Download, Link2Off } from "lucide-react";
-import { usePublicAttachmentOpener, usePublicReport, usePublicReportPdfUrl } from "./report.queries";
+import { usePublicAttachmentOpener, usePublicReport, usePublicReportPdfUrl } from "@/features/report/report.queries";
 import { ReportDocument } from "./ReportDocument";
-import { REPORT_PAPER } from "./reportFormat";
-import { REPORT_SETTLED_MARKER, useReportSettled } from "./reportSettled";
-import type { ReportSnapshot } from "./report.types";
+import { REPORT_PAPER } from "@/features/report/reportFormat";
+import { REPORT_SETTLED_MARKER, useReportSettled } from "@/features/report/reportSettled";
+import type { ReportSnapshot } from "@/features/report/report.types";
 
 // A token that is unpublished, revoked or expired all answer alike, so the page says the
 // one thing that is true of every closed link.

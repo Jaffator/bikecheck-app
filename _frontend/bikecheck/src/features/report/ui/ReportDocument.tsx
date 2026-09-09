@@ -8,9 +8,9 @@ import { PeriodReportDocument } from "./PeriodReportDocument";
 import { PeriodReportPrint } from "./PeriodReportPrint";
 import { BikeCheckDocument } from "./BikeCheckDocument";
 import { BikeCheckPrint } from "./BikeCheckPrint";
-import { REPORT_PAPER } from "./reportFormat";
-import { reportHeadings } from "./reportHeadings";
-import type { ReportAttachment, ReportSnapshot } from "./report.types";
+import { REPORT_PAPER } from "@/features/report/reportFormat";
+import { reportHeadings } from "@/features/report/reportHeadings";
+import type { ReportAttachment, ReportSnapshot } from "@/features/report/report.types";
 
 // On paper nothing is opened, so the print variant is not given a way to open it.
 type ReportDocumentProps =

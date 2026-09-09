@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { CalendarClock } from "lucide-react";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { usePendingRides } from "./strava.queries";
+import { usePendingRides } from "@/features/strava/strava.queries";
 
 // Shows unresolved rides separately from bikes lacking Strava gear.
 export function PendingRidesCard(): ReactElement | null {

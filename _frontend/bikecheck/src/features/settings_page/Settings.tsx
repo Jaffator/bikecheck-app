@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { Card, Group, SegmentedControl, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useCurrentUser, useUpdateUser } from "../users/users.queries";
+import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { SUPPORTED_LANGUAGES, applyLanguage } from "@/i18n";
 import { FALLBACK_CURRENCY, SUPPORTED_CURRENCIES } from "@/utils/money";
 import { CustomPartsDrawer } from "./CustomPartsDrawer";

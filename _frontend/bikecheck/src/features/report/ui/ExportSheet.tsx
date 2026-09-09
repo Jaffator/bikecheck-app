@@ -3,11 +3,11 @@ import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "
 import { ActionIcon, Box, Button, Drawer, Group, Loader, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Check, Link2, Share2, Trash2, X } from "lucide-react";
-import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "./report.queries";
+import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "@/features/report/report.queries";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { ReportDocument } from "./ReportDocument";
-import { REPORT_KIND_KEY } from "./reportListLabels";
-import type { ExportReportInput, ExportedReport, ReportKind } from "./report.types";
+import { REPORT_KIND_KEY } from "@/features/report/reportListLabels";
+import type { ExportReportInput, ExportedReport, ReportKind } from "@/features/report/report.types";
 import { ApiError } from "@/api/client";
 import { canShareLink, shareLink } from "@/utils/shareLink";
 import { useOverlayBack } from "@/hooks/useOverlayBack";

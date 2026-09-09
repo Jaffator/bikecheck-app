@@ -3,7 +3,7 @@ import { useState, type ReactElement } from "react";
 import { Badge, Button, Group, Image, Paper, Radio, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import type { BikeSearchResult } from "../bikes/bikes.types";
+import type { BikeSearchResult } from "@/features/bikes/bikes.types";
 
 // Limit initially rendered image cards on mobile.
 const PAGE_SIZE = 10;

@@ -5,8 +5,8 @@ import type { ReactElement } from "react";
 import { Group, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Clock3 } from "lucide-react";
-import { usePostponeTrackedAction } from "./tracking.queries";
-import type { TrackedAction } from "./tracking.types";
+import { usePostponeTrackedAction } from "@/features/service_tracking/tracking.queries";
+import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface PostponeControlProps {
   action: TrackedAction;

@@ -5,8 +5,8 @@ import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { SERVICE_CARD_SURFACE } from "./serviceCardSurface";
-import type { HistoryTotals } from "./service.types";
+import { SERVICE_CARD_SURFACE } from "@/features/service/serviceCardSurface";
+import type { HistoryTotals } from "@/features/service/service.types";
 
 // How a reading looks while it still belongs to the previous filter.
 function staleStyle(stale: boolean): CSSProperties {

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { Link2Off, MoreVertical, Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { ReportCard } from "@/features/report/ReportCard";
+import { ReportCard } from "@/features/report/ui/ReportCard";
 import {
   useDiscardAllReports,
   useDiscardReport,

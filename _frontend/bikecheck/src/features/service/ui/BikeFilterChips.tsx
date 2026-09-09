@@ -4,7 +4,7 @@ import { Chip, Group, ScrollArea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { chipStyles } from "../add_bike_page/formStyles";
+import { chipStyles } from "@/features/add_bike_page/formStyles";
 
 // The all-bikes chip has no id of its own, so it carries a value no bike can.
 const ALL_BIKES = "all";

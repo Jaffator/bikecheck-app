@@ -26,11 +26,13 @@ file because a second caller appeared is work nobody should have to do.
 ```
 features/<domain>_page/
 ├── <Domain>.tsx           what AppRouter points at
-└── Empty<Domain>.tsx      the screen's own empty state
+├── Empty<Domain>.tsx      the screen's own empty state
+└── <Step>.tsx             a screen that exists only for this route
 ```
 
-Nothing else. If a file in a `_page/` folder is not a route or that route's own empty state,
-it belongs in some domain's `ui/`.
+A route, its empty state, and the pieces that have no life outside it — the steps of the
+add-a-bike wizard, the drawers `settings_page` opens. Anything that is *about* a domain goes
+to that domain's `ui/`, however few screens render it today.
 
 ## Why not split by file kind
 
@@ -41,13 +43,8 @@ that reads it — and it groups files that have nothing to do with each other, w
 
 ## State of the migration
 
-Done: `bikes/ui`, `components/ui`.
+Every domain that draws anything now has one: `bikes` · `components` · `service` · `report` ·
+`strava` · `rides` · `service_tracking`. No domain keeps a `.tsx` in its own root.
 
-Not yet moved — these domains still keep their components in their root, and `bikes_page/`
-still holds four files belonging to two of them (`HealthBadge`, `TrackedActionsSection`,
-`BikeStravaCard`, `StravaLinkedBadge`):
-
-`service` · `report` · `strava` · `rides` · `service_tracking`
-
-Each moves whole, not file by file: half a domain in `ui/` and half in its root is worse than
-either shape.
+A domain moves whole, never file by file: half of one in `ui/` and half in its root is worse
+than either shape.

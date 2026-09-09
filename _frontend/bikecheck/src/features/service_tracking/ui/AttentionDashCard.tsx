@@ -7,9 +7,9 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Wrench } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { trackedActionKey } from "./attentionLevel";
+import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
 import { TrackedActionRow } from "./TrackedActionRow";
-import { useGarageTrackedActions } from "./tracking.queries";
+import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 
 // What the dashboard asks the server for. 80 is the band the server calls warning — the
 // point at which a reading becomes worth showing, not worth interrupting for.

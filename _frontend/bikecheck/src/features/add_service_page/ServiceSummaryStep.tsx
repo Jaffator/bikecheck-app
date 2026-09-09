@@ -25,7 +25,7 @@ import { currencySymbol } from "@/utils/money";
 import type { UploadedAttachment } from "@/features/service/service.types";
 import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import { categoryIcon } from "@/features/service/categoryIcon";
+import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { actionNote, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
 // import { bikecheckIconType } from "@/assets/icons/bikecheck";
 // import { RefreshCcw } from "lucide-react";

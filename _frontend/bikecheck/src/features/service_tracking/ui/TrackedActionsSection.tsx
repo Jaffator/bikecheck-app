@@ -6,7 +6,7 @@ import { Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Wrench } from "lucide-react";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
-import { TrackedActionRow } from "@/features/service_tracking/TrackedActionRow";
+import { TrackedActionRow } from "./TrackedActionRow";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
 
 // How many rows stand in for the list while it is arriving.

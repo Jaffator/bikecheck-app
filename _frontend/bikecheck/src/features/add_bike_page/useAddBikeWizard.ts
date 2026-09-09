@@ -10,12 +10,12 @@ import {
   useFamilyBikes,
   useExternalBikeComponents,
   useCreateBike,
-} from "../bikes/bikes.queries";
-import type { BikeSearchResult, CreateBikePayload } from "../bikes/bikes.types";
-import { getStravaAuthorizeUrl } from "../strava/strava.api";
-import { useCurrentUser } from "../users/users.queries";
-import type { AssembleBikeComponent } from "../components/components.types";
-import { useComponentGroups, useDefaultComponents } from "../components/components.queries";
+} from "@/features/bikes/bikes.queries";
+import type { BikeSearchResult, CreateBikePayload } from "@/features/bikes/bikes.types";
+import { getStravaAuthorizeUrl } from "@/features/strava/strava.api";
+import { useCurrentUser } from "@/features/users/users.queries";
+import type { AssembleBikeComponent } from "@/features/components/components.types";
+import { useComponentGroups, useDefaultComponents } from "@/features/components/components.queries";
 import { isBikeSpecificationComplete, type BikeSpecificationValues, type SuspensionLayout } from "./bikeSpecification.types";
 import {
   buildInitialEntries,

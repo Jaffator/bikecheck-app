@@ -1,9 +1,9 @@
 // One part on a bike, as a Period Report and a BikeCheck both write it down - so the two
 // never word the same thing differently.
 import type { ReactElement } from "react";
-import type { ReportComponent } from "./report.types";
-import { REPORT_PAPER, reportComponentLabel, reportDate, reportNumber, reportRideTime } from "./reportFormat";
-import type { ReportHeadings } from "./reportHeadings";
+import type { ReportComponent } from "@/features/report/report.types";
+import { REPORT_PAPER, reportComponentLabel, reportDate, reportNumber, reportRideTime } from "@/features/report/reportFormat";
+import type { ReportHeadings } from "@/features/report/reportHeadings";
 import { RowLabel } from "./ReportPaper";
 
 // One part on the bike: what it is, how far it has gone, and when it was last worked on —

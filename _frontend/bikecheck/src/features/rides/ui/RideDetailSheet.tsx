@@ -4,7 +4,7 @@ import { Drawer, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
-import type { Ride } from "./rides.types";
+import type { Ride } from "@/features/rides/rides.types";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface RideDetailSheetProps {

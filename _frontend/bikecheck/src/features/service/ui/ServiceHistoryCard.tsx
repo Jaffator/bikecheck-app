@@ -4,10 +4,10 @@ import { Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { SERVICE_CARD_SURFACE } from "./serviceCardSurface";
-import { catalogueLabel } from "./serviceLabels";
-import { formatServiceDate, formatServiceDateShort } from "./serviceDates";
-import type { ServiceHistoryItem } from "./service.types";
+import { SERVICE_CARD_SURFACE } from "@/features/service/serviceCardSurface";
+import { catalogueLabel } from "@/features/service/serviceLabels";
+import { formatServiceDate, formatServiceDateShort } from "@/features/service/serviceDates";
+import type { ServiceHistoryItem } from "@/features/service/service.types";
 import BikeIcon from "@/assets/icons/svg_icons/bike.svg?react";
 
 // As many Actions as a card names before it starts to read as a list of its own. What is

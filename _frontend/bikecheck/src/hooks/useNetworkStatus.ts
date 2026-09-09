@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Network } from "@capacitor/network";
-import { useOfflineWhenCallApiStore } from "../store/store";
+import { useOfflineWhenCallApiStore } from "@/store/store";
 
 export interface UseNetworkStatusResult {
   isOnline: boolean;

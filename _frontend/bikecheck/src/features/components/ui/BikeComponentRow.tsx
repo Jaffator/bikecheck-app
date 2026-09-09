@@ -8,8 +8,8 @@ import { ActionIcon, Group, Menu, Stack, Text, UnstyledButton } from "@mantine/c
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { ArrowLeftRight, MoreVertical, PackageMinus, Pencil, Trash2 } from "lucide-react";
-import type { BikeComponent, PartActions } from "../components.types";
-import { componentTypeName, positionLabel } from "../componentLabels";
+import type { BikeComponent, PartActions } from "@/features/components/components.types";
+import { componentTypeName, positionLabel } from "@/features/components/componentLabels";
 
 interface BikeComponentRowProps {
   component: BikeComponent;

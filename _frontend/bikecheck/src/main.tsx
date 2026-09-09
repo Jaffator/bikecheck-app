@@ -11,7 +11,7 @@ import "./global.css";
 // Initializes i18next before the first render.
 import "./i18n";
 import { theme } from "./theme";
-import { queryClient } from "./api/queryClient";
+import { queryClient } from "@/api/queryClient";
 import { AppRouter } from "./AppRouter";
 import App from "./App.tsx";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";

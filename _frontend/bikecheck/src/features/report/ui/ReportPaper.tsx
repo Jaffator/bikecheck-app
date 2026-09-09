@@ -2,7 +2,7 @@
 // document speaks in — Inter for what a thing is called, mono for the metadata around it.
 import type { ReactElement, ReactNode } from "react";
 import logoDark from "@/assets/icons/bikecheck/Logo_dark.svg";
-import { REPORT_PAPER, reportDate } from "./reportFormat";
+import { REPORT_PAPER, reportDate } from "@/features/report/reportFormat";
 
 // The sheet as it is read on a screen: as wide as the thread it arrived in.
 export function ScreenSheet({ children }: { children: ReactNode }): ReactElement {

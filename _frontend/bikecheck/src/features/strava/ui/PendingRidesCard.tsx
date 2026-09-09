@@ -8,9 +8,9 @@ import { RouteMap } from "@/components/RouteMap";
 import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
 import trailIllustration from "@/assets/images/rides.png";
-import { usePendingRides } from "./strava.queries";
+import { usePendingRides } from "@/features/strava/strava.queries";
 import { PendingRideSheet } from "./PendingRideSheet";
-import type { PendingRide } from "./strava.types";
+import type { PendingRide } from "@/features/strava/strava.types";
 
 // How far a point may stray before the thumbnail drops it, in viewBox units. Matches the
 // completed list: the same route drawn at the same fifty pixels.

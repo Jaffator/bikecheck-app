@@ -16,7 +16,7 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Camera, Gauge, ImagePlus, Shapes, Tag, Zap } from "lucide-react";
-import type { BikeSearchResult } from "../bikes/bikes.types";
+import type { BikeSearchResult } from "@/features/bikes/bikes.types";
 import { inputStyles, dropdownProps } from "./formStyles";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { usePinPageScroll } from "@/hooks/usePinPageScroll";

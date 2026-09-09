@@ -6,7 +6,7 @@ import { IoCloudOffline } from "react-icons/io5";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { groupIcon } from "@/assets/icons/svg_icons/groups";
 import { componentIcon } from "@/assets/icons/svg_icons/components";
-import type { AssembleBikeComponent, ComponentGroup } from "../components/components.types";
+import type { AssembleBikeComponent, ComponentGroup } from "@/features/components/components.types";
 import { autosizeInputStyles } from "./formStyles";
 import {
   componentTypeId,

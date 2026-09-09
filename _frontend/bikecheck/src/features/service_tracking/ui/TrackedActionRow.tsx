@@ -10,9 +10,9 @@ import { ChevronRight, Info } from "lucide-react";
 import { ExplanationModal } from "@/components/ExplanationModal";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { positionLabel, wearExplanation } from "@/features/components/componentLabels";
-import { attentionColor, axisReading, barFill } from "./attentionLevel";
+import { attentionColor, axisReading, barFill } from "@/features/service_tracking/attentionLevel";
 import { PostponeControl } from "./PostponeControl";
-import type { TrackedAction } from "./tracking.types";
+import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface TrackedActionRowProps {
   action: TrackedAction;

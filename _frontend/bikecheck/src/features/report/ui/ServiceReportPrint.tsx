@@ -4,7 +4,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { formatFileSize } from "@/features/service/attachmentLabels";
 import logoDark from "@/assets/icons/bikecheck/Logo_dark.svg";
-import type { ReportAttachment, ServiceReportSnapshot } from "./report.types";
+import type { ReportAttachment, ServiceReportSnapshot } from "@/features/report/report.types";
 import {
   REPORT_PAPER,
   reportBikeName,
@@ -13,8 +13,8 @@ import {
   reportDate,
   reportNumber,
   reportRideTime,
-} from "./reportFormat";
-import { reportHeadings } from "./reportHeadings";
+} from "@/features/report/reportFormat";
+import { reportHeadings } from "@/features/report/reportHeadings";
 
 interface ServiceReportPrintProps {
   snapshot: ServiceReportSnapshot;

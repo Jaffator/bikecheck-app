@@ -8,13 +8,13 @@ import dayjs from "dayjs";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { ExportSheet } from "@/features/report/ExportSheet";
+import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
-import { useDeleteService, useServiceDetail } from "./service.queries";
-import { catalogueLabel, componentLabel } from "./serviceLabels";
+import { useDeleteService, useServiceDetail } from "@/features/service/service.queries";
+import { catalogueLabel, componentLabel } from "@/features/service/serviceLabels";
 import { componentTypeIcon } from "./componentIcon";
-import { attachmentSubtitle } from "./attachmentLabels";
-import type { ServiceActionDone, ServiceAttachment, ServiceHistoryItem } from "./service.types";
+import { attachmentSubtitle } from "@/features/service/attachmentLabels";
+import type { ServiceActionDone, ServiceAttachment, ServiceHistoryItem } from "@/features/service/service.types";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 

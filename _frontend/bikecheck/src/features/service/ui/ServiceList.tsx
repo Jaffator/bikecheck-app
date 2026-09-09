@@ -5,8 +5,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ServiceHistoryCard } from "./ServiceHistoryCard";
 import { ServiceDetailSheet } from "./ServiceDetailSheet";
-import { formatMonthHeading, groupServicesByMonth } from "./serviceDates";
-import type { ServiceHistoryItem } from "./service.types";
+import { formatMonthHeading, groupServicesByMonth } from "@/features/service/serviceDates";
+import type { ServiceHistoryItem } from "@/features/service/service.types";
 
 // Which service is open, if any. The detail is a layer over the list rather than a page
 // of its own — see ADR 0010 — so it rides in the query string, where the path the list

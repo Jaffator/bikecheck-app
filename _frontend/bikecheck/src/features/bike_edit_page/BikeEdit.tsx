@@ -4,12 +4,12 @@ import { Button, Group, Image, NumberInput, Select, Skeleton, Stack, Text, TextI
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { ImagePlus } from "lucide-react";
-import { useBike, useBikeFormOptions, useUpdateBike } from "../bikes/bikes.queries";
-import { PhotoCropModal } from "../add_bike_page/PhotoCropModal";
-import { FRAME_SIZES, WHEEL_SIZES } from "../add_bike_page/bikeSpecification.types";
-import { autosizeInputStyles, disabledButtonStyles, dropdownProps, inputStyles } from "../add_bike_page/formStyles";
-import { PHOTO_ASPECT } from "../add_bike_page/photoCrop";
-import type { Bike, UpdateBikePayload } from "../bikes/bikes.types";
+import { useBike, useBikeFormOptions, useUpdateBike } from "@/features/bikes/bikes.queries";
+import { PhotoCropModal } from "@/features/add_bike_page/PhotoCropModal";
+import { FRAME_SIZES, WHEEL_SIZES } from "@/features/add_bike_page/bikeSpecification.types";
+import { autosizeInputStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
+import { PHOTO_ASPECT } from "@/features/add_bike_page/photoCrop";
+import type { Bike, UpdateBikePayload } from "@/features/bikes/bikes.types";
 
 // What the form holds while it is being edited. Everything is a string or null, so a
 // cleared field is telling the truth rather than falling back to a zero.

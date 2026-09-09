@@ -4,7 +4,7 @@
 import type { ReactElement } from "react";
 import { Cog, Paperclip, RefreshCw, Wrench } from "lucide-react";
 import { formatFileSize } from "@/features/service/attachmentLabels";
-import type { PeriodReportSnapshot, ReportAttachment, ReportService } from "./report.types";
+import type { PeriodReportSnapshot, ReportAttachment, ReportService } from "@/features/report/report.types";
 import {
   REPORT_PAPER,
   reportBikeName,
@@ -13,10 +13,10 @@ import {
   reportDate,
   reportNumber,
   reportPeriodLabel,
-} from "./reportFormat";
-import { reportHeadings, type ReportHeadings } from "./reportHeadings";
+} from "@/features/report/reportFormat";
+import { reportHeadings, type ReportHeadings } from "@/features/report/reportHeadings";
 import { ComponentRow } from "./ComponentRow";
-import { groupByYear } from "./reportTimeline";
+import { groupByYear } from "@/features/report/reportTimeline";
 import { DocumentFooter, DocumentHeader, Field, RowLabel, ScreenSheet, Section } from "./ReportPaper";
 
 interface PeriodReportDocumentProps {

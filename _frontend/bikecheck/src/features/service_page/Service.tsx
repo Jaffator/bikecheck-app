@@ -5,9 +5,9 @@ import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import { BikeFilterChips } from "@/features/service/BikeFilterChips";
+import { BikeFilterChips } from "@/features/service/ui/BikeFilterChips";
 import { SWIPE_AREA_STYLE, useBikePanel, useBikeSwipe } from "@/features/service/useBikeSwipe";
-import { ServiceList } from "@/features/service/ServiceList";
+import { ServiceList } from "@/features/service/ui/ServiceList";
 import { useRecentServices } from "@/features/service/service.queries";
 import { EmptyService } from "./EmptyService";
 

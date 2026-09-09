@@ -2,17 +2,17 @@
 import type { ReactElement, ReactNode } from "react";
 import { Box, Group, Paper, Progress, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { StravaPairingHint } from "@/features/strava/StravaPairingHint";
+import { StravaPairingHint } from "@/features/strava/ui/StravaPairingHint";
 import { ArrowUpRight, Clock, Gauge } from "lucide-react";
-import type { Bike } from "../bikes.types";
-import { bikeTitle } from "../bikeTitle";
+import type { Bike } from "@/features/bikes/bikes.types";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikePhoto } from "./BikePhoto";
 import { attentionColor, barFill, QUIET_BELOW, worstAction } from "@/features/service_tracking/attentionLevel";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import { HealthBadge } from "@/features/bikes_page/HealthBadge";
-import { StravaLinkedBadge } from "@/features/bikes_page/StravaLinkedBadge";
+import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
+import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
 
 interface BikeCardProps {
   bike: Bike;

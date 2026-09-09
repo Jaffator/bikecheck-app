@@ -2,9 +2,9 @@
 import { useState, type ReactElement } from "react";
 import { Anchor, Button, Drawer, Group, Loader, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { inputStyles, dropdownProps, disabledButtonStyles } from "../add_bike_page/formStyles";
-import { useGearLinking, useLinkStravaGear } from "./strava.queries";
-import type { GearLink, GearLinkingBike } from "./strava.types";
+import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
+import { useGearLinking, useLinkStravaGear } from "@/features/strava/strava.queries";
+import type { GearLink, GearLinkingBike } from "@/features/strava/strava.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 // import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
 // import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";

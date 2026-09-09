@@ -2,7 +2,7 @@
 // one A4 sheet. Chosen by the `?print=1` query parameter rather than by `@media print`, so
 // the render chromium captures is explicit rather than a side effect of a stylesheet.
 import type { ReactElement } from "react";
-import type { PeriodReportSnapshot, ReportService } from "./report.types";
+import type { PeriodReportSnapshot, ReportService } from "@/features/report/report.types";
 import {
   REPORT_PAPER,
   reportBikeName,
@@ -11,10 +11,10 @@ import {
   reportDate,
   reportNumber,
   reportPeriodLabel,
-} from "./reportFormat";
-import { reportHeadings, type ReportHeadings } from "./reportHeadings";
+} from "@/features/report/reportFormat";
+import { reportHeadings, type ReportHeadings } from "@/features/report/reportHeadings";
 import { ComponentRow } from "./ComponentRow";
-import { groupByYear } from "./reportTimeline";
+import { groupByYear } from "@/features/report/reportTimeline";
 import { DocumentFooter, DocumentHeader, Field, PrintSheet, Section } from "./ReportPaper";
 
 interface PeriodReportPrintProps {

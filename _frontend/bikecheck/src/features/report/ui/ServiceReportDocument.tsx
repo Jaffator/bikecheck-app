@@ -4,9 +4,9 @@ import type { ReactElement, ReactNode } from "react";
 import { NotepadText, Paperclip, RefreshCw, Wrench } from "lucide-react";
 import { formatFileSize } from "@/features/service/attachmentLabels";
 import logoDark from "@/assets/icons/bikecheck/Logo_dark.svg";
-import type { ReportAction, ReportAttachment, ServiceReportSnapshot } from "./report.types";
-import { REPORT_PAPER, reportBikeName, reportComponentLabel, reportCost, reportDate, reportNumber } from "./reportFormat";
-import { reportHeadings, type ReportHeadings } from "./reportHeadings";
+import type { ReportAction, ReportAttachment, ServiceReportSnapshot } from "@/features/report/report.types";
+import { REPORT_PAPER, reportBikeName, reportComponentLabel, reportCost, reportDate, reportNumber } from "@/features/report/reportFormat";
+import { reportHeadings, type ReportHeadings } from "@/features/report/reportHeadings";
 
 interface ServiceReportDocumentProps {
   snapshot: ServiceReportSnapshot;
