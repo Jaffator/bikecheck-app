@@ -349,12 +349,13 @@ function Category({
       ref={cardRef}
       // The card is the section around it, so a category carries no surface of its own -
       // only the hairline that tells it from the one above, the way a part's row does
-      // inside it. The one being read sinks a shade, which is what marks it open.
+      // inside it. The one being read is drawn round instead, which is what marks it open.
       style={{
-        backgroundColor: open ? "var(--mantine-color-cards-7)" : "transparent",
-        borderTop: "1px solid var(--color-border-subtle)",
+        border: open ? "1px solid var(--mantine-color-primary-9)" : "1px solid transparent",
+        borderTopColor: open ? "var(--mantine-color-primary-9)" : "var(--color-border-subtle)",
+        borderRadius: open ? "var(--mantine-radius-lg)" : undefined,
         overflow: "hidden",
-        transition: "background-color 120ms ease",
+        transition: "border-color 120ms ease",
       }}
     >
       <UnstyledButton
