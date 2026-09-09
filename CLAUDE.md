@@ -61,6 +61,11 @@ Issues and PRDs live as GitHub issues in `Jaffator/bikecheck-app`, managed via t
 
 Default canonical vocabulary — `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/conventions/triage-labels.md`.
 
+### Frontend structure
+
+A domain owns its data in its root and its components in `ui/`; a `<domain>_page/` folder holds
+only the route and its empty state. See `docs/conventions/frontend-structure.md`.
+
 ### Domain docs
 
 Single-context — one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/conventions/domain.md`.
