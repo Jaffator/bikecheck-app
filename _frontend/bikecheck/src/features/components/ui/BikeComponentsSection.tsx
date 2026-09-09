@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import { ChevronDown, ChevronRight, ChevronUp, Plus, Wrench } from "lucide-react";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { groupIcon } from "@/assets/icons/svg_icons/groups";
+import { IoLogoWebComponent } from "react-icons/io5";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import {
   useBikeComponents,
@@ -146,9 +147,12 @@ export function BikeComponentsSection({ bikeId, ebike, readOnly = false }: BikeC
         }}
       >
         <Group justify="space-between" wrap="nowrap" px="md" pt="md" pb="xs">
-          <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
-            {t("bikeComponents.title")}
-          </Text>
+          <Group gap={8} wrap="nowrap">
+            <IoLogoWebComponent size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+            <Text fz={15} fw={600} c="text.6">
+              {t("bikeComponents.title")}
+            </Text>
+          </Group>
           {!readOnly && (
             <ActionIcon
               variant="subtle"

@@ -270,6 +270,31 @@ export function BikeDetail(): ReactElement {
             )}
           </Group>
         </Stack>
+
+        {/* The specs are read once and the actions daily, so the list stays behind a row
+            rather than pushing the tiles below the fold. It belongs to the bike above it,
+            so it sits on the same card, parted from it only by a rule. */}
+        <UnstyledButton
+          onClick={() => setShowingSpecs(true)}
+          px="md"
+          py={15}
+          w="100%"
+          style={{
+            borderTop: "1px solid var(--color-border-subtle)",
+            color: "var(--mantine-color-text-6)",
+            cursor: "pointer",
+          }}
+        >
+          <Group justify="space-between" wrap="nowrap">
+            <Group gap={8} wrap="nowrap">
+              <Info size={16} color="var(--color-text-dim)" />
+              <Text fz={15} fw={600} c="text.6">
+                {t("bikes.specsAction")}
+              </Text>
+            </Group>
+            <ChevronRight size={16} color="var(--color-text-dim)" />
+          </Group>
+        </UnstyledButton>
       </Paper>
       {/* Says plainly what this page now is, so nobody looks for the actions that are gone. */}
       {archived && (
@@ -296,32 +321,6 @@ export function BikeDetail(): ReactElement {
         </Paper>
       )}
 
-      {/* The specs are read once and the actions daily, so the list stays behind a row
-          rather than pushing the tiles below the fold. */}
-      <UnstyledButton
-        onClick={() => setShowingSpecs(true)}
-        px="md"
-        py={15}
-        style={{
-          borderRadius: "var(--mantine-radius-lg)",
-          backgroundColor: "var(--mantine-color-cards-6)",
-          backgroundImage: "var(--card-glow)",
-          boxShadow: "var(--elev-row)",
-          color: "var(--mantine-color-text-6)",
-          cursor: "pointer",
-          transition: "transform 120ms ease",
-        }}
-      >
-        <Group justify="space-between" wrap="nowrap">
-          <Group gap={8} wrap="nowrap">
-            <Info size={16} color="var(--color-text-dim)" />
-            <Text fz={13} fw={600} c="text.6">
-              {t("bikes.specsAction")}
-            </Text>
-          </Group>
-          <ChevronRight size={16} color="var(--color-text-dim)" />
-        </Group>
-      </UnstyledButton>
 
       {/* A paired bike has nothing left to ask of Strava, so the card goes away — which
           gear it answers to is read in the spec sheet. */}

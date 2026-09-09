@@ -1,7 +1,7 @@
 // Where a part is added to a bike and where one is corrected. One form for both: the two
 // ask for the same things, and only the Component Type picker differs — a part's kind is
 // chosen once and is not a correction afterwards.
-import { useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import {
   ActionIcon,
   Box,
@@ -107,6 +107,18 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
   // The build the section has already loaded, read from the same cache entry: what is on
   // the bike is what says which slots are free.
   const { data: mounted } = useBikeComponents(bikeId);
+
+  // This body is remounted on each opening, and a Drawer that mounts already open skips
+  // its enter transition. So it mounts closed and slides up on the next frame.
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!opened) {
+      setVisible(false);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => setVisible(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [opened]);
   const create = useCreateBikeComponent();
   const update = useUpdateBikeComponent();
   const createType = useCreateComponentType();
@@ -265,12 +277,19 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
 
   return (
     <Drawer
-      opened={opened}
+      opened={visible}
       onClose={onClose}
       position="bottom"
       radius="lg"
       zIndex={FORM_Z_INDEX}
       withCloseButton={false}
+      // Opens the same way the specs sheet does, so every bottom sheet reads as one motion.
+      transitionProps={{
+        duration: 400,
+        exitDuration: 400,
+        transition: "slide-up",
+        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
+      }}
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {

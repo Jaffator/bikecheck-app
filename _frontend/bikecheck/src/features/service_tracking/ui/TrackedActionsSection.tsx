@@ -4,7 +4,7 @@
 import type { ReactElement } from "react";
 import { Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Wrench } from "lucide-react";
+import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
 import { TrackedActionRow } from "./TrackedActionRow";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
@@ -75,8 +75,8 @@ function SectionShell({ children }: { children: ReactElement }): ReactElement {
     >
       <Stack gap="md">
         <Group gap={8} wrap="nowrap">
-          <Wrench size={16} color="var(--color-text-dim)" />
-          <Text fz={13} fw={600} c="text.6">
+          <Bikecheck width={16} height={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+          <Text fz={15} fw={600} c="text.6">
             {t("tracking.title")}
           </Text>
         </Group>

@@ -66,6 +66,11 @@ Default canonical vocabulary — `needs-triage`, `needs-info`, `ready-for-agent`
 A domain owns its data in its root and its components in `ui/`; a `<domain>_page/` folder holds
 only the route and its empty state. See `docs/conventions/frontend-structure.md`.
 
+### Drawers
+
+Every bottom sheet opens with the same slide-up transition; a remounted one flips `opened`
+on the next frame so it animates. See `docs/conventions/drawers.md`.
+
 ### Domain docs
 
 Single-context — one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/conventions/domain.md`.
