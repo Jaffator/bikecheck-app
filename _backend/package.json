@@ -13,6 +13,7 @@
     "db:pulldb": "prisma db pull && prisma generate",
     "db:devseed": "ts-node scripts/seedData/main_dev.ts",
     "db:evalaccount": "ts-node apps/monolith/scripts/eval/main_eval_account.ts",
+    "eval:chat": "ts-node apps/monolith/scripts/eval/main_eval_chat.ts",
     "start:debug": "nest start --debug --watch",
     "prisma:studio": "prisma studio",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
