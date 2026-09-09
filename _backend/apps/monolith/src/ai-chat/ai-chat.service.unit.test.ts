@@ -100,7 +100,7 @@ describe('AiChatService', () => {
   const mockPrisma = {
     users: { findUnique: jest.fn() },
     bikes: { findFirst: jest.fn(), findMany: jest.fn() },
-    chat_messages: { create: jest.fn(), findMany: jest.fn(), aggregate: jest.fn() },
+    chat_messages: { create: jest.fn(), findMany: jest.fn(), aggregate: jest.fn(), deleteMany: jest.fn() },
     $transaction: jest.fn(),
   };
 
@@ -350,5 +350,14 @@ describe('AiChatService', () => {
     );
     expect(thread.map((message) => message.role)).toEqual(['user', 'assistant']);
     expect(thread[0].created_at).toBe(CREATED_AT.toISOString());
+  });
+
+  it('deletes the thread of the logged-in user and nobody else, and says how much it reached', async () => {
+    mockPrisma.chat_messages.deleteMany.mockResolvedValue({ count: 4 });
+
+    const count = await service.deleteThread(OWNER_ID);
+
+    expect(mockPrisma.chat_messages.deleteMany).toHaveBeenCalledWith({ where: { user_id: OWNER_ID } });
+    expect(count).toBe(4);
   });
 });

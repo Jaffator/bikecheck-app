@@ -2,7 +2,7 @@
 // the answer is worked out. The bike bar above the thread says what a question is about
 // before it is sent.
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { Box, Skeleton, Stack, Text } from "@mantine/core";
+import { Box, Group, Skeleton, Stack, Text } from "@mantine/core";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
@@ -11,6 +11,7 @@ import { useChatThread } from "@/features/ai_chat/aiChat.queries";
 import { useChatTurn } from "@/features/ai_chat/useChatTurn";
 import { ChatThread } from "@/features/ai_chat/ui/ChatThread";
 import { ChatComposer } from "@/features/ai_chat/ui/ChatComposer";
+import { ClearThreadButton } from "@/features/ai_chat/ui/ClearThreadButton";
 import { EmptyChat } from "./EmptyChat";
 
 // Room for the composer, which floats and so keeps nothing clear of itself.
@@ -50,7 +51,9 @@ export function Chat(): ReactElement {
       ? garage[0].id
       : null;
 
-  const turnCount = (messages?.length ?? 0) + (pending === null ? 0 : 1);
+  // What is actually stored, which is the only thing deleting the thread can reach.
+  const storedCount = messages?.length ?? 0;
+  const turnCount = storedCount + (pending === null ? 0 : 1);
 
   // The newest turn is the one being read, so the thread stays at its foot.
   useEffect(() => {
@@ -78,7 +81,7 @@ export function Chat(): ReactElement {
 
   return (
     <>
-      {garage.length > 0 && (
+      {(garage.length > 0 || storedCount > 0) && (
         // The bar holds under the header while the thread scrolls past it, and carries the
         // page background so the turns pass under it rather than through it.
         <Box
@@ -89,13 +92,27 @@ export function Chat(): ReactElement {
             backgroundColor: "var(--mantine-color-background-9)",
           }}
         >
-          {/* A garage of one has no all-bikes chip: there is nothing else to ask about. */}
-          <BikeFilterChips
-            bikes={garage}
-            selected={selectedBikeId}
-            onSelect={selectBike}
-            withAllBikes={garage.length > 1}
-          />
+          <Group gap={0} wrap="nowrap" align="center">
+            {garage.length > 0 && (
+              // Takes the bar and scrolls inside itself, so the chips never push the bin off.
+              <Box style={{ flex: 1, minWidth: 0 }}>
+                {/* A garage of one has no all-bikes chip: there is nothing else to ask about. */}
+                <BikeFilterChips
+                  bikes={garage}
+                  selected={selectedBikeId}
+                  onSelect={selectBike}
+                  withAllBikes={garage.length > 1}
+                />
+              </Box>
+            )}
+            {/* Far from the composer, at the end of the bar: the thread is deleted from where
+                the thread is described, never from beside the button that adds to it. */}
+            {storedCount > 0 && (
+              <Box ml="auto" mr="md" py={4}>
+                <ClearThreadButton disabled={pending !== null} />
+              </Box>
+            )}
+          </Group>
         </Box>
       )}
       <Box px="md" pt="md" pb={COMPOSER_ROOM}>

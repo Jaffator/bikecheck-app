@@ -187,6 +187,12 @@
     "timeout": "The answer took too long. Try a simpler question.",
     "budget": "Today's question limit is spent. Try again at {{time}}.",
     "loadFailed": "Could not load the thread",
+    "clear": "Delete history",
+    "clearConfirmTitle": "Delete the chat history?",
+    "clearConfirmBody": "The whole thread with the mechanic is deleted for good, every question and every answer. This cannot be undone.",
+    "clearConfirmCancel": "Keep it",
+    "clearConfirmAction": "Delete",
+    "clearFailed": "The history could not be deleted.",
     "emptyTitle": "Ask your mechanic",
     "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides — the answer comes back as plain prose."
   },

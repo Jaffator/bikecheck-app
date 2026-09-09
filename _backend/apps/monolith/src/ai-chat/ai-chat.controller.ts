@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Res } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AiChatService } from './ai-chat.service';
 import { AskChatDto } from './dto/ask-chat.dto';
+import { ResponseChatDeletedDto } from './dto/response-chat-deleted.dto';
 import { ResponseChatMessageDto } from './dto/response-chat-message.dto';
 import type { ChatStreamEvent } from './ai-chat.types';
 
@@ -26,6 +27,16 @@ export class AiChatController {
   @ApiResponse({ status: 200, type: ResponseChatMessageDto, isArray: true })
   async getThread(@CurrentUser('userId') userId: string): Promise<ResponseChatMessageDto[]> {
     return await this.aiChatService.getThread(Number(userId));
+  }
+
+  // ---------- DELETE the thread of the logged-in user ----------
+  // The same path as the GET, and the same reason there is no id in it.
+  @Delete('thread')
+  @ApiResponse({ status: 200, type: ResponseChatDeletedDto })
+  async deleteThread(@CurrentUser('userId') userId: string): Promise<ResponseChatDeletedDto> {
+    const count = await this.aiChatService.deleteThread(Number(userId));
+
+    return { count };
   }
 
   // ---------- POST one question, answered on a held connection ----------

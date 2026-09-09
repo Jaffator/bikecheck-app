@@ -1,13 +1,19 @@
 // Chat API requests. The thread is an ordinary JSON GET; the question is not - it is answered
 // on a held connection, so its body is read by hand rather than through apiFetch.
 import { apiFetch, apiFetchStream } from "@/api/client";
-import type { ChatMessage, ChatStreamEvent } from "./aiChat.types";
+import type { ChatMessage, ChatStreamEvent, ChatThreadDeleted } from "./aiChat.types";
 
 // The longest question the backend accepts.
 export const QUESTION_MAX_LENGTH = 2000;
 
 export async function getChatThread(): Promise<ChatMessage[]> {
   return apiFetch<ChatMessage[]>("/ai-chat/thread");
+}
+
+// DELETE /ai-chat/thread - throws the whole thread away, for good. There is nothing to
+// revoke first and nothing to restore: hard deletion is what "delete my chat" has to mean.
+export async function deleteChatThread(): Promise<ChatThreadDeleted> {
+  return apiFetch<ChatThreadDeleted>("/ai-chat/thread", { method: "DELETE" });
 }
 
 // One question, answered while the caller holds the line. Every line of the NDJSON body is

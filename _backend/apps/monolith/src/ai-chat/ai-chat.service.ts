@@ -144,6 +144,16 @@ export class AiChatService {
     return messages.map(toMessageDto);
   }
 
+  // The whole thread of the logged-in user, gone for good - hard, not soft, which is the
+  // deliberate deviation from the rest of the schema: "delete my chat" has to mean deleted.
+  // What the model did to answer goes with it, cascaded from the messages. Answers with how
+  // many messages it reached.
+  async deleteThread(userId: number): Promise<number> {
+    const { count } = await this.prisma.chat_messages.deleteMany({ where: { user_id: userId } });
+
+    return count;
+  }
+
   // One question, answered while the caller holds the line. Progress is handed to `emit` and
   // never awaited, so a connection that drops takes nothing with it: the turn is finished and
   // saved either way.

@@ -15,6 +15,12 @@ export interface ChatMessage {
   created_at: string;
 }
 
+// What deleting the thread answers with: how many messages it reached. The count is the
+// server's, never the length of the thread the page happened to be showing.
+export interface ChatThreadDeleted {
+  count: number;
+}
+
 export type ChatErrorReason = "timeout" | "failed" | "budget";
 
 // One line of the NDJSON body POST /ai-chat holds the connection open for. A `step` names
