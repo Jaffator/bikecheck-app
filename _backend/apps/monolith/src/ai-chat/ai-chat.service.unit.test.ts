@@ -64,6 +64,15 @@ function hasTools(options: LanguageModelV3CallOptions): boolean {
   return (options.tools ?? []).length > 0;
 }
 
+// One past turn as the thread stores it, newest message first - the order the history is read
+// in. `answerChars` is what makes a turn expensive enough to be cut.
+function storedTurn(index: number, answerChars: number): { role: string; content: string }[] {
+  return [
+    { role: 'assistant', content: `answer-${String(index)} ${'a'.repeat(answerChars)}` },
+    { role: 'user', content: `question-${String(index)}` },
+  ];
+}
+
 function abortError(): Error {
   const error = new Error('Aborted');
   error.name = 'AbortError';
@@ -133,6 +142,7 @@ describe('AiChatService', () => {
     mockPrisma.users.findUnique.mockResolvedValue({ language: 'cs', currency: 'CZK' });
     mockPrisma.bikes.findFirst.mockResolvedValue(null);
     mockPrisma.bikes.findMany.mockResolvedValue(GARAGE);
+    mockPrisma.chat_messages.findMany.mockResolvedValue([]);
     mockServiceTracking.getGarageTrackedActions.mockResolvedValue([]);
     mockPrisma.$transaction.mockImplementation((work: (tx: typeof mockPrisma) => Promise<unknown>) => work(mockPrisma));
     mockPrisma.chat_messages.create.mockImplementation(({ data }: CreateArg) =>
@@ -248,6 +258,50 @@ describe('AiChatService', () => {
     await service.ask(OWNER_ID, { question: 'Jaká mám kola?', bike_id: 999 }, emit);
 
     expect(created()[1].data.bike_id).toBeNull();
+  });
+
+  it('cuts the history at whole turns, dropping the oldest first', async () => {
+    // Four turns of ~1 515 tokens each: two fit in the 4 000 the model is told, the rest go.
+    mockPrisma.chat_messages.findMany.mockResolvedValue([
+      ...storedTurn(4, 4500),
+      ...storedTurn(3, 4500),
+      ...storedTurn(2, 4500),
+      ...storedTurn(1, 4500),
+    ]);
+    const model = stub([saysText('The other bike has 1 200 km.')]);
+
+    await service.ask(OWNER_ID, { question: 'A co to druhé kolo?' }, emit);
+
+    // Question and answer, twice, then the new question - never a question without its answer.
+    const prompt = model.doGenerateCalls[0].prompt;
+    expect(prompt.map((message) => message.role)).toEqual(['system', 'user', 'assistant', 'user', 'assistant', 'user']);
+
+    const sent = JSON.stringify(prompt);
+    expect(sent).toContain('question-3');
+    expect(sent).toContain('answer-3');
+    expect(sent).toContain('question-4');
+    expect(sent).toContain('answer-4');
+    expect(sent).not.toContain('question-2');
+    expect(sent).not.toContain('answer-2');
+    expect(sent).not.toContain('question-1');
+    expect(sent).not.toContain('answer-1');
+  });
+
+  it('never cuts the current question, however little history fits', async () => {
+    // One turn that alone costs more than the whole budget: the history goes, the question stays.
+    mockPrisma.chat_messages.findMany.mockResolvedValue(storedTurn(1, 30_000));
+    const model = stub([saysText('You have a Santa Cruz Hightower.')]);
+
+    await service.ask(OWNER_ID, { question: 'Jaká mám kola?' }, emit);
+
+    const prompt = model.doGenerateCalls[0].prompt;
+    expect(prompt.map((message) => message.role)).toEqual(['system', 'user']);
+    expect(JSON.stringify(prompt)).toContain('Jaká mám kola?');
+    expect(JSON.stringify(prompt)).not.toContain('question-1');
+    expect(events.at(-1)).toEqual({
+      type: 'done',
+      message: expect.objectContaining({ content: 'You have a Santa Cruz Hightower.' }),
+    });
   });
 
   it('reads the thread of the logged-in user, oldest first', async () => {

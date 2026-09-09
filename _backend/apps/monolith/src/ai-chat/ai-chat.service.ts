@@ -30,6 +30,21 @@ const TIMEOUT_MS = 60_000;
 const DEFAULT_LANGUAGE = 'cs';
 const DEFAULT_CURRENCY = 'CZK';
 
+// How much of the thread the model is told about. The cap is in tokens, not in messages: two
+// long turns cost what ten short ones do, and it is the cost that is being held down.
+const HISTORY_TOKEN_BUDGET = 4_000;
+
+// Three characters to a token, which under-reads English and roughly fits Czech. No tokenizer
+// is pulled in for this: the estimate leans high, because overshooting the budget costs money.
+const CHARS_PER_TOKEN = 3;
+
+// What the role framing of one message costs on top of its text.
+const MESSAGE_TOKEN_OVERHEAD = 4;
+
+// How many messages are read at all. Not the cap - the cap is the token budget above, which
+// runs out first; this only keeps a years-long thread from being loaded whole to be thrown away.
+const HISTORY_READ_MESSAGES = 200;
+
 // What the model is told when it has run out of rounds or time.
 const LAST_WORD =
   'You have no tools left for this question. Answer now from what you have already read, and ' +
@@ -84,6 +99,18 @@ const MESSAGE_SELECT = {
 
 type ChatMessage = Prisma.chat_messagesGetPayload<{ select: typeof MESSAGE_SELECT }>;
 
+// All a past turn is worth replaying: what was said. Never the tool calls that found it out.
+const HISTORY_SELECT = { role: true, content: true } satisfies Prisma.chat_messagesSelect;
+
+type HistoryRow = Prisma.chat_messagesGetPayload<{ select: typeof HISTORY_SELECT }>;
+
+// One past turn as the model is told it: a question and the answer it got, priced together,
+// because the two are kept or dropped as one.
+interface HistoryTurn {
+  messages: ModelMessage[];
+  tokens: number;
+}
+
 // The chat: one thread per user, read-only over their own data. The loop, the prompt and the
 // thread live here; the queries live in the tool sets, which is what keeps this one service
 // from growing into everything.
@@ -115,9 +142,10 @@ export class AiChatService {
   // saved either way.
   async ask(userId: number, dto: AskChatDto, emit: EmitChatEvent): Promise<void> {
     const question = dto.question.trim();
-    const [user, selectedBike] = await Promise.all([
+    const [user, selectedBike, history] = await Promise.all([
       this.prisma.users.findUnique({ where: { id: userId }, select: { language: true, currency: true } }),
       this.selectedBike(userId, dto.bike_id),
+      this.history(userId),
     ]);
 
     const system = systemPrompt({
@@ -131,7 +159,7 @@ export class AiChatService {
 
     let saved: ResponseChatMessageDto;
     try {
-      const answer = await this.runLoop(system, question, userId, turn, emit);
+      const answer = await this.runLoop(system, question, history, userId, turn, emit);
       saved = await this.saveTurn(userId, question, selectedBike?.id ?? null, answer, turn);
     } catch (error) {
       // Half a turn is no turn: nothing is written, so the question goes back to the input
@@ -150,12 +178,16 @@ export class AiChatService {
   private async runLoop(
     system: string,
     question: string,
+    history: ModelMessage[],
     userId: number,
     turn: ChatTurn,
     emit: EmitChatEvent,
   ): Promise<string> {
     const tools = this.instrumented(userId, turn, emit);
-    const asked: ModelMessage[] = [{ role: 'user', content: question }];
+
+    // The question goes in after the history, which is what keeps it from ever being cut: the
+    // budget is spent on past turns only.
+    const asked: ModelMessage[] = [...history, { role: 'user', content: question }];
 
     // Every round that finished, so a loop cut short can still be answered from what it read.
     const read: ModelMessage[] = [];
@@ -293,6 +325,19 @@ export class AiChatService {
     emit({ type: 'step', tool });
   }
 
+  // The tail of the thread as the model is told it, oldest first. Read newest first because
+  // that is the end the budget is spent from, then turned back into reading order.
+  private async history(userId: number): Promise<ModelMessage[]> {
+    const rows = await this.prisma.chat_messages.findMany({
+      where: { user_id: userId },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      take: HISTORY_READ_MESSAGES,
+      select: HISTORY_SELECT,
+    });
+
+    return trimmedHistory(rows.reverse());
+  }
+
   // The picker's choice, resolved against the garage: an id that matches no bike of this
   // user's reads as no selection, which is all bikes.
   private async selectedBike(userId: number, bikeId: number | undefined): Promise<SelectedBike | null> {
@@ -339,6 +384,57 @@ export class AiChatService {
 // model, here or in a tool.
 function bikeName(bike: SelectedBike): string {
   return [bike.bike_brand, bike.bike_model].filter((part) => part !== null && part !== '').join(' ');
+}
+
+// The thread cut to the budget, oldest first. Cut at whole turns, never inside a message: a
+// question is never replayed without the answer it got. What a tool returned is not here at
+// all - a follow-up question makes the model read the data again, one round for a small prompt.
+function trimmedHistory(rows: HistoryRow[]): ModelMessage[] {
+  const kept: HistoryTurn[] = [];
+  let spent = 0;
+
+  // Newest turn first, so what runs out of budget is the oldest turn rather than the freshest.
+  for (const turn of wholeTurns(rows).reverse()) {
+    if (spent + turn.tokens > HISTORY_TOKEN_BUDGET) break;
+
+    spent += turn.tokens;
+    kept.unshift(turn);
+  }
+
+  return kept.flatMap((turn) => turn.messages);
+}
+
+// The thread paired into turns. A row that pairs with nothing is skipped - a failed turn
+// writes neither message, so this only guards against a thread no turn should have left.
+function wholeTurns(rows: HistoryRow[]): HistoryTurn[] {
+  const turns: HistoryTurn[] = [];
+  let index = 0;
+
+  while (index < rows.length - 1) {
+    const question = rows[index];
+    const answer = rows[index + 1];
+
+    if (question.role !== 'user' || answer.role !== 'assistant') {
+      index += 1;
+      continue;
+    }
+
+    turns.push({
+      messages: [
+        { role: 'user', content: question.content },
+        { role: 'assistant', content: answer.content },
+      ],
+      tokens: estimateTokens(question.content) + estimateTokens(answer.content),
+    });
+    index += 2;
+  }
+
+  return turns;
+}
+
+// What one message costs the prompt, near enough to spend a budget against.
+function estimateTokens(text: string): number {
+  return MESSAGE_TOKEN_OVERHEAD + Math.ceil(text.length / CHARS_PER_TOKEN);
 }
 
 function toMessageDto(message: ChatMessage): ResponseChatMessageDto {
@@ -391,6 +487,10 @@ of your answer - "Chain" becomes "Řetěz" in Czech.
 Call get_garage before anything else. It gives you the user's bikes and their active parts
 with their ids; every other tool takes those ids.
 Ids are for calling tools. Never write an id in an answer.
+
+Earlier turns of this conversation are in the messages, but nothing the tools returned for them
+is. A follow-up question is answered by reading the data again, never from what an earlier
+answer of yours happened to say.
 
 The bike selected in the header is the subject of a question that names no bike. A question
 that names a bike overrides the selection. With no selection, consider every bike.
