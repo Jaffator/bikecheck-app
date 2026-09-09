@@ -2,11 +2,13 @@ import type { ResponseChatMessageDto } from './dto/response-chat-message.dto';
 
 // What a held POST /ai-chat sends down the line, one JSON per line. A `step` says which tool
 // the round started with and nothing else - the sentence is the frontend's, in the user's
-// language. `done` carries the saved answer; `error` says why there is none. `retry_at` is ISO
-// and belongs to `budget` alone: the refusal names the moment the window frees up, and the
-// sentence around that moment is the frontend's.
+// language. `ping` says nothing at all, and is the only thing sent while a round is running:
+// without it a silent line and a thinking model read the same. `done` carries the saved answer;
+// `error` says why there is none. `retry_at` is ISO and belongs to `budget` alone: the refusal
+// names the moment the window frees up, and the sentence around that moment is the frontend's.
 export type ChatStreamEvent =
   | { type: 'step'; tool: string }
+  | { type: 'ping' }
   | { type: 'done'; message: ResponseChatMessageDto }
   | { type: 'error'; reason: ChatErrorReason; retry_at?: string };
 

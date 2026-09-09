@@ -8,8 +8,14 @@ import { AskChatDto } from './dto/ask-chat.dto';
 import { ResponseChatMessageDto } from './dto/response-chat-message.dto';
 import type { ChatStreamEvent } from './ai-chat.types';
 
-// A pass-through, plus the one thing the transport owes the loop: writing a line to a
-// connection that may already be gone. What an answer is made of is decided in AiChatService.
+// How often a line is sent while the loop has nothing to say. Between two tool rounds the loop
+// is quiet for a long time, so without a heartbeat the client cannot tell a dead connection from
+// a model still thinking - and a phone that changes network never fails the read, it hangs it.
+const KEEPALIVE_MS = 10_000;
+
+// A pass-through, plus the two things the transport owes the loop: writing a line to a
+// connection that may already be gone, and keeping that line audible. What an answer is made of
+// is decided in AiChatService.
 @Controller('ai-chat')
 export class AiChatController {
   constructor(private readonly aiChatService: AiChatService) {}
@@ -23,15 +29,16 @@ export class AiChatController {
   }
 
   // ---------- POST one question, answered on a held connection ----------
-  // NDJSON, one JSON per line: `step` on every tool round, then `done` with the saved message
-  // or `error` with a reason. No job and no polling - the state is the connection.
+  // NDJSON, one JSON per line: `step` on every tool round, `ping` while a round runs, then
+  // `done` with the saved message or `error` with a reason. No job and no polling - the state is
+  // the connection.
   // Ten questions a minute, counted per user rather than per address - see
   // UserThrottlerGuard. The daily token budget is the cost limit; this is only the burst.
   @Post()
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiResponse({
     status: 200,
-    description: 'NDJSON stream, one JSON per line: {"type":"step"|"done"|"error", ...}',
+    description: 'NDJSON stream, one JSON per line: {"type":"step"|"ping"|"done"|"error", ...}',
   })
   async ask(@CurrentUser('userId') userId: string, @Body() dto: AskChatDto, @Res() res: Response): Promise<void> {
     res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
@@ -39,7 +46,14 @@ export class AiChatController {
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.flushHeaders();
 
-    await this.aiChatService.ask(Number(userId), dto, (event) => writeEvent(res, event));
+    // Runs beside the loop rather than inside it: how often the line has to be heard from is a
+    // property of the connection, which the loop knows nothing about.
+    const keepalive = setInterval(() => writeEvent(res, { type: 'ping' }), KEEPALIVE_MS);
+    try {
+      await this.aiChatService.ask(Number(userId), dto, (event) => writeEvent(res, event));
+    } finally {
+      clearInterval(keepalive);
+    }
 
     if (!res.writableEnded) res.end();
   }

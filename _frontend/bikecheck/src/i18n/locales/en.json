@@ -182,6 +182,7 @@
     "stepSetup": "Reading the bike setup…",
     "stepReports": "Looking through reports…",
     "stepTrackedActions": "Checking wear…",
+    "reconnecting": "I lost the connection, checking whether it finished…",
     "failed": "The answer could not be fetched. Please try again.",
     "timeout": "The answer took too long. Try a simpler question.",
     "budget": "Today's question limit is spent. Try again at {{time}}.",

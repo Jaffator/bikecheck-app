@@ -43,7 +43,11 @@ export function ChatThread({ messages, bikes, pending }: ChatThreadProps): React
             <SubjectDivider label={bikeLabel(bikes, pending.bikeId, t)} />
           )}
           <Question text={pending.question} />
-          {pending.answer === null ? <ProgressLine tool={pending.tool} /> : <Answer text={pending.answer} />}
+          {pending.answer === null ? (
+            <ProgressLine tool={pending.tool} recovering={pending.recovering} />
+          ) : (
+            <Answer text={pending.answer} />
+          )}
         </>
       )}
     </Stack>
@@ -94,15 +98,17 @@ function Answer({ text }: { text: string }): ReactElement {
   );
 }
 
-// One line, not a checklist and not a skeleton: what the round started with, nothing else.
-function ProgressLine({ tool }: { tool: string | null }): ReactElement {
+// One line, not a checklist and not a skeleton: what the round started with, nothing else -
+// or, once the connection is gone, that the thread is being read for the answer instead. The
+// loader stays either way: the turn is still being waited for, only somewhere else.
+function ProgressLine({ tool, recovering }: { tool: string | null; recovering: boolean }): ReactElement {
   const { t } = useTranslation();
 
   return (
     <Group gap={8} wrap="nowrap">
       <Loader size={12} color="var(--color-text-dim)" />
       <Text size="xs" c="var(--color-text-dim)">
-        {t(toolStepKey(tool))}
+        {recovering ? t("chat.reconnecting") : t(toolStepKey(tool))}
       </Text>
     </Group>
   );

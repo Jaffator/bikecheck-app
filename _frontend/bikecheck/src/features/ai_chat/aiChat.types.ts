@@ -18,9 +18,12 @@ export interface ChatMessage {
 export type ChatErrorReason = "timeout" | "failed" | "budget";
 
 // One line of the NDJSON body POST /ai-chat holds the connection open for. A `step` names
-// the tool the round started with; the sentence is composed here, in the user's language.
-// `retry_at` comes with `budget` alone: the moment the token window frees up, ISO.
+// the tool the round started with; the sentence is composed here, in the user's language. A
+// `ping` carries nothing and is only proof the line is still alive - a round runs for a long
+// time without a step of its own. `retry_at` comes with `budget` alone: the moment the token
+// window frees up, ISO.
 export type ChatStreamEvent =
   | { type: "step"; tool: string }
+  | { type: "ping" }
   | { type: "done"; message: ChatMessage }
   | { type: "error"; reason: ChatErrorReason; retry_at?: string };
