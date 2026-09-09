@@ -140,6 +140,7 @@ model bikes {
   users                 users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   components_mounted    components_mounted[]
   bike_service_interval bike_service_interval[]
+  chat_messages         chat_messages[]
   events_bikes          events_bikes[]
   rides                 rides[]
 
@@ -448,6 +449,7 @@ model users {
   strava_avatar_url    String?                @db.VarChar
   accounts             accounts[]
   bikes                bikes[]
+  chat_messages        chat_messages[]
   component_types      component_types[]
   device_tokens        device_tokens[]
   event_action_tags    event_action_tags[]
@@ -539,4 +541,44 @@ model device_tokens {
   users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, token])
+}
+
+// One turn of the chat thread - a question or an answer. There is no conversation entity, so
+// a user has exactly one thread and these rows are keyed by nothing but its owner. Deleted
+// hard: nothing references a message, and "delete my chat" has to mean deleted.
+model chat_messages {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  role         String   @db.VarChar // user | assistant
+  content      String
+  // The bike bound at the moment of the question, from the chat's picker. The frontend reads
+  // a change between consecutive turns as the divider in the thread.
+  bike_id      Int?
+  // What the turn cost, which is what a token budget is summed over.
+  total_tokens Int?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  users           users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  bikes           bikes?            @relation(fields: [bike_id], references: [id])
+  chat_tool_calls chat_tool_calls[]
+
+  @@index([user_id, created_at], map: "chat_messages_user_recent")
+}
+
+// What the model did to answer one message, never what it saw: the tool's name, its
+// arguments, how many rows came back, whether the page was cut and how long it took. The
+// tool response payload is not stored - it is reproducible from the arguments.
+model chat_tool_calls {
+  id          Int      @id @default(autoincrement())
+  message_id  Int
+  tool_name   String   @db.VarChar // get_garage
+  arguments   Json // { bike_id: 3 }
+  row_count   Int?
+  truncated   Boolean  @default(false)
+  duration_ms Int?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  chat_messages chat_messages @relation(fields: [message_id], references: [id], onDelete: Cascade)
+
+  @@index([message_id], map: "chat_tool_calls_message")
 }

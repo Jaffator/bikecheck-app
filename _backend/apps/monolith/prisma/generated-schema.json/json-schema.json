@@ -392,6 +392,12 @@
             "$ref": "#/definitions/bike_service_interval"
           }
         },
+        "chat_messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/chat_messages"
+          }
+        },
         "events_bikes": {
           "type": "array",
           "items": {
@@ -1465,6 +1471,12 @@
             "$ref": "#/definitions/bikes"
           }
         },
+        "chat_messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/chat_messages"
+          }
+        },
         "component_types": {
           "type": "array",
           "items": {
@@ -1701,6 +1713,93 @@
           "$ref": "#/definitions/users"
         }
       }
+    },
+    "chat_messages": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "role": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "total_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        },
+        "bikes": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/bikes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "chat_tool_calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/chat_tool_calls"
+          }
+        }
+      }
+    },
+    "chat_tool_calls": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "tool_name": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "row_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "truncated": {
+          "type": "boolean",
+          "default": false
+        },
+        "duration_ms": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "chat_messages": {
+          "$ref": "#/definitions/chat_messages"
+        }
+      }
     }
   },
   "type": "object",
@@ -1794,6 +1893,12 @@
     },
     "device_tokens": {
       "$ref": "#/definitions/device_tokens"
+    },
+    "chat_messages": {
+      "$ref": "#/definitions/chat_messages"
+    },
+    "chat_tool_calls": {
+      "$ref": "#/definitions/chat_tool_calls"
     }
   }
 }
