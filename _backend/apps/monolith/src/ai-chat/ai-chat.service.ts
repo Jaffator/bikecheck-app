@@ -8,8 +8,10 @@ import { ownedBikeWhere } from '../bike/owned-bike.where';
 import { AskChatDto } from './dto/ask-chat.dto';
 import { ResponseChatMessageDto } from './dto/response-chat-message.dto';
 import type { ChatErrorReason, EmitChatEvent } from './ai-chat.types';
-import { garageTools, type GarageBikeRow, type GarageToolSet, type GetGarageInput } from './tools/garage.tools';
-import type { ToolPage } from './tools/tool-page';
+import { garageTools, type GarageToolSet } from './tools/garage.tools';
+import { partsTools, type PartsToolSet } from './tools/parts.tools';
+import { servicesTools, type ServicesToolSet } from './tools/services.tools';
+import type { PageTool, ToolPage } from './tools/tool-page';
 
 // Configuration is constants here, as it is in GeminiService: swapping the provider is a
 // change of code and a deploy, never a decision taken in the middle of a conversation.
@@ -57,6 +59,9 @@ interface ToolCallRecord {
 
 // The bike the picker bound, resolved against the garage.
 type SelectedBike = { id: number; bike_brand: string; bike_model: string | null };
+
+// Every tool the model sees in a turn. There is no router: the AI SDK dispatches by name.
+type ChatToolSet = GarageToolSet & PartsToolSet & ServicesToolSet;
 
 const MESSAGE_SELECT = {
   id: true,
@@ -184,7 +189,7 @@ export class AiChatService {
   private async lastWord(
     system: string,
     messages: ModelMessage[],
-    tools: GarageToolSet,
+    tools: ChatToolSet,
     turn: ChatTurn,
   ): Promise<string> {
     const result = await generateText({
@@ -204,41 +209,57 @@ export class AiChatService {
 
   // The tool set as the loop uses it: one line of progress per round and one metadata row per
   // call, without the tool having to know that either exists.
-  private instrumented(userId: number, turn: ChatTurn, emit: EmitChatEvent): GarageToolSet {
-    const tools = garageTools(this.prisma, userId);
-    const readGarage = tools.get_garage.execute;
+  private instrumented(userId: number, turn: ChatTurn, emit: EmitChatEvent): ChatToolSet {
+    const garage = garageTools(this.prisma, userId);
+    const parts = partsTools(this.prisma, userId);
+    const services = servicesTools(this.prisma, userId);
 
     return {
-      get_garage: {
-        ...tools.get_garage,
-        execute: async (input: GetGarageInput, options: ToolCallOptions): Promise<ToolPage<GarageBikeRow>> => {
-          this.announce('get_garage', turn, emit);
-          const started = performance.now();
-          const page = await readGarage(input, options);
-          const record: ToolCallRecord = {
-            tool_name: 'get_garage',
-            // The tool's own arguments, which are ids and dates - the empty object here.
-            arguments: { ...input } as Prisma.InputJsonObject,
-            row_count: page.rows.length,
-            truncated: page.truncated === true,
-            duration_ms: Math.round(performance.now() - started),
-          };
-          turn.calls.push(record);
+      get_garage: this.instrument('get_garage', garage.get_garage, turn, emit),
+      list_parts: this.instrument('list_parts', parts.list_parts, turn, emit),
+      list_services: this.instrument('list_services', services.list_services, turn, emit),
+    };
+  }
 
-          // Metadata only. Nothing of the conversation, and nothing the tool returned.
-          this.logger.info(
-            {
-              custom: true,
-              tool: record.tool_name,
-              row_count: record.row_count,
-              truncated: record.truncated,
-              duration_ms: record.duration_ms,
-            },
-            'ai-chat tool call',
-          );
+  // One tool, wrapped in the two things the loop owes the user: a progress line and a metadata
+  // row. The tool itself is untouched, so a new tool costs one line above.
+  private instrument<Input extends object, Row>(
+    name: string,
+    tool: PageTool<Input, Row>,
+    turn: ChatTurn,
+    emit: EmitChatEvent,
+  ): PageTool<Input, Row> {
+    const read = tool.execute;
 
-          return page;
-        },
+    return {
+      ...tool,
+      execute: async (input: Input, options: ToolCallOptions): Promise<ToolPage<Row>> => {
+        this.announce(name, turn, emit);
+        const started = performance.now();
+        const page = await read(input, options);
+        const record: ToolCallRecord = {
+          tool_name: name,
+          // The tool's own arguments, which are ids, dates and a cursor - never free text.
+          arguments: { ...input } as Prisma.InputJsonObject,
+          row_count: page.rows.length,
+          truncated: page.truncated === true,
+          duration_ms: Math.round(performance.now() - started),
+        };
+        turn.calls.push(record);
+
+        // Metadata only. Nothing of the conversation, and nothing the tool returned.
+        this.logger.info(
+          {
+            custom: true,
+            tool: record.tool_name,
+            row_count: record.row_count,
+            truncated: record.truncated,
+            duration_ms: record.duration_ms,
+          },
+          'ai-chat tool call',
+        );
+
+        return page;
       },
     };
   }
