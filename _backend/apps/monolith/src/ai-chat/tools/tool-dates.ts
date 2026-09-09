@@ -1,17 +1,24 @@
-import { Prisma } from '@prisma/client';
-
 // The days the tools share: how a date leaves a row, and how a from/to pair the model sent
 // becomes one filter. Nothing here throws - a date it cannot read is no date at all, on the
 // rule the cursor already follows.
 
-// A date as the model reads it: the ISO day, never a timestamp.
+// A date as the model reads it: the ISO day, never a timestamp. A column that is never null
+// answers a string, so a row carrying one does not have to pretend the day might be missing.
+export function isoDay(date: Date): string;
+export function isoDay(date: Date | null): string | null;
 export function isoDay(date: Date | null): string | null {
   return date === null ? null : date.toISOString().slice(0, 10);
 }
 
+// The two ends of a span, as Prisma reads them on a date column - nullable or NOT NULL alike.
+export interface DayRange {
+  gte?: Date;
+  lte?: Date;
+}
+
 // A from/to pair as one filter, or nothing when neither end is a date. Unparseable text is no
 // filter rather than a failure.
-export function dateRange(from: string | undefined, to: string | undefined): Prisma.DateTimeNullableFilter | undefined {
+export function dateRange(from: string | undefined, to: string | undefined): DayRange | undefined {
   const gte = dayStart(from);
   const lte = dayEnd(to);
   if (gte === undefined && lte === undefined) return undefined;
