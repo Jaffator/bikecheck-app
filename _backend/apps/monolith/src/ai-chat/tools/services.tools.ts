@@ -4,7 +4,8 @@ import type { PrismaService } from '../../../prisma/prisma.service';
 import { ownedBikesWhere } from '../../bike/owned-bike.where';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
-import type { PageTool, ToolPage } from './tool-page';
+import { optionalId, optionalText } from './tool-input';
+import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
 
 // One part an action was recorded against. The ids are the ones list_parts and get_garage use,
 // so the model can follow a service back to the part it touched.
@@ -43,14 +44,16 @@ export interface ServiceRow {
 }
 
 const listServicesInput = z.object({
-  bike_id: z.number().int().optional().describe('Only services on this bike, from get_garage.'),
-  component_type_id: z.number().int().optional().describe('Only services that touched a part of this kind.'),
-  mounted_component_id: z.number().int().optional().describe('Only services that touched this one part.'),
-  action_id: z.number().int().optional().describe('Only services carrying this action, from a previous answer.'),
-  from: z.string().optional().describe('Done on or after this ISO day, e.g. "2026-01-01".'),
-  to: z.string().optional().describe('Done on or before this ISO day.'),
+  bike_id: optionalId().describe('Only services on this bike, from get_garage.'),
+  component_type_id: optionalId().describe('Only services that touched a part of this kind.'),
+  mounted_component_id: optionalId().describe('Only services that touched this one part.'),
+  action_id: optionalId().describe('Only services carrying this action, from a previous answer.'),
+  from: optionalText().describe(
+    'Done on or after this ISO day, e.g. "2026-01-01". Omit unless the question names a period.',
+  ),
+  to: optionalText().describe('Done on or before this ISO day. Omit unless the question names a period.'),
   replaced_only: z.boolean().optional().describe('true for occasions on which a part was replaced.'),
-  cursor: z.string().optional().describe('next_cursor of the previous page. Omit for the first page.'),
+  cursor: optionalText().describe('next_cursor of the previous page. Omit for the first page.'),
 });
 
 export type ListServicesInput = z.infer<typeof listServicesInput>;
@@ -67,24 +70,22 @@ const LIST_SERVICES_DESCRIPTION =
   'same action. `tags` says what an action covers in general; only `note` says what was done ' +
   'this time.';
 
-// One page of services. A row carries its actions and their parts, so it is a fat row - half a
-// hundred of them would be a page the model reads badly.
+// One page of services. A row carries its actions and their parts, so fifty would be a page the
+// model reads badly.
 const PAGE_SIZE = 25;
 
-// The sort key of a service with no date. Never empty, because an empty key does not survive
-// the cursor.
+// The sort key of a service with no date. Never empty - an empty key does not survive the cursor.
 const NO_DATE = '-';
 
-// Newest work first, undated services last, and the row id to break a tie - which is what keeps
-// a page from skipping two services done on the same day.
+// Newest work first, undated services last, and the row id to break a tie - so a page never
+// skips two services done on the same day.
 const servicesOrder = [
   { service_date: { sort: 'desc', nulls: 'last' } },
   { id: 'desc' },
 ] satisfies Prisma.events_bikesOrderByWithRelationInput[];
 
-// Everything a row is made of and nothing else: the occasion, its actions in the order they were
-// recorded, and the parts each one touched. Attachments and the public report token are not part
-// of an answer, so they are not read.
+// Everything a row is made of: the occasion, its actions in recorded order, and the parts each
+// touched. Attachments and the public report token are not read.
 const servicesSelect = {
   id: true,
   bike_id: true,
@@ -132,8 +133,7 @@ type ActionRecord = ServiceRecord['event_actions_done'][number];
 type LinkRecord = ActionRecord['action_done_component_map'][number];
 
 // The maintenance axis of the catalogue: what was done, when and for how much. Ownership is
-// written here, and `userId` lives in the closure - it is in no schema, so there is nothing for
-// the model to substitute.
+// written here, and `userId` lives in the closure, in no schema the model can fill.
 export function servicesTools(prisma: PrismaService, userId: number): ServicesToolSet {
   return {
     list_services: {
@@ -160,7 +160,11 @@ export function servicesTools(prisma: PrismaService, userId: number): ServicesTo
         const rows = services.map((service) => toServiceRow(service, userId));
         const last = services.at(-1);
 
-        if (!cut || last === undefined) return { rows, total_count };
+        if (!cut || last === undefined) {
+          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
+            prisma.events_bikes.count({ where: servicesWhere(userId, {}) }),
+          );
+        }
 
         return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
       },
@@ -168,10 +172,9 @@ export function servicesTools(prisma: PrismaService, userId: number): ServicesTo
   };
 }
 
-// Ownership plus whatever the model asked to narrow by. `events_bikes` has no owner column of
-// its own, so the bike carries it - a service of a bike this user does not own is not reachable
-// through any combination of the filters. A deleted Service is no longer part of the record.
-function servicesWhere(userId: number, input: ListServicesInput): Prisma.events_bikesWhereInput {
+// Ownership plus whatever the model asked to narrow by. `events_bikes` has no owner column, so
+// the bike carries it; a deleted Service is no longer part of the record.
+function servicesWhere(userId: number, input: Partial<ListServicesInput>): Prisma.events_bikesWhereInput {
   const done = actionWhere(input);
   const on = dateRange(input.from, input.to);
 
@@ -184,10 +187,9 @@ function servicesWhere(userId: number, input: ListServicesInput): Prisma.events_
   };
 }
 
-// The action every filter but the dates has to hold on at the same time: asking for a chain and
-// a replacement means one action that replaced a chain, not a service that did both separately.
-// Nothing asked for is no clause at all, because a service is allowed to carry no actions.
-function actionWhere(input: ListServicesInput): Prisma.event_actions_doneWhereInput | undefined {
+// The action every filter but the dates has to hold on at once: a chain and a replacement means
+// one action that replaced a chain. Nothing asked for is no clause at all.
+function actionWhere(input: Partial<ListServicesInput>): Prisma.event_actions_doneWhereInput | undefined {
   const touched = linkWhere(input);
   const clauses: Prisma.event_actions_doneWhereInput = {
     ...(input.action_id === undefined ? {} : { event_action_id: input.action_id }),
@@ -199,7 +201,7 @@ function actionWhere(input: ListServicesInput): Prisma.event_actions_doneWhereIn
 }
 
 // Which part the action has to have touched: the part itself, or any part of that kind.
-function linkWhere(input: ListServicesInput): Prisma.action_done_component_mapWhereInput | undefined {
+function linkWhere(input: Partial<ListServicesInput>): Prisma.action_done_component_mapWhereInput | undefined {
   const clauses: Prisma.action_done_component_mapWhereInput = {
     ...(input.mounted_component_id === undefined ? {} : { component_mounted_id: input.mounted_component_id }),
     ...(input.component_type_id === undefined
@@ -210,8 +212,8 @@ function linkWhere(input: ListServicesInput): Prisma.action_done_component_mapWh
   return Object.keys(clauses).length === 0 ? undefined : clauses;
 }
 
-// Where the next page carries on, for `service_date DESC NULLS LAST, id DESC`. The sentinel says
-// the last row read had no date, so only undated services are left.
+// Where the next page carries on, for `service_date DESC NULLS LAST, id DESC`. The sentinel means
+// the last row read had no date.
 function pageStart(cursor: Cursor | null): Prisma.events_bikesWhereInput | undefined {
   if (cursor === null) return undefined;
   if (cursor.sortKey === NO_DATE) return { service_date: null, id: { lt: cursor.id } };

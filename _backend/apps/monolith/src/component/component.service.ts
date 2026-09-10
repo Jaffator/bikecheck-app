@@ -183,7 +183,8 @@ export class ComponentService {
         component_desc: dto.component_desc ?? null,
         position: dto.position ?? null,
         note: dto.note ?? null,
-        mounted_at: dto.mounted_at,
+        // A part joins the bike the day it is added, unless the caller dates it itself.
+        mounted_at: dto.mounted_at ?? new Date(),
         total_km: dto.total_km,
         total_time_min: dto.total_time_min,
       },

@@ -3,15 +3,15 @@ import { z } from 'zod';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
-import type { PageTool, ToolPage } from './tool-page';
+import { optionalId, optionalText } from './tool-input';
+import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
 
 // What a Share Link is doing. It takes both flags to tell the three apart, which is why the
 // state is composed here rather than handed out as `is_public` and `revoked` (ADR 0011).
 export type ReportState = 'unpublished' | 'published' | 'revoked';
 
-// One Report the user has made. The public token and the frozen snapshot are not part of an
-// answer, so they are never read: a share link the owner has not sent is not the chat's to give
-// out. `bike_id` is informative only - a Report outlives the bike it was made for.
+// One Report the user has made. The public token and the snapshot are never read - a share link
+// the owner has not sent is not the chat's to give out.
 export interface ReportRow {
   report_id: number;
   kind: report_kind;
@@ -25,10 +25,12 @@ export interface ReportRow {
 }
 
 const listReportsInput = z.object({
-  bike_id: z.number().int().optional().describe('Only reports made for this bike, from get_garage.'),
-  from: z.string().optional().describe('Made on or after this ISO day, e.g. "2026-01-01".'),
-  to: z.string().optional().describe('Made on or before this ISO day.'),
-  cursor: z.string().optional().describe('next_cursor of the previous page. Omit for the first page.'),
+  bike_id: optionalId().describe('Only reports made for this bike, from get_garage.'),
+  from: optionalText().describe(
+    'Made on or after this ISO day, e.g. "2026-01-01". Omit unless the question names a period.',
+  ),
+  to: optionalText().describe('Made on or before this ISO day. Omit unless the question names a period.'),
+  cursor: optionalText().describe('next_cursor of the previous page. Omit for the first page.'),
 });
 
 export type ListReportsInput = z.infer<typeof listReportsInput>;
@@ -45,16 +47,15 @@ const LIST_REPORTS_DESCRIPTION =
   'good. The link itself is never returned and you cannot hand it out. A report outlives the bike ' +
   'it describes, so a bike_id that is in no bike of the garage is a bike the user has deleted.';
 
-// One page of reports. A row is thin and an owner has few of them, so a page is a whole list
-// many times over.
+// One page of reports. A thin row and few per owner, so a page is a whole list many times over.
 const PAGE_SIZE = 50;
 
-// Newest report first, and the row id to break a tie - which is what keeps a page from skipping
-// two reports exported in the same instant. `created_at` is never missing, so nulls never place.
+// Newest report first, and the row id to break a tie. `created_at` is never missing, so nulls
+// never place.
 const reportsOrder = [{ created_at: 'desc' }, { id: 'desc' }] satisfies Prisma.reportsOrderByWithRelationInput[];
 
-// Everything a row is made of and nothing else. `public_token` and `snapshot` are not selected:
-// what is not read cannot leak into an answer. `expires_at` is never written, so it says nothing.
+// Everything a row is made of and nothing else. `public_token` and `snapshot` are not selected -
+// what is not read cannot leak into an answer.
 const reportsSelect = {
   id: true,
   kind: true,
@@ -68,9 +69,8 @@ const reportsSelect = {
 
 type ReportRecord = Prisma.reportsGetPayload<{ select: typeof reportsSelect }>;
 
-// The sharing axis of the catalogue: which documents the user has made and what their links are
-// doing. Ownership is written here, and `userId` lives in the closure - it is in no schema, so
-// there is nothing for the model to substitute.
+// The sharing axis of the catalogue: which documents the user has made and what their links do.
+// Ownership is written here, and `userId` lives in the closure, in no schema the model can fill.
 export function reportsTools(prisma: PrismaService, userId: number): ReportsToolSet {
   return {
     list_reports: {
@@ -97,7 +97,11 @@ export function reportsTools(prisma: PrismaService, userId: number): ReportsTool
         const rows = reports.map(toReportRow);
         const last = reports.at(-1);
 
-        if (!cut || last === undefined) return { rows, total_count };
+        if (!cut || last === undefined) {
+          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
+            prisma.reports.count({ where: reportsWhere(userId, {}) }),
+          );
+        }
 
         return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
       },
@@ -105,10 +109,9 @@ export function reportsTools(prisma: PrismaService, userId: number): ReportsTool
   };
 }
 
-// Ownership plus whatever the model asked to narrow by. `reports.user_id` carries the owner and
-// the bike is not joined on purpose: `bike_id` is informative only, so a report of a bike its
-// owner has deleted still reads (ADR 0011).
-function reportsWhere(userId: number, input: ListReportsInput): Prisma.reportsWhereInput {
+// Ownership plus whatever the model asked to narrow by. The bike is not joined on purpose, so a
+// report of a deleted bike still reads (ADR 0011).
+function reportsWhere(userId: number, input: Partial<ListReportsInput>): Prisma.reportsWhereInput {
   const made = dateRange(input.from, input.to);
 
   return {

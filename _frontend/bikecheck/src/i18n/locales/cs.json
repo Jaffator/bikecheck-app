@@ -16,7 +16,7 @@
     "bikes": "Kola",
     "service": "Servis",
     "rides": "Jízdy",
-    "chat": "Mechanik"
+    "chat": "Chat"
   },
   "page": {
     "home": "Domů",
@@ -28,7 +28,7 @@
     "notifications": "Oznámení",
     "serviceHistory": "Historie servisů",
     "reports": "Reporty",
-    "chat": "Mechanik"
+    "chat": "Chat"
   },
   "offline": {
     "title": "Jste offline",
@@ -191,14 +191,15 @@
     "timeout": "Odpověď trvala moc dlouho. Zkus otázku zjednodušit.",
     "budget": "Dnešní limit pro dotazy je vyčerpaný. Zkus to znovu v {{time}}.",
     "loadFailed": "Vlákno se nepodařilo načíst",
-    "clear": "Smazat historii",
+    "menu": "Další akce",
+    "clear": "Smazat chat",
     "clearConfirmTitle": "Smazat historii chatu?",
-    "clearConfirmBody": "Celé vlákno s mechanikem se smaže natrvalo, včetně všech otázek i odpovědí. Nejde to vrátit.",
+    "clearConfirmBody": "Celý chat se smaže natrvalo, včetně všech otázek i odpovědí. Nejde to vrátit.",
     "clearConfirmCancel": "Ponechat",
     "clearConfirmAction": "Smazat",
     "clearFailed": "Historii se nepodařilo smazat.",
-    "emptyTitle": "Zeptej se mechanika",
-    "emptyBody": "Napiš vlastními slovy, co chceš vědět o svých kolech, dílech, servisech nebo jízdách — odpověď dostane souvislou větou."
+    "emptyTitle": "Prostě se zeptej",
+    "emptyBody": "Napiš vlastními slovy, co chceš vědět o svých kolech, dílech, servisech nebo jízdách."
   },
   "rides": {
     "emptyTitle": "Zatím žádné jízdy",

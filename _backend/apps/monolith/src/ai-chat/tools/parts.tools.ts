@@ -4,16 +4,15 @@ import type { PrismaService } from '../../../prisma/prisma.service';
 import { ownedBikesWhere } from '../../bike/owned-bike.where';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
-import type { PageTool, ToolPage } from './tool-page';
+import { optionalId, optionalText } from './tool-input';
+import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
 
-// A part that is on the machine, or one that came off. Derived from `removed_at`; `is_active`
+// A part that is on the machine, or one that came off. Read from `is_active`; the flag itself
 // never goes out, because two signals of the same thing would leave the model choosing.
 export type PartStatus = 'mounted' | 'removed';
 
-// One Mounted Component in the history of a bike, still on it or already off. Ids go out so the
-// other tools can be called with them; units live in the field names; a missing number is 0, so
-// no numeric field is optional. The wear accumulators - `drivetrain_km`, `suspension_min`,
-// `health_index` - stay in: they are inputs to a reading, not answers.
+// One Mounted Component in the history of a bike. Ids go out so other tools can be called with
+// them, units live in the field names, and a missing number is 0.
 export interface PartHistoryRow {
   component_mounted_id: number;
   bike_id: number;
@@ -35,15 +34,23 @@ export interface PartHistoryRow {
 }
 
 const listPartsInput = z.object({
-  bike_id: z.number().int().optional().describe('Only parts of this bike, from get_garage.'),
-  component_type_id: z.number().int().optional().describe('Only parts of this kind, from get_garage.'),
-  position: z.string().optional().describe('Only parts in this position, e.g. "front".'),
-  active: z.boolean().optional().describe('true for parts still mounted, false for parts taken off.'),
-  mounted_from: z.string().optional().describe('Mounted on or after this ISO day, e.g. "2026-01-01".'),
-  mounted_to: z.string().optional().describe('Mounted on or before this ISO day.'),
-  removed_from: z.string().optional().describe('Taken off on or after this ISO day.'),
-  removed_to: z.string().optional().describe('Taken off on or before this ISO day.'),
-  cursor: z.string().optional().describe('next_cursor of the previous page. Omit for the first page.'),
+  bike_id: optionalId().describe('Only parts of this bike, from get_garage.'),
+  component_type_id: optionalId().describe('Only parts of this kind, from get_garage.'),
+  position: optionalText().describe('Only parts in this position, e.g. "front". Omit unless the question names one.'),
+  active: z
+    .boolean()
+    .optional()
+    .describe(
+      'true for parts still mounted, false for parts taken off. Omit for both - send false only ' +
+        'when the question asks specifically about parts that came off, never as a default.',
+    ),
+  mounted_from: optionalText().describe(
+    'Mounted on or after this ISO day, e.g. "2026-01-01". Omit unless the question names a period.',
+  ),
+  mounted_to: optionalText().describe('Mounted on or before this ISO day. Omit unless the question names a period.'),
+  removed_from: optionalText().describe('Taken off on or after this ISO day. Omit unless the question names a period.'),
+  removed_to: optionalText().describe('Taken off on or before this ISO day. Omit unless the question names a period.'),
+  cursor: optionalText().describe('next_cursor of the previous page. Omit for the first page.'),
 });
 
 export type ListPartsInput = z.infer<typeof listPartsInput>;
@@ -61,25 +68,25 @@ const LIST_PARTS_DESCRIPTION =
 // One page of parts. Fifty rows is a whole build many times over, so a page is a real page.
 const PAGE_SIZE = 50;
 
-// The sort key of a part with no mounting date. Never empty, because an empty key does not
-// survive the cursor.
+// The sort key of a part with no mounting date. Never empty - an empty key does not survive the cursor.
 const NO_DATE = '-';
 
-// Newest mounting first, undated parts last, and the row id to break a tie - which is what
-// keeps a page from skipping parts mounted on the same day.
+// Newest mounting first, undated parts last, and the row id to break a tie - so a page never
+// skips parts mounted on the same day.
 const partsOrder = [
   { mounted_at: { sort: 'desc', nulls: 'last' } },
   { id: 'desc' },
 ] satisfies Prisma.components_mountedOrderByWithRelationInput[];
 
-// Everything a row is made of and nothing else. The bike comes along denormalized: the model
-// reads brand and model as text, and `bikename` is not selected at all.
+// Everything a row is made of and nothing else. The bike comes along denormalized, and
+// `bikename` is not selected at all.
 const partsSelect = {
   id: true,
   bike_id: true,
   component_type_id: true,
   component_desc: true,
   position: true,
+  is_active: true,
   mounted_at: true,
   removed_at: true,
   total_km: true,
@@ -91,8 +98,7 @@ const partsSelect = {
 type PartRecord = Prisma.components_mountedGetPayload<{ select: typeof partsSelect }>;
 
 // The history axis of the catalogue: which parts a bike has carried and for how long. Ownership
-// is written here, and `userId` lives in the closure - it is in no schema, so there is nothing
-// for the model to substitute.
+// is written here, and `userId` lives in the closure, in no schema the model can fill.
 export function partsTools(prisma: PrismaService, userId: number): PartsToolSet {
   return {
     list_parts: {
@@ -124,7 +130,11 @@ export function partsTools(prisma: PrismaService, userId: number): PartsToolSet 
         const rows = parts.map((part) => toPartHistoryRow(part, counts.get(part.id) ?? 0));
         const last = parts.at(-1);
 
-        if (!cut || last === undefined) return { rows, total_count };
+        if (!cut || last === undefined) {
+          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
+            prisma.components_mounted.count({ where: partsWhere(userId, {}) }),
+          );
+        }
 
         return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
       },
@@ -132,37 +142,35 @@ export function partsTools(prisma: PrismaService, userId: number): PartsToolSet 
   };
 }
 
-// Ownership plus whatever the model asked to narrow by. A part of a bike this user does not own
-// is not reachable through any combination of the filters, because the relation is the first
-// clause. A deleted part is a row that should never have existed, so it is not history.
-function partsWhere(userId: number, input: ListPartsInput): Prisma.components_mountedWhereInput {
+// Ownership plus whatever the model asked to narrow by. The relation is the first clause, so no
+// combination of filters reaches another user's bike; a deleted part is not history.
+function partsWhere(userId: number, input: Partial<ListPartsInput>): Prisma.components_mountedWhereInput {
   const mountedAt = dateRange(input.mounted_from, input.mounted_to);
-  const removedAt = removedAtFilter(input);
 
   return {
     bikes: ownedBikesWhere(userId),
     is_deleted: { not: true },
+    ...mountedFilter(input),
     ...(input.bike_id === undefined ? {} : { bike_id: input.bike_id }),
     ...(input.component_type_id === undefined ? {} : { component_type_id: input.component_type_id }),
     ...(input.position === undefined ? {} : { position: { equals: input.position, mode: 'insensitive' } }),
     ...(mountedAt === undefined ? {} : { mounted_at: mountedAt }),
-    ...(removedAt === undefined ? {} : { removed_at: removedAt }),
   };
 }
 
-// `active` and the removal dates speak about the same column, so they are decided together: a
+// Whether the part is on the machine, and when it came off. The two are decided together: a
 // part still mounted has no removal date to fall in a range.
-function removedAtFilter(input: ListPartsInput): Prisma.components_mountedWhereInput['removed_at'] {
-  if (input.active === true) return null;
-
+function mountedFilter(input: Partial<ListPartsInput>): Prisma.components_mountedWhereInput {
   const range = dateRange(input.removed_from, input.removed_to);
-  if (input.active === false) return { not: null, ...range };
 
-  return range;
+  if (input.active === true) return { is_active: true };
+  if (input.active === false) return { is_active: false, ...(range === undefined ? {} : { removed_at: range }) };
+
+  return range === undefined ? {} : { removed_at: range };
 }
 
-// Where the next page carries on, for `mounted_at DESC NULLS LAST, id DESC`. The sentinel says
-// the last row read had no date, so only undated parts are left.
+// Where the next page carries on, for `mounted_at DESC NULLS LAST, id DESC`. The sentinel means
+// the last row read had no date.
 function pageStart(cursor: Cursor | null): Prisma.components_mountedWhereInput | undefined {
   if (cursor === null) return undefined;
   if (cursor.sortKey === NO_DATE) return { mounted_at: null, id: { lt: cursor.id } };
@@ -179,9 +187,8 @@ function sortKeyOf(part: PartRecord): string {
   return part.mounted_at === null ? NO_DATE : part.mounted_at.toISOString();
 }
 
-// How many Services touched each of these parts, zero included. A deleted Service is no longer
-// part of the record, so it does not count; two actions on one occasion still count once,
-// because the occasion is what a user means by "a service".
+// How many Services touched each of these parts, zero included. Deleted Services do not count,
+// and two actions on one occasion count once - the occasion is what a user means by "a service".
 async function serviceCounts(prisma: PrismaService, ids: number[]): Promise<Map<number, number>> {
   if (ids.length === 0) return new Map();
 
@@ -213,7 +220,7 @@ function toPartHistoryRow(part: PartRecord, serviceCount: number): PartHistoryRo
     component_type: part.component_types.component_type,
     component_desc: part.component_desc ?? '',
     position: part.position ?? '',
-    status: part.removed_at === null ? 'mounted' : 'removed',
+    status: part.is_active === true ? 'mounted' : 'removed',
     mounted_at: isoDay(part.mounted_at),
     removed_at: isoDay(part.removed_at),
     total_km: part.total_km ?? 0,

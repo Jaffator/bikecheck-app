@@ -30,10 +30,8 @@ const TIMEOUT_MS = 60_000;
 const DEFAULT_LANGUAGE = 'cs';
 const DEFAULT_CURRENCY = 'CZK';
 
-// What one user may spend on answers, summed over a rolling window rather than reset at
-// midnight: what was spent at noon is given back at noon, so the user is always told a time
-// rather than "tomorrow". The default lives in code, the real cap in the environment - raising
-// it is a restart, never a new build.
+// What one user may spend on answers, over a rolling window rather than reset at midnight - so
+// the user is told a time rather than "tomorrow". The real cap lives in the environment.
 const DEFAULT_DAILY_TOKEN_BUDGET = 200_000;
 const BUDGET_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -119,8 +117,7 @@ interface HistoryTurn {
 }
 
 // The chat: one thread per user, read-only over their own data. The loop, the prompt and the
-// thread live here; the queries live in the tool sets, which is what keeps this one service
-// from growing into everything.
+// thread live here; the queries live in the tool sets.
 @Injectable()
 export class AiChatService {
   // Replaced by a stub in the unit tests, which is the seam the loop is tested through.
@@ -144,19 +141,16 @@ export class AiChatService {
     return messages.map(toMessageDto);
   }
 
-  // The whole thread of the logged-in user, gone for good - hard, not soft, which is the
-  // deliberate deviation from the rest of the schema: "delete my chat" has to mean deleted.
-  // What the model did to answer goes with it, cascaded from the messages. Answers with how
-  // many messages it reached.
+  // The whole thread of the logged-in user, gone for good - hard, not soft, because "delete my
+  // chat" has to mean deleted. What the model did goes with it, cascaded from the messages.
   async deleteThread(userId: number): Promise<number> {
     const { count } = await this.prisma.chat_messages.deleteMany({ where: { user_id: userId } });
 
     return count;
   }
 
-  // One question, answered while the caller holds the line. Progress is handed to `emit` and
-  // never awaited, so a connection that drops takes nothing with it: the turn is finished and
-  // saved either way.
+  // One question, answered while the caller holds the line. Progress is handed to `emit` and never
+  // awaited, so a dropped connection takes nothing with it - the turn is finished and saved.
   async ask(userId: number, dto: AskChatDto, emit: EmitChatEvent): Promise<void> {
     const question = dto.question.trim();
 
@@ -364,9 +358,8 @@ export class AiChatService {
     return trimmedHistory(rows.reverse());
   }
 
-  // Whether this user is over the cap, and if so when the window frees up. The check is made
-  // before the turn, never during it: one question may cross the cap and the next one is
-  // stopped, so the overshoot is at most a single expensive answer.
+  // Whether this user is over the cap, and when the window frees up. Checked before the turn, so
+  // the overshoot is at most a single expensive answer.
   private async overBudgetUntil(userId: number): Promise<Date | null> {
     const since = new Date(Date.now() - BUDGET_WINDOW_MS);
     const window = await this.prisma.chat_messages.aggregate({
@@ -427,8 +420,7 @@ export class AiChatService {
 }
 
 // The cap, read on every turn so it can be raised without a new build. The same number for
-// everyone - there is no tariff on `users`. Anything that is not a positive number reads as
-// the default.
+// everyone, and anything but a positive number reads as the default.
 function dailyTokenBudget(): number {
   const configured = Number(process.env.AI_CHAT_DAILY_TOKEN_BUDGET);
 
@@ -441,9 +433,8 @@ function bikeName(bike: SelectedBike): string {
   return [bike.bike_brand, bike.bike_model].filter((part) => part !== null && part !== '').join(' ');
 }
 
-// The thread cut to the budget, oldest first. Cut at whole turns, never inside a message: a
-// question is never replayed without the answer it got. What a tool returned is not here at
-// all - a follow-up question makes the model read the data again, one round for a small prompt.
+// The thread cut to the budget, oldest first. Cut at whole turns, so a question is never replayed
+// without its answer; what a tool returned is not here at all, the model reads it again.
 function trimmedHistory(rows: HistoryRow[]): ModelMessage[] {
   const kept: HistoryTurn[] = [];
   let spent = 0;
@@ -538,10 +529,39 @@ ${ctx.userLanguage}.
 Tool results name component types and service actions in English. Write them in the language
 of your answer - "Chain" becomes "Řetěz" in Czech.
 
+# GATE
+Before any tool, decide whether the message is a question about the user's bikes, parts,
+services, rides or costs.
+
+When you cannot tell what is being asked, or the question is about something else entirely,
+call no tool at all. Answer in one sentence - that you do not understand, or that this is not
+something you can answer - and name two or three things you can. Never guess an intent, and
+never list the garage instead of answering.
+
+A short message that continues the previous turn is not nonsense - "and the other one?" is a
+question. Read the earlier messages before you decide you cannot tell.
+
+Maintenance itself is not "something else": a general question about how bikes are looked
+after is answered as # WHAT YOU DO NOT KNOW says, not turned away here.
+
 # TOOLS
 Call get_garage before anything else. It gives you the user's bikes and their active parts
 with their ids; every other tool takes those ids.
 Ids are for calling tools. Never write an id in an answer.
+
+Pass only the arguments the question actually asks for. Leave every other optional argument
+out - never send an empty string, and never invent a date range nobody asked about. Most parts
+carry no mounting date at all, so a date filter you added yourself hides them.
+
+An empty result from a filtered call means the filter matched nothing, not that the thing does
+not exist. Before you tell the user they do not have something, call again with the filters
+removed, or read it from what get_garage already gave you. Never contradict the garage on the
+strength of a narrower call that came back empty.
+
+An empty page may carry unfiltered_count: how long that same list is for this user with nothing
+narrowed. Above zero it is proof your filter was wrong, never that the user owns nothing - call
+again without the filters instead of answering. Only unfiltered_count: 0 means there is nothing
+on record at all.
 
 Earlier turns of this conversation are in the messages, but nothing the tools returned for them
 is. A follow-up question is answered by reading the data again, never from what an earlier

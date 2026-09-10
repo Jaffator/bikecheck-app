@@ -41,9 +41,9 @@ const GET_GARAGE_DESCRIPTION =
   'The bikes the user owns and the parts mounted on them right now, with the ids every other ' +
   'tool takes. Call this before anything else. Takes no arguments.';
 
-// Only what is on the machine now. A part that came off, or one that should never have
-// existed, is not part of the build any more.
-const MOUNTED = { removed_at: null, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
+// Only what is on the machine now, read by the signal the rest of the app mounts by. A part that
+// came off is not part of the build any more.
+const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
 
 // The bike and its build, with nothing derived: the computed columns wear tracking reads are
 // inputs to a reading, not answers, so they stay in.
@@ -73,9 +73,8 @@ type GarageBike = Prisma.bikesGetPayload<{ select: typeof garageSelect }>;
 
 type GaragePart = GarageBike['components_mounted'][number];
 
-// The entry point of the catalogue: the model calls this first and takes the ids it needs for
-// every other tool out of it. Ownership is written here, in the tool, and `userId` lives in
-// the closure - it is in no schema, so there is nothing for the model to substitute.
+// The entry point of the catalogue: the model calls this first and takes its ids from it.
+// Ownership is written here and `userId` lives in the closure, in no schema the model can fill.
 export function garageTools(prisma: PrismaService, userId: number): GarageToolSet {
   return {
     get_garage: {

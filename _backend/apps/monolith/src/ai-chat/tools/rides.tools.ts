@@ -3,11 +3,11 @@ import { z } from 'zod';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
-import type { PageTool, ToolPage } from './tool-page';
+import { optionalId, optionalText } from './tool-input';
+import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
 
-// One ride, as the model reads it. Units live in the field names, so the stored metres are
-// normalized on the way out - `distance_m` becomes `distance_km` and `elevation_up_m` becomes
-// `elevation_m`, while minutes stay minutes. A missing number is 0, so no field is optional.
+// One ride, as the model reads it. Units live in the field names, so stored metres are
+// normalized to kilometres on the way out; a missing number is 0, so no field is optional.
 export interface RideRow {
   ride_id: number;
   bike_id: number;
@@ -21,10 +21,12 @@ export interface RideRow {
 }
 
 const listRidesInput = z.object({
-  bike_id: z.number().int().optional().describe('Only rides on this bike, from get_garage.'),
-  from: z.string().optional().describe('Ridden on or after this ISO day, e.g. "2026-01-01".'),
-  to: z.string().optional().describe('Ridden on or before this ISO day.'),
-  cursor: z.string().optional().describe('next_cursor of the previous page. Omit for the first page.'),
+  bike_id: optionalId().describe('Only rides on this bike, from get_garage.'),
+  from: optionalText().describe(
+    'Ridden on or after this ISO day, e.g. "2026-01-01". Omit unless the question names a period.',
+  ),
+  to: optionalText().describe('Ridden on or before this ISO day. Omit unless the question names a period.'),
+  cursor: optionalText().describe('next_cursor of the previous page. Omit for the first page.'),
 });
 
 export type ListRidesInput = z.infer<typeof listRidesInput>;
@@ -38,24 +40,22 @@ const LIST_RIDES_DESCRIPTION =
   'it was ridden, how far, how long and how much it climbed. There is no total on offer - add ' +
   'the rows up yourself, and read total_count before you call a sum complete.';
 
-// One page of rides. A ride is a thin row and a season is hundreds of them, so the page is the
-// largest of the lists - it is what keeps "how far did I ride last year" to few enough rounds.
+// One page of rides. A thin row and hundreds to a season, so this is the largest of the pages -
+// it keeps "how far did I ride last year" to few enough rounds.
 const PAGE_SIZE = 200;
 
-// The sort key of a ride with no start. Never empty, because an empty key does not survive
-// the cursor.
+// The sort key of a ride with no start. Never empty - an empty key does not survive the cursor.
 const NO_DATE = '-';
 
-// Newest ride first, undated rides last, and the row id to break a tie - which is what keeps a
-// page from skipping two rides started at the same moment.
+// Newest ride first, undated rides last, and the row id to break a tie - so a page never skips
+// two rides started at the same moment.
 const ridesOrder = [
   { started_at: { sort: 'desc', nulls: 'last' } },
   { id: 'desc' },
 ] satisfies Prisma.ridesOrderByWithRelationInput[];
 
 // Everything a row is made of and nothing else. The Strava payload, the speeds and the wear
-// meters stay out: they are neither asked for nor cheap to read. The bike comes along
-// denormalized, and `bikename` is not selected at all.
+// meters stay out, and `bikename` is not selected at all.
 const ridesSelect = {
   id: true,
   bike_id: true,
@@ -68,10 +68,8 @@ const ridesSelect = {
 
 type RideRecord = Prisma.ridesGetPayload<{ select: typeof ridesSelect }>;
 
-// The riding axis of the catalogue: what was ridden, when and how far. Ownership is written on
-// the ride itself, and `userId` lives in the closure - it is in no schema, so there is nothing
-// for the model to substitute. No aggregate mode: the model adds the rows up, which is what
-// keeps it honest about how many of them it read.
+// The riding axis of the catalogue: what was ridden, when and how far. Ownership is on the ride
+// itself and `userId` lives in the closure; no aggregate mode, the model adds the rows up.
 export function ridesTools(prisma: PrismaService, userId: number): RidesToolSet {
   return {
     list_rides: {
@@ -98,7 +96,11 @@ export function ridesTools(prisma: PrismaService, userId: number): RidesToolSet 
         const rows = rides.map(toRideRow);
         const last = rides.at(-1);
 
-        if (!cut || last === undefined) return { rows, total_count };
+        if (!cut || last === undefined) {
+          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
+            prisma.rides.count({ where: ridesWhere(userId, {}) }),
+          );
+        }
 
         return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
       },
@@ -106,11 +108,9 @@ export function ridesTools(prisma: PrismaService, userId: number): RidesToolSet 
   };
 }
 
-// Ownership plus whatever the model asked to narrow by. `rides.user_id` carries the owner, so a
-// ride of somebody else is not reachable through any combination of the filters. Across every
-// bike an Archived Bike's rides leave the list with it; asked for by id its own rides still
-// read (ADR 0024), as they do everywhere else rides are listed.
-function ridesWhere(userId: number, input: ListRidesInput): Prisma.ridesWhereInput {
+// Ownership plus whatever the model asked to narrow by. `rides.user_id` carries the owner; across
+// every bike an Archived Bike's rides leave with it, asked for by id they still read (ADR 0024).
+function ridesWhere(userId: number, input: Partial<ListRidesInput>): Prisma.ridesWhereInput {
   const on = dateRange(input.from, input.to);
 
   return {
@@ -121,8 +121,8 @@ function ridesWhere(userId: number, input: ListRidesInput): Prisma.ridesWhereInp
   };
 }
 
-// Where the next page carries on, for `started_at DESC NULLS LAST, id DESC`. The sentinel says
-// the last row read had no start, so only undated rides are left.
+// Where the next page carries on, for `started_at DESC NULLS LAST, id DESC`. The sentinel means
+// the last row read had no start.
 function pageStart(cursor: Cursor | null): Prisma.ridesWhereInput | undefined {
   if (cursor === null) return undefined;
   if (cursor.sortKey === NO_DATE) return { started_at: null, id: { lt: cursor.id } };
@@ -152,8 +152,8 @@ function toRideRow(ride: RideRecord): RideRow {
   };
 }
 
-// Metres as kilometres, to one decimal: whole kilometres would turn a short ride into a
-// rounding error, and the model rounds for the answer anyway.
+// Metres as kilometres, to one decimal - whole kilometres would turn a short ride into a
+// rounding error.
 function kilometres(metres: number | null): number {
   return metres === null ? 0 : Math.round(metres / 100) / 10;
 }

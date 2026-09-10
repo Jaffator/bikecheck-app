@@ -1,6 +1,7 @@
+import { validateTypes } from '@ai-sdk/provider-utils';
 import type { ToolCallOptions } from 'ai';
 import type { PrismaService } from '../../../prisma/prisma.service';
-import { servicesTools, type ServiceRow, type ServicesToolSet } from './services.tools';
+import { servicesTools, type ListServicesInput, type ServiceRow, type ServicesToolSet } from './services.tools';
 
 const OWNER_ID = 7;
 const STRANGER_ID = 8;
@@ -317,6 +318,63 @@ describe('servicesTools', () => {
     expect((await list.execute({ bike_id: ARCHIVED_BIKE_ID }, CALL)).rows).toEqual([]);
   });
 
+  // What the model actually sends goes through the tool's own schema first, which is where a
+  // filled-in argument is either kept or dropped. Calling execute() directly would walk past it.
+  async function asked(input: unknown): Promise<ListServicesInput> {
+    return await validateTypes({ value: input, schema: tools(OWNER_ID).list_services.inputSchema });
+  }
+
+  it('drops the zeros a filling model sends instead of filtering by them', async () => {
+    database([service()]);
+
+    // Exactly what gpt-4o-mini sent when it told a user with a service on record that they had
+    // never serviced anything: every optional argument filled, the ids at 0.
+    const input = await asked({
+      bike_id: BIKE_ID,
+      action_id: 0,
+      component_type_id: 0,
+      mounted_component_id: 0,
+      replaced_only: false,
+    });
+
+    expect(ids((await tools(OWNER_ID).list_services.execute(input, CALL)).rows)).toEqual([SERVICE_ID]);
+  });
+
+  it('reads an empty string from a filling model as no date filter', async () => {
+    database([service()]);
+
+    const input = await asked({ from: '', to: '   ' });
+
+    expect(ids((await tools(OWNER_ID).list_services.execute(input, CALL)).rows)).toEqual([SERVICE_ID]);
+  });
+
+  it('tells an empty filtered answer how many occasions there are without the filters', async () => {
+    database([service()]);
+
+    const page = await tools(OWNER_ID).list_services.execute({ action_id: FORK_SERVICE_ID }, CALL);
+
+    expect(page.rows).toEqual([]);
+    expect(page.total_count).toBe(0);
+    expect(page.unfiltered_count).toBe(1);
+  });
+
+  it('leaves unfiltered_count out when the answer is empty and nothing was narrowed', async () => {
+    database([]);
+
+    const page = await tools(OWNER_ID).list_services.execute({}, CALL);
+
+    expect(page.rows).toEqual([]);
+    expect(page.unfiltered_count).toBeUndefined();
+  });
+
+  it('leaves unfiltered_count out when the filter found something', async () => {
+    database([service(), forkAndPads()]);
+
+    const page = await tools(OWNER_ID).list_services.execute({ bike_id: BIKE_ID }, CALL);
+
+    expect(page.unfiltered_count).toBeUndefined();
+  });
+
   it('puts the newest work first and an undated occasion last', async () => {
     database([
       service({ id: 1, service_date: new Date('2025-06-01T00:00:00.000Z') }),
@@ -389,7 +447,6 @@ describe('servicesTools', () => {
 
 // ---------------------------------------------------------------------------------------------
 // Enough of Prisma to run the tool's own query against fixtures.
-// ---------------------------------------------------------------------------------------------
 
 type Row = Record<string, unknown>;
 

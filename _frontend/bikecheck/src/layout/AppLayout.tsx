@@ -6,7 +6,8 @@ import { Settings, Bell, ArrowLeft } from "lucide-react";
 import { GoHomeFill, GoHome } from "react-icons/go";
 // import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
-import { PiPath, PiPathBold, PiChatCircleDots, PiChatCircleDotsFill } from "react-icons/pi";
+import { PiPath, PiPathBold } from "react-icons/pi";
+import { RiChatAi3Line, RiChatAi3Fill } from "react-icons/ri";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -56,8 +57,8 @@ const NAV_ITEMS: NavItem[] = [
   {
     labelKey: "nav.chat",
     path: "/chat",
-    icon: PiChatCircleDots,
-    icon_fill: PiChatCircleDotsFill,
+    icon: RiChatAi3Line,
+    icon_fill: RiChatAi3Fill,
   },
 ];
 

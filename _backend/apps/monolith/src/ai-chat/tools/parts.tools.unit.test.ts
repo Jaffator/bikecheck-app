@@ -1,6 +1,8 @@
 import type { ToolCallOptions } from 'ai';
+import type { z } from 'zod';
 import type { PrismaService } from '../../../prisma/prisma.service';
-import { partsTools, type PartHistoryRow, type PartsToolSet } from './parts.tools';
+import { partsTools, type ListPartsInput, type PartHistoryRow, type PartsToolSet } from './parts.tools';
+import type { ToolPage } from './tool-page';
 
 const OWNER_ID = 7;
 const STRANGER_ID = 8;
@@ -30,8 +32,8 @@ interface BikeFixture {
   bikename: string | null;
 }
 
-// One Mounted Component as the table holds it, the wear accumulators included - so a test can
-// watch those not come out either.
+// One Mounted Component as the table holds it, wear accumulators included - so a test can watch
+// those not come out either.
 interface PartFixture {
   id: number;
   bike_id: number;
@@ -68,8 +70,10 @@ function bike(overrides: Partial<BikeFixture> = {}): BikeFixture {
   };
 }
 
+// `is_active` and `removed_at` always move together in the app, so a fixture that names one
+// gets the other to match - unless a test deliberately sets both.
 function part(overrides: Partial<PartFixture> = {}): PartFixture {
-  return {
+  const merged: PartFixture = {
     id: CHAIN_ID,
     bike_id: BIKE_ID,
     component_type_id: CHAIN_TYPE_ID,
@@ -88,6 +92,8 @@ function part(overrides: Partial<PartFixture> = {}): PartFixture {
     component_types: { component_type: 'Chain' },
     ...overrides,
   };
+
+  return { ...merged, is_active: overrides.is_active ?? merged.removed_at === null };
 }
 
 function link(componentMountedId: number, bikeEventId: number, deleted = false): LinkFixture {
@@ -129,6 +135,17 @@ describe('partsTools', () => {
 
   function ids(rows: PartHistoryRow[]): number[] {
     return rows.map((row) => row.component_mounted_id);
+  }
+
+  // A call as the model makes it: through the tool's own schema first, which is where an
+  // argument the model filled in with nothing is dropped. execute() alone would skip that.
+  async function asked(
+    tool: PartsToolSet['list_parts'],
+    sent: Record<string, unknown>,
+  ): Promise<ToolPage<PartHistoryRow>> {
+    const schema = tool.inputSchema as unknown as z.ZodType<ListPartsInput>;
+
+    return await tool.execute(schema.parse(sent), CALL);
   }
 
   afterEach(() => {
@@ -219,6 +236,27 @@ describe('partsTools', () => {
     expect(ids((await list.execute({ position: 'Front' }, CALL)).rows)).toEqual([CHAIN_ID]);
   });
 
+  // What the model sent when the chat told a user their bike had no chain: every optional argument
+  // filled in, empty strings included - and the part it looked for carries no position at all.
+  it('reads an empty argument from the model as no filter at all', async () => {
+    database([part({ position: null, mounted_at: null })]);
+
+    const page = await asked(tools(OWNER_ID).list_parts, {
+      bike_id: BIKE_ID,
+      component_type_id: CHAIN_TYPE_ID,
+      active: true,
+      position: '',
+      cursor: '',
+      mounted_from: '   ',
+      mounted_to: '',
+      removed_from: '',
+      removed_to: '',
+    });
+
+    expect(ids(page.rows)).toEqual([CHAIN_ID]);
+    expect(page.total_count).toBe(1);
+  });
+
   it('narrows by the day a part went on and the day it came off', async () => {
     database([
       part({ id: OLD_CHAIN_ID, mounted_at: new Date('2025-01-05T00:00:00.000Z'), removed_at: REMOVED_AT }),
@@ -306,7 +344,6 @@ describe('partsTools', () => {
 
 // ---------------------------------------------------------------------------------------------
 // Enough of Prisma to run the tool's own query against fixtures.
-// ---------------------------------------------------------------------------------------------
 
 type Row = Record<string, unknown>;
 

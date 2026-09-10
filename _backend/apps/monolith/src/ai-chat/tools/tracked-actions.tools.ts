@@ -5,12 +5,11 @@ import type { AttentionLevel, WearAxis, WearMeasure } from '../../service-tracki
 import type { Response_GarageTrackedActionDto } from '../../service-tracking/dto/response-garage-tracked-action';
 import type { ServiceTrackingService } from '../../service-tracking/service-tracking.service';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
-import type { PageTool, ToolPage } from './tool-page';
+import { optionalId, optionalText } from './tool-input';
+import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
 
-// One Tracked Action as the model reads it - one mounted part paired with one job the bike keeps
-// a Service Interval for (ADR 0027). Every number is finished: the model subtracts nothing and
-// bands nothing. The unit of `current`, `interval` and `remaining` is whatever `axis` on the same
-// row says, which is the one place a unit is not in the field name.
+// One Tracked Action: a mounted part paired with a job the bike keeps a Service Interval for
+// (ADR 0027). Every number is finished, and `axis` carries the unit of the three that need one.
 export interface TrackedActionRow {
   bike_id: number;
   bike_brand: string;
@@ -37,13 +36,13 @@ export interface TrackedActionRow {
 }
 
 const listTrackedActionsInput = z.object({
-  bike_id: z.number().int().optional().describe('Only readings on this bike, from get_garage.'),
+  bike_id: optionalId().describe('Only readings on this bike, from get_garage.'),
   min_percentage: z
     .number()
     .int()
     .optional()
     .describe('Only readings at this percentage or above, e.g. 80 for what needs attention.'),
-  cursor: z.string().optional().describe('next_cursor of the previous page. Omit for the first page.'),
+  cursor: optionalText().describe('next_cursor of the previous page. Omit for the first page.'),
 });
 
 export type ListTrackedActionsInput = z.infer<typeof listTrackedActionsInput>;
@@ -66,12 +65,12 @@ const LIST_TRACKED_ACTIONS_DESCRIPTION =
   'than the bike plans. unfed means the accumulator was never fed, so there is nothing to ' +
   'measure the wear from - never read such a row as being in order.';
 
-// One page of readings. A bike carries tens of pairings, so fifty rows is a whole garage's worst
+// One page of readings. A bike carries tens of pairings, so fifty rows covers a garage's worst
 // end many times over.
 const PAGE_SIZE = 50;
 
-// What separates the two halves of the sort key. The cursor has two slots and a Tracked Action
-// needs three numbers, so the percentage and the part travel together in the key.
+// What separates the two halves of the sort key: the cursor has two slots and a reading needs
+// three numbers, so the percentage and the part travel together.
 const PAIR = ':';
 
 // Where a page carries on: the sort key and the pair that identifies the row it stopped at.
@@ -81,11 +80,8 @@ interface Position {
   event_action_id: number;
 }
 
-// The wear axis of the catalogue: how far every job on the machine has come. The reading is not
-// derived here - `ServiceTrackingService` owns that arithmetic, and reading it through the same
-// code the dashboard reads is what keeps the chat from speaking a third language about the
-// thresholds. `prisma` is here for `unfed` alone, and `userId` lives in the closure - it is in no
-// schema, so there is nothing for the model to substitute.
+// The wear axis of the catalogue: how far every job on the machine has come. `ServiceTrackingService`
+// owns the arithmetic, so the chat says what the dashboard says; `prisma` is here for `unfed` alone.
 export function trackedActionTools(
   serviceTracking: ServiceTrackingService,
   prisma: PrismaService,
@@ -111,7 +107,15 @@ export function trackedActionTools(
         const last = page.at(-1);
         const cut = start + page.length < total_count;
 
-        if (!cut || last === undefined) return { rows: page, total_count };
+        if (!cut || last === undefined) {
+          // The unfiltered set is the one already in hand whenever no cutoff was asked for;
+          // above zero it is a second read, which only an empty answer ever pays for.
+          return await withUnfilteredCount({ rows: page, total_count }, narrowed(input), async () =>
+            cutoff(input.min_percentage) === 0
+              ? tracked.length
+              : (await serviceTracking.getGarageTrackedActions(userId, 0)).length,
+          );
+        }
 
         return { rows: page, total_count, truncated: true, next_cursor: cursorOf(last) };
       },
@@ -126,10 +130,8 @@ function cutoff(minPercentage: number | undefined): number {
   return Math.max(0, Math.trunc(minPercentage));
 }
 
-// Which of these bikes has a ride on record. One grouped query, whatever the list is: a bike
-// with no ride has nothing growing any accumulator, so its readings all sit at zero and must
-// not be read as being in order. Ownership is written here as everywhere, so a bike id the
-// filter let through still only counts this user's own rides.
+// Which of these bikes has a ride on record, in one grouped query. A bike with no ride grows no
+// accumulator, so its zeroes must not be read as being in order.
 async function feedingBikes(
   prisma: PrismaService,
   userId: number,
@@ -147,8 +149,8 @@ async function feedingBikes(
   return new Set(ridden.map((group) => group.bike_id));
 }
 
-// Worst first, then the pair that identifies the row (ADR 0027). The tiebreaker is not optional:
-// most of a garage shares `percentage: 0`, and without it a page could skip a reading.
+// Worst first, then the pair that identifies the row (ADR 0027). The tiebreaker is not optional -
+// most of a garage shares `percentage: 0`.
 function byWorst(one: Position, other: Position): number {
   if (one.percentage !== other.percentage) return other.percentage - one.percentage;
   if (one.component_mounted_id !== other.component_mounted_id) {
@@ -158,8 +160,8 @@ function byWorst(one: Position, other: Position): number {
   return one.event_action_id - other.event_action_id;
 }
 
-// Where the next page starts. A cursor pointing at nothing this list holds is nonsense from the
-// model, which reads as no cursor and a first page rather than a failed answer.
+// Where the next page starts. A cursor pointing at nothing this list holds reads as no cursor and
+// a first page, rather than a failed answer.
 function startOf(rows: TrackedActionRow[], after: Position | null): number {
   if (after === null) return 0;
 
@@ -185,10 +187,8 @@ function pageStart(cursor: Cursor | null): Position | null {
   return { percentage, component_mounted_id: componentMountedId, event_action_id: cursor.id };
 }
 
-// The garage row as the model reads it. `remaining` is computed here, at the tool's boundary,
-// the same place the other tools normalize their units. `year` is dropped even though the garage
-// DTO carries it: no other tool has it, and the difference would have the model naming a bike
-// two ways. The i18n keys are dropped for the same reason - the model translates the name.
+// The garage row as the model reads it. `remaining` is computed at the tool's boundary, where the
+// other tools normalize; `year` and the i18n keys are dropped so a bike is named one way only.
 function toTrackedActionRow(action: Response_GarageTrackedActionDto, unfed: boolean): TrackedActionRow {
   return {
     bike_id: action.bike_id,

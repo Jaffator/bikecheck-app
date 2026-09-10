@@ -1,7 +1,6 @@
-// Where the question is typed. Same material as the tab bar, pinned above it for the whole
-// screen - see docs/ui/pinned-action-bar.md, with the tab bar's own height added to the gap
-// because this is a tabbed route and the two would otherwise stack.
-import type { CSSProperties, ReactElement } from "react";
+// Where the question is typed. Pinned above the tab bar (docs/ui/pinned-action-bar.md), with the
+// bar's height added to the gap so the two do not stack.
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { ActionIcon, Box, Group, Stack, Text, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Send } from "lucide-react";
@@ -30,12 +29,15 @@ interface ChatComposerProps {
   // A turn is already on the wire; a second one is not started while it is.
   running: boolean;
   failed: ChatFailure | null;
+  // What the page hangs at the left of the bar - the plus and its menu.
+  actions: ReactNode;
 }
 
-export function ChatComposer({ value, onChange, onSend, running, failed }: ChatComposerProps): ReactElement {
+export function ChatComposer({ value, onChange, onSend, running, failed, actions }: ChatComposerProps): ReactElement {
   const { t, i18n } = useTranslation();
   const keyboardOffset = useKeyboardOffset();
   const empty = value.trim().length === 0;
+  const disabled = empty || running;
 
   return (
     <Box
@@ -75,7 +77,7 @@ export function ChatComposer({ value, onChange, onSend, running, failed }: ChatC
         className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
         style={{
           pointerEvents: "auto",
-          boxShadow: "0 6px 20px color-mix(in srgb, var(--mantine-color-text-6) 15%, transparent)",
+          boxShadow: "0 2px 10px color-mix(in srgb, var(--mantine-color-text-6) 10%, transparent)",
         }}
       >
         {/* The failure belongs beside the button that failed, not in thread the bar covers. */}
@@ -87,6 +89,7 @@ export function ChatComposer({ value, onChange, onSend, running, failed }: ChatC
           </Text>
         )}
         <Group gap={8} wrap="nowrap" align="flex-end">
+          {actions}
           <Textarea
             variant="unstyled"
             aria-label={t("chat.question")}
@@ -103,13 +106,16 @@ export function ChatComposer({ value, onChange, onSend, running, failed }: ChatC
           <ActionIcon
             size={SEND_BUTTON_SIZE}
             radius="xl"
-            color="primary.6"
-            c="textDark.6"
+            color={disabled ? "gray.7" : "primary.6"}
+            c={disabled ? "gray.5" : "textDark.6"}
             aria-label={t("chat.send")}
-            disabled={empty || running}
+            disabled={disabled}
             onClick={onSend}
+            style={{ opacity: disabled ? 0.2 : 1, transition: "opacity 120ms ease, background-color 120ms ease" }}
           >
-            <Send size={18} />
+            <div className="mr-[2px] mt-[1px]">
+              <Send size={18} />
+            </div>
           </ActionIcon>
         </Group>
       </Stack>

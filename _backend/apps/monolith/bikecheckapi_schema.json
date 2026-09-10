@@ -2428,6 +2428,73 @@
           "Report"
         ]
       }
+    },
+    "/api/ai-chat/thread": {
+      "get": {
+        "operationId": "AiChat getThread",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseChatMessageDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AiChat"
+        ]
+      },
+      "delete": {
+        "operationId": "AiChat deleteThread",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseChatDeletedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "AiChat"
+        ]
+      }
+    },
+    "/api/ai-chat": {
+      "post": {
+        "operationId": "AiChat ask",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "NDJSON stream, one JSON per line: {\"type\":\"step\"|\"ping\"|\"done\"|\"error\", ...}"
+          }
+        },
+        "tags": [
+          "AiChat"
+        ]
+      }
     }
   },
   "info": {
@@ -5161,6 +5228,74 @@
         },
         "required": [
           "count"
+        ]
+      },
+      "ResponseChatMessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "example": "assistant"
+          },
+          "content": {
+            "type": "string",
+            "example": "You have two bikes: a Santa Cruz Hightower and a Canyon Grail."
+          },
+          "bike_id": {
+            "type": "number",
+            "nullable": true,
+            "example": 12,
+            "description": "The bike bound when the question was asked; a change between turns is the divider"
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2026-09-09T08:39:40.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "content",
+          "bike_id",
+          "created_at"
+        ]
+      },
+      "ResponseChatDeletedDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 12,
+            "description": "How many messages the deletion reached"
+          }
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "AskChatDto": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "example": "Jaká mám kola?"
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 12,
+            "description": "The bike selected in the chat; absent is all bikes"
+          }
+        },
+        "required": [
+          "question"
         ]
       }
     }

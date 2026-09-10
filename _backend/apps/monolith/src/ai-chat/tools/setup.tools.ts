@@ -4,12 +4,12 @@ import type { PrismaService } from '../../../prisma/prisma.service';
 import { ownedBikesWhere } from '../../bike/owned-bike.where';
 import type { PageTool, ToolPage } from './tool-page';
 
-// Which axis of the setup is being read. The two live in different tables and read as different
-// rows, so the kind is what the model picks rather than something it filters by.
+// Which axis of the setup is being read. The two live in different tables, so the kind is picked
+// rather than filtered by.
 export type SetupKind = 'suspension' | 'tire';
 
-// The part a setup belongs to. Named by its type and description, as everywhere; the id goes out
-// so the model can follow the part into list_services.
+// The part a setup belongs to. Named by type and description; the id goes out so the model can
+// follow it into list_services.
 interface SetupPart {
   component_mounted_id: number;
   component_type_id: number;
@@ -18,9 +18,8 @@ interface SetupPart {
   position: string;
 }
 
-// What is dialled into one fork or shock right now. Units live in the field names, clicks are
-// counted as the app stores them, and a missing number is 0 - so no field is optional. There is
-// no date: the column keeps a time of day rather than a day, so it cannot say when this was set.
+// What is dialled into one fork or shock right now. Units live in the field names and a missing
+// number is 0; no date, because the column keeps a time of day rather than a day.
 export interface SuspensionSetupRow extends SetupPart {
   kind: 'suspension';
   pressure_psi: number;
@@ -63,10 +62,10 @@ const GET_SETUP_DESCRIPTION =
   'it. There is no date on a setup, so never say when it was set.';
 
 // Only what is on the machine now: a setup on a part that came off is not the bike's setup.
-const MOUNTED = { removed_at: null, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
+const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
 
-// The newest row of the two setup tables is the current one. `setup_date` is a time of day
-// rather than a day, so it cannot order two setups made on different days - the row id can.
+// The newest row of the two setup tables is the current one. `setup_date` is a time of day, so
+// only the row id can order two setups.
 const NEWEST_FIRST = { orderBy: { id: 'desc' }, take: 1 } as const;
 
 const partSelect = {
@@ -107,9 +106,8 @@ type SuspensionRecord = Prisma.components_mountedGetPayload<{ select: typeof sus
 
 type TireRecord = Prisma.components_mountedGetPayload<{ select: typeof tireSelect }>;
 
-// The setup axis of the catalogue: what the rider has dialled in, as opposed to what the part
-// is. Ownership is written here, and `userId` lives in the closure - it is in no schema, so
-// there is nothing for the model to substitute.
+// The setup axis of the catalogue: what the rider dialled in, as opposed to what the part is.
+// Ownership is written here, and `userId` lives in the closure, in no schema the model can fill.
 export function setupTools(prisma: PrismaService, userId: number): SetupToolSet {
   return {
     get_setup: {
@@ -126,8 +124,8 @@ export function setupTools(prisma: PrismaService, userId: number): SetupToolSet 
   };
 }
 
-// Ownership and the bike asked for. A bike this user does not own matches nothing, so the tool
-// answers an empty setup rather than somebody else's.
+// Ownership and the bike asked for. A bike this user does not own matches nothing, so the answer
+// is an empty setup rather than somebody else's.
 function setupWhere(userId: number, input: GetSetupInput): Prisma.components_mountedWhereInput {
   return { ...MOUNTED, bike_id: input.bike_id, bikes: ownedBikesWhere(userId) };
 }
