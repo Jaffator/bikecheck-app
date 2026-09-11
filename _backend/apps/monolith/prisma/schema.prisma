@@ -137,7 +137,7 @@ model bikes {
   strava_name           String?                 @db.VarChar
   bike_types            bike_types?             @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   organizations         organizations?          @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users                 users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                 users                   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   components_mounted    components_mounted[]
   bike_service_interval bike_service_interval[]
   chat_messages         chat_messages[]
@@ -426,39 +426,40 @@ model tire_setup {
   components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
+// The account. Deleted hard, never archived (ADR 0028): everything below cascades from
+// this row, so a deleted account leaves nothing of the rider behind.
 model users {
-  id                   Int                    @id @default(autoincrement())
-  name                 String?                @db.VarChar
-  email                String                 @unique @db.VarChar
-  password_hash        String?                @db.VarChar
-  avatar_url           String?                @db.VarChar
-  language             String?                @db.VarChar
-  is_active            Boolean?               @default(true)
-  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  last_login_at        DateTime?              @db.Timestamptz(6)
-  currency             String?                @db.VarChar
-  weight_kg            Int?
-  is_deleted           Boolean?               @default(false)
-  deleted_at           DateTime?              @db.Timestamptz(6)
-  googleId             String?                @unique @db.VarChar
-  strava_athlete_id    String?                @unique @db.VarChar
-  strava_firstname     String?                @db.VarChar
-  strava_lastname      String?                @db.VarChar
-  strava_username      String?                @db.VarChar
-  strava_avatar_url    String?                @db.VarChar
-  accounts             accounts[]
-  bikes                bikes[]
-  chat_messages        chat_messages[]
-  component_types      component_types[]
-  device_tokens        device_tokens[]
-  event_action_tags    event_action_tags[]
-  events_action        events_action[]
-  notifications        notifications[]
-  organization_members organization_members[]
-  refresh_tokens       refresh_tokens[]
-  reports              reports[]
-  rides                rides[]
+  id                    Int                    @id @default(autoincrement())
+  name                  String?                @db.VarChar
+  email                 String                 @unique @db.VarChar
+  password_hash         String?                @db.VarChar
+  avatar_url            String?                @db.VarChar
+  language              String?                @db.VarChar
+  is_active             Boolean?               @default(true)
+  created_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  last_login_at         DateTime?              @db.Timestamptz(6)
+  currency              String?                @db.VarChar
+  weight_kg             Int?
+  googleId              String?                @unique @db.VarChar
+  strava_athlete_id     String?                @unique @db.VarChar
+  strava_firstname      String?                @db.VarChar
+  strava_lastname       String?                @db.VarChar
+  strava_username       String?                @db.VarChar
+  strava_avatar_url     String?                @db.VarChar
+  notifications_enabled Boolean?               @default(true)
+  accounts              accounts[]
+  bikes                 bikes[]
+  chat_messages         chat_messages[]
+  component_types       component_types[]
+  device_tokens         device_tokens[]
+  event_action_tags     event_action_tags[]
+  events_action         events_action[]
+  notifications         notifications[]
+  organization_members  organization_members[]
+  refresh_tokens        refresh_tokens[]
+  reports               reports[]
+  rides                 rides[]
 
   @@index([created_at], map: "users_created_at")
   @@index([last_login_at], map: "users_last_login_at")

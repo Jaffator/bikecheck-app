@@ -20,6 +20,9 @@ interface BikeFilterChipsProps {
   // Whether the bar offers all bikes at all. The chat turns it off for a garage of one,
   // where the single bike is the only subject there is.
   withAllBikes?: boolean;
+  // Whether the selected chip is opaque. The chat's bar floats over the thread, so it is;
+  // the service history's bar sits on the page and is not.
+  opaque?: boolean;
 }
 
 // Lets the user read one bike's story at a time.
@@ -28,6 +31,7 @@ export function BikeFilterChips({
   selected,
   onSelect,
   withAllBikes = true,
+  opaque = false,
 }: BikeFilterChipsProps): ReactElement {
   const { t } = useTranslation();
   // Lands on whichever chip is selected, so one ref does the work of a map.
@@ -65,7 +69,7 @@ export function BikeFilterChips({
               color="primary.6"
               rootRef={selected === null ? selectedRef : undefined}
               style={{ scrollMarginInline: SCROLL_MARGIN_PX }}
-              styles={chipStyles(selected === null, { wrap: false })}
+              styles={chipStyles(selected === null, { wrap: false, opaque })}
             >
               {t("service.allBikes")}
             </Chip>
@@ -79,7 +83,7 @@ export function BikeFilterChips({
               color="primary.6"
               rootRef={selected === bike.id ? selectedRef : undefined}
               style={{ scrollMarginInline: SCROLL_MARGIN_PX }}
-              styles={chipStyles(selected === bike.id, { wrap: false })}
+              styles={chipStyles(selected === bike.id, { wrap: false, opaque })}
             >
               {/* The same name the garage and the bike detail give it. */}
               {bikeTitle(bike)}

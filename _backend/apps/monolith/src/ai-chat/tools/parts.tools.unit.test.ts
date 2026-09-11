@@ -192,13 +192,13 @@ describe('partsTools', () => {
     expect(answered).not.toContain('health_index');
   });
 
-  it('reads a missing number as 0 and a missing text as empty, and an undated part as null', async () => {
+  it('reads a missing number as null and a missing text as empty, and an undated part as null', async () => {
     database([part({ component_desc: null, position: null, mounted_at: null, total_km: null, total_time_min: null })]);
 
     const [row] = (await tools(OWNER_ID).list_parts.execute({}, CALL)).rows;
 
-    expect(row.total_km).toBe(0);
-    expect(row.total_time_min).toBe(0);
+    expect(row.total_km).toBeNull();
+    expect(row.total_time_min).toBeNull();
     expect(row.component_desc).toBe('');
     expect(row.position).toBe('');
     expect(row.mounted_at).toBeNull();

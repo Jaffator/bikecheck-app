@@ -5,15 +5,16 @@ import { ownedBikesWhere } from '../../bike/owned-bike.where';
 import type { PageTool, ToolPage } from './tool-page';
 
 // One part on one bike, as the model reads it. Ids go out so the other tools can be called
-// with them; units live in the field names; a missing number is 0, so no field is optional.
+// with them; units live in the field names. A number nobody recorded goes out as null rather
+// than as 0: a zero is a reading, and the model states what it is given.
 export interface GaragePartRow {
   component_mounted_id: number;
   component_type_id: number;
   component_type: string;
   position: string;
   component_desc: string;
-  total_km: number;
-  total_time_min: number;
+  total_km: number | null;
+  total_time_min: number | null;
 }
 
 // One bike with what is on it now. Named by brand and model - `bikename` is what its owner
@@ -22,9 +23,15 @@ export interface GarageBikeRow {
   bike_id: number;
   bike_brand: string;
   bike_model: string;
-  total_km: number;
-  total_time_min: number;
-  elevation_m: number;
+  // The model year, as the app writes it beside the name - "Cube Nuroad 2025". Null on a bike
+  // whose owner never filled it in.
+  year: number | null;
+  total_km: number | null;
+  total_time_min: number | null;
+  elevation_m: number | null;
+  // Whether Strava rides land on this bike by themselves. The gear id itself says nothing to
+  // the user, so only the fact of the pairing goes out.
+  strava_paired: boolean;
   parts: GaragePartRow[];
 }
 
@@ -39,7 +46,9 @@ export type GarageToolSet = {
 
 const GET_GARAGE_DESCRIPTION =
   'The bikes the user owns and the parts mounted on them right now, with the ids every other ' +
-  'tool takes. Call this before anything else. Takes no arguments.';
+  'tool takes. `strava_paired` says whether rides from Strava land on that bike by themselves, ' +
+  'and `year` is the model year. A figure nobody recorded is null, which is not a zero. ' +
+  'Call this before anything else. Takes no arguments.';
 
 // Only what is on the machine now, read by the signal the rest of the app mounts by. A part that
 // came off is not part of the build any more.
@@ -51,9 +60,11 @@ const garageSelect = {
   id: true,
   bike_brand: true,
   bike_model: true,
+  year: true,
   total_km: true,
   total_time_min: true,
   total_elevation_m: true,
+  strava_gear_id: true,
   components_mounted: {
     where: MOUNTED,
     orderBy: { id: 'asc' },
@@ -101,9 +112,11 @@ function toGarageBikeRow(bike: GarageBike): GarageBikeRow {
     bike_id: bike.id,
     bike_brand: bike.bike_brand,
     bike_model: bike.bike_model ?? '',
-    total_km: bike.total_km ?? 0,
-    total_time_min: bike.total_time_min ?? 0,
-    elevation_m: bike.total_elevation_m ?? 0,
+    year: bike.year,
+    total_km: bike.total_km,
+    total_time_min: bike.total_time_min,
+    elevation_m: bike.total_elevation_m,
+    strava_paired: bike.strava_gear_id != null,
     parts: bike.components_mounted.map(toGaragePartRow),
   };
 }
@@ -115,7 +128,7 @@ function toGaragePartRow(part: GaragePart): GaragePartRow {
     component_type: part.component_types.component_type,
     position: part.position ?? '',
     component_desc: part.component_desc ?? '',
-    total_km: part.total_km ?? 0,
-    total_time_min: part.total_time_min ?? 0,
+    total_km: part.total_km,
+    total_time_min: part.total_time_min,
   };
 }

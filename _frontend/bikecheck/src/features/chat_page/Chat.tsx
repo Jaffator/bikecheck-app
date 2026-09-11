@@ -1,26 +1,25 @@
 // Chat page. One thread per user, a question typed at the bottom, and one muted line while the
-// answer is worked out. The bike bar above says what a question is about before it is sent.
+// answer is worked out. The bike bar rides on the composer and says what a question is about
+// before it is sent.
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { Box, Skeleton, Stack, Text } from "@mantine/core";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeFilterChips } from "@/features/service/ui/BikeFilterChips";
-import { useChatThread } from "@/features/ai_chat/aiChat.queries";
-import { useChatTurn } from "@/features/ai_chat/useChatTurn";
-import { ChatThread } from "@/features/ai_chat/ui/ChatThread";
-import { ChatComposer } from "@/features/ai_chat/ui/ChatComposer";
-import { ChatActionsMenu } from "@/features/ai_chat/ui/ChatActionsMenu";
+import { useChatThread } from "@/features/chat/chat.queries";
+import { useChatTurn } from "@/features/chat/useChatTurn";
+import { ChatThread } from "@/features/chat/ui/ChatThread";
+import { ChatComposer } from "@/features/chat/ui/ChatComposer";
+import { ChatActionsMenu } from "@/features/chat/ui/ChatActionsMenu";
 import { EmptyChat } from "./EmptyChat";
 
-// Room for the composer, which floats and so keeps nothing clear of itself.
-const COMPOSER_ROOM =
-  "calc(11rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+// Room for the composer, which floats and so keeps nothing clear of itself. The bike bar
+// rides on it, so its row is part of the gap.
+const COMPOSER_ROOM = "calc(15rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
-// Where the bar comes to rest: the app header's height - see AppLayout, and the month
-// headings of the service history, which hold at the same line.
-const HEADER_OFFSET =
-  "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))";
+// The app header's height - see AppLayout, which the empty page measures itself from.
+const HEADER_OFFSET = "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))";
 
 // With nothing in the thread there is nothing to scroll, so the page is held to exactly the
 // space between the header and the composer and the empty state is centred in it.
@@ -41,10 +40,7 @@ export function Chat(): ReactElement {
   const { data: messages, isLoading, isError } = useChatThread();
   const [draft, setDraft] = useState("");
   // A turn that produced nothing puts its question back where it was typed.
-  const restoreQuestion = useCallback(
-    (question: string): void => setDraft(question),
-    [],
-  );
+  const restoreQuestion = useCallback((question: string): void => setDraft(question), []);
   const { pending, failed, ask } = useChatTurn(restoreQuestion);
 
   const garage = bikes ?? [];
@@ -103,33 +99,11 @@ export function Chat(): ReactElement {
           : undefined
       }
     >
-      {garage.length > 0 && (
-        // The bar holds under the header while the thread scrolls past it, carrying the page
-        // background so the turns pass under it rather than through it.
-        <Box
-          style={{
-            // Nothing scrolls past the bar on an empty page, and sticky would only hold it
-            // a header's height below the header, so it sits in the flow there.
-            position: empty ? "static" : "sticky",
-            top: HEADER_OFFSET,
-            zIndex: 1,
-            backgroundColor: "var(--mantine-color-background-9)",
-          }}
-        >
-          {/* A garage of one has no all-bikes chip: there is nothing else to ask about. */}
-          <BikeFilterChips
-            bikes={garage}
-            selected={selectedBikeId}
-            onSelect={selectBike}
-            withAllBikes={garage.length > 1}
-          />
-        </Box>
-      )}
       <Box
         px="md"
         pt="md"
         pb={empty ? 0 : COMPOSER_ROOM}
-        // The empty state takes what the chips leave and centres itself there.
+        // The empty state takes the whole page between header and composer and centres itself.
         style={
           empty
             ? {
@@ -152,11 +126,7 @@ export function Chat(): ReactElement {
         {isError && <Text c="red">{t("chat.loadFailed")}</Text>}
         {empty && <EmptyChat />}
         {!isLoading && !isError && turnCount > 0 && (
-          <ChatThread
-            messages={messages ?? []}
-            bikes={garage}
-            pending={pending}
-          />
+          <ChatThread messages={messages ?? []} bikes={garage} pending={pending} />
         )}
       </Box>
       <ChatComposer
@@ -165,11 +135,18 @@ export function Chat(): ReactElement {
         onSend={send}
         running={pending !== null}
         failed={failed}
-        actions={
-          <ChatActionsMenu
-            canClear={storedCount > 0}
-            disabled={pending !== null}
-          />
+        actions={<ChatActionsMenu canClear={storedCount > 0} disabled={pending !== null} />}
+        chips={
+          garage.length === 0 ? undefined : (
+            // A garage of one has no all-bikes chip: there is nothing else to ask about.
+            <BikeFilterChips
+              bikes={garage}
+              selected={selectedBikeId}
+              onSelect={selectBike}
+              withAllBikes={garage.length > 1}
+              opaque
+            />
+          )
         }
       />
     </Box>

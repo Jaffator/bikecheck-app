@@ -5,7 +5,7 @@ import { ActionIcon, Menu, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Plus, Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { useDeleteChatThread } from "../aiChat.queries";
+import { useDeleteChatThread } from "../chat.queries";
 
 const ICON_SIZE = 18;
 const BUTTON_SIZE = 38;

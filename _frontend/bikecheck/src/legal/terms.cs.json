@@ -1,0 +1,35 @@
+[
+  {
+    "heading": "ZÁSTUPNÝ TEXT — nahradit před vydáním",
+    "paragraphs": [
+      "Toto nejsou skutečné podmínky použití. Jde o zástupný obsah, který drží místo pro znění dodané člověkem. Nespoléhejte se na něj, neodkazujte na něj a nevydávejte aplikaci, dokud ho nenahradí schválený právní text.",
+      "Bloky níže existují jen proto, aby ukázaly, jak sazba vysází nadpis a odstavce pod ním."
+    ]
+  },
+  {
+    "heading": "1. Zástupný nadpis — rozsah služby",
+    "paragraphs": [
+      "Zde bude popsáno, co aplikace dělá, komu je určena a co po ní uživatel může chtít. Odstavec je záměrně delší, aby bylo vidět, jak se dlouhý text láme na šířku telefonu a jak sedí řádkování mezi jednotlivými řádky odstavce.",
+      "Druhý odstavec téhož bloku ukazuje mezeru mezi odstavci."
+    ]
+  },
+  {
+    "heading": "2. Zástupný nadpis — účet uživatele",
+    "paragraphs": [
+      "Zde budou pravidla pro založení, používání a zrušení účtu."
+    ]
+  },
+  {
+    "heading": "3. Zástupný nadpis — obsah vložený uživatelem",
+    "paragraphs": [
+      "Zde bude řečeno, komu patří fotky, servisní záznamy a další data, která uživatel do aplikace vloží.",
+      "A zde, za jakých podmínek s nimi aplikace nakládá."
+    ]
+  },
+  {
+    "heading": "4. Zástupný nadpis — omezení odpovědnosti a kontakt",
+    "paragraphs": [
+      "Zde bude omezení odpovědnosti a kontaktní údaje provozovatele."
+    ]
+  }
+]

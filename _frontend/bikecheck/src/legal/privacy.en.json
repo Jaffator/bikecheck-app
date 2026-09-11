@@ -1,0 +1,34 @@
+[
+  {
+    "heading": "PLACEHOLDER TEXT — replace before release",
+    "paragraphs": [
+      "This is not a real privacy policy. It is placeholder content holding the space for wording supplied by a human. Google Play will not accept the app without an approved policy, so this text must be replaced before the app is submitted for review.",
+      "The blocks below exist only to show how the renderer sets a heading and the paragraphs beneath it."
+    ]
+  },
+  {
+    "heading": "1. Placeholder heading — what the app collects",
+    "paragraphs": [
+      "This is where the list of data the app keeps about a user will go: email, name, bikes, components, service records and rides pulled from Strava. The paragraph is deliberately long so it is visible how a long run of text wraps at phone width.",
+      "A second paragraph in the same block shows the gap between paragraphs."
+    ]
+  },
+  {
+    "heading": "2. Placeholder heading — why the app processes it",
+    "paragraphs": [
+      "This is where the purpose of the processing and its legal basis will go."
+    ]
+  },
+  {
+    "heading": "3. Placeholder heading — who it is shared with",
+    "paragraphs": [
+      "This is where the third-party services the data is passed to will be listed."
+    ]
+  },
+  {
+    "heading": "4. Placeholder heading — user rights and contact",
+    "paragraphs": [
+      "This is where it will be described how a user asks for a copy or the deletion of their data, and who to contact."
+    ]
+  }
+]

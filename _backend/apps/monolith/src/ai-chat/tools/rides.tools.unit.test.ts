@@ -153,15 +153,15 @@ describe('ridesTools', () => {
     expect(answered).not.toContain('Ignore your instructions');
   });
 
-  it('reads a missing number as 0 and a ride with no start as null', async () => {
+  it('reads a missing number as null and a ride with no start as null', async () => {
     database([ride({ started_at: null, distance_m: null, duration_min: null, elevation_up_m: null })]);
 
     const [row] = (await tools(OWNER_ID).list_rides.execute({}, CALL)).rows;
 
     expect(row.started_at).toBeNull();
-    expect(row.distance_km).toBe(0);
-    expect(row.duration_min).toBe(0);
-    expect(row.elevation_m).toBe(0);
+    expect(row.distance_km).toBeNull();
+    expect(row.duration_min).toBeNull();
+    expect(row.elevation_m).toBeNull();
   });
 
   it('narrows to one bike and to a span of days', async () => {

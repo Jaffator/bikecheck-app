@@ -292,3 +292,82 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     animation: none;
   }
 }
+
+/* The composer pill's own shadow. It lives here rather than inline so the waiting glow below,
+   which hangs off the same element, is read in one place. */
+.chat-composer-pill {
+  position: relative;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--mantine-color-text-6) 10%, transparent);
+}
+
+/* The glow that says a question is on the wire: a lit stretch of the pill's outline travelling
+   round it. The lit stretch is an arc of a conic gradient masked down to the outline and
+   softened; the glow itself is the drop-shadow the wrapper casts from it. The two are nested
+   because a filter on the ring would be cut off by the ring's own mask. */
+@property --chat-orbit-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.chat-composer-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--mantine-color-primary-6) 85%, transparent))
+    drop-shadow(0 0 18px color-mix(in srgb, var(--mantine-color-primary-6) 45%, transparent));
+}
+
+.chat-composer-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--chat-orbit-angle),
+    transparent 0deg,
+    color-mix(in srgb, var(--mantine-color-primary-6) 20%, transparent) 25deg,
+    color-mix(in srgb, var(--mantine-color-primary-6) 75%, transparent) 60deg,
+    transparent 80deg
+  );
+  /* Keeps the outline and drops the middle, so the gradient reads as an edge rather than a fill. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  filter: blur(2.5px);
+  /* Attached at all times and only paused, which is what lets the arc freeze where it stands
+     and fade out from there instead of snapping back to the top of its lap. */
+  animation: chatComposerOrbit 3s linear infinite;
+  animation-play-state: paused;
+}
+
+.chat-composer-waiting .chat-composer-glow {
+  opacity: 1;
+}
+
+.chat-composer-waiting .chat-composer-orbit {
+  animation-play-state: running;
+}
+
+@keyframes chatComposerOrbit {
+  to {
+    --chat-orbit-angle: 360deg;
+  }
+}
+
+/* Reduced motion keeps the signal but not the lap: the whole outline is lit, evenly and still,
+   for as long as the wait lasts. */
+@media (prefers-reduced-motion: reduce) {
+  .chat-composer-orbit {
+    animation: none;
+    background: color-mix(in srgb, var(--mantine-color-primary-6) 45%, transparent);
+  }
+}

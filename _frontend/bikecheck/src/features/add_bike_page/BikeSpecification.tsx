@@ -124,6 +124,18 @@ export function BikeSpecification({
 
   return (
     <Stack gap="lg" ref={formRef}>
+      <Stack gap={4}>
+        <FieldLabel>{t("addBike.bikeName")}</FieldLabel>
+        <TextInput
+          placeholder={t("addBike.bikeNamePlaceholder")}
+          leftSection={<Tag size={18} />}
+          value={values.bikeName}
+          onChange={(event) => onChange("bikeName", event.currentTarget.value)}
+          radius="sm"
+          styles={inputStyles}
+        />
+      </Stack>
+
       <Paper bg="cards.6" radius="md" style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
         {shownPhoto ? (
           <Image src={shownPhoto} alt={displayName} h={180} fit="contain" bg="white" p="sm" radius="md" />
@@ -147,7 +159,7 @@ export function BikeSpecification({
                   borderBottom: "1px solid var(--mantine-color-other-borderSubtle)",
                 }}
               >
-                <ImagePlus size={28} color="var(--mantine-color-primary-6)" />
+                <ImagePlus size={28} color="var(--mantine-color-primary-6)" style={{ marginTop: 24 }} />
                 <Text size="sm" c="text.7">
                   {t("addBike.addPhoto")}
                 </Text>
@@ -188,18 +200,6 @@ export function BikeSpecification({
           )}
         </Group>
       </Paper>
-
-      <Stack gap={4}>
-        <FieldLabel>{t("addBike.bikeName")}</FieldLabel>
-        <TextInput
-          placeholder={t("addBike.bikeNamePlaceholder")}
-          leftSection={<Tag size={18} />}
-          value={values.bikeName}
-          onChange={(event) => onChange("bikeName", event.currentTarget.value)}
-          radius="sm"
-          styles={inputStyles}
-        />
-      </Stack>
 
       <Stack gap={4}>
         <FieldLabel>{t("addBike.currentMileage")}</FieldLabel>

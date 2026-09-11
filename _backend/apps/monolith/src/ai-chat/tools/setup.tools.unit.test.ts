@@ -170,7 +170,7 @@ describe('setupTools', () => {
     });
   });
 
-  it('reads a setting nobody wrote down as 0 and a missing note as empty', async () => {
+  it('reads a setting nobody wrote down as null and a missing note as empty', async () => {
     database([
       part({
         component_desc: null,
@@ -195,11 +195,11 @@ describe('setupTools', () => {
       (await tools(OWNER_ID).get_setup.execute({ bike_id: BIKE_ID, kind: 'suspension' }, CALL)).rows[0],
     );
 
-    expect(row.pressure_psi).toBe(0);
-    expect(row.sag_percent).toBe(0);
-    expect(row.tokens_spacers).toBe(0);
-    expect(row.rebound_hs_clicks).toBe(0);
-    expect(row.compression_hs_clicks).toBe(0);
+    expect(row.pressure_psi).toBeNull();
+    expect(row.sag_percent).toBeNull();
+    expect(row.tokens_spacers).toBeNull();
+    expect(row.rebound_hs_clicks).toBeNull();
+    expect(row.compression_hs_clicks).toBeNull();
     expect(row.notes).toBe('');
     expect(row.component_desc).toBe('');
     expect(row.position).toBe('');

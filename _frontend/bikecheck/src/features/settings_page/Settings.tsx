@@ -1,7 +1,7 @@
 // Settings page.
 import { useState, type ReactElement } from "react";
-import { useLocation } from "react-router-dom";
-import { Card, Group, SegmentedControl, Stack, Text, UnstyledButton } from "@mantine/core";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Card, Group, SegmentedControl, Stack, Switch, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
@@ -21,6 +21,7 @@ export function Settings(): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
   const updateUser = useUpdateUser();
+  const navigate = useNavigate();
   const [customParts, setCustomParts] = useState(false);
   // The empty garage links straight into the archive, so it arrives already open.
   const location = useLocation();
@@ -41,6 +42,16 @@ export function Settings(): ReactElement {
       updateUser.mutate({ id: user.id, data: { currency } });
     }
   }
+
+  // Mutes push only. The bell keeps counting, so nothing is lost - just not interrupted.
+  function changeNotifications(enabled: boolean): void {
+    if (user) {
+      updateUser.mutate({ id: user.id, data: { notifications_enabled: enabled } });
+    }
+  }
+
+  // Null is a user who never touched the switch, which the backend reads as on.
+  const notificationsEnabled = user?.notifications_enabled !== false;
 
   return (
     <>
@@ -75,6 +86,31 @@ export function Settings(): ReactElement {
               data={SUPPORTED_CURRENCIES.map((currency) => ({ value: currency, label: currency }))}
             />
           </Group>
+
+          {/* Silences the lock screen only - the notification is still written and the bell
+              still counts it. */}
+          <Group justify="space-between" p="md" wrap="nowrap">
+            <Text c="text.6" fz={15} fw={600}>
+              {t("settings.notifications")}
+            </Text>
+            <Switch
+              withThumbIndicator={false}
+              checked={notificationsEnabled}
+              onChange={(event) => changeNotifications(event.currentTarget.checked)}
+              aria-label={t("settings.notifications")}
+              styles={{
+                track: {
+                  backgroundColor: notificationsEnabled
+                    ? "var(--mantine-color-primary-6)"
+                    : "var(--mantine-color-cards-4)",
+                  borderColor: "var(--mantine-color-other-borderSolid)",
+                },
+                thumb: {
+                  backgroundColor: notificationsEnabled ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
+                },
+              }}
+            />
+          </Group>
         </Stack>
       </Card>
 
@@ -100,6 +136,42 @@ export function Settings(): ReactElement {
             <Group justify="space-between" wrap="nowrap">
               <Text c="text.6" fz={15} fw={600}>
                 {t("settings.bikeArchive")}
+              </Text>
+              <ChevronRight size={18} color="var(--color-text-dim)" />
+            </Group>
+          </UnstyledButton>
+        </Stack>
+      </Card>
+
+      <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
+        {t("settings.sectionAbout")}
+      </Text>
+      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+        <Stack gap={0}>
+          {/* States the build; switches nothing. */}
+          <Group justify="space-between" p="md" wrap="nowrap">
+            <Text c="text.6" fz={15} fw={600}>
+              {t("settings.version")}
+            </Text>
+            <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+              {__APP_VERSION__}
+            </Text>
+          </Group>
+
+          {/* Both documents live on their own route, reachable without a session. */}
+          <UnstyledButton onClick={() => navigate("/legal/terms")} className="w-full" p="md">
+            <Group justify="space-between" wrap="nowrap">
+              <Text c="text.6" fz={15} fw={600}>
+                {t("settings.terms")}
+              </Text>
+              <ChevronRight size={18} color="var(--color-text-dim)" />
+            </Group>
+          </UnstyledButton>
+
+          <UnstyledButton onClick={() => navigate("/legal/privacy")} className="w-full" p="md">
+            <Group justify="space-between" wrap="nowrap">
+              <Text c="text.6" fz={15} fw={600}>
+                {t("settings.privacy")}
               </Text>
               <ChevronRight size={18} color="var(--color-text-dim)" />
             </Group>

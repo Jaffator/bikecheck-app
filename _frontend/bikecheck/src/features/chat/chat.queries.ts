@@ -7,8 +7,8 @@ import {
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
-import { deleteChatThread, getChatThread } from "./aiChat.api";
-import type { ChatMessage, ChatThreadDeleted } from "./aiChat.types";
+import { deleteChatThread, getChatThread } from "./chat.api";
+import type { ChatMessage, ChatThreadDeleted } from "./chat.types";
 
 export const CHAT_THREAD_KEY = ["ai-chat", "thread"];
 

@@ -242,7 +242,7 @@ describe('servicesTools', () => {
     expect(JSON.stringify(page)).not.toContain('Modrá bestie');
   });
 
-  it('reads a missing cost as 0 and a missing note as empty, and an undated occasion as null', async () => {
+  it('reads a missing cost as null and a missing note as empty, and an undated occasion as null', async () => {
     database([
       service({
         total_cost: null,
@@ -254,10 +254,10 @@ describe('servicesTools', () => {
 
     const [row] = (await tools(OWNER_ID).list_services.execute({}, CALL)).rows;
 
-    expect(row.cost).toBe(0);
+    expect(row.cost).toBeNull();
     expect(row.note).toBe('');
     expect(row.service_date).toBeNull();
-    expect(row.actions[0].cost).toBe(0);
+    expect(row.actions[0].cost).toBeNull();
     expect(row.actions[0].note).toBe('');
     expect(row.actions[0].part_replaced).toBe(false);
   });
@@ -293,8 +293,11 @@ describe('servicesTools', () => {
     expect(ids((await list.execute({ replaced_only: true, component_type_id: CHAIN_TYPE_ID }, CALL)).rows)).toEqual([
       SERVICE_ID,
     ]);
-    // The fork was serviced on that occasion, but nothing replaced it.
-    expect((await list.execute({ replaced_only: true, component_type_id: FORK_TYPE_ID }, CALL)).rows).toEqual([]);
+    // The fork was serviced on that occasion, but nothing replaced it. What comes back is the
+    // whole list marked as the swap it is, never an empty page that reads like a fact.
+    const noFork = await list.execute({ replaced_only: true, component_type_id: FORK_TYPE_ID }, CALL);
+    expect(noFork.filter_ignored).toBe(true);
+    expect(ids(noFork.rows)).toEqual([OTHER_SERVICE_ID, SERVICE_ID]);
     expect(ids((await list.execute({ replaced_only: true }, CALL)).rows)).toEqual([OTHER_SERVICE_ID, SERVICE_ID]);
   });
 
@@ -307,15 +310,16 @@ describe('servicesTools', () => {
     expect(page.rows[0].actions.map((done) => done.action_id)).toEqual([FORK_SERVICE_ID, PADS_REPLACEMENT_ID]);
   });
 
-  it('narrows to one bike, one action and a period', async () => {
+  it('narrows to one bike and a period', async () => {
     database([service(), forkAndPads()]);
 
     const list = tools(OWNER_ID).list_services;
 
-    expect(ids((await list.execute({ action_id: FORK_SERVICE_ID }, CALL)).rows)).toEqual([OTHER_SERVICE_ID]);
     expect(ids((await list.execute({ from: '2026-06-01' }, CALL)).rows)).toEqual([OTHER_SERVICE_ID]);
     expect(ids((await list.execute({ to: '2026-05-14' }, CALL)).rows)).toEqual([SERVICE_ID]);
-    expect((await list.execute({ bike_id: ARCHIVED_BIKE_ID }, CALL)).rows).toEqual([]);
+    // An archived bike is nobody's to read, so its filter matches nothing and the unnarrowed
+    // list stands in.
+    expect((await list.execute({ bike_id: ARCHIVED_BIKE_ID }, CALL)).filter_ignored).toBe(true);
   });
 
   // What the model actually sends goes through the tool's own schema first, which is where a
@@ -331,7 +335,6 @@ describe('servicesTools', () => {
     // never serviced anything: every optional argument filled, the ids at 0.
     const input = await asked({
       bike_id: BIKE_ID,
-      action_id: 0,
       component_type_id: 0,
       mounted_component_id: 0,
       replaced_only: false,
@@ -348,14 +351,27 @@ describe('servicesTools', () => {
     expect(ids((await tools(OWNER_ID).list_services.execute(input, CALL)).rows)).toEqual([SERVICE_ID]);
   });
 
-  it('tells an empty filtered answer how many occasions there are without the filters', async () => {
+  // Words did not stop a model reading its own empty page as a fact - see the eval - so the
+  // page it gets back is the one it should have asked for.
+  it('hands back the unnarrowed list when the filters matched nothing', async () => {
     database([service()]);
 
-    const page = await tools(OWNER_ID).list_services.execute({ action_id: FORK_SERVICE_ID }, CALL);
+    const page = await tools(OWNER_ID).list_services.execute({ mounted_component_id: FORK_ID }, CALL);
+
+    expect(ids(page.rows)).toEqual([SERVICE_ID]);
+    expect(page.total_count).toBe(1);
+    expect(page.filter_ignored).toBe(true);
+  });
+
+  // The one case where empty is the answer: nothing is on record either way.
+  it('says nothing is recorded only when the list is empty without the filters too', async () => {
+    database([]);
+
+    const page = await tools(OWNER_ID).list_services.execute({ mounted_component_id: FORK_ID }, CALL);
 
     expect(page.rows).toEqual([]);
-    expect(page.total_count).toBe(0);
-    expect(page.unfiltered_count).toBe(1);
+    expect(page.unfiltered_count).toBe(0);
+    expect(page.filter_ignored).toBeUndefined();
   });
 
   it('leaves unfiltered_count out when the answer is empty and nothing was narrowed', async () => {

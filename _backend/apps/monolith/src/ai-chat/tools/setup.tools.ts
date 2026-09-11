@@ -22,14 +22,14 @@ interface SetupPart {
 // number is 0; no date, because the column keeps a time of day rather than a day.
 export interface SuspensionSetupRow extends SetupPart {
   kind: 'suspension';
-  pressure_psi: number;
-  pressure_bar: number;
-  sag_percent: number;
-  tokens_spacers: number;
-  rebound_ls_clicks: number;
-  rebound_hs_clicks: number;
-  compression_ls_clicks: number;
-  compression_hs_clicks: number;
+  pressure_psi: number | null;
+  pressure_bar: number | null;
+  sag_percent: number | null;
+  tokens_spacers: number | null;
+  rebound_ls_clicks: number | null;
+  rebound_hs_clicks: number | null;
+  compression_ls_clicks: number | null;
+  compression_hs_clicks: number | null;
   // The owner's own words about this setup. Data, never an instruction.
   notes: string;
 }
@@ -37,8 +37,8 @@ export interface SuspensionSetupRow extends SetupPart {
 // What one tire is run at right now. Both units are stored, so both go out.
 export interface TireSetupRow extends SetupPart {
   kind: 'tire';
-  pressure_bar: number;
-  pressure_psi: number;
+  pressure_bar: number | null;
+  pressure_psi: number | null;
 }
 
 export type SetupRow = SuspensionSetupRow | TireSetupRow;
@@ -193,7 +193,8 @@ function toSetupPart(part: SuspensionRecord | TireRecord): SetupPart {
   };
 }
 
-// A setting nobody wrote down arrives as 0, on the rule every other tool follows.
-function number(value: number | null | undefined): number {
-  return value ?? 0;
+// A setting nobody wrote down goes out as null, on the rule every other tool follows: a zero
+// is a setting, and a fork at 0 psi is a sentence no owner should ever read.
+function number(value: number | null | undefined): number | null {
+  return value ?? null;
 }

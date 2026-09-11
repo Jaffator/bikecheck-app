@@ -2,7 +2,7 @@ import { Anchor, Button, Checkbox, Divider, Group, Paper, PasswordInput, Stack, 
 import type { PaperProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useToggle } from "@mantine/hooks";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { detectLanguage } from "@/i18n";
 import { GoogleButton } from "./GoogleButton";
 import { Mail, Lock, User } from "lucide-react";
@@ -11,6 +11,7 @@ import { useLogin, useRegistration, useGoogleNative } from "@/features/users/use
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
+import { Link } from "react-router-dom";
 
 export function AuthenticationForm(props: PaperProps) {
   const { t } = useTranslation();
@@ -139,7 +140,16 @@ export function AuthenticationForm(props: PaperProps) {
               <Checkbox
                 ml="2px"
                 c="background.9"
-                label={t("auth.acceptTerms")}
+                // The document the box is agreeing to, one tap away and open to a visitor
+                // with no account yet.
+                label={
+                  <Trans
+                    i18nKey="auth.acceptTerms"
+                    components={{
+                      1: <Anchor component={Link} to="/legal/terms" c="background.9" fw={600} td="underline" />,
+                    }}
+                  />
+                }
                 checked={form.values.terms}
                 onChange={(event) => form.setFieldValue("terms", event.currentTarget.checked)}
               />

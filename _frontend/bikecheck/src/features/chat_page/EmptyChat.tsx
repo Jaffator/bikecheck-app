@@ -1,18 +1,20 @@
-// The screen before the first question. No illustration exists for the chat, so the tab's own
-// icon stands in the band one would fill.
+// The screen before the first question. No illustration exists for the chat, so the app's own
+// mark stands in the band one would fill.
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { RiChatAi3Line } from "react-icons/ri";
+import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
 
-const ICON_SIZE = 96;
+// The mark is wider than it is tall, so it is sized by its width and the height follows.
+const ICON_WIDTH = 100;
+const ICON_HEIGHT = 62;
 
 export function EmptyChat(): ReactElement {
   const { t } = useTranslation();
 
   return (
     <EmptyStateLayout
-      icon={<RiChatAi3Line size={ICON_SIZE} />}
+      icon={<Bikecheck width={ICON_WIDTH} height={ICON_HEIGHT} />}
       title={t("chat.emptyTitle")}
       body={t("chat.emptyBody")}
       // The chat page centres the state in the space it has, so the layout adds no band.

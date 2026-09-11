@@ -5,7 +5,7 @@ import { ownedBikesWhere } from '../../bike/owned-bike.where';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
 import { optionalId, optionalText } from './tool-input';
-import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
+import { narrowed, withUnfilteredFallback, type PageTool, type ToolPage } from './tool-page';
 
 // A part that is on the machine, or one that came off. Read from `is_active`; the flag itself
 // never goes out, because two signals of the same thing would leave the model choosing.
@@ -26,8 +26,8 @@ export interface PartHistoryRow {
   // ISO day, or null on a part whose date nobody recorded.
   mounted_at: string | null;
   removed_at: string | null;
-  total_km: number;
-  total_time_min: number;
+  total_km: number | null;
+  total_time_min: number | null;
   // Services that touched this part, zero included: an Unserviced Component is a finding to
   // state, not something to read out of an empty answer.
   service_count: number;
@@ -100,45 +100,43 @@ type PartRecord = Prisma.components_mountedGetPayload<{ select: typeof partsSele
 // The history axis of the catalogue: which parts a bike has carried and for how long. Ownership
 // is written here, and `userId` lives in the closure, in no schema the model can fill.
 export function partsTools(prisma: PrismaService, userId: number): PartsToolSet {
+  // One page, named so the empty-page fallback can ask the very same question with no
+  // filters on it at all.
+  const list = async (input: ListPartsInput): Promise<ToolPage<PartHistoryRow>> => {
+    const filter = partsWhere(userId, input);
+    const after = pageStart(decodeCursor(input.cursor));
+    const where = after === undefined ? filter : { ...filter, AND: [after] };
+
+    // One more row than a page, which is how the end of the list is recognised.
+    const [found, total_count] = await Promise.all([
+      prisma.components_mounted.findMany({
+        where,
+        orderBy: partsOrder,
+        take: PAGE_SIZE + 1,
+        select: partsSelect,
+      }),
+      prisma.components_mounted.count({ where: filter }),
+    ]);
+
+    const cut = found.length > PAGE_SIZE;
+    const parts = cut ? found.slice(0, PAGE_SIZE) : found;
+    const counts = await serviceCounts(
+      prisma,
+      parts.map((part) => part.id),
+    );
+
+    const rows = parts.map((part) => toPartHistoryRow(part, counts.get(part.id) ?? 0));
+    const last = parts.at(-1);
+
+    if (!cut || last === undefined) {
+      return await withUnfilteredFallback({ rows, total_count }, narrowed(input), () => list(listPartsInput.parse({})));
+    }
+
+    return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
+  };
+
   return {
-    list_parts: {
-      description: LIST_PARTS_DESCRIPTION,
-      inputSchema: listPartsInput,
-      execute: async (input: ListPartsInput): Promise<ToolPage<PartHistoryRow>> => {
-        const filter = partsWhere(userId, input);
-        const after = pageStart(decodeCursor(input.cursor));
-        const where = after === undefined ? filter : { ...filter, AND: [after] };
-
-        // One more row than a page, which is how the end of the list is recognised.
-        const [found, total_count] = await Promise.all([
-          prisma.components_mounted.findMany({
-            where,
-            orderBy: partsOrder,
-            take: PAGE_SIZE + 1,
-            select: partsSelect,
-          }),
-          prisma.components_mounted.count({ where: filter }),
-        ]);
-
-        const cut = found.length > PAGE_SIZE;
-        const parts = cut ? found.slice(0, PAGE_SIZE) : found;
-        const counts = await serviceCounts(
-          prisma,
-          parts.map((part) => part.id),
-        );
-
-        const rows = parts.map((part) => toPartHistoryRow(part, counts.get(part.id) ?? 0));
-        const last = parts.at(-1);
-
-        if (!cut || last === undefined) {
-          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
-            prisma.components_mounted.count({ where: partsWhere(userId, {}) }),
-          );
-        }
-
-        return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
-      },
-    },
+    list_parts: { description: LIST_PARTS_DESCRIPTION, inputSchema: listPartsInput, execute: list },
   };
 }
 
@@ -223,8 +221,8 @@ function toPartHistoryRow(part: PartRecord, serviceCount: number): PartHistoryRo
     status: part.is_active === true ? 'mounted' : 'removed',
     mounted_at: isoDay(part.mounted_at),
     removed_at: isoDay(part.removed_at),
-    total_km: part.total_km ?? 0,
-    total_time_min: part.total_time_min ?? 0,
+    total_km: part.total_km,
+    total_time_min: part.total_time_min,
     service_count: serviceCount,
   };
 }

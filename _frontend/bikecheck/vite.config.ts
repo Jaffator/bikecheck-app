@@ -2,12 +2,22 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import { fileURLToPath, URL } from "node:url";
+import { readFileSync } from "node:fs";
+
+// The version the About section shows is the one in package.json, read at build time so
+// the two can never drift apart.
+const packageJson = JSON.parse(readFileSync(fileURLToPath(new URL("./package.json", import.meta.url)), "utf-8")) as {
+  version: string;
+};
 
 // https://vite.dev/config/
 export default defineConfig({
   // svgr turns an "?react" SVG import into a component, so an icon can inherit
   // its colour instead of being a fixed-colour <img>.
   plugins: [react(), svgr()],
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

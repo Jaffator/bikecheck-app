@@ -23,6 +23,22 @@ export class GoogleTokenDto {
   idToken!: string;
 }
 
+// Changing a password while logged in: the old one is the proof of identity, so no mailer
+// and no token table. `currentPassword` is only compared, never stored, so it carries no
+// length rule — a wrong one has to reach the service and come back 401, not 400.
+export class ChangePasswordDto {
+  @ApiProperty({ example: 'currentPassword123' })
+  @IsString()
+  @MinLength(1)
+  currentPassword!: string;
+
+  // The same strength registration enforces (CreateUserDto), no stricter.
+  @ApiProperty({ example: 'newStrongPassword123' })
+  @IsString()
+  @MinLength(8)
+  newPassword!: string;
+}
+
 export class LoginGoogleDto {
   @IsString()
   @MinLength(1)

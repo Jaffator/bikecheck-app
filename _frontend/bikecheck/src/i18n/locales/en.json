@@ -28,7 +28,9 @@
     "notifications": "Notifications",
     "serviceHistory": "Service history",
     "reports": "Reports",
-    "chat": "Chat"
+    "chat": "Chat",
+    "legalTerms": "Terms of use",
+    "legalPrivacy": "Privacy policy"
   },
   "offline": {
     "title": "You are offline",
@@ -43,7 +45,7 @@
     "nameRequired": "Name is required",
     "invalidEmail": "Invalid email",
     "passwordTooShort": "Password should include at least 8 characters",
-    "acceptTerms": "I accept terms and conditions",
+    "acceptTerms": "I accept the <1>terms of use</1>",
     "termsRequired": "You must accept the terms and conditions",
     "invalidCredentials": "Invalid email or password",
     "emailTaken": "This email is already registered",
@@ -57,9 +59,14 @@
     "sectionGeneral": "General",
     "sectionBikes": "Bikes",
     "currency": "Currency",
+    "notifications": "Push notifications",
     "language": "Language",
     "customParts": "My custom components",
-    "bikeArchive": "Archived bikes"
+    "bikeArchive": "Archived bikes",
+    "sectionAbout": "About",
+    "version": "Version",
+    "terms": "Terms of use",
+    "privacy": "Privacy policy"
   },
   "profile": {
     "editTitle": "Edit profile",
@@ -70,9 +77,29 @@
     "weightEmpty": "Not set",
     "weightHint": "Sharpens the wear calculated from your rides. Without it the app assumes 75 kg.",
     "weightOutOfRange": "Enter a weight between 30 and 250 kg",
+    "changePassword": "Change password",
+    "changePasswordTitle": "Change password",
+    "changePasswordHint": "Your other signed-in devices will be logged out.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "newPasswordRepeat": "Repeat new password",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordWrongCurrent": "Current password is not correct",
+    "passwordChangeFailed": "Password could not be changed. Try again.",
     "save": "Save",
     "saveFailed": "Profile could not be saved. Try again.",
-    "logout": "Log out"
+    "logout": "Log out",
+    "deleteAccount": "Delete account",
+    "deleteAccountTitle": "Delete account",
+    "deleteAccountBody": "Your account and everything belonging to it is deleted for good. This cannot be undone and nothing is kept anywhere - an account has no archive.",
+    "deleteAccountBikes": "Bikes",
+    "deleteAccountRides": "Rides",
+    "deleteAccountServices": "Services",
+    "deleteAccountPublicReports": "Live public links",
+    "deleteAccountLinksHint": "Public report links stop working. Anyone you sent one to will find an error page.",
+    "deleteAccountTypeEmail": "Type your email to confirm",
+    "deleteAccountConfirm": "Delete account for good",
+    "deleteAccountFailed": "The account could not be deleted. Try again."
   },
   "customParts": {
     "title": "My custom components",

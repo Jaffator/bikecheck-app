@@ -4,10 +4,10 @@ import type { PrismaService } from '../../../prisma/prisma.service';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
 import { optionalId, optionalText } from './tool-input';
-import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
+import { narrowed, withUnfilteredFallback, type PageTool, type ToolPage } from './tool-page';
 
 // One ride, as the model reads it. Units live in the field names, so stored metres are
-// normalized to kilometres on the way out; a missing number is 0, so no field is optional.
+// normalized to kilometres on the way out. A number nobody recorded is null, never 0.
 export interface RideRow {
   ride_id: number;
   bike_id: number;
@@ -15,9 +15,9 @@ export interface RideRow {
   bike_model: string;
   // ISO day, or null on a ride whose start nobody recorded.
   started_at: string | null;
-  distance_km: number;
-  duration_min: number;
-  elevation_m: number;
+  distance_km: number | null;
+  duration_min: number | null;
+  elevation_m: number | null;
 }
 
 const listRidesInput = z.object({
@@ -71,40 +71,38 @@ type RideRecord = Prisma.ridesGetPayload<{ select: typeof ridesSelect }>;
 // The riding axis of the catalogue: what was ridden, when and how far. Ownership is on the ride
 // itself and `userId` lives in the closure; no aggregate mode, the model adds the rows up.
 export function ridesTools(prisma: PrismaService, userId: number): RidesToolSet {
+  // One page, named so the empty-page fallback can ask the very same question with no
+  // filters on it at all.
+  const list = async (input: ListRidesInput): Promise<ToolPage<RideRow>> => {
+    const filter = ridesWhere(userId, input);
+    const after = pageStart(decodeCursor(input.cursor));
+    const where = after === undefined ? filter : { ...filter, AND: [after] };
+
+    // One more row than a page, which is how the end of the list is recognised.
+    const [found, total_count] = await Promise.all([
+      prisma.rides.findMany({
+        where,
+        orderBy: ridesOrder,
+        take: PAGE_SIZE + 1,
+        select: ridesSelect,
+      }),
+      prisma.rides.count({ where: filter }),
+    ]);
+
+    const cut = found.length > PAGE_SIZE;
+    const rides = cut ? found.slice(0, PAGE_SIZE) : found;
+    const rows = rides.map(toRideRow);
+    const last = rides.at(-1);
+
+    if (!cut || last === undefined) {
+      return await withUnfilteredFallback({ rows, total_count }, narrowed(input), () => list(listRidesInput.parse({})));
+    }
+
+    return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
+  };
+
   return {
-    list_rides: {
-      description: LIST_RIDES_DESCRIPTION,
-      inputSchema: listRidesInput,
-      execute: async (input: ListRidesInput): Promise<ToolPage<RideRow>> => {
-        const filter = ridesWhere(userId, input);
-        const after = pageStart(decodeCursor(input.cursor));
-        const where = after === undefined ? filter : { ...filter, AND: [after] };
-
-        // One more row than a page, which is how the end of the list is recognised.
-        const [found, total_count] = await Promise.all([
-          prisma.rides.findMany({
-            where,
-            orderBy: ridesOrder,
-            take: PAGE_SIZE + 1,
-            select: ridesSelect,
-          }),
-          prisma.rides.count({ where: filter }),
-        ]);
-
-        const cut = found.length > PAGE_SIZE;
-        const rides = cut ? found.slice(0, PAGE_SIZE) : found;
-        const rows = rides.map(toRideRow);
-        const last = rides.at(-1);
-
-        if (!cut || last === undefined) {
-          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
-            prisma.rides.count({ where: ridesWhere(userId, {}) }),
-          );
-        }
-
-        return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
-      },
-    },
+    list_rides: { description: LIST_RIDES_DESCRIPTION, inputSchema: listRidesInput, execute: list },
   };
 }
 
@@ -147,13 +145,13 @@ function toRideRow(ride: RideRecord): RideRow {
     bike_model: ride.bikes.bike_model ?? '',
     started_at: isoDay(ride.started_at),
     distance_km: kilometres(ride.distance_m),
-    duration_min: ride.duration_min ?? 0,
-    elevation_m: ride.elevation_up_m ?? 0,
+    duration_min: ride.duration_min,
+    elevation_m: ride.elevation_up_m,
   };
 }
 
 // Metres as kilometres, to one decimal - whole kilometres would turn a short ride into a
 // rounding error.
-function kilometres(metres: number | null): number {
-  return metres === null ? 0 : Math.round(metres / 100) / 10;
+function kilometres(metres: number | null): number | null {
+  return metres === null ? null : Math.round(metres / 100) / 10;
 }

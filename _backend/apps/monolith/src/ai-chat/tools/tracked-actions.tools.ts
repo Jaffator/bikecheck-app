@@ -6,7 +6,7 @@ import type { Response_GarageTrackedActionDto } from '../../service-tracking/dto
 import type { ServiceTrackingService } from '../../service-tracking/service-tracking.service';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { optionalId, optionalText } from './tool-input';
-import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
+import { narrowed, withUnfilteredFallback, type PageTool, type ToolPage } from './tool-page';
 
 // One Tracked Action: a mounted part paired with a job the bike keeps a Service Interval for
 // (ADR 0027). Every number is finished, and `axis` carries the unit of the three that need one.
@@ -53,8 +53,9 @@ export type TrackedActionsToolSet = {
 
 const LIST_TRACKED_ACTIONS_DESCRIPTION =
   'What the app itself says needs doing: every part mounted right now paired with a job the bike ' +
-  'keeps an interval for, worst first. Ask with min_percentage 80 for what needs attention, with ' +
-  'a bike_id for how one machine stands, with neither for everything. A row is a finished ' +
+  'keeps an interval for, worst first. Call it with no arguments, or with a bike_id for how one ' +
+  'machine stands; min_percentage belongs to one question only - what needs attention right now - ' +
+  'and hides every reading below it, so leave it out of anything else. A row is a finished ' +
   'reading - subtract nothing and decide no threshold yourself. current, interval and remaining ' +
   'are in the unit axis names on the same row: kilometres, minutes or wear index points. A ' +
   'remaining below zero is how far past the interval the part already is. percentage is whole ' +
@@ -87,38 +88,36 @@ export function trackedActionTools(
   prisma: PrismaService,
   userId: number,
 ): TrackedActionsToolSet {
+  // One page, named so the empty-page fallback can ask the very same question with no filters
+  // on it at all.
+  const list = async (input: ListTrackedActionsInput): Promise<ToolPage<TrackedActionRow>> => {
+    // The garage path, which is the one that already carries the bike's name on every row.
+    // An Archived Bike never reaches it, so it never reaches the chat either.
+    const tracked = await serviceTracking.getGarageTrackedActions(userId, cutoff(input.min_percentage));
+    const found = input.bike_id === undefined ? tracked : tracked.filter((row) => row.bike_id === input.bike_id);
+
+    const fed = await feedingBikes(prisma, userId, found);
+    const sorted = found.map((action) => toTrackedActionRow(action, !fed.has(action.bike_id))).sort(byWorst);
+
+    const start = startOf(sorted, pageStart(decodeCursor(input.cursor)));
+    const page = sorted.slice(start, start + PAGE_SIZE);
+    const total_count = sorted.length;
+
+    const last = page.at(-1);
+    const cut = start + page.length < total_count;
+
+    if (!cut || last === undefined) {
+      return await withUnfilteredFallback({ rows: page, total_count }, narrowed(input), () => list(listTrackedActionsInput.parse({})));
+    }
+
+    return { rows: page, total_count, truncated: true, next_cursor: cursorOf(last) };
+  };
+
   return {
     list_tracked_actions: {
       description: LIST_TRACKED_ACTIONS_DESCRIPTION,
       inputSchema: listTrackedActionsInput,
-      execute: async (input: ListTrackedActionsInput): Promise<ToolPage<TrackedActionRow>> => {
-        // The garage path, which is the one that already carries the bike's name on every row.
-        // An Archived Bike never reaches it, so it never reaches the chat either.
-        const tracked = await serviceTracking.getGarageTrackedActions(userId, cutoff(input.min_percentage));
-        const found = input.bike_id === undefined ? tracked : tracked.filter((row) => row.bike_id === input.bike_id);
-
-        const fed = await feedingBikes(prisma, userId, found);
-        const sorted = found.map((action) => toTrackedActionRow(action, !fed.has(action.bike_id))).sort(byWorst);
-
-        const start = startOf(sorted, pageStart(decodeCursor(input.cursor)));
-        const page = sorted.slice(start, start + PAGE_SIZE);
-        const total_count = sorted.length;
-
-        const last = page.at(-1);
-        const cut = start + page.length < total_count;
-
-        if (!cut || last === undefined) {
-          // The unfiltered set is the one already in hand whenever no cutoff was asked for;
-          // above zero it is a second read, which only an empty answer ever pays for.
-          return await withUnfilteredCount({ rows: page, total_count }, narrowed(input), async () =>
-            cutoff(input.min_percentage) === 0
-              ? tracked.length
-              : (await serviceTracking.getGarageTrackedActions(userId, 0)).length,
-          );
-        }
-
-        return { rows: page, total_count, truncated: true, next_cursor: cursorOf(last) };
-      },
+      execute: list,
     },
   };
 }

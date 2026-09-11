@@ -4,7 +4,7 @@ import type { PrismaService } from '../../../prisma/prisma.service';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
 import { optionalId, optionalText } from './tool-input';
-import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
+import { narrowed, withUnfilteredFallback, type PageTool, type ToolPage } from './tool-page';
 
 // What a Share Link is doing. It takes both flags to tell the three apart, which is why the
 // state is composed here rather than handed out as `is_public` and `revoked` (ADR 0011).
@@ -72,40 +72,38 @@ type ReportRecord = Prisma.reportsGetPayload<{ select: typeof reportsSelect }>;
 // The sharing axis of the catalogue: which documents the user has made and what their links do.
 // Ownership is written here, and `userId` lives in the closure, in no schema the model can fill.
 export function reportsTools(prisma: PrismaService, userId: number): ReportsToolSet {
+  // One page, named so the empty-page fallback can ask the very same question with no
+  // filters on it at all.
+  const list = async (input: ListReportsInput): Promise<ToolPage<ReportRow>> => {
+    const filter = reportsWhere(userId, input);
+    const after = pageStart(decodeCursor(input.cursor));
+    const where = after === undefined ? filter : { ...filter, AND: [after] };
+
+    // One more row than a page, which is how the end of the list is recognised.
+    const [found, total_count] = await Promise.all([
+      prisma.reports.findMany({
+        where,
+        orderBy: reportsOrder,
+        take: PAGE_SIZE + 1,
+        select: reportsSelect,
+      }),
+      prisma.reports.count({ where: filter }),
+    ]);
+
+    const cut = found.length > PAGE_SIZE;
+    const reports = cut ? found.slice(0, PAGE_SIZE) : found;
+    const rows = reports.map(toReportRow);
+    const last = reports.at(-1);
+
+    if (!cut || last === undefined) {
+      return await withUnfilteredFallback({ rows, total_count }, narrowed(input), () => list(listReportsInput.parse({})));
+    }
+
+    return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
+  };
+
   return {
-    list_reports: {
-      description: LIST_REPORTS_DESCRIPTION,
-      inputSchema: listReportsInput,
-      execute: async (input: ListReportsInput): Promise<ToolPage<ReportRow>> => {
-        const filter = reportsWhere(userId, input);
-        const after = pageStart(decodeCursor(input.cursor));
-        const where = after === undefined ? filter : { ...filter, AND: [after] };
-
-        // One more row than a page, which is how the end of the list is recognised.
-        const [found, total_count] = await Promise.all([
-          prisma.reports.findMany({
-            where,
-            orderBy: reportsOrder,
-            take: PAGE_SIZE + 1,
-            select: reportsSelect,
-          }),
-          prisma.reports.count({ where: filter }),
-        ]);
-
-        const cut = found.length > PAGE_SIZE;
-        const reports = cut ? found.slice(0, PAGE_SIZE) : found;
-        const rows = reports.map(toReportRow);
-        const last = reports.at(-1);
-
-        if (!cut || last === undefined) {
-          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
-            prisma.reports.count({ where: reportsWhere(userId, {}) }),
-          );
-        }
-
-        return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
-      },
-    },
+    list_reports: { description: LIST_REPORTS_DESCRIPTION, inputSchema: listReportsInput, execute: list },
   };
 }
 

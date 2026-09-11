@@ -1,0 +1,35 @@
+[
+  {
+    "heading": "PLACEHOLDER TEXT — replace before release",
+    "paragraphs": [
+      "These are not real terms of use. This is placeholder content holding the space for wording supplied by a human. Do not rely on it, do not link to it and do not ship the app until reviewed legal text replaces it.",
+      "The blocks below exist only to show how the renderer sets a heading and the paragraphs beneath it."
+    ]
+  },
+  {
+    "heading": "1. Placeholder heading — scope of the service",
+    "paragraphs": [
+      "This is where the description of what the app does, who it is for and what a user may expect from it will go. The paragraph is deliberately long so it is visible how a long run of text wraps at phone width and how the line height sits between the lines of one paragraph.",
+      "A second paragraph in the same block shows the gap between paragraphs."
+    ]
+  },
+  {
+    "heading": "2. Placeholder heading — user account",
+    "paragraphs": [
+      "This is where the rules for creating, using and closing an account will go."
+    ]
+  },
+  {
+    "heading": "3. Placeholder heading — content added by the user",
+    "paragraphs": [
+      "This is where it will be stated who owns the photos, service records and other data a user puts into the app.",
+      "And here, on what terms the app handles them."
+    ]
+  },
+  {
+    "heading": "4. Placeholder heading — liability and contact",
+    "paragraphs": [
+      "This is where the limitation of liability and the operator's contact details will go."
+    ]
+  }
+]

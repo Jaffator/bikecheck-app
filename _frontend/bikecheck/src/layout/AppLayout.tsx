@@ -238,7 +238,6 @@ export function AppLayout(): ReactElement {
       <AppShell.Header withBorder={false} bg="transparent">
         {/* Keeps title content below the status bar. */}
         <Box
-          className={headerTransparent ? undefined : "bg-cards-800"}
           h="100%"
           px="md"
           style={{
@@ -247,7 +246,9 @@ export function AppLayout(): ReactElement {
             // stand on - enough to read a dark arrow against a bright photo.
             backgroundImage: headerTransparent
               ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 45%, transparent 100%)"
-              : undefined,
+              : // The page colour held over the title, then let go before the bottom edge, so
+                // content scrolling up dissolves into the bar rather than meeting a line.
+                "linear-gradient(to bottom, var(--mantine-color-background-9) 0%, var(--mantine-color-background-9) 62%, transparent 100%)",
             // The scrim is decoration; what is underneath stays reachable.
             pointerEvents: headerTransparent ? "none" : undefined,
           }}

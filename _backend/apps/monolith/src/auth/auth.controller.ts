@@ -24,7 +24,7 @@ import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CreateUserDto, UserResponseDto } from '../user/dto/user.dtos';
-import { GoogleTokenDto, LoginDto } from './dto/auth.dtos';
+import { ChangePasswordDto, GoogleTokenDto, LoginDto } from './dto/auth.dtos';
 import { users as UserFull } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { UAParser } from 'ua-parser-js';
@@ -99,6 +99,24 @@ export class AuthController {
     await this.authService.logout(token);
     this.deleteAuthCookies(res);
     return res.status(200).json({ message: 'User successfully logged out' });
+  }
+
+  // --- CHANGE PASSWORD of the logged-in user
+  // Not @Public(): the session is what says whose password this is. The refresh token
+  // cookie names the device the change is made from, so that one session survives it.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({ status: 200 })
+  @HttpCode(HttpStatus.OK)
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser('userId') userId: string,
+    @Body() data: ChangePasswordDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
+    const currentRefreshToken: string | null = req.cookies['refresh_token'] ?? null;
+    await this.authService.changePassword(Number(userId), data.currentPassword, data.newPassword, currentRefreshToken);
+    return { message: 'Password changed' };
   }
 
   // --- LOGIN user, classic email password endpoint
@@ -243,6 +261,8 @@ export class AuthController {
       currency: user.currency,
       weight_kg: user.weight_kg,
       is_active: user.is_active || false,
+      has_password: user.password_hash !== null,
+      notifications_enabled: user.notifications_enabled ?? null,
       strava_athlete_id: user.strava_athlete_id ?? null,
       strava_firstname: user.strava_firstname ?? null,
       strava_lastname: user.strava_lastname ?? null,

@@ -66,6 +66,19 @@ export class RefreshTokenService {
     });
   }
 
+  // Drops every other session after a password change. The token the change was made from
+  // is kept, so the user is not logged out of the device they are holding; null keeps none.
+  async revokeAllUserTokensExcept(user_id: number, keep_refresh_token: string | null): Promise<void> {
+    await this.prisma.refresh_tokens.updateMany({
+      where: {
+        user_id,
+        revoked: false,
+        ...(keep_refresh_token ? { refresh_token: { not: keep_refresh_token } } : {}),
+      },
+      data: { revoked: true, revoked_at: new Date() },
+    });
+  }
+
   async deleteExpiredTokens(): Promise<void> {
     await this.prisma.refresh_tokens.deleteMany({
       where: { expires_at: { lt: new Date() } },

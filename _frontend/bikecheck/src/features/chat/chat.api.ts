@@ -1,7 +1,7 @@
 // Chat API requests. The thread is an ordinary JSON GET; the question is not - it is answered
 // on a held connection, so its body is read by hand rather than through apiFetch.
 import { apiFetch, apiFetchStream } from "@/api/client";
-import type { ChatMessage, ChatStreamEvent, ChatThreadDeleted } from "./aiChat.types";
+import type { ChatMessage, ChatStreamEvent, ChatThreadDeleted } from "./chat.types";
 
 // The longest question the backend accepts.
 export const QUESTION_MAX_LENGTH = 2000;

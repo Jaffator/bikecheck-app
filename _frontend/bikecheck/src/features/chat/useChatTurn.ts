@@ -2,9 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
-import { askChat, getChatThread } from "./aiChat.api";
-import { CHAT_THREAD_KEY } from "./aiChat.queries";
-import type { ChatErrorReason, ChatMessage, ChatStreamEvent } from "./aiChat.types";
+import { askChat, getChatThread } from "./chat.api";
+import { CHAT_THREAD_KEY } from "./chat.queries";
+import type { ChatErrorReason, ChatMessage, ChatStreamEvent } from "./chat.types";
 
 // How long the line may say nothing at all before it is taken for dead. The server sends a
 // keepalive every ten seconds, so this is two of them missed - the gap between two tool rounds

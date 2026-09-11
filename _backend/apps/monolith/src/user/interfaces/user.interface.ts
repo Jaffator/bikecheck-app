@@ -21,5 +21,6 @@ export interface UpdateUserData {
   currency?: string | undefined;
   weight_kg?: number | undefined;
   avatar_url?: string | undefined;
+  notifications_enabled?: boolean | undefined;
   // updated_at - automatic from DB
 }

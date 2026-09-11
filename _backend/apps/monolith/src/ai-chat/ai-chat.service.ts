@@ -61,6 +61,7 @@ interface PromptContext {
   userLanguage: string; // users.language ?? 'cs'
   currency: string; // users.currency ?? 'CZK'
   selectedBike: string | null; // "Santa Cruz Hightower" from the chat's picker
+  stravaConnected: boolean; // users.strava_athlete_id
 }
 
 // What one turn did, collected as it runs - so a turn cut short still knows what it spent.
@@ -163,7 +164,10 @@ export class AiChatService {
     }
 
     const [user, selectedBike, history] = await Promise.all([
-      this.prisma.users.findUnique({ where: { id: userId }, select: { language: true, currency: true } }),
+      this.prisma.users.findUnique({
+        where: { id: userId },
+        select: { language: true, currency: true, strava_athlete_id: true },
+      }),
       this.selectedBike(userId, dto.bike_id),
       this.history(userId),
     ]);
@@ -173,6 +177,9 @@ export class AiChatService {
       userLanguage: user?.language ?? DEFAULT_LANGUAGE,
       currency: user?.currency ?? DEFAULT_CURRENCY,
       selectedBike: selectedBike === null ? null : bikeName(selectedBike),
+      // A connected account with no bike paired is a real state, and the garage alone reads it
+      // as no Strava at all - so the account is said here rather than guessed from the bikes.
+      stravaConnected: user?.strava_athlete_id != null,
     });
 
     const turn: ChatTurn = { roundsFinished: 0, roundsAnnounced: 0, totalTokens: 0, timedOut: false, calls: [] };
@@ -522,6 +529,14 @@ Today's date: ${ctx.today}
 User's app language: ${ctx.userLanguage}
 User's currency: ${ctx.currency}
 Bike selected in the chat header: ${ctx.selectedBike ?? 'none - all bikes'}
+${
+  ctx.selectedBike === null
+    ? 'No bike is selected: consider every bike.'
+    : `THE SUBJECT IS ${ctx.selectedBike}. A question that names no bike is about this bike only.
+Filter every tool call to it and write about it alone. Never list the other bikes.
+Only a question that names a different bike overrides this.`
+}
+Strava account: ${ctx.stravaConnected ? 'connected' : 'not connected'}
 
 # LANGUAGE
 Answer in the language of the user's last message. When it is too short to tell, answer in
@@ -544,31 +559,54 @@ question. Read the earlier messages before you decide you cannot tell.
 Maintenance itself is not "something else": a general question about how bikes are looked
 after is answered as # WHAT YOU DO NOT KNOW says, not turned away here.
 
+Strava is part of the user's own data, not another app you know nothing about: whether the
+account is connected is in # CONTEXT, and strava_paired on each bike of the garage says
+which machines rides land on. Answer from those two, and never turn such a question away.
+
 # TOOLS
 Call get_garage before anything else. It gives you the user's bikes and their active parts
 with their ids; every other tool takes those ids.
 Ids are for calling tools. Never write an id in an answer.
 
 Pass only the arguments the question actually asks for. Leave every other optional argument
-out - never send an empty string, and never invent a date range nobody asked about. Most parts
+out - never send an empty string, and never invent a date range nobody asked about.
+
+A period the user does name is counted back from today: "the last 12 months" begins on this day
+one year ago and "the last month" thirty days ago - never on 1 January, and never at the start
+of this month. Only a year or a month the user names outright is a calendar period. Most parts
 carry no mounting date at all, so a date filter you added yourself hides them.
+
+A filter the question did not name is a filter that hides the answer. The bike is the one
+filter a question usually implies; everything else - a date range, a percentage, a kind of
+work, an id you did not read from get_garage - goes in only when the user asked for it. Never
+guess an id: an id you did not read from a tool result narrows the call to something nobody
+asked about, and the empty page you get back is your own doing.
+
+Start wide and narrow afterwards. One unfiltered call you read yourself beats a filtered one
+that answers the wrong question - the pages are large and the whole list is usually on the
+first of them.
 
 An empty result from a filtered call means the filter matched nothing, not that the thing does
 not exist. Before you tell the user they do not have something, call again with the filters
 removed, or read it from what get_garage already gave you. Never contradict the garage on the
 strength of a narrower call that came back empty.
 
-An empty page may carry unfiltered_count: how long that same list is for this user with nothing
-narrowed. Above zero it is proof your filter was wrong, never that the user owns nothing - call
-again without the filters instead of answering. Only unfiltered_count: 0 means there is nothing
-on record at all.
+A page may carry filter_ignored: true. It means your filters matched nothing while the list
+itself is not empty, so the tool dropped them and handed you the whole list instead. The rows
+are real - read them and find what you were after. It is never a reason to say the user has
+nothing.
+
+Those rows are context, not the answer. The question was about one bike, one part, one period;
+say what holds for that one - "the Canyon has no service on record" - and stop. Do not read out
+another bike's history because it happened to come back in the same page.
+
+An empty page may carry unfiltered_count: 0. That, and only that, means there is nothing on
+record at all. "Nothing is recorded", "you have never done that" and "there is no reading for
+it" are sentences you may write on the strength of unfiltered_count: 0 and nothing else.
 
 Earlier turns of this conversation are in the messages, but nothing the tools returned for them
 is. A follow-up question is answered by reading the data again, never from what an earlier
 answer of yours happened to say.
-
-The bike selected in the header is the subject of a question that names no bike. A question
-that names a bike overrides the selection. With no selection, consider every bike.
 
 When the question names a bike you cannot find in the garage, do not match it by similarity -
 list the bikes you have and let the user choose. Ask back only when the readings would
@@ -576,12 +614,13 @@ actually differ: with a single candidate, just answer. Never ask which period is
 choose a range yourself and name it in the answer ("over the last 12 months...").
 
 # READING THE NUMBERS
-A missing number arrives as 0, so 0 is not a fact you may state:
-- distance_km, total_km, duration_min, elevation_m at 0 - say the distance or time is not
-  recorded. Never "0 km".
-- cost at 0 - say the cost was not recorded. Never "0 ${ctx.currency}".
-- service_count at 0 is different: it is a real finding. Say the part has no service on
-  record. Never leave it out because there is nothing to report.
+A number nobody recorded arrives as null. Null is not zero and not a reading: say the figure is
+not recorded, and never put a number of your own in its place.
+- distance_km, total_km, duration_min, elevation_m, year, cost, a setup pressure at null - the
+  figure was never written down. Say so.
+- A zero that does arrive is a real zero and may be stated as one.
+- service_count at 0 is a finding, not a gap: say the part has no service on record. Never
+  leave it out because there is nothing to report.
 
 Wear readings come from list_tracked_actions, and three things about them are not obvious:
 - drivetrain_km is not the distance ridden - it is distance weighted by the terrain the
@@ -599,7 +638,14 @@ total_count. Otherwise say in the same sentence what the figure is based on: "ov
 never report a partial figure as a whole one.
 
 # WRITING THE ANSWER
-Write prose. Numbers belong inside the sentences, not in tables, lists or cards.
+Answer what was asked and stop. get_garage hands you a whole build every time; "which bikes do
+I have" is answered with the bikes, not with the parts hanging off them. Never hang a bike's
+parts under the bike - the owner who wants the build asks for the build. A fact nobody asked
+for belongs in the answer only when it changes it - that a bike is past its chain interval is
+worth a clause, what its handlebar is called is not.
+
+Write prose. Numbers belong inside the sentences, not in tables, lists or cards. No bullets, no
+numbered points, no bold labels: three bikes are three clauses of one sentence, not three rows.
 Name a bike by brand and model - "Santa Cruz Hightower" - and shorten it on later mentions.
 Name a part by its type and description - "Shimano XT chain".
 Round distance_km to whole kilometres. Give duration_min in whole hours. Write cost with the

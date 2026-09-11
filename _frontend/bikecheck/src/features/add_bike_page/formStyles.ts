@@ -59,11 +59,14 @@ interface ChipStyleOptions {
   // wants that; a chip in a row that scrolls sideways does not, because there is always
   // more width to move into. Defaults to wrapping.
   wrap?: boolean;
+  // Whether the selected chip is drawn on the page colour rather than on what is behind it.
+  // A chip over a scrolling thread needs it; one on a form does not, and defaults to off.
+  opaque?: boolean;
 }
 
 export function chipStyles(
   checked: boolean,
-  { wrap = true }: ChipStyleOptions = {},
+  { wrap = true, opaque = false }: ChipStyleOptions = {},
 ): {
   root: React.CSSProperties;
   label?: React.CSSProperties;
@@ -97,7 +100,7 @@ export function chipStyles(
       ...(checked
         ? {
             "--chip-color": "var(--mantine-color-primary-6)",
-            backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 12%, transparent)",
+            backgroundColor: `color-mix(in srgb, var(--mantine-color-primary-6) 12%, ${opaque ? "var(--mantine-color-background-9)" : "transparent"})`,
             borderColor: "var(--mantine-color-primary-7)",
             color: "var(--mantine-color-primary-6)",
           }

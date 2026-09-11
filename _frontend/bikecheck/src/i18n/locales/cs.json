@@ -28,7 +28,9 @@
     "notifications": "Oznámení",
     "serviceHistory": "Historie servisů",
     "reports": "Reporty",
-    "chat": "Chat"
+    "chat": "Chat",
+    "legalTerms": "Podmínky použití",
+    "legalPrivacy": "Ochrana osobních údajů"
   },
   "offline": {
     "title": "Jste offline",
@@ -43,7 +45,7 @@
     "nameRequired": "Jméno je povinné",
     "invalidEmail": "Neplatný e-mail",
     "passwordTooShort": "Heslo musí mít alespoň 8 znaků",
-    "acceptTerms": "Souhlasím s podmínkami použití",
+    "acceptTerms": "Souhlasím s <1>podmínkami použití</1>",
     "termsRequired": "Musíte souhlasit s podmínkami použití",
     "invalidCredentials": "Neplatný e-mail nebo heslo",
     "emailTaken": "Tento e-mail je již registrovaný",
@@ -57,9 +59,14 @@
     "sectionGeneral": "Obecné",
     "sectionBikes": "Kola",
     "currency": "Měna",
+    "notifications": "Push notifikace",
     "language": "Jazyk",
     "customParts": "Moje díly",
-    "bikeArchive": "Archivovaná kola"
+    "bikeArchive": "Archivovaná kola",
+    "sectionAbout": "O aplikaci",
+    "version": "Verze",
+    "terms": "Podmínky použití",
+    "privacy": "Ochrana osobních údajů"
   },
   "profile": {
     "editTitle": "Upravit profil",
@@ -70,9 +77,29 @@
     "weightEmpty": "Nezadáno",
     "weightHint": "Zpřesňuje výpočet opotřebení dílů z jízd. Bez zadání se počítá se 75 kg.",
     "weightOutOfRange": "Zadej hmotnost mezi 30 a 250 kg",
+    "changePassword": "Změnit heslo",
+    "changePasswordTitle": "Změna hesla",
+    "changePasswordHint": "Ostatní zařízení, kde jsi přihlášený, se odhlásí.",
+    "currentPassword": "Současné heslo",
+    "newPassword": "Nové heslo",
+    "newPasswordRepeat": "Nové heslo znovu",
+    "passwordsDoNotMatch": "Hesla se neshodují",
+    "passwordWrongCurrent": "Současné heslo není správně",
+    "passwordChangeFailed": "Heslo se nepodařilo změnit. Zkus to znovu.",
     "save": "Uložit",
     "saveFailed": "Profil se nepodařilo uložit. Zkus to znovu.",
-    "logout": "Odhlásit se"
+    "logout": "Odhlásit se",
+    "deleteAccount": "Smazat účet",
+    "deleteAccountTitle": "Smazat účet",
+    "deleteAccountBody": "Účet i všechno, co k němu patří, se smaže natrvalo. Nejde to vrátit a nic se nikam neuloží - archiv pro účet neexistuje.",
+    "deleteAccountBikes": "Kola",
+    "deleteAccountRides": "Jízdy",
+    "deleteAccountServices": "Servisy",
+    "deleteAccountPublicReports": "Živé veřejné odkazy",
+    "deleteAccountLinksHint": "Veřejné odkazy na reporty přestanou fungovat. Komu jsi je poslal, tomu se otevře stránka s chybou.",
+    "deleteAccountTypeEmail": "Pro potvrzení napiš svůj e-mail",
+    "deleteAccountConfirm": "Smazat účet natrvalo",
+    "deleteAccountFailed": "Účet se nepodařilo smazat. Zkus to znovu."
   },
   "customParts": {
     "title": "Moje díly",

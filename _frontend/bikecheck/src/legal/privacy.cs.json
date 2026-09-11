@@ -1,0 +1,34 @@
+[
+  {
+    "heading": "ZÁSTUPNÝ TEXT — nahradit před vydáním",
+    "paragraphs": [
+      "Toto nejsou skutečné zásady ochrany osobních údajů. Jde o zástupný obsah, který drží místo pro znění dodané člověkem. Google Play bez schválených zásad aplikaci nepustí, takže tento text musí být nahrazen dřív, než se aplikace odešle ke schválení.",
+      "Bloky níže existují jen proto, aby ukázaly, jak sazba vysází nadpis a odstavce pod ním."
+    ]
+  },
+  {
+    "heading": "1. Zástupný nadpis — jaké údaje aplikace sbírá",
+    "paragraphs": [
+      "Zde bude výčet údajů, které aplikace o uživateli vede: e-mail, jméno, kola, komponenty, servisní záznamy a jízdy načtené ze Stravy. Odstavec je záměrně delší, aby bylo vidět, jak se dlouhý text láme na šířku telefonu.",
+      "Druhý odstavec téhož bloku ukazuje mezeru mezi odstavci."
+    ]
+  },
+  {
+    "heading": "2. Zástupný nadpis — proč je aplikace zpracovává",
+    "paragraphs": [
+      "Zde bude účel zpracování a právní základ."
+    ]
+  },
+  {
+    "heading": "3. Zástupný nadpis — komu se předávají",
+    "paragraphs": [
+      "Zde budou vyjmenovány služby třetích stran, kterým se údaje předávají."
+    ]
+  },
+  {
+    "heading": "4. Zástupný nadpis — práva uživatele a kontakt",
+    "paragraphs": [
+      "Zde bude popsáno, jak si uživatel vyžádá výmaz nebo kopii svých údajů, a na koho se obrátit."
+    ]
+  }
+]

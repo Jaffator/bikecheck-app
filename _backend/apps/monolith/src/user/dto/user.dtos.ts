@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsEmail, IsString, MinLength, MaxLength, IsOptional, IsInt, IsPositive } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsOptional, IsInt, IsPositive, IsBoolean } from 'class-validator';
 
 // ------ DTOs for API ------
 // CREATE
@@ -67,6 +67,27 @@ export class UpdateUserDto {
   @IsString()
   @ApiProperty({ example: 'https://example.com/avatar.jpg' })
   avatar_url?: string;
+
+  // Mutes push only; the notification row and the bell are unaffected.
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({ example: true })
+  notifications_enabled?: boolean;
+}
+
+// What an account still holds, counted just before it is destroyed. Read by the delete
+// dialog so the rider is told what disappears rather than asked to remember it.
+export class AccountDeletionSummaryDto {
+  @ApiProperty({ example: 3 })
+  bikes!: number;
+  @ApiProperty({ example: 412 })
+  rides!: number;
+  @ApiProperty({ example: 27 })
+  services!: number;
+  // Only the links that answer today: published and not revoked. A closed Report is
+  // already unreachable, so counting it would overstate what the world loses.
+  @ApiProperty({ example: 2 })
+  publicReports!: number;
 }
 
 export class UserResponseDto {
@@ -86,6 +107,13 @@ export class UserResponseDto {
   weight_kg!: number | null;
   @ApiProperty({ example: true })
   is_active!: boolean;
+  // Whether a local password exists at all — the hash itself never leaves the server.
+  // False for a Google account, which has nothing to change.
+  @ApiProperty({ example: true })
+  has_password!: boolean;
+  // Null means never chosen, which the processor reads as on.
+  @ApiProperty({ example: true, nullable: true })
+  notifications_enabled!: boolean | null;
   // Set once the user completes the Strava OAuth flow. Null means not linked —
   // this is what the app reads to tell the two states apart.
   @ApiProperty({ example: '20678962', nullable: true })

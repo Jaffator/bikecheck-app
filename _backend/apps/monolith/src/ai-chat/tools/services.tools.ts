@@ -5,7 +5,7 @@ import { ownedBikesWhere } from '../../bike/owned-bike.where';
 import { decodeCursor, encodeCursor, type Cursor } from './cursor';
 import { dateRange, isoDay } from './tool-dates';
 import { optionalId, optionalText } from './tool-input';
-import { narrowed, withUnfilteredCount, type PageTool, type ToolPage } from './tool-page';
+import { narrowed, withUnfilteredFallback, type PageTool, type ToolPage } from './tool-page';
 
 // One part an action was recorded against. The ids are the ones list_parts and get_garage use,
 // so the model can follow a service back to the part it touched.
@@ -24,7 +24,7 @@ export interface ServiceActionRow {
   action_name: string;
   tags: string[];
   note: string;
-  cost: number;
+  cost: number | null;
   part_replaced: boolean;
   parts: ServicePartRow[];
 }
@@ -38,7 +38,7 @@ export interface ServiceRow {
   bike_model: string;
   // ISO day, or null on a service whose date nobody recorded.
   service_date: string | null;
-  cost: number;
+  cost: number | null;
   note: string;
   actions: ServiceActionRow[];
 }
@@ -47,7 +47,6 @@ const listServicesInput = z.object({
   bike_id: optionalId().describe('Only services on this bike, from get_garage.'),
   component_type_id: optionalId().describe('Only services that touched a part of this kind.'),
   mounted_component_id: optionalId().describe('Only services that touched this one part.'),
-  action_id: optionalId().describe('Only services carrying this action, from a previous answer.'),
   from: optionalText().describe(
     'Done on or after this ISO day, e.g. "2026-01-01". Omit unless the question names a period.',
   ),
@@ -135,40 +134,38 @@ type LinkRecord = ActionRecord['action_done_component_map'][number];
 // The maintenance axis of the catalogue: what was done, when and for how much. Ownership is
 // written here, and `userId` lives in the closure, in no schema the model can fill.
 export function servicesTools(prisma: PrismaService, userId: number): ServicesToolSet {
+  // One page, named so the empty-page fallback can ask the very same question with no
+  // filters on it at all.
+  const list = async (input: ListServicesInput): Promise<ToolPage<ServiceRow>> => {
+    const filter = servicesWhere(userId, input);
+    const after = pageStart(decodeCursor(input.cursor));
+    const where = after === undefined ? filter : { ...filter, AND: [after] };
+
+    // One more row than a page, which is how the end of the list is recognised.
+    const [found, total_count] = await Promise.all([
+      prisma.events_bikes.findMany({
+        where,
+        orderBy: servicesOrder,
+        take: PAGE_SIZE + 1,
+        select: servicesSelect,
+      }),
+      prisma.events_bikes.count({ where: filter }),
+    ]);
+
+    const cut = found.length > PAGE_SIZE;
+    const services = cut ? found.slice(0, PAGE_SIZE) : found;
+    const rows = services.map((service) => toServiceRow(service, userId));
+    const last = services.at(-1);
+
+    if (!cut || last === undefined) {
+      return await withUnfilteredFallback({ rows, total_count }, narrowed(input), () => list(listServicesInput.parse({})));
+    }
+
+    return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
+  };
+
   return {
-    list_services: {
-      description: LIST_SERVICES_DESCRIPTION,
-      inputSchema: listServicesInput,
-      execute: async (input: ListServicesInput): Promise<ToolPage<ServiceRow>> => {
-        const filter = servicesWhere(userId, input);
-        const after = pageStart(decodeCursor(input.cursor));
-        const where = after === undefined ? filter : { ...filter, AND: [after] };
-
-        // One more row than a page, which is how the end of the list is recognised.
-        const [found, total_count] = await Promise.all([
-          prisma.events_bikes.findMany({
-            where,
-            orderBy: servicesOrder,
-            take: PAGE_SIZE + 1,
-            select: servicesSelect,
-          }),
-          prisma.events_bikes.count({ where: filter }),
-        ]);
-
-        const cut = found.length > PAGE_SIZE;
-        const services = cut ? found.slice(0, PAGE_SIZE) : found;
-        const rows = services.map((service) => toServiceRow(service, userId));
-        const last = services.at(-1);
-
-        if (!cut || last === undefined) {
-          return await withUnfilteredCount({ rows, total_count }, narrowed(input), () =>
-            prisma.events_bikes.count({ where: servicesWhere(userId, {}) }),
-          );
-        }
-
-        return { rows, total_count, truncated: true, next_cursor: encodeCursor(sortKeyOf(last), last.id) };
-      },
-    },
+    list_services: { description: LIST_SERVICES_DESCRIPTION, inputSchema: listServicesInput, execute: list },
   };
 }
 
@@ -192,7 +189,6 @@ function servicesWhere(userId: number, input: Partial<ListServicesInput>): Prism
 function actionWhere(input: Partial<ListServicesInput>): Prisma.event_actions_doneWhereInput | undefined {
   const touched = linkWhere(input);
   const clauses: Prisma.event_actions_doneWhereInput = {
-    ...(input.action_id === undefined ? {} : { event_action_id: input.action_id }),
     ...(input.replaced_only === true ? { part_replaced: true } : {}),
     ...(touched === undefined ? {} : { action_done_component_map: { some: touched } }),
   };
@@ -237,7 +233,7 @@ function toServiceRow(service: ServiceRecord, userId: number): ServiceRow {
     bike_brand: service.bikes?.bike_brand ?? '',
     bike_model: service.bikes?.bike_model ?? '',
     service_date: isoDay(service.service_date),
-    cost: service.total_cost === null ? 0 : Number(service.total_cost),
+    cost: service.total_cost === null ? null : Number(service.total_cost),
     note: service.note ?? '',
     actions: service.event_actions_done.map((action) => toServiceActionRow(action, userId)),
   };
@@ -251,7 +247,7 @@ function toServiceActionRow(action: ActionRecord, userId: number): ServiceAction
       .filter((tag) => tag.user_id === null || tag.user_id === userId)
       .map((tag) => tag.event_action_tag),
     note: action.note ?? '',
-    cost: action.partial_cost === null ? 0 : Number(action.partial_cost),
+    cost: action.partial_cost === null ? null : Number(action.partial_cost),
     part_replaced: action.part_replaced === true,
     parts: action.action_done_component_map.map(toServicePartRow),
   };

@@ -40,7 +40,16 @@ export class NotificationProcessor extends WorkerHost {
       // it lands on a broken screen.
       const route = this.buildRoute(config.route, notification.payload);
       if (route) data.route = route;
-      await this.pushService.sendToUser(notification.user_id, notification.title, notification.body, data);
+
+      // The Settings switch mutes the lock screen only — the row is already written, so
+      // the bell keeps counting. Null means never chosen, which is on.
+      const user = await this.prisma.users.findUnique({
+        where: { id: notification.user_id },
+        select: { notifications_enabled: true },
+      });
+      if (user?.notifications_enabled !== false) {
+        await this.pushService.sendToUser(notification.user_id, notification.title, notification.body, data);
+      }
     }
 
     // 'inApp' is already delivered (stored in DB); 'email' to be wired later.

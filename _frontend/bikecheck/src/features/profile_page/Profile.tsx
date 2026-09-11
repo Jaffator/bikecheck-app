@@ -6,6 +6,8 @@ import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { useCurrentUser, useLogout } from "@/features/users/users.queries";
+import { ChangePasswordDrawer } from "./ChangePasswordDrawer";
+import { DeleteAccountDrawer } from "./DeleteAccountDrawer";
 import { ProfileEditDrawer } from "./ProfileEditDrawer";
 
 export function Profile(): ReactElement | null {
@@ -13,6 +15,8 @@ export function Profile(): ReactElement | null {
   const { data: user } = useCurrentUser();
   const logout = useLogout();
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   // The page dims before the session is dropped, so the login screen is not swapped in
   // under a fully lit page.
   const [leaving, setLeaving] = useState(false);
@@ -91,6 +95,19 @@ export function Profile(): ReactElement | null {
             </Group>
           </Group>
         </UnstyledButton>
+
+        {/* Only for an account that has a password. A Google rider sets none, so offering
+            the row would suggest they have one to change. */}
+        {user.has_password && (
+          <UnstyledButton onClick={() => setChangingPassword(true)} className="w-full" p="md" pt={0}>
+            <Group justify="space-between" wrap="nowrap">
+              <Text fw={600} fz={15} c="text.6">
+                {t("profile.changePassword")}
+              </Text>
+              <ChevronRight size={18} color="var(--color-text-dim)" />
+            </Group>
+          </UnstyledButton>
+        )}
       </Card>
 
       {/* The linked account lives with the identity it belongs to, connected or not. */}
@@ -100,8 +117,9 @@ export function Profile(): ReactElement | null {
 
       {/* Nothing is lost by logging out, so it asks nothing before it does - and it is not
           why anyone opened this page, so it stays quiet at the foot of it. */}
-      <Group
-        justify="center"
+      <Stack
+        align="center"
+        gap={4}
         mt="auto"
         pt="xl"
         pb="calc(1.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
@@ -118,9 +136,28 @@ export function Profile(): ReactElement | null {
         >
           {t("profile.logout")}
         </Button>
-      </Group>
+
+        {/* Under the way out, because it is the same move taken further - and quiet, in
+            words rather than a button, because nobody should reach it by aiming badly. */}
+        <Button
+          variant="transparent"
+          size="compact-sm"
+          c="red.5"
+          onClick={() => setDeletingAccount(true)}
+          className="transition-opacity active:opacity-60"
+          styles={{ label: { fontSize: 13, fontWeight: 500 } }}
+        >
+          {t("profile.deleteAccount")}
+        </Button>
+      </Stack>
 
       <ProfileEditDrawer user={user} opened={editing} onClose={() => setEditing(false)} />
+      <ChangePasswordDrawer opened={changingPassword} onClose={() => setChangingPassword(false)} />
+      <DeleteAccountDrawer
+        opened={deletingAccount}
+        onClose={() => setDeletingAccount(false)}
+        email={user.email}
+      />
     </Stack>
   );
 }

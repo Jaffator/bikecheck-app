@@ -34,9 +34,11 @@ interface BikeRow {
   bike_brand: string;
   bike_model: string | null;
   bikename: string | null;
+  year: number | null;
   total_km: number | null;
   total_time_min: number | null;
   total_elevation_m: number | null;
+  strava_gear_id: string | null;
   components_mounted: PartRow[];
 }
 
@@ -63,9 +65,11 @@ function bike(overrides: Partial<BikeRow> = {}): BikeRow {
     bike_brand: 'Santa Cruz',
     bike_model: 'Hightower',
     bikename: 'Modrá bestie',
+    year: 2021,
     total_km: 4300,
     total_time_min: 12_000,
     total_elevation_m: 51_000,
+    strava_gear_id: null,
     components_mounted: [part()],
     ...overrides,
   };
@@ -110,9 +114,11 @@ describe('garageTools', () => {
       bike_id: BIKE_ID,
       bike_brand: 'Santa Cruz',
       bike_model: 'Hightower',
+      year: 2021,
       total_km: 4300,
       total_time_min: 12_000,
       elevation_m: 51_000,
+      strava_paired: false,
       parts: [
         {
           component_mounted_id: CHAIN_ID,
@@ -128,7 +134,18 @@ describe('garageTools', () => {
     expect(JSON.stringify(page)).not.toContain('Modrá bestie');
   });
 
-  it('reads a missing number as 0 rather than leaving the field out', async () => {
+  // Which gear id a bike answers to says nothing to its owner; that rides land on it by
+  // themselves does. So the pairing goes out as a fact and the id stays behind.
+  it('says a bike is paired with Strava without handing out the gear id', async () => {
+    garage([bike({ strava_gear_id: 'b1234567' })]);
+
+    const page = await tools(OWNER_ID).get_garage.execute({}, CALL);
+
+    expect(page.rows[0].strava_paired).toBe(true);
+    expect(JSON.stringify(page)).not.toContain('b1234567');
+  });
+
+  it('reads a number nobody recorded as null, which is not a zero', async () => {
     garage([
       bike({
         total_km: null,
@@ -140,11 +157,11 @@ describe('garageTools', () => {
 
     const [row] = (await tools(OWNER_ID).get_garage.execute({}, CALL)).rows;
 
-    expect(row.total_km).toBe(0);
-    expect(row.total_time_min).toBe(0);
-    expect(row.elevation_m).toBe(0);
-    expect(row.parts[0].total_km).toBe(0);
-    expect(row.parts[0].total_time_min).toBe(0);
+    expect(row.total_km).toBeNull();
+    expect(row.total_time_min).toBeNull();
+    expect(row.elevation_m).toBeNull();
+    expect(row.parts[0].total_km).toBeNull();
+    expect(row.parts[0].total_time_min).toBeNull();
     expect(row.parts[0].component_desc).toBe('');
   });
 

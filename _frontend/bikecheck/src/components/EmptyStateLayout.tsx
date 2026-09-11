@@ -21,7 +21,10 @@ const ILLUSTRATION_OPACITY = 0.2;
 const ICON_OPACITY = 0.45;
 
 // Separates the icon from the title it heads.
-const ICON_GAP = 32;
+const ICON_GAP = 16;
+
+// Holds the title and its body together as one block.
+const TITLE_BODY_GAP = 8;
 
 interface EmptyStateLayoutProps {
   // The illustration behind the copy. Pages without one pass an icon instead.
@@ -92,7 +95,7 @@ export function EmptyStateLayout({
               {icon}
             </Center>
           )}
-          <Stack gap={16} ta="center">
+          <Stack gap={TITLE_BODY_GAP} ta="center">
             <Text fz={22} lh="32px" fw={600} c="var(--color-text-bright)">
               {title}
             </Text>

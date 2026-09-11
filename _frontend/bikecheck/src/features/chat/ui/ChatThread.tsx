@@ -7,7 +7,7 @@ import type { TFunction } from "i18next";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { toolStepKey } from "../toolStepLabels";
-import type { ChatMessage } from "../aiChat.types";
+import type { ChatMessage } from "../chat.types";
 import type { PendingTurn } from "../useChatTurn";
 
 interface ChatThreadProps {

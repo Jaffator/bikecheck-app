@@ -8,6 +8,10 @@ export interface ToolPage<Row> {
   // How long the list is with nothing narrowed. Only on an empty narrowed page, so a filter that
   // matched nothing cannot read like a user who owns nothing.
   unfiltered_count?: number;
+  // The filters were dropped and this is the whole list instead: what came back for them was
+  // empty while the list itself is not. Words alone did not stop a model reading its own empty
+  // page as a fact, so the page it gets is the one it should have asked for.
+  filter_ignored?: true;
   truncated?: true;
   next_cursor?: string;
 }
@@ -24,14 +28,21 @@ export function narrowed(input: object): boolean {
   return Object.entries(input).some(([key, value]) => key !== 'cursor' && value !== undefined);
 }
 
-// What an empty answer owes the model. The second read happens only on an empty filtered page,
-// so the ordinary answer costs nothing extra.
-export async function withUnfilteredCount<Row>(
+// What an empty answer owes the model. A filter that matched nothing is the model's own doing
+// far more often than it is a fact about the user, so an empty narrowed page is not handed back:
+// the unnarrowed list takes its place, marked as the swap it is. Only a list that is empty either
+// way comes back empty, and then unfiltered_count: 0 says so outright.
+//
+// The second read happens on an empty narrowed page alone, so the ordinary answer costs nothing.
+export async function withUnfilteredFallback<Row>(
   page: ToolPage<Row>,
   isNarrowed: boolean,
-  countAll: () => Promise<number>,
+  unfiltered: () => Promise<ToolPage<Row>>,
 ): Promise<ToolPage<Row>> {
   if (page.rows.length > 0 || !isNarrowed) return page;
 
-  return { ...page, unfiltered_count: await countAll() };
+  const all = await unfiltered();
+  if (all.total_count === 0) return { ...page, unfiltered_count: 0 };
+
+  return { ...all, filter_ignored: true };
 }

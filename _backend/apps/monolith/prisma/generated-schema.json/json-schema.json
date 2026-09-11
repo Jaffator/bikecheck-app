@@ -1409,20 +1409,6 @@
             "null"
           ]
         },
-        "is_deleted": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "deleted_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
         "googleId": {
           "type": [
             "string",
@@ -1458,6 +1444,13 @@
             "string",
             "null"
           ]
+        },
+        "notifications_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true
         },
         "accounts": {
           "type": "array",

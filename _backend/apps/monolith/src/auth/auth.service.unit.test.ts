@@ -4,7 +4,7 @@ import { UserService } from '../user/user.service';
 import { getLoggerToken } from 'nestjs-pino';
 import { RefreshTokenService } from '../refreshtoken/refreshtoken.service';
 import * as bcrypt from 'bcrypt';
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 // import { UnauthorizedException } from '@nestjs/common';
 // import { users as UserFull } from '@prisma/client';
 
@@ -12,10 +12,13 @@ describe('AuthService_testing', () => {
   let authService: AuthService;
   const mockUserService = {
     getUserbyEmail: jest.fn(),
+    getUserbyId: jest.fn(),
+    updatePassword: jest.fn(),
   };
   const mockRefreshTokenService = {
     revokeToken: jest.fn(() => {}),
     findByToken: jest.fn(() => {}),
+    revokeAllUserTokensExcept: jest.fn(() => {}),
   };
   const mockLogger = {
     info: jest.fn(),
@@ -78,6 +81,71 @@ describe('AuthService_testing', () => {
 
       // ASSERT ACT
       await expect(authService.loginUserLocal(email, password)).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('changePassword', () => {
+    // happy path
+    it('Should store the new password and revoke every other session', async () => {
+      // ARRANGE
+      const currentPassword = 'oldPassword123';
+      const newPassword = 'newPassword123';
+      const password_hash = await bcrypt.hash(currentPassword, 5);
+      mockUserService.getUserbyId.mockResolvedValue({ id: 1, email: 'test@test.com', password_hash });
+
+      // ACT
+      await authService.changePassword(1, currentPassword, newPassword, 'current-refresh-token');
+
+      // ASSERT
+      expect(mockUserService.updatePassword).toHaveBeenCalledWith(1, newPassword);
+      expect(mockRefreshTokenService.revokeAllUserTokensExcept).toHaveBeenCalledWith(1, 'current-refresh-token');
+    });
+
+    it('Should throw 401 and change nothing when the current password is wrong', async () => {
+      // ARRANGE
+      const password_hash = await bcrypt.hash('oldPassword123', 5);
+      mockUserService.getUserbyId.mockResolvedValue({ id: 1, email: 'test@test.com', password_hash });
+
+      // ACT ASSERT
+      await expect(authService.changePassword(1, 'wrongPassword', 'newPassword123', 'token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(mockUserService.updatePassword).not.toHaveBeenCalled();
+      expect(mockRefreshTokenService.revokeAllUserTokensExcept).not.toHaveBeenCalled();
+    });
+
+    it('Should throw 400 when the account has no password (Google sign-in)', async () => {
+      // ARRANGE
+      mockUserService.getUserbyId.mockResolvedValue({ id: 1, email: 'test@test.com', password_hash: null });
+
+      // ACT ASSERT
+      await expect(authService.changePassword(1, 'anything', 'newPassword123', 'token')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockUserService.updatePassword).not.toHaveBeenCalled();
+    });
+
+    it('Should throw 401 when the user does not exist', async () => {
+      // ARRANGE
+      mockUserService.getUserbyId.mockResolvedValue(null);
+
+      // ACT ASSERT
+      await expect(authService.changePassword(1, 'oldPassword123', 'newPassword123', 'token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('Should revoke every session when the request carries no refresh token', async () => {
+      // ARRANGE
+      const currentPassword = 'oldPassword123';
+      const password_hash = await bcrypt.hash(currentPassword, 5);
+      mockUserService.getUserbyId.mockResolvedValue({ id: 1, email: 'test@test.com', password_hash });
+
+      // ACT
+      await authService.changePassword(1, currentPassword, 'newPassword123', null);
+
+      // ASSERT
+      expect(mockRefreshTokenService.revokeAllUserTokensExcept).toHaveBeenCalledWith(1, null);
     });
   });
 

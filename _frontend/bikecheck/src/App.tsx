@@ -22,6 +22,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
+import { Legal } from "@/features/legal_page/Legal";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
@@ -30,6 +31,9 @@ function App(): ReactElement {
       {/* Public routes remain outside the authentication gate. A share link opens the
           report and nothing else: no nav, no tab bar, no session fetch. */}
       <Route path="/r/:token" element={<PublicReport />} />
+      {/* The registration checkbox links to the terms, so they have to open without a
+          session. Logged in, the same route serves the Settings rows. */}
+      <Route path="/legal/:document" element={<Legal />} />
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>
   );

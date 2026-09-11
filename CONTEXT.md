@@ -39,6 +39,15 @@ only from the archive and only after the owner types the bike's name, so the irr
 always preceded by the reversible one. Frozen Reports are not destroyed with it (ADR 0024).
 _Avoid_: Hard delete, purge, permanent archive
 
+**Deleting an Account**:
+Destroying the rider and everything that was theirs — every Bike with all of it, their Rides, their
+own Component Types and Actions, their Reports and the chat thread. Unlike Deleting a Bike it has no
+reversible act before it: an account is never archived, because an archived account would mean the
+personal data of someone who asked to be deleted is still in the database (ADR 0028). The ceremony
+is the same one — the owner types their email back — and the sheet counts what goes before asking.
+Share Links die with it, so a link already handed to a buyer stops answering.
+_Avoid_: Deactivate, close the account, anonymise
+
 **Component Type**:
 A kind of part that can be mounted on a bike — Chain, Fork, Brake Caliper. A catalogue entry,
 not a physical object. One an owner names themselves is theirs, outlives every part that used it,
