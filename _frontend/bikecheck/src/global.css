@@ -107,17 +107,17 @@
   --color-primary-light: #b8a937;
   --color-primary-trans: rgba(147, 106, 59, 0.2);
   --color-muted: #a8a29e;
-  --color-border: rgba(120, 110, 99, 0.32);
+  --color-border: rgba(255, 255, 255, 0.09);
   --color-text-bright: #e4e2e2;
   --color-text-dim: #cec7bf;
   --color-accent: #b7c9d3;
   --color-surface: #2a241f;
-  --color-border-solid: #786e63;
-  --color-border-strong: rgba(120, 110, 99, 0.42);
-  --color-border-subtle: rgba(120, 110, 99, 0.22);
+  --color-border-solid: #757575;
+  --color-border-strong: rgba(255, 255, 255, 0.12);
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
   --color-status-idle: #ffb4ab;
   --color-decor: #352e28;
-  /* A track sunk below the hero card's own surface (cards.6, #262524) rather than beside
+  /* A track sunk below the hero card's own surface (cards.6, #282828) rather than beside
      it, so the bar reads as a groove the meter fills. */
   --color-decor-deep: #1a1612;
 

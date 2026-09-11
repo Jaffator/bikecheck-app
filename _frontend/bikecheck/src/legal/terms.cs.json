@@ -1,35 +1,265 @@
 [
   {
-    "heading": "ZÁSTUPNÝ TEXT — nahradit před vydáním",
+    "heading": "SOUHLAS S NAŠIMI PRÁVNÍMI PODMÍNKAMI",
     "paragraphs": [
-      "Toto nejsou skutečné podmínky použití. Jde o zástupný obsah, který drží místo pro znění dodané člověkem. Nespoléhejte se na něj, neodkazujte na něj a nevydávejte aplikaci, dokud ho nenahradí schválený právní text.",
-      "Bloky níže existují jen proto, aby ukázaly, jak sazba vysází nadpis a odstavce pod ním."
+      "Provozujeme mobilní aplikaci BikeCheck (dále jen „Aplikace“) a všechny další související produkty a služby, které na tyto právní podmínky (dále jen „Právní podmínky“) odkazují (společně dále jen „Služby“).",
+      "Kontaktovat nás můžete e-mailem na support@bikecheck.cloud",
+      "Tyto Právní podmínky představují právně závaznou dohodu uzavřenou mezi vámi, ať už osobně, nebo jménem právnické osoby („vy“), a BikeCheck, týkající se vašeho přístupu ke Službám a jejich užívání. Souhlasíte s tím, že přístupem ke Službám jste si tyto Právní podmínky přečetli, porozuměli jim a zavazujete se jimi řídit v plném rozsahu. POKUD S TĚMITO PRÁVNÍMI PODMÍNKAMI V PLNÉM ROZSAHU NESOUHLASÍTE, JE VÁM UŽÍVÁNÍ SLUŽEB VÝSLOVNĚ ZAKÁZÁNO A MUSÍTE JE OKAMŽITĚ PŘESTAT UŽÍVAT.",
+      "O všech plánovaných změnách Služeb, které užíváte, vás budeme předem informovat. Upravené Právní podmínky nabývají účinnosti zveřejněním nebo oznámením na info@bikecheck.cloud, jak je uvedeno v e-mailové zprávě. Pokud budete Služby užívat i po datu účinnosti změn, souhlasíte s tím, že jste vázáni upravenými podmínkami.",
+      "Všichni uživatelé, kteří jsou v jurisdikci svého bydliště nezletilí (obecně mladší 18 let), musí mít k užívání Služeb svolení svého rodiče nebo zákonného zástupce a být jím přímo dohlíženi. Jste-li nezletilí, musí si tyto Právní podmínky přečíst a odsouhlasit váš rodič nebo zákonný zástupce dříve, než Služby začnete užívat.",
+      "Doporučujeme vám, abyste si kopii těchto Právních podmínek vytiskli pro svou evidenci."
     ]
   },
   {
-    "heading": "1. Zástupný nadpis — rozsah služby",
+    "heading": "1. NAŠE SLUŽBY",
     "paragraphs": [
-      "Zde bude popsáno, co aplikace dělá, komu je určena a co po ní uživatel může chtít. Odstavec je záměrně delší, aby bylo vidět, jak se dlouhý text láme na šířku telefonu a jak sedí řádkování mezi jednotlivými řádky odstavce.",
-      "Druhý odstavec téhož bloku ukazuje mezeru mezi odstavci."
+      "Informace poskytované při užívání Služeb nejsou určeny k šíření ani k užití jakoukoli osobou nebo subjektem v jurisdikci či zemi, kde by takové šíření nebo užití bylo v rozporu se zákonem či předpisem nebo kde by nám v dané jurisdikci či zemi vzniklá registrační povinnost. Osoby, které se rozhodnou přistupovat ke Službám z jiných míst, tak činí z vlastní iniciativy a nesou výhradní odpovědnost za dodržování místních právních předpisů, pokud a v rozsahu, v jakém jsou místní předpisy použitelné.",
+      "Služby nejsou uzpůsobeny tak, aby splňovaly odvětvově specifické předpisy (Health Insurance Portability and Accountability Act (HIPAA), Federal Information Security Management Act (FISMA) apod.), a pokud by vaše interakce takovým předpisům podléhaly, nesmíte Služby užívat. Služby nesmíte užívat způsobem, který by porušoval Gramm-Leach-Bliley Act (GLBA)."
     ]
   },
   {
-    "heading": "2. Zástupný nadpis — účet uživatele",
+    "heading": "2. PRÁVA DUŠEVNÍHO VLASTNICTVÍ",
     "paragraphs": [
-      "Zde budou pravidla pro založení, používání a zrušení účtu."
+      "Naše duševní vlastnictví",
+      "Jsme vlastníkem nebo nabyvatelem licence ke všem právům duševního vlastnictví v našich Službách, včetně veškerého zdrojového kódu, databází, funkcionality, softwaru, návrhů webových stránek, zvuku, videa, textu, fotografií a grafiky ve Službách (společně dále jen „Obsah“), stejně jako ochranných známek, známek služeb a log, které jsou v nich obsaženy (dále jen „Známky“).",
+      "Náš Obsah a Známky jsou chráněny autorským a známkovým právem (a různými dalšími právy duševního vlastnictví a předpisy o nekalé soutěži) a mezinárodními smlouvami ve Spojených státech i po celém světě.",
+      "Obsah a Známky jsou ve Službách nebo jejich prostřednictvím poskytovány „TAK, JAK JSOU“, výhradně pro vaše osobní, nekomerční užití.",
+      "Vaše užívání našich Služeb",
+      "Za podmínky, že dodržujete tyto Právní podmínky včetně níže uvedené části „ZAKÁZANÉ ČINNOSTI“, vám udělujeme nevýhradní, nepřevoditelnou a odvolatelnou licenci k tomu, abyste:",
+      "• přistupovali ke Službám; a",
+      "• stáhli si nebo vytiskli kopii jakékoli části Obsahu, ke které jste řádně získali přístup,",
+      "a to výhradně pro vaše osobní, nekomerční užití.",
+      "S výjimkou toho, co je uvedeno v této části nebo jinde v našich Právních podmínkách, nesmí být žádná část Služeb ani žádný Obsah či Známky kopírovány, rozmnožovány, agregovány, znovu zveřejňovány, nahrávány, vystavovány, veřejně zobrazovány, kódovány, překládány, přenášeny, šířeny, prodávány, licencovány ani jinak využívány pro jakýkoli komerční účel bez našeho výslovného předchozího písemného souhlasu.",
+      "Pokud si přejete využít Služby, Obsah nebo Známky jinak, než je uvedeno v této části nebo jinde v našich Právních podmínkách, zašlete svou žádost na: support@bikecheck.cloud. Pokud vám kdykoli udělíme svolení zveřejnit, rozmnožit nebo veřejně zobrazit jakoukoli část našich Služeb či Obsahu, musíte nás označit jako vlastníky nebo poskytovatele licence ke Službám, Obsahu či Známkám a zajistit, aby byla při zveřejnění, rozmnožení nebo zobrazení našeho Obsahu uvedena či viditelná jakákoli autorskoprávní nebo vlastnická doložka.",
+      "Vyhrazujeme si veškerá práva ke Službám, Obsahu a Známkám, která vám nejsou výslovně udělena.",
+      "Jakékoli porušení těchto práv duševního vlastnictví představuje podstatné porušení našich Právních podmínek a vaše právo užívat naše Služby okamžitě zaniká.",
+      "Vaše podněty a příspěvky",
+      "Než začnete naše Služby užívat, pečlivě si prostudujte tuto část a část „ZAKÁZANÉ ČINNOSTI“, abyste porozuměli tomu, (a) jaká práva nám udělujete a (b) jaké povinnosti máte, když prostřednictvím Služeb zveřejňujete nebo nahráváte jakýkoli obsah.",
+      "Podněty: Tím, že nám přímo zašlete jakýkoli dotaz, komentář, návrh, nápad, zpětnou vazbu nebo jiné informace o Službách (dále jen „Podněty“), souhlasíte s tím, že nám postupujete veškerá práva duševního vlastnictví k takovému Podnětu. Souhlasíte s tím, že tento Podnět bude náš a že jsme oprávněni jej neomezeně užívat a šířit pro jakýkoli zákonný účel, komerční i jiný, bez uvedení vašeho jména či poskytnutí odměny.",
+      "Příspěvky: Služby vás mohou vyzvat k chatování, přispívání či účasti na blozích, diskusních fórech, online fórech a v dalších funkcích, v jejichž rámci můžete vytvářet, odesílat, zveřejňovat, zobrazovat, přenášet, publikovat, šířit nebo vysílat obsah a materiály nám nebo prostřednictvím Služeb, mimo jiné texty, písemnosti, video, zvuk, fotografie, hudbu, grafiku, komentáře, recenze, hodnocení, osobní údaje nebo jiný materiál (dále jen „Příspěvky“). Každý Podnět, který je veřejně zveřejněn, se rovněž považuje za Příspěvek.",
+      "Berete na vědomí, že Příspěvky mohou být viditelné pro ostatní uživatele Služeb a případně i prostřednictvím webových stránek třetích stran.",
+      "Zveřejněním Příspěvků nám udělujete licenci (včetně užití vašeho jména, ochranných známek a log): Zveřejněním jakýchkoli Příspěvků nám udělujete neomezené, nelimitované, neodvolatelné, trvalé, nevýhradní, převoditelné, bezúplatné, plně uhrazené a celosvětové právo a licenci k tomu, abychom vaše Příspěvky (mimo jiné včetně vaší podoby, jména a hlasu) užívali, kopírovali, rozmnožovali, šířili, prodávali, dále prodávali, publikovali, vysílali, přejmenovávali, ukládali, veřejně provozovali, veřejně zobrazovali, přeformátovávali, překládali, z nich pořizovali výňatky (vcelku i zčásti) a využívali je pro jakýkoli účel, komerční, reklamní i jiný, abychom z nich vytvářeli odvozená díla nebo je začleňovali do jiných děl, a abychom licence udělené v této části dále poskytovali třetím osobám. Naše užití a šíření může probíhat v jakýchkoli mediálních formátech a jakýmikoli mediálními kanály.",
+      "Tato licence zahrnuje užití vašeho jména, názvu společnosti a názvu franšízy, je-li to relevantní, a jakýchkoli ochranných známek, známek služeb, obchodních jmen, log a osobních i komerčních obrazových materiálů, které poskytnete.",
+      "Za to, co zveřejníte nebo nahrajete, odpovídáte vy: Tím, že nám zašlete Podněty nebo zveřejníte Příspěvky prostřednictvím jakékoli části Služeb, případně Příspěvky zpřístupníte propojením svého účtu ve Službách s některým ze svých účtů na sociálních sítích:",
+      "• potvrzujete, že jste si přečetli naše „ZAKÁZANÉ ČINNOSTI“ a souhlasíte s nimi, a že prostřednictvím Služeb nebudete zveřejňovat, zasílat, publikovat, nahrávat ani přenášet žádný Podnět ani zveřejňovat žádný Příspěvek, který je nezákonný, obtěžující, nenávistný, škodlivý, hanlivý, obscénní, šikanující, urážlivý, diskriminační, vyhrožující jakékoli osobě či skupině, sexuálně explicitní, nepravdivý, nepřesný, klamavý nebo zavádějící;",
+      "• v rozsahu přípustném podle rozhodného práva se vzdáváte veškerých osobnostních práv k takovému Podnětu nebo Příspěvku;",
+      "• zaručujete, že každý takový Podnět nebo Příspěvek je vaším původním dílem nebo že máte potřebná práva a licence k jeho odeslání a že máte plné oprávnění udělit nám ve vztahu ke svým Podnětům a Příspěvkům výše uvedená práva; a",
+      "• zaručujete a prohlašujete, že vaše Podněty a Příspěvky nepředstavují důvěrné informace.",
+      "Za své Podněty a Příspěvky nesete výhradní odpovědnost a výslovně souhlasíte s tím, že nám nahradíte veškeré škody, které nám mohou vzniknout v důsledku vašeho porušení (a) této části, (b) práv duševního vlastnictví třetí osoby nebo (c) rozhodného práva.",
+      "Váš Obsah můžeme odstranit nebo upravit: Ačkoli nemáme povinnost Příspěvky sledovat, máme právo kdykoli a bez upozornění odstranit nebo upravit jakékoli Příspěvky, pokud je podle našeho rozumného úsudku považujeme za škodlivé nebo za porušující tyto Právní podmínky. Pokud takové Příspěvky odstraníme nebo upravíme, můžeme rovněž pozastavit nebo zrušit váš účet a oznámit vás příslušným orgánům."
     ]
   },
   {
-    "heading": "3. Zástupný nadpis — obsah vložený uživatelem",
+    "heading": "3. PROHLÁŠENÍ UŽIVATELE",
     "paragraphs": [
-      "Zde bude řečeno, komu patří fotky, servisní záznamy a další data, která uživatel do aplikace vloží.",
-      "A zde, za jakých podmínek s nimi aplikace nakládá."
+      "Užíváním Služeb prohlašujete a zaručujete, že: (1) všechny registrační údaje, které poskytnete, budou pravdivé, přesné, aktuální a úplné; (2) budete přesnost těchto údajů udržovat a registrační údaje podle potřeby neprodleně aktualizovat; (3) máte právní způsobilost a souhlasíte s dodržováním těchto Právních podmínek; (4) nejste nezletilí v jurisdikci svého bydliště, nebo jste jako nezletilí získali svolení rodiče k užívání Služeb; (5) nebudete ke Službám přistupovat automatizovanými či nelidskými prostředky, ať už pomocí bota, skriptu nebo jinak; (6) nebudete Služby užívat k žádnému nezákonnému či neoprávněnému účelu; a (7) vaše užívání Služeb nebude porušovat žádný platný právní předpis.",
+      "Pokud poskytnete jakékoli údaje, které jsou nepravdivé, nepřesné, neaktuální nebo neúplné, máme právo pozastavit či zrušit váš účet a odmítnout jakékoli současné i budoucí užívání Služeb (nebo jejich části)."
     ]
   },
   {
-    "heading": "4. Zástupný nadpis — omezení odpovědnosti a kontakt",
+    "heading": "4. REGISTRACE UŽIVATELE",
     "paragraphs": [
-      "Zde bude omezení odpovědnosti a kontaktní údaje provozovatele."
+      "K užívání Služeb po vás může být vyžadována registrace. Souhlasíte s tím, že budete své heslo uchovávat v tajnosti, a nesete odpovědnost za veškeré užití svého účtu a hesla. Vyhrazujeme si právo odstranit, získat zpět nebo změnit uživatelské jméno, které si zvolíte, pokud podle vlastního uvážení určíme, že je nevhodné, obscénní nebo jinak závadné."
+    ]
+  },
+  {
+    "heading": "5. PRODUKTY",
+    "paragraphs": [
+      "Všechny produkty podléhají dostupnosti. Vyhrazujeme si právo kdykoli a z jakéhokoli důvodu ukončit nabídku jakýchkoli produktů. Ceny všech produktů se mohou změnit."
+    ]
+  },
+  {
+    "heading": "6. NÁKUPY A PLATBY",
+    "paragraphs": [
+      "Přijímáme následující formy platby:",
+      "• Visa",
+      "• Mastercard",
+      "• PayPal",
+      "Souhlasíte s tím, že u všech nákupů uskutečněných prostřednictvím Služeb poskytnete aktuální, úplné a přesné nákupní a účetní údaje. Dále souhlasíte s tím, že budete neprodleně aktualizovat údaje o účtu a platbě, včetně e-mailové adresy, platební metody a data expirace platební karty, abychom mohli dokončit vaše transakce a v případě potřeby vás kontaktovat. K ceně nákupů bude připočtena daň z prodeje v rozsahu, který budeme považovat za nezbytný. Ceny můžeme kdykoli změnit. Všechny platby probíhají v CZK.",
+      "Souhlasíte s tím, že uhradíte všechny poplatky v cenách platných pro vaše nákupy v daném okamžiku a případné poplatky za dopravu, a opravňujete nás k tomu, abychom příslušné částky při zadání objednávky naúčtovali vámi zvolenému poskytovateli platebních služeb. Vyhrazujeme si právo opravit jakékoli chyby nebo omyly v cenách, a to i tehdy, pokud jsme již platbu vyžádali nebo obdrželi.",
+      "Vyhrazujeme si právo odmítnout jakoukoli objednávku zadanou prostřednictvím Služeb. Podle vlastního uvážení můžeme omezit nebo zrušit množství zakoupené jednou osobou, jednou domácností nebo v rámci jedné objednávky. Tato omezení mohou zahrnovat objednávky zadané pod týmž zákaznickým účtem, toutéž platební metodou nebo objednávky používající tutéž fakturační či dodací adresu. Vyhrazujeme si právo omezit nebo zakázat objednávky, které podle našeho výhradního úsudku vypadají jako zadané prodejci, přeprodejci nebo distributory."
+    ]
+  },
+  {
+    "heading": "7. PŘEDPLATNÉ",
+    "paragraphs": [
+      "Účtování a obnovení",
+      "Vaše předplatné pokračuje a automaticky se obnovuje, dokud jej nezrušíte. Souhlasíte s tím, abychom vaši platební metodu zatěžovali opakovaně bez nutnosti vašeho předchozího souhlasu s každou jednotlivou opakovanou platbou, a to až do okamžiku, kdy příslušnou objednávku zrušíte. Délka fakturačního cyklu závisí na typu předplatného, který jste si při objednání Služeb zvolili.",
+      "Zrušení",
+      "Předplatné můžete kdykoli zrušit přihlášením ke svému účtu. Zrušení nabude účinnosti na konci aktuálního zaplaceného období. Máte-li jakékoli dotazy nebo nejste-li s našimi Službami spokojeni, napište nám prosím na support@bikecheck.cloud.",
+      "Změny poplatků",
+      "Čas od času můžeme provést změny výše předplatného; o každé změně ceny vás budeme informovat v souladu s rozhodným právem."
+    ]
+  },
+  {
+    "heading": "8. ZÁSADY VRACENÍ PENĚZ",
+    "paragraphs": ["Všechny prodeje jsou konečné a peníze se nevracejí."]
+  },
+  {
+    "heading": "9. ZAKÁZANÉ ČINNOSTI",
+    "paragraphs": [
+      "Ke Službám nesmíte přistupovat ani je užívat k jinému účelu, než pro který je zpřístupňujeme. Služby nesmějí být užívány v souvislosti s žádnými komerčními aktivitami s výjimkou těch, které jsme výslovně schválili nebo podpořili.",
+      "Jako uživatel Služeb souhlasíte s tím, že nebudete:",
+      "• Systematicky získávat data ani jiný obsah ze Služeb za účelem vytvoření nebo sestavení, přímo či nepřímo, sbírky, kompilace, databáze nebo adresáře bez našeho písemného svolení.",
+      "• Klamat, podvádět nebo uvádět v omyl nás a další uživatele, zejména při jakémkoli pokusu získat citlivé údaje o účtu, například uživatelská hesla.",
+      "• Obcházet, vyřazovat z provozu nebo jinak narušovat bezpečnostní funkce Služeb, včetně funkcí, které brání užívání či kopírování Obsahu nebo je omezují, případně vynucují omezení užívání Služeb či Obsahu v nich obsaženého.",
+      "• Znevažovat, poškozovat dobré jméno nebo jinak podle našeho názoru poškozovat nás nebo Služby.",
+      "• Užívat informace získané ze Služeb k obtěžování, zneužívání nebo poškozování jiné osoby.",
+      "• Nevhodně využívat naši podporu nebo podávat nepravdivá hlášení o zneužití či nevhodném chování.",
+      "• Užívat Služby způsobem, který je v rozporu s platnými právními předpisy.",
+      "• Provádět neoprávněné vkládání Služeb do rámců nebo neoprávněné odkazování na ně.",
+      "• Nahrávat nebo přenášet (či se o to pokoušet) viry, trojské koně nebo jiný materiál, včetně nadměrného užívání velkých písmen a spamování (opakované zveřejňování stejného textu), který narušuje nerušené užívání Služeb kteroukoli stranou nebo který upravuje, narušuje, přerušuje, mění či zasahuje do užívání, funkcí, provozu nebo údržby Služeb.",
+      "• Zapojovat se do jakéhokoli automatizovaného užívání systému, například používat skripty k rozesílání komentářů či zpráv nebo používat nástroje pro dolování dat, roboty či podobné nástroje pro sběr a extrakci dat.",
+      "• Odstraňovat z jakéhokoli Obsahu autorskoprávní nebo jinou vlastnickou doložku.",
+      "• Pokoušet se vydávat za jiného uživatele či osobu nebo používat uživatelské jméno jiného uživatele.",
+      "• Nahrávat nebo přenášet (či se o to pokoušet) jakýkoli materiál, který funguje jako pasivní nebo aktivní mechanismus sběru či přenosu informací, mimo jiné včetně čirých formátů grafické výměny („gify“), pixelů 1×1, webových brouků, cookies nebo jiných obdobných prostředků (někdy označovaných jako „spyware“, „pasivní sběrné mechanismy“ nebo „pcms“).",
+      "• Zasahovat do Služeb nebo do sítí či služeb s nimi propojených, narušovat je nebo je nepřiměřeně zatěžovat.",
+      "• Obtěžovat, otravovat, zastrašovat nebo ohrožovat kohokoli z našich zaměstnanců či zástupců, kteří vám poskytují jakoukoli část Služeb.",
+      "• Pokoušet se obejít jakákoli opatření Služeb určená k zamezení nebo omezení přístupu ke Službám či k jejich části.",
+      "• Kopírovat nebo upravovat software Služeb, mimo jiné Flash, PHP, HTML, JavaScript nebo jiný kód.",
+      "• S výjimkou případů povolených rozhodným právem dešifrovat, dekompilovat, rozkládat nebo zpětně analyzovat jakýkoli software, který tvoří součást Služeb nebo je jakkoli součástí Služeb.",
+      "• S výjimkou toho, co může být výsledkem běžného užívání vyhledávače nebo internetového prohlížeče, užívat, spouštět, vyvíjet nebo šířit jakýkoli automatizovaný systém, mimo jiné jakéhokoli pavouka, robota, pomocný nástroj k podvádění, scraper nebo offline čtečku, které přistupují ke Službám, ani užívat či spouštět jakýkoli neoprávněný skript nebo jiný software.",
+      "• Používat nákupního agenta nebo zprostředkovatele nákupu k provádění nákupů ve Službách.",
+      "• Jakkoli neoprávněně užívat Služby, včetně shromažďování uživatelských jmen nebo e-mailových adres uživatelů elektronickými či jinými prostředky za účelem rozesílání nevyžádané pošty nebo vytváření uživatelských účtů automatizovanými prostředky či pod nepravdivou záminkou.",
+      "• Užívat Služby v rámci jakékoli snahy konkurovat nám nebo jinak užívat Služby či Obsah k jakékoli výdělečné činnosti nebo komerčnímu podnikání."
+    ]
+  },
+  {
+    "heading": "10. PŘÍSPĚVKY VYTVOŘENÉ UŽIVATELI",
+    "paragraphs": [
+      "Služby vás mohou vyzvat k chatování, přispívání či účasti na blozích, diskusních fórech, online fórech a v dalších funkcích a mohou vám poskytnout možnost vytvářet, odesílat, zveřejňovat, zobrazovat, přenášet, provozovat, publikovat, šířit nebo vysílat obsah a materiály nám nebo ve Službách, mimo jiné texty, písemnosti, video, zvuk, fotografie, grafiku, komentáře, návrhy, osobní údaje či jiný materiál (společně dále jen „Příspěvky“). Příspěvky mohou být viditelné pro ostatní uživatele Služeb a prostřednictvím webových stránek třetích stran. Jakékoli Příspěvky, které přenesete, proto mohou být považovány za nedůvěrné a nechráněné. Když vytvoříte nebo zpřístupníte jakékoli Příspěvky, tímto prohlašujete a zaručujete, že:",
+      "• Vytvoření, šíření, přenos, veřejné zobrazení nebo provozování a přístup k vašim Příspěvkům, jejich stahování či kopírování neporušuje a nebude porušovat vlastnická práva třetích osob, mimo jiné autorská práva, patenty, ochranné známky, obchodní tajemství ani osobnostní práva.",
+      "• Jste tvůrcem a vlastníkem Příspěvků nebo máte potřebné licence, práva, souhlasy, svolení a oprávnění k tomu, abyste je užívali a abyste nás, Služby a další uživatele Služeb oprávnili užívat vaše Příspěvky jakýmkoli způsobem předpokládaným Službami a těmito Právními podmínkami.",
+      "• Máte písemný souhlas, svolení nebo povolení každé identifikovatelné fyzické osoby ve vašich Příspěvcích k užití jména či podoby každé takové identifikovatelné osoby, aby bylo možné vaše Příspěvky zahrnout a užívat jakýmkoli způsobem předpokládaným Službami a těmito Právními podmínkami.",
+      "• Vaše Příspěvky nejsou nepravdivé, nepřesné ani zavádějící.",
+      "• Vaše Příspěvky nejsou nevyžádanou ani neoprávněnou reklamou, propagačními materiály, pyramidovými schématy, řetězovými dopisy, spamem, hromadnou poštou ani jinou formou vnucování.",
+      "• Vaše Příspěvky nejsou obscénní, oplzlé, chlípné, vulgární, násilné, obtěžující, urážlivé na cti, pomlouvačné ani jinak závadné (dle našeho posouzení).",
+      "• Vaše Příspěvky nikoho nezesměšňují, nezlehčují, neznevažují, nezastrašují ani neurážejí.",
+      "• Vaše Příspěvky nejsou používány k obtěžování nebo vyhrožování (v právním smyslu těchto pojmů) jiné osobě ani k podpoře násilí vůči konkrétní osobě či skupině osob.",
+      "• Vaše Příspěvky neporušují žádný platný právní předpis, nařízení ani pravidlo.",
+      "• Vaše Příspěvky neporušují práva na soukromí ani osobnostní práva třetích osob.",
+      "• Vaše Příspěvky neporušují žádný platný právní předpis týkající se dětské pornografie ani jiný předpis určený k ochraně zdraví či blaha nezletilých.",
+      "• Vaše Příspěvky neobsahují urážlivé komentáře spojené s rasou, národnostním původem, pohlavím, sexuální orientací nebo tělesným postižením.",
+      "• Vaše Příspěvky jinak neporušují žádné ustanovení těchto Právních podmínek ani žádný platný právní předpis a neodkazují na materiál, který je porušuje.",
+      "Jakékoli užití Služeb v rozporu s výše uvedeným porušuje tyto Právní podmínky a může vést mimo jiné k ukončení nebo pozastavení vašeho práva Služby užívat."
+    ]
+  },
+  {
+    "heading": "11. LICENCE K PŘÍSPĚVKŮM",
+    "paragraphs": [
+      "Zveřejněním svých Příspěvků v jakékoli části Služeb nám automaticky udělujete – a prohlašujete a zaručujete, že jste k tomu oprávněni – neomezené, nelimitované, neodvolatelné, trvalé, nevýhradní, převoditelné, bezúplatné, plně uhrazené a celosvětové právo a licenci takové Příspěvky (mimo jiné včetně vaší podoby a hlasu) hostovat, užívat, kopírovat, rozmnožovat, zpřístupňovat, prodávat, dále prodávat, publikovat, vysílat, přejmenovávat, archivovat, ukládat, ukládat do mezipaměti, veřejně provozovat, veřejně zobrazovat, přeformátovávat, překládat, přenášet, pořizovat z nich výňatky (vcelku i zčásti) a šířit je pro jakýkoli účel, komerční, reklamní i jiný, vytvářet z nich odvozená díla nebo je začleňovat do jiných děl a poskytovat a schvalovat podlicence k výše uvedenému.",
+      "Tato licence se vztahuje na jakoukoli formu, médium či technologii, ať už nyní známou, nebo vyvinutou v budoucnu, a zahrnuje užití vašeho jména, názvu společnosti a názvu franšízy, je-li to relevantní, a jakýchkoli ochranných známek, známek služeb, obchodních jmen, log a osobních i komerčních obrazových materiálů, které poskytnete. Vzdáváte se všech osobnostních práv ke svým Příspěvkům a zaručujete, že osobnostní práva k vašim Příspěvkům nebyla uplatněna ani jinak.",
+      "Nenárokujeme si žádné vlastnictví k vašim Příspěvkům. Zachováváte si plné vlastnictví všech svých Příspěvků a veškerých práv duševního vlastnictví či jiných vlastnických práv s nimi spojených. Neneseme odpovědnost za žádná prohlášení ani tvrzení obsažená ve vašich Příspěvcích, které jste umístili kdekoli ve Službách. Za své Příspěvky ve Službách nesete výhradní odpovědnost a výslovně souhlasíte s tím, že nás zprostíte veškeré odpovědnosti a zdržíte se jakýchkoli právních kroků vůči nám ve vztahu k vašim Příspěvkům.",
+      "Máme právo podle svého výhradního a absolutního uvážení (1) upravit, redigovat nebo jinak změnit jakékoli Příspěvky; (2) překategorizovat jakékoli Příspěvky a umístit je na vhodnější místa ve Službách; a (3) jakékoli Příspěvky kdykoli a z jakéhokoli důvodu bez upozornění předem prověřit nebo smazat. Nemáme povinnost vaše Příspěvky sledovat."
+    ]
+  },
+  {
+    "heading": "12. LICENCE K MOBILNÍ APLIKACI",
+    "paragraphs": [
+      "Licence k užívání",
+      "Pokud ke Službám přistupujete prostřednictvím Aplikace, udělujeme vám odvolatelné, nevýhradní, nepřevoditelné a omezené právo nainstalovat a užívat Aplikaci na bezdrátových elektronických zařízeních, která vlastníte nebo ovládáte, a přistupovat k Aplikaci a užívat ji na těchto zařízeních výhradně v souladu s podmínkami této licence k mobilní aplikaci obsaženými v těchto Právních podmínkách. Nesmíte: (1) s výjimkou případů povolených rozhodným právem Aplikaci dekompilovat, zpětně analyzovat, rozkládat, pokoušet se odvodit její zdrojový kód ani ji dešifrovat; (2) provádět jakékoli úpravy, adaptace, vylepšení, rozšíření, překlady ani vytvářet z Aplikace odvozená díla; (3) porušovat v souvislosti s přístupem k Aplikaci nebo jejím užíváním platné právní předpisy, pravidla či nařízení; (4) odstraňovat, měnit nebo zakrývat jakoukoli vlastnickou doložku (včetně doložky o autorském právu nebo ochranné známce) umístěnou námi nebo poskytovateli licence k Aplikaci; (5) užívat Aplikaci k jakékoli výdělečné činnosti, komerčnímu podnikání ani k jinému účelu, pro který není navržena či určena; (6) zpřístupňovat Aplikaci prostřednictvím sítě nebo jiného prostředí umožňujícího současný přístup či užití více zařízeními nebo uživateli; (7) užívat Aplikaci k vytvoření produktu, služby nebo softwaru, který je přímo či nepřímo konkurenční vůči Aplikaci nebo jakkoli její náhradou; (8) užívat Aplikaci k rozesílání automatizovaných dotazů na jakékoli webové stránky nebo k rozesílání nevyžádaných obchodních sdělení; ani (9) užívat jakékoli chráněné informace nebo kterákoli naše rozhraní či jiné naše duševní vlastnictví při návrhu, vývoji, výrobě, licencování nebo distribuci jakýchkoli aplikací, příslušenství či zařízení určených k užití s Aplikací.",
+      "Zařízení Apple a Android",
+      "Následující podmínky platí, pokud užíváte Aplikaci získanou z Apple Store nebo Google Play (každý z nich dále jen „Distributor aplikace“) k přístupu ke Službám: (1) licence, kterou vám k naší Aplikaci udělujeme, je omezena na nepřevoditelnou licenci k užívání aplikace na zařízení využívajícím operační systém Apple iOS nebo Android, podle okolností, a to v souladu s pravidly užívání stanovenými v podmínkách služby příslušného Distributora aplikace; (2) za poskytování údržby a podpory k Aplikaci odpovídáme my, a to v rozsahu stanoveném podmínkami této licence k mobilní aplikaci obsaženými v těchto Právních podmínkách nebo jinak vyžadovaném rozhodným právem, a berete na vědomí, že žádný Distributor aplikace nemá jakoukoli povinnost poskytovat k Aplikaci údržbu či podporu; (3) v případě, že Aplikace nebude odpovídat jakékoli platné záruce, můžete to oznámit příslušnému Distributorovi aplikace, a tento Distributor aplikace vám v souladu se svými podmínkami a zásadami může vrátit kupní cenu, pokud jste ji za Aplikaci zaplatili; v maximálním rozsahu povoleném rozhodným právem nemá Distributor aplikace ve vztahu k Aplikaci žádnou další záruční povinnost; (4) prohlašujete a zaručujete, že (i) se nenacházíte v zemi, na kterou se vztahuje embargo vlády USA nebo kterou vláda USA označila za zemi „podporující terorismus“, a (ii) nejste uvedeni na žádném seznamu zakázaných či omezených stran vlády USA; (5) při užívání Aplikace musíte dodržovat platné podmínky smluv třetích stran, např. máte-li aplikaci VoIP, nesmíte při užívání Aplikace porušovat svou smlouvu o bezdrátových datových službách; a (6) berete na vědomí a souhlasíte s tím, že Distributoři aplikace jsou oprávněnými třetími osobami ve vztahu k podmínkám této licence k mobilní aplikaci obsaženým v těchto Právních podmínkách a že každý Distributor aplikace má právo (a má se za to, že toto právo přijal) vymáhat vůči vám podmínky této licence k mobilní aplikaci obsažené v těchto Právních podmínkách jakožto oprávněná třetí osoba."
+    ]
+  },
+  {
+    "heading": "13. WEBOVÉ STRÁNKY A OBSAH TŘETÍCH STRAN",
+    "paragraphs": [
+      "Služby mohou obsahovat (nebo vám prostřednictvím Aplikace mohou být zaslány) odkazy na jiné webové stránky (dále jen „Webové stránky třetích stran“), stejně jako články, fotografie, texty, grafiku, obrázky, návrhy, hudbu, zvuk, video, informace, aplikace, software a další obsah či položky patřící třetím stranám nebo od nich pocházející (dále jen „Obsah třetích stran“). Takové Webové stránky třetích stran a Obsah třetích stran námi nejsou prověřovány, sledovány ani kontrolovány z hlediska přesnosti, vhodnosti či úplnosti a neneseme odpovědnost za žádné Webové stránky třetích stran zpřístupněné prostřednictvím Služeb ani za žádný Obsah třetích stran zveřejněný ve Službách, dostupný jejich prostřednictvím nebo z nich nainstalovaný, včetně obsahu, přesnosti, urážlivosti, názorů, spolehlivosti, postupů při ochraně soukromí či jiných zásad Webových stránek třetích stran nebo Obsahu třetích stran. Zahrnutí Webových stránek třetích stran či Obsahu třetích stran, odkazování na ně nebo umožnění jejich užití či instalace neznamená jejich schválení či podporu z naší strany. Pokud se rozhodnete opustit Služby a přejít na Webové stránky třetích stran nebo užít či nainstalovat jakýkoli Obsah třetích stran, činíte tak na vlastní riziko a měli byste si být vědomi, že tyto Právní podmínky se na to již nevztahují. Měli byste si prostudovat platné podmínky a zásady, včetně zásad ochrany soukromí a sběru dat, každé webové stránky, na kterou ze Služeb přejdete, nebo jakékoli aplikace, kterou ze Služeb užijete či nainstalujete. Jakékoli nákupy uskutečněné prostřednictvím Webových stránek třetích stran proběhnou přes jiné webové stránky a u jiných společností a za takové nákupy, které probíhají výhradně mezi vámi a příslušnou třetí stranou, neneseme žádnou odpovědnost. Souhlasíte a berete na vědomí, že produkty ani služby nabízené na Webových stránkách třetích stran nepodporujeme a že nás zprostíte odpovědnosti za jakoukoli újmu způsobenou vaším nákupem takových produktů či služeb. Dále nás zprostíte odpovědnosti za jakékoli ztráty, které utrpíte, nebo újmu, která vám vznikne v souvislosti s Obsahem třetích stran nebo kontaktem s Webovými stránkami třetích stran."
+    ]
+  },
+  {
+    "heading": "14. SPRÁVA SLUŽEB",
+    "paragraphs": [
+      "Vyhrazujeme si právo, nikoli však povinnost: (1) sledovat Služby z hlediska porušování těchto Právních podmínek; (2) podniknout příslušné právní kroky vůči komukoli, kdo podle našeho výhradního uvážení porušuje zákon nebo tyto Právní podmínky, mimo jiné oznámit takového uživatele orgánům činným v trestním řízení; (3) podle vlastního uvážení a bez omezení odmítnout, omezit přístup k, omezit dostupnost nebo znepřístupnit (v technicky proveditelném rozsahu) jakékoli vaše Příspěvky či jejich část; (4) podle vlastního uvážení a bez omezení, oznámení či odpovědnosti odstranit ze Služeb nebo jinak znepřístupnit všechny soubory a obsah, které jsou nadměrně velké nebo jakkoli zatěžují naše systémy; a (5) jinak spravovat Služby způsobem, který chrání naše práva a majetek a usnadňuje řádné fungování Služeb."
+    ]
+  },
+  {
+    "heading": "15. ZÁSADY OCHRANY OSOBNÍCH ÚDAJŮ",
+    "paragraphs": [
+      "Záleží nám na soukromí a bezpečnosti dat. Užíváním Služeb souhlasíte s tím, že jste vázáni našimi Zásadami ochrany osobních údajů zveřejněnými ve Službách, které jsou součástí těchto Právních podmínek. Upozorňujeme, že Služby jsou hostovány v Německu. Pokud ke Službám přistupujete z jiné části světa se zákony či jinými požadavky na sběr, užívání nebo zpřístupňování osobních údajů, které se liší od právních předpisů platných v Německu, pak dalším užíváním Služeb přenášíte svá data do Německa a výslovně souhlasíte s tím, aby byla vaše data přenesena do Německa a tam zpracovávána."
+    ]
+  },
+  {
+    "heading": "16. TRVÁNÍ A UKONČENÍ",
+    "paragraphs": [
+      "Tyto Právní podmínky zůstávají plně platné a účinné po dobu, kdy Služby užíváte. BEZ OMEZENÍ JAKÉHOKOLI JINÉHO USTANOVENÍ TĚCHTO PRÁVNÍCH PODMÍNEK SI VYHRAZUJEME PRÁVO PODLE SVÉHO VÝHRADNÍHO UVÁŽENÍ A BEZ OZNÁMENÍ ČI ODPOVĚDNOSTI ODEPŘÍT KOMUKOLI PŘÍSTUP KE SLUŽBÁM A JEJICH UŽÍVÁNÍ (VČETNĚ BLOKOVÁNÍ URČITÝCH IP ADRES), A TO Z JAKÉHOKOLI DŮVODU I BEZ DŮVODU, MIMO JINÉ PRO PORUŠENÍ JAKÉHOKOLI PROHLÁŠENÍ, ZÁRUKY ČI ZÁVAZKU OBSAŽENÉHO V TĚCHTO PRÁVNÍCH PODMÍNKÁCH NEBO JAKÉHOKOLI PLATNÉHO PRÁVNÍHO PŘEDPISU. VAŠE UŽÍVÁNÍ SLUŽEB NEBO ÚČAST V NICH MŮŽEME KDYKOLI UKONČIT, STEJNĚ JAKO SMAZAT VÁŠ ÚČET A JAKÝKOLI OBSAH ČI INFORMACE, KTERÉ JSTE ZVEŘEJNILI, A TO BEZ UPOZORNĚNÍ A PODLE NAŠEHO VÝHRADNÍHO UVÁŽENÍ.",
+      "Pokud váš účet z jakéhokoli důvodu ukončíme nebo pozastavíme, je vám zakázáno registrovat se a vytvářet nový účet pod svým jménem, pod smyšleným či vypůjčeným jménem nebo pod jménem jakékoli třetí osoby, i kdybyste jednali jménem této třetí osoby. Kromě ukončení nebo pozastavení vašeho účtu si vyhrazujeme právo podniknout příslušné právní kroky, mimo jiné uplatnit občanskoprávní, trestněprávní a zdržovací nároky."
+    ]
+  },
+  {
+    "heading": "17. ZMĚNY A PŘERUŠENÍ",
+    "paragraphs": [
+      "Vyhrazujeme si právo kdykoli a z jakéhokoli důvodu podle svého výhradního uvážení a bez upozornění změnit, upravit nebo odstranit obsah Služeb. Nemáme však povinnost jakékoli informace ve Službách aktualizovat. Neneseme vůči vám ani vůči žádné třetí osobě odpovědnost za jakoukoli změnu, změnu ceny, pozastavení nebo ukončení Služeb.",
+      "Nemůžeme zaručit, že Služby budou dostupné vždy. Může u nás dojít k hardwarovým, softwarovým či jiným problémům nebo může být nutné provést údržbu související se Službami, což může vést k přerušení, prodlevám nebo chybám. Vyhrazujeme si právo kdykoli a z jakéhokoli důvodu bez upozornění Služby změnit, revidovat, aktualizovat, pozastavit, ukončit nebo jinak upravit. Souhlasíte s tím, že neneseme žádnou odpovědnost za jakoukoli ztrátu, škodu nebo nepohodlí způsobené tím, že jste nemohli ke Službám přistupovat či je užívat během jakékoli odstávky nebo po ukončení Služeb. Nic v těchto Právních podmínkách nelze vykládat tak, že nás zavazuje Služby udržovat a podporovat nebo dodávat jakékoli opravy, aktualizace či verze s nimi související."
+    ]
+  },
+  {
+    "heading": "18. ROZHODNÉ PRÁVO",
+    "paragraphs": [
+      "Tyto Právní podmínky se řídí a vykládají podle práva České republiky a použití Úmluvy OSN o smlouvách o mezinárodní koupi zboží je výslovně vyloučeno. Pokud máte obvyklé bydliště v EU a jste spotřebitel, náleží vám navíc ochrana poskytovaná kogentními ustanoveními práva země vašeho bydliště. BikeCheck i vy se zavazujete podřídit nevýlučné pravomoci soudů Libereckého kraje, což znamená, že nárok na ochranu svých spotřebitelských práv v souvislosti s těmito Právními podmínkami můžete uplatnit v Česku nebo v zemi EU, ve které máte bydliště."
+    ]
+  },
+  {
+    "heading": "19. ŘEŠENÍ SPORŮ",
+    "paragraphs": [
+      "Evropská komise poskytuje informace o mimosoudním řešení spotřebitelských sporů včetně seznamu subjektů pro řešení sporů podle jednotlivých zemí, ke kterému máte přístup. Pokud nás na tuto věc chcete upozornit, kontaktujte nás prosím."
+    ]
+  },
+  {
+    "heading": "20. OPRAVY",
+    "paragraphs": [
+      "Ve Službách se mohou vyskytovat informace obsahující typografické chyby, nepřesnosti nebo opomenutí, včetně popisů, cen, dostupnosti a různých dalších údajů. Vyhrazujeme si právo kdykoli a bez předchozího upozornění opravit jakékoli chyby, nepřesnosti či opomenutí a změnit nebo aktualizovat informace ve Službách."
+    ]
+  },
+  {
+    "heading": "21. ODMÍTNUTÍ ODPOVĚDNOSTI",
+    "paragraphs": [
+      "SLUŽBY JSOU POSKYTOVÁNY „TAK, JAK JSOU“ A „JAK JSOU DOSTUPNÉ“. SOUHLASÍTE S TÍM, ŽE SLUŽBY UŽÍVÁTE NA VLASTNÍ RIZIKO. V MAXIMÁLNÍM ROZSAHU POVOLENÉM ZÁKONEM ODMÍTÁME VEŠKERÉ ZÁRUKY, VÝSLOVNÉ I PŘEDPOKLÁDANÉ, V SOUVISLOSTI SE SLUŽBAMI A JEJICH UŽÍVÁNÍM, MIMO JINÉ PŘEDPOKLÁDANÉ ZÁRUKY PRODEJNOSTI, VHODNOSTI PRO URČITÝ ÚČEL A NEPORUŠOVÁNÍ PRÁV. NEPOSKYTUJEME ŽÁDNÉ ZÁRUKY ANI PROHLÁŠENÍ OHLEDNĚ PŘESNOSTI ČI ÚPLNOSTI OBSAHU SLUŽEB NEBO OBSAHU JAKÝCHKOLI WEBOVÝCH STRÁNEK ČI MOBILNÍCH APLIKACÍ, NA KTERÉ SLUŽBY ODKAZUJÍ, A NEPŘEBÍRÁME ŽÁDNOU ODPOVĚDNOST ZA (1) CHYBY, OMYLY NEBO NEPŘESNOSTI OBSAHU A MATERIÁLŮ, (2) ÚJMU NA ZDRAVÍ NEBO ŠKODU NA MAJETKU JAKÉKOLI POVAHY VZNIKLOU V DŮSLEDKU VAŠEHO PŘÍSTUPU KE SLUŽBÁM A JEJICH UŽÍVÁNÍ, (3) JAKÝKOLI NEOPRÁVNĚNÝ PŘÍSTUP K NAŠIM ZABEZPEČENÝM SERVERŮM NEBO JEJICH UŽITÍ A K VEŠKERÝM OSOBNÍM ÚDAJŮM NEBO FINANČNÍM INFORMACÍM V NICH ULOŽENÝM, (4) JAKÉKOLI PŘERUŠENÍ NEBO UKONČENÍ PŘENOSU DO SLUŽEB ČI ZE SLUŽEB, (5) JAKÉKOLI CHYBY, VIRY, TROJSKÉ KONĚ A PODOBNÉ, KTERÉ MOHOU BÝT DO SLUŽEB NEBO JEJICH PROSTŘEDNICTVÍM PŘENESENY JAKOUKOLI TŘETÍ STRANOU, NEBO (6) JAKÉKOLI CHYBY ČI OPOMENUTÍ V OBSAHU A MATERIÁLECH ANI ZA JAKOUKOLI ZTRÁTU ČI ŠKODU VZNIKLOU V DŮSLEDKU UŽITÍ JAKÉHOKOLI OBSAHU ZVEŘEJNĚNÉHO, PŘENESENÉHO NEBO JINAK ZPŘÍSTUPNĚNÉHO PROSTŘEDNICTVÍM SLUŽEB. NEZARUČUJEME, NEPODPORUJEME, NEGARANTUJEME ANI NEPŘEBÍRÁME ODPOVĚDNOST ZA JAKÝKOLI PRODUKT ČI SLUŽBU INZEROVANOU NEBO NABÍZENOU TŘETÍ STRANOU PROSTŘEDNICTVÍM SLUŽEB, JAKOUKOLI ODKAZOVANOU WEBOVOU STRÁNKU NEBO JAKOUKOLI WEBOVOU STRÁNKU ČI MOBILNÍ APLIKACI UVEDENOU V JAKÉMKOLI BANNERU ČI JINÉ REKLAMĚ, A NEBUDEME STRANOU ŽÁDNÉ TRANSAKCE MEZI VÁMI A JAKÝMKOLI TŘETÍM POSKYTOVATELEM PRODUKTŮ ČI SLUŽEB ANI NEBUDEME JAKKOLI ODPOVĚDNI ZA JEJÍ SLEDOVÁNÍ. STEJNĚ JAKO PŘI NÁKUPU PRODUKTU ČI SLUŽBY JAKÝMKOLI ZPŮSOBEM NEBO V JAKÉMKOLI PROSTŘEDÍ BYSTE MĚLI POUŽÍT VLASTNÍ ÚSUDEK A TAM, KDE JE TO NAMÍSTĚ, POSTUPOVAT OBEZŘETNĚ."
+    ]
+  },
+  {
+    "heading": "22. OMEZENÍ ODPOVĚDNOSTI",
+    "paragraphs": [
+      "V ŽÁDNÉM PŘÍPADĚ NEBUDEME MY ANI NAŠI VEDOUCÍ PRACOVNÍCI, ZAMĚSTNANCI ČI ZÁSTUPCI ODPOVĚDNI VŮČI VÁM ANI VŮČI JAKÉKOLI TŘETÍ OSOBĚ ZA JAKOUKOLI PŘÍMOU, NEPŘÍMOU, NÁSLEDNOU, EXEMPLÁRNÍ, NAHODILOU, ZVLÁŠTNÍ ČI SANKČNÍ ŠKODU, VČETNĚ UŠLÉHO ZISKU, UŠLÝCH VÝNOSŮ, ZTRÁTY DAT NEBO JINÝCH ŠKOD VZNIKLÝCH Z VAŠEHO UŽÍVÁNÍ SLUŽEB, A TO I V PŘÍPADĚ, ŽE JSME BYLI NA MOŽNOST TAKOVÝCH ŠKOD UPOZORNĚNI. BEZ OHLEDU NA JAKÉKOLI OPAČNÉ USTANOVENÍ ZDE OBSAŽENÉ BUDE NAŠE ODPOVĚDNOST VŮČI VÁM Z JAKÉHOKOLI DŮVODU A BEZ OHLEDU NA FORMU NÁROKU VŽDY OMEZENA NA ČÁSTKU, KTEROU JSTE NÁM PŘÍPADNĚ UHRADILI BĚHEM ŠESTIMĚSÍČNÍHO (6) OBDOBÍ PŘEDCHÁZEJÍCÍHO VZNIKU DŮVODU NÁROKU. NĚKTERÉ PRÁVNÍ PŘEDPISY STÁTŮ USA A MEZINÁRODNÍ PRÁVNÍ PŘEDPISY NEUMOŽŇUJÍ OMEZENÍ PŘEDPOKLÁDANÝCH ZÁRUK ANI VYLOUČENÍ ČI OMEZENÍ URČITÝCH ŠKOD. POKUD SE NA VÁS TYTO PŘEDPISY VZTAHUJÍ, NĚKTERÁ NEBO VŠECHNA VÝŠE UVEDENÁ ODMÍTNUTÍ ODPOVĚDNOSTI ČI OMEZENÍ SE NA VÁS NEMUSÍ VZTAHOVAT A MŮŽETE MÍT DALŠÍ PRÁVA."
+    ]
+  },
+  {
+    "heading": "23. ODŠKODNĚNÍ",
+    "paragraphs": [
+      "Souhlasíte s tím, že nás budete hájit, odškodníte nás a zbavíte nás odpovědnosti, včetně našich dceřiných společností, přidružených osob a všech našich příslušných vedoucích pracovníků, zástupců, partnerů a zaměstnanců, ve vztahu k jakékoli ztrátě, škodě, odpovědnosti, nároku nebo požadavku, včetně přiměřených nákladů na právní zastoupení, uplatněnému jakoukoli třetí osobou v důsledku nebo v souvislosti s: (1) vašimi Příspěvky; (2) užíváním Služeb; (3) porušením těchto Právních podmínek; (4) jakýmkoli porušením vašich prohlášení a záruk uvedených v těchto Právních podmínkách; (5) vaším porušením práv třetí osoby, mimo jiné práv duševního vlastnictví; nebo (6) jakýmkoli zjevně škodlivým jednáním vůči jinému uživateli Služeb, se kterým jste se prostřednictvím Služeb spojili. Bez ohledu na výše uvedené si vyhrazujeme právo na vaše náklady převzít výhradní obhajobu a kontrolu nad jakoukoli záležitostí, ve které jste povinni nás odškodnit, a vy souhlasíte s tím, že budete na své náklady spolupracovat na naší obhajobě takových nároků. Vynaložíme přiměřené úsilí, abychom vás o každém takovém nároku, řízení nebo sporu podléhajícím tomuto odškodnění informovali, jakmile se o něm dozvíme."
+    ]
+  },
+  {
+    "heading": "24. UŽIVATELSKÁ DATA",
+    "paragraphs": [
+      "Určitá data, která přenesete do Služeb, budeme uchovávat za účelem řízení výkonnosti Služeb, stejně jako data týkající se vašeho užívání Služeb. Ačkoli provádíme pravidelné rutinní zálohy dat, nesete výhradní odpovědnost za veškerá data, která přenášíte nebo která se týkají jakékoli činnosti, kterou jste prostřednictvím Služeb provedli. Souhlasíte s tím, že vůči vám neneseme žádnou odpovědnost za ztrátu nebo poškození takových dat, a tímto se vzdáváte jakéhokoli nároku vůči nám vzniklého z takové ztráty či poškození dat."
+    ]
+  },
+  {
+    "heading": "25. ELEKTRONICKÁ KOMUNIKACE, TRANSAKCE A PODPISY",
+    "paragraphs": [
+      "Návštěva Služeb, zasílání e-mailů a vyplňování online formulářů představují elektronickou komunikaci. Souhlasíte s přijímáním elektronické komunikace a souhlasíte s tím, že všechny smlouvy, oznámení, sdělení a další komunikace, které vám poskytujeme elektronicky, e-mailem a ve Službách, splňují jakýkoli zákonný požadavek na písemnou formu. TÍMTO SOUHLASÍTE S UŽITÍM ELEKTRONICKÝCH PODPISŮ, SMLUV, OBJEDNÁVEK A DALŠÍCH ZÁZNAMŮ A S ELEKTRONICKÝM DORUČOVÁNÍM OZNÁMENÍ, ZÁSAD A ZÁZNAMŮ O TRANSAKCÍCH ZAHÁJENÝCH NEBO DOKONČENÝCH NÁMI ČI PROSTŘEDNICTVÍM SLUŽEB. Tímto se vzdáváte jakýchkoli práv nebo požadavků podle zákonů, nařízení, pravidel, vyhlášek či jiných právních předpisů v jakékoli jurisdikci, které vyžadují originální podpis nebo doručení či uchovávání neelektronických záznamů, případně platby nebo poskytování kreditů jinými než elektronickými prostředky."
+    ]
+  },
+  {
+    "heading": "26. UŽIVATELÉ A REZIDENTI KALIFORNIE",
+    "paragraphs": [
+      "Pokud jakákoli stížnost vůči nám není uspokojivě vyřešena, můžete kontaktovat Complaint Assistance Unit of the Division of Consumer Services of the California Department of Consumer Affairs písemně na adrese 1625 North Market Blvd., Suite N 112, Sacramento, California 95834 nebo telefonicky na (800) 952-5210 či (916) 445-1254."
+    ]
+  },
+  {
+    "heading": "27. RŮZNÉ",
+    "paragraphs": [
+      "Tyto Právní podmínky a veškeré zásady či provozní pravidla, které ve Službách nebo ve vztahu ke Službám zveřejníme, představují úplnou dohodu a ujednání mezi vámi a námi. Neuplatnění nebo nevymáhání jakéhokoli práva či ustanovení těchto Právních podmínek z naší strany se nepovažuje za vzdání se takového práva či ustanovení. Tyto Právní podmínky platí v maximálním rozsahu povoleném zákonem. Kterákoli nebo veškerá naše práva a povinnosti můžeme kdykoli postoupit jiným osobám. Neneseme odpovědnost za jakoukoli ztrátu, škodu, prodlení nebo nekonání způsobené příčinou mimo naši přiměřenou kontrolu. Pokud bude jakékoli ustanovení nebo část ustanovení těchto Právních podmínek shledáno nezákonným, neplatným nebo nevymahatelným, považuje se takové ustanovení nebo jeho část za oddělitelné od těchto Právních podmínek a neovlivňuje platnost ani vymahatelnost zbývajících ustanovení. Mezi vámi a námi nevzniká v důsledku těchto Právních podmínek ani užívání Služeb žádný společný podnik, partnerství, pracovní ani zastupitelský vztah. Souhlasíte s tím, že tyto Právní podmínky nebudou vykládány v náš neprospěch jen proto, že jsme je sepsali. Tímto se vzdáváte veškerých námitek, které byste mohli mít na základě elektronické formy těchto Právních podmínek a absence podpisu stran při jejich uzavření."
+    ]
+  },
+  {
+    "heading": "28. KONTAKTUJTE NÁS",
+    "paragraphs": [
+      "Chcete-li vyřešit stížnost týkající se Služeb nebo získat další informace o jejich užívání, kontaktujte nás prosím na:",
+
+      "support@bikecheck.cloud"
     ]
   }
 ]

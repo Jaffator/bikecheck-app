@@ -1,34 +1,182 @@
 [
   {
-    "heading": "ZÁSTUPNÝ TEXT — nahradit před vydáním",
+    "heading": "ZÁSADY OCHRANY OSOBNÍCH ÚDAJŮ",
     "paragraphs": [
-      "Toto nejsou skutečné zásady ochrany osobních údajů. Jde o zástupný obsah, který drží místo pro znění dodané člověkem. Google Play bez schválených zásad aplikaci nepustí, takže tento text musí být nahrazen dřív, než se aplikace odešle ke schválení.",
-      "Bloky níže existují jen proto, aby ukázaly, jak sazba vysází nadpis a odstavce pod ním."
+      "Naposledy aktualizováno 11. září 2026",
+      "Tyto Zásady ochrany osobních údajů Jaroslava Lufinky („my“, „nás“ nebo „naše“) popisují, jak a proč můžeme přistupovat k vašim osobním údajům, shromažďovat je, ukládat, používat a/nebo sdílet („zpracovávat“), když využíváte našich služeb („Služby“), včetně případů, kdy:",
+      "• si stáhnete a používáte naši mobilní aplikaci BikeCheck nebo jakoukoli jinou naši aplikaci, která na tyto Zásady odkazuje;",
+      "• navštívíte náš web bikecheck.cloud nebo jakýkoli jiný náš web, který na tyto Zásady odkazuje;",
+      "• s námi jednáte jiným souvisejícím způsobem, včetně podpory, prodeje nebo marketingu.",
+      "Otázky nebo připomínky? Přečtení těchto Zásad vám pomůže porozumět vašim právům a možnostem volby. Jsme odpovědni za rozhodnutí o tom, jak jsou vaše osobní údaje zpracovávány. Pokud s našimi pravidly a postupy nesouhlasíte, prosím nepoužívejte naše Služby. Máte-li i nadále jakékoli otázky nebo připomínky, kontaktujte nás na support@bikecheck.cloud."
     ]
   },
   {
-    "heading": "1. Zástupný nadpis — jaké údaje aplikace sbírá",
+    "heading": "SHRNUTÍ KLÍČOVÝCH BODŮ",
     "paragraphs": [
-      "Zde bude výčet údajů, které aplikace o uživateli vede: e-mail, jméno, kola, komponenty, servisní záznamy a jízdy načtené ze Stravy. Odstavec je záměrně delší, aby bylo vidět, jak se dlouhý text láme na šířku telefonu.",
-      "Druhý odstavec téhož bloku ukazuje mezeru mezi odstavci."
+      "Toto shrnutí uvádí klíčové body našich Zásad. Podrobnosti ke každému tématu najdete níže v oddílu stejného názvu.",
+      "Jaké osobní údaje zpracováváme? Zpracováváme údaje o účtu, které nám dáte (jméno, e-mailovou adresu, heslo, profilovou fotku, nepovinnou tělesnou hmotnost, jazyk a měnu), vše, co si vedete o svých kolech (kola, komponenty, servisní záznamy, náklady, poznámky, fotky a přílohy), zprávy, které pošlete asistentovi v aplikaci, a technické údaje shromážděné automaticky při používání aplikace.",
+      "Zpracováváme citlivé osobní údaje? Ne. Nezpracováváme citlivé osobní údaje, jako je rasový či etnický původ, sexuální orientace nebo náboženské vyznání. Tělesná hmotnost je nepovinná a slouží pouze k výpočtu údajů, které se vám zobrazují.",
+      "Získáváme údaje od třetích stran? Ano, ale pouze ze služeb, které si sami připojíte. Pokud připojíte Stravu, získáme váš profil atleta, vaše vybavení a vaše aktivity. Pokud se přihlásíte přes Google, získáme vaše jméno, e-mailovou adresu a profilový obrázek.",
+      "Jak vaše údaje zpracováváme? Zpracováváme je, abychom vytvořili a zabezpečili váš účet, provozovali Služby (sledování opotřebení, servisních intervalů a nákladů u vašich kol), posílali vám oznámení, o která jste si řekli, odpovídali na vaše dotazy a plnili zákonné povinnosti. Vaše osobní údaje neprodáváme a nepoužíváme je k reklamě.",
+      "V jakých situacích a s kým osobní údaje sdílíme? Sdílíme je s poskytovateli, kteří Služby provozují pro nás: s naším hostingem, Cloudflare (úložiště obrázků), OpenAI (asistent v aplikaci), Google (přihlášení a shrnutí jízd) a Firebase Cloud Messaging (push oznámení). Více v oddílu „KDY A S KÝM SDÍLÍME VAŠE OSOBNÍ ÚDAJE?“ níže.",
+      "Jak vaše údaje chráníme? Používáme organizační a technická opatření k ochraně vašich osobních údajů. Žádný elektronický přenos po internetu ani žádná technologie ukládání údajů však nemůže být zaručeně 100% bezpečná.",
+      "Jaká máte práva? V závislosti na tom, kde se nacházíte, vám příslušné právní předpisy mohou přiznávat určitá práva k vašim osobním údajům, včetně přístupu, opravy, výmazu a práva podat stížnost u dozorového úřadu.",
+      "Jak svá práva uplatníte? Většinu údajů si můžete prohlédnout, změnit nebo smazat přímo v aplikaci v Nastavení. Ve všem ostatním nás kontaktujte na support@bikecheck.cloud. Každou žádost posoudíme a vyřídíme v souladu s předpisy o ochraně osobních údajů."
     ]
   },
   {
-    "heading": "2. Zástupný nadpis — proč je aplikace zpracovává",
+    "heading": "1. JAKÉ ÚDAJE SHROMAŽĎUJEME?",
     "paragraphs": [
-      "Zde bude účel zpracování a právní základ."
+      "Osobní údaje, které nám sami sdělíte",
+      "Ve zkratce: Shromažďujeme osobní údaje, které nám poskytnete.",
+      "Shromažďujeme osobní údaje, které nám dobrovolně poskytnete při registraci ve Službách, při projevení zájmu o informace o nás nebo o našich produktech a Službách, při vaší činnosti ve Službách nebo jinak, když nás kontaktujete.",
+      "Osobní údaje, které poskytujete vy. Osobní údaje, které shromažďujeme, závisí na kontextu vaší interakce s námi a se Službami, na vašich volbách a na funkcích, které používáte. Mohou zahrnovat:",
+      "• jméno;",
+      "• e-mailovou adresu;",
+      "• heslo, které ukládáme pouze jako kryptografický otisk;",
+      "• profilovou fotku;",
+      "• tělesnou hmotnost, která je nepovinná;",
+      "• preferovaný jazyk a měnu.",
+      "Údaje o kolech a údržbě. Služby existují proto, aby vedly záznam o vašich kolech, takže většinu toho, co držíme, vytváříte vy: kola a jejich značka, model, rok, velikost a hmotnost, komponenty na nich namontované, servisní záznamy a provedené úkony, náklady, vaše vlastní poznámky, názvy vlastních dílů a jakékoli fotky či soubory, které k servisnímu záznamu přiložíte.",
+      "Konverzace s asistentem. Pokud používáte asistenta v aplikaci, ukládáme zprávy, které pošlete, a odpovědi, které dostanete, spolu s kolem, ke kterému byl dotaz položen, aby se vám konverzace mohla znovu zobrazit. Celou konverzaci můžete kdykoli smazat na obrazovce chatu.",
+      "Citlivé údaje. Citlivé údaje nezpracováváme. Tělesná hmotnost, kterou některé předpisy považují za údaj blízký údajům o zdraví, je nepovinná, nikdy není k používání Služeb nutná a slouží pouze k výpočtu údajů, které se vám zobrazují.",
+      "Údaje z přihlášení přes jiné služby. Můžeme vám nabídnout registraci pomocí existujícího účtu Google nebo připojení vašeho účtu Strava. Pokud se tak rozhodnete, získáme určité profilové údaje, jak je popsáno v oddílu „JAK NAKLÁDÁME S PŘIHLÁŠENÍM PŘES JINÉ SLUŽBY?“ níže.",
+      "Údaje z aplikace. Pokud používáte naši aplikaci, můžeme rovněž shromažďovat následující údaje, pokud nám k tomu udělíte přístup nebo oprávnění:",
+      "• Přístup k mobilnímu zařízení. Můžeme žádat o přístup nebo oprávnění k některým funkcím vašeho zařízení, včetně fotoaparátu, knihovny fotek a push oznámení. Pokud chcete náš přístup nebo oprávnění změnit, můžete tak učinit v nastavení svého zařízení.",
+      "• Push oznámení. Můžeme vás žádat o možnost posílat push oznámení týkající se vašeho účtu, vašich kol nebo servisu, který je na řadě. K jejich doručení ukládáme token zařízení vydaný operačním systémem. Pokud tato sdělení dostávat nechcete, můžete je vypnout v Nastavení nebo v nastavení svého zařízení.",
+      "Veškeré osobní údaje, které nám poskytnete, musí být pravdivé, úplné a přesné a jejich změny nám musíte oznámit.",
+      "Údaje shromažďované automaticky",
+      "Ve zkratce: Některé údaje — například vaše IP adresa a vlastnosti prohlížeče či zařízení — se shromažďují automaticky při návštěvě našich Služeb.",
+      "Při návštěvě a používání Služeb automaticky shromažďujeme určité údaje. Tyto údaje neodhalují vaši konkrétní totožnost (jako jméno nebo kontaktní údaje), mohou však zahrnovat údaje o zařízení a používání, jako je IP adresa, vlastnosti prohlížeče a zařízení, operační systém, jazyková nastavení, informace o tom, jak a kdy Služby používáte, a další technické údaje. Tyto údaje potřebujeme především k udržení bezpečnosti a provozu Služeb a k vnitřní diagnostice a hlášení chyb.",
+      "U každé aktivní relace rovněž zaznamenáváme zařízení a IP adresu, ze které bylo přihlášení provedeno, aby bylo možné rozpoznat a ukončit relaci, která není vaše.",
+      "Údaje z jiných zdrojů",
+      "Ve zkratce: Údaje získáváme ze služeb, které si sami připojíte, a odnikud jinud.",
+      "Pokud připojíte účet Strava, získáme od Stravy váš identifikátor atleta, jméno a příjmení, uživatelské jméno a profilový obrázek, kola („gear“) vedená ve vašem účtu Strava a vaše aktivity — jejich začátek, vzdálenost, převýšení, dobu trvání, průměrnou a maximální rychlost a vybavení, na kterém byly odjety. Používáme to pouze k přiřazení jízd ke správnému kolu a k udržování jeho opotřebení v aktuálním stavu. Stravu můžete kdykoli odpojit v Nastavení.",
+      "Osobní údaje nekupujeme od datových brokerů, marketingových partnerů ani z veřejných databází."
     ]
   },
   {
-    "heading": "3. Zástupný nadpis — komu se předávají",
+    "heading": "2. JAK VAŠE ÚDAJE ZPRACOVÁVÁME?",
     "paragraphs": [
-      "Zde budou vyjmenovány služby třetích stran, kterým se údaje předávají."
+      "Ve zkratce: Vaše údaje zpracováváme, abychom Služby poskytovali, zlepšovali a spravovali, komunikovali s vámi, zajistili bezpečnost a předcházeli podvodům a plnili zákonné povinnosti.",
+      "Vaše osobní údaje zpracováváme z různých důvodů podle toho, jak Služby používáte, mimo jiné:",
+      "• K vytvoření účtu, přihlášení a správě uživatelských účtů. Údaje zpracováváme, abyste si mohli založit účet, přihlásit se do něj a aby fungoval.",
+      "• K poskytování služeb uživateli. Záznam, který si o svých kolech vedete, zpracováváme proto, abychom sledovali jejich opotřebení, počítali servisní intervaly a index zdraví a ukazovali vám, co je na řadě.",
+      "• K odpovědím na dotazy a podpoře. Údaje zpracováváme, abychom odpověděli na vaše dotazy a vyřešili případné problémy s požadovanou službou.",
+      "• K odpovědím asistenta v aplikaci. Váš dotaz a údaje o vašich vlastních kolech, které jsou k odpovědi potřeba, se odesílají našemu poskytovateli AI, aby odpověď vytvořil.",
+      "• K zasílání administrativních informací. Údaje můžeme zpracovávat, abychom vám poslali informace o našich produktech a službách, o změnách našich podmínek a zásad a další podobné informace.",
+      "• K zasílání push oznámení a připomínek servisu, který je na řadě, pokud jste si je nevypnuli.",
+      "• K ochraně našich Služeb. Údaje můžeme zpracovávat v rámci úsilí o bezpečnost a zabezpečení Služeb, včetně sledování a prevence podvodů.",
+      "• K rozpoznání trendů používání a diagnostice chyb. Můžeme zpracovávat údaje o tom, jak Služby používáte, abychom jim porozuměli a nalezli a opravili chyby.",
+      "• Ke splnění zákonných povinností. Údaje můžeme zpracovávat, abychom splnili své zákonné povinnosti, reagovali na právní žádosti a uplatnili, prokázali nebo hájili své právní nároky.",
+      "O jaké právní základy se opíráme?",
+      "Ve zkratce: Vaše osobní údaje zpracováváme pouze tehdy, když je to podle nás nezbytné a máme k tomu platný právní důvod podle příslušných předpisů.",
+      "Pokud se nacházíte v Evropském hospodářském prostoru (EHP) nebo ve Spojeném království, obecné nařízení o ochraně osobních údajů (GDPR) nám ukládá vysvětlit platné právní základy, o které se při zpracování opíráme. Můžeme se opírat o tyto právní základy:",
+      "• Plnění smlouvy. Údaje o účtu a záznam, který si vedete o svých kolech, zpracováváme proto, že je to nezbytné k poskytnutí Služeb, o které jste požádali.",
+      "• Souhlas. O souhlas se opíráme tam, kde připojujete účet třetí strany, jako je Strava, a kde povolíte push oznámení. Souhlas můžete kdykoli odvolat.",
+      "• Oprávněné zájmy. O oprávněné zájmy se opíráme při zabezpečení Služeb, prevenci podvodů a zneužití a při diagnostice a opravě chyb, pokud nad nimi nepřevažují vaše práva a svobody.",
+      "• Zákonné povinnosti. Údaje můžeme zpracovávat tam, kde je to nezbytné pro splnění právní povinnosti, která se na nás vztahuje."
     ]
   },
   {
-    "heading": "4. Zástupný nadpis — práva uživatele a kontakt",
+    "heading": "3. KDY A S KÝM SDÍLÍME VAŠE OSOBNÍ ÚDAJE?",
     "paragraphs": [
-      "Zde bude popsáno, jak si uživatel vyžádá výmaz nebo kopii svých údajů, a na koho se obrátit."
+      "Ve zkratce: Údaje sdílíme s poskytovateli, kteří pro nás Služby provozují, a v konkrétních situacích popsaných níže.",
+      "Vaše osobní údaje neprodáváme, nesdílíme je s inzerenty a nepoužíváme je k cílené reklamě.",
+      "Využíváme tyto třetí strany, které osobní údaje zpracovávají pro nás a pouze podle našich pokynů:",
+      "• Náš poskytovatel hostingu, který provozuje servery a databázi, kde je uložen váš účet a vaše záznamy, v Německu.",
+      "• Cloudflare R2, které ukládá fotky a soubory, jež nahrajete, například obrázky kol a přílohy servisních záznamů.",
+      "• OpenAI, které vytváří odpovědi asistenta v aplikaci. Váš dotaz a údaje o vašich vlastních kolech potřebné k odpovědi se za tímto účelem odesílají do OpenAI. Podle podmínek, které se na naše používání jeho API vztahují, OpenAI tento obsah nepoužívá k trénování svých modelů.",
+      "• Google, který poskytuje přihlášení, jež si můžete zvolit, a model Gemini používaný k psaní krátkých shrnutí vašich jízd.",
+      "• Firebase Cloud Messaging (Google), které doručuje push oznámení do vašeho zařízení.",
+      "• Náš poskytovatel logování a monitoringu, který uchovává technické logy sloužící k nalezení a opravě chyb.",
+      "Vaše osobní údaje můžeme rovněž sdílet v těchto situacích:",
+      "• Převod podnikání. Údaje můžeme sdílet nebo převést v souvislosti s fúzí, prodejem majetku společnosti, financováním nebo akvizicí celého našeho podnikání nebo jeho části jinou společností, případně během jednání o nich.",
+      "• Zákonné požadavky. Údaje můžeme zpřístupnit tam, kde je to právně vyžadováno kvůli dodržení platných předpisů, žádostí orgánů veřejné moci, soudního řízení, soudního příkazu nebo právního procesu.",
+      "• Životně důležité zájmy. Údaje můžeme zpřístupnit tam, kde to považujeme za nezbytné k prošetření, prevenci nebo zákroku ohledně možného porušení našich pravidel, podezření na podvod nebo situací zahrnujících možné ohrožení bezpečnosti kterékoli osoby."
+    ]
+  },
+  {
+    "heading": "4. POUŽÍVÁME COOKIES A DALŠÍ SLEDOVACÍ TECHNOLOGIE?",
+    "paragraphs": [
+      "Ve zkratce: Cookies a podobné technologie používáme jen k tomu, abyste zůstali přihlášeni a aby si aplikace pamatovala vaše nastavení.",
+      "Cookies a podobné technologie (například místní úložiště vašeho zařízení nebo prohlížeče) používáme k tomu, abyste zůstali přihlášeni, k uchování tokenů, které ověřují vaši relaci, a k zapamatování předvoleb, jako je zvolený jazyk. Bez nich Služby fungovat nemohou.",
+      "Nepoužíváme reklamní cookies, sledovací pixely ani analytiku třetích stran, která by vás profilovala napříč jinými weby nebo aplikacemi.",
+      "Uložené údaje můžete kdykoli odstranit odhlášením nebo vymazáním úložiště aplikace či prohlížeče. Tím se vaše relace ukončí."
+    ]
+  },
+  {
+    "heading": "5. JAK NAKLÁDÁME S PŘIHLÁŠENÍM PŘES JINÉ SLUŽBY?",
+    "paragraphs": [
+      "Ve zkratce: Pokud se rozhodnete registrovat nebo přihlásit pomocí účtu jiné služby, můžeme mít přístup k určitým údajům o vás.",
+      "Naše Služby nabízejí registraci a přihlášení pomocí účtu Google a připojení účtu Strava. Pokud se tak rozhodnete, získáme od daného poskytovatele určité profilové údaje o vás. Od Googlu získáme vaše jméno, e-mailovou adresu a profilový obrázek. Od Stravy získáme váš identifikátor atleta, jméno a příjmení, uživatelské jméno a profilový obrázek spolu s vybavením a aktivitami popsanými výše.",
+      "Získané údaje použijeme pouze k účelům popsaným v těchto Zásadách nebo k účelům, které vám budou v příslušných Službách jinak jasně sděleny. Upozorňujeme, že nemáme kontrolu nad jiným použitím vašich osobních údajů ze strany dané sociální či sportovní služby a neneseme za ně odpovědnost. Doporučujeme přečíst si jejich zásady ochrany osobních údajů, abyste věděli, jak údaje shromažďují, používají a sdílejí a jak si u nich nastavit své předvolby soukromí."
+    ]
+  },
+  {
+    "heading": "6. JSOU VAŠE ÚDAJE PŘEDÁVÁNY DO ZAHRANIČÍ?",
+    "paragraphs": [
+      "Ve zkratce: Vaše údaje jsou uloženy v Německu, ale někteří naši poskytovatelé je mohou zpracovávat mimo Evropský hospodářský prostor.",
+      "Naše servery se nacházejí v Německu. Bez ohledu na to, kde jste, mějte prosím na paměti, že vaše údaje mohou být předány, uloženy a zpracovávány námi v našich zařízeních a v zařízeních třetích stran, se kterými údaje sdílíme (viz oddíl „KDY A S KÝM SDÍLÍME VAŠE OSOBNÍ ÚDAJE?“ výše), včetně zařízení v jiných zemích.",
+      "Někteří z těchto poskytovatelů — zejména OpenAI, Google a Cloudflare — mohou osobní údaje zpracovávat ve Spojených státech nebo v jiných zemích mimo Evropský hospodářský prostor. Takové předání je kryto standardními smluvními doložkami Evropské komise nebo jiným mechanismem předání přípustným podle GDPR.",
+      "Jste-li rezidentem Evropského hospodářského prostoru (EHP), Spojeného království nebo Švýcarska, pak země mimo ně nemusí mít předpisy o ochraně osobních údajů tak komplexní jako vaše země. Přijmeme však všechna nezbytná opatření, abychom vaše osobní údaje chránili v souladu s těmito Zásadami a platnými předpisy."
+    ]
+  },
+  {
+    "heading": "7. JAK DLOUHO VAŠE ÚDAJE UCHOVÁVÁME?",
+    "paragraphs": [
+      "Ve zkratce: Údaje uchováváme tak dlouho, jak je nezbytné k naplnění účelů popsaných v těchto Zásadách, pokud zákon nevyžaduje jinak.",
+      "Vaše osobní údaje budeme uchovávat pouze po dobu nezbytnou k účelům uvedeným v těchto Zásadách, pokud delší dobu uchování nevyžadují nebo neumožňují právní předpisy (například daňové, účetní nebo jiné zákonné požadavky). Žádný účel uvedený v těchto Zásadách nevyžaduje, abychom vaše osobní údaje uchovávali déle, než u nás máte účet.",
+      "Když svůj účet smažete, je účet a vše, co k němu patří — vaše kola, komponenty, servisní záznamy, jízdy, oznámení a konverzace s asistentem — okamžitě a trvale smazáno z naší databáze. Smazání nelze vzít zpět a údaje již nedokážeme obnovit.",
+      "Kopie mohou po krátkou dobu zůstat v zálohách, které se pravidelně rotují a přepisují. Technické logy, které mohou obsahovat IP adresu, uchováváme po omezenou dobu pro účely bezpečnosti a diagnostiky a poté je mažeme."
+    ]
+  },
+  {
+    "heading": "8. SHROMAŽĎUJEME ÚDAJE OD NEZLETILÝCH?",
+    "paragraphs": [
+      "Ve zkratce: Vědomě neshromažďujeme údaje od dětí mladších 18 let ani je neoslovujeme marketingem.",
+      "Vědomě neshromažďujeme údaje od dětí mladších 18 let, nevyžadujeme je od nich, neoslovujeme je marketingem ani takové osobní údaje vědomě neprodáváme. Používáním Služeb prohlašujete, že je vám alespoň 18 let, nebo že jste rodičem či zákonným zástupcem nezletilého a souhlasíte s tím, aby Služby používal. Pokud zjistíme, že byly shromážděny osobní údaje uživatelů mladších 18 let, účet deaktivujeme a přijmeme přiměřená opatření k urychlenému smazání takových údajů z našich záznamů. Pokud se dozvíte o jakýchkoli údajích, které jsme mohli shromáždit od dětí mladších 18 let, kontaktujte nás na support@bikecheck.cloud."
+    ]
+  },
+  {
+    "heading": "9. JAKÁ MÁTE PRÁVA NA OCHRANU SOUKROMÍ?",
+    "paragraphs": [
+      "Ve zkratce: Svůj účet můžete kdykoli zkontrolovat, změnit nebo zrušit, v závislosti na zemi vašeho pobytu.",
+      "V některých regionech (jako je Evropský hospodářský prostor, Spojené království a Švýcarsko) máte podle předpisů o ochraně osobních údajů určitá práva. Mohou zahrnovat právo požadovat přístup ke svým osobním údajům a získat jejich kopii, právo na opravu nebo výmaz, právo na omezení zpracování, právo na přenositelnost údajů a právo nebýt předmětem automatizovaného individuálního rozhodování. Za určitých okolností máte také právo vznést námitku proti zpracování svých osobních údajů. Takovou žádost můžete podat na support@bikecheck.cloud.",
+      "Každou žádost posoudíme a vyřídíme v souladu s předpisy o ochraně osobních údajů.",
+      "Pokud se nacházíte v EHP nebo ve Spojeném království a domníváte se, že vaše osobní údaje zpracováváme protiprávně, máte také právo podat stížnost u místního dozorového úřadu. V České republice je jím Úřad pro ochranu osobních údajů, www.uoou.gov.cz.",
+      "Odvolání souhlasu: Pokud se při zpracování vašich osobních údajů opíráme o váš souhlas, máte právo jej kdykoli odvolat. Souhlas odvoláte odpojením Stravy v Nastavení, vypnutím oznámení v Nastavení nebo v nastavení svého zařízení, případně tím, že nás kontaktujete podle údajů uvedených v oddílu „JAK NÁS MŮŽETE OHLEDNĚ TĚCHTO ZÁSAD KONTAKTOVAT?“ níže.",
+      "Upozorňujeme však, že to neovlivní zákonnost zpracování před odvoláním souhlasu ani, pokud to platné předpisy umožňují, zpracování vašich osobních údajů na jiném právním základě než souhlasu.",
+      "Údaje o účtu",
+      "Pokud si budete chtít kdykoli prohlédnout nebo změnit údaje ve svém účtu nebo účet zrušit, můžete:",
+      "• prohlédnout a změnit své jméno, hmotnost, jazyk, měnu a heslo v Nastavení;",
+      "• smazat svůj účet v Nastavení, čímž se účet i jeho údaje trvale odstraní."
+    ]
+  },
+  {
+    "heading": "10. NASTAVENÍ „DO NOT TRACK“",
+    "paragraphs": [
+      "Většina webových prohlížečů a některé mobilní operační systémy a aplikace obsahují funkci nebo nastavení „Do Not Track“ („DNT“), kterou lze aktivovat a dát tak najevo, že si nepřejete, aby byly údaje o vašem chování na internetu sledovány a shromažďovány. Dosud nebyl dokončen jednotný technologický standard pro rozpoznávání a uplatňování signálů DNT. Proto na signály DNT v prohlížeči ani na jiný mechanismus, který automaticky sděluje vaši volbu nebýt sledován, v současnosti nereagujeme. Pokud bude v budoucnu přijat standard pro sledování na internetu, kterým se budeme muset řídit, budeme vás o tom informovat v aktualizované verzi těchto Zásad.",
+      "V každém případě vás nesledujeme napříč jinými weby ani aplikacemi."
+    ]
+  },
+  {
+    "heading": "11. AKTUALIZUJEME TYTO ZÁSADY?",
+    "paragraphs": [
+      "Ve zkratce: Ano, budeme je podle potřeby aktualizovat, abychom byli v souladu s příslušnými předpisy.",
+      "Tyto Zásady můžeme čas od času aktualizovat. Aktualizovaná verze bude označena novým datem „Naposledy aktualizováno“ v jejich záhlaví. Pokud provedeme podstatné změny, můžeme vás na ně upozornit buď výrazným zveřejněním oznámení o změnách, nebo přímým zasláním oznámení. Doporučujeme tyto Zásady pravidelně číst, abyste věděli, jak vaše údaje chráníme."
+    ]
+  },
+  {
+    "heading": "12. JAK NÁS MŮŽETE OHLEDNĚ TĚCHTO ZÁSAD KONTAKTOVAT?",
+    "paragraphs": ["Máte-li k těmto Zásadám otázky nebo připomínky, kontaktujte nás e-mailem na support@bikecheck.cloud"]
+  },
+  {
+    "heading": "13. JAK SI MŮŽETE ÚDAJE, KTERÉ O VÁS VEDEME, PROHLÉDNOUT, ZMĚNIT NEBO SMAZAT?",
+    "paragraphs": [
+      "Podle platných předpisů vaší země můžete mít právo požádat o přístup k osobním údajům, které o vás shromažďujeme, o podrobnosti o tom, jak jsme je zpracovali, o opravu nepřesností nebo o výmaz svých osobních údajů. Můžete mít také právo odvolat svůj souhlas se zpracováním. Tato práva mohou být za určitých okolností omezena platnými předpisy.",
+      "Většinu z toho zvládnete sami: v aplikaci otevřete Nastavení, kde si můžete prohlédnout a změnit údaje o účtu, odpojit Stravu, vypnout oznámení nebo smazat účet i vše, co k němu patří.",
+      "O kopii svých údajů, případně o cokoli, co v aplikaci udělat nejde, si napište na support@bikecheck.cloud. Odpovíme ve lhůtě, kterou stanoví platné předpisy."
     ]
   }
 ]

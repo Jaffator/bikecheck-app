@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, ArrowLeft } from "lucide-react";
+import { Bell, ArrowLeft } from "lucide-react";
 import { GoHomeFill, GoHome } from "react-icons/go";
 // import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
@@ -73,7 +73,6 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/reports": "page.reports",
   "/rides": "page.rides",
   "/chat": "page.chat",
-  "/profile": "page.profile",
   "/settings": "page.settings",
   "/notifications": "page.notifications",
 };
@@ -82,7 +81,6 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 const SUB_PAGE_ROUTES: string[] = [
   "/reports",
   "/settings",
-  "/profile",
   "/notifications",
   "/bikes/new",
   "/service/history",
@@ -246,9 +244,11 @@ export function AppLayout(): ReactElement {
             // stand on - enough to read a dark arrow against a bright photo.
             backgroundImage: headerTransparent
               ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 45%, transparent 100%)"
-              : // The page colour held over the title, then let go before the bottom edge, so
-                // content scrolling up dissolves into the bar rather than meeting a line.
-                "linear-gradient(to bottom, var(--mantine-color-background-9) 0%, var(--mantine-color-background-9) 62%, transparent 100%)",
+              : undefined,
+            // One step above the page, closed off by a hairline, so the bar reads as the
+            // roof of the screen rather than as page colour that happens to sit still.
+            backgroundColor: headerTransparent ? undefined : "var(--mantine-color-background-8)",
+            borderBottom: headerTransparent ? undefined : "1px solid var(--mantine-color-other-borderSubtle)",
             // The scrim is decoration; what is underneath stays reachable.
             pointerEvents: headerTransparent ? "none" : undefined,
           }}
@@ -294,23 +294,8 @@ export function AppLayout(): ReactElement {
                     {t(pageTitleKey ?? "page.home")}
                   </Text>
                 </Group>
-                {/* PROFILE ICON */}
+                {/* The bell first, the rider last: the avatar is the corner the thumb owns. */}
                 <Group gap="sm">
-                  <UnstyledButton onClick={() => navigate("/profile")} aria-label={t("page.profile")} mr="3">
-                    {/* name drives the initials fallback when the user has no picture */}
-                    <Avatar
-                      src={user?.avatar_url}
-                      name={user?.name}
-                      radius="xl"
-                      size={32}
-                      style={
-                        {
-                          "--avatar-bg": "color-mix(in srgb, var(--mantine-color-primary-5) 50%, transparent)",
-                          "--avatar-color": "var(--mantine-color-primary-3)",
-                        } as CSSProperties
-                      }
-                    />
-                  </UnstyledButton>
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
                     variant="transparent"
@@ -347,16 +332,21 @@ export function AppLayout(): ReactElement {
                       </Box>
                     )}
                   </ActionIcon>
-                  {/* SETTINGS ICON */}
-                  <ActionIcon
-                    variant="transparent"
-                    radius="xl"
-                    size="lg"
-                    aria-label={t("page.settings")}
-                    onClick={() => navigate("/settings")}
-                  >
-                    <Settings size={25} color="var(--mantine-color-cards-1)" />
-                  </ActionIcon>
+                  <UnstyledButton onClick={() => navigate("/settings")} aria-label={t("page.settings")}>
+                    {/* name drives the initials fallback when the user has no picture */}
+                    <Avatar
+                      src={user?.avatar_url}
+                      name={user?.name}
+                      radius="xl"
+                      size={32}
+                      style={
+                        {
+                          "--avatar-bg": "var(--mantine-color-cards-5)",
+                          "--avatar-color": "var(--mantine-color-text-6)",
+                        } as CSSProperties
+                      }
+                    />
+                  </UnstyledButton>
                 </Group>
               </>
             )}

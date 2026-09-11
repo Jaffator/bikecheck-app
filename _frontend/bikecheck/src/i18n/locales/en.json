@@ -6,6 +6,8 @@
     "needsAttention": "Needs attention",
     "showLess": "Show less",
     "showRemaining": "Show remaining ({{value}})",
+    "moreCount_one": "{{count}} more",
+    "moreCount_other": "{{count}} more",
     "postpone": "Put off",
     "extended": "Extended",
     "postponeFailed": "Could not be put off.",
@@ -56,6 +58,7 @@
     "noAccount": "Don't have an account?"
   },
   "settings": {
+    "sectionAccount": "Account",
     "sectionGeneral": "General",
     "sectionBikes": "Bikes",
     "currency": "Currency",
@@ -191,11 +194,11 @@
     "addService": "Add service"
   },
   "dashboard": {
-    "greeting": "Welcome, {{name}}! 🤟",
+    "greeting": "Welcome, {{name}}!",
     "getStarted": "Start by adding your first bike",
     "noActiveData": "NO ACTIVE DATA",
     "addBike": "Add bike",
-    "proTipBody": "Add a bike and components (chain, cassette, tires) <1>BikeCheck</1> predicts maintenance based on your mileage and lets you SHARE your setup with others."
+    "proTipBody": "Add a bike and components (chain, cassette, tires) <1>BikeCheck</1> predicts maintenance based on your mileage and lets you SHARE your bike setup with others."
   },
   "chat": {
     "placeholder": "Ask anything…",

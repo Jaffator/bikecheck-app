@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, type ReactElement } from "react";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { Center, Loader } from "@mantine/core";
 import { Dashboard } from "@/features/dashboard_page/Dashboard";
 import { AppLayout } from "@/layout/AppLayout";
@@ -13,7 +13,6 @@ import { AddService } from "@/features/add_service_page/AddService";
 import { Rides } from "@/features/rides_page/Rides";
 import { Chat } from "@/features/chat_page/Chat";
 import { Login } from "@/features/login_page/Login";
-import { Profile } from "@/features/profile_page/Profile";
 import { Settings } from "@/features/settings_page/Settings";
 import { Notifications } from "@/features/notification_page/Notifications";
 import { StravaConnected } from "@/features/strava_connected_page/StravaConnected";
@@ -110,7 +109,8 @@ function ProtectedApp(): ReactElement {
           <Route path="/service/history" element={<ServiceHistory />} />
           <Route path="/rides" element={<Rides />} />
           <Route path="/chat" element={<Chat />} />
-          <Route path="/profile" element={<Profile />} />
+          {/* The account moved into Settings; old links still land on it. */}
+          <Route path="/profile" element={<Navigate to="/settings" replace />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
           {/* Handles the completed Strava OAuth deep link. */}

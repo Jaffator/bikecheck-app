@@ -6,6 +6,10 @@
     "needsAttention": "Vyžaduje pozornost",
     "showLess": "Zobrazit méně",
     "showRemaining": "Zobrazit zbývající ({{value}})",
+    "moreCount_one": "Další {{count}}",
+    "moreCount_few": "Další {{count}}",
+    "moreCount_many": "Dalšího {{count}}",
+    "moreCount_other": "Dalších {{count}}",
     "postpone": "Odložit",
     "extended": "Prodlouženo",
     "postponeFailed": "Nepodařilo se odložit.",
@@ -56,6 +60,7 @@
     "noAccount": "Nemáte účet?"
   },
   "settings": {
+    "sectionAccount": "Účet",
     "sectionGeneral": "Obecné",
     "sectionBikes": "Kola",
     "currency": "Měna",

@@ -4,7 +4,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { Button, Drawer, Group, Loader, Stack, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
+import { disabledButtonStyles, fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useAccountDeletionSummary, useDeleteAccount } from "@/features/users/users.queries";
 import type { AccountDeletionSummary } from "@/features/users/users.types";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -144,7 +144,13 @@ function DeleteAccountBody({ opened, onClose, email }: DeleteAccountDrawerProps)
         <Button
           color="red.5"
           radius="md"
-          styles={{ root: { "--button-color": "black" } as React.CSSProperties }}
+          // The shared disabled look, plus black lettering while it is live.
+          styles={{
+            root: {
+              ...disabledButtonStyles.root,
+              "--button-color": "black",
+            } as React.CSSProperties,
+          }}
           loading={destroy.isPending}
           disabled={!submittable}
           onClick={submit}

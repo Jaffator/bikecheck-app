@@ -36,9 +36,10 @@ export function Legal(): ReactElement {
   return (
     <Box mih="100dvh" bg="background.9">
       <Box
-        className="bg-cards-500"
+        className="bg-background-800"
         px="md"
         style={{
+          borderBottom: "1px solid var(--mantine-color-other-borderSubtle)",
           position: "sticky",
           top: 0,
           zIndex: 10,

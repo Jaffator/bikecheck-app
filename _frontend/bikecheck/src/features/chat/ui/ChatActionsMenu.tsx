@@ -27,7 +27,7 @@ export function ChatActionsMenu({ canClear, disabled }: ChatActionsMenuProps): R
   return (
     <>
       {/* Opens upwards: the bar stands at the foot of the screen. */}
-      <Menu position="top-start" radius="md" withinPortal zIndex={200}>
+      <Menu position="top-start" radius="lg" withinPortal zIndex={200}>
         <Menu.Target>
           <ActionIcon
             variant="transparent"

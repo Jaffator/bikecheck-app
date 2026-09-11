@@ -1,34 +1,184 @@
 [
   {
-    "heading": "PLACEHOLDER TEXT — replace before release",
+    "heading": "PRIVACY NOTICE",
     "paragraphs": [
-      "This is not a real privacy policy. It is placeholder content holding the space for wording supplied by a human. Google Play will not accept the app without an approved policy, so this text must be replaced before the app is submitted for review.",
-      "The blocks below exist only to show how the renderer sets a heading and the paragraphs beneath it."
+      "Last updated September 11, 2026",
+      "This Privacy Notice for Jaroslav Lufinka ('we', 'us', or 'our'), describes how and why we might access, collect, store, use, and/or share ('process') your personal information when you use our services ('Services'), including when you:",
+      "• Download and use our mobile application BikeCheck, or any other application of ours that links to this Privacy Notice;",
+      "• Visit our website at bikecheck.cloud, or any website of ours that links to this Privacy Notice;",
+      "• Engage with us in other related ways, including any support, sales, or marketing.",
+      "Questions or concerns? Reading this Privacy Notice will help you understand your privacy rights and choices. We are responsible for making decisions about how your personal information is processed. If you do not agree with our policies and practices, please do not use our Services. If you still have any questions or concerns, please contact us at support@bikecheck.cloud."
     ]
   },
   {
-    "heading": "1. Placeholder heading — what the app collects",
+    "heading": "SUMMARY OF KEY POINTS",
     "paragraphs": [
-      "This is where the list of data the app keeps about a user will go: email, name, bikes, components, service records and rides pulled from Strava. The paragraph is deliberately long so it is visible how a long run of text wraps at phone width.",
-      "A second paragraph in the same block shows the gap between paragraphs."
+      "This summary provides key points from our Privacy Notice. You can find more details about any of these topics in the section of the same name below.",
+      "What personal information do we process? We process the account details you give us (name, email address, password, profile photo, optional body weight, language and currency), everything you record about your bikes (bikes, components, service records, costs, notes, photos and attachments), the messages you send to the in-app assistant, and technical information collected automatically when you use the app.",
+      "Do we process any sensitive personal information? No. We do not process sensitive personal information such as racial or ethnic origin, sexual orientation, or religious beliefs. Body weight is optional and is used only to calculate figures shown to you.",
+      "Do we collect any information from third parties? Yes, but only from services you connect yourself. If you connect Strava, we receive your athlete profile, your gear, and your activities. If you sign in with Google, we receive your name, email address, and profile picture.",
+      "How do we process your information? We process your information to create and secure your account, to run the Services (tracking wear, service intervals and costs for your bikes), to send you the notifications you asked for, to answer your questions, and to comply with law. We do not sell your personal information and we do not use it for advertising.",
+      "In what situations and with which parties do we share personal information? We share information with the service providers that run the Services on our behalf: our hosting provider, Cloudflare (image storage), OpenAI (the in-app assistant), Google (sign-in and ride summaries), and Firebase Cloud Messaging (push notifications). Learn more in 'WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?' below.",
+      "How do we keep your information safe? We use organisational and technical measures to protect your personal information. However, no electronic transmission over the internet or information storage technology can be guaranteed to be 100% secure.",
+      "What are your rights? Depending on where you are located geographically, the applicable privacy law may mean you have certain rights regarding your personal information, including access, correction, deletion, and the right to complain to a supervisory authority.",
+      "How do you exercise your rights? You can review, change, or delete most of your information directly in the app under Settings. For anything else, contact us at support@bikecheck.cloud. We will consider and act upon any request in accordance with applicable data protection laws."
     ]
   },
   {
-    "heading": "2. Placeholder heading — why the app processes it",
+    "heading": "1. WHAT INFORMATION DO WE COLLECT?",
     "paragraphs": [
-      "This is where the purpose of the processing and its legal basis will go."
+      "Personal information you disclose to us",
+      "In Short: We collect personal information that you provide to us.",
+      "We collect personal information that you voluntarily provide to us when you register on the Services, express an interest in obtaining information about us or our products and Services, when you participate in activities on the Services, or otherwise when you contact us.",
+      "Personal Information Provided by You. The personal information that we collect depends on the context of your interactions with us and the Services, the choices you make, and the products and features you use. The personal information we collect may include the following:",
+      "• names;",
+      "• email addresses;",
+      "• passwords, which we store only as a cryptographic hash;",
+      "• profile photo;",
+      "• body weight, which is optional;",
+      "• preferred language and currency.",
+      "Bike and maintenance data. The Services exist to keep a record of your bikes, so most of what we hold is the record you create: bikes and their brand, model, year, size and weight, the components mounted on them, service records and the actions performed, costs, your own notes, custom part names, and any photos or files you attach to a service record.",
+      "Assistant conversations. If you use the in-app assistant, we store the messages you send and the answers you receive, together with the bike the question was asked about, so that the conversation can be shown to you again. You can delete the whole conversation at any time from the chat screen.",
+      "Sensitive Information. We do not process sensitive information. Body weight, which some laws treat as health-adjacent, is optional, is never required to use the Services, and is used only to calculate figures shown to you.",
+      "Social Media Login Data. We may provide you with the option to register with us using your existing Google account details, or to connect your Strava account. If you choose to do this, we will collect certain profile information as described in the section 'HOW DO WE HANDLE YOUR SOCIAL LOGINS?' below.",
+      "Application Data. If you use our application, we may also collect the following information if you choose to provide us with access or permission:",
+      "• Mobile Device Access. We may request access or permission to certain features from your mobile device, including your camera, photo library and push notifications. If you wish to change our access or permissions, you may do so in your device's settings.",
+      "• Push Notifications. We may request to send you push notifications regarding your account, your bikes, or the servicing that falls due. To deliver them we store a device token issued by the operating system. If you wish to opt out from receiving these types of communications, you may turn them off in Settings or in your device's settings.",
+      "All personal information that you provide to us must be true, complete, and accurate, and you must notify us of any changes to such personal information.",
+      "Information automatically collected",
+      "In Short: Some information — such as your Internet Protocol (IP) address and/or browser and device characteristics — is collected automatically when you visit our Services.",
+      "We automatically collect certain information when you visit, use, or navigate the Services. This information does not reveal your specific identity (like your name or contact information) but may include device and usage information, such as your IP address, browser and device characteristics, operating system, language preferences, information about how and when you use our Services, and other technical information. This information is primarily needed to maintain the security and operation of our Services, and for our internal diagnostics and error reporting.",
+      "We also record, for each active session, the device and IP address it was signed in from, so that a session that is not yours can be recognised and ended.",
+      "Information collected from other sources",
+      "In Short: We collect information from the services you connect yourself, and from nothing else.",
+      "If you connect your Strava account, we receive from Strava your athlete identifier, first and last name, username and profile picture, the bikes ('gear') recorded in your Strava account, and your activities — their start time, distance, elevation, duration, average and maximum speed, and the gear they were ridden on. We use this only to attribute rides to the right bike and to keep its wear up to date. You can disconnect Strava at any time in Settings.",
+      "We do not buy personal information from data brokers, marketing partners, or public databases."
     ]
   },
   {
-    "heading": "3. Placeholder heading — who it is shared with",
+    "heading": "2. HOW DO WE PROCESS YOUR INFORMATION?",
     "paragraphs": [
-      "This is where the third-party services the data is passed to will be listed."
+      "In Short: We process your information to provide, improve, and administer our Services, communicate with you, for security and fraud prevention, and to comply with law.",
+      "We process your personal information for a variety of reasons, depending on how you interact with our Services, including:",
+      "• To facilitate account creation and authentication and otherwise manage user accounts. We process your information so you can create and log in to your account, and keep it working.",
+      "• To deliver and facilitate delivery of services to the user. We process the record you keep of your bikes in order to track their wear, calculate service intervals and health indexes, and show you what falls due.",
+      "• To respond to user inquiries and offer support. We process your information to respond to your inquiries and solve any potential issues you might have with the requested service.",
+      "• To answer your questions in the in-app assistant. Your question, and the information about your own bikes that is needed to answer it, are sent to our AI provider to produce the answer.",
+      "• To send administrative information to you. We may process your information to send you details about our products and services, changes to our terms and policies, and other similar information.",
+      "• To send you push notifications and reminders about servicing that falls due, where you have not turned them off.",
+      "• To protect our Services. We may process your information as part of our efforts to keep our Services safe and secure, including fraud monitoring and prevention.",
+      "• To identify usage trends and diagnose faults. We may process information about how you use our Services to understand how they are used and to find and fix errors.",
+      "• To comply with our legal obligations. We may process your information to comply with our legal obligations, respond to legal requests, and exercise, establish, or defend our legal rights.",
+      "What legal bases do we rely on?",
+      "In Short: We only process your personal information when we believe it is necessary and we have a valid legal reason to do so under applicable law.",
+      "If you are located in the European Economic Area (EEA) or the United Kingdom, the General Data Protection Regulation (GDPR) requires us to explain the valid legal bases we rely on in order to process your personal information. We may rely on the following legal bases:",
+      "• Performance of a contract. We process your account details and the record you keep of your bikes because it is necessary to provide the Services you asked for.",
+      "• Consent. We rely on your consent where you connect a third-party account such as Strava, and where you allow push notifications. You may withdraw your consent at any time.",
+      "• Legitimate interests. We rely on our legitimate interests to keep the Services secure, to prevent fraud and abuse, and to diagnose and fix errors, where those interests are not overridden by your rights and freedoms.",
+      "• Legal obligations. We may process your information where it is necessary for compliance with a legal obligation to which we are subject."
     ]
   },
   {
-    "heading": "4. Placeholder heading — user rights and contact",
+    "heading": "3. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?",
     "paragraphs": [
-      "This is where it will be described how a user asks for a copy or the deletion of their data, and who to contact."
+      "In Short: We share information with the service providers that run the Services on our behalf, and in the specific situations described below.",
+      "We do not sell your personal information, we do not share it with advertisers, and we do not use it for targeted advertising.",
+      "We use the following third parties, which process personal information on our behalf and only on our instructions:",
+      "• Our hosting provider, which runs the servers and the database on which your account and your records are stored, in Germany.",
+      "• Cloudflare R2, which stores the photos and files you upload, such as bike pictures and attachments to service records.",
+      "• OpenAI, which produces the answers of the in-app assistant. Your question and the information about your own bikes needed to answer it are sent to OpenAI for that purpose. Under the terms that apply to our use of its API, OpenAI does not use this content to train its models.",
+      "• Google, which provides the sign-in you may choose to use, and the Gemini model used to write short summaries of your rides.",
+      "• Firebase Cloud Messaging (Google), which delivers push notifications to your device.",
+      "• Our logging and monitoring provider, which stores the technical logs used to find and fix errors.",
+      "We also may need to share your personal information in the following situations:",
+      "• Business Transfers. We may share or transfer your information in connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition of all or a portion of our business to another company.",
+      "• Legal Requirements. We may disclose your information where we are legally required to do so in order to comply with applicable law, governmental requests, a judicial proceeding, court order, or legal process.",
+      "• Vital Interests. We may disclose your information where we believe it is necessary to investigate, prevent, or take action regarding potential violations of our policies, suspected fraud, or situations involving potential threats to the safety of any person."
+    ]
+  },
+  {
+    "heading": "4. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?",
+    "paragraphs": [
+      "In Short: We use cookies and similar technologies only to keep you signed in and to remember your settings.",
+      "We use cookies and similar technologies (such as the local storage of your device or browser) to keep you signed in, to hold the tokens that authenticate your session, and to remember preferences such as your chosen language. Without them the Services cannot work.",
+      "We do not use advertising cookies, tracking pixels, or third-party analytics that profile you across other websites or applications.",
+      "You may remove the stored data at any time by signing out, or by clearing the storage of the app or browser. Doing so will end your session."
+    ]
+  },
+  {
+    "heading": "5. HOW DO WE HANDLE YOUR SOCIAL LOGINS?",
+    "paragraphs": [
+      "In Short: If you choose to register or log in to our Services using a social media account, we may have access to certain information about you.",
+      "Our Services offer you the ability to register and log in using your Google account details, and to connect your Strava account. Where you choose to do this, we will receive certain profile information about you from that provider. The profile information we receive from Google is your name, email address, and profile picture. The profile information we receive from Strava is your athlete identifier, first and last name, username and profile picture, together with the gear and activities described above.",
+      "We will use the information we receive only for the purposes that are described in this Privacy Notice or that are otherwise made clear to you on the relevant Services. Please note that we do not control, and are not responsible for, other uses of your personal information by your third-party social media or fitness provider. We recommend that you review their privacy notice to understand how they collect, use, and share your personal information, and how you can set your privacy preferences on their sites and apps."
+    ]
+  },
+  {
+    "heading": "6. IS YOUR INFORMATION TRANSFERRED INTERNATIONALLY?",
+    "paragraphs": [
+      "In Short: Your information is stored in Germany, but some of our providers may process it outside the European Economic Area.",
+      "Our servers are located in Germany. Regardless of your location, please be aware that your information may be transferred to, stored by, and processed by us in our facilities and in the facilities of the third parties with whom we may share your personal information (see 'WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?' above), including facilities in other countries.",
+      "Some of these providers — in particular OpenAI, Google and Cloudflare — may process personal information in the United States or in other countries outside the European Economic Area. Where they do, the transfer is covered by the European Commission's Standard Contractual Clauses or another transfer mechanism permitted under the GDPR.",
+      "If you are a resident of the European Economic Area (EEA), the United Kingdom (UK), or Switzerland, then countries outside them may not necessarily have data protection laws or other similar laws as comprehensive as those in your country. However, we will take all necessary measures to protect your personal information in accordance with this Privacy Notice and applicable law."
+    ]
+  },
+  {
+    "heading": "7. HOW LONG DO WE KEEP YOUR INFORMATION?",
+    "paragraphs": [
+      "In Short: We keep your information for as long as necessary to fulfil the purposes outlined in this Privacy Notice unless otherwise required by law.",
+      "We will only keep your personal information for as long as it is necessary for the purposes set out in this Privacy Notice, unless a longer retention period is required or permitted by law (such as tax, accounting, or other legal requirements). No purpose in this notice will require us keeping your personal information for longer than the period of time in which you have an account with us.",
+      "When you delete your account, your account and everything attached to it — your bikes, components, service records, rides, notifications and assistant conversations — are deleted from our database immediately and permanently. Deletion cannot be undone and we cannot restore the data afterwards.",
+      "Copies may remain for a short time in backups, which are rotated and overwritten on a regular schedule. Technical logs that may contain an IP address are kept for a limited period for security and diagnostic purposes and are then deleted."
+    ]
+  },
+  {
+    "heading": "8. DO WE COLLECT INFORMATION FROM MINORS?",
+    "paragraphs": [
+      "In Short: We do not knowingly collect data from or market to children under 18 years of age.",
+      "We do not knowingly collect, solicit data from, or market to children under 18 years of age, nor do we knowingly sell such personal information. By using the Services, you represent that you are at least 18 or that you are the parent or guardian of such a minor and consent to such minor dependent's use of the Services. If we learn that personal information from users less than 18 years of age has been collected, we will deactivate the account and take reasonable measures to promptly delete such data from our records. If you become aware of any data we may have collected from children under age 18, please contact us at support@bikecheck.cloud."
+    ]
+  },
+  {
+    "heading": "9. WHAT ARE YOUR PRIVACY RIGHTS?",
+    "paragraphs": [
+      "In Short: You may review, change, or terminate your account at any time, depending on your country, province, or state of residence.",
+      "In some regions (like the European Economic Area, the United Kingdom, and Switzerland), you have certain rights under applicable data protection laws. These may include the right to request access and obtain a copy of your personal information, to request rectification or erasure, to restrict the processing of your personal information, to data portability, and not to be subject to automated individual decision-making. In certain circumstances, you may also have the right to object to the processing of your personal information. You can make such a request by contacting us at support@bikecheck.cloud.",
+      "We will consider and act upon any request in accordance with applicable data protection laws.",
+      "If you are located in the EEA or UK and you believe we are unlawfully processing your personal information, you also have the right to complain to your local data protection supervisory authority. In the Czech Republic this is the Office for Personal Data Protection (Úřad pro ochranu osobních údajů), www.uoou.gov.cz.",
+      "Withdrawing your consent: If we are relying on your consent to process your personal information, you have the right to withdraw your consent at any time. You can withdraw your consent by disconnecting Strava in Settings, by turning off notifications in Settings or in your device's settings, or by contacting us using the contact details provided in the section 'HOW CAN YOU CONTACT US ABOUT THIS NOTICE?' below.",
+      "However, please note that this will not affect the lawfulness of the processing before its withdrawal nor, when applicable law allows, will it affect the processing of your personal information conducted in reliance on lawful processing grounds other than consent.",
+      "Account Information",
+      "If you would at any time like to review or change the information in your account or terminate your account, you can:",
+      "• Review and change your name, weight, language, currency and password in Settings;",
+      "• Delete your account in Settings, which removes the account and its data permanently."
+    ]
+  },
+  {
+    "heading": "10. CONTROLS FOR DO-NOT-TRACK FEATURES",
+    "paragraphs": [
+      "Most web browsers and some mobile operating systems and mobile applications include a Do-Not-Track ('DNT') feature or setting you can activate to signal your privacy preference not to have data about your online browsing activities monitored and collected. At this stage, no uniform technology standard for recognising and implementing DNT signals has been finalised. As such, we do not currently respond to DNT browser signals or any other mechanism that automatically communicates your choice not to be tracked online. If a standard for online tracking is adopted that we must follow in the future, we will inform you about that practice in a revised version of this Privacy Notice.",
+      "In any event, we do not track you across other websites or applications."
+    ]
+  },
+  {
+    "heading": "11. DO WE MAKE UPDATES TO THIS NOTICE?",
+    "paragraphs": [
+      "In Short: Yes, we will update this notice as necessary to stay compliant with relevant laws.",
+      "We may update this Privacy Notice from time to time. The updated version will be indicated by an updated 'Last updated' date at the top of this Privacy Notice. If we make material changes to this Privacy Notice, we may notify you either by prominently posting a notice of such changes or by directly sending you a notification. We encourage you to review this Privacy Notice frequently to be informed of how we are protecting your information."
+    ]
+  },
+  {
+    "heading": "12. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?",
+    "paragraphs": [
+      "If you have questions or comments about this notice, you may contact us by email at support@bikecheck.cloud"
+    ]
+  },
+  {
+    "heading": "13. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?",
+    "paragraphs": [
+      "Based on the applicable laws of your country, you may have the right to request access to the personal information we collect from you, details about how we have processed it, correct inaccuracies, or delete your personal information. You may also have the right to withdraw your consent to our processing of your personal information. These rights may be limited in some circumstances by applicable law.",
+      "Most of this you can do yourself: open Settings in the app to review and change your account information, to disconnect Strava, to turn notifications off, or to delete your account and everything in it.",
+      "To request a copy of your data, or for anything you cannot do in the app, contact us at support@bikecheck.cloud. We will respond within the period required by applicable law."
     ]
   }
 ]
