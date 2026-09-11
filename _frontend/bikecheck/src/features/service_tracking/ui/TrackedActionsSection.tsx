@@ -18,15 +18,18 @@ const SKELETON_ROWS = 3;
 // The fewest rows a collapsed card shows, whatever their levels say.
 const MIN_VISIBLE_ROWS = 3;
 
-// How much of the next row is left showing beneath them: its heading, and none of its
-// figures — enough to say the list goes on, not enough to read.
-const PEEK_HEIGHT = 28;
+// How much of the next row is left showing beneath them: the top half of its heading,
+// already dissolving — enough to say the list goes on, not enough to read a word of it.
+const PEEK_HEIGHT = 14;
 
 // How long the list takes to unroll.
 const EXPAND_MS = 250;
 
 // Dissolves the peeked row into the card rather than cutting it off.
-const FADE_MASK = "linear-gradient(to bottom, black 0%, black 25%, transparent 100%)";
+const FADE_MASK = "linear-gradient(to bottom, black 0%, transparent 100%)";
+
+// Runs the hem out through the card's padding to its edges.
+const BLEED = "calc(var(--mantine-spacing-md) * -1)";
 
 interface TrackedActionsSectionProps {
   bikeId: number;
@@ -117,6 +120,8 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
         <Stack gap="md">{rest.map(renderRow)}</Stack>
       </Box>
 
+      {/* Closed, the strip is the card's hem: full-bleed, in the card's own colour, casting
+          up onto the rows slipping under it. Open, it is only the arrow. */}
       <UnstyledButton
         onClick={() => {
           setOpen((opened) => !opened);
@@ -124,8 +129,13 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
         aria-expanded={open}
         // Open, the arrow stands alone and has no text to be named by.
         aria-label={open ? t("tracking.showLess") : undefined}
-        py={10}
-        style={{ width: "100%" }}
+        py={14}
+        mx={open ? undefined : BLEED}
+        mb={open ? undefined : BLEED}
+        style={{
+          width: open ? "100%" : undefined,
+          boxShadow: open ? undefined : "var(--elev-sill)",
+        }}
       >
         <Group gap={6} justify="center" wrap="nowrap">
           <ChevronDown
@@ -164,6 +174,8 @@ function SectionShell({ children }: { children: ReactElement }): ReactElement {
         backgroundColor: "var(--mantine-color-cards-6)",
         backgroundImage: "var(--card-glow)",
         boxShadow: "var(--elev-row)",
+        // Keeps the hem inside the corners; the card's own shadow is not clipped by this.
+        overflow: "hidden",
       }}
     >
       <Stack gap="md">

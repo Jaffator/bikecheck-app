@@ -120,6 +120,9 @@
   /* A track sunk below the hero card's own surface (cards.6, #282828) rather than beside
      it, so the bar reads as a groove the meter fills. */
   --color-decor-deep: #1a1612;
+  /* The same groove, sunk only half a step below cards.6 - for a track on a row card,
+     which carries less light than the hero and would read as a hole at the deep shade. */
+  --color-decor-sunk: #201b1b;
 
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -135,6 +138,10 @@
     inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.38), 0 8px 16px -6px rgba(0, 0, 0, 0.5);
   --elev-hero:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.55);
+  /* Not a card: a ledge inside one - the hem a collapsed list slips under. The row's
+     shadow turned upward and a notch darker, so the hem reads as nearer than the rows. */
+  --elev-sill:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 -1px 2px 0 rgba(0, 0, 0, 0.4), 0 -14px 32px -6px rgba(0, 0, 0, 0.45);
   /* The light every card is lit from the top-left corner by. */
   --card-glow: radial-gradient(
     90% 120% at 0% 0%,

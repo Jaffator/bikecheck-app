@@ -203,6 +203,35 @@ the axis it is measured in. Accumulates when granted again, and dies with the pa
 on, so a new chain is never born already deferred.
 _Avoid_: Snooze, postponement, deferral
 
+### Setup
+
+**Setup**:
+The numbers a Bike is ridden at — tyre pressures, suspension pressures, tokens, clicks and sag.
+Belongs to the Bike, not to the parts it is dialled into: replacing a fork leaves the Setup as it
+was, and which sections it has — tyres, fork, shock — follows the bike's own suspension rather than
+what is mounted (ADR 0029). Read through Setup Profiles, never on its own.
+_Avoid_: Settings (that is the app's), tune, configuration
+
+**Setup Profile**:
+One named Setup a Bike keeps alongside others — Trail, Race, Park. Named by the owner, and a bike
+begins with one so nothing has to be named before it is written down. Holds a single state and
+one note: changing it rewrites it, and there is no history behind it — an owner who wants to keep
+what a profile was makes another profile, usually as a copy of it. Any profile can be deleted, the
+last one included; the bike then starts over with one.
+_Avoid_: Preset, mode, variant, setup version
+
+**Tyre Pressure Unit**:
+The unit — bar or psi — an owner reads and types tyre pressures in, chosen once for the whole
+account rather than per bike or per field. Suspension pressure is not subject to it: a fork or
+shock is always read in psi, because that is what every shock pump shows.
+_Avoid_: Unit system, metric/imperial (nothing else in the app switches with it)
+
+**Clicks**:
+Where a damper adjuster stands — rebound, low-speed or high-speed compression — counted from fully
+closed: the dial turned to its stop, then each click back out. One convention for every adjuster,
+so 8 clicks means the same thing on every fork and shock in the app.
+_Avoid_: Clicks from open, turns, position
+
 ### Sharing
 
 **Report**:

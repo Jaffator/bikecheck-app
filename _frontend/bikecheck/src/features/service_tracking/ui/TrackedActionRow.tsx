@@ -73,7 +73,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
         size={5}
         radius="xl"
         styles={{
-          root: { backgroundColor: "var(--color-decor)" },
+          root: { backgroundColor: "var(--color-decor-sunk)" },
           section: { backgroundColor: color },
         }}
       />
