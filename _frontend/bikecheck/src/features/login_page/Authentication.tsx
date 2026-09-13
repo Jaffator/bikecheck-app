@@ -60,7 +60,7 @@ export function AuthenticationForm(props: PaperProps) {
       <img
         src={logoName}
         alt="BikeCheck Logo"
-        style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "6rem", left: 0, right: 0, margin: "0 auto" }}
+        style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "10rem", left: 0, right: 0, margin: "0 auto" }}
       />
       <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent" ref={formRef}>
         <form
@@ -81,7 +81,7 @@ export function AuthenticationForm(props: PaperProps) {
             }
           })}
         >
-          <Stack>
+          <Stack gap="sm">
             {type === "register" && (
               <TextInput
                 placeholder={t("auth.namePlaceholder")}
@@ -94,7 +94,7 @@ export function AuthenticationForm(props: PaperProps) {
                   input: {
                     backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
                     border: "none",
-                    height: "3rem",
+                    height: "2.5rem",
                     color: "var(--mantine-color-text-6)",
                   },
                 }}
@@ -112,7 +112,7 @@ export function AuthenticationForm(props: PaperProps) {
                 input: {
                   backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
                   border: "none",
-                  height: "3rem",
+                  height: "2.5rem",
                   color: "var(--mantine-color-text-6)",
                 },
               }}
@@ -129,7 +129,7 @@ export function AuthenticationForm(props: PaperProps) {
                 input: {
                   backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
                   border: "none",
-                  height: "3rem",
+                  height: "2.5rem",
                   color: "var(--mantine-color-text-6)",
                 },
                 visibilityToggle: { color: "var(--mantine-color-text-8)" },
@@ -156,7 +156,7 @@ export function AuthenticationForm(props: PaperProps) {
             )}
           </Stack>
 
-          <Stack justify="space-between" mt="xl">
+          <Stack justify="space-between" mt="lg">
             {login.isError && (
               <Text size="sm" c="red.6" ta="center">
                 {login.error.status === 401 ? t("auth.invalidCredentials") : t("auth.genericError")}

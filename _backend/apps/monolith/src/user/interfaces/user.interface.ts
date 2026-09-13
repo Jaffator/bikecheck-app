@@ -1,4 +1,5 @@
 // ------ REPOSITORY LAYER types ------
+import type { tire_pressure_unit } from '@prisma/client';
 
 export interface CreateUserData {
   name: string;
@@ -22,5 +23,6 @@ export interface UpdateUserData {
   weight_kg?: number | undefined;
   avatar_url?: string | undefined;
   notifications_enabled?: boolean | undefined;
+  tire_pressure_unit?: tire_pressure_unit | undefined;
   // updated_at - automatic from DB
 }

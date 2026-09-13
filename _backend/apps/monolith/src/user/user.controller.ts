@@ -120,6 +120,7 @@ export class UserController {
       language: user.language,
       currency: user.currency,
       weight_kg: user.weight_kg,
+      tire_pressure_unit: user.tire_pressure_unit,
       is_active: user.is_active || false,
       has_password: user.password_hash !== null,
       notifications_enabled: user.notifications_enabled ?? null,

@@ -143,6 +143,7 @@ model bikes {
   chat_messages         chat_messages[]
   events_bikes          events_bikes[]
   rides                 rides[]
+  setup_profiles        setup_profiles[]
 
   @@index([created_at], map: "bikes_created_at")
   @@index([bike_type_id], map: "bikes_type_id")
@@ -206,12 +207,13 @@ model components_mounted {
   health_index              Int?                        @default(0)
   drivetrain_km             Int?                        @default(0)
   suspension_min            Int?                        @default(0)
+  // A fork or shock with a high-speed adjuster beside the low-speed one; single by default.
+  dual_rebound              Boolean                     @default(false)
+  dual_compression          Boolean                     @default(false)
   action_done_component_map action_done_component_map[]
   tracked_action_state      tracked_action_state[]
   bikes                     bikes                       @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   component_types           component_types             @relation(fields: [component_type_id], references: [id], onUpdate: NoAction)
-  suspension_setup          suspension_setup[]
-  tire_setup                tire_setup[]
 
   @@index([bike_id], map: "bike_components_bike_id")
   @@index([component_type_id], map: "bike_components_component_id")
@@ -402,28 +404,45 @@ model rides {
   @@index([started_at], map: "rides_started_at")
 }
 
-model suspension_setup {
-  id                    Int                @id @default(autoincrement())
-  mounted_component_id  Int
-  setup_date            DateTime           @default(now()) @db.Timetz(6)
-  pressure_psi          Int?
-  pressure_bar          Int?
-  sag_percentage        Int?
-  amount_tokens_spacers Int?
-  rebound_ls            Int?
-  rebound_hs            Int?
-  compression_ls        Int?
-  compression_hs        Int?
-  notes                 String?            @db.VarChar
-  components_mounted    components_mounted @relation(fields: [mounted_component_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+// One Setup Profile: every number a bike is ridden at, on one sheet, rewritten in place
+// (ADR 0029). Belongs to the bike, not to the parts it is dialled into, so a Replacement
+// leaves it as it was. Every number is nullable - null is "not recorded", a zero is a zero.
+// Pressures are psi to one decimal (a bar value converted is not an integer); clicks are
+// counted from fully closed. There is no history behind a row: a save overwrites it.
+model setup_profiles {
+  id                   Int      @id @default(autoincrement())
+  bike_id              Int
+  name                 String   @db.VarChar(50)
+  note                 String?  @db.VarChar(500)
+  front_tire_psi       Decimal? @db.Decimal(5, 1)
+  rear_tire_psi        Decimal? @db.Decimal(5, 1)
+  fork_pressure_psi    Decimal? @db.Decimal(5, 1)
+  fork_tokens          Int?
+  fork_sag_percent     Int?
+  fork_rebound_ls      Int?
+  fork_rebound_hs      Int?
+  fork_compression_ls  Int?
+  fork_compression_hs  Int?
+  shock_pressure_psi   Decimal? @db.Decimal(5, 1)
+  shock_tokens         Int?
+  shock_sag_percent    Int?
+  shock_rebound_ls     Int?
+  shock_rebound_hs     Int?
+  shock_compression_ls Int?
+  shock_compression_hs Int?
+  created_at           DateTime @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  bikes                bikes    @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // Two profiles on one bike never share a name, so switching between them is unambiguous.
+  @@unique([bike_id, name])
 }
 
-model tire_setup {
-  id                   Int                @id @default(autoincrement())
-  component_mounted_id Int
-  tire_pressure_bar    Int?
-  tire_pressure_psi    Int?
-  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+// The Tyre Pressure Unit: what tyre pressures are read and typed in, chosen once per account.
+// Suspension pressure is not subject to it - a fork or shock is always read in psi.
+enum tire_pressure_unit {
+  bar
+  psi
 }
 
 // The account. Deleted hard, never archived (ADR 0028): everything below cascades from
@@ -448,6 +467,8 @@ model users {
   strava_username       String?                @db.VarChar
   strava_avatar_url     String?                @db.VarChar
   notifications_enabled Boolean?               @default(true)
+  // Bar or psi for tyre pressures, account-wide. Suspension is always psi (ADR 0029).
+  tire_pressure_unit    tire_pressure_unit     @default(bar)
   accounts              accounts[]
   bikes                 bikes[]
   chat_messages         chat_messages[]

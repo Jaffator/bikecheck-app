@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotFoundException } from '@nestjs/common';
+import { tire_pressure_unit } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { UpdateUserDto } from './dto/user.dtos';
 
 const USER_ID = 7;
 
@@ -122,5 +127,78 @@ describe('UserService account deletion', () => {
 
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('UserService profile update', () => {
+  let service: UserService;
+
+  const mockPrisma = {
+    users: { findUnique: jest.fn(), update: jest.fn() },
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+  });
+
+  // The Tyre Pressure Unit is one account-wide choice (ADR 0029): it goes in through the same
+  // update as currency and comes back on the row.
+  it('round-trips the tyre pressure unit through update', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: USER_ID, tire_pressure_unit: tire_pressure_unit.bar });
+    mockPrisma.users.update.mockImplementation(({ data }: { data: { tire_pressure_unit: tire_pressure_unit } }) =>
+      Promise.resolve({ id: USER_ID, tire_pressure_unit: data.tire_pressure_unit }),
+    );
+
+    const user = await service.updateUserProfile(USER_ID, { tire_pressure_unit: tire_pressure_unit.psi });
+
+    expect(mockPrisma.users.update).toHaveBeenCalledWith({
+      where: { id: USER_ID },
+      data: { tire_pressure_unit: tire_pressure_unit.psi, updated_at: expect.any(Date) },
+    });
+    expect(user.tire_pressure_unit).toBe(tire_pressure_unit.psi);
+  });
+
+  // A field not sent is not touched, so changing the currency cannot reset the unit.
+  it('leaves the tyre pressure unit alone when it is not sent', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: USER_ID });
+    mockPrisma.users.update.mockResolvedValue({ id: USER_ID });
+
+    await service.updateUserProfile(USER_ID, { currency: 'eur' });
+
+    const { data } = mockPrisma.users.update.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(data).not.toHaveProperty('tire_pressure_unit');
+  });
+
+  it('refuses an unknown user', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue(null);
+
+    await expect(service.updateUserProfile(USER_ID, { tire_pressure_unit: tire_pressure_unit.psi })).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+});
+
+// The DTO is what the ValidationPipe checks, so this is where "outside bar | psi" is refused.
+describe('UpdateUserDto tyre pressure unit', () => {
+  async function violations(body: Record<string, unknown>): Promise<string[]> {
+    const errors = await validate(plainToInstance(UpdateUserDto, body));
+    return errors.map((error) => error.property);
+  }
+
+  it.each([tire_pressure_unit.bar, tire_pressure_unit.psi])('accepts %s', async (unit) => {
+    expect(await violations({ tire_pressure_unit: unit })).toEqual([]);
+  });
+
+  it.each(['kpa', 'BAR', '', 1, null])('rejects %p', async (unit) => {
+    expect(await violations({ tire_pressure_unit: unit })).toEqual(['tire_pressure_unit']);
+  });
+
+  it('accepts a body that does not name the unit', async () => {
+    expect(await violations({ currency: 'czk' })).toEqual([]);
   });
 });

@@ -40,6 +40,9 @@ export interface FixtureBike {
   weightKg: number | null;
   // Null is a bike Strava rides do not land on.
   stravaGearId: string | null;
+  // Which sections its Setup has. The sheet follows the bike, not what is mounted (ADR 0029).
+  frontSuspension: boolean;
+  rearSuspension: boolean;
   parts: FixturePart[];
 }
 
@@ -55,6 +58,8 @@ export const BIKES: FixtureBike[] = [
     size: '56',
     weightKg: 9.4,
     stravaGearId: 'b9876543',
+    frontSuspension: false,
+    rearSuspension: false,
     parts: [
       // 4960 driven, 1000 of them before the last replacement: 3960 of a 3000 km interval
       // is the 132% reading the questions expect.
@@ -76,6 +81,8 @@ export const BIKES: FixtureBike[] = [
     size: 'M',
     weightKg: 14.2,
     stravaGearId: null,
+    frontSuspension: true,
+    rearSuspension: true,
     parts: [
       // 1800 of a 4000 min interval is 45%: in order, and the counterweight to the chain.
       { key: 'B2_FORK', type: 'Fork', desc: 'Fox 36 Factory', mountedDaysAgo: 500, totalKm: 980, totalTimeMin: 4200, suspensionMin: 1800 },
@@ -94,6 +101,8 @@ export const BIKES: FixtureBike[] = [
     size: null,
     weightKg: null,
     stravaGearId: null,
+    frontSuspension: false,
+    rearSuspension: false,
     // A part nobody dated, on a bike nobody has ridden: two figures the chat may not state.
     parts: [
       { key: 'B3_CHAIN', type: 'Chain', desc: 'KMC X8', mountedDaysAgo: null, totalKm: null, totalTimeMin: null, drivetrainKm: 0 },
@@ -165,10 +174,29 @@ export const INTERVALS: FixtureInterval[] = [
   { bike: 'B2', action: 'Fork Basic Service', min: 4000 },
 ];
 
-// The setup the chat reads back. A fork on B2 and nothing on B1, so "what pressure do I run"
-// has both a true answer and one that must not be invented.
-export const FORK_SETUP = { partKey: 'B2_FORK', pressurePsi: 75, sagPercentage: 25, reboundLs: 8 };
-export const TIRE_SETUP = { partKey: 'B2_TIRE_F', pressurePsi: 23 };
+export interface FixtureProfile {
+  bike: BikeKey;
+  name: string;
+  note: string | null;
+  // Null is a figure nobody ever wrote down, which the chat may not invent. Pressures are psi.
+  frontTirePsi: number | null;
+  rearTirePsi: number | null;
+  forkPressurePsi: number | null;
+  forkSagPercent: number | null;
+  forkReboundLs: number | null;
+}
+
+// The Setup the chat reads back: one Setup Profile per bike. A fork pressure on B2 and no fork at
+// all on B1, so "what pressure do I run in the fork" has both a true answer and one that must not
+// be invented. B3's sheet was opened and never filled in.
+export const SETUP_PROFILES: FixtureProfile[] = [
+  { bike: 'B1', name: 'Gravel', note: null, frontTirePsi: 40, rearTirePsi: 42, forkPressurePsi: null, forkSagPercent: null, forkReboundLs: null },
+  { bike: 'B2', name: 'Trail', note: 'bikepark Loket', frontTirePsi: 23, rearTirePsi: 26, forkPressurePsi: 75, forkSagPercent: 25, forkReboundLs: 8 },
+  { bike: 'B3', name: 'Default', note: null, frontTirePsi: null, rearTirePsi: null, forkPressurePsi: null, forkSagPercent: null, forkReboundLs: null },
+];
+
+// The fork pressure D4 expects and D5 must never show, read off the profile so the two cannot drift.
+export const B2_FORK_PRESSURE_PSI = forkPressure('B2');
 
 export const REPORT = { bike: 'B1' as BikeKey, kind: 'PERIOD' as const, isPublic: true };
 
@@ -192,6 +220,15 @@ export const FORK_PERCENTAGE = 45;
 export function bike(key: BikeKey): FixtureBike {
   const found = BIKES.find((row) => row.key === key);
   if (found === undefined) throw new Error(`No fixture bike ${key}`);
+
+  return found;
+}
+
+// The fork pressure recorded on a bike's profile, or a loud failure: a question built on a null
+// would pass against any answer.
+function forkPressure(key: BikeKey): number {
+  const found = SETUP_PROFILES.find((row) => row.bike === key)?.forkPressurePsi;
+  if (found == null) throw new Error(`No fork pressure recorded on ${key}`);
 
   return found;
 }

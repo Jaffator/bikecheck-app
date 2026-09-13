@@ -104,6 +104,12 @@ export class Response_BikeComponentDto {
   @ApiProperty({ type: String, example: 'front', nullable: true })
   position!: string | null;
 
+  @ApiProperty({ example: false, description: 'The damper has a high-speed rebound adjuster beside the low-speed one' })
+  dual_rebound!: boolean;
+
+  @ApiProperty({ example: false, description: 'The damper has a high-speed compression adjuster beside the low-speed one' })
+  dual_compression!: boolean;
+
   @ApiProperty({ type: String, example: 'Mounted after spring service', nullable: true })
   note!: string | null;
 

@@ -1,5 +1,5 @@
 // Dashboard empty state.
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { Box, Button, Group, Stack, Text } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +24,6 @@ export function EmptyDashboard(): ReactElement {
       illustration={graphPlaceholder}
       title={t("dashboard.greeting", { name: firstName })}
       body={t("dashboard.getStarted")}
-      badge={<StatusBadge label={t("dashboard.noActiveData")} />}
     >
       {/* Nothing here works until there is a bike, so the one way forward is a button. */}
       <Button variant="filled" radius="md" size="md" fullWidth onClick={() => navigate("/bikes/new")}>
@@ -36,7 +35,7 @@ export function EmptyDashboard(): ReactElement {
         mt={16}
         pos="relative"
         p={16}
-        bg="var(--color-surface)"
+        bg="var(--mantine-color-surface)"
         className="overflow-hidden rounded-xl"
         style={{ border: "1px solid var(--color-border-strong)" }}
       >
@@ -49,7 +48,7 @@ export function EmptyDashboard(): ReactElement {
         />
         <Group pos="relative" gap={12} align="flex-start" wrap="nowrap">
           <Lightbulb size={20} color="var(--color-accent)" className="shrink-0" />
-          <Stack gap={3}>
+          <Stack gap={3} flex={1} miw={0}>
             <Text className="font-mono" fz={12} lh="16px" fw={500} lts="0.05em" c="var(--color-accent)">
               {t("common.proTip")}
             </Text>

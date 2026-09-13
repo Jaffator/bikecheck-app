@@ -7,12 +7,12 @@
 import {
   B1_HOURS,
   B1_PART_COUNT,
+  B2_FORK_PRESSURE_PSI,
   BIKES,
   CHAIN_OVER_INTERVAL_KM,
   CHAIN_PERCENTAGE,
   FORK_PERCENTAGE,
   FORK_REMAINING_MIN,
-  FORK_SETUP,
   LAST_SERVICE_COST,
   PREVIOUS_SERVICE_COST,
   RIDES_LAST_MONTH_KM,
@@ -246,14 +246,14 @@ export const QUESTIONS: EvalItem[] = [
     id: 'D4',
     category: 'edges',
     turns: [{ question: 'Jaký mám tlak ve vidlici?', bike: 'B2' }],
-    check: { must: [String(FORK_SETUP.pressurePsi)], tools: ['get_garage', 'get_setup'] },
+    check: { must: [String(B2_FORK_PRESSURE_PSI)], tools: ['get_garage', 'get_setup'] },
   },
   {
     id: 'D5',
     category: 'edges',
     // B1 has no fork at all, so any pressure in this answer was invented.
     turns: [{ question: 'Jaký mám tlak ve vidlici?', bike: 'B1' }],
-    check: { mustNot: [String(FORK_SETUP.pressurePsi)], tools: ['get_garage'] },
+    check: { mustNot: [String(B2_FORK_PRESSURE_PSI)], tools: ['get_garage'] },
   },
   {
     id: 'D6',

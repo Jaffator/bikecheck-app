@@ -22,6 +22,11 @@ export interface ChangePasswordPayload {
   newPassword: string;
 }
 
+// Mirrors the backend tire_pressure_unit enum. Tyres are read in this unit; suspension is
+// always psi (ADR 0029).
+export const TIRE_PRESSURE_UNITS = ["bar", "psi"] as const;
+export type TirePressureUnit = (typeof TIRE_PRESSURE_UNITS)[number];
+
 // Mirrors UpdateUserDto; the backend ignores undefined fields.
 export interface UpdateUserPayload {
   name?: string;
@@ -30,6 +35,7 @@ export interface UpdateUserPayload {
   weight_kg?: number;
   avatar_url?: string;
   notifications_enabled?: boolean;
+  tire_pressure_unit?: TirePressureUnit;
 }
 
 // Mirrors UserResponseDto with JSON dates represented as ISO strings.
@@ -41,6 +47,8 @@ export interface User {
   language: string | null;
   currency: string | null;
   weight_kg: number | null;
+  // Never null: the account defaults to bar.
+  tire_pressure_unit: TirePressureUnit;
   is_active: boolean;
   // Whether a local password exists; false for a Google account, which has none to change.
   has_password: boolean;

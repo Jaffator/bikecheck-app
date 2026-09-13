@@ -71,7 +71,7 @@ export interface UpdateBikeInput {
   image: File | null;
 }
 
-export type UpdateBikePayload = Partial<Omit<CreateBikePayload, "ebike" | "has_front_suspension" | "has_rear_suspension">>;
+export type UpdateBikePayload = Partial<CreateBikePayload>;
 
 export type CreateMountedComponentPayload = Omit<components["schemas"]["CreateMountedComponentsDto"], "bike_id">;
 

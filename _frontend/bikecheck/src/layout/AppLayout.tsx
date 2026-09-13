@@ -19,6 +19,7 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
+import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
 
 const BikeIcon = bikecheckIconType("BikeIcon");
 const BikeIconFill = bikecheckIconType("BikeIcon_fill");
@@ -101,6 +102,8 @@ function isFullScreenRoute(pathname: string): boolean {
 const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
   // The edit form is matched first: it is a longer shape than the detail it hangs under.
   { pattern: /^\/bikes\/\d+\/edit$/, titleKey: "bikeEdit.title" },
+  // The Setup screen names the bike in its header; this title is the fallback while it loads.
+  { pattern: /^\/bikes\/\d+\/setup$/, titleKey: "setup.title" },
   { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
 ];
 
@@ -125,13 +128,6 @@ function getPageTitleKey(pathname: string): string | null {
 // choice. Off while we work out whether that swap is what resets the wizard during an
 // attachment upload. Flip back to true to restore the offline screen.
 const OFFLINE_PAGE_ENABLED = false;
-
-// Controls standing on a photo get their own shade; the page-wide scrim alone is not
-// enough to read them against a bright image.
-export const TRANSPARENT_HEADER_CONTROL: CSSProperties = {
-  background: "rgba(0, 0, 0, 0.45)",
-  backdropFilter: "blur(8px)",
-};
 
 // Shares active-route matching between the header and tab bar.
 function isActivePath(path: string, pathname: string): boolean {

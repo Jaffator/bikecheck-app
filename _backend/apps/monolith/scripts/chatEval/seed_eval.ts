@@ -16,12 +16,11 @@ import {
   EVAL_LANGUAGE,
   EVAL_NAME,
   EVAL_STRAVA_ATHLETE_ID,
-  FORK_SETUP,
   INTERVALS,
   REPORT,
   RIDES,
   SERVICES,
-  TIRE_SETUP,
+  SETUP_PROFILES,
   dayAgo,
   type BikeKey,
 } from './fixture';
@@ -133,6 +132,8 @@ export async function seedEvalGarage(prisma: PrismaClient): Promise<SeededGarage
         total_time_min: fixture.totalTimeMin,
         total_elevation_m: fixture.elevationM,
         strava_gear_id: fixture.stravaGearId,
+        has_front_suspension: fixture.frontSuspension,
+        has_rear_suspension: fixture.rearSuspension,
         components_mounted: {
           create: fixture.parts.map((part) => ({
             component_type_id: idOf(types, part.type),
@@ -205,21 +206,21 @@ export async function seedEvalGarage(prisma: PrismaClient): Promise<SeededGarage
     });
   }
 
-  await prisma.suspension_setup.create({
-    data: {
-      mounted_component_id: idOf(partIds, FORK_SETUP.partKey),
-      pressure_psi: FORK_SETUP.pressurePsi,
-      sag_percentage: FORK_SETUP.sagPercentage,
-      rebound_ls: FORK_SETUP.reboundLs,
-    },
-  });
-
-  await prisma.tire_setup.create({
-    data: {
-      component_mounted_id: idOf(partIds, TIRE_SETUP.partKey),
-      tire_pressure_psi: TIRE_SETUP.pressurePsi,
-    },
-  });
+  // One Setup Profile per bike; what the fixture leaves null stays unrecorded.
+  for (const profile of SETUP_PROFILES) {
+    await prisma.setup_profiles.create({
+      data: {
+        bike_id: idOf(bikeIds, profile.bike),
+        name: profile.name,
+        note: profile.note,
+        front_tire_psi: profile.frontTirePsi,
+        rear_tire_psi: profile.rearTirePsi,
+        fork_pressure_psi: profile.forkPressurePsi,
+        fork_sag_percent: profile.forkSagPercent,
+        fork_rebound_ls: profile.forkReboundLs,
+      },
+    });
+  }
 
   await prisma.reports.create({
     data: {

@@ -7,6 +7,7 @@ import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { useCurrentUser, useLogout, useUpdateUser } from "@/features/users/users.queries";
+import { TIRE_PRESSURE_UNITS, type TirePressureUnit } from "@/features/users/users.types";
 import { SUPPORTED_LANGUAGES, applyLanguage } from "@/i18n";
 import { FALLBACK_CURRENCY, SUPPORTED_CURRENCIES } from "@/utils/money";
 import { CustomPartsDrawer } from "./CustomPartsDrawer";
@@ -14,6 +15,11 @@ import { BikeArchiveDrawer } from "./BikeArchiveDrawer";
 import { ChangePasswordDrawer } from "./ChangePasswordDrawer";
 import { DeleteAccountDrawer } from "./DeleteAccountDrawer";
 import { ProfileEditDrawer } from "./ProfileEditDrawer";
+
+// Half the gap between two rows, and half the gap from the card's edge to its first row: a
+// row pays it on both sides and the card pays it once more, so every space on a card is the
+// same 20px whether a row is first, last or in the middle.
+const ROW_GAP_HALF = 10;
 
 // Darker than Mantine's light-scheme default, to sit on the dark card without glowing.
 const SEGMENTED_CONTROL_STYLES = {
@@ -55,6 +61,15 @@ export function Settings(): ReactElement | null {
     }
   }
 
+  // One unit for every tyre pressure on the account (ADR 0029). Stored values are psi, so
+  // switching only changes how they are read - nothing is rewritten.
+  function changeTirePressureUnit(unit: string): void {
+    // The control offers only the two units, so the string is one of them.
+    if (user) {
+      updateUser.mutate({ id: user.id, data: { tire_pressure_unit: unit as TirePressureUnit } });
+    }
+  }
+
   // Mutes push only. The bell keeps counting, so nothing is lost - just not interrupted.
   function changeNotifications(enabled: boolean): void {
     if (user) {
@@ -90,7 +105,8 @@ export function Settings(): ReactElement | null {
             } as CSSProperties
           }
         />
-        <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
+        {/* The name stands a little further off the avatar than the email stands off the name. */}
+        <Text fw={700} fz={20} c="text.6" ta="center" mt={6} style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
           {user.name}
         </Text>
         <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
@@ -102,8 +118,8 @@ export function Settings(): ReactElement | null {
         {t("settings.sectionAccount")}
       </Text>
       {/* Name and weight are one form, so both rows open the same drawer. */}
-      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
-        <UnstyledButton onClick={() => setEditing(true)} className="w-full" p="md">
+      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+        <UnstyledButton onClick={() => setEditing(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
           <Group justify="space-between" wrap="nowrap">
             <Text fw={600} fz={15} c="text.6">
               {t("profile.name")}
@@ -116,7 +132,7 @@ export function Settings(): ReactElement | null {
             </Group>
           </Group>
         </UnstyledButton>
-        <UnstyledButton onClick={() => setEditing(true)} className="w-full" p="md" pt={0}>
+        <UnstyledButton onClick={() => setEditing(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
           <Group justify="space-between" wrap="nowrap">
             <Text fw={600} fz={15} c="text.6">
               {t("profile.weight")}
@@ -140,7 +156,7 @@ export function Settings(): ReactElement | null {
         {/* Only for an account that has a password. A Google rider sets none, so offering the
             row would suggest they have one to change. */}
         {user.has_password && (
-          <UnstyledButton onClick={() => setChangingPassword(true)} className="w-full" p="md" pt={0}>
+          <UnstyledButton onClick={() => setChangingPassword(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
             <Group justify="space-between" wrap="nowrap">
               <Text fw={600} fz={15} c="text.6">
                 {t("profile.changePassword")}
@@ -151,19 +167,20 @@ export function Settings(): ReactElement | null {
         )}
       </Card>
 
-      {/* The linked account lives with the identity it belongs to, connected or not. */}
-      <div className="m-3">
+      {/* The linked account lives with the identity it belongs to, connected or not - pulled
+          up under the account card so the two read as one group. */}
+      <div className="mx-3 mb-3 mt-0">
         <StravaStatusCard allowDisconnect />
       </div>
 
       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
         {t("settings.sectionBikes")}
       </Text>
-      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
         <Stack gap={0}>
           {/* The parts the owner named themselves. A list rather than a setting, so it opens
               over the page instead of resolving in place. */}
-          <UnstyledButton onClick={() => setCustomParts(true)} className="w-full" p="md">
+          <UnstyledButton onClick={() => setCustomParts(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
             <Group justify="space-between" wrap="nowrap">
               <Text c="text.6" fz={15} fw={600}>
                 {t("settings.customParts")}
@@ -174,7 +191,7 @@ export function Settings(): ReactElement | null {
 
           {/* The bikes taken out of use. A list rather than a setting, so it opens over the
               page the way the custom parts do - and it is the only door to the archive. */}
-          <UnstyledButton onClick={() => setArchive(true)} className="w-full" p="md">
+          <UnstyledButton onClick={() => setArchive(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
             <Group justify="space-between" wrap="nowrap">
               <Text c="text.6" fz={15} fw={600}>
                 {t("settings.bikeArchive")}
@@ -188,9 +205,9 @@ export function Settings(): ReactElement | null {
       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
         {t("settings.sectionGeneral")}
       </Text>
-      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
         <Stack gap={0}>
-          <Group justify="space-between" p="md">
+          <Group justify="space-between" px="md" py={ROW_GAP_HALF}>
             <Text c="text.6" fz={15} fw={600}>
               {t("settings.language")}
             </Text>
@@ -205,7 +222,7 @@ export function Settings(): ReactElement | null {
             />
           </Group>
 
-          <Group justify="space-between" p="md">
+          <Group justify="space-between" px="md" py={ROW_GAP_HALF}>
             <Text c="text.6" fz={15} fw={600}>
               {t("settings.currency")}
             </Text>
@@ -217,9 +234,22 @@ export function Settings(): ReactElement | null {
             />
           </Group>
 
+          {/* Beside the currency: both name how a figure is read, neither converts one. */}
+          <Group justify="space-between" px="md" py={ROW_GAP_HALF}>
+            <Text c="text.6" fz={15} fw={600}>
+              {t("settings.tirePressureUnit")}
+            </Text>
+            <SegmentedControl
+              value={user.tire_pressure_unit}
+              onChange={changeTirePressureUnit}
+              styles={SEGMENTED_CONTROL_STYLES}
+              data={TIRE_PRESSURE_UNITS.map((unit) => ({ value: unit, label: unit }))}
+            />
+          </Group>
+
           {/* Silences the lock screen only - the notification is still written and the bell
               still counts it. */}
-          <Group justify="space-between" p="md" wrap="nowrap">
+          <Group justify="space-between" px="md" py={ROW_GAP_HALF} wrap="nowrap">
             <Text c="text.6" fz={15} fw={600}>
               {t("settings.notifications")}
             </Text>
@@ -247,10 +277,10 @@ export function Settings(): ReactElement | null {
       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
         {t("settings.sectionAbout")}
       </Text>
-      <Card bg="cards.6" className="m-3" p={0} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
         <Stack gap={0}>
           {/* States the build; switches nothing. */}
-          <Group justify="space-between" p="md" wrap="nowrap">
+          <Group justify="space-between" px="md" py={ROW_GAP_HALF} wrap="nowrap">
             <Text c="text.6" fz={15} fw={600}>
               {t("settings.version")}
             </Text>
@@ -260,7 +290,7 @@ export function Settings(): ReactElement | null {
           </Group>
 
           {/* Both documents live on their own route, reachable without a session. */}
-          <UnstyledButton onClick={() => navigate("/legal/terms")} className="w-full" p="md">
+          <UnstyledButton onClick={() => navigate("/legal/terms")} className="w-full" px="md" py={ROW_GAP_HALF}>
             <Group justify="space-between" wrap="nowrap">
               <Text c="text.6" fz={15} fw={600}>
                 {t("settings.terms")}
@@ -269,7 +299,7 @@ export function Settings(): ReactElement | null {
             </Group>
           </UnstyledButton>
 
-          <UnstyledButton onClick={() => navigate("/legal/privacy")} className="w-full" p="md">
+          <UnstyledButton onClick={() => navigate("/legal/privacy")} className="w-full" px="md" py={ROW_GAP_HALF}>
             <Group justify="space-between" wrap="nowrap">
               <Text c="text.6" fz={15} fw={600}>
                 {t("settings.privacy")}
@@ -286,13 +316,14 @@ export function Settings(): ReactElement | null {
         bg="cards.6"
         className="m-3"
         mb="calc(1.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
-        p={0}
+        px={0}
+        py={ROW_GAP_HALF}
         radius="lg"
         style={{ border: "1px solid var(--mantine-color-inputs-5)" }}
       >
         <Stack gap={0}>
           {/* Nothing is lost by logging out, so it asks nothing before it does. */}
-          <UnstyledButton onClick={signOut} disabled={logout.isPending || leaving} className="w-full" p="md">
+          <UnstyledButton onClick={signOut} disabled={logout.isPending || leaving} className="w-full" px="md" py={ROW_GAP_HALF}>
             <Group justify="space-between" wrap="nowrap">
               <Text c="text.6" fz={15} fw={600}>
                 {t("profile.logout")}
@@ -303,7 +334,7 @@ export function Settings(): ReactElement | null {
 
           {/* Under the way out, because it is the same move taken further - and the only row on
               the page that reads in red, so nobody reaches it by aiming badly. */}
-          <UnstyledButton onClick={() => setDeletingAccount(true)} className="w-full" p="md">
+          <UnstyledButton onClick={() => setDeletingAccount(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
             <Group justify="space-between" wrap="nowrap">
               <Text c="red.5" fz={15} fw={600}>
                 {t("profile.deleteAccount")}

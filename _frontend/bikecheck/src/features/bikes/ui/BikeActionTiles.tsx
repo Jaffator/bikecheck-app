@@ -1,9 +1,9 @@
-// What the owner can do with this bike, as a 2x2 grid. Two weights: a filled tile is a
+// What the owner can do with this bike, as a two-column grid. Two weights: a filled tile is a
 // branded act, an outlined one goes somewhere. Tiles that navigate carry a chevron on their right.
 import type { ReactElement, ReactNode } from "react";
 import { Box, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, FileText, History, Share2 } from "lucide-react";
+import { ChevronRight, FileText, History, Share2, SlidersHorizontal } from "lucide-react";
 import { Bikecheck } from "@/assets/icons/bikecheck";
 
 interface BikeActionTilesProps {
@@ -12,6 +12,8 @@ interface BikeActionTilesProps {
   onExportReport: () => void;
   onOpenReports: () => void;
   onOpenHistory: () => void;
+  // The Setup screen: the numbers the bike is ridden at (ADR 0029).
+  onOpenSetup: () => void;
 }
 
 export function BikeActionTiles({
@@ -19,6 +21,7 @@ export function BikeActionTiles({
   onExportReport,
   onOpenReports,
   onOpenHistory,
+  onOpenSetup,
 }: BikeActionTilesProps): ReactElement {
   const { t } = useTranslation();
 
@@ -36,6 +39,7 @@ export function BikeActionTiles({
         />
       )}
       <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} chevron />
+      <Tile icon={<SlidersHorizontal size={20} />} label={t("setup.tile")} onClick={onOpenSetup} chevron />
       <Tile icon={<Share2 size={20} />} label={t("report.exportBikeCheck")} onClick={onExportReport} chevron />
       <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron />
     </SimpleGrid>

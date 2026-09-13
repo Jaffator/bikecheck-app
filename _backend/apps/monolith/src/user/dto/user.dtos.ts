@@ -1,6 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { tire_pressure_unit } from '@prisma/client';
 
-import { IsEmail, IsString, MinLength, MaxLength, IsOptional, IsInt, IsPositive, IsBoolean } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  MaxLength,
+  IsOptional,
+  IsInt,
+  IsPositive,
+  IsBoolean,
+  IsEnum,
+  ValidateIf,
+} from 'class-validator';
 
 // ------ DTOs for API ------
 // CREATE
@@ -73,6 +85,13 @@ export class UpdateUserDto {
   @IsBoolean()
   @ApiProperty({ example: true })
   notifications_enabled?: boolean;
+
+  // Bar or psi for tyre pressures, chosen once for the whole account (ADR 0029).
+  // Not IsOptional: the column is never null, so only an absent field is let through.
+  @ValidateIf((_, value: unknown) => value !== undefined)
+  @IsEnum(tire_pressure_unit)
+  @ApiProperty({ enum: tire_pressure_unit, example: tire_pressure_unit.bar })
+  tire_pressure_unit?: tire_pressure_unit;
 }
 
 // What an account still holds, counted just before it is destroyed. Read by the delete
@@ -105,6 +124,9 @@ export class UserResponseDto {
   currency!: string | null;
   @ApiProperty({ example: 70, nullable: true })
   weight_kg!: number | null;
+  // Never null: the column defaults to bar, so every account reads in one unit.
+  @ApiProperty({ enum: tire_pressure_unit, example: tire_pressure_unit.bar })
+  tire_pressure_unit!: tire_pressure_unit;
   @ApiProperty({ example: true })
   is_active!: boolean;
   // Whether a local password exists at all — the hash itself never leaves the server.

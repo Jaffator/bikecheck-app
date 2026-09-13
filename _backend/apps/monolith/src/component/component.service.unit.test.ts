@@ -16,6 +16,8 @@ function mountedRow(overrides: Record<string, unknown> = {}): Record<string, unk
     component_type_id: 12,
     component_desc: 'Fox 38 Factory Grip2',
     position: 'front',
+    dual_rebound: false,
+    dual_compression: false,
     note: null,
     mounted_at: new Date('2024-04-01T00:00:00.000Z'),
     removed_at: null,
@@ -306,6 +308,8 @@ describe('ComponentService', () => {
         side_choice: true,
         component_desc: 'Fox 38 Factory Grip2',
         position: 'front',
+        dual_rebound: false,
+        dual_compression: false,
         note: null,
         mounted_at: new Date('2024-04-01T00:00:00.000Z'),
         removed_at: null,
@@ -587,6 +591,22 @@ describe('ComponentService', () => {
           data: expect.objectContaining({ component_desc: 'Fox 38 Performance', position: 'rear' }),
         }),
       );
+    });
+
+    it('switches a hardened part between single and dual adjusters', async () => {
+      // ARRANGE
+      mockPrismaService.components_mounted.findFirst.mockResolvedValue(hardened);
+      mockPrismaService.components_mounted.update.mockResolvedValue({ ...hardened, dual_rebound: true });
+
+      // ACT
+      const result = await service.updateMountedComponent(COMPONENT_ID, { dual_rebound: true }, OWNER_ID);
+
+      // ASSERT
+      expect(mockPrismaService.components_mounted.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ dual_rebound: true, dual_compression: undefined }) }),
+      );
+      expect(result.dual_rebound).toBe(true);
+      expect(result.dual_compression).toBe(false);
     });
 
     it('refuses to rewrite the wear of a part a Service has touched', async () => {

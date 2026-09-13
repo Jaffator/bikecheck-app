@@ -225,6 +225,8 @@ export class ComponentService {
       data: {
         component_desc: dto.component_desc,
         position: dto.position,
+        dual_rebound: dto.dual_rebound,
+        dual_compression: dto.dual_compression,
         ...wear,
         updated_at: new Date(),
       },
@@ -412,6 +414,8 @@ function toBikeComponentDto(
     side_choice: mounted.component_types.component_groups.side_choice,
     component_desc: mounted.component_desc,
     position: mounted.position,
+    dual_rebound: mounted.dual_rebound,
+    dual_compression: mounted.dual_compression,
     note: mounted.note,
     mounted_at: mounted.mounted_at,
     removed_at: mounted.removed_at,

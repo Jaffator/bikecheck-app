@@ -409,6 +409,12 @@
           "items": {
             "$ref": "#/definitions/rides"
           }
+        },
+        "setup_profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/setup_profiles"
+          }
         }
       }
     },
@@ -621,6 +627,14 @@
           ],
           "default": 0
         },
+        "dual_rebound": {
+          "type": "boolean",
+          "default": false
+        },
+        "dual_compression": {
+          "type": "boolean",
+          "default": false
+        },
         "action_done_component_map": {
           "type": "array",
           "items": {
@@ -638,18 +652,6 @@
         },
         "component_types": {
           "$ref": "#/definitions/component_types"
-        },
-        "suspension_setup": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/suspension_setup"
-          }
-        },
-        "tire_setup": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/tire_setup"
-          }
         }
       }
     },
@@ -1244,95 +1246,127 @@
         }
       }
     },
-    "suspension_setup": {
+    "setup_profiles": {
       "type": "object",
       "properties": {
         "id": {
           "type": "integer"
         },
-        "setup_date": {
-          "type": "string",
-          "format": "date-time"
+        "name": {
+          "type": "string"
         },
-        "pressure_psi": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "pressure_bar": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "sag_percentage": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "amount_tokens_spacers": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "rebound_ls": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "rebound_hs": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "compression_ls": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "compression_hs": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "notes": {
+        "note": {
           "type": [
             "string",
             "null"
           ]
         },
-        "components_mounted": {
-          "$ref": "#/definitions/components_mounted"
-        }
-      }
-    },
-    "tire_setup": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
+        "front_tire_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
         },
-        "tire_pressure_bar": {
+        "rear_tire_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "fork_pressure_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "fork_tokens": {
           "type": [
             "integer",
             "null"
           ]
         },
-        "tire_pressure_psi": {
+        "fork_sag_percent": {
           "type": [
             "integer",
             "null"
           ]
         },
-        "components_mounted": {
-          "$ref": "#/definitions/components_mounted"
+        "fork_rebound_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fork_rebound_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fork_compression_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fork_compression_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_pressure_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "shock_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_sag_percent": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_rebound_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_rebound_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_compression_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_compression_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bikes": {
+          "$ref": "#/definitions/bikes"
         }
       }
     },
@@ -1451,6 +1485,14 @@
             "null"
           ],
           "default": true
+        },
+        "tire_pressure_unit": {
+          "type": "string",
+          "default": "bar",
+          "enum": [
+            "bar",
+            "psi"
+          ]
         },
         "accounts": {
           "type": "array",
@@ -1866,11 +1908,8 @@
     "rides": {
       "$ref": "#/definitions/rides"
     },
-    "suspension_setup": {
-      "$ref": "#/definitions/suspension_setup"
-    },
-    "tire_setup": {
-      "$ref": "#/definitions/tire_setup"
+    "setup_profiles": {
+      "$ref": "#/definitions/setup_profiles"
     },
     "users": {
       "$ref": "#/definitions/users"

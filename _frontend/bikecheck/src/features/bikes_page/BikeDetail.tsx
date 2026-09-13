@@ -39,7 +39,7 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
 import { useHeaderStore } from "@/store/store";
-import { TRANSPARENT_HEADER_CONTROL } from "@/layout/AppLayout";
+import { TRANSPARENT_HEADER_CONTROL } from "@/layout/headerControl";
 
 // One hue per reading, so the line is read by colour before it is read by number. The
 // green is the one the health badge already uses; the yellow is the brand's own. The
@@ -338,6 +338,7 @@ export function BikeDetail(): ReactElement {
         onExportReport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
+        onOpenSetup={() => navigate(`/bikes/${String(bike.id)}/setup`)}
       />
 
       {/* What the bike still owes, above what it is made of: the readings are what the

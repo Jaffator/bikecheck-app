@@ -25,7 +25,9 @@ did and the owner corrects what actually changed.
 
 Which sections a profile has follows the bike too — `has_front_suspension` and
 `has_rear_suspension` on `bikes` — not what is mounted. A gravel bike shows tyres only; a hardtail
-tyres and fork. The Setup therefore never reads `components_mounted` at all.
+tyres and fork. The one thing the Setup reads off `components_mounted` is the mounted fork's or
+shock's description, and only to pick which dial to draw — a Fox, a RockShox or a generic one. No
+value depends on it, and a part with no recognisable name simply gets the generic dial.
 
 ## Why profiles instead of history
 
@@ -63,5 +65,9 @@ compared across profiles or bikes without converting on every read.
   one" as a promise of the screen, not a row written by a migration.
 - Pressures are stored in psi; tyres are read in the owner's Tyre Pressure Unit, suspension always
   in psi. Clicks are counted from fully closed on every adjuster.
+- The dial's click range is a constant of the dial, not a stored fact: nothing records how many
+  clicks a given fork has. Every ring runs from fully closed (zero) to 30 clicks, a cap set
+  generously enough that a real fork never reaches it; the range is never shown: the owner
+  reads "7 clicks", not "7 of 30", because the 30 is the dial's, not the fork's.
 - Reports do not carry a Setup. A frozen Report of a rewritable profile is a feature on its own, not
   a side effect of this one.

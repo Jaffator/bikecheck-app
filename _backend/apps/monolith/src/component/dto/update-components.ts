@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
 import { CreateMountedComponentsDto } from './create-components';
 
 export class UpdateComponentsDto extends PartialType(CreateMountedComponentsDto) {}
@@ -18,6 +18,17 @@ export class UpdateMountedComponentDto {
   @ApiProperty({ type: String, example: 'front', required: false, nullable: true })
   @IsString()
   position?: string | null;
+
+  // Whether the damper carries a high-speed rebound adjuster beside the low-speed one.
+  @IsOptional()
+  @ApiProperty({ type: Boolean, example: false, required: false })
+  @IsBoolean()
+  dual_rebound?: boolean;
+
+  @IsOptional()
+  @ApiProperty({ type: Boolean, example: false, required: false })
+  @IsBoolean()
+  dual_compression?: boolean;
 
   // Refused against a part a Service has touched, along with every accumulator below.
   @IsOptional()

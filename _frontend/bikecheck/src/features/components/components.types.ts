@@ -85,6 +85,9 @@ export interface BikeComponent {
   side_choice: boolean;
   component_desc: string | null;
   position: string | null;
+  // A fork or shock with a high-speed adjuster beside the low-speed one; single by default.
+  dual_rebound: boolean;
+  dual_compression: boolean;
   note: string | null;
   mounted_at: string | null;
   // The day the part came off. Null while it is still on the bike.
@@ -109,6 +112,8 @@ export interface BikeComponent {
 export interface BikeComponentFields {
   component_desc?: string | null;
   position?: string | null;
+  dual_rebound?: boolean;
+  dual_compression?: boolean;
   mounted_at?: string | null;
   total_km?: number | null;
   total_time_min?: number | null;

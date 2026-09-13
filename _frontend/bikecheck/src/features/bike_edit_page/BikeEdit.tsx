@@ -1,69 +1,76 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useState, type ReactElement } from "react";
-import { Button, Group, Image, NumberInput, Select, Skeleton, Stack, Text, TextInput, Textarea } from "@mantine/core";
+import { Button, Group, NumberInput, Skeleton, Stack, Text, TextInput, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { ImagePlus } from "lucide-react";
 import { useBike, useBikeFormOptions, useUpdateBike } from "@/features/bikes/bikes.queries";
+import { BikeSpecification, FieldLabel } from "@/features/add_bike_page/BikeSpecification";
 import { PhotoCropModal } from "@/features/add_bike_page/PhotoCropModal";
-import { FRAME_SIZES, WHEEL_SIZES } from "@/features/add_bike_page/bikeSpecification.types";
-import { autosizeInputStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
+import {
+  SUSPENSION_FLAGS,
+  toSpecificationValues,
+  type BikeSpecificationValues,
+} from "@/features/add_bike_page/bikeSpecification.types";
+import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { PHOTO_ASPECT } from "@/features/add_bike_page/photoCrop";
 import type { Bike, UpdateBikePayload } from "@/features/bikes/bikes.types";
 
-// What the form holds while it is being edited. Everything is a string or null, so a
-// cleared field is telling the truth rather than falling back to a zero.
-interface FormValues {
-  bikename: string;
+// What the form holds while it is being edited: the wizard's step-two values, and the
+// identity the wizard took from the lookup. Everything is a string or null, so a cleared
+// field is telling the truth rather than falling back to a zero.
+interface FormValues extends BikeSpecificationValues {
   bike_brand: string;
   bike_model: string;
   year: number | null;
-  bike_type: string | null;
-  bike_size: string | null;
-  wheel_size: string | null;
   frame_material: string;
   bike_weight_kg: number | null;
   description: string;
 }
 
-// The frame sizes offered as chips in the wizard; "other" is a free-text escape there and
-// has no meaning in a plain select, so it is dropped.
-const FRAME_SIZE_OPTIONS = FRAME_SIZES.filter((size) => size !== "other");
-
 function toForm(bike: Bike): FormValues {
   return {
-    bikename: bike.bikename ?? "",
+    ...toSpecificationValues(bike),
     bike_brand: bike.bike_brand,
     bike_model: bike.bike_model ?? "",
     year: bike.year,
-    bike_type: bike.bike_type,
-    bike_size: bike.bike_size,
-    wheel_size: bike.wheel_size,
     frame_material: bike.frame_material ?? "",
     bike_weight_kg: bike.bike_weight_kg,
     description: bike.description ?? "",
   };
 }
 
+function trimmed(value: string): string | undefined {
+  const text = value.trim();
+  return text === "" ? undefined : text;
+}
+
 // What goes to the server. A field the owner emptied is left out rather than sent blank, so
 // the update writes what was typed and never an empty string over a name.
 function toPayload(values: FormValues): UpdateBikePayload {
+  const suspension = values.suspension === null ? undefined : SUSPENSION_FLAGS[values.suspension];
+  const bikeSize = values.frameSize === "other" ? trimmed(values.sizeLength) : (values.frameSize ?? undefined);
+
   return {
-    bikename: values.bikename.trim() === "" ? undefined : values.bikename.trim(),
+    bikename: trimmed(values.bikeName),
     bike_brand: values.bike_brand.trim(),
-    bike_model: values.bike_model.trim() === "" ? undefined : values.bike_model.trim(),
+    bike_model: trimmed(values.bike_model),
     year: values.year ?? undefined,
-    bike_type: values.bike_type ?? undefined,
-    bike_size: values.bike_size ?? undefined,
-    wheel_size: values.wheel_size ?? undefined,
-    frame_material: values.frame_material.trim() === "" ? undefined : values.frame_material.trim(),
+    bike_type: values.category ?? undefined,
+    has_front_suspension: suspension?.front,
+    has_rear_suspension: suspension?.rear,
+    ebike: values.ebike,
+    bike_size: bikeSize,
+    wheel_size: values.wheelSize ?? undefined,
+    total_km: values.currentMileage.trim() === "" ? undefined : Number(values.currentMileage),
+    frame_material: trimmed(values.frame_material),
     bike_weight_kg: values.bike_weight_kg ?? undefined,
-    description: values.description.trim() === "" ? undefined : values.description.trim(),
+    description: trimmed(values.description),
   };
 }
 
-// Corrects a bike that was described once in the wizard and frozen ever since. A plain
-// form, not a wizard: nothing here scrapes or assembles components.
+// Corrects a bike that was described once in the wizard and frozen ever since. The wizard's
+// own step two, with brand and model above it: nothing here scrapes
+// or assembles components.
 export function BikeEdit(): ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -150,154 +157,112 @@ export function BikeEdit(): ReactElement {
     setEdits((current) => ({ ...current, [key]: value }));
   };
 
-  const shownPhoto = photoUrl ?? bike.image_url;
+  // The header of step two names the bike as the lookup did; here it follows the brand and
+  // model typed above it.
+  const displayName = `${values.bike_brand} ${values.bike_model}`.trim();
+
+  const identity = (
+    <>
+      <Stack gap={4}>
+        <FieldLabel>{t("addBike.brand")}</FieldLabel>
+        <TextInput
+          placeholder={t("addBike.brandPlaceholder")}
+          radius="sm"
+          styles={inputStyles}
+          value={values.bike_brand}
+          onChange={(event) => set("bike_brand", event.currentTarget.value)}
+          error={values.bike_brand.trim() === "" ? t("bikeEdit.brandRequired") : undefined}
+        />
+      </Stack>
+
+      <Stack gap={4}>
+        <FieldLabel>{t("addBike.model")}</FieldLabel>
+        <TextInput
+          placeholder={t("addBike.modelPlaceholder")}
+          radius="sm"
+          styles={inputStyles}
+          value={values.bike_model}
+          onChange={(event) => set("bike_model", event.currentTarget.value)}
+        />
+      </Stack>
+    </>
+  );
 
   return (
     <Stack
-      gap="md"
+      gap="lg"
       px="md"
       pt="md"
       pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
-      bg="cards.6"
+      bg="background.9"
       mih="100dvh"
     >
-      {/* The photo, and the one control that replaces it. */}
-      <Stack gap="xs">
-        {shownPhoto !== null ? (
-          <Image
-            src={shownPhoto}
-            alt={values.bike_brand}
-            radius="lg"
-            style={{ aspectRatio: PHOTO_ASPECT, objectFit: "cover", backgroundColor: "#FFFFFF" }}
-          />
-        ) : (
-          <Stack
-            align="center"
-            justify="center"
-            bg="cards.7"
-            style={{ aspectRatio: PHOTO_ASPECT, borderRadius: "var(--mantine-radius-lg)" }}
-          >
-            <ImagePlus size={28} color="var(--mantine-color-text-9)" />
-          </Stack>
-        )}
+      <BikeSpecification
+        bike={null}
+        fallbackName={displayName}
+        year={values.year === null ? null : String(values.year)}
+        categories={formOptions?.bikeTypes ?? []}
+        values={values}
+        onChange={(field, value) => setEdits((current) => ({ ...current, [field]: value }))}
+        photoUrl={photoUrl ?? bike.image_url}
+        onPickPhoto={pickPhoto}
+        mileageLabel={t("bikeEdit.startingMileage")}
+        identity={identity}
+      />
 
-        <Button
-          component="label"
-          variant="outline"
-          color="primary.5"
-          radius="md"
-          leftSection={<ImagePlus size={16} />}
-          style={{ alignSelf: "flex-start" }}
-        >
-          {t("addBike.changePhoto")}
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(event) => pickPhoto(event.currentTarget.files?.[0] ?? null)}
-          />
-        </Button>
+      <Stack gap={4}>
+        <FieldLabel>{t("addBike.year")}</FieldLabel>
+        <NumberInput
+          placeholder={t("addBike.yearPlaceholder")}
+          radius="sm"
+          styles={inputStyles}
+          value={values.year ?? ""}
+          min={1900}
+          max={new Date().getFullYear() + 1}
+          onChange={(value) => set("year", value === "" ? null : Number(value))}
+        />
       </Stack>
 
-      <TextInput
-        label={t("addBike.bikeName")}
-        placeholder={t("addBike.bikeNamePlaceholder")}
-        styles={inputStyles}
-        value={values.bikename}
-        onChange={(event) => set("bikename", event.currentTarget.value)}
-      />
-
-      <TextInput
-        label={t("addBike.brand")}
-        placeholder={t("addBike.brandPlaceholder")}
-        styles={inputStyles}
-        value={values.bike_brand}
-        onChange={(event) => set("bike_brand", event.currentTarget.value)}
-        error={values.bike_brand.trim() === "" ? t("bikeEdit.brandRequired") : undefined}
-      />
-
-      <TextInput
-        label={t("addBike.model")}
-        placeholder={t("addBike.modelPlaceholder")}
-        styles={inputStyles}
-        value={values.bike_model}
-        onChange={(event) => set("bike_model", event.currentTarget.value)}
-      />
-
-      <NumberInput
-        label={t("addBike.year")}
-        placeholder={t("addBike.yearPlaceholder")}
-        styles={inputStyles}
-        value={values.year ?? ""}
-        min={1900}
-        max={new Date().getFullYear() + 1}
-        onChange={(value) => set("year", value === "" ? null : Number(value))}
-      />
-
-      <Select
-        label={t("bikeEdit.bikeType")}
-        placeholder={t("bikeEdit.bikeTypePlaceholder")}
-        comboboxProps={{ withinPortal: dropdownProps.withinPortal }}
-        styles={{ ...inputStyles, ...dropdownProps.styles }}
-        data={formOptions?.bikeTypes ?? []}
-        value={values.bike_type}
-        onChange={(value) => set("bike_type", value)}
-        clearable
-      />
-
-      <Select
-        label={t("addBike.frameSize")}
-        placeholder={t("bikeEdit.notSet")}
-        comboboxProps={{ withinPortal: dropdownProps.withinPortal }}
-        styles={{ ...inputStyles, ...dropdownProps.styles }}
-        data={[...FRAME_SIZE_OPTIONS]}
-        value={values.bike_size}
-        onChange={(value) => set("bike_size", value)}
-        clearable
-      />
-
-      <Select
-        label={t("addBike.wheelSize")}
-        placeholder={t("bikeEdit.notSet")}
-        comboboxProps={{ withinPortal: dropdownProps.withinPortal }}
-        styles={{ ...inputStyles, ...dropdownProps.styles }}
-        data={[...WHEEL_SIZES]}
-        value={values.wheel_size}
-        onChange={(value) => set("wheel_size", value)}
-        clearable
-      />
-
-      <TextInput
-        label={t("bikeEdit.frameMaterial")}
-        placeholder={t("bikeEdit.frameMaterialPlaceholder")}
-        styles={inputStyles}
-        value={values.frame_material}
-        onChange={(event) => set("frame_material", event.currentTarget.value)}
-      />
+      <Stack gap={4}>
+        <FieldLabel>{t("bikeEdit.frameMaterial")}</FieldLabel>
+        <TextInput
+          placeholder={t("bikeEdit.frameMaterialPlaceholder")}
+          radius="sm"
+          styles={inputStyles}
+          value={values.frame_material}
+          onChange={(event) => set("frame_material", event.currentTarget.value)}
+        />
+      </Stack>
 
       {/* A tenth of a kilogram is exactly what an owner quotes about a road bike. */}
-      <NumberInput
-        label={t("bikeEdit.weight")}
-        placeholder={t("bikeEdit.weightPlaceholder")}
-        styles={inputStyles}
-        value={values.bike_weight_kg ?? ""}
-        min={0}
-        max={999}
-        step={0.1}
-        decimalScale={2}
-        onChange={(value) => set("bike_weight_kg", value === "" ? null : Number(value))}
-      />
+      <Stack gap={4}>
+        <FieldLabel>{t("bikeEdit.weight")}</FieldLabel>
+        <NumberInput
+          placeholder={t("bikeEdit.weightPlaceholder")}
+          radius="sm"
+          styles={inputStyles}
+          value={values.bike_weight_kg ?? ""}
+          min={0}
+          max={999}
+          step={0.1}
+          decimalScale={2}
+          onChange={(value) => set("bike_weight_kg", value === "" ? null : Number(value))}
+        />
+      </Stack>
 
-      <Textarea
-        label={t("bikeEdit.description")}
-        placeholder={t("bikeEdit.descriptionPlaceholder")}
-        styles={autosizeInputStyles}
-        autosize
-        minRows={2}
-        maxRows={5}
-        value={values.description}
-        onChange={(event) => set("description", event.currentTarget.value)}
-      />
+      <Stack gap={4}>
+        <FieldLabel>{t("bikeEdit.description")}</FieldLabel>
+        <Textarea
+          placeholder={t("bikeEdit.descriptionPlaceholder")}
+          radius="sm"
+          styles={autosizeInputStyles}
+          autosize
+          minRows={2}
+          maxRows={5}
+          value={values.description}
+          onChange={(event) => set("description", event.currentTarget.value)}
+        />
+      </Stack>
 
       {save.isError && (
         <Text fz={13} c="red.5">
