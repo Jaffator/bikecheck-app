@@ -12,7 +12,13 @@ import type { TirePressureUnit } from "@/features/users/users.types";
 import { useDeleteSetupProfile, useSaveSetupProfile, useSetupProfiles } from "@/features/setup/setup.queries";
 import type { SetupProfile } from "@/features/setup/setup.types";
 import type { DialKind } from "@/features/setup/dial.types";
-import { isSetupDirty, toSetupForm, toSetupPayload, type SetupFormValues, type SetupSuspension } from "@/features/setup/setupForm";
+import {
+  isSetupDirty,
+  toSetupForm,
+  toSetupPayload,
+  type SetupFormValues,
+  type SetupSuspension,
+} from "@/features/setup/setupForm";
 import { SetupProfileChips } from "@/features/setup/ui/SetupProfileChips";
 import { SetupProfileForm } from "@/features/setup/ui/SetupProfileForm";
 import { SetupProfileMenu } from "@/features/setup/ui/SetupProfileMenu";

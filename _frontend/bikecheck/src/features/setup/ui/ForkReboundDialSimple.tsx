@@ -45,7 +45,10 @@ function layoutLetters(): LetterLayout {
   const letters: Letter[] = [];
   for (const phase of [0, Math.PI]) {
     for (let j = 0; j < LABEL.length; j++) {
-      letters.push({ ch: LABEL[j], theta: phase + (j - (LABEL.length - 1) / 2) * stepTheta });
+      letters.push({
+        ch: LABEL[j],
+        theta: phase + (j - (LABEL.length - 1) / 2) * stepTheta,
+      });
     }
   }
   return { fontSize, y: TOP + HEIGHT / 2 + fontSize * 0.36, letters };
@@ -160,7 +163,11 @@ function SideRing({ groupProps, url }: SideRingProps): ReactElement {
         fontSize={fontSize}
         fill="#fff"
         textAnchor="middle"
-        style={{ paintOrder: "stroke", stroke: "rgba(40,0,6,0.55)", strokeWidth: 1.5 }}
+        style={{
+          paintOrder: "stroke",
+          stroke: "rgba(40,0,6,0.55)",
+          strokeWidth: 1.5,
+        }}
       >
         {letters.map((l, i) => (
           <text key={i} data-letter y={textY}>

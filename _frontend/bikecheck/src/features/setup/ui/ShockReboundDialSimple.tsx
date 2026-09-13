@@ -153,7 +153,11 @@ function Knob({ groupProps, url }: KnobProps): ReactElement {
               fill="#fff"
               textAnchor="middle"
               dominantBaseline="central"
-              style={{ paintOrder: "stroke", stroke: "rgba(40,0,6,0.6)", strokeWidth: 1.6 }}
+              style={{
+                paintOrder: "stroke",
+                stroke: "rgba(40,0,6,0.6)",
+                strokeWidth: 1.6,
+              }}
             >
               {LETTER_THETA.map((_, i) => (
                 <text key={i} data-letter y={(BAND.y0 + BAND.y1) / 2 + 1}>

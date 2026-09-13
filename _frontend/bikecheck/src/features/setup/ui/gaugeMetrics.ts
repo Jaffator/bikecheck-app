@@ -6,10 +6,11 @@ import { STEP_BUTTON_SIZE } from "./stepButtonProps";
 // reads the same spacing to set its steppers under the grid's outer ones.
 export const GAUGE_GRID_SPACING = "xl";
 
-// The gap between the minus and the plus of a pair - wide enough for a click count to sit in
-// it, so a click row's pair lines up with the pairs under the gauges above - and between the
-// figure and a unit set beside it.
+// The gap between the minus and the plus of a click row's pair - wide enough for the count to
+// sit in it - and between the figure and a unit set beside it.
 export const STEP_PAIR_GAP = 25;
+// The pair under a gauge has nothing between its buttons, so they stand closer.
+export const GAUGE_PAIR_GAP = 12;
 export const FIGURE_UNIT_GAP = 4;
 // A minus and a plus with the gap between them, as they stand under every gauge.
 export const STEP_PAIR_WIDTH = STEP_BUTTON_SIZE * 2 + STEP_PAIR_GAP;

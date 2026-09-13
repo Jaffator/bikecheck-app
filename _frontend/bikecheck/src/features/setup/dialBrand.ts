@@ -29,7 +29,10 @@ export interface MountedSuspension {
   dualCompression: boolean;
 }
 
-export function mountedSuspension(components: BikeComponent[] | undefined, part: SuspensionPart): MountedSuspension | null {
+export function mountedSuspension(
+  components: BikeComponent[] | undefined,
+  part: SuspensionPart,
+): MountedSuspension | null {
   const mounted = components?.find((component) => component.component_type === part && !isDismounted(component));
   if (!mounted) return null;
   return {

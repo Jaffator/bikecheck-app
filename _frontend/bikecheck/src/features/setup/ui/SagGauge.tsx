@@ -12,11 +12,15 @@ import { tapFeedback } from "@/utils/haptics";
 import type { SuspensionPart } from "../dialBrand";
 import { BigNumberInput } from "./BigNumberInput";
 import { GaugeReadout } from "./GaugeReadout";
-import { FIGURE_UNIT_GAP, STEP_PAIR_GAP, UNIT_LINE_HEIGHT, figureFontSize, unitFontSize } from "./gaugeMetrics";
+import { GAUGE_PAIR_GAP, figureFontSize } from "./gaugeMetrics";
 import { ForkLeg, ShockBody } from "./sagDrawings";
 import { PICTURE_INK_RIGHT, PICTURE_WIDTH } from "./sagPictureMetrics";
 import { StepButton } from "./StepButton";
 
+// The picture and its name stand this much left of the column's middle, so the figure hanging
+// off the picture's right does not crowd the edge of the card.
+const PICTURE_SHIFT = 10;
+const shifted = { position: "relative", left: -PICTURE_SHIFT } as const;
 // The figure sits close by the shaft it reads off; two digits at most.
 const FIGURE_GAP = 4;
 const FIGURE_WIDTH = 36;
@@ -59,42 +63,41 @@ export function SagGauge({
 
   return (
     <Stack gap={4} align="center">
-      <Text style={fieldLabel} w={PICTURE_WIDTH} ta="center">
+      <Text style={{ ...fieldLabel, ...shifted }} w={PICTURE_WIDTH} ta="center">
         {label}
       </Text>
       {/* The picture is the column's centre, over the middle of the pair; it hangs from the top,
           the fork drawn so its gold sits on the figure line. The figure hangs off its right. */}
-      <Box pos="relative" w={PICTURE_WIDTH} h={size}>
+      <Box pos="relative" w={PICTURE_WIDTH} h={size} left={-PICTURE_SHIFT}>
         {part === "Fork" ? <ForkLeg size={size} sag={sag} /> : <ShockBody size={size} sag={sag} />}
-        {/* Set by the part's own edge rather than the picture's blank margin. The sign is set
-            beside the figure on its baseline, as the app writes "15 %"; the readout's own unit
-            line stays blank so the figure keeps the row's line. */}
+        {/* Set by the part's own edge rather than the picture's blank margin, the per cent sign
+            on the unit line under the figure as under every gauge's. */}
         <GaugeReadout
           size={size}
           align="flex-start"
-          style={{ position: "absolute", top: 0, left: PICTURE_INK_RIGHT[part] + FIGURE_GAP }}
+          unit="%"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: PICTURE_INK_RIGHT[part] + FIGURE_GAP,
+          }}
         >
-          <Group gap={FIGURE_UNIT_GAP} wrap="nowrap" align="baseline">
-            <BigNumberInput
-              label={label}
-              value={value}
-              onChange={onChange}
-              decimals={0}
-              max={max}
-              align="left"
-              width={FIGURE_WIDTH}
-              fontSize={figureFontSize(size)}
-              readOnly={readOnly}
-            />
-            <Text fz={unitFontSize(size)} fw={500} c="var(--color-text-dim)" lh={UNIT_LINE_HEIGHT}>
-              %
-            </Text>
-          </Group>
+          <BigNumberInput
+            label={label}
+            value={value}
+            onChange={onChange}
+            decimals={0}
+            max={max}
+            align="left"
+            width={FIGURE_WIDTH}
+            fontSize={figureFontSize(size)}
+            readOnly={readOnly}
+          />
         </GaugeReadout>
       </Box>
       {/* Centred in the column, so the pair lines up with the pairs under the other gauges. */}
       {!readOnly && (
-        <Group gap={STEP_PAIR_GAP} wrap="nowrap" justify="center" w="100%">
+        <Group gap={GAUGE_PAIR_GAP} wrap="nowrap" justify="center" w="100%">
           <StepButton
             direction={-1}
             label={t("setup.stepLess", { field: label })}

@@ -1,4 +1,4 @@
-import { createTheme, type MantineColorsTuple } from "@mantine/core";
+import { SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
@@ -152,4 +152,15 @@ export const theme = createTheme({
   },
   other: otherColor,
   respectReducedMotion: false,
+  components: {
+    // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk
+    // track, raised pill, dim labels.
+    SegmentedControl: SegmentedControl.extend({
+      styles: {
+        root: { backgroundColor: "var(--mantine-color-inputs-6)" },
+        indicator: { backgroundColor: "var(--mantine-color-cards-5)" },
+        label: { color: "var(--color-text-dim)" },
+      },
+    }),
+  },
 });

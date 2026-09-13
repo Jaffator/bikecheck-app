@@ -10,7 +10,7 @@ import { fieldLabel } from "@/features/add_bike_page/formStyles";
 import { tapFeedback } from "@/utils/haptics";
 import { BigNumberInput } from "./BigNumberInput";
 import { GaugeReadout } from "./GaugeReadout";
-import { STEP_PAIR_GAP, arcStroke, figureFontSize } from "./gaugeMetrics";
+import { GAUGE_PAIR_GAP, arcStroke, figureFontSize } from "./gaugeMetrics";
 import { StepButton } from "./StepButton";
 
 // Three quarters of a circle, open at the bottom, as a pressure gauge is drawn.
@@ -120,7 +120,7 @@ export function SetupGauge({
         </GaugeReadout>
       </div>
       {!readOnly && (
-        <Group gap={STEP_PAIR_GAP} wrap="nowrap" justify="center">
+        <Group gap={GAUGE_PAIR_GAP} wrap="nowrap" justify="center">
           <StepButton
             direction={-1}
             label={t("setup.stepLess", { field: label })}

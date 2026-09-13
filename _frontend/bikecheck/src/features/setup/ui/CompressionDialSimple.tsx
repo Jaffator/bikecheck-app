@@ -22,7 +22,16 @@ function mix(hex: string, target: string, t: number): string {
   const channels = (s: string): number[] => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
   const a = channels(hex);
   const b = channels(target);
-  return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, "0")).join("");
+  return (
+    "#" +
+    a
+      .map((v, i) =>
+        Math.round(v + (b[i] - v) * t)
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")
+  );
 }
 
 export function CompressionDialSimple({

@@ -40,11 +40,20 @@ const READOUTS_INSET = `calc(${COLUMN_WIDTH} / 2 - ${STEP_PAIR_WIDTH / 2}px)`;
 // The info mark after the "clicks" heading.
 const INFO_SIZE = 18;
 const INFO_GAP = 2;
+// Between the rebound row and the compression row.
+const ROW_GAP = 30;
+// The rebound knobs hang from the fork leg or the shock, so they sit a little lower in their row.
+const REBOUND_DIAL_OFFSET = 15;
+// Room under the compression row before the card ends.
+const BOTTOM_GAP = 20;
 
 // A read-only dial is not something to grab.
 const READ_ONLY_STYLE: CSSProperties = { cursor: "default" };
 // The dual shock dial has no readOnly of its own, so it is simply not touchable.
-const READ_ONLY_SHOCK_STYLE: CSSProperties = { ...READ_ONLY_STYLE, pointerEvents: "none" };
+const READ_ONLY_SHOCK_STYLE: CSSProperties = {
+  ...READ_ONLY_STYLE,
+  pointerEvents: "none",
+};
 
 interface SuspensionDialsProps {
   section: "fork" | "shock";
@@ -54,6 +63,7 @@ interface SuspensionDialsProps {
   onChange: (ring: Adjuster, value: number) => void;
   onDualChange: (kind: DialKind, dual: boolean) => void;
   readOnly?: boolean;
+  style?: CSSProperties;
 }
 
 export function SuspensionDials({
@@ -63,6 +73,7 @@ export function SuspensionDials({
   onChange,
   onDualChange,
   readOnly = false,
+  style,
 }: SuspensionDialsProps): ReactElement {
   const { t } = useTranslation();
   const dialStyle = readOnly ? READ_ONLY_STYLE : undefined;
@@ -109,22 +120,37 @@ export function SuspensionDials({
     const shown: Adjuster[] = dual ? keys : [keys[1]];
     return (
       <Stack gap="xs">
-        <Group justify="space-between" align="center" wrap="nowrap">
-          <Text style={fieldLabel}>{title}</Text>
-          <SegmentedControl
-            size="xs"
-            data={layoutOptions}
-            value={dual ? "dual" : "single"}
-            onChange={(value) => onDualChange(kind, value === "dual")}
-            disabled={switchDisabled}
-            aria-label={t("setup.adjusterLayout", { dial: title })}
-          />
+        {/* The same two columns as the row under it: the name centred over the knob, as a
+            gauge's name is over its arc, and the switch centred over the counts. */}
+        <Group gap={DIAL_GAP} wrap="nowrap" align="center">
+          <Text w={DIAL_WIDTH} ta="center" style={{ ...fieldLabel, flexShrink: 0 }}>
+            {title}
+          </Text>
+          <Box style={{ flex: 1, minWidth: 0, paddingRight: READOUTS_INSET }}>
+            <Group justify="center" ml="auto" w={STEP_PAIR_WIDTH}>
+              <SegmentedControl
+                size="xs"
+                data={layoutOptions}
+                value={dual ? "dual" : "single"}
+                onChange={(value) => onDualChange(kind, value === "dual")}
+                disabled={switchDisabled}
+                aria-label={t("setup.adjusterLayout", { dial: title })}
+              />
+            </Group>
+          </Box>
         </Group>
         <Group gap={DIAL_GAP} wrap="nowrap" align="center">
-          <Box w={DIAL_WIDTH} style={{ flexShrink: 0 }}>
+          <Box
+            w={DIAL_WIDTH}
+            style={{
+              flexShrink: 0,
+              position: "relative",
+              top: kind === "rebound" ? REBOUND_DIAL_OFFSET : 0,
+            }}
+          >
             {dial}
           </Box>
-          <Stack gap="sm" style={{ flex: 1, minWidth: 0, paddingRight: READOUTS_INSET }}>
+          <Stack gap="sm" style={{ flex: 1, minWidth: 0, paddingRight: READOUTS_INSET, marginTop: -15 }}>
             {/* Names the counts: the word and its mark centred as one over the figure between
                 the plus and the minus, with how they are counted a tap away rather than printed
                 under every knob. */}
@@ -184,7 +210,7 @@ export function SuspensionDials({
   );
 
   return (
-    <Stack gap="lg">
+    <Stack gap={ROW_GAP} pb={BOTTOM_GAP} style={style}>
       {row(t("setup.rebound"), "rebound", dualRebound, reboundDial, ["hsr", "lsr"])}
       {row(t("setup.compression"), "compression", dualCompression, compressionDial, ["hsc", "lsc"])}
       <ExplanationModal

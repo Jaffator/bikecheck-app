@@ -1,8 +1,8 @@
 // The numbers of one Setup Profile as a sheet: Tyres always, Fork and Shock by the bike's own
 // suspension flags rather than by what is mounted (ADR 0029). Tyres read in the owner's Tyre
 // Pressure Unit; a fork or shock is always psi, because that is what every shock pump shows.
-import type { ReactElement } from "react";
-import { Box, Divider, SimpleGrid, Stack, Textarea } from "@mantine/core";
+import type { CSSProperties, ReactElement } from "react";
+import { SimpleGrid, Stack, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { autosizeInputStyles } from "@/features/add_bike_page/formStyles";
 import type { TirePressureUnit } from "@/features/users/users.types";
@@ -30,7 +30,7 @@ import { SagGauge } from "./SagGauge";
 import { SetupGauge } from "./SetupGauge";
 import { SetupSection } from "./SetupSection";
 import { SuspensionDials } from "./SuspensionDials";
-import { TokenBar } from "./TokenBar";
+import { TokenStepper } from "./TokenStepper";
 
 // Suspension pressure is accepted to a tenth of a psi, which is what the API stores.
 const SUSPENSION_PSI_DECIMALS = 1;
@@ -39,9 +39,20 @@ const SUSPENSION_PSI_MAX = 350;
 const SUSPENSION_PSI_STEP = 1;
 // Volume spacers: a fork or shock takes a handful, never more than eight.
 const TOKENS_MAX = 8;
-// Space between the token bar, its hairlines and the neighbours, on top of the section gap.
-const TOKENS_MARGIN = 28;
-const TOKENS_RULE = "var(--color-border-subtle)";
+// Between the pressure gauge, the token column and the sag picture.
+const GAUGE_ROW_GAP = 16;
+// Under the gauge row, before the knobs.
+const DIALS_GAP = 30;
+// Pressure, tokens and sag in one row, drawn close together in the middle of the card.
+const gaugeRow: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "auto auto auto",
+  justifyContent: "center",
+  alignItems: "start",
+  columnGap: GAUGE_ROW_GAP,
+};
+// The token column sits a touch right of centre, off the sag picture's shaft.
+const TOKENS_OFFSET = 8;
 // Sag is set between a fifth and a third of the travel; half is already far past any chart.
 const SAG_MAX = 50;
 
@@ -114,7 +125,8 @@ export function SetupProfileForm({
       {/* ---------- Fork ---------- */}
       {hasFork && (
         <SetupSection title={t("setup.fork")}>
-          <SimpleGrid cols={2} spacing={GAUGE_GRID_SPACING}>
+          {/* The two gauges at the sides with the token count between them. */}
+          <div style={gaugeRow}>
             <SetupGauge
               label={t("setup.pressure")}
               value={values.fork_pressure_psi}
@@ -127,6 +139,14 @@ export function SetupProfileForm({
               hint={barHint}
               readOnly={readOnly}
             />
+            <TokenStepper
+              style={{ marginLeft: TOKENS_OFFSET }}
+              label={t("setup.tokens")}
+              value={values.fork_tokens}
+              onChange={(value) => onChange("fork_tokens", value)}
+              max={TOKENS_MAX}
+              readOnly={readOnly}
+            />
             <SagGauge
               part="Fork"
               label={t("setup.sag")}
@@ -136,20 +156,9 @@ export function SetupProfileForm({
               start={SAG_START}
               readOnly={readOnly}
             />
-          </SimpleGrid>
-          {/* A hairline either side, so the bar reads as its own strip between gauges and knobs. */}
-          <Box my={TOKENS_MARGIN}>
-            <Divider color={TOKENS_RULE} mb={TOKENS_MARGIN} />
-            <TokenBar
-              label={t("setup.tokens")}
-              value={values.fork_tokens}
-              onChange={(value) => onChange("fork_tokens", value)}
-              max={TOKENS_MAX}
-              readOnly={readOnly}
-            />
-            <Divider color={TOKENS_RULE} mt={TOKENS_MARGIN} />
-          </Box>
+          </div>
           <SuspensionDials
+            style={{ marginTop: DIALS_GAP }}
             section="fork"
             part={fork}
             onDualChange={(kind, dual) => onDualChange("fork", kind, dual)}
@@ -163,7 +172,8 @@ export function SetupProfileForm({
       {/* ---------- Shock ---------- */}
       {hasShock && (
         <SetupSection title={t("setup.shock")}>
-          <SimpleGrid cols={2} spacing={GAUGE_GRID_SPACING}>
+          {/* The two gauges at the sides with the token count between them. */}
+          <div style={gaugeRow}>
             <SetupGauge
               label={t("setup.pressure")}
               value={values.shock_pressure_psi}
@@ -176,6 +186,14 @@ export function SetupProfileForm({
               hint={barHint}
               readOnly={readOnly}
             />
+            <TokenStepper
+              style={{ marginLeft: TOKENS_OFFSET }}
+              label={t("setup.tokens")}
+              value={values.shock_tokens}
+              onChange={(value) => onChange("shock_tokens", value)}
+              max={TOKENS_MAX}
+              readOnly={readOnly}
+            />
             <SagGauge
               part="Shock"
               label={t("setup.sag")}
@@ -185,20 +203,9 @@ export function SetupProfileForm({
               start={SAG_START}
               readOnly={readOnly}
             />
-          </SimpleGrid>
-          {/* A hairline either side, so the bar reads as its own strip between gauges and knobs. */}
-          <Box my={TOKENS_MARGIN}>
-            <Divider color={TOKENS_RULE} mb={TOKENS_MARGIN} />
-            <TokenBar
-              label={t("setup.tokens")}
-              value={values.shock_tokens}
-              onChange={(value) => onChange("shock_tokens", value)}
-              max={TOKENS_MAX}
-              readOnly={readOnly}
-            />
-            <Divider color={TOKENS_RULE} mt={TOKENS_MARGIN} />
-          </Box>
+          </div>
           <SuspensionDials
+            style={{ marginTop: DIALS_GAP }}
             section="shock"
             part={shock}
             onDualChange={(kind, dual) => onDualChange("shock", kind, dual)}
