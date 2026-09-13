@@ -2,7 +2,7 @@
 // suspension flags rather than by what is mounted (ADR 0029). Tyres read in the owner's Tyre
 // Pressure Unit; a fork or shock is always psi, because that is what every shock pump shows.
 import type { ReactElement } from "react";
-import { SimpleGrid, Stack, Textarea } from "@mantine/core";
+import { Box, Divider, SimpleGrid, Stack, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { autosizeInputStyles } from "@/features/add_bike_page/formStyles";
 import type { TirePressureUnit } from "@/features/users/users.types";
@@ -39,6 +39,9 @@ const SUSPENSION_PSI_MAX = 350;
 const SUSPENSION_PSI_STEP = 1;
 // Volume spacers: a fork or shock takes a handful, never more than eight.
 const TOKENS_MAX = 8;
+// Space between the token bar, its hairlines and the neighbours, on top of the section gap.
+const TOKENS_MARGIN = 28;
+const TOKENS_RULE = "var(--color-border-subtle)";
 // Sag is set between a fifth and a third of the travel; half is already far past any chart.
 const SAG_MAX = 50;
 
@@ -134,13 +137,18 @@ export function SetupProfileForm({
               readOnly={readOnly}
             />
           </SimpleGrid>
-          <TokenBar
-            label={t("setup.tokens")}
-            value={values.fork_tokens}
-            onChange={(value) => onChange("fork_tokens", value)}
-            max={TOKENS_MAX}
-            readOnly={readOnly}
-          />
+          {/* A hairline either side, so the bar reads as its own strip between gauges and knobs. */}
+          <Box my={TOKENS_MARGIN}>
+            <Divider color={TOKENS_RULE} mb={TOKENS_MARGIN} />
+            <TokenBar
+              label={t("setup.tokens")}
+              value={values.fork_tokens}
+              onChange={(value) => onChange("fork_tokens", value)}
+              max={TOKENS_MAX}
+              readOnly={readOnly}
+            />
+            <Divider color={TOKENS_RULE} mt={TOKENS_MARGIN} />
+          </Box>
           <SuspensionDials
             section="fork"
             part={fork}
@@ -178,13 +186,18 @@ export function SetupProfileForm({
               readOnly={readOnly}
             />
           </SimpleGrid>
-          <TokenBar
-            label={t("setup.tokens")}
-            value={values.shock_tokens}
-            onChange={(value) => onChange("shock_tokens", value)}
-            max={TOKENS_MAX}
-            readOnly={readOnly}
-          />
+          {/* A hairline either side, so the bar reads as its own strip between gauges and knobs. */}
+          <Box my={TOKENS_MARGIN}>
+            <Divider color={TOKENS_RULE} mb={TOKENS_MARGIN} />
+            <TokenBar
+              label={t("setup.tokens")}
+              value={values.shock_tokens}
+              onChange={(value) => onChange("shock_tokens", value)}
+              max={TOKENS_MAX}
+              readOnly={readOnly}
+            />
+            <Divider color={TOKENS_RULE} mt={TOKENS_MARGIN} />
+          </Box>
           <SuspensionDials
             section="shock"
             part={shock}

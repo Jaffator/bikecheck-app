@@ -184,8 +184,7 @@ export function SuspensionDials({
   );
 
   return (
-    // Extra room above the dials, so the token bar does not crowd the rebound knob.
-    <Stack gap="lg" mt={30}>
+    <Stack gap="lg">
       {row(t("setup.rebound"), "rebound", dualRebound, reboundDial, ["hsr", "lsr"])}
       {row(t("setup.compression"), "compression", dualCompression, compressionDial, ["hsc", "lsc"])}
       <ExplanationModal

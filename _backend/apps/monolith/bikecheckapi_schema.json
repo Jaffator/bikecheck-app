@@ -1,6 +1,43 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/users/me/deletion-summary": {
+      "get": {
+        "operationId": "User getDeletionSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDeletionSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "What the signed-in account still holds, for the delete dialog",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/api/users/me": {
+      "delete": {
+        "operationId": "User deleteMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete the signed-in account and everything belonging to it",
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/api/users/{id}": {
       "get": {
         "operationId": "User getUser",
@@ -187,6 +224,30 @@
       "post": {
         "operationId": "Auth logout",
         "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/change-password": {
+      "post": {
+        "operationId": "Auth changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": ""
@@ -2495,6 +2556,166 @@
           "AiChat"
         ]
       }
+    },
+    "/api/setup/bike/{bikeId}": {
+      "get": {
+        "operationId": "Setup findByBike",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Response_SetupProfileDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bike not found or not the caller's"
+          }
+        },
+        "tags": [
+          "Setup"
+        ]
+      },
+      "post": {
+        "operationId": "Setup create",
+        "parameters": [
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSetupProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_SetupProfileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bike, or the profile to copy, not found on this bike"
+          },
+          "409": {
+            "description": "Bike is archived, or the name is already taken on it"
+          }
+        },
+        "tags": [
+          "Setup"
+        ]
+      }
+    },
+    "/api/setup/{id}": {
+      "patch": {
+        "operationId": "Setup update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSetupProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_SetupProfileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found or not the caller's"
+          },
+          "409": {
+            "description": "Bike is archived, or the name is already taken on it"
+          }
+        },
+        "tags": [
+          "Setup"
+        ]
+      },
+      "delete": {
+        "operationId": "Setup delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_SetupProfileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found or not the caller's"
+          },
+          "409": {
+            "description": "Bike is archived"
+          }
+        },
+        "tags": [
+          "Setup"
+        ]
+      }
     }
   },
   "info": {
@@ -2507,6 +2728,33 @@
   "servers": [],
   "components": {
     "schemas": {
+      "AccountDeletionSummaryDto": {
+        "type": "object",
+        "properties": {
+          "bikes": {
+            "type": "number",
+            "example": 3
+          },
+          "rides": {
+            "type": "number",
+            "example": 412
+          },
+          "services": {
+            "type": "number",
+            "example": 27
+          },
+          "publicReports": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "bikes",
+          "rides",
+          "services",
+          "publicReports"
+        ]
+      },
       "UserResponseDto": {
         "type": "object",
         "properties": {
@@ -2541,9 +2789,26 @@
             "example": 70,
             "nullable": true
           },
+          "tire_pressure_unit": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "psi"
+            ],
+            "example": "bar"
+          },
           "is_active": {
             "type": "boolean",
             "example": true
+          },
+          "has_password": {
+            "type": "boolean",
+            "example": true
+          },
+          "notifications_enabled": {
+            "type": "object",
+            "example": true,
+            "nullable": true
           },
           "strava_athlete_id": {
             "type": "object",
@@ -2593,7 +2858,10 @@
           "language",
           "currency",
           "weight_kg",
+          "tire_pressure_unit",
           "is_active",
+          "has_password",
+          "notifications_enabled",
           "strava_athlete_id",
           "strava_firstname",
           "strava_lastname",
@@ -2653,6 +2921,18 @@
           "avatar_url": {
             "type": "string",
             "example": "https://example.com/avatar.jpg"
+          },
+          "notifications_enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "tire_pressure_unit": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "psi"
+            ],
+            "example": "bar"
           }
         },
         "required": [
@@ -2660,7 +2940,26 @@
           "language",
           "currency",
           "weight_kg",
-          "avatar_url"
+          "avatar_url",
+          "notifications_enabled",
+          "tire_pressure_unit"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "currentPassword123"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "newStrongPassword123"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
         ]
       },
       "LoginDto": {
@@ -4460,6 +4759,16 @@
             "example": "front",
             "nullable": true
           },
+          "dual_rebound": {
+            "type": "boolean",
+            "example": false,
+            "description": "The damper has a high-speed rebound adjuster beside the low-speed one"
+          },
+          "dual_compression": {
+            "type": "boolean",
+            "example": false,
+            "description": "The damper has a high-speed compression adjuster beside the low-speed one"
+          },
           "note": {
             "type": "string",
             "example": "Mounted after spring service",
@@ -4538,6 +4847,8 @@
           "side_choice",
           "component_desc",
           "position",
+          "dual_rebound",
+          "dual_compression",
           "note",
           "mounted_at",
           "removed_at",
@@ -4622,6 +4933,14 @@
             "type": "string",
             "example": "front",
             "nullable": true
+          },
+          "dual_rebound": {
+            "type": "boolean",
+            "example": false
+          },
+          "dual_compression": {
+            "type": "boolean",
+            "example": false
           },
           "mounted_at": {
             "format": "date-time",
@@ -5297,6 +5616,278 @@
         "required": [
           "question"
         ]
+      },
+      "Response_SetupProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 12
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 15
+          },
+          "name": {
+            "type": "string",
+            "example": "Trail"
+          },
+          "note": {
+            "type": "object",
+            "example": "Wet, muddy Loket",
+            "nullable": true
+          },
+          "front_tire_psi": {
+            "type": "object",
+            "example": 24.5,
+            "nullable": true
+          },
+          "rear_tire_psi": {
+            "type": "object",
+            "example": 27,
+            "nullable": true
+          },
+          "fork_pressure_psi": {
+            "type": "object",
+            "example": 85,
+            "nullable": true
+          },
+          "fork_tokens": {
+            "type": "object",
+            "example": 2,
+            "nullable": true
+          },
+          "fork_sag_percent": {
+            "type": "object",
+            "example": 20,
+            "nullable": true
+          },
+          "fork_rebound_ls": {
+            "type": "object",
+            "example": 8,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "fork_rebound_hs": {
+            "type": "object",
+            "example": 3,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "fork_compression_ls": {
+            "type": "object",
+            "example": 10,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "fork_compression_hs": {
+            "type": "object",
+            "example": 2,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_pressure_psi": {
+            "type": "object",
+            "example": 185,
+            "nullable": true
+          },
+          "shock_tokens": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          },
+          "shock_sag_percent": {
+            "type": "object",
+            "example": 30,
+            "nullable": true
+          },
+          "shock_rebound_ls": {
+            "type": "object",
+            "example": 6,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_rebound_hs": {
+            "type": "object",
+            "example": 2,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_compression_ls": {
+            "type": "object",
+            "example": 9,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_compression_hs": {
+            "type": "object",
+            "example": 1,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-11T12:00:00.000Z"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-11T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "bike_id",
+          "name",
+          "note",
+          "front_tire_psi",
+          "rear_tire_psi",
+          "fork_pressure_psi",
+          "fork_tokens",
+          "fork_sag_percent",
+          "fork_rebound_ls",
+          "fork_rebound_hs",
+          "fork_compression_ls",
+          "fork_compression_hs",
+          "shock_pressure_psi",
+          "shock_tokens",
+          "shock_sag_percent",
+          "shock_rebound_ls",
+          "shock_rebound_hs",
+          "shock_compression_ls",
+          "shock_compression_hs",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "CreateSetupProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Trail",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "copy_of": {
+            "type": "number",
+            "example": 12,
+            "description": "Profile to copy every number and the note from"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateSetupProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Race",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "note": {
+            "type": "object",
+            "example": "Wet, muddy Loket",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "front_tire_psi": {
+            "type": "object",
+            "example": 24.5,
+            "nullable": true
+          },
+          "rear_tire_psi": {
+            "type": "object",
+            "example": 27,
+            "nullable": true
+          },
+          "fork_pressure_psi": {
+            "type": "object",
+            "example": 85,
+            "nullable": true
+          },
+          "fork_tokens": {
+            "type": "object",
+            "example": 2,
+            "nullable": true
+          },
+          "fork_sag_percent": {
+            "type": "object",
+            "example": 20,
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100
+          },
+          "fork_rebound_ls": {
+            "type": "object",
+            "example": 8,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "fork_rebound_hs": {
+            "type": "object",
+            "example": 3,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "fork_compression_ls": {
+            "type": "object",
+            "example": 10,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "fork_compression_hs": {
+            "type": "object",
+            "example": 2,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_pressure_psi": {
+            "type": "object",
+            "example": 185,
+            "nullable": true
+          },
+          "shock_tokens": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          },
+          "shock_sag_percent": {
+            "type": "object",
+            "example": 30,
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100
+          },
+          "shock_rebound_ls": {
+            "type": "object",
+            "example": 6,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_rebound_hs": {
+            "type": "object",
+            "example": 2,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_compression_ls": {
+            "type": "object",
+            "example": 9,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          },
+          "shock_compression_hs": {
+            "type": "object",
+            "example": 1,
+            "nullable": true,
+            "description": "Clicks from fully closed"
+          }
+        }
       }
     }
   }
