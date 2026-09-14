@@ -1595,6 +1595,20 @@
           ],
           "default": 0
         },
+        "extended_km_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "extended_min_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "reached_threshold": {
           "type": "integer",
           "default": 0

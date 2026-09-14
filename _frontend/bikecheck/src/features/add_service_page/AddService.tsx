@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import { Stack } from "@mantine/core";
+import { Group, Loader, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useHeaderStore } from "@/store/store";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -13,9 +13,18 @@ import { useAddServiceWizard, type BackPrompt, type WizardStep } from "./useAddS
 // Each loss the user can be warned about names itself; nothing is assembled from the
 // prompt at the call site, so every key stays greppable.
 const DISCARD_COPY: Record<Exclude<BackPrompt, null>, { title: string; body: string }> = {
-  discardAction: { title: "addService.discardActionTitle", body: "addService.discardActionBody" },
-  discardEdits: { title: "addService.discardEditsTitle", body: "addService.discardEditsBody" },
-  discardService: { title: "addService.discardServiceTitle", body: "addService.discardServiceBody" },
+  discardAction: {
+    title: "addService.discardActionTitle",
+    body: "addService.discardActionBody",
+  },
+  discardEdits: {
+    title: "addService.discardEditsTitle",
+    body: "addService.discardEditsBody",
+  },
+  discardService: {
+    title: "addService.discardServiceTitle",
+    body: "addService.discardServiceBody",
+  },
 };
 
 // Each step says what it is asking for, so the header is never just "Add service".
@@ -35,11 +44,15 @@ export function AddService(): ReactElement {
   // What the user is being asked to confirm before back throws work away.
   const [prompt, setPrompt] = useState<BackPrompt>(null);
 
+  // A link still fetching its catalogue is on its way to the actions step, so that is the
+  // step it is titled as - the category step it would otherwise read as is never shown.
+  const titledStep: WizardStep = wizard.seeding ? "actions" : wizard.step;
+
   // Restore the route header title when this view unmounts.
   useEffect(() => {
-    setHeaderTitleKey(TITLE_KEY_BY_STEP[wizard.step]);
+    setHeaderTitleKey(TITLE_KEY_BY_STEP[titledStep]);
     return () => setHeaderTitleKey(null);
-  }, [wizard.step, setHeaderTitleKey]);
+  }, [titledStep, setHeaderTitleKey]);
 
   // The Summary has no way back into the wizard, so it shows no arrow — see ADR 0006.
   useEffect(() => {
@@ -74,11 +87,20 @@ export function AddService(): ReactElement {
 
   return (
     <Stack gap="lg" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-      {wizard.step === "bike" && (
+      {/* The linked job is being looked up; nothing to pick from until it is (ADR 0030). */}
+      {wizard.seeding && (
+        <Group justify="center" p="xl">
+          <Loader size="sm" />
+        </Group>
+      )}
+
+      {!wizard.seeding && wizard.step === "bike" && (
         <ServiceBikeStep bikes={wizard.bikes} isLoading={wizard.bikesLoading} onChoose={wizard.chooseBike} />
       )}
 
-      {wizard.step === "category" && <ServiceCategoryStep bikeId={wizard.bikeId} onChoose={wizard.chooseCategory} />}
+      {!wizard.seeding && wizard.step === "category" && (
+        <ServiceCategoryStep bikeId={wizard.bikeId} onChoose={wizard.chooseCategory} />
+      )}
 
       {wizard.step === "actions" && (
         <ServiceActionsStep

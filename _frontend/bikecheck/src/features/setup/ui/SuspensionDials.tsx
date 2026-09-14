@@ -20,6 +20,8 @@ import { ForkReboundDial } from "./ForkReboundDialDouble";
 import { ForkReboundDialSimple } from "./ForkReboundDialSimple";
 import { CaneCreekReboundDial } from "./ShockReboundDialDual";
 import { ShockReboundDialSimple } from "./ShockReboundDialSimple";
+import { CaneCreekCompressionDial } from "./ShockCompressionDialDual";
+import { ShockCompressionDialSimple } from "./ShockCompressionDialSimple";
 
 // Each adjuster's full name, spoken for the ring and its buttons.
 const RING_NAMES: Record<Adjuster, string> = {
@@ -52,7 +54,7 @@ const BOTTOM_GAP = 20;
 
 // A read-only dial is not something to grab.
 const READ_ONLY_STYLE: CSSProperties = { cursor: "default" };
-// The dual shock dial has no readOnly of its own, so it is simply not touchable.
+// The shock dials have no readOnly of their own, so they are simply not touchable.
 const READ_ONLY_SHOCK_STYLE: CSSProperties = {
   ...READ_ONLY_STYLE,
   pointerEvents: "none",
@@ -199,17 +201,30 @@ export function SuspensionDials({
     <ShockReboundDialSimple lsr={ring("lsr")} ariaLabel={t("setup.reboundDial")} readOnly={readOnly} style={dialStyle} />
   );
 
+  // The shock always draws its own knobs; only the fork's compression follows the brand.
   const compressionDial = dualCompression ? (
-    <CompressionDial
+    section === "fork" ? (
+      <CompressionDial
+        brand={brand}
+        hsc={ring("hsc")}
+        lsc={ring("lsc")}
+        ariaLabel={t("setup.compressionDial")}
+        readOnly={readOnly}
+        style={dialStyle}
+      />
+    ) : (
+      <CaneCreekCompressionDial hsc={ring("hsc")} lsc={ring("lsc")} style={readOnly ? READ_ONLY_SHOCK_STYLE : undefined} />
+    )
+  ) : section === "fork" ? (
+    <CompressionDialSimple
       brand={brand}
-      hsc={ring("hsc")}
       lsc={ring("lsc")}
       ariaLabel={t("setup.compressionDial")}
       readOnly={readOnly}
       style={dialStyle}
     />
   ) : (
-    <CompressionDialSimple lsc={ring("lsc")} ariaLabel={t("setup.compressionDial")} readOnly={readOnly} style={dialStyle} />
+    <ShockCompressionDialSimple lsc={ring("lsc")} style={readOnly ? READ_ONLY_SHOCK_STYLE : undefined} />
   );
 
   return (

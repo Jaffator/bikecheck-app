@@ -501,6 +501,20 @@ model tracked_action_state {
   extended_by_km          Int?               @default(0)
   extended_by_min         Int?               @default(0)
   extended_by_healthIndex Int?               @default(0)
+  // When each Extension was granted. An Extension belongs to the cycle it was granted in,
+  // so it counts only while it is newer than the Service the reading is measured from -
+  // a job put off and then done is not still put off. Read against the Service's
+  // created_at rather than its service_date, which carries a date and no time.
+  //
+  // Null is an Extension granted before this was recorded - so before any Service it could
+  // be compared with, and the first one recorded spends it. Every grant stamps one now, so
+  // the exception can only shrink.
+  //
+  // No column for healthIndex on purpose: a Service does not rebase that axis (its
+  // baseline is always zero), so an Extension on it has nothing to expire against and
+  // dies with the part, at Replacement.
+  extended_km_at          DateTime?          @db.Timestamptz(6)
+  extended_min_at         DateTime?          @db.Timestamptz(6)
   // The band already announced: 0, 80, 95 or 100. Moved to whichever band the percentage
   // currently falls in, up or down, so a reset re-arms the next crossing.
   reached_threshold       Int                @default(0)

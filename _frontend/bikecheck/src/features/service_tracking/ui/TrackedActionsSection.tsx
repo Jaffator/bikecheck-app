@@ -5,9 +5,11 @@
 import { useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import { Box, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
+import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { TrackedActionRow } from "./TrackedActionRow";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
@@ -84,12 +86,26 @@ function visibleCount(actions: TrackedAction[]): number {
 // The list, and how much of it the owner has asked to see.
 function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactElement {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [restHeight, setRestHeight] = useState(0);
   const restRef = useRef<HTMLDivElement>(null);
 
   const shown = visibleCount(actions);
   const rest = actions.slice(shown);
+
+  // Every row is about this bike, so no prefix — and every one leads to recording the job
+  // it names, the quiet ones too: a part is replaced early as often as it is replaced late.
+  const renderRow = (action: TrackedAction): ReactElement => (
+    <TrackedActionRow
+      key={trackedActionKey(action)}
+      action={action}
+      prefix={null}
+      onOpen={() => {
+        navigate(trackedActionServiceLink(action));
+      }}
+    />
+  );
 
   // A max-height has to run to a number, and only the rows' own height is the right one.
   // Measured on every change to the list, since clipping them does not hide it.
@@ -155,11 +171,6 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
       </UnstyledButton>
     </Stack>
   );
-}
-
-// Every row is about this bike, and it is already open - so no prefix, and nowhere to go.
-function renderRow(action: TrackedAction): ReactElement {
-  return <TrackedActionRow key={trackedActionKey(action)} action={action} prefix={null} onOpen={null} />;
 }
 
 // The section's own surface and heading, which every state of it wears.

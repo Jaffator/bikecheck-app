@@ -2,10 +2,9 @@
 // presentational and the assembled Service is built in a single readable pass.
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import { categoryActionsKey, useCreateService } from "@/features/service/service.queries";
+import { useCategoryActions, useCreateService } from "@/features/service/service.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
 import type {
   BikeCategory,
@@ -78,6 +77,9 @@ export interface AddServiceWizard {
   draftCost: number;
   // Whether there is a Service to save at all.
   canSave: boolean;
+  // Whether the wizard is still waiting on the catalogue its link names, before it can
+  // open on the actions step with the linked job ticked (ADR 0030).
+  seeding: boolean;
   // Writes the draft into the Service and lands on the Summary.
   commitDraft: () => void;
   addAnotherCategory: () => void;
@@ -93,40 +95,66 @@ export function useAddServiceWizard(): AddServiceWizard {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const queryClient = useQueryClient();
   const { data: bikes, isLoading: bikesLoading } = useBikes();
   const create = useCreateService();
 
   // A bike carried in from its detail page is a bike the user has already chosen.
   const bikeFromUrl = parseId(searchParams.get("bike"));
-  // A part carried in from its detail sheet: the category it sits in, the Replacement that
-  // fits it, and the part itself — see ADR 0017.
+  // A job carried in from a part's row or a Tracked Action: the category it sits in, the
+  // action, and the part itself — see ADR 0017 and ADR 0030.
   const categoryFromUrl = parseId(searchParams.get("category"));
   const actionFromUrl = parseId(searchParams.get("action"));
   const componentFromUrl = parseId(searchParams.get("component"));
+  const linked =
+    bikeFromUrl !== null && categoryFromUrl !== null && actionFromUrl !== null && componentFromUrl !== null;
 
-  // The Replacement the URL names, built from the catalogue the component's detail sheet
-  // already read to find it. Taken once, as the wizard is created: the block belongs to the
-  // user from then on, and a param left in the URL never rebuilds one they have emptied.
-  const [seededDraft] = useState<DraftBlock | null>(() =>
-    seedDraft(queryClient, bikeFromUrl, categoryFromUrl, actionFromUrl, componentFromUrl),
-  );
-
-  const [requestedStep, setStep] = useState<WizardStep>(seededDraft === null ? "bike" : "actions");
+  const [requestedStep, setStep] = useState<WizardStep>("bike");
   const [chosenBikeId, setChosenBikeId] = useState<number | null>(null);
   const [serviceDate, setServiceDate] = useState<string>(today());
   const [blocks, setBlocks] = useState<CategoryBlock[]>([]);
-  const [draft, setDraft] = useState<DraftBlock | null>(seededDraft);
+  // The block the user is working on. Null until they touch one - and while the seed below
+  // stands in for it.
+  const [ownDraft, setOwnDraft] = useState<DraftBlock | null>(null);
   const [note, setNote] = useState("");
   const [totalCostOverride, setTotalCostOverride] = useState<number | null>(null);
   const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
+  // Whether the seed has been used up: committed, or left with back. From then on a param
+  // still in the URL never rebuilds a block the user has emptied.
+  const [seedSpent, setSeedSpent] = useState(false);
+
+  // The catalogue the link names, fetched by the wizard itself so a link opened cold seeds
+  // too. The same key the actions step reads, so the two share one request; let go of
+  // once the seed is spent, so a later tag edit does not refetch it on the wizard's behalf.
+  const { data: catalogue, isError: catalogueFailed } = useCategoryActions(
+    bikeFromUrl,
+    linked && !seedSpent ? categoryFromUrl : null,
+  );
+
+  // The linked job as a Draft Block, read off the catalogue rather than set from it, so it
+  // stands the moment the catalogue arrives. Null while there is nothing to read - and for
+  // an action the catalogue no longer carries, which leaves the user at the category step.
+  const seed = useMemo(
+    () =>
+      catalogue === undefined || seedSpent || actionFromUrl === null || componentFromUrl === null
+        ? null
+        : seedDraft(catalogue, actionFromUrl, componentFromUrl),
+    [catalogue, seedSpent, actionFromUrl, componentFromUrl],
+  );
+
+  // The seed stands in until the user has a block of their own.
+  const draft = ownDraft ?? seed;
+
+  // A link that failed to fetch its catalogue is a link opened cold: category step.
+  const seeding = linked && !seedSpent && catalogue === undefined && !catalogueFailed;
 
   // A question with one answer is not worth asking: an owner of a single bike, or one
-  // arriving from a bike's detail, starts at the category step. Derived rather than set,
-  // so it settles as soon as the garage arrives instead of after an extra render.
+  // arriving from a bike's detail, starts at the category step - or, carrying a job in,
+  // at the actions step. Derived rather than set, so it settles as soon as the garage
+  // arrives instead of after an extra render.
   const bikeStepSkipped = bikeFromUrl !== null || (bikes !== undefined && bikes.length === 1);
   const bikeId = chosenBikeId ?? (bikeStepSkipped ? (bikeFromUrl ?? bikes?.[0]?.id ?? null) : null);
-  const step: WizardStep = requestedStep === "bike" && bikeStepSkipped ? "category" : requestedStep;
+  const step: WizardStep =
+    requestedStep !== "bike" ? requestedStep : seed !== null ? "actions" : bikeStepSkipped ? "category" : "bike";
 
   const draftDirty = (draft?.actions.length ?? 0) > 0;
   const canCommit = draft !== null && (draftDirty || draft.editingIndex !== null);
@@ -142,6 +170,23 @@ export function useAddServiceWizard(): AddServiceWizard {
   // The sum is the usual case; an overridden total covers labour and discounts.
   const totalCost = totalCostOverride ?? suggestedTotal;
 
+  // Writes the block being worked on. The first write to the seed makes it the user's own.
+  const editDraft = useCallback(
+    (write: (current: DraftBlock) => DraftBlock): void => {
+      setOwnDraft((current) => {
+        const base = current ?? seed;
+        return base === null ? current : write(base);
+      });
+    },
+    [seed],
+  );
+
+  // Drops the block being worked on, the seed included - it is never rebuilt from the URL.
+  const clearDraft = useCallback((): void => {
+    setOwnDraft(null);
+    setSeedSpent(true);
+  }, []);
+
   const chooseBike = useCallback((chosen: number): void => {
     setChosenBikeId(chosen);
     setStep("category");
@@ -153,9 +198,13 @@ export function useAddServiceWizard(): AddServiceWizard {
   const chooseCategory = useCallback(
     (category: BikeCategory): void => {
       const existing = blocks.findIndex((block) => block.categoryId === category.group_id);
-      setDraft(
+      setOwnDraft(
         existing >= 0
-          ? { ...blocks[existing], actions: [...blocks[existing].actions], editingIndex: existing }
+          ? {
+              ...blocks[existing],
+              actions: [...blocks[existing].actions],
+              editingIndex: existing,
+            }
           : {
               categoryId: category.group_id,
               categoryName: category.group_name,
@@ -169,60 +218,63 @@ export function useAddServiceWizard(): AddServiceWizard {
     [blocks],
   );
 
-  const toggleAction = useCallback((action: CatalogueAction): void => {
-    setDraft((current) => {
-      if (current === null) return current;
-      const picked = current.actions.some((candidate) => candidate.actionId === action.id);
-      if (picked) {
-        return { ...current, actions: current.actions.filter((candidate) => candidate.actionId !== action.id) };
-      }
-      return {
-        ...current,
-        actions: [
-          ...current.actions,
-          // One candidate is no choice at all, so ticking the action makes it. Two are
-          // never guessed between - the user says which brake was bled.
-          pickAction(action, action.components.length === 1 ? [action.components[0].id] : []),
-        ],
-      };
-    });
-  }, []);
+  const toggleAction = useCallback(
+    (action: CatalogueAction): void => {
+      editDraft((current) => {
+        const picked = current.actions.some((candidate) => candidate.actionId === action.id);
+        if (picked) {
+          return {
+            ...current,
+            actions: current.actions.filter((candidate) => candidate.actionId !== action.id),
+          };
+        }
+        return {
+          ...current,
+          actions: [
+            ...current.actions,
+            // One candidate is no choice at all, so ticking the action makes it. Two are
+            // never guessed between - the user says which brake was bled.
+            pickAction(action, action.components.length === 1 ? [action.components[0].id] : []),
+          ],
+        };
+      });
+    },
+    [editDraft],
+  );
 
   // Reads the selection as it stands rather than taking it from a stale render, so a run
   // of quick taps on several chips all land. The tag is held by its catalogue name; what
   // it will say in the note is decided when the note is composed - see ADR 0007.
-  const toggleActionTag = useCallback((actionId: number, tagName: string): void => {
-    setDraft((current) =>
-      current === null
-        ? current
-        : {
-            ...current,
-            actions: current.actions.map((action) =>
-              action.actionId === actionId
-                ? {
-                    ...action,
-                    selectedTags: action.selectedTags.includes(tagName)
-                      ? action.selectedTags.filter((taken) => taken !== tagName)
-                      : [...action.selectedTags, tagName],
-                  }
-                : action,
-            ),
-          },
-    );
-  }, []);
+  const toggleActionTag = useCallback(
+    (actionId: number, tagName: string): void => {
+      editDraft((current) => ({
+        ...current,
+        actions: current.actions.map((action) =>
+          action.actionId === actionId
+            ? {
+                ...action,
+                selectedTags: action.selectedTags.includes(tagName)
+                  ? action.selectedTags.filter((taken) => taken !== tagName)
+                  : [...action.selectedTags, tagName],
+              }
+            : action,
+        ),
+      }));
+    },
+    [editDraft],
+  );
 
-  const updateAction = useCallback((actionId: number, patch: Partial<PickedAction>): void => {
-    setDraft((current) =>
-      current === null
-        ? current
-        : {
-            ...current,
-            actions: current.actions.map((action) =>
-              action.actionId === actionId ? withPrefilledDescriptions({ ...action, ...patch }) : action,
-            ),
-          },
-    );
-  }, []);
+  const updateAction = useCallback(
+    (actionId: number, patch: Partial<PickedAction>): void => {
+      editDraft((current) => ({
+        ...current,
+        actions: current.actions.map((action) =>
+          action.actionId === actionId ? withPrefilledDescriptions({ ...action, ...patch }) : action,
+        ),
+      }));
+    },
+    [editDraft],
+  );
 
   // An edited block left with no actions is a block the user removed.
   const commitDraft = useCallback((): void => {
@@ -233,15 +285,19 @@ export function useAddServiceWizard(): AddServiceWizard {
       if (block.actions.length === 0) return current.filter((_, index) => index !== editingIndex);
       return current.map((existing, index) => (index === editingIndex ? block : existing));
     });
-    setDraft(null);
+    clearDraft();
     setStep("summary");
-  }, [draft]);
+  }, [draft, clearDraft]);
 
   const addAnotherCategory = useCallback((): void => setStep("category"), []);
 
   const editBlock = useCallback(
     (index: number): void => {
-      setDraft({ ...blocks[index], actions: [...blocks[index].actions], editingIndex: index });
+      setOwnDraft({
+        ...blocks[index],
+        actions: [...blocks[index].actions],
+        editingIndex: index,
+      });
       setStep("actions");
     },
     [blocks],
@@ -269,11 +325,12 @@ export function useAddServiceWizard(): AddServiceWizard {
     const index = draft.editingIndex;
     // A block opened for editing is measured against the one still sitting in blocks -
     // nothing writes there until commit, so that is the state the user opened. A new block
-    // started empty, so its baseline is no actions at all.
-    const baseline = index === null ? NO_ACTIONS : blocks[index]?.actions;
+    // started empty, so its baseline is no actions at all - unless a link seeded it, and
+    // then the seed is what the user opened (ADR 0030).
+    const baseline = index === null ? (seed?.actions ?? NO_ACTIONS) : blocks[index]?.actions;
     if (baseline !== undefined && sameActionLists(draft.actions, baseline)) return null;
     return index === null ? "discardAction" : "discardEdits";
-  }, [step, draft, blocks]);
+  }, [step, draft, seed, blocks]);
 
   // Back walks the wizard rather than the browser history, and only leaves it from the
   // step the user entered on. The Summary has no way back into the wizard, so leaving it
@@ -285,7 +342,14 @@ export function useAddServiceWizard(): AddServiceWizard {
     }
     if (step === "actions") {
       const editing = draft !== null && draft.editingIndex !== null;
-      setDraft(null);
+      // A link entered here, and nothing is saved yet: this is the step the user entered
+      // on, so back leaves the way they came rather than through a category step they
+      // never saw (ADR 0030).
+      if (linked && !editing && blocks.length === 0) {
+        navigate(-1);
+        return;
+      }
+      clearDraft();
       setStep(editing || blocks.length > 0 ? "summary" : "category");
       return;
     }
@@ -300,7 +364,7 @@ export function useAddServiceWizard(): AddServiceWizard {
       }
     }
     navigate(-1);
-  }, [step, draft, blocks.length, bikeStepSkipped, navigate]);
+  }, [step, draft, linked, blocks.length, bikeStepSkipped, clearDraft, navigate]);
 
   const save = useCallback((): void => {
     if (bikeId === null) return;
@@ -346,6 +410,7 @@ export function useAddServiceWizard(): AddServiceWizard {
     canCommit,
     draftCost,
     canSave,
+    seeding,
     commitDraft,
     addAnotherCategory,
     editBlock,
@@ -361,24 +426,11 @@ export function useAddServiceWizard(): AddServiceWizard {
 // is rebuilt against the picked parts on every change, which is the whole invariant: a part
 // just picked arrives with the name of the one it replaces, and a part unpicked takes its
 // name with it rather than lingering as a change the user cannot see.
-// The Replacement a component's detail sheet linked to, as a Draft Block. Read out of the
-// cache rather than fetched: the sheet had to read this very catalogue to find the Action,
-// so it is in hand the moment the wizard is created. A link opened cold has no catalogue to
-// read and returns null, which starts the user at the category step instead.
-function seedDraft(
-  client: QueryClient,
-  bikeId: number | null,
-  categoryId: number | null,
-  actionId: number | null,
-  componentId: number | null,
-): DraftBlock | null {
-  if (bikeId === null || categoryId === null || actionId === null || componentId === null) return null;
-
-  const category = client.getQueryData<CategoryActions>(categoryActionsKey(bikeId, categoryId));
-  if (category === undefined) return null;
-
+// The job a link named, as a Draft Block picked out of its category's catalogue. Null when
+// the catalogue no longer carries the action - it has moved on since the link was built,
+// so the user picks for themselves.
+function seedDraft(category: CategoryActions, actionId: number, componentId: number): DraftBlock | null {
   const action = category.actions.find((candidate) => candidate.id === actionId);
-  // The catalogue has moved on since the link was built, so the user picks for themselves.
   if (action === undefined) return null;
 
   return {

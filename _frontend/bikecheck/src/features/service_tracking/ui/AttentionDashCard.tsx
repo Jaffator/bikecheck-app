@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Wrench } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
+import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { TrackedActionRow } from "./TrackedActionRow";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 
@@ -55,13 +56,14 @@ export function AttentionDashCard(): ReactElement | null {
         <Stack gap="md">
           {shown.map((action) => (
             // The list is flat across the garage, so every row names the bike it belongs
-            // to and opening it lands there.
+            // to. Opening it records the job, not the bike: the wizard opens with this
+            // very job ticked (ADR 0030).
             <TrackedActionRow
               key={trackedActionKey(action)}
               action={action}
               prefix={bikeTitle(action)}
               onOpen={() => {
-                navigate(`/bikes/${String(action.bike_id)}`);
+                navigate(trackedActionServiceLink(action));
               }}
             />
           ))}

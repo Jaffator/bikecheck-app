@@ -13,7 +13,6 @@ import {
   Stack,
   Text,
   Textarea,
-  TextInput,
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -77,8 +76,11 @@ export function ServiceActionsStep({
   const keyboardOffset = useKeyboardOffset();
   // A price or a note near the end of the list would otherwise be focused behind the bar.
   const listRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
-  // One action open at a time, as on the bike's component step.
-  const [openActionId, setOpenActionId] = useState<number | null>(null);
+  // One action open at a time, as on the bike's component step. A block arriving with one
+  // job already ticked - a linked one (ADR 0030), or a saved one reopened - opens on it.
+  const [openActionId, setOpenActionId] = useState<number | null>(() =>
+    draft !== null && draft.actions.length === 1 ? draft.actions[0].actionId : null,
+  );
   const setHeaderTitleSlot = useHeaderStore((state) => state.setTitleSlot);
 
   // The category being worked on is the header's title here: a step spent inside one
@@ -448,11 +450,13 @@ function ActionRow({
               says the work happened, so it ticks the action on the way through. */}
           {/* Nothing to choose between: straight to describing the part going on. */}
           {soleReplacementTarget !== null && picked !== undefined && (
-            <TextInput
+            <Textarea
               label={t("addService.newPart")}
               placeholder={t("addService.newPartPlaceholder")}
               value={picked.newDescriptions[soleReplacementTarget.id] ?? ""}
-              styles={inputStyles}
+              autosize
+              minRows={1}
+              styles={autosizeInputStyles}
               onChange={(event) =>
                 onUpdate({
                   newDescriptions: {
@@ -484,11 +488,13 @@ function ActionRow({
                           // Indented so it reads as belonging to the chip above rather than
                           // to the list as a whole.
                           <Box pl="md">
-                            <TextInput
+                            <Textarea
                               label={t("addService.newPart")}
                               placeholder={t("addService.newPartPlaceholder")}
                               value={picked.newDescriptions[component.id] ?? ""}
-                              styles={inputStyles}
+                              autosize
+                              minRows={1}
+                              styles={autosizeInputStyles}
                               onChange={(event) =>
                                 onUpdate({
                                   newDescriptions: {

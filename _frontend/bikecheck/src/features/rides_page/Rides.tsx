@@ -37,12 +37,16 @@ export function Rides(): ReactElement {
 
   // Notification-selected pending ride.
   const requestedActivityId = searchParams.get("pending") ?? undefined;
+  // Notification-selected confirmed ride.
+  const requestedRideId = searchParams.get("ride") ?? undefined;
   // URL-selected tab.
   const requestedTab = searchParams.get("tab");
 
   const [tab, setTab] = useState<RidesTab>("completed");
-  // URL parameters override local selection.
-  const activeTab: RidesTab = requestedActivityId !== undefined || requestedTab === "pending" ? "pending" : tab;
+  // URL parameters override local selection. A requested ride names its own tab, so it
+  // opens even when the user last left the page on the other one.
+  const requestedPending = requestedActivityId !== undefined || requestedTab === "pending";
+  const activeTab: RidesTab = requestedRideId !== undefined ? "completed" : requestedPending ? "pending" : tab;
   const activeIndex = TAB_ORDER.indexOf(activeTab);
 
   const pendingCount = pendingRides?.length ?? 0;
@@ -51,13 +55,14 @@ export function Rides(): ReactElement {
   const selectTab = useCallback(
     (next: RidesTab): void => {
       setTab(next);
-      if (requestedActivityId === undefined && requestedTab === null) return;
+      if (requestedActivityId === undefined && requestedRideId === undefined && requestedTab === null) return;
       const params = new URLSearchParams(searchParams);
       params.delete("pending");
+      params.delete("ride");
       params.delete("tab");
       setSearchParams(params, { replace: true });
     },
-    [requestedActivityId, requestedTab, searchParams, setSearchParams],
+    [requestedActivityId, requestedRideId, requestedTab, searchParams, setSearchParams],
   );
 
   // Stable across renders, so the pending list is not re-rendered by a tab change alone.
@@ -66,6 +71,13 @@ export function Rides(): ReactElement {
     // Preserve the pending tab after clearing URL parameters.
     selectTab("pending");
   }, [requestedActivityId, requestedTab, selectTab]);
+
+  // The same for a confirmed ride: closing its sheet drops the parameter so the sheet
+  // does not open again, and leaves the tab it was opened on.
+  const clearRequestedRide = useCallback((): void => {
+    if (requestedRideId === undefined) return;
+    selectTab("completed");
+  }, [requestedRideId, selectTab]);
 
   // A finished swipe selects a tab, which is the same thing tapping one does.
   const selectIndex = useCallback((next: number): void => selectTab(TAB_ORDER[next]), [selectTab]);
@@ -111,7 +123,7 @@ export function Rides(): ReactElement {
           }}
         >
           <SwipePanel current={activeTab === "completed"} moving={swipe.moving}>
-            <CompletedRides />
+            <CompletedRides openActivityId={requestedRideId} onOpenedActivityHandled={clearRequestedRide} />
           </SwipePanel>
           <SwipePanel current={activeTab === "pending"} moving={swipe.moving}>
             <PendingRides openActivityId={requestedActivityId} onOpenedActivityHandled={clearRequestedActivity} />

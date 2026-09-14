@@ -2,7 +2,8 @@ import type { NotificationPayload, NotificationType } from "./notifications.type
 
 // Notification routes by type.
 const ROUTES: Partial<Record<NotificationType, string>> = {
-  strava_activity_saved: "/bikes/:bikeId",
+  // The ride itself, not the bike it landed on.
+  strava_activity_saved: "/rides?ride=:activityId",
   // Open the pending rides tab.
   strava_activity_unassigned: "/rides?pending=:activityId",
   maintenance_due: "/bikes/:bikeId",

@@ -1366,6 +1366,21 @@
         ]
       }
     },
+    "/api/notifications/viewed": {
+      "patch": {
+        "operationId": "Notification markAllViewed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark every notification the list clears on view as read",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
     "/api/notifications/{id}/read": {
       "patch": {
         "operationId": "Notification markRead",

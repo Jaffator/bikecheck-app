@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NotificationType } from './notification-types.config';
+import { CLEARED_ON_VIEW, NotificationType } from './notification-types.config';
 import { buildNotificationText, NotificationTextPayload } from './notification-texts';
 import { notifications, Prisma } from '@prisma/client';
 import { DeviceTokenDto } from './dto/device-token-.dto';
@@ -72,6 +72,18 @@ export class NotificationService {
     return await this.prisma.notifications.findMany({
       where: { user_id: userId, ...(unreadOnly ? { is_read: false } : {}) },
       orderBy: { created_at: 'desc' },
+    });
+  }
+
+  /**
+   * What opening the notification list does: clears the announcements and leaves the asks
+   * standing. An unassigned ride keeps its place in the badge until a bike is picked for
+   * it, because reading the ask is not answering it.
+   */
+  async markAllViewed(userId: number): Promise<void> {
+    await this.prisma.notifications.updateMany({
+      where: { user_id: userId, is_read: false, type: { in: CLEARED_ON_VIEW } },
+      data: { is_read: true, read_at: new Date() },
     });
   }
 

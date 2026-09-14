@@ -6,6 +6,7 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
+  type QueryClient,
   type UseInfiniteQueryResult,
   type UseMutationResult,
   type UseQueryResult,
@@ -165,26 +166,37 @@ export function useUploadServiceAttachment(): UseMutationResult<UploadedAttachme
   });
 }
 
-// Refresh every history list after a Service is written.
+// Refresh every history list after a Service is written, and everything the write moved.
 export function useCreateService(): UseMutationResult<ServiceRecord, Error, CreateServiceInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: CreateServiceInput) => createService(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["services"] });
+    onSuccess: async (record) => {
+      await invalidateAfterService(queryClient, record.bike_id);
     },
   });
 }
 
-// Refresh every history list after a Service is removed from it.
+// Refresh every history list after a Service is removed from it, and everything the
+// removal moved back.
 export function useDeleteService(): UseMutationResult<ServiceRecord, Error, number> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: number) => deleteService(id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["services"] });
+    onSuccess: async (record) => {
+      await invalidateAfterService(queryClient, record.bike_id);
     },
   });
+}
+
+// What a Service written or removed changes besides the history: every reading on the bike
+// is measured from it (ADR 0001), a Replacement in it changes the build (ADR 0003), and the
+// bike's own condition follows its readings.
+async function invalidateAfterService(queryClient: QueryClient, bikeId: number): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: ["services"] });
+  await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
+  await queryClient.invalidateQueries({ queryKey: ["bike-components", bikeId] });
+  await queryClient.invalidateQueries({ queryKey: ["bikes", bikeId] });
 }

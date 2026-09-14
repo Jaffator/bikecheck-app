@@ -44,6 +44,9 @@ function mountedPart(overrides: Record<string, unknown> = {}): Record<string, un
   };
 }
 
+// The Component Category each kind of part sits in.
+const GROUP_ID = 2;
+
 function typeRow(componentTypeId: number): Record<string, unknown> {
   const names: Record<number, string> = {
     [CHAIN_TYPE]: 'Chain',
@@ -51,7 +54,7 @@ function typeRow(componentTypeId: number): Record<string, unknown> {
     [PAD_TYPE]: 'Brake pad',
     [TYRE_TYPE]: 'Tyre',
   };
-  return { component_type: names[componentTypeId], i18n_key: null };
+  return { component_type: names[componentTypeId], i18n_key: null, component_group_id: GROUP_ID };
 }
 
 // The bike's own plan for one action: how much wear may pass, and which parts it applies to.
@@ -84,6 +87,10 @@ function baseline(
   frozen: { km?: number; timeMin?: number; drivetrainKm?: number; suspensionMin?: number },
   serviceDate = '2025-01-01T00:00:00.000Z',
   isDeleted = false,
+  // When the occasion entered the record, which is what an Extension is weighed against.
+  // Defaults to the date on it, which is what a recording made on the day it happened
+  // looks like once the time is dropped.
+  recordedAt = serviceDate,
 ): Record<string, unknown> {
   return {
     km_at_time: frozen.km ?? null,
@@ -92,7 +99,11 @@ function baseline(
     suspension_min_at_time: frozen.suspensionMin ?? null,
     event_actions_done: {
       event_action_id: actionId,
-      events_bikes: { service_date: new Date(serviceDate), is_deleted: isDeleted },
+      events_bikes: {
+        service_date: new Date(serviceDate),
+        created_at: new Date(recordedAt),
+        is_deleted: isDeleted,
+      },
     },
   };
 }
@@ -103,12 +114,17 @@ function stateRow(
   actionId: number,
   extension: { km?: number; min?: number; healthIndex?: number },
   reachedThreshold = 0,
+  // When each Extension was granted. Absent by default, which is a row put off before the
+  // app recorded the moment - spent by the first Service recorded on the job.
+  grantedAt: { km?: string; min?: string } = {},
 ): Record<string, unknown> {
   return {
     event_actions_id: actionId,
     extended_by_km: extension.km ?? 0,
     extended_by_min: extension.min ?? 0,
     extended_by_healthIndex: extension.healthIndex ?? 0,
+    extended_km_at: grantedAt.km === undefined ? null : new Date(grantedAt.km),
+    extended_min_at: grantedAt.min === undefined ? null : new Date(grantedAt.min),
     reached_threshold: reachedThreshold,
   };
 }
@@ -280,6 +296,46 @@ describe('ServiceTrackingService', () => {
       expect(action.current).toBe(500);
     });
 
+    // The date on a Service carries no time, so two done on the same day tie on it. The
+    // one written down last is the one that counts - whichever order the rows come in.
+    it('measures from the Service recorded last when two share a day', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 5000,
+            action_done_component_map: [
+              baseline(
+                CHAIN_REPLACEMENT,
+                { drivetrainKm: 1000 },
+                '2025-06-01T00:00:00.000Z',
+                false,
+                '2025-06-01T09:00:00.000Z',
+              ),
+              baseline(
+                CHAIN_REPLACEMENT,
+                { drivetrainKm: 4500 },
+                '2025-06-01T00:00:00.000Z',
+                false,
+                '2025-06-01T18:00:00.000Z',
+              ),
+              baseline(
+                CHAIN_REPLACEMENT,
+                { drivetrainKm: 3000 },
+                '2025-06-01T00:00:00.000Z',
+                false,
+                '2025-06-01T12:00:00.000Z',
+              ),
+            ],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.current).toBe(500);
+    });
+
     // A deleted Service is no longer part of the record, so it no longer holds a baseline
     // either - the same rule the build reads a part's last service by.
     it('ignores a baseline frozen by a deleted Service', async () => {
@@ -428,6 +484,199 @@ describe('ServiceTrackingService', () => {
       expect(action.interval).toBe(1100);
       expect(action.percentage).toBe(90);
       expect(action.extended).toBe(true);
+    });
+
+    // An Extension belongs to the cycle it was granted in: the job was put off, then it was
+    // done, and what was put off no longer is. The interval goes back to the bike's plan.
+    it('spends an Extension the following Service outlived', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 1000,
+            action_done_component_map: [baseline(CHAIN_REPLACEMENT, { drivetrainKm: 0 }, '2026-06-01T00:00:00.000Z')],
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 100 }, 0, { km: '2026-01-01T10:00:00.000Z' })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(1000);
+      expect(action.percentage).toBe(100);
+      expect(action.extended).toBe(false);
+    });
+
+    // Put off again since the job was last done, so it is still put off.
+    it('keeps an Extension granted after the last Service', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 1000,
+            action_done_component_map: [baseline(CHAIN_REPLACEMENT, { drivetrainKm: 0 }, '2026-06-01T00:00:00.000Z')],
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 100 }, 0, { km: '2026-07-01T10:00:00.000Z' })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(1100);
+      expect(action.percentage).toBe(90);
+      expect(action.extended).toBe(true);
+    });
+
+    // The commonest case there is, and the one the date alone cannot answer: the job was
+    // put off in the morning and done in the afternoon. A service_date carries no time, so
+    // it sits at midnight and every postponement that day looks newer than it - which is
+    // why the Extension is weighed against when the Service entered the record instead.
+    it('spends an Extension made earlier on the day the Service was recorded', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 1000,
+            action_done_component_map: [
+              baseline(
+                CHAIN_REPLACEMENT,
+                { drivetrainKm: 0 },
+                '2026-09-14T00:00:00.000Z',
+                false,
+                '2026-09-14T16:29:00.000Z',
+              ),
+            ],
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 100 }, 0, { km: '2026-09-14T10:00:00.000Z' })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(1000);
+      expect(action.extended).toBe(false);
+    });
+
+    // Put off after the Service was written down, on the same day. The clock separates them
+    // where the date cannot.
+    it('keeps an Extension made after the Service was recorded that day', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 1000,
+            action_done_component_map: [
+              baseline(
+                CHAIN_REPLACEMENT,
+                { drivetrainKm: 0 },
+                '2026-09-14T00:00:00.000Z',
+                false,
+                '2026-09-14T16:29:00.000Z',
+              ),
+            ],
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 100 }, 0, { km: '2026-09-14T17:05:00.000Z' })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(1100);
+      expect(action.extended).toBe(true);
+    });
+
+    // Written before the app recorded when a job was put off - so before any Service it
+    // could be compared with. The job being done is what ends it.
+    it('spends an Extension that carries no moment once the job is recorded', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 1000,
+            action_done_component_map: [baseline(CHAIN_REPLACEMENT, { drivetrainKm: 0 }, '2026-06-01T00:00:00.000Z')],
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 100 })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(1000);
+      expect(action.extended).toBe(false);
+    });
+
+    // Nothing has been done to this part yet, so there is nothing the Extension could have
+    // been outlived by.
+    it('keeps an Extension on a part the job has never been recorded on', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 1000,
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 100 }, 0, { km: '2026-01-01T10:00:00.000Z' })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(1100);
+      expect(action.extended).toBe(true);
+    });
+
+    // A Service never rebases a wear index - its baseline is always zero - so an Extension
+    // on that axis has nothing to have outlived, and stands until the part is replaced.
+    it('keeps a health index Extension through a Service', async () => {
+      garage(
+        [intervalRow(PADS_REPLACEMENT, { healthIndex: 100 }, [PAD_TYPE])],
+        [
+          mountedPart({
+            component_type_id: PAD_TYPE,
+            component_types: typeRow(PAD_TYPE),
+            health_index: 110,
+            action_done_component_map: [baseline(PADS_REPLACEMENT, {}, '2026-06-01T00:00:00.000Z')],
+            tracked_action_state: [stateRow(PADS_REPLACEMENT, { healthIndex: 20 })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(120);
+      expect(action.percentage).toBe(91);
+      expect(action.extended).toBe(true);
+    });
+
+    // Each axis is put off on its own occasion, so each is spent on its own. Here the
+    // kilometres were put off before the Service and the minutes after it: were either axis
+    // to take the other's answer, a different axis would win and the reading with it.
+    it('spends only the axis whose Extension the Service outlived', async () => {
+      garage(
+        [intervalRow(TYRE_REPLACEMENT, { km: 1000, min: 1000 }, [TYRE_TYPE])],
+        [
+          mountedPart({
+            component_type_id: TYRE_TYPE,
+            component_types: typeRow(TYRE_TYPE),
+            total_km: 1000,
+            total_time_min: 1400,
+            action_done_component_map: [baseline(TYRE_REPLACEMENT, { km: 0, timeMin: 0 }, '2026-06-01T00:00:00.000Z')],
+            tracked_action_state: [
+              stateRow(TYRE_REPLACEMENT, { km: 500, min: 500 }, 0, {
+                km: '2026-01-01T10:00:00.000Z',
+                min: '2026-07-01T10:00:00.000Z',
+              }),
+            ],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      // Kilometres win at 1000/1000. A live km Extension would read 66% and hand it to the
+      // minutes; a spent min Extension would read 140% and take it the other way.
+      expect(action.percentage).toBe(100);
+      expect(action.interval).toBe(1000);
+      expect(action.extended).toBe(false);
     });
 
     // The band boundaries, which are the whole of the colour rule. Each edge is hit exactly
@@ -580,7 +829,8 @@ describe('ServiceTrackingService', () => {
       expect(actions.map((action) => action.percentage)).toEqual([110, 20]);
     });
 
-    // What the row has to carry to be read without opening anything else.
+    // What the row has to carry to be read without opening anything else - and to lead
+    // into the service wizard, which names the part's category (ADR 0030).
     it('names the part and the action on every reading', async () => {
       garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 3200 })]);
 
@@ -589,6 +839,7 @@ describe('ServiceTrackingService', () => {
       expect(action).toMatchObject({
         bike_id: BIKE_ID,
         component_mounted_id: 55,
+        component_group_id: GROUP_ID,
         component_type: 'Chain',
         component_desc: 'Shimano XT M8100',
         event_action_id: CHAIN_REPLACEMENT,
@@ -671,7 +922,6 @@ describe('ServiceTrackingService', () => {
       expect(action.interval).toBe(4000);
       expect(action.extended).toBe(false);
     });
-
   });
 
   describe('getGarageTrackedActions', () => {

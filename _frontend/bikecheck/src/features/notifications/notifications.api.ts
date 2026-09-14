@@ -7,6 +7,11 @@ export async function getNotifications(unreadOnly = false): Promise<Notification
   return apiFetch<Notification[]>(`/notifications${unreadOnly ? "?unread=true" : ""}`);
 }
 
+// Mark everything the list clears on view as read.
+export async function markNotificationsViewed(): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>("/notifications/viewed", { method: "PATCH" });
+}
+
 // Mark a notification as read.
 export async function markNotificationRead(id: number): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>(`/notifications/${id}/read`, { method: "PATCH" });

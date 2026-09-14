@@ -19,6 +19,8 @@ export interface TrackedAction {
   bike_id: number;
   component_mounted_id: number;
   component_type_id: number;
+  // The Component Category the part sits in — what a link into the service wizard names.
+  component_group_id: number;
   component_type: string;
   component_type_i18n_key: string | null;
   component_desc: string | null;

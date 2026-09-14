@@ -156,7 +156,6 @@ export class StravaWebhookService {
     const signature: string = parts['v1'];
 
     const timeDiff = Math.abs(Date.now() / 1000 - parseInt(timestamp, 10));
-    console.log('Time difference:', timeDiff, 'seconds');
     if (timeDiff > 300) {
       this.logger.error({ timeDiff }, 'Timestamp too old');
       return false;

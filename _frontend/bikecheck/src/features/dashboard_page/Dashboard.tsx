@@ -8,6 +8,8 @@ import { UnpairedBikesCard } from "@/features/strava/ui/UnpairedBikesCard";
 import { PendingRidesCard } from "@/features/strava/ui/PendingRidesDashCard";
 import { AttentionDashCard } from "@/features/service_tracking/ui/AttentionDashCard";
 
+const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+
 export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();
 
@@ -21,7 +23,9 @@ export function Dashboard(): ReactElement {
   }
   // TODO: Add the populated dashboard.
   return (
-    <Stack gap="sm" p="md">
+    // Clears the floating create button, so the last card can be scrolled out from under
+    // it. Without the room there is nothing to scroll, and the button sits on the card.
+    <Stack gap="sm" p="md" pb={FAB_CLEARANCE}>
       {/* Show Strava connection status. */}
       <StravaStatusCard />
       {/* Show bikes awaiting Strava pairing. */}
