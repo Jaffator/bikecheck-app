@@ -1,7 +1,7 @@
 {
   "name": "bikecheck",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "androidBuild_withTarget": "npm run build && npx cap sync android && npx cap run android --target MRH6V4DUFMF6PBRG",
@@ -78,5 +78,10 @@
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vite-plugin-svgr": "^5.2.0"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

@@ -12,6 +12,10 @@
     "start_ngrok": "ngrok http 3002",
     "db:pulldb": "prisma db pull && prisma generate",
     "db:devseed": "ts-node scripts/seedData/main_dev.ts",
+    "chat:eval": "ts-node apps/monolith/scripts/chatEval/run.ts",
+    "chat:eval:seed": "ts-node apps/monolith/scripts/chatEval/seed_eval.ts",
+    "db:evalaccount": "ts-node apps/monolith/scripts/eval/main_eval_account.ts",
+    "eval:chat": "ts-node apps/monolith/scripts/eval/main_eval_chat.ts",
     "start:debug": "nest start --debug --watch",
     "prisma:studio": "prisma studio",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
@@ -25,6 +29,7 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.111",
     "@aws-sdk/client-s3": "^3.1023.0",
     "@aws-sdk/lib-storage": "^3.1023.0",
     "@bull-board/api": "^7.2.1",
@@ -42,6 +47,7 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@prisma/internals": "^7.3.0",
+    "ai": "^6.0.279",
     "axios": "^1.13.6",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.76.10",
@@ -69,7 +75,8 @@
     "rxjs": "^7.8.1",
     "set-cookie-parser": "^3.0.1",
     "sharp": "^0.35.3",
-    "ua-parser-js": "^2.0.9"
+    "ua-parser-js": "^2.0.9",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

@@ -1,0 +1,11 @@
+-- One switch in Settings that mutes push. The row in `notifications` is written by
+-- `create()`, the push is sent by the processor, so turning this off silences the lock
+-- screen and leaves the bell counting - the user still finds out the chain is worn, just
+-- not by being interrupted.
+--
+-- Nullable with a default of true: rows written before this column existed read back as
+-- NULL, and NULL means "never chosen", which the processor treats as on. Only an explicit
+-- false stops a push.
+--
+-- Idempotent: re-running changes nothing.
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "notifications_enabled" BOOLEAN DEFAULT true;

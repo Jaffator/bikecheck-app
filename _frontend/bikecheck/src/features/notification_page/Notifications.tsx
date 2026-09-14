@@ -1,16 +1,35 @@
 // Notifications page.
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { BellOff } from "lucide-react";
+import { BellOff, CircleQuestionMark } from "lucide-react";
+import { PiPath } from "react-icons/pi";
+import type { IconType } from "react-icons";
+import { bikecheckIconType } from "@/assets/icons/bikecheck";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useNotifications, useMarkNotificationRead } from "@/features/notifications/notifications.queries";
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkNotificationsViewed,
+} from "@/features/notifications/notifications.queries";
 import { notificationRoute } from "@/features/notifications/notificationRoute";
-import type { Notification } from "@/features/notifications/notifications.types";
+import type { Notification, NotificationType } from "@/features/notifications/notifications.types";
 
 dayjs.extend(relativeTime);
+
+const BikecheckIcon = bikecheckIconType("Bikecheck")!;
+
+// The icon says what the row is, so it reads before a word of it does. A ride that landed
+// carries the Rides mark and a service reminder the Bikecheck one, both borrowed from the
+// tab that owns the place. The ask gets a question mark instead of a place: it is the one
+// row that wants something back, and the only one the badge goes on counting.
+const ICONS: Partial<Record<NotificationType, IconType>> = {
+  strava_activity_saved: PiPath,
+  strava_activity_unassigned: CircleQuestionMark,
+  maintenance_due: BikecheckIcon,
+};
 
 // Render one notification row.
 function NotificationRow({
@@ -21,6 +40,7 @@ function NotificationRow({
   onOpen: (notification: Notification) => void;
 }): ReactElement {
   const unread = !notification.is_read;
+  const Icon = ICONS[notification.type];
 
   return (
     <UnstyledButton onClick={() => onOpen(notification)} style={{ display: "block", width: "100%", textAlign: "left" }}>
@@ -34,9 +54,29 @@ function NotificationRow({
         }}
         className="active:scale-[0.985]"
       >
-        <Group gap="sm" wrap="nowrap" align="flex-start">
-          {/* Reserve space for the unread indicator. */}
-          <Box w={8} pt={6} style={{ flexShrink: 0 }}>
+        <Stack gap={4}>
+          {/* The heading line: what it is on the left, whether it still wants the user on
+              the right. The facts below run the full width of the card rather than
+              indenting under the icon, so every line starts on the same edge. */}
+          <Group gap="xs" wrap="nowrap" align="center">
+            {/* Follows the title's own read state rather than holding a colour of its own. */}
+            {Icon !== undefined && (
+              <Icon
+                size={22}
+                color={unread ? "var(--mantine-color-text-6)" : "var(--color-text-dim)"}
+                style={{ flexShrink: 0 }}
+              />
+            )}
+            <Text
+              fw={unread ? 600 : 500}
+              fz={15}
+              c={unread ? "text.6" : "var(--color-text-dim)"}
+              lh={1.3}
+              lineClamp={1}
+              style={{ flex: 1, minWidth: 0 }}
+            >
+              {notification.title}
+            </Text>
             {unread && (
               <Box
                 w={8}
@@ -44,23 +84,19 @@ function NotificationRow({
                 style={{
                   borderRadius: "50%",
                   backgroundColor: "var(--mantine-color-primary-6)",
+                  flexShrink: 0,
                 }}
               />
             )}
-          </Box>
+          </Group>
 
-          <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
-            <Text fw={unread ? 600 : 500} fz={15} c={unread ? "text.6" : "var(--color-text-dim)"} lh={1.3}>
-              {notification.title}
-            </Text>
-            <Text fz={13} c="var(--color-text-dim)" lh={1.4}>
-              {notification.body}
-            </Text>
-            <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)">
-              {dayjs(notification.created_at).fromNow()}
-            </Text>
-          </Stack>
-        </Group>
+          <Text fz={13} c="var(--color-text-dim)" lh={1.4}>
+            {notification.body}
+          </Text>
+          <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)">
+            {dayjs(notification.created_at).fromNow()}
+          </Text>
+        </Stack>
       </Paper>
     </UnstyledButton>
   );
@@ -71,6 +107,14 @@ export function Notifications(): ReactElement {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useNotifications();
   const markRead = useMarkNotificationRead();
+  const { mutate: markViewed } = useMarkNotificationsViewed();
+
+  // Opening the list is what clears the badge - of the announcements, at least. An
+  // unassigned ride stays counted until a bike is picked for it, so the number that
+  // remains is the number of things still waiting on the user.
+  useEffect(() => {
+    markViewed();
+  }, [markViewed]);
 
   // Mark unread notifications as read when opened.
   function openNotification(notification: Notification): void {

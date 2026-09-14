@@ -2,11 +2,12 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, ArrowLeft } from "lucide-react";
+import { Bell, ArrowLeft } from "lucide-react";
 import { GoHomeFill, GoHome } from "react-icons/go";
 // import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
 import { PiPath, PiPathBold } from "react-icons/pi";
+import { RiChatAi3Line, RiChatAi3Fill } from "react-icons/ri";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -18,6 +19,7 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
+import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
 
 const BikeIcon = bikecheckIconType("BikeIcon");
 const BikeIconFill = bikecheckIconType("BikeIcon_fill");
@@ -53,6 +55,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: PiPath,
     icon_fill: PiPathBold,
   },
+  {
+    labelKey: "nav.chat",
+    path: "/chat",
+    icon: RiChatAi3Line,
+    icon_fill: RiChatAi3Fill,
+  },
 ];
 
 // Maps routes to translated header titles; Home intentionally has none.
@@ -65,7 +73,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/service": "page.service",
   "/reports": "page.reports",
   "/rides": "page.rides",
-  "/profile": "page.profile",
+  "/chat": "page.chat",
   "/settings": "page.settings",
   "/notifications": "page.notifications",
 };
@@ -74,7 +82,6 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 const SUB_PAGE_ROUTES: string[] = [
   "/reports",
   "/settings",
-  "/profile",
   "/notifications",
   "/bikes/new",
   "/service/history",
@@ -95,6 +102,8 @@ function isFullScreenRoute(pathname: string): boolean {
 const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
   // The edit form is matched first: it is a longer shape than the detail it hangs under.
   { pattern: /^\/bikes\/\d+\/edit$/, titleKey: "bikeEdit.title" },
+  // The Setup screen names the bike in its header; this title is the fallback while it loads.
+  { pattern: /^\/bikes\/\d+\/setup$/, titleKey: "setup.title" },
   { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
 ];
 
@@ -119,13 +128,6 @@ function getPageTitleKey(pathname: string): string | null {
 // choice. Off while we work out whether that swap is what resets the wizard during an
 // attachment upload. Flip back to true to restore the offline screen.
 const OFFLINE_PAGE_ENABLED = false;
-
-// Controls standing on a photo get their own shade; the page-wide scrim alone is not
-// enough to read them against a bright image.
-export const TRANSPARENT_HEADER_CONTROL: CSSProperties = {
-  background: "rgba(0, 0, 0, 0.45)",
-  backdropFilter: "blur(8px)",
-};
 
 // Shares active-route matching between the header and tab bar.
 function isActivePath(path: string, pathname: string): boolean {
@@ -230,7 +232,6 @@ export function AppLayout(): ReactElement {
       <AppShell.Header withBorder={false} bg="transparent">
         {/* Keeps title content below the status bar. */}
         <Box
-          className={headerTransparent ? undefined : "bg-cards-800"}
           h="100%"
           px="md"
           style={{
@@ -240,6 +241,10 @@ export function AppLayout(): ReactElement {
             backgroundImage: headerTransparent
               ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 45%, transparent 100%)"
               : undefined,
+            // One step above the page, closed off by a hairline, so the bar reads as the
+            // roof of the screen rather than as page colour that happens to sit still.
+            backgroundColor: headerTransparent ? undefined : "var(--mantine-color-background-8)",
+            borderBottom: headerTransparent ? undefined : "1px solid var(--mantine-color-other-borderSubtle)",
             // The scrim is decoration; what is underneath stays reachable.
             pointerEvents: headerTransparent ? "none" : undefined,
           }}
@@ -285,23 +290,8 @@ export function AppLayout(): ReactElement {
                     {t(pageTitleKey ?? "page.home")}
                   </Text>
                 </Group>
-                {/* PROFILE ICON */}
+                {/* The bell first, the rider last: the avatar is the corner the thumb owns. */}
                 <Group gap="sm">
-                  <UnstyledButton onClick={() => navigate("/profile")} aria-label={t("page.profile")} mr="3">
-                    {/* name drives the initials fallback when the user has no picture */}
-                    <Avatar
-                      src={user?.avatar_url}
-                      name={user?.name}
-                      radius="xl"
-                      size={32}
-                      style={
-                        {
-                          "--avatar-bg": "color-mix(in srgb, var(--mantine-color-primary-5) 50%, transparent)",
-                          "--avatar-color": "var(--mantine-color-primary-3)",
-                        } as CSSProperties
-                      }
-                    />
-                  </UnstyledButton>
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
                     variant="transparent"
@@ -338,16 +328,21 @@ export function AppLayout(): ReactElement {
                       </Box>
                     )}
                   </ActionIcon>
-                  {/* SETTINGS ICON */}
-                  <ActionIcon
-                    variant="transparent"
-                    radius="xl"
-                    size="lg"
-                    aria-label={t("page.settings")}
-                    onClick={() => navigate("/settings")}
-                  >
-                    <Settings size={25} color="var(--mantine-color-cards-1)" />
-                  </ActionIcon>
+                  <UnstyledButton onClick={() => navigate("/settings")} aria-label={t("page.settings")}>
+                    {/* name drives the initials fallback when the user has no picture */}
+                    <Avatar
+                      src={user?.avatar_url}
+                      name={user?.name}
+                      radius="xl"
+                      size={32}
+                      style={
+                        {
+                          "--avatar-bg": "var(--mantine-color-cards-5)",
+                          "--avatar-color": "var(--mantine-color-text-6)",
+                        } as CSSProperties
+                      }
+                    />
+                  </UnstyledButton>
                 </Group>
               </>
             )}

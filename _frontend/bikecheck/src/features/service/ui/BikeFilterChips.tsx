@@ -17,10 +17,22 @@ interface BikeFilterChipsProps {
   // Null reads as every bike.
   selected: number | null;
   onSelect: (bikeId: number | null) => void;
+  // Whether the bar offers all bikes at all. The chat turns it off for a garage of one,
+  // where the single bike is the only subject there is.
+  withAllBikes?: boolean;
+  // Whether the selected chip is opaque. The chat's bar floats over the thread, so it is;
+  // the service history's bar sits on the page and is not.
+  opaque?: boolean;
 }
 
 // Lets the user read one bike's story at a time.
-export function BikeFilterChips({ bikes, selected, onSelect }: BikeFilterChipsProps): ReactElement {
+export function BikeFilterChips({
+  bikes,
+  selected,
+  onSelect,
+  withAllBikes = true,
+  opaque = false,
+}: BikeFilterChipsProps): ReactElement {
   const { t } = useTranslation();
   // Lands on whichever chip is selected, so one ref does the work of a map.
   const selectedRef = useRef<HTMLDivElement>(null);
@@ -49,17 +61,19 @@ export function BikeFilterChips({ bikes, selected, onSelect }: BikeFilterChipsPr
         }}
       >
         <Group gap="xs" wrap="nowrap" px="md" py="xs">
-          <Chip
-            value={ALL_BIKES}
-            radius="xl"
-            size="sm"
-            color="primary.6"
-            rootRef={selected === null ? selectedRef : undefined}
-            style={{ scrollMarginInline: SCROLL_MARGIN_PX }}
-            styles={chipStyles(selected === null, { wrap: false })}
-          >
-            {t("service.allBikes")}
-          </Chip>
+          {withAllBikes && (
+            <Chip
+              value={ALL_BIKES}
+              radius="xl"
+              size="sm"
+              color="primary.6"
+              rootRef={selected === null ? selectedRef : undefined}
+              style={{ scrollMarginInline: SCROLL_MARGIN_PX }}
+              styles={chipStyles(selected === null, { wrap: false, opaque })}
+            >
+              {t("service.allBikes")}
+            </Chip>
+          )}
           {bikes.map((bike) => (
             <Chip
               key={bike.id}
@@ -69,7 +83,7 @@ export function BikeFilterChips({ bikes, selected, onSelect }: BikeFilterChipsPr
               color="primary.6"
               rootRef={selected === bike.id ? selectedRef : undefined}
               style={{ scrollMarginInline: SCROLL_MARGIN_PX }}
-              styles={chipStyles(selected === bike.id, { wrap: false })}
+              styles={chipStyles(selected === bike.id, { wrap: false, opaque })}
             >
               {/* The same name the garage and the bike detail give it. */}
               {bikeTitle(bike)}

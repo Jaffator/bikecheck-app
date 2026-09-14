@@ -35,6 +35,17 @@ export class NotificationController {
     return this.notificationService.list(Number(userId), unread === 'true');
   }
 
+  // ---------- PATCH mark everything the list clears ----------
+  @ApiOperation({ summary: 'Mark every notification the list clears on view as read' })
+  @ApiResponse({ status: 200 })
+  @Patch('viewed')
+  // Returns a body on purpose: the shared frontend client parses every 2xx as
+  // JSON, and an empty response would leave it parsing nothing.
+  async markAllViewed(@CurrentUser('userId') userId: string): Promise<{ success: boolean }> {
+    await this.notificationService.markAllViewed(Number(userId));
+    return { success: true };
+  }
+
   // ---------- PATCH mark notification as read ----------
   @ApiOperation({ summary: 'Mark a notification as read' })
   @ApiResponse({ status: 200 })

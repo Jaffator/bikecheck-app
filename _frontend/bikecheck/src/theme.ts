@@ -1,4 +1,4 @@
-import { createTheme, type MantineColorsTuple } from "@mantine/core";
+import { SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
@@ -34,8 +34,8 @@ const background: MantineColorsTuple = [
   "#868688",
   "#7e7e83",
   "#6c6c71",
-  "#21201f",
-  "#1a1816",
+  "#1f1f1f",
+  "#141414",
 ];
 // The dark end runs warm on purpose: the primary yellow and the Strava orange are both
 // warm, so a cool grey card read as a different material behind them.
@@ -45,8 +45,8 @@ const cards: MantineColorsTuple = [
   "#a7a7a7",
   "#848484",
   "#6b6764",
-  "#403e3c",
-  "#262524",
+  "#313131",
+  "#282828",
   "#1a1612",
   "#14100b",
   "#0f0c08",
@@ -59,7 +59,7 @@ const cards2: MantineColorsTuple = [
   "#848484",
   "#696058",
   "#2d2722",
-  "#2d2722",
+  "#2d2d2d",
   "#171616",
   "#121111",
   "#0d0c0c",
@@ -72,7 +72,7 @@ const inputs: MantineColorsTuple = [
   "#808080",
   "#5c5c5c",
   "#39312a",
-  "#13100d",
+  "#191919",
   "#100d0b",
   "#0c0a08",
   "#0a0806",
@@ -123,10 +123,10 @@ export const otherColor = {
   textDim: "#CEC7BF",
   accent: "#B7C9D3",
   surface: "#2A241F",
-  // 3.24:1 on a card, so a border can be the only thing outlining a control.
-  borderSolid: "#786E63",
-  borderStrong: "rgba(120, 110, 99, 0.42)",
-  borderSubtle: "rgba(120, 110, 99, 0.22)",
+  // 3.20:1 on a card, so a border can be the only thing outlining a control.
+  borderSolid: "#757575",
+  borderStrong: "rgba(255, 255, 255, 0.12)",
+  borderSubtle: "rgba(255, 255, 255, 0.07)",
   statusIdle: "#FFB4AB",
   decor: "#352E28",
 } as const;
@@ -152,4 +152,15 @@ export const theme = createTheme({
   },
   other: otherColor,
   respectReducedMotion: false,
+  components: {
+    // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk
+    // track, raised pill, dim labels.
+    SegmentedControl: SegmentedControl.extend({
+      styles: {
+        root: { backgroundColor: "var(--mantine-color-inputs-6)" },
+        indicator: { backgroundColor: "var(--mantine-color-cards-5)" },
+        label: { color: "var(--color-text-dim)" },
+      },
+    }),
+  },
 });

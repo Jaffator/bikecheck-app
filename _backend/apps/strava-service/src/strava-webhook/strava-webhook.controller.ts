@@ -63,8 +63,6 @@ export class WebhookController {
   @Post('/mock-webhook')
   @HttpCode(200)
   async handleTestWebhook(@Req() req: Request): Promise<string> {
-    console.log('Received TEST MOCK Strava webhook event:', req.body);
-
     // Add the event to the BullMQ queue for processing
     await this.webhookQueue.add('test-strava-event', req.body as StravaWebhookEventDto);
 

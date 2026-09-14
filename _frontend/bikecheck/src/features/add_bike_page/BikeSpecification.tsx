@@ -1,5 +1,5 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { type ReactElement } from "react";
+import { type ReactElement, type ReactNode } from "react";
 import {
   Box,
   Button,
@@ -34,9 +34,15 @@ interface BikeSpecificationProps {
   // Locally selected photo overrides the scraped image.
   photoUrl: string | null;
   onPickPhoto: (file: File | null) => void;
+  // What the mileage field is called. The wizard asks for the odometer as it stands; the
+  // edit form shows the same number later, when rides have moved on, and must say so.
+  mileageLabel?: string;
+  // Fields drawn above the name. The wizard has none - the lookup settled the identity;
+  // the edit form puts brand and model here so the bike is named before it is pictured.
+  identity?: ReactNode;
 }
 
-function FieldLabel({ children, dimmed = false }: { children: string; dimmed?: boolean }): ReactElement {
+export function FieldLabel({ children, dimmed = false }: { children: string; dimmed?: boolean }): ReactElement {
   return (
     <Text size="xs" fw={600} c={dimmed ? "text.9" : "text.7"} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
       {children}
@@ -60,7 +66,7 @@ function ChoiceButton({
   return (
     <Button
       variant="default"
-      radius="sm"
+      radius="lg"
       onClick={() => {
         onSelect();
       }}
@@ -95,12 +101,13 @@ export function BikeSpecification({
   onChange,
   photoUrl,
   onPickPhoto,
+  mileageLabel,
+  identity,
 }: BikeSpecificationProps): ReactElement {
   const { t } = useTranslation();
   const displayName = bike?.name ?? fallbackName;
   // Prefer local photo over scraped image.
   const shownPhoto = photoUrl ?? bike?.imageUrl ?? null;
-  console.log(shownPhoto);
   const suspensionOptions: { value: SuspensionLayout; label: string }[] = [
     { value: "hardtail", label: t("addBike.suspensionHardtail") },
     { value: "full", label: t("addBike.suspensionFull") },
@@ -124,6 +131,19 @@ export function BikeSpecification({
 
   return (
     <Stack gap="lg" ref={formRef}>
+      {identity}
+      <Stack gap={4}>
+        <FieldLabel>{t("addBike.bikeName")}</FieldLabel>
+        <TextInput
+          placeholder={t("addBike.bikeNamePlaceholder")}
+          leftSection={<Tag size={18} />}
+          value={values.bikeName}
+          onChange={(event) => onChange("bikeName", event.currentTarget.value)}
+          radius="sm"
+          styles={inputStyles}
+        />
+      </Stack>
+
       <Paper bg="cards.6" radius="md" style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
         {shownPhoto ? (
           <Image src={shownPhoto} alt={displayName} h={180} fit="contain" bg="white" p="sm" radius="md" />
@@ -147,7 +167,7 @@ export function BikeSpecification({
                   borderBottom: "1px solid var(--mantine-color-other-borderSubtle)",
                 }}
               >
-                <ImagePlus size={28} color="var(--mantine-color-primary-6)" />
+                <ImagePlus size={28} color="var(--mantine-color-primary-6)" style={{ marginTop: 24 }} />
                 <Text size="sm" c="text.7">
                   {t("addBike.addPhoto")}
                 </Text>
@@ -190,19 +210,7 @@ export function BikeSpecification({
       </Paper>
 
       <Stack gap={4}>
-        <FieldLabel>{t("addBike.bikeName")}</FieldLabel>
-        <TextInput
-          placeholder={t("addBike.bikeNamePlaceholder")}
-          leftSection={<Tag size={18} />}
-          value={values.bikeName}
-          onChange={(event) => onChange("bikeName", event.currentTarget.value)}
-          radius="sm"
-          styles={inputStyles}
-        />
-      </Stack>
-
-      <Stack gap={4}>
-        <FieldLabel>{t("addBike.currentMileage")}</FieldLabel>
+        <FieldLabel>{mileageLabel ?? t("addBike.currentMileage")}</FieldLabel>
         <TextInput
           placeholder={t("addBike.currentMileagePlaceholder")}
           leftSection={<Gauge size={18} />}
@@ -230,7 +238,7 @@ export function BikeSpecification({
           data={categories}
           value={values.category}
           onChange={(value) => onChange("category", value)}
-          radius="sm"
+          radius="lg"
           styles={{
             input: {
               backgroundColor: "var(--mantine-color-cards-6)",
@@ -311,8 +319,9 @@ export function BikeSpecification({
         <FieldLabel>{t("addBike.power")}</FieldLabel>
         <Paper
           bg="cards.6"
-          p="md"
-          radius="sm"
+          px="md"
+          py="xs"
+          radius="lg"
           style={{
             border: "1px solid var(--mantine-color-other-borderSubtle)",
           }}

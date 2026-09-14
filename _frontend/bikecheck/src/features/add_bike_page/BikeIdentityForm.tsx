@@ -46,7 +46,7 @@ export function BikeIdentityForm({
   const pinPageScroll = usePinPageScroll();
 
   return (
-    <Paper bg="cards.6" p="md" radius="md" ref={formRef}>
+    <Paper bg="cards.6" p="md" radius="md" ref={formRef} style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
       <form onSubmit={form.onSubmit(onSubmit)}>
         <Stack gap="md">
           <Stack gap={4}>

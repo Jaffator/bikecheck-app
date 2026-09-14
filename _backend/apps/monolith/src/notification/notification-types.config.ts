@@ -16,6 +16,10 @@ export type NotificationType =
 export interface NotificationTypeConfig {
   channels: NotificationChannel[];
   route?: string;
+  // Holds the bell badge until the user has actually dealt with it. Opening the list
+  // does not touch one of these: looking at an ask is not the same as answering it.
+  // Left off means the notification is an announcement, and seeing it is the whole job.
+  holdsBadge?: boolean;
 }
 
 export interface PendingActivities {
@@ -30,17 +34,23 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
   // event, so every ride gets its own notification.
   strava_activity_saved: {
     channels: ['push', 'inApp'],
-    route: '/bikes/:bikeId',
+    // The ride itself, not the bike it landed on: the notification is about this one
+    // ride, and the bike is a page away from it either way.
+    route: '/rides?ride=:activityId',
   },
   // A ride the app could not put on a bike by itself — whether Strava sent no
   // gear at all, or gear that matches nothing here. Both leave the user with
   // the same job, so they are one notification rather than two: the rider is
   // not expected to keep gear tidy on Strava's side.
-  // No dedup key either, for the same reason as above.
+  // Keyed on the activity: one ask per ride, however many webhooks Strava sends for it.
+  // The badge is counted from these, so a redelivery must not add to it.
   strava_activity_unassigned: {
     channels: ['push', 'inApp'],
     // Opens the Pending tab with this ride's sheet already up.
     route: '/rides?pending=:activityId',
+    // The only ask the app makes of the rider, so it is the only thing the badge counts
+    // once the list has been read. Cleared by assigning the bike, not by looking.
+    holdsBadge: true,
   },
   // Recurring by nature: the same job comes due again every season, so it belongs on
   // the lock screen and in the list, and never in an inbox.
@@ -54,3 +64,9 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     channels: ['inApp'],
   },
 };
+
+// The types opening the notification list marks read: everything that is not waiting on
+// the user. Derived rather than listed, so a new type is covered by its own config.
+export const CLEARED_ON_VIEW: NotificationType[] = (Object.keys(NOTIFICATION_CONFIG) as NotificationType[]).filter(
+  (type) => !NOTIFICATION_CONFIG[type].holdsBadge,
+);

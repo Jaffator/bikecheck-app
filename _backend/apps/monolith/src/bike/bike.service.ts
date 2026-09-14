@@ -80,6 +80,8 @@ export class BikeService {
         ...data,
         bike_id: bike.id,
         component_type_id: data.component_type_id,
+        // A part joins the bike the day it is added, unless the caller dates it itself.
+        mounted_at: data.mounted_at ?? new Date(),
       }));
       await db.components_mounted.createMany({ data: componentData });
 

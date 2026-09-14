@@ -167,8 +167,8 @@ export function StravaStatusCard({
         }}
       />
 
-      {/* Dashboard uses a compact strip; settings reserves room for disconnect. */}
-      <Stack gap="md" p={allowDisconnect ? "md" : "sm"} style={{ position: "relative" }}>
+      {/* Both are one strip tall: settings pads it as the rows of its cards are padded. */}
+      <Stack gap="md" px={allowDisconnect ? "md" : "sm"} py={allowDisconnect ? 10 : "sm"} style={{ position: "relative" }}>
         <Group gap="sm" wrap="nowrap" align="center">
           <Box
             style={{

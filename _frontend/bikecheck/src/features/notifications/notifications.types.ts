@@ -13,6 +13,7 @@ export interface NotificationPayload {
   activityId?: string;
   gearId?: string;
   km?: number;
+  elevationM?: number;
   bikeName?: string;
 }
 

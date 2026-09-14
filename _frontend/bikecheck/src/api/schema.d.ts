@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/api/users/me/deletion-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the signed-in account still holds, for the delete dialog */
+        get: operations["User getDeletionSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete the signed-in account and everything belonging to it */
+        delete: operations["User deleteMe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/{id}": {
         parameters: {
             query?: never;
@@ -113,6 +147,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["Auth logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Auth changePassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -305,7 +355,23 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["Bike deleteSoft"];
+        delete: operations["Bike archive"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bike/unarchive/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Bike unarchive"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -517,6 +583,105 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/service-tracking/tracked-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ServiceTracking getBikeTrackedActions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/service-tracking/attention": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ServiceTracking getGarageTrackedActions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/service-tracking/postpone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ServiceTracking postponeTrackedAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/fcm-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register FCM token for the current user */
+        post: operations["Notification registerFcmToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notifications for the current user */
+        get: operations["Notification list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark a notification as read */
+        patch: operations["Notification markRead"];
         trace?: never;
     };
     "/api/components": {
@@ -805,57 +970,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/notifications/fcm-token": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Register FCM token for the current user */
-        post: operations["Notification registerFcmToken"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List notifications for the current user */
-        get: operations["Notification list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/notifications/{id}/read": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Mark a notification as read */
-        patch: operations["Notification markRead"];
-        trace?: never;
-    };
     "/api/rides": {
         parameters: {
             query?: never;
@@ -1044,10 +1158,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ai-chat/thread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiChat getThread"];
+        put?: never;
+        post?: never;
+        delete: operations["AiChat deleteThread"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai-chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiChat ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/setup/bike/{bikeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Setup findByBike"];
+        put?: never;
+        post: operations["Setup create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/setup/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["Setup delete"];
+        options?: never;
+        head?: never;
+        patch: operations["Setup update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountDeletionSummaryDto: {
+            /** @example 3 */
+            bikes: number;
+            /** @example 412 */
+            rides: number;
+            /** @example 27 */
+            services: number;
+            /** @example 2 */
+            publicReports: number;
+        };
         UserResponseDto: {
             /** @example 1 */
             id: number;
@@ -1062,8 +1250,17 @@ export interface components {
             currency: Record<string, never> | null;
             /** @example 70 */
             weight_kg: Record<string, never> | null;
+            /**
+             * @example bar
+             * @enum {string}
+             */
+            tire_pressure_unit: "bar" | "psi";
             /** @example true */
             is_active: boolean;
+            /** @example true */
+            has_password: boolean;
+            /** @example true */
+            notifications_enabled: Record<string, never> | null;
             /** @example 20678962 */
             strava_athlete_id: Record<string, never> | null;
             /** @example Jaroslav */
@@ -1108,6 +1305,19 @@ export interface components {
             weight_kg: number;
             /** @example https://example.com/avatar.jpg */
             avatar_url: string;
+            /** @example true */
+            notifications_enabled: boolean;
+            /**
+             * @example bar
+             * @enum {string}
+             */
+            tire_pressure_unit: "bar" | "psi";
+        };
+        ChangePasswordDto: {
+            /** @example currentPassword123 */
+            currentPassword: string;
+            /** @example newStrongPassword123 */
+            newPassword: string;
         };
         LoginDto: {
             /** @example jaffa@jaffa.com */
@@ -1615,6 +1825,171 @@ export interface components {
              */
             attachments_removed?: number[];
         };
+        Response_TrackedActionDto: {
+            /**
+             * @description The bike carrying the part, which a row opens
+             * @example 21
+             */
+            bike_id: number;
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 12 */
+            component_type_id: number;
+            /** @example Chain */
+            component_type: string;
+            /** @example component.chain */
+            component_type_i18n_key: string | null;
+            /** @example Shimano XT M8100 */
+            component_desc: string | null;
+            /** @example front */
+            position: string | null;
+            /** @example 42 */
+            event_action_id: number;
+            /** @example Chain Replacement */
+            action_name: string;
+            /** @example action.chainReplacement */
+            action_i18n_key: string | null;
+            /**
+             * @example km
+             * @enum {string}
+             */
+            axis: "km" | "min" | "health_index";
+            /**
+             * @description Which accumulator the reading was taken from, which is not implied by the axis
+             * @example drivetrain_km
+             * @enum {string}
+             */
+            measure: "total_km" | "drivetrain_km" | "total_time_min" | "suspension_min" | "health_index";
+            /**
+             * @description Wear on that axis since the Wear Baseline
+             * @example 3200
+             */
+            current: number;
+            /**
+             * @description The Service Interval on that axis, including any Extension in force
+             * @example 4000
+             */
+            interval: number;
+            /**
+             * @description Whole percent of the way to being due. Never capped
+             * @example 80
+             */
+            percentage: number;
+            /**
+             * @example warning
+             * @enum {string}
+             */
+            level: "good" | "warning" | "critical" | "overdue";
+            /**
+             * @description The action has been put off, lengthening its interval
+             * @example false
+             */
+            extended: boolean;
+        };
+        Response_GarageTrackedActionDto: {
+            /**
+             * @description The bike carrying the part, which a row opens
+             * @example 21
+             */
+            bike_id: number;
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 12 */
+            component_type_id: number;
+            /** @example Chain */
+            component_type: string;
+            /** @example component.chain */
+            component_type_i18n_key: string | null;
+            /** @example Shimano XT M8100 */
+            component_desc: string | null;
+            /** @example front */
+            position: string | null;
+            /** @example 42 */
+            event_action_id: number;
+            /** @example Chain Replacement */
+            action_name: string;
+            /** @example action.chainReplacement */
+            action_i18n_key: string | null;
+            /**
+             * @example km
+             * @enum {string}
+             */
+            axis: "km" | "min" | "health_index";
+            /**
+             * @description Which accumulator the reading was taken from, which is not implied by the axis
+             * @example drivetrain_km
+             * @enum {string}
+             */
+            measure: "total_km" | "drivetrain_km" | "total_time_min" | "suspension_min" | "health_index";
+            /**
+             * @description Wear on that axis since the Wear Baseline
+             * @example 3200
+             */
+            current: number;
+            /**
+             * @description The Service Interval on that axis, including any Extension in force
+             * @example 4000
+             */
+            interval: number;
+            /**
+             * @description Whole percent of the way to being due. Never capped
+             * @example 80
+             */
+            percentage: number;
+            /**
+             * @example warning
+             * @enum {string}
+             */
+            level: "good" | "warning" | "critical" | "overdue";
+            /**
+             * @description The action has been put off, lengthening its interval
+             * @example false
+             */
+            extended: boolean;
+            /** @example Santa Cruz */
+            bike_brand: string;
+            /** @example Hightower */
+            bike_model: string | null;
+            /** @example 2022 */
+            year: number | null;
+        };
+        PostponeTrackedActionDto: {
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 42 */
+            event_action_id: number;
+        };
+        DeviceTokenDto: {
+            /** @example caYcjw...:APA91b... */
+            token: string;
+            /** @example android */
+            platform: string;
+        };
+        ResponseNotificationDto: {
+            /** @example 1 */
+            id: number;
+            /** @example strava_unmatched_activity */
+            type: string;
+            /** @example Nepřiřazená aktivita ze Stravy */
+            title: string;
+            /** @example Kolo "Trek Fuel EX" ještě nemáš přiřazené */
+            body: string;
+            /**
+             * @example {
+             *       "gearId": "b12345"
+             *     }
+             */
+            payload: Record<string, never> | null;
+            /** @example false */
+            is_read: boolean;
+            /** @example null */
+            read_at: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2026-06-16T12:00:00.000Z
+             */
+            created_at: string;
+        };
         CustomComponentsDto: {
             /** @example 15 */
             component_group_id: number;
@@ -1876,37 +2251,6 @@ export interface components {
             /** @example 1 */
             bikeId: number;
         };
-        DeviceTokenDto: {
-            /** @example caYcjw...:APA91b... */
-            token: string;
-            /** @example android */
-            platform: string;
-        };
-        ResponseNotificationDto: {
-            /** @example 1 */
-            id: number;
-            /** @example strava_unmatched_activity */
-            type: string;
-            /** @example Nepřiřazená aktivita ze Stravy */
-            title: string;
-            /** @example Kolo "Trek Fuel EX" ještě nemáš přiřazené */
-            body: string;
-            /**
-             * @example {
-             *       "gearId": "b12345"
-             *     }
-             */
-            payload: Record<string, never> | null;
-            /** @example false */
-            is_read: boolean;
-            /** @example null */
-            read_at: Record<string, never> | null;
-            /**
-             * Format: date-time
-             * @example 2026-06-16T12:00:00.000Z
-             */
-            created_at: string;
-        };
         ResponseRideDto: {
             /** @example 42 */
             id: number;
@@ -2063,6 +2407,187 @@ export interface components {
              */
             count: number;
         };
+        ResponseChatMessageDto: {
+            /** @example 1 */
+            id: number;
+            /**
+             * @example assistant
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** @example You have two bikes: a Santa Cruz Hightower and a Canyon Grail. */
+            content: string;
+            /**
+             * @description The bike bound when the question was asked; a change between turns is the divider
+             * @example 12
+             */
+            bike_id: number | null;
+            /** @example 2026-09-09T08:39:40.000Z */
+            created_at: string;
+        };
+        ResponseChatDeletedDto: {
+            /**
+             * @description How many messages the deletion reached
+             * @example 12
+             */
+            count: number;
+        };
+        AskChatDto: {
+            /** @example Jaká mám kola? */
+            question: string;
+            /**
+             * @description The bike selected in the chat; absent is all bikes
+             * @example 12
+             */
+            bike_id?: number;
+        };
+        Response_SetupProfileDto: {
+            /** @example 12 */
+            id: number;
+            /** @example 15 */
+            bike_id: number;
+            /** @example Trail */
+            name: string;
+            /** @example Wet, muddy Loket */
+            note: Record<string, never> | null;
+            /** @example 24.5 */
+            front_tire_psi: Record<string, never> | null;
+            /** @example 27 */
+            rear_tire_psi: Record<string, never> | null;
+            /** @example 85 */
+            fork_pressure_psi: Record<string, never> | null;
+            /** @example 2 */
+            fork_tokens: Record<string, never> | null;
+            /** @example 20 */
+            fork_sag_percent: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 8
+             */
+            fork_rebound_ls: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 3
+             */
+            fork_rebound_hs: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 10
+             */
+            fork_compression_ls: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 2
+             */
+            fork_compression_hs: Record<string, never> | null;
+            /** @example 185 */
+            shock_pressure_psi: Record<string, never> | null;
+            /** @example 1 */
+            shock_tokens: Record<string, never> | null;
+            /** @example 30 */
+            shock_sag_percent: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 6
+             */
+            shock_rebound_ls: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 2
+             */
+            shock_rebound_hs: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 9
+             */
+            shock_compression_ls: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 1
+             */
+            shock_compression_hs: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2026-09-11T12:00:00.000Z
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-11T12:00:00.000Z
+             */
+            updated_at: string;
+        };
+        CreateSetupProfileDto: {
+            /** @example Trail */
+            name: string;
+            /**
+             * @description Profile to copy every number and the note from
+             * @example 12
+             */
+            copy_of?: number;
+        };
+        UpdateSetupProfileDto: {
+            /** @example Race */
+            name?: string;
+            /** @example Wet, muddy Loket */
+            note?: Record<string, never> | null;
+            /** @example 24.5 */
+            front_tire_psi?: Record<string, never> | null;
+            /** @example 27 */
+            rear_tire_psi?: Record<string, never> | null;
+            /** @example 85 */
+            fork_pressure_psi?: Record<string, never> | null;
+            /** @example 2 */
+            fork_tokens?: Record<string, never> | null;
+            /** @example 20 */
+            fork_sag_percent?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 8
+             */
+            fork_rebound_ls?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 3
+             */
+            fork_rebound_hs?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 10
+             */
+            fork_compression_ls?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 2
+             */
+            fork_compression_hs?: Record<string, never> | null;
+            /** @example 185 */
+            shock_pressure_psi?: Record<string, never> | null;
+            /** @example 1 */
+            shock_tokens?: Record<string, never> | null;
+            /** @example 30 */
+            shock_sag_percent?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 6
+             */
+            shock_rebound_ls?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 2
+             */
+            shock_rebound_hs?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 9
+             */
+            shock_compression_ls?: Record<string, never> | null;
+            /**
+             * @description Clicks from fully closed
+             * @example 1
+             */
+            shock_compression_hs?: Record<string, never> | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -2072,6 +2597,42 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "User getDeletionSummary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDeletionSummaryDto"];
+                };
+            };
+        };
+    };
+    "User deleteMe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "User getUser": {
         parameters: {
             query?: never;
@@ -2225,6 +2786,27 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Auth changePassword": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -2429,7 +3011,9 @@ export interface operations {
     };
     "Bike findUserBikes": {
         parameters: {
-            query?: never;
+            query?: {
+                archived?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2497,7 +3081,28 @@ export interface operations {
             };
         };
     };
-    "Bike deleteSoft": {
+    "Bike archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseBikeDto"];
+                };
+            };
+        };
+    };
+    "Bike unarchive": {
         parameters: {
             query?: never;
             header?: never;
@@ -2536,6 +3141,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ResponseBikeDto"];
                 };
+            };
+            /** @description Bike is not archived */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2833,6 +3445,132 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Response_BikeEvent_Dto"];
                 };
+            };
+        };
+    };
+    "ServiceTracking getBikeTrackedActions": {
+        parameters: {
+            query: {
+                bikeId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_TrackedActionDto"][];
+                };
+            };
+        };
+    };
+    "ServiceTracking getGarageTrackedActions": {
+        parameters: {
+            query: {
+                minPercentage: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_GarageTrackedActionDto"][];
+                };
+            };
+        };
+    };
+    "ServiceTracking postponeTrackedAction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostponeTrackedActionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_TrackedActionDto"];
+                };
+            };
+        };
+    };
+    "Notification registerFcmToken": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Notification list": {
+        parameters: {
+            query?: {
+                unread?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseNotificationDto"][];
+                };
+            };
+        };
+    };
+    "Notification markRead": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3354,72 +4092,12 @@ export interface operations {
             };
         };
     };
-    "Notification registerFcmToken": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DeviceTokenDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    "Notification list": {
-        parameters: {
-            query?: {
-                unread?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ResponseNotificationDto"][];
-                };
-            };
-        };
-    };
-    "Notification markRead": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     "Ride listRides": {
         parameters: {
             query?: {
                 limit?: number;
                 offset?: number;
+                bikeId?: number;
             };
             header?: never;
             path?: never;
@@ -3659,6 +4337,207 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "AiChat getThread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseChatMessageDto"][];
+                };
+            };
+        };
+    };
+    "AiChat deleteThread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseChatDeletedDto"];
+                };
+            };
+        };
+    };
+    "AiChat ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskChatDto"];
+            };
+        };
+        responses: {
+            /** @description NDJSON stream, one JSON per line: {"type":"step"|"ping"|"done"|"error", ...} */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Setup findByBike": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bikeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_SetupProfileDto"][];
+                };
+            };
+            /** @description Bike not found or not the caller's */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Setup create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bikeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSetupProfileDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_SetupProfileDto"];
+                };
+            };
+            /** @description Bike, or the profile to copy, not found on this bike */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bike is archived, or the name is already taken on it */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Setup delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_SetupProfileDto"];
+                };
+            };
+            /** @description Profile not found or not the caller's */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bike is archived */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Setup update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSetupProfileDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_SetupProfileDto"];
+                };
+            };
+            /** @description Profile not found or not the caller's */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bike is archived, or the name is already taken on it */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

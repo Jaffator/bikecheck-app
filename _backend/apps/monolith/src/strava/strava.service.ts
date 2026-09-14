@@ -405,9 +405,13 @@ export class StravaEventsService {
         payload: {
           activityId: String(data.activity_id),
           km: Math.round(data.analyzedData.distance_km),
+          elevationM: Math.round(data.analyzedData.elevation_up_m),
           ...(data.analyzedData.name ? { activityName: data.analyzedData.name } : {}),
           ...(data.gearid ? { gearId: data.gearid } : {}),
         },
+        // Strava sends both "create" and "update" for the same ride, and can redeliver
+        // either. The badge counts these, so the ask has to be one row per ride.
+        dedupKey: `unassigned:${data.activity_id}`,
       });
       return { message: 'Not linked bike, activity saved to pending' };
     } else if (bikeId && user) {
@@ -429,7 +433,11 @@ export class StravaEventsService {
           type: 'strava_activity_saved',
           payload: {
             bikeId,
+            // What the route opens the ride by: rides are keyed on the Strava activity,
+            // and the row id is not known to the client until the list has loaded.
+            activityId: String(data.activity_id),
             km: Math.round(data.analyzedData.distance_km),
+            elevationM: Math.round(data.analyzedData.elevation_up_m),
             bikeName: bikeRow ? [bikeRow.bike_brand, bikeRow.bike_model, bikeRow.year].filter(Boolean).join(' ') : '',
           },
         });

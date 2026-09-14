@@ -137,11 +137,13 @@ model bikes {
   strava_name           String?                 @db.VarChar
   bike_types            bike_types?             @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   organizations         organizations?          @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users                 users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                 users                   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   components_mounted    components_mounted[]
   bike_service_interval bike_service_interval[]
+  chat_messages         chat_messages[]
   events_bikes          events_bikes[]
   rides                 rides[]
+  setup_profiles        setup_profiles[]
 
   @@index([created_at], map: "bikes_created_at")
   @@index([bike_type_id], map: "bikes_type_id")
@@ -205,12 +207,13 @@ model components_mounted {
   health_index              Int?                        @default(0)
   drivetrain_km             Int?                        @default(0)
   suspension_min            Int?                        @default(0)
+  // A fork or shock with a high-speed adjuster beside the low-speed one; single by default.
+  dual_rebound              Boolean                     @default(false)
+  dual_compression          Boolean                     @default(false)
   action_done_component_map action_done_component_map[]
   tracked_action_state      tracked_action_state[]
   bikes                     bikes                       @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   component_types           component_types             @relation(fields: [component_type_id], references: [id], onUpdate: NoAction)
-  suspension_setup          suspension_setup[]
-  tire_setup                tire_setup[]
 
   @@index([bike_id], map: "bike_components_bike_id")
   @@index([component_type_id], map: "bike_components_component_id")
@@ -401,62 +404,83 @@ model rides {
   @@index([started_at], map: "rides_started_at")
 }
 
-model suspension_setup {
-  id                    Int                @id @default(autoincrement())
-  mounted_component_id  Int
-  setup_date            DateTime           @default(now()) @db.Timetz(6)
-  pressure_psi          Int?
-  pressure_bar          Int?
-  sag_percentage        Int?
-  amount_tokens_spacers Int?
-  rebound_ls            Int?
-  rebound_hs            Int?
-  compression_ls        Int?
-  compression_hs        Int?
-  notes                 String?            @db.VarChar
-  components_mounted    components_mounted @relation(fields: [mounted_component_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+// One Setup Profile: every number a bike is ridden at, on one sheet, rewritten in place
+// (ADR 0029). Belongs to the bike, not to the parts it is dialled into, so a Replacement
+// leaves it as it was. Every number is nullable - null is "not recorded", a zero is a zero.
+// Pressures are psi to one decimal (a bar value converted is not an integer); clicks are
+// counted from fully closed. There is no history behind a row: a save overwrites it.
+model setup_profiles {
+  id                   Int      @id @default(autoincrement())
+  bike_id              Int
+  name                 String   @db.VarChar(50)
+  note                 String?  @db.VarChar(500)
+  front_tire_psi       Decimal? @db.Decimal(5, 1)
+  rear_tire_psi        Decimal? @db.Decimal(5, 1)
+  fork_pressure_psi    Decimal? @db.Decimal(5, 1)
+  fork_tokens          Int?
+  fork_sag_percent     Int?
+  fork_rebound_ls      Int?
+  fork_rebound_hs      Int?
+  fork_compression_ls  Int?
+  fork_compression_hs  Int?
+  shock_pressure_psi   Decimal? @db.Decimal(5, 1)
+  shock_tokens         Int?
+  shock_sag_percent    Int?
+  shock_rebound_ls     Int?
+  shock_rebound_hs     Int?
+  shock_compression_ls Int?
+  shock_compression_hs Int?
+  created_at           DateTime @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  bikes                bikes    @relation(fields: [bike_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // Two profiles on one bike never share a name, so switching between them is unambiguous.
+  @@unique([bike_id, name])
 }
 
-model tire_setup {
-  id                   Int                @id @default(autoincrement())
-  component_mounted_id Int
-  tire_pressure_bar    Int?
-  tire_pressure_psi    Int?
-  components_mounted   components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+// The Tyre Pressure Unit: what tyre pressures are read and typed in, chosen once per account.
+// Suspension pressure is not subject to it - a fork or shock is always read in psi.
+enum tire_pressure_unit {
+  bar
+  psi
 }
 
+// The account. Deleted hard, never archived (ADR 0028): everything below cascades from
+// this row, so a deleted account leaves nothing of the rider behind.
 model users {
-  id                   Int                    @id @default(autoincrement())
-  name                 String?                @db.VarChar
-  email                String                 @unique @db.VarChar
-  password_hash        String?                @db.VarChar
-  avatar_url           String?                @db.VarChar
-  language             String?                @db.VarChar
-  is_active            Boolean?               @default(true)
-  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
-  last_login_at        DateTime?              @db.Timestamptz(6)
-  currency             String?                @db.VarChar
-  weight_kg            Int?
-  is_deleted           Boolean?               @default(false)
-  deleted_at           DateTime?              @db.Timestamptz(6)
-  googleId             String?                @unique @db.VarChar
-  strava_athlete_id    String?                @unique @db.VarChar
-  strava_firstname     String?                @db.VarChar
-  strava_lastname      String?                @db.VarChar
-  strava_username      String?                @db.VarChar
-  strava_avatar_url    String?                @db.VarChar
-  accounts             accounts[]
-  bikes                bikes[]
-  component_types      component_types[]
-  device_tokens        device_tokens[]
-  event_action_tags    event_action_tags[]
-  events_action        events_action[]
-  notifications        notifications[]
-  organization_members organization_members[]
-  refresh_tokens       refresh_tokens[]
-  reports              reports[]
-  rides                rides[]
+  id                    Int                    @id @default(autoincrement())
+  name                  String?                @db.VarChar
+  email                 String                 @unique @db.VarChar
+  password_hash         String?                @db.VarChar
+  avatar_url            String?                @db.VarChar
+  language              String?                @db.VarChar
+  is_active             Boolean?               @default(true)
+  created_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  last_login_at         DateTime?              @db.Timestamptz(6)
+  currency              String?                @db.VarChar
+  weight_kg             Int?
+  googleId              String?                @unique @db.VarChar
+  strava_athlete_id     String?                @unique @db.VarChar
+  strava_firstname      String?                @db.VarChar
+  strava_lastname       String?                @db.VarChar
+  strava_username       String?                @db.VarChar
+  strava_avatar_url     String?                @db.VarChar
+  notifications_enabled Boolean?               @default(true)
+  // Bar or psi for tyre pressures, account-wide. Suspension is always psi (ADR 0029).
+  tire_pressure_unit    tire_pressure_unit     @default(bar)
+  accounts              accounts[]
+  bikes                 bikes[]
+  chat_messages         chat_messages[]
+  component_types       component_types[]
+  device_tokens         device_tokens[]
+  event_action_tags     event_action_tags[]
+  events_action         events_action[]
+  notifications         notifications[]
+  organization_members  organization_members[]
+  refresh_tokens        refresh_tokens[]
+  reports               reports[]
+  rides                 rides[]
 
   @@index([created_at], map: "users_created_at")
   @@index([last_login_at], map: "users_last_login_at")
@@ -477,6 +501,20 @@ model tracked_action_state {
   extended_by_km          Int?               @default(0)
   extended_by_min         Int?               @default(0)
   extended_by_healthIndex Int?               @default(0)
+  // When each Extension was granted. An Extension belongs to the cycle it was granted in,
+  // so it counts only while it is newer than the Service the reading is measured from -
+  // a job put off and then done is not still put off. Read against the Service's
+  // created_at rather than its service_date, which carries a date and no time.
+  //
+  // Null is an Extension granted before this was recorded - so before any Service it could
+  // be compared with, and the first one recorded spends it. Every grant stamps one now, so
+  // the exception can only shrink.
+  //
+  // No column for healthIndex on purpose: a Service does not rebase that axis (its
+  // baseline is always zero), so an Extension on it has nothing to expire against and
+  // dies with the part, at Replacement.
+  extended_km_at          DateTime?          @db.Timestamptz(6)
+  extended_min_at         DateTime?          @db.Timestamptz(6)
   // The band already announced: 0, 80, 95 or 100. Moved to whichever band the percentage
   // currently falls in, up or down, so a reset re-arms the next crossing.
   reached_threshold       Int                @default(0)
@@ -539,4 +577,44 @@ model device_tokens {
   users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, token])
+}
+
+// One turn of the chat thread - a question or an answer. There is no conversation entity, so
+// a user has exactly one thread and these rows are keyed by nothing but its owner. Deleted
+// hard: nothing references a message, and "delete my chat" has to mean deleted.
+model chat_messages {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  role         String   @db.VarChar // user | assistant
+  content      String
+  // The bike bound at the moment of the question, from the chat's picker. The frontend reads
+  // a change between consecutive turns as the divider in the thread.
+  bike_id      Int?
+  // What the turn cost, which is what a token budget is summed over.
+  total_tokens Int?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  users           users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  bikes           bikes?            @relation(fields: [bike_id], references: [id])
+  chat_tool_calls chat_tool_calls[]
+
+  @@index([user_id, created_at], map: "chat_messages_user_recent")
+}
+
+// What the model did to answer one message, never what it saw: the tool's name, its
+// arguments, how many rows came back, whether the page was cut and how long it took. The
+// tool response payload is not stored - it is reproducible from the arguments.
+model chat_tool_calls {
+  id          Int      @id @default(autoincrement())
+  message_id  Int
+  tool_name   String   @db.VarChar // get_garage
+  arguments   Json // { bike_id: 3 }
+  row_count   Int?
+  truncated   Boolean  @default(false)
+  duration_ms Int?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  chat_messages chat_messages @relation(fields: [message_id], references: [id], onDelete: Cascade)
+
+  @@index([message_id], map: "chat_tool_calls_message")
 }

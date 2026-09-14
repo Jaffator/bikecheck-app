@@ -1,0 +1,134 @@
+import { Prisma } from '@prisma/client';
+import { z } from 'zod';
+import type { PrismaService } from '../../../prisma/prisma.service';
+import { ownedBikesWhere } from '../../bike/owned-bike.where';
+import type { PageTool, ToolPage } from './tool-page';
+
+// One part on one bike, as the model reads it. Ids go out so the other tools can be called
+// with them; units live in the field names. A number nobody recorded goes out as null rather
+// than as 0: a zero is a reading, and the model states what it is given.
+export interface GaragePartRow {
+  component_mounted_id: number;
+  component_type_id: number;
+  component_type: string;
+  position: string;
+  component_desc: string;
+  total_km: number | null;
+  total_time_min: number | null;
+}
+
+// One bike with what is on it now. Named by brand and model - `bikename` is what its owner
+// calls it, not what it is, so it never reaches the model.
+export interface GarageBikeRow {
+  bike_id: number;
+  bike_brand: string;
+  bike_model: string;
+  // The model year, as the app writes it beside the name - "Cube Nuroad 2025". Null on a bike
+  // whose owner never filled it in.
+  year: number | null;
+  total_km: number | null;
+  total_time_min: number | null;
+  elevation_m: number | null;
+  // Whether Strava rides land on this bike by themselves. The gear id itself says nothing to
+  // the user, so only the fact of the pairing goes out.
+  strava_paired: boolean;
+  parts: GaragePartRow[];
+}
+
+// The garage takes no arguments: it is the whole of what the user owns.
+const getGarageInput = z.object({});
+
+export type GetGarageInput = z.infer<typeof getGarageInput>;
+
+export type GarageToolSet = {
+  get_garage: PageTool<GetGarageInput, GarageBikeRow>;
+};
+
+const GET_GARAGE_DESCRIPTION =
+  'The bikes the user owns and the parts mounted on them right now, with the ids every other ' +
+  'tool takes. `strava_paired` says whether rides from Strava land on that bike by themselves, ' +
+  'and `year` is the model year. A figure nobody recorded is null, which is not a zero. ' +
+  'Call this before anything else. Takes no arguments.';
+
+// Only what is on the machine now, read by the signal the rest of the app mounts by. A part that
+// came off is not part of the build any more.
+const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
+
+// The bike and its build, with nothing derived: the computed columns wear tracking reads are
+// inputs to a reading, not answers, so they stay in.
+const garageSelect = {
+  id: true,
+  bike_brand: true,
+  bike_model: true,
+  year: true,
+  total_km: true,
+  total_time_min: true,
+  total_elevation_m: true,
+  strava_gear_id: true,
+  components_mounted: {
+    where: MOUNTED,
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      component_type_id: true,
+      component_desc: true,
+      position: true,
+      total_km: true,
+      total_time_min: true,
+      component_types: { select: { component_type: true } },
+    },
+  },
+} satisfies Prisma.bikesSelect;
+
+type GarageBike = Prisma.bikesGetPayload<{ select: typeof garageSelect }>;
+
+type GaragePart = GarageBike['components_mounted'][number];
+
+// The entry point of the catalogue: the model calls this first and takes its ids from it.
+// Ownership is written here and `userId` lives in the closure, in no schema the model can fill.
+export function garageTools(prisma: PrismaService, userId: number): GarageToolSet {
+  return {
+    get_garage: {
+      description: GET_GARAGE_DESCRIPTION,
+      inputSchema: getGarageInput,
+      execute: async (): Promise<ToolPage<GarageBikeRow>> => {
+        const bikes = await prisma.bikes.findMany({
+          where: ownedBikesWhere(userId),
+          orderBy: { id: 'asc' },
+          select: garageSelect,
+        });
+
+        const rows = bikes.map(toGarageBikeRow);
+
+        // The garage is never cut: it is the list the rest of the catalogue is reached through.
+        return { rows, total_count: rows.length };
+      },
+    },
+  };
+}
+
+function toGarageBikeRow(bike: GarageBike): GarageBikeRow {
+  return {
+    bike_id: bike.id,
+    bike_brand: bike.bike_brand,
+    bike_model: bike.bike_model ?? '',
+    year: bike.year,
+    total_km: bike.total_km,
+    total_time_min: bike.total_time_min,
+    elevation_m: bike.total_elevation_m,
+    strava_paired: bike.strava_gear_id != null,
+    parts: bike.components_mounted.map(toGaragePartRow),
+  };
+}
+
+function toGaragePartRow(part: GaragePart): GaragePartRow {
+  return {
+    component_mounted_id: part.id,
+    component_type_id: part.component_type_id,
+    component_type: part.component_types.component_type,
+    position: part.position ?? '',
+    component_desc: part.component_desc ?? '',
+    total_km: part.total_km,
+    total_time_min: part.total_time_min,
+  };
+}

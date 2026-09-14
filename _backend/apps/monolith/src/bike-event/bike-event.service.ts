@@ -352,7 +352,9 @@ export class BikeEventService {
             note: dto.note,
             total_cost: dto.total_cost,
             created_at: new Date(),
-            service_date: dto.service_date,
+            // The resolved date, not the raw field: a create with no date reads "now" here
+            // exactly as it does for the baselines below, so the two can never disagree.
+            service_date: serviceDate,
           },
         });
         await this.writeActions(tx, bikeEvent.id, dto.bike_id, dto.actions_done, moment);

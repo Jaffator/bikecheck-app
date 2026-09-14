@@ -31,6 +31,15 @@ Three steps, and nothing between them:
 Do not write a shadow literal into a component. A new shadow means a fourth elevation,
 which is a change to this file first.
 
+### Sill
+
+One shadow that is not an elevation: `--elev-sill` is a ledge *inside* a card — the hem a
+collapsed list slips under (`TrackedActionsSection`). It keeps the card's own colour, bleeds
+to the card's edges through negative `md` margins, and casts upward onto what it hides, a
+notch darker than `--elev-row` so the hem reads as nearer than the rows.
+The card clips it with `overflow: hidden`, which keeps the hem inside the corners without
+touching the card's own shadow.
+
 ## Cards on a saturated surface
 
 `--card-glow` is lit for the near-black `cards.6`: a 7% primary tint that disappears on a

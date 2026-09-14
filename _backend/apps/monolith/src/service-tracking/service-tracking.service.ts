@@ -18,13 +18,16 @@ import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-a
 // against it, and the state of its own row. Nothing here is a percentage - the percentage
 // is derived from these on every read and stored nowhere (ADR 0026).
 const trackedPartInclude = {
-  component_types: { select: { component_type: true, i18n_key: true } },
+  component_types: { select: { component_type: true, i18n_key: true, component_group_id: true } },
   action_done_component_map: {
     include: {
       event_actions_done: {
         select: {
           event_action_id: true,
-          events_bikes: { select: { service_date: true, is_deleted: true } },
+          // created_at alongside service_date: the date decides which recording is the
+          // latest, the timestamp decides whether an Extension survived it (see
+          // `liveExtension`).
+          events_bikes: { select: { service_date: true, created_at: true, is_deleted: true } },
         },
       },
     },
@@ -263,11 +266,16 @@ export class ServiceTrackingService {
   ): Promise<void> {
     const pair = { component_mounted_id: componentMountedId, event_actions_id: eventActionId };
     const column = EXTENSION_COLUMNS[axis];
+    // Which cycle the Extension belongs to. The health index axis keeps none: a Service
+    // never rebases it, so its Extension has nothing to outlive.
+    const stampColumn = EXTENSION_STAMP_COLUMNS[axis];
+    const stamp = stampColumn === null ? {} : { [stampColumn]: new Date() };
 
     await this.prisma.tracked_action_state.upsert({
       where: { component_mounted_id_event_actions_id: pair },
-      create: { ...pair, [column]: granted },
-      update: { [column]: { increment: granted } },
+      create: { ...pair, [column]: granted, ...stamp },
+      // Put off again, so the clock restarts: what stands now was granted now.
+      update: { [column]: { increment: granted }, ...stamp },
     });
   }
 
@@ -380,6 +388,8 @@ function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response
     bike_id: part.bike_id,
     component_mounted_id: part.id,
     component_type_id: part.component_type_id,
+    // The Component Category the part sits in - what a link into the service wizard names.
+    component_group_id: part.component_types.component_group_id,
     component_type: part.component_types.component_type,
     component_type_i18n_key: part.component_types.i18n_key,
     component_desc: part.component_desc,
@@ -405,9 +415,25 @@ function worstAxis(part: TrackedPart, interval: TrackedInterval): Reading | null
 
   const wear = wearColumns(part, frozen);
 
+  // When the Service this reading is measured from entered the record. Null where the job
+  // has never been recorded on this part, which leaves every Extension standing.
+  const servicedAt = frozen?.event_actions_done.events_bikes.created_at ?? null;
+
   const readings: Reading[] = [
-    readingOn('km', interval.service_interval_km, state?.extended_by_km ?? 0, wear.km),
-    readingOn('min', interval.service_interval_min, state?.extended_by_min ?? 0, wear.min),
+    readingOn(
+      'km',
+      interval.service_interval_km,
+      liveExtension(state?.extended_by_km, state?.extended_km_at, servicedAt),
+      wear.km,
+    ),
+    readingOn(
+      'min',
+      interval.service_interval_min,
+      liveExtension(state?.extended_by_min, state?.extended_min_at, servicedAt),
+      wear.min,
+    ),
+    // The health index axis keeps its Extension for the life of the part: a Service does
+    // not rebase it, so there is nothing for the Extension to have outlived.
     readingOn('health_index', interval.health_index_interval, state?.extended_by_healthIndex ?? 0, wear.health_index),
   ].filter((reading): reading is Reading => reading !== null);
 
@@ -455,6 +481,38 @@ const EXTENSION_COLUMNS = {
   health_index: 'extended_by_healthIndex',
 } as const;
 
+// When each Extension was granted, which is what tells it from the Service that ends it.
+// Null for the health index, which keeps its Extension for the life of the part.
+const EXTENSION_STAMP_COLUMNS = {
+  km: 'extended_km_at',
+  min: 'extended_min_at',
+  health_index: null,
+} as const satisfies Record<WearAxis, string | null>;
+
+// How much of an Extension still counts. A postponement belongs to the cycle it was
+// granted in, so doing the job ends it: an Extension granted before the Service the
+// reading is measured from is spent, and the interval goes back to what the bike's plan
+// sets. Granted after it - the job put off again since - and it stands.
+//
+// Compared against when the Service entered the record rather than the date on it: the
+// date comes from the user and carries no time, so a job done and logged today sits at
+// midnight, and every postponement made that day would read as newer than it.
+//
+// An Extension with no timestamp was granted before stamping existed, so before any
+// Service it could be compared with: the first Service recorded spends it. Every grant
+// stamps one now, so that exception can only shrink.
+function liveExtension(
+  granted: number | null | undefined,
+  grantedAt: Date | null | undefined,
+  servicedAt: Date | null,
+): number {
+  const extension = granted ?? 0;
+  if (extension === 0 || servicedAt === null) return extension;
+  if (grantedAt === null || grantedAt === undefined) return 0;
+
+  return grantedAt > servicedAt ? extension : 0;
+}
+
 // What putting one job off adds on one axis: a tenth of the interval the bike's plan sets,
 // never of the interval an earlier Extension already lengthened - so putting the same job
 // off twice adds the same slice twice, and a third time has put it off by 30%.
@@ -499,11 +557,24 @@ function latestBaseline(part: TrackedPart, eventActionId: number): Baseline | nu
 
   if (recorded.length === 0) return null;
 
-  return recorded.reduce((latest, junction) => (servicedAt(junction) > servicedAt(latest) ? junction : latest));
+  return recorded.reduce((latest, junction) => (recordedLater(junction, latest) ? junction : latest));
+}
+
+// Later work wins. The date on a Service carries no time, so two done on the same day are
+// told apart by which entered the record last - the same clock an Extension is read by.
+function recordedLater(candidate: Baseline, than: Baseline): boolean {
+  const byDay = servicedAt(candidate) - servicedAt(than);
+  if (byDay !== 0) return byDay > 0;
+  return recordedAt(candidate) > recordedAt(than);
 }
 
 // When the work behind a baseline happened. An undated Service is the oldest there is, so
 // a dated one always wins over it.
 function servicedAt(junction: Baseline): number {
   return junction.event_actions_done.events_bikes.service_date?.getTime() ?? 0;
+}
+
+// When the Service behind a baseline was written down.
+function recordedAt(junction: Baseline): number {
+  return junction.event_actions_done.events_bikes.created_at?.getTime() ?? 0;
 }

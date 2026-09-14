@@ -52,7 +52,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
               size="xs"
               aria-label={explanation.aria}
               onClick={(event) => {
-                // The row around it leads to the bike; asking what a reading is does not.
+                // The row around it leads to recording the job; asking what a reading is does not.
                 event.stopPropagation();
                 setExplained(true);
               }}
@@ -73,7 +73,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
         size={5}
         radius="xl"
         styles={{
-          root: { backgroundColor: "var(--color-decor)" },
+          root: { backgroundColor: "var(--color-decor-sunk)" },
           section: { backgroundColor: color },
         }}
       />
@@ -142,7 +142,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
 
   // Only a job already past due is worth putting off — anything else is not being ridden
   // on borrowed time yet. Its own control, outside whatever the row leads to, so a tap on
-  // it is never a tap into the bike.
+  // it is never a tap into the wizard.
   if (action.level !== "overdue") return body;
 
   return (

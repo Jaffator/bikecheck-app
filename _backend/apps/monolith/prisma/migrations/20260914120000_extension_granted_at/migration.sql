@@ -1,0 +1,24 @@
+-- When each Extension was granted, so a postponement can expire.
+--
+-- An Extension belongs to the cycle it was granted in: a job put off and then done is not
+-- still put off, yet `extended_by_*` used to outlive the Service and lengthen every cycle
+-- after it. Nothing clears it; only the part dying takes it away. Rather than zeroing the
+-- columns on a Service - which a deleted or backdated Service would then have to undo -
+-- the grant is stamped and the reading works out for itself whether it still counts:
+-- an Extension counts while it is newer than the Service its reading is measured from.
+--
+-- Compared against the Service's `created_at`, not its `service_date`: the date comes from
+-- the user and carries no time, so a Service done today is stamped at midnight and every
+-- postponement made during that day would read as newer than it.
+--
+-- Null goes on counting. A row written before this column existed cannot say when it was
+-- put off, and guessing would be worse than leaving it alone; every grant stamps one from
+-- now on, so the exception can only shrink.
+--
+-- No column for the health index: a Service does not rebase that axis - its baseline is
+-- always zero - so an Extension on it has nothing to expire against, and dies with the
+-- part at Replacement.
+--
+-- Idempotent: re-running changes nothing.
+ALTER TABLE "tracked_action_state" ADD COLUMN IF NOT EXISTS "extended_km_at" TIMESTAMPTZ(6);
+ALTER TABLE "tracked_action_state" ADD COLUMN IF NOT EXISTS "extended_min_at" TIMESTAMPTZ(6);

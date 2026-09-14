@@ -16,7 +16,7 @@ import { getStravaAuthorizeUrl } from "@/features/strava/strava.api";
 import { useCurrentUser } from "@/features/users/users.queries";
 import type { AssembleBikeComponent } from "@/features/components/components.types";
 import { useComponentGroups, useDefaultComponents } from "@/features/components/components.queries";
-import { isBikeSpecificationComplete, type BikeSpecificationValues, type SuspensionLayout } from "./bikeSpecification.types";
+import { isBikeSpecificationComplete, SUSPENSION_FLAGS, type BikeSpecificationValues } from "./bikeSpecification.types";
 import {
   buildInitialEntries,
   entriesAfterSplitToggle,
@@ -112,13 +112,6 @@ export interface AddBikeWizard {
   connectingStrava: boolean;
   connectStrava: () => Promise<void>;
 }
-
-// Map wizard suspension layouts to persisted axle flags.
-const SUSPENSION_FLAGS: Record<SuspensionLayout, { front: boolean; rear: boolean }> = {
-  full: { front: true, rear: true },
-  hardtail: { front: true, rear: false },
-  none: { front: false, rear: false },
-};
 
 export function useAddBikeWizard(): AddBikeWizard {
   const { t } = useTranslation();

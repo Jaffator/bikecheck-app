@@ -392,6 +392,12 @@
             "$ref": "#/definitions/bike_service_interval"
           }
         },
+        "chat_messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/chat_messages"
+          }
+        },
         "events_bikes": {
           "type": "array",
           "items": {
@@ -402,6 +408,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/rides"
+          }
+        },
+        "setup_profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/setup_profiles"
           }
         }
       }
@@ -615,6 +627,14 @@
           ],
           "default": 0
         },
+        "dual_rebound": {
+          "type": "boolean",
+          "default": false
+        },
+        "dual_compression": {
+          "type": "boolean",
+          "default": false
+        },
         "action_done_component_map": {
           "type": "array",
           "items": {
@@ -632,18 +652,6 @@
         },
         "component_types": {
           "$ref": "#/definitions/component_types"
-        },
-        "suspension_setup": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/suspension_setup"
-          }
-        },
-        "tire_setup": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/tire_setup"
-          }
         }
       }
     },
@@ -1238,95 +1246,127 @@
         }
       }
     },
-    "suspension_setup": {
+    "setup_profiles": {
       "type": "object",
       "properties": {
         "id": {
           "type": "integer"
         },
-        "setup_date": {
-          "type": "string",
-          "format": "date-time"
+        "name": {
+          "type": "string"
         },
-        "pressure_psi": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "pressure_bar": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "sag_percentage": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "amount_tokens_spacers": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "rebound_ls": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "rebound_hs": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "compression_ls": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "compression_hs": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "notes": {
+        "note": {
           "type": [
             "string",
             "null"
           ]
         },
-        "components_mounted": {
-          "$ref": "#/definitions/components_mounted"
-        }
-      }
-    },
-    "tire_setup": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer"
+        "front_tire_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
         },
-        "tire_pressure_bar": {
+        "rear_tire_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "fork_pressure_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "fork_tokens": {
           "type": [
             "integer",
             "null"
           ]
         },
-        "tire_pressure_psi": {
+        "fork_sag_percent": {
           "type": [
             "integer",
             "null"
           ]
         },
-        "components_mounted": {
-          "$ref": "#/definitions/components_mounted"
+        "fork_rebound_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fork_rebound_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fork_compression_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fork_compression_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_pressure_psi": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "shock_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_sag_percent": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_rebound_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_rebound_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_compression_ls": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "shock_compression_hs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bikes": {
+          "$ref": "#/definitions/bikes"
         }
       }
     },
@@ -1403,20 +1443,6 @@
             "null"
           ]
         },
-        "is_deleted": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "default": false
-        },
-        "deleted_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
         "googleId": {
           "type": [
             "string",
@@ -1453,6 +1479,21 @@
             "null"
           ]
         },
+        "notifications_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true
+        },
+        "tire_pressure_unit": {
+          "type": "string",
+          "default": "bar",
+          "enum": [
+            "bar",
+            "psi"
+          ]
+        },
         "accounts": {
           "type": "array",
           "items": {
@@ -1463,6 +1504,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/bikes"
+          }
+        },
+        "chat_messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/chat_messages"
           }
         },
         "component_types": {
@@ -1547,6 +1594,20 @@
             "null"
           ],
           "default": 0
+        },
+        "extended_km_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "extended_min_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
         },
         "reached_threshold": {
           "type": "integer",
@@ -1701,6 +1762,93 @@
           "$ref": "#/definitions/users"
         }
       }
+    },
+    "chat_messages": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "role": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "total_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        },
+        "bikes": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/bikes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "chat_tool_calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/chat_tool_calls"
+          }
+        }
+      }
+    },
+    "chat_tool_calls": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "tool_name": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "row_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "truncated": {
+          "type": "boolean",
+          "default": false
+        },
+        "duration_ms": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "chat_messages": {
+          "$ref": "#/definitions/chat_messages"
+        }
+      }
     }
   },
   "type": "object",
@@ -1774,11 +1922,8 @@
     "rides": {
       "$ref": "#/definitions/rides"
     },
-    "suspension_setup": {
-      "$ref": "#/definitions/suspension_setup"
-    },
-    "tire_setup": {
-      "$ref": "#/definitions/tire_setup"
+    "setup_profiles": {
+      "$ref": "#/definitions/setup_profiles"
     },
     "users": {
       "$ref": "#/definitions/users"
@@ -1794,6 +1939,12 @@
     },
     "device_tokens": {
       "$ref": "#/definitions/device_tokens"
+    },
+    "chat_messages": {
+      "$ref": "#/definitions/chat_messages"
+    },
+    "chat_tool_calls": {
+      "$ref": "#/definitions/chat_tool_calls"
     }
   }
 }

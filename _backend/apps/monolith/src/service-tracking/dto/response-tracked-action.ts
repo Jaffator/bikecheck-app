@@ -15,6 +15,9 @@ export class Response_TrackedActionDto {
   @ApiProperty({ example: 12 })
   component_type_id!: number;
 
+  @ApiProperty({ example: 2, description: 'The Component Category the part sits in, which a service link names' })
+  component_group_id!: number;
+
   @ApiProperty({ example: 'Chain' })
   component_type!: string;
 

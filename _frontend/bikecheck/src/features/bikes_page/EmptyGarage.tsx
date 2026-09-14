@@ -21,7 +21,6 @@ export function EmptyGarage(): ReactElement {
       illustration={bikeIllustration}
       title={t("bikes.emptyTitle")}
       body={archivedCount > 0 ? t("bikes.emptyArchivedBody", { count: archivedCount }) : t("bikes.emptyBody")}
-      badge={<StatusBadge label={t("bikes.noBikesFound")} />}
     >
       {archivedCount > 0 && (
         <Button

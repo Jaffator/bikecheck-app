@@ -2,7 +2,7 @@ import { Anchor, Button, Checkbox, Divider, Group, Paper, PasswordInput, Stack, 
 import type { PaperProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useToggle } from "@mantine/hooks";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { detectLanguage } from "@/i18n";
 import { GoogleButton } from "./GoogleButton";
 import { Mail, Lock, User } from "lucide-react";
@@ -11,6 +11,7 @@ import { useLogin, useRegistration, useGoogleNative } from "@/features/users/use
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
+import { Link } from "react-router-dom";
 
 export function AuthenticationForm(props: PaperProps) {
   const { t } = useTranslation();
@@ -59,7 +60,7 @@ export function AuthenticationForm(props: PaperProps) {
       <img
         src={logoName}
         alt="BikeCheck Logo"
-        style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "6rem", left: 0, right: 0, margin: "0 auto" }}
+        style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "10rem", left: 0, right: 0, margin: "0 auto" }}
       />
       <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent" ref={formRef}>
         <form
@@ -80,7 +81,7 @@ export function AuthenticationForm(props: PaperProps) {
             }
           })}
         >
-          <Stack>
+          <Stack gap="sm">
             {type === "register" && (
               <TextInput
                 placeholder={t("auth.namePlaceholder")}
@@ -93,7 +94,7 @@ export function AuthenticationForm(props: PaperProps) {
                   input: {
                     backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
                     border: "none",
-                    height: "3rem",
+                    height: "2.5rem",
                     color: "var(--mantine-color-text-6)",
                   },
                 }}
@@ -111,7 +112,7 @@ export function AuthenticationForm(props: PaperProps) {
                 input: {
                   backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
                   border: "none",
-                  height: "3rem",
+                  height: "2.5rem",
                   color: "var(--mantine-color-text-6)",
                 },
               }}
@@ -128,7 +129,7 @@ export function AuthenticationForm(props: PaperProps) {
                 input: {
                   backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
                   border: "none",
-                  height: "3rem",
+                  height: "2.5rem",
                   color: "var(--mantine-color-text-6)",
                 },
                 visibilityToggle: { color: "var(--mantine-color-text-8)" },
@@ -139,14 +140,23 @@ export function AuthenticationForm(props: PaperProps) {
               <Checkbox
                 ml="2px"
                 c="background.9"
-                label={t("auth.acceptTerms")}
+                // The document the box is agreeing to, one tap away and open to a visitor
+                // with no account yet.
+                label={
+                  <Trans
+                    i18nKey="auth.acceptTerms"
+                    components={{
+                      1: <Anchor component={Link} to="/legal/terms" c="background.9" fw={600} td="underline" />,
+                    }}
+                  />
+                }
                 checked={form.values.terms}
                 onChange={(event) => form.setFieldValue("terms", event.currentTarget.checked)}
               />
             )}
           </Stack>
 
-          <Stack justify="space-between" mt="xl">
+          <Stack justify="space-between" mt="lg">
             {login.isError && (
               <Text size="sm" c="red.6" ta="center">
                 {login.error.status === 401 ? t("auth.invalidCredentials") : t("auth.genericError")}

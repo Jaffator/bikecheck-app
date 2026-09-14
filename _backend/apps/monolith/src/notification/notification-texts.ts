@@ -26,6 +26,9 @@ export interface NotificationTextPayload {
   // Text values.
   bikeName?: string;
   km?: number;
+  // Metres climbed. Named for what it is rather than for the column it came from, like
+  // every other field here.
+  elevationM?: number;
   gearName?: string;
   activityName?: string;
   // How many Tracked Actions on the bike are due, and how many are past due. Where the
@@ -106,14 +109,23 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
   },
 };
 
-// "42 km · Canyon Grail" — whichever halves the payload actually carries, so a
+// "42 km · 620 m ↑ · Canyon Grail" — whichever parts the payload actually carries, so a
 // ride saved without a distance still reads as a sentence rather than a stray
 // separator.
 function rideBody(payload: NotificationTextPayload, unit: string, fallback: string): string {
   const parts: string[] = [];
   if (payload.km !== undefined) parts.push(`${payload.km} ${unit}`);
+  const climb = climbed(payload);
+  if (climb !== null) parts.push(climb);
   if (payload.bikeName) parts.push(payload.bikeName);
   return parts.length > 0 ? parts.join(' · ') : fallback;
+}
+
+// "620 m ↑", or nothing at all: a flat ride and a ride whose climb was never recorded
+// both read better without the figure than with a zero.
+function climbed(payload: NotificationTextPayload): string | null {
+  if (!payload.elevationM) return null;
+  return `${payload.elevationM} m ↑`;
 }
 
 // "Canyon Grail · 2 due, 1 overdue": the bike, then the size of the job, so one line says
@@ -135,8 +147,12 @@ function maintenanceBody(
 // place the ask used to hold. The distance still leads. A ride that arrived
 // without a name falls back to the ask, which is why the notification was sent.
 function unassignedBody(payload: NotificationTextPayload, unit: string, ask: string): string {
-  const tail = payload.activityName ?? ask;
-  return payload.km === undefined ? tail : `${payload.km} ${unit} · ${tail}`;
+  const parts: string[] = [];
+  if (payload.km !== undefined) parts.push(`${payload.km} ${unit}`);
+  const climb = climbed(payload);
+  if (climb !== null) parts.push(climb);
+  parts.push(payload.activityName ?? ask);
+  return parts.join(' · ');
 }
 
 // Builds the stored title and body for a notification in the user's language.

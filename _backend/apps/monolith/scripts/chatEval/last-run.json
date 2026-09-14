@@ -1,0 +1,1766 @@
+{
+  "ranAt": "2026-09-10T20:16:51.541Z",
+  "results": [
+    {
+      "id": "A1",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš tři kola: Cube Nuroad z roku 2025, Canyon Spectral z roku 2021 a Author Basic z roku 2013.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš tři kola: \n\n1. **Cube Nuroad** (2025) s najetými 4210 km.\n2. **Canyon Spectral** (2021) s najetými 980 km.\n3. **Author Basic** (2013), u kterého nejsou zaznamenány žádné najeté kilometry.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš tři kola: Cube Nuroad, Canyon Spectral a Author Basic.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A2",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš tři kola: Cube Nuroad z roku 2025, Canyon Spectral z roku 2021 a Author Basic z roku 2013. Cube Nuroad má odjetých 4210 kilometrů a je spojené se Stravou, Canyon Spectral má 980 kilometrů a není se Stravou spojené, a Author Basic zatím žádné odjeté kilometry nejsou zaznamenány.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": false,
+          "reasons": [
+            "obsahuje \"Shimano XT M8100\"",
+            "obsahuje \"Fox 36 Factory\""
+          ],
+          "answer": "Máš tři kola. \n\nPrvní je Cube Nuroad z roku 2025, na kterém máš najeto 4 210 km a strava je s ním spárovaná. U něho máš Shimano XT M8100 řetěz, Shimano XT 11-34 kazetu, přední brzdy SwissStop Disc 34 a obě pneumatiky Schwalbe G-One 40.\n\nDruhé kolo je Canyon Spectral z roku 2021, u něj máš najeto 980 km a strava není spárovaná. Je vybaveno vidlicí Fox 36 Factory, tlumičem Fox Float X a přední pneumatikou Maxxis Minion DHF.\n\nTřetí je Author Basic z roku 2013, které nemá žádné zaznamenané informace o najetých km ani času. Má jen řetěz KMC X8.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máte tři kola:\n\n1. **Cube Nuroad** z roku 2025, na kterém jste najeli 4 210 km a strava je propojena.\n2. **Canyon Spectral** z roku 2021, s najetými 980 km, strava na něj není propojena.\n3. **Author Basic** z roku 2013, data o najetých kilometrech nejsou zaznamenána a strava na něj také není propojena.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A3",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Cube Nuroad má najeto 4 210 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Cube Nuroad má najeto 4 210 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Cube Nuroad má najeto 4 210 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A4",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na tvém Cube Nuroad máš najeto celkem 210 hodin, což odpovídá 12 600 minutám.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na Cube Nuroad máš najeto celkem 210 hodin.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na tvém Cube Nuroad máš najeto 210 hodin.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A5",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Naposledy jsi měnil řetěz na tvém kole Cube Nuroad 2. června 2026, kdy jsi nainstaloval nový řetěz KMC X11.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_parts",
+              "arguments": {
+                "active": false,
+                "bike_id": 365,
+                "component_type_id": 295
+              }
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2025-01-01",
+                "bike_id": 365,
+                "replaced_only": true,
+                "component_type_id": 295,
+                "mounted_component_id": 3492
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nap posledy jsi měnil řetěz na tvém Cube Nuroad dne druhého června 2026. Při této výměně byl namontován nový řetěz KMC X11 a náklady na službu činily 850 Kč.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_parts",
+              "arguments": {
+                "active": true,
+                "bike_id": 365,
+                "component_type_id": 295
+              }
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-01-01",
+                "bike_id": 365,
+                "replaced_only": true,
+                "component_type_id": 295,
+                "mounted_component_id": 3492
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Naposledy jsi měnil řetěz na svém kole Cube Nuroad dne druhého června letošního roku, kdy jsi nahrazoval starý řetěz novým KMC X11. Tato výměna stála 850 Kč.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_parts",
+              "arguments": {
+                "active": false,
+                "bike_id": 365,
+                "component_type_id": 295
+              }
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2023-09-10",
+                "bike_id": 365,
+                "replaced_only": true,
+                "component_type_id": 295,
+                "mounted_component_id": 3492
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A6",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Za posledních 12 měsíců tě servis Cube stál celkem 1 620 CZK. V rámci servisu jsi měl výměnu brzdových destiček a řetězu, a také promazání po dešti.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2025-09-10",
+                "bike_id": 365,
+                "replaced_only": false
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Za posledních 12 měsíců tě servis Cube stál celkem 1 620 CZK. Měl jsi tři servisní zásahy: Mazání řetězu v srpnu za 150 CZK, výměnu řetězu v červnu za 850 CZK a výměnu brzdových destiček v listopadu za 620 CZK.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2025-09-10",
+                "bike_id": 365,
+                "replaced_only": false
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Za posledních dvanáct měsíců stál servis tvého Cube Nuroad celkem 1 620 CZK. To zahrnuje výměnu řetězu za 850 CZK, výměnu předních brzdových destiček za 620 CZK a údržbu po dešti za 150 CZK.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2025-09-10",
+                "bike_id": 365,
+                "replaced_only": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A7",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Poslední servis na kole Cube Nuroad proběhl 27. srpna 2026. Náklady na tento servis činily 150 CZK a zahrnoval promazání řetězu po dešti. Předtím se 2. června 2026 uskutečnila výměna řetězu, která stála 850 CZK.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-01-01",
+                "bike_id": 365,
+                "replaced_only": false
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Poslední servis na TVém kole Cube Nuroad byl 27. srpna 2026 a stál 150 CZK. Byla provedena údržba řetězu po dešti.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2021-01-01",
+                "bike_id": 365,
+                "replaced_only": false,
+                "component_type_id": 295,
+                "mounted_component_id": 3492
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Poslední servis na kole Cube Nuroad proběhl 27. srpna 2026 a stál 150 CZK za promazání řetězu.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 365,
+                "replaced_only": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A8",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na tvém Cube Nuroad máš celkem pět dílů: Shimano XT M8100 řetěz, Shimano XT 11-34 kazetu, přední brzdové podložky SwissStop Disc 34, a dvě pneumatiky Schwalbe G-One 40 (přední a zadní).",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na tvém kole Cube Nuroad máš celkem pět dílů: Shimano XT M8100 řetěz, Shimano XT 11-34 kazetu, přední brzdy SwissStop Disc 34, a dva pláště Schwalbe G-One 40 (přední a zadní).",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na tvém kole Cube Nuroad máš celkem pět dílů: Shimano XT M8100 řetěz, Shimano XT 11-34 kazetu, přední brzdové destičky SwissStop Disc 34, a dva pláště Schwalbe G-One 40 (přední i zadní).",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A9",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Za poslední měsíc jsi na svém kole Cube Nuroad najel celkem 103 kilometrů. To zahrnuje dvě vyjížďky - 62 kilometrů 7. září a 41 kilometrů 31. srpna. Na kole Canyon Spectral jsi žádné výjezdy v tomto období neměl.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-08-11",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-08-11",
+                "bike_id": 366
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Za poslední měsíc jsi na Cube Nuroad najel celkem 103 kilometrů. Z toho 62 kilometrů bylo v týdnu od 7. září a 41 kilometrů v týdnu od 31. srpna. Na Canyonu Spectral nejsou žádné záznamy za poslední měsíc, protože se na něm nejezdilo.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-08-10",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-08-10",
+                "bike_id": 366
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "V posledním měsíci jsi na své Cube Nuroad najel celkem 103 kilometrů. Z toho 62 kilometrů jsi ujel 7. září a 41 kilometrů 31. srpna. Canyon Spectral nemá v tomto období zaznamenané žádné jízdy.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-08-10",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-08-10",
+                "bike_id": 366
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A10",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nejvíc opotřebovaný díl je řetěz \"Shimano XT M8100\" na kole Cube Nuroad, který je již 960 km za intervalem výměny, s celkovým vyčerpáním 3960 km.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 365,
+                "min_percentage": 80
+              }
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 366,
+                "min_percentage": 80
+              }
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 367,
+                "min_percentage": 80
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nejvíce opotřebovaný díl je řetěz \"Shimano XT M8100\" na kole Cube Nuroad, který má již najeto 3 960 km, přičemž interval pro jeho výměnu je stanovený na 3 000 km. To znamená, že je už 960 km po termínu výměny.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 365,
+                "min_percentage": 80
+              }
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 367,
+                "min_percentage": 80
+              }
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 366,
+                "min_percentage": 80
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nejvíc opotřebený díl je řetěz Shimano XT M8100 na kole Cube Nuroad. Ten je už 960 km nad doporučeným intervalem 3000 km a má 132 % k opotřebení. Zbytek dílů na ostatních kolech, jako jsou vidlice a pneumatiky, je v dobrém stavu.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 365,
+                "min_percentage": 80
+              }
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 366,
+                "min_percentage": 80
+              }
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 367,
+                "min_percentage": 80
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "A11",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Ano, tvoje Strava je připojena.",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Ano, máš propojený účet Strava.",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Ano, tvůj účet Strava je propojen.",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "id": "A12",
+      "category": "facts",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Se Stravou máš spárované kolo Cube Nuroad. Ostatní kola, Canyon Spectral a Author Basic, nejsou se Stravou propojena.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Se Stravou je spárované kolo Cube Nuroad. Ostatní dvě kola, Canyon Spectral a Author Basic, nejsou spárovaná.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš spárované s Stravou kolo Cube Nuroad z roku 2025. Ostatní kola, Canyon Spectral a Author Basic, nejsou se Stravou spárována.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B1",
+      "category": "gate",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Toto není něco, co mohu zpracovat. Mohu ti ale pomoci s informacemi o tvých kolech, dílech, servisu nebo jízdách.",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tohle není něco, co můžu odpovědět. Můžu ti ale říct o tvých kolech, součástech nebo údržbě.",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Toto není něco, co mohu odpovědět. Můžu ti ale říct o tvých bicyklech, dílech, službách nebo jízdách.",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "gate",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nerozumím tomu, co se snažíš říct. Můžeš prosím upřesnit, o čem chceš mluvit, například ohledně tvých kol, dílů nebo údržby?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nerozumím, co máš na mysli. Můžeš říct, co tě zajímá ohledně tvých bicyklů, komponentů, servisu nebo jízd?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nerozumím, co se ptáš. Můžu ti ale říct něco o svých kolech, dílech nebo servisních záznamech.",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "id": "B3",
+      "category": "gate",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Toto není něco, co mohu psát. Můžu ti ale poskytnout informace o tvých kolech, údržbě nebo jízdách. Co tě zajímá?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Toto téma není něco, co bych ti mohl poskytnout. Mohu ti ale říct, jaké části má tvoje kolo, kolik jsi na něm najel kilometrů nebo jaká údržba byla provedena. Co tě zajímá?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Toto není něco, co mohu udělat. Můžu ti ale poskytnout informace o tvém kole, servisu nebo jízdách. Co bys chtěl vědět?",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "id": "B4",
+      "category": "gate",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Toto není informace, kterou mohu poskytnout. Můžu však zjistit informace o tvých kolech, součástkách nebo údržbě. Co tě konkrétně zajímá?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tohle není něco, co mohu zjistit. Můžu ti ale ukázat detaily o součásných a minulých řetězech na tvých kolech nebo o údržbě na nich. Co bys rád věděl?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Toto není něco, na co mohu odpovědět. Můžu ti ale říct, jaké máš řetězy na svých kolech, nebo kolik stály služby související s údržbou. Co bys chtěl zjistit?",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "id": "B5",
+      "category": "gate",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na to nemám konkrétní údaje. Obecně platí, že by se řetěz měl mazat každých 100–200 km nebo po každé jízdě v dešti. Můžeš to také přizpůsobit podle podmínek a intenzity používání.",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tohle nemám v datech, ale obecně platí, že řetěz by se měl mazat po každých několika jízdách nebo když je viditelně suchý, což může být každých 100 až 300 km, v závislosti na podmínkách, ve kterých jezdíš.",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tohle nemůžu posoudit podle tvých dat. Obecně se doporučuje mazat řetěz každých 100 až 200 kilometrů, nebo podle potřeby, pokud je špinavý nebo suchý.",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "id": "B6",
+      "category": "gate",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nechápu, co tím myslíš. Můžu ti říct, jaká kola máš, jaké součásti na nich jsou, nebo jaké služby byly provedeny. Co chceš vědět?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nemohu smazat kola. Můžu ti ale poskytnout informace o tvých kolech, součástech nebo údržbě. Co přesně potřebuješ?",
+          "calls": []
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tohle není něco, co mohu provést. Můžu ti ale říct, jaká kola vlastníš, nebo jaké mají komponenty a služby. Co bys chtěl vědět?",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "id": "C1",
+      "category": "context",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na Cube Nuroad máš najeto 4 210 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na Cube Nuroad máš najeto 4 210 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": false,
+          "reasons": [
+            "obsahuje \"980\""
+          ],
+          "answer": "Na tvém kole Cube Nuroad máš najeto 4 210 kilometrů. Další kola mají méně: Canyon Spectral má 980 kilometrů a Author Basic nemá žádný zaznamenaný nájezd.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "category": "context",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tvůj Canyon Spectral má najeto 980 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tvůj Canyon Spectral má najeto 980 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tvoje Canyon Spectral má najeto 980 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "category": "context",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Canyon Spectral má najeto 980 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Canyon Spectral má najeto 980 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Canyon Spectral má najeto 980 kilometrů.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C4",
+      "category": "context",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Druhý poslední servis, který proběhl 2. června 2026, stál 850 CZK a zahrnoval výměnu řetězu na KMC X11.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-01-01",
+                "bike_id": 365,
+                "replaced_only": false,
+                "component_type_id": 295,
+                "mounted_component_id": 3492
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Druhý poslední servis Cube Nuroad proběhl 2. června 2026 a stál 850 Kč. Při něm byla provedena výměna řetězu na KMC X11.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-01-01",
+                "bike_id": 365,
+                "replaced_only": false
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Předchozí servis na tvém Cube Nuroad proběhl 2. června 2026 a stál 850 CZK. Tento servis zahrnoval výměnu řetězu KMC X11.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "bike_id": 365,
+                "replaced_only": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C5",
+      "category": "context",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nejnovější kolo je Cube Nuroad z roku 2025. Má najeto 4 210 kilometrů a je vybaveno komponenty jako Shimano XT řetěz a kazeta Shimano XT 11-34.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nejnovější kolo, které máš, je Cube Nuroad z roku 2025.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nejnovější kolo, které máš, je Cube Nuroad z roku 2025. Má najeto 4 210 kilometrů a aktuálně je spárované se Strava účtem.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C6",
+      "category": "context",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Servis proběhl pro tvou Cube Nuroad ve dvou případech, které se zapsaly do záznamu. Poslední servis byl 27. srpna 2026, kde byla provedena údržba řetězu. Dříve byl řetěz vyměněn 2. června 2026. Další záležitosti, jako výměna brzdových destiček a pláště, proběhly v listopadu 2025 a dubnu 2025. \n\nCanyon Spectral nemá zaznamenaný žádný servis.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "bike_id": 366,
+                "replaced_only": false
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Servis na tvém kole Canyon Spectral není evidovaný. Na tvém jiném kole, Cube Nuroad, byl servis proveden naposledy 27. srpna 2026, kdy došlo k promazání řetězu, a další servisy proběhly v červnu a listopadu 2026 a v dubnu 2025.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2023-09-10",
+                "bike_id": 366,
+                "replaced_only": false
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Servisy na Canyonu Spectral nejsou na záznamu. Na tvém druhém kole, Cube Nuroad, byl poslední servis 27. srpna 2026, při kterém byla provedena údržba na řetězu. Předchozí servis proběhl 2. června 2026, kdy byl řetěz vyměněn za nový KMC X11.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 366,
+                "replaced_only": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D1",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Author má najeto zatím nezaznamenáno, takže žádná čísla nejsou k dispozici.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na kole Author Basic není zaznamenána žádná ujetá vzdálenost, takže nemám žádné údaje o najetých kilometrech.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": false,
+          "reasons": [
+            "obsahuje \"zadne kilometry\""
+          ],
+          "answer": "Author Basic nemá zaznamenané najeto žádné kilometry.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na Authoru není záznam o datu montáže řetězu KMC X8, takže není jasné, kdy k tomu došlo. Ráno bys měl ověřit, zda jsi část montoval s nějakým zaznamenaným servisním úkonem.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_parts",
+              "arguments": {
+                "active": true,
+                "bike_id": 367,
+                "component_type_id": 295
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Řetěz KMC X8 na Author byl nainstalován, ale datum montáže není zaznamenáno. Není také uvedena žádná dokumentace o jeho údržbě.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_parts",
+              "arguments": {
+                "active": true,
+                "bike_id": 367,
+                "component_type_id": 295
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Na Authoru nemáš zaznamenanou montáž řetězu KMC X8, takže datum instalace není k dispozici. Pokus se to zaznamenat při další údržbě.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_parts",
+              "arguments": {
+                "active": true,
+                "bike_id": 367,
+                "component_type_id": 295
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D3",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Canyon nemá zaznamenaný žádný servis, takže není co reportovat.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "bike_id": 366,
+                "replaced_only": false
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "U Canyon Spectral není zatím žádný servis zaznamenán, takže nemám informace o nákladech. Pokud tě zajímají náklady na servis jiného kola, dej vědět.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "bike_id": 366,
+                "replaced_only": false
+              }
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2026-01-01",
+                "bike_id": 366,
+                "replaced_only": true,
+                "component_type_id": 282,
+                "mounted_component_id": 3497
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Servis pro Canyon nebyl zatím zaznamenán. Nemáš na něm nic udělaného, ani žádné náklady.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_services",
+              "arguments": {
+                "bike_id": 366,
+                "replaced_only": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D4",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "U tvé Canyon Spectral má vidlice Fox 36 Factory tlak 75 psi a sag 25 %.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "get_setup",
+              "arguments": {
+                "kind": "suspension",
+                "bike_id": 366
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tlak ve vidlici Canyon Spectral (Fox 36 Factory) je 75 psi.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "get_setup",
+              "arguments": {
+                "kind": "suspension",
+                "bike_id": 366
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Ve vidlici Canyon Spectral máš tlak 75 PSI.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "get_setup",
+              "arguments": {
+                "kind": "suspension",
+                "bike_id": 366
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D5",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tlak ve vidlici není záznamem zaznamenán. Nikdy nebyl zapsán.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "get_setup",
+              "arguments": {
+                "kind": "suspension",
+                "bike_id": 365
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Tlak ve vidlici nebyl nikdy zaznamenán, takže aktuální hodnotu nemohu poskytnout.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "get_setup",
+              "arguments": {
+                "kind": "suspension",
+                "bike_id": 365
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nemám záznam o tlaku ve vidlici na tvém kole Cube Nuroad. Vypadá to, že nebyl zaznamenán.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "get_setup",
+              "arguments": {
+                "kind": "suspension",
+                "bike_id": 365
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D6",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nemám žádné záznamy o ujetých kilometrech za rok 2019, zejména pro kola, která vlastním. Na mém kole Cube Nuroad je celkových 4 210 km, ale data jako taková probíhala až v letech 2026 a později.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 366
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 367
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "V roce 2019 a na základě tvých záznamů nejsi na žádném kole. Čísla z tvého záznamu jsou od začátku letošního roku, a tak nemám žádné údaje o najetých kilometrech za rok 2019. Tvoje kola zahrnují Cube Nuroad, Canyon Spectral a Author Basic.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 366
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 367
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Nemám žádné záznamy o jízdách z roku 2019, takže není možné zjistit, kolik kilometrů jsi v tom roce najel.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 366
+              }
+            },
+            {
+              "tool": "list_rides",
+              "arguments": {
+                "to": "2019-12-31",
+                "from": "2019-01-01",
+                "bike_id": 367
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D7",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš celkem jeden report, který je zveřejněný pro tvůj Cube Nuroad.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 366
+              }
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 367
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš jeden report, který byl vytvořen pro tvůj Cube Nuroad, a ten je publikovaný. Ostatní dvě kola nemají žádný report.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2023-09-10",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2023-09-10",
+                "bike_id": 366
+              }
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2023-09-10",
+                "bike_id": 367
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Máš jeden report, který je publikován pro tvůj Cube Nuroad.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 365
+              }
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 366
+              }
+            },
+            {
+              "tool": "list_reports",
+              "arguments": {
+                "to": "2026-09-10",
+                "from": "2022-09-10",
+                "bike_id": 367
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D8",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Canyon Spectral není spárovaný se Stravou. Oproti tomu Cube Nuroad je spárovaný.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Canyon Spectral nemá spojení se Stravou.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Canyon Spectral není spárovaný se Stravou. Máš však spárovaný Cube Nuroad.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D9",
+      "category": "edges",
+      "passed": true,
+      "runs": [
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Vidlice Canyon Spectral, model Fox 36 Factory, má interval pro servis 4000 minut a za dobu 1800 minut už byla používána. Zbývá tedy 2200 minut do dalšího servisu, což odpovídá dobrému stavu.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 366,
+                "min_percentage": 80
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Vidlice Canyon Spectral, konkrétně Fox 36 Factory, má do dalšího servisu interval 4 000 minut. V současnosti je využita 1 800 minut, což znamená, že do servisu zbývá 2 200 minut. Aktuálně je v dobrém stavu.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 366,
+                "min_percentage": 80
+              }
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "reasons": [],
+          "answer": "Vidlice Canyon Spectral, konkrétně Fox 36 Factory, má interval pro základní servis 4000 minut. Aktuálně je použitá 1800 minut, takže zbývá ještě 2200 minut do dalšího servisu.",
+          "calls": [
+            {
+              "tool": "get_garage",
+              "arguments": {}
+            },
+            {
+              "tool": "list_tracked_actions",
+              "arguments": {
+                "bike_id": 366,
+                "min_percentage": 80
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

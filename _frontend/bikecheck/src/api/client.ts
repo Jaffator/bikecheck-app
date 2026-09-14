@@ -129,6 +129,14 @@ export async function apiFetchBlob(path: string, options?: RequestInit): Promise
   return await response.blob();
 }
 
+// A connection held open while the answer is worked out, read line by line rather than
+// parsed whole - the NDJSON chat stream. The response is handed over untouched, but the
+// session and the refresh-once dance around it are the same: a 401 arrives in the headers,
+// before any of the body, so it is caught and the request replayed once.
+export async function apiFetchStream(path: string, options?: RequestInit): Promise<Response> {
+  return await apiRequest(path, options);
+}
+
 export class NetworkError extends Error {
   constructor() {
     super("No internet connection");

@@ -55,7 +55,7 @@ function StatusPanel({
   titleColor?: string;
 }): ReactElement {
   return (
-    <Paper bg="cards.6" p="xl" radius="md" py={40}>
+    <Paper bg="cards.6" p="xl" radius="md" py={40} style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
       <Stack gap="md" align="center">
         {mark}
         {title && (
