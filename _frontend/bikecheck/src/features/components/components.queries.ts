@@ -105,12 +105,37 @@ export function useCreateBikeComponent(): UseMutationResult<BikeComponent, Error
   });
 }
 
-export function useUpdateBikeComponent(): UseMutationResult<BikeComponent, Error, UpdateBikeComponentInput> {
+// What the optimistic edit rolls back to when the write fails.
+interface UpdateBikeComponentContext {
+  previous: BikeComponent[] | undefined;
+}
+
+// The edit is drawn at once and the write only confirms it, so a switch on the part answers
+// the tap instead of waiting out a round trip.
+export function useUpdateBikeComponent(): UseMutationResult<
+  BikeComponent,
+  Error,
+  UpdateBikeComponentInput,
+  UpdateBikeComponentContext
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: UpdateBikeComponentInput) => updateBikeComponent(input),
-    onSuccess: async (_component, input) => {
+    onMutate: async (input) => {
+      const key = bikeComponentsKey(input.bikeId);
+      // A refetch in flight would land after this and undo it.
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<BikeComponent[]>(key);
+      queryClient.setQueryData<BikeComponent[]>(key, (list) =>
+        list?.map((item) => (item.id === input.id ? { ...item, ...input.fields } : item)),
+      );
+      return { previous };
+    },
+    onError: (_error, input, context) => {
+      queryClient.setQueryData(bikeComponentsKey(input.bikeId), context?.previous);
+    },
+    onSettled: async (_component, _error, input) => {
       await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bikeId) });
     },
   });

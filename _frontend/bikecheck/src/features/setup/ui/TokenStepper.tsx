@@ -7,7 +7,7 @@ import { Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { fieldLabel } from "@/features/add_bike_page/formStyles";
 import { tapFeedback } from "@/utils/haptics";
-import { FIGURE_LINE_HEIGHT, figureFontSize, figureLine } from "./gaugeMetrics";
+import { FIGURE_LINE_HEIGHT, GAUGE_LABEL_GAP, figureFontSize, figureLine } from "./gaugeMetrics";
 import { StepButton } from "./StepButton";
 
 // Smaller than the pairs under the gauges: these stand over and under a figure, not in a row.
@@ -57,7 +57,7 @@ export function TokenStepper({
   };
 
   return (
-    <Stack gap={4} align="center" style={style}>
+    <Stack gap={GAUGE_LABEL_GAP} align="center" style={style}>
       <Text style={fieldLabel}>{label}</Text>
       <Stack gap={FIGURE_GAP} align="center" h={size} style={{ paddingTop }}>
         {!readOnly && (

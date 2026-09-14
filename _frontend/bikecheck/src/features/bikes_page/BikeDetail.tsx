@@ -12,9 +12,8 @@ import {
   Info,
   MoreVertical,
   Pencil,
-  Ruler,
+  Share2,
   Unlink,
-  Weight,
 } from "lucide-react";
 import { useBike, useArchiveBike } from "@/features/bikes/bikes.queries";
 import { useBikeRideCount } from "@/features/rides/rides.queries";
@@ -49,9 +48,11 @@ const METRIC_COLORS = {
   distance: "var(--mantine-color-text-8)",
   elevation: "var(--mantine-color-text-8)",
   time: "var(--mantine-color-text-8)",
-  size: "var(--mantine-color-text-8)",
-  weight: "var(--mantine-color-text-8)",
 } as const;
+
+// The share mark rides on the name's first line rather than centred on a two-line name
+// block, and the button is taller than that line - so it lifts by half the difference.
+const SHARE_ICON_LIFT = -3;
 
 // The machine's own page: what it is, what it has done, and what can be done with it.
 export function BikeDetail(): ReactElement {
@@ -190,10 +191,6 @@ export function BikeDetail(): ReactElement {
     );
   }
 
-  // Both are the owner's to fill in, so the frame line appears only once one of them is.
-  const hasSize = bike.bike_size !== null && bike.bike_size !== "";
-  const hasWeight = bike.bike_weight_kg !== null;
-
   return (
     <Stack
       gap="md"
@@ -224,22 +221,38 @@ export function BikeDetail(): ReactElement {
         </BikePhoto>
 
         <Stack gap={8} p="md">
-          {/* The name leads and holds one line: brand, model and year are one label. */}
-          <Stack gap={2}>
-            <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={1}>
-              {bikeTitle(bike)}
-            </Text>
-            {/* The garage and this page are the only places a bike answers to its nickname. */}
-            {bike.bikename !== null && bike.bikename !== "" && (
-              <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
-                {bike.bikename}
+          {/* The name leads and holds one line: brand, model and year are one label. The one
+              act the card offers stands beside it - everything else here only reads. */}
+          <Group gap="sm" wrap="nowrap" align="flex-start" justify="space-between">
+            <Stack gap={2} style={{ minWidth: 0 }}>
+              <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={1}>
+                {bikeTitle(bike)}
               </Text>
-            )}
-          </Stack>
+              {/* The garage and this page are the only places a bike answers to its nickname. */}
+              {bike.bikename !== null && bike.bikename !== "" && (
+                <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
+                  {bike.bikename}
+                </Text>
+              )}
+            </Stack>
+            {/* An Archived Bike is exported too - it is the machine being sold that a
+                BikeCheck is most often asked for. */}
+            <ActionIcon
+              variant="transparent"
+              radius="xl"
+              size="lg"
+              aria-label={t("report.exportBikeCheck")}
+              onClick={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+              mt={SHARE_ICON_LIFT}
+              style={{ flexShrink: 0 }}
+            >
+              <Share2 size={20} color="var(--mantine-color-primary-6)" />
+            </ActionIcon>
+          </Group>
 
-          {/* Everything the bike is and has done, on one line: units only, so the icon and
-              its colour carry what each number is. It folds onto a second line rather than
-              running off a narrow screen. */}
+          {/* What the bike has done, on one line: units only, so the icon and its colour
+              carry what each number is. What the bike is - its frame size and weight - is
+              read in the spec sheet below. */}
           <Group gap="md" wrap="wrap">
             <Metric
               icon={<Gauge size={14} color={METRIC_COLORS.distance} />}
@@ -255,19 +268,6 @@ export function BikeDetail(): ReactElement {
                 count: Math.round((bike.total_time_min ?? 0) / 60),
               })}
             />
-            {/* The frame's own figures, which the owner fills in or leaves empty. */}
-            {hasSize && <Metric icon={<Ruler size={14} color={METRIC_COLORS.size} />} value={bike.bike_size ?? ""} />}
-            {hasWeight && (
-              <Metric
-                icon={<Weight size={14} color={METRIC_COLORS.weight} />}
-                value={t("bikes.kilograms", {
-                  // The language writes its own decimal mark - 7,25 kg, not 7.25 kg.
-                  weight: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(
-                    bike.bike_weight_kg ?? 0,
-                  ),
-                })}
-              />
-            )}
           </Group>
         </Stack>
 
@@ -335,7 +335,6 @@ export function BikeDetail(): ReactElement {
 
       <BikeActionTiles
         onAddService={archived ? undefined : () => navigate(`/service/new?bike=${String(bike.id)}`)}
-        onExportReport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
         onOpenSetup={() => navigate(`/bikes/${String(bike.id)}/setup`)}

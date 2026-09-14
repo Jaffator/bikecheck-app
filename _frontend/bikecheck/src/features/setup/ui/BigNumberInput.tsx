@@ -37,7 +37,7 @@ export function BigNumberInput({
       height: "auto",
       minHeight: 0,
       padding: 0,
-      color: "var(--color-text-bright)",
+      color: "var(--mantine-color-text-6)",
       "--input-placeholder-color": "var(--mantine-color-text-9)",
     } as CSSProperties,
   };

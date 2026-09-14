@@ -61,7 +61,8 @@ export function CompressionDialSimple({
 
   return (
     <svg
-      viewBox="0 0 320 320"
+      // The frame is 10% wider than the 320 drawing, so the knob fills 90% of the box.
+      viewBox="-18 -18 356 356"
       {...svgProps}
       className={className}
       role="group"

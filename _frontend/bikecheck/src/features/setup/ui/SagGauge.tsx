@@ -12,7 +12,7 @@ import { tapFeedback } from "@/utils/haptics";
 import type { SuspensionPart } from "../dialBrand";
 import { BigNumberInput } from "./BigNumberInput";
 import { GaugeReadout } from "./GaugeReadout";
-import { GAUGE_PAIR_GAP, figureFontSize } from "./gaugeMetrics";
+import { GAUGE_LABEL_GAP, GAUGE_PAIR_GAP, figureFontSize } from "./gaugeMetrics";
 import { ForkLeg, ShockBody } from "./sagDrawings";
 import { PICTURE_INK_RIGHT, PICTURE_WIDTH } from "./sagPictureMetrics";
 import { StepButton } from "./StepButton";
@@ -62,7 +62,7 @@ export function SagGauge({
   };
 
   return (
-    <Stack gap={4} align="center">
+    <Stack gap={GAUGE_LABEL_GAP} align="center">
       <Text style={{ ...fieldLabel, ...shifted }} w={PICTURE_WIDTH} ta="center">
         {label}
       </Text>

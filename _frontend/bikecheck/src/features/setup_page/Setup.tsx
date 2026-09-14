@@ -214,14 +214,14 @@ export function Setup(): ReactElement {
         gap="md"
         px="md"
         pt="md"
-        pb={`calc(${archived ? "2rem" : BAR_CLEARANCE} + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
+        pb={`calc(${BAR_CLEARANCE} + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
         ref={formRef}
       >
         {/* Which profile this sheet is, and the others it can be switched to. It holds at the
             top of the screen while the sheet scrolls, so a profile is a tap away from anywhere
             on it. The offset is the app header's height - see AppLayout. */}
         <Group
-          gap="xs"
+          gap={4}
           wrap="nowrap"
           align="center"
           py={6}
@@ -233,17 +233,13 @@ export function Setup(): ReactElement {
             backgroundColor: "var(--mantine-color-background-9)",
           }}
         >
-          <SetupProfileChips
-            profiles={profiles}
-            selectedId={profile?.id ?? null}
-            onSelect={select}
-            onCreate={() => openCreate(false)}
-            readOnly={archived}
-          />
-          {/* Only a saved profile has anything to rename, copy or delete. */}
-          {!archived && profile !== null && (
+          <SetupProfileChips profiles={profiles} selectedId={profile?.id ?? null} onSelect={select} />
+          {/* Everything done to profiles lives here - beginning one included. */}
+          {!archived && (
             <SetupProfileMenu
-              onRename={() => setNameSheet({ mode: "rename", profile })}
+              onCreate={() => openCreate(false)}
+              hasProfile={profile !== null}
+              onRename={() => profile !== null && setNameSheet({ mode: "rename", profile })}
               onDuplicate={() => openCreate(true)}
               onDelete={() => setDeleting(profile)}
             />
@@ -263,8 +259,11 @@ export function Setup(): ReactElement {
         />
       </Stack>
 
-      {/* An Archived Bike takes no new numbers, so the bar is absent rather than disabled. */}
-      {!archived && <SetupSaveBar disabled={!dirty} saving={save.isPending} saveFailed={save.isError} onSave={submit} />}
+      {/* Present only while there is something to save, so the page is clear the rest of the
+          time. An Archived Bike takes no new numbers at all. */}
+      {!archived && (
+        <SetupSaveBar visible={dirty} saving={save.isPending} saveFailed={save.isError} onSave={submit} />
+      )}
 
       {/* Leaving or switching costs the owner what they typed, so it is asked rather than assumed. */}
       <ConfirmModal

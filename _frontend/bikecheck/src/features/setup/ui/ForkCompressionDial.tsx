@@ -2,9 +2,9 @@
 import type { ReactElement } from "react";
 import type { CompressionDialProps } from "../dial.types";
 import type { DialBrand } from "../dialBrand";
-import { FoxCompressionDial } from "./FoxCompressionDial";
-import { GenericCompressionDial } from "./GenericCompressionDial";
-import { RockShoxCompressionDial } from "./RockShoxCompressionDial";
+import { FoxCompressionDial } from "./ForkFoxCompressionDial";
+import { GenericCompressionDial } from "./ForkCompressionDialDual";
+import { RockShoxCompressionDial } from "./ForkRockShoxCompressionDial";
 
 interface BrandedCompressionDialProps extends CompressionDialProps {
   brand: DialBrand;

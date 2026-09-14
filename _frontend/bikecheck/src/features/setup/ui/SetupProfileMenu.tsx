@@ -1,19 +1,28 @@
-// What an owner can do to the Setup Profile being read: rename it, begin another as a copy
-// of it, or delete it. Absent on an Archived Bike and while the bike has no saved profile.
+// What an owner can do with Setup Profiles: begin another, and - once one is saved - rename
+// it, copy it or delete it. Absent on an Archived Bike, which takes no changes at all.
 import type { ReactElement } from "react";
 import { ActionIcon, Menu } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Copy, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Copy, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 
 const ICON_SIZE = 18;
 
 interface SetupProfileMenuProps {
+  onCreate: () => void;
+  // False while the bike has no saved profile: there is nothing yet to rename, copy or delete.
+  hasProfile: boolean;
   onRename: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
 }
 
-export function SetupProfileMenu({ onRename, onDuplicate, onDelete }: SetupProfileMenuProps): ReactElement {
+export function SetupProfileMenu({
+  onCreate,
+  hasProfile,
+  onRename,
+  onDuplicate,
+  onDelete,
+}: SetupProfileMenuProps): ReactElement {
   const { t } = useTranslation();
 
   return (
@@ -22,9 +31,10 @@ export function SetupProfileMenu({ onRename, onDuplicate, onDelete }: SetupProfi
         <ActionIcon
           variant="transparent"
           radius="xl"
-          size="md"
+          size="sm"
           aria-label={t("setup.profileMenu")}
-          style={{ flexShrink: 0 }}
+          // The bar itself is transparent, so the burger carries its own disc to be read against.
+          style={{ flexShrink: 0, marginInline: 2, backgroundColor: "var(--mantine-color-cards-6)" }}
         >
           <MoreVertical size={ICON_SIZE} color="var(--color-text-dim)" />
         </ActionIcon>
@@ -36,18 +46,26 @@ export function SetupProfileMenu({ onRename, onDuplicate, onDelete }: SetupProfi
         p={8}
         style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
       >
-        <Menu.Item color="text" py={12} fw={600} leftSection={<Pencil size={ICON_SIZE} />} onClick={onRename}>
-          {t("setup.rename")}
+        <Menu.Item color="text" py={12} fw={600} leftSection={<Plus size={ICON_SIZE} />} onClick={onCreate}>
+          {t("setup.newProfile")}
         </Menu.Item>
 
-        {/* The one affordance ADR 0029 kept from history: a profile may start as a copy. */}
-        <Menu.Item color="text" py={12} fw={600} leftSection={<Copy size={ICON_SIZE} />} onClick={onDuplicate}>
-          {t("setup.duplicate")}
-        </Menu.Item>
+        {hasProfile && (
+          <>
+            <Menu.Item color="text" py={12} fw={600} leftSection={<Pencil size={ICON_SIZE} />} onClick={onRename}>
+              {t("setup.rename")}
+            </Menu.Item>
 
-        <Menu.Item color="red.5" py={12} fw={600} leftSection={<Trash2 size={ICON_SIZE} />} onClick={onDelete}>
-          {t("setup.delete")}
-        </Menu.Item>
+            {/* The one affordance ADR 0029 kept from history: a profile may start as a copy. */}
+            <Menu.Item color="text" py={12} fw={600} leftSection={<Copy size={ICON_SIZE} />} onClick={onDuplicate}>
+              {t("setup.duplicate")}
+            </Menu.Item>
+
+            <Menu.Item color="red.5" py={12} fw={600} leftSection={<Trash2 size={ICON_SIZE} />} onClick={onDelete}>
+              {t("setup.delete")}
+            </Menu.Item>
+          </>
+        )}
       </Menu.Dropdown>
     </Menu>
   );

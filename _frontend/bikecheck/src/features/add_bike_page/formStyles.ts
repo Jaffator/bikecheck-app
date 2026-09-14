@@ -100,12 +100,12 @@ export function chipStyles(
       ...(checked
         ? {
             "--chip-color": "var(--mantine-color-primary-6)",
-            backgroundColor: `color-mix(in srgb, var(--mantine-color-primary-6) 12%, ${opaque ? "var(--mantine-color-background-9)" : "transparent"})`,
+            backgroundColor: `color-mix(in srgb, var(--mantine-color-primary-6) 15%, ${opaque ? "var(--mantine-color-background-9)" : "transparent"})`,
             borderColor: "var(--mantine-color-primary-7)",
             color: "var(--mantine-color-primary-6)",
           }
         : {
-            backgroundColor: "var(--mantine-color-cards-6)",
+            backgroundColor: "var(--mantine-color-cards-7)",
             borderColor: "var(--mantine-color-inputs-5)",
             color: "var(--mantine-color-text-7)",
           }),

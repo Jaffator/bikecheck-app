@@ -13,7 +13,7 @@ export function SetupSection({ title, children }: SetupSectionProps): ReactEleme
     <Paper
       radius="lg"
       style={{
-        backgroundColor: "var(--mantine-color-cards-6)",
+        backgroundColor: "var(--mantine-color-background-8)",
         backgroundImage: "var(--card-glow)",
         border: "none",
         boxShadow: "var(--elev-panel)",

@@ -103,9 +103,15 @@ function useDialEngine(specs: KnobSpec[], direction: Direction, haptics: boolean
   const groups = useRef<Record<string, SVGGElement | null>>({});
   const nodes = useRef<Record<string, KnobNodes>>({});
   const states = useRef<Record<string, KnobState>>({});
-  const specsRef = useRef(specs); specsRef.current = specs;
-  const sgnRef = useRef(1); sgnRef.current = direction === "left" ? 1 : -1;
-  const hapticsRef = useRef(haptics); hapticsRef.current = haptics;
+  // Latest props for the pointer handlers to read; written after the render, never during it.
+  const specsRef = useRef(specs);
+  const sgnRef = useRef(direction === "left" ? 1 : -1);
+  const hapticsRef = useRef(haptics);
+  useEffect(() => {
+    specsRef.current = specs;
+    sgnRef.current = direction === "left" ? 1 : -1;
+    hapticsRef.current = haptics;
+  });
   const reduced = useReducedMotion();
   const drag = useRef<{ key: string | null; pid: number | null; lastX: number }>({ key: null, pid: null, lastX: 0 });
 
@@ -251,6 +257,8 @@ type KnobArtProps = {
   nodes: KnobNodes;
 };
 function Knob({ spec, u, id, knobProps, nodes }: KnobArtProps) {
+  // Each collection is filled by its own ref callback, so none is written through `nodes`.
+  const { light, dark, flutes, letters } = nodes;
   const clipId = id(`clip-${spec.key}`);
   const chars = [...spec.text];
   return (
@@ -264,16 +272,16 @@ function Knob({ spec, u, id, knobProps, nodes }: KnobArtProps) {
             <g fill="none" strokeLinecap="round">
               {RIDGES.map((_, i) => (
                 <g key={i}>
-                  <path ref={(el) => { nodes.light[i] = el; }} stroke="#ffd0d8" strokeOpacity={0.42} />
-                  <path ref={(el) => { nodes.dark[i] = el; }} stroke="#2a0309" strokeOpacity={0.5} />
+                  <path ref={(el) => { light[i] = el; }} stroke="#ffd0d8" strokeOpacity={0.42} />
+                  <path ref={(el) => { dark[i] = el; }} stroke="#2a0309" strokeOpacity={0.5} />
                 </g>
               ))}
             </g>
-            {FLUTE_PHI.map((_, i) => <rect key={i} ref={(el) => { nodes.flutes[i] = el; }} y={FLUTES.y0} height={FLUTES.y1 - FLUTES.y0} rx={5} fill={u("flute")} />)}
+            {FLUTE_PHI.map((_, i) => <rect key={i} ref={(el) => { flutes[i] = el; }} y={FLUTES.y0} height={FLUTES.y1 - FLUTES.y0} rx={5} fill={u("flute")} />)}
             <rect x={-R} y={BAND.y0} width={2 * R} height={BAND.y1 - BAND.y0} fill={u("anod")} />
             <rect x={-R} y={BAND.y0} width={2 * R} height={BAND.y1 - BAND.y0} fill={u("band")} />
             {[0, 1].flatMap((p) => chars.map((ch, j) => (
-              <text key={`${p}-${j}`} ref={(el) => { nodes.letters[p * chars.length + j] = el; }} className="cc-lbl" y={(BAND.y0 + BAND.y1) / 2 + 1} fontSize={BAND.font}>{ch}</text>
+              <text key={`${p}-${j}`} ref={(el) => { letters[p * chars.length + j] = el; }} className="cc-lbl" y={(BAND.y0 + BAND.y1) / 2 + 1} fontSize={BAND.font}>{ch}</text>
             )))}
           </g>
           {/* statické: zkosené hrany, spekulár, ztmavené okraje válce */}

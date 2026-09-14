@@ -15,6 +15,10 @@ export const FIGURE_UNIT_GAP = 4;
 // A minus and a plus with the gap between them, as they stand under every gauge.
 export const STEP_PAIR_WIDTH = STEP_BUTTON_SIZE * 2 + STEP_PAIR_GAP;
 
+// Between a gauge's name and the body under it. Wide, so the controls read as one group with
+// their figure rather than hanging off the heading.
+export const GAUGE_LABEL_GAP = 18;
+
 // The three lines of a readout, top to bottom: the figure, its unit, a second reading.
 export const FIGURE_LINE_HEIGHT = 1.1;
 export const UNIT_LINE_HEIGHT = 1.2;

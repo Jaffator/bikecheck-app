@@ -2,7 +2,7 @@
 // suspension flags rather than by what is mounted (ADR 0029). Tyres read in the owner's Tyre
 // Pressure Unit; a fork or shock is always psi, because that is what every shock pump shows.
 import type { CSSProperties, ReactElement } from "react";
-import { SimpleGrid, Stack, Textarea } from "@mantine/core";
+import { Divider, SimpleGrid, Stack, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { autosizeInputStyles } from "@/features/add_bike_page/formStyles";
 import type { TirePressureUnit } from "@/features/users/users.types";
@@ -25,7 +25,7 @@ import {
   type SetupFormValues,
   type SetupSuspension,
 } from "../setupForm";
-import { GAUGE_GRID_SPACING } from "./gaugeMetrics";
+import { GAUGE_GRID_SPACING, GAUGE_LABEL_GAP } from "./gaugeMetrics";
 import { SagGauge } from "./SagGauge";
 import { SetupGauge } from "./SetupGauge";
 import { SetupSection } from "./SetupSection";
@@ -43,16 +43,18 @@ const TOKENS_MAX = 8;
 const GAUGE_ROW_GAP = 16;
 // Under the gauge row, before the knobs.
 const DIALS_GAP = 30;
-// Pressure, tokens and sag in one row, drawn close together in the middle of the card.
+// Before the divider. Less than DIALS_GAP by what the gauges' names now give their bodies, so
+// the controls sit lower without the line moving.
+const DIVIDER_GAP = DIALS_GAP - (GAUGE_LABEL_GAP - 4);
+// Pressure, tokens and sag in one row. The outer columns share what is left over, so the token
+// column falls in the middle of the card however wide the gauge and the sag picture are.
 const gaugeRow: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "auto auto auto",
-  justifyContent: "center",
+  gridTemplateColumns: "1fr auto 1fr",
+  justifyItems: "center",
   alignItems: "start",
   columnGap: GAUGE_ROW_GAP,
 };
-// The token column sits a touch right of centre, off the sag picture's shaft.
-const TOKENS_OFFSET = 8;
 // Sag is set between a fifth and a third of the travel; half is already far past any chart.
 const SAG_MAX = 50;
 
@@ -140,7 +142,6 @@ export function SetupProfileForm({
               readOnly={readOnly}
             />
             <TokenStepper
-              style={{ marginLeft: TOKENS_OFFSET }}
               label={t("setup.tokens")}
               value={values.fork_tokens}
               onChange={(value) => onChange("fork_tokens", value)}
@@ -157,6 +158,7 @@ export function SetupProfileForm({
               readOnly={readOnly}
             />
           </div>
+          <Divider color="rgba(255, 255, 255, 0.09)" mt={DIVIDER_GAP} />
           <SuspensionDials
             style={{ marginTop: DIALS_GAP }}
             section="fork"
@@ -187,7 +189,6 @@ export function SetupProfileForm({
               readOnly={readOnly}
             />
             <TokenStepper
-              style={{ marginLeft: TOKENS_OFFSET }}
               label={t("setup.tokens")}
               value={values.shock_tokens}
               onChange={(value) => onChange("shock_tokens", value)}
@@ -204,6 +205,7 @@ export function SetupProfileForm({
               readOnly={readOnly}
             />
           </div>
+          <Divider color="rgba(255, 255, 255, 0.09)" mt={DIVIDER_GAP} />
           <SuspensionDials
             style={{ marginTop: DIALS_GAP }}
             section="shock"

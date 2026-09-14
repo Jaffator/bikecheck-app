@@ -7,6 +7,7 @@ import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { UnpairedBikesCard } from "@/features/strava/ui/UnpairedBikesCard";
 import { PendingRidesCard } from "@/features/strava/ui/PendingRidesDashCard";
 import { AttentionDashCard } from "@/features/service_tracking/ui/AttentionDashCard";
+
 export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();
 

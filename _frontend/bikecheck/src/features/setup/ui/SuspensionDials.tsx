@@ -4,7 +4,7 @@
 // that is a property of the part, written to it and shared by every profile. Clicks are
 // counted from fully closed and stop at the ring's last click (ADR 0029).
 import { useState, type CSSProperties, type ReactElement } from "react";
-import { ActionIcon, Box, Group, SegmentedControl, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Divider, Group, SegmentedControl, Stack, Text } from "@mantine/core";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ExplanationModal } from "@/components/ExplanationModal";
@@ -14,11 +14,11 @@ import { DIAL_RANGE, type MountedSuspension } from "../dialBrand";
 import type { Adjuster, SuspensionClicks } from "../setupForm";
 import { ClickStepper } from "./ClickStepper";
 import { GAUGE_GRID_SPACING, STEP_PAIR_WIDTH } from "./gaugeMetrics";
-import { CompressionDial } from "./CompressionDial";
+import { CompressionDial } from "./ForkCompressionDial";
 import { CompressionDialSimple } from "./CompressionDialSimple";
-import { ForkReboundDial } from "./ForkReboundDial";
+import { ForkReboundDial } from "./ForkReboundDialDouble";
 import { ForkReboundDialSimple } from "./ForkReboundDialSimple";
-import { CaneCreekReboundDial } from "./ShockReboundDial";
+import { CaneCreekReboundDial } from "./ShockReboundDialDual";
 import { ShockReboundDialSimple } from "./ShockReboundDialSimple";
 
 // Each adjuster's full name, spoken for the ring and its buttons.
@@ -42,6 +42,9 @@ const INFO_SIZE = 18;
 const INFO_GAP = 2;
 // Between the rebound row and the compression row.
 const ROW_GAP = 30;
+// The shock's rebound knob is drawn shorter than the fork's, so its row ends higher and the
+// two rows read as closer together. Made up here, so both sections breathe the same.
+const SHOCK_ROW_GAP = 50;
 // The rebound knobs hang from the fork leg or the shock, so they sit a little lower in their row.
 const REBOUND_DIAL_OFFSET = 15;
 // Room under the compression row before the card ends.
@@ -210,8 +213,9 @@ export function SuspensionDials({
   );
 
   return (
-    <Stack gap={ROW_GAP} pb={BOTTOM_GAP} style={style}>
+    <Stack gap={section === "shock" ? SHOCK_ROW_GAP : ROW_GAP} pb={BOTTOM_GAP} style={style}>
       {row(t("setup.rebound"), "rebound", dualRebound, reboundDial, ["hsr", "lsr"])}
+      <Divider color="var(--mantine-color-other-borderSubtle)" />
       {row(t("setup.compression"), "compression", dualCompression, compressionDial, ["hsc", "lsc"])}
       <ExplanationModal
         explained={explained === null ? null : { title: explained, body: t("setup.clicksFromClosed") }}
