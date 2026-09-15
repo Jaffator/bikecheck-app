@@ -3,8 +3,13 @@ import { Job } from 'bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationDeliveryJob } from './notification.service';
-import { NOTIFICATION_CONFIG, NotificationType } from './notification-types.config';
+import { NOTIFICATION_CONFIG, NotificationType, NotificationTypeConfig } from './notification-types.config';
 import { PushService } from './push.service';
+
+// The title as the lock screen shows it: led by the type's emoji when it has one.
+function pushTitle(config: NotificationTypeConfig, title: string): string {
+  return config.pushEmoji ? `${config.pushEmoji} ${title}` : title;
+}
 
 @Processor('notification-queue')
 export class NotificationProcessor extends WorkerHost {
@@ -48,7 +53,12 @@ export class NotificationProcessor extends WorkerHost {
         select: { notifications_enabled: true },
       });
       if (user?.notifications_enabled !== false) {
-        await this.pushService.sendToUser(notification.user_id, notification.title, notification.body, data);
+        await this.pushService.sendToUser(
+          notification.user_id,
+          pushTitle(config, notification.title),
+          notification.body,
+          data,
+        );
       }
     }
 

@@ -15,6 +15,8 @@ export interface NotificationPayload {
   km?: number;
   elevationM?: number;
   bikeName?: string;
+  // The worst band a service reminder's bike stands in, which colours its icon.
+  level?: "warning" | "critical" | "overdue";
 }
 
 export interface Notification {

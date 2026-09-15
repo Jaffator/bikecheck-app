@@ -20,6 +20,10 @@ const SKELETON_ROWS = 3;
 // The fewest rows a collapsed card shows, whatever their levels say.
 const MIN_VISIBLE_ROWS = 3;
 
+// The air between two readings - and between the shown rows and the ones held back, which
+// continue the same list.
+const ROW_GAP = "lg";
+
 // How much of the next row is left showing beneath them: the top half of its heading,
 // already dissolving — enough to say the list goes on, not enough to read a word of it.
 const PEEK_HEIGHT = 14;
@@ -115,11 +119,11 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
   }, [actions]);
 
   // Nothing is being held back, so there is nothing to open.
-  if (rest.length === 0) return <Stack gap="md">{actions.map(renderRow)}</Stack>;
+  if (rest.length === 0) return <Stack gap={ROW_GAP}>{actions.map(renderRow)}</Stack>;
 
   return (
-    <Stack gap="md">
-      <Stack gap="md">{actions.slice(0, shown).map(renderRow)}</Stack>
+    <Stack gap={ROW_GAP}>
+      <Stack gap={ROW_GAP}>{actions.slice(0, shown).map(renderRow)}</Stack>
 
       <Box
         ref={restRef}
@@ -133,7 +137,7 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
           pointerEvents: open ? undefined : "none",
         }}
       >
-        <Stack gap="md">{rest.map(renderRow)}</Stack>
+        <Stack gap={ROW_GAP}>{rest.map(renderRow)}</Stack>
       </Box>
 
       {/* Closed, the strip is the card's hem: full-bleed, in the card's own colour, casting

@@ -13,6 +13,7 @@ import { App } from "@capacitor/app";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import { useStravaDeepLink } from "@/hooks/useStravaDeepLink";
+import { useResumeRefresh } from "@/hooks/useResumeRefresh";
 import { OfflinePage } from "@/features/offline_page/OfflinePage";
 import { useOfflineWhenCallApiStore, useHeaderStore, useOverlayStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
@@ -104,6 +105,8 @@ const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
   { pattern: /^\/bikes\/\d+\/edit$/, titleKey: "bikeEdit.title" },
   // The Setup screen names the bike in its header; this title is the fallback while it loads.
   { pattern: /^\/bikes\/\d+\/setup$/, titleKey: "setup.title" },
+  // One bike's history wears the same title as the garage's; the card below names the bike.
+  { pattern: /^\/bikes\/\d+\/history$/, titleKey: "page.serviceHistory" },
   { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
 ];
 
@@ -200,6 +203,8 @@ export function AppLayout(): ReactElement {
   useAndroidBackButton(handleHardwareBack);
   // Listens for Strava callbacks while the app is foregrounded again.
   useStravaDeepLink();
+  // Rides land while the app is away; coming back re-reads what they move.
+  useResumeRefresh();
 
   function headerIcon() {
     // Omits the icon on Home and untitled routes.

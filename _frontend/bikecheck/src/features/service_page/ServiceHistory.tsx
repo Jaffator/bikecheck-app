@@ -2,10 +2,11 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { ActionIcon, Box, Group, Loader, Stack } from "@mantine/core";
 import { ListFilter } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { useBikes } from "@/features/bikes/bikes.queries";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useHeaderStore } from "@/store/store";
 import { BikeFilterChips } from "@/features/service/ui/BikeFilterChips";
 import { SWIPE_AREA_STYLE, useBikePanel, useBikeSwipe } from "@/features/service/useBikeSwipe";
@@ -19,10 +20,13 @@ import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import { EmptyService } from "./EmptyService";
 import type { ExportReportInput } from "@/features/report/report.types";
 
+// Clears the FAB and the bottom nav, so the last row can still be tapped.
+const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+
 // A bike id the user cannot have typed by hand reads as no filter at all, so junk in the
 // URL never reaches the API as ?bikeId=NaN.
-function parseBikeId(raw: string | null): number | null {
-  if (raw === null) return null;
+function parseBikeId(raw: string | null | undefined): number | null {
+  if (raw === null || raw === undefined) return null;
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
@@ -34,11 +38,14 @@ function parseDay(raw: string | null): string | null {
   return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
 }
 
-// Every service the user has recorded, newest work first, divided into Month Groups and
-// paged in as they scroll. The History Totals above them sum whatever the bike chip and
-// the period filter have narrowed the page to.
+// Every service recorded, newest work first, divided into Month Groups and paged in as
+// they scroll. Two doors, two shapes: `/service/history` is the garage's, with a chip to
+// narrow it to one bike; `/bikes/:id/history` is one bike's alone, chosen before coming
+// here, so it carries no chip and names the bike instead. The History Totals above the
+// list sum whatever the page is narrowed to.
 export function ServiceHistory(): ReactElement {
   const { t, i18n } = useTranslation();
+  const { id: routeBikeId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: bikes } = useBikes();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
@@ -46,9 +53,12 @@ export function ServiceHistory(): ReactElement {
   // What the Share button is exporting. Null keeps the export sheet shut.
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
 
-  // Both filters live in the URL, so arriving from the service page keeps the chip the
-  // user had already chosen, and the back button undoes a filter rather than the page.
-  const bikeId = parseBikeId(searchParams.get("bike"));
+  // A bike in the path locks the page to it; in the garage's shape the chip lives in the
+  // query, so the back button undoes a filter rather than the page.
+  const lockedBikeId = parseBikeId(routeBikeId);
+  const locked = routeBikeId !== undefined;
+  const bikeId = locked ? lockedBikeId : parseBikeId(searchParams.get("bike"));
+  const bike = bikes?.find((candidate) => candidate.id === bikeId) ?? null;
   const period: ServicePeriod = {
     from: parseDay(searchParams.get("from")),
     to: parseDay(searchParams.get("to")),
@@ -71,7 +81,8 @@ export function ServiceHistory(): ReactElement {
   const sentinel = useInfiniteScrollSentinel(hasNextPage, () => void fetchNextPage());
 
   const services = data?.pages.flatMap((page) => page.items) ?? [];
-  const showChips = (bikes?.length ?? 0) > 1;
+  // The garage's shape offers a chip when there is a choice to make; one bike's never does.
+  const showChips = !locked && (bikes?.length ?? 0) > 1;
   // Nothing under these filters: totals of zero and an empty list say less than one clear
   // empty state, so they stand down and it takes the page - the same as Reports.
   const isEmpty = !isLoading && !isError && services.length === 0;
@@ -80,12 +91,19 @@ export function ServiceHistory(): ReactElement {
   // several bikes and none chosen there is nothing to export yet.
   const exportBikeId = bikeId ?? (bikes?.length === 1 ? bikes[0].id : null);
 
-  // The chips and a swipe across the content are two ways into the same filter.
+  // The chips and a swipe across the content are two ways into the same filter. Locked to
+  // one bike there is no filter, and the swipe is given nothing to move between.
   const selectBike = (next: number | null): void => setParams({ bike: next === null ? null : String(next) });
-  const swipeHandlers = useBikeSwipe(bikes ?? [], bikeId, selectBike);
+  const swipeHandlers = useBikeSwipe(locked ? [] : (bikes ?? []), bikeId, selectBike);
   // The history the previous bike left on screen dims until the new one lands, and the new
   // one arrives from the side the selection moved.
-  const panel = useBikePanel(bikes ?? [], bikeId, historyStale);
+  const panel = useBikePanel(locked ? [] : (bikes ?? []), bikeId, historyStale);
+
+  // Opens at the top whichever page it came from: the service page may have been scrolled
+  // deep into its list, and the browser would otherwise keep that offset.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [lockedBikeId]);
 
   // The period filter hangs in the app header, which is the layout's to render - see the
   // header store. It leaves with the page.
@@ -119,8 +137,12 @@ export function ServiceHistory(): ReactElement {
     setSearchParams(params, { replace: true });
   }
 
+  // Locked to a bike the garage does not have - a URL typed by hand, or a bike since
+  // archived. The garage's history is the nearest thing to show.
+  if (locked && bikes !== undefined && bike === null) return <Navigate to="/service/history" replace />;
+
   return (
-    <Stack gap={0} pb="xl">
+    <Stack gap={0} pb={FAB_CLEARANCE}>
       {showChips && <BikeFilterChips bikes={bikes ?? []} selected={bikeId} onSelect={selectBike} />}
 
       {/* The chips stay above it: they are the only way back to a bike that does have a
@@ -135,6 +157,8 @@ export function ServiceHistory(): ReactElement {
             <Stack gap="lg" className="m-3">
               <HistoryTotalsCard
                 totals={totals}
+                // Only the locked page names the bike: the garage's has the chip to say so.
+                bikeName={locked && bike !== null ? bikeTitle(bike) : null}
                 periodLabel={periodLabel(period, t, i18n.language)}
                 isLoading={totalsLoading}
                 isStale={totalsStale}

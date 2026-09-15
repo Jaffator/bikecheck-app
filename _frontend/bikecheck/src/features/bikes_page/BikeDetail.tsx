@@ -33,11 +33,14 @@ import { useBikeTrackedActions } from "@/features/service_tracking/tracking.quer
 import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
 import { BikeSpecsDrawer } from "@/features/bikes/ui/BikeSpecsDrawer";
 import { BikeComponentsSection } from "@/features/components/ui/BikeComponentsSection";
+import { CustomPartsDrawer } from "@/features/components/ui/CustomPartsDrawer";
+import { useCustomComponentTypes } from "@/features/components/components.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
 import { useHeaderStore } from "@/store/store";
+import { IoLogoWebComponent } from "react-icons/io5";
 import { TRANSPARENT_HEADER_CONTROL } from "@/layout/headerControl";
 
 // One hue per reading, so the line is read by colour before it is read by number. The
@@ -66,6 +69,11 @@ export function BikeDetail(): ReactElement {
   // Unpairing is destructive enough to ask about, and the question is where the note about
   // rides staying finally has room to be read.
   const [confirmingUnpair, setConfirmingUnpair] = useState(false);
+  // The parts the owner named themselves - a catalogue list, so the row shows only once
+  // there is something in it (ADR 0021).
+  const [managingParts, setManagingParts] = useState(false);
+  const { data: customTypes } = useCustomComponentTypes();
+  const hasCustomTypes = (customTypes?.length ?? 0) > 0;
   // What the export button is exporting. Null keeps the export sheet shut.
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   // The full spec list, which is read once and then left alone.
@@ -152,6 +160,20 @@ export function BikeDetail(): ReactElement {
             </Menu.Item>
           )}
 
+          {/* The custom types are the owner's, not this bike's: removing one here takes it
+              out of the picker on every bike. */}
+          {hasCustomTypes && (
+            <Menu.Item
+              color="text"
+              py={12}
+              fw={600}
+              leftSection={<IoLogoWebComponent size={18} />}
+              onClick={() => setManagingParts(true)}
+            >
+              {t("customParts.title")}
+            </Menu.Item>
+          )}
+
           {/* Archiving is the only way out of the garage; destroying the bike is offered
               in the archive alone, never one tap from this page (ADR 0024). */}
           <Menu.Item
@@ -168,7 +190,7 @@ export function BikeDetail(): ReactElement {
     );
 
     return () => setActionSlot(null);
-  }, [setActionSlot, t, navigate, bike, archived]);
+  }, [setActionSlot, t, navigate, bike, archived, hasCustomTypes]);
 
   // Show loading state for deep links without cached garage data.
   if (isLoading) {
@@ -336,7 +358,7 @@ export function BikeDetail(): ReactElement {
       <BikeActionTiles
         onAddService={archived ? undefined : () => navigate(`/service/new?bike=${String(bike.id)}`)}
         onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
-        onOpenHistory={() => navigate(`/service/history?bike=${String(bike.id)}`)}
+        onOpenHistory={() => navigate(`/bikes/${String(bike.id)}/history`)}
         onOpenSetup={() => navigate(`/bikes/${String(bike.id)}/setup`)}
       />
 
@@ -365,6 +387,8 @@ export function BikeDetail(): ReactElement {
       <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
       <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
+
+      <CustomPartsDrawer opened={managingParts} onClose={() => setManagingParts(false)} />
 
       {/* Detaching keeps the rides already recorded, which the question is the only place
           with room to say. */}

@@ -192,8 +192,8 @@ Actions (ADR 0027). A pairing the bike keeps no Service Interval for is not one 
 _Avoid_: Due item, maintenance item, service item
 
 **Attention Level**:
-How much attention one Tracked Action is asking for, from its percentage: good below 80, warning
-80–94, critical 95–99, overdue at 100 and above. The colour a reading is read by before it is read
+How much attention one Tracked Action is asking for, from its percentage: good below 70, warning
+70–94, critical 95–99, overdue at 100 and above. The colour a reading is read by before it is read
 by number.
 _Avoid_: Health level, severity, status
 
@@ -262,3 +262,35 @@ The public address a Report is read at. A Report has one from birth, but it stay
 owner publishes it, and the owner can revoke it afterwards — a revoked link is gone for good, and a
 new one means a new Report.
 _Avoid_: Public URL, share url, token
+
+### Account
+
+**Verified Email**:
+An address that has been shown to belong to the person behind the account — either they opened the
+link sent to it, or Google vouched for it at sign-in. One rule for every way in — there is no
+account that is usable and unverified, so anyone signed in can be written to. The only address the app will ever write to.
+_Avoid_: Confirmed email, activated account
+
+**Unverified Account**:
+An account whose email is not yet verified. Cannot sign in and holds nothing, so it is a placeholder
+rather than a locked account: whatever next arrives on that address with proof of ownership — a
+Google sign-in with an address Google vouches for, a fresh registration — replaces it outright.
+Born from a registration by name and password, or from the rare Google sign-in whose address
+Google does not vouch for; every other Google sign-in is verified from birth.
+_Avoid_: Pending account, inactive user (`is_active` means nothing here)
+
+**Verification Email**:
+The one email an Unverified Account receives — the link that verifies the address, and nothing else.
+_Avoid_: Confirmation email, activation email
+
+**Welcome Email**:
+The email an account receives the moment it becomes usable: at creation when it is born verified,
+on verification otherwise. Never sent to an Unverified Account.
+_Avoid_: Onboarding email, signup email
+
+**Notification Email**:
+A notification carried to the inbox as well as to the lock screen and the bell — the same words,
+sent the moment the notification is written, one email per notification. Only some kinds of
+notification travel this way, and only while the owner keeps it switched on; a Verification Email
+or a Welcome Email is not one, because neither is a notification.
+_Avoid_: Email alert, digest (nothing is batched), mail notification

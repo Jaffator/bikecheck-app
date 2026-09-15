@@ -105,6 +105,7 @@ function ProtectedApp(): ReactElement {
           <Route path="/bikes/:id" element={<BikeDetail />} />
           <Route path="/bikes/:id/edit" element={<BikeEdit />} />
           <Route path="/bikes/:id/setup" element={<Setup />} />
+          <Route path="/bikes/:id/history" element={<ServiceHistory />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/service" element={<Service />} />
           <Route path="/service/new" element={<AddService />} />

@@ -16,7 +16,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Banknote, Check, ChevronDown, ChevronUp, NotepadText, Plus } from "lucide-react";
+import { Banknote, Check, ChevronDown, ChevronUp, NotepadText, Plus } from "lucide-react";
 import { useHeaderStore } from "@/store/store";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
@@ -333,8 +333,13 @@ function ActionRow({
   // An unticked action has none: nothing is picked on the user's behalf.
   const selectedComponentIds = (picked?.componentIds ?? []).map(String);
 
+  // A ticked action always names at least one part. With one candidate there is nothing
+  // to choose, so its chip is shown ticked and locked rather than left to be unticked.
+  const soleCandidateLocked = picked !== undefined && action.components.length === 1;
+
   // The same chip whichever way the parts are laid out; only the arrangement differs.
   function renderComponentChip(component: MountedComponent): ReactElement {
+    const styles = chipStyles(selectedComponentIds.includes(String(component.id)));
     return (
       <Chip
         key={component.id}
@@ -342,7 +347,9 @@ function ActionRow({
         radius="xl"
         size="sm"
         color="primary.6"
-        styles={chipStyles(selectedComponentIds.includes(String(component.id)))}
+        disabled={soleCandidateLocked}
+        // Inline colours already beat Mantine's disabled greys; only its cursor gets through.
+        styles={soleCandidateLocked ? { ...styles, label: { ...styles.label, cursor: "default" } } : styles}
         icon={false}
       >
         <Group gap={6} wrap="nowrap">
@@ -514,16 +521,6 @@ function ActionRow({
                 )}
               </Chip.Group>
             </Stack>
-          )}
-
-          {/* A warning, not a block: work the user cannot attribute is still work. */}
-          {picked && picked.componentIds.length === 0 && (
-            <Group gap={6} wrap="nowrap">
-              <AlertTriangle size={14} color="var(--mantine-color-yellow-5)" style={{ flexShrink: 0 }} />
-              <Text fz={13} c="yellow.5">
-                {t("addService.noComponentWarning")}
-              </Text>
-            </Group>
           )}
 
           {/* ------- A tag chip -------*/}

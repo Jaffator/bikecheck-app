@@ -157,7 +157,10 @@ export function useAddServiceWizard(): AddServiceWizard {
     requestedStep !== "bike" ? requestedStep : seed !== null ? "actions" : bikeStepSkipped ? "category" : "bike";
 
   const draftDirty = (draft?.actions.length ?? 0) > 0;
-  const canCommit = draft !== null && (draftDirty || draft.editingIndex !== null);
+  // Work is always recorded against a part: an action ticked with none chosen yet holds
+  // the block until one is. Nothing says so - the chips it is missing sit right in the card.
+  const draftAttributed = draft?.actions.every((action) => action.componentIds.length > 0) ?? true;
+  const canCommit = draft !== null && (draftDirty || draft.editingIndex !== null) && draftAttributed;
   const canSave = blocks.length > 0;
 
   // What the category being worked on costs so far, shown while the user works on it.

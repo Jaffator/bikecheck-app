@@ -29,15 +29,19 @@ function Metric({ label, value, isStale }: { label: string; value: number; isSta
 
 // Sums the history the user is currently looking at - the same bike and the same Period
 // the list below runs on, so the two can never disagree. The eyebrow names the Period
-// because the picker that sets it is up in the header, out of sight.
+// because the picker that sets it is up in the header, out of sight; a page locked to one
+// bike gives the bike a line of its own, because it carries no chip to say so.
 export function HistoryTotalsCard({
   totals,
+  bikeName,
   periodLabel,
   isLoading,
   isStale,
   onShare,
 }: {
   totals: HistoryTotals | undefined;
+  // Null on the garage's page, where the chip already names the bike.
+  bikeName: string | null;
   periodLabel: string;
   isLoading: boolean;
   // The numbers on screen belong to the filter the user just left. Shown dimmed rather
@@ -61,7 +65,7 @@ export function HistoryTotalsCard({
     <Box style={{ ...SERVICE_CARD_SURFACE, padding: "var(--mantine-spacing-md)" }}>
       <Stack gap="xs">
         <Group gap="sm" wrap="nowrap" align="center">
-          <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>n
+          <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>
             {`${t("service.totalsTitle")} · ${periodLabel}`}
           </Text>
           {/* Exports exactly what is summed above: the same Bike and the same Period. */}
@@ -74,12 +78,18 @@ export function HistoryTotalsCard({
               ml="auto"
               leftSection={<Share2 size={16} />}
               disabled={!canShare}
-              onClick={() => onShare?.()}
+              onClick={onShare}
             >
               {t("report.share")}
             </Button>
           )}
         </Group>
+
+        {bikeName !== null && (
+          <Text fz={15} fw={600} c="text.6" lineClamp={1}>
+            {bikeName}
+          </Text>
+        )}
 
         {isLoading || totals === undefined ? (
           <Skeleton height={34} width="60%" radius="sm" />

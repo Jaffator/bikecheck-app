@@ -121,3 +121,15 @@ discover, and a nightly job would mean a corrected mileage did not show up until
   rather than a row with no percentage to show.
 - Archived bikes (ADR 0024) and removed or deleted components produce no Tracked Actions, on every
   path.
+
+## Revised 2026-09-15: the first band is 70, and it announces
+
+The bands are now **good below 70 · warning 70–94 · critical 95–99 · overdue at 100 and above**,
+and every move up announces — 70, 95 and 100 — not only 95 and 100. The numbers above are left as
+written; what they said about *why* still holds, only the values moved.
+
+80 was too late to be useful as a heads-up: by the time a chain was listed, the part still had to
+be ordered, and the first push arrived at 95 with the job already at the door. 70 lists the job
+and says so once, with room to plan; 95 asks for the part; 100 says the interval is behind. The
+notification carries which of the three it is (`level` in the payload), and the headline and the
+icon's colour read it. One push per bike per evaluation is unchanged.

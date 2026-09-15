@@ -682,9 +682,9 @@ describe('ServiceTrackingService', () => {
     // The band boundaries, which are the whole of the colour rule. Each edge is hit exactly
     // and then missed by one kilometre, so a reading can never band as due before it is.
     it.each([
-      [7900, 'good', 79],
-      [7999, 'good', 79],
-      [8000, 'warning', 80],
+      [6900, 'good', 69],
+      [6999, 'good', 69],
+      [7000, 'warning', 70],
       [9400, 'warning', 94],
       [9499, 'warning', 94],
       [9500, 'critical', 95],
@@ -1074,7 +1074,8 @@ describe('ServiceTrackingService', () => {
   });
 
   // The announcements. Everything below turns on one rule: the stored band is moved to
-  // whichever band the reading now falls in, and only a move up to 95 or 100 says anything.
+  // whichever band the reading now falls in, and only a move up - to 70, 95 or 100 - says
+  // anything.
   describe('evaluateBike', () => {
     // What the evaluation wrote, by pairing - which is what "always set to the band the
     // current percentage falls in" means in the table.
@@ -1092,12 +1093,12 @@ describe('ServiceTrackingService', () => {
       return written;
     }
 
-    // The counts one notification carried, or null when none was sent.
-    function announced(): Record<string, number> | null {
-      const calls = mockNotifications.create.mock.calls as [{ payload: Record<string, number> }][];
+    // The counts and the band one notification carried, or null when none was sent.
+    function announced(): Record<string, number | string> | null {
+      const calls = mockNotifications.create.mock.calls as [{ payload: Record<string, number | string> }][];
       if (calls.length === 0) return null;
-      const { bikeId, dueCount, overdueCount } = calls[0][0].payload;
-      return { bikeId, dueCount, overdueCount };
+      const { bikeId, soonCount, dueCount, overdueCount, level } = calls[0][0].payload;
+      return { bikeId, soonCount, dueCount, overdueCount, level };
     }
 
     // Order the part before it is needed: this is the first band worth interrupting for.
@@ -1106,7 +1107,7 @@ describe('ServiceTrackingService', () => {
 
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
-      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 1, overdueCount: 0 });
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 1, overdueCount: 0, level: 'critical' });
       expect(mockNotifications.create).toHaveBeenCalledWith(
         expect.objectContaining({ userId: OWNER_ID, type: 'maintenance_due' }),
       );
@@ -1118,18 +1119,34 @@ describe('ServiceTrackingService', () => {
 
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
-      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 0, overdueCount: 1 });
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 0, overdueCount: 1, level: 'overdue' });
     });
 
-    // 80 pulls the row onto the dashboard, which is a place the owner goes. It does not
-    // come to them.
-    it('says nothing about a Tracked Action reaching only 80%', async () => {
-      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 3200 })]);
+    // 70 is the heads-up: the job is on the horizon, and the owner hears about it once.
+    it('announces a Tracked Action reaching 70% as coming up', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 2800 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 1, dueCount: 0, overdueCount: 0, level: 'warning' });
+      expect(bandsWritten()).toEqual({ '55:101': 70 });
+      // The heads-up names the job, so the crossing travels with the part and the reading.
+      const [call] = mockNotifications.create.mock.calls as [
+        { payload: { crossed: { componentName: string; percentage: number }[] } },
+      ][];
+      expect(call[0].payload.crossed).toEqual([
+        expect.objectContaining({ componentName: 'Chain', actionKey: null, percentage: 70 }),
+      ]);
+    });
+
+    // Below the first band nothing is said and nothing is written.
+    it('says nothing about a Tracked Action still under 70%', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 2700 })]);
 
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
       expect(mockNotifications.create).not.toHaveBeenCalled();
-      expect(bandsWritten()).toEqual({ '55:101': 80 });
+      expect(bandsWritten()).toEqual({});
     });
 
     // Every threshold is announced once. A second ride in the same band is not news.
@@ -1211,7 +1228,7 @@ describe('ServiceTrackingService', () => {
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
       expect(mockNotifications.create).not.toHaveBeenCalled();
-      expect(bandsWritten()).toEqual({ '55:101': 80 });
+      expect(bandsWritten()).toEqual({ '55:101': 70 });
     });
 
     // Adjusting a plan is not the same as turning a job off.
@@ -1242,7 +1259,7 @@ describe('ServiceTrackingService', () => {
 
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
-      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 0, overdueCount: 1 });
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 0, overdueCount: 1, level: 'overdue' });
     });
 
     // Syncing a month of rides must not fire a dozen pushes: one line says the size of
@@ -1269,7 +1286,7 @@ describe('ServiceTrackingService', () => {
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
       expect(mockNotifications.create).toHaveBeenCalledTimes(1);
-      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 2, overdueCount: 1 });
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 2, overdueCount: 1, level: 'overdue' });
     });
 
     // A crossing makes the app speak; what it says is the size of the job, which includes
@@ -1295,7 +1312,7 @@ describe('ServiceTrackingService', () => {
 
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
-      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 1, overdueCount: 1 });
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 1, overdueCount: 1, level: 'overdue' });
     });
 
     // A backfill lands in the band it ends in. The owner is told where the bike stands
@@ -1306,7 +1323,7 @@ describe('ServiceTrackingService', () => {
       await service.evaluateBike(BIKE_ID, OWNER_ID);
 
       expect(mockNotifications.create).toHaveBeenCalledTimes(1);
-      expect(announced()).toEqual({ bikeId: BIKE_ID, dueCount: 0, overdueCount: 1 });
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 0, overdueCount: 1, level: 'overdue' });
       expect(bandsWritten()).toEqual({ '55:101': 100 });
     });
 

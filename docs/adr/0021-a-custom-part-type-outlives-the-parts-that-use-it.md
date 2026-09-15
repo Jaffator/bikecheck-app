@@ -66,3 +66,11 @@ is a name typed wrongly and used by nothing, where there is nothing to keep.
   parts still use the type — the only place that fact is visible before the removal happens.
 - The owner can end up with two types of one name in the data, one removed and one live. It is the
   price of a delete that means what it says.
+
+## Revised 2026-09-15: the list moved from Settings to the bike page
+
+The list is reached from the bike detail's menu, next to editing and archiving the bike, rather
+than from Settings — and only while there is a custom type to list, so an owner who never named one
+never sees the row. Nobody found it under Settings: the type is made in the part picker, and the
+owner looks for it where parts are. Everything else here holds: it is still one door, the drawer
+is the same, and a removal still reaches every bike's picker, which the row says.

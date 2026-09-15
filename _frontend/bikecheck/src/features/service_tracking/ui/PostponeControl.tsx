@@ -17,7 +17,8 @@ export function PostponeControl({ action }: PostponeControlProps): ReactElement 
   const postpone = usePostponeTrackedAction();
 
   return (
-    <Group gap="sm" wrap="nowrap">
+    // Sits at the row's right edge, off the reading it follows.
+    <Group gap="sm" wrap="nowrap" justify="flex-end">
       <UnstyledButton
         onClick={() => {
           postpone.mutate({

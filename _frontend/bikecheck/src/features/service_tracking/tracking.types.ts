@@ -2,7 +2,7 @@
 // every figure is derived from the part's wear, its Wear Baseline and the bike's Service
 // Interval at the moment of the read.
 
-// How much attention one Tracked Action is asking for: good below 80%, warning 80–94,
+// How much attention one Tracked Action is asking for: good below 70%, warning 70–94,
 // critical 95–99, overdue at 100 and above.
 export type AttentionLevel = "good" | "warning" | "critical" | "overdue";
 

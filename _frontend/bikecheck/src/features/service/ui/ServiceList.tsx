@@ -1,10 +1,11 @@
 // UI component using feature hooks.
-import { useRef, type ReactElement, type ReactNode } from "react";
-import { Box, Group, Loader, Stack, Text } from "@mantine/core";
+import { Fragment, useRef, type ReactElement, type ReactNode } from "react";
+import { Box, Divider, Group, Loader, Stack, Text } from "@mantine/core";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ServiceHistoryCard } from "./ServiceHistoryCard";
 import { ServiceDetailSheet } from "./ServiceDetailSheet";
+import { SERVICE_CARD_SURFACE } from "@/features/service/serviceCardSurface";
 import { formatMonthHeading, groupServicesByMonth } from "@/features/service/serviceDates";
 import type { ServiceHistoryItem } from "@/features/service/service.types";
 
@@ -20,7 +21,8 @@ interface ServiceListProps {
   // Divides the list into Month Groups. The landing page shows too few services for a
   // month to mean anything, so only the full history asks for it.
   grouped?: boolean;
-  // Rendered below the cards; the full history hangs its paging sentinel here.
+  // Rendered below the rows; the full history hangs its paging sentinel here, the landing
+  // page the way to the full history - which sits inside the one card the rows share.
   footer?: ReactNode;
 }
 
@@ -65,10 +67,26 @@ export function ServiceList({ services, isLoading, isError, grouped = false, foo
     setSearchParams(params, { replace: true });
   }
 
+  // The landing page's few rows share one card, and the footer is its last row - whichever
+  // state the rows are in, so the way to the full history never loses its frame.
   return (
     <>
-      <ServiceRows services={services} isLoading={isLoading} isError={isError} grouped={grouped} onOpen={open} />
-      {footer}
+      {!grouped ? (
+        <Box style={SERVICE_CARD_SURFACE}>
+          <ServiceRows services={services} isLoading={isLoading} isError={isError} grouped={grouped} onOpen={open} />
+          {footer !== undefined && (
+            <>
+              <Divider color="var(--color-border-subtle)" />
+              {footer}
+            </>
+          )}
+        </Box>
+      ) : (
+        <>
+          <ServiceRows services={services} isLoading={isLoading} isError={isError} grouped={grouped} onOpen={open} />
+          {footer}
+        </>
+      )}
       <ServiceDetailSheet serviceId={openId} seed={openSeed} onClose={close} />
     </>
   );
@@ -137,36 +155,44 @@ function ServiceRows({
               </Text>
             </Box>
 
-            {/* Every service is its own card; the month only gathers them under a
-                heading. */}
-            <Stack gap="sm">
-              {group.services.map((service) => (
-                <ServiceHistoryCard
-                  key={service.id}
-                  grouped
-                  service={service}
-                  onOpen={() => {
-                    onOpen(service);
-                  }}
-                />
-              ))}
-            </Stack>
+            {/* The month is one card, its services the rows of it. */}
+            <Box style={SERVICE_CARD_SURFACE}>
+              <SharedRows services={group.services} grouped onOpen={onOpen} />
+            </Box>
           </Stack>
         ))}
       </>
     );
   }
 
+  return <SharedRows services={services} grouped={false} onOpen={onOpen} />;
+}
+
+// Rows of one shared card, a line between neighbours. The card itself is the caller's: the
+// landing page draws one around everything, the full history one around each month.
+function SharedRows({
+  services,
+  grouped,
+  onOpen,
+}: {
+  services: ServiceHistoryItem[];
+  grouped: boolean;
+  onOpen: (service: ServiceHistoryItem) => void;
+}): ReactElement {
   return (
     <>
-      {services.map((service) => (
-        <ServiceHistoryCard
-          key={service.id}
-          service={service}
-          onOpen={() => {
-            onOpen(service);
-          }}
-        />
+      {services.map((service, index) => (
+        <Fragment key={service.id}>
+          {index > 0 && <Divider color="var(--color-border-subtle)" />}
+          <ServiceHistoryCard
+            flat
+            grouped={grouped}
+            service={service}
+            onOpen={() => {
+              onOpen(service);
+            }}
+          />
+        </Fragment>
       ))}
     </>
   );

@@ -1,6 +1,6 @@
 // How a reading looks on screen, and how a Tracked Action is turned into the one line that
 // describes it. What a reading *means* is still the server's: it decides what the dashboard
-// lists (80), what announces (95 and 100) and what may be put off (100). The colour is the
+// lists (70), what announces (70, 95 and 100) and what may be put off (100). The colour is the
 // frontend's own, and it warns earlier than any of those act — see ADR 0026.
 import type { AttentionLevel, TrackedAction } from "./tracking.types";
 

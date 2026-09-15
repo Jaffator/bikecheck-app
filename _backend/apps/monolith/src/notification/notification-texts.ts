@@ -1,4 +1,5 @@
 import { NotificationType } from './notification-types.config';
+import { CATALOGUE_NAMES } from './catalogue-names.generated';
 
 // The languages the app ships translations for. Anything else — including a
 // user who never picked one — falls back to English.
@@ -31,11 +32,26 @@ export interface NotificationTextPayload {
   elevationM?: number;
   gearName?: string;
   activityName?: string;
-  // How many Tracked Actions on the bike are due, and how many are past due. Where the
-  // bike stands, not only what just moved - the line has to size the job, and an action
+  // How many Tracked Actions on the bike are coming up, due, and past due. Where the bike
+  // stands, not only what just moved - the line has to size the job, and an action
   // announced last week is still an action waiting.
+  soonCount?: number;
   dueCount?: number;
   overdueCount?: number;
+  // The worst band the bike stands in, which is what the headline and the icon read.
+  level?: 'warning' | 'critical' | 'overdue';
+  // The Tracked Actions that crossed a band in this evaluation - the news itself, named.
+  crossed?: CrossedAction[];
+}
+
+// One Tracked Action that just crossed: the part and the job, each as a catalogue key with
+// the raw name behind it for a type the owner named themselves, and how far along it is.
+export interface CrossedAction {
+  componentKey: string | null;
+  componentName: string;
+  actionKey: string | null;
+  actionName: string;
+  percentage: number;
 }
 
 // Both halves are written from the payload, because a maintenance reminder's headline
@@ -75,11 +91,13 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
   },
   maintenance_due: {
     cs: {
-      // 95 asks the owner to order the part; 100 tells them they are riding on borrowed
-      // time. One notification can carry both, and the worse of the two names it.
-      title: (payload) => (payload.overdueCount ? 'Servis po termínu' : 'Čas na servis'),
+      // 70 says a job is on the horizon; 95 asks the owner to order the part; 100 tells
+      // them they are riding on borrowed time. One notification can carry all three, and
+      // the worst of them names it.
+      title: (payload) => MAINTENANCE_TITLES.cs[payload.level ?? 'critical'],
       body: (payload) =>
-        maintenanceBody(payload, {
+        maintenanceBody(payload, 'cs', {
+          soon: 'brzy',
           due: 'k servisu',
           overdue: 'po termínu',
           named: (bike) => `Kolo ${bike} potřebuje servis.`,
@@ -87,9 +105,10 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
         }),
     },
     en: {
-      title: (payload) => (payload.overdueCount ? 'Service overdue' : 'Service due'),
+      title: (payload) => MAINTENANCE_TITLES.en[payload.level ?? 'critical'],
       body: (payload) =>
-        maintenanceBody(payload, {
+        maintenanceBody(payload, 'en', {
+          soon: 'soon',
           due: 'due',
           overdue: 'overdue',
           named: (bike) => `${bike} needs a service.`,
@@ -133,9 +152,18 @@ function climbed(payload: NotificationTextPayload): string | null {
 // existed carries none, and still has to read as a sentence.
 function maintenanceBody(
   payload: NotificationTextPayload,
-  words: { due: string; overdue: string; named: (bike: string) => string; fallback: string },
+  language: NotificationLanguage,
+  words: { soon: string; due: string; overdue: string; named: (bike: string) => string; fallback: string },
 ): string {
+  // A heads-up names what is coming and how far along it is; nothing is due yet, so
+  // there is no job to size, only jobs to expect.
+  if (payload.level === 'warning' && payload.crossed && payload.crossed.length > 0) {
+    const jobs = payload.crossed.map((action) => crossedLabel(action, language)).join(', ');
+    return payload.bikeName ? `${payload.bikeName} · ${jobs}` : jobs;
+  }
+
   const counts: string[] = [];
+  if (payload.soonCount) counts.push(`${payload.soonCount} ${words.soon}`);
   if (payload.dueCount) counts.push(`${payload.dueCount} ${words.due}`);
   if (payload.overdueCount) counts.push(`${payload.overdueCount} ${words.overdue}`);
 
@@ -154,6 +182,29 @@ function unassignedBody(payload: NotificationTextPayload, unit: string, ask: str
   parts.push(payload.activityName ?? ask);
   return parts.join(' · ');
 }
+
+// One crossed Tracked Action, written the way the app's cards write it: the part, the job,
+// the percentage. A catalogue key is translated; a name the owner typed is shown as typed.
+function crossedLabel(action: CrossedAction, language: NotificationLanguage): string {
+  const part = catalogueName(action.componentKey, action.componentName, language);
+  const job = catalogueName(action.actionKey, action.actionName, language);
+  return `${part} – ${job} ${action.percentage} %`;
+}
+
+// What the app calls a catalogue entry in this language, from the copy of its locale files
+// the server keeps (catalogue-names.generated.ts). Falls back to the raw name.
+function catalogueName(key: string | null, fallback: string, language: NotificationLanguage): string {
+  if (key === null) return fallback;
+  const names: Record<string, string> = CATALOGUE_NAMES[language];
+  return names[key] ?? fallback;
+}
+
+// The headline per band. A notification sent while nothing is yet due reads as a heads-up,
+// not a demand; one with anything past due reads as the demand it is.
+const MAINTENANCE_TITLES: Record<'cs' | 'en', Record<NonNullable<NotificationTextPayload['level']>, string>> = {
+  cs: { warning: 'Blíží se servis', critical: 'Čas na servis', overdue: 'Servis po termínu' },
+  en: { warning: 'Service coming up', critical: 'Service due', overdue: 'Service overdue' },
+};
 
 // Builds the stored title and body for a notification in the user's language.
 export function buildNotificationText(

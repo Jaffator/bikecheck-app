@@ -73,7 +73,7 @@ export function StravaStatusCard({
         />
 
         <Stack gap="lg" align="center" p="lg" style={{ position: "relative" }}>
-          {/* Concentric rings visually emphasize the Strava mark. */}
+          {/* The glow stays inside the disc: it lights the mark, it does not spill onto the card. */}
           <Box
             style={{
               display: "flex",
@@ -84,8 +84,7 @@ export function StravaStatusCard({
               borderRadius: "9999px",
               backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
               border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 35%, transparent)",
-              boxShadow:
-                "0 0 0 8px color-mix(in srgb, var(--mantine-color-strava-6) 7%, transparent), 0 0 28px 0 color-mix(in srgb, var(--mantine-color-strava-6) 22%, transparent)",
+              boxShadow: "inset 0 0 24px 0 color-mix(in srgb, var(--mantine-color-strava-6) 28%, transparent)",
             }}
           >
             <StravaMark width={40} height={40} color="var(--mantine-color-strava-6)" />
@@ -209,7 +208,7 @@ export function StravaStatusCard({
               <Group gap={5} wrap="nowrap">
                 <CircleCheck size={13} color="var(--mantine-color-green-8)" />
                 <Text className="font-mono" fz={10} c="green.8" style={{ letterSpacing: "0.08em" }}>
-                  {t("strava.statusConnected")}
+                  {t("strava.statusConnectedShort")}
                 </Text>
               </Group>
             </Group>

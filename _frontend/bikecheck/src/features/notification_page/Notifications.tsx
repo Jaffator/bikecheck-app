@@ -3,10 +3,9 @@ import { useEffect, type ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { BellOff, CircleQuestionMark } from "lucide-react";
+import { BellOff, CircleQuestionMark, TriangleAlert } from "lucide-react";
 import { PiPath } from "react-icons/pi";
 import type { IconType } from "react-icons";
-import { bikecheckIconType } from "@/assets/icons/bikecheck";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {
@@ -15,21 +14,35 @@ import {
   useMarkNotificationsViewed,
 } from "@/features/notifications/notifications.queries";
 import { notificationRoute } from "@/features/notifications/notificationRoute";
-import type { Notification, NotificationType } from "@/features/notifications/notifications.types";
+import type { Notification, NotificationPayload, NotificationType } from "@/features/notifications/notifications.types";
+import { attentionColor } from "@/features/service_tracking/attentionLevel";
 
 dayjs.extend(relativeTime);
 
-const BikecheckIcon = bikecheckIconType("Bikecheck")!;
-
 // The icon says what the row is, so it reads before a word of it does. A ride that landed
-// carries the Rides mark and a service reminder the Bikecheck one, both borrowed from the
-// tab that owns the place. The ask gets a question mark instead of a place: it is the one
-// row that wants something back, and the only one the badge goes on counting.
+// carries the Rides mark, borrowed from the tab that owns the place. The ask gets a question
+// mark instead of a place: it is the one row that wants something back, and the only one
+// the badge goes on counting. A service reminder gets the warning sign, in the colour of
+// the band it reports.
 const ICONS: Partial<Record<NotificationType, IconType>> = {
   strava_activity_saved: PiPath,
   strava_activity_unassigned: CircleQuestionMark,
-  maintenance_due: BikecheckIcon,
+  maintenance_due: TriangleAlert,
 };
+
+// Where each band begins, so the reminder wears the same colour the row on the card does.
+const LEVEL_PERCENTAGE: Record<NonNullable<NotificationPayload["level"]>, number> = {
+  warning: 70,
+  critical: 95,
+  overdue: 100,
+};
+
+// An unread reminder is coloured by its band; everything else follows the title's read state.
+function iconColor(notification: Notification, unread: boolean): string {
+  const level = notification.payload?.level;
+  if (unread && level !== undefined) return attentionColor(LEVEL_PERCENTAGE[level]);
+  return unread ? "var(--mantine-color-text-6)" : "var(--color-text-dim)";
+}
 
 // Render one notification row.
 function NotificationRow({
@@ -59,14 +72,7 @@ function NotificationRow({
               the right. The facts below run the full width of the card rather than
               indenting under the icon, so every line starts on the same edge. */}
           <Group gap="xs" wrap="nowrap" align="center">
-            {/* Follows the title's own read state rather than holding a colour of its own. */}
-            {Icon !== undefined && (
-              <Icon
-                size={22}
-                color={unread ? "var(--mantine-color-text-6)" : "var(--color-text-dim)"}
-                style={{ flexShrink: 0 }}
-              />
-            )}
+            {Icon !== undefined && <Icon size={22} color={iconColor(notification, unread)} style={{ flexShrink: 0 }} />}
             <Text
               fw={unread ? 600 : 500}
               fz={15}

@@ -199,10 +199,9 @@ export class ServiceTrackingService {
   // scheduler and nothing to poll.
   //
   // One rule covers all of them: `reached_threshold` is moved to whichever band the
-  // reading now falls in, up or down. A move up to 95 or 100 announces; a move up to 80
-  // does not, because 80 only pulls the row onto the dashboard. A move down - which is
-  // what a Service, a Replacement, an Extension or a lengthened interval produces - is
-  // silent, and by lowering the band it re-arms the next crossing.
+  // reading now falls in, up or down. A move up - to 70, 95 or 100 - announces. A move
+  // down - which is what a Service, a Replacement, an Extension or a lengthened interval
+  // produces - is silent, and by lowering the band it re-arms the next crossing.
   async evaluateBike(bikeId: number, userId: number): Promise<void> {
     // An Archived Bike stays put away: it produces no readings, so it announces nothing.
     const bike = await this.prisma.bikes.findFirst({
@@ -235,6 +234,7 @@ export class ServiceTrackingService {
     // one line has to size the job, not only report the last thing to move.
     const overdue = countIn(evaluated, ATTENTION_THRESHOLDS.overdue);
     const due = countIn(evaluated, ATTENTION_THRESHOLDS.critical);
+    const soon = countIn(evaluated, ATTENTION_THRESHOLDS.warning);
 
     await this.notificationService.create({
       userId,
@@ -242,8 +242,19 @@ export class ServiceTrackingService {
       payload: {
         bikeId,
         bikeName: [bike.bike_brand, bike.bike_model, bike.year].filter(Boolean).join(' '),
+        soonCount: soon,
         dueCount: due,
         overdueCount: overdue,
+        // The worst band the bike stands in, which names the notification and colours it.
+        level: overdue > 0 ? 'overdue' : due > 0 ? 'critical' : 'warning',
+        // What just moved, worst first - the heads-up names these one by one.
+        crossed: crossings.map(({ action }) => ({
+          componentKey: action.component_type_i18n_key,
+          componentName: action.component_type,
+          actionKey: action.action_i18n_key,
+          actionName: action.action_name,
+          percentage: action.percentage,
+        })),
       },
     });
   }

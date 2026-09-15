@@ -144,3 +144,10 @@ owner can now genuinely delete them, which they could not before.
 - Archiving changes the app's numbers before any deletion happens: spend, kilometres and ride counts
   all drop. Every confirmation dialog for archiving therefore states what stops counting, where the
   bike goes, that Strava is unpaired for good, and how many pending rides are discarded.
+
+## Revised 2026-09-15: the archive's door is in the garage
+
+The archive opens from the end of the garage list — a row "Archived bikes (n)" shown only while
+there is something in it — and from the empty garage, not from Settings. It is still the only
+door, and unarchiving and destroying a bike are still offered there alone. An archived bike left
+the garage, so the garage is where the owner goes looking for it; Settings was where nobody did.

@@ -16,6 +16,9 @@ export type NotificationType =
 export interface NotificationTypeConfig {
   channels: NotificationChannel[];
   route?: string;
+  // Leads the push's title, so a push reads as what it is before a word of it does. Only
+  // the push: the in-app list has its own icon, and the stored title stays clean.
+  pushEmoji?: string;
   // Holds the bell badge until the user has actually dealt with it. Opening the list
   // does not touch one of these: looking at an ask is not the same as answering it.
   // Left off means the notification is an announcement, and seeing it is the whole job.
@@ -37,6 +40,7 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     // The ride itself, not the bike it landed on: the notification is about this one
     // ride, and the bike is a page away from it either way.
     route: '/rides?ride=:activityId',
+    pushEmoji: '🚵',
   },
   // A ride the app could not put on a bike by itself — whether Strava sent no
   // gear at all, or gear that matches nothing here. Both leave the user with
@@ -48,6 +52,7 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     channels: ['push', 'inApp'],
     // Opens the Pending tab with this ride's sheet already up.
     route: '/rides?pending=:activityId',
+    pushEmoji: '❓',
     // The only ask the app makes of the rider, so it is the only thing the badge counts
     // once the list has been read. Cleared by assigning the bike, not by looking.
     holdsBadge: true,
@@ -59,6 +64,7 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     // No maintenance sub-screen exists yet; the bike itself is the closest
     // thing the app can actually open.
     route: '/bikes/:bikeId',
+    pushEmoji: '🔧',
   },
   achievement_unlocked: {
     channels: ['inApp'],

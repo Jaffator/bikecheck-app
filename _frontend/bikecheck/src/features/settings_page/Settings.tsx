@@ -1,7 +1,7 @@
 // Settings page: who the rider is and what the app does for them, one page deep. The header
 // avatar is the only door to it, so the account opens the page and the way out closes it.
 import { useState, type CSSProperties, type ReactElement } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Avatar, Card, Group, SegmentedControl, Stack, Switch, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -10,8 +10,6 @@ import { useCurrentUser, useLogout, useUpdateUser } from "@/features/users/users
 import { TIRE_PRESSURE_UNITS, type TirePressureUnit } from "@/features/users/users.types";
 import { SUPPORTED_LANGUAGES, applyLanguage } from "@/i18n";
 import { FALLBACK_CURRENCY, SUPPORTED_CURRENCIES } from "@/utils/money";
-import { CustomPartsDrawer } from "./CustomPartsDrawer";
-import { BikeArchiveDrawer } from "./BikeArchiveDrawer";
 import { ChangePasswordDrawer } from "./ChangePasswordDrawer";
 import { DeleteAccountDrawer } from "./DeleteAccountDrawer";
 import { ProfileEditDrawer } from "./ProfileEditDrawer";
@@ -34,16 +32,12 @@ export function Settings(): ReactElement | null {
   const updateUser = useUpdateUser();
   const logout = useLogout();
   const navigate = useNavigate();
-  const [customParts, setCustomParts] = useState(false);
   const [editing, setEditing] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   // The page dims before the session is dropped, so the login screen is not swapped in under
   // a fully lit page.
   const [leaving, setLeaving] = useState(false);
-  // The empty garage links straight into the archive, so it arrives already open.
-  const location = useLocation();
-  const [archive, setArchive] = useState((location.state as { openArchive?: boolean } | null)?.openArchive === true);
 
   // Update the UI before persisting the language.
   function changeLanguage(language: string): void {
@@ -172,35 +166,6 @@ export function Settings(): ReactElement | null {
       <div className="mx-3 mb-3 mt-0">
         <StravaStatusCard allowDisconnect />
       </div>
-
-      <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
-        {t("settings.sectionBikes")}
-      </Text>
-      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
-        <Stack gap={0}>
-          {/* The parts the owner named themselves. A list rather than a setting, so it opens
-              over the page instead of resolving in place. */}
-          <UnstyledButton onClick={() => setCustomParts(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
-            <Group justify="space-between" wrap="nowrap">
-              <Text c="text.6" fz={15} fw={600}>
-                {t("settings.customParts")}
-              </Text>
-              <ChevronRight size={18} color="var(--color-text-dim)" />
-            </Group>
-          </UnstyledButton>
-
-          {/* The bikes taken out of use. A list rather than a setting, so it opens over the
-              page the way the custom parts do - and it is the only door to the archive. */}
-          <UnstyledButton onClick={() => setArchive(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
-            <Group justify="space-between" wrap="nowrap">
-              <Text c="text.6" fz={15} fw={600}>
-                {t("settings.bikeArchive")}
-              </Text>
-              <ChevronRight size={18} color="var(--color-text-dim)" />
-            </Group>
-          </UnstyledButton>
-        </Stack>
-      </Card>
 
       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
         {t("settings.sectionGeneral")}
@@ -344,10 +309,6 @@ export function Settings(): ReactElement | null {
           </UnstyledButton>
         </Stack>
       </Card>
-
-      <CustomPartsDrawer opened={customParts} onClose={() => setCustomParts(false)} />
-
-      <BikeArchiveDrawer opened={archive} onClose={() => setArchive(false)} />
 
       <ProfileEditDrawer user={user} opened={editing} onClose={() => setEditing(false)} />
 

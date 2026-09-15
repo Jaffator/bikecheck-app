@@ -32,7 +32,7 @@ describe('NotificationProcessor', () => {
       type: 'strava_activity_saved',
       title: 'Ride saved',
       body: 'Your ride landed on Enduro',
-      payload: { bikeId: 3 },
+      payload: { bikeId: 3, activityId: '900' },
       is_read: false,
     };
   }
@@ -73,9 +73,9 @@ describe('NotificationProcessor', () => {
 
       await processor.process(deliveryJob());
 
-      expect(mockPushService.sendToUser).toHaveBeenCalledWith(USER_ID, 'Ride saved', 'Your ride landed on Enduro', {
+      expect(mockPushService.sendToUser).toHaveBeenCalledWith(USER_ID, '🚵 Ride saved', 'Your ride landed on Enduro', {
         type: 'strava_activity_saved',
-        route: '/bikes/3',
+        route: '/rides?ride=900',
       });
     });
 
