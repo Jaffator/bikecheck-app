@@ -114,8 +114,12 @@ async function apiRequest(path: string, options?: RequestInit, retried = false):
   return response;
 }
 
+// A 204 carries no body, so there is nothing to parse; the caller typed it as void.
+const NO_CONTENT_STATUS = 204;
+
 export async function apiFetch<T>(path: string, options?: RequestInit, retried = false): Promise<T> {
   const response = await apiRequest(path, options, retried);
+  if (response.status === NO_CONTENT_STATUS) return undefined as T;
 
   return (await response.json()) as T;
 }

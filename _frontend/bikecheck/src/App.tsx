@@ -19,13 +19,19 @@ import { Notifications } from "@/features/notification_page/Notifications";
 import { StravaConnected } from "@/features/strava_connected_page/StravaConnected";
 import { InAppNotification } from "@/components/InAppNotification";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useVerifyEmailAppLink } from "@/hooks/useVerifyEmailAppLink";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
 import { Legal } from "@/features/legal_page/Legal";
+import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
+  // The App Link listener lives above the auth gate: a Verification Email's link arrives
+  // while nobody is signed in, so the Strava listener inside the shell would never see it.
+  useVerifyEmailAppLink();
+
   return (
     <Routes>
       {/* Public routes remain outside the authentication gate. A share link opens the
@@ -34,6 +40,9 @@ function App(): ReactElement {
       {/* The registration checkbox links to the terms, so they have to open without a
           session. Logged in, the same route serves the Settings rows. */}
       <Route path="/legal/:document" element={<Legal />} />
+      {/* The link in a Verification Email lands here while nobody is signed in (ADR 0031):
+          no session fetch, no nav, one button. */}
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>
   );

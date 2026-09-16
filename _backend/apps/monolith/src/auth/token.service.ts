@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { users as UserFull } from '@prisma/client';
 import { RefreshTokenService } from '../refreshtoken/refreshtoken.service';
@@ -6,6 +6,9 @@ import { randomBytes } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { AUTH_CONFIG } from './auth.config';
+import { VerificationTokenPayload } from './entities/auth.interface';
+
+const VERIFICATION_PURPOSE: VerificationTokenPayload['purpose'] = 'email_verification';
 
 @Injectable()
 export class TokenService {
@@ -72,6 +75,37 @@ export class TokenService {
     await this.refreshTokenRepository.create(user.id, refreshToken, expiresAt, deviceInfo, ip);
     const accessToken = this.generateAccessToken(user);
     return { refreshToken, accessToken };
+  }
+
+  // The link in a Verification Email (ADR 0031): a signed token, not a row. The app's own
+  // secret signs it; only the purpose claim tells it apart from an access token.
+  mintVerificationToken(user: Pick<UserFull, 'id' | 'email'>): string {
+    const payload: VerificationTokenPayload = { purpose: VERIFICATION_PURPOSE, sub: user.id, email: user.email };
+    return this.jwtService.sign(payload, { expiresIn: AUTH_CONFIG.VERIFICATION_TOKEN_EXPIRATION_SECONDS });
+  }
+
+  // Signature, expiry and purpose. An access token has no purpose and is refused here the
+  // same way a verification token is refused by the JWT strategy: neither opens the other
+  // door. One refusal for every reason, so the caller has nothing to tell apart.
+  readVerificationToken(token: string): VerificationTokenPayload {
+    let payload: Partial<VerificationTokenPayload>;
+    try {
+      payload = this.jwtService.verify<Partial<VerificationTokenPayload>>(token);
+    } catch {
+      this.logger.warn('Verification token refused: invalid or expired');
+      throw new BadRequestException('VERIFICATION_TOKEN_INVALID');
+    }
+
+    if (
+      payload.purpose !== VERIFICATION_PURPOSE ||
+      typeof payload.sub !== 'number' ||
+      typeof payload.email !== 'string'
+    ) {
+      this.logger.warn({ purpose: payload.purpose }, 'Verification token refused: wrong purpose');
+      throw new BadRequestException('VERIFICATION_TOKEN_INVALID');
+    }
+
+    return { purpose: payload.purpose, sub: payload.sub, email: payload.email };
   }
 
   // ---- Private methods ----

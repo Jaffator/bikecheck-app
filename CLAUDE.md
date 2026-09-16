@@ -39,7 +39,8 @@ Code style:
 - Explicit types
 - Small functions
 - No overengineering
-- Every code in English, comments too, comments short and concise, one liner if possible
+- Every code in English, comments too
+- Comments: one line, two at most. Say why, not what; no essays, no prose, no restating the code
 
 General:
 

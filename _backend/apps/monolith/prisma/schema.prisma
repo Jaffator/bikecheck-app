@@ -469,6 +469,9 @@ model users {
   notifications_enabled Boolean?               @default(true)
   // Bar or psi for tyre pressures, account-wide. Suspension is always psi (ADR 0029).
   tire_pressure_unit    tire_pressure_unit     @default(bar)
+  // Null is an Unverified Account - a placeholder that cannot sign in (ADR 0031). Set is a
+  // Verified Email, the only address the app writes to. Pre-existing rows were backfilled.
+  email_verified_at     DateTime?              @db.Timestamptz(6)
   accounts              accounts[]
   bikes                 bikes[]
   chat_messages         chat_messages[]

@@ -1,7 +1,8 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
+import { AccessTokenPayload } from '../entities/auth.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -20,7 +21,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: any) {
+  validate(payload: AccessTokenPayload): { userId: number; email: string } {
+    // A verification token is signed with the same secret (ADR 0031); its purpose claim is
+    // what keeps it from opening a session when pasted where an access token goes.
+    if (payload.purpose !== undefined) {
+      throw new UnauthorizedException('Not an access token');
+    }
+
     return { userId: payload.sub, email: payload.email };
   }
 }

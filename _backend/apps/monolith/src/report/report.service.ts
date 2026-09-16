@@ -1,13 +1,7 @@
-import {
-  BadRequestException,
-  ConflictException,
-  GoneException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Prisma, report_kind, reports } from '@prisma/client';
+import { publicAppOrigin } from '../_config/public-app-origin';
 import { PrismaService } from '../../prisma/prisma.service';
 import { serviceDateInPeriod } from '../bike-event/bike-event.service';
 import { StorageService } from '../storage/storage.service';
@@ -101,7 +95,7 @@ export class ReportService {
   async exportReport(userId: number, dto: ExportReportDto): Promise<ExportedReport> {
     // Refuse before writing a row we could not address. A share link built on an empty
     // origin is worse than no share link.
-    this.publicAppOrigin();
+    publicAppOrigin('share link');
 
     const owner = await this.ownerVoice(userId);
 
@@ -344,7 +338,7 @@ export class ReportService {
   // The public address a report is read at. Only ever the web origin: native builds route
   // by hash, and a link that opens nothing outside the app is not a share link.
   shareUrl(token: string): string {
-    return `${this.publicAppOrigin()}/r/${token}`;
+    return `${publicAppOrigin('share link')}/r/${token}`;
   }
 
   // The same page, asked for as it is drawn for print. The variant is chosen in the
@@ -707,15 +701,6 @@ export class ReportService {
 
   private storedSnapshot(report: reports): StoredReportSnapshot {
     return report.snapshot as unknown as StoredReportSnapshot;
-  }
-
-  private publicAppOrigin(): string {
-    const origin = process.env.PUBLIC_APP_URL;
-    if (origin === undefined || origin === '') {
-      throw new InternalServerErrorException('PUBLIC_APP_URL is not set, so no share link can be addressed');
-    }
-
-    return origin.replace(/\/+$/, '');
   }
 }
 

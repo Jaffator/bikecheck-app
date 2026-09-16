@@ -73,6 +73,7 @@ export class UserController {
   @ApiResponse({ status: 201, type: UserResponseDto })
   @Post('create')
   async createUser(@Body() data: CreateUserDto): Promise<UserResponseDto> {
+    // Not self-registration (that is POST /auth/register): never overwrites a placeholder, sends no mail.
     const user = await this.userService.createUserLocal(data);
     return this.mapToResponse(user);
   }

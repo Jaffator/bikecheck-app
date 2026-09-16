@@ -29,8 +29,8 @@ function Metric({ label, value, isStale }: { label: string; value: number; isSta
 
 // Sums the history the user is currently looking at - the same bike and the same Period
 // the list below runs on, so the two can never disagree. The eyebrow names the Period
-// because the picker that sets it is up in the header, out of sight; a page locked to one
-// bike gives the bike a line of its own, because it carries no chip to say so.
+// because the picker that sets it is up in the header, out of sight; the bike - or the
+// whole garage - gets a line of its own, because the page carries no chip to say so.
 export function HistoryTotalsCard({
   totals,
   bikeName,
@@ -40,8 +40,8 @@ export function HistoryTotalsCard({
   onShare,
 }: {
   totals: HistoryTotals | undefined;
-  // Null on the garage's page, where the chip already names the bike.
-  bikeName: string | null;
+  // One bike by name, or what the whole garage is called.
+  bikeName: string;
   periodLabel: string;
   isLoading: boolean;
   // The numbers on screen belong to the filter the user just left. Shown dimmed rather
@@ -65,9 +65,16 @@ export function HistoryTotalsCard({
     <Box style={{ ...SERVICE_CARD_SURFACE, padding: "var(--mantine-spacing-md)" }}>
       <Stack gap="xs">
         <Group gap="sm" wrap="nowrap" align="center">
-          <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>
-            {`${t("service.totalsTitle")} · ${periodLabel}`}
-          </Text>
+          {/* The eyebrow and the bike read as one heading over the figure, so they sit in
+              one column beside the button rather than each on a row of its height. */}
+          <Stack gap={4} style={{ minWidth: 0 }}>
+            <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>
+              {`${t("service.totalsTitle")} · ${periodLabel}`}
+            </Text>
+            <Text fz={15} fw={600} c="text.6" lineClamp={1}>
+              {bikeName}
+            </Text>
+          </Stack>
           {/* Exports exactly what is summed above: the same Bike and the same Period. */}
           {onShare !== null && (
             <Button
@@ -84,12 +91,6 @@ export function HistoryTotalsCard({
             </Button>
           )}
         </Group>
-
-        {bikeName !== null && (
-          <Text fz={15} fw={600} c="text.6" lineClamp={1}>
-            {bikeName}
-          </Text>
-        )}
 
         {isLoading || totals === undefined ? (
           <Skeleton height={34} width="60%" radius="sm" />

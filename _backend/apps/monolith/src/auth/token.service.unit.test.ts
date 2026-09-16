@@ -5,7 +5,7 @@ import { RefreshTokenService } from '../refreshtoken/refreshtoken.service';
 import { getLoggerToken } from 'nestjs-pino';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { users as UserFull } from '@prisma/client';
 
 describe('TokenService_testing', () => {
@@ -151,5 +151,91 @@ describe('TokenService_testing', () => {
       expect(result.accessToken).toBe('fake-access-token');
       expect(result.refreshToken).toBeDefined();
     });
+  });
+});
+
+// The Verification Email carries a signed JWT, not a row (ADR 0031): purpose, user id,
+// address, a day's expiry, the app's own secret. Read back with a real JwtService so the
+// signature and the expiry are what is tested, not a mock of them.
+describe('TokenService verification token', () => {
+  let tokenService: TokenService;
+  const jwtService = new JwtService({ secret: 'test-secret' });
+  const user = { id: 7, email: 'rider@example.com' } as UserFull;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        TokenService,
+        { provide: RefreshTokenService, useValue: {} },
+        { provide: JwtService, useValue: jwtService },
+        { provide: UserService, useValue: {} },
+        {
+          provide: getLoggerToken(TokenService.name),
+          useValue: { info: jest.fn(), debug: jest.fn(), warn: jest.fn() },
+        },
+      ],
+    }).compile();
+
+    tokenService = module.get<TokenService>(TokenService);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('reads back its purpose, user id and address', () => {
+    const token = tokenService.mintVerificationToken(user);
+
+    expect(tokenService.readVerificationToken(token)).toEqual({
+      purpose: 'email_verification',
+      sub: 7,
+      email: 'rider@example.com',
+    });
+  });
+
+  it('refuses a token older than a day', () => {
+    jest.useFakeTimers({ now: new Date('2026-09-15T10:00:00Z') });
+    const token = tokenService.mintVerificationToken(user);
+
+    jest.setSystemTime(new Date('2026-09-16T10:00:01Z'));
+
+    expect(() => tokenService.readVerificationToken(token)).toThrow(BadRequestException);
+  });
+
+  it('still reads a token minted 23 hours ago', () => {
+    jest.useFakeTimers({ now: new Date('2026-09-15T10:00:00Z') });
+    const token = tokenService.mintVerificationToken(user);
+
+    jest.setSystemTime(new Date('2026-09-16T09:00:00Z'));
+
+    expect(tokenService.readVerificationToken(token).sub).toBe(7);
+  });
+
+  // An access token is signed with the same secret and names the same user; only the
+  // purpose tells them apart, so a token without one is not a verification token.
+  it('refuses an access token - no purpose', () => {
+    const accessToken = jwtService.sign({ sub: 7, email: 'rider@example.com' });
+
+    expect(() => tokenService.readVerificationToken(accessToken)).toThrow(BadRequestException);
+  });
+
+  it('refuses a token minted for another purpose', () => {
+    const otherToken = jwtService.sign({ purpose: 'password_reset', sub: 7, email: 'rider@example.com' });
+
+    expect(() => tokenService.readVerificationToken(otherToken)).toThrow(BadRequestException);
+  });
+
+  it('refuses a token signed with another secret', () => {
+    const forged = new JwtService({ secret: 'other-secret' }).sign({
+      purpose: 'email_verification',
+      sub: 7,
+      email: 'rider@example.com',
+    });
+
+    expect(() => tokenService.readVerificationToken(forged)).toThrow(BadRequestException);
+  });
+
+  it('refuses garbage', () => {
+    expect(() => tokenService.readVerificationToken('not-a-token')).toThrow(BadRequestException);
   });
 });

@@ -4,6 +4,10 @@ import type {
   User,
   LoginCredentials,
   RegisterCredentials,
+  RegisterResponse,
+  ResendVerificationPayload,
+  VerifyEmailPayload,
+  VerifyEmailResponse,
   GoogleTokenCredentials,
   UpdateUserPayload,
   ChangePasswordPayload,
@@ -22,7 +26,9 @@ export async function logoutUser(): Promise<void> {
   });
 }
 
-// POST /auth/login — sets the auth cookies and returns the logged-in user.
+// POST /auth/login — sets the auth cookies and returns the logged-in user. 401 for a wrong
+// password; 403 EMAIL_NOT_VERIFIED for the right one on an account whose address is not
+// yet verified.
 export async function loginUser(credentials: LoginCredentials): Promise<User> {
   return apiFetch<User>("/auth/login", {
     method: "POST",
@@ -30,11 +36,34 @@ export async function loginUser(credentials: LoginCredentials): Promise<User> {
   });
 }
 
-// Creates a user without establishing auth cookies.
-export async function registerUser(credentials: RegisterCredentials): Promise<User> {
-  return apiFetch<User>("/auth/register", {
+// POST /auth/register — writes a placeholder and sends the Verification Email. No cookies:
+// the account cannot sign in until the link in that email is used. 409 when the address
+// belongs to a verified account.
+export async function registerUser(credentials: RegisterCredentials): Promise<RegisterResponse> {
+  return apiFetch<RegisterResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify(credentials),
+  });
+}
+
+// POST /auth/verification/resend — sends the Verification Email again when the address
+// belongs to an account not yet verified. 204 in every case, known address or not, so the
+// answer says nothing about who has an account.
+export async function resendVerificationEmail(payload: ResendVerificationPayload): Promise<void> {
+  return apiFetch<void>("/auth/verification/resend", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// POST /auth/verification/verify — verifies the address the token names. No cookies: the
+// token proves an address, not a password, and the rider signs in afterwards. 400
+// VERIFICATION_TOKEN_INVALID for an expired, forged or stale link; a link used twice
+// answers 200 both times.
+export async function verifyEmail(payload: VerifyEmailPayload): Promise<VerifyEmailResponse> {
+  return apiFetch<VerifyEmailResponse>("/auth/verification/verify", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 
@@ -56,7 +85,10 @@ export async function changePassword(data: ChangePasswordPayload): Promise<void>
   });
 }
 
-// Sends a native Google ID token for backend verification and login.
+// POST /auth/google/token — sends a native Google ID token for backend verification and
+// login. A 2xx is a session. 403 EMAIL_NOT_VERIFIED, no cookies, when the address is not
+// yet verified (the Verification Email is on its way); 409 GOOGLE_EMAIL_UNVERIFIED when an
+// address Google does not vouch for meets a verified password account.
 export async function sendGoogleToken(credentials: GoogleTokenCredentials): Promise<User> {
   return apiFetch<User>("/auth/google/token", {
     method: "POST",

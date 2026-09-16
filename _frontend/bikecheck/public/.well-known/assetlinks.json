@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bikecheck.app",
+      "sha256_cert_fingerprints": [
+        "DF:D7:C7:A0:68:78:DF:FC:B1:DE:BC:46:4B:CA:B1:85:8E:FC:D3:04:DA:9E:FE:D9:23:10:FE:5E:79:B4:C3:F6"
+      ]
+    }
+  }
+]

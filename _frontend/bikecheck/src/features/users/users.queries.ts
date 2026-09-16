@@ -4,6 +4,8 @@ import {
   getCurrentUser,
   loginUser,
   registerUser,
+  resendVerificationEmail,
+  verifyEmail,
   sendGoogleToken,
   logoutUser,
   updateUser,
@@ -15,6 +17,10 @@ import type {
   User,
   LoginCredentials,
   RegisterCredentials,
+  RegisterResponse,
+  ResendVerificationPayload,
+  VerifyEmailPayload,
+  VerifyEmailResponse,
   GoogleTokenCredentials,
   UpdateUserPayload,
   ChangePasswordPayload,
@@ -56,10 +62,27 @@ export function useLogin(): UseMutationResult<User, ApiError, LoginCredentials> 
   });
 }
 
-// Registration creates an account but leaves currentUser untouched.
-export function useRegistration(): UseMutationResult<User, ApiError, RegisterCredentials> {
+// Registration writes a placeholder and leaves currentUser untouched: the rider signs in
+// only after verifying the address, through login.
+export function useRegistration(): UseMutationResult<RegisterResponse, ApiError, RegisterCredentials> {
   return useMutation({
     mutationFn: registerUser,
+  });
+}
+
+// "Send it again" touches no cached user either: nobody is signed in, and the answer is the
+// same whatever the address - success means the request landed, not that an email went out.
+export function useResendVerification(): UseMutationResult<void, ApiError, ResendVerificationPayload> {
+  return useMutation({
+    mutationFn: resendVerificationEmail,
+  });
+}
+
+// Verifying touches no cached user: the page that calls it has no session, and none comes
+// out of it - the rider signs in afterwards, through login.
+export function useVerifyEmail(): UseMutationResult<VerifyEmailResponse, ApiError, VerifyEmailPayload> {
+  return useMutation({
+    mutationFn: verifyEmail,
   });
 }
 
@@ -82,7 +105,8 @@ export function useChangePassword(): UseMutationResult<void, ApiError, ChangePas
   });
 }
 
-// Native Google sign-in writes the returned user into the auth cache.
+// Native Google sign-in writes the returned user into the auth cache - only on success,
+// which is the only answer that is a session; a refusal (403, 409) leaves it untouched.
 export function useGoogleNative(): UseMutationResult<User, ApiError, GoogleTokenCredentials> {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1494,6 +1494,13 @@
             "psi"
           ]
         },
+        "email_verified_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "accounts": {
           "type": "array",
           "items": {

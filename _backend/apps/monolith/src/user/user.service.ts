@@ -2,12 +2,17 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
-import { users as UserFull } from '@prisma/client';
+import { Prisma, users as UserFull } from '@prisma/client';
 import { LoginGoogleDto } from '../auth/dto/auth.dtos';
 
 // One cost factor for every hash the app writes, so registration and a later password
 // change cannot drift apart.
 const SALT_ROUNDS = 10;
+
+// P2025 on a conditional `update` means the row moved on between read and write: a lost race.
+function isRecordNotFound(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025';
+}
 
 @Injectable()
 export class UserService {
@@ -27,6 +32,9 @@ export class UserService {
     return this.prisma.users.findUnique({ where: { email } });
   }
 
+  // A Google sign-in on an unknown address (ADR 0031). Google's own word decides: a vouched
+  // address is born verified, the rare unvouched one is a placeholder like any other, with
+  // the Google id on it and the link still to prove it.
   async createUserByGoogle(dto: LoginGoogleDto): Promise<UserFull> {
     return this.prisma.users.create({
       data: {
@@ -38,10 +46,73 @@ export class UserService {
         is_active: true,
         // Google sign-in carries no locale, so the client backfills it on first load.
         language: null,
+        email_verified_at: dto.emailVerified ? new Date() : null,
       },
     });
   }
 
+  // A Google id attached to a row that already has the address: a Verified Email met by a
+  // vouched sign-in, or a placeholder met by an unvouched one. Nothing else on the row moves.
+  async linkGoogleId(id: number, dto: Pick<LoginGoogleDto, 'googleId' | 'avatar_url'>): Promise<UserFull> {
+    return this.prisma.users.update({
+      where: { id },
+      data: { googleId: dto.googleId, avatar_url: dto.avatar_url, updated_at: new Date() },
+    });
+  }
+
+  // Vouched Google sign-in takes an Unverified Account over outright (ADR 0031). Conditional on
+  // the row still being a placeholder: the loser of a concurrent takeover gets null, not a 500.
+  async takeOverPlaceholder(id: number, dto: LoginGoogleDto): Promise<UserFull | null> {
+    try {
+      return await this.prisma.users.update({
+        where: { id, email_verified_at: null },
+        data: {
+          googleId: dto.googleId,
+          name: dto.name,
+          avatar_url: dto.avatar_url,
+          password_hash: null,
+          email_verified_at: new Date(),
+          updated_at: new Date(),
+        },
+      });
+    } catch (error) {
+      if (isRecordNotFound(error)) return null;
+      throw error;
+    }
+  }
+
+  // Registration by name and password (ADR 0031). The address is taken only by a Verified
+  // Email; an Unverified Account is a placeholder, and registering over it is simply the
+  // first registration again - same row, new name, password and language, and whatever a
+  // Google sign-in left on it cleared, because the one registering now is the one who has
+  // to prove the address. Either way the row stays unverified; the link does the proving.
+  async registerLocal(dto: CreateUserDto): Promise<UserFull> {
+    const existingUser = await this.prisma.users.findUnique({ where: { email: dto.email } });
+    if (existingUser?.email_verified_at) {
+      throw new ConflictException('User with this email already exist');
+    }
+
+    const password_hash = await bcrypt.hash(dto.password!, SALT_ROUNDS);
+    const profile = {
+      name: dto.name,
+      avatar_url: null,
+      googleId: null,
+      password_hash,
+      // Sent by the client from the device locale; null means "not chosen yet".
+      language: dto.language ?? null,
+    };
+
+    if (existingUser) {
+      return this.replacePlaceholder(existingUser.id, profile);
+    }
+
+    return this.prisma.users.create({
+      data: { ...profile, email: dto.email, is_active: true, email_verified_at: null },
+    });
+  }
+
+  // POST /users/create is not self-registration: any row on the address refuses, a placeholder
+  // included, and the new row stays unverified because nothing here sends a Verification Email.
   async createUserLocal(dto: CreateUserDto): Promise<UserFull> {
     const existingUser = await this.prisma.users.findUnique({ where: { email: dto.email } });
     if (existingUser) {
@@ -60,8 +131,20 @@ export class UserService {
         is_active: true,
         // Sent by the client from the device locale; null means "not chosen yet".
         language: dto.language ?? null,
+        email_verified_at: null,
       },
     });
+  }
+
+  // Verifying flips the column once (ADR 0031). The write is conditional on the column still
+  // being null, so two links used at once flip it once, and the answer says whether this
+  // call was the null -> set transition - the one moment the Welcome Email goes out.
+  async verifyEmail(id: number): Promise<boolean> {
+    const { count } = await this.prisma.users.updateMany({
+      where: { id, email_verified_at: null },
+      data: { email_verified_at: new Date(), updated_at: new Date() },
+    });
+    return count === 1;
   }
 
   // The plain password is hashed here, never handed in already hashed, so the users table
@@ -118,5 +201,21 @@ export class UserService {
       where: { id },
       data: { ...dataFilteredUndefined, updated_at: new Date() },
     });
+  }
+
+  // ---- Private methods ----
+
+  // Conditional on the row still being a placeholder: a Google takeover landing between the read
+  // and this write made it the owner's Verified Email, so a stranger's password must not follow.
+  private async replacePlaceholder(id: number, profile: Prisma.usersUpdateInput): Promise<UserFull> {
+    try {
+      return await this.prisma.users.update({
+        where: { id, email_verified_at: null },
+        data: { ...profile, updated_at: new Date() },
+      });
+    } catch (error) {
+      if (isRecordNotFound(error)) throw new ConflictException('User with this email already exist');
+      throw error;
+    }
   }
 }

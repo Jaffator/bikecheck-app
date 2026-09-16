@@ -39,6 +39,39 @@ export class ChangePasswordDto {
   newPassword!: string;
 }
 
+// What registration answers (ADR 0031): the address the Verification Email went to, so
+// the inbox screen can show it. No profile - a placeholder has none worth reading - and
+// no cookies; the login form is the one door.
+export class RegisterResponseDto {
+  @ApiProperty({ example: 'jaffa@jaffa.com' })
+  email!: string;
+}
+
+// "Send it again" (ADR 0031): the address the Verification Email should go to once more.
+// The answer is the same whether or not an account exists behind it, so this is the only
+// thing the request carries.
+export class ResendVerificationDto {
+  @ApiProperty({ example: 'jaffa@jaffa.com' })
+  @IsEmail()
+  email!: string;
+}
+
+// The link in a Verification Email, handed back by the page on a tap (ADR 0031). Only the
+// token: everything else - who, which address - is read from its signed payload.
+export class VerifyEmailDto {
+  @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6...' })
+  @IsString()
+  @MinLength(1)
+  token!: string;
+}
+
+// What verifying answers: the address that is now verified, so the page can hand it to the
+// login form. No profile and no cookies; the token proves an address, not a password.
+export class VerifyEmailResponseDto {
+  @ApiProperty({ example: 'jaffa@jaffa.com' })
+  email!: string;
+}
+
 export class LoginGoogleDto {
   @IsString()
   @MinLength(1)

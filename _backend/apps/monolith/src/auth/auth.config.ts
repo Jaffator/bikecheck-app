@@ -12,4 +12,7 @@ export const AUTH_CONFIG = {
   // How close to expiry a refresh token has to be before it gets rotated.
   // 30 days against a 1 year expiry, so an active user is never caught out.
   REFRESH_TOKEN_ROTATION_THRESHOLD_HOURS: 30 * 24,
+  // How long the link in a Verification Email answers (ADR 0031). A link found in an old
+  // inbox must not verify an address months later; "send it again" mints a fresh one.
+  VERIFICATION_TOKEN_EXPIRATION_SECONDS: 24 * 60 * 60,
 } as const;

@@ -11,6 +11,7 @@ import { RefreshTokenModule } from '../refreshtoken/refreshtoken.module';
 import { GoogleAuthService } from './googleAuth.service';
 import { TokenService } from './token.service';
 import { AUTH_CONFIG } from './auth.config';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AUTH_CONFIG } from './auth.config';
       secret: AUTH_CONFIG.JWT_SECRET,
     }),
     RefreshTokenModule,
+    MailModule,
   ],
   providers: [AuthService, GoogleAuthService, TokenService, LocalStrategy, JwtStrategy, GoogleStrategy],
   exports: [AuthService, GoogleAuthService, TokenService],

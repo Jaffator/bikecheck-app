@@ -73,6 +73,7 @@
     "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.28.0",
     "rxjs": "^7.8.1",
     "set-cookie-parser": "^3.0.1",
     "sharp": "^0.35.3",

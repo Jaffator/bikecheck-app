@@ -19,7 +19,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const user = {
       googleId: id,
       email: emails[0].value,
-      emailVerified: emails[0].verified,
+      // Google's own `email_verified` claim (ADR 0031); only an explicit true vouches.
+      emailVerified: emails[0].verified === true,
       firstName: name.givenName,
       lastName: name.familyName,
       picture: photos[0].value,

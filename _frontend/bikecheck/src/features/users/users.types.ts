@@ -12,6 +12,30 @@ export interface RegisterCredentials {
   language: string;
 }
 
+// Mirrors the backend RegisterResponseDto (auth/dto/auth.dtos.ts): the address the
+// Verification Email went to. No user - a placeholder has no profile, and no session.
+export interface RegisterResponse {
+  email: string;
+}
+
+// Mirrors the backend ResendVerificationDto (auth/dto/auth.dtos.ts): the address the
+// Verification Email should go to once more.
+export interface ResendVerificationPayload {
+  email: string;
+}
+
+// Mirrors the backend VerifyEmailDto (auth/dto/auth.dtos.ts): the token the link in the
+// Verification Email carries, handed back on a tap.
+export interface VerifyEmailPayload {
+  token: string;
+}
+
+// Mirrors the backend VerifyEmailResponseDto: the address that is now verified, so the
+// login form can be opened with it already filled in. No user and no session.
+export interface VerifyEmailResponse {
+  email: string;
+}
+
 export interface GoogleTokenCredentials {
   idToken: string;
 }

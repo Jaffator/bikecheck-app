@@ -372,6 +372,11 @@ Three things are wrong for production:
 wrong the moment Redis is a separate container). Also flip `PUBLIC_APP_URL`, `FRONTEND_URL`,
 `STRAVA_SERVICE_URL` and `APP_DEEP_LINK_URL` from localhost to the real domain, and remove
 `server.url` from `capacitor.config.ts` before building a real APK.
+Before the **release** build, also add the release certificate's SHA-256 (Play Console → Setup →
+App signing → *App signing key certificate*) to `_frontend/bikecheck/public/.well-known/assetlinks.json`
+next to the debug fingerprint, or the `/verify-email` App Link will not verify for the store build.
+Keep that file plain valid JSON — no comments, no placeholder entries — a malformed statement fails
+`autoVerify` for the whole host.
 
 **4. Add a `docker-compose.prod.yml` + Caddyfile.** Keep the two Postgres services and Redis as they
 are; drop Loki and Grafana; add the two app services and Caddy. Sketch:

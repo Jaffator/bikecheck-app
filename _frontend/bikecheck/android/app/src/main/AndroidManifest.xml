@@ -33,6 +33,21 @@
                 <data android:scheme="bikecheck" />
             </intent-filter>
 
+            <!-- App Link for the Verification Email (ADR 0031). Android checks the
+                 host's /.well-known/assetlinks.json at install; until that passes,
+                 or on a device without the app, the same link opens the web page.
+                 The host is PUBLIC_APP_URL, where the backend addresses the link. -->
+            <!-- TODO: assetlinks.json lists only the debug key; add the release SHA-256 from
+                 Play Console -> Setup -> App signing before shipping, or autoVerify fails. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="bikecheck.cloud" />
+                <data android:pathPrefix="/verify-email" />
+            </intent-filter>
+
         </activity>
 
         <provider

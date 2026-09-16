@@ -1,13 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NotFoundException } from '@nestjs/common';
-import { tire_pressure_unit } from '@prisma/client';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Prisma, tire_pressure_unit } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UpdateUserDto } from './dto/user.dtos';
 
 const USER_ID = 7;
+
+// What Prisma throws when a conditional `update` finds no row to update (P2025).
+function recordNotFound(): Prisma.PrismaClientKnownRequestError {
+  return new Prisma.PrismaClientKnownRequestError('No record was found for an update.', {
+    code: 'P2025',
+    clientVersion: 'test',
+  });
+}
 
 describe('UserService account deletion', () => {
   let service: UserService;
@@ -127,6 +136,337 @@ describe('UserService account deletion', () => {
 
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+// Registration by name and password (ADR 0031). An Unverified Account is a placeholder:
+// the address is not taken by it, so registering again is simply the first time again.
+describe('UserService registration', () => {
+  let service: UserService;
+
+  const mockPrisma = {
+    users: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+  };
+
+  const dto = { name: 'Jarda', email: 'rider@example.com', password: 'abcd1234', language: 'cs' };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    mockPrisma.users.create.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+      Promise.resolve({ id: USER_ID, ...data }),
+    );
+    mockPrisma.users.update.mockImplementation(
+      ({ where, data }: { where: { id: number }; data: Record<string, unknown> }) =>
+        Promise.resolve({ id: where.id, email: dto.email, ...data }),
+    );
+  });
+
+  it('creates a placeholder for an unknown address', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue(null);
+
+    const user = await service.registerLocal(dto);
+
+    expect(mockPrisma.users.create).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.users.update).not.toHaveBeenCalled();
+    const { data } = mockPrisma.users.create.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(data).toMatchObject({ name: 'Jarda', email: dto.email, language: 'cs', googleId: null, avatar_url: null });
+    expect(data.email_verified_at).toBeNull();
+    expect(await bcrypt.compare('abcd1234', data.password_hash as string)).toBe(true);
+    expect(user.email).toBe(dto.email);
+  });
+
+  it('refuses a verified address with 409', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({
+      id: 3,
+      email: dto.email,
+      email_verified_at: new Date('2026-01-01T00:00:00Z'),
+    });
+
+    await expect(service.registerLocal(dto)).rejects.toThrow(ConflictException);
+    expect(mockPrisma.users.create).not.toHaveBeenCalled();
+    expect(mockPrisma.users.update).not.toHaveBeenCalled();
+  });
+
+  // Same row id, new name, password and language; whatever Google put on the placeholder
+  // goes, because the person registering now is the one who has to prove the address.
+  it('replaces an Unverified Account in place', async () => {
+    const oldHash = await bcrypt.hash('oldpassword', 5);
+    mockPrisma.users.findUnique.mockResolvedValue({
+      id: 3,
+      email: dto.email,
+      name: 'Impostor',
+      password_hash: oldHash,
+      googleId: 'google-123',
+      avatar_url: 'https://example.com/old.png',
+      language: 'en',
+      email_verified_at: null,
+    });
+
+    const user = await service.registerLocal(dto);
+
+    expect(mockPrisma.users.create).not.toHaveBeenCalled();
+    expect(mockPrisma.users.update).toHaveBeenCalledTimes(1);
+    const { where, data } = mockPrisma.users.update.mock.calls[0][0] as {
+      where: { id: number };
+      data: Record<string, unknown>;
+    };
+    expect(where).toEqual({ id: 3, email_verified_at: null });
+    expect(data).toMatchObject({ name: 'Jarda', language: 'cs', googleId: null, avatar_url: null });
+    expect(data.password_hash).not.toBe(oldHash);
+    expect(await bcrypt.compare('abcd1234', data.password_hash as string)).toBe(true);
+    // Still a placeholder: replacing it proves nothing about the address.
+    expect(data).not.toHaveProperty('email_verified_at');
+    expect(user.id).toBe(3);
+  });
+
+  it('never changes the address of the row it replaces', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: 3, email: dto.email, email_verified_at: null });
+
+    await service.registerLocal(dto);
+
+    const { data } = mockPrisma.users.update.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(data).not.toHaveProperty('email');
+  });
+
+  // A vouched Google takeover landed between read and write: the owner's row must not get a
+  // stranger's password, so the address reads as taken.
+  it('refuses with 409 when the row was verified between the read and the write', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: 3, email: dto.email, email_verified_at: null });
+    mockPrisma.users.update.mockRejectedValue(recordNotFound());
+
+    await expect(service.registerLocal(dto)).rejects.toThrow(ConflictException);
+
+    expect(mockPrisma.users.create).not.toHaveBeenCalled();
+    const { where } = mockPrisma.users.update.mock.calls[0][0] as { where: Record<string, unknown> };
+    expect(where).toEqual({ id: 3, email_verified_at: null });
+  });
+
+  it('lets any other database error through untouched', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: 3, email: dto.email, email_verified_at: null });
+    mockPrisma.users.update.mockRejectedValue(new Error('connection lost'));
+
+    await expect(service.registerLocal(dto)).rejects.toThrow('connection lost');
+  });
+});
+
+// POST /users/create is not self-registration: any row on the address refuses, a placeholder
+// included, and the new row stays unverified because nothing sends a Verification Email for it.
+describe('UserService createUserLocal', () => {
+  let service: UserService;
+
+  const mockPrisma = {
+    users: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+  };
+
+  const dto = { name: 'Jarda', email: 'rider@example.com', password: 'abcd1234', language: 'cs' };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    mockPrisma.users.create.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+      Promise.resolve({ id: USER_ID, ...data }),
+    );
+  });
+
+  it('creates an unverified row for an unknown address', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue(null);
+
+    const user = await service.createUserLocal(dto);
+
+    expect(mockPrisma.users.create).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.users.update).not.toHaveBeenCalled();
+    const { data } = mockPrisma.users.create.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(data).toMatchObject({ name: 'Jarda', email: dto.email, language: 'cs', googleId: null, avatar_url: null });
+    expect(data.email_verified_at).toBeNull();
+    expect(await bcrypt.compare('abcd1234', data.password_hash as string)).toBe(true);
+    expect(user.email).toBe(dto.email);
+  });
+
+  it.each([
+    ['a Verified Email', new Date('2026-01-01T00:00:00Z')],
+    ['an Unverified Account', null],
+  ])('refuses %s on the address with 409 and writes nothing', async (_, email_verified_at) => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: 3, email: dto.email, email_verified_at });
+
+    await expect(service.createUserLocal(dto)).rejects.toThrow(ConflictException);
+
+    expect(mockPrisma.users.create).not.toHaveBeenCalled();
+    expect(mockPrisma.users.update).not.toHaveBeenCalled();
+  });
+});
+
+// Google's own word on the address counts (ADR 0031): a vouched sign-in is born verified
+// and takes a placeholder over; an unvouched one becomes a placeholder like any other.
+describe('UserService Google sign-in', () => {
+  let service: UserService;
+
+  const mockPrisma = {
+    users: { create: jest.fn(), update: jest.fn() },
+  };
+
+  const vouched = {
+    googleId: 'google-123',
+    email: 'rider@example.com',
+    emailVerified: true,
+    name: 'Jarda',
+    avatar_url: 'https://example.com/a.png',
+  };
+  const unvouched = { ...vouched, emailVerified: false };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    mockPrisma.users.create.mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+      Promise.resolve({ id: USER_ID, ...data }),
+    );
+    mockPrisma.users.update.mockImplementation(
+      ({ where, data }: { where: { id: number }; data: Record<string, unknown> }) =>
+        Promise.resolve({ id: where.id, email: vouched.email, ...data }),
+    );
+  });
+
+  describe('createUserByGoogle', () => {
+    it('creates a vouched address born verified', async () => {
+      await service.createUserByGoogle(vouched);
+
+      expect(mockPrisma.users.create).toHaveBeenCalledTimes(1);
+      const { data } = mockPrisma.users.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data).toMatchObject({
+        name: 'Jarda',
+        email: vouched.email,
+        googleId: 'google-123',
+        avatar_url: vouched.avatar_url,
+        password_hash: null,
+        language: null,
+      });
+      expect(data.email_verified_at).toBeInstanceOf(Date);
+    });
+
+    // The rare unvouched address: a placeholder with the Google id on it; the link proves it.
+    it('creates an unvouched address as a placeholder carrying the Google id', async () => {
+      await service.createUserByGoogle(unvouched);
+
+      const { data } = mockPrisma.users.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data).toMatchObject({ googleId: 'google-123', password_hash: null });
+      expect(data.email_verified_at).toBeNull();
+    });
+  });
+
+  describe('linkGoogleId', () => {
+    it('puts the Google id and avatar on the row and nothing else', async () => {
+      const user = await service.linkGoogleId(USER_ID, vouched);
+
+      expect(mockPrisma.users.update).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.users.update).toHaveBeenCalledWith({
+        where: { id: USER_ID },
+        data: { googleId: 'google-123', avatar_url: vouched.avatar_url, updated_at: expect.any(Date) },
+      });
+      expect(user.googleId).toBe('google-123');
+    });
+  });
+
+  // The impostor's row never becomes the owner's: Google id, name and avatar from Google,
+  // the password gone, the row verified - one write, conditional on the row still being a
+  // placeholder, so two sign-ins at once take it over once.
+  describe('takeOverPlaceholder', () => {
+    it('replaces the placeholder in one write: Google id, name, avatar, no password, verified', async () => {
+      const user = await service.takeOverPlaceholder(USER_ID, vouched);
+
+      expect(mockPrisma.users.update).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.users.create).not.toHaveBeenCalled();
+      const { where, data } = mockPrisma.users.update.mock.calls[0][0] as {
+        where: Record<string, unknown>;
+        data: Record<string, unknown>;
+      };
+      expect(where).toEqual({ id: USER_ID, email_verified_at: null });
+      expect(data).toMatchObject({
+        googleId: 'google-123',
+        name: 'Jarda',
+        avatar_url: vouched.avatar_url,
+        password_hash: null,
+      });
+      expect(data.email_verified_at).toBeInstanceOf(Date);
+      expect(user.id).toBe(USER_ID);
+    });
+
+    it('never changes the address of the row it takes over', async () => {
+      await service.takeOverPlaceholder(USER_ID, vouched);
+
+      const { data } = mockPrisma.users.update.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data).not.toHaveProperty('email');
+    });
+
+    // The loser of two takeovers at once: the where clause matches no row any more, and
+    // Prisma says so with P2025. That is an answer, not a failure - the caller re-reads.
+    it('answers null when another write verified the row first', async () => {
+      mockPrisma.users.update.mockRejectedValue(recordNotFound());
+
+      const user = await service.takeOverPlaceholder(USER_ID, vouched);
+
+      expect(user).toBeNull();
+    });
+
+    it('lets any other database error through untouched', async () => {
+      mockPrisma.users.update.mockRejectedValue(new Error('connection lost'));
+
+      await expect(service.takeOverPlaceholder(USER_ID, vouched)).rejects.toThrow('connection lost');
+    });
+  });
+});
+
+// Verifying flips the column once (ADR 0031). The write is conditional on the column still
+// being null, so two links used at once flip it once, and the caller is told whether this
+// was the transition - the Welcome Email hangs on that answer.
+describe('UserService email verification', () => {
+  let service: UserService;
+
+  const mockPrisma = {
+    users: { updateMany: jest.fn() },
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+  });
+
+  it('sets the column only where it is still null, and reports the transition', async () => {
+    mockPrisma.users.updateMany.mockResolvedValue({ count: 1 });
+
+    const verified = await service.verifyEmail(USER_ID);
+
+    expect(verified).toBe(true);
+    expect(mockPrisma.users.updateMany).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.users.updateMany).toHaveBeenCalledWith({
+      where: { id: USER_ID, email_verified_at: null },
+      data: { email_verified_at: expect.any(Date), updated_at: expect.any(Date) },
+    });
+  });
+
+  // The second time the where clause matches nothing: no row changes, and the caller
+  // learns there was no transition to greet.
+  it('is a no-op the second time and says so', async () => {
+    mockPrisma.users.updateMany.mockResolvedValue({ count: 0 });
+
+    const verified = await service.verifyEmail(USER_ID);
+
+    expect(verified).toBe(false);
   });
 });
 
