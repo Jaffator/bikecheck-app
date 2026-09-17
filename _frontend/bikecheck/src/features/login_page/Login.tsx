@@ -39,7 +39,7 @@ export function Login(): ReactElement {
         py="xl"
         style={{ minHeight: "100dvh" }}
       >
-        <AuthenticationForm mt="180"></AuthenticationForm>
+        <AuthenticationForm />
         {/* Keep the background stable during keyboard resize. */}
         <div
           className="w-full absolute top-0 left-0 -z-10"

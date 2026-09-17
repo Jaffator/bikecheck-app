@@ -19,7 +19,7 @@ import { Notifications } from "@/features/notification_page/Notifications";
 import { StravaConnected } from "@/features/strava_connected_page/StravaConnected";
 import { InAppNotification } from "@/components/InAppNotification";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { useVerifyEmailAppLink } from "@/hooks/useVerifyEmailAppLink";
+import { useAppLinks } from "@/hooks/useAppLinks";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
@@ -30,7 +30,7 @@ import { applyLanguage, detectLanguage } from "./i18n";
 function App(): ReactElement {
   // The App Link listener lives above the auth gate: a Verification Email's link arrives
   // while nobody is signed in, so the Strava listener inside the shell would never see it.
-  useVerifyEmailAppLink();
+  useAppLinks();
 
   return (
     <Routes>

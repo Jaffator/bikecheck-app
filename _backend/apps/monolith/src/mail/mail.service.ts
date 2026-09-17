@@ -23,6 +23,7 @@ export class MailService implements OnModuleInit {
 
   onModuleInit(): void {
     const apiKey = process.env.RESEND_API_KEY;
+    console.log(apiKey);
     const from = process.env.MAIL_FROM;
     if (!apiKey || !from) {
       this.logger.warn({ custom: true }, 'RESEND_API_KEY or MAIL_FROM not set; email disabled');
@@ -53,6 +54,7 @@ export class MailService implements OnModuleInit {
   // The SDK answers a provider refusal as { error } and a transport failure as a throw;
   // both end here, in the log, with who and what.
   private async send(user: MailRecipient, kind: MailKind, mail: MailText): Promise<void> {
+    console.log(this.client?.apiKeys);
     if (this.client === null) return;
 
     try {

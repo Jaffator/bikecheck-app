@@ -101,3 +101,12 @@ code on that belief. The migration drops both columns.
   debt, same answer: ADR 0025's queue drains them once it is built.
 - A Share Link the owner handed out stops answering. Nothing warns the recipient; the sheet warns
   the owner, before the fact.
+
+## Revised 2026-09-17: the count survives, the rider does not
+
+Hard delete stands. What it cost was the statistic: a deleted row is a rider the user curve
+never knew about. The answer is not a flag on `users` but `account_events` - one anonymous row
+when an email is verified, one when an account is deleted, with the account's age in days and
+nothing else. No user id, no email; nothing to link back. Grafana reads it, the app never does.
+Every account verified before this shipped is backfilled as one `verified` event.
+

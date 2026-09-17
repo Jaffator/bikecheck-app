@@ -7,8 +7,12 @@ import bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UpdateUserDto } from './dto/user.dtos';
+import { AccountEventsService } from '../account-events/account-events.service';
 
 const USER_ID = 7;
+
+// The anonymous statistics row (ADR 0028, revised); what is written is asserted, not stored.
+const mockAccountEvents = { recordVerified: jest.fn(), recordDeleted: jest.fn() };
 
 // What Prisma throws when a conditional `update` finds no row to update (P2025).
 function recordNotFound(): Prisma.PrismaClientKnownRequestError {
@@ -21,10 +25,11 @@ function recordNotFound(): Prisma.PrismaClientKnownRequestError {
 describe('UserService account deletion', () => {
   let service: UserService;
 
+  const VERIFIED_AT = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
   const tx = {
     strava_pending_activities: { deleteMany: jest.fn() },
     bikes: { deleteMany: jest.fn() },
-    users: { delete: jest.fn() },
+    users: { delete: jest.fn(), findUnique: jest.fn().mockResolvedValue({ email_verified_at: VERIFIED_AT }) },
   };
 
   const mockPrisma = {
@@ -38,7 +43,11 @@ describe('UserService account deletion', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountEventsService, useValue: mockAccountEvents },
+      ],
     }).compile();
 
     service = module.get<UserService>(UserService);
@@ -136,6 +145,22 @@ describe('UserService account deletion', () => {
 
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
+
+    // The statistics keep that a rider left and after how long - nothing else survives.
+    it('records the leaving, in the same transaction, with the account age', async () => {
+      await service.deleteAccount(USER_ID);
+
+      expect(mockAccountEvents.recordDeleted).toHaveBeenCalledWith(VERIFIED_AT, tx);
+    });
+
+    // A placeholder was never a rider, so nothing is counted as leaving.
+    it('records nothing for an account that never verified', async () => {
+      tx.users.findUnique.mockResolvedValueOnce({ email_verified_at: null });
+
+      await service.deleteAccount(USER_ID);
+
+      expect(mockAccountEvents.recordDeleted).not.toHaveBeenCalled();
+    });
   });
 });
 
@@ -153,7 +178,11 @@ describe('UserService registration', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountEventsService, useValue: mockAccountEvents },
+      ],
     }).compile();
 
     service = module.get<UserService>(UserService);
@@ -268,7 +297,11 @@ describe('UserService createUserLocal', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountEventsService, useValue: mockAccountEvents },
+      ],
     }).compile();
 
     service = module.get<UserService>(UserService);
@@ -325,7 +358,11 @@ describe('UserService Google sign-in', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountEventsService, useValue: mockAccountEvents },
+      ],
     }).compile();
 
     service = module.get<UserService>(UserService);
@@ -440,7 +477,11 @@ describe('UserService email verification', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountEventsService, useValue: mockAccountEvents },
+      ],
     }).compile();
 
     service = module.get<UserService>(UserService);
@@ -452,6 +493,7 @@ describe('UserService email verification', () => {
     const verified = await service.verifyEmail(USER_ID);
 
     expect(verified).toBe(true);
+    expect(mockAccountEvents.recordVerified).toHaveBeenCalledTimes(1);
     expect(mockPrisma.users.updateMany).toHaveBeenCalledTimes(1);
     expect(mockPrisma.users.updateMany).toHaveBeenCalledWith({
       where: { id: USER_ID, email_verified_at: null },
@@ -467,6 +509,7 @@ describe('UserService email verification', () => {
     const verified = await service.verifyEmail(USER_ID);
 
     expect(verified).toBe(false);
+    expect(mockAccountEvents.recordVerified).not.toHaveBeenCalled();
   });
 });
 
@@ -480,7 +523,11 @@ describe('UserService profile update', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountEventsService, useValue: mockAccountEvents },
+      ],
     }).compile();
 
     service = module.get<UserService>(UserService);

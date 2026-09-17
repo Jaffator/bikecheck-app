@@ -1,4 +1,5 @@
 import { resolveLanguage, type NotificationLanguage } from '../notification/notification-texts';
+import { mailLogoUrl, renderMail } from './mail-layout';
 
 // The same two languages the app ships, resolved the same way: anything else falls back
 // to English.
@@ -12,18 +13,30 @@ export interface MailText {
   html: string;
 }
 
-// The Verification Email: one sentence, one link, and that it expires in a day. Nothing
-// else, so there is no doubt about what to do with it.
+// The Verification Email: one sentence, one button, and that it expires in a day. The raw
+// link sits under the button for a client that shows no buttons; plain text carries it alone.
 const VERIFICATION: Record<MailLanguage, (link: string) => MailText> = {
   cs: (link) => ({
     subject: 'Ověř svůj e-mail',
     text: `Ověř svou adresu otevřením tohoto odkazu: ${link}\n\nOdkaz platí jeden den.`,
-    html: `<p>Ověř svou adresu otevřením tohoto odkazu: <a href="${link}">${link}</a></p><p>Odkaz platí jeden den.</p>`,
+    html: renderMail({
+      logoUrl: mailLogoUrl(),
+      title: 'Ověř svůj e-mail',
+      body: 'Klikni na tlačítko a je hotovo. Odkaz platí jeden den.',
+      button: { label: 'Ověřit e-mail', href: link },
+      footnote: `Nejde tlačítko? Zkopíruj odkaz: <a href="${link}" style="color:#aeaeae;">${link}</a>`,
+    }),
   }),
   en: (link) => ({
     subject: 'Verify your email',
     text: `Verify your address by opening this link: ${link}\n\nThe link expires in a day.`,
-    html: `<p>Verify your address by opening this link: <a href="${link}">${link}</a></p><p>The link expires in a day.</p>`,
+    html: renderMail({
+      logoUrl: mailLogoUrl(),
+      title: 'Verify your email',
+      body: 'Tap the button and you are done. The link expires in a day.',
+      button: { label: 'Verify email', href: link },
+      footnote: `Button not working? Copy the link: <a href="${link}" style="color:#aeaeae;">${link}</a>`,
+    }),
   }),
 };
 
@@ -31,15 +44,31 @@ const VERIFICATION: Record<MailLanguage, (link: string) => MailText> = {
 const WELCOME: Record<MailLanguage, (name: string) => MailText> = {
   cs: (name) => ({
     subject: 'Vítej v BikeCheck',
-    text: `Ahoj ${name},\n\nBikeCheck hlídá opotřebení dílů na tvém kole a připomene servis dřív, než něco odejde.`,
-    html: `<p>Ahoj ${escapeHtml(name)},</p><p>BikeCheck hlídá opotřebení dílů na tvém kole a připomene servis dřív, než něco odejde.</p>`,
+    text: `Ahoj ${name},\n\nBikeCheck umožňuje chytře sledovat servis tvých kol a sdílet tvůj build s ostatními.`,
+    html: renderMail({
+      logoUrl: mailLogoUrl(),
+      title: `Ahoj ${escapeHtml(name)},`,
+      body: 'BikeCheck umožňuje chytře sledovat servis tvých kol a sdílet tvůj build s ostatními.',
+      button: appButton('Otevřít BikeCheck'),
+    }),
   }),
   en: (name) => ({
     subject: 'Welcome to BikeCheck',
-    text: `Hi ${name},\n\nBikeCheck tracks the wear on your bike's parts and reminds you to service them before they give out.`,
-    html: `<p>Hi ${escapeHtml(name)},</p><p>BikeCheck tracks the wear on your bike's parts and reminds you to service them before they give out.</p>`,
+    text: `Hi ${name},\n\nBikeCheck allows you to smartly track the service of your bikes and share your build with others.`,
+    html: renderMail({
+      logoUrl: mailLogoUrl(),
+      title: `Hi ${escapeHtml(name)},`,
+      body: 'BikeCheck allows you to smartly track the service of your bikes and share your build with others.',
+      button: appButton('Open BikeCheck'),
+    }),
   }),
 };
+
+// The way into the app, when its origin is known; no button otherwise.
+function appButton(label: string): { label: string; href: string } | undefined {
+  const origin = process.env.PUBLIC_APP_URL;
+  return origin ? { label, href: origin.replace(/\/+$/, '') } : undefined;
+}
 
 // A greeting for an account that never gave a name, so "Hi null," is never written.
 const NAMELESS: Record<MailLanguage, string> = { cs: 'jezdče', en: 'rider' };

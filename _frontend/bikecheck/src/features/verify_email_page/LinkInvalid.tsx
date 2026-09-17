@@ -15,11 +15,11 @@ export function LinkInvalid({ onBackToLogin }: LinkInvalidProps): ReactElement {
 
   return (
     <Stack align="center" gap="md" ta="center">
-      <Link2Off size={40} color="var(--mantine-color-background-9)" />
-      <Text fw={600} size="lg" c="background.9">
+      <Link2Off size={40} color="var(--mantine-color-text-8)" />
+      <Text fw={600} size="lg" c="text.1">
         {t("auth.linkInvalidTitle")}
       </Text>
-      <Text size="sm" c="background.9">
+      <Text size="sm" c="text.1">
         {t("auth.linkInvalidBody")}
       </Text>
       <Button radius="lg" style={{ height: "3rem" }} fullWidth mt="sm" onClick={onBackToLogin}>

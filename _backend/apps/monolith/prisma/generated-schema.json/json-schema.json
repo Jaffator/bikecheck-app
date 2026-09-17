@@ -1370,6 +1370,27 @@
         }
       }
     },
+    "account_events": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "account_age_days": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
     "users": {
       "type": "object",
       "properties": {
@@ -1931,6 +1952,9 @@
     },
     "setup_profiles": {
       "$ref": "#/definitions/setup_profiles"
+    },
+    "account_events": {
+      "$ref": "#/definitions/account_events"
     },
     "users": {
       "$ref": "#/definitions/users"

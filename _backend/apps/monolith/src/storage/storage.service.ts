@@ -8,7 +8,7 @@ import 'dotenv/config';
 
 // Service attachments are receipts and invoices, kept apart from the bike photos so a
 // document is never served from the folder the garage reads.
-type CloudFolder = 'bikes' | 'service-attachments';
+type CloudFolder = 'bikes' | 'service-attachments' | 'static';
 
 // One size for every use. Wide enough to stay sharp full-screen on a phone at
 // 3x, small enough that a card does not pull megabytes to draw 180px.

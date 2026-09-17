@@ -5,7 +5,7 @@
 import type { ReactElement } from "react";
 import { Button, Stack, Text } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
-import { MailCheck } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useResendVerification } from "@/features/users/users.queries";
 import { useResendCooldown } from "@/features/users/useResendCooldown";
 
@@ -26,16 +26,16 @@ export function CheckInbox({ email, onBackToLogin }: CheckInboxProps): ReactElem
 
   return (
     <Stack align="center" gap="md" ta="center">
-      <MailCheck size={40} color="var(--mantine-color-background-9)" />
-      <Text fw={600} size="lg" c="background.9">
+      <Mail size={40} color="var(--mantine-color-text-8)" />
+      <Text fw={600} size="lg" c="text.1">
         {t("auth.checkInboxTitle")}
       </Text>
-      <Text size="sm" c="background.9">
+      <Text size="sm" c="text.1">
         {/* Preserve a single translatable sentence with the address set apart. */}
         <Trans i18nKey="auth.checkInboxBody" values={{ email }} components={{ 1: <Text span fw={600} /> }} />
       </Text>
       {resend.isError && (
-        <Text size="sm" c="red.6">
+        <Text size="sm" c="red.8">
           {t("auth.genericError")}
         </Text>
       )}
@@ -44,11 +44,19 @@ export function CheckInbox({ email, onBackToLogin }: CheckInboxProps): ReactElem
       </Button>
       {/* While resting, the confirmation and the countdown stand where the button was. */}
       {cooldown.secondsLeft > 0 ? (
-        <Text size="sm" c="background.9" fw={600}>
+        <Text size="sm" c="text.1" fw={600} mt="md">
           {t("auth.resendSent", { seconds: cooldown.secondsLeft })}
         </Text>
       ) : (
-        <Button variant="subtle" color="background.9" radius="lg" loading={resend.isPending} onClick={sendAgain}>
+        <Button
+          variant="outline"
+          fullWidth
+          color="primary.6"
+          radius="lg"
+          style={{ height: "3rem" }}
+          loading={resend.isPending}
+          onClick={sendAgain}
+        >
           {t("auth.resend")}
         </Button>
       )}

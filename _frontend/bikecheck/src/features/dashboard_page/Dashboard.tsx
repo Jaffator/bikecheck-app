@@ -7,7 +7,6 @@ import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { UnpairedBikesCard } from "@/features/strava/ui/UnpairedBikesCard";
 import { PendingRidesCard } from "@/features/strava/ui/PendingRidesDashCard";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
-
 const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
 export function Dashboard(): ReactElement {

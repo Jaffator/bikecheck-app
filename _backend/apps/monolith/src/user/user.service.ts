@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccountEventsService } from '../account-events/account-events.service';
 import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
 import { Prisma, users as UserFull } from '@prisma/client';
@@ -16,7 +17,10 @@ function isRecordNotFound(error: unknown): boolean {
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly accountEvents: AccountEventsService,
+  ) {}
 
   // Returns null when not found — every caller does its own null handling
   // (login -> 401, token refresh -> 401, getMe -> 404, Google -> create user).
@@ -36,7 +40,7 @@ export class UserService {
   // address is born verified, the rare unvouched one is a placeholder like any other, with
   // the Google id on it and the link still to prove it.
   async createUserByGoogle(dto: LoginGoogleDto): Promise<UserFull> {
-    return this.prisma.users.create({
+    const user = await this.prisma.users.create({
       data: {
         name: dto.name,
         email: dto.email,
@@ -49,6 +53,9 @@ export class UserService {
         email_verified_at: dto.emailVerified ? new Date() : null,
       },
     });
+    // Born verified counts as a rider from day one.
+    if (dto.emailVerified) await this.accountEvents.recordVerified();
+    return user;
   }
 
   // A Google id attached to a row that already has the address: a Verified Email met by a
@@ -64,7 +71,7 @@ export class UserService {
   // the row still being a placeholder: the loser of a concurrent takeover gets null, not a 500.
   async takeOverPlaceholder(id: number, dto: LoginGoogleDto): Promise<UserFull | null> {
     try {
-      return await this.prisma.users.update({
+      const user = await this.prisma.users.update({
         where: { id, email_verified_at: null },
         data: {
           googleId: dto.googleId,
@@ -75,6 +82,8 @@ export class UserService {
           updated_at: new Date(),
         },
       });
+      await this.accountEvents.recordVerified();
+      return user;
     } catch (error) {
       if (isRecordNotFound(error)) return null;
       throw error;
@@ -144,6 +153,7 @@ export class UserService {
       where: { id, email_verified_at: null },
       data: { email_verified_at: new Date(), updated_at: new Date() },
     });
+    if (count === 1) await this.accountEvents.recordVerified();
     return count === 1;
   }
 
@@ -186,9 +196,12 @@ export class UserService {
   // outliving the rider.
   async deleteAccount(userId: number): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
+      // The one thing kept: that a rider left, and after how long. Read before the row goes.
+      const user = await tx.users.findUnique({ where: { id: userId }, select: { email_verified_at: true } });
       await tx.strava_pending_activities.deleteMany({ where: { user_id: userId } });
       await tx.bikes.deleteMany({ where: { user_id: userId } });
       await tx.users.delete({ where: { id: userId } });
+      if (user?.email_verified_at) await this.accountEvents.recordDeleted(user.email_verified_at, tx);
     });
   }
 

@@ -9,7 +9,6 @@ import { useTranslation } from "react-i18next";
 import { MailOpen } from "lucide-react";
 import logoName from "@/assets/logo_name.svg";
 import { useVerifyEmail } from "@/features/users/users.queries";
-import { LOGIN_EMAIL_PARAM } from "@/features/login_page/Authentication";
 import { EmailVerified } from "./EmailVerified";
 import { LinkInvalid } from "./LinkInvalid";
 
@@ -25,12 +24,7 @@ export function VerifyEmail(): ReactElement {
   const token = searchParams.get(TOKEN_PARAM);
   const verify = useVerifyEmail();
 
-  // The login form is the one door; it opens with the address already filled in. The
-  // link's page is replaced in history: there is nothing to come back to.
-  function signIn(email: string): void {
-    navigate(`/?${LOGIN_EMAIL_PARAM}=${encodeURIComponent(email)}`, { replace: true });
-  }
-
+  // The link's page is replaced in history: there is nothing to come back to.
   function backToLogin(): void {
     navigate("/", { replace: true });
   }
@@ -38,7 +32,7 @@ export function VerifyEmail(): ReactElement {
   if (verify.isSuccess) {
     return (
       <Shell>
-        <EmailVerified email={verify.data.email} onSignIn={() => signIn(verify.data.email)} />
+        <EmailVerified email={verify.data.email} />
       </Shell>
     );
   }
@@ -55,11 +49,11 @@ export function VerifyEmail(): ReactElement {
   return (
     <Shell>
       <Stack align="center" gap="md" ta="center">
-        <MailOpen size={40} color="var(--mantine-color-background-9)" />
-        <Text fw={600} size="lg" c="background.9">
+        <MailOpen size={40} color="var(--mantine-color-text-8)" />
+        <Text fw={600} size="lg" c="text.1">
           {t("auth.verifyEmailTitle")}
         </Text>
-        <Text size="sm" c="background.9">
+        <Text size="sm" c="text.1">
           {t("auth.verifyEmailBody")}
         </Text>
         {/* Anything but a refused link - the network, a busy server - is worth another tap. */}
@@ -83,7 +77,7 @@ export function VerifyEmail(): ReactElement {
   );
 }
 
-// The login screen's backdrop, so the page reads as the app the rider registered in.
+// The login screen's frame, minus its gradient: a plain background.9 backdrop.
 function Shell({ children }: { children: ReactNode }): ReactElement {
   return (
     <Stack
@@ -101,14 +95,6 @@ function Shell({ children }: { children: ReactNode }): ReactElement {
       <Paper w="90%" radius="md" p="lg" mt="180" bg="transparent">
         {children}
       </Paper>
-      <div
-        className="w-full absolute top-0 left-0 -z-10"
-        style={{
-          height: "100%",
-          background: "linear-gradient(to top, var(--mantine-color-primary-6) 10%, transparent 80%)",
-          animation: "wave 6s ease-in-out infinite",
-        }}
-      ></div>
     </Stack>
   );
 }

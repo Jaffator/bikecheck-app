@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Anchor, Button, Checkbox, Divider, Group, Paper, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import type { PaperProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -32,6 +32,14 @@ export const LOGIN_EMAIL_PARAM = "email";
 const EMAIL_NOT_VERIFIED_PARAM = "emailNotVerified";
 const GOOGLE_ERROR_PARAM = "googleError";
 const GOOGLE_EMAIL_UNVERIFIED = "GOOGLE_EMAIL_UNVERIFIED";
+
+// The native app sits under a status bar the web page does not, so the block starts lower.
+const NATIVE_SHIFT_PX = Capacitor.isNativePlatform() ? 50 : 0;
+const LOGO_TOP = `calc(10rem + ${String(NATIVE_SHIFT_PX)}px)`;
+const FORM_TOP = `calc(180px + ${String(NATIVE_SHIFT_PX)}px)`;
+
+// Every error on the login screen - field messages, input borders - in the darker red.
+const ERROR_COLOR_STYLE = { "--mantine-color-error": "var(--mantine-color-red-8)" } as CSSProperties;
 
 // The right password on an Unverified Account: the one refusal "Send it again" can fix.
 function isEmailNotVerified(error: ApiError): boolean {
@@ -73,6 +81,7 @@ export function AuthenticationForm(props: PaperProps) {
       email: searchParams.get(LOGIN_EMAIL_PARAM) ?? "",
       name: "",
       password: "",
+      confirmPassword: "",
       terms: false,
     },
 
@@ -80,6 +89,8 @@ export function AuthenticationForm(props: PaperProps) {
       name: (val) => (type === "register" && val.trim().length === 0 ? t("auth.nameRequired") : null),
       email: (val) => (/^\S+@\S+$/.test(val) ? null : t("auth.invalidEmail")),
       password: (val) => (val.length < 8 ? t("auth.passwordTooShort") : null),
+      // A typo guard, so it lives on the client alone.
+      confirmPassword: (val, values) => (type === "register" && val !== values.password ? t("auth.passwordMismatch") : null),
       terms: (val) => (type === "register" && !val ? t("auth.termsRequired") : null),
     },
   });
@@ -147,11 +158,21 @@ export function AuthenticationForm(props: PaperProps) {
         <img
           src={logoName}
           alt="BikeCheck Logo"
-          style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "10rem", left: 0, right: 0, margin: "0 auto" }}
+          style={{
+            width: "100%",
+            maxWidth: "200px",
+            position: "absolute",
+            top: LOGO_TOP,
+            left: 0,
+            right: 0,
+            margin: "0 auto",
+          }}
         />
-        <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent">
+        <Paper w="90%" radius="md" p="lg" mt={FORM_TOP} {...props} bg="transparent">
           <CheckInbox email={inboxEmail} onBackToLogin={backToLogin} />
         </Paper>
+        {/* Covers the login gradient: this screen sits on plain background.9. */}
+        <div className="w-full h-full absolute top-0 left-0 bg-background-900" style={{ zIndex: -5 }} />
       </>
     );
   }
@@ -161,9 +182,17 @@ export function AuthenticationForm(props: PaperProps) {
       <img
         src={logoName}
         alt="BikeCheck Logo"
-        style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "10rem", left: 0, right: 0, margin: "0 auto" }}
+        style={{
+          width: "100%",
+          maxWidth: "200px",
+          position: "absolute",
+          top: LOGO_TOP,
+          left: 0,
+          right: 0,
+          margin: "0 auto",
+        }}
       />
-      <Paper w="90%" radius="md" p="lg" mt="4rem" {...props} bg="transparent" ref={formRef}>
+      <Paper w="90%" radius="md" p="lg" mt={FORM_TOP} {...props} bg="transparent" ref={formRef} style={ERROR_COLOR_STYLE}>
         <form
           // Submit the active form.
           onSubmit={form.onSubmit((values) => {
@@ -239,9 +268,30 @@ export function AuthenticationForm(props: PaperProps) {
             />
 
             {type === "register" && (
+              <PasswordInput
+                placeholder={t("auth.confirmPasswordPlaceholder")}
+                leftSection={<Lock size={18} />}
+                value={form.values.confirmPassword}
+                onChange={(event) => form.setFieldValue("confirmPassword", event.currentTarget.value)}
+                error={form.errors.confirmPassword}
+                radius="lg"
+                styles={{
+                  input: {
+                    backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
+                    border: "none",
+                    height: "2.5rem",
+                    color: "var(--mantine-color-text-6)",
+                  },
+                  visibilityToggle: { color: "var(--mantine-color-text-8)" },
+                }}
+              />
+            )}
+
+            {type === "register" && (
               <Checkbox
                 ml="2px"
                 c="background.9"
+                styles={{ body: { alignItems: "center" }, labelWrapper: { paddingInlineStart: 0 } }}
                 // The document the box is agreeing to, one tap away and open to a visitor
                 // with no account yet.
                 label={
@@ -260,7 +310,7 @@ export function AuthenticationForm(props: PaperProps) {
 
           <Stack justify="space-between" mt="lg">
             {login.isError && (
-              <Text size="sm" c="red.6" ta="center">
+              <Text size="sm" c="red.8" ta="center">
                 {t(loginErrorKey(login.error))}
               </Text>
             )}
@@ -286,22 +336,29 @@ export function AuthenticationForm(props: PaperProps) {
                 </Anchor>
               ))}
             {resend.isError && (
-              <Text size="sm" c="red.6" ta="center">
+              <Text size="sm" c="red.8" ta="center">
                 {t("auth.genericError")}
               </Text>
             )}
             {registration.isError && (
-              <Text size="sm" c="red.6" ta="center">
+              <Text size="sm" c="red.8" ta="center">
                 {registration.error.status === 409 ? t("auth.emailTaken") : t("auth.genericError")}
               </Text>
             )}
             {form.errors.terms && (
-              <Text size="sm" c="red.6" ta="center">
+              <Text size="sm" c="red.8" ta="center">
                 {form.errors.terms}
               </Text>
             )}
 
-            <Button type="submit" radius="lg" style={{ height: "3rem" }} loading={login.isPending || registration.isPending}>
+            <Button
+              type="submit"
+              radius="lg"
+              size="md"
+              fz="sm"
+              // style={{ height: "2.5rem" }}
+              loading={login.isPending || registration.isPending}
+            >
               {type === "login" ? t("auth.login") : t("auth.register")}
             </Button>
           </Stack>
@@ -309,32 +366,33 @@ export function AuthenticationForm(props: PaperProps) {
         <Divider
           label={t("auth.or")}
           labelPosition="center"
-          my="lg"
+          my="sm"
           w="100%"
           mx="auto"
           color="background.9"
           styles={{ label: { color: "var(--mantine-color-background-9)" } }}
         />
 
-        <Stack mb="md" mt="md">
+        <Stack mb="md">
           <GoogleButton
             onClick={() => handleGoogleSignIn()}
             variant="filled"
             bg="background.9"
             c="text.6"
+            fz="sm"
             radius="lg"
-            h="3rem"
+            size="md"
           >
             {t("auth.continueWithGoogle")}
           </GoogleButton>
           {/* A refused Google sign-in: the native answer, or the code the web callback came back with. */}
           {googleToken.isError && (
-            <Text size="sm" c="red.6" ta="center">
+            <Text size="sm" c="red.8" ta="center">
               {t(googleErrorKey(googleToken.error))}
             </Text>
           )}
           {!googleToken.isError && webGoogleError === GOOGLE_EMAIL_UNVERIFIED && (
-            <Text size="sm" c="red.6" ta="center">
+            <Text size="sm" c="red.8" ta="center">
               {t("auth.googleEmailUnverified")}
             </Text>
           )}
