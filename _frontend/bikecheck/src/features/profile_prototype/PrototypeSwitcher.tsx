@@ -1,6 +1,6 @@
-// PROTOTYPE #121 — throwaway. Floating bar: ←/→ cycle the drawer variant (kept in
-// ?variant= so a URL is shareable), a segmented control flips the visibility state, and a
-// toggle puts the header icon on every main tab. Dev builds only.
+// PROTOTYPE #121 / #128 — throwaway. Floating bar: ←/→ cycle the Follows screen variant
+// (kept in ?variant= so a URL is shareable), a segmented control flips the visibility
+// state, and a toggle empties the follow lists to look at the empty states. Dev builds only.
 import { useEffect, useRef, type ReactElement } from "react";
 import { ActionIcon, Group, SegmentedControl, Switch, Text } from "@mantine/core";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -34,8 +34,10 @@ export function PrototypeSwitcher(): ReactElement | null {
   const setVariant = usePrototypeStore((state) => state.setVariant);
   const visibility = usePrototypeStore((state) => state.visibility);
   const setVisibility = usePrototypeStore((state) => state.setVisibility);
-  const everywhere = usePrototypeStore((state) => state.headerIconEverywhere);
-  const setEverywhere = usePrototypeStore((state) => state.setHeaderIconEverywhere);
+  const seed = usePrototypeStore((state) => state.seed);
+  const empty = usePrototypeStore(
+    (state) => Object.keys(state.following).length === 0 && Object.keys(state.followers).length === 0,
+  );
 
   // The URL wins once, on load; after that the store wins and re-stamps the URL on every
   // route and every change - otherwise a click would be undone by the stale param.
@@ -136,9 +138,9 @@ export function PrototypeSwitcher(): ReactElement | null {
       <Switch
         size="xs"
         color="#ff4fd8"
-        checked={everywhere}
-        onChange={(event) => setEverywhere(event.currentTarget.checked)}
-        label="ikona všude"
+        checked={empty}
+        onChange={(event) => seed(event.currentTarget.checked ? "empty" : "full")}
+        label="prázdné"
         styles={{ label: { color: "#141414", fontSize: 10, paddingInlineStart: 4, whiteSpace: "nowrap" } }}
       />
     </Group>

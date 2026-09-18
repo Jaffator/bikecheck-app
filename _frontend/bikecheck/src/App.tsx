@@ -26,6 +26,9 @@ import { Reports } from "@/features/report_page/Reports";
 import { Legal } from "@/features/legal_page/Legal";
 import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";
 import { applyLanguage, detectLanguage } from "./i18n";
+// PROTOTYPE #128 — remove with features/profile_prototype.
+import { Follows } from "@/features/profile_prototype/Follows";
+import { UserProfileStub } from "@/features/profile_prototype/UserProfileStub";
 
 function App(): ReactElement {
   // The App Link listener lives above the auth gate: a Verification Email's link arrives
@@ -125,6 +128,9 @@ function ProtectedApp(): ReactElement {
           <Route path="/profile" element={<Navigate to="/settings" replace />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
+          {/* PROTOTYPE #128 */}
+          <Route path="/follows" element={<Follows />} />
+          <Route path="/users/:handle" element={<UserProfileStub />} />
           {/* Handles the completed Strava OAuth deep link. */}
           <Route path="/strava-connected" element={<StravaConnected />} />
         </Route>

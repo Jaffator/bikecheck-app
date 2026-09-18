@@ -1,6 +1,6 @@
 // PROTOTYPE #121 — the way into the drawer from the garage (round 1's B): an icon in the
-// header beside the bell. /bikes is a main tab, so its header has no actionSlot. The
-// switcher's toggle shows it on every main tab instead, to judge whether it belongs there.
+// header beside the bell, on /bikes only (settled in #121). /bikes is a main tab, so its
+// header has no actionSlot.
 import type { ReactElement } from "react";
 import { ActionIcon } from "@mantine/core";
 import { useLocation } from "react-router-dom";
@@ -9,12 +9,11 @@ import { usePrototypeStore } from "./prototype.store";
 import { STATE_COLOR } from "./shared";
 
 export function HeaderShareIcon(): ReactElement | null {
-  const everywhere = usePrototypeStore((state) => state.headerIconEverywhere);
   const visibility = usePrototypeStore((state) => state.visibility);
   const open = usePrototypeStore((state) => state.openDrawer);
   const { pathname } = useLocation();
   if (!import.meta.env.DEV) return null;
-  if (!everywhere && pathname !== "/bikes") return null;
+  if (pathname !== "/bikes") return null;
   const color = visibility === "OFF" ? "var(--mantine-color-cards-1)" : STATE_COLOR[visibility];
 
   return (

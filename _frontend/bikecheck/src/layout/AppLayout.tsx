@@ -85,6 +85,9 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 // Sub-pages display only a back arrow and title.
 const SUB_PAGE_ROUTES: string[] = [
   "/reports",
+  // PROTOTYPE #128
+  "/follows",
+  "/users",
   "/settings",
   "/notifications",
   "/bikes/new",

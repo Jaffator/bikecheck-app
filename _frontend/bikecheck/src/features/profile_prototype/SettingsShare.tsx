@@ -1,10 +1,11 @@
-// PROTOTYPE #121 — Settings: the state written beside the name (round 1's C badge), and one
-// row under the Strava card that opens the drawer. No inline control - the drawer is the
-// one place sharing is set.
+// PROTOTYPE #121 / #128 — Settings: the state written beside the name (round 1's C badge),
+// and one card under the Strava card with two rows - sharing opens the drawer, following
+// leads to /follows. No inline control - the drawer is the one place sharing is set.
 import type { ReactElement } from "react";
-import { Card, Group, Text, UnstyledButton } from "@mantine/core";
+import { Card, Divider, Group, Text, UnstyledButton } from "@mantine/core";
+import { useNavigate } from "react-router-dom";
 import { ChevronRight, Globe, Users } from "lucide-react";
-import { usePrototypeStore, VISIBILITY_LABEL } from "./prototype.store";
+import { usePrototypeStore, useStats, VISIBILITY_LABEL } from "./prototype.store";
 import { STATE_COLOR } from "./shared";
 
 // Settings' own rhythm (ROW_GAP_HALF).
@@ -13,6 +14,8 @@ const ROW = 10;
 export function SettingsShareSection(): ReactElement {
   const visibility = usePrototypeStore((state) => state.visibility);
   const open = usePrototypeStore((state) => state.openDrawer);
+  const stats = useStats();
+  const navigate = useNavigate();
 
   return (
     <Card
@@ -32,6 +35,23 @@ export function SettingsShareSection(): ReactElement {
             <Text fz={13} style={{ color: STATE_COLOR[visibility] }}>
               {VISIBILITY_LABEL[visibility]}
             </Text>
+            <ChevronRight size={18} color="var(--color-text-dim)" />
+          </Group>
+        </Group>
+      </UnstyledButton>
+      <Divider color="var(--color-border-subtle)" mx="md" />
+      {/* The one number that asks for something rides along; the rest waits on the screen. */}
+      <UnstyledButton onClick={() => navigate("/follows")} className="w-full" px="md" py={ROW}>
+        <Group justify="space-between" wrap="nowrap">
+          <Text fw={600} fz={15} c="text.6">
+            Sledování
+          </Text>
+          <Group gap="xs" wrap="nowrap">
+            {stats.pending > 0 && (
+              <Text fz={13} c="primary.5">
+                {stats.pending} {stats.pending === 1 ? "žádost" : stats.pending < 5 ? "žádosti" : "žádostí"}
+              </Text>
+            )}
             <ChevronRight size={18} color="var(--color-text-dim)" />
           </Group>
         </Group>
