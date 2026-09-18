@@ -1,9 +1,9 @@
-// PROTOTYPE #121 / #128 — throwaway. In-memory state shared by every surface of the
+// PROTOTYPE #121 / #128 / #129 — throwaway. In-memory state shared by every surface of the
 // share-profile prototype, so flipping visibility in the drawer changes the dashboard card,
 // Settings row, badge and the Follows screen at once. Nothing here talks to the backend.
 //
-// #121 is settled (drawer with cards, round 1 kept as a patch in Design/). The variant axis
-// now drives the Follows screen (#128): rows as cards, sections as panels, or a bare list.
+// #121 (drawer with cards) and #128 (Follows as panels) are settled. The variant axis
+// now drives somebody's profile (#129): hero card, panels, or a contact card.
 import { create } from "zustand";
 import { suggestHandle } from "./handle";
 import type { FollowStatus } from "./people";
@@ -14,9 +14,9 @@ export type SectionKey = "components" | "setup" | "history" | "costs";
 
 export const VARIANTS: Variant[] = ["1", "2", "3"];
 export const VARIANT_NAMES: Record<Variant, string> = {
-  "1": "Karty",
+  "1": "Hero",
   "2": "Panely",
-  "3": "Seznam",
+  "3": "Vizitka",
 };
 
 export const VISIBILITY_LABEL: Record<Visibility, string> = {

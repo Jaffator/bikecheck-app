@@ -62,3 +62,12 @@ export function useProfileBikes(): ProfileBike[] {
   const unshared = usePrototypeStore((state) => state.unsharedBikeIds);
   return (bikes ?? []).map((bike) => ({ bike, shared: !unshared.includes(bike.id) }));
 }
+
+// A secondary button on the dark surface: Mantine's `default` variant paints white here, so
+// every "Sledujete", "Odebrat", "Zobrazit starší" wears the field surface ConfirmModal's
+// Cancel wears instead. Radius stays the button's own.
+export const SECONDARY_BUTTON: CSSProperties = {
+  backgroundColor: "var(--mantine-color-cards-7)",
+  border: "1px solid var(--mantine-color-inputs-5)",
+  color: "var(--mantine-color-text-6)",
+};

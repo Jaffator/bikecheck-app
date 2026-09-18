@@ -1,4 +1,4 @@
-// PROTOTYPE #121 / #128 — throwaway. Floating bar: ←/→ cycle the Follows screen variant
+// PROTOTYPE #121 / #128 / #129 — throwaway. Floating bar: ←/→ cycle the profile screen variant
 // (kept in ?variant= so a URL is shareable), a segmented control flips the visibility
 // state, and a toggle empties the follow lists to look at the empty states. Dev builds only.
 import { useEffect, useRef, type ReactElement } from "react";

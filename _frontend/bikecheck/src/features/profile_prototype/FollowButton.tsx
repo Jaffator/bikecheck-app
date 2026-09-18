@@ -7,28 +7,33 @@ import { Check, Clock } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import type { Person } from "./people";
 import { usePrototypeStore } from "./prototype.store";
+import { SECONDARY_BUTTON } from "./shared";
 
 interface FollowButtonProps {
   person: Person;
   // Rows wear the small one; the profile header the regular one.
   size?: "xs" | "sm";
+  // Variant 3 of #129 runs it across the screen under the centred owner.
+  fullWidth?: boolean;
 }
 
 // Which of the two questions is open, if any.
 type Leaving = "unfollow" | "withdraw" | null;
 
-export function FollowButton({ person, size = "xs" }: FollowButtonProps): ReactElement {
+export function FollowButton({ person, size = "xs", fullWidth = false }: FollowButtonProps): ReactElement {
   const status = usePrototypeStore((state) => state.following[person.handle]);
   const follow = usePrototypeStore((state) => state.follow);
   const unfollow = usePrototypeStore((state) => state.unfollow);
   const [leaving, setLeaving] = useState<Leaving>(null);
 
-  const common = { size, radius: "xl" as const, style: { flexShrink: 0 } };
+  const common = { size, radius: "xl" as const, fullWidth, style: { flexShrink: 0 } };
+  // The two standing states are quiet: a dark field, not a white pill.
+  const standing = { ...common, variant: "default" as const, styles: { root: SECONDARY_BUTTON } };
 
   if (status === "ACCEPTED") {
     return (
       <>
-        <Button {...common} variant="default" leftSection={<Check size={14} />} onClick={() => setLeaving("unfollow")}>
+        <Button {...standing} leftSection={<Check size={14} />} onClick={() => setLeaving("unfollow")}>
           Sledujete
         </Button>
         <ConfirmModal
@@ -55,9 +60,8 @@ export function FollowButton({ person, size = "xs" }: FollowButtonProps): ReactE
     return (
       <>
         <Button
-          {...common}
-          variant="default"
-          c="var(--color-text-dim)"
+          {...standing}
+          styles={{ root: { ...SECONDARY_BUTTON, color: "var(--color-text-dim)" } }}
           leftSection={<Clock size={14} />}
           onClick={() => setLeaving("withdraw")}
         >

@@ -1,4 +1,4 @@
-// PROTOTYPE #128 — variant 2 "Panely": each section is one panel card with hairline rows,
+// PROTOTYPE #128 — winner "Panely": each section is one panel card with hairline rows,
 // the way Settings groups its rows. Results come as their own panel above the list, which
 // stays where it was. Removing a follower and declining a request both ask in a bottom
 // sheet (docs/conventions/drawers.md) that shows who it is about.
@@ -7,19 +7,14 @@ import { ActionIcon, Button, Divider, Drawer, Group, Paper, Stack, Text, Unstyle
 import { Check, X } from "lucide-react";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { FollowButton, PersonAvatar } from "./FollowButton";
-import type { FollowsModel, FollowsTab } from "./follows.model";
+import type { FollowsModel } from "./follows.model";
 import { CAPPED, NO_FOLLOWERS_TITLE, NO_FOLLOWING_HINT, NO_FOLLOWING_TITLE, NO_RESULTS, useNoFollowersHint } from "./followsCopy";
 import { SearchInput } from "./FollowsShared";
 import type { Person } from "./people";
 import { usePrototypeStore } from "./prototype.store";
-import { DRAWER_PROPS, EYEBROW, PANEL } from "./shared";
+import { DRAWER_PROPS, EYEBROW, PANEL, SECONDARY_BUTTON } from "./shared";
 
 const AVATAR = 40;
-
-interface Props {
-  model: FollowsModel;
-  tab: FollowsTab;
-}
 
 // One panel: eyebrow, then rows split by hairlines. An empty one says so in one dim line.
 function Panel({ title, empty, children }: { title: ReactNode; empty?: string; children: ReactNode[] }): ReactElement {
@@ -116,11 +111,14 @@ function QuestionSheet({
   );
 }
 
-function FollowingTab({ model }: { model: FollowsModel }): ReactElement {
+// Each tab body brings its own page padding, so the swipe track can lay them side by side.
+const PAGE_BOTTOM = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+
+export function FollowingPanels({ model }: { model: FollowsModel }): ReactElement {
   const { search, following, openProfile } = model;
 
   return (
-    <Stack gap="md">
+    <Stack gap="md" px={8} pt="md" pb={PAGE_BOTTOM}>
       <SearchInput search={search} />
       {search.results !== null && (
         <Panel title={`Výsledky · ${search.results.length}${search.capped ? "+" : ""}`} empty={search.searching ? "Hledám…" : NO_RESULTS}>
@@ -151,7 +149,7 @@ function FollowingTab({ model }: { model: FollowsModel }): ReactElement {
   );
 }
 
-function FollowersTab({ model }: { model: FollowsModel }): ReactElement {
+export function FollowersPanels({ model }: { model: FollowsModel }): ReactElement {
   const { requests, followers, accept, remove, openProfile } = model;
   const visibility = usePrototypeStore((state) => state.visibility);
   const hint = useNoFollowersHint();
@@ -164,7 +162,7 @@ function FollowersTab({ model }: { model: FollowsModel }): ReactElement {
   }
 
   return (
-    <Stack gap="md">
+    <Stack gap="md" px={8} pt="md" pb={PAGE_BOTTOM}>
       {/* Requests only exist while approval does: a public profile has no panel for them. */}
       {visibility !== "PUBLIC" && (
         <Panel
@@ -185,6 +183,7 @@ function FollowersTab({ model }: { model: FollowsModel }): ReactElement {
                 radius="xl"
                 size={32}
                 aria-label="Odmítnout"
+                styles={{ root: SECONDARY_BUTTON }}
                 onClick={() => ask({ person, act: "decline" })}
               >
                 <X size={16} />
@@ -197,7 +196,13 @@ function FollowersTab({ model }: { model: FollowsModel }): ReactElement {
       <Panel title={`Sledující · ${followers.length}`} empty={`${NO_FOLLOWERS_TITLE}. ${hint}`}>
         {followers.map((person) => (
           <PersonRow key={person.handle} person={person} onOpen={() => openProfile(person.handle)}>
-            <Button variant="default" size="xs" radius="xl" c="var(--color-text-dim)" onClick={() => ask({ person, act: "remove" })}>
+            <Button
+              variant="default"
+              size="xs"
+              radius="xl"
+              styles={{ root: { ...SECONDARY_BUTTON, color: "var(--color-text-dim)" } }}
+              onClick={() => ask({ person, act: "remove" })}
+            >
               Odebrat
             </Button>
           </PersonRow>
@@ -213,14 +218,6 @@ function FollowersTab({ model }: { model: FollowsModel }): ReactElement {
           setAsking(false);
         }}
       />
-    </Stack>
-  );
-}
-
-export function FollowsVariantPanels({ model, tab }: Props): ReactElement {
-  return (
-    <Stack gap={0} px={8} pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-      {tab === "following" ? <FollowingTab model={model} /> : <FollowersTab model={model} />}
     </Stack>
   );
 }
