@@ -21,6 +21,9 @@ import { useUnreadNotifications } from "@/features/notifications/notifications.q
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
+// PROTOTYPE #121 — remove with features/profile_prototype.
+import { ProfilePrototypeMount } from "@/features/profile_prototype/ProfilePrototypeMount";
+import { HeaderShareIcon } from "@/features/profile_prototype/HeaderShareIcon";
 
 const BikeIcon = bikecheckIconType("BikeIcon");
 const BikeIconFill = bikecheckIconType("BikeIcon_fill");
@@ -297,6 +300,8 @@ export function AppLayout(): ReactElement {
                 </Group>
                 {/* The bell first, the rider last: the avatar is the corner the thumb owns. */}
                 <Group gap="sm">
+                  {/* PROTOTYPE #121 */}
+                  <HeaderShareIcon />
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
                     variant="transparent"
@@ -381,6 +386,8 @@ export function AppLayout(): ReactElement {
         />
       </AppShell.Main>
 
+      {/* PROTOTYPE #121 */}
+      <ProfilePrototypeMount />
       {/* Hides the create action on sub-pages. */}
       {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {/* --------- FOOTER --------- */}

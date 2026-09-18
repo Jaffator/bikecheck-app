@@ -1,0 +1,2171 @@
+diff --git a/_frontend/bikecheck/src/features/bikes_page/Bikes.tsx b/_frontend/bikecheck/src/features/bikes_page/Bikes.tsx
+index a76e464..a32a422 100644
+--- a/_frontend/bikecheck/src/features/bikes_page/Bikes.tsx
++++ b/_frontend/bikecheck/src/features/bikes_page/Bikes.tsx
+@@ -8,6 +8,8 @@ import { useArchivedBikes, useBikes } from "@/features/bikes/bikes.queries";
+ import { BikeCard } from "@/features/bikes/ui/BikeCard";
+ import { BikeArchiveDrawer } from "@/features/bikes/ui/BikeArchiveDrawer";
+ import { EmptyGarage } from "./EmptyGarage";
++// PROTOTYPE #121
++import { BikesShareEntry } from "@/features/profile_prototype/BikesShareEntry";
+ 
+ export function Bikes(): ReactElement {
+   const { data: bikes, isLoading, isError } = useBikes();
+@@ -50,6 +52,8 @@ export function Bikes(): ReactElement {
+   return (
+     // Reserve space for bottom navigation.
+     <Stack gap="md" px="md" pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
++      {/* PROTOTYPE #121 */}
++      <BikesShareEntry />
+       {bikes.map((bike) => (
+         <BikeCard key={bike.id} bike={bike} onOpen={() => navigate(`/bikes/${bike.id}`)} />
+       ))}
+diff --git a/_frontend/bikecheck/src/features/dashboard_page/Dashboard.tsx b/_frontend/bikecheck/src/features/dashboard_page/Dashboard.tsx
+index 1d35e7b..d352fc5 100644
+--- a/_frontend/bikecheck/src/features/dashboard_page/Dashboard.tsx
++++ b/_frontend/bikecheck/src/features/dashboard_page/Dashboard.tsx
+@@ -7,6 +7,8 @@ import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
+ import { UnpairedBikesCard } from "@/features/strava/ui/UnpairedBikesCard";
+ import { PendingRidesCard } from "@/features/strava/ui/PendingRidesDashCard";
+ import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
++// PROTOTYPE #121
++import { DashboardShareCard } from "@/features/profile_prototype/DashboardShareCard";
+ const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+ 
+ export function Dashboard(): ReactElement {
+@@ -25,6 +27,8 @@ export function Dashboard(): ReactElement {
+     // Clears the floating create button, so the last card can be scrolled out from under
+     // it. Without the room there is nothing to scroll, and the button sits on the card.
+     <Stack gap="sm" p="md" pb={FAB_CLEARANCE}>
++      {/* PROTOTYPE #121 */}
++      <DashboardShareCard />
+       {/* Show Strava connection status. */}
+       <StravaStatusCard />
+       {/* Show bikes awaiting Strava pairing. */}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/BikesShareEntry.tsx b/_frontend/bikecheck/src/features/profile_prototype/BikesShareEntry.tsx
+new file mode 100644
+index 0000000..998ed45
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/BikesShareEntry.tsx
+@@ -0,0 +1,127 @@
++// PROTOTYPE #121 — the way into the drawer from the garage, three ways. /bikes is a main
++// tab, so its header has no actionSlot - only the bell and the avatar.
++//   A: a mono row above the cards, the archive row's twin.
++//   B: nothing in the list; an icon in the header beside the bell (BikesHeaderShareIcon).
++//   C: a banner card above the cards - a sentence about the state, dashed when OFF.
++import type { ReactElement } from "react";
++import { ActionIcon, Box, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
++import { useLocation } from "react-router-dom";
++import { ChevronRight, Globe, Share2, Users } from "lucide-react";
++import { usePrototypeStore, statsFor, VISIBILITY_LABEL } from "./prototype.store";
++import { PANEL, STATE_COLOR } from "./shared";
++
++function EntryA(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const open = usePrototypeStore((state) => state.openDrawer);
++  const color = STATE_COLOR[visibility];
++
++  return (
++    <UnstyledButton onClick={open} px="md" py={4} className="active:scale-[0.985]">
++      <Group justify="space-between" wrap="nowrap">
++        <Text className="font-mono uppercase" fz={12} fw={500} c="var(--color-text-dim)" lts="0.08em">
++          Sdílení garáže
++        </Text>
++        <Group gap={6} wrap="nowrap">
++          {visibility !== "OFF" && <Box w={7} h={7} style={{ borderRadius: 9999, backgroundColor: color }} />}
++          <Text
++            className="font-mono uppercase"
++            fz={12}
++            fw={500}
++            lts="0.08em"
++            style={{
++              color: visibility === "OFF" ? "var(--color-text-dim)" : color,
++            }}
++          >
++            {VISIBILITY_LABEL[visibility]}
++          </Text>
++          <ChevronRight size={18} color="var(--color-text-dim)" />
++        </Group>
++      </Group>
++    </UnstyledButton>
++  );
++}
++
++function EntryC(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const stats = usePrototypeStore((state) => state.stats);
++  const open = usePrototypeStore((state) => state.openDrawer);
++
++  if (visibility === "OFF") {
++    return (
++      <UnstyledButton onClick={open} className="active:scale-[0.985]" style={{ display: "block" }}>
++        <Box
++          px="md"
++          py="sm"
++          style={{
++            borderRadius: "var(--mantine-radius-lg)",
++            border: "1px dashed var(--color-border-solid)",
++          }}
++        >
++          <Group justify="space-between" wrap="nowrap">
++            <Group gap="sm" wrap="nowrap">
++              <Share2 size={18} color="var(--color-text-dim)" />
++              <Stack gap={0}>
++                <Text fw={600} fz={14} c="text.6">
++                  Sdílej svou garáž
++                </Text>
++                <Text fz={12} c="var(--color-text-dim)">
++                  Jeden odkaz na všechna kola
++                </Text>
++              </Stack>
++            </Group>
++            <ChevronRight size={18} color="var(--color-text-dim)" />
++          </Group>
++        </Box>
++      </UnstyledButton>
++    );
++  }
++
++  const color = STATE_COLOR[visibility];
++  const figures = statsFor(visibility, stats);
++
++  return (
++    <UnstyledButton onClick={open} className="active:scale-[0.985]" style={{ display: "block" }}>
++      <Paper radius="lg" px="md" py="sm" style={{ ...PANEL, boxShadow: "var(--elev-row)" }}>
++        <Group justify="space-between" wrap="nowrap">
++          <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
++            {visibility === "PUBLIC" ? <Globe size={18} color={color} /> : <Users size={18} color={color} />}
++            <Stack gap={0} style={{ minWidth: 0 }}>
++              <Text fw={600} fz={14} c="text.6" truncate>
++                {visibility === "PUBLIC" ? "Garáž je veřejná" : "Garáž vidí jen sledující"}
++              </Text>
++              <Text className="font-mono" fz={11} c="var(--color-text-dim)" truncate>
++                {figures.map((figure) => `${figure.value} ${figure.label.toLowerCase()}`).join(" · ")}
++              </Text>
++            </Stack>
++          </Group>
++          <ChevronRight size={18} color="var(--color-text-dim)" />
++        </Group>
++      </Paper>
++    </UnstyledButton>
++  );
++}
++
++export function BikesShareEntry(): ReactElement | null {
++  const variant = usePrototypeStore((state) => state.variant);
++  if (variant === "A") return <EntryA />;
++  if (variant === "C") return <EntryC />;
++  return null;
++}
++
++// Variant B's entry: lives in AppLayout's header, only on /bikes.
++export function BikesHeaderShareIcon(): ReactElement | null {
++  const variant = usePrototypeStore((state) => state.variant);
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const open = usePrototypeStore((state) => state.openDrawer);
++  const { pathname } = useLocation();
++  if (!import.meta.env.DEV || variant !== "B" || pathname !== "/bikes") return null;
++  const color = visibility === "OFF" ? "var(--mantine-color-cards-1)" : STATE_COLOR[visibility];
++
++  return (
++    <ActionIcon variant="transparent" radius="sm" size="lg" aria-label="Sdílení garáže" onClick={open}>
++      {visibility === "PUBLIC" && <Globe size={24} color={color} />}
++      {visibility === "FOLLOWERS" && <Users size={24} color={color} />}
++      {visibility === "OFF" && <Share2 size={24} color={color} />}
++    </ActionIcon>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/DashboardShareCard.tsx b/_frontend/bikecheck/src/features/profile_prototype/DashboardShareCard.tsx
+new file mode 100644
+index 0000000..ec7181a
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/DashboardShareCard.tsx
+@@ -0,0 +1,244 @@
++// PROTOTYPE #121 — the dashboard card, three ways. All open the same drawer.
++//   A: a pitch when OFF (like Strava's), a one-line status strip once on. Never leaves.
++//   B: three big figures; OFF collapses to a one-line invitation. Never leaves.
++//   C: gone when OFF; once on, it is about what needs doing (pending requests) first.
++import type { ReactElement } from "react";
++import { Box, Button, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
++import { ChevronRight, Globe, Share2, Users } from "lucide-react";
++import { usePrototypeStore, statsFor, VISIBILITY_LABEL } from "./prototype.store";
++import { EYEBROW, PANEL, STATE_COLOR } from "./shared";
++
++function StateIcon({ size = 18 }: { size?: number }): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const color = STATE_COLOR[visibility];
++  if (visibility === "FOLLOWERS") return <Users size={size} color={color} />;
++  if (visibility === "PUBLIC") return <Globe size={size} color={color} />;
++  return <Share2 size={size} color={color} />;
++}
++
++function CardA(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const stats = usePrototypeStore((state) => state.stats);
++  const handle = usePrototypeStore((state) => state.handle);
++  const open = usePrototypeStore((state) => state.openDrawer);
++
++  if (visibility === "OFF") {
++    return (
++      <Paper
++        radius="lg"
++        style={{
++          ...PANEL,
++          overflow: "hidden",
++          position: "relative",
++          backgroundImage:
++            "radial-gradient(120% 90% at 50% 115%, color-mix(in srgb, var(--mantine-color-primary-6) 18%, transparent) 0%, transparent 70%)",
++        }}
++      >
++        <Stack gap="lg" align="center" p="lg">
++          <Box
++            style={{
++              display: "flex",
++              alignItems: "center",
++              justifyContent: "center",
++              width: "4.5rem",
++              height: "4.5rem",
++              borderRadius: 9999,
++              backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
++              border: "1px solid color-mix(in srgb, var(--mantine-color-primary-6) 35%, transparent)",
++              boxShadow: "inset 0 0 24px 0 color-mix(in srgb, var(--mantine-color-primary-6) 28%, transparent)",
++            }}
++          >
++            <Globe size={36} color="var(--mantine-color-primary-6)" />
++          </Box>
++          <Stack gap={8} align="center">
++            <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
++              Sdílej svou garáž
++            </Text>
++            <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
++              Jeden odkaz na všechna kola, osazení i servis. Ty rozhoduješ, kdo ho uvidí.
++            </Text>
++          </Stack>
++          <Button
++            fullWidth
++            radius="md"
++            color="primary.6"
++            c="black"
++            onClick={open}
++            styles={{
++              root: { height: "2.75rem" },
++              label: {
++                fontWeight: 700,
++                fontSize: "0.8125rem",
++                letterSpacing: "0.08em",
++                textTransform: "uppercase",
++              },
++            }}
++          >
++            Nastavit sdílení
++          </Button>
++        </Stack>
++      </Paper>
++    );
++  }
++
++  return (
++    <UnstyledButton onClick={open} className="active:scale-[0.985]" style={{ display: "block" }}>
++      <Paper radius="lg" px="sm" py="sm" style={PANEL}>
++        <Group gap="sm" wrap="nowrap">
++          <Box
++            style={{
++              display: "flex",
++              alignItems: "center",
++              justifyContent: "center",
++              width: "1.75rem",
++              height: "1.75rem",
++              borderRadius: "0.625rem",
++              backgroundColor: `color-mix(in srgb, ${STATE_COLOR[visibility]} 14%, transparent)`,
++            }}
++          >
++            <StateIcon size={15} />
++          </Box>
++          <Stack gap={1} style={{ flex: 1, minWidth: 0 }}>
++            <Group gap={6} wrap="nowrap">
++              <Text fw={600} fz={14} c="text.6" truncate>
++                Veřejný profil
++              </Text>
++              <Text
++                className="font-mono"
++                fz={10}
++                lts="0.08em"
++                tt="uppercase"
++                style={{ color: STATE_COLOR[visibility], flexShrink: 0 }}
++              >
++                {VISIBILITY_LABEL[visibility]}
++              </Text>
++            </Group>
++            <Text className="font-mono" fz={11} c="var(--color-text-dim)" truncate>
++              /u/{handle} ·{" "}
++              {statsFor(visibility, stats)
++                .map((stat) => `${stat.value} ${stat.label.toLowerCase()}`)
++                .join(" · ")}
++            </Text>
++          </Stack>
++          <ChevronRight size={18} color="var(--color-text-dim)" />
++        </Group>
++      </Paper>
++    </UnstyledButton>
++  );
++}
++
++function CardB(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const stats = usePrototypeStore((state) => state.stats);
++  const open = usePrototypeStore((state) => state.openDrawer);
++
++  if (visibility === "OFF") {
++    return (
++      <UnstyledButton onClick={open} className="active:scale-[0.985]" style={{ display: "block" }}>
++        <Paper radius="lg" px="md" py="sm" style={{ ...PANEL, boxShadow: "var(--elev-row)" }}>
++          <Group justify="space-between" wrap="nowrap">
++            <Group gap="sm" wrap="nowrap">
++              <Share2 size={18} color="var(--mantine-color-primary-6)" />
++              <Text fw={600} fz={15} c="text.6">
++                Sdílej svou garáž
++              </Text>
++            </Group>
++            <ChevronRight size={18} color="var(--color-text-dim)" />
++          </Group>
++        </Paper>
++      </UnstyledButton>
++    );
++  }
++
++  const figures = statsFor(visibility, stats);
++
++  return (
++    <UnstyledButton onClick={open} className="active:scale-[0.985]" style={{ display: "block" }}>
++      <Paper radius="lg" p="md" style={PANEL}>
++        <Stack gap="sm">
++          <Group justify="space-between" wrap="nowrap">
++            <Text {...EYEBROW}>Garáž · {VISIBILITY_LABEL[visibility]}</Text>
++            <StateIcon size={16} />
++          </Group>
++          <Group gap={0} grow>
++            {figures.map((figure) => (
++              <Stack key={figure.label} gap={0}>
++                <Text
++                  className="font-mono"
++                  fz={32}
++                  fw={700}
++                  c={figure.label === "Žádosti" && figure.value > 0 ? "primary.5" : "text.6"}
++                  style={{ lineHeight: 1.1 }}
++                >
++                  {figure.value}
++                </Text>
++                <Text {...EYEBROW}>{figure.label}</Text>
++              </Stack>
++            ))}
++          </Group>
++        </Stack>
++      </Paper>
++    </UnstyledButton>
++  );
++}
++
++function CardC(): ReactElement | null {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const stats = usePrototypeStore((state) => state.stats);
++  const open = usePrototypeStore((state) => state.openDrawer);
++
++  // Nothing to report while nobody sees anything; the way in is the garage and Settings.
++  if (visibility === "OFF") return null;
++
++  const pending = visibility === "FOLLOWERS" ? stats.pending : 0;
++  const figures = statsFor(visibility, stats).filter((figure) => figure.label !== "Žádosti");
++
++  return (
++    <Paper radius="lg" p="md" style={PANEL}>
++      <Stack gap="sm">
++        <Group justify="space-between" wrap="nowrap">
++          <Group gap={8} wrap="nowrap">
++            <StateIcon size={16} />
++            <Text fw={600} fz={16} c="text.6">
++              {visibility === "PUBLIC" ? "Garáž je veřejná" : "Garáž sdílíš se sledujícími"}
++            </Text>
++          </Group>
++          <UnstyledButton onClick={open} aria-label="Nastavení sdílení">
++            <ChevronRight size={18} color="var(--color-text-dim)" />
++          </UnstyledButton>
++        </Group>
++
++        {pending > 0 ? (
++          <Group
++            justify="space-between"
++            wrap="nowrap"
++            p="sm"
++            style={{
++              borderRadius: "0.75rem",
++              backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 10%, transparent)",
++              border: "1px solid color-mix(in srgb, var(--mantine-color-primary-6) 35%, transparent)",
++            }}
++          >
++            <Text fz={13} c="text.6">
++              <b>{pending}</b> {pending === 1 ? "žádost o sledování čeká" : "žádosti o sledování čekají"}
++            </Text>
++            <Button size="compact-sm" radius="md" color="primary.6" c="black" disabled>
++              Vyřídit
++            </Button>
++          </Group>
++        ) : null}
++
++        <Text fz={13} c="var(--color-text-dim)">
++          {figures.map((figure) => `${figure.value} ${figure.label.toLowerCase()}`).join(" · ")}
++        </Text>
++      </Stack>
++    </Paper>
++  );
++}
++
++export function DashboardShareCard(): ReactElement | null {
++  const variant = usePrototypeStore((state) => state.variant);
++  if (variant === "A") return <CardA />;
++  if (variant === "B") return <CardB />;
++  return <CardC />;
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/LinkActions.tsx b/_frontend/bikecheck/src/features/profile_prototype/LinkActions.tsx
+new file mode 100644
+index 0000000..1b2856d
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/LinkActions.tsx
+@@ -0,0 +1,104 @@
++// PROTOTYPE #121 — throwaway. Copy / share / open for the profile link; only a PUBLIC
++// profile has a page these can point at.
++import { useEffect, useState, type ReactElement } from "react";
++import { Button, Group } from "@mantine/core";
++import { Check, Copy, ExternalLink, Share2 } from "lucide-react";
++import { canShareLink, copyLink, shareLink } from "@/utils/shareLink";
++import { profileUrl } from "./handle";
++
++const COPIED_FOR_MS = 1500;
++
++interface LinkActionsProps {
++  handle: string;
++  // Only a PUBLIC profile has a web page to copy, share or open.
++  enabled: boolean;
++  withShare?: boolean;
++  withOpen?: boolean;
++  size?: "xs" | "sm";
++  grow?: boolean;
++}
++
++export function LinkActions({
++  handle,
++  enabled,
++  withShare = false,
++  withOpen = false,
++  size = "sm",
++  grow = true,
++}: LinkActionsProps): ReactElement {
++  const [copied, setCopied] = useState(false);
++  const url = profileUrl(handle);
++
++  useEffect(() => {
++    if (!copied) return;
++    const timeout = window.setTimeout(() => setCopied(false), COPIED_FOR_MS);
++    return () => window.clearTimeout(timeout);
++  }, [copied]);
++
++  async function copy(): Promise<void> {
++    try {
++      await copyLink(url);
++      setCopied(true);
++    } catch {
++      setCopied(false);
++    }
++  }
++
++  async function share(): Promise<void> {
++    if (!canShareLink()) {
++      await copy();
++      return;
++    }
++    try {
++      await shareLink({
++        title: "BikeCheck",
++        text: "Moje garáž na BikeChecku",
++        url,
++      });
++    } catch {
++      // The sheet was dismissed; nothing to say.
++    }
++  }
++
++  return (
++    <Group gap="sm" grow={grow} wrap="nowrap">
++      <Button
++        variant="outline"
++        color="primary.5"
++        radius="md"
++        size={size}
++        disabled={!enabled}
++        leftSection={copied ? <Check size={16} /> : <Copy size={16} />}
++        onClick={() => void copy()}
++      >
++        {copied ? "Zkopírováno" : "Kopírovat"}
++      </Button>
++      {withShare && (
++        <Button
++          variant="outline"
++          color="primary.5"
++          radius="md"
++          size={size}
++          disabled={!enabled}
++          leftSection={<Share2 size={16} />}
++          onClick={() => void share()}
++        >
++          Sdílet
++        </Button>
++      )}
++      {withOpen && (
++        <Button
++          variant="outline"
++          color="primary.5"
++          radius="md"
++          size={size}
++          disabled={!enabled}
++          leftSection={<ExternalLink size={16} />}
++          onClick={() => window.open(url, "_blank", "noopener")}
++        >
++          Otevřít
++        </Button>
++      )}
++    </Group>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/ProfilePrototypeMount.tsx b/_frontend/bikecheck/src/features/profile_prototype/ProfilePrototypeMount.tsx
+new file mode 100644
+index 0000000..cfb6b80
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/ProfilePrototypeMount.tsx
+@@ -0,0 +1,22 @@
++// PROTOTYPE #121 — throwaway. Mounted once in AppLayout: the drawer of the current variant
++// (every surface opens the same one) and the floating switcher. Dev builds only.
++import type { ReactElement } from "react";
++import { usePrototypeStore } from "./prototype.store";
++import { PrototypeSwitcher } from "./PrototypeSwitcher";
++import { ShareDrawerA } from "./ShareDrawerA";
++import { ShareDrawerB } from "./ShareDrawerB";
++import { ShareDrawerC } from "./ShareDrawerC";
++
++export function ProfilePrototypeMount(): ReactElement | null {
++  const variant = usePrototypeStore((state) => state.variant);
++  if (!import.meta.env.DEV) return null;
++
++  return (
++    <>
++      {variant === "A" && <ShareDrawerA />}
++      {variant === "B" && <ShareDrawerB />}
++      {variant === "C" && <ShareDrawerC />}
++      <PrototypeSwitcher />
++    </>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/PrototypeSwitcher.tsx b/_frontend/bikecheck/src/features/profile_prototype/PrototypeSwitcher.tsx
+new file mode 100644
+index 0000000..13dfa84
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/PrototypeSwitcher.tsx
+@@ -0,0 +1,136 @@
++// PROTOTYPE #121 — throwaway. Floating bar: ←/→ cycle the variant (kept in ?variant= so a
++// URL is shareable), and a segmented control flips the visibility state so every surface
++// can be judged in all three without opening the drawer. Dev builds only.
++import { useEffect, useRef, type ReactElement } from "react";
++import { ActionIcon, Group, SegmentedControl, Text } from "@mantine/core";
++import { ChevronLeft, ChevronRight } from "lucide-react";
++import { useLocation, useSearchParams } from "react-router-dom";
++import {
++  usePrototypeStore,
++  VARIANTS,
++  VARIANT_NAMES,
++  VISIBILITY_LABEL,
++  type Variant,
++  type Visibility,
++} from "./prototype.store";
++
++// Above the tab bar and its safe-area margin.
++const BAR_BOTTOM = "calc(5.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
++
++function isVariant(value: string | null): value is Variant {
++  return value !== null && (VARIANTS as string[]).includes(value);
++}
++
++function isTyping(): boolean {
++  const el = document.activeElement;
++  if (!el) return false;
++  return el.tagName === "INPUT" || el.tagName === "TEXTAREA" || (el as HTMLElement).isContentEditable;
++}
++
++export function PrototypeSwitcher(): ReactElement | null {
++  const [params, setParams] = useSearchParams();
++  const location = useLocation();
++  const variant = usePrototypeStore((state) => state.variant);
++  const setVariant = usePrototypeStore((state) => state.setVariant);
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const setVisibility = usePrototypeStore((state) => state.setVisibility);
++
++  // The URL wins once, on load; after that the store wins and re-stamps the URL on every
++  // route and every change - otherwise a click would be undone by the stale param.
++  const initialized = useRef(false);
++  useEffect(() => {
++    const fromUrl = params.get("variant");
++    if (!initialized.current) {
++      initialized.current = true;
++      if (isVariant(fromUrl) && fromUrl !== variant) {
++        setVariant(fromUrl);
++        return;
++      }
++    }
++    if (fromUrl !== variant) {
++      const next = new URLSearchParams(params);
++      next.set("variant", variant);
++      setParams(next, { replace: true });
++    }
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [location.pathname, variant]);
++
++  function cycle(step: number): void {
++    const index = VARIANTS.indexOf(variant);
++    const next = VARIANTS[(index + step + VARIANTS.length) % VARIANTS.length];
++    setVariant(next);
++  }
++
++  useEffect(() => {
++    function onKey(event: KeyboardEvent): void {
++      if (isTyping()) return;
++      if (event.key === "ArrowLeft") cycle(-1);
++      if (event.key === "ArrowRight") cycle(1);
++    }
++    window.addEventListener("keydown", onKey);
++    return () => window.removeEventListener("keydown", onKey);
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [variant]);
++
++  if (!import.meta.env.DEV) return null;
++
++  return (
++    <Group
++      gap={4}
++      wrap="nowrap"
++      style={{
++        position: "fixed",
++        left: "50%",
++        bottom: BAR_BOTTOM,
++        transform: "translateX(-50%)",
++        zIndex: 500,
++        padding: "4px 6px",
++        borderRadius: 9999,
++        backgroundColor: "#f4f4f5",
++        color: "#141414",
++        boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
++        border: "2px solid #ff4fd8",
++        maxWidth: "calc(100vw - 24px)",
++      }}
++    >
++      <ActionIcon
++        variant="subtle"
++        color="dark"
++        radius="xl"
++        size="sm"
++        aria-label="Předchozí varianta"
++        onClick={() => cycle(-1)}
++      >
++        <ChevronLeft size={16} />
++      </ActionIcon>
++      <Text className="font-mono" fz={11} fw={700} style={{ whiteSpace: "nowrap" }}>
++        {variant} — {VARIANT_NAMES[variant]}
++      </Text>
++      <ActionIcon
++        variant="subtle"
++        color="dark"
++        radius="xl"
++        size="sm"
++        aria-label="Další varianta"
++        onClick={() => cycle(1)}
++      >
++        <ChevronRight size={16} />
++      </ActionIcon>
++      <SegmentedControl
++        size="xs"
++        radius="xl"
++        value={visibility}
++        onChange={(value) => setVisibility(value as Visibility)}
++        data={(["OFF", "FOLLOWERS", "PUBLIC"] as Visibility[]).map((value) => ({
++          value,
++          label: VISIBILITY_LABEL[value],
++        }))}
++        styles={{
++          root: { backgroundColor: "#dcdcdf" },
++          indicator: { backgroundColor: "#ffffff" },
++          label: { color: "#141414", fontSize: 10, padding: "4px 6px" },
++        }}
++      />
++    </Group>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/SettingsShare.tsx b/_frontend/bikecheck/src/features/profile_prototype/SettingsShare.tsx
+new file mode 100644
+index 0000000..c0e0f2c
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/SettingsShare.tsx
+@@ -0,0 +1,213 @@
++// PROTOTYPE #121 — Settings, three ways. The section sits under the Strava card; the badge
++// sits at the avatar and name at the top of the page.
++//   A: inline segmented control + a read-only address row; badge = pill under the name.
++//   B: one row that opens the drawer, no inline control; badge = ring and bubble on the avatar.
++//   C: its own titled card with a Select; badge = chip beside the name.
++import type { ReactElement, ReactNode } from "react";
++import { Box, Card, Group, SegmentedControl, Select, Stack, Text, UnstyledButton } from "@mantine/core";
++import { ChevronRight, Globe, Users } from "lucide-react";
++import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
++import { usePrototypeStore, VISIBILITY_HINT, VISIBILITY_LABEL, type Visibility } from "./prototype.store";
++import { STATE_COLOR } from "./shared";
++
++// Settings' own rhythm (ROW_GAP_HALF).
++const ROW = 10;
++const CARD_STYLE = { border: "1px solid var(--mantine-color-inputs-5)" };
++
++const STATES: Visibility[] = ["OFF", "FOLLOWERS", "PUBLIC"];
++
++function SectionA(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const setVisibility = usePrototypeStore((state) => state.setVisibility);
++  const handle = usePrototypeStore((state) => state.handle);
++  const open = usePrototypeStore((state) => state.openDrawer);
++
++  return (
++    <Card bg="cards.6" className="mx-3 mb-3" px={0} py={ROW} radius="lg" style={CARD_STYLE}>
++      <Stack gap={0}>
++        <Group justify="space-between" px="md" py={ROW} wrap="nowrap">
++          <Text c="text.6" fz={15} fw={600}>
++            Veřejný profil
++          </Text>
++          <SegmentedControl
++            size="xs"
++            value={visibility}
++            onChange={(value) => setVisibility(value as Visibility)}
++            data={STATES.map((value) => ({
++              value,
++              label: VISIBILITY_LABEL[value],
++            }))}
++          />
++        </Group>
++        {/* The address is only shown here - it is changed in the drawer (#114). */}
++        <UnstyledButton onClick={open} className="w-full" px="md" py={ROW}>
++          <Group justify="space-between" wrap="nowrap">
++            <Text fw={600} fz={15} c="text.6">
++              Adresa
++            </Text>
++            <Group gap="xs" wrap="nowrap">
++              <Text className="font-mono" fz={13} c="var(--color-text-dim)" truncate>
++                /u/{handle}
++              </Text>
++              <ChevronRight size={18} color="var(--color-text-dim)" />
++            </Group>
++          </Group>
++        </UnstyledButton>
++      </Stack>
++    </Card>
++  );
++}
++
++function SectionB(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const open = usePrototypeStore((state) => state.openDrawer);
++
++  return (
++    <Card bg="cards.6" className="mx-3 mb-3" px={0} py={ROW} radius="lg" style={CARD_STYLE}>
++      <UnstyledButton onClick={open} className="w-full" px="md" py={ROW}>
++        <Group justify="space-between" wrap="nowrap">
++          <Text fw={600} fz={15} c="text.6">
++            Sdílení garáže
++          </Text>
++          <Group gap="xs" wrap="nowrap">
++            <Text fz={13} style={{ color: STATE_COLOR[visibility] }}>
++              {VISIBILITY_LABEL[visibility]}
++            </Text>
++            <ChevronRight size={18} color="var(--color-text-dim)" />
++          </Group>
++        </Group>
++      </UnstyledButton>
++    </Card>
++  );
++}
++
++function SectionC(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const setVisibility = usePrototypeStore((state) => state.setVisibility);
++  const handle = usePrototypeStore((state) => state.handle);
++  const open = usePrototypeStore((state) => state.openDrawer);
++
++  return (
++    <>
++      <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
++        Veřejný profil
++      </Text>
++      <Card bg="cards.6" className="m-3" px="md" py="md" radius="lg" style={CARD_STYLE}>
++        <Stack gap="sm">
++          <Select
++            label="Kdo vidí moji garáž"
++            value={visibility}
++            onChange={(value) => value && setVisibility(value as Visibility)}
++            data={STATES.map((value) => ({
++              value,
++              label: VISIBILITY_LABEL[value],
++            }))}
++            allowDeselect={false}
++            comboboxProps={dropdownProps}
++            styles={inputStyles}
++          />
++          <Text fz={12} c="var(--color-text-dim)" style={{ lineHeight: 1.4 }}>
++            {VISIBILITY_HINT[visibility]}
++          </Text>
++          {visibility !== "OFF" && (
++            <UnstyledButton onClick={open} className="w-full" pt={4}>
++              <Group justify="space-between" wrap="nowrap">
++                <Text className="font-mono" fz={13} c="var(--color-text-dim)" truncate>
++                  bikecheck.app/u/{handle}
++                </Text>
++                <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
++                  <Text fz={13} c="primary.5">
++                    Co sdílím
++                  </Text>
++                  <ChevronRight size={16} color="var(--mantine-color-primary-5)" />
++                </Group>
++              </Group>
++            </UnstyledButton>
++          )}
++        </Stack>
++      </Card>
++    </>
++  );
++}
++
++export function SettingsShareSection(): ReactElement {
++  const variant = usePrototypeStore((state) => state.variant);
++  if (variant === "A") return <SectionA />;
++  if (variant === "B") return <SectionB />;
++  return <SectionC />;
++}
++
++// Variant B: the state is worn by the avatar - a coloured ring and a small bubble. A/C pass through.
++export function ProfileAvatarFrame({ children }: { children: ReactNode }): ReactElement {
++  const variant = usePrototypeStore((state) => state.variant);
++  const visibility = usePrototypeStore((state) => state.visibility);
++  if (variant !== "B" || visibility === "OFF") return <>{children}</>;
++  const color = STATE_COLOR[visibility];
++  return (
++    <Box
++      style={{
++        position: "relative",
++        borderRadius: 9999,
++        padding: 3,
++        border: `2px solid ${color}`,
++      }}
++    >
++      {children}
++      <Box
++        style={{
++          position: "absolute",
++          right: -2,
++          bottom: -2,
++          width: 26,
++          height: 26,
++          borderRadius: 9999,
++          display: "flex",
++          alignItems: "center",
++          justifyContent: "center",
++          backgroundColor: color,
++          border: "3px solid var(--mantine-color-background-9)",
++        }}
++      >
++        {visibility === "PUBLIC" ? <Globe size={13} color="black" /> : <Users size={13} color="black" />}
++      </Box>
++    </Box>
++  );
++}
++
++// Variants A and C: the state is written next to the name. B says it on the avatar.
++export function ProfileNameBadge(): ReactElement | null {
++  const variant = usePrototypeStore((state) => state.variant);
++  const visibility = usePrototypeStore((state) => state.visibility);
++  if (variant === "B" || visibility === "OFF") return null;
++  const color = STATE_COLOR[visibility];
++
++  if (variant === "A") {
++    return (
++      <Group
++        gap={6}
++        wrap="nowrap"
++        px={10}
++        py={4}
++        style={{
++          borderRadius: 9999,
++          backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
++          border: `1px solid color-mix(in srgb, ${color} 40%, transparent)`,
++        }}
++      >
++        <Box w={7} h={7} style={{ borderRadius: 9999, backgroundColor: color }} />
++        <Text className="font-mono" fz={11} lts="0.08em" tt="uppercase" style={{ color }}>
++          {VISIBILITY_LABEL[visibility]}
++        </Text>
++      </Group>
++    );
++  }
++
++  return (
++    <Group gap={4} wrap="nowrap" style={{ color }}>
++      {visibility === "PUBLIC" ? <Globe size={13} /> : <Users size={13} />}
++      <Text fz={12} fw={600} style={{ color: "inherit" }}>
++        {VISIBILITY_LABEL[visibility]}
++      </Text>
++    </Group>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerA.tsx b/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerA.tsx
+new file mode 100644
+index 0000000..c9db1a8
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerA.tsx
+@@ -0,0 +1,233 @@
++// PROTOTYPE #121 — variant A "Ovládací panel": one segmented control on top decides the
++// state; everything under it is a settings form that dims to read-only when OFF.
++import type { ReactElement } from "react";
++import { Box, Drawer, Group, Image, SegmentedControl, Stack, Switch, Text, TextInput } from "@mantine/core";
++import { useOverlayBack } from "@/hooks/useOverlayBack";
++import { inputStyles } from "@/features/add_bike_page/formStyles";
++import { bikeTitle } from "@/features/bikes/bikeTitle";
++import { handleError, profileHost } from "./handle";
++import {
++  usePrototypeStore,
++  VISIBILITY_HINT,
++  VISIBILITY_LABEL,
++  type SectionKey,
++  type Visibility,
++} from "./prototype.store";
++import { LinkActions } from "./LinkActions";
++import { DRAWER_PROPS, EYEBROW, INSET, useProfileBikes } from "./shared";
++
++const THUMB = 40;
++
++const SWITCH_STYLES = (checked: boolean) => ({
++  track: {
++    backgroundColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
++    borderColor: "var(--mantine-color-other-borderSolid)",
++  },
++  thumb: {
++    backgroundColor: checked ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
++  },
++});
++
++function SectionRow({
++  label,
++  hint,
++  checked,
++  onChange,
++  nested = false,
++}: {
++  label: string;
++  hint?: string;
++  checked: boolean;
++  onChange: () => void;
++  nested?: boolean;
++}): ReactElement {
++  return (
++    <Group justify="space-between" wrap="nowrap" px="md" py={10} pl={nested ? 32 : "md"}>
++      <Stack gap={1} style={{ minWidth: 0 }}>
++        <Text fw={600} fz={15} c="text.6">
++          {label}
++        </Text>
++        {hint && (
++          <Text fz={12} c="var(--color-text-dim)">
++            {hint}
++          </Text>
++        )}
++      </Stack>
++      <Switch withThumbIndicator={false} checked={checked} onChange={onChange} styles={SWITCH_STYLES(checked)} />
++    </Group>
++  );
++}
++
++export function ShareDrawerA(): ReactElement {
++  const opened = usePrototypeStore((state) => state.drawerOpened);
++  const close = usePrototypeStore((state) => state.closeDrawer);
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const setVisibility = usePrototypeStore((state) => state.setVisibility);
++  const handle = usePrototypeStore((state) => state.handle);
++  const setHandle = usePrototypeStore((state) => state.setHandle);
++  const sections = usePrototypeStore((state) => state.sections);
++  const toggleSection = usePrototypeStore((state) => state.toggleSection);
++  const toggleBike = usePrototypeStore((state) => state.toggleBike);
++  const bikes = useProfileBikes();
++  const error = handleError(handle);
++  const off = visibility === "OFF";
++
++  useOverlayBack(opened, close);
++
++  const rows: {
++    key: SectionKey;
++    label: string;
++    hint?: string;
++    nested?: boolean;
++  }[] = [
++    {
++      key: "components",
++      label: "Komponenty",
++      hint: "Osazení kola po typech dílů",
++    },
++    { key: "setup", label: "Setup", hint: "Tlaky, odpružení, profily" },
++    {
++      key: "history",
++      label: "Servisní historie",
++      hint: "Datum a úkony, bez poznámek a příloh",
++    },
++  ];
++
++  return (
++    <Drawer opened={opened} onClose={close} title="Sdílení garáže" {...DRAWER_PROPS}>
++      <Stack gap="lg">
++        <Stack gap={8}>
++          <SegmentedControl
++            fullWidth
++            value={visibility}
++            onChange={(value) => setVisibility(value as Visibility)}
++            data={(["OFF", "FOLLOWERS", "PUBLIC"] as Visibility[]).map((value) => ({
++              value,
++              label: VISIBILITY_LABEL[value],
++            }))}
++          />
++          <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
++            {VISIBILITY_HINT[visibility]}
++          </Text>
++        </Stack>
++
++        {/* OFF keeps the form on screen but takes the hand off it: the owner sees what
++            switching back on brings, and nothing here can be changed while nobody sees it. */}
++        <Stack
++          gap="lg"
++          style={{
++            opacity: off ? 0.4 : 1,
++            pointerEvents: off ? "none" : "auto",
++            transition: "opacity 200ms",
++          }}
++        >
++          <Stack gap={8}>
++            <Text {...EYEBROW}>Adresa</Text>
++            <TextInput
++              value={handle}
++              onChange={(event) => setHandle(event.currentTarget.value.toLowerCase())}
++              leftSection={
++                <Text className="font-mono" fz={13} c="var(--color-text-dim)" pl={4}>
++                  /u/
++                </Text>
++              }
++              leftSectionWidth={36}
++              error={error}
++              styles={{
++                ...inputStyles,
++                input: {
++                  ...inputStyles.input,
++                  fontFamily: "var(--font-mono)",
++                  paddingLeft: 36,
++                },
++              }}
++              autoCapitalize="none"
++              autoCorrect="off"
++              spellCheck={false}
++            />
++            <Text className="font-mono" fz={12} c="var(--color-text-dim)" truncate>
++              {profileHost()}/u/{handle}
++            </Text>
++            <LinkActions handle={handle} enabled={visibility === "PUBLIC" && error === null} withOpen />
++            {visibility === "FOLLOWERS" && (
++              <Text fz={12} c="var(--color-text-dim)">
++                Odkaz funguje jen u veřejného profilu. Sledující tě najdou v appce podle adresy.
++              </Text>
++            )}
++          </Stack>
++
++          <Stack gap={8}>
++            <Text {...EYEBROW}>Co sdílet</Text>
++            <Box style={INSET} py={4}>
++              {rows.map((row) => (
++                <SectionRow
++                  key={row.key}
++                  label={row.label}
++                  hint={row.hint}
++                  checked={sections[row.key]}
++                  onChange={() => toggleSection(row.key)}
++                />
++              ))}
++              {sections.history && (
++                <SectionRow
++                  nested
++                  label="Ceny servisů"
++                  hint="Cena za servis, měsíční součty i útrata"
++                  checked={sections.costs}
++                  onChange={() => toggleSection("costs")}
++                />
++              )}
++            </Box>
++          </Stack>
++
++          <Stack gap={8}>
++            <Text {...EYEBROW}>Kola</Text>
++            <Box style={INSET} py={4}>
++              {bikes.map(({ bike, shared }) => (
++                <Group key={bike.id} justify="space-between" wrap="nowrap" px="md" py={8}>
++                  <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
++                    {bike.image_url ? (
++                      <Image
++                        src={bike.image_url}
++                        alt=""
++                        w={THUMB}
++                        h={THUMB}
++                        radius="sm"
++                        fit="cover"
++                        style={{ flexShrink: 0, opacity: shared ? 1 : 0.4 }}
++                      />
++                    ) : (
++                      <Box
++                        w={THUMB}
++                        h={THUMB}
++                        style={{
++                          borderRadius: 6,
++                          backgroundColor: "var(--mantine-color-cards-5)",
++                          flexShrink: 0,
++                        }}
++                      />
++                    )}
++                    <Text fw={500} fz={14} c={shared ? "text.6" : "var(--color-text-dim)"} truncate>
++                      {bikeTitle(bike)}
++                    </Text>
++                  </Group>
++                  <Switch
++                    withThumbIndicator={false}
++                    checked={shared}
++                    onChange={() => toggleBike(bike.id)}
++                    styles={SWITCH_STYLES(shared)}
++                  />
++                </Group>
++              ))}
++              {bikes.length === 0 && (
++                <Text px="md" py={8} fz={13} c="var(--color-text-dim)">
++                  Zatím žádné kolo.
++                </Text>
++              )}
++            </Box>
++          </Stack>
++        </Stack>
++      </Stack>
++    </Drawer>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerB.tsx b/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerB.tsx
+new file mode 100644
+index 0000000..aad5569
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerB.tsx
+@@ -0,0 +1,311 @@
++// PROTOTYPE #121 — variant B "Odkaz napřed": the sheet is a share sheet. The link is the
++// hero, the audience is a radio list with a sentence each, sections are chips, bikes a grid.
++import { useState, type ReactElement } from "react";
++import {
++  ActionIcon,
++  Box,
++  Button,
++  Chip,
++  Drawer,
++  Group,
++  Image,
++  Radio,
++  SimpleGrid,
++  Stack,
++  Text,
++  TextInput,
++} from "@mantine/core";
++import { Check, Globe, Lock, Pencil, Users } from "lucide-react";
++import { useOverlayBack } from "@/hooks/useOverlayBack";
++import { chipStyles, inputStyles } from "@/features/add_bike_page/formStyles";
++import { bikeTitle } from "@/features/bikes/bikeTitle";
++import { handleError, profileHost } from "./handle";
++import {
++  usePrototypeStore,
++  VISIBILITY_HINT,
++  VISIBILITY_LABEL,
++  type SectionKey,
++  type Visibility,
++} from "./prototype.store";
++import { LinkActions } from "./LinkActions";
++import { DRAWER_PROPS, EYEBROW, INSET, STATE_COLOR, useProfileBikes } from "./shared";
++
++const STATE_ICON: Record<Visibility, ReactElement> = {
++  OFF: <Lock size={14} />,
++  FOLLOWERS: <Users size={14} />,
++  PUBLIC: <Globe size={14} />,
++};
++
++function LinkHero(): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const setVisibility = usePrototypeStore((state) => state.setVisibility);
++  const handle = usePrototypeStore((state) => state.handle);
++  const setHandle = usePrototypeStore((state) => state.setHandle);
++  const [editing, setEditing] = useState(false);
++  const error = handleError(handle);
++  const isPublic = visibility === "PUBLIC";
++  const off = visibility === "OFF";
++
++  return (
++    <Box
++      p="md"
++      style={{
++        borderRadius: "1rem",
++        // A live link glows; a switched-off one is pressed into the sheet (ReportCard's revoked look).
++        backgroundColor: off ? "var(--mantine-color-cards-7)" : "var(--mantine-color-cards-6)",
++        backgroundImage: isPublic
++          ? "radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--mantine-color-green-8) 14%, transparent) 0%, transparent 55%)"
++          : undefined,
++        border: `1px solid ${isPublic ? "color-mix(in srgb, var(--mantine-color-green-8) 40%, transparent)" : "var(--mantine-color-inputs-5)"}`,
++        boxShadow: off ? "inset 0 2px 6px rgba(0,0,0,0.5)" : "var(--elev-panel)",
++      }}
++    >
++      <Stack gap="sm">
++        <Group justify="space-between" wrap="nowrap">
++          <Text {...EYEBROW}>Tvoje garáž</Text>
++          <Group gap={6} wrap="nowrap" style={{ color: STATE_COLOR[visibility] }}>
++            {STATE_ICON[visibility]}
++            <Text className="font-mono" fz={11} lts="0.08em" tt="uppercase" style={{ color: "inherit" }}>
++              {VISIBILITY_LABEL[visibility]}
++            </Text>
++          </Group>
++        </Group>
++
++        {editing ? (
++          <Group gap="xs" wrap="nowrap" align="flex-start">
++            <TextInput
++              autoFocus
++              value={handle}
++              onChange={(event) => setHandle(event.currentTarget.value.toLowerCase())}
++              error={error}
++              style={{ flex: 1 }}
++              styles={{
++                ...inputStyles,
++                input: { ...inputStyles.input, fontFamily: "var(--font-mono)" },
++              }}
++              autoCapitalize="none"
++              autoCorrect="off"
++              spellCheck={false}
++            />
++            <ActionIcon
++              variant="filled"
++              color="primary.6"
++              radius="md"
++              size="lg"
++              disabled={error !== null}
++              onClick={() => setEditing(false)}
++              aria-label="Hotovo"
++            >
++              <Check size={18} color="black" />
++            </ActionIcon>
++          </Group>
++        ) : (
++          <Group gap="xs" wrap="nowrap" align="baseline">
++            <Text className="font-mono" fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
++              {profileHost()}/u/
++            </Text>
++            <Text
++              className="font-mono"
++              fz={20}
++              fw={700}
++              c={off ? "var(--color-text-dim)" : "text.6"}
++              truncate
++              style={{
++                flex: 1,
++                minWidth: 0,
++                textDecoration: off ? "line-through" : "none",
++              }}
++            >
++              {handle}
++            </Text>
++            <ActionIcon
++              variant="subtle"
++              color="gray"
++              radius="xl"
++              size="sm"
++              onClick={() => setEditing(true)}
++              aria-label="Upravit adresu"
++            >
++              <Pencil size={14} color="var(--color-text-dim)" />
++            </ActionIcon>
++          </Group>
++        )}
++
++        {off ? (
++          <Button fullWidth radius="md" color="primary.6" c="black" onClick={() => setVisibility("PUBLIC")}>
++            Zveřejnit garáž
++          </Button>
++        ) : (
++          <LinkActions handle={handle} enabled={isPublic && error === null} withShare withOpen size="xs" />
++        )}
++        {visibility === "FOLLOWERS" && (
++          <Text fz={12} c="var(--color-text-dim)">
++            Bez veřejného odkazu. Sledující tě v appce najdou jako /u/{handle}.
++          </Text>
++        )}
++      </Stack>
++    </Box>
++  );
++}
++
++export function ShareDrawerB(): ReactElement {
++  const opened = usePrototypeStore((state) => state.drawerOpened);
++  const close = usePrototypeStore((state) => state.closeDrawer);
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const setVisibility = usePrototypeStore((state) => state.setVisibility);
++  const sections = usePrototypeStore((state) => state.sections);
++  const toggleSection = usePrototypeStore((state) => state.toggleSection);
++  const toggleBike = usePrototypeStore((state) => state.toggleBike);
++  const bikes = useProfileBikes();
++
++  useOverlayBack(opened, close);
++
++  const chips: { key: SectionKey; label: string }[] = [
++    { key: "components", label: "Komponenty" },
++    { key: "setup", label: "Setup" },
++    { key: "history", label: "Servis" },
++  ];
++
++  return (
++    <Drawer opened={opened} onClose={close} withCloseButton={false} {...DRAWER_PROPS}>
++      <Stack gap="lg" pt="xs">
++        <LinkHero />
++
++        <Stack gap={8}>
++          <Text {...EYEBROW}>Kdo to uvidí</Text>
++          <Radio.Group value={visibility} onChange={(value) => setVisibility(value as Visibility)}>
++            <Box style={INSET} py={4}>
++              {(["PUBLIC", "FOLLOWERS", "OFF"] as Visibility[]).map((value) => (
++                <Radio
++                  key={value}
++                  value={value}
++                  color="primary.6"
++                  iconColor="black"
++                  px="md"
++                  py={10}
++                  labelPosition="left"
++                  label={
++                    <Stack gap={1}>
++                      <Text fw={600} fz={15} c="text.6">
++                        {VISIBILITY_LABEL[value]}
++                      </Text>
++                      <Text fz={12} c="var(--color-text-dim)" style={{ lineHeight: 1.4 }}>
++                        {VISIBILITY_HINT[value]}
++                      </Text>
++                    </Stack>
++                  }
++                  styles={{
++                    body: {
++                      justifyContent: "space-between",
++                      alignItems: "center",
++                    },
++                    labelWrapper: { flex: 1 },
++                    radio: {
++                      backgroundColor: "var(--mantine-color-cards-5)",
++                      borderColor: "var(--mantine-color-inputs-4)",
++                    },
++                  }}
++                />
++              ))}
++            </Box>
++          </Radio.Group>
++        </Stack>
++
++        {/* Choosing what goes out only makes sense once someone can see it. */}
++        {visibility !== "OFF" && (
++          <>
++            <Stack gap={8}>
++              <Text {...EYEBROW}>Co ukázat</Text>
++              <Group gap="xs">
++                {chips.map((chip) => (
++                  <Chip
++                    key={chip.key}
++                    checked={sections[chip.key]}
++                    onChange={() => toggleSection(chip.key)}
++                    variant="outline"
++                    radius="md"
++                    styles={chipStyles(sections[chip.key], { wrap: false })}
++                  >
++                    {chip.label}
++                  </Chip>
++                ))}
++                {sections.history && (
++                  <Chip
++                    checked={sections.costs}
++                    onChange={() => toggleSection("costs")}
++                    variant="outline"
++                    radius="md"
++                    styles={chipStyles(sections.costs, { wrap: false })}
++                  >
++                    + ceny
++                  </Chip>
++                )}
++              </Group>
++            </Stack>
++
++            <Stack gap={8}>
++              <Group justify="space-between">
++                <Text {...EYEBROW}>Kola</Text>
++                <Text className="font-mono" fz={11} c="var(--color-text-dim)">
++                  {bikes.filter((row) => row.shared).length} / {bikes.length}
++                </Text>
++              </Group>
++              <SimpleGrid cols={2} spacing="sm">
++                {bikes.map(({ bike, shared }) => (
++                  <Box
++                    key={bike.id}
++                    component="button"
++                    type="button"
++                    onClick={() => toggleBike(bike.id)}
++                    className="active:scale-[0.985]"
++                    style={{
++                      ...INSET,
++                      padding: 0,
++                      overflow: "hidden",
++                      textAlign: "left",
++                      cursor: "pointer",
++                      borderColor: shared
++                        ? "color-mix(in srgb, var(--mantine-color-primary-6) 60%, transparent)"
++                        : "var(--mantine-color-inputs-5)",
++                      position: "relative",
++                    }}
++                  >
++                    <Box
++                      style={{
++                        aspectRatio: "16 / 10",
++                        backgroundColor: "var(--mantine-color-cards-5)",
++                        opacity: shared ? 1 : 0.35,
++                      }}
++                    >
++                      {bike.image_url && <Image src={bike.image_url} alt="" h="100%" w="100%" fit="cover" />}
++                    </Box>
++                    <Box
++                      style={{
++                        position: "absolute",
++                        top: 8,
++                        right: 8,
++                        width: 22,
++                        height: 22,
++                        borderRadius: 9999,
++                        display: "flex",
++                        alignItems: "center",
++                        justifyContent: "center",
++                        backgroundColor: shared ? "var(--mantine-color-primary-6)" : "rgba(0,0,0,0.6)",
++                        border: shared ? "none" : "1px solid var(--color-border-solid)",
++                      }}
++                    >
++                      {shared && <Check size={14} color="black" />}
++                    </Box>
++                    <Text px={10} py={8} fw={500} fz={13} c={shared ? "text.6" : "var(--color-text-dim)"} truncate>
++                      {bikeTitle(bike)}
++                    </Text>
++                  </Box>
++                ))}
++              </SimpleGrid>
++            </Stack>
++          </>
++        )}
++      </Stack>
++    </Drawer>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerC.tsx b/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerC.tsx
+new file mode 100644
+index 0000000..0cfc2ed
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/ShareDrawerC.tsx
+@@ -0,0 +1,359 @@
++// PROTOTYPE #121 — variant C "Kdo vidí co": three audience cards, the chosen one opens up
++// with what belongs to it (followers, or the link). OFF hides the rest of the form outright.
++import { useState, type ReactElement } from "react";
++import { Box, Button, Drawer, Group, Image, Stack, Switch, Text, TextInput, UnstyledButton } from "@mantine/core";
++import { Check, ChevronRight, Globe, Lock, Users } from "lucide-react";
++import { useOverlayBack } from "@/hooks/useOverlayBack";
++import { inputStyles } from "@/features/add_bike_page/formStyles";
++import { bikeTitle } from "@/features/bikes/bikeTitle";
++import { handleError, profileHost } from "./handle";
++import {
++  usePrototypeStore,
++  VISIBILITY_HINT,
++  VISIBILITY_LABEL,
++  type SectionKey,
++  type Visibility,
++} from "./prototype.store";
++import { LinkActions } from "./LinkActions";
++import { DRAWER_PROPS, EYEBROW, INSET, STATE_COLOR, useProfileBikes } from "./shared";
++
++const THUMB = 44;
++
++const SWITCH_STYLES = (checked: boolean) => ({
++  track: {
++    backgroundColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
++    borderColor: "var(--mantine-color-other-borderSolid)",
++  },
++  thumb: {
++    backgroundColor: checked ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
++  },
++});
++
++const STATE_ICON: Record<Visibility, ReactElement> = {
++  OFF: <Lock size={18} />,
++  FOLLOWERS: <Users size={18} />,
++  PUBLIC: <Globe size={18} />,
++};
++
++function HandleRow(): ReactElement {
++  const handle = usePrototypeStore((state) => state.handle);
++  const setHandle = usePrototypeStore((state) => state.setHandle);
++  const [editing, setEditing] = useState(false);
++  const error = handleError(handle);
++
++  if (editing) {
++    return (
++      <Group gap="xs" wrap="nowrap" align="flex-start">
++        <TextInput
++          autoFocus
++          value={handle}
++          onChange={(event) => setHandle(event.currentTarget.value.toLowerCase())}
++          leftSection={
++            <Text className="font-mono" fz={13} c="var(--color-text-dim)" pl={4}>
++              /u/
++            </Text>
++          }
++          leftSectionWidth={36}
++          error={error}
++          style={{ flex: 1 }}
++          styles={{
++            ...inputStyles,
++            input: {
++              ...inputStyles.input,
++              fontFamily: "var(--font-mono)",
++              paddingLeft: 36,
++            },
++          }}
++          autoCapitalize="none"
++          autoCorrect="off"
++          spellCheck={false}
++        />
++        <Button
++          size="sm"
++          radius="md"
++          color="primary.6"
++          c="black"
++          disabled={error !== null}
++          onClick={() => setEditing(false)}
++        >
++          Uložit
++        </Button>
++      </Group>
++    );
++  }
++
++  return (
++    <UnstyledButton onClick={() => setEditing(true)} className="w-full">
++      <Group justify="space-between" wrap="nowrap">
++        <Text className="font-mono" fz={14} c="text.6" truncate>
++          {profileHost()}/u/<b>{handle}</b>
++        </Text>
++        <Text fz={13} c="primary.5" style={{ flexShrink: 0 }}>
++          Změnit
++        </Text>
++      </Group>
++    </UnstyledButton>
++  );
++}
++
++function AudienceCard({ value }: { value: Visibility }): ReactElement {
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const setVisibility = usePrototypeStore((state) => state.setVisibility);
++  const handle = usePrototypeStore((state) => state.handle);
++  const stats = usePrototypeStore((state) => state.stats);
++  const selected = visibility === value;
++  const color = STATE_COLOR[value];
++
++  return (
++    <Box
++      style={{
++        ...INSET,
++        borderColor: selected ? `color-mix(in srgb, ${color} 55%, transparent)` : "var(--mantine-color-inputs-5)",
++        backgroundColor: selected ? "var(--mantine-color-cards-6)" : "var(--mantine-color-cards-7)",
++        boxShadow: selected ? "var(--elev-panel)" : "none",
++        overflow: "hidden",
++      }}
++    >
++      <UnstyledButton onClick={() => setVisibility(value)} className="w-full" px="md" py={12}>
++        <Group gap="sm" wrap="nowrap" align="flex-start">
++          <Box
++            style={{
++              color: selected ? color : "var(--color-text-dim)",
++              marginTop: 2,
++              flexShrink: 0,
++            }}
++          >
++            {STATE_ICON[value]}
++          </Box>
++          <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
++            <Text fw={600} fz={15} c="text.6">
++              {VISIBILITY_LABEL[value]}
++            </Text>
++            <Text fz={12} c="var(--color-text-dim)" style={{ lineHeight: 1.4 }}>
++              {VISIBILITY_HINT[value]}
++            </Text>
++          </Stack>
++          <Box
++            style={{
++              width: 20,
++              height: 20,
++              borderRadius: 9999,
++              flexShrink: 0,
++              marginTop: 2,
++              display: "flex",
++              alignItems: "center",
++              justifyContent: "center",
++              backgroundColor: selected ? color : "transparent",
++              border: selected ? "none" : "1px solid var(--color-border-solid)",
++            }}
++          >
++            {selected && <Check size={13} color="black" />}
++          </Box>
++        </Group>
++      </UnstyledButton>
++
++      {/* What the chosen audience brings with it, and nothing of the other two. */}
++      {selected && value === "FOLLOWERS" && (
++        <Stack gap="sm" px="md" pb="md">
++          <Group gap="lg">
++            <Stack gap={0}>
++              <Text className="font-mono" fz={20} fw={700} c="text.6">
++                {stats.followers}
++              </Text>
++              <Text {...EYEBROW}>sledujících</Text>
++            </Stack>
++            <Stack gap={0}>
++              <Text className="font-mono" fz={20} fw={700} c={stats.pending > 0 ? "primary.5" : "text.6"}>
++                {stats.pending}
++              </Text>
++              <Text {...EYEBROW}>žádosti</Text>
++            </Stack>
++          </Group>
++          <Button
++            variant="outline"
++            color="primary.5"
++            radius="md"
++            size="xs"
++            rightSection={<ChevronRight size={14} />}
++            disabled
++          >
++            Spravovat sledující (ticket #124)
++          </Button>
++        </Stack>
++      )}
++      {selected && value === "PUBLIC" && (
++        <Stack gap="sm" px="md" pb="md">
++          <Group gap="lg">
++            <Stack gap={0}>
++              <Text className="font-mono" fz={20} fw={700} c="text.6">
++                {stats.followers}
++              </Text>
++              <Text {...EYEBROW}>sledujících</Text>
++            </Stack>
++            <Stack gap={0}>
++              <Text className="font-mono" fz={20} fw={700} c="text.6">
++                {stats.views}
++              </Text>
++              <Text {...EYEBROW}>zobrazení</Text>
++            </Stack>
++          </Group>
++          <LinkActions handle={handle} enabled={handleError(handle) === null} withShare withOpen size="xs" />
++        </Stack>
++      )}
++    </Box>
++  );
++}
++
++export function ShareDrawerC(): ReactElement {
++  const opened = usePrototypeStore((state) => state.drawerOpened);
++  const close = usePrototypeStore((state) => state.closeDrawer);
++  const visibility = usePrototypeStore((state) => state.visibility);
++  const sections = usePrototypeStore((state) => state.sections);
++  const toggleSection = usePrototypeStore((state) => state.toggleSection);
++  const toggleBike = usePrototypeStore((state) => state.toggleBike);
++  const bikes = useProfileBikes();
++
++  useOverlayBack(opened, close);
++
++  const rows: { key: SectionKey; label: string; hint: string }[] = [
++    { key: "components", label: "Komponenty", hint: "Typ dílu, značka, model" },
++    { key: "setup", label: "Setup", hint: "Tlaky, odpružení, profily" },
++    {
++      key: "history",
++      label: "Servisní historie",
++      hint: "Datum a úkony. Poznámky a přílohy nikdy.",
++    },
++  ];
++
++  return (
++    <Drawer opened={opened} onClose={close} title="Kdo vidí moji garáž" {...DRAWER_PROPS}>
++      <Stack gap="lg">
++        <Stack gap="sm">
++          {(["OFF", "FOLLOWERS", "PUBLIC"] as Visibility[]).map((value) => (
++            <AudienceCard key={value} value={value} />
++          ))}
++        </Stack>
++
++        {/* Nobody sees anything when OFF, so there is nothing to choose - the sheet ends here. */}
++        {visibility !== "OFF" && (
++          <>
++            <Stack gap={8}>
++              <Text {...EYEBROW}>{visibility === "PUBLIC" ? "Adresa" : "Jméno v appce"}</Text>
++              <Box style={INSET} px="md" py={12}>
++                <HandleRow />
++              </Box>
++            </Stack>
++
++            <Stack gap={8}>
++              <Text {...EYEBROW}>Co ukážeš</Text>
++              <Box style={INSET} py={4}>
++                {rows.map((row) => (
++                  <Group key={row.key} justify="space-between" wrap="nowrap" px="md" py={10}>
++                    <Stack gap={1} style={{ minWidth: 0 }}>
++                      <Text fw={600} fz={15} c="text.6">
++                        {row.label}
++                      </Text>
++                      <Text fz={12} c="var(--color-text-dim)">
++                        {row.hint}
++                      </Text>
++                    </Stack>
++                    <Switch
++                      withThumbIndicator={false}
++                      checked={sections[row.key]}
++                      onChange={() => toggleSection(row.key)}
++                      styles={SWITCH_STYLES(sections[row.key])}
++                    />
++                  </Group>
++                ))}
++                {sections.history && (
++                  <Group
++                    justify="space-between"
++                    wrap="nowrap"
++                    px="md"
++                    py={10}
++                    style={{
++                      borderTop: "1px dashed var(--mantine-color-inputs-5)",
++                    }}
++                  >
++                    <Stack gap={1} style={{ minWidth: 0 }}>
++                      <Text fw={600} fz={15} c="text.6">
++                        … včetně cen
++                      </Text>
++                      <Text fz={12} c="var(--color-text-dim)">
++                        Cena servisu, měsíční součty, útrata
++                      </Text>
++                    </Stack>
++                    <Switch
++                      withThumbIndicator={false}
++                      checked={sections.costs}
++                      onChange={() => toggleSection("costs")}
++                      styles={SWITCH_STYLES(sections.costs)}
++                    />
++                  </Group>
++                )}
++              </Box>
++            </Stack>
++
++            <Stack gap={8}>
++              <Text {...EYEBROW}>Která kola</Text>
++              <Box style={INSET} py={4}>
++                {bikes.map(({ bike, shared }) => (
++                  <Group key={bike.id} justify="space-between" wrap="nowrap" px="md" py={8}>
++                    <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
++                      {bike.image_url ? (
++                        <Image
++                          src={bike.image_url}
++                          alt=""
++                          w={THUMB}
++                          h={THUMB}
++                          radius="md"
++                          fit="cover"
++                          style={{
++                            flexShrink: 0,
++                            filter: shared ? "none" : "grayscale(1)",
++                            opacity: shared ? 1 : 0.5,
++                          }}
++                        />
++                      ) : (
++                        <Box
++                          w={THUMB}
++                          h={THUMB}
++                          style={{
++                            borderRadius: 8,
++                            backgroundColor: "var(--mantine-color-cards-5)",
++                            flexShrink: 0,
++                          }}
++                        />
++                      )}
++                      <Stack gap={0} style={{ minWidth: 0 }}>
++                        <Text fw={500} fz={14} c="text.6" truncate>
++                          {bikeTitle(bike)}
++                        </Text>
++                        <Text
++                          fz={11}
++                          className="font-mono"
++                          c={shared ? "var(--mantine-color-green-8)" : "var(--color-text-dim)"}
++                        >
++                          {shared ? "sdílené" : "skryté"}
++                        </Text>
++                      </Stack>
++                    </Group>
++                    <Switch
++                      withThumbIndicator={false}
++                      checked={shared}
++                      onChange={() => toggleBike(bike.id)}
++                      styles={SWITCH_STYLES(shared)}
++                    />
++                  </Group>
++                ))}
++              </Box>
++              <Text fz={12} c="var(--color-text-dim)">
++                Archivovaná kola ven nejdou nikdy.
++              </Text>
++            </Stack>
++          </>
++        )}
++      </Stack>
++    </Drawer>
++  );
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/handle.ts b/_frontend/bikecheck/src/features/profile_prototype/handle.ts
+new file mode 100644
+index 0000000..0d201af
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/handle.ts
+@@ -0,0 +1,53 @@
++// PROTOTYPE #121 — throwaway. The handle rules from #114, enough for inline validation.
++import type { User } from "@/features/users/users.types";
++
++const HANDLE_PATTERN = /^[a-z0-9_-]{3,30}$/;
++
++// Brand words and the app's own routes (#114).
++const RESERVED = new Set([
++  "bikecheck",
++  "admin",
++  "api",
++  "app",
++  "support",
++  "bikes",
++  "service",
++  "rides",
++  "chat",
++  "settings",
++  "notifications",
++  "reports",
++  "legal",
++  "login",
++  "profile",
++  "r",
++  "u",
++]);
++
++export function handleError(handle: string): string | null {
++  if (handle.length < 3) return "Aspoň 3 znaky";
++  if (handle.length > 30) return "Nejvíc 30 znaků";
++  if (!HANDLE_PATTERN.test(handle)) return "Jen a–z, 0–9, pomlčka a podtržítko";
++  if (RESERVED.has(handle)) return "Tohle jméno je rezervované";
++  return null;
++}
++
++// Strava username first, then the name slugged (#114).
++export function suggestHandle(user: User | null): string {
++  const source = user?.strava_username ?? user?.name ?? "jarda";
++  const slug = source
++    .toLowerCase()
++    .normalize("NFD")
++    .replace(/[̀-ͯ]/g, "")
++    .replace(/[^a-z0-9_-]+/g, "-")
++    .replace(/^-+|-+$/g, "");
++  return slug.length >= 3 ? slug : "rider";
++}
++
++export function profileUrl(handle: string): string {
++  return `https://bikecheck.app/u/${handle}`;
++}
++
++export function profileHost(): string {
++  return "bikecheck.app";
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/prototype.store.ts b/_frontend/bikecheck/src/features/profile_prototype/prototype.store.ts
+new file mode 100644
+index 0000000..98afbe9
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/prototype.store.ts
+@@ -0,0 +1,98 @@
++// PROTOTYPE #121 — throwaway. In-memory state shared by every surface of the share-profile
++// prototype, so flipping visibility in the drawer changes the dashboard card, Settings row
++// and badge at once. Nothing here talks to the backend.
++import { create } from "zustand";
++import { suggestHandle } from "./handle";
++
++export type Visibility = "OFF" | "FOLLOWERS" | "PUBLIC";
++export type Variant = "A" | "B" | "C";
++export type SectionKey = "components" | "setup" | "history" | "costs";
++
++export const VARIANTS: Variant[] = ["A", "B", "C"];
++export const VARIANT_NAMES: Record<Variant, string> = {
++  A: "Ovládací panel",
++  B: "Odkaz napřed",
++  C: "Kdo vidí co",
++};
++
++export const VISIBILITY_LABEL: Record<Visibility, string> = {
++  OFF: "Vypnuto",
++  FOLLOWERS: "Jen sledující",
++  PUBLIC: "Veřejný",
++};
++
++export const VISIBILITY_HINT: Record<Visibility, string> = {
++  OFF: "Nikdo nic nevidí. Nastavení i adresa zůstávají.",
++  FOLLOWERS: "Vidí jen schválení sledující v appce. Žádný webový odkaz.",
++  PUBLIC: "Kdokoli s odkazem. V appce sledování bez schvalování.",
++};
++
++export interface Stats {
++  followers: number;
++  pending: number;
++  views: number;
++}
++
++interface PrototypeStore {
++  variant: Variant;
++  setVariant: (variant: Variant) => void;
++  visibility: Visibility;
++  setVisibility: (visibility: Visibility) => void;
++  handle: string;
++  setHandle: (handle: string) => void;
++  sections: Record<SectionKey, boolean>;
++  toggleSection: (key: SectionKey) => void;
++  // Default is shared (#115: bikes.is_shared default true), so only the exceptions are kept.
++  unsharedBikeIds: number[];
++  toggleBike: (id: number) => void;
++  stats: Stats;
++  drawerOpened: boolean;
++  openDrawer: () => void;
++  closeDrawer: () => void;
++}
++
++export const usePrototypeStore = create<PrototypeStore>((set) => ({
++  variant: "A",
++  setVariant: (variant) => set({ variant }),
++  visibility: "PUBLIC",
++  setVisibility: (visibility) => set({ visibility }),
++  handle: suggestHandle(null),
++  setHandle: (handle) => set({ handle }),
++  sections: { components: true, setup: true, history: true, costs: false },
++  toggleSection: (key) =>
++    set((state) => {
++      const next = { ...state.sections, [key]: !state.sections[key] };
++      // Costs ride on history (#117): switching history off takes costs with it.
++      if (key === "history" && !next.history) next.costs = false;
++      return { sections: next };
++    }),
++  unsharedBikeIds: [],
++  toggleBike: (id) =>
++    set((state) => ({
++      unsharedBikeIds: state.unsharedBikeIds.includes(id)
++        ? state.unsharedBikeIds.filter((other) => other !== id)
++        : [...state.unsharedBikeIds, id],
++    })),
++  stats: { followers: 14, pending: 2, views: 128 },
++  drawerOpened: false,
++  openDrawer: () => set({ drawerOpened: true }),
++  closeDrawer: () => set({ drawerOpened: false }),
++}));
++
++// Which figures a state has: requests only exist while approval does, views only while a
++// web page does (#115 view_count counts the web page, FOLLOWERS has none).
++export function statsFor(visibility: Visibility, stats: Stats): { label: string; value: number }[] {
++  if (visibility === "FOLLOWERS") {
++    return [
++      { label: "Sledující", value: stats.followers },
++      { label: "Žádosti", value: stats.pending },
++    ];
++  }
++  if (visibility === "PUBLIC") {
++    return [
++      { label: "Sledující", value: stats.followers },
++      { label: "Zobrazení", value: stats.views },
++    ];
++  }
++  return [];
++}
+diff --git a/_frontend/bikecheck/src/features/profile_prototype/shared.ts b/_frontend/bikecheck/src/features/profile_prototype/shared.ts
+new file mode 100644
+index 0000000..1eaa6bd
+--- /dev/null
++++ b/_frontend/bikecheck/src/features/profile_prototype/shared.ts
+@@ -0,0 +1,78 @@
++// PROTOTYPE #121 — throwaway. Bits every variant needs verbatim: the drawer motion from
++// docs/conventions/drawers.md, the card surface, the bike list.
++import type { CSSProperties } from "react";
++import { useBikes } from "@/features/bikes/bikes.queries";
++import type { Bike } from "@/features/bikes/bikes.types";
++import { usePrototypeStore, type Visibility } from "./prototype.store";
++
++export const DRAWER_Z_INDEX = 320;
++
++export const DRAWER_PROPS = {
++  position: "bottom" as const,
++  radius: "lg" as const,
++  zIndex: DRAWER_Z_INDEX,
++  transitionProps: {
++    duration: 400,
++    exitDuration: 400,
++    transition: "slide-up" as const,
++    timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
++  },
++  overlayProps: { backgroundOpacity: 0.7, blur: 4 },
++  styles: {
++    content: {
++      backgroundColor: "var(--mantine-color-cards-6)",
++      height: "auto",
++      maxHeight: "92dvh",
++    },
++    header: { backgroundColor: "var(--mantine-color-cards-6)" },
++    body: {
++      paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
++    },
++    title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
++  },
++};
++
++// docs/ui/card-surface.md — a panel.
++export const PANEL: CSSProperties = {
++  backgroundColor: "var(--mantine-color-cards-6)",
++  backgroundImage: "var(--card-glow)",
++  border: "1px solid var(--color-border-subtle)",
++  boxShadow: "var(--elev-panel)",
++};
++
++// A block inside the sheet, one step below the sheet's own surface.
++export const INSET: CSSProperties = {
++  backgroundColor: "var(--mantine-color-cards-7)",
++  border: "1px solid var(--mantine-color-inputs-5)",
++  borderRadius: "0.75rem",
++};
++
++export const EYEBROW = {
++  fz: 11,
++  fw: 400,
++  tt: "uppercase" as const,
++  lts: "0.08em",
++  c: "var(--color-text-dim)",
++  className: "font-mono",
++};
++
++export const STATE_COLOR: Record<Visibility, string> = {
++  OFF: "var(--color-text-dim)",
++  FOLLOWERS: "var(--mantine-color-blue-4)",
++  PUBLIC: "var(--mantine-color-green-8)",
++};
++
++export interface ProfileBike {
++  bike: Bike;
++  shared: boolean;
++}
++
++// Every bike in use, with whether it goes out. Archived bikes never appear (#115).
++export function useProfileBikes(): ProfileBike[] {
++  const { data: bikes } = useBikes();
++  const unshared = usePrototypeStore((state) => state.unsharedBikeIds);
++  return (bikes ?? []).map((bike) => ({
++    bike,
++    shared: !unshared.includes(bike.id),
++  }));
++}
+diff --git a/_frontend/bikecheck/src/features/settings_page/Settings.tsx b/_frontend/bikecheck/src/features/settings_page/Settings.tsx
+index 6963dd2..7d3b8a2 100644
+--- a/_frontend/bikecheck/src/features/settings_page/Settings.tsx
++++ b/_frontend/bikecheck/src/features/settings_page/Settings.tsx
+@@ -13,6 +13,8 @@ import { FALLBACK_CURRENCY, SUPPORTED_CURRENCIES } from "@/utils/money";
+ import { ChangePasswordDrawer } from "./ChangePasswordDrawer";
+ import { DeleteAccountDrawer } from "./DeleteAccountDrawer";
+ import { ProfileEditDrawer } from "./ProfileEditDrawer";
++// PROTOTYPE #121
++import { ProfileAvatarFrame, ProfileNameBadge, SettingsShareSection } from "@/features/profile_prototype/SettingsShare";
+ 
+ // Half the gap between two rows, and half the gap from the card's edge to its first row: a
+ // row pays it on both sides and the card pays it once more, so every space on a card is the
+@@ -87,6 +89,8 @@ export function Settings(): ReactElement | null {
+     <Stack gap={0} style={{ opacity: leaving ? 0 : 1, transition: "opacity 220ms ease-out" }}>
+       {/* Not a card: this names the rider, it does not set anything. */}
+       <Stack align="center" gap={6} pt="lg" pb="md" px="md">
++        {/* PROTOTYPE #121 */}
++        <ProfileAvatarFrame>
+         <Avatar
+           src={user.avatar_url}
+           name={user.name}
+@@ -99,10 +103,13 @@ export function Settings(): ReactElement | null {
+             } as CSSProperties
+           }
+         />
++        </ProfileAvatarFrame>
+         {/* The name stands a little further off the avatar than the email stands off the name. */}
+         <Text fw={700} fz={20} c="text.6" ta="center" mt={6} style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
+           {user.name}
+         </Text>
++        {/* PROTOTYPE #121 */}
++        <ProfileNameBadge />
+         <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
+           {user.email}
+         </Text>
+@@ -166,6 +173,8 @@ export function Settings(): ReactElement | null {
+       <div className="mx-3 mb-3 mt-0">
+         <StravaStatusCard allowDisconnect />
+       </div>
++      {/* PROTOTYPE #121 */}
++      <SettingsShareSection />
+ 
+       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
+         {t("settings.sectionGeneral")}
+diff --git a/_frontend/bikecheck/src/layout/AppLayout.tsx b/_frontend/bikecheck/src/layout/AppLayout.tsx
+index a28e5af..44b1411 100644
+--- a/_frontend/bikecheck/src/layout/AppLayout.tsx
++++ b/_frontend/bikecheck/src/layout/AppLayout.tsx
+@@ -21,6 +21,9 @@ import { useUnreadNotifications } from "@/features/notifications/notifications.q
+ import { tapFeedback } from "@/utils/haptics";
+ import { Fab } from "./Fab";
+ import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
++// PROTOTYPE #121 — remove with features/profile_prototype.
++import { ProfilePrototypeMount } from "@/features/profile_prototype/ProfilePrototypeMount";
++import { BikesHeaderShareIcon } from "@/features/profile_prototype/BikesShareEntry";
+ 
+ const BikeIcon = bikecheckIconType("BikeIcon");
+ const BikeIconFill = bikecheckIconType("BikeIcon_fill");
+@@ -297,6 +300,8 @@ export function AppLayout(): ReactElement {
+                 </Group>
+                 {/* The bell first, the rider last: the avatar is the corner the thumb owns. */}
+                 <Group gap="sm">
++                  {/* PROTOTYPE #121 */}
++                  <BikesHeaderShareIcon />
+                   {/* NOTIFICATION ICON */}
+                   <ActionIcon
+                     variant="transparent"
+@@ -381,6 +386,8 @@ export function AppLayout(): ReactElement {
+         />
+       </AppShell.Main>
+ 
++      {/* PROTOTYPE #121 */}
++      <ProfilePrototypeMount />
+       {/* Hides the create action on sub-pages. */}
+       {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
+       {/* --------- FOOTER --------- */}

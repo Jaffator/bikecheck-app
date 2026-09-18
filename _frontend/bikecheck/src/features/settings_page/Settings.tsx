@@ -13,6 +13,8 @@ import { FALLBACK_CURRENCY, SUPPORTED_CURRENCIES } from "@/utils/money";
 import { ChangePasswordDrawer } from "./ChangePasswordDrawer";
 import { DeleteAccountDrawer } from "./DeleteAccountDrawer";
 import { ProfileEditDrawer } from "./ProfileEditDrawer";
+// PROTOTYPE #121
+import { ProfileNameBadge, SettingsShareSection } from "@/features/profile_prototype/SettingsShare";
 
 // Half the gap between two rows, and half the gap from the card's edge to its first row: a
 // row pays it on both sides and the card pays it once more, so every space on a card is the
@@ -103,6 +105,8 @@ export function Settings(): ReactElement | null {
         <Text fw={700} fz={20} c="text.6" ta="center" mt={6} style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
           {user.name}
         </Text>
+        {/* PROTOTYPE #121 */}
+        <ProfileNameBadge />
         <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
           {user.email}
         </Text>
@@ -166,6 +170,8 @@ export function Settings(): ReactElement | null {
       <div className="mx-3 mb-3 mt-0">
         <StravaStatusCard allowDisconnect />
       </div>
+      {/* PROTOTYPE #121 */}
+      <SettingsShareSection />
 
       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
         {t("settings.sectionGeneral")}
