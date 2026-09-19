@@ -1,0 +1,1708 @@
+<!doctype html>
+<html lang="cs" data-lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orbea Rallon M-Team — BikeCheck report</title>
+    <meta
+      name="description"
+      content="Živý BikeCheck report: kompletní osazení, nájezd a servisní historie kola. Stránka se aktualizuje sama, jak majitel mění data v aplikaci."
+    />
+
+    <!-- The share link IS the product surface here: it gets pasted into a bazar
+         listing, a forum signature or a WhatsApp thread, so the link preview is
+         part of the design, not an afterthought. noindex because a public link
+         is not the same thing as a published page — the owner shares it, search
+         engines don't get to. -->
+    <meta property="og:title" content="Orbea Rallon M-Team — BikeCheck report" />
+    <meta
+      property="og:description"
+      content="4 187 km · 32 komponent · 11 servisů. Živý přehled celého stroje a jeho údržby."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="assets/img_ready/rallon.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="robots" content="noindex" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=Martian+Mono:wdth,wght@75..112.5,400..700&display=swap"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              /* The site's ink ramp carries the ground; the app's own card and
+                 input colours slot in on top of it, so the report reads as the
+                 same product as the app while sitting on the marketing site's
+                 near-black. */
+              ink: { 950: "#0A0A0B", 900: "#101012", 850: "#17181A", 800: "#1F2023", 700: "#2C2E31", 600: "#43464A" },
+              card: { DEFAULT: "#262524", alt: "#2D2722", inset: "#13100D" },
+              gold: { 300: "#E8DE93", 400: "#DED37A", 500: "#CEC053", 600: "#A69A3F", 700: "#7B722E" },
+              /* paper.dim is the secondary text colour ON CARDS (5.6:1 on
+                 #262524). paper.faint is the app's #7E7E83 and is only ever
+                 used on the page ground, where it measures 4.9:1 — on a card it
+                 drops to 3.8:1 and fails, so the two are not interchangeable. */
+              paper: { DEFAULT: "#E0E0E0", dim: "#9C9C9E", faint: "#7E7E83" },
+              dark: "#050505",
+              sage: "#7FB069",
+              rust: "#D08248",
+            },
+            fontFamily: {
+              display: ["Archivo", "system-ui", "sans-serif"],
+              body: ["Archivo", "system-ui", "sans-serif"],
+              mono: ['"Martian Mono"', "ui-monospace", "monospace"],
+            },
+            maxWidth: { content: "1240px" },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        color-scheme: dark;
+        /* Density 7/10 — this is a reference document, read by someone
+           comparing spec lines, not a marketing page. */
+        --space-1: 8px;
+        --space-2: 12px;
+        --space-3: 16px;
+        --space-4: 24px;
+        --space-5: 32px;
+        --space-6: 48px;
+      }
+      html {
+        scroll-behavior: smooth;
+        /* Sticky header + the mobile category rail both overlap anchors. */
+        scroll-padding-top: 140px;
+      }
+      @media (min-width: 1024px) {
+        html {
+          scroll-padding-top: 96px;
+        }
+      }
+      body {
+        background: #0a0a0b;
+      }
+
+      /* Both faces are variable on width as well as weight — headings run a
+         touch narrow so long Czech component names keep their shape, and the
+         mono runs narrow because it sets at 10-13px in dense spec rows. */
+      .font-display {
+        font-stretch: 96%;
+      }
+      .font-mono {
+        font-stretch: 82%;
+      }
+
+      .hairline {
+        border-color: rgba(255, 255, 255, 0.075);
+      }
+      .hairline-strong {
+        border-color: rgba(255, 255, 255, 0.13);
+      }
+
+      :focus-visible {
+        outline: 2px solid #cec053;
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+
+      /* Anodised grain, same treatment as the marketing site so the two read as
+         one surface. */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      .ambient {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          radial-gradient(900px 620px at 78% 2%, rgba(206, 192, 83, 0.055), transparent 62%),
+          radial-gradient(820px 600px at 8% 26%, rgba(64, 67, 72, 0.3), transparent 66%),
+          radial-gradient(920px 640px at 92% 66%, rgba(64, 67, 72, 0.26), transparent 64%),
+          radial-gradient(760px 540px at 16% 94%, rgba(206, 192, 83, 0.035), transparent 62%);
+      }
+
+      .glass {
+        background: linear-gradient(
+          155deg,
+          rgba(255, 255, 255, 0.055),
+          rgba(255, 255, 255, 0.018) 45%,
+          rgba(255, 255, 255, 0.008)
+        );
+        backdrop-filter: blur(18px) saturate(118%);
+        -webkit-backdrop-filter: blur(18px) saturate(118%);
+        border: 1px solid rgba(255, 255, 255, 0.075);
+        box-shadow:
+          inset 0 1px 0 0 rgba(255, 255, 255, 0.085),
+          0 24px 60px -30px rgba(0, 0, 0, 0.95);
+      }
+      @supports not (backdrop-filter: blur(1px)) {
+        .glass {
+          background: #17181a;
+        }
+      }
+
+      /* Component cards use the app's own card fill rather than glass: these are
+         data rows, and a warm opaque ground keeps 32 of them legible where 32
+         stacked translucent panels would turn to soup. The alternating fill is
+         the app's cards2 doing what it is for — banding a long list. */
+      .part-card {
+        background: #262524;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition:
+          border-color 0.2s ease,
+          background-color 0.2s ease;
+      }
+      .part-card:nth-of-type(even) {
+        background: #2d2722;
+      }
+      .part-card:hover {
+        border-color: rgba(206, 192, 83, 0.28);
+      }
+      /* Only the chevron rotates; the card's bounds never change on hover or
+         press, so running down a list of 32 rows never makes the page jitter. */
+      .part-card[open] {
+        border-color: rgba(206, 192, 83, 0.22);
+      }
+      .part-card[open] .part-chev {
+        transform: rotate(180deg);
+      }
+      .part-chev {
+        transition: transform 0.22s ease;
+      }
+      .part-card > summary {
+        list-style: none;
+        cursor: pointer;
+        min-height: 56px; /* 44px target with room to spare */
+      }
+      .part-card > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      /* Live pulse. The dot is decorative — the status text beside it is what
+         announces — so switching it off under reduced motion costs nothing. */
+      .live-dot::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 9999px;
+        background: currentColor;
+        animation: pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.55;
+        }
+        70%,
+        100% {
+          transform: scale(2.6);
+          opacity: 0;
+        }
+      }
+
+      /* A value that just changed gets one gold wash and settles. This is the
+         whole point of a live report: you have to see what moved without
+         diffing the page against your memory of it. */
+      @keyframes flash {
+        0% {
+          background-color: rgba(206, 192, 83, 0.28);
+        }
+        100% {
+          background-color: transparent;
+        }
+      }
+      .just-changed {
+        animation: flash 2.6s ease-out;
+        border-radius: 4px;
+        box-decoration-break: clone;
+      }
+
+      .js .reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        transition:
+          opacity 0.5s ease,
+          transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+      }
+      .js .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* Mobile category rail: the chips scroll horizontally, but the PAGE never
+         does. This is the only horizontally scrolling thing on the page. */
+      .rail {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .rail::-webkit-scrollbar {
+        display: none;
+      }
+      .chip[aria-current="true"] {
+        background: #cec053;
+        color: #050505;
+        border-color: #cec053;
+      }
+      /* Desktop rail: the active category is marked by a gold edge AND a colour
+         change, never by colour alone. */
+      .navlink[aria-current="true"] {
+        color: #cec053;
+        border-left-color: #cec053;
+        background: rgba(206, 192, 83, 0.06);
+      }
+
+      /* Long model names, serials and URLs wrap instead of widening the row. */
+      .token {
+        min-inline-size: 0;
+        overflow-wrap: anywhere;
+      }
+
+      [data-lang="cs"] .lang-en {
+        display: none;
+      }
+      [data-lang="en"] .lang-cs {
+        display: none;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .js .reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        .live-dot::after {
+          animation: none;
+        }
+        /* The change still has to be findable without the wash. */
+        .just-changed {
+          animation: none;
+          outline: 2px solid #cec053;
+          outline-offset: 2px;
+        }
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
+      /* ---- A4 print / PDF export -------------------------------------------
+         The report exists to be handed over — to a buyer, to a workshop — and a
+         dark page burns a cartridge. Printing flips the document to paper white
+         and uses the app's textDark token, which is exactly what that token is
+         for. Everything interactive drops out, every disclosure opens, and the
+         printed sheet carries the full spec rather than a screenshot of a list
+         that was collapsed when you hit print. */
+      @media print {
+        @page {
+          size: A4;
+          margin: 14mm 12mm;
+        }
+        :root {
+          color-scheme: light;
+        }
+        body {
+          background: #fff !important;
+          color: #050505 !important;
+        }
+        body::after,
+        .ambient,
+        .no-print {
+          display: none !important;
+        }
+        /* A section still waiting on its scroll reveal is opacity:0, and the
+           printer does not scroll. Without this the categories the reader never
+           reached print as blank space. */
+        .js .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        .glass,
+        .part-card,
+        .part-card:nth-of-type(even) {
+          background: #fff !important;
+          border: 1px solid #c9c9c9 !important;
+          box-shadow: none !important;
+          backdrop-filter: none !important;
+        }
+        .part-card > summary {
+          min-height: 0;
+        }
+        /* A closed <details> hides its content from the printer too, so the
+           beforeprint handler opens every row. These two are the safety net for
+           browsers that lay out print before that handler settles. */
+        details > .part-detail {
+          display: block !important;
+          content-visibility: visible !important;
+        }
+        .part-chev {
+          display: none !important;
+        }
+        h1,
+        h2,
+        h3,
+        .text-paper,
+        .text-paper-dim,
+        .text-paper-faint {
+          color: #050505 !important;
+        }
+        .text-gold-500,
+        .text-gold-400,
+        .text-gold-300 {
+          color: #7b722e !important;
+        }
+        section,
+        .part-card,
+        .svc-row {
+          break-inside: avoid;
+        }
+        .print-break {
+          break-before: page;
+        }
+        a[href^="http"]::after {
+          content: " (" attr(href) ")";
+          font-size: 9px;
+          color: #555;
+        }
+      }
+    </style>
+
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+
+  <body class="bg-ink-950 text-paper font-body antialiased">
+    <div class="ambient" aria-hidden="true"></div>
+
+    <!-- Icon sheet. One family, 24px box, 1.75 stroke, no fills — so a category
+         icon never competes with a data value for attention. -->
+    <svg width="0" height="0" class="absolute" aria-hidden="true" focusable="false">
+      <symbol id="bc-mark" viewBox="0 0 318 318">
+        <path
+          d="M0 19.3902C0 8.68131 8.66844 0 19.3615 0H298.167C308.86 0 317.529 8.68131 317.529 19.3902V298.61C317.529 309.319 308.86 318 298.167 318H19.3615C8.66844 318 0 309.319 0 298.61V19.3902Z"
+          fill="#CEC053"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M255.027 154.366C280.342 154.809 300.517 175.225 300.086 199.968C299.655 224.71 278.781 244.411 253.465 243.969C250.171 243.911 246.963 243.513 243.877 242.814L242.905 242.797L227.849 238.672L208.121 231.571L189.302 226.417L174.213 224.222L143.025 223.677V223.639L138.954 223.569L138.964 223.098L139.121 222.978C139.139 222.96 139.161 222.943 139.185 222.931L141.834 220.947C141.857 220.912 141.887 220.874 141.917 220.842C141.961 220.797 142.01 220.746 142.1 220.664C142.155 220.615 142.209 220.59 142.246 220.574C142.267 220.564 142.274 220.56 142.274 220.56L142.305 220.53C142.322 220.511 142.357 220.474 142.397 220.443C142.448 220.404 142.477 220.372 142.543 220.314L142.679 220.208C142.75 220.145 142.799 220.112 142.849 220.079L142.891 220.053L142.917 220.036L142.934 220.024L142.972 219.988L143 219.96L143.025 219.915L143.036 219.898L143.052 219.873L143.065 219.856L143.084 219.837L143.091 219.818L147.189 216.94L147.584 216.644L147.593 216.656L156.493 210.401L175.63 197.224L193.823 184.029L210.091 172.732L223.474 164.279L224.548 163.863L230.734 160.676C232.135 159.857 233.585 159.111 235.077 158.44L235.662 158.138C235.731 158.103 235.806 158.087 235.879 158.087C241.733 155.587 248.219 154.248 255.027 154.366ZM253.181 178.864C241.699 178.664 232.23 187.791 232.029 199.25C231.83 210.709 240.976 220.162 252.459 220.363C263.942 220.564 273.413 211.437 273.613 199.977C273.813 188.518 264.665 179.064 253.181 178.864Z"
+          fill="#22333B"
+          fill-opacity="0.96"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M256.812 71.5602L255.933 75.3493L247.876 83.1546L247.938 83.2228L245.325 85.6257L241.19 89.6325C235.199 92.3233 230.948 98.5303 230.821 105.828C230.649 115.725 238.125 123.88 247.52 124.045C253.354 124.146 258.554 121.143 261.701 116.483L267.185 112.123L271.635 108.097L280.936 99.4451L283.772 99.3958L284.801 104.096L285.115 122.015L280.62 135.302L274.188 145.792L270.716 150.098L261.8 148.828L261.771 148.824L245.624 148.542L245.577 148.551L238.936 149.85L238.904 149.856L238.876 149.867L232.218 152.107L232.179 152.123L232.143 152.141L223.731 156.745L220.515 158.046L205.559 167.739L188.761 180.295L173.839 191.876L151.42 207.36L138.338 216.078L117.744 227.758L104.629 234.59L85.8425 241.52L81.1325 242.545L78.8107 242.584C75.3868 243.283 71.8265 243.623 68.1751 243.56C65.706 243.517 63.2835 243.289 60.924 242.895L60.3416 242.906L59.0559 242.545C57.1957 242.158 55.3763 241.668 53.6067 241.077C33.6003 235.871 18.9931 217.546 19.3686 196.004C19.8091 170.741 40.689 150.62 66.0045 151.062C70.2779 151.137 74.4041 151.795 78.3096 152.956C88.1932 156.871 99.5721 159.197 111.71 159.409C126.644 159.67 140.541 156.692 151.997 151.407L150.494 154.543L139.334 165.114L121.608 178.631L113.336 183.91C113.274 183.947 113.214 183.985 113.155 184.026L113.136 184.037C111.676 185.04 111.076 186.917 111.795 188.53C112.402 189.889 113.775 190.678 115.223 190.647L114.977 190.697C115.024 190.942 115.069 191.189 115.112 191.435L116.868 190.312L116.577 190.373C116.627 190.353 116.677 190.332 116.726 190.31C116.898 190.234 117.062 190.145 117.216 190.049L117.312 190.03L126.434 184.207L143.231 171.651L152.88 162.585L152.863 162.568L156.181 159.369L156.247 159.159L163.691 152.426L173.856 139.042L181.187 125.705L185.581 106.76L191.053 95.3436L199.376 84.821L208.71 78.0552L219.953 72.2003L227.48 70.1817L249.218 69.8049L256.812 71.5602ZM66.9952 175.61C55.5118 175.41 46.041 184.537 45.8413 195.997C45.6421 207.456 54.7882 216.907 66.2711 217.108C77.7541 217.309 87.2266 208.183 87.4269 196.724C87.6267 185.264 78.4784 175.811 66.9952 175.61Z"
+          fill="#22333B"
+          fill-opacity="0.96"
+        />
+      </symbol>
+
+        <symbol id="i-suspension" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3h6M9 21h6M12 3v3M12 18v3M8 7.5l8 2-8 2 8 2-8 2" />
+        </symbol>
+        <symbol id="i-frame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 18l4.5-9H17l-3.5 9zM9.5 9L7.5 5M17 9l2.5 9M5 18h13" />
+        </symbol>
+        <symbol id="i-cockpit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8h3.5l2 3.5h7l2-3.5H21M7 8v7M17 8v7" />
+        </symbol>
+        <symbol id="i-saddle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11c4.5-4 13.5-4 18 0-3 3.5-7 4.5-9 4.5S6 14.5 3 11zM12 15.5V21" />
+        </symbol>
+        <symbol id="i-wheels" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="2.5" />
+          <path d="M12 3v6.5M12 14.5V21M3 12h6.5M14.5 12H21" />
+        </symbol>
+        <symbol id="i-drivetrain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="7.5" />
+          <circle cx="12" cy="12" r="2.5" />
+          <path d="M12 4.5v-2M12 21.5v-2M4.5 12h-2M21.5 12h-2M6.7 6.7L5.3 5.3M18.7 18.7l-1.4-1.4M17.3 6.7l1.4-1.4M5.3 18.7l1.4-1.4" />
+        </symbol>
+        <symbol id="i-brakes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 3.2v3M12 17.8v3M3.2 12h3M17.8 12h3" stroke-dasharray="1 2.5" />
+        </symbol>
+        <symbol id="i-ebike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="7.5" width="16" height="9" rx="2.5" />
+          <path d="M21.5 11v2M11 10l-2 3h3l-2 3" />
+        </symbol>
+        <symbol id="i-other" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="M14.5 3.5a5 5 0 00-6.2 6.2L3.5 14.5a2 2 0 002.8 2.8l4.8-4.8a5 5 0 006.2-6.2L14.5 9.2 12.4 9l-.2-2.1z"
+          />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12.5l4.5 4.5L19 7.5" />
+        </symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9.5l6 6 6-6" />
+        </symbol>
+        <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13.5a4 4 0 006 .5l3-3a4 4 0 00-5.7-5.7L11.5 7" />
+          <path d="M14 10.5a4 4 0 00-6-.5l-3 3a4 4 0 005.7 5.7L12.5 17" />
+        </symbol>
+        <symbol id="i-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 9V3.5h10V9M7 18H5a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2" />
+          <rect x="7" y="14.5" width="10" height="6" rx="1" />
+        </symbol>
+        <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20l6.5-6.5M20 5.5l-3 3-2.5-2.5 3-3a4.5 4.5 0 00-5.6 5.6L4.5 15.4a2.2 2.2 0 003.1 3.1l6.8-6.8A4.5 4.5 0 0020 5.5z" />
+        </symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+          <path d="M3.5 10h17M8 3v4M16 3v4" />
+        </symbol>
+    </svg>
+
+    <a
+      href="#report"
+      class="sr-only focus:not-sr-only focus:absolute focus:z-[120] focus:left-4 focus:top-4 focus:rounded-lg focus:bg-gold-500 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-dark"
+    >
+      <span class="lang-cs">Přejít na obsah</span><span class="lang-en">Skip to content</span>
+    </a>
+
+    <!-- ================= HEADER =================
+         Slim and sticky. It carries three things only: whose report this is,
+         whether it is currently live, and the two things a reader actually
+         does with it — print it, or pass the link on. -->
+    <!-- The bar sits on a ground of the same near-black, so it needs its own
+         surface to read as a bar at all: a lifted fill, a stronger bottom edge
+         and a shadow that separates it from whatever scrolls underneath. -->
+    <header
+      class="sticky top-0 z-50 border-b hairline-strong bg-ink-850/95 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.9)] backdrop-blur-xl no-print"
+    >
+      <div class="mx-auto flex max-w-content items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
+        <a href="#report" class="flex min-h-[44px] shrink-0 items-center gap-2.5">
+          <svg class="size-7 rounded-md" aria-hidden="true"><use href="#bc-mark" /></svg>
+          <span class="hidden text-[15px] font-semibold tracking-tight font-display sm:block">BikeCheck</span>
+        </a>
+
+        <span class="hidden h-5 w-px bg-white/10 sm:block" aria-hidden="true"></span>
+
+        <!-- paper-faint measured 4.9:1 on the page ground but only 4.4:1 once
+             the bar got its own lighter surface — so this label moves to dim. -->
+        <p class="hidden font-mono text-[10px] uppercase tracking-[0.16em] text-paper-dim sm:block">
+          <span class="lang-cs">Živý report</span><span class="lang-en">Live report</span>
+        </p>
+
+        <div class="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <!-- The single live region on the page. One atomic status message
+               that says what changed and when, never a bare number, and it
+               never moves focus. Every other badge here is inert on purpose.
+               It grows when something updates ("Aktualizováno v 15:52 · nájezd
+               a řetěz"), so it has to be the part that gives way on a narrow
+               screen — never the brand or the controls. -->
+          <p
+            id="live-status"
+            role="status"
+            aria-atomic="true"
+            class="flex min-w-0 items-center gap-2 rounded-full border hairline bg-card-inset px-2.5 py-1.5 sm:px-3"
+          >
+            <span id="live-dot" class="relative block size-1.5 shrink-0 rounded-full bg-sage text-sage live-dot"></span>
+            <span
+              id="live-text"
+              class="truncate font-mono text-[10px] leading-tight tracking-wide text-paper-dim sm:text-[11px]"
+            >
+              <span class="lang-cs">Živé · právě teď</span><span class="lang-en">Live · just now</span>
+            </span>
+          </p>
+
+          <button
+            type="button"
+            id="btn-lang"
+            class="flex min-h-[44px] items-center rounded-lg border hairline px-3 font-mono text-[11px] uppercase tracking-wider text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper"
+          >
+            <span class="lang-cs">EN</span><span class="lang-en">CS</span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-copy"
+            class="flex size-11 items-center justify-center rounded-lg border hairline text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper"
+          >
+            <svg class="size-4" aria-hidden="true"><use href="#i-link" /></svg>
+            <span class="sr-only"><span class="lang-cs">Zkopírovat odkaz</span><span class="lang-en">Copy link</span></span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-print"
+            class="flex size-11 items-center justify-center rounded-lg border hairline text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper"
+          >
+            <svg class="size-4" aria-hidden="true"><use href="#i-print" /></svg>
+            <span class="sr-only"><span class="lang-cs">Vytisknout report</span><span class="lang-en">Print report</span></span>
+          </button>
+        </div>
+      </div>
+      <p id="copy-toast" class="hidden bg-gold-500 px-4 py-1.5 text-center text-[12px] font-medium text-dark"></p>
+    </header>
+
+    <main id="report">
+      <!-- ================= HERO =================
+           A buyer and a forum reader want the same first screen: which machine
+           is this, and how much has it done. Identity and the four readings sit
+           together above the fold; everything else is evidence below. -->
+      <section class="relative overflow-hidden border-b hairline">
+        <div class="relative mx-auto max-w-content px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8 lg:pb-16 lg:pt-16">
+          <div class="grid items-center gap-8 lg:grid-cols-[1.05fr,0.95fr] lg:gap-12">
+            <div>
+              <p class="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gold-500">
+                <span class="lang-cs">BikeCheck report</span><span class="lang-en">BikeCheck report</span>
+                <span class="text-paper-faint" aria-hidden="true">/</span>
+                <span class="text-paper-faint">
+                  <span class="lang-cs">veřejný odkaz</span><span class="lang-en">public link</span>
+                </span>
+              </p>
+
+              <h1 class="mt-3 font-display text-[34px] font-extrabold leading-[1.05] tracking-tight sm:text-[46px] lg:text-[56px]">
+                Orbea Rallon
+                <span class="block text-gold-500">M-Team</span>
+              </h1>
+
+              <!-- Identity chips. Frame size and model year are the first two
+                   things anyone asks in a bazar thread, so they are not buried
+                   in the frame category. -->
+              <ul class="mt-4 flex flex-wrap gap-1.5" aria-label="Parametry kola">
+                <li class="rounded-md border hairline bg-card-inset px-2.5 py-1 font-mono text-[11px] text-paper-dim">2023</li>
+                <li class="rounded-md border hairline bg-card-inset px-2.5 py-1 font-mono text-[11px] text-paper-dim">
+                  <span class="lang-cs">Enduro · 170/160 mm</span><span class="lang-en">Enduro · 170/160 mm</span>
+                </li>
+                <li class="rounded-md border hairline bg-card-inset px-2.5 py-1 font-mono text-[11px] text-paper-dim">
+                  <span class="lang-cs">vel. L</span><span class="lang-en">size L</span>
+                </li>
+                <li class="rounded-md border hairline bg-card-inset px-2.5 py-1 font-mono text-[11px] text-paper-dim">carbon OMR</li>
+              </ul>
+
+              <p class="mt-5 max-w-[52ch] text-[15px] leading-relaxed text-paper-dim sm:text-base">
+                  <span class="lang-cs"
+                    >Kompletní osazení a servisní historie stroje, tak jak je vedená v aplikaci BikeCheck. Stránka se
+                    aktualizuje sama — co majitel změní, uvidíš tady.</span
+                  ><span class="lang-en"
+                    >The full build and service history of this machine as kept in the BikeCheck app. The page updates
+                    itself — whatever the owner changes, you see here.</span
+                  >
+              </p>
+
+              <!-- The four readings. Mono, tabular, one line on desktop and a
+                   2×2 block on a phone, so nothing shrinks below 12px. -->
+              <dl id="hero-stats" class="mt-7 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
+                <div>
+                  <dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
+                    <span class="lang-cs">Nájezd</span><span class="lang-en">Distance</span>
+                  </dt>
+                  <dd class="mt-1.5 font-mono text-[22px] tabular-nums leading-none text-paper sm:text-[26px]">
+                    <span id="odo-km">4 187</span><span class="ml-1 text-[13px] text-paper-faint">km</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
+                    <span class="lang-cs">Čas v sedle</span><span class="lang-en">Ride time</span>
+                  </dt>
+                  <dd class="mt-1.5 font-mono text-[22px] tabular-nums leading-none text-paper sm:text-[26px]">
+                    <span id="odo-h">312</span><span class="ml-1 text-[13px] text-paper-faint">h</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
+                    <span class="lang-cs">Komponent</span><span class="lang-en">Components</span>
+                  </dt>
+                  <dd class="mt-1.5 font-mono text-[22px] tabular-nums leading-none text-paper sm:text-[26px]">
+                    <span id="stat-parts">32</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
+                    <span class="lang-cs">Servisů</span><span class="lang-en">Services</span>
+                  </dt>
+                  <dd class="mt-1.5 font-mono text-[22px] tabular-nums leading-none text-paper sm:text-[26px]">11</dd>
+                </div>
+              </dl>
+
+              <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <a
+                  href="#osazeni"
+                  class="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-gold-500 px-5 text-[15px] font-semibold text-dark transition-colors duration-200 hover:bg-gold-400"
+                >
+                  <span class="lang-cs">Prohlédnout osazení</span><span class="lang-en">See the build</span>
+                </a>
+                <a
+                  href="#servis"
+                  class="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border hairline-strong px-5 text-[15px] font-medium text-paper transition-colors duration-200 hover:border-gold-500/40"
+                >
+                  <svg class="size-4 text-paper-dim" aria-hidden="true"><use href="#i-wrench" /></svg>
+                  <span class="lang-cs">Servisní historie</span><span class="lang-en">Service history</span>
+                </a>
+              </div>
+
+              <p class="mt-5 font-mono text-[11px] leading-relaxed text-paper-faint">
+                <span class="lang-cs">Vlastník: Jarda L. · report vytvořen 12. 8. 2026</span
+                ><span class="lang-en">Owner: Jarda L. · report created 12 Aug 2026</span>
+              </p>
+            </div>
+
+            <!-- The photo. On a phone it comes first visually only if it earns
+                 it — here the readings do, so the picture sits under them and
+                 keeps a reserved aspect ratio so nothing shifts on load. -->
+            <!-- The whole machine has to be in frame — this is the picture
+                 someone judges the bike by. No forced aspect ratio and no
+                 cropping: the intrinsic 1745×996 attributes let the browser
+                 reserve the right box, so it renders uncut and without shifting
+                 the layout as it loads. The machine sits straight on the page:
+                 no panel, no mat, no rounded corners to read as a picture of a
+                 bike rather than the bike. -->
+            <img
+              src="assets/img_ready/rallon.webp"
+              alt="Orbea Rallon M-Team, celkový pohled zprava"
+              width="1745"
+              height="996"
+              loading="eager"
+              decoding="async"
+              class="h-auto w-full"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= BUILD =================
+           The core of the document. Nine categories, rendered from the same
+           shape the app stores them in. Desktop gets a sticky rail so you can
+           jump between categories without losing your place in a 32-row list;
+           a phone gets the same list as scrolling chips. -->
+      <section id="osazeni" class="relative overflow-hidden scroll-mt-32">
+        <div class="relative mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 class="font-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">
+                <span class="lang-cs">Osazení</span><span class="lang-en">The build</span>
+              </h2>
+              <!-- Screen-only: it counts what follows and tells the reader to
+                   tap a row. On paper every row is already open, and there is
+                   nothing to tap. -->
+              <p class="no-print mt-2 max-w-[56ch] text-[15px] text-paper-dim">
+                <span class="lang-cs">32 kusů v 9 kategoriích. Klepni na řádek a uvidíš, kdy byl díl namontovaný.</span
+                ><span class="lang-en">32 parts across 9 categories. Open a row to see when it was mounted.</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              id="btn-expand"
+              class="no-print inline-flex min-h-[44px] items-center gap-2 rounded-lg border hairline px-3.5 font-mono text-[11px] uppercase tracking-wider text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper"
+              aria-expanded="false"
+            >
+              <span class="lang-cs">Rozbalit vše</span><span class="lang-en">Expand all</span>
+            </button>
+          </div>
+
+          <!-- Mobile category rail. Sticky under the header, chips scroll
+               sideways; the page itself never does. -->
+          <nav
+            class="no-print sticky top-[65px] z-40 -mx-4 mt-6 border-y hairline bg-ink-950/90 px-4 py-2.5 backdrop-blur-xl lg:hidden"
+            aria-label="Kategorie komponent"
+          >
+            <ul id="chip-rail" class="rail flex gap-2 overflow-x-auto"></ul>
+          </nav>
+
+          <div class="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[210px,1fr] lg:gap-10">
+            <!-- Desktop rail -->
+            <nav class="no-print hidden lg:block" aria-label="Kategorie komponent">
+              <ul id="side-rail" class="sticky top-24 space-y-0.5 border-l hairline"></ul>
+            </nav>
+
+            <div id="categories" class="min-w-0 space-y-10"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SERVICE HISTORY =================
+           For a buyer this is the part that turns a spec list into evidence:
+           dated, priced, and tied to the parts it touched. Grouped by month
+           the way the app groups it, with the totals a buyer will add up
+           themselves if you do not. -->
+      <section id="servis" class="border-t hairline bg-ink-900/40 print-break scroll-mt-32">
+        <div class="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
+          <h2 class="font-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">
+            <span class="lang-cs">Servisní historie</span><span class="lang-en">Service history</span>
+          </h2>
+
+          <!-- Three tiles across even at 375px, so the figure has to be sized to
+               the narrowest column rather than the widest. The thousands space is
+               non-breaking and the value never wraps: a total that splits across
+               two lines reads as two numbers. -->
+          <dl class="mt-6 grid grid-cols-3 gap-2 sm:max-w-xl sm:gap-3">
+            <div class="rounded-xl border hairline bg-card px-3 py-3 sm:px-4">
+              <dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">
+                <span class="lang-cs">Servisů</span><span class="lang-en">Services</span>
+              </dt>
+              <dd class="mt-1 whitespace-nowrap font-mono text-[17px] tabular-nums leading-none sm:text-[20px]">11</dd>
+            </div>
+            <div class="rounded-xl border hairline bg-card px-3 py-3 sm:px-4">
+              <dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">
+                <span class="lang-cs">Výměn</span><span class="lang-en">Swaps</span>
+              </dt>
+              <dd class="mt-1 whitespace-nowrap font-mono text-[17px] tabular-nums leading-none sm:text-[20px]">6</dd>
+            </div>
+            <div class="rounded-xl border hairline bg-card px-3 py-3 sm:px-4">
+              <dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">
+                <span class="lang-cs">Útrata</span><span class="lang-en">Spent</span>
+              </dt>
+              <dd class="mt-1 whitespace-nowrap font-mono text-[17px] tabular-nums leading-none sm:text-[20px]">
+                18&nbsp;340<span class="ml-1 text-[11px] text-paper-dim">Kč</span>
+              </dd>
+            </div>
+          </dl>
+
+          <div id="services" class="mt-8 space-y-8"></div>
+
+          <p class="mt-8 font-mono text-[11px] leading-relaxed text-paper-faint">
+            <span class="lang-cs"
+              >Zobrazeny poslední 4 měsíce. Starší servisy jsou v aplikaci — majitel je může kdykoli zveřejnit.</span
+            ><span class="lang-en"
+              >Showing the last 4 months. Older services live in the app — the owner can publish them at any time.</span
+            >
+          </p>
+        </div>
+      </section>
+
+      <!-- ================= FOOTER ================= -->
+      <footer class="border-t hairline">
+        <div class="mx-auto max-w-content px-4 py-10 sm:px-6 lg:px-8">
+          <div class="grid gap-8 sm:grid-cols-[1fr,auto] sm:items-center">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <svg class="size-8 rounded-md" aria-hidden="true"><use href="#bc-mark" /></svg>
+                <p class="font-display text-[17px] font-bold tracking-tight">BikeCheck</p>
+              </div>
+              <p class="mt-3 max-w-[54ch] text-[14px] leading-relaxed text-paper-dim">
+                <span class="lang-cs"
+                  >Tenhle report vygenerovala aplikace BikeCheck z dat svého majitele. Odkaz jde kdykoli zrušit — pak
+                  stránka zmizí nadobro.</span
+                ><span class="lang-en"
+                  >This report was generated by the BikeCheck app from its owner's data. The link can be revoked at any
+                  time — the page then disappears for good.</span
+                >
+              </p>
+              <p class="mt-4 font-mono text-[11px] text-paper-faint">
+                <span class="lang-cs">Aktualizováno </span><span class="lang-en">Updated </span>
+                <time id="foot-time" datetime="2026-09-03T23:20:00+02:00">3. 9. 2026, 23:20</time>
+              </p>
+            </div>
+
+            <a
+              href="#"
+              class="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-gold-500 px-5 text-[15px] font-semibold text-dark transition-colors duration-200 hover:bg-gold-400 no-print"
+            >
+              <span class="lang-cs">Založit vlastní garáž</span><span class="lang-en">Start your own garage</span>
+            </a>
+          </div>
+
+          <!-- Prototype-only control. In production the page is driven by the
+               app's webhook stream; this button stands in for "the owner just
+               changed something" so the live behaviour is visible offline. -->
+          <div class="no-print mt-10 flex flex-wrap items-center gap-3 border-t hairline pt-6">
+            <p class="font-mono text-[10px] uppercase tracking-[0.16em] text-paper-faint">Prototyp</p>
+            <button
+              type="button"
+              id="btn-simulate"
+              class="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-gold-500/30 px-3.5 font-mono text-[11px] uppercase tracking-wider text-gold-500 transition-colors duration-200 hover:border-gold-500/60 hover:bg-gold-500/5"
+            >
+              <span class="lang-cs">Simulovat změnu v aplikaci</span><span class="lang-en">Simulate an app change</span>
+            </button>
+            <button
+              type="button"
+              id="btn-stale"
+              class="inline-flex min-h-[44px] items-center gap-2 rounded-lg border hairline px-3.5 font-mono text-[11px] uppercase tracking-wider text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper"
+            >
+              <span class="lang-cs">Ukázat odpojený stav</span><span class="lang-en">Show disconnected state</span>
+            </button>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var root = document.documentElement;
+
+        /* This is the WITH-SERVICE report: the build list plus the
+           maintenance record, kept as history at the end of the document
+           rather than as a reading on every component row. The build-only
+           variant, without the history, is live-report-bez-servisu.html. */
+
+        /* ------------------------------------------------------------------
+           Report data. Shaped the way the app stores it — categories in the
+           fixed order the domain uses, each part a mounted component with its
+           own counters. In production this arrives server-rendered and is
+           patched over the wire; here it is inline so the page works offline.
+
+           Parts carry what identifies them and when they went on. Wear
+           counters live with the service record, which this report shows as
+           history at the end rather than as a reading on every row.
+        ------------------------------------------------------------------ */
+        var DATA = [
+          {
+            id: "suspension",
+            icon: "i-suspension",
+            cs: "Odpružení",
+            en: "Suspension",
+            parts: [
+              {
+                cs: "Vidlice",
+                en: "Fork",
+                brand: "Fox",
+                model: "38 Factory GRIP2",
+                spec: "170 mm · 29″ · Kabolt-X 15×110",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Tlumič",
+                en: "Shock",
+                brand: "Fox",
+                model: "Float X2 Factory",
+                spec: "205 × 65 mm · trunnion",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+            ],
+          },
+          {
+            id: "frame",
+            icon: "i-frame",
+            cs: "Rám",
+            en: "Frame",
+            parts: [
+              {
+                cs: "Rám",
+                en: "Frame",
+                brand: "Orbea",
+                model: "Rallon M-LTD",
+                spec: "carbon OMR · vel. L · 2023",
+                since: { cs: "4. 4. 2023", en: "4 Apr 2023" },
+                serial: "WOB23K4••••21",
+              },
+              {
+                cs: "Hanger",
+                en: "Hanger",
+                brand: "Orbea",
+                model: "1042 UDH",
+                spec: "UDH kompatibilní",
+                since: { cs: "8. 8. 2026", en: "8 Aug 2026" },
+              },
+            ],
+          },
+          {
+            id: "cockpit",
+            icon: "i-cockpit",
+            cs: "Kokpit",
+            en: "Cockpit",
+            parts: [
+              {
+                cs: "Hlavové složení",
+                en: "Headset",
+                brand: "Acros",
+                model: "Blocklock",
+                spec: "ZS56/28,6 · ZS56/40",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Představec",
+                en: "Stem",
+                brand: "Race Face",
+                model: "Turbine R 35",
+                spec: "40 mm · 35 mm · 0°",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Řídítka",
+                en: "Handlebar",
+                brand: "OneUp",
+                model: "Carbon Handlebar",
+                spec: "800 mm · 35 mm · rise 20 mm",
+                since: { cs: "21. 4. 2026", en: "21 Apr 2026" },
+              },
+              {
+                cs: "Gripy",
+                en: "Grips",
+                brand: "Ergon",
+                model: "GA3",
+                spec: "vel. L · černá",
+                since: { cs: "21. 4. 2026", en: "21 Apr 2026" },
+              },
+            ],
+          },
+          {
+            id: "saddle",
+            icon: "i-saddle",
+            cs: "Sedlo a sedlovka",
+            en: "Saddle & Seatpost",
+            parts: [
+              {
+                cs: "Sedlo",
+                en: "Saddle",
+                brand: "Ergon",
+                model: "SM Enduro Comp",
+                spec: "M/L · 145 mm",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Sedlovka",
+                en: "Seatpost",
+                brand: "OneUp",
+                model: "Dropper V2",
+                spec: "210 mm zdvih · 31,6 mm",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+            ],
+          },
+          {
+            id: "wheels",
+            icon: "i-wheels",
+            cs: "Kola",
+            en: "Wheels",
+            parts: [
+              {
+                cs: "Ráfek přední",
+                en: "Rim, front",
+                brand: "DT Swiss",
+                model: "EX 511",
+                spec: "29″ · 30 mm vnitřní · 32 děr",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Ráfek zadní",
+                en: "Rim, rear",
+                brand: "DT Swiss",
+                model: "EX 511",
+                spec: "29″ · 30 mm vnitřní · 32 děr",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Plášť přední",
+                en: "Tire, front",
+                brand: "Maxxis",
+                model: "Assegai",
+                spec: "29 × 2,5″ · EXO+ · MaxxGrip",
+                since: { cs: "12. 6. 2026", en: "12 Jun 2026" },
+              },
+              {
+                cs: "Plášť zadní",
+                en: "Tire, rear",
+                brand: "Maxxis",
+                model: "Minion DHR II",
+                spec: "29 × 2,4″ · DoubleDown · MaxxTerra",
+                since: { cs: "12. 6. 2026", en: "12 Jun 2026" },
+              },
+              {
+                cs: "Náboj přední",
+                en: "Hub, front",
+                brand: "DT Swiss",
+                model: "350",
+                spec: "Boost 110 × 15",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Náboj zadní",
+                en: "Hub, rear",
+                brand: "DT Swiss",
+                model: "350",
+                spec: "Boost 148 × 12 · 54 t ratchet",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Osa",
+                en: "Axle",
+                brand: "DT Swiss",
+                model: "RWS Plug-In",
+                spec: "12 × 148 mm",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Inserty",
+                en: "Inserts",
+                brand: "CushCore",
+                model: "Pro",
+                spec: "29″ · pár",
+                since: { cs: "12. 6. 2026", en: "12 Jun 2026" },
+              },
+              {
+                cs: "Ventilky",
+                en: "Valves",
+                brand: "Muc-Off",
+                model: "Big Bore",
+                spec: "44 mm · pár",
+                since: { cs: "12. 6. 2026", en: "12 Jun 2026" },
+              },
+              {
+                cs: "Tmel",
+                en: "Sealant",
+                brand: "Stan's",
+                model: "Race Sealant",
+                spec: "60 ml na kolo",
+                since: { cs: "doplněno 12. 8. 2026", en: "topped up 12 Aug 2026" },
+              },
+            ],
+          },
+          {
+            id: "drivetrain",
+            icon: "i-drivetrain",
+            cs: "Pohon",
+            en: "Drivetrain",
+            parts: [
+              {
+                cs: "Řadicí páka",
+                en: "Shifter",
+                brand: "SRAM",
+                model: "GX Eagle AXS",
+                spec: "12 rychlostí · bezdrátová",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Přehazovačka",
+                en: "Derailleur",
+                brand: "SRAM",
+                model: "X01 Eagle AXS",
+                spec: "12 rychlostí · max 52 z.",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Kliky",
+                en: "Crank",
+                brand: "SRAM",
+                model: "X01 Eagle",
+                spec: "170 mm · DUB · 55 mm chainline",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Převodník",
+                en: "Chainring",
+                brand: "SRAM",
+                model: "X-Sync 2",
+                spec: "32 z. · direct mount",
+                since: { cs: "21. 4. 2026", en: "21 Apr 2026" },
+              },
+              {
+                cs: "Řetěz",
+                en: "Chain",
+                brand: "SRAM",
+                model: "GX Eagle",
+                spec: "126 článků · 12 rychlostí",
+                id: "chain",
+                since: { cs: "21. 4. 2026", en: "21 Apr 2026" },
+              },
+              {
+                cs: "Kazeta",
+                en: "Cassette",
+                brand: "SRAM",
+                model: "XG-1275",
+                spec: "10–52 z. · XD",
+                since: { cs: "21. 4. 2026", en: "21 Apr 2026" },
+              },
+            ],
+          },
+          {
+            id: "brakes",
+            icon: "i-brakes",
+            cs: "Brzdy",
+            en: "Brakes",
+            parts: [
+              {
+                cs: "Brzdové páky",
+                en: "Brake levers",
+                brand: "SRAM",
+                model: "Code RSC",
+                spec: "4pístkové · pár",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Kotouč přední",
+                en: "Rotor, front",
+                brand: "SRAM",
+                model: "Centerline X",
+                spec: "200 mm · 6 děr",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Kotouč zadní",
+                en: "Rotor, rear",
+                brand: "SRAM",
+                model: "Centerline X",
+                spec: "180 mm · 6 děr",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+              {
+                cs: "Destičky přední",
+                en: "Brake pads, front",
+                brand: "SRAM",
+                model: "Code metalické",
+                spec: "metalické · pár",
+                since: { cs: "21. 4. 2026", en: "21 Apr 2026" },
+              },
+              {
+                cs: "Destičky zadní",
+                en: "Brake pads, rear",
+                brand: "SRAM",
+                model: "Code metalické",
+                spec: "metalické · pár",
+                since: { cs: "21. 4. 2026", en: "21 Apr 2026" },
+              },
+            ],
+          },
+          {
+            id: "ebike",
+            icon: "i-ebike",
+            cs: "E-bike",
+            en: "E-bike",
+            parts: [],
+            empty: {
+              cs: "Tohle kolo není elektro. Kategorie se objeví, jakmile v aplikaci přibude motor nebo baterie.",
+              en: "This bike is not an e-bike. The category fills in as soon as a motor or battery is added in the app.",
+            },
+          },
+          {
+            id: "other",
+            icon: "i-other",
+            cs: "Ostatní",
+            en: "Other",
+            parts: [
+              {
+                cs: "Pedály",
+                en: "Pedals",
+                brand: "Crankbrothers",
+                model: "Mallet DH",
+                spec: "nášlapné · vložky +1 mm",
+                since: { cs: "od nového kola", en: "since new" },
+              },
+            ],
+          },
+        ];
+
+        var SERVICES = [
+          {
+            month: { cs: "Srpen 2026", en: "August 2026" },
+            total: "670 Kč",
+            items: [
+              {
+                date: "8. 8. 2026",
+                cs: "Výměna hangeru a kontrola po pádu",
+                en: "Hanger replaced, post-crash check",
+                price: "450 Kč",
+                tags: { cs: ["výměna dílu", "kontrola geometrie"], en: ["part swap", "geometry check"] },
+                parts: { cs: "Hanger · Přehazovačka", en: "Hanger · Derailleur" },
+              },
+              {
+                date: "12. 8. 2026",
+                cs: "Doplnění tmelu v obou kolech",
+                en: "Sealant topped up, both wheels",
+                price: "220 Kč",
+                tags: { cs: ["doplnění tmelu"], en: ["sealant top-up"] },
+                parts: { cs: "Tmel", en: "Sealant" },
+              },
+            ],
+          },
+          {
+            month: { cs: "Červen 2026", en: "June 2026" },
+            total: "5 640 Kč",
+            items: [
+              {
+                date: "12. 6. 2026",
+                cs: "Servis vidlice, sedlovky a výměna plášťů",
+                en: "Fork and dropper service, tires replaced",
+                price: "5 640 Kč",
+                tags: {
+                  cs: ["výměna oleje", "výměna prachovek", "mazání", "výměna dílu"],
+                  en: ["oil change", "seal change", "lubrication", "part swap"],
+                },
+                parts: {
+                  cs: "Vidlice · Sedlovka · Plášť přední · Plášť zadní · Inserty · Ventilky",
+                  en: "Fork · Seatpost · Tire front · Tire rear · Inserts · Valves",
+                },
+              },
+            ],
+          },
+          {
+            month: { cs: "Duben 2026", en: "April 2026" },
+            total: "8 130 Kč",
+            items: [
+              {
+                date: "21. 4. 2026",
+                cs: "Kompletní výměna pohonu a brzdových destiček",
+                en: "Full drivetrain and brake pad replacement",
+                price: "8 130 Kč",
+                tags: { cs: ["výměna dílu", "seřízení"], en: ["part swap", "adjustment"] },
+                parts: {
+                  cs: "Řetěz · Kazeta · Převodník · Destičky přední · Destičky zadní · Řídítka · Gripy",
+                  en: "Chain · Cassette · Chainring · Pads front · Pads rear · Handlebar · Grips",
+                },
+              },
+            ],
+          },
+          {
+            month: { cs: "Březen 2026", en: "March 2026" },
+            total: "3 900 Kč",
+            items: [
+              {
+                date: "4. 3. 2026",
+                cs: "Servis tlumiče, center kol, odvzdušnění brzd",
+                en: "Shock service, wheels trued, brakes bled",
+                price: "3 900 Kč",
+                tags: { cs: ["základní servis", "centrování", "odvzdušnění"], en: ["basic service", "truing", "bleed"] },
+                parts: {
+                  cs: "Tlumič · Ráfek přední · Ráfek zadní · Náboj zadní · Brzdové páky · Pedály",
+                  en: "Shock · Rim front · Rim rear · Hub rear · Brake levers · Pedals",
+                },
+              },
+            ],
+          },
+        ];
+
+        function t(obj) {
+          return '<span class="lang-cs">' + obj.cs + "</span><span class=\"lang-en\">" + obj.en + "</span>";
+        }
+
+        function partRow(p) {
+          var domId = p.id ? ' id="part-' + p.id + '"' : "";
+
+          return (
+            '<details class="part-card rounded-xl" data-cs="' +
+            p.cs +
+            '" data-en="' +
+            p.en +
+            '"' +
+            domId +
+            ">" +
+            '<summary class="flex items-center gap-3 px-3 py-2.5 sm:px-4">' +
+            '<div class="min-w-0 flex-1 token">' +
+            '<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' +
+            t({ cs: p.cs, en: p.en }) +
+            "</p>" +
+            '<p class="mt-0.5 text-[15px] font-semibold leading-snug">' +
+            p.brand +
+            ' <span class="font-normal text-paper-dim">' +
+            p.model +
+            "</span></p>" +
+            '<p class="mt-0.5 font-mono text-[11px] leading-snug text-paper-dim md:hidden">' +
+            p.spec +
+            "</p>" +
+            "</div>" +
+            '<p class="hidden min-w-0 flex-1 token font-mono text-[11px] leading-snug text-paper-dim md:block">' +
+            p.spec +
+            "</p>" +
+            '<svg class="part-chev size-4 shrink-0 text-paper-dim" aria-hidden="true"><use href="#i-chevron" /></svg>' +
+            "</summary>" +
+            '<div class="part-detail border-t hairline px-3 pb-4 pt-3 sm:px-4">' +
+            '<dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">' +
+            // Distance-on-part, interval and last-work are all readings off the
+            // maintenance record. A build-only report keeps what identifies the
+            // part — when it went on, and what it is.
+            detailRow({ cs: "Namontováno", en: "Mounted" }, t(p.since)) +
+            (p.serial ? detailRow({ cs: "Sériové číslo", en: "Serial" }, p.serial) : "") +
+            "</dl>" +
+            "</div>" +
+            "</details>"
+          );
+        }
+
+        function detailRow(label, value) {
+          return (
+            "<div>" +
+            '<dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' +
+            t(label) +
+            "</dt>" +
+            '<dd class="mt-1 token font-mono text-[12px] leading-snug text-paper">' +
+            value +
+            "</dd>" +
+            "</div>"
+          );
+        }
+
+        /* ---- Render ------------------------------------------------------- */
+        var catHost = document.getElementById("categories");
+        var chipHost = document.getElementById("chip-rail");
+        var sideHost = document.getElementById("side-rail");
+
+        catHost.innerHTML = DATA.map(function (c, i) {
+          var body = c.parts.length
+            ? '<div class="mt-3 space-y-1.5">' + c.parts.map(partRow).join("") + "</div>"
+            : '<p class="mt-3 rounded-xl border border-dashed hairline-strong bg-card/40 px-4 py-5 text-[14px] leading-relaxed text-paper-dim">' +
+              t(c.empty) +
+              "</p>";
+
+          return (
+            '<section id="cat-' +
+            c.id +
+            '" class="reveal scroll-mt-32 lg:scroll-mt-24" aria-labelledby="h-' +
+            c.id +
+            '">' +
+            '<div class="flex items-center gap-3 border-b hairline pb-2.5">' +
+            '<span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-card-inset text-gold-500"><svg class="size-[18px]" aria-hidden="true"><use href="#i-' +
+            c.icon.replace("i-", "") +
+            '" /></svg></span>' +
+            '<h3 id="h-' +
+            c.id +
+            '" class="font-display text-[19px] font-bold tracking-tight sm:text-[21px]">' +
+            t(c) +
+            "</h3>" +
+            '<span class="ml-auto font-mono text-[11px] tabular-nums text-paper-dim">' +
+            c.parts.length +
+            "</span>" +
+            "</div>" +
+            body +
+            "</section>"
+          );
+        }).join("");
+
+        chipHost.innerHTML = DATA.map(function (c) {
+          return (
+            '<li><a href="#cat-' +
+            c.id +
+            '" data-cat="' +
+            c.id +
+            '" class="chip flex min-h-[44px] items-center gap-1.5 whitespace-nowrap rounded-lg border hairline bg-card-inset px-3 font-mono text-[11px] text-paper-dim transition-colors duration-200">' +
+            t(c) +
+            '<span class="tabular-nums opacity-60">' +
+            c.parts.length +
+            "</span></a></li>"
+          );
+        }).join("");
+
+        sideHost.innerHTML = DATA.map(function (c) {
+          return (
+            '<li><a href="#cat-' +
+            c.id +
+            '" data-cat="' +
+            c.id +
+            '" class="navlink flex min-h-[44px] items-center gap-2.5 border-l-2 border-transparent px-3 text-[13px] text-paper-dim transition-colors duration-200 hover:text-paper">' +
+            '<svg class="size-4 shrink-0 opacity-70" aria-hidden="true"><use href="#i-' +
+            c.icon.replace("i-", "") +
+            '" /></svg>' +
+            '<span class="min-w-0 flex-1 truncate">' +
+            t(c) +
+            "</span>" +
+            '<span class="font-mono text-[10px] tabular-nums opacity-60">' +
+            c.parts.length +
+            "</span></a></li>"
+          );
+        }).join("");
+
+        document.getElementById("services").innerHTML = SERVICES.map(function (m) {
+          return (
+            "<div>" +
+            '<div class="flex items-baseline justify-between gap-4 border-b hairline pb-2">' +
+            '<h3 class="font-mono text-[11px] uppercase tracking-[0.16em] text-gold-500">' +
+            t(m.month) +
+            "</h3>" +
+            '<p class="font-mono text-[12px] tabular-nums text-paper-dim">' +
+            m.total +
+            "</p>" +
+            "</div>" +
+            '<ul class="mt-3 space-y-1.5">' +
+            m.items
+              .map(function (s) {
+                return (
+                  '<li class="svc-row rounded-xl border hairline bg-card p-4">' +
+                  '<div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">' +
+                  '<p class="font-mono text-[11px] tabular-nums text-paper-dim">' +
+                  s.date +
+                  "</p>" +
+                  '<p class="text-[15px] font-semibold leading-snug">' +
+                  t(s) +
+                  "</p>" +
+                  '<p class="ml-auto font-mono text-[12px] tabular-nums text-gold-500">' +
+                  s.price +
+                  "</p>" +
+                  "</div>" +
+                  '<ul class="mt-3 flex flex-wrap gap-1.5">' +
+                  s.tags.cs
+                    .map(function (tag, i) {
+                      return (
+                        '<li class="rounded-md bg-card-inset px-2 py-1 font-mono text-[10px] text-paper-dim">' +
+                        '<span class="lang-cs">' +
+                        tag +
+                        '</span><span class="lang-en">' +
+                        s.tags.en[i] +
+                        "</span></li>"
+                      );
+                    })
+                    .join("") +
+                  "</ul>" +
+                  // The label stays quieter than the value, but both sit on a
+                  // card — so the split is dim-vs-full, not faint-vs-dim, which
+                  // would put the label under 4.5:1.
+                  '<p class="mt-3 token font-mono text-[11px] leading-relaxed text-paper-dim">' +
+                  '<span class="lang-cs">Dotčené díly: </span><span class="lang-en">Parts touched: </span>' +
+                  '<span class="text-paper">' +
+                  t(s.parts) +
+                  "</span></p>" +
+                  "</li>"
+                );
+              })
+              .join("") +
+            "</ul>" +
+            "</div>"
+          );
+        }).join("");
+
+        /* ---- Reveal ------------------------------------------------------- */
+        var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var revealables = document.querySelectorAll(".reveal");
+
+        if (reduced || !("IntersectionObserver" in window)) {
+          revealables.forEach(function (el) {
+            el.classList.add("in");
+          });
+        } else {
+          var io = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (e) {
+                if (e.isIntersecting) {
+                  e.target.classList.add("in");
+                  io.unobserve(e.target);
+                }
+              });
+            },
+            { rootMargin: "0px 0px -10% 0px", threshold: 0.06 },
+          );
+          revealables.forEach(function (el) {
+            io.observe(el);
+          });
+
+          /* Safety net. This is a reference document, not a landing page: no
+             part of it may stay invisible because an observer callback did not
+             land — after an anchor jump, a fast scrollbar drag, or a restored
+             scroll position on a backgrounded tab. Anything at or above the
+             viewport bottom is shown outright, and the whole thing gives up
+             hiding content after a few seconds regardless. */
+          var sweep = function () {
+            revealables.forEach(function (el) {
+              if (el.classList.contains("in")) return;
+              if (el.getBoundingClientRect().top < window.innerHeight) {
+                el.classList.add("in");
+                io.unobserve(el);
+              }
+            });
+          };
+          window.addEventListener("scroll", sweep, { passive: true });
+          window.addEventListener("resize", sweep, { passive: true });
+          window.addEventListener("hashchange", sweep);
+          window.setTimeout(function () {
+            revealables.forEach(function (el) {
+              el.classList.add("in");
+            });
+          }, 4000);
+        }
+
+        /* ---- Scroll spy: mark the category you are actually reading -------- */
+        var links = document.querySelectorAll("[data-cat]");
+        function markActive(id) {
+          links.forEach(function (a) {
+            if (a.getAttribute("data-cat") === id) {
+              a.setAttribute("aria-current", "true");
+            } else {
+              a.removeAttribute("aria-current");
+            }
+          });
+          var chip = chipHost.querySelector('[data-cat="' + id + '"]');
+          if (chip && chip.scrollIntoView) {
+            chip.scrollIntoView({ block: "nearest", inline: "center", behavior: reduced ? "auto" : "smooth" });
+          }
+        }
+
+        if ("IntersectionObserver" in window) {
+          var spy = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (e) {
+                if (e.isIntersecting) markActive(e.target.id.replace("cat-", ""));
+              });
+            },
+            { rootMargin: "-25% 0px -65% 0px" },
+          );
+          DATA.forEach(function (c) {
+            var el = document.getElementById("cat-" + c.id);
+            if (el) spy.observe(el);
+          });
+        }
+
+        /* ---- Expand / collapse all ---------------------------------------- */
+        var btnExpand = document.getElementById("btn-expand");
+        btnExpand.addEventListener("click", function () {
+          var open = btnExpand.getAttribute("aria-expanded") !== "true";
+          document.querySelectorAll(".part-card").forEach(function (d) {
+            d.open = open;
+          });
+          btnExpand.setAttribute("aria-expanded", String(open));
+          btnExpand.querySelector(".lang-cs").textContent = open ? "Sbalit vše" : "Rozbalit vše";
+          btnExpand.querySelector(".lang-en").textContent = open ? "Collapse all" : "Expand all";
+        });
+
+        /* ---- Language ------------------------------------------------------ */
+        document.getElementById("btn-lang").addEventListener("click", function () {
+          var next = root.getAttribute("data-lang") === "cs" ? "en" : "cs";
+          root.setAttribute("data-lang", next);
+          root.setAttribute("lang", next);
+          // The status line is plain text, not paired lang spans, so it has to
+          // be re-rendered by hand when the language changes.
+          renderStatus();
+        });
+
+        /* ---- Copy link ----------------------------------------------------- */
+        var toast = document.getElementById("copy-toast");
+        document.getElementById("btn-copy").addEventListener("click", function () {
+          var msg =
+            root.getAttribute("data-lang") === "cs" ? "Odkaz zkopírován do schránky" : "Link copied to clipboard";
+          var fail = root.getAttribute("data-lang") === "cs" ? "Odkaz se nepodařilo zkopírovat" : "Could not copy the link";
+          function show(text) {
+            toast.textContent = text;
+            toast.classList.remove("hidden");
+            window.setTimeout(function () {
+              toast.classList.add("hidden");
+            }, 2600);
+          }
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(window.location.href).then(
+              function () {
+                show(msg);
+              },
+              function () {
+                show(fail);
+              },
+            );
+          } else {
+            show(fail);
+          }
+        });
+
+        /* Print has to carry the full spec, so every row opens first — and this
+           hangs off beforeprint rather than the button, so Ctrl+P and the
+           browser menu behave the same as our own control. Whatever the reader
+           had open is put back afterwards. */
+        var wasOpen = [];
+        window.addEventListener("beforeprint", function () {
+          wasOpen = [];
+          document.querySelectorAll(".part-card").forEach(function (d, i) {
+            if (d.open) wasOpen.push(i);
+            d.open = true;
+          });
+        });
+        window.addEventListener("afterprint", function () {
+          document.querySelectorAll(".part-card").forEach(function (d, i) {
+            d.open = wasOpen.indexOf(i) !== -1;
+          });
+        });
+
+        document.getElementById("btn-print").addEventListener("click", function () {
+          window.print();
+        });
+
+        /* ---- Live plumbing --------------------------------------------------
+           In production this is a subscription to the app's change stream:
+
+             var es = new EventSource('/api/reports/<token>/stream');
+             es.onmessage = function (e) { applyPatch(JSON.parse(e.data)); };
+             es.onerror   = function ()  { setStale(); };
+
+           The two buttons in the footer stand in for that stream so the live
+           and disconnected states are visible without a backend. What matters
+           for the design is the contract: exactly one status region, a single
+           gold wash on whatever moved, and an honest disconnected state rather
+           than a page that quietly goes stale while still claiming to be live.
+        -------------------------------------------------------------------- */
+        var liveDot = document.getElementById("live-dot");
+        var liveText = document.getElementById("live-text");
+        var lastUpdate = new Date();
+
+        // The status line is state, not a string: it has to survive a language
+        // switch, so it is re-rendered from this rather than overwritten once.
+        var liveState = { stale: false, what: null };
+
+        function renderStatus() {
+          var cs = root.getAttribute("data-lang") === "cs";
+          if (liveState.stale) {
+            liveDot.className = "relative block size-1.5 shrink-0 rounded-full bg-paper-faint";
+            liveText.textContent = (cs ? "Odpojeno · data z " : "Disconnected · data from ") + timeOf(lastUpdate);
+            return;
+          }
+          liveDot.className = "relative block size-1.5 shrink-0 rounded-full bg-sage text-sage live-dot";
+          // One atomic message that says what happened, never a bare number.
+          liveText.textContent = liveState.what
+            ? (cs ? "Aktualizováno v " : "Updated at ") + timeOf(lastUpdate) + " · " + liveState.what[cs ? 0 : 1]
+            : cs
+              ? "Živé · právě teď"
+              : "Live · just now";
+        }
+
+        function timeOf(d) {
+          return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+        }
+
+        function flash(el) {
+          if (!el) return;
+          el.classList.remove("just-changed");
+          void el.offsetWidth; // restart the animation
+          el.classList.add("just-changed");
+        }
+
+        document.getElementById("btn-simulate").addEventListener("click", function () {
+          lastUpdate = new Date();
+
+          // A ride landed: the odometer moves and the chain, which
+          // was already close, crosses its interval.
+          var odo = document.getElementById("odo-km");
+          odo.textContent = "4 224";
+          flash(odo);
+
+          var hours = document.getElementById("odo-h");
+          hours.textContent = "315";
+          flash(hours);
+
+          // The chain was at 94 % and crosses its interval on this ride, so the
+          // row changes band — number, word, colours and arc all move together.
+          // A build-only report has no wear to move, so the ride only shows up
+          // in the odometer and the status line says exactly that.
+
+          liveState = {
+            stale: false,
+            what: ["nájezd", "distance"],
+          };
+          renderStatus();
+
+          var foot = document.getElementById("foot-time");
+          if (foot) {
+            foot.textContent =
+              lastUpdate.getDate() + ". " + (lastUpdate.getMonth() + 1) + ". " + lastUpdate.getFullYear() + ", " + timeOf(lastUpdate);
+            foot.setAttribute("datetime", lastUpdate.toISOString());
+          }
+        });
+
+        document.getElementById("btn-stale").addEventListener("click", function () {
+          liveState.stale = !liveState.stale;
+          renderStatus();
+        });
+
+      })();
+    </script>
+  </body>
+</html>
