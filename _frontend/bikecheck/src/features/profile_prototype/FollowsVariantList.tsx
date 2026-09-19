@@ -217,7 +217,7 @@ function FollowersTab({ model }: { model: FollowsModel }): ReactElement {
                       </Stack>
                     </Group>
                   </UnstyledButton>
-                  <Button size="xs" radius="xl" color="primary.6" onClick={() => accept(person.handle)}>
+                  <Button size="xs" radius="xl" color="primary.6" c="textDark.6" onClick={() => accept(person.handle)}>
                     Přijmout
                   </Button>
                   <Button

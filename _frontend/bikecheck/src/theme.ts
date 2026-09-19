@@ -1,4 +1,4 @@
-import { SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import { Button, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
@@ -153,6 +153,16 @@ export const theme = createTheme({
   other: otherColor,
   respectReducedMotion: false,
   components: {
+    // Disabled buttons sink into the card instead of Mantine's light-grey default.
+    Button: Button.extend({
+      styles: (_theme, props) => ({
+        root: {
+          "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+          "--mantine-color-disabled-color": "var(--mantine-color-text-8)",
+          opacity: props.disabled ? 0.45 : undefined,
+        } as React.CSSProperties,
+      }),
+    }),
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk
     // track, raised pill, dim labels.
     SegmentedControl: SegmentedControl.extend({

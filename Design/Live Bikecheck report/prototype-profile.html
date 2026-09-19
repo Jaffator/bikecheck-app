@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="cs" data-lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- ARTIFACT-HEAD-START -->
+    <title>Prototyp veřejné garáže</title>
+    <meta name="robots" content="noindex" />
+
+    <!-- PROTOTYPE — throwaway (wayfinder #120). Three variants of the public profile — garage
+         `/u/<handle>` and the bike page with a Setup section — switchable from the floating bar or
+         `?variant=A|B|C`. Same tokens and fonts as live-report.html. Nothing here is production. -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=Martian+Mono:wdth,wght@75..112.5,400..700&display=swap"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: { 950: "#0A0A0B", 900: "#101012", 850: "#17181A", 800: "#1F2023", 700: "#2C2E31", 600: "#43464A" },
+              card: { DEFAULT: "#262524", alt: "#2D2722", inset: "#13100D" },
+              gold: { 300: "#E8DE93", 400: "#DED37A", 500: "#CEC053", 600: "#A69A3F", 700: "#7B722E" },
+              paper: { DEFAULT: "#E0E0E0", dim: "#9C9C9E", faint: "#7E7E83" },
+              dark: "#050505",
+              sage: "#7FB069",
+              rust: "#D08248",
+            },
+            fontFamily: {
+              display: ["Archivo", "system-ui", "sans-serif"],
+              body: ["Archivo", "system-ui", "sans-serif"],
+              mono: ['"Martian Mono"', "ui-monospace", "monospace"],
+            },
+            maxWidth: { content: "1240px" },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 140px;
+      }
+      @media (min-width: 1024px) {
+        html {
+          scroll-padding-top: 96px;
+        }
+      }
+      body {
+        margin: 0;
+        background: #0a0a0b;
+        color: #e0e0e0;
+        font-family: Archivo, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        /* Room for the floating prototype bar. */
+        padding-bottom: 120px;
+      }
+      .font-display {
+        font-stretch: 96%;
+      }
+      .font-mono {
+        font-stretch: 82%;
+      }
+      .hairline {
+        border-color: rgba(255, 255, 255, 0.075);
+      }
+      .hairline-strong {
+        border-color: rgba(255, 255, 255, 0.13);
+      }
+      :focus-visible {
+        outline: 2px solid #cec053;
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      .ambient {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          radial-gradient(900px 620px at 78% 2%, rgba(206, 192, 83, 0.055), transparent 62%),
+          radial-gradient(820px 600px at 8% 26%, rgba(64, 67, 72, 0.3), transparent 66%),
+          radial-gradient(920px 640px at 92% 66%, rgba(64, 67, 72, 0.26), transparent 64%),
+          radial-gradient(760px 540px at 16% 94%, rgba(206, 192, 83, 0.035), transparent 62%);
+      }
+      .glass {
+        background: linear-gradient(155deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018) 45%, rgba(255, 255, 255, 0.008));
+        backdrop-filter: blur(18px) saturate(118%);
+        -webkit-backdrop-filter: blur(18px) saturate(118%);
+        border: 1px solid rgba(255, 255, 255, 0.075);
+        box-shadow:
+          inset 0 1px 0 0 rgba(255, 255, 255, 0.085),
+          0 24px 60px -30px rgba(0, 0, 0, 0.95);
+      }
+      .part-card {
+        background: #262524;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+      }
+      .part-card:nth-of-type(even) {
+        background: #2d2722;
+      }
+      .part-card:hover {
+        border-color: rgba(206, 192, 83, 0.28);
+      }
+      .part-card[open] {
+        border-color: rgba(206, 192, 83, 0.22);
+      }
+      .part-card[open] .part-chev {
+        transform: rotate(180deg);
+      }
+      .part-chev {
+        transition: transform 0.22s ease;
+      }
+      /* Garage cards share the part-card surface but not its banding. */
+      .bike-card {
+        background: #262524;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: border-color 0.2s ease;
+      }
+      .bike-card:hover {
+        border-color: rgba(206, 192, 83, 0.28);
+      }
+      .part-card > summary {
+        list-style: none;
+        cursor: pointer;
+        min-height: 56px;
+      }
+      .part-card > summary::-webkit-details-marker {
+        display: none;
+      }
+      .rail {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .rail::-webkit-scrollbar {
+        display: none;
+      }
+      .chip[aria-current="true"],
+      .seg[aria-current="true"] {
+        background: #cec053;
+        color: #050505;
+        border-color: #cec053;
+      }
+      .navlink[aria-current="true"] {
+        color: #cec053;
+        border-left-color: #cec053;
+        background: rgba(206, 192, 83, 0.06);
+      }
+      .token {
+        min-inline-size: 0;
+        overflow-wrap: anywhere;
+      }
+      [data-lang="cs"] .lang-en {
+        display: none;
+      }
+      [data-lang="en"] .lang-cs {
+        display: none;
+      }
+      /* Poster card (variant C): the name sits on the photo, so the photo needs a floor to hold it. */
+      .poster-fade {
+        background: linear-gradient(180deg, rgba(10, 10, 11, 0) 35%, rgba(10, 10, 11, 0.92) 100%);
+      }
+      /* Setup comparison table (variant B). */
+      .setup-table th,
+      .setup-table td {
+        padding: 9px 12px;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .setup-table th:first-child,
+      .setup-table td:first-child {
+        text-align: left;
+      }
+      .setup-table tbody tr {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      /* ---- Prototype bar: deliberately not part of the design under review. */
+      #proto-bar {
+        position: fixed;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        z-index: 200;
+        max-width: calc(100% - 32px);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 14px;
+        background: #f5f5f0;
+        color: #111;
+        font: 500 12px/1.2 system-ui, sans-serif;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.3);
+      }
+      #proto-bar button {
+        border: 1px solid #c8c8c0;
+        background: #fff;
+        color: #111;
+        border-radius: 8px;
+        padding: 6px 9px;
+        min-height: 32px;
+        cursor: pointer;
+        font: inherit;
+      }
+      #proto-bar button[aria-pressed="true"] {
+        background: #111;
+        color: #fff;
+        border-color: #111;
+      }
+      #proto-bar .variant {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 4px;
+        border-left: 1px solid #c8c8c0;
+        border-right: 1px solid #c8c8c0;
+      }
+      #proto-bar .variant .label {
+        min-width: 150px;
+        text-align: center;
+        line-height: 1.25;
+      }
+      #proto-bar .variant .label small {
+        display: block;
+        font-weight: 400;
+        color: #555;
+        font-size: 10px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+    </style>
+    <!-- ARTIFACT-HEAD-END -->
+  </head>
+
+  <body>
+    <!-- ARTIFACT-BODY-START -->
+    <div class="ambient" aria-hidden="true"></div>
+
+    <svg width="0" height="0" class="absolute" aria-hidden="true" focusable="false">
+      <symbol id="bc-mark" viewBox="0 0 318 318">
+        <path d="M0 19.3902C0 8.68131 8.66844 0 19.3615 0H298.167C308.86 0 317.529 8.68131 317.529 19.3902V298.61C317.529 309.319 308.86 318 298.167 318H19.3615C8.66844 318 0 309.319 0 298.61V19.3902Z" fill="#CEC053" />
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M255.027 154.366C280.342 154.809 300.517 175.225 300.086 199.968C299.655 224.71 278.781 244.411 253.465 243.969C250.171 243.911 246.963 243.513 243.877 242.814L242.905 242.797L227.849 238.672L208.121 231.571L189.302 226.417L174.213 224.222L143.025 223.677V223.639L138.954 223.569L138.964 223.098L139.121 222.978C139.139 222.96 139.161 222.943 139.185 222.931L141.834 220.947C141.857 220.912 141.887 220.874 141.917 220.842C141.961 220.797 142.01 220.746 142.1 220.664C142.155 220.615 142.209 220.59 142.246 220.574C142.267 220.564 142.274 220.56 142.274 220.56L142.305 220.53C142.322 220.511 142.357 220.474 142.397 220.443C142.448 220.404 142.477 220.372 142.543 220.314L142.679 220.208C142.75 220.145 142.799 220.112 142.849 220.079L142.891 220.053L142.917 220.036L142.934 220.024L142.972 219.988L143 219.96L143.025 219.915L143.036 219.898L143.052 219.873L143.065 219.856L143.084 219.837L143.091 219.818L147.189 216.94L147.584 216.644L147.593 216.656L156.493 210.401L175.63 197.224L193.823 184.029L210.091 172.732L223.474 164.279L224.548 163.863L230.734 160.676C232.135 159.857 233.585 159.111 235.077 158.44L235.662 158.138C235.731 158.103 235.806 158.087 235.879 158.087C241.733 155.587 248.219 154.248 255.027 154.366ZM253.181 178.864C241.699 178.664 232.23 187.791 232.029 199.25C231.83 210.709 240.976 220.162 252.459 220.363C263.942 220.564 273.413 211.437 273.613 199.977C273.813 188.518 264.665 179.064 253.181 178.864Z" fill="#22333B" fill-opacity="0.96" />
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M256.812 71.5602L255.933 75.3493L247.876 83.1546L247.938 83.2228L245.325 85.6257L241.19 89.6325C235.199 92.3233 230.948 98.5303 230.821 105.828C230.649 115.725 238.125 123.88 247.52 124.045C253.354 124.146 258.554 121.143 261.701 116.483L267.185 112.123L271.635 108.097L280.936 99.4451L283.772 99.3958L284.801 104.096L285.115 122.015L280.62 135.302L274.188 145.792L270.716 150.098L261.8 148.828L261.771 148.824L245.624 148.542L245.577 148.551L238.936 149.85L238.904 149.856L238.876 149.867L232.218 152.107L232.179 152.123L232.143 152.141L223.731 156.745L220.515 158.046L205.559 167.739L188.761 180.295L173.839 191.876L151.42 207.36L138.338 216.078L117.744 227.758L104.629 234.59L85.8425 241.52L81.1325 242.545L78.8107 242.584C75.3868 243.283 71.8265 243.623 68.1751 243.56C65.706 243.517 63.2835 243.289 60.924 242.895L60.3416 242.906L59.0559 242.545C57.1957 242.158 55.3763 241.668 53.6067 241.077C33.6003 235.871 18.9931 217.546 19.3686 196.004C19.8091 170.741 40.689 150.62 66.0045 151.062C70.2779 151.137 74.4041 151.795 78.3096 152.956C88.1932 156.871 99.5721 159.197 111.71 159.409C126.644 159.67 140.541 156.692 151.997 151.407L150.494 154.543L139.334 165.114L121.608 178.631L113.336 183.91C113.274 183.947 113.214 183.985 113.155 184.026L113.136 184.037C111.676 185.04 111.076 186.917 111.795 188.53C112.402 189.889 113.775 190.678 115.223 190.647L114.977 190.697C115.024 190.942 115.069 191.189 115.112 191.435L116.868 190.312L116.577 190.373C116.627 190.353 116.677 190.332 116.726 190.31C116.898 190.234 117.062 190.145 117.216 190.049L117.312 190.03L126.434 184.207L143.231 171.651L152.88 162.585L152.863 162.568L156.181 159.369L156.247 159.159L163.691 152.426L173.856 139.042L181.187 125.705L185.581 106.76L191.053 95.3436L199.376 84.821L208.71 78.0552L219.953 72.2003L227.48 70.1817L249.218 69.8049L256.812 71.5602ZM66.9952 175.61C55.5118 175.41 46.041 184.537 45.8413 195.997C45.6421 207.456 54.7882 216.907 66.2711 217.108C77.7541 217.309 87.2266 208.183 87.4269 196.724C87.6267 185.264 78.4784 175.811 66.9952 175.61Z" fill="#22333B" fill-opacity="0.96" />
+      </symbol>
+      <symbol id="i-suspension" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M9 21h6M12 3v3M12 18v3M8 7.5l8 2-8 2 8 2-8 2" /></symbol>
+      <symbol id="i-frame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18l4.5-9H17l-3.5 9zM9.5 9L7.5 5M17 9l2.5 9M5 18h13" /></symbol>
+      <symbol id="i-cockpit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3.5l2 3.5h7l2-3.5H21M7 8v7M17 8v7" /></symbol>
+      <symbol id="i-saddle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11c4.5-4 13.5-4 18 0-3 3.5-7 4.5-9 4.5S6 14.5 3 11zM12 15.5V21" /></symbol>
+      <symbol id="i-wheels" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /><path d="M12 3v6.5M12 14.5V21M3 12h6.5M14.5 12H21" /></symbol>
+      <symbol id="i-drivetrain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5" /><circle cx="12" cy="12" r="2.5" /><path d="M12 4.5v-2M12 21.5v-2M4.5 12h-2M21.5 12h-2M6.7 6.7L5.3 5.3M18.7 18.7l-1.4-1.4M17.3 6.7l1.4-1.4M5.3 18.7l1.4-1.4" /></symbol>
+      <symbol id="i-brakes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3" /><path d="M12 3.2v3M12 17.8v3M3.2 12h3M17.8 12h3" stroke-dasharray="1 2.5" /></symbol>
+      <symbol id="i-ebike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="16" height="9" rx="2.5" /><path d="M21.5 11v2M11 10l-2 3h3l-2 3" /></symbol>
+      <symbol id="i-other" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5a5 5 0 00-6.2 6.2L3.5 14.5a2 2 0 002.8 2.8l4.8-4.8a5 5 0 006.2-6.2L14.5 9.2 12.4 9l-.2-2.1z" /></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6" /></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13.5a4 4 0 006 .5l3-3a4 4 0 00-5.7-5.7L11.5 7" /><path d="M14 10.5a4 4 0 00-6-.5l-3 3a4 4 0 005.7 5.7L12.5 17" /></symbol>
+      <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l6.5-6.5M20 5.5l-3 3-2.5-2.5 3-3a4.5 4.5 0 00-5.6 5.6L4.5 15.4a2.2 2.2 0 003.1 3.1l6.8-6.8A4.5 4.5 0 0020 5.5z" /></symbol>
+      <symbol id="i-dial" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 12l3.5-3.5M12 3.5v2M20.5 12h-2M12 20.5v-2M3.5 12h2" /></symbol>
+      <symbol id="i-bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16" r="3.5" /><circle cx="18.5" cy="16" r="3.5" /><path d="M5.5 16l4-7h6l3 7M9.5 9L8 6h3M15.5 9l-3 7h-3" /></symbol>
+    </svg>
+
+    <div id="app"></div>
+
+    <div id="proto-bar" role="group" aria-label="Prototyp"></div>
+
+    <script src="prototype-profile.data.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        var root = document.documentElement;
+
+        /* ---- URL state ----------------------------------------------------
+           view=garage|bike · bike=<id> · variant=A|B|C · lang=cs|en ·
+           sections=p s h c (parts / setup / history / costs; absent letter = off) */
+        function readState() {
+          var q = new URLSearchParams(location.search);
+          var s = q.get("sections");
+          return {
+            view: q.get("view") === "bike" ? "bike" : "garage",
+            bike: q.get("bike") || "rallon",
+            variant: ["A", "B", "C"].indexOf(q.get("variant")) >= 0 ? q.get("variant") : "A",
+            lang: q.get("lang") === "en" ? "en" : "cs",
+            parts: s === null ? true : s.indexOf("p") >= 0,
+            setup: s === null ? true : s.indexOf("s") >= 0,
+            history: s === null ? true : s.indexOf("h") >= 0,
+            costs: s === null ? false : s.indexOf("c") >= 0,
+          };
+        }
+        var state = readState();
+        var historyShown = {}; // bike id -> services shown (pagination is not URL state)
+
+        function query(over) {
+          var s = Object.assign({}, state, over || {});
+          var q = new URLSearchParams();
+          q.set("view", s.view);
+          if (s.view === "bike") q.set("bike", s.bike);
+          q.set("variant", s.variant);
+          q.set("lang", s.lang);
+          q.set("sections", (s.parts ? "p" : "") + (s.setup ? "s" : "") + (s.history ? "h" : "") + (s.costs ? "c" : ""));
+          return "?" + q.toString();
+        }
+        function setState(over) {
+          Object.assign(state, over);
+          history.replaceState(null, "", query());
+          render();
+        }
+
+        /* ---- Copy helpers ------------------------------------------------- */
+        function t(o) {
+          return '<span class="lang-cs">' + o.cs + '</span><span class="lang-en">' + o.en + "</span>";
+        }
+        function L(cs, en) {
+          return t({ cs: cs, en: en });
+        }
+        function num(n) {
+          return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        }
+        function money(n) {
+          return num(n) + '<span class="ml-1 text-[11px] text-paper-dim">Kč</span>';
+        }
+        // Tyres are stored in psi and read in the owner's unit (bar here); suspension stays psi.
+        function bar(psi) {
+          var b = (psi * 0.0689476).toFixed(2);
+          return L(b.replace(".", ",") + " bar", b + " bar");
+        }
+        var MONTHS = {
+          cs: ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"],
+          en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        };
+        var MONTHS_SHORT_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        function fmtDate(iso) {
+          var p = iso.split("-");
+          return L(+p[2] + ". " + +p[1] + ". " + p[0], +p[2] + " " + MONTHS_SHORT_EN[+p[1] - 1] + " " + p[0]);
+        }
+        function monthLabel(iso) {
+          var p = iso.split("-");
+          return L(MONTHS.cs[+p[1] - 1] + " " + p[0], MONTHS.en[+p[1] - 1] + " " + p[0]);
+        }
+        function plural(n, one, few, many) {
+          return n === 1 ? one : n >= 2 && n <= 4 ? few : many;
+        }
+
+        /* ---- Data ---------------------------------------------------------- */
+        var OWNER = {
+          name: "Jarda L.",
+          handle: "jardal",
+          initials: "JL",
+          updated: { cs: "před 3 dny", en: "3 days ago" },
+          updatedAbs: { cs: "15. 9. 2026", en: "15 Sep 2026" },
+        };
+
+        var ACT = {
+          swap: { cs: "výměna dílu", en: "part swap" },
+          geo: { cs: "kontrola geometrie", en: "geometry check" },
+          sealant: { cs: "doplnění tmelu", en: "sealant top-up" },
+          oil: { cs: "výměna oleje", en: "oil change" },
+          seals: { cs: "výměna prachovek", en: "seal change" },
+          lube: { cs: "mazání", en: "lubrication" },
+          adjust: { cs: "seřízení", en: "adjustment" },
+          basic: { cs: "základní servis", en: "basic service" },
+          truing: { cs: "centrování", en: "truing" },
+          bleed: { cs: "odvzdušnění", en: "bleed" },
+          clean: { cs: "čištění", en: "cleaning" },
+          torque: { cs: "kontrola utažení", en: "torque check" },
+          bearing: { cs: "výměna ložisek", en: "bearing replacement" },
+          wax: { cs: "voskování řetězu", en: "chain waxing" },
+          pads: { cs: "výměna destiček", en: "pad replacement" },
+        };
+        var PART = {
+          hanger: { cs: "Hanger", en: "Hanger" },
+          der: { cs: "Přehazovačka", en: "Derailleur" },
+          sealant: { cs: "Tmel", en: "Sealant" },
+          fork: { cs: "Vidlice", en: "Fork" },
+          post: { cs: "Sedlovka", en: "Seatpost" },
+          tireF: { cs: "Plášť přední", en: "Tire front" },
+          tireR: { cs: "Plášť zadní", en: "Tire rear" },
+          inserts: { cs: "Inserty", en: "Inserts" },
+          valves: { cs: "Ventilky", en: "Valves" },
+          chain: { cs: "Řetěz", en: "Chain" },
+          cassette: { cs: "Kazeta", en: "Cassette" },
+          ring: { cs: "Převodník", en: "Chainring" },
+          padsF: { cs: "Destičky přední", en: "Pads front" },
+          padsR: { cs: "Destičky zadní", en: "Pads rear" },
+          bar: { cs: "Řídítka", en: "Handlebar" },
+          grips: { cs: "Gripy", en: "Grips" },
+          shock: { cs: "Tlumič", en: "Shock" },
+          rimF: { cs: "Ráfek přední", en: "Rim front" },
+          rimR: { cs: "Ráfek zadní", en: "Rim rear" },
+          hubR: { cs: "Náboj zadní", en: "Hub rear" },
+          levers: { cs: "Brzdové páky", en: "Brake levers" },
+          pedals: { cs: "Pedály", en: "Pedals" },
+          bb: { cs: "Středové složení", en: "Bottom bracket" },
+          headset: { cs: "Hlavové složení", en: "Headset" },
+        };
+        // [date | null, actions, parts touched, replacement, price | null]
+        function svc(rows) {
+          return rows.map(function (r) {
+            return { date: r[0], actions: r[1], parts: r[2], replacement: r[3], price: r[4] };
+          });
+        }
+        var RALLON_SERVICES = svc([
+          ["2026-08-12", ["sealant"], ["sealant"], false, 220],
+          ["2026-08-08", ["swap", "geo"], ["hanger", "der"], true, 450],
+          ["2026-07-19", ["wax"], ["chain"], false, null],
+          ["2026-06-12", ["oil", "seals", "lube", "swap"], ["fork", "post", "tireF", "tireR", "inserts", "valves"], true, 5640],
+          ["2026-05-24", ["torque", "clean"], ["bar", "pedals"], false, null],
+          ["2026-04-21", ["swap", "adjust"], ["chain", "cassette", "ring", "padsF", "padsR", "bar", "grips"], true, 8130],
+          ["2026-03-04", ["basic", "truing", "bleed"], ["shock", "rimF", "rimR", "hubR", "levers", "pedals"], false, 3900],
+          ["2026-01-17", ["wax"], ["chain"], false, null],
+          ["2025-11-30", ["bearing"], ["bb", "headset"], true, 2450],
+          ["2025-10-11", ["pads"], ["padsF", "padsR"], true, 890],
+          ["2025-09-06", ["sealant"], ["sealant"], false, 220],
+          ["2025-08-15", ["oil", "seals"], ["fork"], false, 2900],
+          ["2025-07-02", ["swap"], ["tireR"], true, 1390],
+          ["2025-06-14", ["truing"], ["rimF", "rimR"], false, 600],
+          ["2025-05-03", ["wax", "clean"], ["chain", "cassette"], false, null],
+          ["2025-04-12", ["bleed"], ["levers"], false, 700],
+          ["2025-03-22", ["swap"], ["chain"], true, 1250],
+          ["2025-02-08", ["basic"], ["fork", "shock"], false, 4800],
+          ["2024-12-14", ["swap"], ["grips"], true, 450],
+          ["2024-11-02", ["sealant"], ["sealant"], false, 220],
+          ["2024-09-21", ["pads"], ["padsF"], true, 445],
+          ["2024-08-10", ["swap", "adjust"], ["cassette", "chain"], true, 3200],
+          ["2024-06-29", ["oil"], ["post"], false, 1100],
+          ["2024-05-18", ["truing", "torque"], ["rimR", "hubR"], false, 600],
+          [null, ["bleed"], ["levers"], false, null],
+          [null, ["swap"], ["pedals"], true, 1890],
+        ]);
+
+        function cat(id, icon, cs, en, parts) {
+          return { id: id, icon: icon, cs: cs, en: en, parts: parts };
+        }
+        function part(cs, en, brand, model, spec, since) {
+          return { cs: cs, en: en, brand: brand, model: model, spec: spec, since: since || { cs: "od nového kola", en: "since new" } };
+        }
+
+        var BIKES = [
+          {
+            id: "rallon",
+            brand: "Orbea Rallon",
+            model: "M-Team",
+            chips: [{ cs: "2023", en: "2023" }, { cs: "Enduro · 170/160 mm", en: "Enduro · 170/160 mm" }, { cs: "vel. L", en: "size L" }, { cs: "carbon OMR", en: "carbon OMR" }],
+            km: 4187,
+            hours: 312,
+            photo: "assets/img_ready/rallon.webp",
+            photoAlt: "Orbea Rallon M-Team, celkový pohled zprava",
+            front: true,
+            rear: true,
+            categories: window.RALLON_DATA,
+            services: RALLON_SERVICES,
+            profiles: [
+              { name: "Trail", ft: 22.5, rt: 25.4, fp: 82, ftok: 2, fsag: 20, frl: 8, frh: 3, fcl: 10, fch: 2, sp: 195, stok: 1, ssag: 30, srl: 9, srh: 2, scl: 12, sch: 1 },
+              { name: "Race", ft: 23.9, rt: 26.8, fp: 88, ftok: 3, fsag: 18, frl: 7, frh: 3, fcl: 8, fch: 3, sp: 205, stok: 2, ssag: 28, srl: 8, srh: 2, scl: 10, sch: 2 },
+              { name: "Park", ft: 24.7, rt: 27.6, fp: 90, ftok: 3, fsag: 17, frl: 6, frh: 2, fcl: 7, fch: 4, sp: 210, stok: 2, ssag: 27, srl: 7, srh: 1, scl: 9, sch: 3 },
+            ],
+          },
+          {
+            id: "grizl",
+            brand: "Canyon Grizl",
+            model: "CF SL 7",
+            chips: [{ cs: "2022", en: "2022" }, { cs: "Gravel", en: "Gravel" }, { cs: "vel. M", en: "size M" }, { cs: "carbon", en: "carbon" }],
+            km: 3905,
+            hours: 168,
+            photo: null,
+            front: false,
+            rear: false,
+            categories: [
+              cat("frame", "i-frame", "Rám", "Frame", [part("Rám", "Frame", "Canyon", "Grizl CF SL", "carbon · 700c · M")]),
+              cat("cockpit", "i-cockpit", "Kokpit", "Cockpit", [part("Řídítka", "Handlebar", "Canyon", "HB43 Ergobar", "440 mm · flare 16°"), part("Představec", "Stem", "Canyon", "V13", "90 mm")]),
+              cat("saddle", "i-saddle", "Sedlo a sedlovka", "Saddle & seatpost", [part("Sedlo", "Saddle", "Fizik", "Terra Argo X5", "150 mm"), part("Sedlovka", "Seatpost", "Canyon", "S15 VCLS", "27,2 mm · carbon")]),
+              cat("wheels", "i-wheels", "Kola", "Wheels", [part("Plášť přední", "Tire front", "Schwalbe", "G-One R", "45-622 · TLE", { cs: "15. 3. 2026", en: "15 Mar 2026" }), part("Plášť zadní", "Tire rear", "Schwalbe", "G-One R", "45-622 · TLE", { cs: "15. 3. 2026", en: "15 Mar 2026" })]),
+              cat("drivetrain", "i-drivetrain", "Pohon", "Drivetrain", [part("Řetěz", "Chain", "Shimano", "CN-M8100", "12sp"), part("Kazeta", "Cassette", "Shimano", "GRX CS-M8100", "10–51")]),
+              cat("brakes", "i-brakes", "Brzdy", "Brakes", [part("Brzdové páky", "Brake levers", "Shimano", "GRX ST-RX820", "hydraulické")]),
+            ],
+            services: svc([
+              ["2026-07-05", ["wax"], ["chain"], false, null],
+              ["2026-03-15", ["swap"], ["tireF", "tireR"], true, 2380],
+              ["2025-10-20", ["bleed"], ["levers"], false, 700],
+              [null, ["basic"], ["bb"], false, 900],
+            ]),
+            profiles: [{ name: "Default", ft: 37.7, rt: 40.6 }],
+          },
+          {
+            id: "honzo",
+            brand: "Kona Honzo",
+            model: "ESD",
+            chips: [{ cs: "2021", en: "2021" }, { cs: "Trail HT · 140 mm", en: "Trail HT · 140 mm" }, { cs: "vel. L", en: "size L" }, { cs: "ocel", en: "steel" }],
+            km: 1320,
+            hours: 96,
+            photo: null,
+            front: true,
+            rear: false,
+            categories: [
+              cat("suspension", "i-suspension", "Odpružení", "Suspension", [part("Vidlice", "Fork", "RockShox", "Pike Select", "140 mm · 29″")]),
+              cat("frame", "i-frame", "Rám", "Frame", [part("Rám", "Frame", "Kona", "Honzo ESD", "ocel · L")]),
+              cat("cockpit", "i-cockpit", "Kokpit", "Cockpit", [part("Řídítka", "Handlebar", "Kona", "XC/BC 35", "800 mm · 35 mm rise")]),
+              cat("wheels", "i-wheels", "Kola", "Wheels", [part("Plášť přední", "Tire front", "Maxxis", "Assegai", "29×2.5 · EXO+"), part("Plášť zadní", "Tire rear", "Maxxis", "Dissector", "29×2.4 · EXO+")]),
+              cat("drivetrain", "i-drivetrain", "Pohon", "Drivetrain", [part("Řetěz", "Chain", "SRAM", "GX Eagle", "12sp", { cs: "8. 11. 2025", en: "8 Nov 2025" }), part("Kazeta", "Cassette", "SRAM", "GX Eagle XG-1275", "10–52", { cs: "8. 11. 2025", en: "8 Nov 2025" })]),
+              cat("other", "i-other", "Ostatní", "Other", [part("Pedály", "Pedals", "OneUp", "Composite", "platformy")]),
+            ],
+            services: svc([
+              ["2026-05-30", ["oil"], ["fork"], false, 2600],
+              ["2025-11-08", ["swap"], ["chain", "cassette"], true, 2900],
+              ["2025-04-19", ["sealant"], ["sealant"], false, 220],
+            ]),
+            // No profile yet — a Setup is created lazily on first save (ADR 0029), so the section is absent.
+            profiles: [],
+          },
+        ];
+        function bikeById(id) {
+          return BIKES.filter(function (b) { return b.id === id; })[0] || BIKES[0];
+        }
+        function partCount(b) {
+          return b.categories.reduce(function (n, c) { return n + c.parts.length; }, 0);
+        }
+        function swapCount(b) {
+          return b.services.filter(function (s) { return s.replacement; }).length;
+        }
+        function spent(b) {
+          return b.services.reduce(function (n, s) { return n + (s.price || 0); }, 0);
+        }
+        function mountedPart(b, csName) {
+          for (var i = 0; i < b.categories.length; i++) {
+            var hit = b.categories[i].parts.filter(function (p) { return p.cs === csName; })[0];
+            if (hit) return hit;
+          }
+          return null;
+        }
+        function lastService(b) {
+          var dated = b.services.filter(function (s) { return s.date; });
+          return dated.length ? dated[0].date : null;
+        }
+
+        var VARIANTS = {
+          A: { cs: "Hero + mřížka", en: "Hero + grid", sub: { cs: "setup dlaždice · titulek = akce · Živé v liště, Aktualizováno v hero", en: "setup tiles · title = actions · Live in bar, Updated in hero" } },
+          B: { cs: "Seznam", en: "Ledger", sub: { cs: "setup tabulka · akce jako chipy · Živé + Aktualizováno v jednom pillu", en: "setup table · actions as chips · Live + Updated in one pill" } },
+          C: { cs: "Profil vlevo", en: "Profile aside", sub: { cs: "setup karta pod hero · titulek = díly · Živé u jména, Aktualizováno v patičce", en: "setup card under hero · title = parts · Live by the name, Updated in footer" } },
+        };
+
+        /* ---- Shared pieces -------------------------------------------------- */
+        function avatar(size) {
+          return '<span class="flex shrink-0 items-center justify-center rounded-full bg-gold-500 font-display font-bold text-dark ' + size + '" aria-hidden="true">' + OWNER.initials + "</span>";
+        }
+        function liveDot() {
+          return '<span class="block size-1.5 shrink-0 rounded-full bg-sage" aria-hidden="true"></span>';
+        }
+        function livePill(withUpdated) {
+          return (
+            '<p class="flex min-w-0 items-center gap-2 rounded-full border hairline bg-card-inset px-2.5 py-1.5 sm:px-3">' +
+            liveDot() +
+            '<span class="truncate font-mono text-[10px] leading-tight tracking-wide text-paper-dim sm:text-[11px]">' +
+            L("Živé", "Live") +
+            (withUpdated ? " · " + t(OWNER.updated) : "") +
+            "</span></p>"
+          );
+        }
+        function liveBadgeInline() {
+          return (
+            '<span class="inline-flex items-center gap-1.5 rounded-md border hairline bg-card-inset px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-sage">' +
+            liveDot() + L("Živé", "Live") + "</span>"
+          );
+        }
+        function iconBtn(icon, cs, en, id) {
+          return (
+            '<button type="button" id="' + id + '" class="flex size-11 items-center justify-center rounded-lg border hairline text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper">' +
+            '<svg class="size-4" aria-hidden="true"><use href="#' + icon + '" /></svg><span class="sr-only">' + L(cs, en) + "</span></button>"
+          );
+        }
+        function langBtn() {
+          return (
+            '<button type="button" id="btn-lang" class="flex min-h-[44px] items-center rounded-lg border hairline px-3 font-mono text-[11px] uppercase tracking-wider text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper">' +
+            L("EN", "CS") + "</button>"
+          );
+        }
+        function chips(list) {
+          return (
+            '<ul class="flex flex-wrap gap-1.5">' +
+            list.map(function (c) {
+              return '<li class="rounded-md border hairline bg-card-inset px-2.5 py-1 font-mono text-[11px] text-paper-dim">' + t(c) + "</li>";
+            }).join("") +
+            "</ul>"
+          );
+        }
+        function reading(label, value, unit, size) {
+          return (
+            "<div>" +
+            '<dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">' + t(label) + "</dt>" +
+            '<dd class="mt-1.5 font-mono tabular-nums leading-none text-paper ' + (size || "text-[22px] sm:text-[26px]") + '">' +
+            value + (unit ? '<span class="ml-1 text-[13px] text-paper-faint">' + unit + "</span>" : "") +
+            "</dd></div>"
+          );
+        }
+        function photoBox(b, cls, contain) {
+          if (b.photo) {
+            return '<img src="' + b.photo + '" alt="' + b.photoAlt + '" width="1745" height="996" loading="lazy" decoding="async" class="' + cls + ' h-full w-full ' + (contain ? "object-contain" : "object-cover") + '" />';
+          }
+          return (
+            '<div class="' + cls + ' flex h-full w-full flex-col items-center justify-center gap-2 bg-card-inset text-paper-faint">' +
+            '<svg class="size-10 opacity-60" aria-hidden="true"><use href="#i-bike" /></svg>' +
+            '<span class="font-mono text-[10px] uppercase tracking-[0.14em]">' + L("bez fotky", "no photo") + "</span></div>"
+          );
+        }
+        function bikeHref(b) {
+          return query({ view: "bike", bike: b.id });
+        }
+        var garageHref = function () { return query({ view: "garage" }); };
+
+        /* ---- Header ---------------------------------------------------------- */
+        function renderHeader(b) {
+          var v = state.variant;
+          var isBike = state.view === "bike";
+          var slot = "";
+          if (isBike && v === "B") {
+            slot = '<a href="' + garageHref() + '" class="flex min-h-[44px] min-w-0 items-center gap-1.5 text-[13px] text-paper-dim transition-colors hover:text-paper"><svg class="size-4 rotate-180" aria-hidden="true"><use href="#i-arrow" /></svg><span class="truncate">' + L("Garáž · " + OWNER.name, "Garage · " + OWNER.name) + "</span></a>";
+          } else if (isBike && v === "C") {
+            slot = '<p class="flex min-w-0 items-center gap-1.5 text-[13px]"><a href="' + garageHref() + '" class="truncate text-paper-dim transition-colors hover:text-paper">' + OWNER.name + '</a><span class="text-paper-faint" aria-hidden="true">›</span><span class="truncate text-paper">' + b.brand + "</span></p>";
+          } else {
+            slot = '<p class="hidden font-mono text-[10px] uppercase tracking-[0.16em] text-paper-dim sm:block">' + L("Veřejný profil", "Public profile") + "</p>";
+          }
+          var right = "";
+          if (v === "A") right = livePill(false);
+          if (v === "B" && isBike) right = livePill(true);
+          return (
+            '<header class="sticky top-0 z-50 border-b hairline-strong bg-ink-850/95 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.9)] backdrop-blur-xl">' +
+            '<div class="mx-auto flex max-w-content items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">' +
+            '<a href="' + garageHref() + '" class="flex min-h-[44px] shrink-0 items-center gap-2.5"><svg class="size-7 rounded-md" aria-hidden="true"><use href="#bc-mark" /></svg><span class="hidden text-[15px] font-semibold tracking-tight font-display sm:block">BikeCheck</span></a>' +
+            '<span class="hidden h-5 w-px bg-white/10 sm:block" aria-hidden="true"></span>' +
+            slot +
+            '<div class="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">' + right + langBtn() + iconBtn("i-link", "Zkopírovat odkaz", "Copy link", "btn-copy") + "</div>" +
+            "</div>" +
+            '<p id="copy-toast" class="hidden bg-gold-500 px-4 py-1.5 text-center text-[12px] font-medium text-dark"></p>' +
+            "</header>"
+          );
+        }
+
+        /* ---- Footer ---------------------------------------------------------- */
+        function renderFooter(showUpdated) {
+          return (
+            '<footer class="border-t hairline"><div class="mx-auto max-w-content px-4 py-10 sm:px-6 lg:px-8">' +
+            '<div class="grid gap-8 sm:grid-cols-[1fr,auto] sm:items-center"><div>' +
+            '<div class="flex items-center gap-2.5"><svg class="size-8 rounded-md" aria-hidden="true"><use href="#bc-mark" /></svg><p class="font-display text-[17px] font-bold tracking-tight">BikeCheck</p></div>' +
+            '<p class="mt-3 max-w-[54ch] text-[14px] leading-relaxed text-paper-dim">' +
+            L("Tenhle profil vede majitel v aplikaci BikeCheck. Stránka čte jeho garáž, jak stojí teď — když profil vypne, zmizí.", "The owner keeps this profile in the BikeCheck app. The page reads the garage as it stands now — switch the profile off and it is gone.") +
+            "</p>" +
+            (showUpdated ? '<p class="mt-4 font-mono text-[11px] text-paper-faint">' + L("Aktualizováno ", "Updated ") + t(OWNER.updatedAbs) + "</p>" : "") +
+            "</div>" +
+            '<a href="#" class="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-gold-500 px-5 text-[15px] font-semibold text-dark transition-colors duration-200 hover:bg-gold-400">' +
+            L("Založit vlastní garáž", "Start your own garage") + "</a></div></div></footer>"
+          );
+        }
+
+        /* ---- Garage ---------------------------------------------------------- */
+        function garageTotals() {
+          return {
+            bikes: BIKES.length,
+            km: BIKES.reduce(function (n, b) { return n + b.km; }, 0),
+            parts: BIKES.reduce(function (n, b) { return n + partCount(b); }, 0),
+            services: BIKES.reduce(function (n, b) { return n + b.services.length; }, 0),
+          };
+        }
+        function garageReadings(size) {
+          var g = garageTotals();
+          return (
+            reading({ cs: "Kol", en: "Bikes" }, g.bikes, "", size) +
+            reading({ cs: "Nájezd celkem", en: "Total distance" }, num(g.km), "km", size) +
+            (state.parts ? reading({ cs: "Komponent", en: "Components" }, g.parts, "", size) : "") +
+            (state.history ? reading({ cs: "Servisů", en: "Services" }, g.services, "", size) : "")
+          );
+        }
+        function cardStats(b) {
+          var bits = [num(b.km) + " km"];
+          if (state.parts) bits.push(partCount(b) + " " + L("dílů", "parts"));
+          if (state.history) bits.push(b.services.length + " " + L("servisů", "services"));
+          return bits.join(' <span class="text-paper-faint">·</span> ');
+        }
+
+        function garageA() {
+          var cards = BIKES.map(function (b) {
+            return (
+              '<a href="' + bikeHref(b) + '" class="bike-card group block overflow-hidden rounded-xl">' +
+              '<div class="aspect-[16/10] w-full overflow-hidden border-b hairline bg-card-inset">' + photoBox(b, "", true) + "</div>" +
+              '<div class="p-4">' +
+              '<p class="font-display text-[19px] font-bold leading-tight tracking-tight">' + b.brand + ' <span class="text-gold-500">' + b.model + "</span></p>" +
+              '<div class="mt-2.5">' + chips(b.chips.slice(0, 2)) + "</div>" +
+              '<p class="mt-4 flex items-center gap-2 font-mono text-[11px] tabular-nums text-paper-dim"><span class="min-w-0 flex-1">' + cardStats(b) + '</span><svg class="size-4 shrink-0 text-paper-faint transition-colors group-hover:text-gold-500" aria-hidden="true"><use href="#i-arrow" /></svg></p>' +
+              "</div></a>"
+            );
+          }).join("");
+          return (
+            '<section class="border-b hairline"><div class="mx-auto max-w-content px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-12 lg:px-8">' +
+            '<p class="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gold-500">BikeCheck<span class="text-paper-faint" aria-hidden="true">/</span><span class="text-paper-faint">' + L("veřejný profil", "public profile") + "</span></p>" +
+            '<div class="mt-4 flex items-center gap-4">' + avatar("size-14 text-[20px] sm:size-16 sm:text-[22px]") +
+            '<div class="min-w-0"><h1 class="font-display text-[30px] font-extrabold leading-[1.05] tracking-tight sm:text-[40px]">' + OWNER.name + "</h1>" +
+            '<p class="mt-1 font-mono text-[12px] text-paper-dim">bikecheck.app/u/' + OWNER.handle + "</p></div></div>" +
+            '<p class="mt-5 max-w-[52ch] text-[15px] leading-relaxed text-paper-dim sm:text-base">' +
+            L("Garáž, jak ji majitel vede v aplikaci BikeCheck. Co změní, uvidíš tady.", "The garage as its owner keeps it in the BikeCheck app. Whatever changes, you see here.") + "</p>" +
+            '<dl class="mt-7 flex flex-wrap gap-x-10 gap-y-5">' + garageReadings() + "</dl>" +
+            '<p class="mt-5 font-mono text-[11px] leading-relaxed text-paper-faint">' + L("Aktualizováno ", "Updated ") + t(OWNER.updated) + "</p>" +
+            "</div></section>" +
+            '<section><div class="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14 lg:px-8">' +
+            '<div class="flex items-end justify-between gap-4"><h2 class="font-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">' + L("Kola", "Bikes") + '</h2><p class="font-mono text-[12px] tabular-nums text-paper-dim">' + BIKES.length + "</p></div>" +
+            '<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">' + cards + "</div>" +
+            "</div></section>"
+          );
+        }
+
+        function garageB() {
+          var rows = BIKES.map(function (b) {
+            var last = lastService(b);
+            return (
+              '<a href="' + bikeHref(b) + '" class="part-card group flex items-stretch gap-3 overflow-hidden rounded-xl sm:gap-5">' +
+              '<div class="aspect-[3/2] w-28 shrink-0 overflow-hidden bg-card-inset sm:w-44">' + photoBox(b, "", true) + "</div>" +
+              '<div class="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-2 py-3 pr-3 sm:pr-4">' +
+              '<div class="min-w-0 flex-1 basis-56"><p class="text-[16px] font-semibold leading-snug">' + b.brand + ' <span class="font-normal text-paper-dim">' + b.model + "</span></p>" +
+              '<p class="mt-1 font-mono text-[11px] text-paper-dim">' + b.chips.map(function (c) { return t(c); }).join(" · ") + "</p>" +
+              '<p class="mt-1.5 font-mono text-[11px] tabular-nums text-paper-dim md:hidden">' + cardStats(b) + "</p></div>" +
+              '<dl class="hidden shrink-0 grid-cols-4 gap-x-6 md:grid">' +
+              reading({ cs: "Nájezd", en: "Distance" }, num(b.km), "km", "text-[15px]") +
+              (state.parts ? reading({ cs: "Komponent", en: "Parts" }, partCount(b), "", "text-[15px]") : "<div></div>") +
+              (state.history ? reading({ cs: "Servisů", en: "Services" }, b.services.length, "", "text-[15px]") : "<div></div>") +
+              (state.history ? reading({ cs: "Poslední servis", en: "Last service" }, last ? fmtDate(last) : "—", "", "text-[15px]") : "<div></div>") +
+              "</dl>" +
+              '<svg class="size-4 shrink-0 text-paper-faint transition-colors group-hover:text-gold-500" aria-hidden="true"><use href="#i-arrow" /></svg>' +
+              "</div></a>"
+            );
+          }).join("");
+          var g = garageTotals();
+          return (
+            '<section class="border-b hairline"><div class="mx-auto flex max-w-content flex-wrap items-center gap-3 px-4 py-5 sm:px-6 lg:px-8">' +
+            avatar("size-10 text-[14px]") +
+            '<div class="min-w-0 flex-1"><h1 class="text-[17px] font-semibold leading-tight tracking-tight">' + OWNER.name + "</h1>" +
+            '<p class="mt-0.5 font-mono text-[11px] tabular-nums text-paper-dim">@' + OWNER.handle + " · " + g.bikes + " " + L("kola", "bikes") + " · " + num(g.km) + " km" +
+            (state.parts ? " · " + g.parts + " " + L("komponent", "parts") : "") + (state.history ? " · " + g.services + " " + L("servisů", "services") : "") + "</p></div>" +
+            livePill(true) +
+            "</div></section>" +
+            '<section><div class="mx-auto max-w-content px-4 py-6 sm:px-6 sm:py-8 lg:px-8">' +
+            '<div class="flex items-center gap-3 border-b hairline pb-2.5"><h2 class="font-display text-[19px] font-bold tracking-tight sm:text-[21px]">' + L("Kola", "Bikes") + '</h2><span class="ml-auto font-mono text-[11px] tabular-nums text-paper-dim">' + BIKES.length + "</span></div>" +
+            '<div class="mt-3 space-y-1.5">' + rows + "</div>" +
+            '<a href="#" class="mt-1.5 flex min-h-[56px] items-center justify-between rounded-xl border border-dashed hairline-strong px-4 text-[14px] text-paper-dim transition-colors hover:border-gold-500/40 hover:text-paper">' +
+            L("Založit vlastní garáž", "Start your own garage") + '<svg class="size-4" aria-hidden="true"><use href="#i-arrow" /></svg></a>' +
+            "</div></section>"
+          );
+        }
+
+        function garageC() {
+          var posters = BIKES.map(function (b) {
+            return (
+              '<a href="' + bikeHref(b) + '" class="group block overflow-hidden rounded-2xl border hairline bg-card transition-colors hover:border-gold-500/30">' +
+              '<div class="relative aspect-[16/9] w-full bg-card-inset">' + photoBox(b, "", true) +
+              '<div class="poster-fade absolute inset-0" aria-hidden="true"></div>' +
+              '<div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-5">' +
+              '<p class="font-display text-[24px] font-extrabold leading-[1.05] tracking-tight sm:text-[30px]">' + b.brand + '<span class="block text-gold-500">' + b.model + "</span></p>" +
+              '<svg class="mb-1 size-5 shrink-0 text-paper-dim transition-colors group-hover:text-gold-500" aria-hidden="true"><use href="#i-arrow" /></svg>' +
+              "</div></div>" +
+              '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">' + chips(b.chips) +
+              '<p class="ml-auto font-mono text-[11px] tabular-nums text-paper-dim">' + cardStats(b) + "</p></div></a>"
+            );
+          }).join("");
+          return (
+            '<section><div class="mx-auto max-w-content px-4 py-8 sm:px-6 sm:py-12 lg:px-8"><div class="grid gap-8 lg:grid-cols-[320px,1fr] lg:gap-12">' +
+            '<aside class="glass self-start rounded-2xl p-6 lg:sticky lg:top-24">' +
+            avatar("size-20 text-[26px]") +
+            '<div class="mt-4 flex flex-wrap items-center gap-2"><h1 class="font-display text-[26px] font-extrabold leading-tight tracking-tight">' + OWNER.name + "</h1>" + liveBadgeInline() + "</div>" +
+            '<p class="mt-1 font-mono text-[12px] text-paper-dim">@' + OWNER.handle + "</p>" +
+            '<p class="mt-4 text-[14px] leading-relaxed text-paper-dim">' + L("Garáž, jak ji majitel vede v aplikaci BikeCheck. Co změní, uvidíš tady.", "The garage as its owner keeps it in the BikeCheck app. Whatever changes, you see here.") + "</p>" +
+            '<dl class="mt-6 grid grid-cols-2 gap-x-4 gap-y-5">' + garageReadings("text-[20px]") + "</dl>" +
+            '<p class="mt-6 border-t hairline pt-4 font-mono text-[11px] text-paper-faint">' + L("Aktualizováno ", "Updated ") + t(OWNER.updated) + "</p>" +
+            '<a href="#" class="mt-4 flex min-h-[48px] items-center justify-center rounded-xl bg-gold-500 px-5 text-[15px] font-semibold text-dark transition-colors hover:bg-gold-400">' + L("Založit vlastní garáž", "Start your own garage") + "</a>" +
+            "</aside>" +
+            '<div class="space-y-5">' + posters + "</div>" +
+            "</div></div></section>"
+          );
+        }
+
+        /* ---- Bike page: hero ---------------------------------------------------- */
+        function bikeHero(b) {
+          var v = state.variant;
+          var eyebrow;
+          if (v === "A") {
+            eyebrow = '<a href="' + garageHref() + '" class="flex items-center gap-2 text-paper-dim transition-colors hover:text-paper">' + avatar("size-5 text-[9px]") + "<span>" + OWNER.name + ' · @' + OWNER.handle + "</span></a>" +
+              '<span class="text-paper-faint" aria-hidden="true">/</span><span class="text-gold-500">' + L("veřejný profil", "public profile") + "</span>";
+          } else if (v === "B") {
+            var idx = BIKES.indexOf(b) + 1;
+            eyebrow = '<span class="text-gold-500">' + L("Veřejný profil", "Public profile") + '</span><span class="text-paper-faint" aria-hidden="true">/</span><span class="text-paper-faint">' + L("kolo " + idx + " ze " + BIKES.length, "bike " + idx + " of " + BIKES.length) + "</span>";
+          } else {
+            eyebrow = '<span class="text-gold-500">BikeCheck</span><span class="text-paper-faint" aria-hidden="true">/</span><span class="text-paper-faint">' + L("veřejný profil", "public profile") + "</span>" + liveBadgeInline();
+          }
+          var hasSetup = state.setup && b.profiles.length > 0;
+          var ctas = [];
+          if (state.parts) ctas.push({ href: "#osazeni", cs: "Prohlédnout osazení", en: "See the build", icon: null });
+          if (hasSetup && v !== "C") ctas.push({ href: "#setup", cs: "Setup", en: "Setup", icon: "i-dial" });
+          if (state.history) ctas.push({ href: "#servis", cs: "Servisní historie", en: "Service history", icon: "i-wrench" });
+          var ctaHtml = ctas.map(function (c, i) {
+            var cls = i === 0
+              ? "bg-gold-500 text-dark hover:bg-gold-400 font-semibold"
+              : "border hairline-strong text-paper hover:border-gold-500/40 font-medium";
+            return '<a href="' + c.href + '" class="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl px-5 text-[15px] transition-colors duration-200 ' + cls + '">' +
+              (c.icon ? '<svg class="size-4 text-paper-dim" aria-hidden="true"><use href="#' + c.icon + '" /></svg>' : "") + L(c.cs, c.en) + "</a>";
+          }).join("");
+          var small = L("Vlastník: " + OWNER.name, "Owner: " + OWNER.name) + (v === "A" ? " · " + L("aktualizováno ", "updated ") + t(OWNER.updated) : "");
+          return (
+            '<section class="relative overflow-hidden border-b hairline"><div class="relative mx-auto max-w-content px-4 pb-10 pt-8 sm:px-6 sm:pb-14 sm:pt-12 lg:px-8 lg:pb-16 lg:pt-16">' +
+            '<div class="grid items-center gap-8 lg:grid-cols-[1.05fr,0.95fr] lg:gap-12"><div>' +
+            '<p class="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em]">' + eyebrow + "</p>" +
+            '<h1 class="mt-3 font-display text-[34px] font-extrabold leading-[1.05] tracking-tight sm:text-[46px] lg:text-[56px]">' + b.brand + '<span class="block text-gold-500">' + b.model + "</span></h1>" +
+            '<div class="mt-4">' + chips(b.chips) + "</div>" +
+            '<p class="mt-5 max-w-[52ch] text-[15px] leading-relaxed text-paper-dim sm:text-base">' +
+            L("Co je na kole a co se s ním dělalo, tak jak to majitel vede v aplikaci BikeCheck. Co změní, uvidíš tady.", "What is on the bike and what was done to it, as the owner keeps it in the BikeCheck app. Whatever changes, you see here.") + "</p>" +
+            '<dl class="mt-7 flex flex-wrap gap-x-10 gap-y-5">' +
+            reading({ cs: "Nájezd", en: "Distance" }, num(b.km), "km") +
+            reading({ cs: "Čas v sedle", en: "Ride time" }, b.hours, "h") +
+            (state.parts ? reading({ cs: "Komponent", en: "Components" }, partCount(b), "") : "") +
+            (state.history ? reading({ cs: "Servisů", en: "Services" }, b.services.length, "") : "") +
+            "</dl>" +
+            (ctaHtml ? '<div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' + ctaHtml + "</div>" : "") +
+            '<p class="mt-5 font-mono text-[11px] leading-relaxed text-paper-faint">' + small + "</p>" +
+            "</div>" +
+            (b.photo
+              ? '<img src="' + b.photo + '" alt="' + b.photoAlt + '" width="1745" height="996" loading="eager" decoding="async" class="h-auto w-full" />'
+              : '<div class="aspect-[16/9] w-full overflow-hidden rounded-2xl border hairline">' + photoBox(b, "", true) + "</div>") +
+            "</div>" +
+            (v === "C" && hasSetup ? setupC(b) : "") +
+            "</div></section>"
+          );
+        }
+
+        /* ---- Bike page: build (from the design) ------------------------------- */
+        function partRow(p) {
+          return (
+            '<details class="part-card rounded-xl"><summary class="flex items-center gap-3 px-3 py-2.5 sm:px-4">' +
+            '<div class="min-w-0 flex-1 token"><p class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + t({ cs: p.cs, en: p.en }) + "</p>" +
+            '<p class="mt-0.5 text-[15px] font-semibold leading-snug">' + p.brand + ' <span class="font-normal text-paper-dim">' + p.model + "</span></p>" +
+            '<p class="mt-0.5 font-mono text-[11px] leading-snug text-paper-dim md:hidden">' + p.spec + "</p></div>" +
+            '<p class="hidden min-w-0 flex-1 token font-mono text-[11px] leading-snug text-paper-dim md:block">' + p.spec + "</p>" +
+            '<svg class="part-chev size-4 shrink-0 text-paper-dim" aria-hidden="true"><use href="#i-chevron" /></svg></summary>' +
+            '<div class="part-detail border-t hairline px-3 pb-4 pt-3 sm:px-4"><dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">' +
+            detailRow({ cs: "Namontováno", en: "Mounted" }, t(p.since)) +
+            (p.serial ? detailRow({ cs: "Sériové číslo", en: "Serial" }, p.serial) : "") +
+            "</dl></div></details>"
+          );
+        }
+        function detailRow(label, value) {
+          return '<div><dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + t(label) + '</dt><dd class="mt-1 token font-mono text-[12px] leading-snug text-paper">' + value + "</dd></div>";
+        }
+        function buildSection(b) {
+          var cats = b.categories;
+          var n = partCount(b);
+          var catHtml = cats.map(function (c) {
+            var body = c.parts.length
+              ? '<div class="mt-3 space-y-1.5">' + c.parts.map(partRow).join("") + "</div>"
+              : '<p class="mt-3 rounded-xl border border-dashed hairline-strong bg-card/40 px-4 py-5 text-[14px] leading-relaxed text-paper-dim">' + t(c.empty) + "</p>";
+            return (
+              '<section id="cat-' + c.id + '" class="scroll-mt-32 lg:scroll-mt-24"><div class="flex items-center gap-3 border-b hairline pb-2.5">' +
+              '<span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-card-inset text-gold-500"><svg class="size-[18px]" aria-hidden="true"><use href="#' + c.icon + '" /></svg></span>' +
+              '<h3 class="font-display text-[19px] font-bold tracking-tight sm:text-[21px]">' + t(c) + "</h3>" +
+              '<span class="ml-auto font-mono text-[11px] tabular-nums text-paper-dim">' + c.parts.length + "</span></div>" + body + "</section>"
+            );
+          }).join("");
+          var chipRail = cats.map(function (c) {
+            return '<li><a href="#cat-' + c.id + '" class="chip flex min-h-[44px] items-center gap-1.5 whitespace-nowrap rounded-lg border hairline bg-card-inset px-3 font-mono text-[11px] text-paper-dim transition-colors duration-200">' + t(c) + '<span class="tabular-nums opacity-60">' + c.parts.length + "</span></a></li>";
+          }).join("");
+          var sideRail = cats.map(function (c) {
+            return '<li><a href="#cat-' + c.id + '" class="navlink flex min-h-[44px] items-center gap-2.5 border-l-2 border-transparent px-3 text-[13px] text-paper-dim transition-colors duration-200 hover:text-paper"><svg class="size-4 shrink-0 opacity-70" aria-hidden="true"><use href="#' + c.icon + '" /></svg><span class="min-w-0 flex-1 truncate">' + t(c) + '</span><span class="font-mono text-[10px] tabular-nums opacity-60">' + c.parts.length + "</span></a></li>";
+          }).join("");
+          return (
+            '<section id="osazeni" class="relative overflow-hidden scroll-mt-32"><div class="relative mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">' +
+            '<div class="flex flex-wrap items-end justify-between gap-4"><div>' +
+            '<h2 class="font-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">' + L("Osazení", "The build") + "</h2>" +
+            '<p class="mt-2 max-w-[56ch] text-[15px] text-paper-dim">' + L(n + " kusů v " + cats.length + " kategoriích. Klepni na řádek a uvidíš, kdy byl díl namontovaný.", n + " parts across " + cats.length + " categories. Open a row to see when it was mounted.") + "</p></div>" +
+            '<button type="button" id="btn-expand" class="inline-flex min-h-[44px] items-center gap-2 rounded-lg border hairline px-3.5 font-mono text-[11px] uppercase tracking-wider text-paper-dim transition-colors duration-200 hover:border-gold-500/40 hover:text-paper" aria-expanded="false">' + L("Rozbalit vše", "Expand all") + "</button></div>" +
+            '<nav class="sticky top-[65px] z-40 -mx-4 mt-6 border-y hairline bg-ink-950/90 px-4 py-2.5 backdrop-blur-xl lg:hidden" aria-label="Kategorie"><ul class="rail flex gap-2 overflow-x-auto">' + chipRail + "</ul></nav>" +
+            '<div class="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[210px,1fr] lg:gap-10">' +
+            '<nav class="hidden lg:block" aria-label="Kategorie"><ul class="sticky top-24 space-y-0.5 border-l hairline">' + sideRail + "</ul></nav>" +
+            '<div class="min-w-0 space-y-10">' + catHtml + "</div></div></div></section>"
+          );
+        }
+
+        /* ---- Bike page: setup (three placements) --------------------------------- */
+        var FORK_ROWS = [
+          ["fp", { cs: "Tlak", en: "Pressure" }, "psi"], ["ftok", { cs: "Tokeny", en: "Tokens" }, ""], ["fsag", { cs: "Sag", en: "Sag" }, "%"],
+          ["frl", { cs: "Odskok LS", en: "Rebound LS" }, ""], ["frh", { cs: "Odskok HS", en: "Rebound HS" }, ""], ["fcl", { cs: "Komprese LS", en: "Compression LS" }, ""], ["fch", { cs: "Komprese HS", en: "Compression HS" }, ""],
+        ];
+        var SHOCK_ROWS = FORK_ROWS.map(function (r) { return ["s" + r[0].slice(1), r[1], r[2]]; });
+        function setupGroups(b) {
+          var g = [{ id: "tyres", icon: "i-wheels", label: { cs: "Pláště", en: "Tyres" }, rows: [["ft", { cs: "Přední", en: "Front" }, "bar"], ["rt", { cs: "Zadní", en: "Rear" }, "bar"]] }];
+          if (b.front) g.push({ id: "fork", icon: "i-suspension", label: { cs: "Vidlice", en: "Fork" }, rows: FORK_ROWS });
+          if (b.rear) g.push({ id: "shock", icon: "i-suspension", label: { cs: "Tlumič", en: "Shock" }, rows: SHOCK_ROWS });
+          return g;
+        }
+        function setupValue(p, row) {
+          var v = p[row[0]];
+          if (v === undefined || v === null) return '<span class="text-paper-faint">—</span>';
+          if (row[2] === "bar") return bar(v);
+          return num(v) + (row[2] ? '<span class="ml-1 text-[11px] text-paper-dim">' + row[2] + "</span>" : "");
+        }
+        function profileTabs(b, current, cls) {
+          return (
+            '<ul class="flex flex-wrap gap-1.5 ' + (cls || "") + '" role="tablist">' +
+            b.profiles.map(function (p, i) {
+              return '<li><button type="button" data-profile="' + i + '" role="tab" aria-current="' + (i === current) + '" class="seg flex min-h-[40px] items-center rounded-lg border hairline bg-card-inset px-3.5 font-mono text-[11px] text-paper-dim transition-colors">' + p.name + "</button></li>";
+            }).join("") + "</ul>"
+          );
+        }
+        var setupHead = function () {
+          return (
+            '<h2 class="font-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">Setup</h2>' +
+            '<p class="mt-2 max-w-[56ch] text-[15px] text-paper-dim">' + L("Tlaky a nastavení odpružení, jak je majitel jezdí. Kliky se počítají od plně zavřeného.", "Pressures and suspension settings as the owner rides them. Clicks are counted from fully closed.") + "</p>"
+          );
+        };
+        function setupA(b) {
+          var cur = +(b._profile || 0);
+          var p = b.profiles[cur];
+          var groups = setupGroups(b).map(function (g) {
+            return (
+              '<section><div class="flex items-center gap-3 border-b hairline pb-2.5"><span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-card-inset text-gold-500"><svg class="size-[18px]" aria-hidden="true"><use href="#' + g.icon + '" /></svg></span>' +
+              '<h3 class="font-display text-[19px] font-bold tracking-tight sm:text-[21px]">' + t(g.label) + "</h3></div>" +
+              '<dl class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-7">' +
+              g.rows.map(function (r) {
+                return '<div class="rounded-xl border hairline bg-card px-3 py-3"><dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + t(r[1]) + '</dt><dd class="mt-1 whitespace-nowrap font-mono text-[17px] tabular-nums leading-none sm:text-[20px]">' + setupValue(p, r) + "</dd></div>";
+              }).join("") + "</dl></section>"
+            );
+          }).join("");
+          return (
+            '<section id="setup" class="border-t hairline scroll-mt-32"><div class="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">' +
+            '<div class="flex flex-wrap items-end justify-between gap-4"><div>' + setupHead() + "</div>" + (b.profiles.length > 1 ? profileTabs(b, cur) : "") + "</div>" +
+            '<div class="mt-8 space-y-8">' + groups + "</div></div></section>"
+          );
+        }
+        function setupB(b) {
+          var groups = setupGroups(b);
+          var body = groups.map(function (g) {
+            return (
+              '<tr class="bg-ink-900/60"><th colspan="' + (b.profiles.length + 1) + '" class="!text-left font-mono text-[10px] uppercase tracking-[0.16em] text-gold-500">' + t(g.label) + "</th></tr>" +
+              g.rows.map(function (r) {
+                return "<tr><td class=\"text-[13px] text-paper-dim\">" + t(r[1]) + "</td>" +
+                  b.profiles.map(function (p) { return '<td class="font-mono text-[13px] tabular-nums text-paper">' + setupValue(p, r) + "</td>"; }).join("") + "</tr>";
+              }).join("")
+            );
+          }).join("");
+          return (
+            '<section id="setup" class="border-t hairline scroll-mt-32"><div class="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">' + setupHead() +
+            '<div class="mt-6 overflow-x-auto rounded-xl border hairline bg-card sm:max-w-3xl"><table class="setup-table w-full border-collapse">' +
+            '<thead><tr><th class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + L("Profil", "Profile") + "</th>" +
+            b.profiles.map(function (p) { return '<th class="font-mono text-[12px] font-semibold text-paper">' + p.name + "</th>"; }).join("") + "</tr></thead>" +
+            "<tbody>" + body + "</tbody></table></div></div></section>"
+          );
+        }
+        function setupC(b) {
+          var cur = +(b._profile || 0);
+          var p = b.profiles[cur];
+          var dials = [["ft", { cs: "Přední plášť", en: "Front tyre" }, "bar"], ["rt", { cs: "Zadní plášť", en: "Rear tyre" }, "bar"]];
+          if (b.front) dials.push(["fp", { cs: "Vidlice", en: "Fork" }, "psi"], ["fsag", { cs: "Sag vidlice", en: "Fork sag" }, "%"]);
+          if (b.rear) dials.push(["sp", { cs: "Tlumič", en: "Shock" }, "psi"], ["ssag", { cs: "Sag tlumiče", en: "Shock sag" }, "%"]);
+          var clicks = [];
+          if (b.front) clicks.push({ label: { cs: "Vidlice", en: "Fork" }, rows: FORK_ROWS.slice(1) });
+          if (b.rear) clicks.push({ label: { cs: "Tlumič", en: "Shock" }, rows: SHOCK_ROWS.slice(1) });
+          return (
+            '<div id="setup" class="glass mt-8 rounded-2xl p-4 sm:p-5 lg:mt-10">' +
+            '<div class="flex flex-wrap items-center gap-3"><span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-card-inset text-gold-500"><svg class="size-[18px]" aria-hidden="true"><use href="#i-dial" /></svg></span>' +
+            '<h2 class="font-display text-[19px] font-bold tracking-tight">Setup</h2>' +
+            (b.profiles.length > 1 ? profileTabs(b, cur, "ml-auto") : "") + "</div>" +
+            '<dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">' +
+            dials.map(function (r) {
+              // Tyre dials carry the mounted tyre itself, as the build row shows it.
+              var tyre = r[0] === "ft" ? mountedPart(b, "Plášť přední") : r[0] === "rt" ? mountedPart(b, "Plášť zadní") : null;
+              return reading(r[1], setupValue(p, r), "", "text-[18px] sm:text-[20px]") .replace("</dd></div>",
+                (tyre ? '</dd><dd class="mt-1.5 token text-[13px] leading-snug"><span class="font-semibold">' + tyre.brand + '</span> <span class="text-paper-dim">' + tyre.model + '</span><span class="block font-mono text-[11px] text-paper-dim">' + tyre.spec + "</span></dd></div>" : "</dd></div>"));
+            }).join("") + "</dl>" +
+            (clicks.length
+              ? '<details class="mt-4 border-t hairline pt-3"><summary class="cursor-pointer list-none font-mono text-[11px] uppercase tracking-wider text-paper-dim hover:text-paper">' + L("Tokeny a kliky (od plně zavřeného)", "Tokens and clicks (from fully closed)") + "</summary>" +
+                '<div class="mt-3 grid gap-4 sm:grid-cols-2">' + clicks.map(function (c) {
+                  return '<dl class="grid grid-cols-3 gap-x-3 gap-y-2"><dt class="col-span-3 font-mono text-[10px] uppercase tracking-[0.14em] text-gold-500">' + t(c.label) + "</dt>" +
+                    c.rows.map(function (r) { return '<div><dt class="font-mono text-[10px] text-paper-faint">' + t(r[1]) + '</dt><dd class="font-mono text-[13px] tabular-nums">' + setupValue(p, r) + "</dd></div>"; }).join("") + "</dl>";
+                }).join("") + "</div></details>"
+              : "") +
+            "</div>"
+          );
+        }
+
+        /* ---- Bike page: service history (#117) ----------------------------------- */
+        var PAGE = 20;
+        function svcRow(s) {
+          var v = state.variant;
+          var actions = s.actions.map(function (a) { return ACT[a]; });
+          var parts = s.parts.map(function (p) { return PART[p]; });
+          var price = state.costs && s.price !== null ? '<p class="ml-auto font-mono text-[12px] tabular-nums text-gold-500">' + money(s.price) + "</p>" : "";
+          var swapBadge = s.replacement ? '<span class="rounded-md border border-gold-500/40 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-gold-500">' + L("Výměna", "Swap") + "</span>" : "";
+          var date = '<p class="font-mono text-[11px] tabular-nums text-paper-dim">' + (s.date ? fmtDate(s.date) : "—") + "</p>";
+          function chipList(items, cls) {
+            return '<ul class="flex flex-wrap gap-1.5">' + items.map(function (i) { return '<li class="rounded-md px-2 py-1 font-mono text-[10px] ' + cls + '">' + t(i) + "</li>"; }).join("") + "</ul>";
+          }
+          var inner;
+          if (v === "A") {
+            // Title composed from the action names; parts as chips under it.
+            inner =
+              '<div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">' + date +
+              '<p class="text-[15px] font-semibold leading-snug">' + actions.map(function (a) { return t(a); }).join(' <span class="text-paper-faint">·</span> ') + "</p>" + swapBadge + price + "</div>" +
+              '<div class="mt-3">' + chipList(parts, "bg-card-inset text-paper-dim") + "</div>";
+          } else if (v === "B") {
+            // No title: actions are chips, parts stay a text line as in the design.
+            inner =
+              '<div class="flex flex-wrap items-center gap-x-3 gap-y-2">' + date + chipList(actions, "border border-gold-500/25 bg-gold-500/5 text-gold-300") + swapBadge + price + "</div>" +
+              '<p class="mt-3 token font-mono text-[11px] leading-relaxed text-paper-dim">' + L("Dotčené díly: ", "Parts touched: ") + '<span class="text-paper">' + parts.map(function (p) { return t(p); }).join(" · ") + "</span></p>";
+          } else {
+            // Part-centric: parts are the title, actions the eyebrow above it.
+            inner =
+              '<div class="flex flex-wrap items-center gap-x-3 gap-y-1">' + date +
+              '<p class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + actions.map(function (a) { return t(a); }).join(" · ") + "</p>" + swapBadge + price + "</div>" +
+              '<p class="mt-1.5 text-[15px] font-semibold leading-snug">' + parts.map(function (p) { return t(p); }).join(", ") + "</p>";
+          }
+          return '<li class="svc-row rounded-xl border hairline bg-card p-4">' + inner + "</li>";
+        }
+        function historySection(b) {
+          var shown = Math.min(historyShown[b.id] || PAGE, b.services.length);
+          var slice = b.services.slice(0, shown);
+          var groups = [];
+          slice.forEach(function (s) {
+            var key = s.date ? s.date.slice(0, 7) : "none";
+            var g = groups[groups.length - 1];
+            if (!g || g.key !== key) {
+              g = { key: key, label: s.date ? monthLabel(s.date) : L("Datum neuvedeno", "Date not given"), items: [], total: 0 };
+              groups.push(g);
+            }
+            g.items.push(s);
+            g.total += s.price || 0;
+          });
+          var list = groups.map(function (g) {
+            return (
+              '<div><div class="flex items-baseline justify-between gap-4 border-b hairline pb-2"><h3 class="font-mono text-[11px] uppercase tracking-[0.16em] ' + (g.key === "none" ? "text-paper-faint" : "text-gold-500") + '">' + g.label + "</h3>" +
+              (state.costs && g.total ? '<p class="font-mono text-[12px] tabular-nums text-paper-dim">' + money(g.total) + "</p>" : "") + "</div>" +
+              '<ul class="mt-3 space-y-1.5">' + g.items.map(svcRow).join("") + "</ul></div>"
+            );
+          }).join("");
+          var rest = b.services.length - shown;
+          var tiles =
+            '<div class="rounded-xl border hairline bg-card px-3 py-3 sm:px-4"><dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + L("Servisů", "Services") + '</dt><dd class="mt-1 whitespace-nowrap font-mono text-[17px] tabular-nums leading-none sm:text-[20px]">' + b.services.length + "</dd></div>" +
+            '<div class="rounded-xl border hairline bg-card px-3 py-3 sm:px-4"><dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + L("Výměn", "Swaps") + '</dt><dd class="mt-1 whitespace-nowrap font-mono text-[17px] tabular-nums leading-none sm:text-[20px]">' + swapCount(b) + "</dd></div>" +
+            (state.costs ? '<div class="rounded-xl border hairline bg-card px-3 py-3 sm:px-4"><dt class="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">' + L("Útrata", "Spent") + '</dt><dd class="mt-1 whitespace-nowrap font-mono text-[17px] tabular-nums leading-none sm:text-[20px]">' + money(spent(b)) + "</dd></div>" : "");
+          return (
+            '<section id="servis" class="border-t hairline bg-ink-900/40 scroll-mt-32"><div class="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">' +
+            '<h2 class="font-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">' + L("Servisní historie", "Service history") + "</h2>" +
+            '<dl class="mt-6 grid gap-2 sm:max-w-xl sm:gap-3 ' + (state.costs ? "grid-cols-3" : "grid-cols-2 sm:max-w-sm") + '">' + tiles + "</dl>" +
+            '<div class="mt-8 space-y-8">' + list + "</div>" +
+            (rest > 0
+              ? '<button type="button" id="btn-older" class="mt-8 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border hairline-strong px-5 text-[15px] font-medium text-paper transition-colors hover:border-gold-500/40 sm:w-auto">' +
+                L("Zobrazit starší", "Show older") + '<span class="font-mono text-[12px] tabular-nums text-paper-dim">' + rest + "</span></button>"
+              : "") +
+            "</div></section>"
+          );
+        }
+
+        /* ---- Page assembly --------------------------------------------------------- */
+        function render() {
+          root.setAttribute("data-lang", state.lang);
+          root.setAttribute("lang", state.lang);
+          var v = state.variant;
+          var html;
+          var b = bikeById(state.bike);
+          if (state.view === "garage") {
+            html = renderHeader(b) + "<main>" + (v === "A" ? garageA() : v === "B" ? garageB() : garageC()) + "</main>" + renderFooter(v !== "A");
+          } else {
+            var hasSetup = state.setup && b.profiles.length > 0;
+            html =
+              renderHeader(b) + "<main>" + bikeHero(b) +
+              (state.parts ? buildSection(b) : "") +
+              (hasSetup && v === "A" ? setupA(b) : "") +
+              (hasSetup && v === "B" ? setupB(b) : "") +
+              (state.history ? historySection(b) : "") +
+              "</main>" + renderFooter(v !== "A");
+          }
+          document.getElementById("app").innerHTML = html;
+          document.title = (state.view === "garage" ? OWNER.name : b.brand + " " + b.model) + " — BikeCheck";
+          wire(b);
+          renderBar();
+        }
+
+        function wire(b) {
+          document.getElementById("btn-lang").addEventListener("click", function () {
+            setState({ lang: state.lang === "cs" ? "en" : "cs" });
+          });
+          document.getElementById("btn-copy").addEventListener("click", function () {
+            var toast = document.getElementById("copy-toast");
+            var done = function (ok) {
+              toast.textContent = state.lang === "cs" ? (ok ? "Odkaz zkopírován do schránky" : "Odkaz se nepodařilo zkopírovat") : ok ? "Link copied to clipboard" : "Could not copy the link";
+              toast.classList.remove("hidden");
+              setTimeout(function () { toast.classList.add("hidden"); }, 2200);
+            };
+            if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(function () { done(true); }, function () { done(false); });
+            else done(false);
+          });
+          var expand = document.getElementById("btn-expand");
+          if (expand) {
+            expand.addEventListener("click", function () {
+              var open = expand.getAttribute("aria-expanded") !== "true";
+              document.querySelectorAll(".part-card").forEach(function (d) { d.open = open; });
+              expand.setAttribute("aria-expanded", String(open));
+              expand.querySelector(".lang-cs").textContent = open ? "Sbalit vše" : "Rozbalit vše";
+              expand.querySelector(".lang-en").textContent = open ? "Collapse all" : "Expand all";
+            });
+          }
+          var older = document.getElementById("btn-older");
+          if (older) {
+            older.addEventListener("click", function () {
+              historyShown[b.id] = (historyShown[b.id] || PAGE) + PAGE;
+              var y = window.scrollY;
+              render();
+              window.scrollTo(0, y);
+            });
+          }
+          document.querySelectorAll("[data-profile]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              b._profile = +btn.getAttribute("data-profile");
+              var y = window.scrollY;
+              render();
+              window.scrollTo(0, y);
+            });
+          });
+        }
+
+        /* ---- Prototype bar (never part of the design under review) ---------------- */
+        var ORDER = ["A", "B", "C"];
+        function renderBar() {
+          var lang = state.lang;
+          var vi = ORDER.indexOf(state.variant);
+          var vdef = VARIANTS[state.variant];
+          function tog(key, cs, en) {
+            return '<button type="button" data-tog="' + key + '" aria-pressed="' + state[key] + '">' + (lang === "cs" ? cs : en) + "</button>";
+          }
+          document.getElementById("proto-bar").innerHTML =
+            '<button type="button" data-view="garage" aria-pressed="' + (state.view === "garage") + '">' + (lang === "cs" ? "Garáž" : "Garage") + "</button>" +
+            '<button type="button" data-view="bike" aria-pressed="' + (state.view === "bike") + '">' + (lang === "cs" ? "Kolo" : "Bike") + "</button>" +
+            '<span class="variant"><button type="button" data-step="-1" aria-label="Previous variant">&#9664;</button>' +
+            '<span class="label">' + state.variant + " — " + vdef[lang] + "<small>" + vdef.sub[lang] + "</small></span>" +
+            '<button type="button" data-step="1" aria-label="Next variant">&#9654;</button></span>' +
+            tog("parts", "Komponenty", "Parts") + tog("setup", "Setup", "Setup") + tog("history", "Servis", "History") + tog("costs", "Ceny", "Costs") +
+            '<button type="button" data-lang>' + (lang === "cs" ? "EN" : "CS") + "</button>";
+        }
+        document.getElementById("proto-bar").addEventListener("click", function (e) {
+          var btn = e.target.closest("button");
+          if (!btn) return;
+          if (btn.hasAttribute("data-view")) {
+            setState({ view: btn.getAttribute("data-view") });
+            window.scrollTo(0, 0);
+          } else if (btn.hasAttribute("data-step")) {
+            step(+btn.getAttribute("data-step"));
+          } else if (btn.hasAttribute("data-tog")) {
+            var k = btn.getAttribute("data-tog");
+            var o = {};
+            o[k] = !state[k];
+            setState(o);
+          } else if (btn.hasAttribute("data-lang")) {
+            setState({ lang: state.lang === "cs" ? "en" : "cs" });
+          }
+        });
+        function step(d) {
+          var i = (ORDER.indexOf(state.variant) + d + ORDER.length) % ORDER.length;
+          var y = window.scrollY;
+          setState({ variant: ORDER[i] });
+          window.scrollTo(0, y);
+        }
+        document.addEventListener("keydown", function (e) {
+          var el = document.activeElement;
+          if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+          if (e.key === "ArrowLeft") step(-1);
+          if (e.key === "ArrowRight") step(1);
+        });
+
+        render();
+      })();
+    </script>
+    <!-- ARTIFACT-BODY-END -->
+  </body>
+</html>

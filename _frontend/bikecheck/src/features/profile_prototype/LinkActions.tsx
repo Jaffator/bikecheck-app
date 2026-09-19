@@ -1,6 +1,7 @@
 // PROTOTYPE #121 — throwaway. Copy / share / open for the profile link; only a PUBLIC
 // profile has a page these can point at, so elsewhere they sit disabled (theme's look).
 import { useEffect, useState, type ReactElement } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Group } from "@mantine/core";
 import { Check, Copy, ExternalLink, Share2 } from "lucide-react";
 import { canShareLink, copyLink, shareLink } from "@/utils/shareLink";
@@ -24,7 +25,15 @@ export function LinkActions({
   size = "sm",
 }: LinkActionsProps): ReactElement {
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
   const url = profileUrl(handle);
+
+  // #132: the real page is a new tab; the prototype stays in this one so the store's
+  // visibility and switches reach /u/<handle>.
+  function open(): void {
+    if (import.meta.env.DEV) navigate(`/u/${handle}`);
+    else window.open(url, "_blank", "noopener");
+  }
 
   useEffect(() => {
     if (!copied) return;
@@ -87,7 +96,7 @@ export function LinkActions({
           size={size}
           disabled={!enabled}
           leftSection={<ExternalLink size={16} />}
-          onClick={() => window.open(url, "_blank", "noopener")}
+          onClick={open}
         >
           Otevřít
         </Button>

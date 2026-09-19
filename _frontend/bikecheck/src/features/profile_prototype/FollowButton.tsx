@@ -84,7 +84,7 @@ export function FollowButton({ person, size = "xs", fullWidth = false }: FollowB
   }
 
   return (
-    <Button {...common} color="primary.6" onClick={() => follow(person.handle, person.visibility)}>
+    <Button {...common} color="primary.6" c="textDark.6" onClick={() => follow(person.handle, person.visibility)}>
       {person.visibility === "PUBLIC" ? "Sledovat" : "Požádat"}
     </Button>
   );

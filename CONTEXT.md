@@ -234,6 +234,54 @@ _Avoid_: Clicks from open, turns, position
 
 ### Sharing
 
+**Public Profile**:
+The one live page an owner keeps outside the app, reading their garage as it stands the moment it
+is opened — what the owner changes, the reader sees. Exactly one per account, and the opposite of
+a Report: nothing about it is frozen.
+_Avoid_: Live report (a Report is always frozen), shared profile, public garage
+
+**Handle**:
+The name an owner picks for their Public Profile's address — one per account, unique across the
+app, changeable at will. Changing it retires the old address for good; there is no forwarding.
+_Avoid_: Username (that is the Strava field), slug, nickname
+
+**Visibility**:
+The one switch that says who may open a Public Profile. Off: nobody, not even a Follower, though
+the Handle, every setting and every Follower stay as they were. Followers only: the profile's
+Followers, inside the app; the web address answers to no one. Public: anyone at the address, and
+following it needs no approval.
+_Avoid_: Privacy, status, published
+
+**Follower**:
+An account whose following of a Public Profile stands — accepted by the owner, or taken at once on
+a Public one. Reads the profile inside the app. One way only: following says nothing about being
+followed back.
+_Avoid_: Friend, connection, subscriber
+
+**Follow Request**:
+A following that waits on the owner of a Followers-only profile. Accepted, it becomes a Follower;
+declined or withdrawn, it is gone, and may be made again. A profile turning Public accepts every
+request still waiting.
+_Avoid_: Invitation, pending follower
+
+**Discoverable**:
+A Public Profile that search inside the app can turn up — one whose Visibility is Followers only or
+Public, found by its Handle or its owner's name, or opened by its address inside the app. Off is never
+found, nor is an account that has never had a profile. The result shows who it is and where the seeker
+stands with them, nothing of the garage.
+_Avoid_: Searchable, listed, indexed
+
+**Shared Bike**:
+A Bike the owner lets the Public Profile show. Every bike is shared until the owner says otherwise;
+an archived bike is never shown, whatever its flag says.
+_Avoid_: Public bike, visible bike
+
+**Last Updated**:
+The moment the owner last changed anything the Public Profile shows — a ride synced, a part swapped,
+a Service written down. It is a fact about the garage, not about the reader: opening the page does
+not move it. The one line that tells a reader whether the garage is kept.
+_Avoid_: Refreshed, fetched at, live since
+
 **Report**:
 A frozen document made from what the owner selected, shared outside the app. Its contents never
 change after it is made — the Services it was built from may be edited or deleted afterwards, and

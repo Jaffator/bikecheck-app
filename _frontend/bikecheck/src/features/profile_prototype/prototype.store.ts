@@ -5,6 +5,7 @@
 // #121 (drawer with cards) and #128 (Follows as panels) are settled. The variant axis
 // now drives somebody's profile (#129): hero card, panels, or a contact card.
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { suggestHandle } from "./handle";
 import type { FollowStatus } from "./people";
 
@@ -98,56 +99,72 @@ interface PrototypeStore {
   seed: (kind: "full" | "empty") => void;
 }
 
-export const usePrototypeStore = create<PrototypeStore>((set) => ({
-  variant: "1",
-  setVariant: (variant) => set({ variant }),
-  visibility: "FOLLOWERS",
-  setVisibility: (visibility) =>
-    set((state) => {
-      // #125: turning PUBLIC is the one change that touches follows - every waiting
-      // request is accepted, since nothing waits on a public profile.
-      if (visibility !== "PUBLIC") return { visibility };
-      const followers: Relations = {};
-      for (const [handle] of Object.entries(state.followers)) followers[handle] = "ACCEPTED";
-      return { visibility, followers };
+// #132: the profile settings survive a reload on /u/<handle> (the web page is a separate
+// route with no drawer to set them again); the follow graph stays in memory.
+export const usePrototypeStore = create<PrototypeStore>()(
+  persist(
+    (set) => ({
+      variant: "1",
+      setVariant: (variant) => set({ variant }),
+      visibility: "FOLLOWERS",
+      setVisibility: (visibility) =>
+        set((state) => {
+          // #125: turning PUBLIC is the one change that touches follows - every waiting
+          // request is accepted, since nothing waits on a public profile.
+          if (visibility !== "PUBLIC") return { visibility };
+          const followers: Relations = {};
+          for (const [handle] of Object.entries(state.followers)) followers[handle] = "ACCEPTED";
+          return { visibility, followers };
+        }),
+      handle: suggestHandle(null),
+      setHandle: (handle) => set({ handle }),
+      sections: { components: true, setup: true, history: true, costs: false },
+      toggleSection: (key) =>
+        set((state) => {
+          const next = { ...state.sections, [key]: !state.sections[key] };
+          // Costs ride on history (#117): switching history off takes costs with it.
+          if (key === "history" && !next.history) next.costs = false;
+          return { sections: next };
+        }),
+      unsharedBikeIds: [],
+      toggleBike: (id) =>
+        set((state) => ({
+          unsharedBikeIds: state.unsharedBikeIds.includes(id)
+            ? state.unsharedBikeIds.filter((other) => other !== id)
+            : [...state.unsharedBikeIds, id],
+        })),
+      drawerOpened: false,
+      openDrawer: () => set({ drawerOpened: true }),
+      closeDrawer: () => set({ drawerOpened: false }),
+      following: SEED_FOLLOWING,
+      followers: SEED_FOLLOWERS,
+      follow: (handle, visibility) =>
+        set((state) => ({
+          following: { ...state.following, [handle]: visibility === "PUBLIC" ? "ACCEPTED" : "PENDING" },
+        })),
+      unfollow: (handle) => set((state) => ({ following: without(state.following, handle) })),
+      accept: (handle) => set((state) => ({ followers: { ...state.followers, [handle]: "ACCEPTED" } })),
+      removeFollower: (handle) => set((state) => ({ followers: without(state.followers, handle) })),
+      restoreFollower: (handle, status) => set((state) => ({ followers: { ...state.followers, [handle]: status } })),
+      seed: (kind) =>
+        set(
+          kind === "empty"
+            ? { following: {}, followers: {} }
+            : { following: SEED_FOLLOWING, followers: SEED_FOLLOWERS },
+        ),
     }),
-  handle: suggestHandle(null),
-  setHandle: (handle) => set({ handle }),
-  sections: { components: true, setup: true, history: true, costs: false },
-  toggleSection: (key) =>
-    set((state) => {
-      const next = { ...state.sections, [key]: !state.sections[key] };
-      // Costs ride on history (#117): switching history off takes costs with it.
-      if (key === "history" && !next.history) next.costs = false;
-      return { sections: next };
-    }),
-  unsharedBikeIds: [],
-  toggleBike: (id) =>
-    set((state) => ({
-      unsharedBikeIds: state.unsharedBikeIds.includes(id)
-        ? state.unsharedBikeIds.filter((other) => other !== id)
-        : [...state.unsharedBikeIds, id],
-    })),
-  drawerOpened: false,
-  openDrawer: () => set({ drawerOpened: true }),
-  closeDrawer: () => set({ drawerOpened: false }),
-  following: SEED_FOLLOWING,
-  followers: SEED_FOLLOWERS,
-  follow: (handle, visibility) =>
-    set((state) => ({
-      following: { ...state.following, [handle]: visibility === "PUBLIC" ? "ACCEPTED" : "PENDING" },
-    })),
-  unfollow: (handle) => set((state) => ({ following: without(state.following, handle) })),
-  accept: (handle) => set((state) => ({ followers: { ...state.followers, [handle]: "ACCEPTED" } })),
-  removeFollower: (handle) => set((state) => ({ followers: without(state.followers, handle) })),
-  restoreFollower: (handle, status) => set((state) => ({ followers: { ...state.followers, [handle]: status } })),
-  seed: (kind) =>
-    set(
-      kind === "empty"
-        ? { following: {}, followers: {} }
-        : { following: SEED_FOLLOWING, followers: SEED_FOLLOWERS },
-    ),
-}));
+    {
+      name: "bikecheck.prototype.profile",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({
+        visibility: state.visibility,
+        handle: state.handle,
+        sections: state.sections,
+        unsharedBikeIds: state.unsharedBikeIds,
+      }),
+    },
+  ),
+);
 
 // The dashboard's figures, read off the graph so a request accepted on the Follows screen
 // moves the number on the card.

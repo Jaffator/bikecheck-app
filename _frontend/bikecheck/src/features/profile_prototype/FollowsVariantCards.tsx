@@ -137,7 +137,7 @@ function FollowersTab({ model }: { model: FollowsModel }): ReactElement {
           {requests.map((person) => (
             <PersonCard key={person.handle} person={person} onOpen={() => openProfile(person.handle)}>
               {/* Two round answers: yes takes the accent, no stays quiet. Neither asks twice. */}
-              <ActionIcon variant="filled" color="primary.6" radius="xl" size={36} aria-label="Přijmout" onClick={() => accept(person.handle)}>
+              <ActionIcon variant="filled" color="primary.6" c="textDark.6" radius="xl" size={36} aria-label="Přijmout" onClick={() => accept(person.handle)}>
                 <Check size={18} />
               </ActionIcon>
               <ActionIcon variant="default" radius="xl" size={36} aria-label="Odmítnout" onClick={() => remove(person.handle)}>

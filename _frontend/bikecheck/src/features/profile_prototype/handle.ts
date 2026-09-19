@@ -44,10 +44,15 @@ export function suggestHandle(user: User | null): string {
   return slug.length >= 3 ? slug : "rider";
 }
 
+// #132: in dev the link points at this origin, so "Otevřít" lands on the prototype page.
 export function profileUrl(handle: string): string {
-  return `https://bikecheck.app/u/${handle}`;
+  return `${profileOrigin()}/u/${handle}`;
 }
 
 export function profileHost(): string {
-  return "bikecheck.app";
+  return import.meta.env.DEV ? window.location.host : "bikecheck.app";
+}
+
+function profileOrigin(): string {
+  return import.meta.env.DEV ? window.location.origin : "https://bikecheck.app";
 }

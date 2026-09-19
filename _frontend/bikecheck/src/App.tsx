@@ -30,6 +30,9 @@ import { applyLanguage, detectLanguage } from "./i18n";
 import { Follows } from "@/features/profile_prototype/Follows";
 import { UserProfile } from "@/features/profile_prototype/UserProfile";
 import { UserProfileBike } from "@/features/profile_prototype/UserProfileBike";
+// PROTOTYPE #132 — remove with features/profile_prototype.
+import { PublicGarage } from "@/features/profile_prototype/PublicGarage";
+import { PublicBike } from "@/features/profile_prototype/PublicBike";
 
 function App(): ReactElement {
   // The App Link listener lives above the auth gate: a Verification Email's link arrives
@@ -47,6 +50,9 @@ function App(): ReactElement {
       {/* The link in a Verification Email lands here while nobody is signed in (ADR 0031):
           no session fetch, no nav, one button. */}
       <Route path="/verify-email" element={<VerifyEmail />} />
+      {/* PROTOTYPE #132 — the public profile page, outside the gate like a share link. */}
+      <Route path="/u/:handle" element={<PublicGarage />} />
+      <Route path="/u/:handle/:bikeId" element={<PublicBike />} />
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>
   );

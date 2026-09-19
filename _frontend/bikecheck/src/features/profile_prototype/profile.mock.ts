@@ -42,10 +42,17 @@ export interface MockClicks {
 
 export interface MockSetupProfile {
   name: string;
+  // Mirrors is_active: the one profile the owner rides right now, so a follower can tell.
+  active: boolean;
   frontTire: number;
   rearTire: number;
   fork: { psi: number; sag: number; tokens: number; clicks: MockClicks } | null;
   shock: { psi: number; sag: number; tokens: number; clicks: MockClicks } | null;
+}
+
+// The card opens on the active profile, never on whichever happens to be first.
+export function activeProfileIndex(bike: MockBike): number {
+  return Math.max(0, bike.profiles.findIndex((profile) => profile.active));
 }
 
 export interface MockBike {
@@ -200,9 +207,9 @@ const RALLON: MockBike = {
   categories: RALLON_CATEGORIES,
   services: RALLON_SERVICES,
   profiles: [
-    { name: "Trail", frontTire: 22.5, rearTire: 25.4, fork: { psi: 82, sag: 20, tokens: 2, clicks: { lsr: 8, hsr: 3, lsc: 10, hsc: 2 } }, shock: { psi: 195, sag: 30, tokens: 1, clicks: { lsr: 9, hsr: 2, lsc: 12, hsc: 1 } } },
-    { name: "Race", frontTire: 23.9, rearTire: 26.8, fork: { psi: 88, sag: 18, tokens: 3, clicks: { lsr: 7, hsr: 3, lsc: 8, hsc: 3 } }, shock: { psi: 205, sag: 28, tokens: 2, clicks: { lsr: 8, hsr: 2, lsc: 10, hsc: 2 } } },
-    { name: "Park", frontTire: 24.7, rearTire: 27.6, fork: { psi: 90, sag: 17, tokens: 3, clicks: { lsr: 6, hsr: 2, lsc: 7, hsc: 4 } }, shock: { psi: 210, sag: 27, tokens: 2, clicks: { lsr: 7, hsr: 1, lsc: 9, hsc: 3 } } },
+    { name: "Trail", active: false, frontTire: 22.5, rearTire: 25.4, fork: { psi: 82, sag: 20, tokens: 2, clicks: { lsr: 8, hsr: 3, lsc: 10, hsc: 2 } }, shock: { psi: 195, sag: 30, tokens: 1, clicks: { lsr: 9, hsr: 2, lsc: 12, hsc: 1 } } },
+    { name: "Race", active: true, frontTire: 23.9, rearTire: 26.8, fork: { psi: 88, sag: 18, tokens: 3, clicks: { lsr: 7, hsr: 3, lsc: 8, hsc: 3 } }, shock: { psi: 205, sag: 28, tokens: 2, clicks: { lsr: 8, hsr: 2, lsc: 10, hsc: 2 } } },
+    { name: "Park", active: false, frontTire: 24.7, rearTire: 27.6, fork: { psi: 90, sag: 17, tokens: 3, clicks: { lsr: 6, hsr: 2, lsc: 7, hsc: 4 } }, shock: { psi: 210, sag: 27, tokens: 2, clicks: { lsr: 7, hsr: 1, lsc: 9, hsc: 3 } } },
   ],
 };
 
@@ -232,7 +239,7 @@ const GRIZL: MockBike = {
     ["2025-10-20", ["Odvzdušnění"], ["Brzdové páky"], false, 700],
     [null, ["Základní servis"], ["Středové složení"], false, 900],
   ]),
-  profiles: [{ name: "Default", frontTire: 37.7, rearTire: 40.6, fork: null, shock: null }],
+  profiles: [{ name: "Default", active: true, frontTire: 37.7, rearTire: 40.6, fork: null, shock: null }],
 };
 
 const HONZO: MockBike = {

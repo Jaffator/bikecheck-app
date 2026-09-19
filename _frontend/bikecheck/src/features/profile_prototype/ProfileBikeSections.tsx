@@ -6,12 +6,23 @@ import { Badge, Box, Button, Chip, Collapse, Divider, Group, Paper, SimpleGrid, 
 import dayjs from "dayjs";
 import { ChevronDown, ChevronUp, SlidersHorizontal, Wrench } from "lucide-react";
 import { IoLogoWebComponent } from "react-icons/io5";
+import { componentIcon } from "@/assets/icons/svg_icons/components";
 import { groupIcon } from "@/assets/icons/svg_icons/groups";
 import { chipStyles } from "@/features/add_bike_page/formStyles";
+import { TYRE_PRESSURE_MAX } from "@/features/setup/pressure";
+import { ReadOnlyGauge } from "@/features/setup/ui/ReadOnlyGauge";
+import { SUSPENSION_PSI_MAX } from "@/features/setup/ui/SetupProfileForm";
 import { SERVICE_CARD_SURFACE } from "@/features/service/serviceCardSurface";
 import { formatMonthHeading, formatServiceDateShort } from "@/features/service/serviceDates";
 import { formatCost } from "@/utils/money";
-import { mountedTire, type MockBike, type MockGarage, type MockService, type MockSetupProfile } from "./profile.mock";
+import {
+  activeProfileIndex,
+  mountedTire,
+  type MockBike,
+  type MockGarage,
+  type MockService,
+  type MockSetupProfile,
+} from "./profile.mock";
 import { formatKm } from "./profile.figures";
 import { EYEBROW, PANEL, SECONDARY_BUTTON } from "./shared";
 
@@ -34,28 +45,80 @@ function SectionTitle({ icon, children, aside }: { icon: ReactNode; children: Re
 
 // ---- Setup -------------------------------------------------------------------------
 
-function Reading({ label, value, under }: { label: string; value: string; under?: string | null }): ReactElement {
+// One reading of the sheet as a gauge: the part's own icon and name over the arc, and under
+// it what else the reader may know about the part - the tyre mounted, the sag it is set to.
+interface GaugeReading {
+  label: string;
+  // The icon of the part read - Tire, Fork, Shock - as the rest of the app draws it.
+  icon: string;
+  // In psi, as the mock keeps every pressure.
+  psi: number;
+  max: number;
+  unit: MockGarage["tireUnit"];
+  hint?: string;
+  under?: string | null;
+}
+
+function partMark(componentType: string): ReactElement | null {
+  const Icon = componentIcon(componentType);
+  return Icon === null ? null : <Icon width={18} height={18} />;
+}
+
+function Gauge({ reading }: { reading: GaugeReading }): ReactElement {
   return (
-    <Stack gap={2} style={{ minWidth: 0 }}>
-      <Text {...EYEBROW} lineClamp={1}>
-        {label}
-      </Text>
-      <Text className="font-mono" fz={17} fw={600} c="text.6" lh={1.1}>
-        {value}
-      </Text>
-      {under !== undefined && under !== null && (
-        <Text fz={11} c="var(--color-text-dim)" lineClamp={1}>
-          {under}
+    <Stack gap={6} align="center" style={{ minWidth: 0 }}>
+      <Group gap={6} wrap="nowrap" c="var(--color-text-dim)">
+        {partMark(reading.icon)}
+        <Text {...EYEBROW} lineClamp={1}>
+          {reading.label}
+        </Text>
+      </Group>
+      <ReadOnlyGauge
+        value={reading.psi}
+        max={reading.max}
+        figure={formatFigure(reading.psi, reading.unit)}
+        unit={reading.unit}
+        hint={reading.hint}
+      />
+      {reading.under !== undefined && reading.under !== null && (
+        <Text fz={11} c="var(--color-text-dim)" lineClamp={1} ta="center" maw="100%">
+          {reading.under}
         </Text>
       )}
     </Stack>
   );
 }
 
-function formatPressure(value: number, unit: MockGarage["tireUnit"]): string {
+// The figure alone; the unit is written under it by the gauge.
+function formatFigure(psi: number, unit: MockGarage["tireUnit"]): string {
   // The mock keeps psi; bar is what the owner would see if their unit says so.
-  const shown = unit === "bar" ? value / 14.504 : value;
-  return `${new Intl.NumberFormat("cs", { maximumFractionDigits: unit === "bar" ? 2 : 1 }).format(shown)} ${unit}`;
+  const shown = unit === "bar" ? psi / 14.504 : psi;
+  return new Intl.NumberFormat("cs", { maximumFractionDigits: unit === "bar" ? 2 : 1 }).format(shown);
+}
+
+// The gauges of one profile: both tyres, then whichever of fork and shock the bike has. A tyre
+// is read in bar with the psi small under it; suspension is always psi (ADR 0029).
+function gaugeReadings(bike: MockBike, garage: MockGarage, profile: MockSetupProfile): GaugeReading[] {
+  const tire = (label: string, psi: number, position: "Přední" | "Zadní"): GaugeReading => {
+    const mounted = mountedTire(bike, position);
+    return {
+      label,
+      icon: "Tire",
+      psi,
+      max: TYRE_PRESSURE_MAX.psi,
+      unit: "bar",
+      hint: `${Math.round(psi)} psi`,
+      under: garage.sections.components && mounted ? `${mounted.brand} ${mounted.model}` : null,
+    };
+  };
+  const readings = [tire("Přední", profile.frontTire, "Přední"), tire("Zadní", profile.rearTire, "Zadní")];
+  if (profile.fork) {
+    readings.push({ label: "Vidlice", icon: "Fork", psi: profile.fork.psi, max: SUSPENSION_PSI_MAX, unit: "psi", hint: `sag ${profile.fork.sag} %` });
+  }
+  if (profile.shock) {
+    readings.push({ label: "Tlumič", icon: "Shock", psi: profile.shock.psi, max: SUSPENSION_PSI_MAX, unit: "psi", hint: `sag ${profile.shock.sag} %` });
+  }
+  return readings;
 }
 
 function ClickRow({ label, clicks }: { label: string; clicks: { lsr: number; hsr: number; lsc: number; hsc: number } }): ReactElement {
@@ -87,14 +150,11 @@ function ClickRow({ label, clicks }: { label: string; clicks: { lsr: number; hsr
 }
 
 export function SetupCard({ bike, garage }: { bike: MockBike; garage: MockGarage }): ReactElement | null {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => activeProfileIndex(bike));
   const [clicksOpen, setClicksOpen] = useState(false);
   // No saved profile = no card, not an empty one (#120).
   if (bike.profiles.length === 0) return null;
   const profile: MockSetupProfile = bike.profiles[index] ?? bike.profiles[0];
-  const front = mountedTire(bike, "Přední");
-  const rear = mountedTire(bike, "Zadní");
-  const tireName = (tire: typeof front): string | null => (tire ? `${tire.brand} ${tire.model}` : null);
 
   return (
     <Paper radius="lg" style={{ ...PANEL, overflow: "hidden" }}>
@@ -113,23 +173,27 @@ export function SetupCard({ bike, garage }: { bike: MockBike; garage: MockGarage
                   onChange={() => setIndex(itemIndex)}
                   styles={chipStyles(itemIndex === index, { wrap: false, opaque: true })}
                 >
-                  {item.name}
+                  {item.active ? `● ${item.name}` : item.name}
                 </Chip>
               ))}
             </Group>
           ) : undefined
         }
       >
-        Setup
+        <Group gap={8} wrap="nowrap">
+          Setup
+          {profile.active && (
+            <Badge size="xs" radius="sm" variant="light" color="primary.6" style={{ flexShrink: 0 }}>
+              Aktuální
+            </Badge>
+          )}
+        </Group>
       </SectionTitle>
 
-      <SimpleGrid cols={2} spacing="md" px="md" pb="md">
-        <Reading label="Přední plášť" value={formatPressure(profile.frontTire, garage.tireUnit)} under={garage.sections.components ? tireName(front) : null} />
-        <Reading label="Zadní plášť" value={formatPressure(profile.rearTire, garage.tireUnit)} under={garage.sections.components ? tireName(rear) : null} />
-        {profile.fork && <Reading label="Vidlice" value={`${profile.fork.psi} psi`} />}
-        {profile.fork && <Reading label="Sag vidlice" value={`${profile.fork.sag} %`} />}
-        {profile.shock && <Reading label="Tlumič" value={`${profile.shock.psi} psi`} />}
-        {profile.shock && <Reading label="Sag tlumiče" value={`${profile.shock.sag} %`} />}
+      <SimpleGrid cols={2} spacing="md" verticalSpacing="lg" px="md" pb="md">
+        {gaugeReadings(bike, garage, profile).map((reading) => (
+          <Gauge key={reading.label} reading={reading} />
+        ))}
       </SimpleGrid>
 
       {(profile.fork || profile.shock) && (
@@ -203,7 +267,7 @@ export function ComponentsPanel({ bike }: { bike: MockBike }): ReactElement {
               <Group key={`${part.type}-${partIndex}`} gap="sm" wrap="nowrap" align="flex-start" px="md" py={8} pl={50}>
                 <Stack gap={1} style={{ minWidth: 0, flex: 1 }}>
                   <Group gap={6} wrap="nowrap">
-                    <Text fz={14} fw={600} c="text.6" lineClamp={1}>
+                    <Text fz={14} fw={600} c="text.6">
                       {part.type}
                     </Text>
                     {part.position !== null && (
@@ -212,7 +276,8 @@ export function ComponentsPanel({ bike }: { bike: MockBike }): ReactElement {
                       </Text>
                     )}
                   </Group>
-                  <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
+                  {/* Wraps: a part's full name is what the reader came for, a cut one says nothing. */}
+                  <Text fz={13} c="var(--color-text-dim)">
                     {part.brand} {part.model} · {part.spec}
                   </Text>
                 </Stack>

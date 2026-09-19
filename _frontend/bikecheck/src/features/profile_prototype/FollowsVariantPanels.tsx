@@ -175,7 +175,7 @@ export function FollowersPanels({ model }: { model: FollowsModel }): ReactElemen
         >
           {requests.map((person) => (
             <PersonRow key={person.handle} person={person} onOpen={() => openProfile(person.handle)}>
-              <ActionIcon variant="filled" color="primary.6" radius="xl" size={32} aria-label="Přijmout" onClick={() => accept(person.handle)}>
+              <ActionIcon variant="filled" color="primary.6" c="textDark.6" radius="xl" size={32} aria-label="Přijmout" onClick={() => accept(person.handle)}>
                 <Check size={16} />
               </ActionIcon>
               <ActionIcon
