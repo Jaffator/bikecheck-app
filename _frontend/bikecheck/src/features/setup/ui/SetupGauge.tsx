@@ -10,24 +10,8 @@ import { fieldLabel } from "@/features/add_bike_page/formStyles";
 import { tapFeedback } from "@/utils/haptics";
 import { BigNumberInput } from "./BigNumberInput";
 import { GaugeReadout } from "./GaugeReadout";
-import { GAUGE_LABEL_GAP, GAUGE_PAIR_GAP, arcStroke, figureFontSize } from "./gaugeMetrics";
+import { GAUGE_LABEL_GAP, GAUGE_PAIR_GAP, arcPath, arcStroke, figureFontSize } from "./gaugeMetrics";
 import { StepButton } from "./StepButton";
-
-// Three quarters of a circle, open at the bottom, as a pressure gauge is drawn.
-const SWEEP = 0.75;
-
-// The arc's path, from seven o'clock round the top to five o'clock.
-function arcPath(size: number, stroke: number): string {
-  const c = size / 2;
-  const r = c - stroke / 2;
-  const start = (Math.PI * 3) / 4;
-  const end = start + Math.PI * 2 * SWEEP;
-  const sx = c + r * Math.cos(start);
-  const sy = c + r * Math.sin(start);
-  const ex = c + r * Math.cos(end);
-  const ey = c + r * Math.sin(end);
-  return `M ${sx} ${sy} A ${r} ${r} 0 1 1 ${ex} ${ey}`;
-}
 
 // Kept to the notch, so a step never hands back 1.7000000002.
 function snap(value: number, decimals: number): number {

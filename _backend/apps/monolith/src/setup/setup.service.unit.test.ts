@@ -40,9 +40,9 @@ const BLANK_SHEET = Object.fromEntries(Object.keys(SHEET).map((field) => [field,
   null
 >;
 
-// The bike a profile hangs off: whose it is, and whether it is archived.
+// The bike a profile hangs off: whose it is, whether it is archived, and which profile is active.
 function bikeRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return { id: BIKE_ID, user_id: OWNER_ID, is_deleted: false, ...overrides };
+  return { id: BIKE_ID, user_id: OWNER_ID, is_deleted: false, active_setup_profile_id: PROFILE_ID, ...overrides };
 }
 
 // One Setup Profile as the row holds it.
@@ -81,7 +81,7 @@ describe('SetupService', () => {
   let nextId: number;
 
   const mockPrisma = {
-    bikes: { findFirst: jest.fn() },
+    bikes: { findFirst: jest.fn(), update: jest.fn() },
     setup_profiles: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -111,7 +111,10 @@ describe('SetupService', () => {
     if (where.bikes) {
       const bike = findBike({ ...where.bikes, id: profile.bike_id as number });
       if (!bike) return null;
-      return { ...profile, bikes: { id: bike.id, is_deleted: bike.is_deleted } };
+      return {
+        ...profile,
+        bikes: { id: bike.id, is_deleted: bike.is_deleted, active_setup_profile_id: bike.active_setup_profile_id },
+      };
     }
     return profile;
   }
@@ -135,12 +138,21 @@ describe('SetupService', () => {
     service = module.get<SetupService>(SetupService);
 
     // The owner's bike and a stranger's, and one profile on the owner's bike unless a test says otherwise.
-    bikes = [bikeRow(), bikeRow({ id: STRANGERS_BIKE_ID, user_id: STRANGER_ID })];
+    bikes = [
+      bikeRow(),
+      bikeRow({ id: STRANGERS_BIKE_ID, user_id: STRANGER_ID, active_setup_profile_id: STRANGERS_PROFILE_ID }),
+    ];
     profiles = [profileRow(), profileRow({ id: STRANGERS_PROFILE_ID, bike_id: STRANGERS_BIKE_ID })];
     nextId = 100;
 
     mockPrisma.bikes.findFirst.mockImplementation(({ where }: { where: BikeWhere }) =>
       Promise.resolve(findBike(where)),
+    );
+    mockPrisma.bikes.update.mockImplementation(
+      ({ where, data }: { where: { id: number }; data: Record<string, unknown> }) => {
+        const row = bikes.find((bike) => bike.id === where.id)!;
+        return Promise.resolve(applyUpdate(row, data));
+      },
     );
     mockPrisma.setup_profiles.findMany.mockImplementation(({ where }: { where: { bike_id: number } }) =>
       Promise.resolve(profiles.filter((row) => row.bike_id === where.bike_id).map((row) => ({ ...row }))),
@@ -198,6 +210,19 @@ describe('SetupService', () => {
       await expect(service.findByBike(BIKE_ID, OWNER_ID)).resolves.toEqual([]);
     });
 
+    // The Active Setup Profile is the bike's, not the row's: the flag is read off the bike.
+    it('marks the profile the bike is ridden at', async () => {
+      profiles.push(profileRow({ id: OTHER_PROFILE_ID, name: 'Race' }));
+      bikes = [bikeRow({ active_setup_profile_id: OTHER_PROFILE_ID })];
+
+      const result = await service.findByBike(BIKE_ID, OWNER_ID);
+
+      expect(result.map((profile) => [profile.name, profile.is_active])).toEqual([
+        ['Trail', false],
+        ['Race', true],
+      ]);
+    });
+
     it('serves the pressures as numbers', async () => {
       profiles = [profileRow(SHEET)];
 
@@ -236,6 +261,27 @@ describe('SetupService', () => {
         data: { bike_id: BIKE_ID, name: 'Race', ...BLANK_SHEET },
       });
       expect(profile).toMatchObject({ name: 'Race', ...BLANK_SHEET });
+    });
+
+    // A bike with profiles always has an active one, so the first written becomes it.
+    it("makes the bike's first profile the active one", async () => {
+      profiles = [];
+      bikes = [bikeRow({ active_setup_profile_id: null })];
+
+      const profile = await service.create(BIKE_ID, OWNER_ID, { name: 'Trail' });
+
+      expect(mockPrisma.bikes.update).toHaveBeenCalledWith({
+        where: { id: BIKE_ID },
+        data: { active_setup_profile_id: profile.id },
+      });
+      expect(profile.is_active).toBe(true);
+    });
+
+    it('leaves the active profile alone when another is added', async () => {
+      const profile = await service.create(BIKE_ID, OWNER_ID, { name: 'Race' });
+
+      expect(mockPrisma.bikes.update).not.toHaveBeenCalled();
+      expect(profile.is_active).toBe(false);
     });
 
     it('copies every number and the note from copy_of', async () => {
@@ -331,6 +377,15 @@ describe('SetupService', () => {
       expect(profile.fork_rebound_ls).toBe(57);
     });
 
+    it('answers whether the rewritten profile is the active one', async () => {
+      profiles.push(profileRow({ id: OTHER_PROFILE_ID, name: 'Race' }));
+
+      await expect(service.update(PROFILE_ID, OWNER_ID, { note: 'x' })).resolves.toMatchObject({ is_active: true });
+      await expect(service.update(OTHER_PROFILE_ID, OWNER_ID, { note: 'x' })).resolves.toMatchObject({
+        is_active: false,
+      });
+    });
+
     it('renames a profile', async () => {
       const profile = await service.update(PROFILE_ID, OWNER_ID, { name: 'Enduro' });
 
@@ -366,6 +421,35 @@ describe('SetupService', () => {
     });
   });
 
+  describe('activate', () => {
+    it('makes the profile the one the bike is ridden at', async () => {
+      profiles.push(profileRow({ id: OTHER_PROFILE_ID, name: 'Race' }));
+
+      const profile = await service.activate(OTHER_PROFILE_ID, OWNER_ID);
+
+      expect(mockPrisma.bikes.update).toHaveBeenCalledWith({
+        where: { id: BIKE_ID },
+        data: { active_setup_profile_id: OTHER_PROFILE_ID },
+      });
+      expect(profile.is_active).toBe(true);
+      const listed = await service.findByBike(BIKE_ID, OWNER_ID);
+      expect(listed.map((item) => item.is_active)).toEqual([false, true]);
+    });
+
+    it("refuses a stranger's or missing profile", async () => {
+      await expect(service.activate(STRANGERS_PROFILE_ID, OWNER_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.activate(MISSING_ID, OWNER_ID)).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.bikes.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses on an Archived Bike', async () => {
+      bikes = [bikeRow({ is_deleted: true })];
+
+      await expect(service.activate(PROFILE_ID, OWNER_ID)).rejects.toThrow(ConflictException);
+      expect(mockPrisma.bikes.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe('delete', () => {
     it('deletes the profile and answers with it', async () => {
       const profile = await service.delete(PROFILE_ID, OWNER_ID);
@@ -379,6 +463,32 @@ describe('SetupService', () => {
       await service.delete(PROFILE_ID, OWNER_ID);
 
       await expect(service.findByBike(BIKE_ID, OWNER_ID)).resolves.toEqual([]);
+      expect(bikes[0].active_setup_profile_id).toBeNull();
+    });
+
+    // Deleting the active profile hands over to the older neighbour, else the younger (ADR 0029).
+    it('hands the active role to the older neighbour, else the younger', async () => {
+      const YOUNGEST_ID = 34;
+      profiles.push(
+        profileRow({ id: OTHER_PROFILE_ID, name: 'Race', created_at: new Date('2026-01-15T00:00:00.000Z') }),
+        profileRow({ id: YOUNGEST_ID, name: 'Park', created_at: new Date('2026-02-01T00:00:00.000Z') }),
+      );
+      bikes = [bikeRow({ active_setup_profile_id: OTHER_PROFILE_ID })];
+
+      await service.delete(OTHER_PROFILE_ID, OWNER_ID);
+      expect(bikes[0].active_setup_profile_id).toBe(PROFILE_ID);
+
+      await service.delete(PROFILE_ID, OWNER_ID);
+      expect(bikes[0].active_setup_profile_id).toBe(YOUNGEST_ID);
+    });
+
+    it('leaves the active profile alone when another is deleted', async () => {
+      profiles.push(profileRow({ id: OTHER_PROFILE_ID, name: 'Race' }));
+
+      const profile = await service.delete(OTHER_PROFILE_ID, OWNER_ID);
+
+      expect(mockPrisma.bikes.update).not.toHaveBeenCalled();
+      expect(profile.is_active).toBe(false);
     });
 
     it("refuses a stranger's or missing profile", async () => {

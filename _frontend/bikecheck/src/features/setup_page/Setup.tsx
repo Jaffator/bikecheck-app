@@ -9,7 +9,12 @@ import { useBikeComponents, useUpdateBikeComponent } from "@/features/components
 import { mountedSuspension } from "@/features/setup/dialBrand";
 import { useCurrentUser } from "@/features/users/users.queries";
 import type { TirePressureUnit } from "@/features/users/users.types";
-import { useDeleteSetupProfile, useSaveSetupProfile, useSetupProfiles } from "@/features/setup/setup.queries";
+import {
+  useActivateSetupProfile,
+  useDeleteSetupProfile,
+  useSaveSetupProfile,
+  useSetupProfiles,
+} from "@/features/setup/setup.queries";
 import type { SetupProfile } from "@/features/setup/setup.types";
 import type { DialKind } from "@/features/setup/dial.types";
 import {
@@ -50,6 +55,7 @@ export function Setup(): ReactElement {
   const { data: components, isLoading: componentsLoading } = useBikeComponents(bikeId);
   const save = useSaveSetupProfile();
   const remove = useDeleteSetupProfile();
+  const activate = useActivateSetupProfile();
   const updateComponent = useUpdateBikeComponent();
   const setTitleSlot = useHeaderStore((state) => state.setTitleSlot);
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
@@ -59,7 +65,7 @@ export function Setup(): ReactElement {
   // Only what the owner has changed. The rest is read off the profile, so a save that comes
   // back from the server is what the form goes on showing.
   const [edits, setEdits] = useState<Partial<SetupFormValues>>({});
-  // Which profile is read; null falls back to the oldest, or to the unsaved default.
+  // Which profile is read; null falls back to the active one, or to the unsaved default.
   const [selectedId, setSelectedId] = useState<number | null>(null);
   // What waits for the owner to agree to lose their typing: leaving, or switching profile.
   const [pendingDiscard, setPendingDiscard] = useState<(() => void) | null>(null);
@@ -68,7 +74,11 @@ export function Setup(): ReactElement {
 
   // The account's unit; the user is always loaded behind the auth gate, bar is only a type guard.
   const unit: TirePressureUnit = user?.tire_pressure_unit ?? "bar";
-  const profile = profiles?.find((item) => item.id === selectedId) ?? profiles?.[0] ?? null;
+  const profile =
+    profiles?.find((item) => item.id === selectedId) ??
+    profiles?.find((item) => item.is_active) ??
+    profiles?.[0] ??
+    null;
   // An Archived Bike is a frozen record: readable, and written to by nothing.
   const archived = bike?.is_deleted === true;
   const fork = mountedSuspension(components, "Fork");
@@ -139,9 +149,13 @@ export function Setup(): ReactElement {
     setSelectedId(profileId);
   }
 
+  // The profile being read is the one the bike is ridden at: choosing a chip says so to followers.
   function select(profileId: number): void {
     if (profileId === profile?.id) return;
-    whenClean(() => show(profileId));
+    whenClean(() => {
+      show(profileId);
+      activate.mutate(profileId);
+    });
   }
 
   // A new profile opens as soon as it exists, so a copy is switched to at once.
@@ -149,9 +163,12 @@ export function Setup(): ReactElement {
     whenClean(() => setNameSheet({ mode: "create", copy }));
   }
 
+  // A new profile opens as what the owner is dialling in now, so it is also what they ride.
   function onNamed(saved: SetupProfile): void {
     setNameSheet(null);
-    if (nameSheet?.mode === "create") show(saved.id);
+    if (nameSheet?.mode !== "create") return;
+    show(saved.id);
+    if (!saved.is_active) activate.mutate(saved.id);
   }
 
   // The neighbour takes over from a deleted profile: the older one, else the younger, else

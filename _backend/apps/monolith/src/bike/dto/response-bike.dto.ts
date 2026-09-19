@@ -137,4 +137,7 @@ export class ResponseBikeDto implements Omit<bikes, 'bike_weight_kg'> {
 
   @ApiProperty({ example: 'My Enduro Bike', nullable: true })
   strava_name!: string | null;
+
+  @ApiProperty({ example: 12, nullable: true, description: 'The Setup Profile the bike is ridden at right now' })
+  active_setup_profile_id!: number | null;
 }

@@ -49,6 +49,18 @@ export class SetupController {
     return await this.setupService.update(id, Number(userId), dto);
   }
 
+  // ---------- PATCH make a profile the one the bike is ridden at ----------
+  @Patch(':id/activate')
+  @ApiResponse({ status: 200, type: Response_SetupProfileDto })
+  @ApiResponse({ status: 404, description: "Profile not found or not the caller's" })
+  @ApiResponse({ status: 409, description: 'Bike is archived' })
+  async activate(
+    @CurrentUser('userId') userId: string,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Response_SetupProfileDto> {
+    return await this.setupService.activate(id, Number(userId));
+  }
+
   // ---------- DELETE a profile, the last one included ----------
   @Delete(':id')
   @ApiResponse({ status: 200, type: Response_SetupProfileDto })

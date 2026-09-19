@@ -357,6 +357,16 @@
             "null"
           ]
         },
+        "active_setup_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/setup_profiles"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "bike_types": {
           "anyOf": [
             {
@@ -1367,6 +1377,12 @@
         },
         "bikes": {
           "$ref": "#/definitions/bikes"
+        },
+        "active_on": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/bikes"
+          }
         }
       }
     },

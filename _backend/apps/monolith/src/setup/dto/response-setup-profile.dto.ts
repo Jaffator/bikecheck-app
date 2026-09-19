@@ -68,6 +68,10 @@ export class Response_SetupProfileDto implements Omit<setup_profiles, PressureCo
   @ApiProperty({ example: 1, nullable: true, description: 'Clicks from fully closed' })
   shock_compression_hs!: number | null;
 
+  // Exactly one profile of a bike is active: the one the owner last chose on the Setup screen.
+  @ApiProperty({ example: true, description: 'The profile the bike is ridden at right now' })
+  is_active!: boolean;
+
   @ApiProperty({ example: '2026-09-11T12:00:00.000Z' })
   created_at!: Date;
 

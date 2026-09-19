@@ -23,6 +23,11 @@ export async function updateSetupProfile(id: number, payload: UpdateSetupProfile
   });
 }
 
+// PATCH /setup/:id/activate — makes the profile the one the bike is ridden at.
+export async function activateSetupProfile(id: number): Promise<SetupProfile> {
+  return apiFetch<SetupProfile>(`/setup/${String(id)}/activate`, { method: "PATCH" });
+}
+
 // DELETE /setup/:id — removes a profile, the last one included.
 export async function deleteSetupProfile(id: number): Promise<SetupProfile> {
   return apiFetch<SetupProfile>(`/setup/${String(id)}`, { method: "DELETE" });

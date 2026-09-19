@@ -25,6 +25,22 @@ export const UNIT_LINE_HEIGHT = 1.2;
 export const HINT_FONT_SIZE = 11;
 export const HINT_LINE_HEIGHT = 1.4;
 
+// Three quarters of a circle, open at the bottom, as a pressure gauge is drawn.
+const ARC_SWEEP = 0.75;
+
+// The arc's path, from seven o'clock round the top to five o'clock.
+export function arcPath(size: number, stroke: number): string {
+  const c = size / 2;
+  const r = c - stroke / 2;
+  const start = (Math.PI * 3) / 4;
+  const end = start + Math.PI * 2 * ARC_SWEEP;
+  const sx = c + r * Math.cos(start);
+  const sy = c + r * Math.sin(start);
+  const ex = c + r * Math.cos(end);
+  const ey = c + r * Math.sin(end);
+  return `M ${sx} ${sy} A ${r} ${r} 0 1 1 ${ex} ${ey}`;
+}
+
 // The arc's stroke at the gauge's size; every readout is lifted by it, arc or not.
 export function arcStroke(size: number): number {
   return Math.round(size / 13);

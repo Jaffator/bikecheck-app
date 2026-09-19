@@ -35,7 +35,7 @@ import { TokenStepper } from "./TokenStepper";
 // Suspension pressure is accepted to a tenth of a psi, which is what the API stores.
 const SUSPENSION_PSI_DECIMALS = 1;
 // The buttons move a whole psi at a time; a tenth is typed, never stepped to.
-const SUSPENSION_PSI_MAX = 350;
+export const SUSPENSION_PSI_MAX = 350;
 const SUSPENSION_PSI_STEP = 1;
 // Volume spacers: a fork or shock takes a handful, never more than eight.
 const TOKENS_MAX = 8;

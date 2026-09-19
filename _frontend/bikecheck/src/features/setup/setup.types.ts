@@ -25,6 +25,8 @@ export interface SetupProfile {
   shock_rebound_hs: number | null;
   shock_compression_ls: number | null;
   shock_compression_hs: number | null;
+  // The one profile the bike is ridden at right now; exactly one of a bike's profiles is.
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,4 +35,6 @@ export interface SetupProfile {
 export type CreateSetupProfilePayload = components["schemas"]["CreateSetupProfileDto"];
 
 // Mirrors UpdateSetupProfileDto: a field sent as null clears it, a field left out is untouched.
-export type UpdateSetupProfilePayload = Partial<Omit<SetupProfile, "id" | "bike_id" | "created_at" | "updated_at">>;
+export type UpdateSetupProfilePayload = Partial<
+  Omit<SetupProfile, "id" | "bike_id" | "is_active" | "created_at" | "updated_at">
+>;

@@ -9,7 +9,13 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 import type { ApiError } from "@/api/client";
-import { createSetupProfile, deleteSetupProfile, getSetupProfiles, updateSetupProfile } from "./setup.api";
+import {
+  activateSetupProfile,
+  createSetupProfile,
+  deleteSetupProfile,
+  getSetupProfiles,
+  updateSetupProfile,
+} from "./setup.api";
 import type { CreateSetupProfilePayload, SetupProfile, UpdateSetupProfilePayload } from "./setup.types";
 
 function setupKey(bikeId: number): [string, number] {
@@ -28,6 +34,13 @@ function writeProfile(queryClient: QueryClient, profile: SetupProfile): void {
     const known = current.some((item) => item.id === profile.id);
     return known ? current.map((item) => (item.id === profile.id ? profile : item)) : [...current, profile];
   });
+}
+
+// Only one profile is active, so the flag moves off the others in the same write.
+function markActive(queryClient: QueryClient, profile: SetupProfile): void {
+  queryClient.setQueryData<SetupProfile[]>(setupKey(profile.bike_id), (current) =>
+    current?.map((item) => ({ ...item, is_active: item.id === profile.id })),
+  );
 }
 
 function dropProfile(queryClient: QueryClient, profile: SetupProfile): void {
@@ -73,6 +86,18 @@ export function useUpdateSetupProfile(): UseMutationResult<SetupProfile, ApiErro
   return useMutation({
     mutationFn: ({ id, data }: UpdateSetupProfileInput) => updateSetupProfile(id, data),
     onSuccess: (profile) => settleProfile(queryClient, profile),
+  });
+}
+
+export function useActivateSetupProfile(): UseMutationResult<SetupProfile, ApiError, number> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => activateSetupProfile(id),
+    onSuccess: async (profile) => {
+      markActive(queryClient, profile);
+      await refreshProfiles(queryClient, profile.bike_id);
+    },
   });
 }
 
