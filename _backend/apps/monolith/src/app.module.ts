@@ -23,6 +23,7 @@ import { ServiceTrackingModule } from './service-tracking/service-tracking.modul
 import { AiChatModule } from './ai-chat/ai-chat.module';
 import { SetupModule } from './setup/setup.module';
 import { ProfileModule } from './profile/profile.module';
+import { PreviewModule } from './preview/preview.module';
 import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from 'nestjs-pino';
 import { BullBoardModule } from '@bull-board/nestjs';
@@ -113,6 +114,7 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
     AiChatModule,
     SetupModule,
     ProfileModule,
+    PreviewModule,
   ],
   providers: [
     {
