@@ -33,6 +33,8 @@ export interface Bike {
   deleted_at: string | null;
   strava_gear_id: string | null;
   strava_name: string | null;
+  // Whether the bike goes out on the owner's Public Profile. Archiving leaves it alone.
+  is_shared: boolean;
 }
 
 // Keep multipart photo data separate from the create DTO.
@@ -61,6 +63,7 @@ export interface CreateBikePayload {
   total_km?: number;
   bike_weight_kg?: number;
   image_url?: string;
+  is_shared?: boolean;
 }
 
 // What the edit form sends. Every field is optional - the form writes only what it holds,

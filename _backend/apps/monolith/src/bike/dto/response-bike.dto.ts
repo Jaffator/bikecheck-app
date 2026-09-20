@@ -140,4 +140,7 @@ export class ResponseBikeDto implements Omit<bikes, 'bike_weight_kg'> {
 
   @ApiProperty({ example: 12, nullable: true, description: 'The Setup Profile the bike is ridden at right now' })
   active_setup_profile_id!: number | null;
+
+  @ApiProperty({ example: true, description: "Whether the bike goes out on the owner's Public Profile" })
+  is_shared!: boolean;
 }

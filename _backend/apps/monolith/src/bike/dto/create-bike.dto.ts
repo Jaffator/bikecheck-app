@@ -65,6 +65,12 @@ export class CreateBikeDto {
   @IsPositive()
   year?: number;
 
+  // Whether the bike goes out on the owner's Public Profile (PRD #131). Archiving leaves it alone.
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  is_shared?: boolean;
+
   @ApiProperty({ example: 'Serviced bike, top health', required: false })
   @IsOptional()
   @IsString()

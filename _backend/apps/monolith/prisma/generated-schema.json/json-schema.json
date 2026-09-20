@@ -357,6 +357,10 @@
             "null"
           ]
         },
+        "is_shared": {
+          "type": "boolean",
+          "default": true
+        },
         "active_setup_profile": {
           "anyOf": [
             {
@@ -1592,6 +1596,16 @@
             "$ref": "#/definitions/organization_members"
           }
         },
+        "public_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/public_profiles"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "refresh_tokens": {
           "type": "array",
           "items": {
@@ -1737,6 +1751,61 @@
           "format": "date-time"
         },
         "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "public_profiles": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "default": "OFF",
+          "enum": [
+            "OFF",
+            "FOLLOWERS",
+            "PUBLIC"
+          ]
+        },
+        "share_components": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_setup": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_history": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_costs": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_count": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_viewed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
           "type": "string",
           "format": "date-time"
         },
@@ -1980,6 +2049,9 @@
     },
     "reports": {
       "$ref": "#/definitions/reports"
+    },
+    "public_profiles": {
+      "$ref": "#/definitions/public_profiles"
     },
     "strava_pending_activities": {
       "$ref": "#/definitions/strava_pending_activities"

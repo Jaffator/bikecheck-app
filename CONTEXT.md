@@ -263,6 +263,52 @@ owner publishes it, and the owner can revoke it afterwards — a revoked link is
 new one means a new Report.
 _Avoid_: Public URL, share url, token
 
+**Public Profile**:
+The live page of one account's garage at `/u/<handle>` — what is there now, read when opened. The
+opposite of a Report: nothing is frozen, and switching it off takes effect on the next request.
+Every account may keep exactly one.
+_Avoid_: Live report, public page, published profile
+
+**Handle**:
+The name in a Public Profile's address, chosen by the owner: 3–30 characters, letters, digits, dash
+and underscore, starting with a letter or digit, stored lowercase and matched whatever the case it
+is typed in. Brand words and the app's own routes are reserved. Renaming is free and immediate — the
+old Handle stops answering and may be taken by anyone.
+_Avoid_: Username (that is the Strava field), nickname, slug, alias
+
+**Visibility**:
+Who may open a Public Profile: **Off** (nobody, not even a Follower — the settings and the Handle
+stay), **Followers only** (approved Followers, inside the app; the web address answers to no one) or
+**Public** (anyone at the address). One switch, set only in the share drawer.
+_Avoid_: Private (Off is a Visibility, not a privacy setting), privacy, status
+
+**Shared Bike**:
+A bike the owner lets out on their Public Profile — every bike is one until its switch is turned
+off. An archived bike is never shown whatever its switch says, and comes back as it was set when
+un-archived.
+_Avoid_: Public bike, visible bike, published bike
+
+**Last Updated**:
+When a Public Profile last changed, as read on its page: the newest of the profile's own settings,
+its Shared Bikes, their mounted components and their Services. Reading the page does not move it.
+_Avoid_: Modified, last activity, last seen
+
+**Follower**:
+An account allowed to open a Followers-only profile, once the owner has accepted its Follow
+Request. Nobody is one until Follow (PRD 2) lands; until then a Followers-only profile opens for its
+owner alone.
+_Avoid_: Friend, subscriber, contact
+
+**Follow Request**:
+One account asking to become a Follower of another; pending until the owner accepts or refuses it.
+A Public profile needs none — following it is immediate.
+_Avoid_: Friend request, invitation, subscription
+
+**Discoverable**:
+A Public Profile that answers inside the app — Followers only or Public. An Off profile is not, and
+neither is a Handle nobody holds: the two are indistinguishable to anyone but the owner.
+_Avoid_: Listed, searchable, indexed
+
 ### Account
 
 **Verified Email**:

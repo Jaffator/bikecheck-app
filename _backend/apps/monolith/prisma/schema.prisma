@@ -138,6 +138,8 @@ model bikes {
   // The Setup Profile the bike is ridden at right now - the one last chosen on the Setup screen.
   // Set whenever the bike has a profile; deleting it hands over to a neighbour, never to null.
   active_setup_profile_id Int?
+  // Whether the bike goes out on the owner's Public Profile. Archiving leaves it alone (PRD #131).
+  is_shared             Boolean                 @default(true)
   active_setup_profile  setup_profiles?         @relation("bike_active_setup_profile", fields: [active_setup_profile_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   bike_types            bike_types?             @relation(fields: [bike_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   organizations         organizations?          @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -499,6 +501,7 @@ model users {
   events_action         events_action[]
   notifications         notifications[]
   organization_members  organization_members[]
+  public_profile        public_profiles?
   refresh_tokens        refresh_tokens[]
   reports               reports[]
   rides                 rides[]
@@ -575,6 +578,31 @@ model reports {
 
   @@index([user_id], map: "reports_user_id")
   @@index([bike_id], map: "reports_bike_id")
+}
+
+// Who may open a Public Profile: nobody, approved followers in the app, or anyone at the address.
+enum profile_visibility {
+  OFF
+  FOLLOWERS
+  PUBLIC
+}
+
+// One Public Profile per account (PRD #131): the live page at /u/<handle>. Off keeps the row
+// and the handle; only deleting the account removes it (ADR 0028).
+model public_profiles {
+  user_id          Int                @id
+  handle           String             @unique @db.VarChar(30)
+  visibility       profile_visibility @default(OFF)
+  share_components Boolean            @default(true)
+  share_setup      Boolean            @default(true)
+  share_history    Boolean            @default(true)
+  // Meaningful only with share_history.
+  share_costs      Boolean            @default(false)
+  view_count       Int                @default(0)
+  last_viewed_at   DateTime?          @db.Timestamptz(6)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  users            users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model strava_pending_activities {

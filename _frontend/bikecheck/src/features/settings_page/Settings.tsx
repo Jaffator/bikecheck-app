@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, Card, Group, SegmentedControl, Stack, Switch, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { SettingsShareRow } from "@/features/profile/ui/SettingsShareRow";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { useCurrentUser, useLogout, useUpdateUser } from "@/features/users/users.queries";
 import { TIRE_PRESSURE_UNITS, type TirePressureUnit } from "@/features/users/users.types";
@@ -166,6 +167,7 @@ export function Settings(): ReactElement | null {
       <div className="mx-3 mb-3 mt-0">
         <StravaStatusCard allowDisconnect />
       </div>
+      <SettingsShareRow />
 
       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
         {t("settings.sectionGeneral")}
