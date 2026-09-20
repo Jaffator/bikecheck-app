@@ -1,3 +1,5 @@
+import type { TirePressureUnit } from "@/features/users/users.types";
+
 // Mirrors the backend profile_visibility enum: nobody, approved followers, anyone at the address.
 export const PROFILE_VISIBILITIES = ["OFF", "FOLLOWERS", "PUBLIC"] as const;
 export type ProfileVisibility = (typeof PROFILE_VISIBILITIES)[number];
@@ -54,4 +56,68 @@ export interface SharedBikeChange {
 export interface SaveSharingInput {
   profile: UpdateProfilePayload;
   bikes: SharedBikeChange[];
+}
+
+// Where the viewer stands with the owner. Follow (PRD 2) adds PENDING and FOLLOWING.
+export type ProfileRelation = "SELF" | "NONE";
+
+// Mirrors ProfileOwnerDto: the owner as the page names them, nothing else of the account.
+export interface ProfileOwner {
+  handle: string;
+  name: string | null;
+  avatar_url: string | null;
+}
+
+export interface ProfileShares {
+  components: boolean;
+  setup: boolean;
+  history: boolean;
+  costs: boolean;
+}
+
+// Over the listed bikes only. A count is null when its section is off.
+export interface ProfileTotals {
+  bikes: number;
+  distance_km: number;
+  components: number | null;
+  services: number | null;
+}
+
+export interface ProfileBikeType {
+  i18n_key: string | null;
+  name: string;
+}
+
+// Mirrors ProfileBikeCardDto: one card on somebody's garage page.
+export interface ProfileBikeCard {
+  id: number;
+  // The nickname its owner gave it.
+  name: string | null;
+  brand: string;
+  model: string | null;
+  year: number | null;
+  type: ProfileBikeType | null;
+  image_url: string | null;
+  distance_km: number;
+  components: number | null;
+  services: number | null;
+}
+
+// Mirrors ProfileGarageDto. updated_at is Last Updated; the units are the owner's.
+export interface ProfileGarage {
+  updated_at: string;
+  shares: ProfileShares;
+  totals: ProfileTotals;
+  currency: string;
+  tire_pressure_unit: TirePressureUnit;
+  bikes: ProfileBikeCard[];
+}
+
+// Mirrors ResponseProfileGarageDto (GET /profiles/:handle): always the header, the garage
+// only when the read rule allows. OFF reaches nobody but the owner's own preview.
+export interface ProfileGarageResponse {
+  owner: ProfileOwner;
+  visibility: ProfileVisibility;
+  relation: ProfileRelation;
+  garage: ProfileGarage | null;
 }

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, Card, Group, SegmentedControl, Stack, Switch, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useMyProfile } from "@/features/profile/profile.queries";
 import { SettingsShareRow } from "@/features/profile/ui/SettingsShareRow";
 import { VisibilityBadge } from "@/features/profile/ui/VisibilityBadge";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
@@ -31,6 +32,7 @@ const SEGMENTED_CONTROL_STYLES = {
 export function Settings(): ReactElement | null {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
+  const { data: profile } = useMyProfile();
   const updateUser = useUpdateUser();
   const logout = useLogout();
   const navigate = useNavigate();
@@ -105,7 +107,7 @@ export function Settings(): ReactElement | null {
         <Text fw={700} fz={20} c="text.6" ta="center" mt={6} style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
           {user.name}
         </Text>
-        <VisibilityBadge />
+        {profile && <VisibilityBadge visibility={profile.visibility} />}
         <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
           {user.email}
         </Text>

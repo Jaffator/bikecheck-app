@@ -25,6 +25,8 @@ import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
 import { Legal } from "@/features/legal_page/Legal";
 import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";
+import { UserProfile } from "@/features/profile_page/UserProfile";
+import { UserProfileBike } from "@/features/profile_page/UserProfileBike";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
@@ -125,6 +127,9 @@ function ProtectedApp(): ReactElement {
           <Route path="/profile" element={<Navigate to="/settings" replace />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
+          {/* Somebody's garage, and my own the way others see it. */}
+          <Route path="/users/:handle" element={<UserProfile />} />
+          <Route path="/users/:handle/:bikeId" element={<UserProfileBike />} />
           {/* Handles the completed Strava OAuth deep link. */}
           <Route path="/strava-connected" element={<StravaConnected />} />
         </Route>

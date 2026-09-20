@@ -108,6 +108,9 @@ const DETAIL_ROUTES: { pattern: RegExp; titleKey: string }[] = [
   // One bike's history wears the same title as the garage's; the card below names the bike.
   { pattern: /^\/bikes\/\d+\/history$/, titleKey: "page.serviceHistory" },
   { pattern: /^\/bikes\/\d+$/, titleKey: "bikes.detailTitle" },
+  // Somebody's garage and one of their bikes; the bike page names its owner once it lands.
+  { pattern: /^\/users\/[^/]+$/, titleKey: "sharing.profileTitle" },
+  { pattern: /^\/users\/[^/]+\/\d+$/, titleKey: "sharing.profileTitle" },
 ];
 
 function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | undefined {

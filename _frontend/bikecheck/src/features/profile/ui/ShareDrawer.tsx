@@ -5,6 +5,7 @@ import { useEffect, useState, type CSSProperties, type ReactElement, type ReactN
 import { Box, Button, Center, Drawer, Group, Image, Loader, SegmentedControl, Stack, Text } from "@mantine/core";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
@@ -59,6 +60,8 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
   const { t } = useTranslation();
   const { data: profile } = useMyProfile();
   const { data: bikes } = useBikes();
+  const navigate = useNavigate();
+  const location = useLocation();
   // The form remounts per opening to discard a cancelled edit, so the sheet mounts closed
   // and opens on the next frame or Mantine skips the slide (docs/conventions/drawers.md).
   const [visible, setVisible] = useState(false);
@@ -73,6 +76,14 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
 
   // Android's back gesture dismisses this rather than the page under it.
   useOverlayBack(opened, onClose);
+
+  // Closing pushes nothing, so back from the preview lands where the drawer was opened.
+  // Opened over the preview itself, it only closes - the page is already there.
+  function preview(handle: string): void {
+    onClose();
+    const path = `/users/${handle}`;
+    if (location.pathname !== path) void navigate(path);
+  }
 
   return (
     <Drawer
@@ -104,7 +115,7 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
       }}
     >
       {profile && bikes ? (
-        <ShareForm profile={profile} bikes={bikes} onSaved={onClose} />
+        <ShareForm profile={profile} bikes={bikes} onSaved={onClose} onPreview={preview} />
       ) : (
         <Center py="xl">
           <Loader type="oval" color="primary.6" />
@@ -125,9 +136,10 @@ interface ShareFormProps {
   profile: Profile;
   bikes: Bike[];
   onSaved: () => void;
+  onPreview: (handle: string) => void;
 }
 
-function ShareForm({ profile, bikes, onSaved }: ShareFormProps): ReactElement {
+function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): ReactElement {
   const { t } = useTranslation();
   const save = useSaveSharing();
   const [visibility, setVisibility] = useState<ProfileVisibility>(profile.visibility);
@@ -148,6 +160,8 @@ function ShareForm({ profile, bikes, onSaved }: ShareFormProps): ReactElement {
   const off = visibility === "OFF";
   const error = handleError(handle) ?? refusedFor;
   const renaming = profile.handle !== null && handle !== profile.handle;
+  // The preview shows what is saved, not what is typed: an unsaved handle has no page.
+  const savedHandle = profile.handle;
 
   function changeHandle(next: string): void {
     setRefusedFor(null);
@@ -220,6 +234,7 @@ function ShareForm({ profile, bikes, onSaved }: ShareFormProps): ReactElement {
           origin={profile.public_origin}
           visibility={visibility}
           disabled={off}
+          onPreview={savedHandle === null ? null : () => onPreview(savedHandle)}
         />
       </Section>
 

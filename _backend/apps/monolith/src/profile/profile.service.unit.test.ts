@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException, HttpException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, NotFoundException } from '@nestjs/common';
 import { Prisma, profile_visibility } from '@prisma/client';
 import { ProfileService } from './profile.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -29,6 +29,64 @@ interface WhereUnique {
   handle?: string;
 }
 
+// The moments a garage can last have changed at, one per source, so a test can say which
+// one Last Updated has to pick.
+const PROFILE_UPDATED = new Date('2026-09-01T00:00:00.000Z');
+const BIKE_UPDATED = new Date('2026-09-05T00:00:00.000Z');
+const PART_UPDATED = new Date('2026-09-10T00:00:00.000Z');
+const SERVICE_UPDATED = new Date('2026-09-12T00:00:00.000Z');
+
+interface PartRow {
+  is_active: boolean | null;
+  is_deleted: boolean | null;
+  updated_at: Date | null;
+}
+
+interface ServiceRow {
+  is_deleted: boolean | null;
+  updated_at: Date | null;
+}
+
+interface BikeRow {
+  id: number;
+  user_id: number;
+  bikename: string | null;
+  bike_brand: string;
+  bike_model: string | null;
+  year: number | null;
+  image_url: string | null;
+  total_km: number | null;
+  is_deleted: boolean | null;
+  is_shared: boolean;
+  updated_at: Date | null;
+  bike_types: { type: string | null; i18n_key: string | null } | null;
+  components_mounted: PartRow[];
+  events_bikes: ServiceRow[];
+}
+
+type Where = Record<string, unknown>;
+
+// Enough of Prisma's where to answer the flat filters the garage read asks: equality and
+// `{ not: x }`, which is how "not archived" is spelled on a nullable flag.
+function matches(row: Record<string, unknown>, where: Where | undefined): boolean {
+  if (!where) return true;
+  return Object.entries(where).every(([key, condition]) => {
+    const value = row[key];
+    if (condition !== null && typeof condition === 'object' && 'not' in condition) {
+      return value !== (condition as { not: unknown }).not;
+    }
+    return value === condition;
+  });
+}
+
+interface BikesFindManyArgs {
+  where?: Where;
+  include?: {
+    components_mounted?: { where?: Where };
+    events_bikes?: { where?: Where };
+  };
+}
+
 describe('ProfileService', () => {
   let service: ProfileService;
 
@@ -44,6 +102,10 @@ describe('ProfileService', () => {
 
   const findByHandle = (handle: string): ProfileRow | null =>
     [...table.values()].find((row) => row.handle === handle) ?? null;
+
+  // The bikes table with the parts and Services hanging off each row, filtered the way
+  // the database would, so what a read lists is decided by the flags and not by the mock.
+  const bikesTable: BikeRow[] = [];
 
   const mockPrisma = {
     public_profiles: {
@@ -88,6 +150,24 @@ describe('ProfileService', () => {
       ),
     },
     users: { findUnique: jest.fn() },
+    bikes: {
+      findMany: jest.fn(({ where, include }: BikesFindManyArgs) =>
+        Promise.resolve(
+          bikesTable
+            .filter((bike) => matches(bike, where))
+            .sort((a, b) => a.id - b.id)
+            .map((bike) => ({
+              ...bike,
+              components_mounted: bike.components_mounted
+                .filter((part) => matches(part, include?.components_mounted?.where))
+                .map((part) => ({ updated_at: part.updated_at })),
+              events_bikes: bike.events_bikes
+                .filter((done) => matches(done, include?.events_bikes?.where))
+                .map((done) => ({ updated_at: done.updated_at })),
+            })),
+        ),
+      ),
+    },
   };
 
   const seed = (overrides: Partial<ProfileRow> & { user_id: number; handle: string }): void => {
@@ -105,6 +185,53 @@ describe('ProfileService', () => {
     });
   };
 
+  const part = (overrides: Partial<PartRow> = {}): PartRow => ({
+    is_active: true,
+    is_deleted: false,
+    updated_at: PART_UPDATED,
+    ...overrides,
+  });
+
+  const done = (overrides: Partial<ServiceRow> = {}): ServiceRow => ({
+    is_deleted: false,
+    updated_at: SERVICE_UPDATED,
+    ...overrides,
+  });
+
+  const seedBike = (overrides: Partial<BikeRow> & { id: number }): BikeRow => {
+    const row: BikeRow = {
+      user_id: OWNER_ID,
+      bikename: 'Rallon',
+      bike_brand: 'Orbea',
+      bike_model: 'Rallon M10',
+      year: 2024,
+      image_url: 'https://storage.example.com/bikes/rallon.webp',
+      total_km: 4187,
+      is_deleted: false,
+      is_shared: true,
+      updated_at: BIKE_UPDATED,
+      bike_types: { type: 'Enduro', i18n_key: 'bikeType.enduro' },
+      components_mounted: [],
+      events_bikes: [],
+      ...overrides,
+    };
+    bikesTable.push(row);
+    return row;
+  };
+
+  // Everything the users row carries, so a test can assert what never leaves it.
+  const ownerRow = {
+    id: OWNER_ID,
+    name: 'Jarda Novák',
+    email: 'jarda@example.com',
+    password_hash: 'hash',
+    avatar_url: 'https://lh3.googleusercontent.com/jarda',
+    strava_username: 'jardal',
+    strava_avatar_url: 'https://strava.example.com/jarda.jpg',
+    currency: 'EUR',
+    tire_pressure_unit: 'psi',
+  };
+
   const rejectsWith = async (promise: Promise<unknown>, type: typeof HttpException, code: string): Promise<void> => {
     await expect(promise).rejects.toBeInstanceOf(type);
     await expect(promise).rejects.toThrow(code);
@@ -113,6 +240,7 @@ describe('ProfileService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     table.clear();
+    bikesTable.length = 0;
     process.env.PUBLIC_APP_URL = ORIGIN;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -361,6 +489,315 @@ describe('ProfileService', () => {
 
       expect(other.handle).toBe('jaffa');
       expect((await service.getMine(OWNER_ID)).handle).toBe('jaffa-mtb');
+    });
+  });
+
+  describe('read - the rule', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seedBike({ id: 1 });
+    });
+
+    it('PUBLIC: a stranger reads the garage', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page).toMatchObject({
+        owner: { handle: 'jaffa', name: 'Jarda Novák', avatar_url: 'https://lh3.googleusercontent.com/jarda' },
+        visibility: 'PUBLIC',
+        relation: 'NONE',
+      });
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
+    });
+
+    it('FOLLOWERS: a stranger gets the header only', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page).toEqual({
+        owner: { handle: 'jaffa', name: 'Jarda Novák', avatar_url: 'https://lh3.googleusercontent.com/jarda' },
+        visibility: 'FOLLOWERS',
+        relation: 'NONE',
+        garage: null,
+      });
+    });
+
+    it('FOLLOWERS: the owner reads the garage', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+
+      const page = await service.read('jaffa', OWNER_ID);
+
+      expect(page.relation).toBe('SELF');
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
+    });
+
+    it('OFF: the owner reads the garage and is told the state', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      const page = await service.read('jaffa', OWNER_ID);
+
+      expect(page).toMatchObject({ visibility: 'OFF', relation: 'SELF' });
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
+    });
+
+    it('OFF: a stranger gets 404', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      await expect(service.read('jaffa', OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('OFF and unknown answer the same 404', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      const off = service.read('jaffa', OTHER_ID).catch((error: unknown) => error);
+      const unknown = service.read('nobody', OTHER_ID).catch((error: unknown) => error);
+
+      expect(await off).toBeInstanceOf(NotFoundException);
+      expect(await unknown).toBeInstanceOf(NotFoundException);
+      expect((await off) as Error).toMatchObject({ message: ((await unknown) as Error).message });
+    });
+
+    it('a handle renamed away answers 404 and the new one opens', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      await service.updateMine(OWNER_ID, { handle: 'jaffa-mtb' });
+
+      await expect(service.read('jaffa', OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+      expect((await service.read('jaffa-mtb', OTHER_ID)).owner.handle).toBe('jaffa-mtb');
+    });
+
+    it('matches the handle whatever its case', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      expect((await service.read('JAFFA', OTHER_ID)).owner.handle).toBe('jaffa');
+    });
+
+    it('counts no view', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, view_count: 3 });
+
+      await service.read('jaffa', OTHER_ID);
+      await service.read('jaffa', OWNER_ID);
+
+      expect((await service.getMine(OWNER_ID)).stats.views).toBe(3);
+      expect(table.get(OWNER_ID)?.last_viewed_at).toBeNull();
+    });
+  });
+
+  describe('read - the garage', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+    });
+
+    it('lists the shared bikes in use and leaves archived and unshared ones out', async () => {
+      seedBike({ id: 1 });
+      seedBike({ id: 2, is_shared: false });
+      seedBike({ id: 3, is_deleted: true });
+      seedBike({ id: 4, is_deleted: null });
+      seedBike({ id: 5, user_id: OTHER_ID });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1, 4]);
+    });
+
+    it('un-archiving brings a bike back as it was set', async () => {
+      const archived = seedBike({ id: 1, is_deleted: true, is_shared: true });
+      const hidden = seedBike({ id: 2, is_deleted: true, is_shared: false });
+      expect((await service.read('jaffa', OTHER_ID)).garage?.bikes).toEqual([]);
+
+      archived.is_deleted = false;
+      hidden.is_deleted = false;
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
+    });
+
+    it('totals count the listed bikes only', async () => {
+      seedBike({ id: 1, total_km: 4187 });
+      seedBike({ id: 2, total_km: 800 });
+      seedBike({ id: 3, total_km: null });
+      seedBike({ id: 4, total_km: 9999, is_shared: false });
+      seedBike({ id: 5, total_km: 9999, is_deleted: true });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.totals).toMatchObject({ bikes: 3, distance_km: 4987 });
+    });
+
+    it('counts mounted parts and Services, per bike and in total', async () => {
+      seedBike({
+        id: 1,
+        components_mounted: [part(), part(), part({ is_active: false }), part({ is_deleted: true })],
+        events_bikes: [done(), done(), done(), done({ is_deleted: true })],
+      });
+      seedBike({ id: 2, components_mounted: [part()], events_bikes: [] });
+      seedBike({ id: 3, is_shared: false, components_mounted: [part()], events_bikes: [done()] });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.totals).toMatchObject({ components: 3, services: 3 });
+      expect(page.garage?.bikes.map((bike) => [bike.components, bike.services])).toEqual([
+        [2, 3],
+        [1, 0],
+      ]);
+    });
+
+    it('components off: the parts count is null on the totals and on every card', async () => {
+      table.get(OWNER_ID)!.share_components = false;
+      seedBike({ id: 1, components_mounted: [part()], events_bikes: [done()] });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.shares).toEqual({ components: false, setup: true, history: true, costs: false });
+      expect(page.garage?.totals).toMatchObject({ components: null, services: 1 });
+      expect(page.garage?.bikes[0]).toMatchObject({ components: null, services: 1 });
+    });
+
+    it('history off: the Services count is null on the totals and on every card', async () => {
+      table.get(OWNER_ID)!.share_history = false;
+      seedBike({ id: 1, components_mounted: [part()], events_bikes: [done()] });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.totals).toMatchObject({ components: 1, services: null });
+      expect(page.garage?.bikes[0]).toMatchObject({ components: 1, services: null });
+    });
+
+    it('draws the card from the bike: names, type as a catalogue label, photo, distance', async () => {
+      seedBike({ id: 1 });
+      seedBike({
+        id: 2,
+        bikename: null,
+        bike_model: null,
+        year: null,
+        image_url: null,
+        total_km: null,
+        bike_types: null,
+      });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.bikes[0]).toEqual({
+        id: 1,
+        name: 'Rallon',
+        brand: 'Orbea',
+        model: 'Rallon M10',
+        year: 2024,
+        type: { i18n_key: 'bikeType.enduro', name: 'Enduro' },
+        image_url: 'https://storage.example.com/bikes/rallon.webp',
+        distance_km: 4187,
+        components: 0,
+        services: 0,
+      });
+      expect(page.garage?.bikes[1]).toMatchObject({
+        name: null,
+        model: null,
+        year: null,
+        type: null,
+        image_url: null,
+        distance_km: 0,
+      });
+    });
+
+    it("writes the numbers in the owner's currency and tyre unit", async () => {
+      seedBike({ id: 1 });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage).toMatchObject({ currency: 'EUR', tire_pressure_unit: 'psi' });
+    });
+
+    it('falls back to CZK for an owner who chose no currency', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ ...ownerRow, currency: null });
+      seedBike({ id: 1 });
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage?.currency).toBe('CZK');
+    });
+
+    it('an empty garage is a garage, not a locked one', async () => {
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.garage).toMatchObject({
+        bikes: [],
+        totals: { bikes: 0, distance_km: 0, components: 0, services: 0 },
+      });
+    });
+  });
+
+  describe('read - Last Updated', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, updated_at: PROFILE_UPDATED });
+    });
+
+    it('is the profile itself when nothing on the bikes is newer', async () => {
+      const older = new Date('2026-08-01T00:00:00.000Z');
+      seedBike({
+        id: 1,
+        updated_at: older,
+        components_mounted: [part({ updated_at: older })],
+        events_bikes: [done({ updated_at: older })],
+      });
+
+      expect((await service.read('jaffa', OTHER_ID)).garage?.updated_at).toBe(PROFILE_UPDATED.toISOString());
+    });
+
+    it('is the newest bike, part or Service, whichever moved last', async () => {
+      seedBike({ id: 1, updated_at: BIKE_UPDATED });
+      expect((await service.read('jaffa', OTHER_ID)).garage?.updated_at).toBe(BIKE_UPDATED.toISOString());
+
+      bikesTable[0].components_mounted = [part({ updated_at: PART_UPDATED })];
+      expect((await service.read('jaffa', OTHER_ID)).garage?.updated_at).toBe(PART_UPDATED.toISOString());
+
+      bikesTable[0].events_bikes = [done({ updated_at: SERVICE_UPDATED })];
+      expect((await service.read('jaffa', OTHER_ID)).garage?.updated_at).toBe(SERVICE_UPDATED.toISOString());
+    });
+
+    it('ignores what is not on the page: archived and unshared bikes, dismounted parts, deleted Services', async () => {
+      const far = new Date('2027-01-01T00:00:00.000Z');
+      seedBike({
+        id: 1,
+        updated_at: BIKE_UPDATED,
+        components_mounted: [part({ is_active: false, updated_at: far })],
+        events_bikes: [done({ is_deleted: true, updated_at: far })],
+      });
+      seedBike({ id: 2, is_deleted: true, updated_at: far });
+      seedBike({ id: 3, is_shared: false, updated_at: far });
+
+      expect((await service.read('jaffa', OTHER_ID)).garage?.updated_at).toBe(BIKE_UPDATED.toISOString());
+    });
+
+    it('does not move when the page is read', async () => {
+      seedBike({ id: 1, updated_at: BIKE_UPDATED });
+
+      const first = await service.read('jaffa', OTHER_ID);
+      const again = await service.read('jaffa', OWNER_ID);
+
+      expect(again.garage?.updated_at).toBe(first.garage?.updated_at);
+      expect(table.get(OWNER_ID)?.updated_at).toBe(PROFILE_UPDATED);
+    });
+  });
+
+  describe('read - never out', () => {
+    it('carries no email, no Strava picture and nothing of another account', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seed({ user_id: OTHER_ID, handle: 'stranger', visibility: profile_visibility.PUBLIC });
+      seedBike({ id: 1, components_mounted: [part()], events_bikes: [done()] });
+      seedBike({ id: 2, user_id: OTHER_ID, bikename: 'Strangers bike' });
+
+      const page = JSON.stringify(await service.read('jaffa', OTHER_ID));
+
+      expect(page).not.toContain('jarda@example.com');
+      expect(page).not.toContain('strava');
+      expect(page).not.toContain('password');
+      expect(page).not.toContain('user_id');
+      expect(page).not.toContain('stranger');
+      expect(page).not.toContain('Strangers bike');
     });
   });
 });

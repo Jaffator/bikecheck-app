@@ -1032,6 +1032,23 @@
     "cardRequests": "Requests",
     "cardViews": "Views",
     "cardOff": "Share your garage",
-    "headerIcon": "Garage sharing"
+    "headerIcon": "Garage sharing",
+    "profileTitle": "Rider profile",
+    "ownerAction": "Your profile · Sharing settings",
+    "offNotice": "The profile is off — only you can see it",
+    "figureBikes": "Bikes",
+    "figureDistance": "Distance",
+    "figureParts": "Parts",
+    "figureServices": "Services",
+    "updatedAt": "Updated {{when}}",
+    "partsCount_one": "{{count}} part",
+    "partsCount_other": "{{count}} parts",
+    "servicesCount_one": "{{count}} service",
+    "servicesCount_other": "{{count}} services",
+    "lockedTitle": "This profile is for followers only",
+    "lockedBody": "Only approved followers see the garage.",
+    "unavailableTitle": "Profile not available",
+    "unavailableBody": "The owner turned it off, or the address no longer works.",
+    "loadFailed": "The profile could not be loaded. Try again."
   }
 }

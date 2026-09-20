@@ -32,13 +32,16 @@ interface HandleFieldProps {
   origin: string;
   visibility: ProfileVisibility;
   disabled: boolean;
+  // Opens my profile the way others see it; null while nothing is saved to see yet.
+  onPreview: (() => void) | null;
 }
 
-export function HandleField({ handle, onChange, error, origin, visibility, disabled }: HandleFieldProps): ReactElement {
+export function HandleField({ handle, onChange, error, origin, visibility, disabled, onPreview }: HandleFieldProps): ReactElement {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const url = profileUrl(origin, handle);
   const linkEnabled = visibility === "PUBLIC" && error === null;
+  const previewEnabled = onPreview !== null && error === null;
   const dim = disabled ? "text.9" : "var(--color-text-dim)";
 
   useEffect(() => {
@@ -108,9 +111,10 @@ export function HandleField({ handle, onChange, error, origin, visibility, disab
           {t("sharing.linkFollowersHint")}
         </Text>
       )}
-      {/* Wired to /users/<handle> once that screen exists; until then it only says it is coming. */}
-      <UnstyledButton disabled style={{ cursor: "default" }}>
-        <Text fz={13} fw={600} c="text.9">
+      {/* Works in every state, Off included: the preview is the one check a Followers-only
+          profile has. Gated like Kopírovat - a handle the rule refuses has no page. */}
+      <UnstyledButton disabled={!previewEnabled} onClick={onPreview ?? undefined} style={{ cursor: previewEnabled ? "pointer" : "default" }}>
+        <Text fz={13} fw={600} c={previewEnabled ? "primary.5" : "text.9"}>
           {t("sharing.preview")}
         </Text>
       </UnstyledButton>

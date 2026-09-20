@@ -1,10 +1,16 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, public_profiles } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { publicAppOrigin } from '../_config/public-app-origin';
 import { RESERVED_HANDLES } from './reserved-handles';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseProfileDto } from './dto/response-profile.dto';
+import {
+  ProfileBikeCardDto,
+  ProfileGarageDto,
+  ProfileRelation,
+  ResponseProfileGarageDto,
+} from './dto/response-profile-garage.dto';
 
 // The handle rule ^[a-z0-9][a-z0-9_-]{2,29}$, checked piece by piece so a refusal can say why.
 const HANDLE_MIN_LENGTH = 3;
@@ -14,6 +20,33 @@ const HANDLE_START = /^[a-z0-9]/;
 
 // What a name slugs to when nothing usable is left of it.
 const FALLBACK_HANDLE = 'rider';
+
+// Off, no row and a dead handle all answer with this, so a handle cannot be probed for
+// which of the three it is.
+const PROFILE_UNAVAILABLE = 'This profile is not available';
+
+const FALLBACK_CURRENCY = 'CZK';
+
+// What a garage card is built from: the type label, and of the parts and Services only
+// the timestamps - the page counts them and takes the newest, nothing else travels.
+const garageBikeInclude = {
+  bike_types: { select: { type: true, i18n_key: true } },
+  components_mounted: { where: { is_active: true, is_deleted: { not: true } }, select: { updated_at: true } },
+  events_bikes: { where: { is_deleted: { not: true } }, select: { updated_at: true } },
+} satisfies Prisma.bikesInclude;
+
+type GarageBike = Prisma.bikesGetPayload<{ include: typeof garageBikeInclude }>;
+
+// The owner as the page needs them: the name and the app avatar, and the units the
+// numbers are written in. Never the email, never the Strava picture.
+const ownerSelect = {
+  name: true,
+  avatar_url: true,
+  currency: true,
+  tire_pressure_unit: true,
+} satisfies Prisma.usersSelect;
+
+type GarageOwner = Prisma.usersGetPayload<{ select: typeof ownerSelect }>;
 
 export type HandleReason =
   | 'HANDLE_TOO_SHORT'
@@ -147,6 +180,73 @@ export class ProfileService {
     }
   }
 
+  // ---------- The in-app garage ----------
+
+  // One read rule: PUBLIC opens to anyone, FOLLOWERS to the owner or an accepted follower
+  // (the header to everyone else), OFF to the owner alone. No view is counted here.
+  async read(rawHandle: string, viewerId: number | null): Promise<ResponseProfileGarageDto> {
+    const handle = rawHandle.trim().toLowerCase();
+    const profile = await this.prisma.public_profiles.findUnique({ where: { handle } });
+    const relation: ProfileRelation = profile !== null && profile.user_id === viewerId ? 'SELF' : 'NONE';
+    if (!profile || (profile.visibility === 'OFF' && relation !== 'SELF')) {
+      throw new NotFoundException(PROFILE_UNAVAILABLE);
+    }
+
+    const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
+    const allowed = await this.mayReadGarage(profile, relation, viewerId);
+
+    return {
+      owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
+      visibility: profile.visibility,
+      relation,
+      garage: allowed ? await this.garageOf(profile, owner) : null,
+    };
+  }
+
+  private async mayReadGarage(
+    profile: public_profiles,
+    relation: ProfileRelation,
+    viewerId: number | null,
+  ): Promise<boolean> {
+    if (relation === 'SELF' || profile.visibility === 'PUBLIC') return true;
+    if (profile.visibility === 'FOLLOWERS' && viewerId !== null) {
+      return await this.isAcceptedFollower(profile.user_id, viewerId);
+    }
+    return false;
+  }
+
+  // Nobody follows anyone yet. Follow (PRD 2) replaces the body with a follows query.
+  private isAcceptedFollower(_ownerId: number, _viewerId: number): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
+  private async garageOf(profile: public_profiles, owner: GarageOwner | null): Promise<ProfileGarageDto> {
+    const bikes = await this.prisma.bikes.findMany({
+      where: { user_id: profile.user_id, is_deleted: { not: true }, is_shared: true },
+      orderBy: { id: 'asc' },
+      include: garageBikeInclude,
+    });
+
+    return {
+      updated_at: lastUpdated(profile, bikes).toISOString(),
+      shares: {
+        components: profile.share_components,
+        setup: profile.share_setup,
+        history: profile.share_history,
+        costs: profile.share_costs,
+      },
+      totals: {
+        bikes: bikes.length,
+        distance_km: sum(bikes.map((bike) => bike.total_km ?? 0)),
+        components: profile.share_components ? sum(bikes.map((bike) => bike.components_mounted.length)) : null,
+        services: profile.share_history ? sum(bikes.map((bike) => bike.events_bikes.length)) : null,
+      },
+      currency: owner?.currency ?? FALLBACK_CURRENCY,
+      tire_pressure_unit: owner?.tire_pressure_unit ?? 'bar',
+      bikes: bikes.map((bike) => toBikeCard(bike, profile)),
+    };
+  }
+
   private origin(): string {
     return publicAppOrigin('profile link');
   }
@@ -164,4 +264,37 @@ export class ProfileService {
       public_origin: this.origin(),
     };
   }
+}
+
+function sum(values: number[]): number {
+  return values.reduce((total, value) => total + value, 0);
+}
+
+// Last Updated: the newest of the profile, its listed bikes, their mounted parts and their
+// Services. The profile row always has one, so there is always an answer.
+function lastUpdated(profile: public_profiles, bikes: GarageBike[]): Date {
+  const moments = bikes.flatMap((bike) => [
+    bike.updated_at,
+    ...bike.components_mounted.map((part) => part.updated_at),
+    ...bike.events_bikes.map((done) => done.updated_at),
+  ]);
+  return moments.reduce<Date>(
+    (newest, moment) => (moment !== null && moment > newest ? moment : newest),
+    profile.updated_at,
+  );
+}
+
+function toBikeCard(bike: GarageBike, profile: public_profiles): ProfileBikeCardDto {
+  return {
+    id: bike.id,
+    name: bike.bikename,
+    brand: bike.bike_brand,
+    model: bike.bike_model,
+    year: bike.year,
+    type: bike.bike_types === null ? null : { i18n_key: bike.bike_types.i18n_key, name: bike.bike_types.type ?? '' },
+    image_url: bike.image_url,
+    distance_km: bike.total_km ?? 0,
+    components: profile.share_components ? bike.components_mounted.length : null,
+    services: profile.share_history ? bike.events_bikes.length : null,
+  };
 }

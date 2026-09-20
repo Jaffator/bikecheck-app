@@ -1082,6 +1082,27 @@
     "cardRequests": "Žádosti",
     "cardViews": "Zobrazení",
     "cardOff": "Sdílej svou garáž",
-    "headerIcon": "Sdílení garáže"
+    "headerIcon": "Sdílení garáže",
+    "profileTitle": "Profil uživatele",
+    "ownerAction": "Tvůj profil · Nastavení sdílení",
+    "offNotice": "Profil je vypnutý — vidíš ho jen ty",
+    "figureBikes": "Kol",
+    "figureDistance": "Nájezd",
+    "figureParts": "Dílů",
+    "figureServices": "Servisů",
+    "updatedAt": "Aktualizováno {{when}}",
+    "partsCount_one": "{{count}} díl",
+    "partsCount_few": "{{count}} díly",
+    "partsCount_many": "{{count}} dílů",
+    "partsCount_other": "{{count}} dílů",
+    "servicesCount_one": "{{count}} servis",
+    "servicesCount_few": "{{count}} servisy",
+    "servicesCount_many": "{{count}} servisů",
+    "servicesCount_other": "{{count}} servisů",
+    "lockedTitle": "Profil je jen pro sledující",
+    "lockedBody": "Garáž uvidí jen schválení sledující.",
+    "unavailableTitle": "Profil není dostupný",
+    "unavailableBody": "Majitel ho vypnul, nebo adresa už neplatí.",
+    "loadFailed": "Profil se nepodařilo načíst. Zkus to znovu."
   }
 }
