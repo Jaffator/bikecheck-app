@@ -64,6 +64,8 @@ Ordered by how much they differentiate the app, not by effort.
   "3000 km per chain". The `rides` data needed for this is already stored.
 - **Cost / total cost of ownership** — spend per season, cost per kilometer. Derivable from
   `event_actions_done`.
+- **Public Profile shipped, Follow next** — a rider's garage and bikes at `/u/:handle`, shared
+  from the Bikes page (PRD #131); following a rider is PRD 2.
 - **QR code on the frame** → opens the public BikeCheck. Cheap, demos well, and the Reports it
   builds on have shipped.
 - **Garmin / Wahoo integration** alongside Strava — `strava-service` is already a separate app,
