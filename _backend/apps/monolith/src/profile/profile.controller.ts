@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseProfileDto } from './dto/response-profile.dto';
 import { ResponseProfileGarageDto } from './dto/response-profile-garage.dto';
+import { ResponseProfileBikeDto } from './dto/response-profile-bike.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('profiles')
@@ -45,5 +46,21 @@ export class ProfileController {
     @Param('handle') handle: string,
   ): Promise<ResponseProfileGarageDto> {
     return await this.profileService.read(handle, Number(userId));
+  }
+
+  // ---------- GET one of somebody's bikes, in the app ----------
+  @ApiOperation({ summary: 'One bike of a Public Profile for the app: the hero and the sections the owner shares' })
+  @ApiResponse({ status: 200, type: ResponseProfileBikeDto })
+  @ApiResponse({
+    status: 404,
+    description: 'Not readable by the rule, or a bike that is unknown, unshared or archived - one answer for all',
+  })
+  @Get(':handle/bikes/:id')
+  async readBike(
+    @CurrentUser('userId') userId: string,
+    @Param('handle') handle: string,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ResponseProfileBikeDto> {
+    return await this.profileService.readBike(handle, id, Number(userId));
   }
 }

@@ -121,3 +121,80 @@ export interface ProfileGarageResponse {
   relation: ProfileRelation;
   garage: ProfileGarage | null;
 }
+
+// A catalogue entry: the key to translate, the stored name when it is the owner's own.
+export interface ProfileCatalogueName {
+  i18n_key: string | null;
+  name: string;
+}
+
+// Mirrors ProfileMountedPartDto: one part as a reader may know it. Wear is since mounted;
+// null means nothing on record.
+export interface ProfileMountedPart {
+  id: number;
+  type: ProfileCatalogueName;
+  description: string | null;
+  position: string | null;
+  distance_km: number | null;
+  time_min: number | null;
+}
+
+export interface ProfileComponentGroup {
+  category: ProfileCatalogueName;
+  parts: ProfileMountedPart[];
+}
+
+// Clicks from fully closed on every adjuster (ADR 0029).
+export interface ProfileClicks {
+  rebound_ls: number | null;
+  rebound_hs: number | null;
+  compression_ls: number | null;
+  compression_hs: number | null;
+}
+
+// One leg of the suspension, always in psi.
+export interface ProfileLeg {
+  pressure_psi: number | null;
+  sag_percent: number | null;
+  tokens: number | null;
+  clicks: ProfileClicks;
+}
+
+// Mirrors ProfileSetupProfileDto. Tyres in psi - the page converts to the owner's unit;
+// the mounted tyre under each only while components are shared; a leg only per suspension.
+export interface ProfileSetupProfile {
+  id: number;
+  name: string;
+  is_active: boolean;
+  front_tire_psi: number | null;
+  rear_tire_psi: number | null;
+  front_tire: ProfileMountedPart | null;
+  rear_tire: ProfileMountedPart | null;
+  fork: ProfileLeg | null;
+  shock: ProfileLeg | null;
+}
+
+// Mirrors ProfileBikeDto: the card plus what the hero reads and the sections the switches let
+// out. A section that is off is null; setup [] is a bike with no profile yet. The build
+// stands where the card's parts count was; history lands with the next slice.
+export interface ProfileBike extends Omit<ProfileBikeCard, "components"> {
+  time_min: number;
+  ebike: boolean;
+  frame_material: string | null;
+  has_front_suspension: boolean;
+  has_rear_suspension: boolean;
+  components: ProfileComponentGroup[] | null;
+  setup: ProfileSetupProfile[] | null;
+  history: null;
+}
+
+// Mirrors ResponseProfileBikeDto (GET /profiles/:handle/bikes/:id). No header exception:
+// whatever is not readable is a 404.
+export interface ProfileBikeResponse {
+  owner: ProfileOwner;
+  visibility: ProfileVisibility;
+  relation: ProfileRelation;
+  currency: string;
+  tire_pressure_unit: TirePressureUnit;
+  bike: ProfileBike;
+}

@@ -1,6 +1,6 @@
 // Public Profile settings through the shared authenticated client.
 import { apiFetch } from "@/api/client";
-import type { Profile, ProfileGarageResponse, UpdateProfilePayload } from "./profile.types";
+import type { Profile, ProfileBikeResponse, ProfileGarageResponse, UpdateProfilePayload } from "./profile.types";
 
 // GET /profiles/me — the owner's settings; the OFF defaults and a suggested handle while no
 // row exists. Reads only: nothing is written until the drawer confirms.
@@ -21,4 +21,10 @@ export async function updateMyProfile(payload: UpdateProfilePayload): Promise<Pr
 // and a dead handle alike; the owner reads their own in every state.
 export async function getProfileGarage(handle: string): Promise<ProfileGarageResponse> {
   return apiFetch<ProfileGarageResponse>(`/profiles/${encodeURIComponent(handle)}`);
+}
+
+// GET /profiles/:handle/bikes/:id — one of somebody's bikes. 404 for a profile the rule
+// closes and for a bike that is unknown, unshared or archived alike.
+export async function getProfileBike(handle: string, bikeId: number): Promise<ProfileBikeResponse> {
+  return apiFetch<ProfileBikeResponse>(`/profiles/${encodeURIComponent(handle)}/bikes/${String(bikeId)}`);
 }

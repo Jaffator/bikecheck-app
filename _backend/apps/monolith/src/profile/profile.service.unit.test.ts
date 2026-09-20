@@ -36,15 +36,58 @@ const BIKE_UPDATED = new Date('2026-09-05T00:00:00.000Z');
 const PART_UPDATED = new Date('2026-09-10T00:00:00.000Z');
 const SERVICE_UPDATED = new Date('2026-09-12T00:00:00.000Z');
 
+interface CatalogueRow {
+  component_type: string;
+  i18n_key: string | null;
+  component_groups: { id: number; group_name: string; i18n_key: string | null };
+}
+
+// The whole components_mounted row, the note and the health index included, so a test can
+// assert what of it never leaves.
 interface PartRow {
+  id: number;
+  component_type_id: number;
+  component_desc: string | null;
+  position: string | null;
+  note: string | null;
+  total_km: number | null;
+  total_time_min: number | null;
+  health_index: number | null;
   is_active: boolean | null;
   is_deleted: boolean | null;
   updated_at: Date | null;
+  component_types: CatalogueRow;
 }
 
 interface ServiceRow {
   is_deleted: boolean | null;
   updated_at: Date | null;
+}
+
+// The whole setup_profiles row, its note included, pressures as the Decimal the database holds.
+interface SetupRow {
+  id: number;
+  bike_id: number;
+  name: string;
+  note: string | null;
+  front_tire_psi: Prisma.Decimal | null;
+  rear_tire_psi: Prisma.Decimal | null;
+  fork_pressure_psi: Prisma.Decimal | null;
+  fork_tokens: number | null;
+  fork_sag_percent: number | null;
+  fork_rebound_ls: number | null;
+  fork_rebound_hs: number | null;
+  fork_compression_ls: number | null;
+  fork_compression_hs: number | null;
+  shock_pressure_psi: Prisma.Decimal | null;
+  shock_tokens: number | null;
+  shock_sag_percent: number | null;
+  shock_rebound_ls: number | null;
+  shock_rebound_hs: number | null;
+  shock_compression_ls: number | null;
+  shock_compression_hs: number | null;
+  created_at: Date;
+  updated_at: Date;
 }
 
 interface BikeRow {
@@ -56,6 +99,12 @@ interface BikeRow {
   year: number | null;
   image_url: string | null;
   total_km: number | null;
+  total_time_min: number | null;
+  ebike: boolean;
+  frame_material: string | null;
+  has_front_suspension: boolean;
+  has_rear_suspension: boolean;
+  active_setup_profile_id: number | null;
   is_deleted: boolean | null;
   is_shared: boolean;
   updated_at: Date | null;
@@ -87,6 +136,19 @@ interface BikesFindManyArgs {
   };
 }
 
+// A bike as the garage include shapes it: of the parts and Services only the timestamps.
+function garageShape(bike: BikeRow, include: BikesFindManyArgs['include']): Record<string, unknown> {
+  return {
+    ...bike,
+    components_mounted: bike.components_mounted
+      .filter((part) => matches(part, include?.components_mounted?.where))
+      .map((part) => ({ updated_at: part.updated_at })),
+    events_bikes: bike.events_bikes
+      .filter((done) => matches(done, include?.events_bikes?.where))
+      .map((done) => ({ updated_at: done.updated_at })),
+  };
+}
+
 describe('ProfileService', () => {
   let service: ProfileService;
 
@@ -106,6 +168,7 @@ describe('ProfileService', () => {
   // The bikes table with the parts and Services hanging off each row, filtered the way
   // the database would, so what a read lists is decided by the flags and not by the mock.
   const bikesTable: BikeRow[] = [];
+  const setupTable: SetupRow[] = [];
 
   const mockPrisma = {
     public_profiles: {
@@ -156,15 +219,32 @@ describe('ProfileService', () => {
           bikesTable
             .filter((bike) => matches(bike, where))
             .sort((a, b) => a.id - b.id)
-            .map((bike) => ({
-              ...bike,
-              components_mounted: bike.components_mounted
-                .filter((part) => matches(part, include?.components_mounted?.where))
-                .map((part) => ({ updated_at: part.updated_at })),
-              events_bikes: bike.events_bikes
-                .filter((done) => matches(done, include?.events_bikes?.where))
-                .map((done) => ({ updated_at: done.updated_at })),
-            })),
+            .map((bike) => garageShape(bike, include)),
+        ),
+      ),
+      findFirst: jest.fn(({ where, include }: BikesFindManyArgs) => {
+        const bike = bikesTable.find((row) => matches(row, where));
+        return Promise.resolve(bike === undefined ? null : garageShape(bike, include));
+      }),
+    },
+    // The parts hang off their bike row; the query sees them as one table keyed by bike_id.
+    components_mounted: {
+      findMany: jest.fn(({ where }: { where?: Where }) =>
+        Promise.resolve(
+          bikesTable
+            .flatMap((bike) => bike.components_mounted.map((part) => ({ ...part, bike_id: bike.id })))
+            .filter((part) => matches(part, where))
+            .sort((a, b) => a.component_type_id - b.component_type_id || a.id - b.id),
+        ),
+      ),
+    },
+    // Oldest first, as the Setup screen lists them - the order the query asks for.
+    setup_profiles: {
+      findMany: jest.fn(({ where }: { where?: Where }) =>
+        Promise.resolve(
+          setupTable
+            .filter((row) => matches(row, where))
+            .sort((a, b) => a.created_at.getTime() - b.created_at.getTime() || a.id - b.id),
         ),
       ),
     },
@@ -185,10 +265,34 @@ describe('ProfileService', () => {
     });
   };
 
+  // The seeded catalogue rows the fixtures mount, keyed the way the seed names them.
+  const SUSPENSION = { id: 1, group_name: 'Suspension', i18n_key: 'componentGroup.suspension' };
+  const WHEELS = { id: 5, group_name: 'Wheels', i18n_key: 'componentGroup.wheels' };
+  const DRIVETRAIN = { id: 6, group_name: 'Drivetrain', i18n_key: 'componentGroup.drivetrain' };
+  const FORK_TYPE: CatalogueRow = { component_type: 'Fork', i18n_key: 'component.fork', component_groups: SUSPENSION };
+  const TIRE_TYPE: CatalogueRow = { component_type: 'Tire', i18n_key: 'component.tire', component_groups: WHEELS };
+  const CHAIN_TYPE: CatalogueRow = {
+    component_type: 'Chain',
+    i18n_key: 'component.chain',
+    component_groups: DRIVETRAIN,
+  };
+
+  let nextPartId = 1;
+
+  // A mounted part with a note and a health index on it, so the payload has something to leave out.
   const part = (overrides: Partial<PartRow> = {}): PartRow => ({
+    id: nextPartId++,
+    component_type_id: 12,
+    component_desc: 'Fox 38 Factory GRIP2',
+    position: null,
+    note: 'Mechanic Pepa, 777 123 456',
+    total_km: 1200,
+    total_time_min: 4800,
+    health_index: 42,
     is_active: true,
     is_deleted: false,
     updated_at: PART_UPDATED,
+    component_types: FORK_TYPE,
     ...overrides,
   });
 
@@ -207,6 +311,12 @@ describe('ProfileService', () => {
       year: 2024,
       image_url: 'https://storage.example.com/bikes/rallon.webp',
       total_km: 4187,
+      total_time_min: 15000,
+      ebike: false,
+      frame_material: 'carbon',
+      has_front_suspension: true,
+      has_rear_suspension: true,
+      active_setup_profile_id: null,
       is_deleted: false,
       is_shared: true,
       updated_at: BIKE_UPDATED,
@@ -216,6 +326,35 @@ describe('ProfileService', () => {
       ...overrides,
     };
     bikesTable.push(row);
+    return row;
+  };
+
+  // A Setup Profile with every number and a note written down, in psi as the row holds them.
+  const seedSetup = (overrides: Partial<SetupRow> & { id: number; bike_id: number }): SetupRow => {
+    const row: SetupRow = {
+      name: 'Trail',
+      note: 'Wet, muddy Loket',
+      front_tire_psi: new Prisma.Decimal(24.5),
+      rear_tire_psi: new Prisma.Decimal(27),
+      fork_pressure_psi: new Prisma.Decimal(85),
+      fork_tokens: 2,
+      fork_sag_percent: 20,
+      fork_rebound_ls: 8,
+      fork_rebound_hs: 3,
+      fork_compression_ls: 10,
+      fork_compression_hs: 2,
+      shock_pressure_psi: new Prisma.Decimal(185),
+      shock_tokens: 1,
+      shock_sag_percent: 30,
+      shock_rebound_ls: 6,
+      shock_rebound_hs: 2,
+      shock_compression_ls: 9,
+      shock_compression_hs: 1,
+      created_at: new Date(`2026-09-${String(overrides.id).padStart(2, '0')}T00:00:00.000Z`),
+      updated_at: NOW,
+      ...overrides,
+    };
+    setupTable.push(row);
     return row;
   };
 
@@ -241,6 +380,8 @@ describe('ProfileService', () => {
     jest.clearAllMocks();
     table.clear();
     bikesTable.length = 0;
+    setupTable.length = 0;
+    nextPartId = 1;
     process.env.PUBLIC_APP_URL = ORIGIN;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -792,6 +933,445 @@ describe('ProfileService', () => {
 
       const page = JSON.stringify(await service.read('jaffa', OTHER_ID));
 
+      expect(page).not.toContain('jarda@example.com');
+      expect(page).not.toContain('strava');
+      expect(page).not.toContain('password');
+      expect(page).not.toContain('user_id');
+      expect(page).not.toContain('stranger');
+      expect(page).not.toContain('Strangers bike');
+    });
+  });
+
+  describe('readBike - the rule', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seedBike({ id: 1 });
+    });
+
+    it('PUBLIC: a stranger reads the bike, with the owner in the header', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      const page = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(page).toMatchObject({
+        owner: { handle: 'jaffa', name: 'Jarda Novák', avatar_url: 'https://lh3.googleusercontent.com/jarda' },
+        visibility: 'PUBLIC',
+        relation: 'NONE',
+        currency: 'EUR',
+        tire_pressure_unit: 'psi',
+        bike: { id: 1, name: 'Rallon' },
+      });
+    });
+
+    it('FOLLOWERS: a stranger gets 404, not a header', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+
+      await expect(service.readBike('jaffa', 1, OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('FOLLOWERS: the owner reads the bike', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+
+      const page = await service.readBike('jaffa', 1, OWNER_ID);
+
+      expect(page).toMatchObject({ relation: 'SELF', bike: { id: 1 } });
+    });
+
+    it('OFF: a stranger gets 404', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      await expect(service.readBike('jaffa', 1, OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('OFF: the owner reads the bike and is told the state', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      const page = await service.readBike('jaffa', 1, OWNER_ID);
+
+      expect(page).toMatchObject({ visibility: 'OFF', relation: 'SELF', bike: { id: 1 } });
+    });
+
+    it('unknown handle, unknown bike, unshared, archived and another account answer one 404', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seedBike({ id: 2, is_shared: false });
+      seedBike({ id: 3, is_deleted: true });
+      seedBike({ id: 4, user_id: OTHER_ID });
+
+      const messages = await Promise.all(
+        [
+          service.readBike('nobody', 1, OTHER_ID),
+          service.readBike('jaffa', 99, OTHER_ID),
+          service.readBike('jaffa', 2, OTHER_ID),
+          service.readBike('jaffa', 3, OTHER_ID),
+          service.readBike('jaffa', 4, OTHER_ID),
+        ].map((promise) =>
+          promise.then(
+            () => 'resolved',
+            (error: unknown) => error,
+          ),
+        ),
+      );
+
+      for (const error of messages) expect(error).toBeInstanceOf(NotFoundException);
+      expect(new Set(messages.map((error) => (error as Error).message)).size).toBe(1);
+    });
+
+    it('the owner cannot read their own unshared or archived bike through the profile either', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seedBike({ id: 2, is_shared: false });
+      seedBike({ id: 3, is_deleted: true });
+
+      await expect(service.readBike('jaffa', 2, OWNER_ID)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.readBike('jaffa', 3, OWNER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('matches the handle whatever its case and counts no view', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, view_count: 3 });
+
+      const page = await service.readBike('JAFFA', 1, OTHER_ID);
+
+      expect(page.owner.handle).toBe('jaffa');
+      expect((await service.getMine(OWNER_ID)).stats.views).toBe(3);
+    });
+  });
+
+  describe('readBike - the hero and the switches', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+    });
+
+    it('reads the card plus saddle time, e-bike, frame material and the suspension flags', async () => {
+      seedBike({
+        id: 1,
+        components_mounted: [part(), part({ is_active: false })],
+        events_bikes: [done(), done(), done({ is_deleted: true })],
+        has_rear_suspension: false,
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike).toMatchObject({
+        id: 1,
+        name: 'Rallon',
+        brand: 'Orbea',
+        model: 'Rallon M10',
+        year: 2024,
+        type: { i18n_key: 'bikeType.enduro', name: 'Enduro' },
+        image_url: 'https://storage.example.com/bikes/rallon.webp',
+        distance_km: 4187,
+        components: expect.any(Array) as unknown,
+        services: 2,
+        time_min: 15000,
+        ebike: false,
+        frame_material: 'carbon',
+        has_front_suspension: true,
+        has_rear_suspension: false,
+      });
+    });
+
+    it('reads zero where the odometer holds nothing', async () => {
+      seedBike({ id: 1, total_km: null, total_time_min: null, frame_material: null });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike).toMatchObject({ distance_km: 0, time_min: 0, frame_material: null });
+    });
+
+    it('components off: the section and the count are null', async () => {
+      table.get(OWNER_ID)!.share_components = false;
+      seedBike({ id: 1, components_mounted: [part()] });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.components).toBeNull();
+      expect(bike.components).not.toEqual([]);
+    });
+
+    it('setup off: the section is null even when profiles exist', async () => {
+      table.get(OWNER_ID)!.share_setup = false;
+      seedBike({ id: 1, active_setup_profile_id: 10 });
+      seedSetup({ id: 10, bike_id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.setup).toBeNull();
+    });
+
+    it('setup on with no profile yet: an empty list, not null', async () => {
+      seedBike({ id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.setup).toEqual([]);
+    });
+
+    it('components on with nothing mounted: an empty list, not null', async () => {
+      seedBike({ id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.components).toEqual([]);
+    });
+
+    it('history is null in this slice whatever the switch, while the Services count still travels', async () => {
+      seedBike({ id: 1, events_bikes: [done()] });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history).toBeNull();
+      expect(bike.services).toBe(1);
+    });
+
+    it('history off: the Services count is null', async () => {
+      table.get(OWNER_ID)!.share_history = false;
+      seedBike({ id: 1, events_bikes: [done()] });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.services).toBeNull();
+    });
+  });
+
+  describe('readBike - Osazení', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+    });
+
+    it('groups what is mounted by Component Category, catalogue names as key plus fallback', async () => {
+      const own: CatalogueRow = { component_type: 'Mudguard', i18n_key: null, component_groups: WHEELS };
+      seedBike({
+        id: 1,
+        components_mounted: [
+          part({ component_type_id: 12, component_types: FORK_TYPE, total_km: 1200, total_time_min: 4800 }),
+          part({
+            component_type_id: 20,
+            component_types: TIRE_TYPE,
+            position: 'front',
+            component_desc: 'Maxxis Assegai',
+          }),
+          part({
+            component_type_id: 20,
+            component_types: TIRE_TYPE,
+            position: 'rear',
+            component_desc: 'Maxxis DHR II',
+          }),
+          part({
+            component_type_id: 30,
+            component_types: own,
+            component_desc: null,
+            total_km: null,
+            total_time_min: null,
+          }),
+          part({ component_type_id: 40, component_types: CHAIN_TYPE, is_active: false }),
+          part({ component_type_id: 40, component_types: CHAIN_TYPE, is_deleted: true }),
+        ],
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.components).toEqual([
+        {
+          category: { i18n_key: 'componentGroup.suspension', name: 'Suspension' },
+          parts: [
+            {
+              id: 1,
+              type: { i18n_key: 'component.fork', name: 'Fork' },
+              description: 'Fox 38 Factory GRIP2',
+              position: null,
+              distance_km: 1200,
+              time_min: 4800,
+            },
+          ],
+        },
+        {
+          category: { i18n_key: 'componentGroup.wheels', name: 'Wheels' },
+          parts: [
+            expect.objectContaining({ id: 2, type: { i18n_key: 'component.tire', name: 'Tire' }, position: 'front' }),
+            expect.objectContaining({ id: 3, description: 'Maxxis DHR II', position: 'rear' }),
+            expect.objectContaining({
+              id: 4,
+              type: { i18n_key: null, name: 'Mudguard' },
+              description: null,
+              distance_km: null,
+              time_min: null,
+            }),
+          ],
+        },
+      ]);
+    });
+
+    it('carries no note and no health index, on a fixture that has both', async () => {
+      seedBike({ id: 1, components_mounted: [part({ note: 'Mechanic Pepa, 777 123 456', health_index: 42 })] });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+      const partOut = bike.components?.[0].parts[0] as Record<string, unknown>;
+
+      expect(partOut).not.toHaveProperty('note');
+      expect(partOut).not.toHaveProperty('health_index');
+      expect(JSON.stringify(bike)).not.toContain('Pepa');
+    });
+  });
+
+  describe('readBike - Setup', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+    });
+
+    it('reads every profile with its six numbers, the legs and the clicks, the note left behind', async () => {
+      seedBike({ id: 1, active_setup_profile_id: 10 });
+      seedSetup({ id: 10, bike_id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.setup).toEqual([
+        {
+          id: 10,
+          name: 'Trail',
+          is_active: true,
+          front_tire_psi: 24.5,
+          rear_tire_psi: 27,
+          front_tire: null,
+          rear_tire: null,
+          fork: {
+            pressure_psi: 85,
+            sag_percent: 20,
+            tokens: 2,
+            clicks: { rebound_ls: 8, rebound_hs: 3, compression_ls: 10, compression_hs: 2 },
+          },
+          shock: {
+            pressure_psi: 185,
+            sag_percent: 30,
+            tokens: 1,
+            clicks: { rebound_ls: 6, rebound_hs: 2, compression_ls: 9, compression_hs: 1 },
+          },
+        },
+      ]);
+      expect(JSON.stringify(bike.setup)).not.toContain('Loket');
+    });
+
+    it('the active profile is marked exactly once and listed first, the rest oldest first', async () => {
+      seedBike({ id: 1, active_setup_profile_id: 12 });
+      seedSetup({ id: 10, bike_id: 1, name: 'Trail' });
+      seedSetup({ id: 11, bike_id: 1, name: 'Park' });
+      seedSetup({ id: 12, bike_id: 1, name: 'Race' });
+      seedSetup({ id: 13, bike_id: 1, name: 'Wet' });
+      seedSetup({ id: 20, bike_id: 2, name: 'Other bike' });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.setup?.map((profile) => [profile.name, profile.is_active])).toEqual([
+        ['Race', true],
+        ['Trail', false],
+        ['Park', false],
+        ['Wet', false],
+      ]);
+    });
+
+    it('a number never written down is null, not zero', async () => {
+      seedBike({ id: 1, active_setup_profile_id: 10 });
+      seedSetup({
+        id: 10,
+        bike_id: 1,
+        front_tire_psi: null,
+        fork_pressure_psi: null,
+        fork_tokens: null,
+        shock_rebound_hs: null,
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.setup?.[0]).toMatchObject({
+        front_tire_psi: null,
+        fork: { pressure_psi: null, tokens: null },
+        shock: { clicks: { rebound_hs: null } },
+      });
+    });
+
+    it('a hardtail has no shock, a rigid bike neither leg, whatever the row holds', async () => {
+      seedBike({ id: 1, has_front_suspension: true, has_rear_suspension: false, active_setup_profile_id: 10 });
+      seedBike({ id: 2, has_front_suspension: false, has_rear_suspension: false, active_setup_profile_id: 20 });
+      seedSetup({ id: 10, bike_id: 1 });
+      seedSetup({ id: 20, bike_id: 2 });
+
+      const hardtail = await service.readBike('jaffa', 1, OTHER_ID);
+      const rigid = await service.readBike('jaffa', 2, OTHER_ID);
+
+      expect(hardtail.bike.setup?.[0]).toMatchObject({ fork: { pressure_psi: 85 }, shock: null });
+      expect(rigid.bike.setup?.[0]).toMatchObject({ fork: null, shock: null });
+    });
+
+    it('puts the mounted tyre under each pressure, looked up by its slot', async () => {
+      seedBike({
+        id: 1,
+        active_setup_profile_id: 10,
+        components_mounted: [
+          part({ component_types: TIRE_TYPE, position: 'Front', component_desc: 'Maxxis Assegai' }),
+          part({ component_types: TIRE_TYPE, position: 'rear', component_desc: 'Maxxis DHR II' }),
+          part({ component_types: TIRE_TYPE, position: 'rear', component_desc: 'Old rear', is_active: false }),
+        ],
+      });
+      seedSetup({ id: 10, bike_id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.setup?.[0]).toMatchObject({
+        front_tire: {
+          type: { i18n_key: 'component.tire', name: 'Tire' },
+          description: 'Maxxis Assegai',
+          position: 'Front',
+        },
+        rear_tire: { description: 'Maxxis DHR II' },
+      });
+    });
+
+    it('an empty slot reads null under the pressure', async () => {
+      seedBike({ id: 1, active_setup_profile_id: 10, components_mounted: [part({ component_types: FORK_TYPE })] });
+      seedSetup({ id: 10, bike_id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.setup?.[0]).toMatchObject({ front_tire: null, rear_tire: null });
+    });
+
+    it('components off: the tyre lookup is null even with tyres mounted', async () => {
+      table.get(OWNER_ID)!.share_components = false;
+      seedBike({
+        id: 1,
+        active_setup_profile_id: 10,
+        components_mounted: [part({ component_types: TIRE_TYPE, position: 'front' })],
+      });
+      seedSetup({ id: 10, bike_id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.components).toBeNull();
+      expect(bike.setup?.[0]).toMatchObject({ front_tire_psi: 24.5, front_tire: null, rear_tire: null });
+    });
+  });
+
+  describe('readBike - never out', () => {
+    it('carries no note, health index, email, Strava picture or anything of another account', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, share_costs: true });
+      seed({ user_id: OTHER_ID, handle: 'stranger', visibility: profile_visibility.PUBLIC });
+      seedBike({
+        id: 1,
+        active_setup_profile_id: 10,
+        components_mounted: [part({ component_types: TIRE_TYPE, position: 'front' }), part()],
+        events_bikes: [done()],
+      });
+      seedSetup({ id: 10, bike_id: 1 });
+      seedBike({ id: 2, user_id: OTHER_ID, bikename: 'Strangers bike' });
+
+      const page = JSON.stringify(await service.readBike('jaffa', 1, OTHER_ID));
+
+      expect(page).not.toContain('note');
+      expect(page).not.toContain('health_index');
+      expect(page).not.toContain('Pepa');
+      expect(page).not.toContain('Loket');
       expect(page).not.toContain('jarda@example.com');
       expect(page).not.toContain('strava');
       expect(page).not.toContain('password');

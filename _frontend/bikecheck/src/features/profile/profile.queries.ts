@@ -2,8 +2,8 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import type { ApiError } from "@/api/client";
 import { updateBike } from "@/features/bikes/bikes.api";
-import { getMyProfile, getProfileGarage, updateMyProfile } from "./profile.api";
-import type { Profile, ProfileGarageResponse, SaveSharingInput } from "./profile.types";
+import { getMyProfile, getProfileBike, getProfileGarage, updateMyProfile } from "./profile.api";
+import type { Profile, ProfileBikeResponse, ProfileGarageResponse, SaveSharingInput } from "./profile.types";
 
 // Shared by every surface that reads the sharing state (Settings row, dashboard card, header icon).
 export const PROFILE_ME_QUERY_KEY = ["profile", "me"] as const;
@@ -24,6 +24,17 @@ export function useProfileGarage(handle: string): UseQueryResult<ProfileGarageRe
     queryKey: [...PROFILE_GARAGE_QUERY_KEY, handle],
     queryFn: () => getProfileGarage(handle),
     enabled: handle !== "",
+    retry: false,
+  });
+}
+
+// One of somebody's bikes at /users/:handle/:bikeId, keyed under the garage so a save in the
+// share drawer refreshes it too. A closed profile or a hidden bike is an answer, not a fault.
+export function useProfileBike(handle: string, bikeId: number): UseQueryResult<ProfileBikeResponse, ApiError> {
+  return useQuery<ProfileBikeResponse, ApiError>({
+    queryKey: [...PROFILE_GARAGE_QUERY_KEY, handle, "bike", bikeId],
+    queryFn: () => getProfileBike(handle, bikeId),
+    enabled: handle !== "" && Number.isInteger(bikeId),
     retry: false,
   });
 }

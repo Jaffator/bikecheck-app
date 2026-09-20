@@ -1103,6 +1103,18 @@
     "lockedBody": "Garáž uvidí jen schválení sledující.",
     "unavailableTitle": "Profil není dostupný",
     "unavailableBody": "Majitel ho vypnul, nebo adresa už neplatí.",
-    "loadFailed": "Profil se nepodařilo načíst. Zkus to znovu."
+    "loadFailed": "Profil se nepodařilo načíst. Zkus to znovu.",
+    "bikeSetupActive": "Aktuální",
+    "bikeComponentsTitle": "Osazení",
+    "sinceNew": "od nového kola",
+    "tokensAndClicks": "Tokeny a kliky (od plně zavřeného)",
+    "gaugeFrontTyre": "Přední plášť",
+    "gaugeRearTyre": "Zadní plášť",
+    "gaugeForkSag": "Sag vidlice",
+    "gaugeShockSag": "Sag tlumiče",
+    "lsr": "LSR",
+    "hsr": "HSR",
+    "lsc": "LSC",
+    "hsc": "HSC"
   }
 }

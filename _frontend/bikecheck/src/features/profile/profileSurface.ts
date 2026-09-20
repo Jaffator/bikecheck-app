@@ -17,3 +17,20 @@ export const SECONDARY_BUTTON: CSSProperties = {
   border: "1px solid var(--mantine-color-inputs-5)",
   color: "var(--mantine-color-text-6)",
 };
+
+// The same fallback the header avatar wears: initials on the card colour.
+export const AVATAR_STYLE = {
+  flexShrink: 0,
+  "--avatar-bg": "var(--mantine-color-cards-5)",
+  "--avatar-color": "var(--mantine-color-text-6)",
+} as CSSProperties;
+
+// A small mono label over a figure or beside a name - the profile's one caption style.
+export const EYEBROW = {
+  fz: 11,
+  fw: 400,
+  tt: "uppercase" as const,
+  lts: "0.08em",
+  c: "var(--color-text-dim)",
+  className: "font-mono",
+};

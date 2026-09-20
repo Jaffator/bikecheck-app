@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, public_profiles } from '@prisma/client';
+import { Prisma, public_profiles, setup_profiles } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { publicAppOrigin } from '../_config/public-app-origin';
 import { RESERVED_HANDLES } from './reserved-handles';
@@ -11,6 +11,13 @@ import {
   ProfileRelation,
   ResponseProfileGarageDto,
 } from './dto/response-profile-garage.dto';
+import {
+  ProfileComponentGroupDto,
+  ProfileLegDto,
+  ProfileMountedPartDto,
+  ProfileSetupProfileDto,
+  ResponseProfileBikeDto,
+} from './dto/response-profile-bike.dto';
 
 // The handle rule ^[a-z0-9][a-z0-9_-]{2,29}$, checked piece by piece so a refusal can say why.
 const HANDLE_MIN_LENGTH = 3;
@@ -36,6 +43,18 @@ const garageBikeInclude = {
 } satisfies Prisma.bikesInclude;
 
 type GarageBike = Prisma.bikesGetPayload<{ include: typeof garageBikeInclude }>;
+
+// A mounted part with the kind of part it is and the category that kind sits in.
+const mountedPartInclude = {
+  component_types: { include: { component_groups: true } },
+} satisfies Prisma.components_mountedInclude;
+
+type MountedPart = Prisma.components_mountedGetPayload<{ include: typeof mountedPartInclude }>;
+
+// The seeded kind of part a tyre pressure is dialled into, matched by name like the ride
+// sync matches its own kinds; the side is the slot's.
+const TIRE_TYPE = 'Tire';
+type TireSide = 'front' | 'rear';
 
 // The owner as the page needs them: the name and the app avatar, and the units the
 // numbers are written in. Never the email, never the Strava picture.
@@ -203,6 +222,69 @@ export class ProfileService {
     };
   }
 
+  // ---------- The in-app bike page ----------
+
+  // The same rule as the garage, with no header exception: whatever is not readable - the
+  // profile, or a bike that is not this owner's, not shared or archived - is one 404.
+  async readBike(rawHandle: string, bikeId: number, viewerId: number | null): Promise<ResponseProfileBikeDto> {
+    const handle = rawHandle.trim().toLowerCase();
+    const profile = await this.prisma.public_profiles.findUnique({ where: { handle } });
+    const relation: ProfileRelation = profile !== null && profile.user_id === viewerId ? 'SELF' : 'NONE';
+    if (!profile || (profile.visibility === 'OFF' && relation !== 'SELF')) {
+      throw new NotFoundException(PROFILE_UNAVAILABLE);
+    }
+    if (!(await this.mayReadGarage(profile, relation, viewerId))) {
+      throw new NotFoundException(PROFILE_UNAVAILABLE);
+    }
+
+    const bike = await this.prisma.bikes.findFirst({
+      where: { id: bikeId, user_id: profile.user_id, is_deleted: { not: true }, is_shared: true },
+      include: garageBikeInclude,
+    });
+    if (!bike) throw new NotFoundException(PROFILE_UNAVAILABLE);
+
+    const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
+    // Read only what goes out: a section that is off is never even fetched.
+    const parts = profile.share_components ? await this.mountedParts(bike.id) : null;
+    const profiles = profile.share_setup ? await this.setupProfiles(bike.id) : null;
+
+    return {
+      owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
+      visibility: profile.visibility,
+      relation,
+      currency: owner?.currency ?? FALLBACK_CURRENCY,
+      tire_pressure_unit: owner?.tire_pressure_unit ?? 'bar',
+      bike: {
+        ...bikeIdentity(bike, profile),
+        time_min: bike.total_time_min ?? 0,
+        ebike: bike.ebike,
+        frame_material: bike.frame_material,
+        has_front_suspension: bike.has_front_suspension,
+        has_rear_suspension: bike.has_rear_suspension,
+        components: parts === null ? null : groupByCategory(parts),
+        setup: profiles === null ? null : activeFirst(profiles, bike).map((row) => toSetupProfile(row, bike, parts)),
+        history: null,
+      },
+    };
+  }
+
+  // The build as the Report writes it: what is on the bike now, in the catalogue's order.
+  private async mountedParts(bikeId: number): Promise<MountedPart[]> {
+    return await this.prisma.components_mounted.findMany({
+      where: { bike_id: bikeId, is_active: true, is_deleted: { not: true } },
+      orderBy: [{ component_type_id: 'asc' }, { id: 'asc' }],
+      include: mountedPartInclude,
+    });
+  }
+
+  // Every profile of the bike, oldest first as the Setup screen lists them.
+  private async setupProfiles(bikeId: number): Promise<setup_profiles[]> {
+    return await this.prisma.setup_profiles.findMany({
+      where: { bike_id: bikeId },
+      orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+    });
+  }
+
   private async mayReadGarage(
     profile: public_profiles,
     relation: ProfileRelation,
@@ -284,7 +366,9 @@ function lastUpdated(profile: public_profiles, bikes: GarageBike[]): Date {
   );
 }
 
-function toBikeCard(bike: GarageBike, profile: public_profiles): ProfileBikeCardDto {
+// What the card and the bike page share: the bike itself and the Services count the history
+// switch lets out. The parts count is the card's alone - the page carries the build instead.
+function bikeIdentity(bike: GarageBike, profile: public_profiles): Omit<ProfileBikeCardDto, 'components'> {
   return {
     id: bike.id,
     name: bike.bikename,
@@ -294,7 +378,92 @@ function toBikeCard(bike: GarageBike, profile: public_profiles): ProfileBikeCard
     type: bike.bike_types === null ? null : { i18n_key: bike.bike_types.i18n_key, name: bike.bike_types.type ?? '' },
     image_url: bike.image_url,
     distance_km: bike.total_km ?? 0,
-    components: profile.share_components ? bike.components_mounted.length : null,
     services: profile.share_history ? bike.events_bikes.length : null,
+  };
+}
+
+function toBikeCard(bike: GarageBike, profile: public_profiles): ProfileBikeCardDto {
+  return {
+    ...bikeIdentity(bike, profile),
+    components: profile.share_components ? bike.components_mounted.length : null,
+  };
+}
+
+// Only what a reader may know of a part: never its note, never its health index.
+function toMountedPart(part: MountedPart): ProfileMountedPartDto {
+  return {
+    id: part.id,
+    type: { i18n_key: part.component_types.i18n_key, name: part.component_types.component_type },
+    description: part.component_desc,
+    position: part.position,
+    distance_km: part.total_km,
+    time_min: part.total_time_min,
+  };
+}
+
+// The build by Component Category, in the order the parts arrive; a category with nothing
+// on the bike is not a category of this bike.
+function groupByCategory(parts: MountedPart[]): ProfileComponentGroupDto[] {
+  const groups = new Map<number, ProfileComponentGroupDto>();
+  for (const part of parts) {
+    const category = part.component_types.component_groups;
+    const group = groups.get(category.id) ?? {
+      category: { i18n_key: category.i18n_key, name: category.group_name },
+      parts: [],
+    };
+    group.parts.push(toMountedPart(part));
+    groups.set(category.id, group);
+  }
+  return [...groups.values()];
+}
+
+// The tyre in the slot, by side. Null with components off (nothing was read) or an empty slot.
+function mountedTire(parts: MountedPart[] | null, side: TireSide): ProfileMountedPartDto | null {
+  const tire = parts?.find(
+    (part) => part.component_types.component_type === TIRE_TYPE && part.position?.toLowerCase() === side,
+  );
+  return tire === undefined ? null : toMountedPart(tire);
+}
+
+function toNumber(value: Prisma.Decimal | null): number | null {
+  return value === null ? null : Number(value);
+}
+
+// One leg of the sheet, read off the row's fork_* or shock_* columns.
+function legOf(row: setup_profiles, leg: 'fork' | 'shock'): ProfileLegDto {
+  return {
+    pressure_psi: toNumber(row[`${leg}_pressure_psi`]),
+    sag_percent: row[`${leg}_sag_percent`],
+    tokens: row[`${leg}_tokens`],
+    clicks: {
+      rebound_ls: row[`${leg}_rebound_ls`],
+      rebound_hs: row[`${leg}_rebound_hs`],
+      compression_ls: row[`${leg}_compression_ls`],
+      compression_hs: row[`${leg}_compression_hs`],
+    },
+  };
+}
+
+// The page opens on the profile the bike is ridden at, so it goes first; the rest keep
+// the Setup screen's order.
+function activeFirst(profiles: setup_profiles[], bike: GarageBike): setup_profiles[] {
+  const active = profiles.filter((row) => row.id === bike.active_setup_profile_id);
+  const others = profiles.filter((row) => row.id !== bike.active_setup_profile_id);
+  return [...active, ...others];
+}
+
+// A profile as the page reads it: the six numbers, the legs only per the bike's own
+// suspension (ADR 0029), the mounted tyres only when the build goes out. The note stays.
+function toSetupProfile(row: setup_profiles, bike: GarageBike, parts: MountedPart[] | null): ProfileSetupProfileDto {
+  return {
+    id: row.id,
+    name: row.name,
+    is_active: row.id === bike.active_setup_profile_id,
+    front_tire_psi: toNumber(row.front_tire_psi),
+    rear_tire_psi: toNumber(row.rear_tire_psi),
+    front_tire: mountedTire(parts, 'front'),
+    rear_tire: mountedTire(parts, 'rear'),
+    fork: bike.has_front_suspension ? legOf(row, 'fork') : null,
+    shock: bike.has_rear_suspension ? legOf(row, 'shock') : null,
   };
 }

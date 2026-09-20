@@ -56,7 +56,7 @@ const gaugeRow: CSSProperties = {
   columnGap: GAUGE_ROW_GAP,
 };
 // Sag is set between a fifth and a third of the travel; half is already far past any chart.
-const SAG_MAX = 50;
+export const SAG_MAX = 50;
 
 // The same pressure as a shock pump in bar would show it, under the psi figure.
 function barHint(psi: number): string {

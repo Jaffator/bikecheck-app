@@ -1,27 +1,20 @@
 // The owner as a hero card on their garage page: avatar, name, address and state, the way
 // to the sharing settings when the garage is mine, and under a hairline the numbers the
 // listed bikes add up to. A locked garage shows the card without the numbers.
-import type { CSSProperties, ReactElement } from "react";
+import type { ReactElement } from "react";
 import { Avatar, Button, Divider, Group, Paper, Stack, Text } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useTranslation } from "react-i18next";
 import { formatKm } from "../profileFormat";
-import { PANEL, SECONDARY_BUTTON } from "../profileSurface";
+import { AVATAR_STYLE, PANEL, SECONDARY_BUTTON } from "../profileSurface";
 import type { ProfileGarage, ProfileGarageResponse } from "../profile.types";
 import { VisibilityBadge } from "./VisibilityBadge";
 
 dayjs.extend(relativeTime);
 
 const AVATAR_SIZE = 64;
-
-// The same fallback the header avatar wears: initials on the card colour.
-const AVATAR_STYLE = {
-  flexShrink: 0,
-  "--avatar-bg": "var(--mantine-color-cards-5)",
-  "--avatar-color": "var(--mantine-color-text-6)",
-} as CSSProperties;
 
 interface Figure {
   label: string;

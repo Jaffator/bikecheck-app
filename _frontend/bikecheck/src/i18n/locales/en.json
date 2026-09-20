@@ -1049,6 +1049,18 @@
     "lockedBody": "Only approved followers see the garage.",
     "unavailableTitle": "Profile not available",
     "unavailableBody": "The owner turned it off, or the address no longer works.",
-    "loadFailed": "The profile could not be loaded. Try again."
+    "loadFailed": "The profile could not be loaded. Try again.",
+    "bikeSetupActive": "Current",
+    "bikeComponentsTitle": "Build",
+    "sinceNew": "since new",
+    "tokensAndClicks": "Tokens and clicks (from fully closed)",
+    "gaugeFrontTyre": "Front tyre",
+    "gaugeRearTyre": "Rear tyre",
+    "gaugeForkSag": "Fork sag",
+    "gaugeShockSag": "Shock sag",
+    "lsr": "LSR",
+    "hsr": "HSR",
+    "lsc": "LSC",
+    "hsc": "HSC"
   }
 }
