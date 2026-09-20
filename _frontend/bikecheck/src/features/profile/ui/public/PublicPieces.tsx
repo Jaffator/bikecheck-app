@@ -1,5 +1,6 @@
 // The small pieces the public pages draw: a sprite icon, the owner's avatar, a reading, a
-// chip row, the photo box with its "no photo" fallback, and one centred message.
+// chip row, the photo box with its "no photo" fallback, one centred message, and the two
+// states every page passes through before it has its data.
 import type { ReactElement, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { initialsOf } from "../../publicProfile";
@@ -99,5 +100,31 @@ export function PublicMessage({ icon, title, children }: PublicMessageProps): Re
       <h1 className="pp-display mt-6 text-[28px] font-extrabold leading-[1.1] tracking-tight sm:text-[36px]">{title}</h1>
       {children}
     </section>
+  );
+}
+
+export function PublicLoading(): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <p
+      className="pp-mono px-4 py-24 text-center text-[11px] uppercase tracking-[0.14em] text-[var(--pp-paper-faint)]"
+      aria-busy="true"
+    >
+      {t("publicProfile.loading")}
+    </p>
+  );
+}
+
+// Anything but a closed profile - a burst over the limit, the network - is a fault to retry by reload.
+export function PublicLoadFailed(): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <PublicMessage icon="i-link" title={t("publicProfile.loadFailedTitle")}>
+      <p className="mt-4 max-w-[46ch] text-[15px] leading-relaxed text-[var(--pp-paper-dim)] sm:text-base">
+        {t("publicProfile.loadFailedBody")}
+      </p>
+    </PublicMessage>
   );
 }

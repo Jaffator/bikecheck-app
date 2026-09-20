@@ -223,6 +223,8 @@ export interface ProfileServicesPage {
 // out. A section that is off is null; setup [] is a bike with no profile yet. The build
 // stands where the card's parts count was.
 export interface ProfileBike extends Omit<ProfileBikeCard, "components"> {
+  // Last Updated of this bike alone: the newest of the bike, its parts and its Services.
+  updated_at: string;
   time_min: number;
   ebike: boolean;
   frame_material: string | null;

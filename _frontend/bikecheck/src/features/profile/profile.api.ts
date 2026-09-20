@@ -50,3 +50,22 @@ export async function getProfileBikeServices(handle: string, bikeId: number, off
     `/profiles/${encodeURIComponent(handle)}/bikes/${String(bikeId)}/services?${params.toString()}`,
   );
 }
+
+// GET /profiles/public/:handle/bikes/:id — one bike for the web page, no session behind it.
+// Open only while PUBLIC; a closed profile and a hidden bike are one 404. Counts no view.
+export async function getPublicProfileBike(handle: string, bikeId: number): Promise<ProfileBikeResponse> {
+  return apiFetch<ProfileBikeResponse>(`/profiles/public/${encodeURIComponent(handle)}/bikes/${String(bikeId)}`);
+}
+
+// GET /profiles/public/:handle/bikes/:id/services — the Services the web bike page did not
+// carry, from the offset. The same 404s as the bike, and one more for a history kept in.
+export async function getPublicProfileBikeServices(
+  handle: string,
+  bikeId: number,
+  offset: number,
+): Promise<ProfileServicesPage> {
+  const params = new URLSearchParams({ offset: String(offset) });
+  return apiFetch<ProfileServicesPage>(
+    `/profiles/public/${encodeURIComponent(handle)}/bikes/${String(bikeId)}/services?${params.toString()}`,
+  );
+}

@@ -172,6 +172,10 @@ export class ResponseProfileServicesDto {
 // A section that is off is null, never []; setup: [] is a bike with no profile yet. The
 // card's parts count gives way to the section itself - the page counts the groups.
 export class ProfileBikeDto extends OmitType(ProfileBikeCardDto, ['components'] as const) {
+  // Last Updated of this bike alone: the newest of the bike, its mounted parts and its Services.
+  @ApiProperty({ example: '2026-09-12T00:00:00.000Z' })
+  updated_at!: string;
+
   @ApiProperty({ example: 15000 })
   time_min!: number;
 

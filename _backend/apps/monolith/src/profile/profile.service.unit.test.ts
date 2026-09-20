@@ -1157,6 +1157,145 @@ describe('ProfileService', () => {
     });
   });
 
+  describe('readPublicBike - the web rule', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seedBike({ id: 1, components_mounted: [part()], events_bikes: [done()] });
+    });
+
+    it('PUBLIC: opens with no session - the same page the app gives a stranger', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      const page = await service.readPublicBike('jaffa', 1);
+
+      expect(page).toMatchObject({
+        owner: { handle: 'jaffa', name: 'Jarda Novák' },
+        visibility: 'PUBLIC',
+        relation: 'NONE',
+        currency: 'EUR',
+        tire_pressure_unit: 'psi',
+        bike: { id: 1, name: 'Rallon' },
+      });
+      expect(page).toEqual(await service.readBike('jaffa', 1, OTHER_ID));
+    });
+
+    it('FOLLOWERS, OFF and an unknown handle answer one identical 404 - the owner has no way in either', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seed({ user_id: OTHER_ID, handle: 'quiet', visibility: profile_visibility.OFF });
+      seedBike({ id: 2, user_id: OTHER_ID });
+
+      const answers = await Promise.all(
+        [
+          service.readPublicBike('jaffa', 1),
+          service.readPublicBike('quiet', 2),
+          service.readPublicBike('nobody', 1),
+        ].map((promise) => promise.catch((error: unknown) => error)),
+      );
+
+      for (const answer of answers) {
+        expect(answer).toBeInstanceOf(NotFoundException);
+        expect((answer as HttpException).getResponse()).toEqual((answers[0] as HttpException).getResponse());
+      }
+    });
+
+    it("unknown, unshared, archived and another account's bike answer the same 404 as a closed profile", async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seed({ user_id: OTHER_ID, handle: 'quiet', visibility: profile_visibility.OFF });
+      seedBike({ id: 2, is_shared: false });
+      seedBike({ id: 3, is_deleted: true });
+      seedBike({ id: 4, user_id: OTHER_ID });
+
+      const closed = await service.readPublicBike('quiet', 4).catch((error: unknown) => error);
+      for (const bikeId of [99, 2, 3, 4]) {
+        const answer = await service.readPublicBike('jaffa', bikeId).catch((error: unknown) => error);
+        expect(answer).toBeInstanceOf(NotFoundException);
+        expect((answer as HttpException).getResponse()).toEqual((closed as HttpException).getResponse());
+      }
+    });
+
+    it('matches the handle whatever its case', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      expect((await service.readPublicBike('JAFFA', 1)).owner.handle).toBe('jaffa');
+    });
+  });
+
+  describe('readPublicBike - the view', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seedBike({ id: 1, events_bikes: Array.from({ length: 25 }, (_, index) => done({ id: index + 1 })) });
+    });
+
+    it('counts nothing: neither the bike page nor a page of its older Services writes the profile', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, view_count: 3 });
+
+      await service.readPublicBike('jaffa', 1);
+      await service.readPublicBikeServices('jaffa', 1, 20, 20);
+
+      expect(mockPrisma.public_profiles.update).not.toHaveBeenCalled();
+      expect((await service.getMine(OWNER_ID)).stats.views).toBe(3);
+      expect(table.get(OWNER_ID)?.last_viewed_at).toBeNull();
+    });
+  });
+
+  describe('readPublicBikeServices - paging under the web rule', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      // 30 dated Services, one a day, the newest on day 30 - id 30.
+      seedBike({
+        id: 1,
+        events_bikes: Array.from({ length: 30 }, (_, index) =>
+          done({ id: index + 1, service_date: new Date(Date.UTC(2026, 0, index + 1)) }),
+        ),
+      });
+    });
+
+    it('PUBLIC: pages the Services past the first 20 with the total alongside, as the app does', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      const page = await service.readPublicBikeServices('jaffa', 1, Number.NaN, 20);
+
+      expect(page.services.map((row) => row.id)).toEqual([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+      expect(page.total_count).toBe(30);
+      expect(page).toEqual(await service.readBikeServices('jaffa', 1, OTHER_ID, Number.NaN, 20));
+    });
+
+    it("keeps the costs rule: absent with costs off, on the rows in the owner's currency with costs on", async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      const hidden = await service.readPublicBikeServices('jaffa', 1, 1, 0);
+      table.get(OWNER_ID)!.share_costs = true;
+      const shown = await service.readPublicBikeServices('jaffa', 1, 1, 0);
+
+      expect(hidden.services[0]).not.toHaveProperty('cost');
+      expect(shown.services[0].cost).toEqual({ amount: 1200, currency: 'EUR' });
+    });
+
+    it('FOLLOWERS, OFF, history off, an unknown handle and a hidden bike answer one identical 404', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seed({ user_id: OTHER_ID, handle: 'quiet', visibility: profile_visibility.OFF });
+      seedBike({ id: 2, user_id: OTHER_ID });
+      seedBike({ id: 3, is_shared: false });
+
+      const answers = await Promise.all(
+        [
+          service.readPublicBikeServices('jaffa', 1, 20, 0),
+          service.readPublicBikeServices('quiet', 2, 20, 0),
+          service.readPublicBikeServices('nobody', 1, 20, 0),
+          service.readPublicBikeServices('jaffa', 3, 20, 0),
+        ].map((promise) => promise.catch((error: unknown) => error)),
+      );
+      table.get(OWNER_ID)!.visibility = profile_visibility.PUBLIC;
+      table.get(OWNER_ID)!.share_history = false;
+      answers.push(await service.readPublicBikeServices('jaffa', 1, 20, 0).catch((error: unknown) => error));
+
+      for (const answer of answers) {
+        expect(answer).toBeInstanceOf(NotFoundException);
+        expect((answer as HttpException).getResponse()).toEqual((answers[0] as HttpException).getResponse());
+      }
+    });
+  });
+
   describe('readBike - the rule', () => {
     beforeEach(() => {
       mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
@@ -1283,6 +1422,15 @@ describe('ProfileService', () => {
         has_front_suspension: true,
         has_rear_suspension: false,
       });
+    });
+
+    it('carries Last Updated of this bike alone: the newest of the bike, its parts and its Services', async () => {
+      table.get(OWNER_ID)!.updated_at = PROFILE_UPDATED;
+      seedBike({ id: 1, components_mounted: [part()], events_bikes: [done()] });
+      seedBike({ id: 2, updated_at: BIKE_UPDATED, components_mounted: [part({ updated_at: null })], events_bikes: [] });
+
+      expect((await service.readBike('jaffa', 1, OTHER_ID)).bike.updated_at).toBe(SERVICE_UPDATED.toISOString());
+      expect((await service.readBike('jaffa', 2, OTHER_ID)).bike.updated_at).toBe(BIKE_UPDATED.toISOString());
     });
 
     it('reads zero where the odometer holds nothing', async () => {

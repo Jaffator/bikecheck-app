@@ -295,6 +295,24 @@ export class ProfileService {
     });
   }
 
+  // ---------- The web bike page ----------
+
+  // With no viewer nobody is the owner or a follower, so only PUBLIC opens and everything
+  // else is the bike route's one 404. No view is counted: the garage read did that.
+  async readPublicBike(rawHandle: string, bikeId: number): Promise<ResponseProfileBikeDto> {
+    return await this.readBike(rawHandle, bikeId, null);
+  }
+
+  // Older Services for the web page: the same rule, the same pages, no viewer.
+  async readPublicBikeServices(
+    rawHandle: string,
+    bikeId: number,
+    limit: number,
+    offset: number,
+  ): Promise<ResponseProfileServicesDto> {
+    return await this.readBikeServices(rawHandle, bikeId, null, limit, offset);
+  }
+
   // ---------- The in-app bike page ----------
 
   // The same rule as the garage, with no header exception: whatever is not readable - the
@@ -317,6 +335,7 @@ export class ProfileService {
       tire_pressure_unit: owner?.tire_pressure_unit ?? 'bar',
       bike: {
         ...bikeIdentity(bike, profile),
+        updated_at: lastUpdated(profile, [bike]).toISOString(),
         time_min: bike.total_time_min ?? 0,
         ebike: bike.ebike,
         frame_material: bike.frame_material,

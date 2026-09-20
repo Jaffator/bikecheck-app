@@ -15,8 +15,9 @@ import {
 import { useSeededName } from "@/i18n/useSeededName";
 import { formatCost } from "@/utils/money";
 import { useProfileBikeServices } from "../../profile.queries";
+import { monthSum } from "../../profileFormat";
 import { EYEBROW, SECONDARY_BUTTON } from "../../profileSurface";
-import type { ProfileHistory, ProfileMoney, ProfileService } from "../../profile.types";
+import type { ProfileHistory, ProfileService } from "../../profile.types";
 import { UserBikeSectionTitle } from "./UserBikeSectionTitle";
 
 interface UserBikeHistoryProps {
@@ -118,14 +119,6 @@ function MonthGroup({ group }: { group: ServiceMonthGroup<ProfileService> }): Re
       </Box>
     </Stack>
   );
-}
-
-// What the month's priced Services add up to; null when no price went out, so a month
-// where nothing was written down never reads as free work.
-function monthSum(services: ProfileService[]): ProfileMoney | null {
-  const priced = services.flatMap((service) => (service.cost === undefined ? [] : [service.cost]));
-  if (priced.length === 0) return null;
-  return { amount: priced.reduce((sum, cost) => sum + cost.amount, 0), currency: priced[0].currency };
 }
 
 // One Service: when, what was done, what it touched, and the price where it goes out.

@@ -16,6 +16,8 @@ import {
   getProfileBike,
   getProfileBikeServices,
   getProfileGarage,
+  getPublicProfileBike,
+  getPublicProfileBikeServices,
   getPublicProfileGarage,
   updateMyProfile,
 } from "./profile.api";
@@ -54,17 +56,48 @@ export function useProfileGarage(handle: string): UseQueryResult<ProfileGarageRe
   });
 }
 
-// The garage at /u/:handle. Every fetch is a view on the owner's card, so nothing here
-// refetches on its own - refresh is a reload. A closed profile is an answer, not a fault.
+// The web page never refetches on its own - refresh is a reload: a garage fetch is a view on
+// the owner's card, and a closed profile is an answer, not a fault to retry.
+const PUBLIC_READ_OPTIONS = {
+  staleTime: Infinity,
+  retry: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+} as const;
+
+// The garage at /u/:handle.
 export function usePublicProfileGarage(handle: string): UseQueryResult<PublicProfileGarageResponse, ApiError> {
   return useQuery<PublicProfileGarageResponse, ApiError>({
     queryKey: [...PROFILE_PUBLIC_QUERY_KEY, handle],
     queryFn: () => getPublicProfileGarage(handle),
     enabled: handle !== "",
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    ...PUBLIC_READ_OPTIONS,
+  });
+}
+
+// The bike at /u/:handle/:bikeId, keyed under the garage's handle as the reader typed it.
+export function usePublicProfileBike(handle: string, bikeId: number): UseQueryResult<ProfileBikeResponse, ApiError> {
+  return useQuery<ProfileBikeResponse, ApiError>({
+    queryKey: [...PROFILE_PUBLIC_QUERY_KEY, handle, "bike", bikeId],
+    queryFn: () => getPublicProfileBike(handle, bikeId),
+    enabled: handle !== "" && Number.isInteger(bikeId),
+    ...PUBLIC_READ_OPTIONS,
+  });
+}
+
+// The web page's "show older": the same paging as the app's, through the public route.
+export function usePublicProfileBikeServices(
+  handle: string,
+  bikeId: number,
+  firstPageCount: number,
+): UseInfiniteQueryResult<InfiniteData<ProfileServicesPage>, ApiError> {
+  return useInfiniteQuery<ProfileServicesPage, ApiError, InfiniteData<ProfileServicesPage>, readonly unknown[], number>({
+    queryKey: [...PROFILE_PUBLIC_QUERY_KEY, handle, "bike", bikeId, "services"],
+    queryFn: ({ pageParam }) => getPublicProfileBikeServices(handle, bikeId, pageParam),
+    initialPageParam: firstPageCount,
+    getNextPageParam: (lastPage, allPages) => nextServicesOffset(firstPageCount, lastPage, allPages),
+    enabled: false,
+    ...PUBLIC_READ_OPTIONS,
   });
 }
 
@@ -90,14 +123,20 @@ export function useProfileBikeServices(
     queryKey: [...PROFILE_GARAGE_QUERY_KEY, handle, "bike", bikeId, "services"],
     queryFn: ({ pageParam }) => getProfileBikeServices(handle, bikeId, pageParam),
     initialPageParam: firstPageCount,
-    // Stop once the bike's first page and these together hold every Service.
-    getNextPageParam: (lastPage, allPages) => {
-      const loaded = firstPageCount + allPages.reduce((count, page) => count + page.services.length, 0);
-      return loaded < lastPage.total_count ? loaded : undefined;
-    },
+    getNextPageParam: (lastPage, allPages) => nextServicesOffset(firstPageCount, lastPage, allPages),
     enabled: false,
     retry: false,
   });
+}
+
+// Stop once the bike's first page and the pages tapped in together hold every Service.
+function nextServicesOffset(
+  firstPageCount: number,
+  lastPage: ProfileServicesPage,
+  allPages: ProfileServicesPage[],
+): number | undefined {
+  const loaded = firstPageCount + allPages.reduce((count, page) => count + page.services.length, 0);
+  return loaded < lastPage.total_count ? loaded : undefined;
 }
 
 // One confirm in the share drawer. The settings go first: a refused handle must leave the

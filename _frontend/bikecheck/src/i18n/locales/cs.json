@@ -1145,6 +1145,18 @@
     "closedFollower": "Pokud ho sleduješ, otevři ho v aplikaci BikeCheck.",
     "openInApp": "Otevřít v aplikaci",
     "loadFailedTitle": "Stránku se nepodařilo načíst",
-    "loadFailedBody": "Zkus to za chvíli znovu."
+    "loadFailedBody": "Zkus to za chvíli znovu.",
+    "bikeIntro": "Co je na kole a co se s ním dělalo, tak jak to majitel vede v aplikaci BikeCheck. Co změní, uvidíš tady.",
+    "figureBikeDistance": "Nájezd",
+    "figureRideTime": "Čas v sedle",
+    "seeBuild": "Prohlédnout osazení",
+    "serviceHistory": "Servisní historie",
+    "ownerLine": "Vlastník: {{owner}} · aktualizováno {{when}}",
+    "buildIntro": "{{parts}} v {{categories}}",
+    "categoriesCount_one": "{{count}} kategorii",
+    "categoriesCount_few": "{{count}} kategoriích",
+    "categoriesCount_many": "{{count}} kategoriích",
+    "categoriesCount_other": "{{count}} kategoriích",
+    "categoriesNav": "Kategorie komponent"
   }
 }

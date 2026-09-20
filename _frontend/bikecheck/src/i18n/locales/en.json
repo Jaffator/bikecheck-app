@@ -1091,6 +1091,16 @@
     "closedFollower": "If you follow them, open it in the BikeCheck app.",
     "openInApp": "Open in the app",
     "loadFailedTitle": "The page could not be loaded",
-    "loadFailedBody": "Try again in a moment."
+    "loadFailedBody": "Try again in a moment.",
+    "bikeIntro": "What is on the bike and what was done to it, as the owner keeps it in the BikeCheck app. Whatever changes, you see it here.",
+    "figureBikeDistance": "Distance",
+    "figureRideTime": "Ride time",
+    "seeBuild": "See the build",
+    "serviceHistory": "Service history",
+    "ownerLine": "Owner: {{owner}} · updated {{when}}",
+    "buildIntro": "{{parts}} across {{categories}}",
+    "categoriesCount_one": "{{count}} category",
+    "categoriesCount_other": "{{count}} categories",
+    "categoriesNav": "Component categories"
   }
 }

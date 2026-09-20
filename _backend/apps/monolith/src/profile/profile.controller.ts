@@ -54,6 +54,42 @@ export class ProfileController {
     return await this.profileService.readPublic(handle);
   }
 
+  // ---------- GET one of somebody's bikes, on the web (no auth) ----------
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Public()
+  @ApiOperation({ summary: 'One bike of a Public Profile for the web page: open only while PUBLIC, no view counted' })
+  @ApiResponse({ status: 200, type: ResponseProfileBikeDto })
+  @ApiResponse({ status: 404, description: 'Not PUBLIC, or a bike that is unknown, unshared or archived - one answer' })
+  @Get('public/:handle/bikes/:id')
+  async readPublicBike(
+    @Param('handle') handle: string,
+    @Param('id', ParseIntPipe) id: number,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ResponseProfileBikeDto> {
+    res.setHeader('Cache-Control', 'no-store');
+    return await this.profileService.readPublicBike(handle, id);
+  }
+
+  // ---------- GET older Services of one of somebody's bikes, on the web (no auth) ----------
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Public()
+  @ApiOperation({ summary: 'One page of the Services the web bike page did not carry, newest first' })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Default 20, at most 100' })
+  @ApiQuery({ name: 'offset', type: Number, required: false })
+  @ApiResponse({ status: 200, type: ResponseProfileServicesDto })
+  @ApiResponse({ status: 404, description: 'The same as the web bike route, and a history the owner keeps in' })
+  @Get('public/:handle/bikes/:id/services')
+  async readPublicBikeServices(
+    @Param('handle') handle: string,
+    @Param('id', ParseIntPipe) id: number,
+    @Res({ passthrough: true }) res: Response,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ): Promise<ResponseProfileServicesDto> {
+    res.setHeader('Cache-Control', 'no-store');
+    return await this.profileService.readPublicBikeServices(handle, id, toNumber(limit), toNumber(offset));
+  }
+
   // ---------- GET somebody's garage, in the app ----------
   // Declared after `me`, which a handle can never be: three characters is the minimum.
   @ApiOperation({
