@@ -10,6 +10,8 @@ import type { DialKind } from "../dial.types";
 import type { MountedSuspension } from "../dialBrand";
 import {
   PRESSURE_DECIMALS,
+  SAG_MAX,
+  SUSPENSION_PSI_MAX,
   TYRE_PRESSURE_MAX,
   TYRE_PRESSURE_START,
   TYRE_PRESSURE_STEP,
@@ -35,7 +37,6 @@ import { TokenStepper } from "./TokenStepper";
 // Suspension pressure is accepted to a tenth of a psi, which is what the API stores.
 const SUSPENSION_PSI_DECIMALS = 1;
 // The buttons move a whole psi at a time; a tenth is typed, never stepped to.
-export const SUSPENSION_PSI_MAX = 350;
 const SUSPENSION_PSI_STEP = 1;
 // Volume spacers: a fork or shock takes a handful, never more than eight.
 const TOKENS_MAX = 8;
@@ -55,8 +56,6 @@ const gaugeRow: CSSProperties = {
   alignItems: "start",
   columnGap: GAUGE_ROW_GAP,
 };
-// Sag is set between a fifth and a third of the travel; half is already far past any chart.
-export const SAG_MAX = 50;
 
 // The same pressure as a shock pump in bar would show it, under the psi figure.
 function barHint(psi: number): string {

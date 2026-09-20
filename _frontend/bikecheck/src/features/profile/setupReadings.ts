@@ -1,7 +1,13 @@
 // The six numbers of a Setup Profile read as gauges, for whoever draws somebody's Setup:
 // tyres in the owner's unit with the other unit under them, suspension always psi (ADR 0029).
-import { PRESSURE_DECIMALS, TYRE_PRESSURE_MAX, fromPsi, otherUnitReading } from "@/features/setup/pressure";
-import { SAG_MAX, SUSPENSION_PSI_MAX } from "@/features/setup/ui/SetupProfileForm";
+import {
+  PRESSURE_DECIMALS,
+  SAG_MAX,
+  SUSPENSION_PSI_MAX,
+  TYRE_PRESSURE_MAX,
+  fromPsi,
+  otherUnitReading,
+} from "@/features/setup/pressure";
 import type { TirePressureUnit } from "@/features/users/users.types";
 import type { SeededRowName } from "@/i18n/useSeededName";
 import type { ProfileLeg, ProfileMountedPart, ProfileSetupProfile } from "./profile.types";

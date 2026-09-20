@@ -124,7 +124,7 @@ export function PublicBikeHistory({ handle, bikeId, history }: PublicBikeHistory
   const spend = history.totals.spend;
 
   return (
-    <section id="servis" className="pp-hairline scroll-mt-32 border-t bg-[rgba(16,16,18,0.4)]">
+    <section id="history" className="pp-hairline scroll-mt-32 border-t bg-[rgba(16,16,18,0.4)]">
       <div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
         <h2 className="pp-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">
           {t("publicProfile.serviceHistory")}

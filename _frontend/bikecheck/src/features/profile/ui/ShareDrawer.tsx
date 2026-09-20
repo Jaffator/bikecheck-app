@@ -11,7 +11,7 @@ import { useBikes } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
-import { handleError, handleErrorFromApi } from "../handle";
+import { handleError, handleErrorFromApi, profileUrl } from "../handle";
 import { useMyProfile, useSaveSharing } from "../profile.queries";
 import { PROFILE_VISIBILITIES, type HandleErrorCode, type Profile, type ProfileVisibility } from "../profile.types";
 import { VISIBILITY_HINT_KEY, VISIBILITY_LABEL_KEY } from "../profileVisibility";
@@ -162,6 +162,8 @@ function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): Reac
   const renaming = profile.handle !== null && handle !== profile.handle;
   // The preview shows what is saved, not what is typed: an unsaved handle has no page.
   const savedHandle = profile.handle;
+  // Copy and Open likewise: only a saved Public profile has a page the link opens.
+  const savedUrl = profile.visibility === "PUBLIC" && savedHandle !== null ? profileUrl(profile.public_origin, savedHandle) : null;
 
   function changeHandle(next: string): void {
     setRefusedFor(null);
@@ -234,6 +236,7 @@ function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): Reac
           origin={profile.public_origin}
           visibility={visibility}
           disabled={off}
+          savedUrl={savedUrl}
           onPreview={savedHandle === null ? null : () => onPreview(savedHandle)}
         />
       </Section>

@@ -136,7 +136,7 @@ export function PublicBikeComponents({ groups }: PublicBikeComponentsProps): Rea
   const total = groups.reduce((sum, group) => sum + group.parts.length, 0);
 
   return (
-    <section id="osazeni" className="relative scroll-mt-32 overflow-hidden">
+    <section id="build" className="relative scroll-mt-32 overflow-hidden">
       <div className="relative mx-auto max-w-[1240px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
         <div>
           <h2 className="pp-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">

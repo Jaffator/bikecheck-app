@@ -32,15 +32,26 @@ interface HandleFieldProps {
   origin: string;
   visibility: ProfileVisibility;
   disabled: boolean;
+  // What Kopírovat and Otevřít hand out: the saved link, null while what is saved is not Public.
+  savedUrl: string | null;
   // Opens my profile the way others see it; null while nothing is saved to see yet.
   onPreview: (() => void) | null;
 }
 
-export function HandleField({ handle, onChange, error, origin, visibility, disabled, onPreview }: HandleFieldProps): ReactElement {
+export function HandleField({
+  handle,
+  onChange,
+  error,
+  origin,
+  visibility,
+  disabled,
+  savedUrl,
+  onPreview,
+}: HandleFieldProps): ReactElement {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const url = profileUrl(origin, handle);
-  const linkEnabled = visibility === "PUBLIC" && error === null;
+  const linkEnabled = savedUrl !== null && error === null;
   const previewEnabled = onPreview !== null && error === null;
   const dim = disabled ? "text.9" : "var(--color-text-dim)";
 
@@ -52,12 +63,17 @@ export function HandleField({ handle, onChange, error, origin, visibility, disab
 
   // Nothing is claimed until the clipboard has actually taken it.
   async function copy(): Promise<void> {
+    if (savedUrl === null) return;
     try {
-      await copyLink(url);
+      await copyLink(savedUrl);
       setCopied(true);
     } catch {
       setCopied(false);
     }
+  }
+
+  function open(): void {
+    if (savedUrl !== null) void Browser.open({ url: savedUrl });
   }
 
   return (
@@ -101,7 +117,7 @@ export function HandleField({ handle, onChange, error, origin, visibility, disab
           size="sm"
           disabled={!linkEnabled}
           leftSection={<ExternalLink size={16} />}
-          onClick={() => void Browser.open({ url })}
+          onClick={open}
         >
           {t("sharing.open")}
         </Button>

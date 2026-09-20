@@ -1,7 +1,6 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query, Res } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import type { Response } from 'express';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseProfileDto } from './dto/response-profile.dto';
@@ -44,13 +43,10 @@ export class ProfileController {
   @ApiOperation({ summary: "A Public Profile's garage for the web page: open only while PUBLIC" })
   @ApiResponse({ status: 200, type: ResponsePublicProfileGarageDto })
   @ApiResponse({ status: 404, description: 'Off, followers only, no profile or a handle nobody holds - one answer' })
+  // Set before the handler runs, so the 404 is never cached either: Off takes effect on the next request.
+  @Header('Cache-Control', 'no-store')
   @Get('public/:handle')
-  async readPublic(
-    @Param('handle') handle: string,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<ResponsePublicProfileGarageDto> {
-    // Set before the read so the 404 is never cached either: Off takes effect on the next request.
-    res.setHeader('Cache-Control', 'no-store');
+  async readPublic(@Param('handle') handle: string): Promise<ResponsePublicProfileGarageDto> {
     return await this.profileService.readPublic(handle);
   }
 
@@ -60,13 +56,12 @@ export class ProfileController {
   @ApiOperation({ summary: 'One bike of a Public Profile for the web page: open only while PUBLIC, no view counted' })
   @ApiResponse({ status: 200, type: ResponseProfileBikeDto })
   @ApiResponse({ status: 404, description: 'Not PUBLIC, or a bike that is unknown, unshared or archived - one answer' })
+  @Header('Cache-Control', 'no-store')
   @Get('public/:handle/bikes/:id')
   async readPublicBike(
     @Param('handle') handle: string,
     @Param('id', ParseIntPipe) id: number,
-    @Res({ passthrough: true }) res: Response,
   ): Promise<ResponseProfileBikeDto> {
-    res.setHeader('Cache-Control', 'no-store');
     return await this.profileService.readPublicBike(handle, id);
   }
 
@@ -78,15 +73,14 @@ export class ProfileController {
   @ApiQuery({ name: 'offset', type: Number, required: false })
   @ApiResponse({ status: 200, type: ResponseProfileServicesDto })
   @ApiResponse({ status: 404, description: 'The same as the web bike route, and a history the owner keeps in' })
+  @Header('Cache-Control', 'no-store')
   @Get('public/:handle/bikes/:id/services')
   async readPublicBikeServices(
     @Param('handle') handle: string,
     @Param('id', ParseIntPipe) id: number,
-    @Res({ passthrough: true }) res: Response,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ): Promise<ResponseProfileServicesDto> {
-    res.setHeader('Cache-Control', 'no-store');
     return await this.profileService.readPublicBikeServices(handle, id, toNumber(limit), toNumber(offset));
   }
 

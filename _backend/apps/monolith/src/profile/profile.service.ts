@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { Prisma, public_profiles, setup_profiles } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { publicAppOrigin } from '../_config/public-app-origin';
+import { ownedBikeWhere, ownedBikesWhere } from '../bike/owned-bike.where';
 import { RESERVED_HANDLES } from './reserved-handles';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseProfileDto } from './dto/response-profile.dto';
@@ -385,7 +386,7 @@ export class ProfileService {
     }
 
     const bike = await this.prisma.bikes.findFirst({
-      where: { id: bikeId, user_id: profile.user_id, is_deleted: { not: true }, is_shared: true },
+      where: { ...ownedBikeWhere(bikeId, profile.user_id), is_shared: true },
       include: garageBikeInclude,
     });
     if (!bike) throw new NotFoundException(PROFILE_UNAVAILABLE);
@@ -464,13 +465,13 @@ export class ProfileService {
   }
 
   // Nobody follows anyone yet. Follow (PRD 2) replaces the body with a follows query.
-  private isAcceptedFollower(_ownerId: number, _viewerId: number): Promise<boolean> {
-    return Promise.resolve(false);
+  private async isAcceptedFollower(_ownerId: number, _viewerId: number): Promise<boolean> {
+    return false;
   }
 
   private async garageOf(profile: public_profiles, owner: GarageOwner | null): Promise<ProfileGarageDto> {
     const bikes = await this.prisma.bikes.findMany({
-      where: { user_id: profile.user_id, is_deleted: { not: true }, is_shared: true },
+      where: { ...ownedBikesWhere(profile.user_id), is_shared: true },
       orderBy: { id: 'asc' },
       include: garageBikeInclude,
     });

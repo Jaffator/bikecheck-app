@@ -1,6 +1,6 @@
 // Dashboard page.
 import type { ReactElement } from "react";
-import { Loader, Stack } from "@mantine/core";
+import { Box, Loader, Stack } from "@mantine/core";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
@@ -17,9 +17,17 @@ export function Dashboard(): ReactElement {
     return <Loader m="md" />;
   }
 
-  // Show the empty state when no bikes exist.
+  // Show the empty state when no bikes exist. The sharing card is never hidden (#135), so
+  // it sits above it; the empty state pads its own sides.
   if (!bikes || bikes.length === 0) {
-    return <EmptyDashboard />;
+    return (
+      <>
+        <Box px="md" pt="md">
+          <DashboardShareCard />
+        </Box>
+        <EmptyDashboard />
+      </>
+    );
   }
   // TODO: Add the populated dashboard.
   return (

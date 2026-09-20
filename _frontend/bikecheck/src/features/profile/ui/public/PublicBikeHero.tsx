@@ -25,10 +25,10 @@ interface Cta {
 function heroCtas(bike: ProfileBike, t: (key: string) => string): Cta[] {
   const ctas: Cta[] = [];
   if (bike.components !== null && bike.components.length > 0) {
-    ctas.push({ href: "#osazeni", label: t("publicProfile.seeBuild"), icon: null });
+    ctas.push({ href: "#build", label: t("publicProfile.seeBuild"), icon: null });
   }
   if (bike.history !== null) {
-    ctas.push({ href: "#servis", label: t("publicProfile.serviceHistory"), icon: "i-wrench" });
+    ctas.push({ href: "#history", label: t("publicProfile.serviceHistory"), icon: "i-wrench" });
   }
   return ctas;
 }
