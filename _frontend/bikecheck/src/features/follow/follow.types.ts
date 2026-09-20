@@ -28,3 +28,17 @@ export interface FollowSearchResponse {
   results: FollowingRow[];
   capped: boolean;
 }
+
+// Mirrors the backend follow_status enum: a request waiting on me, or a follower.
+export type FollowerStatus = "PENDING" | "ACCEPTED";
+
+// Mirrors FollowerRowDto: one person on my incoming side. Keyed by user id, since a follower
+// who never made a profile has no handle - handle is null then.
+export interface FollowerRow {
+  user_id: number;
+  handle: string | null;
+  name: string | null;
+  avatar_url: string | null;
+  status: FollowerStatus;
+  created_at: string;
+}

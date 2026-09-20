@@ -10,6 +10,8 @@ const ROUTES: Partial<Record<NotificationType, string>> = {
   // The owner's side of the Follows page, whoever the follower or the asker was.
   new_follower: "/follows?tab=followers",
   follow_request: "/follows?tab=followers",
+  // The garage that opened, at the handle the owner had when they accepted.
+  follow_accepted: "/users/:handle",
 };
 
 // Return a route only when all placeholders are present.

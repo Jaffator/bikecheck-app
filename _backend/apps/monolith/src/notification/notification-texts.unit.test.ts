@@ -136,3 +136,35 @@ describe('follow_request text', () => {
     expect(buildNotificationText('follow_request', 'en', {}).body).toBe('Someone wants to follow your garage.');
   });
 });
+
+// An accepted request names the garage that opened by its address first - the address is
+// what the requester will open - with the owner's name beside it when the account has one.
+describe('follow_accepted text', () => {
+  it('names the garage by handle and owner, in Czech', () => {
+    const text = buildNotificationText('follow_accepted', 'cs', { handle: 'jaffa', personName: 'Jarda Novák' });
+
+    expect(text.title).toBe('Žádost přijata');
+    expect(text.body).toBe('Garáž @jaffa (Jarda Novák) je pro tebe otevřená.');
+  });
+
+  it('names the garage by handle and owner, in English', () => {
+    const text = buildNotificationText('follow_accepted', 'en', { handle: 'jaffa', personName: 'Jarda Novák' });
+
+    expect(text.title).toBe('Request accepted');
+    expect(text.body).toBe('The garage of @jaffa (Jarda Novák) is open to you.');
+  });
+
+  it('drops the parenthesis when the owner has no name', () => {
+    expect(buildNotificationText('follow_accepted', 'cs', { handle: 'jaffa' }).body).toBe(
+      'Garáž @jaffa je pro tebe otevřená.',
+    );
+    expect(buildNotificationText('follow_accepted', 'en', { handle: 'jaffa' }).body).toBe(
+      'The garage of @jaffa is open to you.',
+    );
+  });
+
+  it('still reads as a sentence with neither', () => {
+    expect(buildNotificationText('follow_accepted', 'cs', {}).body).toBe('Garáž je pro tebe otevřená.');
+    expect(buildNotificationText('follow_accepted', 'en', {}).body).toBe('The garage is open to you.');
+  });
+});

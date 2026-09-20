@@ -5,11 +5,11 @@ export class ProfileStatsDto {
   @ApiProperty({ example: 128 })
   views!: number;
 
-  // Accepted followers. Requests answer 0 until Follow Requests land (#146).
+  // Accepted followers, and Follow Requests still waiting on the owner.
   @ApiProperty({ example: 3 })
   followers!: number;
 
-  @ApiProperty({ example: 0 })
+  @ApiProperty({ example: 1 })
   pending_requests!: number;
 }
 

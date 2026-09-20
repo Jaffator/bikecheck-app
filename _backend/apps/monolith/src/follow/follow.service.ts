@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationType } from '../notification/notification-types.config';
 import { FollowRelation, ResponseFollowDto } from './dto/response-follow.dto';
+import { FollowerRowDto } from './dto/response-follower.dto';
 import { FollowingRowDto, FollowingRowRelation, ResponseFollowSearchDto } from './dto/response-following.dto';
 
 // Off, no row and a dead handle all answer with this, so a handle cannot be probed for
@@ -47,14 +48,28 @@ function relationOf(status: follow_status | undefined): FollowingRowRelation {
   return status === undefined ? 'NONE' : standing(status);
 }
 
-// What the owner is told of a person: a follow that took, or an ask still waiting.
-type OwnerNotice = Extract<NotificationType, 'new_follower' | 'follow_request'>;
+// What one side is told of the other: a follow that took or an ask still waiting go to the
+// owner, an accepted ask goes back to the asker.
+type FollowNotice = Extract<NotificationType, 'new_follower' | 'follow_request' | 'follow_accepted'>;
 
-// One key per person and notice, the same at creation and at resolve, so the badge drops
-// for the right asker.
-function noticeKey(type: OwnerNotice, followerId: number): string {
-  return `${type}:${String(followerId)}`;
+// One key per counterpart and notice, the same at creation and at resolve, so the badge
+// drops for the right asker.
+function noticeKey(type: FollowNotice, counterpartId: number): string {
+  return `${type}:${String(counterpartId)}`;
 }
+
+// What the owner reads of a follower, under the row: the account's name and picture, and
+// the handle if they ever made a profile. The select is what keeps the private fields out.
+const followerSelect = {
+  follower_id: true,
+  status: true,
+  created_at: true,
+  follower: { select: { name: true, avatar_url: true, public_profile: { select: { handle: true } } } },
+} satisfies Prisma.followsSelect;
+
+type FollowerHit = Prisma.followsGetPayload<{ select: typeof followerSelect }>;
+
+const NO_REQUEST = 'No request from this user is waiting';
 
 @Injectable()
 export class FollowService {
@@ -85,7 +100,7 @@ export class FollowService {
         accepted_at: status === 'ACCEPTED' ? now : null,
       },
     });
-    await this.tellOwner(profile.user_id, followerId, status === 'ACCEPTED' ? 'new_follower' : 'follow_request');
+    await this.tell(profile.user_id, status === 'ACCEPTED' ? 'new_follower' : 'follow_request', followerId);
 
     return { relation: standing(status) };
   }
@@ -204,29 +219,80 @@ export class FollowService {
     });
   }
 
+  // ---------- Who follows me ----------
+
+  // Who asked me and who follows me, one list, each as they are now. The follower is keyed
+  // by user id: they may have no handle to be named by.
+  async followers(ownerId: number): Promise<FollowerRowDto[]> {
+    const rows = await this.prisma.follows.findMany({
+      where: { followed_id: ownerId },
+      orderBy: [{ follower: { name: 'asc' } }, { follower: { public_profile: { handle: 'asc' } } }],
+      select: followerSelect,
+    });
+    return rows.map(toFollowerRow);
+  }
+
+  // Accept a request: the row turns into a follow now, the asker is told their garage is
+  // open, my own ask comes off the badge. Only a request still waiting can be accepted.
+  async accept(ownerId: number, followerId: number): Promise<void> {
+    const existing = await this.prisma.follows.findUnique({ where: pair(followerId, ownerId) });
+    if (!existing || existing.status !== 'PENDING') throw new NotFoundException(NO_REQUEST);
+
+    await this.prisma.follows.update({
+      where: pair(followerId, ownerId),
+      data: { status: 'ACCEPTED', accepted_at: new Date() },
+    });
+    await this.tell(followerId, 'follow_accepted', ownerId);
+    await this.notificationService.resolveByDedupKey(ownerId, noticeKey('follow_request', followerId));
+  }
+
+  // Decline a request or remove a follower. Nobody is told either way; a declined ask only
+  // comes off my badge. No row ends the same way.
+  async removeFollower(ownerId: number, followerId: number): Promise<void> {
+    const existing = await this.prisma.follows.findUnique({ where: pair(followerId, ownerId) });
+    if (!existing) return;
+
+    await this.prisma.follows.deleteMany({ where: { follower_id: followerId, followed_id: ownerId } });
+    if (existing.status === 'PENDING') {
+      await this.notificationService.resolveByDedupKey(ownerId, noticeKey('follow_request', followerId));
+    }
+  }
+
   private async profileOf(rawHandle: string): Promise<public_profiles | null> {
     const handle = rawHandle.trim().toLowerCase();
     return await this.prisma.public_profiles.findUnique({ where: { handle } });
   }
 
-  // A new follower or a Follow Request, once per person ever (the dedup key). The person is
-  // named as the app names people: handle only with a profile, name only when the account has one.
-  private async tellOwner(ownerId: number, followerId: number, type: OwnerNotice): Promise<void> {
-    const follower = await this.prisma.users.findUnique({
-      where: { id: followerId },
+  // One notice per pair ever (the dedup key). The counterpart is named as the app names
+  // people: handle only with a profile, name only when the account has one.
+  private async tell(recipientId: number, type: FollowNotice, counterpartId: number): Promise<void> {
+    const person = await this.prisma.users.findUnique({
+      where: { id: counterpartId },
       select: { name: true, public_profile: { select: { handle: true } } },
     });
 
     await this.notificationService.create({
-      userId: ownerId,
+      userId: recipientId,
       type,
-      dedupKey: noticeKey(type, followerId),
+      dedupKey: noticeKey(type, counterpartId),
       payload: {
-        ...(follower?.public_profile && { handle: follower.public_profile.handle }),
-        ...(follower?.name && { personName: follower.name }),
+        ...(person?.public_profile && { handle: person.public_profile.handle }),
+        ...(person?.name && { personName: person.name }),
       },
     });
   }
+}
+
+// An incoming row, field by field: the select read only these, and nothing else is copied.
+function toFollowerRow(hit: FollowerHit): FollowerRowDto {
+  return {
+    user_id: hit.follower_id,
+    handle: hit.follower.public_profile?.handle ?? null,
+    name: hit.follower.name,
+    avatar_url: hit.follower.avatar_url,
+    status: hit.status,
+    created_at: hit.created_at.toISOString(),
+  };
 }
 
 // A result row, field by field: the select read only these, and nothing else is copied.

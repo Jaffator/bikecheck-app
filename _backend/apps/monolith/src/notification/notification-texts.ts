@@ -149,6 +149,16 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
       body: (payload) => `${personLabel(payload, 'Someone')} wants to follow your garage.`,
     },
   },
+  follow_accepted: {
+    cs: {
+      title: () => 'Žádost přijata',
+      body: (payload) => `Garáž${garageLabel(payload)} je pro tebe otevřená.`,
+    },
+    en: {
+      title: () => 'Request accepted',
+      body: (payload) => `The garage${garageLabel(payload, ' of')} is open to you.`,
+    },
+  },
 };
 
 // "Jarda Novák (@jaffa)", or whichever half is known: a follower without a profile has no
@@ -157,6 +167,16 @@ function personLabel(payload: NotificationTextPayload, anonymous: string): strin
   const handle = payload.handle ? `@${payload.handle}` : null;
   if (payload.personName) return handle ? `${payload.personName} (${handle})` : payload.personName;
   return handle ?? anonymous;
+}
+
+// " @jaffa (Jarda Novák)": the address first, since it is what the reader will open, the
+// owner's name beside it when the account has one. The lead ("of") comes only with a label,
+// and nothing at all rather than a stray word with neither.
+function garageLabel(payload: NotificationTextPayload, lead = ''): string {
+  const handle = payload.handle ? `@${payload.handle}` : null;
+  const owner = payload.personName ?? null;
+  const label = handle && owner ? `${handle} (${owner})` : (handle ?? owner);
+  return label === null ? '' : `${lead} ${label}`;
 }
 
 // "42 km · 620 m ↑ · Canyon Grail" — whichever parts the payload actually carries, so a

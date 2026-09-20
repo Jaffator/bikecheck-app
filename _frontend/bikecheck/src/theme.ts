@@ -1,4 +1,4 @@
-import { Button, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import { ActionIcon, Button, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
@@ -174,6 +174,20 @@ export const theme = createTheme({
           "--mantine-color-disabled-color": "var(--mantine-color-text-8)",
           opacity: props.disabled ? 0.45 : undefined,
         } as React.CSSProperties,
+      }),
+    }),
+    // The same quiet secondary on an icon-only button (the ✗ beside a request's ✓).
+    ActionIcon: ActionIcon.extend({
+      vars: (_theme, props) => ({
+        root:
+          props.variant === "outline" && props.color === undefined
+            ? {
+                "--ai-bg": "var(--mantine-color-cards-7)",
+                "--ai-bd": "1px solid var(--mantine-color-inputs-5)",
+                "--ai-color": "var(--mantine-color-text-6)",
+                "--ai-hover": "var(--mantine-color-cards-5)",
+              }
+            : {},
       }),
     }),
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk

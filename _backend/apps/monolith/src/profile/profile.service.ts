@@ -462,9 +462,13 @@ export class ProfileService {
     return row.status === 'ACCEPTED' ? 'FOLLOWING' : 'PENDING';
   }
 
-  // Who follows me now: ACCEPTED rows toward me. Requests are the owner's slice (#147).
+  // Who follows me now, and who is still waiting on me: rows toward me, by status.
   private async followerCount(userId: number): Promise<number> {
     return await this.prisma.follows.count({ where: { followed_id: userId, status: 'ACCEPTED' } });
+  }
+
+  private async pendingRequestCount(userId: number): Promise<number> {
+    return await this.prisma.follows.count({ where: { followed_id: userId, status: 'PENDING' } });
   }
 
   private async garageOf(profile: public_profiles, owner: GarageOwner | null): Promise<ProfileGarageDto> {
@@ -506,7 +510,11 @@ export class ProfileService {
       share_setup: row.share_setup,
       share_history: row.share_history,
       share_costs: row.share_costs,
-      stats: { views: row.view_count, followers: await this.followerCount(row.user_id), pending_requests: 0 },
+      stats: {
+        views: row.view_count,
+        followers: await this.followerCount(row.user_id),
+        pending_requests: await this.pendingRequestCount(row.user_id),
+      },
       suggested_handle: null,
       public_origin: this.origin(),
     };

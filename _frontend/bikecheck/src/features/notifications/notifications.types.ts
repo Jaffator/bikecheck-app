@@ -7,7 +7,8 @@ export type NotificationType =
   | "maintenance_due"
   | "achievement_unlocked"
   | "new_follower"
-  | "follow_request";
+  | "follow_request"
+  | "follow_accepted";
 
 // Optional data used to open notification routes.
 export interface NotificationPayload {

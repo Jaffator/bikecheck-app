@@ -7,17 +7,21 @@ import {
   useQuery,
   useQueryClient,
   type QueryClient,
+  type QueryKey,
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
 import { PROFILE_GARAGE_QUERY_KEY, PROFILE_ME_QUERY_KEY } from "@/features/profile/profile.queries";
 import type { ProfileGarageResponse, ProfileRelation } from "@/features/profile/profile.types";
-import { followUser, getFollowing, searchPeople, unfollowUser } from "./follow.api";
+import { acceptFollower, followUser, getFollowers, getFollowing, removeFollower, searchPeople, unfollowUser } from "./follow.api";
 import { SEARCH_MIN_LENGTH } from "./followSearch";
-import type { FollowResponse, FollowSearchResponse, FollowingRow } from "./follow.types";
+import type { FollowResponse, FollowSearchResponse, FollowerRow, FollowingRow } from "./follow.types";
 
 // Whom I follow and whom I asked - the "Sleduješ" panel.
 export const FOLLOWING_QUERY_KEY = ["follows", "following"] as const;
+
+// Who asked me and who follows me - the "Žádosti" and "Sledující" panels.
+export const FOLLOWERS_QUERY_KEY = ["follows", "followers"] as const;
 
 // Every search answer; one query's answer is keyed under it.
 export const FOLLOW_SEARCH_QUERY_KEY = ["follows", "search"] as const;
@@ -26,6 +30,13 @@ export function useFollowing(): UseQueryResult<FollowingRow[]> {
   return useQuery({
     queryKey: FOLLOWING_QUERY_KEY,
     queryFn: getFollowing,
+  });
+}
+
+export function useFollowers(): UseQueryResult<FollowerRow[]> {
+  return useQuery({
+    queryKey: FOLLOWERS_QUERY_KEY,
+    queryFn: getFollowers,
   });
 }
 
@@ -80,5 +91,36 @@ export function useUnfollow(handle: string): UseMutationResult<void, Error, void
     mutationFn: () => unfollowUser(handle),
     onSuccess: () => seedRelation(queryClient, handle, "NONE"),
     onSettled: () => refresh(queryClient, handle),
+  });
+}
+
+// ---------- The owner's side ----------
+
+// After an answer: the incoming list, my own figures, and the person's page if they have
+// one. Awaited, so a row stays busy until the list no longer carries it.
+async function refreshFollowers(queryClient: QueryClient, person: FollowerRow): Promise<void> {
+  const keys: QueryKey[] = [FOLLOWERS_QUERY_KEY, PROFILE_ME_QUERY_KEY];
+  if (person.handle !== null) keys.push([...PROFILE_GARAGE_QUERY_KEY, person.handle]);
+  await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+}
+
+// The person is the variable rather than the hook's argument, so one hook serves whichever
+// row is answered; each row has its own hook so its button alone shows busy.
+export function useAcceptFollower(): UseMutationResult<void, Error, FollowerRow> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (person) => acceptFollower(person.user_id),
+    onSettled: (_data, _error, person) => refreshFollowers(queryClient, person),
+  });
+}
+
+// Decline a request or remove a follower - the same route, the row decides which.
+export function useRemoveFollower(): UseMutationResult<void, Error, FollowerRow> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (person) => removeFollower(person.user_id),
+    onSettled: (_data, _error, person) => refreshFollowers(queryClient, person),
   });
 }

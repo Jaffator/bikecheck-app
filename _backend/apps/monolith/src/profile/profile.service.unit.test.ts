@@ -661,6 +661,31 @@ describe('ProfileService', () => {
 
       expect((await service.updateMine(OWNER_ID, { share_costs: true })).stats.followers).toBe(1);
     });
+
+    it('counts the requests waiting on me: not a follower, not whom I asked myself', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa' });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+      seedFollow(9, OWNER_ID, follow_status.PENDING);
+      seedFollow(10, OWNER_ID);
+      seedFollow(OWNER_ID, OTHER_ID, follow_status.PENDING);
+
+      expect((await service.getMine(OWNER_ID)).stats).toMatchObject({ followers: 1, pending_requests: 2 });
+    });
+
+    it('a request answered or withdrawn is no longer counted', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa' });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+      unfollow(OTHER_ID, OWNER_ID);
+
+      expect((await service.getMine(OWNER_ID)).stats.pending_requests).toBe(0);
+    });
+
+    it('counts the requests with the profile Off too: the list is mine whatever the switch says', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+
+      expect((await service.getMine(OWNER_ID)).stats.pending_requests).toBe(1);
+    });
   });
 
   describe('updateMine - the handle', () => {

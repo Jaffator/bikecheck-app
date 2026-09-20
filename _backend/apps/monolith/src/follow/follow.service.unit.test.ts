@@ -53,10 +53,20 @@ interface ProfileWhere {
   users?: { OR: { name: NameFilter }[] };
 }
 
+// My outgoing side (a follower id, the counterparts maybe narrowed) or my incoming side (a
+// followed id alone).
 interface FollowsWhere {
-  follower_id: number;
-  followed_id?: { in: number[] };
+  follower_id?: number;
+  followed_id?: number | { in: number[] };
 }
+
+// What an accept writes on the row.
+interface FollowUpdateData {
+  status: follow_status;
+  accepted_at: Date;
+}
+
+type Side = 'follower_id' | 'followed_id';
 
 describe('FollowService', () => {
   let service: FollowService;
@@ -90,19 +100,35 @@ describe('FollowService', () => {
 
   const byHandle = (a: ProfileRow, b: ProfileRow): number => (a.handle < b.handle ? -1 : a.handle > b.handle ? 1 : 0);
 
-  // What a followed account reads as: name first, the handle breaking a tie, no name last.
-  const byNameThenHandle = (a: FollowRow, b: FollowRow): number => {
-    const nameA = users.get(a.followed_id)?.name ?? null;
-    const nameB = users.get(b.followed_id)?.name ?? null;
-    if (nameA !== nameB) {
-      if (nameA === null) return 1;
-      if (nameB === null) return -1;
-      return nameA < nameB ? -1 : 1;
-    }
-    const handleA = profiles.get(a.followed_id)?.handle ?? '';
-    const handleB = profiles.get(b.followed_id)?.handle ?? '';
-    return handleA < handleB ? -1 : handleA > handleB ? 1 : 0;
+  // What the counterpart on one side reads as: name first, the handle breaking a tie, no
+  // name last.
+  const byNameThenHandle =
+    (side: Side) =>
+    (a: FollowRow, b: FollowRow): number => {
+      const nameA = users.get(a[side])?.name ?? null;
+      const nameB = users.get(b[side])?.name ?? null;
+      if (nameA !== nameB) {
+        if (nameA === null) return 1;
+        if (nameB === null) return -1;
+        return nameA < nameB ? -1 : 1;
+      }
+      const handleA = profiles.get(a[side])?.handle ?? '';
+      const handleB = profiles.get(b[side])?.handle ?? '';
+      return handleA < handleB ? -1 : handleA > handleB ? 1 : 0;
+    };
+
+  const matchesFollow = (row: FollowRow, where: FollowsWhere): boolean => {
+    if (where.follower_id !== undefined && row.follower_id !== where.follower_id) return false;
+    if (typeof where.followed_id === 'number') return row.followed_id === where.followed_id;
+    if (where.followed_id !== undefined) return where.followed_id.in.includes(row.followed_id);
+    return true;
   };
+
+  // The account as the include hangs it off a row: the user, their profile if any.
+  const counterpart = (id: number): Partial<UserRow> & { public_profile: ProfileRow | null } => ({
+    ...users.get(id),
+    public_profile: profiles.get(id) ?? null,
+  });
 
   const mockPrisma = {
     public_profiles: {
@@ -135,19 +161,23 @@ describe('FollowService', () => {
       findUnique: jest.fn(({ where }: { where: { follower_id_followed_id: Pair } }) =>
         Promise.resolve(findFollow(where.follower_id_followed_id) ?? null),
       ),
-      // My rows, the counterpart hanging off each as the include shapes it, in list order.
-      findMany: jest.fn(({ where }: { where: FollowsWhere }) =>
-        Promise.resolve(
+      // My rows on either side, both counterparts hanging off each as an include would,
+      // in the order the list on that side reads: by the other party's name.
+      findMany: jest.fn(({ where }: { where: FollowsWhere }) => {
+        const incoming = typeof where.followed_id === 'number';
+        return Promise.resolve(
           follows
-            .filter((row) => row.follower_id === where.follower_id)
-            .filter((row) => where.followed_id === undefined || where.followed_id.in.includes(row.followed_id))
-            .sort(byNameThenHandle)
-            .map((row) => ({
-              ...row,
-              followed: { ...users.get(row.followed_id), public_profile: profiles.get(row.followed_id) ?? null },
-            })),
-        ),
-      ),
+            .filter((row) => matchesFollow(row, where))
+            .sort(byNameThenHandle(incoming ? 'follower_id' : 'followed_id'))
+            .map((row) => ({ ...row, followed: counterpart(row.followed_id), follower: counterpart(row.follower_id) })),
+        );
+      }),
+      update: jest.fn(({ where, data }: { where: { follower_id_followed_id: Pair }; data: FollowUpdateData }) => {
+        const row = findFollow(where.follower_id_followed_id);
+        if (!row) return Promise.reject(new Error('Record to update not found'));
+        Object.assign(row, data);
+        return Promise.resolve(row);
+      }),
       create: jest.fn(({ data }: { data: Omit<FollowRow, 'created_at'> & { created_at?: Date } }) => {
         if (findFollow(data)) return Promise.reject(new Error('Unique constraint failed'));
         const row: FollowRow = { ...data, created_at: data.created_at ?? NOW };
@@ -739,6 +769,257 @@ describe('FollowService', () => {
       const rows = await service.following(ME);
 
       expect(rows.map((row) => row.handle)).toEqual(['zzz', 'aaa']);
+    });
+  });
+
+  // The owner's side. Every test here reads the owner as the one being asked or followed;
+  // the counterpart is keyed by user id, since a follower may have no handle at all.
+  describe('followers', () => {
+    it('is empty with no row', async () => {
+      await expect(service.followers(OWNER_ID)).resolves.toEqual([]);
+    });
+
+    it('lists who asked me and who follows me, each with their status, ordered by name then handle', async () => {
+      seedRider(10, 'Zuzana Veselá', 'zuzka');
+      seedRider(11, 'Adam Novák', 'adam-b');
+      seedRider(12, 'Adam Novák', 'adam-a');
+      seedFollow(10, OWNER_ID, 'PENDING');
+      seedFollow(11, OWNER_ID, 'ACCEPTED');
+      seedFollow(12, OWNER_ID, 'PENDING');
+
+      const rows = await service.followers(OWNER_ID);
+
+      expect(rows.map((row) => [row.user_id, row.status])).toEqual([
+        [12, 'PENDING'],
+        [11, 'ACCEPTED'],
+        [10, 'PENDING'],
+      ]);
+    });
+
+    it('carries the user id, the current handle, the name, the picture and when they came - nothing private', async () => {
+      seedRider(10, 'Jana Malá', 'janicka');
+      seedFollow(10, OWNER_ID, 'ACCEPTED');
+      seedProfile(10, 'jana-nova', profile_visibility.OFF);
+
+      const rows = await service.followers(OWNER_ID);
+
+      expect(rows).toEqual([
+        {
+          user_id: 10,
+          handle: 'jana-nova',
+          name: 'Jana Malá',
+          avatar_url: 'https://lh3.googleusercontent.com/photo',
+          status: 'ACCEPTED',
+          created_at: NOW.toISOString(),
+        },
+      ]);
+    });
+
+    it('a follower who never made a profile has handle null and keeps their row', async () => {
+      seedUser(10, 'Bez Profilu');
+      seedFollow(10, OWNER_ID, 'PENDING');
+
+      const rows = await service.followers(OWNER_ID);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ user_id: 10, handle: null, name: 'Bez Profilu', status: 'PENDING' });
+    });
+
+    it('is my incoming side only: whom I follow is not in it', async () => {
+      seedRider(10, 'Jana Malá', 'janicka');
+      seedFollow(OWNER_ID, 10, 'ACCEPTED');
+
+      await expect(service.followers(OWNER_ID)).resolves.toEqual([]);
+    });
+
+    it('reads the same with my profile Off', async () => {
+      seedRider(10, 'Jana Malá', 'janicka');
+      seedFollow(10, OWNER_ID, 'ACCEPTED');
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.OFF);
+
+      expect(await service.followers(OWNER_ID)).toHaveLength(1);
+    });
+  });
+
+  describe('accept', () => {
+    beforeEach(async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.FOLLOWERS);
+      await service.follow(ME, 'jaffa');
+      mockNotifications.create.mockClear();
+    });
+
+    it('turns the request into a follow, accepted now, so the garage opens to them', async () => {
+      await service.accept(OWNER_ID, ME);
+
+      expect(follows).toHaveLength(1);
+      expect(follows[0]).toMatchObject({ follower_id: ME, followed_id: OWNER_ID, status: 'ACCEPTED' });
+      expect(follows[0].accepted_at).toBeInstanceOf(Date);
+      expect((await service.followers(OWNER_ID))[0].status).toBe('ACCEPTED');
+    });
+
+    it('tells the requester once: follow_accepted keyed on the owner, whose garage it names', async () => {
+      await service.accept(OWNER_ID, ME);
+
+      expect(mockNotifications.create).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.create).toHaveBeenCalledWith({
+        userId: ME,
+        type: 'follow_accepted',
+        dedupKey: `follow_accepted:${String(OWNER_ID)}`,
+        payload: { handle: 'jaffa', personName: 'Jarda Novák' },
+      });
+    });
+
+    it('names an owner without a name by handle alone', async () => {
+      seedUser(OWNER_ID, null);
+
+      await service.accept(OWNER_ID, ME);
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(expect.objectContaining({ payload: { handle: 'jaffa' } }));
+    });
+
+    it("resolves the owner's ask, so the badge drops", async () => {
+      await service.accept(OWNER_ID, ME);
+
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_ID, `follow_request:${String(ME)}`);
+    });
+
+    it('with no row answers 404 and touches nothing', async () => {
+      await expect(service.accept(OWNER_ID, 9)).rejects.toBeInstanceOf(NotFoundException);
+
+      expect(follows).toHaveLength(1);
+      expect(follows[0].status).toBe('PENDING');
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+    });
+
+    it('a second accept finds no request and answers 404, telling nobody again', async () => {
+      await service.accept(OWNER_ID, ME);
+      mockNotifications.create.mockClear();
+      mockNotifications.resolveByDedupKey.mockClear();
+
+      await expect(service.accept(OWNER_ID, ME)).rejects.toBeInstanceOf(NotFoundException);
+
+      expect(follows[0].status).toBe('ACCEPTED');
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+    });
+
+    it("is the owner's alone: the request cannot be accepted from the other side", async () => {
+      await expect(service.accept(ME, OWNER_ID)).rejects.toBeInstanceOf(NotFoundException);
+
+      expect(follows[0].status).toBe('PENDING');
+    });
+
+    it('works with the profile Off: the row reads once the profile is back on', async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.OFF);
+
+      await service.accept(OWNER_ID, ME);
+
+      expect(follows[0].status).toBe('ACCEPTED');
+      expect(mockNotifications.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'follow_accepted' }));
+    });
+  });
+
+  describe('decline - a waiting request', () => {
+    beforeEach(async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.FOLLOWERS);
+      await service.follow(ME, 'jaffa');
+      mockNotifications.create.mockClear();
+    });
+
+    it('removes the row and resolves my ask, so the badge drops', async () => {
+      await service.removeFollower(OWNER_ID, ME);
+
+      expect(follows).toHaveLength(0);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_ID, `follow_request:${String(ME)}`);
+    });
+
+    it('tells nobody', async () => {
+      await service.removeFollower(OWNER_ID, ME);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    it('the same person can ask again, silently under the same key', async () => {
+      await service.removeFollower(OWNER_ID, ME);
+
+      const answer = await service.follow(ME, 'jaffa');
+
+      expect(answer).toEqual({ relation: 'PENDING' });
+      expect(follows).toHaveLength(1);
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'follow_request', dedupKey: `follow_request:${String(ME)}` }),
+      );
+    });
+
+    it("removes this asker's row only", async () => {
+      seedUser(9, 'Third');
+      await service.follow(9, 'jaffa');
+
+      await service.removeFollower(OWNER_ID, ME);
+
+      expect(follows.map((row) => row.follower_id)).toEqual([9]);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('remove - an accepted follower', () => {
+    beforeEach(async () => {
+      await service.follow(ME, 'jaffa');
+      mockNotifications.create.mockClear();
+    });
+
+    it('removes the row, tells nobody and resolves nothing - there was no ask', async () => {
+      await service.removeFollower(OWNER_ID, ME);
+
+      expect(follows).toHaveLength(0);
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+    });
+
+    it('on a Followers-only profile too: the next open is the locked panel', async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.FOLLOWERS);
+
+      await service.removeFollower(OWNER_ID, ME);
+
+      expect(follows).toHaveLength(0);
+      expect(await service.followers(OWNER_ID)).toEqual([]);
+    });
+
+    it('works with the profile Off', async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.OFF);
+
+      await service.removeFollower(OWNER_ID, ME);
+
+      expect(follows).toHaveLength(0);
+    });
+
+    it('with no row: resolves and touches nothing', async () => {
+      await service.removeFollower(OWNER_ID, ME);
+      mockNotifications.resolveByDedupKey.mockClear();
+
+      await expect(service.removeFollower(OWNER_ID, ME)).resolves.toBeUndefined();
+      await expect(service.removeFollower(OWNER_ID, 9)).resolves.toBeUndefined();
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+    });
+
+    it("is the owner's alone: whom I follow is not removed from here", async () => {
+      await expect(service.removeFollower(ME, OWNER_ID)).resolves.toBeUndefined();
+
+      expect(follows).toHaveLength(1);
+    });
+
+    it('the same person can follow again', async () => {
+      await service.removeFollower(OWNER_ID, ME);
+
+      const answer = await service.follow(ME, 'jaffa');
+
+      expect(answer).toEqual({ relation: 'FOLLOWING' });
+      expect(follows).toHaveLength(1);
     });
   });
 });

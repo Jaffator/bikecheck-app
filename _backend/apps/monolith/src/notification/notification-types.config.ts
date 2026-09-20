@@ -13,7 +13,8 @@ export type NotificationType =
   | 'maintenance_due'
   | 'achievement_unlocked'
   | 'new_follower'
-  | 'follow_request';
+  | 'follow_request'
+  | 'follow_accepted';
 
 export interface NotificationTypeConfig {
   channels: NotificationChannel[];
@@ -84,6 +85,13 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     route: '/follows?tab=followers',
     pushEmoji: '👋',
     holdsBadge: true,
+  },
+  // The answer to an ask: pushes, nothing to do but open the garage. Keyed on the owner, so
+  // one garage opening to a person is news once.
+  follow_accepted: {
+    channels: ['push', 'inApp'],
+    route: '/users/:handle',
+    pushEmoji: '✅',
   },
 };
 

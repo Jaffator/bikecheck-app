@@ -1,8 +1,9 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { FollowService } from './follow.service';
 import { ResponseFollowDto } from './dto/response-follow.dto';
+import { FollowerRowDto } from './dto/response-follower.dto';
 import { FollowingRowDto, ResponseFollowSearchDto } from './dto/response-following.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -29,6 +30,40 @@ export class FollowController {
   @Get('following')
   async following(@CurrentUser('userId') userId: string): Promise<FollowingRowDto[]> {
     return await this.followService.following(Number(userId));
+  }
+
+  // ---------- GET who follows me ----------
+  // The incoming side is keyed by the follower's user id: a follower may have no handle.
+  @ApiOperation({ summary: 'Who asked me (PENDING) and who follows me (ACCEPTED), one list ordered by name' })
+  @ApiResponse({ status: 200, type: [FollowerRowDto] })
+  @Get('followers')
+  async followers(@CurrentUser('userId') userId: string): Promise<FollowerRowDto[]> {
+    return await this.followService.followers(Number(userId));
+  }
+
+  // ---------- POST accept a request ----------
+  @ApiOperation({ summary: 'Accept a Follow Request: the asker is told and their garage opens' })
+  @ApiResponse({ status: 204 })
+  @ApiResponse({ status: 404, description: 'No PENDING row from this user' })
+  @Post('followers/:userId/accept')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async accept(
+    @CurrentUser('userId') userId: string,
+    @Param('userId', ParseIntPipe) followerId: number,
+  ): Promise<void> {
+    await this.followService.accept(Number(userId), followerId);
+  }
+
+  // ---------- DELETE decline or remove ----------
+  @ApiOperation({ summary: 'Decline a request or remove a follower; nobody is told, the same 204 with no row' })
+  @ApiResponse({ status: 204 })
+  @Delete('followers/:userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeFollower(
+    @CurrentUser('userId') userId: string,
+    @Param('userId', ParseIntPipe) followerId: number,
+  ): Promise<void> {
+    await this.followService.removeFollower(Number(userId), followerId);
   }
 
   // ---------- POST follow somebody ----------

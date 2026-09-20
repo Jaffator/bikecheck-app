@@ -2,11 +2,11 @@
 // The tab lives in the URL - ?tab=followers is the address the dashboard figures and the
 // owner-side notifications point at; the first tab carries no param.
 import { useCallback, type ReactElement, type ReactNode } from "react";
-import { Box, Stack, Tabs } from "@mantine/core";
+import { Box, Tabs } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import { FollowPanel } from "@/features/follow/ui/FollowPanel";
-import { FollowingPanels, PAGE_BOTTOM } from "@/features/follow/ui/FollowingPanels";
+import { FollowersPanels } from "@/features/follow/ui/FollowersPanels";
+import { FollowingPanels } from "@/features/follow/ui/FollowingPanels";
 import { SETTLE_MS, useSwipePanels } from "@/hooks/useSwipePanels";
 
 type FollowsTab = "following" | "followers";
@@ -80,10 +80,7 @@ export function Follows(): ReactElement {
             <FollowingPanels />
           </SwipePanel>
           <SwipePanel current={tab === "followers"} moving={swipe.moving}>
-            {/* Requests and followers arrive with #147; the panel already stands where they go. */}
-            <Stack gap="md" px={8} pt="md" pb={PAGE_BOTTOM}>
-              <FollowPanel title={t("follow.followersTitle")}>{[]}</FollowPanel>
-            </Stack>
+            <FollowersPanels />
           </SwipePanel>
         </Box>
       </Box>
