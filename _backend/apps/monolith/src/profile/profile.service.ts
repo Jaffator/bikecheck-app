@@ -3,6 +3,7 @@ import { Prisma, public_profiles, setup_profiles } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { publicAppOrigin } from '../_config/public-app-origin';
 import { ownedBikeWhere, ownedBikesWhere } from '../bike/owned-bike.where';
+import { FollowService } from '../follow/follow.service';
 import { RESERVED_HANDLES } from './reserved-handles';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseProfileDto } from './dto/response-profile.dto';
@@ -179,7 +180,10 @@ function settingsOf(dto: UpdateProfileDto): ProfileSettings {
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly followService: FollowService,
+  ) {}
 
   // The owner's settings; without a row, the OFF defaults and a suggested handle. Reads only.
   async getMine(userId: number): Promise<ResponseProfileDto> {
@@ -204,6 +208,8 @@ export class ProfileService {
         create: { user_id: userId, handle, ...settings },
         update: { handle, ...settings },
       });
+      // The door is open now: whoever was still waiting on it is let in, after the write.
+      if (arrivesAtPublic(existing, row)) await this.followService.acceptAllPending(userId);
       return await this.toDto(row);
     } catch (error) {
       if (isUniqueViolation(error)) throw new ConflictException('HANDLE_TAKEN');
@@ -519,6 +525,12 @@ export class ProfileService {
       public_origin: this.origin(),
     };
   }
+}
+
+// A switch into PUBLIC from anywhere else - a save that leaves a Public profile Public is
+// no arrival, so a flipped switch or a rename accepts nobody.
+function arrivesAtPublic(before: public_profiles | null, after: public_profiles): boolean {
+  return after.visibility === 'PUBLIC' && before?.visibility !== 'PUBLIC';
 }
 
 // The read rule on a profile that answered at all: OFF already 404'd to everyone but the

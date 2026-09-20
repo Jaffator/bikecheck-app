@@ -232,12 +232,29 @@ export class FollowService {
     return rows.map(toFollowerRow);
   }
 
-  // Accept a request: the row turns into a follow now, the asker is told their garage is
-  // open, my own ask comes off the badge. Only a request still waiting can be accepted.
+  // Accept a request. Only a request still waiting can be accepted.
   async accept(ownerId: number, followerId: number): Promise<void> {
     const existing = await this.prisma.follows.findUnique({ where: pair(followerId, ownerId) });
     if (!existing || existing.status !== 'PENDING') throw new NotFoundException(NO_REQUEST);
 
+    await this.acceptRequest(ownerId, followerId);
+  }
+
+  // The profile turned Public: nobody should wait on a door that is now open, so every
+  // request still waiting is accepted as the owner would have, one by one.
+  async acceptAllPending(ownerId: number): Promise<void> {
+    const waiting = await this.prisma.follows.findMany({
+      where: { followed_id: ownerId, status: 'PENDING' },
+      select: { follower_id: true },
+    });
+    for (const row of waiting) {
+      await this.acceptRequest(ownerId, row.follower_id);
+    }
+  }
+
+  // The row turns into a follow now, the asker is told their garage is open, my own ask
+  // comes off the badge.
+  private async acceptRequest(ownerId: number, followerId: number): Promise<void> {
     await this.prisma.follows.update({
       where: pair(followerId, ownerId),
       data: { status: 'ACCEPTED', accepted_at: new Date() },

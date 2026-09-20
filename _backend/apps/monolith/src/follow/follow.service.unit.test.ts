@@ -54,10 +54,11 @@ interface ProfileWhere {
 }
 
 // My outgoing side (a follower id, the counterparts maybe narrowed) or my incoming side (a
-// followed id alone).
+// followed id alone), maybe narrowed to one status.
 interface FollowsWhere {
   follower_id?: number;
   followed_id?: number | { in: number[] };
+  status?: follow_status;
 }
 
 // What an accept writes on the row.
@@ -119,6 +120,7 @@ describe('FollowService', () => {
 
   const matchesFollow = (row: FollowRow, where: FollowsWhere): boolean => {
     if (where.follower_id !== undefined && row.follower_id !== where.follower_id) return false;
+    if (where.status !== undefined && row.status !== where.status) return false;
     if (typeof where.followed_id === 'number') return row.followed_id === where.followed_id;
     if (where.followed_id !== undefined) return where.followed_id.in.includes(row.followed_id);
     return true;
@@ -918,6 +920,108 @@ describe('FollowService', () => {
 
       expect(follows[0].status).toBe('ACCEPTED');
       expect(mockNotifications.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'follow_accepted' }));
+    });
+  });
+
+  // The profile turned Public: the profile service calls this after the write, so every
+  // test here reads the owner as already Public with the requests made while Followers-only.
+  describe('acceptAllPending - turning Public', () => {
+    const THIRD = 9;
+
+    beforeEach(async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.FOLLOWERS);
+      seedUser(THIRD, 'Third Rider');
+      seedProfile(THIRD, 'third', profile_visibility.PUBLIC);
+      await service.follow(ME, 'jaffa');
+      await service.follow(THIRD, 'jaffa');
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.PUBLIC);
+      mockNotifications.create.mockClear();
+    });
+
+    it('turns every waiting request into a follow, accepted now, so each garage opens to them', async () => {
+      await service.acceptAllPending(OWNER_ID);
+
+      expect(follows).toHaveLength(2);
+      for (const row of follows) {
+        expect(row).toMatchObject({ followed_id: OWNER_ID, status: 'ACCEPTED' });
+        expect(row.accepted_at).toBeInstanceOf(Date);
+      }
+      expect((await service.followers(OWNER_ID)).map((row) => row.status)).toEqual(['ACCEPTED', 'ACCEPTED']);
+    });
+
+    it('tells each requester once: follow_accepted keyed on the owner, whose garage it names', async () => {
+      await service.acceptAllPending(OWNER_ID);
+
+      expect(mockNotifications.create).toHaveBeenCalledTimes(2);
+      for (const requester of [ME, THIRD]) {
+        expect(mockNotifications.create).toHaveBeenCalledWith({
+          userId: requester,
+          type: 'follow_accepted',
+          dedupKey: `follow_accepted:${String(OWNER_ID)}`,
+          payload: { handle: 'jaffa', personName: 'Jarda Novák' },
+        });
+      }
+    });
+
+    it("resolves the owner's ask for each row, so every badge drops", async () => {
+      await service.acceptAllPending(OWNER_ID);
+
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledTimes(2);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_ID, `follow_request:${String(ME)}`);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_ID, `follow_request:${String(THIRD)}`);
+    });
+
+    it('leaves a follower already accepted as they were, and tells them nothing again', async () => {
+      seedUser(10, 'Old Follower');
+      seedFollow(10, OWNER_ID, 'ACCEPTED');
+
+      await service.acceptAllPending(OWNER_ID);
+
+      const old = follows.find((row) => row.follower_id === 10);
+      expect(old).toMatchObject({ status: 'ACCEPTED', accepted_at: NOW });
+      expect(mockNotifications.create).toHaveBeenCalledTimes(2);
+      expect(mockNotifications.create).not.toHaveBeenCalledWith(expect.objectContaining({ userId: 10 }));
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalledWith(OWNER_ID, 'follow_request:10');
+    });
+
+    it('is my incoming side only: a request I made to someone else keeps waiting', async () => {
+      seedFollow(OWNER_ID, THIRD, 'PENDING');
+
+      await service.acceptAllPending(OWNER_ID);
+
+      expect(findFollow({ follower_id: OWNER_ID, followed_id: THIRD })).toMatchObject({ status: 'PENDING' });
+      expect(mockNotifications.create).toHaveBeenCalledTimes(2);
+    });
+
+    it("is mine alone: another owner's requests keep waiting", async () => {
+      seedUser(11, 'Someone Else');
+      seedFollow(ME, 11, 'PENDING');
+
+      await service.acceptAllPending(OWNER_ID);
+
+      expect(findFollow({ follower_id: ME, followed_id: 11 })).toMatchObject({ status: 'PENDING' });
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalledWith(11, expect.anything());
+    });
+
+    it('with nothing waiting: touches nothing and tells nobody', async () => {
+      follows.length = 0;
+
+      await expect(service.acceptAllPending(OWNER_ID)).resolves.toBeUndefined();
+
+      expect(follows).toHaveLength(0);
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+    });
+
+    it('a second call finds nothing waiting and tells nobody again', async () => {
+      await service.acceptAllPending(OWNER_ID);
+      mockNotifications.create.mockClear();
+      mockNotifications.resolveByDedupKey.mockClear();
+
+      await service.acceptAllPending(OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
     });
   });
 

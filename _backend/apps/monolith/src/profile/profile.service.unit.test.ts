@@ -3,6 +3,7 @@ import { BadRequestException, ConflictException, HttpException, NotFoundExceptio
 import { follow_status, Prisma, profile_visibility } from '@prisma/client';
 import { ProfileService } from './profile.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { FollowService } from '../follow/follow.service';
 import { RESERVED_HANDLES } from './reserved-handles';
 
 const OWNER_ID = 7;
@@ -355,6 +356,9 @@ describe('ProfileService', () => {
     },
   };
 
+  // The one thing the profile asks of the follow domain: what it does is that service's own test.
+  const mockFollow = { acceptAllPending: jest.fn() };
+
   const seedFollow = (followerId: number, followedId: number, status = follow_status.ACCEPTED): void => {
     followsTable.push({ follower_id: followerId, followed_id: followedId, status });
   };
@@ -531,7 +535,11 @@ describe('ProfileService', () => {
     process.env.PUBLIC_APP_URL = ORIGIN;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ProfileService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        ProfileService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: FollowService, useValue: mockFollow },
+      ],
     }).compile();
 
     service = module.get<ProfileService>(ProfileService);
@@ -826,6 +834,103 @@ describe('ProfileService', () => {
 
       expect(other.handle).toBe('jaffa');
       expect((await service.getMine(OWNER_ID)).handle).toBe('jaffa-mtb');
+    });
+  });
+
+  // Arriving at Public opens the door to everyone still waiting on it; the follow service
+  // does the accepting, the profile only says when.
+  describe('updateMine - arriving at Public', () => {
+    it('Followers only -> Public accepts every waiting request, once the row is written', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      let visibilityWhenCalled: profile_visibility | undefined;
+      mockFollow.acceptAllPending.mockImplementationOnce(() => {
+        visibilityWhenCalled = table.get(OWNER_ID)?.visibility;
+        return Promise.resolve();
+      });
+
+      await service.updateMine(OWNER_ID, { visibility: profile_visibility.PUBLIC });
+
+      expect(mockFollow.acceptAllPending).toHaveBeenCalledTimes(1);
+      expect(mockFollow.acceptAllPending).toHaveBeenCalledWith(OWNER_ID);
+      expect(visibilityWhenCalled).toBe('PUBLIC');
+    });
+
+    it('answers with the figures as they stand after the accepting: Žádosti 0, the requesters now followers', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+      seedFollow(9, OWNER_ID, follow_status.PENDING);
+      mockFollow.acceptAllPending.mockImplementationOnce(() => {
+        for (const row of followsTable) row.status = follow_status.ACCEPTED;
+        return Promise.resolve();
+      });
+
+      const saved = await service.updateMine(OWNER_ID, { visibility: profile_visibility.PUBLIC });
+
+      expect(saved.stats).toMatchObject({ followers: 2, pending_requests: 0 });
+    });
+
+    it('Off -> Public accepts too: requests left from a Followers-only period must not strand', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      await service.updateMine(OWNER_ID, { visibility: profile_visibility.PUBLIC });
+
+      expect(mockFollow.acceptAllPending).toHaveBeenCalledTimes(1);
+      expect(mockFollow.acceptAllPending).toHaveBeenCalledWith(OWNER_ID);
+    });
+
+    it('the first confirm straight to Public is an arrival too', async () => {
+      await service.updateMine(OWNER_ID, { handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      expect(mockFollow.acceptAllPending).toHaveBeenCalledWith(OWNER_ID);
+    });
+
+    it('Public -> Followers only moves no row: followers who came without approval stay', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      const saved = await service.updateMine(OWNER_ID, { visibility: profile_visibility.FOLLOWERS });
+
+      expect(mockFollow.acceptAllPending).not.toHaveBeenCalled();
+      expect(saved.stats.followers).toBe(1);
+    });
+
+    it.each([profile_visibility.PUBLIC, profile_visibility.FOLLOWERS])('%s -> Off moves nothing', async (from) => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: from });
+
+      await service.updateMine(OWNER_ID, { visibility: profile_visibility.OFF });
+
+      expect(mockFollow.acceptAllPending).not.toHaveBeenCalled();
+    });
+
+    it('Off -> Followers only moves nothing: the requests keep waiting on the owner', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+
+      const saved = await service.updateMine(OWNER_ID, { visibility: profile_visibility.FOLLOWERS });
+
+      expect(mockFollow.acceptAllPending).not.toHaveBeenCalled();
+      expect(saved.stats.pending_requests).toBe(1);
+    });
+
+    it('a save that leaves a Public profile Public is no arrival', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      await service.updateMine(OWNER_ID, { share_costs: true });
+      await service.updateMine(OWNER_ID, { visibility: profile_visibility.PUBLIC });
+      await service.updateMine(OWNER_ID, { handle: 'jaffa-mtb' });
+
+      expect(mockFollow.acceptAllPending).not.toHaveBeenCalled();
+    });
+
+    it('a refused save arrives nowhere', async () => {
+      seed({ user_id: OTHER_ID, handle: 'jaffa' });
+      seed({ user_id: OWNER_ID, handle: 'mine', visibility: profile_visibility.FOLLOWERS });
+
+      await expect(
+        service.updateMine(OWNER_ID, { handle: 'jaffa', visibility: profile_visibility.PUBLIC }),
+      ).rejects.toBeInstanceOf(ConflictException);
+
+      expect(mockFollow.acceptAllPending).not.toHaveBeenCalled();
     });
   });
 
