@@ -174,9 +174,48 @@ export interface ProfileSetupProfile {
   shock: ProfileLeg | null;
 }
 
+// A sum in the owner's currency, written for the reader's language by the money formatter.
+export interface ProfileMoney {
+  amount: number;
+  currency: string;
+}
+
+// Mirrors ProfileServiceDto: one Service as a reader may know it. The cost is there only
+// with costs shared and a price written down - absent otherwise, never null.
+export interface ProfileService {
+  id: number;
+  // Service Date; null for work the owner never dated.
+  date: string | null;
+  is_replacement: boolean;
+  actions: ProfileCatalogueName[];
+  // Component types touched, each once.
+  parts: ProfileCatalogueName[];
+  cost?: ProfileMoney;
+}
+
+// History Totals over the whole record; spend only with costs shared.
+export interface ProfileHistoryTotals {
+  services: number;
+  replacements: number;
+  spend?: ProfileMoney;
+}
+
+// Mirrors ProfileHistoryDto: the totals and the first page, newest first, undated last.
+export interface ProfileHistory {
+  totals: ProfileHistoryTotals;
+  services: ProfileService[];
+  total_count: number;
+}
+
+// Mirrors ResponseProfileServicesDto (GET /profiles/:handle/bikes/:id/services): older Services.
+export interface ProfileServicesPage {
+  services: ProfileService[];
+  total_count: number;
+}
+
 // Mirrors ProfileBikeDto: the card plus what the hero reads and the sections the switches let
 // out. A section that is off is null; setup [] is a bike with no profile yet. The build
-// stands where the card's parts count was; history lands with the next slice.
+// stands where the card's parts count was.
 export interface ProfileBike extends Omit<ProfileBikeCard, "components"> {
   time_min: number;
   ebike: boolean;
@@ -185,7 +224,7 @@ export interface ProfileBike extends Omit<ProfileBikeCard, "components"> {
   has_rear_suspension: boolean;
   components: ProfileComponentGroup[] | null;
   setup: ProfileSetupProfile[] | null;
-  history: null;
+  history: ProfileHistory | null;
 }
 
 // Mirrors ResponseProfileBikeDto (GET /profiles/:handle/bikes/:id). No header exception:

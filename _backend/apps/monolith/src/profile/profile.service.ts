@@ -12,11 +12,15 @@ import {
   ResponseProfileGarageDto,
 } from './dto/response-profile-garage.dto';
 import {
+  ProfileCatalogueNameDto,
   ProfileComponentGroupDto,
+  ProfileHistoryDto,
   ProfileLegDto,
   ProfileMountedPartDto,
+  ProfileServiceDto,
   ProfileSetupProfileDto,
   ResponseProfileBikeDto,
+  ResponseProfileServicesDto,
 } from './dto/response-profile-bike.dto';
 
 // The handle rule ^[a-z0-9][a-z0-9_-]{2,29}$, checked piece by piece so a refusal can say why.
@@ -50,6 +54,43 @@ const mountedPartInclude = {
 } satisfies Prisma.components_mountedInclude;
 
 type MountedPart = Prisma.components_mountedGetPayload<{ include: typeof mountedPartInclude }>;
+
+// A Service as a reader may know it, selected rather than included: the note, the
+// actions' notes and prices and the attachments are never even fetched.
+const serviceSelect = {
+  id: true,
+  service_date: true,
+  total_cost: true,
+  event_actions_done: {
+    orderBy: { id: 'asc' },
+    select: {
+      part_replaced: true,
+      events_action: { select: { action_name: true, i18n_key: true } },
+      action_done_component_map: {
+        select: {
+          components_mounted: { select: { component_types: { select: { component_type: true, i18n_key: true } } } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.events_bikesSelect;
+
+type ServiceRow = Prisma.events_bikesGetPayload<{ select: typeof serviceSelect }>;
+
+// The history's page: what the bike page carries, and the bounds the sub-resource pages
+// older Services within - the bike-event history's own.
+const DEFAULT_PAGE = 20;
+const MAX_PAGE = 100;
+
+// Whether the money goes out, and in what currency when it does. Null keeps every price in.
+type Costs = { currency: string } | null;
+
+// A bike the viewer may read through the profile, with the profile that let them.
+interface ReadableBike {
+  profile: public_profiles;
+  relation: ProfileRelation;
+  bike: GarageBike;
+}
 
 // The seeded kind of part a tyre pressure is dialled into, matched by name like the ride
 // sync matches its own kinds; the side is the slot's.
@@ -227,6 +268,61 @@ export class ProfileService {
   // The same rule as the garage, with no header exception: whatever is not readable - the
   // profile, or a bike that is not this owner's, not shared or archived - is one 404.
   async readBike(rawHandle: string, bikeId: number, viewerId: number | null): Promise<ResponseProfileBikeDto> {
+    const { profile, relation, bike } = await this.readableBike(rawHandle, bikeId, viewerId);
+
+    const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
+    // Read only what goes out: a section that is off is never even fetched.
+    const parts = profile.share_components ? await this.mountedParts(bike.id) : null;
+    const profiles = profile.share_setup ? await this.setupProfiles(bike.id) : null;
+    const currency = owner?.currency ?? FALLBACK_CURRENCY;
+    const history = profile.share_history ? await this.historyOf(bike.id, costsIn(profile, currency)) : null;
+
+    return {
+      owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
+      visibility: profile.visibility,
+      relation,
+      currency,
+      tire_pressure_unit: owner?.tire_pressure_unit ?? 'bar',
+      bike: {
+        ...bikeIdentity(bike, profile),
+        time_min: bike.total_time_min ?? 0,
+        ebike: bike.ebike,
+        frame_material: bike.frame_material,
+        has_front_suspension: bike.has_front_suspension,
+        has_rear_suspension: bike.has_rear_suspension,
+        components: parts === null ? null : groupByCategory(parts),
+        setup: profiles === null ? null : activeFirst(profiles, bike).map((row) => toSetupProfile(row, bike, parts)),
+        history,
+      },
+    };
+  }
+
+  // Older Services of the bike page, by offset. Reads under the bike's rule; a history the
+  // owner keeps in is a resource that is not there, the same 404 as a bike nobody may read.
+  async readBikeServices(
+    rawHandle: string,
+    bikeId: number,
+    viewerId: number | null,
+    limit: number,
+    offset: number,
+  ): Promise<ResponseProfileServicesDto> {
+    const { profile, bike } = await this.readableBike(rawHandle, bikeId, viewerId);
+    if (!profile.share_history) throw new NotFoundException(PROFILE_UNAVAILABLE);
+
+    const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
+    const costs = costsIn(profile, owner?.currency ?? FALLBACK_CURRENCY);
+    const take = clamp(limit, DEFAULT_PAGE, 1, MAX_PAGE);
+    const skip = clamp(offset, 0, 0, Number.MAX_SAFE_INTEGER);
+
+    const [services, total_count] = await Promise.all([
+      this.servicesPage(bike.id, take, skip, costs),
+      this.prisma.events_bikes.count({ where: serviceFilter(bike.id) }),
+    ]);
+    return { services, total_count };
+  }
+
+  // The profile rule, then the bike: this owner's, shared and in use. One 404 for whatever fails.
+  private async readableBike(rawHandle: string, bikeId: number, viewerId: number | null): Promise<ReadableBike> {
     const handle = rawHandle.trim().toLowerCase();
     const profile = await this.prisma.public_profiles.findUnique({ where: { handle } });
     const relation: ProfileRelation = profile !== null && profile.user_id === viewerId ? 'SELF' : 'NONE';
@@ -243,29 +339,7 @@ export class ProfileService {
     });
     if (!bike) throw new NotFoundException(PROFILE_UNAVAILABLE);
 
-    const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
-    // Read only what goes out: a section that is off is never even fetched.
-    const parts = profile.share_components ? await this.mountedParts(bike.id) : null;
-    const profiles = profile.share_setup ? await this.setupProfiles(bike.id) : null;
-
-    return {
-      owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
-      visibility: profile.visibility,
-      relation,
-      currency: owner?.currency ?? FALLBACK_CURRENCY,
-      tire_pressure_unit: owner?.tire_pressure_unit ?? 'bar',
-      bike: {
-        ...bikeIdentity(bike, profile),
-        time_min: bike.total_time_min ?? 0,
-        ebike: bike.ebike,
-        frame_material: bike.frame_material,
-        has_front_suspension: bike.has_front_suspension,
-        has_rear_suspension: bike.has_rear_suspension,
-        components: parts === null ? null : groupByCategory(parts),
-        setup: profiles === null ? null : activeFirst(profiles, bike).map((row) => toSetupProfile(row, bike, parts)),
-        history: null,
-      },
-    };
+    return { profile, relation, bike };
   }
 
   // The build as the Report writes it: what is on the bike now, in the catalogue's order.
@@ -283,6 +357,47 @@ export class ProfileService {
       where: { bike_id: bikeId },
       orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
     });
+  }
+
+  // The whole record summed up, and its first page. Replacements are counted per part,
+  // as the History Totals count them (ADR 0003); the spend is read only when it goes out.
+  private async historyOf(bikeId: number, costs: Costs): Promise<ProfileHistoryDto> {
+    const where = serviceFilter(bikeId);
+    const [services, total, replacements, spend] = await Promise.all([
+      this.servicesPage(bikeId, DEFAULT_PAGE, 0, costs),
+      this.prisma.events_bikes.count({ where }),
+      this.prisma.event_actions_done.count({ where: { part_replaced: true, events_bikes: where } }),
+      costs === null ? null : this.spendOf(where),
+    ]);
+
+    return {
+      totals: {
+        services: total,
+        replacements,
+        ...(costs !== null && spend !== null && { spend: { amount: spend, currency: costs.currency } }),
+      },
+      services,
+      total_count: total,
+    };
+  }
+
+  // What the record adds up to; a history where nobody wrote a price down has spent zero.
+  private async spendOf(where: Prisma.events_bikesWhereInput): Promise<number> {
+    const totals = await this.prisma.events_bikes.aggregate({ where, _sum: { total_cost: true } });
+    return totals._sum.total_cost === null ? 0 : Number(totals._sum.total_cost);
+  }
+
+  // One page, ordered as the owner's history reads: newest Service Date first, the undated
+  // last, the id breaking a tie so paging never repeats or skips one.
+  private async servicesPage(bikeId: number, take: number, skip: number, costs: Costs): Promise<ProfileServiceDto[]> {
+    const rows = await this.prisma.events_bikes.findMany({
+      where: serviceFilter(bikeId),
+      orderBy: [{ service_date: { sort: 'desc', nulls: 'last' } }, { id: 'desc' }],
+      take,
+      skip,
+      select: serviceSelect,
+    });
+    return rows.map((row) => toService(row, costs));
   }
 
   private async mayReadGarage(
@@ -465,5 +580,51 @@ function toSetupProfile(row: setup_profiles, bike: GarageBike, parts: MountedPar
     rear_tire: mountedTire(parts, 'rear'),
     fork: bike.has_front_suspension ? legOf(row, 'fork') : null,
     shock: bike.has_rear_suspension ? legOf(row, 'shock') : null,
+  };
+}
+
+// is_deleted is nullable, so `not: true` covers both false and the rows written before
+// the column existed.
+function serviceFilter(bikeId: number): Prisma.events_bikesWhereInput {
+  return { bike_id: bikeId, is_deleted: { not: true } };
+}
+
+function costsIn(profile: public_profiles, currency: string): Costs {
+  return profile.share_costs ? { currency } : null;
+}
+
+// A page size the caller left out arrives as NaN and takes the default; one pushed too far
+// is pulled back into range - the bike-event history's own reading of the query string.
+function clamp(value: number, fallback: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(Math.max(Math.trunc(value), min), max);
+}
+
+// The kinds of part a Service touched, each once: two tyres in one Service are one chip.
+function partsTouched(row: ServiceRow): ProfileCatalogueNameDto[] {
+  const types = new Map<string, ProfileCatalogueNameDto>();
+  for (const done of row.event_actions_done) {
+    for (const junction of done.action_done_component_map) {
+      const type = junction.components_mounted.component_types;
+      types.set(type.component_type, { i18n_key: type.i18n_key, name: type.component_type });
+    }
+  }
+  return [...types.values()];
+}
+
+// A Service as the page reads it. The note, the actions' notes and prices and the
+// attachments were never fetched; the cost joins only with share_costs and a price written down.
+function toService(row: ServiceRow, costs: Costs): ProfileServiceDto {
+  return {
+    id: row.id,
+    date: row.service_date?.toISOString() ?? null,
+    is_replacement: row.event_actions_done.some((done) => done.part_replaced === true),
+    actions: row.event_actions_done.map((done) => ({
+      i18n_key: done.events_action.i18n_key,
+      name: done.events_action.action_name,
+    })),
+    parts: partsTouched(row),
+    ...(costs !== null &&
+      row.total_cost !== null && { cost: { amount: Number(row.total_cost), currency: costs.currency } }),
   };
 }

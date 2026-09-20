@@ -1,9 +1,24 @@
 // React Query hooks for the owner's Public Profile settings.
-import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type UseInfiniteQueryResult,
+  type UseMutationResult,
+  type UseQueryResult,
+} from "@tanstack/react-query";
 import type { ApiError } from "@/api/client";
 import { updateBike } from "@/features/bikes/bikes.api";
-import { getMyProfile, getProfileBike, getProfileGarage, updateMyProfile } from "./profile.api";
-import type { Profile, ProfileBikeResponse, ProfileGarageResponse, SaveSharingInput } from "./profile.types";
+import { getMyProfile, getProfileBike, getProfileBikeServices, getProfileGarage, updateMyProfile } from "./profile.api";
+import type {
+  Profile,
+  ProfileBikeResponse,
+  ProfileGarageResponse,
+  ProfileServicesPage,
+  SaveSharingInput,
+} from "./profile.types";
 
 // Shared by every surface that reads the sharing state (Settings row, dashboard card, header icon).
 export const PROFILE_ME_QUERY_KEY = ["profile", "me"] as const;
@@ -35,6 +50,27 @@ export function useProfileBike(handle: string, bikeId: number): UseQueryResult<P
     queryKey: [...PROFILE_GARAGE_QUERY_KEY, handle, "bike", bikeId],
     queryFn: () => getProfileBike(handle, bikeId),
     enabled: handle !== "" && Number.isInteger(bikeId),
+    retry: false,
+  });
+}
+
+// The Services past the ones the bike page carries, paged in as "show older" is tapped. The
+// bike brought the first page, so this starts where it stopped and never fetches on its own.
+export function useProfileBikeServices(
+  handle: string,
+  bikeId: number,
+  firstPageCount: number,
+): UseInfiniteQueryResult<InfiniteData<ProfileServicesPage>, ApiError> {
+  return useInfiniteQuery<ProfileServicesPage, ApiError, InfiniteData<ProfileServicesPage>, readonly unknown[], number>({
+    queryKey: [...PROFILE_GARAGE_QUERY_KEY, handle, "bike", bikeId, "services"],
+    queryFn: ({ pageParam }) => getProfileBikeServices(handle, bikeId, pageParam),
+    initialPageParam: firstPageCount,
+    // Stop once the bike's first page and these together hold every Service.
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = firstPageCount + allPages.reduce((count, page) => count + page.services.length, 0);
+      return loaded < lastPage.total_count ? loaded : undefined;
+    },
+    enabled: false,
     retry: false,
   });
 }

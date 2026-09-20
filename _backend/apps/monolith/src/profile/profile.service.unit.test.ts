@@ -59,9 +59,27 @@ interface PartRow {
   component_types: CatalogueRow;
 }
 
+// One Action of a Service with its note and its own price on it, and the parts it touched.
+interface ActionDoneRow {
+  id: number;
+  note: string | null;
+  partial_cost: Prisma.Decimal | null;
+  part_replaced: boolean | null;
+  events_action: { action_name: string; i18n_key: string | null };
+  action_done_component_map: { components_mounted: { component_types: CatalogueRow } }[];
+}
+
+// The whole events_bikes row - note, price, attachments - so a test can assert what of it
+// never leaves.
 interface ServiceRow {
+  id: number;
+  note: string | null;
+  total_cost: Prisma.Decimal | null;
+  service_date: Date | null;
   is_deleted: boolean | null;
   updated_at: Date | null;
+  event_actions_done: ActionDoneRow[];
+  bike_event_attachments: { id: number; name: string; url: string; content_type: string }[];
 }
 
 // The whole setup_profiles row, its note included, pressures as the Decimal the database holds.
@@ -170,6 +188,24 @@ describe('ProfileService', () => {
   const bikesTable: BikeRow[] = [];
   const setupTable: SetupRow[] = [];
 
+  type ServiceWithBike = ServiceRow & { bike_id: number };
+
+  const servicesOf = (where?: Where): ServiceWithBike[] =>
+    bikesTable
+      .flatMap((bike) => bike.events_bikes.map((row) => ({ ...row, bike_id: bike.id })))
+      .filter((row) => matches(row, where));
+
+  // Service Date descending with the undated last, the id breaking a tie - the order the
+  // history asks for.
+  const newestFirst = (rows: ServiceWithBike[]): ServiceWithBike[] =>
+    [...rows].sort((a, b) => {
+      if (a.service_date === null || b.service_date === null) {
+        if (a.service_date === b.service_date) return b.id - a.id;
+        return a.service_date === null ? 1 : -1;
+      }
+      return b.service_date.getTime() - a.service_date.getTime() || b.id - a.id;
+    });
+
   const mockPrisma = {
     public_profiles: {
       findUnique: jest.fn(({ where }: { where: WhereUnique }) =>
@@ -248,6 +284,28 @@ describe('ProfileService', () => {
         ),
       ),
     },
+    // The Services hang off their bike row too; the whole row comes back whatever the
+    // select asked, so what the payload leaves out is the service's doing, not the mock's.
+    events_bikes: {
+      findMany: jest.fn(({ where, take, skip }: { where?: Where; take?: number; skip?: number }) =>
+        Promise.resolve(newestFirst(servicesOf(where)).slice(skip ?? 0, (skip ?? 0) + (take ?? Infinity))),
+      ),
+      count: jest.fn(({ where }: { where?: Where }) => Promise.resolve(servicesOf(where).length)),
+      aggregate: jest.fn(({ where }: { where?: Where }) => {
+        const priced = servicesOf(where).filter((row) => row.total_cost !== null);
+        const total = priced.reduce((sum, row) => sum + Number(row.total_cost), 0);
+        return Promise.resolve({ _sum: { total_cost: priced.length === 0 ? null : new Prisma.Decimal(total) } });
+      }),
+    },
+    event_actions_done: {
+      count: jest.fn(({ where }: { where: { part_replaced: boolean; events_bikes: Where } }) =>
+        Promise.resolve(
+          servicesOf(where.events_bikes)
+            .flatMap((row) => row.event_actions_done)
+            .filter((action) => action.part_replaced === where.part_replaced).length,
+        ),
+      ),
+    },
   };
 
   const seed = (overrides: Partial<ProfileRow> & { user_id: number; handle: string }): void => {
@@ -296,9 +354,38 @@ describe('ProfileService', () => {
     ...overrides,
   });
 
+  let nextServiceId = 1;
+  let nextActionId = 1;
+
+  // One Action with a note and its own price written down, on the chain unless told otherwise.
+  const action = (overrides: Partial<ActionDoneRow> = {}): ActionDoneRow => ({
+    id: nextActionId++,
+    note: 'Waxed, not oiled',
+    partial_cost: new Prisma.Decimal(300),
+    part_replaced: false,
+    events_action: { action_name: 'Chain Cleaning', i18n_key: 'action.chainCleaning' },
+    action_done_component_map: [{ components_mounted: { component_types: CHAIN_TYPE } }],
+    ...overrides,
+  });
+
+  // A dated, priced Service with a note and an invoice attached, so the payload has
+  // plenty to leave out.
   const done = (overrides: Partial<ServiceRow> = {}): ServiceRow => ({
+    id: nextServiceId++,
+    note: 'Invoice 4711, mechanic Pepa 777 123 456',
+    total_cost: new Prisma.Decimal(1200),
+    service_date: new Date('2026-08-15T00:00:00.000Z'),
     is_deleted: false,
     updated_at: SERVICE_UPDATED,
+    event_actions_done: [action()],
+    bike_event_attachments: [
+      {
+        id: 1,
+        name: 'invoice.pdf',
+        url: 'https://r2.example.com/service-attachments/invoice.pdf',
+        content_type: 'application/pdf',
+      },
+    ],
     ...overrides,
   });
 
@@ -382,6 +469,8 @@ describe('ProfileService', () => {
     bikesTable.length = 0;
     setupTable.length = 0;
     nextPartId = 1;
+    nextServiceId = 1;
+    nextActionId = 1;
     process.env.PUBLIC_APP_URL = ORIGIN;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -1114,22 +1203,217 @@ describe('ProfileService', () => {
       expect(bike.components).toEqual([]);
     });
 
-    it('history is null in this slice whatever the switch, while the Services count still travels', async () => {
-      seedBike({ id: 1, events_bikes: [done()] });
-
-      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
-
-      expect(bike.history).toBeNull();
-      expect(bike.services).toBe(1);
-    });
-
-    it('history off: the Services count is null', async () => {
+    it('history off: the section and the Services count are null', async () => {
       table.get(OWNER_ID)!.share_history = false;
       seedBike({ id: 1, events_bikes: [done()] });
 
       const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
 
+      expect(bike.history).toBeNull();
       expect(bike.services).toBeNull();
+    });
+
+    it('costs on without history: still no history', async () => {
+      table.get(OWNER_ID)!.share_history = false;
+      table.get(OWNER_ID)!.share_costs = true;
+      seedBike({ id: 1, events_bikes: [done()] });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history).toBeNull();
+      expect(bike.services).toBeNull();
+    });
+  });
+
+  describe('readBike - Historie', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+    });
+
+    it('reads every Service newest first: its date, its actions as catalogue names, the parts touched', async () => {
+      seedBike({
+        id: 1,
+        events_bikes: [
+          done({
+            id: 1,
+            service_date: new Date('2026-07-01T00:00:00.000Z'),
+            event_actions_done: [
+              action({
+                events_action: { action_name: 'Fork Full Service', i18n_key: 'action.forkFullService' },
+                action_done_component_map: [{ components_mounted: { component_types: FORK_TYPE } }],
+              }),
+              action({
+                events_action: { action_name: 'Odd job', i18n_key: null },
+                action_done_component_map: [],
+              }),
+            ],
+          }),
+          done({ id: 2, service_date: new Date('2026-08-15T00:00:00.000Z') }),
+          done({ id: 3, is_deleted: true, service_date: new Date('2026-09-01T00:00:00.000Z') }),
+        ],
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.services).toBe(2);
+      expect(bike.history).toEqual({
+        totals: { services: 2, replacements: 0 },
+        total_count: 2,
+        services: [
+          {
+            id: 2,
+            date: '2026-08-15T00:00:00.000Z',
+            is_replacement: false,
+            actions: [{ i18n_key: 'action.chainCleaning', name: 'Chain Cleaning' }],
+            parts: [{ i18n_key: 'component.chain', name: 'Chain' }],
+          },
+          {
+            id: 1,
+            date: '2026-07-01T00:00:00.000Z',
+            is_replacement: false,
+            actions: [
+              { i18n_key: 'action.forkFullService', name: 'Fork Full Service' },
+              { i18n_key: null, name: 'Odd job' },
+            ],
+            parts: [{ i18n_key: 'component.fork', name: 'Fork' }],
+          },
+        ],
+      });
+    });
+
+    it('a Replacement flags its Service; the total counts them per part, not per Service', async () => {
+      seedBike({
+        id: 1,
+        events_bikes: [
+          done({
+            id: 1,
+            event_actions_done: [
+              action({
+                part_replaced: true,
+                events_action: { action_name: 'Tire Replacement', i18n_key: 'action.tireReplacement' },
+                action_done_component_map: [
+                  { components_mounted: { component_types: TIRE_TYPE } },
+                  { components_mounted: { component_types: TIRE_TYPE } },
+                ],
+              }),
+              action({
+                part_replaced: true,
+                events_action: { action_name: 'Chain Replacement', i18n_key: 'action.chainReplacement' },
+              }),
+              action(),
+            ],
+          }),
+          done({ id: 2 }),
+        ],
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history?.totals).toEqual({ services: 2, replacements: 2 });
+      expect(bike.history?.services.map((row) => [row.id, row.is_replacement])).toEqual([
+        [2, false],
+        [1, true],
+      ]);
+      // Both tyres and the chain: each kind once.
+      expect(bike.history?.services[1].parts).toEqual([
+        { i18n_key: 'component.tire', name: 'Tire' },
+        { i18n_key: 'component.chain', name: 'Chain' },
+      ]);
+    });
+
+    it('undated Services close the list, whatever their id', async () => {
+      seedBike({
+        id: 1,
+        events_bikes: [
+          done({ id: 1, service_date: new Date('2026-01-01T00:00:00.000Z') }),
+          done({ id: 2, service_date: null }),
+          done({ id: 3, service_date: new Date('2026-06-01T00:00:00.000Z') }),
+          done({ id: 4, service_date: null }),
+        ],
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history?.services.map((row) => [row.id, row.date])).toEqual([
+        [3, '2026-06-01T00:00:00.000Z'],
+        [1, '2026-01-01T00:00:00.000Z'],
+        [4, null],
+        [2, null],
+      ]);
+    });
+
+    it('costs off: no cost on any Service and no spend, while Services and Replacements stay', async () => {
+      seedBike({
+        id: 1,
+        events_bikes: [
+          done({ id: 1, total_cost: new Prisma.Decimal(1200) }),
+          done({ id: 2, total_cost: new Prisma.Decimal(300) }),
+        ],
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history?.totals).toEqual({ services: 2, replacements: 0 });
+      expect(bike.history?.totals).not.toHaveProperty('spend');
+      for (const row of bike.history?.services ?? []) {
+        expect(row).not.toHaveProperty('cost');
+      }
+      expect(JSON.stringify(bike.history)).not.toContain('1200');
+    });
+
+    it("costs on: each priced Service carries its cost and the totals their spend, in the owner's currency", async () => {
+      table.get(OWNER_ID)!.share_costs = true;
+      seedBike({
+        id: 1,
+        events_bikes: [
+          done({ id: 1, total_cost: new Prisma.Decimal(1200.5) }),
+          done({ id: 2, total_cost: new Prisma.Decimal(300) }),
+          done({ id: 3, total_cost: null }),
+          done({ id: 4, total_cost: new Prisma.Decimal(99), is_deleted: true }),
+        ],
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history?.totals).toEqual({
+        services: 3,
+        replacements: 0,
+        spend: { amount: 1500.5, currency: 'EUR' },
+      });
+      expect(bike.history?.services.map((row) => row.cost)).toEqual([
+        undefined,
+        { amount: 300, currency: 'EUR' },
+        { amount: 1200.5, currency: 'EUR' },
+      ]);
+    });
+
+    it('costs on with nothing priced: spend is zero, not absent', async () => {
+      table.get(OWNER_ID)!.share_costs = true;
+      seedBike({ id: 1, events_bikes: [done({ total_cost: null })] });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history?.totals.spend).toEqual({ amount: 0, currency: 'EUR' });
+    });
+
+    it('costs on: the spend falls back to CZK for an owner who chose no currency', async () => {
+      table.get(OWNER_ID)!.share_costs = true;
+      mockPrisma.users.findUnique.mockResolvedValue({ ...ownerRow, currency: null });
+      seedBike({ id: 1, events_bikes: [done()] });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history?.totals.spend).toEqual({ amount: 1200, currency: 'CZK' });
+      expect(bike.history?.services[0].cost).toEqual({ amount: 1200, currency: 'CZK' });
+    });
+
+    it('a bike with no Service yet has an empty history, not a null one', async () => {
+      seedBike({ id: 1 });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history).toEqual({ totals: { services: 0, replacements: 0 }, services: [], total_count: 0 });
     });
   });
 
@@ -1352,6 +1636,136 @@ describe('ProfileService', () => {
     });
   });
 
+  describe('readBike - the first page', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+    });
+
+    it('carries the newest 20 and counts all 30', async () => {
+      // Thirty dated Services, one a day, the newest on day 30 - id 30.
+      seedBike({
+        id: 1,
+        events_bikes: Array.from({ length: 30 }, (_, index) =>
+          done({ id: index + 1, service_date: new Date(Date.UTC(2026, 0, index + 1)) }),
+        ),
+      });
+
+      const { bike } = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(bike.history?.services).toHaveLength(20);
+      expect(bike.history?.services[0].id).toBe(30);
+      expect(bike.history?.services[19].id).toBe(11);
+      expect(bike.history?.total_count).toBe(30);
+      expect(bike.history?.totals.services).toBe(30);
+      expect(bike.services).toBe(30);
+    });
+  });
+
+  describe('readBikeServices - paging', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      // 130 dated Services, one a day, the newest on day 130 - id 130.
+      seedBike({
+        id: 1,
+        events_bikes: Array.from({ length: 130 }, (_, index) =>
+          done({ id: index + 1, service_date: new Date(Date.UTC(2026, 0, index + 1)) }),
+        ),
+      });
+    });
+
+    it('pages from the offset, 20 at a time by default, with the total alongside', async () => {
+      const page = await service.readBikeServices('jaffa', 1, OTHER_ID, Number.NaN, 20);
+
+      expect(page.services).toHaveLength(20);
+      expect(page.services[0].id).toBe(110);
+      expect(page.services[19].id).toBe(91);
+      expect(page.total_count).toBe(130);
+    });
+
+    it('honours a limit within the bounds and clamps one over 100 to 100', async () => {
+      const small = await service.readBikeServices('jaffa', 1, OTHER_ID, 5, 0);
+      const large = await service.readBikeServices('jaffa', 1, OTHER_ID, 101, 0);
+
+      expect(small.services.map((row) => row.id)).toEqual([130, 129, 128, 127, 126]);
+      expect(large.services).toHaveLength(100);
+    });
+
+    it('an absent limit takes the default and zero is pulled up to 1; an absent or negative offset starts at 0', async () => {
+      const absent = await service.readBikeServices('jaffa', 1, OTHER_ID, Number.NaN, Number.NaN);
+      const zero = await service.readBikeServices('jaffa', 1, OTHER_ID, 0, -5);
+
+      expect(absent.services).toHaveLength(20);
+      expect(absent.services[0].id).toBe(130);
+      expect(zero.services).toHaveLength(1);
+      expect(zero.services[0].id).toBe(130);
+    });
+
+    it('past the end is an empty page with the total still on it', async () => {
+      const page = await service.readBikeServices('jaffa', 1, OTHER_ID, 20, 500);
+
+      expect(page).toEqual({ services: [], total_count: 130 });
+    });
+
+    it('keeps the costs rule: absent with costs off, on the rows with costs on', async () => {
+      const hidden = await service.readBikeServices('jaffa', 1, OTHER_ID, 1, 0);
+      table.get(OWNER_ID)!.share_costs = true;
+      const shown = await service.readBikeServices('jaffa', 1, OTHER_ID, 1, 0);
+
+      expect(hidden.services[0]).not.toHaveProperty('cost');
+      expect(shown.services[0].cost).toEqual({ amount: 1200, currency: 'EUR' });
+    });
+  });
+
+  describe('readBikeServices - the rule', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seedBike({ id: 1, events_bikes: [done()] });
+    });
+
+    it('history off: 404, the same as a bike nobody may read', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, share_history: false });
+
+      await rejectsWith(service.readBikeServices('jaffa', 1, OTHER_ID, 20, 0), NotFoundException, 'not available');
+    });
+
+    it('FOLLOWERS: a stranger gets 404, the owner reads', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+
+      await expect(service.readBikeServices('jaffa', 1, OTHER_ID, 20, 0)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.readBikeServices('jaffa', 1, OWNER_ID, 20, 0)).resolves.toMatchObject({ total_count: 1 });
+    });
+
+    it('OFF: a stranger gets 404, the owner reads', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      await expect(service.readBikeServices('jaffa', 1, OTHER_ID, 20, 0)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.readBikeServices('jaffa', 1, OWNER_ID, 20, 0)).resolves.toMatchObject({ total_count: 1 });
+    });
+
+    it('unknown handle, unknown bike, unshared, archived and another account answer one 404', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seedBike({ id: 2, is_shared: false });
+      seedBike({ id: 3, is_deleted: true });
+      seedBike({ id: 4, user_id: OTHER_ID });
+
+      for (const [handle, bikeId] of [
+        ['nobody', 1],
+        ['jaffa', 99],
+        ['jaffa', 2],
+        ['jaffa', 3],
+        ['jaffa', 4],
+      ] as const) {
+        await rejectsWith(
+          service.readBikeServices(handle, bikeId, OTHER_ID, 20, 0),
+          NotFoundException,
+          'not available',
+        );
+      }
+    });
+  });
+
   describe('readBike - never out', () => {
     it('carries no note, health index, email, Strava picture or anything of another account', async () => {
       mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
@@ -1368,6 +1782,7 @@ describe('ProfileService', () => {
 
       const page = JSON.stringify(await service.readBike('jaffa', 1, OTHER_ID));
 
+      expect(page).toContain('Chain Cleaning');
       expect(page).not.toContain('note');
       expect(page).not.toContain('health_index');
       expect(page).not.toContain('Pepa');
@@ -1378,6 +1793,31 @@ describe('ProfileService', () => {
       expect(page).not.toContain('user_id');
       expect(page).not.toContain('stranger');
       expect(page).not.toContain('Strangers bike');
+      expect(page).not.toContain('Invoice');
+      expect(page).not.toContain('Waxed');
+      expect(page).not.toContain('partial_cost');
+      expect(page).not.toContain('attachment');
+      expect(page).not.toContain('invoice.pdf');
+      expect(page).not.toContain('r2.example.com');
+    });
+
+    it('a page of older Services carries no note, action note, price of an action or attachment either', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, share_costs: true });
+      seedBike({ id: 1, events_bikes: [done(), done()] });
+
+      const page = JSON.stringify(await service.readBikeServices('jaffa', 1, OTHER_ID, 20, 1));
+
+      expect(page).toContain('Chain Cleaning');
+      expect(page).toContain('1200');
+      expect(page).not.toContain('note');
+      expect(page).not.toContain('Invoice');
+      expect(page).not.toContain('Waxed');
+      expect(page).not.toContain('partial_cost');
+      expect(page).not.toContain('300');
+      expect(page).not.toContain('attachment');
+      expect(page).not.toContain('invoice.pdf');
+      expect(page).not.toContain('user_id');
     });
   });
 });

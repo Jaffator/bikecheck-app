@@ -1,6 +1,6 @@
 // One of somebody's bikes at /users/:handle/:bikeId, read as the machine: the hero, then
-// Setup and the build only where the owner shares them. The header steps off the photo and
-// names the owner as the way back to their garage.
+// Setup, the build and the history only where the owner shares them. The header steps off
+// the photo and names the owner as the way back to their garage.
 import { useEffect, type ReactElement } from "react";
 import { Center, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useProfileBike } from "@/features/profile/profile.queries";
 import { UserBikeComponents } from "@/features/profile/ui/bike/UserBikeComponents";
 import { UserBikeHero } from "@/features/profile/ui/bike/UserBikeHero";
+import { UserBikeHistory } from "@/features/profile/ui/bike/UserBikeHistory";
 import { UserBikeOwnerPill } from "@/features/profile/ui/bike/UserBikeOwnerPill";
 import { UserBikeSetup } from "@/features/profile/ui/bike/UserBikeSetup";
 import { useHeaderStore } from "@/store/store";
@@ -77,6 +78,7 @@ export function UserProfileBike(): ReactElement {
       {/* A section that is off is null and absent; nothing shared leaves the hero alone. */}
       {bike.setup !== null && <UserBikeSetup profiles={bike.setup} unit={page.tire_pressure_unit} />}
       {bike.components !== null && <UserBikeComponents groups={bike.components} />}
+      {bike.history !== null && <UserBikeHistory handle={handle} bikeId={id} history={bike.history} />}
     </Stack>
   );
 }

@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseProfileDto } from './dto/response-profile.dto';
 import { ResponseProfileGarageDto } from './dto/response-profile-garage.dto';
-import { ResponseProfileBikeDto } from './dto/response-profile-bike.dto';
+import { ResponseProfileBikeDto, ResponseProfileServicesDto } from './dto/response-profile-bike.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('profiles')
@@ -63,4 +63,28 @@ export class ProfileController {
   ): Promise<ResponseProfileBikeDto> {
     return await this.profileService.readBike(handle, id, Number(userId));
   }
+
+  // ---------- GET older Services of one of somebody's bikes, in the app ----------
+  @ApiOperation({ summary: 'One page of the Services the bike page did not carry, newest first' })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Default 20, at most 100' })
+  @ApiQuery({ name: 'offset', type: Number, required: false })
+  @ApiResponse({ status: 200, type: ResponseProfileServicesDto })
+  @ApiResponse({ status: 404, description: 'The same as the bike route, and a history the owner keeps in' })
+  @Get(':handle/bikes/:id/services')
+  async readBikeServices(
+    @CurrentUser('userId') userId: string,
+    @Param('handle') handle: string,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ): Promise<ResponseProfileServicesDto> {
+    // An absent limit/offset reaches the service as NaN and takes its default, as the
+    // bike-event history reads them - Number('') is 0, which would ask for an empty page.
+    return await this.profileService.readBikeServices(handle, id, Number(userId), toNumber(limit), toNumber(offset));
+  }
+}
+
+// A query parameter the caller left out is not a number at all.
+function toNumber(value?: string): number {
+  return value === undefined || value === '' ? Number.NaN : Number(value);
 }

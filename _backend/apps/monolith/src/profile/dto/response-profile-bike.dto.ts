@@ -103,6 +103,71 @@ export class ProfileSetupProfileDto {
   shock!: ProfileLegDto | null;
 }
 
+// A sum of money in the owner's currency; the frontend writes it for the reader's language.
+export class ProfileMoneyDto {
+  @ApiProperty({ example: 1200 })
+  amount!: number;
+
+  @ApiProperty({ example: 'CZK' })
+  currency!: string;
+}
+
+// One Service as a reader may know it: when, what was done, what it touched. Never its
+// note, its actions' notes, their prices or its attachments. The cost travels only with
+// share_costs and a recorded price - otherwise the key is absent, not null.
+export class ProfileServiceDto {
+  @ApiProperty({ example: 88 })
+  id!: number;
+
+  @ApiProperty({ example: '2026-08-15T00:00:00.000Z', nullable: true, description: 'Service Date' })
+  date!: string | null;
+
+  @ApiProperty({ example: true, description: 'Any of its actions swapped a part out' })
+  is_replacement!: boolean;
+
+  @ApiProperty({ type: [ProfileCatalogueNameDto] })
+  actions!: ProfileCatalogueNameDto[];
+
+  @ApiProperty({ type: [ProfileCatalogueNameDto], description: 'Component types touched, each once' })
+  parts!: ProfileCatalogueNameDto[];
+
+  @ApiProperty({ type: ProfileMoneyDto, required: false })
+  cost?: ProfileMoneyDto;
+}
+
+// History Totals over the bike's whole record; spend only with share_costs.
+export class ProfileHistoryTotalsDto {
+  @ApiProperty({ example: 26 })
+  services!: number;
+
+  @ApiProperty({ example: 9, description: 'Replacements counted per part, not per Service (ADR 0003)' })
+  replacements!: number;
+
+  @ApiProperty({ type: ProfileMoneyDto, required: false })
+  spend?: ProfileMoneyDto;
+}
+
+// The bike's service history: the totals and the first page, newest first, undated last.
+export class ProfileHistoryDto {
+  @ApiProperty({ type: ProfileHistoryTotalsDto })
+  totals!: ProfileHistoryTotalsDto;
+
+  @ApiProperty({ type: [ProfileServiceDto] })
+  services!: ProfileServiceDto[];
+
+  @ApiProperty({ example: 26, description: 'Every Service of the bike, ignoring the page' })
+  total_count!: number;
+}
+
+// What GET /profiles/:handle/bikes/:id/services answers: one page of older Services.
+export class ResponseProfileServicesDto {
+  @ApiProperty({ type: [ProfileServiceDto] })
+  services!: ProfileServiceDto[];
+
+  @ApiProperty({ example: 26 })
+  total_count!: number;
+}
+
 // The bike page: the card plus what the hero reads, and the sections the switches let out.
 // A section that is off is null, never []; setup: [] is a bike with no profile yet. The
 // card's parts count gives way to the section itself - the page counts the groups.
@@ -132,9 +197,8 @@ export class ProfileBikeDto extends OmitType(ProfileBikeCardDto, ['components'] 
   })
   setup!: ProfileSetupProfileDto[] | null;
 
-  // The service history lands with the next slice; until then null whatever the switch says.
-  @ApiProperty({ type: Object, nullable: true, example: null })
-  history!: null;
+  @ApiProperty({ type: ProfileHistoryDto, nullable: true, description: 'null = section off' })
+  history!: ProfileHistoryDto | null;
 }
 
 // What GET /profiles/:handle/bikes/:id answers. No header exception: not readable is 404.
