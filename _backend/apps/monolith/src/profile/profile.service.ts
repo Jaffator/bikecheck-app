@@ -10,6 +10,7 @@ import {
   ProfileGarageDto,
   ProfileRelation,
   ResponseProfileGarageDto,
+  ResponsePublicProfileGarageDto,
 } from './dto/response-profile-garage.dto';
 import {
   ProfileCatalogueNameDto,
@@ -261,6 +262,37 @@ export class ProfileService {
       relation,
       garage: allowed ? await this.garageOf(profile, owner) : null,
     };
+  }
+
+  // ---------- The web garage ----------
+
+  // The web rule is stricter than the app's: PUBLIC opens, everything else - OFF,
+  // FOLLOWERS, no row, the owner themself - is the same 404. The one read that counts a view.
+  async readPublic(rawHandle: string): Promise<ResponsePublicProfileGarageDto> {
+    const handle = rawHandle.trim().toLowerCase();
+    const profile = await this.prisma.public_profiles.findUnique({ where: { handle } });
+    if (!profile || profile.visibility !== 'PUBLIC') {
+      throw new NotFoundException(PROFILE_UNAVAILABLE);
+    }
+
+    await this.countView(profile);
+    const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
+
+    return {
+      owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
+      visibility: profile.visibility,
+      relation: 'NONE',
+      garage: await this.garageOf(profile, owner),
+    };
+  }
+
+  // A vanity number, like a Report's: no dedup. updated_at is pinned, or @updatedAt would
+  // turn every view into a Last Updated.
+  private async countView(profile: public_profiles): Promise<void> {
+    await this.prisma.public_profiles.update({
+      where: { user_id: profile.user_id },
+      data: { view_count: { increment: 1 }, last_viewed_at: new Date(), updated_at: profile.updated_at },
+    });
   }
 
   // ---------- The in-app bike page ----------

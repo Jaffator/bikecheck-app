@@ -5,6 +5,7 @@ import type {
   ProfileBikeResponse,
   ProfileGarageResponse,
   ProfileServicesPage,
+  PublicProfileGarageResponse,
   UpdateProfilePayload,
 } from "./profile.types";
 
@@ -27,6 +28,12 @@ export async function updateMyProfile(payload: UpdateProfilePayload): Promise<Pr
 // and a dead handle alike; the owner reads their own in every state.
 export async function getProfileGarage(handle: string): Promise<ProfileGarageResponse> {
   return apiFetch<ProfileGarageResponse>(`/profiles/${encodeURIComponent(handle)}`);
+}
+
+// GET /profiles/public/:handle — the garage for the web page, no session behind it. Open only
+// while PUBLIC; Off, followers only and a dead handle are one 404. Every call counts a view.
+export async function getPublicProfileGarage(handle: string): Promise<PublicProfileGarageResponse> {
+  return apiFetch<PublicProfileGarageResponse>(`/profiles/public/${encodeURIComponent(handle)}`);
 }
 
 // GET /profiles/:handle/bikes/:id — one of somebody's bikes. 404 for a profile the rule

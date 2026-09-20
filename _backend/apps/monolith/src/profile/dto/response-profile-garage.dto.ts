@@ -123,3 +123,10 @@ export class ResponseProfileGarageDto {
   @ApiProperty({ type: ProfileGarageDto, nullable: true, description: 'null = header only' })
   garage!: ProfileGarageDto | null;
 }
+
+// What GET /profiles/public/:handle answers: the app's shape with the garage always on it -
+// whatever the web rule closes is a 404, never a header.
+export class ResponsePublicProfileGarageDto extends ResponseProfileGarageDto {
+  @ApiProperty({ type: ProfileGarageDto })
+  declare garage: ProfileGarageDto;
+}

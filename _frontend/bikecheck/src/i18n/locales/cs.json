@@ -1123,5 +1123,28 @@
     "hsr": "HSR",
     "lsc": "LSC",
     "hsc": "HSC"
+  },
+  "publicProfile": {
+    "title": "Veřejný profil",
+    "eyebrow": "veřejný profil",
+    "live": "Živé",
+    "langButton": "EN",
+    "switchLanguage": "Switch to English",
+    "garageIntro": "Garáž, jak ji majitel vede v aplikaci BikeCheck. Co změní, uvidíš tady.",
+    "bikes": "Kola",
+    "figureBikes": "Kol",
+    "figureDistance": "Nájezd celkem",
+    "figureComponents": "Komponent",
+    "figureServices": "Servisů",
+    "updated": "Aktualizováno {{when}}",
+    "noPhoto": "bez fotky",
+    "loading": "Načítám…",
+    "footerNote": "Tenhle profil vede majitel v aplikaci BikeCheck. Stránka čte jeho garáž, jak stojí teď — když profil vypne, zmizí.",
+    "startGarage": "Založit vlastní garáž",
+    "closedTitle": "Tenhle profil není veřejný",
+    "closedFollower": "Pokud ho sleduješ, otevři ho v aplikaci BikeCheck.",
+    "openInApp": "Otevřít v aplikaci",
+    "loadFailedTitle": "Stránku se nepodařilo načíst",
+    "loadFailedBody": "Zkus to za chvíli znovu."
   }
 }

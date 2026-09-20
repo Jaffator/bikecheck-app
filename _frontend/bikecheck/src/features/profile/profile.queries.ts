@@ -11,12 +11,20 @@ import {
 } from "@tanstack/react-query";
 import type { ApiError } from "@/api/client";
 import { updateBike } from "@/features/bikes/bikes.api";
-import { getMyProfile, getProfileBike, getProfileBikeServices, getProfileGarage, updateMyProfile } from "./profile.api";
+import {
+  getMyProfile,
+  getProfileBike,
+  getProfileBikeServices,
+  getProfileGarage,
+  getPublicProfileGarage,
+  updateMyProfile,
+} from "./profile.api";
 import type {
   Profile,
   ProfileBikeResponse,
   ProfileGarageResponse,
   ProfileServicesPage,
+  PublicProfileGarageResponse,
   SaveSharingInput,
 } from "./profile.types";
 
@@ -25,6 +33,9 @@ export const PROFILE_ME_QUERY_KEY = ["profile", "me"] as const;
 
 // Every garage page read, whoever's; one handle's page is keyed under it.
 export const PROFILE_GARAGE_QUERY_KEY = ["profile", "garage"] as const;
+
+// The web page's reads, kept apart from the app's: these count views, those never do.
+export const PROFILE_PUBLIC_QUERY_KEY = ["profile", "public"] as const;
 
 export function useMyProfile(): UseQueryResult<Profile> {
   return useQuery({
@@ -40,6 +51,20 @@ export function useProfileGarage(handle: string): UseQueryResult<ProfileGarageRe
     queryFn: () => getProfileGarage(handle),
     enabled: handle !== "",
     retry: false,
+  });
+}
+
+// The garage at /u/:handle. Every fetch is a view on the owner's card, so nothing here
+// refetches on its own - refresh is a reload. A closed profile is an answer, not a fault.
+export function usePublicProfileGarage(handle: string): UseQueryResult<PublicProfileGarageResponse, ApiError> {
+  return useQuery<PublicProfileGarageResponse, ApiError>({
+    queryKey: [...PROFILE_PUBLIC_QUERY_KEY, handle],
+    queryFn: () => getPublicProfileGarage(handle),
+    enabled: handle !== "",
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 

@@ -20,6 +20,7 @@ const RESERVED_HANDLES: ReadonlySet<string> = new Set([
   "api",
   "system",
   "root",
+  "public",
   "bikes",
   "settings",
   "profile",

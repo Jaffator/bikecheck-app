@@ -13,6 +13,8 @@ export const RESERVED_HANDLES: ReadonlySet<string> = new Set([
   'api',
   'system',
   'root',
+  // The web garage's API prefix, /profiles/public/:handle
+  'public',
   // Top-level routes (App.tsx)
   'bikes',
   'settings',

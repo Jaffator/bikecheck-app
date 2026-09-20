@@ -1069,5 +1069,28 @@
     "hsr": "HSR",
     "lsc": "LSC",
     "hsc": "HSC"
+  },
+  "publicProfile": {
+    "title": "Public profile",
+    "eyebrow": "public profile",
+    "live": "Live",
+    "langButton": "CS",
+    "switchLanguage": "Přepnout do češtiny",
+    "garageIntro": "The garage as its owner keeps it in the BikeCheck app. Whatever changes, you see it here.",
+    "bikes": "Bikes",
+    "figureBikes": "Bikes",
+    "figureDistance": "Total distance",
+    "figureComponents": "Components",
+    "figureServices": "Services",
+    "updated": "Updated {{when}}",
+    "noPhoto": "no photo",
+    "loading": "Loading…",
+    "footerNote": "The owner keeps this profile in the BikeCheck app. The page reads the garage as it stands now — switch the profile off and it is gone.",
+    "startGarage": "Start your own garage",
+    "closedTitle": "This profile is not public",
+    "closedFollower": "If you follow them, open it in the BikeCheck app.",
+    "openInApp": "Open in the app",
+    "loadFailedTitle": "The page could not be loaded",
+    "loadFailedBody": "Try again in a moment."
   }
 }

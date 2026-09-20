@@ -1,11 +1,14 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query, Res } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ResponseProfileDto } from './dto/response-profile.dto';
-import { ResponseProfileGarageDto } from './dto/response-profile-garage.dto';
+import { ResponseProfileGarageDto, ResponsePublicProfileGarageDto } from './dto/response-profile-garage.dto';
 import { ResponseProfileBikeDto, ResponseProfileServicesDto } from './dto/response-profile-bike.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('profiles')
 export class ProfileController {
@@ -31,6 +34,24 @@ export class ProfileController {
   @Patch('me')
   async updateMine(@CurrentUser('userId') userId: string, @Body() dto: UpdateProfileDto): Promise<ResponseProfileDto> {
     return await this.profileService.updateMine(Number(userId), dto);
+  }
+
+  // ---------- GET somebody's garage, on the web (no auth) ----------
+  // The one read that counts a view; the throttler answers 429 before it, so a burst does
+  // not. `public` is a reserved handle, so this can never shadow a garage.
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Public()
+  @ApiOperation({ summary: "A Public Profile's garage for the web page: open only while PUBLIC" })
+  @ApiResponse({ status: 200, type: ResponsePublicProfileGarageDto })
+  @ApiResponse({ status: 404, description: 'Off, followers only, no profile or a handle nobody holds - one answer' })
+  @Get('public/:handle')
+  async readPublic(
+    @Param('handle') handle: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ResponsePublicProfileGarageDto> {
+    // Set before the read so the 404 is never cached either: Off takes effect on the next request.
+    res.setHeader('Cache-Control', 'no-store');
+    return await this.profileService.readPublic(handle);
   }
 
   // ---------- GET somebody's garage, in the app ----------

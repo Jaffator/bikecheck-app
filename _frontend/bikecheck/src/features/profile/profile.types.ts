@@ -122,6 +122,12 @@ export interface ProfileGarageResponse {
   garage: ProfileGarage | null;
 }
 
+// Mirrors ResponsePublicProfileGarageDto (GET /profiles/public/:handle): the same shape with
+// the garage always on it - whatever the web rule closes is a 404, never a header.
+export interface PublicProfileGarageResponse extends ProfileGarageResponse {
+  garage: ProfileGarage;
+}
+
 // A catalogue entry: the key to translate, the stored name when it is the owner's own.
 export interface ProfileCatalogueName {
   i18n_key: string | null;

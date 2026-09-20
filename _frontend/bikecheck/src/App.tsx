@@ -27,6 +27,8 @@ import { Legal } from "@/features/legal_page/Legal";
 import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";
 import { UserProfile } from "@/features/profile_page/UserProfile";
 import { UserProfileBike } from "@/features/profile_page/UserProfileBike";
+import { PublicProfile } from "@/features/profile_page/PublicProfile";
+import { PublicProfileBike } from "@/features/profile_page/PublicProfileBike";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
@@ -39,6 +41,10 @@ function App(): ReactElement {
       {/* Public routes remain outside the authentication gate. A share link opens the
           report and nothing else: no nav, no tab bar, no session fetch. */}
       <Route path="/r/:token" element={<PublicReport />} />
+      {/* Somebody's garage the way a link in a chat opens it: no session, no shell, the
+          design's own look. Every open counts a view, so the page is read once per load. */}
+      <Route path="/u/:handle" element={<PublicProfile />} />
+      <Route path="/u/:handle/:bikeId" element={<PublicProfileBike />} />
       {/* The registration checkbox links to the terms, so they have to open without a
           session. Logged in, the same route serves the Settings rows. */}
       <Route path="/legal/:document" element={<Legal />} />

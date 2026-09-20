@@ -29,6 +29,14 @@ interface WhereUnique {
   handle?: string;
 }
 
+// What the view counter writes: the count bumped, the moment, and updated_at pinned so
+// Last Updated stays where it was.
+interface ProfileUpdateData {
+  view_count?: number | { increment: number };
+  last_viewed_at?: Date | null;
+  updated_at?: Date;
+}
+
 // The moments a garage can last have changed at, one per source, so a test can say which
 // one Last Updated has to pick.
 const PROFILE_UPDATED = new Date('2026-09-01T00:00:00.000Z');
@@ -247,6 +255,25 @@ describe('ProfileService', () => {
           return Promise.resolve(next);
         },
       ),
+      // Emulates @updatedAt: the moment moves on every write unless the write pins it.
+      update: jest.fn(({ where, data }: { where: WhereUnique; data: ProfileUpdateData }) => {
+        const existing = where.user_id !== undefined ? table.get(where.user_id) : findByHandle(where.handle ?? '');
+        if (!existing) return Promise.reject(new Error('Record to update not found'));
+        const bump = data.view_count;
+        const next: ProfileRow = {
+          ...existing,
+          view_count:
+            bump === undefined
+              ? existing.view_count
+              : typeof bump === 'number'
+                ? bump
+                : existing.view_count + bump.increment,
+          last_viewed_at: data.last_viewed_at === undefined ? existing.last_viewed_at : data.last_viewed_at,
+          updated_at: data.updated_at ?? NOW,
+        };
+        table.set(existing.user_id, next);
+        return Promise.resolve(next);
+      }),
     },
     users: { findUnique: jest.fn() },
     bikes: {
@@ -1028,6 +1055,105 @@ describe('ProfileService', () => {
       expect(page).not.toContain('user_id');
       expect(page).not.toContain('stranger');
       expect(page).not.toContain('Strangers bike');
+    });
+  });
+
+  describe('readPublic - the web rule', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seedBike({ id: 1 });
+    });
+
+    it('PUBLIC: opens with no session - the owner in the header, the garage as the app reads it', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      const page = await service.readPublic('jaffa');
+
+      expect(page).toMatchObject({
+        owner: { handle: 'jaffa', name: 'Jarda Novák', avatar_url: 'https://lh3.googleusercontent.com/jarda' },
+        visibility: 'PUBLIC',
+        relation: 'NONE',
+      });
+      expect(page.garage.bikes.map((bike) => bike.id)).toEqual([1]);
+      expect(page.garage).toEqual((await service.read('jaffa', OTHER_ID)).garage);
+    });
+
+    it('FOLLOWERS, OFF and an unknown handle answer one identical 404', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seed({ user_id: OTHER_ID, handle: 'quiet', visibility: profile_visibility.OFF });
+
+      const answers = await Promise.all(
+        ['jaffa', 'quiet', 'nobody'].map((handle) => service.readPublic(handle).catch((error: unknown) => error)),
+      );
+
+      for (const answer of answers) {
+        expect(answer).toBeInstanceOf(NotFoundException);
+        expect((answer as HttpException).getResponse()).toEqual((answers[0] as HttpException).getResponse());
+      }
+    });
+
+    it('answers the same 404 as the in-app route, so the two cannot be told apart either', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+
+      const web = await service.readPublic('jaffa').catch((error: unknown) => error);
+      const app = await service.read('jaffa', OTHER_ID).catch((error: unknown) => error);
+
+      expect((web as HttpException).getResponse()).toEqual((app as HttpException).getResponse());
+    });
+
+    it('matches the handle whatever its case', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+
+      expect((await service.readPublic('JAFFA')).owner.handle).toBe('jaffa');
+    });
+  });
+
+  describe('readPublic - the view', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seedBike({ id: 1 });
+    });
+
+    it('counts one view per open and stamps the moment', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, view_count: 3 });
+
+      await service.readPublic('jaffa');
+      await service.readPublic('JAFFA');
+
+      expect((await service.getMine(OWNER_ID)).stats.views).toBe(5);
+      expect(table.get(OWNER_ID)?.last_viewed_at).toBeInstanceOf(Date);
+    });
+
+    it('a closed profile counts nothing', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS, view_count: 3 });
+
+      await expect(service.readPublic('jaffa')).rejects.toBeInstanceOf(NotFoundException);
+
+      expect((await service.getMine(OWNER_ID)).stats.views).toBe(3);
+      expect(table.get(OWNER_ID)?.last_viewed_at).toBeNull();
+    });
+
+    it('does not move Last Updated', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, updated_at: PROFILE_UPDATED });
+      bikesTable[0].updated_at = new Date('2026-08-01T00:00:00.000Z');
+
+      await service.readPublic('jaffa');
+      const again = await service.readPublic('jaffa');
+
+      expect(again.garage.updated_at).toBe(PROFILE_UPDATED.toISOString());
+      expect(table.get(OWNER_ID)?.updated_at).toBe(PROFILE_UPDATED);
+    });
+
+    it('the in-app reads count nothing: the garage, the bike and its older Services', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, view_count: 3 });
+
+      await service.read('jaffa', OTHER_ID);
+      await service.read('jaffa', OWNER_ID);
+      await service.readBike('jaffa', 1, OTHER_ID);
+      await service.readBikeServices('jaffa', 1, OTHER_ID, 20, 0);
+
+      expect((await service.getMine(OWNER_ID)).stats.views).toBe(3);
+      expect(table.get(OWNER_ID)?.last_viewed_at).toBeNull();
     });
   });
 
