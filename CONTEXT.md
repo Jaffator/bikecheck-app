@@ -294,14 +294,15 @@ its Shared Bikes, their mounted components and their Services. Reading the page 
 _Avoid_: Modified, last activity, last seen
 
 **Follower**:
-An account allowed to open a Followers-only profile, once the owner has accepted its Follow
-Request. Nobody is one until Follow (PRD 2) lands; until then a Followers-only profile opens for its
-owner alone.
+An account whose Follow Request the owner accepted, or one that followed a Public profile — there
+it takes at once. May open a Followers-only profile inside the app, for as long as the owner keeps
+it: the owner may remove a Follower at any time, and the Follower is told nothing.
 _Avoid_: Friend, subscriber, contact
 
 **Follow Request**:
 One account asking to become a Follower of another; pending until the owner accepts or refuses it.
-A Public profile needs none — following it is immediate.
+A Public profile needs none — following it is immediate, and a profile turning Public accepts every
+request still waiting.
 _Avoid_: Friend request, invitation, subscription
 
 **Discoverable**:

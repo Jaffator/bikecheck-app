@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountEventsService } from '../account-events/account-events.service';
+import { NotificationService } from '../notification/notification.service';
 import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
 import { Prisma, users as UserFull } from '@prisma/client';
@@ -20,6 +21,7 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accountEvents: AccountEventsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // Returns null when not found — every caller does its own null handling
@@ -195,14 +197,25 @@ export class UserService {
   // cascade would ever reach it. It is cleared here rather than left as the rider's data
   // outliving the rider.
   async deleteAccount(userId: number): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    const owners = await this.prisma.$transaction(async (tx) => {
       // The one thing kept: that a rider left, and after how long. Read before the row goes.
       const user = await tx.users.findUnique({ where: { id: userId }, select: { email_verified_at: true } });
+      // The cascade takes my requests, but each owner's `follow_request` badge is theirs and
+      // would stay lit for an account that is gone. Read here, while the rows still exist.
+      const waiting = await tx.follows.findMany({
+        where: { follower_id: userId, status: 'PENDING' },
+        select: { followed_id: true },
+      });
       await tx.strava_pending_activities.deleteMany({ where: { user_id: userId } });
       await tx.bikes.deleteMany({ where: { user_id: userId } });
       await tx.users.delete({ where: { id: userId } });
       if (user?.email_verified_at) await this.accountEvents.recordDeleted(user.email_verified_at, tx);
+      return waiting.map((row) => row.followed_id);
     });
+    // Only once the delete committed: a badge dropped for a delete that rolled back would lie.
+    for (const ownerId of owners) {
+      await this.notificationService.resolveByDedupKey(ownerId, `follow_request:${String(userId)}`);
+    }
   }
 
   async updateUserProfile(id: number, dto: UpdateUserDto): Promise<UserFull> {

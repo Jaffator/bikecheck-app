@@ -8,11 +8,14 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UpdateUserDto } from './dto/user.dtos';
 import { AccountEventsService } from '../account-events/account-events.service';
+import { NotificationService } from '../notification/notification.service';
 
 const USER_ID = 7;
 
 // The anonymous statistics row (ADR 0028, revised); what is written is asserted, not stored.
 const mockAccountEvents = { recordVerified: jest.fn(), recordDeleted: jest.fn() };
+// The one call deletion makes outside its transaction; asserted, never stored.
+const mockNotifications = { resolveByDedupKey: jest.fn() };
 
 // What Prisma throws when a conditional `update` finds no row to update (P2025).
 function recordNotFound(): Prisma.PrismaClientKnownRequestError {
@@ -30,14 +33,22 @@ describe('UserService account deletion', () => {
     strava_pending_activities: { deleteMany: jest.fn() },
     bikes: { deleteMany: jest.fn() },
     users: { delete: jest.fn(), findUnique: jest.fn().mockResolvedValue({ email_verified_at: VERIFIED_AT }) },
+    follows: { findMany: jest.fn().mockResolvedValue([]) },
   };
+
+  // Fires once the transaction body resolved: the mock's commit, for ordering assertions.
+  const committed = jest.fn();
 
   const mockPrisma = {
     bikes: { count: jest.fn() },
     rides: { count: jest.fn() },
     events_bikes: { count: jest.fn() },
     reports: { count: jest.fn() },
-    $transaction: jest.fn((run: (client: typeof tx) => Promise<void>) => run(tx)),
+    $transaction: jest.fn(async <T>(run: (client: typeof tx) => Promise<T>): Promise<T> => {
+      const result = await run(tx);
+      committed();
+      return result;
+    }),
   };
 
   beforeEach(async () => {
@@ -47,6 +58,7 @@ describe('UserService account deletion', () => {
         UserService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
+        { provide: NotificationService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -161,6 +173,58 @@ describe('UserService account deletion', () => {
 
       expect(mockAccountEvents.recordDeleted).not.toHaveBeenCalled();
     });
+
+    // The cascade takes my requests with the row, but the owners' `follow_request` rows
+    // are theirs and would hold their badge forever. Read inside the transaction, before
+    // the row goes; resolved only after it committed, so a rolled-back delete drops no badge.
+    describe('requests still waiting on other owners', () => {
+      const OWNER_A = 21;
+      const OWNER_B = 22;
+
+      it('reads the owners through the transaction, before the user row goes', async () => {
+        tx.follows.findMany.mockResolvedValueOnce([{ followed_id: OWNER_A }, { followed_id: OWNER_B }]);
+
+        await service.deleteAccount(USER_ID);
+
+        expect(tx.follows.findMany).toHaveBeenCalledWith({
+          where: { follower_id: USER_ID, status: 'PENDING' },
+          select: { followed_id: true },
+        });
+        const readCall = tx.follows.findMany.mock.invocationCallOrder[0];
+        const deleteCall = tx.users.delete.mock.invocationCallOrder[0];
+        expect(readCall).toBeLessThan(deleteCall);
+      });
+
+      it('drops the badge for me on each owner, once, after the transaction committed', async () => {
+        tx.follows.findMany.mockResolvedValueOnce([{ followed_id: OWNER_A }, { followed_id: OWNER_B }]);
+
+        await service.deleteAccount(USER_ID);
+
+        expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledTimes(2);
+        expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_A, `follow_request:${String(USER_ID)}`);
+        expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_B, `follow_request:${String(USER_ID)}`);
+        const commitCall = committed.mock.invocationCallOrder[0];
+        for (const resolveCall of mockNotifications.resolveByDedupKey.mock.invocationCallOrder) {
+          expect(resolveCall).toBeGreaterThan(commitCall);
+        }
+      });
+
+      it('resolves nothing when no request of mine is waiting', async () => {
+        await service.deleteAccount(USER_ID);
+
+        expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+      });
+
+      // The account is still there, so its requests still stand and the badges are right.
+      it('resolves nothing when the delete throws', async () => {
+        tx.follows.findMany.mockResolvedValueOnce([{ followed_id: OWNER_A }, { followed_id: OWNER_B }]);
+        tx.users.delete.mockRejectedValueOnce(new Error('connection lost'));
+
+        await expect(service.deleteAccount(USER_ID)).rejects.toThrow('connection lost');
+
+        expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+      });
+    });
   });
 });
 
@@ -182,6 +246,7 @@ describe('UserService registration', () => {
         UserService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
+        { provide: NotificationService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -301,6 +366,7 @@ describe('UserService createUserLocal', () => {
         UserService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
+        { provide: NotificationService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -362,6 +428,7 @@ describe('UserService Google sign-in', () => {
         UserService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
+        { provide: NotificationService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -481,6 +548,7 @@ describe('UserService email verification', () => {
         UserService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
+        { provide: NotificationService, useValue: mockNotifications },
       ],
     }).compile();
 
@@ -527,6 +595,7 @@ describe('UserService profile update', () => {
         UserService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
+        { provide: NotificationService, useValue: mockNotifications },
       ],
     }).compile();
 
