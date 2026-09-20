@@ -339,7 +339,9 @@ will not finish. **[reasoning]**
 
 Ordered. Roughly two evenings for steps 1–5. **[reasoning]**
 
-**1. Write a production backend Dockerfile — the current one cannot ship.**
+**1. Write a production backend Dockerfile — the current one cannot ship.** *Done:
+`_backend/Dockerfile.prod` (`--build-arg APP=monolith|strava-service`; Debian with Playwright's Chromium
+for the monolith, migrations run from the compose `command`).*
 `_backend/Dockerfile` is a dev image: `node:22-alpine`, `npx prisma db push && npm run start:dev`.
 Three things are wrong for production:
 
@@ -378,20 +380,27 @@ next to the debug fingerprint, or the `/verify-email` App Link will not verify f
 Keep that file plain valid JSON — no comments, no placeholder entries — a malformed statement fails
 `autoVerify` for the whole host.
 
-**4. Add a `docker-compose.prod.yml` + Caddyfile.** Keep the two Postgres services and Redis as they
+**4. Add a `docker-compose.prod.yml` + Caddyfile.** *Done: `docker-compose.prod.yml` at the repo root,
+`docker/Caddyfile`, `.env.production.example`.* Keep the two Postgres services and Redis as they
 are; drop Loki and Grafana; add the two app services and Caddy. Sketch:
 
 ```
 bikecheck.cloud {
-    handle_path /api/* { reverse_proxy monolith:3000 }
-    handle_path /strava/* { reverse_proxy strava-service:3002 }
-    handle { root * /srv/dist; try_files {path} /index.html; file_server }
+    encode gzip
+    @preview path /u/* /r/*
+    handle @preview { rewrite * /api/preview{uri}; reverse_proxy monolith:3000 }
+    handle /api/* { reverse_proxy monolith:3000 }
+    handle /strava/* { reverse_proxy strava-service:3002 }
+    handle { root * /srv/spa; try_files {path} /index.html; file_server }
 }
 ```
 
-Notes: keep the SPA fallback (`try_files … /index.html`) or `/r/:token` 404s; keep the `/api` prefix
-because `main.ts` sets `setGlobalPrefix('api')`; and **do not expose Bull Board (`/queues`) or
-Swagger (`/api` root) publicly** without auth. Caddy does TLS by itself given DNS and ports 80/443
+Notes: `handle`, not `handle_path` — `handle_path` strips the matched prefix, and both apps expect it
+(`setGlobalPrefix('api')` in `main.ts`, `@Controller('strava')` in the strava-service). Keep the SPA
+fallback (`try_files … /index.html`) or `/r/:token` 404s; and **do not expose Bull Board
+(`/api/queues` — the global prefix applies) or Swagger (`/api` root) publicly** without auth: Swagger is
+skipped under `NODE_ENV=production` in `main.ts`, Bull Board sits behind Caddy `basic_auth`. Caddy does
+TLS by itself given DNS and ports 80/443
 ([automatic HTTPS](https://caddyserver.com/docs/automatic-https)).
 
 **5. Point Strava at the real URL.** Delete the ngrok subscription and create a new one against

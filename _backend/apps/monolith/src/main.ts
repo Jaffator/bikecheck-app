@@ -34,7 +34,8 @@ async function bootstrap(): Promise<void> {
         return `${cleanKey} ${methodKey}`;
       },
     });
-  SwaggerModule.setup('api', app, documentFactory);
+  // The API map (/api, /api-json) is a dev tool; the public host must not serve it.
+  if (process.env.NODE_ENV !== 'production') SwaggerModule.setup('api', app, documentFactory);
 
   app.useGlobalPipes(
     new ValidationPipe({

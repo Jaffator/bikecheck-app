@@ -1,0 +1,46 @@
+# Production edge: TLS, the SPA and the two Nest apps on one origin (docs/research/hosting.md §5).
+# Env: PUBLIC_HOST, OPS_USER, OPS_PASSWORD_HASH - see .env.production.example.
+{$PUBLIC_HOST} {
+	# Facebook's crawler accepts only gzip/deflate.
+	encode gzip
+
+	# Link crawlers ask for the page URL; the OG-tagged shell is a Nest endpoint.
+	@preview path /u/* /r/*
+	handle @preview {
+		rewrite * /api/preview{uri}
+		reverse_proxy monolith:3000
+	}
+
+	# Bull Board sits under the api prefix with no auth of its own.
+	@ops path /api/queues /api/queues/*
+	basic_auth @ops {
+		{$OPS_USER} {$OPS_PASSWORD_HASH}
+	}
+
+	# `handle`, not `handle_path`: Nest sets the `api` global prefix and expects it on the wire.
+	handle /api/* {
+		# The AI chat streams NDJSON on one held connection; never buffer it.
+		reverse_proxy monolith:3000 {
+			flush_interval -1
+		}
+	}
+
+	# Only what Strava itself calls: the webhook and the OAuth redirect. Internal routes stay inside.
+	@strava path /strava/webhook /strava/exchange_token
+	handle @strava {
+		reverse_proxy strava-service:3002
+	}
+
+	# Everything else is the SPA; unknown paths fall back to index.html so client routes load.
+	handle {
+		root * /srv/spa
+		route {
+			try_files {path} /index.html
+			@shell path /index.html
+			header @shell Cache-Control "no-store"
+			@hashed path /assets/*
+			header @hashed Cache-Control "public, max-age=31536000, immutable"
+			file_server
+		}
+	}
+}
