@@ -139,7 +139,7 @@ function nextServicesOffset(
   return loaded < lastPage.total_count ? loaded : undefined;
 }
 
-// One confirm in the share drawer. The settings go first: a refused handle must leave the
+// One change in the share drawer. The settings go first: a refused handle must leave the
 // bike switches as they were. Both caches are read again whatever the outcome, so a save
 // that failed halfway still shows what actually landed.
 export function useSaveSharing(): UseMutationResult<Profile, Error, SaveSharingInput> {
@@ -148,6 +148,8 @@ export function useSaveSharing(): UseMutationResult<Profile, Error, SaveSharingI
   return useMutation({
     mutationFn: async ({ profile, bikes }: SaveSharingInput) => {
       const saved = await updateMyProfile(profile);
+      // Seeded at once so Kopírovat / Otevřít follow the switch without waiting for a refetch.
+      queryClient.setQueryData(PROFILE_ME_QUERY_KEY, saved);
       await Promise.all(bikes.map((bike) => updateBike({ id: bike.id, bike: { is_shared: bike.is_shared }, image: null })));
       return saved;
     },

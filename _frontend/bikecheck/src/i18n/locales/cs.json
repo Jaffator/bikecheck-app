@@ -1065,7 +1065,6 @@
     "shareCostsHint": "Cena za servis, měsíční součty i útrata",
     "sectionBikes": "Kola",
     "noBikes": "Zatím žádné kolo.",
-    "save": "Uložit",
     "saveFailed": "Nastavení se nepodařilo uložit. Zkus to znovu.",
     "renameTitle": "Změnit adresu?",
     "renameBody": "Starý odkaz /u/{{handle}} přestane fungovat hned. Komu jsi ho poslal, tomu se stránka už neotevře.",

@@ -1015,7 +1015,6 @@
     "shareCostsHint": "Cost per service, monthly sums and total spend",
     "sectionBikes": "Bikes",
     "noBikes": "No bike yet.",
-    "save": "Save",
     "saveFailed": "The settings could not be saved. Try again.",
     "renameTitle": "Change the address?",
     "renameBody": "The old link /u/{{handle}} stops working right away. Anyone you sent it to will not get the page.",

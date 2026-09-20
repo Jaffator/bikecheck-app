@@ -1,8 +1,7 @@
 // The share drawer: one segmented control decides the state, under it the address, what
-// goes out and which bikes - genuinely disabled while the profile is Off. Nothing is
-// written until the owner confirms; closing discards what was typed.
+// goes out and which bikes. Every change saves at once; the handle saves on leaving the field.
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Box, Button, Center, Drawer, Group, Image, Loader, SegmentedControl, Stack, Text } from "@mantine/core";
+import { Box, Center, Drawer, Group, Image, Loader, SegmentedControl, Stack, Text } from "@mantine/core";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -13,7 +12,14 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { handleError, handleErrorFromApi, profileUrl } from "../handle";
 import { useMyProfile, useSaveSharing } from "../profile.queries";
-import { PROFILE_VISIBILITIES, type HandleErrorCode, type Profile, type ProfileVisibility } from "../profile.types";
+import {
+  PROFILE_VISIBILITIES,
+  type HandleErrorCode,
+  type Profile,
+  type ProfileVisibility,
+  type SharedBikeChange,
+  type UpdateProfilePayload,
+} from "../profile.types";
 import { VISIBILITY_HINT_KEY, VISIBILITY_LABEL_KEY } from "../profileVisibility";
 import { HandleField } from "./HandleField";
 import { ShareSwitchRow } from "./ShareSwitchRow";
@@ -62,7 +68,7 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
   const { data: bikes } = useBikes();
   const navigate = useNavigate();
   const location = useLocation();
-  // The form remounts per opening to discard a cancelled edit, so the sheet mounts closed
+  // The form remounts per opening to start from what is saved, so the sheet mounts closed
   // and opens on the next frame or Mantine skips the slide (docs/conventions/drawers.md).
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -115,7 +121,7 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
       }}
     >
       {profile && bikes ? (
-        <ShareForm profile={profile} bikes={bikes} onSaved={onClose} onPreview={preview} />
+        <ShareForm profile={profile} bikes={bikes} onPreview={preview} />
       ) : (
         <Center py="xl">
           <Loader type="oval" color="primary.6" />
@@ -132,14 +138,22 @@ interface ShareSwitches {
   costs: boolean;
 }
 
+function sharePayload(shares: ShareSwitches): UpdateProfilePayload {
+  return {
+    share_components: shares.components,
+    share_setup: shares.setup,
+    share_history: shares.history,
+    share_costs: shares.costs,
+  };
+}
+
 interface ShareFormProps {
   profile: Profile;
   bikes: Bike[];
-  onSaved: () => void;
   onPreview: (handle: string) => void;
 }
 
-function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): ReactElement {
+function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement {
   const { t } = useTranslation();
   const save = useSaveSharing();
   const [visibility, setVisibility] = useState<ProfileVisibility>(profile.visibility);
@@ -170,42 +184,52 @@ function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): Reac
     setHandle(next);
   }
 
+  // The first save must carry a handle (the row needs one); a rename only lands via saveHandle.
+  function persist(overrides: UpdateProfilePayload, changedBikes: SharedBikeChange[] = []): void {
+    const carriesHandle = !renaming && error === null;
+    save.mutate(
+      {
+        profile: { ...(carriesHandle ? { handle } : {}), visibility, ...sharePayload(shares), ...overrides },
+        bikes: changedBikes,
+      },
+      { onError: (failure) => setRefusedFor(handleErrorFromApi(failure)) },
+    );
+  }
+
+  function changeVisibility(next: ProfileVisibility): void {
+    setVisibility(next);
+    persist({ visibility: next });
+  }
+
   function setShare(key: keyof ShareSwitches, checked: boolean): void {
-    setShares((current) => ({ ...current, [key]: checked }));
+    const next = { ...shares, [key]: checked };
+    setShares(next);
+    persist(sharePayload(next));
+  }
+
+  function setBikeShared(id: number, checked: boolean): void {
+    setSharedBikes((current) => ({ ...current, [id]: checked }));
+    persist({}, [{ id, is_shared: checked }]);
   }
 
   // A rename kills the old link the moment it lands, so it is asked about first.
-  function submit(): void {
+  function saveHandle(): void {
+    if (error !== null || handle === profile.handle) return;
     if (renaming) {
       setConfirmingRename(true);
       return;
     }
-    persist();
+    persist({ handle });
   }
 
-  function persist(): void {
+  function confirmRename(): void {
     setConfirmingRename(false);
-    const changedBikes = bikes
-      .filter((bike) => sharedBikes[bike.id] !== bike.is_shared)
-      .map((bike) => ({ id: bike.id, is_shared: sharedBikes[bike.id] }));
+    persist({ handle });
+  }
 
-    save.mutate(
-      {
-        profile: {
-          handle,
-          visibility,
-          share_components: shares.components,
-          share_setup: shares.setup,
-          share_history: shares.history,
-          share_costs: shares.costs,
-        },
-        bikes: changedBikes,
-      },
-      {
-        onSuccess: onSaved,
-        onError: (failure) => setRefusedFor(handleErrorFromApi(failure)),
-      },
-    );
+  function cancelRename(): void {
+    setConfirmingRename(false);
+    setHandle(profile.handle ?? "");
   }
 
   return (
@@ -218,7 +242,7 @@ function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): Reac
           withItemsBorders={false}
           color="primary.6"
           value={visibility}
-          onChange={(value) => setVisibility(value as ProfileVisibility)}
+          onChange={(value) => changeVisibility(value as ProfileVisibility)}
           data={PROFILE_VISIBILITIES.map((value) => ({ value, label: t(VISIBILITY_LABEL_KEY[value]) }))}
           classNames={{ label: "data-[active]:!text-black data-[active]:font-semibold" }}
           styles={{ indicator: { backgroundColor: "var(--mantine-color-primary-6)" } }}
@@ -232,6 +256,7 @@ function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): Reac
         <HandleField
           handle={handle}
           onChange={changeHandle}
+          onCommit={saveHandle}
           error={error}
           origin={profile.public_origin}
           visibility={visibility}
@@ -285,7 +310,7 @@ function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): Reac
             label={bikeTitle(bike)}
             checked={sharedBikes[bike.id]}
             disabled={off}
-            onChange={(checked) => setSharedBikes((current) => ({ ...current, [bike.id]: checked }))}
+            onChange={(checked) => setBikeShared(bike.id, checked)}
             leading={<BikeThumb bike={bike} dimmed={off || !sharedBikes[bike.id]} />}
           />
         ))}
@@ -296,29 +321,16 @@ function ShareForm({ profile, bikes, onSaved, onPreview }: ShareFormProps): Reac
         )}
       </Section>
 
-      {/* The form stays open on failure, so nothing set is lost. */}
       {save.isError && refusedFor === null && (
         <Text fz={13} c="red">
           {t("sharing.saveFailed")}
         </Text>
       )}
 
-      <Button
-        variant="filled"
-        color="primary.6"
-        c="textDark.6"
-        radius="md"
-        loading={save.isPending}
-        disabled={error !== null}
-        onClick={submit}
-      >
-        {t("sharing.save")}
-      </Button>
-
       <ConfirmModal
         opened={confirmingRename}
-        onCancel={() => setConfirmingRename(false)}
-        onConfirm={persist}
+        onCancel={cancelRename}
+        onConfirm={confirmRename}
         title={t("sharing.renameTitle")}
         body={t("sharing.renameBody", { handle: profile.handle ?? "" })}
         cancelLabel={t("sharing.renameCancel")}

@@ -28,6 +28,8 @@ const HANDLE_INPUT_STYLES = {
 interface HandleFieldProps {
   handle: string;
   onChange: (handle: string) => void;
+  // Leaving the field (or Enter) is when a typed handle is saved.
+  onCommit: () => void;
   error: HandleErrorCode | null;
   origin: string;
   visibility: ProfileVisibility;
@@ -41,6 +43,7 @@ interface HandleFieldProps {
 export function HandleField({
   handle,
   onChange,
+  onCommit,
   error,
   origin,
   visibility,
@@ -82,6 +85,10 @@ export function HandleField({
         value={handle}
         disabled={disabled}
         onChange={(event) => onChange(normalizeHandle(event.currentTarget.value))}
+        onBlur={onCommit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+        }}
         leftSection={
           <Text className="font-mono" fz={13} c={dim} pl={4}>
             /u/
