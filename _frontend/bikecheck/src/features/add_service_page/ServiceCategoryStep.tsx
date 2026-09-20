@@ -51,7 +51,6 @@ export function ServiceCategoryStep({ bikeId, onChoose }: ServiceCategoryStepPro
         </Text>
         <Button
           variant="outline"
-          color="secondary.6"
           radius="md"
           onClick={() => {
             navigate(`/bikes/${bikeId}`);

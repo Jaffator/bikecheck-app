@@ -217,7 +217,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
 
       {isPublished && (
         <Footer>
-          <Button variant="outline" color="text.8" radius="md" onClick={reset}>
+          <Button variant="outline" radius="md" onClick={reset}>
             {t("action.close")}
           </Button>
         </Footer>

@@ -10,14 +10,6 @@ export const PANEL: CSSProperties = {
   borderRadius: "1rem",
 };
 
-// A quiet button on the dark surface: Mantine's `default` variant paints white here, so it
-// wears the field surface ConfirmModal's Cancel wears instead.
-export const SECONDARY_BUTTON: CSSProperties = {
-  backgroundColor: "var(--mantine-color-cards-7)",
-  border: "1px solid var(--mantine-color-inputs-5)",
-  color: "var(--mantine-color-text-6)",
-};
-
 // The same fallback the header avatar wears: initials on the card colour.
 export const AVATAR_STYLE = {
   flexShrink: 0,

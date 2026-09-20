@@ -130,7 +130,7 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
                   </UnstyledButton>
 
                   <Group gap="sm" grow>
-                    <Button variant="outline" color="primary.6" radius="md" size="xs" onClick={() => setRestoring(bike)}>
+                    <Button variant="outline" radius="md" size="xs" onClick={() => setRestoring(bike)}>
                       {t("archive.unarchive")}
                     </Button>
                     <Button

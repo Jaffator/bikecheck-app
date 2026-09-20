@@ -273,7 +273,6 @@ export function BikeEdit(): ReactElement {
       <Group gap="sm" wrap="nowrap" mt="xs">
         <Button
           variant="outline"
-          color="var(--mantine-color-cards-2)"
           radius="md"
           onClick={() => navigate(-1)}
           style={{ flex: 1 }}

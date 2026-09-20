@@ -155,6 +155,19 @@ export const theme = createTheme({
   components: {
     // Disabled buttons sink into the card instead of Mantine's light-grey default.
     Button: Button.extend({
+      // An outline without a colour is the quiet secondary: neutral frame and text on the
+      // card, the accent left to the icon. A coloured outline (red.5 delete) keeps its colour.
+      vars: (_theme, props) => ({
+        root:
+          props.variant === "outline" && props.color === undefined
+            ? {
+                "--button-bg": "var(--mantine-color-cards-7)",
+                "--button-bd": "1px solid var(--mantine-color-inputs-5)",
+                "--button-color": "var(--mantine-color-text-6)",
+                "--button-hover": "var(--mantine-color-cards-5)",
+              }
+            : {},
+      }),
       styles: (_theme, props) => ({
         root: {
           "--mantine-color-disabled": "var(--mantine-color-cards-5)",

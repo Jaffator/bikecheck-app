@@ -57,6 +57,8 @@ export function HandleField({
   const linkEnabled = savedUrl !== null && error === null;
   const previewEnabled = onPreview !== null && error === null;
   const dim = disabled ? "text.9" : "var(--color-text-dim)";
+  // The one accent on a quiet button; gone with it when disabled.
+  const accent = linkEnabled ? "var(--mantine-color-primary-5)" : undefined;
 
   useEffect(() => {
     if (!copied) return;
@@ -108,22 +110,20 @@ export function HandleField({
       <Group gap="sm" grow wrap="nowrap">
         <Button
           variant="outline"
-          color="primary.5"
           radius="md"
           size="sm"
           disabled={!linkEnabled}
-          leftSection={copied ? <Check size={16} /> : <Copy size={16} />}
+          leftSection={copied ? <Check size={16} color={accent} /> : <Copy size={16} color={accent} />}
           onClick={() => void copy()}
         >
           {copied ? t("sharing.copied") : t("sharing.copy")}
         </Button>
         <Button
           variant="outline"
-          color="primary.5"
           radius="md"
           size="sm"
           disabled={!linkEnabled}
-          leftSection={<ExternalLink size={16} />}
+          leftSection={<ExternalLink size={16} color={accent} />}
           onClick={open}
         >
           {t("sharing.open")}

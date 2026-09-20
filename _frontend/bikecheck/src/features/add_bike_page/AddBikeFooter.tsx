@@ -69,7 +69,6 @@ export function AddBikeFooter({
         <>
           <Button
             variant="outline"
-            color="secondary.6"
             leftSection={<ChevronLeft size={14} />}
             onClick={onBack}
             style={{ flex: 1, height: "3rem" }}

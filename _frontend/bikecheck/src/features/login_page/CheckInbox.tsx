@@ -51,7 +51,6 @@ export function CheckInbox({ email, onBackToLogin }: CheckInboxProps): ReactElem
         <Button
           variant="outline"
           fullWidth
-          color="primary.6"
           radius="lg"
           style={{ height: "3rem" }}
           loading={resend.isPending}

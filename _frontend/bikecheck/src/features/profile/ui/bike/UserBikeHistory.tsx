@@ -16,7 +16,7 @@ import { useSeededName } from "@/i18n/useSeededName";
 import { formatCost } from "@/utils/money";
 import { useProfileBikeServices } from "../../profile.queries";
 import { monthSum } from "../../profileFormat";
-import { EYEBROW, SECONDARY_BUTTON } from "../../profileSurface";
+import { EYEBROW } from "../../profileSurface";
 import type { ProfileHistory, ProfileService } from "../../profile.types";
 import { UserBikeSectionTitle } from "./UserBikeSectionTitle";
 
@@ -68,8 +68,7 @@ export function UserBikeHistory({ handle, bikeId, history }: UserBikeHistoryProp
         <Button
           size="sm"
           radius="xl"
-          variant="default"
-          styles={{ root: SECONDARY_BUTTON }}
+          variant="outline"
           loading={older.isFetchingNextPage}
           onClick={() => void older.fetchNextPage()}
         >

@@ -135,7 +135,6 @@ export function ReportCard({ report, onRevoke, onDelete }: ReportCardProps): Rea
             )}
             <Button
               variant="outline"
-              color="secondary.7"
               radius="md"
               size="xs"
               leftSection={<Link2Off size={16} />}

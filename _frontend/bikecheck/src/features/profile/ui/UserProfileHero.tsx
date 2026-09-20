@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useTranslation } from "react-i18next";
 import { formatKm } from "../profileFormat";
-import { AVATAR_STYLE, PANEL, SECONDARY_BUTTON } from "../profileSurface";
+import { AVATAR_STYLE, PANEL } from "../profileSurface";
 import type { ProfileGarage, ProfileGarageResponse } from "../profile.types";
 import { VisibilityBadge } from "./VisibilityBadge";
 
@@ -52,9 +52,8 @@ export function UserProfileHero({ page, onOpenSharing }: UserProfileHeroProps): 
           <Button
             size="sm"
             radius="xl"
-            variant="default"
+            variant="outline"
             fullWidth
-            styles={{ root: SECONDARY_BUTTON }}
             rightSection={<ChevronRight size={14} />}
             onClick={onOpenSharing}
           >
