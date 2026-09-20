@@ -10,9 +10,8 @@ export interface FollowResponse {
   relation: FollowRelation;
 }
 
-// Where I stand with a person in a list: nothing, a waiting request, or following. PENDING
-// arrives with the request slice (#146); the type is whole already.
-export type FollowingRowRelation = "NONE" | "PENDING" | "FOLLOWING";
+// Where I stand with a person in a list: what the profile reads, less the one that is me.
+export type FollowingRowRelation = Exclude<ProfileRelation, "SELF">;
 
 // Mirrors FollowingRowDto: one person on my outgoing side - a search result or somebody I
 // follow. visibility lets the following list mark a profile that went Off.

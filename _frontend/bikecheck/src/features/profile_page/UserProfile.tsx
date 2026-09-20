@@ -51,7 +51,7 @@ export function UserProfile(): ReactElement {
 
       <UserProfileHero page={page} onOpenSharing={mine ? () => setSharing(true) : undefined} />
 
-      {page.garage === null && <ProfileLocked />}
+      {page.garage === null && <ProfileLocked handle={page.owner.handle} relation={page.relation} />}
 
       {page.garage?.bikes.map((bike) => (
         <UserProfileBikeCard key={bike.id} bike={bike} onOpen={() => void navigate(`/users/${handle}/${String(bike.id)}`)} />

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { profile_visibility } from '@prisma/client';
+import { PROFILE_RELATIONS, ProfileRelation } from '../../profile/dto/response-profile-garage.dto';
 
-// Where I stand with a person in a list: nothing, a waiting request, or following. Declared
-// whole here; PENDING is written by the request slice (#146).
-export const FOLLOWING_ROW_RELATIONS = ['NONE', 'PENDING', 'FOLLOWING'] as const;
-export type FollowingRowRelation = (typeof FOLLOWING_ROW_RELATIONS)[number];
+// Where I stand with a person in a list: what the profile reads, less the one that is me.
+export const FOLLOWING_ROW_RELATIONS = PROFILE_RELATIONS.filter((relation) => relation !== 'SELF');
+export type FollowingRowRelation = Exclude<ProfileRelation, 'SELF'>;
 
 // One person on my outgoing side - a search result or somebody I follow. Only what the app
 // names people by and what the row needs to draw itself: never the email, the Google id,

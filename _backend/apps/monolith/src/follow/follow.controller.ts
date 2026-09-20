@@ -32,7 +32,10 @@ export class FollowController {
   }
 
   // ---------- POST follow somebody ----------
-  @ApiOperation({ summary: 'Follow a Public profile by its handle; a row that already stands is answered as it is' })
+  @ApiOperation({
+    summary:
+      'Follow a Public profile or ask to follow a Followers-only one; a row that already stands is answered as it is',
+  })
   @ApiResponse({ status: 201, type: ResponseFollowDto })
   @ApiResponse({ status: 400, description: 'CANNOT_FOLLOW_SELF' })
   @ApiResponse({ status: 404, description: 'Off, no profile or a handle nobody holds - one answer for all' })
@@ -41,8 +44,8 @@ export class FollowController {
     return await this.followService.follow(Number(userId), handle);
   }
 
-  // ---------- DELETE stop following ----------
-  @ApiOperation({ summary: 'Stop following somebody; the same 204 with no row to remove' })
+  // ---------- DELETE withdraw or stop following ----------
+  @ApiOperation({ summary: 'Withdraw a request or stop following somebody; the same 204 with no row to remove' })
   @ApiResponse({ status: 204 })
   @Delete(':handle')
   @HttpCode(HttpStatus.NO_CONTENT)

@@ -2,7 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { follow_status, Prisma, public_profiles } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
-import { ResponseFollowDto } from './dto/response-follow.dto';
+import { NotificationType } from '../notification/notification-types.config';
+import { FollowRelation, ResponseFollowDto } from './dto/response-follow.dto';
 import { FollowingRowDto, FollowingRowRelation, ResponseFollowSearchDto } from './dto/response-following.dto';
 
 // Off, no row and a dead handle all answer with this, so a handle cannot be probed for
@@ -37,9 +38,22 @@ function pair(followerId: number, followedId: number): Prisma.followsWhereUnique
   return { follower_id_followed_id: { follower_id: followerId, followed_id: followedId } };
 }
 
-function relationOf(status: follow_status | undefined): FollowingRowRelation {
-  if (status === undefined) return 'NONE';
+// What a row that stands means from the follower's side.
+function standing(status: follow_status): FollowRelation {
   return status === 'ACCEPTED' ? 'FOLLOWING' : 'PENDING';
+}
+
+function relationOf(status: follow_status | undefined): FollowingRowRelation {
+  return status === undefined ? 'NONE' : standing(status);
+}
+
+// What the owner is told of a person: a follow that took, or an ask still waiting.
+type OwnerNotice = Extract<NotificationType, 'new_follower' | 'follow_request'>;
+
+// One key per person and notice, the same at creation and at resolve, so the badge drops
+// for the right asker.
+function noticeKey(type: OwnerNotice, followerId: number): string {
+  return `${type}:${String(followerId)}`;
 }
 
 @Injectable()
@@ -49,8 +63,8 @@ export class FollowService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  // Follow somebody by their Handle. A Public profile takes at once; a row that already
-  // stands is left as it is and answered, so a second tap changes nothing.
+  // Follow somebody by their Handle. A Public profile takes at once, a Followers-only one
+  // takes a Follow Request; a row that already stands is left as it is and answered.
   async follow(followerId: number, rawHandle: string): Promise<ResponseFollowDto> {
     const profile = await this.profileOf(rawHandle);
     if (!profile) throw new NotFoundException(PROFILE_UNAVAILABLE);
@@ -58,34 +72,37 @@ export class FollowService {
     if (profile.visibility === 'OFF') throw new NotFoundException(PROFILE_UNAVAILABLE);
 
     const existing = await this.prisma.follows.findUnique({ where: pair(followerId, profile.user_id) });
-    // ACCEPTED is the only status a row can hold until Follow Requests land (#146).
-    if (existing) return { relation: 'FOLLOWING' };
-
-    // A Followers-only profile takes a Follow Request, which is the request slice's (#146).
-    if (profile.visibility !== 'PUBLIC') throw new NotFoundException(PROFILE_UNAVAILABLE);
+    if (existing) return { relation: standing(existing.status) };
 
     const now = new Date();
+    const status: follow_status = profile.visibility === 'PUBLIC' ? 'ACCEPTED' : 'PENDING';
     await this.prisma.follows.create({
       data: {
         follower_id: followerId,
         followed_id: profile.user_id,
-        status: 'ACCEPTED',
+        status,
         created_at: now,
-        accepted_at: now,
+        accepted_at: status === 'ACCEPTED' ? now : null,
       },
     });
-    await this.tellNewFollower(profile.user_id, followerId);
+    await this.tellOwner(profile.user_id, followerId, status === 'ACCEPTED' ? 'new_follower' : 'follow_request');
 
-    return { relation: 'FOLLOWING' };
+    return { relation: standing(status) };
   }
 
-  // Stop following. No row, an unknown handle and a profile gone Off all end the same way:
-  // nothing stands, nobody is told.
+  // Withdraw a request or stop following. Nobody is told; a withdrawn request only takes
+  // the owner's ask off their badge. No row and an unknown handle end the same way.
   async unfollow(followerId: number, rawHandle: string): Promise<void> {
     const profile = await this.profileOf(rawHandle);
     if (!profile) return;
 
+    const existing = await this.prisma.follows.findUnique({ where: pair(followerId, profile.user_id) });
+    if (!existing) return;
+
     await this.prisma.follows.deleteMany({ where: { follower_id: followerId, followed_id: profile.user_id } });
+    if (existing.status === 'PENDING') {
+      await this.notificationService.resolveByDedupKey(profile.user_id, noticeKey('follow_request', followerId));
+    }
   }
 
   // ---------- Finding people ----------
@@ -192,9 +209,9 @@ export class FollowService {
     return await this.prisma.public_profiles.findUnique({ where: { handle } });
   }
 
-  // In-app only, once per follower ever (the dedup key). The follower is named as the app
-  // names people: handle only with a profile, name only when the account has one.
-  private async tellNewFollower(ownerId: number, followerId: number): Promise<void> {
+  // A new follower or a Follow Request, once per person ever (the dedup key). The person is
+  // named as the app names people: handle only with a profile, name only when the account has one.
+  private async tellOwner(ownerId: number, followerId: number, type: OwnerNotice): Promise<void> {
     const follower = await this.prisma.users.findUnique({
       where: { id: followerId },
       select: { name: true, public_profile: { select: { handle: true } } },
@@ -202,8 +219,8 @@ export class FollowService {
 
     await this.notificationService.create({
       userId: ownerId,
-      type: 'new_follower',
-      dedupKey: `new_follower:${String(followerId)}`,
+      type,
+      dedupKey: noticeKey(type, followerId),
       payload: {
         ...(follower?.public_profile && { handle: follower.public_profile.handle }),
         ...(follower?.name && { personName: follower.name }),

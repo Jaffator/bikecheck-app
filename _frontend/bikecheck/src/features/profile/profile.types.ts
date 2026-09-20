@@ -4,7 +4,7 @@ import type { TirePressureUnit } from "@/features/users/users.types";
 export const PROFILE_VISIBILITIES = ["OFF", "FOLLOWERS", "PUBLIC"] as const;
 export type ProfileVisibility = (typeof PROFILE_VISIBILITIES)[number];
 
-// Mirrors ProfileStatsDto. Requests read 0 until Follow Requests land (#146).
+// Mirrors ProfileStatsDto. Requests read 0 until the owner's side lands (#147).
 export interface ProfileStats {
   views: number;
   followers: number;
@@ -58,9 +58,9 @@ export interface SaveSharingInput {
   bikes: SharedBikeChange[];
 }
 
-// Where the viewer stands with the owner: the owner, an accepted follower, or nobody. A
-// waiting Follow Request (PENDING) arrives with #146.
-export type ProfileRelation = "SELF" | "NONE" | "FOLLOWING";
+// Where the viewer stands with the owner: the owner, nobody, a waiting Follow Request, or
+// an accepted follower.
+export type ProfileRelation = "SELF" | "NONE" | "PENDING" | "FOLLOWING";
 
 // Mirrors ProfileOwnerDto: the owner as the page names them, nothing else of the account.
 export interface ProfileOwner {

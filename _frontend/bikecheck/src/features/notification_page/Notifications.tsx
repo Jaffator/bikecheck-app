@@ -3,7 +3,7 @@ import { useEffect, type ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { BellOff, CircleQuestionMark, TriangleAlert, Users } from "lucide-react";
+import { BellOff, CircleQuestionMark, TriangleAlert, UserPlus, Users } from "lucide-react";
 import { PiPath } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import dayjs from "dayjs";
@@ -23,12 +23,14 @@ dayjs.extend(relativeTime);
 // carries the Rides mark, borrowed from the tab that owns the place. The ask gets a question
 // mark instead of a place: it is the one row that wants something back, and the only one
 // the badge goes on counting. A service reminder gets the warning sign, in the colour of
-// the band it reports. A new follower is people, plainly.
+// the band it reports. A new follower is people, plainly; an ask to follow is one person
+// at the door.
 const ICONS: Partial<Record<NotificationType, IconType>> = {
   strava_activity_saved: PiPath,
   strava_activity_unassigned: CircleQuestionMark,
   maintenance_due: TriangleAlert,
   new_follower: Users,
+  follow_request: UserPlus,
 };
 
 // Where each band begins, so the reminder wears the same colour the row on the card does.

@@ -273,6 +273,90 @@ describe('FollowService', () => {
     });
   });
 
+  describe('follow - a Followers-only profile', () => {
+    beforeEach(() => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.FOLLOWERS);
+    });
+
+    it('writes one PENDING row, not yet accepted, and answers PENDING', async () => {
+      const answer = await service.follow(ME, 'jaffa');
+
+      expect(answer).toEqual({ relation: 'PENDING' });
+      expect(follows).toHaveLength(1);
+      expect(follows[0]).toMatchObject({
+        follower_id: ME,
+        followed_id: OWNER_ID,
+        status: 'PENDING',
+        accepted_at: null,
+      });
+    });
+
+    it('asks the owner once: follow_request keyed on the asker, named by name and handle', async () => {
+      seedProfile(ME, 'petr', profile_visibility.PUBLIC);
+
+      await service.follow(ME, 'jaffa');
+
+      expect(mockNotifications.create).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.create).toHaveBeenCalledWith({
+        userId: OWNER_ID,
+        type: 'follow_request',
+        dedupKey: `follow_request:${String(ME)}`,
+        payload: { handle: 'petr', personName: 'Petr Dvořák' },
+      });
+    });
+
+    it('names an asker without a profile by name alone, and one without a name by handle alone', async () => {
+      await service.follow(ME, 'jaffa');
+      expect(mockNotifications.create).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'follow_request', payload: { personName: 'Petr Dvořák' } }),
+      );
+
+      follows.length = 0;
+      seedUser(ME, null);
+      seedProfile(ME, 'petr', profile_visibility.PUBLIC);
+      await service.follow(ME, 'jaffa');
+      expect(mockNotifications.create).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'follow_request', payload: { handle: 'petr' } }),
+      );
+    });
+
+    it('a second POST leaves the request as it is, asks nobody again, and answers PENDING', async () => {
+      await service.follow(ME, 'jaffa');
+      const [first] = follows;
+
+      const answer = await service.follow(ME, 'jaffa');
+
+      expect(answer).toEqual({ relation: 'PENDING' });
+      expect(follows).toEqual([first]);
+      expect(mockNotifications.create).toHaveBeenCalledTimes(1);
+    });
+
+    // The brake on request spam is the notification's own dedup: the service asks under the
+    // same key every time, and the owner is only ever pushed for the first.
+    it('a request withdrawn and made again is a new row asked under the same key', async () => {
+      await service.follow(ME, 'jaffa');
+      await service.unfollow(ME, 'jaffa');
+
+      const answer = await service.follow(ME, 'jaffa');
+
+      expect(answer).toEqual({ relation: 'PENDING' });
+      expect(follows).toHaveLength(1);
+      expect(follows[0].status).toBe('PENDING');
+      const keys = mockNotifications.create.mock.calls.map(([params]: [{ dedupKey: string }]) => params.dedupKey);
+      expect(keys).toEqual([`follow_request:${String(ME)}`, `follow_request:${String(ME)}`]);
+    });
+
+    it('a request that stands is answered PENDING whatever the profile turned to since', async () => {
+      await service.follow(ME, 'jaffa');
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.PUBLIC);
+
+      expect(await service.follow(ME, 'jaffa')).toEqual({ relation: 'PENDING' });
+      expect(follows).toHaveLength(1);
+      expect(follows[0].status).toBe('PENDING');
+      expect(mockNotifications.create).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('follow - refused', () => {
     it('my own handle answers 400 and writes nothing', async () => {
       await expect(service.follow(OWNER_ID, 'jaffa')).rejects.toBeInstanceOf(BadRequestException);
@@ -296,17 +380,6 @@ describe('FollowService', () => {
       expect(await off).toBeInstanceOf(NotFoundException);
       expect(await unknown).toBeInstanceOf(NotFoundException);
       expect((await off) as Error).toMatchObject({ message: ((await unknown) as Error).message });
-      expect(follows).toHaveLength(0);
-      expect(mockNotifications.create).not.toHaveBeenCalled();
-    });
-
-    // A Followers-only profile takes a Follow Request, which is the request slice's (#146);
-    // until it lands there is nothing here to answer with but the closed door.
-    it('FOLLOWERS answers 404 and writes nothing', async () => {
-      seedProfile(OWNER_ID, 'jaffa', profile_visibility.FOLLOWERS);
-
-      await expect(service.follow(ME, 'jaffa')).rejects.toBeInstanceOf(NotFoundException);
-
       expect(follows).toHaveLength(0);
       expect(mockNotifications.create).not.toHaveBeenCalled();
     });
@@ -371,8 +444,58 @@ describe('FollowService', () => {
     });
   });
 
-  // A row written straight into the table: a waiting request is the request slice's to
-  // make (#146), but the lists already have to read one back.
+  describe('withdraw - a waiting request', () => {
+    beforeEach(async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.FOLLOWERS);
+      await service.follow(ME, 'jaffa');
+      mockNotifications.create.mockClear();
+    });
+
+    it("removes the row and resolves the owner's ask, so the badge drops", async () => {
+      await service.unfollow(ME, 'jaffa');
+
+      expect(follows).toHaveLength(0);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_ID, `follow_request:${String(ME)}`);
+    });
+
+    it('tells nobody', async () => {
+      await service.unfollow(ME, 'jaffa');
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    it("resolves my key only, never another asker's", async () => {
+      seedUser(9, 'Third');
+      await service.follow(9, 'jaffa');
+
+      await service.unfollow(ME, 'jaffa');
+
+      expect(follows.map((row) => row.follower_id)).toEqual([9]);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_ID, `follow_request:${String(ME)}`);
+    });
+
+    it('works on a profile that went Off since - the request is mine to take back', async () => {
+      seedProfile(OWNER_ID, 'jaffa', profile_visibility.OFF);
+
+      await service.unfollow(ME, 'jaffa');
+
+      expect(follows).toHaveLength(0);
+      expect(mockNotifications.resolveByDedupKey).toHaveBeenCalledWith(OWNER_ID, `follow_request:${String(ME)}`);
+    });
+
+    it('a second withdrawal finds no row and resolves nothing more', async () => {
+      await service.unfollow(ME, 'jaffa');
+      mockNotifications.resolveByDedupKey.mockClear();
+
+      await expect(service.unfollow(ME, 'jaffa')).resolves.toBeUndefined();
+
+      expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
+    });
+  });
+
+  // A row written straight into the table, so a list test needs no round trip through follow().
   const seedFollow = (followerId: number, followedId: number, status: follow_status): void => {
     follows.push({
       follower_id: followerId,

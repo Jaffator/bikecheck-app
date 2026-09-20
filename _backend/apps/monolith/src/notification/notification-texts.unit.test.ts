@@ -95,3 +95,44 @@ describe('new_follower text', () => {
     expect(buildNotificationText('new_follower', 'en', {}).body).toBe('Someone now follows your garage.');
   });
 });
+
+// A Follow Request names the asker the same way; without a handle the parenthesis goes and
+// the sentence still reads whole.
+describe('follow_request text', () => {
+  it('names the asker with name and handle, in Czech', () => {
+    const text = buildNotificationText('follow_request', 'cs', { personName: 'Jarda Novák', handle: 'jaffa' });
+
+    expect(text.title).toBe('Nová žádost o sledování');
+    expect(text.body).toBe('Jarda Novák (@jaffa) chce sledovat tvoji garáž.');
+  });
+
+  it('names the asker with name and handle, in English', () => {
+    const text = buildNotificationText('follow_request', 'en', { personName: 'Jarda Novák', handle: 'jaffa' });
+
+    expect(text.title).toBe('New follow request');
+    expect(text.body).toBe('Jarda Novák (@jaffa) wants to follow your garage.');
+  });
+
+  it('drops the parenthesis when the asker has no handle', () => {
+    expect(buildNotificationText('follow_request', 'cs', { personName: 'Jarda Novák' }).body).toBe(
+      'Jarda Novák chce sledovat tvoji garáž.',
+    );
+    expect(buildNotificationText('follow_request', 'en', { personName: 'Jarda Novák' }).body).toBe(
+      'Jarda Novák wants to follow your garage.',
+    );
+  });
+
+  it('falls back to @handle when the asker has no name', () => {
+    expect(buildNotificationText('follow_request', 'cs', { handle: 'jaffa' }).body).toBe(
+      '@jaffa chce sledovat tvoji garáž.',
+    );
+    expect(buildNotificationText('follow_request', 'en', { handle: 'jaffa' }).body).toBe(
+      '@jaffa wants to follow your garage.',
+    );
+  });
+
+  it('still reads as a sentence with neither', () => {
+    expect(buildNotificationText('follow_request', 'cs', {}).body).toBe('Někdo chce sledovat tvoji garáž.');
+    expect(buildNotificationText('follow_request', 'en', {}).body).toBe('Someone wants to follow your garage.');
+  });
+});

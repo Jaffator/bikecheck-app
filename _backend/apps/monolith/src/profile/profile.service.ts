@@ -449,8 +449,8 @@ export class ProfileService {
     return rows.map((row) => toService(row, costs));
   }
 
-  // Where the viewer stands with the owner: the owner themself, an accepted follower, or
-  // nobody. The one place the profile reads the follows table for the read rule.
+  // Where the viewer stands with the owner: the owner themself, an accepted follower, a
+  // requester still waiting, or nobody. The one place the profile reads the follows table.
   private async relationOf(profile: public_profiles, viewerId: number | null): Promise<ProfileRelation> {
     if (profile.user_id === viewerId) return 'SELF';
     if (viewerId === null) return 'NONE';
@@ -458,10 +458,11 @@ export class ProfileService {
     const row = await this.prisma.follows.findUnique({
       where: { follower_id_followed_id: { follower_id: viewerId, followed_id: profile.user_id } },
     });
-    return row?.status === 'ACCEPTED' ? 'FOLLOWING' : 'NONE';
+    if (!row) return 'NONE';
+    return row.status === 'ACCEPTED' ? 'FOLLOWING' : 'PENDING';
   }
 
-  // Who follows me now: ACCEPTED rows toward me. Requests are the request slice's (#146).
+  // Who follows me now: ACCEPTED rows toward me. Requests are the owner's slice (#147).
   private async followerCount(userId: number): Promise<number> {
     return await this.prisma.follows.count({ where: { followed_id: userId, status: 'ACCEPTED' } });
   }
@@ -512,7 +513,8 @@ export class ProfileService {
   }
 }
 
-// The read rule on a profile that answered at all: OFF already 404'd to everyone but the owner.
+// The read rule on a profile that answered at all: OFF already 404'd to everyone but the
+// owner, and a request still waiting opens nothing.
 function mayReadGarage(profile: public_profiles, relation: ProfileRelation): boolean {
   if (relation === 'SELF' || profile.visibility === 'PUBLIC') return true;
   return profile.visibility === 'FOLLOWERS' && relation === 'FOLLOWING';

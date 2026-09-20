@@ -139,6 +139,16 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
       body: (payload) => `${personLabel(payload, 'Someone')} now follows your garage.`,
     },
   },
+  follow_request: {
+    cs: {
+      title: () => 'Nová žádost o sledování',
+      body: (payload) => `${personLabel(payload, 'Někdo')} chce sledovat tvoji garáž.`,
+    },
+    en: {
+      title: () => 'New follow request',
+      body: (payload) => `${personLabel(payload, 'Someone')} wants to follow your garage.`,
+    },
+  },
 };
 
 // "Jarda Novák (@jaffa)", or whichever half is known: a follower without a profile has no

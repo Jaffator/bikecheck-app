@@ -1,14 +1,14 @@
 // The one follow control, drawn from where I stand with the person and how their profile is
-// set: Sledovat on a Public profile takes at once; Sledujete asks before leaving. Shared by
-// the profile hero and every person row. Never drawn for myself.
+// set: Sledovat on a Public profile takes at once, Požádat on a Followers-only one sends a
+// request; Sledujete and Čeká ask before leaving. Shared by the profile hero and every
+// person row. Never drawn for myself.
 import { useState, type ReactElement } from "react";
 import { Button } from "@mantine/core";
-import { Check } from "lucide-react";
+import { Check, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import type { ProfileRelation, ProfileVisibility } from "@/features/profile/profile.types";
 import { useFollow, useUnfollow } from "../follow.queries";
-import type { FollowingRowRelation } from "../follow.types";
 
 const ICON_SIZE = 14;
 
@@ -16,7 +16,7 @@ interface FollowButtonProps {
   handle: string;
   visibility: ProfileVisibility;
   // The profile hero hands over what its page read, a person row what its list read.
-  relation: ProfileRelation | FollowingRowRelation;
+  relation: ProfileRelation;
   // Rows wear the small one; the profile hero the regular one.
   size?: "xs" | "sm";
 }
@@ -57,13 +57,39 @@ export function FollowButton({ handle, visibility, relation, size = "xs" }: Foll
     );
   }
 
-  // Požádat and Čeká are the request slice's (#146): a Followers-only profile and a waiting
-  // request draw nothing yet.
-  if (relation !== "NONE" || visibility !== "PUBLIC") return null;
+  // A waiting request is quiet: dim label, the clock in the same dim, no accent to earn yet.
+  if (relation === "PENDING") {
+    return (
+      <>
+        <Button
+          {...common}
+          variant="outline"
+          c="var(--color-text-dim)"
+          leftSection={<Clock size={ICON_SIZE} />}
+          onClick={() => setLeaving(true)}
+        >
+          {t("follow.pending")}
+        </Button>
+        <ConfirmModal
+          opened={leaving}
+          onCancel={() => setLeaving(false)}
+          onConfirm={() => unfollow.mutate(undefined, { onSettled: () => setLeaving(false) })}
+          title={t("follow.withdrawTitle")}
+          body={t("follow.withdrawBody", { handle })}
+          cancelLabel={t("follow.back")}
+          confirmLabel={t("follow.withdrawConfirm")}
+          pending={unfollow.isPending}
+        />
+      </>
+    );
+  }
+
+  // Nothing stands and the profile is Off: there is no door to knock on.
+  if (visibility === "OFF") return null;
 
   return (
     <Button {...common} color="primary.6" c="textDark.6" loading={follow.isPending} onClick={() => follow.mutate()}>
-      {t("follow.follow")}
+      {t(visibility === "PUBLIC" ? "follow.follow" : "follow.request")}
     </Button>
   );
 }

@@ -6,7 +6,8 @@ export type NotificationType =
   | "strava_activity_unassigned"
   | "maintenance_due"
   | "achievement_unlocked"
-  | "new_follower";
+  | "new_follower"
+  | "follow_request";
 
 // Optional data used to open notification routes.
 export interface NotificationPayload {

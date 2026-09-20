@@ -12,7 +12,8 @@ export type NotificationType =
   | 'strava_activity_unassigned'
   | 'maintenance_due'
   | 'achievement_unlocked'
-  | 'new_follower';
+  | 'new_follower'
+  | 'follow_request';
 
 export interface NotificationTypeConfig {
   channels: NotificationChannel[];
@@ -75,6 +76,14 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
   new_follower: {
     channels: ['inApp'],
     route: '/follows?tab=followers',
+  },
+  // An ask: pushes and holds the badge until answered. Keyed on the asker, so a repeat
+  // after a withdrawal or a refusal is silent - the free brake on request spam.
+  follow_request: {
+    channels: ['push', 'inApp'],
+    route: '/follows?tab=followers',
+    pushEmoji: '👋',
+    holdsBadge: true,
   },
 };
 

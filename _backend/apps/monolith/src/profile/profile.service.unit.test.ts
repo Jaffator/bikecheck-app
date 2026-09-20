@@ -880,6 +880,42 @@ describe('ProfileService', () => {
       expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
     });
 
+    it('FOLLOWERS: a requester still waiting gets the header only, and is told PENDING', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page).toMatchObject({ visibility: 'FOLLOWERS', relation: 'PENDING', garage: null });
+    });
+
+    it('FOLLOWERS: a request withdrawn reads NONE on the next call', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+      expect((await service.read('jaffa', OTHER_ID)).relation).toBe('PENDING');
+
+      unfollow(OTHER_ID, OWNER_ID);
+
+      expect(await service.read('jaffa', OTHER_ID)).toMatchObject({ relation: 'NONE', garage: null });
+    });
+
+    it('PUBLIC: a request left standing reads the garage as anyone does, and is told PENDING', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.relation).toBe('PENDING');
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
+    });
+
+    it('OFF: a requester gets 404 too', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
+
+      await expect(service.read('jaffa', OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
     it('FOLLOWERS: a follower who left gets the header only on the next call', async () => {
       seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
       seedFollow(OTHER_ID, OWNER_ID);
@@ -1447,6 +1483,13 @@ describe('ProfileService', () => {
     it('OFF: an accepted follower gets 404 too', async () => {
       seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
       seedFollow(OTHER_ID, OWNER_ID);
+
+      await expect(service.readBike('jaffa', 1, OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('FOLLOWERS: a requester still waiting gets 404 - the bike opens with the garage, not before', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID, follow_status.PENDING);
 
       await expect(service.readBike('jaffa', 1, OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
     });
