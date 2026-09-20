@@ -1,11 +1,10 @@
 // Dashboard empty state.
-import { useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { Box, Button, Group, Stack, Text } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Lightbulb } from "lucide-react";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
-import { StatusBadge } from "@/components/StatusBadge";
 import { useCurrentUser } from "@/features/users/users.queries";
 import graphPlaceholder from "@/assets/images/empty_dashboard_graph.png";
 

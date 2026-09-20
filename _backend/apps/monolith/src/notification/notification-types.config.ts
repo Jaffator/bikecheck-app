@@ -11,7 +11,8 @@ export type NotificationType =
   | 'strava_activity_saved'
   | 'strava_activity_unassigned'
   | 'maintenance_due'
-  | 'achievement_unlocked';
+  | 'achievement_unlocked'
+  | 'new_follower';
 
 export interface NotificationTypeConfig {
   channels: NotificationChannel[];
@@ -68,6 +69,12 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
   },
   achievement_unlocked: {
     channels: ['inApp'],
+  },
+  // Someone followed a Public profile. In-app only: there is nothing to do about it. Keyed
+  // on the follower, so one person is news once, however often they leave and come back.
+  new_follower: {
+    channels: ['inApp'],
+    route: '/follows?tab=followers',
   },
 };
 

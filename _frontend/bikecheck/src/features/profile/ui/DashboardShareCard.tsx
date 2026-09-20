@@ -23,7 +23,7 @@ interface Figure {
   accented: boolean;
 }
 
-// Which two numbers a state shows. Followers and requests read 0 until Follow lands (PRD 2).
+// Which two numbers a state shows. Requests read 0 until Follow Requests land (#146).
 function figuresFor(visibility: Exclude<ProfileVisibility, "OFF">, profile: Profile): Figure[] {
   const followers: Figure = { labelKey: "sharing.cardFollowers", value: profile.stats.followers, accented: false };
   if (visibility === "FOLLOWERS") {

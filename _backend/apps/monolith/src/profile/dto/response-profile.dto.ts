@@ -5,8 +5,8 @@ export class ProfileStatsDto {
   @ApiProperty({ example: 128 })
   views!: number;
 
-  // Both answer 0 until Follow lands (PRD 2).
-  @ApiProperty({ example: 0 })
+  // Accepted followers. Requests answer 0 until Follow Requests land (#146).
+  @ApiProperty({ example: 3 })
   followers!: number;
 
   @ApiProperty({ example: 0 })

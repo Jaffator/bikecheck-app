@@ -1606,6 +1606,18 @@
             }
           ]
         },
+        "following": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/follows"
+          }
+        },
+        "followers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/follows"
+          }
+        },
         "refresh_tokens": {
           "type": "array",
           "items": {
@@ -1810,6 +1822,35 @@
           "format": "date-time"
         },
         "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "follows": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "ACCEPTED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "accepted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "follower": {
+          "$ref": "#/definitions/users"
+        },
+        "followed": {
           "$ref": "#/definitions/users"
         }
       }
@@ -2052,6 +2093,9 @@
     },
     "public_profiles": {
       "$ref": "#/definitions/public_profiles"
+    },
+    "follows": {
+      "$ref": "#/definitions/follows"
     },
     "strava_pending_activities": {
       "$ref": "#/definitions/strava_pending_activities"

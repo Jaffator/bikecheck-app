@@ -184,7 +184,7 @@ export class ProfileService {
   // The owner's settings; without a row, the OFF defaults and a suggested handle. Reads only.
   async getMine(userId: number): Promise<ResponseProfileDto> {
     const row = await this.prisma.public_profiles.findUnique({ where: { user_id: userId } });
-    if (row) return this.toDto(row);
+    if (row) return await this.toDto(row);
 
     return { ...OFF_DEFAULTS, suggested_handle: await this.suggestHandle(userId), public_origin: this.origin() };
   }
@@ -204,7 +204,7 @@ export class ProfileService {
         create: { user_id: userId, handle, ...settings },
         update: { handle, ...settings },
       });
-      return this.toDto(row);
+      return await this.toDto(row);
     } catch (error) {
       if (isUniqueViolation(error)) throw new ConflictException('HANDLE_TAKEN');
       throw error;
@@ -249,19 +249,18 @@ export class ProfileService {
   async read(rawHandle: string, viewerId: number | null): Promise<ResponseProfileGarageDto> {
     const handle = rawHandle.trim().toLowerCase();
     const profile = await this.prisma.public_profiles.findUnique({ where: { handle } });
-    const relation: ProfileRelation = profile !== null && profile.user_id === viewerId ? 'SELF' : 'NONE';
-    if (!profile || (profile.visibility === 'OFF' && relation !== 'SELF')) {
+    if (!profile || (profile.visibility === 'OFF' && profile.user_id !== viewerId)) {
       throw new NotFoundException(PROFILE_UNAVAILABLE);
     }
 
+    const relation = await this.relationOf(profile, viewerId);
     const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
-    const allowed = await this.mayReadGarage(profile, relation, viewerId);
 
     return {
       owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
       visibility: profile.visibility,
       relation,
-      garage: allowed ? await this.garageOf(profile, owner) : null,
+      garage: mayReadGarage(profile, relation) ? await this.garageOf(profile, owner) : null,
     };
   }
 
@@ -377,13 +376,11 @@ export class ProfileService {
   private async readableBike(rawHandle: string, bikeId: number, viewerId: number | null): Promise<ReadableBike> {
     const handle = rawHandle.trim().toLowerCase();
     const profile = await this.prisma.public_profiles.findUnique({ where: { handle } });
-    const relation: ProfileRelation = profile !== null && profile.user_id === viewerId ? 'SELF' : 'NONE';
-    if (!profile || (profile.visibility === 'OFF' && relation !== 'SELF')) {
+    if (!profile || (profile.visibility === 'OFF' && profile.user_id !== viewerId)) {
       throw new NotFoundException(PROFILE_UNAVAILABLE);
     }
-    if (!(await this.mayReadGarage(profile, relation, viewerId))) {
-      throw new NotFoundException(PROFILE_UNAVAILABLE);
-    }
+    const relation = await this.relationOf(profile, viewerId);
+    if (!mayReadGarage(profile, relation)) throw new NotFoundException(PROFILE_UNAVAILABLE);
 
     const bike = await this.prisma.bikes.findFirst({
       where: { ...ownedBikeWhere(bikeId, profile.user_id), is_shared: true },
@@ -452,21 +449,21 @@ export class ProfileService {
     return rows.map((row) => toService(row, costs));
   }
 
-  private async mayReadGarage(
-    profile: public_profiles,
-    relation: ProfileRelation,
-    viewerId: number | null,
-  ): Promise<boolean> {
-    if (relation === 'SELF' || profile.visibility === 'PUBLIC') return true;
-    if (profile.visibility === 'FOLLOWERS' && viewerId !== null) {
-      return await this.isAcceptedFollower(profile.user_id, viewerId);
-    }
-    return false;
+  // Where the viewer stands with the owner: the owner themself, an accepted follower, or
+  // nobody. The one place the profile reads the follows table for the read rule.
+  private async relationOf(profile: public_profiles, viewerId: number | null): Promise<ProfileRelation> {
+    if (profile.user_id === viewerId) return 'SELF';
+    if (viewerId === null) return 'NONE';
+
+    const row = await this.prisma.follows.findUnique({
+      where: { follower_id_followed_id: { follower_id: viewerId, followed_id: profile.user_id } },
+    });
+    return row?.status === 'ACCEPTED' ? 'FOLLOWING' : 'NONE';
   }
 
-  // Nobody follows anyone yet. Follow (PRD 2) replaces the body with a follows query.
-  private async isAcceptedFollower(_ownerId: number, _viewerId: number): Promise<boolean> {
-    return false;
+  // Who follows me now: ACCEPTED rows toward me. Requests are the request slice's (#146).
+  private async followerCount(userId: number): Promise<number> {
+    return await this.prisma.follows.count({ where: { followed_id: userId, status: 'ACCEPTED' } });
   }
 
   private async garageOf(profile: public_profiles, owner: GarageOwner | null): Promise<ProfileGarageDto> {
@@ -500,7 +497,7 @@ export class ProfileService {
     return publicAppOrigin('profile link');
   }
 
-  private toDto(row: public_profiles): ResponseProfileDto {
+  private async toDto(row: public_profiles): Promise<ResponseProfileDto> {
     return {
       handle: row.handle,
       visibility: row.visibility,
@@ -508,11 +505,17 @@ export class ProfileService {
       share_setup: row.share_setup,
       share_history: row.share_history,
       share_costs: row.share_costs,
-      stats: { views: row.view_count, followers: 0, pending_requests: 0 },
+      stats: { views: row.view_count, followers: await this.followerCount(row.user_id), pending_requests: 0 },
       suggested_handle: null,
       public_origin: this.origin(),
     };
   }
+}
+
+// The read rule on a profile that answered at all: OFF already 404'd to everyone but the owner.
+function mayReadGarage(profile: public_profiles, relation: ProfileRelation): boolean {
+  if (relation === 'SELF' || profile.visibility === 'PUBLIC') return true;
+  return profile.visibility === 'FOLLOWERS' && relation === 'FOLLOWING';
 }
 
 function sum(values: number[]): number {

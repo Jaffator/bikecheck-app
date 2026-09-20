@@ -1123,6 +1123,15 @@
     "lsc": "LSC",
     "hsc": "HSC"
   },
+  "follow": {
+    "follow": "Sledovat",
+    "following": "Sledujete",
+    "unfollowTitle": "Přestat sledovat @{{handle}}?",
+    "unfollowBodyFollowers": "Garáž ti zmizí. Profil je jen pro sledující, znovu budeš muset požádat.",
+    "unfollowBodyPublic": "Garáž ti zmizí ze sledovaných. Sledovat můžeš kdykoli znovu.",
+    "unfollowConfirm": "Přestat sledovat",
+    "back": "Zpět"
+  },
   "publicProfile": {
     "title": "Veřejný profil",
     "eyebrow": "veřejný profil",

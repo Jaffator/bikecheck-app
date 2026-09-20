@@ -502,6 +502,8 @@ model users {
   notifications         notifications[]
   organization_members  organization_members[]
   public_profile        public_profiles?
+  following             follows[]              @relation("follower")
+  followers             follows[]              @relation("followed")
   refresh_tokens        refresh_tokens[]
   reports               reports[]
   rides                 rides[]
@@ -603,6 +605,27 @@ model public_profiles {
   created_at       DateTime           @default(now()) @db.Timestamptz(6)
   updated_at       DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
   users            users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+enum follow_status {
+  PENDING
+  ACCEPTED
+}
+
+// One row per relationship (PRD #133): a rider following an owner's garage. A Public follow
+// is ACCEPTED at birth; a Follow Request waits as PENDING. Decline, withdraw and unfollow all
+// delete the row. Self-follow is refused by a CHECK the migration writes by hand.
+model follows {
+  follower_id Int
+  followed_id Int
+  status      follow_status
+  created_at  DateTime      @default(now()) @db.Timestamptz(6)
+  accepted_at DateTime?     @db.Timestamptz(6)
+  follower    users         @relation("follower", fields: [follower_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  followed    users         @relation("followed", fields: [followed_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([follower_id, followed_id])
+  @@index([followed_id, status], map: "follows_followed_status")
 }
 
 model strava_pending_activities {

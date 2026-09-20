@@ -5,7 +5,8 @@ export type NotificationType =
   | "strava_activity_saved"
   | "strava_activity_unassigned"
   | "maintenance_due"
-  | "achievement_unlocked";
+  | "achievement_unlocked"
+  | "new_follower";
 
 // Optional data used to open notification routes.
 export interface NotificationPayload {
@@ -17,6 +18,9 @@ export interface NotificationPayload {
   bikeName?: string;
   // The worst band a service reminder's bike stands in, which colours its icon.
   level?: "warning" | "critical" | "overdue";
+  // The other party of a follow, as the app names people. Absent when they have none.
+  handle?: string;
+  personName?: string;
 }
 
 export interface Notification {

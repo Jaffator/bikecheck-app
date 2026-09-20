@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, HttpException, NotFoundException } from '@nestjs/common';
-import { Prisma, profile_visibility } from '@prisma/client';
+import { follow_status, Prisma, profile_visibility } from '@prisma/client';
 import { ProfileService } from './profile.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RESERVED_HANDLES } from './reserved-handles';
@@ -27,6 +27,13 @@ interface ProfileRow {
 interface WhereUnique {
   user_id?: number;
   handle?: string;
+}
+
+// One relationship as the follows table holds it; the read rule and the counts read these.
+interface FollowRow {
+  follower_id: number;
+  followed_id: number;
+  status: follow_status;
 }
 
 // What the view counter writes: the count bumped, the moment, and updated_at pinned so
@@ -195,6 +202,7 @@ describe('ProfileService', () => {
   // the database would, so what a read lists is decided by the flags and not by the mock.
   const bikesTable: BikeRow[] = [];
   const setupTable: SetupRow[] = [];
+  const followsTable: FollowRow[] = [];
 
   type ServiceWithBike = ServiceRow & { bike_id: number };
 
@@ -333,6 +341,27 @@ describe('ProfileService', () => {
         ),
       ),
     },
+    follows: {
+      findUnique: jest.fn(({ where }: { where: { follower_id_followed_id: Omit<FollowRow, 'status'> } }) => {
+        const key = where.follower_id_followed_id;
+        return Promise.resolve(
+          followsTable.find((row) => row.follower_id === key.follower_id && row.followed_id === key.followed_id) ??
+            null,
+        );
+      }),
+      count: jest.fn(({ where }: { where?: Where }) =>
+        Promise.resolve(followsTable.filter((row) => matches(row, where)).length),
+      ),
+    },
+  };
+
+  const seedFollow = (followerId: number, followedId: number, status = follow_status.ACCEPTED): void => {
+    followsTable.push({ follower_id: followerId, followed_id: followedId, status });
+  };
+
+  const unfollow = (followerId: number, followedId: number): void => {
+    const at = followsTable.findIndex((row) => row.follower_id === followerId && row.followed_id === followedId);
+    if (at >= 0) followsTable.splice(at, 1);
   };
 
   const seed = (overrides: Partial<ProfileRow> & { user_id: number; handle: string }): void => {
@@ -495,6 +524,7 @@ describe('ProfileService', () => {
     table.clear();
     bikesTable.length = 0;
     setupTable.length = 0;
+    followsTable.length = 0;
     nextPartId = 1;
     nextServiceId = 1;
     nextActionId = 1;
@@ -605,6 +635,31 @@ describe('ProfileService', () => {
         suggested_handle: null,
         stats: { views: 128, followers: 0, pending_requests: 0 },
       });
+    });
+
+    it('counts the accepted followers: not a request, not whom I follow myself', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa' });
+      seedFollow(OTHER_ID, OWNER_ID);
+      seedFollow(9, OWNER_ID);
+      seedFollow(10, OWNER_ID, follow_status.PENDING);
+      seedFollow(OWNER_ID, OTHER_ID);
+
+      expect((await service.getMine(OWNER_ID)).stats.followers).toBe(2);
+    });
+
+    it('a follower who left is no longer counted', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa' });
+      seedFollow(OTHER_ID, OWNER_ID);
+      unfollow(OTHER_ID, OWNER_ID);
+
+      expect((await service.getMine(OWNER_ID)).stats.followers).toBe(0);
+    });
+
+    it('a saved setting reads the count back too', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa' });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      expect((await service.updateMine(OWNER_ID, { share_costs: true })).stats.followers).toBe(1);
     });
   });
 
@@ -803,6 +858,57 @@ describe('ProfileService', () => {
       seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
 
       await expect(service.read('jaffa', OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('FOLLOWERS: an accepted follower reads the garage and is told FOLLOWING', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.relation).toBe('FOLLOWING');
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
+    });
+
+    it('PUBLIC: a follower reads what a stranger reads, and is told FOLLOWING', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      const page = await service.read('jaffa', OTHER_ID);
+
+      expect(page.relation).toBe('FOLLOWING');
+      expect(page.garage?.bikes.map((bike) => bike.id)).toEqual([1]);
+    });
+
+    it('FOLLOWERS: a follower who left gets the header only on the next call', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID);
+      expect((await service.read('jaffa', OTHER_ID)).garage).not.toBeNull();
+
+      unfollow(OTHER_ID, OWNER_ID);
+
+      expect(await service.read('jaffa', OTHER_ID)).toMatchObject({ relation: 'NONE', garage: null });
+    });
+
+    it('following the owner the other way round opens nothing', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OWNER_ID, OTHER_ID);
+
+      expect(await service.read('jaffa', OTHER_ID)).toMatchObject({ relation: 'NONE', garage: null });
+    });
+
+    it('OFF: an accepted follower gets 404 too', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      await expect(service.read('jaffa', OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('the owner is SELF whatever rows stand', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OWNER_ID, OTHER_ID);
+
+      expect((await service.read('jaffa', OWNER_ID)).relation).toBe('SELF');
     });
 
     it('OFF and unknown answer the same 404', async () => {
@@ -1101,6 +1207,14 @@ describe('ProfileService', () => {
       expect((web as HttpException).getResponse()).toEqual((app as HttpException).getResponse());
     });
 
+    it('FOLLOWERS: closed however many followers stand - the web has no viewer to be one', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      await expect(service.readPublic('jaffa')).rejects.toBeInstanceOf(NotFoundException);
+      expect(mockPrisma.follows.findUnique).not.toHaveBeenCalled();
+    });
+
     it('matches the handle whatever its case', async () => {
       seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC });
 
@@ -1319,6 +1433,20 @@ describe('ProfileService', () => {
 
     it('FOLLOWERS: a stranger gets 404, not a header', async () => {
       seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+
+      await expect(service.readBike('jaffa', 1, OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('FOLLOWERS: an accepted follower reads the bike and is told FOLLOWING', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      expect(await service.readBike('jaffa', 1, OTHER_ID)).toMatchObject({ relation: 'FOLLOWING', bike: { id: 1 } });
+    });
+
+    it('OFF: an accepted follower gets 404 too', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.OFF });
+      seedFollow(OTHER_ID, OWNER_ID);
 
       await expect(service.readBike('jaffa', 1, OTHER_ID)).rejects.toBeInstanceOf(NotFoundException);
     });
@@ -2002,6 +2130,13 @@ describe('ProfileService', () => {
       seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, share_history: false });
 
       await rejectsWith(service.readBikeServices('jaffa', 1, OTHER_ID, 20, 0), NotFoundException, 'not available');
+    });
+
+    it('FOLLOWERS: an accepted follower pages the Services', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      seedFollow(OTHER_ID, OWNER_ID);
+
+      await expect(service.readBikeServices('jaffa', 1, OTHER_ID, 20, 0)).resolves.toMatchObject({ total_count: 1 });
     });
 
     it('FOLLOWERS: a stranger gets 404, the owner reads', async () => {

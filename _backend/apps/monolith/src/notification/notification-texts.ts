@@ -42,6 +42,9 @@ export interface NotificationTextPayload {
   level?: 'warning' | 'critical' | 'overdue';
   // The Tracked Actions that crossed a band in this evaluation - the news itself, named.
   crossed?: CrossedAction[];
+  // The other party of a follow, as the app names people. Absent when they have none.
+  handle?: string;
+  personName?: string;
 }
 
 // One Tracked Action that just crossed: the part and the job, each as a catalogue key with
@@ -126,7 +129,25 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
       body: () => 'You unlocked a new achievement.',
     },
   },
+  new_follower: {
+    cs: {
+      title: () => 'Nový sledující',
+      body: (payload) => `${personLabel(payload, 'Někdo')} teď sleduje tvoji garáž.`,
+    },
+    en: {
+      title: () => 'New follower',
+      body: (payload) => `${personLabel(payload, 'Someone')} now follows your garage.`,
+    },
+  },
 };
+
+// "Jarda Novák (@jaffa)", or whichever half is known: a follower without a profile has no
+// handle, an account without a name reads as its handle alone.
+function personLabel(payload: NotificationTextPayload, anonymous: string): string {
+  const handle = payload.handle ? `@${payload.handle}` : null;
+  if (payload.personName) return handle ? `${payload.personName} (${handle})` : payload.personName;
+  return handle ?? anonymous;
+}
 
 // "42 km · 620 m ↑ · Canyon Grail" — whichever parts the payload actually carries, so a
 // ride saved without a distance still reads as a sentence rather than a stray

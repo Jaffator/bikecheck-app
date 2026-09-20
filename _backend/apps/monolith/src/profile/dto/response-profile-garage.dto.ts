@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { profile_visibility, tire_pressure_unit } from '@prisma/client';
 
-// Where the viewer stands with the owner. Follow (PRD 2) adds PENDING and FOLLOWING.
-export const PROFILE_RELATIONS = ['SELF', 'NONE'] as const;
+// Where the viewer stands with the owner: the owner, an accepted follower, or nobody. A
+// waiting Follow Request (PENDING) arrives with the request slice of PRD #133.
+export const PROFILE_RELATIONS = ['SELF', 'NONE', 'FOLLOWING'] as const;
 export type ProfileRelation = (typeof PROFILE_RELATIONS)[number];
 
 // The owner as the page names them - and nothing else of the users row.

@@ -58,3 +58,40 @@ describe('maintenance_due text', () => {
     expect(text.body).toBe('Canyon Strive · 1 soon, 1 overdue');
   });
 });
+
+// A new follower is named as the app names people: name and @handle when both are known,
+// whichever one is when not - a follower who never made a profile has no handle.
+describe('new_follower text', () => {
+  it('names the follower with name and handle, in Czech', () => {
+    const text = buildNotificationText('new_follower', 'cs', { personName: 'Jarda Novák', handle: 'jaffa' });
+
+    expect(text.title).toBe('Nový sledující');
+    expect(text.body).toBe('Jarda Novák (@jaffa) teď sleduje tvoji garáž.');
+  });
+
+  it('names the follower with name and handle, in English', () => {
+    const text = buildNotificationText('new_follower', 'en', { personName: 'Jarda Novák', handle: 'jaffa' });
+
+    expect(text.title).toBe('New follower');
+    expect(text.body).toBe('Jarda Novák (@jaffa) now follows your garage.');
+  });
+
+  it('falls back to @handle when the follower has no name', () => {
+    expect(buildNotificationText('new_follower', 'cs', { handle: 'jaffa' }).body).toBe('@jaffa teď sleduje tvoji garáž.');
+    expect(buildNotificationText('new_follower', 'en', { handle: 'jaffa' }).body).toBe('@jaffa now follows your garage.');
+  });
+
+  it('drops the parenthesis when the follower has no handle', () => {
+    expect(buildNotificationText('new_follower', 'cs', { personName: 'Jarda Novák' }).body).toBe(
+      'Jarda Novák teď sleduje tvoji garáž.',
+    );
+    expect(buildNotificationText('new_follower', 'en', { personName: 'Jarda Novák' }).body).toBe(
+      'Jarda Novák now follows your garage.',
+    );
+  });
+
+  it('still reads as a sentence with neither', () => {
+    expect(buildNotificationText('new_follower', 'cs', {}).body).toBe('Někdo teď sleduje tvoji garáž.');
+    expect(buildNotificationText('new_follower', 'en', {}).body).toBe('Someone now follows your garage.');
+  });
+});

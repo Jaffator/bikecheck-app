@@ -1069,6 +1069,15 @@
     "lsc": "LSC",
     "hsc": "HSC"
   },
+  "follow": {
+    "follow": "Follow",
+    "following": "Following",
+    "unfollowTitle": "Unfollow @{{handle}}?",
+    "unfollowBodyFollowers": "You'll lose the garage. The profile is for followers only, so you'd have to ask again.",
+    "unfollowBodyPublic": "The garage leaves the people you follow. You can follow again any time.",
+    "unfollowConfirm": "Unfollow",
+    "back": "Back"
+  },
   "publicProfile": {
     "title": "Public profile",
     "eyebrow": "public profile",
