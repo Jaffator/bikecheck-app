@@ -131,6 +131,17 @@ export const otherColor = {
   decor: "#352E28",
 } as const;
 
+// An outline without a colour is the quiet secondary: neutral frame and text on the card,
+// the accent left to the icon. Button and ActionIcon prefix their vars differently.
+function quietOutlineVars(prefix: "button" | "ai"): Record<string, string> {
+  return {
+    [`--${prefix}-bg`]: "var(--mantine-color-cards-7)",
+    [`--${prefix}-bd`]: "1px solid var(--mantine-color-inputs-5)",
+    [`--${prefix}-color`]: "var(--mantine-color-text-6)",
+    [`--${prefix}-hover`]: "var(--mantine-color-cards-5)",
+  };
+}
+
 export const theme = createTheme({
   autoContrast: true,
   primaryColor: "primary",
@@ -155,18 +166,9 @@ export const theme = createTheme({
   components: {
     // Disabled buttons sink into the card instead of Mantine's light-grey default.
     Button: Button.extend({
-      // An outline without a colour is the quiet secondary: neutral frame and text on the
-      // card, the accent left to the icon. A coloured outline (red.5 delete) keeps its colour.
+      // A coloured outline (red.5 delete) keeps its colour.
       vars: (_theme, props) => ({
-        root:
-          props.variant === "outline" && props.color === undefined
-            ? {
-                "--button-bg": "var(--mantine-color-cards-7)",
-                "--button-bd": "1px solid var(--mantine-color-inputs-5)",
-                "--button-color": "var(--mantine-color-text-6)",
-                "--button-hover": "var(--mantine-color-cards-5)",
-              }
-            : {},
+        root: props.variant === "outline" && props.color === undefined ? quietOutlineVars("button") : {},
       }),
       styles: (_theme, props) => ({
         root: {
@@ -179,15 +181,7 @@ export const theme = createTheme({
     // The same quiet secondary on an icon-only button (the ✗ beside a request's ✓).
     ActionIcon: ActionIcon.extend({
       vars: (_theme, props) => ({
-        root:
-          props.variant === "outline" && props.color === undefined
-            ? {
-                "--ai-bg": "var(--mantine-color-cards-7)",
-                "--ai-bd": "1px solid var(--mantine-color-inputs-5)",
-                "--ai-color": "var(--mantine-color-text-6)",
-                "--ai-hover": "var(--mantine-color-cards-5)",
-              }
-            : {},
+        root: props.variant === "outline" && props.color === undefined ? quietOutlineVars("ai") : {},
       }),
     }),
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk

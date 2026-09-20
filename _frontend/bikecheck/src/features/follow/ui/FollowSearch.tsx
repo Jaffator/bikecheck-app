@@ -3,6 +3,7 @@
 import { useState, type ReactElement } from "react";
 import { CloseButton, Loader, Text, TextInput } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
+import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
@@ -54,23 +55,21 @@ export function FollowSearch(): ReactElement {
   );
 }
 
-type Translate = (key: string) => string;
-
 // "Výsledky · 20+" once the cap was hit; the eyebrow alone before the first answer.
-function resultsTitle(t: Translate, answer: FollowSearchResponse | undefined): string {
+function resultsTitle(t: TFunction, answer: FollowSearchResponse | undefined): string {
   if (answer === undefined) return t("follow.resultsTitle");
   return `${t("follow.resultsTitle")} · ${String(answer.results.length)}${answer.capped ? "+" : ""}`;
 }
 
 // What the panel says with no row to show: still waiting, failed, or nobody.
-function emptyText(t: Translate, answer: FollowSearchResponse | undefined, failed: boolean): string {
+function emptyText(t: TFunction, answer: FollowSearchResponse | undefined, failed: boolean): string {
   if (failed) return t("follow.searchFailed");
   if (answer === undefined) return t("follow.searching");
   return t("follow.noResults");
 }
 
 // One row per person found, and after a cut list the line saying it was cut.
-function resultRows(t: Translate, answer: FollowSearchResponse | undefined): ReactElement[] {
+function resultRows(t: TFunction, answer: FollowSearchResponse | undefined): ReactElement[] {
   if (answer === undefined) return [];
   const rows = answer.results.map((person) => (
     <PersonRow key={person.handle} person={person}>

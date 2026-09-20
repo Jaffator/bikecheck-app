@@ -1,6 +1,5 @@
-// The Follows sub-page at /follows: two tabs drawn and swiped the way /rides draws its own.
-// The tab lives in the URL - ?tab=followers is the address the dashboard figures and the
-// owner-side notifications point at; the first tab carries no param.
+// The Follows sub-page at /follows, two tabs swiped the way /rides does. The tab lives in the
+// URL: ?tab=followers is what the dashboard figures and the owner-side notifications point at.
 import { useCallback, type ReactElement, type ReactNode } from "react";
 import { Box, Tabs } from "@mantine/core";
 import { useTranslation } from "react-i18next";

@@ -29,14 +29,20 @@ const searchSelect = {
 
 type SearchHit = Prisma.public_profilesGetPayload<{ select: typeof searchSelect }>;
 
-// Who may be found at all: a Discoverable profile that is not the seeker's own.
-function discoverable(seekerId: number): Prisma.public_profilesWhereInput {
-  return { visibility: { in: ['FOLLOWERS', 'PUBLIC'] }, user_id: { not: seekerId } };
+// Who may be found at all: a Discoverable profile that is not the seeker's own, nor one
+// a query before already found.
+function discoverable(seekerId: number, alreadyFound: number[] = []): Prisma.public_profilesWhereInput {
+  return { visibility: { in: ['FOLLOWERS', 'PUBLIC'] }, user_id: { notIn: [seekerId, ...alreadyFound] } };
 }
 
 // One row per pair, keyed as the unique index is.
 function pair(followerId: number, followedId: number): Prisma.followsWhereUniqueInput {
   return { follower_id_followed_id: { follower_id: followerId, followed_id: followedId } };
+}
+
+// P2002: two POSTs for one pair raced and the read before the write lost.
+function isUniqueViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
 // What a row that stands means from the follower's side.
@@ -89,20 +95,39 @@ export class FollowService {
     const existing = await this.prisma.follows.findUnique({ where: pair(followerId, profile.user_id) });
     if (existing) return { relation: standing(existing.status) };
 
-    const now = new Date();
     const status: follow_status = profile.visibility === 'PUBLIC' ? 'ACCEPTED' : 'PENDING';
-    await this.prisma.follows.create({
-      data: {
-        follower_id: followerId,
-        followed_id: profile.user_id,
-        status,
-        created_at: now,
-        accepted_at: status === 'ACCEPTED' ? now : null,
-      },
-    });
+    const created = await this.createRow(followerId, profile.user_id, status);
+    if (!created) return await this.lostRace(followerId, profile.user_id, status);
     await this.tell(profile.user_id, status === 'ACCEPTED' ? 'new_follower' : 'follow_request', followerId);
 
     return { relation: standing(status) };
+  }
+
+  // Two POSTs at once both pass the read; the unique index breaks the tie. False for the loser.
+  private async createRow(followerId: number, followedId: number, status: follow_status): Promise<boolean> {
+    const now = new Date();
+    try {
+      await this.prisma.follows.create({
+        data: {
+          follower_id: followerId,
+          followed_id: followedId,
+          status,
+          created_at: now,
+          accepted_at: status === 'ACCEPTED' ? now : null,
+        },
+      });
+      return true;
+    } catch (error) {
+      if (isUniqueViolation(error)) return false;
+      throw error;
+    }
+  }
+
+  // The loser answers the winner's row and tells nobody - the winner did. Gone again
+  // already: what this call would have written.
+  private async lostRace(followerId: number, followedId: number, status: follow_status): Promise<ResponseFollowDto> {
+    const theirs = await this.prisma.follows.findUnique({ where: pair(followerId, followedId) });
+    return { relation: standing(theirs?.status ?? status) };
   }
 
   // Withdraw a request or stop following. Nobody is told; a withdrawn request only takes
@@ -111,13 +136,7 @@ export class FollowService {
     const profile = await this.profileOf(rawHandle);
     if (!profile) return;
 
-    const existing = await this.prisma.follows.findUnique({ where: pair(followerId, profile.user_id) });
-    if (!existing) return;
-
-    await this.prisma.follows.deleteMany({ where: { follower_id: followerId, followed_id: profile.user_id } });
-    if (existing.status === 'PENDING') {
-      await this.notificationService.resolveByDedupKey(profile.user_id, noticeKey('follow_request', followerId));
-    }
+    await this.dropRow(followerId, profile.user_id);
   }
 
   // ---------- Finding people ----------
@@ -151,17 +170,16 @@ export class FollowService {
     };
   }
 
-  // The name's first word or any later one starts with the query; no unaccent, so "st"
-  // never finds Šťastná. Whoever the handle already found is left out, and only as many
-  // rows as the page still has room for are read.
+  // Any word of the name starts with the query - no unaccent, so "st" never finds Šťastná.
+  // Whoever the handle already found is left out; only the page's remaining room is read.
   private async searchByName(seekerId: number, query: string, found: SearchHit[]): Promise<SearchHit[]> {
     const room = SEARCH_PAGE + 1 - found.length;
     if (room <= 0) return [];
 
+    const foundIds = found.map((hit) => hit.user_id);
     return await this.prisma.public_profiles.findMany({
       where: {
-        ...discoverable(seekerId),
-        user_id: { notIn: [seekerId, ...found.map((hit) => hit.user_id)] },
+        ...discoverable(seekerId, foundIds),
         users: {
           OR: [
             { name: { startsWith: query, mode: 'insensitive' } },
@@ -266,6 +284,12 @@ export class FollowService {
   // Decline a request or remove a follower. Nobody is told either way; a declined ask only
   // comes off my badge. No row ends the same way.
   async removeFollower(ownerId: number, followerId: number): Promise<void> {
+    await this.dropRow(followerId, ownerId);
+  }
+
+  // Either side ends the pair the same way: the row goes, and an ask still waiting comes off
+  // the owner's badge - nobody is told.
+  private async dropRow(followerId: number, ownerId: number): Promise<void> {
     const existing = await this.prisma.follows.findUnique({ where: pair(followerId, ownerId) });
     if (!existing) return;
 

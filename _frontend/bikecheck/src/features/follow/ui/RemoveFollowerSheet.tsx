@@ -1,5 +1,4 @@
-// The one confirmation behind Odebrat: who is being taken out, what it costs them and that
-// they are not told. Stays mounted across openings and keeps the last person, so the exit
+// The one confirmation behind Odebrat. Stays mounted and keeps the last person, so the exit
 // slide still has a face to carry down (docs/conventions/drawers.md).
 import type { CSSProperties, ReactElement } from "react";
 import { Button, Drawer, Stack, Text } from "@mantine/core";

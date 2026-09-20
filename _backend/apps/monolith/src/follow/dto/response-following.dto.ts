@@ -6,9 +6,8 @@ import { PROFILE_RELATIONS, ProfileRelation } from '../../profile/dto/response-p
 export const FOLLOWING_ROW_RELATIONS = PROFILE_RELATIONS.filter((relation) => relation !== 'SELF');
 export type FollowingRowRelation = Exclude<ProfileRelation, 'SELF'>;
 
-// One person on my outgoing side - a search result or somebody I follow. Only what the app
-// names people by and what the row needs to draw itself: never the email, the Google id,
-// the Strava fields or anything of the garage.
+// One person on my outgoing side - a search result or somebody I follow. Only what names and
+// draws the row: never the email, the Google id, the Strava fields or anything of the garage.
 export class FollowingRowDto {
   @ApiProperty({ example: 'jarda-novak' })
   handle!: string;

@@ -4,7 +4,7 @@ import type { TirePressureUnit } from "@/features/users/users.types";
 export const PROFILE_VISIBILITIES = ["OFF", "FOLLOWERS", "PUBLIC"] as const;
 export type ProfileVisibility = (typeof PROFILE_VISIBILITIES)[number];
 
-// Mirrors ProfileStatsDto. Requests read 0 until the owner's side lands (#147).
+// Mirrors ProfileStatsDto.
 export interface ProfileStats {
   views: number;
   followers: number;

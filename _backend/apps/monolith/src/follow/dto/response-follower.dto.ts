@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { follow_status } from '@prisma/client';
 
-// One person on my incoming side - somebody who asked or who follows. Keyed by user id,
-// since a follower who never opened the share drawer has no handle. As the outgoing row,
-// only what names them and draws the row: nothing private, nothing of a garage.
+// One person on my incoming side, keyed by user id: a follower who never opened the share
+// drawer has no handle. Only what names and draws the row - nothing private, nothing of a garage.
 export class FollowerRowDto {
   @ApiProperty({ example: 42 })
   user_id!: number;

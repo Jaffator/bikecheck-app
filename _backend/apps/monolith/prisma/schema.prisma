@@ -612,9 +612,8 @@ enum follow_status {
   ACCEPTED
 }
 
-// One row per relationship (PRD #133): a rider following an owner's garage. A Public follow
-// is ACCEPTED at birth; a Follow Request waits as PENDING. Decline, withdraw and unfollow all
-// delete the row. Self-follow is refused by a CHECK the migration writes by hand.
+// One row per relationship (PRD #133): ACCEPTED at birth on a Public profile, PENDING while
+// a request waits; refusing it deletes the row. Self-follow is a CHECK the migration writes.
 model follows {
   follower_id Int
   followed_id Int

@@ -158,6 +158,8 @@ export function useSaveSharing(): UseMutationResult<Profile, Error, SaveSharingI
       // The owner's preview reads what was just saved.
       await queryClient.invalidateQueries({ queryKey: PROFILE_GARAGE_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      // Turning Public accepts every waiting request, so the asks come off the bell now.
+      await queryClient.invalidateQueries({ queryKey: ["notifications", "unread"] });
     },
   });
 }

@@ -1,6 +1,5 @@
-// React Query hooks for finding and following people. Both mutations seed the person's
-// profile page from the answer, so the button flips at once, then read the page, the lists
-// and the dashboard again.
+// React Query hooks for finding and following people. A mutation seeds the person's page
+// from the answer, so the button flips at once, then reads everything it touched again.
 import {
   keepPreviousData,
   useMutation,
@@ -25,6 +24,9 @@ export const FOLLOWERS_QUERY_KEY = ["follows", "followers"] as const;
 
 // Every search answer; one query's answer is keyed under it.
 export const FOLLOW_SEARCH_QUERY_KEY = ["follows", "search"] as const;
+
+// The bell's key: an ask answered or withdrawn comes off it, without waiting for the poll.
+const UNREAD_QUERY_KEY = ["notifications", "unread"] as const;
 
 export function useFollowing(): UseQueryResult<FollowingRow[]> {
   return useQuery({
@@ -71,6 +73,7 @@ async function refresh(queryClient: QueryClient, handle: string): Promise<void> 
     queryClient.invalidateQueries({ queryKey: FOLLOWING_QUERY_KEY }),
     queryClient.invalidateQueries({ queryKey: FOLLOW_SEARCH_QUERY_KEY }),
     queryClient.invalidateQueries({ queryKey: PROFILE_ME_QUERY_KEY }),
+    queryClient.invalidateQueries({ queryKey: UNREAD_QUERY_KEY }),
   ]);
 }
 
@@ -99,7 +102,7 @@ export function useUnfollow(handle: string): UseMutationResult<void, Error, void
 // After an answer: the incoming list, my own figures, and the person's page if they have
 // one. Awaited, so a row stays busy until the list no longer carries it.
 async function refreshFollowers(queryClient: QueryClient, person: FollowerRow): Promise<void> {
-  const keys: QueryKey[] = [FOLLOWERS_QUERY_KEY, PROFILE_ME_QUERY_KEY];
+  const keys: QueryKey[] = [FOLLOWERS_QUERY_KEY, PROFILE_ME_QUERY_KEY, UNREAD_QUERY_KEY];
   if (person.handle !== null) keys.push([...PROFILE_GARAGE_QUERY_KEY, person.handle]);
   await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 }

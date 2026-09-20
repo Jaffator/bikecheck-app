@@ -201,16 +201,20 @@ export class ProfileService {
       throw new BadRequestException('HANDLE_REQUIRED');
     }
 
-    const settings = settingsOf(dto);
+    const row = await this.writeProfile(userId, handle, settingsOf(dto));
+    // The door is open now: whoever was still waiting on it is let in, after the write.
+    if (arrivesAtPublic(existing, row)) await this.followService.acceptAllPending(userId);
+    return await this.toDto(row);
+  }
+
+  // Only the upsert sits under the HANDLE_TAKEN mapping: a P2002 from anywhere later is its own.
+  private async writeProfile(userId: number, handle: string, settings: ProfileSettings): Promise<public_profiles> {
     try {
-      const row = await this.prisma.public_profiles.upsert({
+      return await this.prisma.public_profiles.upsert({
         where: { user_id: userId },
         create: { user_id: userId, handle, ...settings },
         update: { handle, ...settings },
       });
-      // The door is open now: whoever was still waiting on it is let in, after the write.
-      if (arrivesAtPublic(existing, row)) await this.followService.acceptAllPending(userId);
-      return await this.toDto(row);
     } catch (error) {
       if (isUniqueViolation(error)) throw new ConflictException('HANDLE_TAKEN');
       throw error;
@@ -456,7 +460,7 @@ export class ProfileService {
   }
 
   // Where the viewer stands with the owner: the owner themself, an accepted follower, a
-  // requester still waiting, or nobody. The one place the profile reads the follows table.
+  // requester still waiting, or nobody.
   private async relationOf(profile: public_profiles, viewerId: number | null): Promise<ProfileRelation> {
     if (profile.user_id === viewerId) return 'SELF';
     if (viewerId === null) return 'NONE';

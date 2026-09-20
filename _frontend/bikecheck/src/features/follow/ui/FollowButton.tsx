@@ -1,7 +1,5 @@
-// The one follow control, drawn from where I stand with the person and how their profile is
-// set: Sledovat on a Public profile takes at once, Požádat on a Followers-only one sends a
-// request; Sledujete and Čeká ask before leaving. Shared by the profile hero and every
-// person row. Never drawn for myself.
+// The one follow control, on the profile hero and every person row: Sledovat / Požádat by the
+// profile's switch, Sledujete / Čeká by where I stand - those two ask before leaving.
 import { useState, type ReactElement } from "react";
 import { Button } from "@mantine/core";
 import { Check, Clock } from "lucide-react";
@@ -57,17 +55,11 @@ export function FollowButton({ handle, visibility, relation, size = "xs" }: Foll
     );
   }
 
-  // A waiting request is quiet: dim label, the clock in the same dim, no accent to earn yet.
+  // A waiting request is quiet: no accent to earn yet, not even in the clock.
   if (relation === "PENDING") {
     return (
       <>
-        <Button
-          {...common}
-          variant="outline"
-          c="var(--color-text-dim)"
-          leftSection={<Clock size={ICON_SIZE} />}
-          onClick={() => setLeaving(true)}
-        >
+        <Button {...common} variant="outline" leftSection={<Clock size={ICON_SIZE} />} onClick={() => setLeaving(true)}>
           {t("follow.pending")}
         </Button>
         <ConfirmModal

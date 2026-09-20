@@ -1,7 +1,5 @@
-// The dashboard card: the sharing state, whose heading opens the drawer, and its two figures,
-// the people ones each a way to the followers tab. Off collapses to one row leading to
-// /follows - following others works with the profile switched off; the drawer is reached
-// from the Bikes icon and Settings in that state. Never hidden.
+// The dashboard card: the sharing state, its heading opening the drawer, its people figures
+// leading to the followers tab. Off collapses to one row leading to /follows. Never hidden.
 import { useState, type CSSProperties, type ReactElement } from "react";
 import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, Users } from "lucide-react";

@@ -2,6 +2,7 @@
 // follow me, each removable. All of it is mine whatever the profile's switch says.
 import { useState, type ReactElement } from "react";
 import { ActionIcon, Button, Stack, Text } from "@mantine/core";
+import type { TFunction } from "i18next";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useMyProfile } from "@/features/profile/profile.queries";
@@ -9,15 +10,13 @@ import type { Profile } from "@/features/profile/profile.types";
 import { EYEBROW } from "@/features/profile/profileSurface";
 import { useAcceptFollower, useFollowers, useRemoveFollower } from "../follow.queries";
 import type { FollowerRow } from "../follow.types";
+import { countedTitle, emptyText, PAGE_BOTTOM } from "../followPanels";
 import { FollowPanel } from "./FollowPanel";
-import { PAGE_BOTTOM } from "./FollowingPanels";
 import { PersonRow } from "./PersonRow";
 import { RemoveFollowerSheet } from "./RemoveFollowerSheet";
 
 const ACTION_SIZE = 32;
 const ICON_SIZE = 16;
-
-type Translate = (key: string, options?: Record<string, string>) => string;
 
 export function FollowersPanels(): ReactElement {
   const { t } = useTranslation();
@@ -37,8 +36,9 @@ export function FollowersPanels(): ReactElement {
 
   return (
     <Stack gap="md" px={8} pt="md" pb={PAGE_BOTTOM}>
-      {/* Requests only exist while approval does: a Public profile has no panel for them. */}
-      {profile?.visibility !== "PUBLIC" && (
+      {/* Requests only exist while approval does: a Public profile has no panel for them. Not
+          drawn before the profile is in, or a Public owner would see it mount and vanish. */}
+      {profile !== undefined && profile.visibility !== "PUBLIC" && (
         <FollowPanel
           title={
             // A request waiting is the one thing on the tab that asks for something, so it takes the accent.
@@ -66,7 +66,6 @@ export function FollowersPanels(): ReactElement {
               variant="outline"
               size="xs"
               radius="xl"
-              c="var(--color-text-dim)"
               style={{ flexShrink: 0 }}
               onClick={() => askToRemove(person)}
             >
@@ -118,20 +117,8 @@ function RequestActions({ person }: { person: FollowerRow }): ReactElement {
   );
 }
 
-// "Žádosti · n" once the list is in; the eyebrow alone while it loads.
-function countedTitle(label: string, rows: FollowerRow[] | undefined): string {
-  return rows === undefined ? label : `${label} · ${String(rows.length)}`;
-}
-
-// Nothing while the list loads, the fault when it failed, else what the panel says when empty.
-function emptyText(t: Translate, rows: FollowerRow[] | undefined, failed: boolean, empty: string): string {
-  if (failed) return t("follow.listFailed");
-  if (rows === undefined) return "";
-  return empty;
-}
-
 // Why nobody follows me yet depends on whether anybody could.
-function noFollowersText(t: Translate, profile: Profile | undefined): string {
+function noFollowersText(t: TFunction, profile: Profile | undefined): string {
   const title = t("follow.noFollowers");
   if (profile === undefined) return title;
   if (profile.visibility === "OFF") return `${title} ${t("follow.noFollowersOff")}`;

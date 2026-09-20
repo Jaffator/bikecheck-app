@@ -15,9 +15,8 @@ export async function getFollowing(): Promise<FollowingRow[]> {
   return apiFetch<FollowingRow[]>("/follows/following");
 }
 
-// POST /follows/:handle — follow a Public profile at once, or ask to follow a Followers-only
-// one. 404 for Off, no profile and a dead handle alike, 400 for my own handle. A row that
-// already stands is answered as is.
+// POST /follows/:handle — follow a Public profile at once, or ask a Followers-only one; a row
+// that stands is answered as is. 404 for Off, no profile and a dead handle alike, 400 for mine.
 export async function followUser(handle: string): Promise<FollowResponse> {
   return apiFetch<FollowResponse>(`/follows/${encodeURIComponent(handle)}`, { method: "POST" });
 }

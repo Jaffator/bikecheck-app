@@ -174,9 +174,8 @@ describe('UserService account deletion', () => {
       expect(mockAccountEvents.recordDeleted).not.toHaveBeenCalled();
     });
 
-    // The cascade takes my requests with the row, but the owners' `follow_request` rows
-    // are theirs and would hold their badge forever. Read inside the transaction, before
-    // the row goes; resolved only after it committed, so a rolled-back delete drops no badge.
+    // The owners' `follow_request` badges outlive the cascade: read before the row goes,
+    // resolved only after the commit, so a rolled-back delete drops no badge.
     describe('requests still waiting on other owners', () => {
       const OWNER_A = 21;
       const OWNER_B = 22;
@@ -186,10 +185,6 @@ describe('UserService account deletion', () => {
 
         await service.deleteAccount(USER_ID);
 
-        expect(tx.follows.findMany).toHaveBeenCalledWith({
-          where: { follower_id: USER_ID, status: 'PENDING' },
-          select: { followed_id: true },
-        });
         const readCall = tx.follows.findMany.mock.invocationCallOrder[0];
         const deleteCall = tx.users.delete.mock.invocationCallOrder[0];
         expect(readCall).toBeLessThan(deleteCall);

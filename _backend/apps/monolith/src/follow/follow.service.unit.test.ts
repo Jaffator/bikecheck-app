@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { follow_status, profile_visibility } from '@prisma/client';
+import { follow_status, Prisma, profile_visibility } from '@prisma/client';
 import { FollowService } from './follow.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
@@ -68,6 +68,13 @@ interface FollowUpdateData {
 }
 
 type Side = 'follower_id' | 'followed_id';
+
+// What Postgres throws through Prisma when a second row for one pair is written.
+const uniqueViolation = (): Prisma.PrismaClientKnownRequestError =>
+  new Prisma.PrismaClientKnownRequestError('Unique constraint failed on the fields: (`follower_id`,`followed_id`)', {
+    code: 'P2002',
+    clientVersion: 'test',
+  });
 
 describe('FollowService', () => {
   let service: FollowService;
@@ -181,7 +188,7 @@ describe('FollowService', () => {
         return Promise.resolve(row);
       }),
       create: jest.fn(({ data }: { data: Omit<FollowRow, 'created_at'> & { created_at?: Date } }) => {
-        if (findFollow(data)) return Promise.reject(new Error('Unique constraint failed'));
+        if (findFollow(data)) return Promise.reject(uniqueViolation());
         const row: FollowRow = { ...data, created_at: data.created_at ?? NOW };
         follows.push(row);
         return Promise.resolve(row);
@@ -302,6 +309,19 @@ describe('FollowService', () => {
 
       expect(answer).toEqual({ relation: 'FOLLOWING' });
       expect(follows).toHaveLength(1);
+    });
+
+    it('a POST that lost the race to a concurrent one answers the row the other wrote, and tells nobody again', async () => {
+      await service.follow(ME, 'jaffa');
+      mockNotifications.create.mockClear();
+      // The read saw nothing, as it does while the other write is still in flight.
+      mockPrisma.follows.findUnique.mockResolvedValueOnce(null);
+
+      const answer = await service.follow(ME, 'jaffa');
+
+      expect(answer).toEqual({ relation: 'FOLLOWING' });
+      expect(follows).toHaveLength(1);
+      expect(mockNotifications.create).not.toHaveBeenCalled();
     });
   });
 

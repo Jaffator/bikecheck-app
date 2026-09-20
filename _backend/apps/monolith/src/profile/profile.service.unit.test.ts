@@ -932,6 +932,16 @@ describe('ProfileService', () => {
 
       expect(mockFollow.acceptAllPending).not.toHaveBeenCalled();
     });
+
+    it('a unique violation from the accepting is not HANDLE_TAKEN: the row is written, the fault is its own', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.FOLLOWERS });
+      const violation = uniqueViolation();
+      mockFollow.acceptAllPending.mockRejectedValueOnce(violation);
+
+      await expect(service.updateMine(OWNER_ID, { visibility: profile_visibility.PUBLIC })).rejects.toBe(violation);
+
+      expect(table.get(OWNER_ID)?.visibility).toBe('PUBLIC');
+    });
   });
 
   describe('read - the rule', () => {

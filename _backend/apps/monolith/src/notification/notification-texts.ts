@@ -169,9 +169,8 @@ function personLabel(payload: NotificationTextPayload, anonymous: string): strin
   return handle ?? anonymous;
 }
 
-// " @jaffa (Jarda Novák)": the address first, since it is what the reader will open, the
-// owner's name beside it when the account has one. The lead ("of") comes only with a label,
-// and nothing at all rather than a stray word with neither.
+// " @jaffa (Jarda Novák)": the address first, since it is what the reader will open. The
+// lead ("of") comes only with a label - nothing at all rather than a stray word.
 function garageLabel(payload: NotificationTextPayload, lead = ''): string {
   const handle = payload.handle ? `@${payload.handle}` : null;
   const owner = payload.personName ?? null;
