@@ -8,13 +8,15 @@ import { useTranslation } from "react-i18next";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import type { ProfileRelation, ProfileVisibility } from "@/features/profile/profile.types";
 import { useFollow, useUnfollow } from "../follow.queries";
+import type { FollowingRowRelation } from "../follow.types";
 
 const ICON_SIZE = 14;
 
 interface FollowButtonProps {
   handle: string;
   visibility: ProfileVisibility;
-  relation: ProfileRelation;
+  // The profile hero hands over what its page read, a person row what its list read.
+  relation: ProfileRelation | FollowingRowRelation;
   // Rows wear the small one; the profile hero the regular one.
   size?: "xs" | "sm";
 }
@@ -55,8 +57,9 @@ export function FollowButton({ handle, visibility, relation, size = "xs" }: Foll
     );
   }
 
-  // Asking to follow a Followers-only profile is the request slice's (#146).
-  if (visibility !== "PUBLIC") return null;
+  // Požádat and Čeká are the request slice's (#146): a Followers-only profile and a waiting
+  // request draw nothing yet.
+  if (relation !== "NONE" || visibility !== "PUBLIC") return null;
 
   return (
     <Button {...common} color="primary.6" c="textDark.6" loading={follow.isPending} onClick={() => follow.mutate()}>

@@ -7,6 +7,8 @@ const ROUTES: Partial<Record<NotificationType, string>> = {
   // Open the pending rides tab.
   strava_activity_unassigned: "/rides?pending=:activityId",
   maintenance_due: "/bikes/:bikeId",
+  // The owner's side of the Follows page, whoever the follower was.
+  new_follower: "/follows?tab=followers",
 };
 
 // Return a route only when all placeholders are present.

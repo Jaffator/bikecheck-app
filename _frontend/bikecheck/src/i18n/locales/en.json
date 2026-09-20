@@ -32,6 +32,7 @@
     "notifications": "Notifications",
     "serviceHistory": "Service history",
     "reports": "Reports",
+    "follows": "Following",
     "chat": "Chat",
     "legalTerms": "Terms of use",
     "legalPrivacy": "Privacy policy"
@@ -1076,7 +1077,21 @@
     "unfollowBodyFollowers": "You'll lose the garage. The profile is for followers only, so you'd have to ask again.",
     "unfollowBodyPublic": "The garage leaves the people you follow. You can follow again any time.",
     "unfollowConfirm": "Unfollow",
-    "back": "Back"
+    "back": "Back",
+    "tabFollowing": "Following",
+    "tabFollowers": "Followers",
+    "searchPlaceholder": "Name or @handle",
+    "searchClear": "Clear",
+    "searching": "Searching…",
+    "searchFailed": "Search failed. Try again.",
+    "resultsTitle": "Results",
+    "noResults": "Nobody found",
+    "capped": "Showing the first 20. Narrow your search.",
+    "followingTitle": "You follow",
+    "noFollowing": "You're not following anyone yet. Find people by name or handle.",
+    "listFailed": "The list could not be loaded. Try again.",
+    "profileOff": "Profile off",
+    "followersTitle": "Followers"
   },
   "publicProfile": {
     "title": "Public profile",

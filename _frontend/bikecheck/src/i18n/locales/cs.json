@@ -34,6 +34,7 @@
     "notifications": "Oznámení",
     "serviceHistory": "Historie servisů",
     "reports": "Reporty",
+    "follows": "Sledování",
     "chat": "Chat",
     "legalTerms": "Podmínky použití",
     "legalPrivacy": "Ochrana osobních údajů"
@@ -1130,7 +1131,21 @@
     "unfollowBodyFollowers": "Garáž ti zmizí. Profil je jen pro sledující, znovu budeš muset požádat.",
     "unfollowBodyPublic": "Garáž ti zmizí ze sledovaných. Sledovat můžeš kdykoli znovu.",
     "unfollowConfirm": "Přestat sledovat",
-    "back": "Zpět"
+    "back": "Zpět",
+    "tabFollowing": "Sledovaní",
+    "tabFollowers": "Sledující",
+    "searchPlaceholder": "Jméno nebo @adresa",
+    "searchClear": "Smazat",
+    "searching": "Hledám…",
+    "searchFailed": "Hledání se nepodařilo. Zkus to znovu.",
+    "resultsTitle": "Výsledky",
+    "noResults": "Nikdo se nenašel",
+    "capped": "Zobrazeno prvních 20. Zpřesni hledání.",
+    "followingTitle": "Sleduješ",
+    "noFollowing": "Zatím nikoho nesleduješ. Najdi lidi podle jména nebo adresy.",
+    "listFailed": "Seznam se nepodařilo načíst. Zkus to znovu.",
+    "profileOff": "Profil vypnutý",
+    "followersTitle": "Sledující"
   },
   "publicProfile": {
     "title": "Veřejný profil",

@@ -23,6 +23,7 @@ import { useAppLinks } from "@/hooks/useAppLinks";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
+import { Follows } from "@/features/follow_page/Follows";
 import { Legal } from "@/features/legal_page/Legal";
 import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";
 import { UserProfile } from "@/features/profile_page/UserProfile";
@@ -124,6 +125,8 @@ function ProtectedApp(): ReactElement {
           <Route path="/bikes/:id/setup" element={<Setup />} />
           <Route path="/bikes/:id/history" element={<ServiceHistory />} />
           <Route path="/reports" element={<Reports />} />
+          {/* Whom I follow and who follows me; ?tab=followers opens the second tab. */}
+          <Route path="/follows" element={<Follows />} />
           <Route path="/service" element={<Service />} />
           <Route path="/service/new" element={<AddService />} />
           <Route path="/service/history" element={<ServiceHistory />} />
