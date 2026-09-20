@@ -1076,6 +1076,12 @@
     "handleInvalidChars": "Jen a–z, 0–9, pomlčka a podtržítko",
     "handleLeadingDash": "Musí začínat písmenem nebo číslicí",
     "handleReserved": "Tahle adresa je rezervovaná",
-    "handleTaken": "Tahle adresa už je zabraná"
+    "handleTaken": "Tahle adresa už je zabraná",
+    "cardTitle": "Garáž",
+    "cardFollowers": "Sledující",
+    "cardRequests": "Žádosti",
+    "cardViews": "Zobrazení",
+    "cardOff": "Sdílej svou garáž",
+    "headerIcon": "Sdílení garáže"
   }
 }

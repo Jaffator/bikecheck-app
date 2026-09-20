@@ -1026,6 +1026,12 @@
     "handleInvalidChars": "Only a–z, 0–9, dash and underscore",
     "handleLeadingDash": "Has to start with a letter or a digit",
     "handleReserved": "This address is reserved",
-    "handleTaken": "This address is already taken"
+    "handleTaken": "This address is already taken",
+    "cardTitle": "Garage",
+    "cardFollowers": "Followers",
+    "cardRequests": "Requests",
+    "cardViews": "Views",
+    "cardOff": "Share your garage",
+    "headerIcon": "Garage sharing"
   }
 }

@@ -297,6 +297,8 @@ export function AppLayout(): ReactElement {
                 </Group>
                 {/* The bell first, the rider last: the avatar is the corner the thumb owns. */}
                 <Group gap="sm">
+                  {/* Whatever the tab hung here, before the bell; nothing renders when it hung nothing. */}
+                  {actionSlot}
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
                     variant="transparent"

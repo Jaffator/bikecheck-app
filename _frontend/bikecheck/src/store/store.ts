@@ -35,7 +35,7 @@ interface HeaderStore {
   backHidden: boolean;
   setBackHidden: (value: boolean) => void;
   // A control the page hangs at the right edge of the header — the history's period filter.
-  // Sub-pages only: the main tabs already carry the avatar, bell and settings there.
+  // On a main tab it stands beside the bell, before it — the garage's share icon.
   actionSlot: ReactNode | null;
   setActionSlot: (value: ReactNode | null) => void;
 }
