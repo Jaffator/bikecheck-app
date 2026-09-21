@@ -139,6 +139,7 @@ function isActivePath(path: string, pathname: string): boolean {
 export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
   const [renderOfflinePage, setRenderOfflinePage] = useState(false);
+  const [fabMenuOpened, setFabMenuOpened] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -371,10 +372,24 @@ export function AppLayout(): ReactElement {
             {outlet}
           </Box>
         )}
+        {/* Dims page content without covering shared chrome. */}
+        <Box
+          onClick={() => setFabMenuOpened(false)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.45)",
+            backdropFilter: "blur(1px)",
+            opacity: fabMenuOpened ? 1 : 0,
+            pointerEvents: fabMenuOpened ? "auto" : "none",
+            transition: "opacity 0.2s ease",
+            zIndex: 190,
+          }}
+        />
       </AppShell.Main>
 
       {/* Hides the create action on sub-pages. */}
-      {!subPage && <Fab />}
+      {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {/* --------- FOOTER --------- */}
       {!subPage && (
         <AppShell.Footer

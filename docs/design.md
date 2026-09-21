@@ -145,6 +145,8 @@ Profile → connect Strava → unmatched gear notification
 - Tab destinations: `/`, `/bikes`, `/service`, `/rides`. Landing after login = `/`.
 - Inbox opens from the **bell** as a Drawer/Modal over the current screen (no own tab); deep-linkable as `/inbox` if needed.
 - Account (`/profile`, settings, Strava, logout) opens from the **avatar menu** in the top bar — not a tab.
+- **Follows** (`/follows`) opens from the **Users icon** in the top bar, left of the bell, badge = pending
+  follow requests — see [Follows entry](ui/follows-entry.md).
 - Detail routes: `/bikes/:id`, `/bikes/:id/maintenance`, `/bikes/:id/strava-link`, `/bikes/:id/rides` —
   these mirror the backend `NotificationType.route` values so a notification tap maps straight to a screen.
 - Public report route `/r/:token` is **outside** the authenticated shell (no nav, no login).
