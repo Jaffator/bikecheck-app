@@ -320,7 +320,7 @@ function Published({
       </Box>
 
       <Group gap="sm" grow wrap="nowrap">
-        <CopyLinkButton shareUrl={shareUrl} />
+        <CopyLinkButton shareUrl={shareUrl} color="primary.5" />
         {canShare && (
           <Button
             color="primary.6"

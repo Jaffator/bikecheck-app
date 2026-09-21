@@ -130,7 +130,8 @@ export function ReportCard({ report, onRevoke, onDelete }: ReportCardProps): Rea
                 >
                   {t("report.open")}
                 </Button>
-                <CopyLinkButton shareUrl={report.share_url} size="xs" variant="filled" color="primary.6" />
+                {/* One primary per card: opening is the action, copying is the quiet way beside it. */}
+                <CopyLinkButton shareUrl={report.share_url} size="xs" />
               </>
             )}
             <Button

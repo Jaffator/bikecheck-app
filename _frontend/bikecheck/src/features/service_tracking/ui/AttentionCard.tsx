@@ -12,6 +12,7 @@ import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { TrackedActionRow } from "./TrackedActionRow";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
+import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 
 // What the card asks the server for. 70 is the band the server calls warning — the point
 // at which a job is on the horizon, and the first the owner hears of it.
@@ -20,6 +21,21 @@ const CUTOFF = 70;
 // How many rows the card leads with. A neglected fleet must not bury everything below it,
 // so the rest waits behind one tap.
 const LEAD_ROWS = 3;
+
+// The garage list gathered under its bikes, in the order the bikes first appear - which is
+// worst first, since the list is. The bike is named once over its rows instead of on every
+// meta line, which is what left no room for the part.
+function groupByBike(
+  actions: GarageTrackedAction[],
+): { bikeId: number; title: string; actions: GarageTrackedAction[] }[] {
+  const groups: { bikeId: number; title: string; actions: GarageTrackedAction[] }[] = [];
+  for (const action of actions) {
+    const group = groups.find((entry) => entry.bikeId === action.bike_id);
+    if (group) group.actions.push(action);
+    else groups.push({ bikeId: action.bike_id, title: bikeTitle(action), actions: [action] });
+  }
+  return groups;
+}
 
 interface AttentionCardProps {
   // Null reads as every bike. One garage read serves both, narrowed here rather than on
@@ -64,21 +80,45 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
           </Text>
         </Group>
 
-        <Stack gap="md">
-          {shown.map((action) => (
-            // The garage list is flat, so every row names the bike it belongs to; a list
-            // narrowed to one bike already says which. Opening a row records the job, not
-            // the bike: the wizard opens with this very job ticked (ADR 0030).
-            <TrackedActionRow
-              key={trackedActionKey(action)}
-              action={action}
-              prefix={bikeId === null ? bikeTitle(action) : null}
-              onOpen={() => {
-                navigate(trackedActionServiceLink(action));
-              }}
-            />
-          ))}
-        </Stack>
+        {/* A list narrowed to one bike already says which; the garage list names each bike
+            once, as an eyebrow over its rows. Opening a row records the job, not the bike:
+            the wizard opens with this very job ticked (ADR 0030). */}
+        {bikeId === null ? (
+          <Stack gap="lg">
+            {groupByBike(shown).map((group) => (
+              <Stack key={group.bikeId} gap="sm">
+                <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
+                  {group.title}
+                </Text>
+                <Stack gap="md">
+                  {group.actions.map((action) => (
+                    <TrackedActionRow
+                      key={trackedActionKey(action)}
+                      action={action}
+                      prefix={null}
+                      onOpen={() => {
+                        navigate(trackedActionServiceLink(action));
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Stack>
+            ))}
+          </Stack>
+        ) : (
+          <Stack gap="md">
+            {shown.map((action) => (
+              <TrackedActionRow
+                key={trackedActionKey(action)}
+                action={action}
+                prefix={null}
+                onOpen={() => {
+                  navigate(trackedActionServiceLink(action));
+                }}
+              />
+            ))}
+          </Stack>
+        )}
 
         {/* The way to the rest, and back. Only shown while there is a rest to reach. */}
         {actions.length > LEAD_ROWS && (

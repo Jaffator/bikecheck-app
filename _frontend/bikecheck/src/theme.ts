@@ -158,8 +158,10 @@ export const theme = createTheme({
     textDark,
   },
   fontFamily: "Inter, sans-serif",
+  // One family for headings and body: the card typography rule keeps Inter for names and
+  // mono for data, so a third face had nowhere left to go.
   headings: {
-    fontFamily: "Space Grotesk, sans-serif",
+    fontFamily: "Inter, sans-serif",
   },
   other: otherColor,
   respectReducedMotion: false,

@@ -321,6 +321,7 @@
     "loadFailed": "Your bikes could not be loaded. Please try again.",
     "cardMenu": "Bike actions",
     "detailTitle": "Bike detail",
+    "noRidesYet": "No rides yet",
     "kilometres_one": "{{count}} km",
     "kilometres_other": "{{count}} km",
     "hours_one": "{{count}} h",
@@ -792,6 +793,8 @@
     "disconnectConfirmCancel": "Keep connected",
     "unpairedBikesBody": "Connecting with Strava gear automates mileage tracking and service reminders for your bikes without picking a right bike after every ride.",
     "unpairedBikesAction": "Pair gear",
+    "unpairedTile_one": "{{count}} unpaired",
+    "unpairedTile_other": "{{count}} unpaired",
     "gearLinkingLoadFailed": "Could not load your Strava gear. Try again.",
     "notConnectedTitle": "Strava not connected",
     "notConnectedBody": "Connect your account to smart service",
@@ -822,7 +825,9 @@
     "distance": "{{count}} km",
     "duration": "{{count}} min",
     "elevation": "{{count}} m",
-    "noGear": "No Strava bike"
+    "noGear": "No Strava bike",
+    "tileDetail_one": "{{count}} ride to assign",
+    "tileDetail_other": "{{count}} rides to assign"
   },
   "report": {
     "titleService": "Service report",

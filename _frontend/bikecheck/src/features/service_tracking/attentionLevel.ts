@@ -6,18 +6,19 @@ import type { AttentionLevel, TrackedAction } from "./tracking.types";
 
 // The colour a reading is read by before it is read as a number. Five steps, warming as the
 // part runs out: quiet, first tint, clearly hot, reddening, and out of interval. Highest
-// stop first, so the first one a reading clears is the one it wears. Every hue stands up on
-// the app's dark surfaces.
+// stop first, so the first one a reading clears is the one it wears. Tuned to the warm
+// palette: the first stop is amber, not the brand yellow, and every stop clears 4.5:1 on
+// cards.6 (the overdue red sits at 4.94:1).
 const ATTENTION_RAMP: { from: number; color: string }[] = [
-  { from: 100, color: "#EF4444" },
-  { from: 90, color: "#F87171" },
-  { from: 70, color: "#F97316" },
-  { from: 60, color: "#EAB308" },
+  { from: 100, color: "#F26B5B" },
+  { from: 90, color: "#F07B66" },
+  { from: 70, color: "#F0803A" },
+  { from: 60, color: "#E8A33C" },
 ];
 
 // The quiet end of the ramp, worn below the first stop — and by the dot that stands for a
-// part with nothing to answer for.
-export const QUIET_COLOR = "#4ADE80";
+// part with nothing to answer for. Sage rather than neon, so it sits with the mustard.
+export const QUIET_COLOR = "#8FCB9B";
 
 // Below this a reading carries no warning at all. Anything reading it has to read it here,
 // so a row can never be tinted and dimmed at the same time.

@@ -90,6 +90,9 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
   // The garage leads with the part that needs attention first; the whole list is on the
   // bike's own page.
   const worst = worstAction(actions ?? []);
+  // Three zeros read as a broken card, not as a bike that has not ridden yet. A bike with
+  // nothing on the clock shows only where its figures would come from.
+  const hasFigures = (bike.total_km ?? 0) > 0 || (bike.total_elevation_m ?? 0) > 0 || (bike.total_time_min ?? 0) > 0;
 
   return (
     <Paper
@@ -153,17 +156,23 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
         {/* The three readings a bike keeps by itself, in the order the bike's own page
             gives them. The pairing hint takes whatever room is left. */}
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-          <Metric icon={<Gauge size={14} color="var(--color-text-dim)" />}>
-            {t("bikes.kilometres", { count: bike.total_km ?? 0 })}
-          </Metric>
-          <Rule />
-          <Metric icon={<ArrowUpRight size={14} color="var(--color-text-dim)" />}>
-            {t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
-          </Metric>
-          <Rule />
-          <Metric icon={<Clock size={14} color="var(--color-text-dim)" />}>
-            {t("bikes.hours", { count: Math.round((bike.total_time_min ?? 0) / 60) })}
-          </Metric>
+          {hasFigures ? (
+            <>
+              <Metric icon={<Gauge size={14} color="var(--color-text-dim)" />}>
+                {t("bikes.kilometres", { count: bike.total_km ?? 0 })}
+              </Metric>
+              <Rule />
+              <Metric icon={<ArrowUpRight size={14} color="var(--color-text-dim)" />}>
+                {t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
+              </Metric>
+              <Rule />
+              <Metric icon={<Clock size={14} color="var(--color-text-dim)" />}>
+                {t("bikes.hours", { count: Math.round((bike.total_time_min ?? 0) / 60) })}
+              </Metric>
+            </>
+          ) : (
+            <Metric icon={<Gauge size={14} color="var(--color-text-dim)" />}>{t("bikes.noRidesYet")}</Metric>
+          )}
           <StravaPairingHint stravaGearId={bike.strava_gear_id} />
         </Group>
 

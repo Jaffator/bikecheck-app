@@ -93,7 +93,20 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
         <Group gap="sm" wrap="nowrap" ml="auto" style={{ whiteSpace: "nowrap" }}>
           {/* What a tap on the control left behind: the interval beside it is longer for it. */}
           {action.extended && (
-            <Text className="font-mono" fz={11} tt="uppercase" c="primary.6" lts="0.08em">
+            <Text
+              className="font-mono"
+              fz={9}
+              tt="uppercase"
+              c="primary.5"
+              lts="0.08em"
+              px={6}
+              py={1}
+              style={{
+                borderRadius: "9999px",
+                backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
+                lineHeight: 1.4,
+              }}
+            >
               {t("tracking.extended")}
             </Text>
           )}

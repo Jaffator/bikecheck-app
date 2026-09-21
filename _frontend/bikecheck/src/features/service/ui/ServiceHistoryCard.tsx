@@ -69,7 +69,13 @@ export function ServiceHistoryCard({
             {/* A service with no cost recorded shows no price; an explicit zero still
                 reads as zero, because the user said the work was free. */}
             {service.total_cost !== null && (
-              <Text className="font-mono" fz={13} fw={600} c="text.7">
+              <Text
+                className="font-mono"
+                fz={13}
+                fw={service.total_cost === 0 ? 400 : 600}
+                // A zero is still a price, but not one worth the weight.
+                c={service.total_cost === 0 ? "var(--color-text-dim)" : "text.7"}
+              >
                 {formatCost(service.total_cost, user?.currency ?? null, i18n.language)}
               </Text>
             )}

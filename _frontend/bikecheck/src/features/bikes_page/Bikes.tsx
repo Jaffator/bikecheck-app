@@ -1,6 +1,6 @@
 // Garage page.
 import { useEffect, useState, type ReactElement } from "react";
-import { Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Group, SimpleGrid, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -59,9 +59,12 @@ export function Bikes(): ReactElement {
   return (
     // Reserve space for bottom navigation.
     <Stack gap="md" px="md" pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-      {bikes.map((bike) => (
-        <BikeCard key={bike.id} bike={bike} onOpen={() => navigate(`/bikes/${bike.id}`)} />
-      ))}
+      {/* One to a row on a phone; two once the column is wide enough for a card each. */}
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        {bikes.map((bike) => (
+          <BikeCard key={bike.id} bike={bike} onOpen={() => navigate(`/bikes/${bike.id}`)} />
+        ))}
+      </SimpleGrid>
 
       {/* The way into the archive, under the bikes in use - and only while there is
           something in it, so an owner who never put a bike away never sees the door. */}

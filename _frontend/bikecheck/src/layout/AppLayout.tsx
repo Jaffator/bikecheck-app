@@ -2,12 +2,8 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Bell, ArrowLeft } from "lucide-react";
-import { GoHomeFill, GoHome } from "react-icons/go";
-// import { RiWrenchFill, RiWrenchLine } from "react-icons/ri";
+import { Bell, ArrowLeft, House, Route, MessageCircleMore } from "lucide-react";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
-import { PiPath, PiPathBold } from "react-icons/pi";
-import { RiChatAi3Line, RiChatAi3Fill } from "react-icons/ri";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -21,6 +17,7 @@ import { useUnreadNotifications } from "@/features/notifications/notifications.q
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
+import { BAR_WIDTH, CONTENT_MAX_WIDTH } from "./contentWidth";
 
 const BikeIcon = bikecheckIconType("BikeIcon");
 const BikeIconFill = bikecheckIconType("BikeIcon_fill");
@@ -31,12 +28,19 @@ interface NavItem {
   labelKey: string;
   path: string;
   icon: IconType;
+  // The app's own marks have a filled twin for the active tab; a lucide icon thickens instead.
   icon_fill?: IconType;
 }
 
-// Defines available navigation tabs by stable route paths.
+// Stroke widths for the lucide tabs: the resting one matches the app's own outline marks,
+// the active one carries the weight the filled twins carry.
+const TAB_STROKE = 1.75;
+const TAB_STROKE_ACTIVE = 2.5;
+
+// Defines available navigation tabs by stable route paths. Every third-party icon is lucide,
+// the family the rest of the app draws with, so the bar no longer mixes three stroke weights.
 const NAV_ITEMS: NavItem[] = [
-  { labelKey: "nav.home", path: "/", icon: GoHome, icon_fill: GoHomeFill },
+  { labelKey: "nav.home", path: "/", icon: House as IconType },
   {
     labelKey: "nav.bikes",
     path: "/bikes",
@@ -50,18 +54,8 @@ const NAV_ITEMS: NavItem[] = [
     icon: BikecheckOutlineIcon!,
     icon_fill: BikecheckIcon!,
   },
-  {
-    labelKey: "nav.rides",
-    path: "/rides",
-    icon: PiPath,
-    icon_fill: PiPathBold,
-  },
-  {
-    labelKey: "nav.chat",
-    path: "/chat",
-    icon: RiChatAi3Line,
-    icon_fill: RiChatAi3Fill,
-  },
+  { labelKey: "nav.rides", path: "/rides", icon: Route as IconType },
+  { labelKey: "nav.chat", path: "/chat", icon: MessageCircleMore as IconType },
 ];
 
 // Maps routes to translated header titles; Home intentionally has none.
@@ -145,7 +139,6 @@ function isActivePath(path: string, pathname: string): boolean {
 export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
   const [renderOfflinePage, setRenderOfflinePage] = useState(false);
-  const [fabMenuOpened, setFabMenuOpened] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -216,12 +209,10 @@ export function AppLayout(): ReactElement {
     if (pageTitleKey === null) {
       return null;
     }
-    const headerIcon = NAV_ITEMS.find((item) => isActivePath(item.path, location.pathname))?.icon_fill;
-    if (headerIcon) {
-      const HeaderIconComponent = headerIcon;
-      return <HeaderIconComponent size={25} />;
-    }
-    return null;
+    const item = NAV_ITEMS.find((entry) => isActivePath(entry.path, location.pathname));
+    if (!item) return null;
+    const HeaderIconComponent = item.icon_fill ?? item.icon;
+    return <HeaderIconComponent size={25} strokeWidth={item.icon_fill ? undefined : TAB_STROKE_ACTIVE} />;
   }
 
   return (
@@ -259,7 +250,14 @@ export function AppLayout(): ReactElement {
             pointerEvents: headerTransparent ? "none" : undefined,
           }}
         >
-          <Group h="100%" justify="space-between" w="100%" style={{ pointerEvents: "auto" }}>
+          <Group
+            h="100%"
+            justify="space-between"
+            w="100%"
+            maw={CONTENT_MAX_WIDTH}
+            mx="auto"
+            style={{ pointerEvents: "auto" }}
+          >
             {subPage ? (
               <>
                 <Group gap="xs" c="text.6" wrap="nowrap" style={{ minWidth: 0 }}>
@@ -367,29 +365,16 @@ export function AppLayout(): ReactElement {
         {OFFLINE_PAGE_ENABLED && (renderOfflinePage || isOffline) ? (
           <OfflinePage />
         ) : (
-          // Remounts each route to replay its entry animation.
-          <Box key={location.pathname} style={{ animation: "pageEnter 350ms ease-out" }}>
+          // Remounts each route to replay its entry animation. The column is the page's
+          // width in a browser; on a phone it is the phone.
+          <Box key={location.pathname} maw={CONTENT_MAX_WIDTH} mx="auto" style={{ animation: "pageEnter 350ms ease-out" }}>
             {outlet}
           </Box>
         )}
-        {/* Dims page content without covering shared chrome. */}
-        <Box
-          onClick={() => setFabMenuOpened(false)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.45)",
-            backdropFilter: "blur(1px)",
-            opacity: fabMenuOpened ? 1 : 0,
-            pointerEvents: fabMenuOpened ? "auto" : "none",
-            transition: "opacity 0.2s ease",
-            zIndex: 190,
-          }}
-        />
       </AppShell.Main>
 
       {/* Hides the create action on sub-pages. */}
-      {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
+      {!subPage && <Fab />}
       {/* --------- FOOTER --------- */}
       {!subPage && (
         <AppShell.Footer
@@ -413,7 +398,7 @@ export function AppLayout(): ReactElement {
           />
           <Group
             h="110%"
-            w="92%"
+            w={BAR_WIDTH}
             grow
             px="xs"
             className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
@@ -454,6 +439,8 @@ export function AppLayout(): ReactElement {
                         size={23}
                         className="relative z-10"
                         color={active ? "var(--mantine-color-primary-5)" : "var(--mantine-color-text-6)"}
+                        // Ignored by the app's own marks, which carry their weight in the fill.
+                        strokeWidth={active ? TAB_STROKE_ACTIVE : TAB_STROKE}
                       />
                     </div>
                     <Text size="xs" c={active ? "var(--mantine-color-primary-5)" : "var(--mantine-color-text-5)"}>

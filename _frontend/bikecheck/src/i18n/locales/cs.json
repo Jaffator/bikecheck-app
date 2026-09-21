@@ -331,6 +331,7 @@
     "loadFailed": "Kola se nepodařilo načíst. Zkuste to prosím znovu.",
     "cardMenu": "Akce kola",
     "detailTitle": "Detail kola",
+    "noRidesYet": "Zatím bez jízd",
     "kilometres_one": "{{count}} km",
     "kilometres_few": "{{count}} km",
     "kilometres_many": "{{count}} km",
@@ -830,6 +831,9 @@
     "disconnectConfirmCancel": "Nechat propojené",
     "unpairedBikesBody": "Propojení se Strava gearem automaticky hlídá kilometry a připomínky servisu tvých kol.",
     "unpairedBikesAction": "Propojit kola",
+    "unpairedTile_one": "{{count}} nespárované",
+    "unpairedTile_few": "{{count}} nespárovaná",
+    "unpairedTile_other": "{{count}} nespárovaných",
     "gearLinkingLoadFailed": "Strava gear se nepodařilo načíst. Zkus to znovu.",
     "notConnectedTitle": "Strava není propojena",
     "notConnectedBody": "Propoj účet pro chytrý servis",
@@ -860,7 +864,10 @@
     "distance": "{{count}} km",
     "duration": "{{count}} min",
     "elevation": "{{count}} m",
-    "noGear": "Bez kola ze Stravy"
+    "noGear": "Bez kola ze Stravy",
+    "tileDetail_one": "{{count}} jízda k přiřazení",
+    "tileDetail_few": "{{count}} jízdy k přiřazení",
+    "tileDetail_other": "{{count}} jízd k přiřazení"
   },
   "report": {
     "titleService": "Servisní report",
