@@ -54,6 +54,8 @@ approve             bell 0   Users 0
   because no other way in existed. Tile = "my sharing", Users = "my people". Never hidden (#135).
 - **"N requests" leaves the tile.** Detail = `OFF ? label : "12 followers · 40 views"`; the
   count lives on the Users badge alone. `detailAccented` on the sharing tile goes with it.
+- **Bikes header share icon removed.** Sharing lives on the Home tile, people on `Users`; a
+  fourth icon in the bar on one tab only was the old way in, not a place of its own.
 - **Notifications unchanged.** `follow_request` / `new_follower` → `/follows?tab=followers`
   (a tap jumps to the event). `follow_accepted` → `/users/:handle` untouched.
 
@@ -64,6 +66,7 @@ approve             bell 0   Users 0
 | `layout/AppLayout.tsx`                                       | Users icon + badge before the bell; badge shared with the bell |
 | `features/dashboard_page/StatusRow.tsx`                      | sharing tile always opens the drawer; requests line removed    |
 | `features/profile/ui/DashboardShareCard.tsx` (empty garage)  | same: Off row opens the drawer; Requests figure removed        |
+| `features/bikes_page/Bikes.tsx`                              | header share icon gone; `profile/ui/HeaderShareIcon.tsx` deleted |
 | `hooks/usePushNotifications.ts`                              | foreground push also invalidates `PROFILE_ME_QUERY_KEY`        |
 | `notification/notification-types.config.ts` (backend)        | `follow_request` drops `holdsBadge`                            |
 | `i18n/locales/{cs,en}.json`                                  | `aria-label` variant with count (reuses `page.follows`)        |

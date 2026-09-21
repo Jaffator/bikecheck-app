@@ -1,5 +1,5 @@
 // Garage page.
-import { useEffect, useState, type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { Group, SimpleGrid, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -7,8 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { useArchivedBikes, useBikes } from "@/features/bikes/bikes.queries";
 import { BikeCard } from "@/features/bikes/ui/BikeCard";
 import { BikeArchiveDrawer } from "@/features/bikes/ui/BikeArchiveDrawer";
-import { HeaderShareIcon } from "@/features/profile/ui/HeaderShareIcon";
-import { useHeaderStore } from "@/store/store";
 import { EmptyGarage } from "./EmptyGarage";
 
 export function Bikes(): ReactElement {
@@ -16,16 +14,9 @@ export function Bikes(): ReactElement {
   const { data: archived } = useArchivedBikes();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   // The archive opens over the garage: it is the garage's own back room (ADR 0024).
   const [archive, setArchive] = useState(false);
   const archivedCount = archived?.length ?? 0;
-
-  // The share icon hangs in the app header beside the bell, on this tab only; it leaves with the page.
-  useEffect(() => {
-    setActionSlot(<HeaderShareIcon />);
-    return () => setActionSlot(null);
-  }, [setActionSlot]);
 
   // Preserve layout while bikes load.
   if (isLoading) {

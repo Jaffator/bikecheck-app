@@ -30,7 +30,7 @@ import type {
   SaveSharingInput,
 } from "./profile.types";
 
-// Shared by every surface that reads the sharing state (Settings row, dashboard card, header icon).
+// Shared by every surface that reads the sharing state (dashboard tile and card, Users badge).
 export const PROFILE_ME_QUERY_KEY = ["profile", "me"] as const;
 
 // Every garage page read, whoever's; one handle's page is keyed under it.
