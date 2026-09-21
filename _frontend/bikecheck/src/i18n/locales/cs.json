@@ -1086,7 +1086,6 @@
     "handleTaken": "Tahle adresa už je zabraná",
     "cardTitle": "Garáž",
     "cardFollowers": "Sledující",
-    "cardRequests": "Žádosti",
     "cardViews": "Zobrazení",
     "headerIcon": "Sdílení garáže",
     "profileTitle": "Profil uživatele",
@@ -1132,6 +1131,10 @@
     "hsc": "HSC"
   },
   "follow": {
+    "entryLabelWithRequests_one": "{{title}}, {{count}} žádost",
+    "entryLabelWithRequests_few": "{{title}}, {{count}} žádosti",
+    "entryLabelWithRequests_many": "{{title}}, {{count}} žádosti",
+    "entryLabelWithRequests_other": "{{title}}, {{count}} žádostí",
     "follow": "Sledovat",
     "following": "Sledujete",
     "unfollowTitle": "Přestat sledovat @{{handle}}?",

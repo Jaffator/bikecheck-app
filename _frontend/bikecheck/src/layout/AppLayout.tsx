@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Bell, ArrowLeft, House, Route, MessageCircleMore } from "lucide-react";
+import { Bell, ArrowLeft, House, Route, MessageCircleMore, Users } from "lucide-react";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
@@ -14,8 +14,10 @@ import { OfflinePage } from "@/features/offline_page/OfflinePage";
 import { useOfflineWhenCallApiStore, useHeaderStore, useOverlayStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
+import { useMyProfile } from "@/features/profile/profile.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
+import { HeaderCountBadge } from "./HeaderCountBadge";
 import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
 import { BAR_WIDTH, CONTENT_MAX_WIDTH } from "./contentWidth";
 
@@ -151,6 +153,10 @@ export function AppLayout(): ReactElement {
   // Loads unread notifications for the persistent bell badge.
   const { data: unreadNotifications } = useUnreadNotifications();
   const unreadCount = unreadNotifications?.length ?? 0;
+  // Pending follow requests sit on the Users icon, not the bell: a request is a task that
+  // clears when answered, not something read (#155).
+  const { data: profile } = useMyProfile();
+  const pendingRequests = profile?.stats.pending_requests ?? 0;
   const overrideTitleKey = useHeaderStore((state) => state.titleKey);
   // A title a translation key cannot express - a category the user named, with its icon.
   const overrideTitleSlot = useHeaderStore((state) => state.titleSlot);
@@ -299,10 +305,27 @@ export function AppLayout(): ReactElement {
                     {t(pageTitleKey ?? "page.home")}
                   </Text>
                 </Group>
-                {/* The bell first, the rider last: the avatar is the corner the thumb owns. */}
+                {/* Least used furthest from the thumb: people, then the bell, then the rider in
+                    the corner the thumb owns. */}
                 <Group gap="sm">
-                  {/* Whatever the tab hung here, before the bell; nothing renders when it hung nothing. */}
+                  {/* Whatever the tab hung here, before the icons; nothing renders when it hung nothing. */}
                   {actionSlot}
+                  {/* FOLLOWS ICON */}
+                  <ActionIcon
+                    variant="transparent"
+                    radius="sm"
+                    size="lg"
+                    aria-label={
+                      pendingRequests > 0
+                        ? t("follow.entryLabelWithRequests", { title: t("page.follows"), count: pendingRequests })
+                        : t("page.follows")
+                    }
+                    onClick={() => navigate("/follows")}
+                    pos="relative"
+                  >
+                    <Users size={25} color="var(--mantine-color-cards-1)" />
+                    <HeaderCountBadge count={pendingRequests} />
+                  </ActionIcon>
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
                     variant="transparent"
@@ -311,33 +334,9 @@ export function AppLayout(): ReactElement {
                     aria-label={t("page.notifications")}
                     onClick={() => navigate("/notifications")}
                     pos="relative"
-                    // style={{ border: "none" }}
                   >
                     <Bell size={25} color="var(--mantine-color-cards-1)" />
-                    {/* Displays the unread count, capped at nine plus. */}
-                    {unreadCount > 0 && (
-                      <Box
-                        pos="absolute"
-                        top={2}
-                        right={0}
-                        miw={16}
-                        h={16}
-                        px={4}
-                        style={{
-                          borderRadius: "9999px",
-                          backgroundColor: "var(--mantine-color-primary-6)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          // Blends the badge border into the header.
-                          border: "none",
-                        }}
-                      >
-                        <Text className="font-mono" fz={10} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
-                          {unreadCount > 9 ? "9+" : unreadCount}
-                        </Text>
-                      </Box>
-                    )}
+                    <HeaderCountBadge count={unreadCount} />
                   </ActionIcon>
                   <UnstyledButton onClick={() => navigate("/settings")} aria-label={t("page.settings")}>
                     {/* name drives the initials fallback when the user has no picture */}

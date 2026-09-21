@@ -1034,7 +1034,6 @@
     "handleTaken": "This address is already taken",
     "cardTitle": "Garage",
     "cardFollowers": "Followers",
-    "cardRequests": "Requests",
     "cardViews": "Views",
     "headerIcon": "Garage sharing",
     "profileTitle": "Rider profile",
@@ -1076,6 +1075,8 @@
     "hsc": "HSC"
   },
   "follow": {
+    "entryLabelWithRequests_one": "{{title}}, {{count}} request",
+    "entryLabelWithRequests_other": "{{title}}, {{count}} requests",
     "follow": "Follow",
     "following": "Following",
     "unfollowTitle": "Unfollow @{{handle}}?",

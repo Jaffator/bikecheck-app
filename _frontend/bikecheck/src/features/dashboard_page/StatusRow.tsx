@@ -33,13 +33,11 @@ interface TileProps {
   title: string;
   // The figure or the state under the title, in the data voice.
   detail: string;
-  // Coloured when the detail asks for something - a waiting request.
-  detailAccented?: boolean;
   onOpen: (() => void) | null;
 }
 
 // One tile: an icon disc, two lines, and a chevron when it leads on.
-function Tile({ icon, tint, title, detail, detailAccented = false, onOpen }: TileProps): ReactElement {
+function Tile({ icon, tint, title, detail, onOpen }: TileProps): ReactElement {
   const body = (
     <Group gap="sm" wrap="nowrap" px="sm" py={10} style={{ minWidth: 0 }}>
       <Box
@@ -65,7 +63,7 @@ function Tile({ icon, tint, title, detail, detailAccented = false, onOpen }: Til
           fz={11}
           tt="uppercase"
           lts="0.06em"
-          c={detailAccented ? "primary.5" : "var(--color-text-dim)"}
+          c="var(--color-text-dim)"
           lineClamp={1}
         >
           {detail}
@@ -140,14 +138,15 @@ export function StatusRow(): ReactElement | null {
     );
   }
 
-  // Never hidden (#135): Off is the way to the Follows page, anything else opens the drawer.
+  // Never hidden (#135) and always the drawer: the tile is "my sharing"; "my people" and the
+  // waiting requests live on the Users icon in the top bar (#156).
   if (profile) {
     const Icon = VISIBILITY_ICON[profile.visibility];
     const color = VISIBILITY_COLOR[profile.visibility];
-    const requests = profile.visibility === "FOLLOWERS" ? profile.stats.pending_requests : 0;
-    let detail = `${profile.stats.followers} ${t("sharing.cardFollowers")} · ${profile.stats.views} ${t("sharing.cardViews")}`;
-    if (profile.visibility === "OFF") detail = t(VISIBILITY_LABEL_KEY.OFF);
-    else if (requests > 0) detail = `${requests} ${t("sharing.cardRequests")}`;
+    const detail =
+      profile.visibility === "OFF"
+        ? t(VISIBILITY_LABEL_KEY.OFF)
+        : `${profile.stats.followers} ${t("sharing.cardFollowers")} · ${profile.stats.views} ${t("sharing.cardViews")}`;
 
     tiles.push(
       <Tile
@@ -156,8 +155,7 @@ export function StatusRow(): ReactElement | null {
         tint={color}
         title={`${t("sharing.cardTitle")} · ${t(VISIBILITY_LABEL_KEY[profile.visibility])}`}
         detail={detail}
-        detailAccented={requests > 0}
-        onOpen={profile.visibility === "OFF" ? () => void navigate("/follows") : () => setSharing(true)}
+        onOpen={() => setSharing(true)}
       />,
     );
   }

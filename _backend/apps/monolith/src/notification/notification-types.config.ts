@@ -78,13 +78,13 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     channels: ['inApp'],
     route: '/follows?tab=followers',
   },
-  // An ask: pushes and holds the badge until answered. Keyed on the asker, so a repeat
-  // after a withdrawal or a refusal is silent - the free brake on request spam.
+  // An ask, but the bell is only its receipt: the Users badge in the top bar counts pending
+  // requests until answered. Keyed on the asker, so a repeat after a withdrawal or a refusal
+  // is silent - the free brake on request spam.
   follow_request: {
     channels: ['push', 'inApp'],
     route: '/follows?tab=followers',
     pushEmoji: '👋',
-    holdsBadge: true,
   },
   // The answer to an ask: pushes, nothing to do but open the garage. Keyed on the owner, so
   // one garage opening to a person is news once.

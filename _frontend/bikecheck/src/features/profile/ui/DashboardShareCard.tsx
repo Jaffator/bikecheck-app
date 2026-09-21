@@ -1,8 +1,8 @@
 // The dashboard card: the sharing state, its heading opening the drawer, its people figures
-// leading to the followers tab. Off collapses to one row leading to /follows. Never hidden.
+// leading to the followers tab. Off collapses to one row opening the drawer. Never hidden.
 import { useState, type CSSProperties, type ReactElement } from "react";
 import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
-import { ChevronRight, Users } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useMyProfile } from "../profile.queries";
@@ -23,25 +23,16 @@ const FOLLOWERS_TAB = "/follows?tab=followers";
 interface Figure {
   labelKey: string;
   value: number;
-  // A waiting request is the one figure that asks for something, so it takes the accent.
-  accented: boolean;
-  // The people figures are a way somewhere; Views is a count, nothing to open.
+  // The people figure is a way somewhere; Views is a count, nothing to open.
   linked: boolean;
 }
 
-// Which two numbers a state shows.
-function figuresFor(visibility: Exclude<ProfileVisibility, "OFF">, profile: Profile): Figure[] {
-  const followers: Figure = {
-    labelKey: "sharing.cardFollowers",
-    value: profile.stats.followers,
-    accented: false,
-    linked: true,
-  };
-  if (visibility === "FOLLOWERS") {
-    const requests = profile.stats.pending_requests;
-    return [followers, { labelKey: "sharing.cardRequests", value: requests, accented: requests > 0, linked: true }];
-  }
-  return [followers, { labelKey: "sharing.cardViews", value: profile.stats.views, accented: false, linked: false }];
+// The two numbers the card shows; waiting requests live on the Users badge alone (#156).
+function figuresFor(profile: Profile): Figure[] {
+  return [
+    { labelKey: "sharing.cardFollowers", value: profile.stats.followers, linked: true },
+    { labelKey: "sharing.cardViews", value: profile.stats.views, linked: false },
+  ];
 }
 
 export function DashboardShareCard(): ReactElement | null {
@@ -52,13 +43,9 @@ export function DashboardShareCard(): ReactElement | null {
   return (
     <>
       {profile.visibility === "OFF" ? (
-        <OffRow />
+        <OffRow onOpenDrawer={() => setSharing(true)} />
       ) : (
-        <StateCard
-          visibility={profile.visibility}
-          figures={figuresFor(profile.visibility, profile)}
-          onOpenDrawer={() => setSharing(true)}
-        />
+        <StateCard visibility={profile.visibility} figures={figuresFor(profile)} onOpenDrawer={() => setSharing(true)} />
       )}
 
       <ShareDrawer opened={sharing} onClose={() => setSharing(false)} />
@@ -66,19 +53,20 @@ export function DashboardShareCard(): ReactElement | null {
   );
 }
 
-// Off collapses to one row: the way to the Follows page, not a pitch to share.
-function OffRow(): ReactElement {
+// Off collapses to one row: "my sharing" with nothing to count, a tap opening the drawer;
+// "my people" is the Users icon in the top bar (#156).
+function OffRow({ onOpenDrawer }: { onOpenDrawer: () => void }): ReactElement {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const OffIcon = VISIBILITY_ICON.OFF;
 
   return (
-    <UnstyledButton onClick={() => void navigate("/follows")} className="active:scale-[0.985]" style={{ display: "block" }}>
+    <UnstyledButton onClick={onOpenDrawer} className="active:scale-[0.985]" style={{ display: "block" }}>
       <Paper radius="lg" px="md" py="sm" style={{ ...PANEL, boxShadow: "var(--elev-row)" }}>
         <Group justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap">
-            <Users size={18} color="var(--mantine-color-primary-6)" />
+            <OffIcon size={18} color={VISIBILITY_COLOR.OFF} />
             <Text fw={600} fz={15} c="text.6">
-              {t("page.follows")}
+              {`${t("sharing.cardTitle")} · ${t(VISIBILITY_LABEL_KEY.OFF)}`}
             </Text>
           </Group>
           <ChevronRight size={18} color="var(--color-text-dim)" />
@@ -127,7 +115,7 @@ function FigureCell({ figure }: { figure: Figure }): ReactElement {
 
   const body = (
     <Stack gap={0}>
-      <Text className="font-mono" fz={32} fw={700} c={figure.accented ? "primary.5" : "text.6"} style={{ lineHeight: 1.1 }}>
+      <Text className="font-mono" fz={32} fw={700} c="text.6" style={{ lineHeight: 1.1 }}>
         {figure.value}
       </Text>
       <Group gap={2} wrap="nowrap">

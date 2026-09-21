@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { PushNotifications, type PushNotificationSchema } from "@capacitor/push-notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import { registerFcmToken } from "@/features/notifications/notifications.api";
+import { PROFILE_ME_QUERY_KEY } from "@/features/profile/profile.queries";
 
 export interface UsePushNotificationsResult {
   // Holds the push received while the app is in the foreground.
@@ -42,6 +43,8 @@ export function usePushNotifications(onNotificationTapped: (route: string) => vo
       // Refreshes the notification list and bell badge.
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
       void queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
+      // A follow request lands on the Users badge, which reads the profile's pending count.
+      void queryClient.invalidateQueries({ queryKey: PROFILE_ME_QUERY_KEY });
     });
 
     // Handles a system-tray notification tap.

@@ -15,7 +15,7 @@ section links the ticket that holds the reasoning. Spec only — no implementati
 | icon     | lucide `Users`, 25px, `cards-1` — same style as the bell; no text label                    |
 | target   | always `/follows` (default tab Following), no state-dependent switching                    |
 | where    | the 5 main tabs only, like the bell and avatar; nested pages keep back arrow + `actionSlot` |
-| a11y     | `aria-label` = `page.follows` ("Sledování" / "Following"); with pending requests append the count the way the bell does, e.g. "Sledování, 3 žádosti" |
+| a11y     | `aria-label` = `page.follows` ("Sledování" / "Following"); with pending requests append the count, e.g. "Sledování, 3 žádosti" (the bell stays a bare label) |
 
 ```
 before:  BikeCheck            🔔(3)  👤
@@ -63,6 +63,7 @@ approve             bell 0   Users 0
 | ------------------------------------------------------------ | -------------------------------------------------------------- |
 | `layout/AppLayout.tsx`                                       | Users icon + badge before the bell; badge shared with the bell |
 | `features/dashboard_page/StatusRow.tsx`                      | sharing tile always opens the drawer; requests line removed    |
+| `features/profile/ui/DashboardShareCard.tsx` (empty garage)  | same: Off row opens the drawer; Requests figure removed        |
 | `hooks/usePushNotifications.ts`                              | foreground push also invalidates `PROFILE_ME_QUERY_KEY`        |
 | `notification/notification-types.config.ts` (backend)        | `follow_request` drops `holdsBadge`                            |
 | `i18n/locales/{cs,en}.json`                                  | `aria-label` variant with count (reuses `page.follows`)        |
