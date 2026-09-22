@@ -39,6 +39,20 @@ export interface TrackedAction {
   level: AttentionLevel;
   // The action has been put off, which lengthened the interval above.
   extended: boolean;
+  // What one more postponement would add. Not derivable from `interval`, which already
+  // carries any Extension in force.
+  postpone_by: number;
+  // The bike's own plan on this axis, which Reset to default restores.
+  default_interval: number;
+  // The owner's own Service Interval, or null where the reading follows the bike's plan —
+  // which is also what tells a custom interval from the app's.
+  interval_override: number | null;
+  // False silences this pairing's announcements and nothing else.
+  notify: boolean;
+  // When the part went on the bike, which the reading is judged against.
+  mounted_at: string | null;
+  // Recording this job replaces the part rather than servicing it, which names the button.
+  replace_action: boolean;
 }
 
 // The same reading on the dashboard, where the list is flat across the whole garage and a
@@ -56,4 +70,19 @@ export interface GarageTrackedAction extends TrackedAction {
 export interface PostponeTrackedActionInput {
   component_mounted_id: number;
   event_action_id: number;
+}
+
+// What setting an owner's own Service Interval asks for. Null clears it, which puts the
+// bike's plan back — only the number is theirs, never the axis.
+export interface SetTrackedActionIntervalInput {
+  component_mounted_id: number;
+  event_action_id: number;
+  interval_override: number | null;
+}
+
+// What muting one Tracked Action asks for. False stops the push and nothing else.
+export interface SetTrackedActionNotifyInput {
+  component_mounted_id: number;
+  event_action_id: number;
+  notify: boolean;
 }

@@ -78,9 +78,8 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     channels: ['inApp'],
     route: '/follows?tab=followers',
   },
-  // An ask, but the bell is only its receipt: the Users badge in the top bar counts pending
-  // requests until answered. Keyed on the asker, so a repeat after a withdrawal or a refusal
-  // is silent - the free brake on request spam.
+  // An ask, but the bell is only its receipt: the More tab counts pending requests until
+  // answered. Keyed on the asker, so a repeat after a withdrawal or a refusal is silent.
   follow_request: {
     channels: ['push', 'inApp'],
     route: '/follows?tab=followers',

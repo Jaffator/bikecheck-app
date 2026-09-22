@@ -1,5 +1,5 @@
-// Where the question is typed. Pinned above the tab bar (docs/ui/pinned-action-bar.md), with the
-// bar's height added to the gap so the two do not stack.
+// Where the question is typed. Pinned to the bottom edge (docs/ui/pinned-action-bar.md); chat
+// is a sub-page, so no tab bar stands under it.
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { ActionIcon, Box, Group, Stack, Text, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -8,10 +8,8 @@ import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { QUESTION_MAX_LENGTH } from "../chat.api";
 import type { ChatFailure } from "../useChatTurn";
 
-// Clears the footer pill, written the way the FAB writes the same gap - with a wider gap of
-// its own at the end, so the composer does not read as sitting on the tab bar.
-const TAB_BAR_CLEARANCE =
-  "calc(4rem + 0.4rem + 0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)) + 1.5rem)";
+// Clears the safe area alone, the gap the pinned action bar keeps.
+const BOTTOM_CLEARANCE = "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
 const SEND_BUTTON_SIZE = 34;
 
@@ -72,7 +70,7 @@ export function ChatComposer({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingBottom: TAB_BAR_CLEARANCE,
+        paddingBottom: BOTTOM_CLEARANCE,
         zIndex: 100,
         // Only the bar itself takes taps; the rest of this strip is thread underneath.
         pointerEvents: "none",

@@ -6,6 +6,7 @@ import { Box, Button, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { CONTENT_MAX_WIDTH } from "@/layout/contentWidth";
 
 interface SetupSaveBarProps {
   // Nothing has changed: the bar waits off-screen rather than sitting there disabled.
@@ -58,7 +59,8 @@ export function SetupSaveBar({ visible, saving, saveFailed, onSave }: SetupSaveB
           zIndex: -1,
         }}
       />
-      <Stack gap={6} w="100%" align="center" style={{ pointerEvents: visible ? "auto" : "none" }}>
+      {/* In a browser it stays as wide as the cards it saves: the column less the gutter. */}
+      <Stack gap={6} w="100%" maw={`calc(${CONTENT_MAX_WIDTH} - 2rem)`} align="center" style={{ pointerEvents: visible ? "auto" : "none" }}>
         {/* The failure belongs beside the button that failed. */}
         {saveFailed && (
           <Text fz={13} c="red.5">

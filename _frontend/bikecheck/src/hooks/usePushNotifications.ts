@@ -43,7 +43,7 @@ export function usePushNotifications(onNotificationTapped: (route: string) => vo
       // Refreshes the notification list and bell badge.
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
       void queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
-      // A follow request lands on the Users badge, which reads the profile's pending count.
+      // A follow request lands on the More tab's dot, which reads the profile's pending count.
       void queryClient.invalidateQueries({ queryKey: PROFILE_ME_QUERY_KEY });
     });
 

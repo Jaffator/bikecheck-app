@@ -4,6 +4,8 @@ import { ServiceTrackingService } from './service-tracking.service';
 import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 import { PostponeTrackedActionDto } from './dto/postpone-tracked-action';
+import { SetTrackedActionIntervalDto } from './dto/set-tracked-action-interval';
+import { SetTrackedActionNotifyDto } from './dto/set-tracked-action-notify';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 // A pass-through: what a caller may read, and what a reading says, is decided in
@@ -45,6 +47,38 @@ export class ServiceTrackingController {
       dto.component_mounted_id,
       dto.event_action_id,
       Number(userId),
+    );
+  }
+
+  // ---------- POST the owner's own Service Interval for one Tracked Action ----------
+  // Null clears it, which puts the bike's plan back. Answers with the reading as it now
+  // stands, so the drawer needs no refetch to show what the change did.
+  @Post('interval')
+  @ApiResponse({ status: 201, type: Response_TrackedActionDto })
+  async setTrackedActionInterval(
+    @CurrentUser('userId') userId: string,
+    @Body() dto: SetTrackedActionIntervalDto,
+  ): Promise<Response_TrackedActionDto> {
+    return await this.serviceTrackingService.setTrackedActionInterval(
+      dto.component_mounted_id,
+      dto.event_action_id,
+      Number(userId),
+      dto.interval_override,
+    );
+  }
+
+  // ---------- POST whether one Tracked Action may announce itself ----------
+  @Post('notify')
+  @ApiResponse({ status: 201, type: Response_TrackedActionDto })
+  async setTrackedActionNotify(
+    @CurrentUser('userId') userId: string,
+    @Body() dto: SetTrackedActionNotifyDto,
+  ): Promise<Response_TrackedActionDto> {
+    return await this.serviceTrackingService.setTrackedActionNotify(
+      dto.component_mounted_id,
+      dto.event_action_id,
+      Number(userId),
+      dto.notify,
     );
   }
 }

@@ -1,6 +1,12 @@
 // Service Tracking API requests.
 import { apiFetch } from "@/api/client";
-import type { GarageTrackedAction, PostponeTrackedActionInput, TrackedAction } from "./tracking.types";
+import type {
+  GarageTrackedAction,
+  PostponeTrackedActionInput,
+  SetTrackedActionIntervalInput,
+  SetTrackedActionNotifyInput,
+  TrackedAction,
+} from "./tracking.types";
 
 // Every Tracked Action on one bike, worst first — the quiet ones included.
 export async function getBikeTrackedActions(bikeId: number): Promise<TrackedAction[]> {
@@ -18,6 +24,23 @@ export async function getGarageTrackedActions(minPercentage: number): Promise<Ga
 // reads, with the Extension already in its interval.
 export async function postponeTrackedAction(input: PostponeTrackedActionInput): Promise<TrackedAction> {
   return apiFetch<TrackedAction>("/service-tracking/postpone", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+// Set the owner's own Service Interval, or clear it with null. The row comes back reading
+// against whatever now applies, so nothing has to be refetched to show the change.
+export async function setTrackedActionInterval(input: SetTrackedActionIntervalInput): Promise<TrackedAction> {
+  return apiFetch<TrackedAction>("/service-tracking/interval", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+// Turn this pairing's announcements on or off. The reading itself is untouched.
+export async function setTrackedActionNotify(input: SetTrackedActionNotifyInput): Promise<TrackedAction> {
+  return apiFetch<TrackedAction>("/service-tracking/notify", {
     method: "POST",
     body: JSON.stringify(input),
   });

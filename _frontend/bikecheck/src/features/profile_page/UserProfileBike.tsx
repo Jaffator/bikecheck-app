@@ -63,7 +63,7 @@ export function UserProfileBike(): ReactElement {
       gap="md"
       px={8}
       // Clears the transparent header, which no longer holds a place open for the page.
-      pt="calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.4rem)"
+      pt="calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.4rem)"
       pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
     >
       {/* My own preview while nobody else can open it. */}

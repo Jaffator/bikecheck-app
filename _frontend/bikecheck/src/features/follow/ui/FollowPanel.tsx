@@ -1,8 +1,8 @@
-// One section of the Follows screen: a panel card with a mono eyebrow, its rows split by
-// hairlines. An empty one stays and says so in one dim line.
+// One section of the Follows screen: a mono eyebrow over rows split by hairlines, straight on
+// the page background. An empty one stays and says so in one dim line.
 import { Fragment, type ReactElement, type ReactNode } from "react";
-import { Divider, Paper, Stack, Text } from "@mantine/core";
-import { EYEBROW, PANEL } from "@/features/profile/profileSurface";
+import { Divider, Stack, Text } from "@mantine/core";
+import { EYEBROW } from "@/features/profile/profileSurface";
 
 interface FollowPanelProps {
   title: ReactNode;
@@ -14,22 +14,20 @@ interface FollowPanelProps {
 
 export function FollowPanel({ title, empty, children }: FollowPanelProps): ReactElement {
   return (
-    <Paper radius="lg" p="md" pt="sm" style={PANEL}>
-      <Stack gap={4}>
-        <Text {...EYEBROW}>{title}</Text>
-        {children.length === 0 ? (
-          <Text fz={14} c="var(--color-text-dim)" py="xs">
-            {empty}
-          </Text>
-        ) : (
-          children.map((child, index) => (
-            <Fragment key={child.key ?? index}>
-              {index > 0 && <Divider color="var(--color-border-subtle)" />}
-              {child}
-            </Fragment>
-          ))
-        )}
-      </Stack>
-    </Paper>
+    <Stack gap={4}>
+      <Text {...EYEBROW}>{title}</Text>
+      {children.length === 0 ? (
+        <Text fz={14} c="var(--color-text-dim)" py="xs">
+          {empty}
+        </Text>
+      ) : (
+        children.map((child, index) => (
+          <Fragment key={child.key ?? index}>
+            {index > 0 && <Divider color="var(--color-border-subtle)" />}
+            {child}
+          </Fragment>
+        ))
+      )}
+    </Stack>
   );
 }

@@ -786,6 +786,8 @@ export class BikeEventService {
           suspension_min_at_time: 0,
         },
       });
+
+      await carrySettingsOver(tx, replacement.old_component_mounted_id, newComponent.id);
     }
   }
 
@@ -1208,4 +1210,26 @@ function endOfServiceDay(serviceDate: Date): Date {
   const end = new Date(serviceDate);
   end.setUTCHours(23, 59, 59, 999);
   return end;
+}
+
+// What the owner set on the part that came off, carried onto the one that went on, for every
+// one of its jobs (ADR 0033). The Extension and the announced band belong to the cycle that
+// just ended and are never copied, so a new part is born neither deferred nor announced.
+async function carrySettingsOver(
+  tx: Prisma.TransactionClient,
+  oldComponentMountedId: number,
+  newComponentMountedId: number,
+): Promise<void> {
+  const settings = await tx.tracked_action_state.findMany({
+    where: {
+      component_mounted_id: oldComponentMountedId,
+      OR: [{ interval_override: { not: null } }, { notify: false }],
+    },
+    select: { event_actions_id: true, interval_override: true, notify: true },
+  });
+  if (settings.length === 0) return;
+
+  await tx.tracked_action_state.createMany({
+    data: settings.map((setting) => ({ ...setting, component_mounted_id: newComponentMountedId })),
+  });
 }

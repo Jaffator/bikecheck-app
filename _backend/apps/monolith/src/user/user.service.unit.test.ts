@@ -228,8 +228,10 @@ describe('UserService account deletion', () => {
 describe('UserService registration', () => {
   let service: UserService;
 
+  // $queryRaw answers the name check: nobody holds the name unless a test says so.
   const mockPrisma = {
     users: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    $queryRaw: jest.fn().mockResolvedValue([]),
   };
 
   const dto = { name: 'Jarda', email: 'rider@example.com', password: 'abcd1234', language: 'cs' };
@@ -341,6 +343,34 @@ describe('UserService registration', () => {
 
     await expect(service.registerLocal(dto)).rejects.toThrow('connection lost');
   });
+
+  // The name is what people are found by, so a taken one is refused - the form has to know.
+  it('refuses a name somebody else holds with 409 NAME_TAKEN', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue(null);
+    mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 9 }]).mockResolvedValueOnce([{ id: 9 }]);
+
+    await expect(service.registerLocal(dto)).rejects.toThrow(ConflictException);
+    await expect(service.registerLocal(dto)).rejects.toThrow('NAME_TAKEN');
+    expect(mockPrisma.users.create).not.toHaveBeenCalled();
+  });
+
+  it('trims the name before it is stored', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue(null);
+
+    await service.registerLocal({ ...dto, name: '  Jarda ' });
+
+    const { data } = mockPrisma.users.create.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(data.name).toBe('Jarda');
+  });
+
+  it('maps a unique violation on the write itself to 409 NAME_TAKEN', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue(null);
+    mockPrisma.users.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'x' }),
+    );
+
+    await expect(service.registerLocal(dto)).rejects.toThrow('NAME_TAKEN');
+  });
 });
 
 // POST /users/create is not self-registration: any row on the address refuses, a placeholder
@@ -348,8 +378,10 @@ describe('UserService registration', () => {
 describe('UserService createUserLocal', () => {
   let service: UserService;
 
+  // $queryRaw answers the name check: nobody holds the name unless a test says so.
   const mockPrisma = {
     users: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    $queryRaw: jest.fn().mockResolvedValue([]),
   };
 
   const dto = { name: 'Jarda', email: 'rider@example.com', password: 'abcd1234', language: 'cs' };
@@ -403,8 +435,10 @@ describe('UserService createUserLocal', () => {
 describe('UserService Google sign-in', () => {
   let service: UserService;
 
+  // $queryRaw answers the name check: nobody holds the name unless a test says so.
   const mockPrisma = {
     users: { create: jest.fn(), update: jest.fn() },
+    $queryRaw: jest.fn().mockResolvedValue([]),
   };
 
   const vouched = {
@@ -524,6 +558,36 @@ describe('UserService Google sign-in', () => {
       await expect(service.takeOverPlaceholder(USER_ID, vouched)).rejects.toThrow('connection lost');
     });
   });
+
+  // Nobody chose a Google name, so a collision gets a suffix rather than a form.
+  describe('name collisions', () => {
+    it('creates "Jarda 2" when Jarda is taken, "Jarda 3" when that is too', async () => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 1 }]).mockResolvedValueOnce([{ id: 2 }]);
+
+      await service.createUserByGoogle(vouched);
+
+      const { data } = mockPrisma.users.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data.name).toBe('Jarda 3');
+    });
+
+    it('names an account Google sent without a name "rider"', async () => {
+      await service.createUserByGoogle({ ...vouched, name: '' });
+
+      const { data } = mockPrisma.users.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data.name).toBe('rider');
+    });
+
+    it('suffixes on takeover too, but never against the row being taken over', async () => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 1 }]);
+
+      await service.takeOverPlaceholder(USER_ID, vouched);
+
+      const { data } = mockPrisma.users.update.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(data.name).toBe('Jarda 2');
+      const first = mockPrisma.$queryRaw.mock.calls[0] as unknown[];
+      expect(first).toContain(USER_ID);
+    });
+  });
 });
 
 // Verifying flips the column once (ADR 0031). The write is conditional on the column still
@@ -581,6 +645,7 @@ describe('UserService profile update', () => {
 
   const mockPrisma = {
     users: { findUnique: jest.fn(), update: jest.fn() },
+    $queryRaw: jest.fn().mockResolvedValue([]),
   };
 
   beforeEach(async () => {
@@ -631,6 +696,27 @@ describe('UserService profile update', () => {
     await expect(service.updateUserProfile(USER_ID, { tire_pressure_unit: tire_pressure_unit.psi })).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  // A rename to a name somebody else holds is refused; keeping your own name is not a collision.
+  it('refuses a rename to a taken name with 409 NAME_TAKEN', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: USER_ID });
+    mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 9 }]);
+
+    await expect(service.updateUserProfile(USER_ID, { name: 'Jarda' })).rejects.toThrow('NAME_TAKEN');
+    expect(mockPrisma.users.update).not.toHaveBeenCalled();
+  });
+
+  it('asks the name check to leave the own row out', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue({ id: USER_ID });
+    mockPrisma.users.update.mockResolvedValue({ id: USER_ID, name: 'Jarda' });
+
+    await service.updateUserProfile(USER_ID, { name: ' Jarda ' });
+
+    const query = mockPrisma.$queryRaw.mock.calls[0] as unknown[];
+    expect(query).toContain(USER_ID);
+    const { data } = mockPrisma.users.update.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(data.name).toBe('Jarda');
   });
 });
 

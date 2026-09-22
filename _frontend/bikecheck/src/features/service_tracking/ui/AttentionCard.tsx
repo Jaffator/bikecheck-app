@@ -5,11 +5,10 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { Wrench } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
-import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
+import { TrackedActionDrawer } from "./TrackedActionDrawer";
 import { TrackedActionRow } from "./TrackedActionRow";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
@@ -47,9 +46,10 @@ interface AttentionCardProps {
 
 export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactElement | null {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { data: garage } = useGarageTrackedActions(CUTOFF);
   const [expanded, setExpanded] = useState(false);
+  // The reading the drawer is open on, or null while it is closed.
+  const [opened, setOpened] = useState<GarageTrackedAction | null>(null);
 
   // Not loaded yet says nothing either way, so neither the list nor the all-clear shows.
   if (!garage) return null;
@@ -81,8 +81,8 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
         </Group>
 
         {/* A list narrowed to one bike already says which; the garage list names each bike
-            once, as an eyebrow over its rows. Opening a row records the job, not the bike:
-            the wizard opens with this very job ticked (ADR 0030). */}
+            once, as an eyebrow over its rows. A row opens the drawer for the job it names,
+            the same one the bike's own page opens (ADR 0032). */}
         {bikeId === null ? (
           <Stack gap="lg">
             {groupByBike(shown).map((group) => (
@@ -97,7 +97,7 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
                       action={action}
                       prefix={null}
                       onOpen={() => {
-                        navigate(trackedActionServiceLink(action));
+                        setOpened(action);
                       }}
                     />
                   ))}
@@ -113,7 +113,7 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
                 action={action}
                 prefix={null}
                 onOpen={() => {
-                  navigate(trackedActionServiceLink(action));
+                  setOpened(action);
                 }}
               />
             ))}
@@ -132,6 +132,13 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
             </Text>
           </UnstyledButton>
         )}
+
+        <TrackedActionDrawer
+          action={opened}
+          onClose={() => {
+            setOpened(null);
+          }}
+        />
       </Stack>
     </Paper>
   );

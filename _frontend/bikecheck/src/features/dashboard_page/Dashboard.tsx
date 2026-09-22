@@ -1,6 +1,6 @@
 // Dashboard page.
 import type { ReactElement } from "react";
-import { Box, Loader, SimpleGrid, Stack } from "@mantine/core";
+import { Loader, SimpleGrid, Stack } from "@mantine/core";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
@@ -8,7 +8,6 @@ import { StatusRow } from "./StatusRow";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
-import { DashboardShareCard } from "@/features/profile/ui/DashboardShareCard";
 const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
 export function Dashboard(): ReactElement {
@@ -19,17 +18,9 @@ export function Dashboard(): ReactElement {
     return <Loader m="md" />;
   }
 
-  // Show the empty state when no bikes exist. The sharing card is never hidden (#135), so
-  // it sits above it; the empty state pads its own sides.
+  // Show the empty state when no bikes exist. Nothing to share yet, so no sharing card here.
   if (!bikes || bikes.length === 0) {
-    return (
-      <>
-        <Box px="md" pt="md">
-          <DashboardShareCard />
-        </Box>
-        <EmptyDashboard />
-      </>
-    );
+    return <EmptyDashboard />;
   }
 
   // The work the garage owes, then its standing state. An account not yet

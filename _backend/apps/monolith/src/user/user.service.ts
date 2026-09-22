@@ -11,9 +11,17 @@ import { LoginGoogleDto } from '../auth/dto/auth.dtos';
 // change cannot drift apart.
 const SALT_ROUNDS = 10;
 
+// The name a Google account with no name gets; " 2", " 3" follow like any other collision.
+const FALLBACK_NAME = 'rider';
+
 // P2025 on a conditional `update` means the row moved on between read and write: a lost race.
 function isRecordNotFound(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025';
+}
+
+// P2002 on a name write: two accounts raced for one name and the check before it lost.
+function isUniqueViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
 @Injectable()
@@ -44,7 +52,7 @@ export class UserService {
   async createUserByGoogle(dto: LoginGoogleDto): Promise<UserFull> {
     const user = await this.prisma.users.create({
       data: {
-        name: dto.name,
+        name: await this.freeName(dto.name, null),
         email: dto.email,
         googleId: dto.googleId,
         avatar_url: dto.avatar_url,
@@ -77,7 +85,7 @@ export class UserService {
         where: { id, email_verified_at: null },
         data: {
           googleId: dto.googleId,
-          name: dto.name,
+          name: await this.freeName(dto.name, id),
           avatar_url: dto.avatar_url,
           password_hash: null,
           email_verified_at: new Date(),
@@ -102,10 +110,12 @@ export class UserService {
     if (existingUser?.email_verified_at) {
       throw new ConflictException('User with this email already exist');
     }
+    // The placeholder's own old name is no collision - it is being replaced.
+    const name = await this.requireFreeName(dto.name, existingUser?.id ?? null);
 
     const password_hash = await bcrypt.hash(dto.password!, SALT_ROUNDS);
     const profile = {
-      name: dto.name,
+      name,
       avatar_url: null,
       googleId: null,
       password_hash,
@@ -117,9 +127,11 @@ export class UserService {
       return this.replacePlaceholder(existingUser.id, profile);
     }
 
-    return this.prisma.users.create({
-      data: { ...profile, email: dto.email, is_active: true, email_verified_at: null },
-    });
+    return this.writeName(() =>
+      this.prisma.users.create({
+        data: { ...profile, email: dto.email, is_active: true, email_verified_at: null },
+      }),
+    );
   }
 
   // POST /users/create is not self-registration: any row on the address refuses, a placeholder
@@ -129,22 +141,25 @@ export class UserService {
     if (existingUser) {
       throw new ConflictException('User with this email already exist');
     }
+    const name = await this.requireFreeName(dto.name, null);
 
     const password_hash = await bcrypt.hash(dto.password!, SALT_ROUNDS);
 
-    return this.prisma.users.create({
-      data: {
-        name: dto.name,
-        avatar_url: null,
-        email: dto.email,
-        googleId: null,
-        password_hash,
-        is_active: true,
-        // Sent by the client from the device locale; null means "not chosen yet".
-        language: dto.language ?? null,
-        email_verified_at: null,
-      },
-    });
+    return this.writeName(() =>
+      this.prisma.users.create({
+        data: {
+          name,
+          avatar_url: null,
+          email: dto.email,
+          googleId: null,
+          password_hash,
+          is_active: true,
+          // Sent by the client from the device locale; null means "not chosen yet".
+          language: dto.language ?? null,
+          email_verified_at: null,
+        },
+      }),
+    );
   }
 
   // Verifying flips the column once (ADR 0031). The write is conditional on the column still
@@ -223,13 +238,53 @@ export class UserService {
     if (!user) throw new NotFoundException('User not found');
 
     const dataFilteredUndefined = Object.fromEntries(Object.entries(dto).filter(([, value]) => value !== undefined));
-    return this.prisma.users.update({
-      where: { id },
-      data: { ...dataFilteredUndefined, updated_at: new Date() },
-    });
+    if (dto.name !== undefined) dataFilteredUndefined.name = await this.requireFreeName(dto.name, id);
+    return this.writeName(() =>
+      this.prisma.users.update({
+        where: { id },
+        data: { ...dataFilteredUndefined, updated_at: new Date() },
+      }),
+    );
   }
 
   // ---- Private methods ----
+
+  // Who else holds this name. The index is on lower(btrim(name)), which Prisma cannot
+  // express, so the question is asked in SQL - the same way the index will judge it.
+  private async nameTaken(name: string, exceptId: number | null): Promise<boolean> {
+    const rows = await this.prisma.$queryRaw<{ id: number }[]>`
+      SELECT "id" FROM "users"
+      WHERE lower(btrim("name")) = lower(btrim(${name})) AND "id" <> ${exceptId ?? -1}
+      LIMIT 1`;
+    return rows.length > 0;
+  }
+
+  // A typed name: refused when somebody else has it, so the form can say so.
+  private async requireFreeName(raw: string, exceptId: number | null): Promise<string> {
+    const name = raw.trim();
+    if (await this.nameTaken(name, exceptId)) throw new ConflictException('NAME_TAKEN');
+    return name;
+  }
+
+  // A name nobody chose (Google's): a taken one gets " 2", " 3", ... rather than a form.
+  private async freeName(raw: string, exceptId: number | null): Promise<string> {
+    const base = raw.trim() || FALLBACK_NAME;
+    let candidate = base;
+    for (let n = 2; await this.nameTaken(candidate, exceptId); n += 1) {
+      candidate = `${base} ${String(n)}`;
+    }
+    return candidate;
+  }
+
+  // Only a name write sits under the NAME_TAKEN mapping; the email is checked before it.
+  private async writeName(write: () => Promise<UserFull>): Promise<UserFull> {
+    try {
+      return await write();
+    } catch (error) {
+      if (isUniqueViolation(error)) throw new ConflictException('NAME_TAKEN');
+      throw error;
+    }
+  }
 
   // Conditional on the row still being a placeholder: a Google takeover landing between the read
   // and this write made it the owner's Verified Email, so a stranger's password must not follow.
@@ -241,6 +296,7 @@ export class UserService {
       });
     } catch (error) {
       if (isRecordNotFound(error)) throw new ConflictException('User with this email already exist');
+      if (isUniqueViolation(error)) throw new ConflictException('NAME_TAKEN');
       throw error;
     }
   }

@@ -10,7 +10,7 @@ import type { Profile } from "@/features/profile/profile.types";
 import { EYEBROW } from "@/features/profile/profileSurface";
 import { useAcceptFollower, useFollowers, useRemoveFollower } from "../follow.queries";
 import type { FollowerRow } from "../follow.types";
-import { countedTitle, emptyText, PAGE_BOTTOM } from "../followPanels";
+import { countedTitle, emptyText, PAGE_BOTTOM, showPanel } from "../followPanels";
 import { FollowPanel } from "./FollowPanel";
 import { PersonRow } from "./PersonRow";
 import { RemoveFollowerSheet } from "./RemoveFollowerSheet";
@@ -35,10 +35,10 @@ export function FollowersPanels(): ReactElement {
   }
 
   return (
-    <Stack gap="md" px={8} pt="md" pb={PAGE_BOTTOM}>
+    <Stack gap="md" px="md" pt="md" pb={PAGE_BOTTOM}>
       {/* Requests only exist while approval does: a Public profile has no panel for them. Not
           drawn before the profile is in, or a Public owner would see it mount and vanish. */}
-      {profile !== undefined && profile.visibility !== "PUBLIC" && (
+      {profile !== undefined && profile.visibility !== "PUBLIC" && showPanel(requests, isError) && (
         <FollowPanel
           title={
             // A request waiting is the one thing on the tab that asks for something, so it takes the accent.
@@ -46,7 +46,7 @@ export function FollowersPanels(): ReactElement {
               {countedTitle(t("follow.requestsTitle"), requests)}
             </Text>
           }
-          empty={emptyText(t, requests, isError, t("follow.noRequests"))}
+          empty={t("follow.listFailed")}
         >
           {(requests ?? []).map((person) => (
             <PersonRow key={person.user_id} person={person}>
@@ -57,7 +57,7 @@ export function FollowersPanels(): ReactElement {
       )}
 
       <FollowPanel
-        title={countedTitle(t("follow.followersTitle"), followers)}
+        title={t("follow.followersTitle")}
         empty={emptyText(t, followers, isError, noFollowersText(t, profile))}
       >
         {(followers ?? []).map((person) => (

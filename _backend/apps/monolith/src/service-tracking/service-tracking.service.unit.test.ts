@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ServiceTrackingService } from './service-tracking.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
@@ -30,6 +30,7 @@ function mountedPart(overrides: Record<string, unknown> = {}): Record<string, un
     component_type_id: CHAIN_TYPE,
     component_desc: 'Shimano XT M8100',
     position: null,
+    mounted_at: new Date('2025-01-01T00:00:00.000Z'),
     is_active: true,
     is_deleted: false,
     total_km: 0,
@@ -63,6 +64,8 @@ function intervalRow(
   axes: { km?: number; min?: number; healthIndex?: number },
   targets: number[],
   bikeId = BIKE_ID,
+  // Whether recording this job replaces the part, which is what names the drawer's button.
+  replaceAction = false,
 ): Record<string, unknown> {
   return {
     id: actionId,
@@ -75,6 +78,7 @@ function intervalRow(
       id: actionId,
       action_name: `Action ${String(actionId)}`,
       i18n_key: null,
+      replace_action: replaceAction,
       event_action_targets: targets.map((component_type_id) => ({ component_type_id })),
     },
   };
@@ -109,7 +113,8 @@ function baseline(
 }
 
 // The state of one Tracked Action: any Extension in force, which lengthens its interval,
-// and the band that has already been announced for it.
+// the band that has already been announced for it, and the two settings the owner sets -
+// their own Service Interval and their mute.
 function stateRow(
   actionId: number,
   extension: { km?: number; min?: number; healthIndex?: number },
@@ -117,6 +122,8 @@ function stateRow(
   // When each Extension was granted. Absent by default, which is a row put off before the
   // app recorded the moment - spent by the first Service recorded on the job.
   grantedAt: { km?: string; min?: string } = {},
+  // What the owner set: no interval of their own, and announcements on, unless said.
+  settings: { intervalOverride?: number | null; notify?: boolean } = {},
 ): Record<string, unknown> {
   return {
     event_actions_id: actionId,
@@ -126,7 +133,17 @@ function stateRow(
     extended_km_at: grantedAt.km === undefined ? null : new Date(grantedAt.km),
     extended_min_at: grantedAt.min === undefined ? null : new Date(grantedAt.min),
     reached_threshold: reachedThreshold,
+    interval_override: settings.intervalOverride ?? null,
+    notify: settings.notify ?? true,
   };
+}
+
+// A pairing carrying nothing but a setting: no Extension, nothing announced.
+function settingRow(
+  actionId: number,
+  settings: { intervalOverride?: number | null; notify?: boolean },
+): Record<string, unknown> {
+  return stateRow(actionId, {}, 0, {}, settings);
 }
 
 // What a read hands the mock: the filters it puts on the rows it loads.
@@ -195,6 +212,50 @@ describe('ServiceTrackingService', () => {
       Promise.resolve(bikes.filter((bike) => where?.is_deleted === undefined || bike.is_deleted !== true)),
     );
     garage(intervals, parts);
+  }
+
+  // What one write asked of the state row, whichever column it landed on.
+  interface StateUpsertArgs {
+    where: { component_mounted_id_event_actions_id: { component_mounted_id: number; event_actions_id: number } };
+    create: Record<string, unknown>;
+    update: Record<string, unknown>;
+  }
+
+  // The state rows a write leaves behind, kept on the fixtures the read then loads. Every
+  // write answers with the reading as it now stands, so the stand-in database has to
+  // actually keep what was written to it.
+  function keepState(parts: Record<string, unknown>[]): void {
+    mockPrismaService.tracked_action_state.upsert.mockImplementation(({ where, create, update }: StateUpsertArgs) => {
+      const { component_mounted_id, event_actions_id } = where.component_mounted_id_event_actions_id;
+      const part = parts.find((row) => row.id === component_mounted_id);
+      const rows = (part?.tracked_action_state ?? []) as Record<string, unknown>[];
+      const existing = rows.find((row) => row.event_actions_id === event_actions_id);
+
+      if (existing === undefined) {
+        rows.push({ ...stateRow(event_actions_id, {}), ...create });
+        return Promise.resolve({});
+      }
+
+      for (const [column, value] of Object.entries(update)) {
+        // An Extension is written as a slice to add; a setting is written as the value
+        // itself, and clearing an override writes null.
+        const increment = value === null ? undefined : (value as { increment?: number }).increment;
+        existing[column] = increment === undefined ? value : (existing[column] as number) + increment;
+      }
+      return Promise.resolve({});
+    });
+  }
+
+  // What each pairing now holds in one column of its state row - the Extension it carries
+  // on one axis, or a setting the owner wrote.
+  function held(parts: Record<string, unknown>[], column: string): Record<string, unknown> {
+    const values: Record<string, unknown> = {};
+    for (const part of parts) {
+      for (const state of part.tracked_action_state as Record<string, unknown>[]) {
+        values[`${String(part.id)}:${String(state.event_actions_id)}`] = state[column];
+      }
+    }
+    return values;
   }
 
   beforeEach(async () => {
@@ -922,6 +983,165 @@ describe('ServiceTrackingService', () => {
       expect(action.interval).toBe(4000);
       expect(action.extended).toBe(false);
     });
+
+    // The owner knows their chain does 2 500 km rather than 3 000, and the reading says so.
+    it('measures against the Interval Override where the owner set one', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 2000,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { intervalOverride: 2500 })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(2500);
+      expect(action.percentage).toBe(80);
+      expect(action.interval_override).toBe(2500);
+      expect(action.default_interval).toBe(4000);
+    });
+
+    // Nothing silently freezes at the value it happened to have: an untouched pairing goes
+    // on following whatever the bike plans.
+    it("measures against the bike's plan where no override was set", async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 2000 })]);
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(4000);
+      expect(action.percentage).toBe(50);
+      expect(action.interval_override).toBeNull();
+      expect(action.default_interval).toBe(4000);
+    });
+
+    // A fresh rear tyre is not judged by the front one's schedule: two tyres are two
+    // Tracked Actions, and they are allowed two intervals.
+    it('leaves the other part of the same kind on the bike plan', async () => {
+      garage(
+        [intervalRow(TYRE_REPLACEMENT, { km: 3000 }, [TYRE_TYPE])],
+        [
+          mountedPart({
+            id: 55,
+            component_type_id: TYRE_TYPE,
+            component_types: typeRow(TYRE_TYPE),
+            total_km: 1500,
+            tracked_action_state: [settingRow(TYRE_REPLACEMENT, { intervalOverride: 2000 })],
+          }),
+          mountedPart({ id: 56, component_type_id: TYRE_TYPE, component_types: typeRow(TYRE_TYPE), total_km: 1500 }),
+        ],
+      );
+
+      const byPart = new Map(
+        (await service.getBikeTrackedActions(BIKE_ID, OWNER_ID)).map((row) => [row.component_mounted_id, row]),
+      );
+
+      expect(byPart.get(55)?.interval).toBe(2000);
+      expect(byPart.get(56)?.interval).toBe(3000);
+      expect(byPart.get(56)?.interval_override).toBeNull();
+    });
+
+    // An override cannot make a Tracked Action out of an action the bike plans nothing for:
+    // the plan is still what says whether an axis is read at all.
+    it('reads an override only on the axis the bike plans for', async () => {
+      garage(
+        [intervalRow(FORK_SERVICE, { min: 6000 }, [FORK_TYPE])],
+        [
+          mountedPart({
+            component_type_id: FORK_TYPE,
+            component_types: typeRow(FORK_TYPE),
+            suspension_min: 2000,
+            total_km: 9000,
+            tracked_action_state: [settingRow(FORK_SERVICE, { intervalOverride: 4000 })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.axis).toBe('min');
+      expect(action.interval).toBe(4000);
+      expect(action.percentage).toBe(50);
+    });
+
+    // What the drawer cannot work out for itself: what a postponement is worth, what a
+    // reset would restore, whether the pairing is muted, and which button records the job.
+    it('carries the postponement amount, the bike plan, the mute and the button', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], BIKE_ID, true)],
+        [
+          mountedPart({
+            drivetrain_km: 2000,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { intervalOverride: 2500, notify: false })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.postpone_by).toBe(250);
+      expect(action.default_interval).toBe(4000);
+      expect(action.notify).toBe(false);
+      expect(action.replace_action).toBe(true);
+      expect(action.mounted_at).toEqual(new Date('2025-01-01T00:00:00.000Z'));
+    });
+
+    // Which axis is read is the bike's plan's to decide, so the override lands on whichever
+    // axis the reading is actually served on - never on a quieter one the plan also fills.
+    it('applies the override to the axis the reading is served on', async () => {
+      garage(
+        [intervalRow(FORK_SERVICE, { km: 4000, min: 6000 }, [FORK_TYPE])],
+        [
+          mountedPart({
+            component_type_id: FORK_TYPE,
+            component_types: typeRow(FORK_TYPE),
+            total_km: 1000,
+            suspension_min: 4800,
+            tracked_action_state: [settingRow(FORK_SERVICE, { intervalOverride: 4000 })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      // Minutes read 80% against the plan and kilometres 25%, so minutes is the axis - and
+      // the override is the interval it is read against, not the kilometre one.
+      expect(action.axis).toBe('min');
+      expect(action.interval).toBe(4000);
+      expect(action.default_interval).toBe(6000);
+      expect(action.interval_override).toBe(4000);
+      expect(action.percentage).toBe(120);
+    });
+
+    // A pairing with no row of its own has never been muted, and announcing is the default.
+    it('reads a pairing with no state row as announcing', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 2000 })]);
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.notify).toBe(true);
+    });
+
+    // An Extension lengthens the interval in force; what a further postponement is worth is
+    // still a tenth of the interval itself, never of the one already lengthened.
+    it('reports the postponement amount against the interval before any Extension', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 4200,
+            tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 400 })],
+          }),
+        ],
+      );
+
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+
+      expect(action.interval).toBe(4400);
+      expect(action.postpone_by).toBe(400);
+    });
   });
 
   describe('getGarageTrackedActions', () => {
@@ -1099,6 +1319,13 @@ describe('ServiceTrackingService', () => {
       if (calls.length === 0) return null;
       const { bikeId, soonCount, dueCount, overdueCount, level } = calls[0][0].payload;
       return { bikeId, soonCount, dueCount, overdueCount, level };
+    }
+
+    // Which jobs the notification named as having just moved, as the fixtures name them.
+    function crossed(): string[] {
+      const calls = mockNotifications.create.mock.calls as [{ payload: { crossed: { actionName: string }[] } }][];
+      if (calls.length === 0) return [];
+      return calls[0][0].payload.crossed.map((reading) => reading.actionName);
     }
 
     // Order the part before it is needed: this is the first band worth interrupting for.
@@ -1375,50 +1602,80 @@ describe('ServiceTrackingService', () => {
 
       expect(mockPrismaService.bikes.findFirst).toHaveBeenCalledTimes(2);
     });
+
+    // A job the owner tracks themselves stops interrupting them - and the app does not stop
+    // knowing the chain is finished, so the band moves on under the mute.
+    it('says nothing about a muted Tracked Action but still moves its band', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 4000,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { notify: false })],
+          }),
+        ],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toBeNull();
+      expect(bandsWritten()).toEqual({ '55:101': 100 });
+    });
+
+    // Muting one pairing silences that pairing and no other.
+    it('still announces an unmuted Tracked Action beside a muted one', async () => {
+      garage(
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+          intervalRow(TYRE_REPLACEMENT, { km: 3000 }, [TYRE_TYPE]),
+        ],
+        [
+          mountedPart({
+            id: 55,
+            drivetrain_km: 4000,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { notify: false })],
+          }),
+          mountedPart({ id: 56, component_type_id: TYRE_TYPE, component_types: typeRow(TYRE_TYPE), total_km: 3000 }),
+        ],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      // The muted chain is still counted - the app does not stop knowing it is finished -
+      // but the tyre is the only thing named as having just moved.
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 0, overdueCount: 2, level: 'overdue' });
+      expect(crossed()).toEqual([`Action ${String(TYRE_REPLACEMENT)}`]);
+    });
+
+    // Unmuting hands back no backlog: the band kept moving while the mute was on, so there
+    // is nothing left to cross.
+    it('says nothing when a pairing is unmuted in the band it already reached', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 4000, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 100)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toBeNull();
+    });
+
+    // ... but silence does not become permanent: the band that moved under the mute is the
+    // one the next genuine crossing is measured from, and that crossing announces.
+    it('announces the first genuine crossing after a pairing is unmuted', async () => {
+      garage(
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 3800, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 70)] })],
+      );
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      expect(announced()).toEqual({ bikeId: BIKE_ID, soonCount: 0, dueCount: 1, overdueCount: 0, level: 'critical' });
+      expect(bandsWritten()).toEqual({ '55:101': 95 });
+    });
   });
 
   describe('postponeTrackedAction', () => {
-    // What one write asked of the state row, whichever column it landed on.
-    interface StateUpsertArgs {
-      where: { component_mounted_id_event_actions_id: { component_mounted_id: number; event_actions_id: number } };
-      create: Record<string, unknown>;
-      update: Record<string, unknown>;
-    }
-
-    // The state rows a write leaves behind, kept on the fixtures the read then loads. A
-    // postponement answers with the reading as it now stands, so the stand-in database has
-    // to actually keep what was written to it.
-    function keepState(parts: Record<string, unknown>[]): void {
-      mockPrismaService.tracked_action_state.upsert.mockImplementation(({ where, create, update }: StateUpsertArgs) => {
-        const { component_mounted_id, event_actions_id } = where.component_mounted_id_event_actions_id;
-        const part = parts.find((row) => row.id === component_mounted_id);
-        const rows = (part?.tracked_action_state ?? []) as Record<string, unknown>[];
-        const existing = rows.find((row) => row.event_actions_id === event_actions_id);
-
-        if (existing === undefined) {
-          rows.push({ ...stateRow(event_actions_id, {}), ...create });
-          return Promise.resolve({});
-        }
-
-        for (const [column, value] of Object.entries(update)) {
-          const increment = (value as { increment?: number }).increment;
-          existing[column] = increment === undefined ? value : (existing[column] as number) + increment;
-        }
-        return Promise.resolve({});
-      });
-    }
-
-    // The Extension each pairing now carries on one axis.
-    function extensions(parts: Record<string, unknown>[], column: string): Record<string, unknown> {
-      const held: Record<string, unknown> = {};
-      for (const part of parts) {
-        for (const state of part.tracked_action_state as Record<string, unknown>[]) {
-          held[`${String(part.id)}:${String(state.event_actions_id)}`] = state[column];
-        }
-      }
-      return held;
-    }
-
     // A tenth of the interval the bike's plan sets, on the axis the reading is taken on.
     it('grants an Extension of a tenth of the Service Interval', async () => {
       const parts = [mountedPart({ drivetrain_km: 4400 })];
@@ -1427,7 +1684,7 @@ describe('ServiceTrackingService', () => {
 
       await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
 
-      expect(extensions(parts, 'extended_by_km')).toEqual({ '55:101': 400 });
+      expect(held(parts, 'extended_by_km')).toEqual({ '55:101': 400 });
     });
 
     // A job measured in minutes is put off in minutes: the axis the interval is expressed
@@ -1441,8 +1698,8 @@ describe('ServiceTrackingService', () => {
 
       await service.postponeTrackedAction(55, FORK_SERVICE, OWNER_ID);
 
-      expect(extensions(parts, 'extended_by_min')).toEqual({ '55:102': 600 });
-      expect(extensions(parts, 'extended_by_km')).toEqual({ '55:102': 0 });
+      expect(held(parts, 'extended_by_min')).toEqual({ '55:102': 600 });
+      expect(held(parts, 'extended_by_km')).toEqual({ '55:102': 0 });
     });
 
     // The Extension is added to the interval, never taken off the wear: the reading still
@@ -1469,7 +1726,7 @@ describe('ServiceTrackingService', () => {
       await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
       const action = await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
 
-      expect(extensions(parts, 'extended_by_km')).toEqual({ '55:101': 800 });
+      expect(held(parts, 'extended_by_km')).toEqual({ '55:101': 800 });
       expect(action.interval).toBe(4800);
       expect(action.percentage).toBe(91);
     });
@@ -1516,6 +1773,196 @@ describe('ServiceTrackingService', () => {
       garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 4400 })]);
 
       await expect(service.postponeTrackedAction(55, TYRE_REPLACEMENT, OWNER_ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // The amount named on the Postpone row is a tenth of the number on the interval row
+    // above it, which is the owner's own where they set one.
+    it('grants a tenth of the Interval Override where there is one', async () => {
+      const parts = [
+        mountedPart({
+          drivetrain_km: 2400,
+          tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { intervalOverride: 2500 })],
+        }),
+      ];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(held(parts, 'extended_by_km')).toEqual({ '55:101': 250 });
+      expect(action.interval).toBe(2750);
+    });
+
+    // Planning does not have to wait for being late: a job is put off whatever it reads.
+    it('puts a job off that is nowhere near due', async () => {
+      const parts = [mountedPart({ drivetrain_km: 400 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(action.level).toBe('good');
+      expect(action.interval).toBe(4400);
+      expect(action.extended).toBe(true);
+    });
+
+    // Twice as far, not a tenth of the already lengthened interval - so the slice stays the
+    // same size however often the job is put off.
+    it('grants the same slice again on an already extended override', async () => {
+      const parts = [
+        mountedPart({
+          drivetrain_km: 2400,
+          tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { intervalOverride: 2500 })],
+        }),
+      ];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+      const action = await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(held(parts, 'extended_by_km')).toEqual({ '55:101': 500 });
+      expect(action.interval).toBe(3000);
+    });
+  });
+
+  describe('setTrackedActionInterval', () => {
+    // The app measures the chain the way the owner actually rides it, from the moment they
+    // say so - and answers with the reading their change produced.
+    it('reads against the new interval the moment it is saved', async () => {
+      const parts = [mountedPart({ drivetrain_km: 2000 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.setTrackedActionInterval(55, CHAIN_REPLACEMENT, OWNER_ID, 2500);
+
+      expect(held(parts, 'interval_override')).toEqual({ '55:101': 2500 });
+      expect(action.interval).toBe(2500);
+      expect(action.percentage).toBe(80);
+      expect(action.interval_override).toBe(2500);
+    });
+
+    // Reset to default puts the bike's own plan back, which is why the plan is never written.
+    it('restores the bike plan when the override is cleared', async () => {
+      const parts = [
+        mountedPart({
+          drivetrain_km: 2000,
+          tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { intervalOverride: 2500 })],
+        }),
+      ];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.setTrackedActionInterval(55, CHAIN_REPLACEMENT, OWNER_ID, null);
+
+      expect(held(parts, 'interval_override')).toEqual({ '55:101': null });
+      expect(action.interval).toBe(4000);
+      expect(action.percentage).toBe(50);
+      expect(action.interval_override).toBeNull();
+    });
+
+    // A reading with nothing to divide by is not a reading.
+    it.each([0, -1])('refuses an interval of %s', async (value) => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 2000 })]);
+
+      await expect(service.setTrackedActionInterval(55, CHAIN_REPLACEMENT, OWNER_ID, value)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // Somebody else's bike is nobody's to re-plan.
+    it('refuses a Tracked Action the caller does not own', async () => {
+      mockPrismaService.bikes.findFirst.mockResolvedValue(null);
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 2000 })]);
+
+      await expect(service.setTrackedActionInterval(55, CHAIN_REPLACEMENT, OWNER_ID, 2500)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // A pairing the bike keeps no Service Interval for has no interval to override.
+    it('refuses a pairing that is not a Tracked Action', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 2000 })]);
+
+      await expect(service.setTrackedActionInterval(55, TYRE_REPLACEMENT, OWNER_ID, 2500)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+
+    // The Extension belongs to the pairing it was granted on and a re-plan does not touch
+    // it; what a further postponement is worth follows the new interval.
+    it('leaves an Extension in force and re-sizes what a postponement is worth', async () => {
+      const parts = [
+        mountedPart({ drivetrain_km: 2000, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, { km: 400 })] }),
+      ];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.setTrackedActionInterval(55, CHAIN_REPLACEMENT, OWNER_ID, 2500);
+
+      expect(action.interval).toBe(2900);
+      expect(action.postpone_by).toBe(250);
+    });
+  });
+
+  describe('setTrackedActionNotify', () => {
+    // A job the owner tracks themselves stops interrupting them, and nothing else changes:
+    // the percentage, the colour and the place on the dashboard all stand.
+    it('mutes one pairing without touching its reading', async () => {
+      const parts = [mountedPart({ drivetrain_km: 4000 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.setTrackedActionNotify(55, CHAIN_REPLACEMENT, OWNER_ID, false);
+
+      expect(held(parts, 'notify')).toEqual({ '55:101': false });
+      expect(action.notify).toBe(false);
+      expect(action.percentage).toBe(100);
+      expect(action.level).toBe('overdue');
+    });
+
+    // Muting is never a one-way door.
+    it('unmutes a pairing that was muted', async () => {
+      const parts = [
+        mountedPart({ drivetrain_km: 4000, tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { notify: false })] }),
+      ];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.setTrackedActionNotify(55, CHAIN_REPLACEMENT, OWNER_ID, true);
+
+      expect(action.notify).toBe(true);
+    });
+
+    // Unmuting is quiet: the band went on moving under the mute, so there is no backlog to
+    // hand back.
+    it('announces nothing on unmuting', async () => {
+      const parts = [
+        mountedPart({
+          drivetrain_km: 4000,
+          tracked_action_state: [stateRow(CHAIN_REPLACEMENT, {}, 100, {}, { notify: false })],
+        }),
+      ];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      await service.setTrackedActionNotify(55, CHAIN_REPLACEMENT, OWNER_ID, true);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    // Somebody else's bike is nobody's to silence.
+    it('refuses a Tracked Action the caller does not own', async () => {
+      mockPrismaService.bikes.findFirst.mockResolvedValue(null);
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 4000 })]);
+
+      await expect(service.setTrackedActionNotify(55, CHAIN_REPLACEMENT, OWNER_ID, false)).rejects.toBeInstanceOf(
         NotFoundException,
       );
       expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();

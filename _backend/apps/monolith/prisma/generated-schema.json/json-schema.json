@@ -1418,10 +1418,7 @@
           "type": "integer"
         },
         "name": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "email": {
           "type": "string"
@@ -1690,6 +1687,16 @@
           ],
           "format": "date-time"
         },
+        "interval_override": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "notify": {
+          "type": "boolean",
+          "default": true
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -1796,7 +1803,7 @@
         },
         "share_history": {
           "type": "boolean",
-          "default": true
+          "default": false
         },
         "share_costs": {
           "type": "boolean",

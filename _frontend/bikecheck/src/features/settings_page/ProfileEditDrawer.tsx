@@ -15,6 +15,9 @@ const DRAWER_Z_INDEX = 320;
 const MIN_WEIGHT_KG = 30;
 const MAX_WEIGHT_KG = 250;
 
+// The one refusal that belongs under the field rather than under the form.
+const NAME_TAKEN = "NAME_TAKEN";
+
 interface ProfileEditDrawerProps {
   user: User;
   opened: boolean;
@@ -35,6 +38,7 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
   const shownName = name ?? user.name;
   const shownWeight = weight === undefined ? user.weight_kg : weight;
   const nameEmpty = shownName.trim() === "";
+  const nameTaken = save.isError && save.error.details.includes(NAME_TAKEN);
   const weightOutOfRange = shownWeight !== null && (shownWeight < MIN_WEIGHT_KG || shownWeight > MAX_WEIGHT_KG);
 
   function submit(): void {
@@ -69,8 +73,12 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
           label={t("profile.name")}
           styles={inputStyles}
           value={shownName}
-          onChange={(event) => setName(event.currentTarget.value)}
-          error={nameEmpty ? t("profile.nameRequired") : undefined}
+          onChange={(event) => {
+            // A refused name stops being refused the moment it is changed.
+            save.reset();
+            setName(event.currentTarget.value);
+          }}
+          error={nameEmpty ? t("profile.nameRequired") : nameTaken ? t("profile.nameTaken") : undefined}
         />
 
         <Stack gap={4}>
@@ -94,7 +102,7 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
         </Stack>
 
         {/* The form stays open on failure, so nothing typed is lost. */}
-        {save.isError && (
+        {save.isError && !nameTaken && (
           <Text fz={13} c="red">
             {t("profile.saveFailed")}
           </Text>

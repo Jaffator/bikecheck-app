@@ -17,8 +17,6 @@ export function EmptyChat(): ReactElement {
       icon={<Bikecheck width={ICON_WIDTH} height={ICON_HEIGHT} />}
       title={t("chat.emptyTitle")}
       body={t("chat.emptyBody")}
-      // The chat page centres the state in the space it has, so the layout adds no band.
-      bandHeight="auto"
     />
   );
 }

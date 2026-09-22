@@ -1,6 +1,6 @@
 // UI component using feature hooks.
 import type { ReactElement } from "react";
-import { Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatCost } from "@/utils/money";
@@ -14,6 +14,9 @@ import BikeIcon from "@/assets/icons/svg_icons/bike.svg?react";
 // As many Actions as a card names before it starts to read as a list of its own. What is
 // left over is counted, and the detail has them all.
 const VISIBLE_ACTIONS = 3;
+
+// The bike's mark, sized to the metadata line it rides on.
+const BIKE_ICON_SIZE = 13;
 
 // Displays one recorded service.
 export function ServiceHistoryCard({
@@ -57,13 +60,19 @@ export function ServiceHistoryCard({
       className="active:scale-[0.985]"
     >
       <Stack gap={5}>
-        {/* When the work happened, what it was and how much of it, with the price at the far edge. */}
+        {/* Which bike it was and when, with the price at the far edge. */}
         <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
-          <Text className="font-mono uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
-            {[date, t("service.actionCount", { count: service.action_count })]
-              .filter((part) => part !== null)
-              .join(" · ")}
-          </Text>
+          <Group gap={5} align="center" wrap="nowrap" style={{ minWidth: 0 }}>
+            <BikeIcon
+              width={BIKE_ICON_SIZE}
+              height={BIKE_ICON_SIZE}
+              style={{ flexShrink: 0 }}
+              color="var(--mantine-color-primary-5)"
+            />
+            <Text className="font-mono uppercase" fz={11} fw={400} c="text.8" lts="0.08em" lineClamp={1}>
+              {[service.bike_name ?? t("service.unknownBike"), date].filter((part) => part !== null).join(" · ")}
+            </Text>
+          </Group>
 
           <Group gap={4} align="center" wrap="nowrap" style={{ flexShrink: 0 }}>
             {/* A service with no cost recorded shows no price; an explicit zero still
@@ -83,41 +92,28 @@ export function ServiceHistoryCard({
           </Group>
         </Group>
 
-        {/* The bike - the line that identifies the occasion. */}
-        <Group gap={7} align="center" wrap="nowrap">
-          <BikeIcon
-            width={18}
-            height={18}
-            style={{
-              flexShrink: 0,
-              transform: "translateY(-1px)",
-            }}
-            color="var(--mantine-color-primary-5)"
-          />
-          <Text fz={16} fw={600} c="text.6" lineClamp={1}>
-            {service.bike_name ?? t("service.unknownBike")}
-          </Text>
-        </Group>
-
         {/* What was done, one Action per line. */}
         {shown.length === 0 ? (
           <Text className="font-mono" fz={13} c="var(--color-text-dim)">
             {t("service.noActions")}
           </Text>
         ) : (
-          <Stack gap={0}>
+          <Stack gap={4}>
             {shown.map((action, index) => (
-              <Group key={`${action.name}-${index}`} lh={1.15} gap={6} align="baseline" wrap="nowrap">
-                <Box c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
-                  ·
-                </Box>
-                <Text className="font-sans" fz={13} c="var(--color-text-dim)" lineClamp={1}>
-                  {catalogueLabel(action.i18n_key, action.name, t)}
-                </Text>
-              </Group>
+              <Text
+                key={`${action.name}-${index}`}
+                className="font-sans"
+                fz={13}
+                fw={600}
+                c="text.6"
+                lh={1.15}
+                lineClamp={1}
+              >
+                {catalogueLabel(action.i18n_key, action.name, t)}
+              </Text>
             ))}
             {hidden > 0 && (
-              <Text className="font-sans" fz={13} c="text.7" pl={20}>
+              <Text className="font-sans" fz={13} c="text.7">
                 {t("service.moreActions", { count: hidden })}
               </Text>
             )}

@@ -1,6 +1,8 @@
-// Where a Tracked Action leads: the service wizard, opened on the actions step with this
-// very job ticked on this very part. The URL is the contract ADR 0017 set for a Replacement
-// carried in from a part; a Tracked Action already knows every piece of it (ADR 0030).
+// Where recording a Tracked Action leads: the service wizard, opened on the actions step
+// with this very job ticked on this very part. The URL is the contract ADR 0017 set for a
+// Replacement carried in from a part; a Tracked Action already knows every piece of it
+// (ADR 0030). Built by the drawer's own button since the row opens the drawer instead
+// (ADR 0032).
 import type { TrackedAction } from "./tracking.types";
 
 export function trackedActionServiceLink(action: TrackedAction): string {

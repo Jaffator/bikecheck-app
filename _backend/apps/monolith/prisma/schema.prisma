@@ -469,7 +469,7 @@ model account_events {
 // this row, so a deleted account leaves nothing of the rider behind.
 model users {
   id                    Int                    @id @default(autoincrement())
-  name                  String?                @db.VarChar
+  name                  String                 @db.VarChar
   email                 String                 @unique @db.VarChar
   password_hash         String?                @db.VarChar
   avatar_url            String?                @db.VarChar
@@ -545,6 +545,14 @@ model tracked_action_state {
   // currently falls in, up or down, so a reset re-arms the next crossing.
   reached_threshold       Int                @default(0)
   announced_at            DateTime?          @db.Timestamptz(6)
+  // The owner's own Service Interval for this pairing, on the axis the bike's plan fills in.
+  // Null follows the plan, which is what Reset to default restores. Unlike the Extension
+  // above, it survives a Replacement: it is about how the bike is ridden, not about the part
+  // it was set on (ADR 0033).
+  interval_override       Int?
+  // False silences this pairing's announcements and nothing else - the reading still reads,
+  // the colour still warns and the dashboard still lists it. Survives a Replacement.
+  notify                  Boolean            @default(true)
   created_at              DateTime           @default(now())
   updated_at              DateTime           @updatedAt
   components_mounted      components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade)
@@ -597,7 +605,7 @@ model public_profiles {
   visibility       profile_visibility @default(OFF)
   share_components Boolean            @default(true)
   share_setup      Boolean            @default(true)
-  share_history    Boolean            @default(true)
+  share_history    Boolean            @default(false)
   // Meaningful only with share_history.
   share_costs      Boolean            @default(false)
   view_count       Int                @default(0)

@@ -27,7 +27,7 @@ interface Figure {
   linked: boolean;
 }
 
-// The two numbers the card shows; waiting requests live on the Users badge alone (#156).
+// The two numbers the card shows; waiting requests live on the More sheet alone (#156, #158).
 function figuresFor(profile: Profile): Figure[] {
   return [
     { labelKey: "sharing.cardFollowers", value: profile.stats.followers, linked: true },
@@ -54,7 +54,7 @@ export function DashboardShareCard(): ReactElement | null {
 }
 
 // Off collapses to one row: "my sharing" with nothing to count, a tap opening the drawer;
-// "my people" is the Users icon in the top bar (#156).
+// "my people" is the Riders card in the More sheet (#156, #158).
 function OffRow({ onOpenDrawer }: { onOpenDrawer: () => void }): ReactElement {
   const { t } = useTranslation();
   const OffIcon = VISIBILITY_ICON.OFF;

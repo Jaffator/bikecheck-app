@@ -106,7 +106,12 @@ describe('FollowService', () => {
     return true;
   };
 
-  const byHandle = (a: ProfileRow, b: ProfileRow): number => (a.handle < b.handle ? -1 : a.handle > b.handle ? 1 : 0);
+  // The search orders by the account name, as Postgres would - what a nameless row does is moot.
+  const byName = (a: ProfileRow, b: ProfileRow): number => {
+    const nameA = users.get(a.user_id)?.name ?? '';
+    const nameB = users.get(b.user_id)?.name ?? '';
+    return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+  };
 
   // What the counterpart on one side reads as: name first, the handle breaking a tie, no
   // name last.
@@ -150,7 +155,7 @@ describe('FollowService', () => {
         Promise.resolve(
           [...profiles.values()]
             .filter((row) => matchesProfile(row, where))
-            .sort(byHandle)
+            .sort(byName)
             .slice(0, take)
             .map((row) => ({ ...row, users: users.get(row.user_id) ?? null })),
         ),
@@ -572,7 +577,12 @@ describe('FollowService', () => {
       seedRider(13, 'Petr Jasný', 'petr-j');
     });
 
-    it('matches the handle by prefix, whatever the case typed', async () => {
+    it('never matches the handle: an address is not a name', async () => {
+      expect((await service.search(ME, 'janicka')).results).toEqual([]);
+      expect((await service.search(ME, 'petr-j')).results).toEqual([]);
+    });
+
+    it('matches the name whatever the case typed', async () => {
       const lower = await service.search(ME, 'jan');
       const upper = await service.search(ME, 'JAN');
 
@@ -612,7 +622,7 @@ describe('FollowService', () => {
     });
 
     it('a Followers-only profile is Discoverable', async () => {
-      const answer = await service.search(ME, 'tomas');
+      const answer = await service.search(ME, 'tom');
 
       expect(answer.results).toHaveLength(1);
       expect(answer.results[0]).toMatchObject({ handle: 'tomas_h', visibility: 'FOLLOWERS' });
@@ -648,19 +658,12 @@ describe('FollowService', () => {
         capped: false,
       });
     });
-
-    it('reads a rider with no name as null', async () => {
-      seedRider(16, null, 'nameless');
-
-      const answer = await service.search(ME, 'name');
-
-      expect(answer.results[0]).toMatchObject({ handle: 'nameless', name: null });
-    });
   });
 
   describe('search - order and cap', () => {
-    // The owner seeded for every test - jaffa, Jarda Novák - is a handle match for "ja" too.
-    it('handle matches come first, then name matches, alphabetically by handle inside each', async () => {
+    // The owner seeded for every test - jaffa, Jarda Novák - is a name match for "ja" too; the
+    // handles starting with ja count for nothing.
+    it('lists name matches alphabetically by name', async () => {
       seedRider(20, 'Zdeněk Novák', 'jazdenek');
       seedRider(21, 'Ondřej Jareš', 'ondra');
       seedRider(22, 'Adam Novák', 'jaadam');
@@ -669,20 +672,12 @@ describe('FollowService', () => {
 
       const answer = await service.search(ME, 'ja');
 
-      expect(answer.results.map((row) => row.handle)).toEqual(['jaadam', 'jaffa', 'jazdenek', 'anna', 'bob', 'ondra']);
-    });
-
-    it('a rider matched by both handle and name is listed once, among the handle matches', async () => {
-      seedRider(20, 'Jana Malá', 'jana');
-      seedRider(21, 'Petr Jasný', 'petr');
-
-      const answer = await service.search(ME, 'ja');
-
-      expect(answer.results.map((row) => row.handle)).toEqual(['jaffa', 'jana', 'petr']);
+      expect(answer.results.map((row) => row.handle)).toEqual(['anna', 'jaffa', 'bob', 'ondra']);
     });
 
     it('21 matches answer the first 20 and capped', async () => {
-      for (let n = 1; n <= 21; n++) seedRider(100 + n, `Rider ${String(n)}`, `rider${String(n).padStart(2, '0')}`);
+      for (let n = 1; n <= 21; n++)
+        seedRider(100 + n, `Rider ${String(n).padStart(2, '0')}`, `rider${String(n).padStart(2, '0')}`);
 
       const answer = await service.search(ME, 'rider');
 
@@ -693,23 +688,13 @@ describe('FollowService', () => {
     });
 
     it('20 matches answer all 20 and not capped', async () => {
-      for (let n = 1; n <= 20; n++) seedRider(100 + n, `Rider ${String(n)}`, `rider${String(n).padStart(2, '0')}`);
+      for (let n = 1; n <= 20; n++)
+        seedRider(100 + n, `Rider ${String(n).padStart(2, '0')}`, `rider${String(n).padStart(2, '0')}`);
 
       const answer = await service.search(ME, 'rider');
 
       expect(answer.results).toHaveLength(20);
       expect(answer.capped).toBe(false);
-    });
-
-    it('the cap counts handle and name matches together', async () => {
-      for (let n = 1; n <= 12; n++) seedRider(100 + n, `Someone ${String(n)}`, `ri${String(n).padStart(2, '0')}`);
-      for (let n = 1; n <= 9; n++) seedRider(200 + n, `Rider ${String(n)}`, `x${String(n).padStart(2, '0')}`);
-
-      const answer = await service.search(ME, 'ri');
-
-      expect(answer.results).toHaveLength(20);
-      expect(answer.results.slice(0, 12).every((row) => row.handle.startsWith('ri'))).toBe(true);
-      expect(answer.capped).toBe(true);
     });
   });
 

@@ -2,8 +2,9 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Bell, ArrowLeft, House, Route, MessageCircleMore, Users } from "lucide-react";
+import { Bell, ArrowLeft, House, Route, LayoutGrid } from "lucide-react";
 import { bikecheckIconType } from "@/assets/icons/bikecheck";
+import Logo from "@/assets/icons/bikecheck/Logo_white.svg?react";
 import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
@@ -17,6 +18,7 @@ import { useUnreadNotifications } from "@/features/notifications/notifications.q
 import { useMyProfile } from "@/features/profile/profile.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
+import { MoreDrawer } from "./MoreDrawer";
 import { HeaderCountBadge } from "./HeaderCountBadge";
 import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
 import { BAR_WIDTH, CONTENT_MAX_WIDTH } from "./contentWidth";
@@ -28,11 +30,21 @@ const BikecheckOutlineIcon = bikecheckIconType("Bikecheck_outline")!;
 
 interface NavItem {
   labelKey: string;
-  path: string;
+  // The tab that opens the More sheet has no route of its own.
+  path: string | null;
   icon: IconType;
   // The app's own marks have a filled twin for the active tab; a lucide icon thickens instead.
   icon_fill?: IconType;
 }
+
+// The mark Home wears instead of a title. Its width follows from the artwork's ratio, and it
+// is nudged in because the artwork carries no padding of its own, unlike the tab icons.
+const LOGO_HEIGHT = 20;
+const LOGO_INSET = 8;
+
+// The tab's mark beside the page title. Two points over the title's own 18px, so it leads the
+// pair without shouting over it.
+const TITLE_ICON_SIZE = 20;
 
 // Stroke widths for the lucide tabs: the resting one matches the app's own outline marks,
 // the active one carries the weight the filled twins carry.
@@ -57,7 +69,9 @@ const NAV_ITEMS: NavItem[] = [
     icon_fill: BikecheckIcon!,
   },
   { labelKey: "nav.rides", path: "/rides", icon: Route as IconType },
-  { labelKey: "nav.chat", path: "/chat", icon: MessageCircleMore as IconType },
+  // Riders and the chat have no tab of their own; this one opens the sheet that holds
+  // both (docs/ui/follows-entry.md).
+  { labelKey: "nav.more", path: null, icon: LayoutGrid as IconType },
 ];
 
 // Maps routes to translated header titles; Home intentionally has none.
@@ -80,6 +94,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
 const SUB_PAGE_ROUTES: string[] = [
   "/reports",
   "/follows",
+  "/chat",
   "/settings",
   "/notifications",
   "/bikes/new",
@@ -142,6 +157,7 @@ export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
   const [renderOfflinePage, setRenderOfflinePage] = useState(false);
   const [fabMenuOpened, setFabMenuOpened] = useState(false);
+  const [moreOpened, setMoreOpened] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -153,8 +169,8 @@ export function AppLayout(): ReactElement {
   // Loads unread notifications for the persistent bell badge.
   const { data: unreadNotifications } = useUnreadNotifications();
   const unreadCount = unreadNotifications?.length ?? 0;
-  // Pending follow requests sit on the Users icon, not the bell: a request is a task that
-  // clears when answered, not something read (#155).
+  // Pending follow requests sit on the More tab, not the bell: a request is a task that
+  // clears when answered, not something read (#155, #158).
   const { data: profile } = useMyProfile();
   const pendingRequests = profile?.stats.pending_requests ?? 0;
   const overrideTitleKey = useHeaderStore((state) => state.titleKey);
@@ -216,17 +232,17 @@ export function AppLayout(): ReactElement {
     if (pageTitleKey === null) {
       return null;
     }
-    const item = NAV_ITEMS.find((entry) => isActivePath(entry.path, location.pathname));
+    const item = NAV_ITEMS.find((entry) => entry.path !== null && isActivePath(entry.path, location.pathname));
     if (!item) return null;
     const HeaderIconComponent = item.icon_fill ?? item.icon;
-    return <HeaderIconComponent size={25} strokeWidth={item.icon_fill ? undefined : TAB_STROKE_ACTIVE} />;
+    return <HeaderIconComponent size={TITLE_ICON_SIZE} strokeWidth={item.icon_fill ? undefined : TAB_STROKE_ACTIVE} />;
   }
 
   return (
     <AppShell
       // Extends header and footer backgrounds into system safe areas.
       header={{
-        height: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+        height: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
         // Full-screen routes have neither header nor header offset. A transparent header
         // keeps its controls but stops reserving its height, so content passes beneath it.
         collapsed: chromeHidden,
@@ -249,10 +265,9 @@ export function AppLayout(): ReactElement {
             backgroundImage: headerTransparent
               ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 45%, transparent 100%)"
               : undefined,
-            // One step above the page, closed off by a hairline, so the bar reads as the
-            // roof of the screen rather than as page colour that happens to sit still.
-            backgroundColor: headerTransparent ? undefined : "var(--mantine-color-background-8)",
-            borderBottom: headerTransparent ? undefined : "1px solid var(--mantine-color-other-borderSubtle)",
+            // The page colour carried up over the status bar, so the bar reads as the top of
+            // the page rather than as a shelf above it.
+            backgroundColor: headerTransparent ? undefined : "var(--mantine-color-background-9)",
             // The scrim is decoration; what is underneath stays reachable.
             pointerEvents: headerTransparent ? "none" : undefined,
           }}
@@ -282,7 +297,7 @@ export function AppLayout(): ReactElement {
                   )}
                   {overrideTitleSlot ?? (
                     <Text
-                      fw={700}
+                      fw={600}
                       size="lg"
                       c="text.6"
                       px={headerTransparent ? 10 : undefined}
@@ -298,34 +313,23 @@ export function AppLayout(): ReactElement {
               </>
             ) : (
               <>
-                <Group gap="xs" c="cards.1">
-                  {/* Decorative icon beside the title. */}
-                  {headerIcon()}
-                  <Text fw={700} size="lg">
-                    {t(pageTitleKey ?? "page.home")}
-                  </Text>
-                </Group>
-                {/* Least used furthest from the thumb: people, then the bell, then the rider in
-                    the corner the thumb owns. */}
+                {pageTitleKey === null ? (
+                  // Home has no title of its own, so the app's mark stands where one would be.
+                  <Logo style={{ height: LOGO_HEIGHT, width: "auto", marginLeft: LOGO_INSET }} />
+                ) : (
+                  <Group gap="xs" c="cards.1">
+                    {/* Decorative icon beside the title. */}
+                    {headerIcon()}
+                    <Text fw={600} size="lg">
+                      {t(pageTitleKey)}
+                    </Text>
+                  </Group>
+                )}
+                {/* Least used furthest from the thumb: the bell, then the rider in the corner
+                    the thumb owns. People moved to the More tab (#158). */}
                 <Group gap="sm">
                   {/* Whatever the tab hung here, before the icons; nothing renders when it hung nothing. */}
                   {actionSlot}
-                  {/* FOLLOWS ICON */}
-                  <ActionIcon
-                    variant="transparent"
-                    radius="sm"
-                    size="lg"
-                    aria-label={
-                      pendingRequests > 0
-                        ? t("follow.entryLabelWithRequests", { title: t("page.follows"), count: pendingRequests })
-                        : t("page.follows")
-                    }
-                    onClick={() => navigate("/follows")}
-                    pos="relative"
-                  >
-                    <Users size={25} color="var(--mantine-color-cards-1)" />
-                    <HeaderCountBadge count={pendingRequests} />
-                  </ActionIcon>
                   {/* NOTIFICATION ICON */}
                   <ActionIcon
                     variant="transparent"
@@ -389,6 +393,7 @@ export function AppLayout(): ReactElement {
 
       {/* Hides the create action on sub-pages. */}
       {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
+      <MoreDrawer opened={moreOpened} onClose={() => setMoreOpened(false)} />
       {/* --------- FOOTER --------- */}
       {!subPage && (
         <AppShell.Footer
@@ -421,15 +426,22 @@ export function AppLayout(): ReactElement {
             }}
           >
             {NAV_ITEMS.map(({ labelKey, path, icon: Icon, icon_fill: IconFill }) => {
-              const active = isActivePath(path, location.pathname);
+              // The More tab stands for a sheet rather than a route, so it reads as active
+              // while the sheet is open.
+              const isMore = path === null;
+              const active = isMore ? moreOpened : isActivePath(path, location.pathname);
               // Uses the filled icon for the active tab when available.
               const TabIcon = active ? (IconFill ?? Icon) : Icon;
               return (
                 <UnstyledButton
-                  key={path}
+                  key={labelKey}
                   onClick={() => {
                     // Provides feedback for every tab press.
                     tapFeedback();
+                    if (isMore) {
+                      setMoreOpened(true);
+                      return;
+                    }
                     // Avoids duplicate history entries for the active tab.
                     if (location.pathname === path) return;
                     if (!isOnline) setRenderOfflinePage(true);
@@ -456,6 +468,22 @@ export function AppLayout(): ReactElement {
                         // Ignored by the app's own marks, which carry their weight in the fill.
                         strokeWidth={active ? TAB_STROKE_ACTIVE : TAB_STROKE}
                       />
+                      {/* A dot, not a figure: the sheet will hold more than requests in time
+                          and a number on the tab would have to say what it counts (#158). */}
+                      {isMore && pendingRequests > 0 && (
+                        <Box
+                          pos="absolute"
+                          top={0}
+                          right={10}
+                          w={7}
+                          h={7}
+                          className="z-10"
+                          // Silent to a screen reader otherwise: a dot carries no text of its own.
+                          role="status"
+                          aria-label={t("follow.requestsTitle")}
+                          style={{ borderRadius: "9999px", backgroundColor: "var(--mantine-color-primary-6)" }}
+                        />
+                      )}
                     </div>
                     <Text size="xs" c={active ? "var(--mantine-color-primary-5)" : "var(--mantine-color-text-5)"}>
                       {t(labelKey)}

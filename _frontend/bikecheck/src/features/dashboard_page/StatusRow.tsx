@@ -139,7 +139,7 @@ export function StatusRow(): ReactElement | null {
   }
 
   // Never hidden (#135) and always the drawer: the tile is "my sharing"; "my people" and the
-  // waiting requests live on the Users icon in the top bar (#156).
+  // waiting requests live on the More tab's sheet (#156, #158).
   if (profile) {
     const Icon = VISIBILITY_ICON[profile.visibility];
     const color = VISIBILITY_COLOR[profile.visibility];

@@ -175,7 +175,8 @@ measured against.
 
 **Service Interval**:
 How much wear may pass before an action is due again — expressed in kilometres, minutes or health
-index, depending on the action.
+index, depending on the action. The bike's own plan is seeded when the bike is created and never
+edited; a reading measures against that plan unless its Tracked Action carries an Interval Override.
 
 ### Service Tracking
 
@@ -198,10 +199,23 @@ by number.
 _Avoid_: Health level, severity, status
 
 **Extension**:
-What putting off an overdue Tracked Action added to its Service Interval — 10% of the interval, on
-the axis it is measured in. Accumulates when granted again, and dies with the part it was granted
-on, so a new chain is never born already deferred.
+What putting off a Tracked Action added to its Service Interval — 10% of the interval in force, the
+Interval Override where there is one, on the axis it is measured in. Accumulates when granted again,
+and dies with the part it was granted on, so a new chain is never born already deferred.
 _Avoid_: Snooze, postponement, deferral
+
+**Interval Override**:
+A Service Interval the owner set on one Tracked Action, standing in for the bike's plan on that part
+alone — the number only, never the axis. Carried to the new part by a Replacement, so it outlives
+the part it was set on (ADR 0033). Cleared, the bike's plan applies again.
+_Avoid_: Custom interval, per-part interval
+
+**Muted**:
+A Tracked Action whose announcements the owner turned off. Only the announcement stops — the
+reading, its colour and its place on the dashboard all stand, and the band already announced keeps
+moving silently, so unmuting is quiet rather than a backlog. Carried to the new part by a
+Replacement, like an Interval Override.
+_Avoid_: Snoozed, disabled, ignored, untracked
 
 ### Setup
 

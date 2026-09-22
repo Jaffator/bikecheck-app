@@ -1,15 +1,15 @@
 import type { ReactElement } from "react";
 import { Box, Text } from "@mantine/core";
 
-// Caps the number so a busy badge never widens the icon it sits on.
-const BADGE_CAP = 9;
+// Caps the number so a busy badge never widens the icon it sits on. Shared, so the More
+// sheet's pill cannot disagree about what "a lot" looks like.
+export const BADGE_CAP = 9;
 
 interface HeaderCountBadgeProps {
   count: number;
 }
 
-// The pill at the top-right of a top-bar icon: the bell and the Users icon share it so the
-// two counts in one bar read as one voice. Renders nothing at zero.
+// The pill at the top-right of a top-bar icon, worn by the bell. Renders nothing at zero.
 export function HeaderCountBadge({ count }: HeaderCountBadgeProps): ReactElement | null {
   if (count <= 0) return null;
   return (

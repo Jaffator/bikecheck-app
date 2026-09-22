@@ -1,14 +1,14 @@
-// The address panel of the share drawer: the handle as it is typed, the full link under it,
-// and the two things to do with the link - which only a Public profile has a page for.
+// The address panel of the share drawer, shown for a Public profile only: the handle as it
+// is typed, the full link under it, and the two things to do with the link.
 import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
-import { Button, Group, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { Browser } from "@capacitor/browser";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { copyLink } from "@/utils/shareLink";
 import { HANDLE_ERROR_KEY, normalizeHandle, profileUrl } from "../handle";
-import type { HandleErrorCode, ProfileVisibility } from "../profile.types";
+import type { HandleErrorCode } from "../profile.types";
 
 // Long enough for the owner to read that it worked, short enough not to sit there.
 const COPIED_FOR_MS = 1500;
@@ -32,31 +32,16 @@ interface HandleFieldProps {
   onCommit: () => void;
   error: HandleErrorCode | null;
   origin: string;
-  visibility: ProfileVisibility;
-  disabled: boolean;
   // What Kopírovat and Otevřít hand out: the saved link, null while what is saved is not Public.
   savedUrl: string | null;
-  // Opens my profile the way others see it; null while nothing is saved to see yet.
-  onPreview: (() => void) | null;
 }
 
-export function HandleField({
-  handle,
-  onChange,
-  onCommit,
-  error,
-  origin,
-  visibility,
-  disabled,
-  savedUrl,
-  onPreview,
-}: HandleFieldProps): ReactElement {
+export function HandleField({ handle, onChange, onCommit, error, origin, savedUrl }: HandleFieldProps): ReactElement {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const url = profileUrl(origin, handle);
   const linkEnabled = savedUrl !== null && error === null;
-  const previewEnabled = onPreview !== null && error === null;
-  const dim = disabled ? "text.9" : "var(--color-text-dim)";
+  const dim = "var(--color-text-dim)";
   // The one accent on a quiet button; gone with it when disabled.
   const accent = linkEnabled ? "var(--mantine-color-primary-5)" : undefined;
 
@@ -85,7 +70,6 @@ export function HandleField({
     <Stack gap={8} pt={8} pb={8}>
       <TextInput
         value={handle}
-        disabled={disabled}
         onChange={(event) => onChange(normalizeHandle(event.currentTarget.value))}
         onBlur={onCommit}
         onKeyDown={(event) => {
@@ -129,18 +113,6 @@ export function HandleField({
           {t("sharing.open")}
         </Button>
       </Group>
-      {visibility === "FOLLOWERS" && (
-        <Text fz={12} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-          {t("sharing.linkFollowersHint")}
-        </Text>
-      )}
-      {/* Works in every state, Off included: the preview is the one check a Followers-only
-          profile has. Gated like Kopírovat - a handle the rule refuses has no page. */}
-      <UnstyledButton disabled={!previewEnabled} onClick={onPreview ?? undefined} style={{ cursor: previewEnabled ? "pointer" : "default" }}>
-        <Text fz={13} fw={600} c={previewEnabled ? "primary.5" : "text.9"}>
-          {t("sharing.preview")}
-        </Text>
-      </UnstyledButton>
     </Stack>
   );
 }

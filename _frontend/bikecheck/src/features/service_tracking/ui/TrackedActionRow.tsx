@@ -52,7 +52,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
               size="xs"
               aria-label={explanation.aria}
               onClick={(event) => {
-                // The row around it leads to recording the job; asking what a reading is does not.
+                // The row around it opens the job; asking what a reading is does not.
                 event.stopPropagation();
                 setExplained(true);
               }}
@@ -62,35 +62,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
             </ActionIcon>
           )}
         </Group>
-        <Text className="font-mono" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
-          {t("tracking.percentage", { value: action.percentage })}
-        </Text>
-        {onOpen !== null && <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
-      </Group>
-
-      <Progress
-        value={barFill(action) * 100}
-        size={5}
-        radius="xl"
-        styles={{
-          root: { backgroundColor: "var(--color-decor-sunk)" },
-          section: { backgroundColor: color },
-        }}
-      />
-
-      <Group gap="sm" wrap="nowrap" align="baseline">
-        <Text
-          className="font-mono"
-          fz={11}
-          tt="uppercase"
-          c="var(--color-text-dim)"
-          lts="0.08em"
-          lineClamp={1}
-          style={{ minWidth: 0 }}
-        >
-          {prefix === null ? part : `${prefix} · ${part}`}
-        </Text>
-        <Group gap="sm" wrap="nowrap" ml="auto" style={{ whiteSpace: "nowrap" }}>
+        <Group gap={6} wrap="nowrap" align="center" ml="auto" style={{ whiteSpace: "nowrap" }}>
           {/* What a tap on the control left behind: the interval beside it is longer for it. */}
           {action.extended && (
             <Text
@@ -110,18 +82,54 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
               {t("tracking.extended")}
             </Text>
           )}
-          <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em">
-            {axisReading(action, i18n.language, t)}
+          <Text className="font-mono" fz={12} c={color}>
+            {t("tracking.percentage", { value: action.percentage })}
           </Text>
         </Group>
+        {onOpen !== null && <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
+      </Group>
+
+      <Progress
+        value={barFill(action) * 100}
+        size={5}
+        radius="xl"
+        styles={{
+          root: { backgroundColor: "var(--color-decor-sunk)" },
+          section: { backgroundColor: color },
+        }}
+      />
+
+      <Group gap="sm" wrap="nowrap" align="baseline">
+        <Text
+          className="font-mono"
+          fz={11}
+          tt="uppercase"
+          c="text.8"
+          lts="0.08em"
+          lineClamp={1}
+          style={{ minWidth: 0 }}
+        >
+          {prefix === null ? part : `${prefix} · ${part}`}
+        </Text>
+        <Text
+          className="font-mono"
+          fz={11}
+          tt="uppercase"
+          c="text.8"
+          lts="0.08em"
+          ml="auto"
+          style={{ whiteSpace: "nowrap" }}
+        >
+          {axisReading(action, i18n.language, t)}
+        </Text>
       </Group>
     </Stack>
   );
 
   // The info button sits on the heading it explains, which puts it inside whatever the row
-  // leads through - so the row carries the tap as a div rather than as a <button>, since a
-  // button within a button is not valid markup. It keeps the keyboard by declaring what it
-  // is: a control that answers to Enter and to Space, the way the real button did.
+  // opens - so the row carries the tap as a div rather than as a <button>, since a button
+  // within a button is not valid markup. It keeps the keyboard by declaring what it is: a
+  // control that answers to Enter and to Space, the way the real button did.
   const body = (
     <>
       {onOpen === null ? (
@@ -153,9 +161,9 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
     </>
   );
 
-  // Only a job already past due is worth putting off — anything else is not being ridden
-  // on borrowed time yet. Its own control, outside whatever the row leads to, so a tap on
-  // it is never a tap into the wizard.
+  // The one-tap dismissal an overdue row already offered, kept where it was — the drawer
+  // offers the same write at every level. Its own control, outside whatever the row leads
+  // to, so a tap on it never opens the drawer.
   if (action.level !== "overdue") return body;
 
   return (

@@ -15,3 +15,9 @@ export function emptyText(t: TFunction, rows: readonly unknown[] | undefined, fa
   if (rows === undefined) return "";
   return empty;
 }
+
+// A panel that would only say it is empty is not drawn at all; a failed load still is, so the
+// fault is not mistaken for an empty list.
+export function showPanel(rows: readonly unknown[] | undefined, failed: boolean): boolean {
+  return failed || (rows !== undefined && rows.length > 0);
+}

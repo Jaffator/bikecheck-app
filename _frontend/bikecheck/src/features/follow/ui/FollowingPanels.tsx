@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import { Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useFollowing } from "../follow.queries";
-import { countedTitle, emptyText, PAGE_BOTTOM } from "../followPanels";
+import { PAGE_BOTTOM, showPanel } from "../followPanels";
 import { FollowButton } from "./FollowButton";
 import { FollowPanel } from "./FollowPanel";
 import { FollowSearch } from "./FollowSearch";
@@ -14,18 +14,18 @@ export function FollowingPanels(): ReactElement {
   const { data: following, isError } = useFollowing();
 
   return (
-    <Stack gap="md" px={8} pt="md" pb={PAGE_BOTTOM}>
+    <Stack gap="md" px="md" pt="md" pb={PAGE_BOTTOM}>
       <FollowSearch />
-      <FollowPanel
-        title={countedTitle(t("follow.followingTitle"), following)}
-        empty={emptyText(t, following, isError, t("follow.noFollowing"))}
-      >
-        {(following ?? []).map((person) => (
-          <PersonRow key={person.handle} person={person}>
-            <FollowButton handle={person.handle} visibility={person.visibility} relation={person.relation} size="xs" />
-          </PersonRow>
-        ))}
-      </FollowPanel>
+      {/* Nobody followed yet leaves only the search: its placeholder already says what to do. */}
+      {showPanel(following, isError) && (
+        <FollowPanel title={t("follow.followingTitle")} empty={t("follow.listFailed")}>
+          {(following ?? []).map((person) => (
+            <PersonRow key={person.handle} person={person}>
+              <FollowButton handle={person.handle} visibility={person.visibility} relation={person.relation} size="xs" />
+            </PersonRow>
+          ))}
+        </FollowPanel>
+      )}
     </Stack>
   );
 }

@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
 import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
+import { RIDES_TAB_TOP_SPACE } from "@/features/rides_page/EmptyRides";
 import trailIllustration from "@/assets/images/rides.png";
 import { usePendingRides } from "@/features/strava/strava.queries";
 import { PendingRideSheet } from "./PendingRideSheet";
@@ -87,6 +88,7 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled }: Pendin
         illustration={trailIllustration}
         title={t("pendingRides.empty")}
         body={t("pendingRides.emptyBody")}
+        topSpace={RIDES_TAB_TOP_SPACE}
       />
     );
   }

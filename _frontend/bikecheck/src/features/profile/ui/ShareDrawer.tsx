@@ -1,7 +1,8 @@
-// The share drawer: one segmented control decides the state, under it the address, what
-// goes out and which bikes. Every change saves at once; the handle saves on leaving the field.
+// The share drawer: one segmented control decides the state, under it the preview, the
+// address (Public only - in the app people go by name), what goes out and which bikes.
+// Every change saves at once; the handle saves on leaving the field.
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Box, Center, Drawer, Group, Image, Loader, SegmentedControl, Stack, Text } from "@mantine/core";
+import { Box, Center, Drawer, Group, Image, Loader, SegmentedControl, Stack, Text, UnstyledButton } from "@mantine/core";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -39,7 +40,7 @@ const PANEL: CSSProperties = {
 
 // The grabber rides on Mantine's own header, so the close button stays the stock one.
 const GRABBER_HEADER =
-  "relative pt-9 before:content-[''] before:absolute before:top-2 before:left-1/2 before:-translate-x-1/2 before:w-9 before:h-1 before:rounded-full before:bg-[var(--color-border-subtle)]";
+  "relative pt-14 before:content-[''] before:absolute before:top-2 before:left-1/2 before:-translate-x-1/2 before:w-9 before:h-1 before:rounded-full before:bg-[var(--color-border-subtle)]";
 
 interface SectionProps {
   title: string;
@@ -176,6 +177,9 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
   const renaming = profile.handle !== null && handle !== profile.handle;
   // The preview shows what is saved, not what is typed: an unsaved handle has no page.
   const savedHandle = profile.handle;
+  // Works in every state, Off included: the preview is the one check a Followers-only
+  // profile has. Gated like Kopírovat - a handle the rule refuses has no page.
+  const previewEnabled = savedHandle !== null && error === null;
   // Copy and Open likewise: only a saved Public profile has a page the link opens.
   const savedUrl = profile.visibility === "PUBLIC" && savedHandle !== null ? profileUrl(profile.public_origin, savedHandle) : null;
 
@@ -198,7 +202,14 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
 
   function changeVisibility(next: ProfileVisibility): void {
     setVisibility(next);
-    persist({ visibility: next });
+    if (next === "PUBLIC") {
+      persist({ visibility: next });
+      return;
+    }
+    // Leaving Public hides the field, so whatever was typed there is dropped, not kept invisibly.
+    const saved = profile.handle ?? profile.suggested_handle ?? "";
+    changeHandle(saved);
+    persist({ visibility: next, handle: saved });
   }
 
   function setShare(key: keyof ShareSwitches, checked: boolean): void {
@@ -250,21 +261,30 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
         <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
           {t(VISIBILITY_HINT_KEY[visibility])}
         </Text>
+        <UnstyledButton
+          disabled={!previewEnabled}
+          onClick={savedHandle === null ? undefined : () => onPreview(savedHandle)}
+          style={{ cursor: previewEnabled ? "pointer" : "default" }}
+        >
+          <Text fz={13} fw={600} c={previewEnabled ? "primary.5" : "text.9"}>
+            {t("sharing.preview")}
+          </Text>
+        </UnstyledButton>
       </Stack>
 
-      <Section title={t("sharing.sectionAddress")}>
-        <HandleField
-          handle={handle}
-          onChange={changeHandle}
-          onCommit={saveHandle}
-          error={error}
-          origin={profile.public_origin}
-          visibility={visibility}
-          disabled={off}
-          savedUrl={savedUrl}
-          onPreview={savedHandle === null ? null : () => onPreview(savedHandle)}
-        />
-      </Section>
+      {/* The address is the web link and nothing else; without a Public profile there is none. */}
+      {visibility === "PUBLIC" && (
+        <Section title={t("sharing.sectionAddress")}>
+          <HandleField
+            handle={handle}
+            onChange={changeHandle}
+            onCommit={saveHandle}
+            error={error}
+            origin={profile.public_origin}
+            savedUrl={savedUrl}
+          />
+        </Section>
+      )}
 
       <Section title={t("sharing.sectionShares")}>
         <ShareSwitchRow

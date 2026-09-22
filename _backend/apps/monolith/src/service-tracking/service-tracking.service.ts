@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, ownedBikesWhere } from '../bike/owned-bike.where';
@@ -44,6 +44,9 @@ const trackedIntervalInclude = {
       id: true,
       action_name: true,
       i18n_key: true,
+      // Which of the two things recording this job means, and so which button the drawer
+      // offers: Log replacement, or Log service.
+      replace_action: true,
       event_action_targets: { select: { component_type_id: true } },
     },
   },
@@ -81,6 +84,13 @@ interface Reading {
   interval: number;
   percentage: number;
   extended: boolean;
+  // The Service Interval in force before any Extension, which is what a postponement is a
+  // tenth of - `interval` already carries the Extension and cannot say it.
+  inForce: number;
+  // The bike's own plan on this axis, which clearing the override restores.
+  planned: number;
+  // The owner's own value, or null where this axis follows the plan.
+  override: number | null;
 }
 
 // Service Tracking: how far every piece of a bike's maintenance has come. A Tracked Action
@@ -138,59 +148,67 @@ export class ServiceTrackingService {
   }
 
   // Putting one Tracked Action off, which grants it an Extension: a tenth of the Service
-  // Interval the bike's plan sets, on the axis the reading is taken on. Added to the
-  // interval and never taken off the wear, so the reading still says how far the part has
-  // actually gone. Granted again it accumulates, so putting the same job off three times
-  // reads as a growing Extension rather than a cleared flag.
+  // Interval in force - the owner's own where they set one - on the axis the reading is
+  // taken on. Added to the interval and never taken off the wear, so the reading still says
+  // how far the part has actually gone. Granted again it accumulates, so putting the same
+  // job off three times reads as a growing Extension rather than a cleared flag.
   //
-  // Which readings are worth offering the control on is the frontend's rule - the write
-  // refuses only what nobody may put off: a bike that is not the caller's or is archived,
-  // and a part that came off or was deleted.
+  // Offered at every Attention Level, not only overdue: planning does not have to wait for
+  // being late. The write refuses only what nobody may put off: a bike that is not the
+  // caller's or is archived, and a part that came off or was deleted.
   async postponeTrackedAction(
     componentMountedId: number,
     eventActionId: number,
     userId: number,
   ): Promise<Response_TrackedActionDto> {
-    // One question answers all of it: whose bike carries this part, and is it still on it.
-    const bike = await this.prisma.bikes.findFirst({
-      where: { ...ownedBikesWhere(userId), components_mounted: { some: { id: componentMountedId, ...MOUNTED } } },
-      select: { id: true },
-    });
-    if (!bike) {
-      throw new NotFoundException(`Tracked Action on component ${componentMountedId} not found`);
-    }
+    const { bikeId, reading } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
 
-    const [intervals, parts] = await this.loadTracking(bike.id);
-    const part = parts.find((row) => row.id === componentMountedId);
-    const interval = intervals.find((row) => row.event_actions_id === eventActionId);
-
-    // A pairing the bike keeps no Service Interval for, or one this kind of part is not a
-    // target of, is not a Tracked Action at all - so there is nothing to put off.
-    if (part === undefined || interval === undefined || !targets(interval).has(part.component_type_id)) {
-      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} not found`);
-    }
-
-    const reading = worstAxis(part, interval);
-    if (reading === null) {
-      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} has no Service Interval`);
-    }
-
-    await this.grantExtension(componentMountedId, eventActionId, reading.axis, extensionOn(interval, reading.axis));
+    await this.grantExtension(componentMountedId, eventActionId, reading.axis, postponeBy(reading));
 
     // An Extension lowers the reading, which moves the band down and re-arms the next
     // crossing - the same rule a Service and a Replacement go through.
-    await this.evaluateBike(bike.id, userId);
+    await this.evaluateBike(bikeId, userId);
 
-    // Answered from the read every other caller uses, so what the tap returns and what the
-    // next page load shows can never disagree.
-    const updated = (await this.readBike(bike.id)).find(
-      (row) => row.component_mounted_id === componentMountedId && row.event_action_id === eventActionId,
-    );
-    if (updated === undefined) {
-      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} not found`);
+    return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
+  }
+
+  // The owner's own Service Interval for one Tracked Action, or null to put the bike's plan
+  // back. Only the number is theirs - the axis follows the part's type (ADR 0033).
+  async setTrackedActionInterval(
+    componentMountedId: number,
+    eventActionId: number,
+    userId: number,
+    intervalOverride: number | null,
+  ): Promise<Response_TrackedActionDto> {
+    if (intervalOverride !== null && intervalOverride <= 0) {
+      throw new BadRequestException('A Service Interval must be greater than zero');
     }
 
-    return updated;
+    const { bikeId } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
+
+    await this.writeSettings(componentMountedId, eventActionId, { interval_override: intervalOverride });
+
+    // A new interval moves the reading, so it moves the band with it: a longer one re-arms
+    // the next crossing, a shorter one may be that crossing.
+    await this.evaluateBike(bikeId, userId);
+
+    return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
+  }
+
+  // Whether one Tracked Action may announce itself. False stops the push and nothing else.
+  async setTrackedActionNotify(
+    componentMountedId: number,
+    eventActionId: number,
+    userId: number,
+    notify: boolean,
+  ): Promise<Response_TrackedActionDto> {
+    const { bikeId } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
+
+    await this.writeSettings(componentMountedId, eventActionId, { notify });
+
+    // No evaluation: muting moves no reading, and the band went on moving under the mute -
+    // so unmuting is quiet and the next genuine crossing is the one that announces.
+    return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
   }
 
   // Announcements, run at the end of every write that moves an input Service Tracking
@@ -267,6 +285,73 @@ export class ServiceTrackingService {
     }
   }
 
+  // What every write asks first: whose bike carries this part, is it still on it, and is the
+  // pairing a Tracked Action at all. Answers with the bike and the reading to act on.
+  private async requireTrackedAction(
+    componentMountedId: number,
+    eventActionId: number,
+    userId: number,
+  ): Promise<{ bikeId: number; reading: Reading }> {
+    // One question answers the ownership: whose bike carries this part, and is it still on it.
+    const bike = await this.prisma.bikes.findFirst({
+      where: { ...ownedBikesWhere(userId), components_mounted: { some: { id: componentMountedId, ...MOUNTED } } },
+      select: { id: true },
+    });
+    if (!bike) {
+      throw new NotFoundException(`Tracked Action on component ${componentMountedId} not found`);
+    }
+
+    const [intervals, parts] = await this.loadTracking(bike.id);
+    const part = parts.find((row) => row.id === componentMountedId);
+    const interval = intervals.find((row) => row.event_actions_id === eventActionId);
+
+    // A pairing the bike keeps no Service Interval for, or one this kind of part is not a
+    // target of, is not a Tracked Action at all - so there is nothing to write.
+    if (part === undefined || interval === undefined || !targets(interval).has(part.component_type_id)) {
+      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} not found`);
+    }
+
+    const reading = worstAxis(part, interval);
+    if (reading === null) {
+      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} has no Service Interval`);
+    }
+
+    return { bikeId: bike.id, reading };
+  }
+
+  // What a write answers with: the Tracked Action read the way every other caller reads it,
+  // so what the tap returns and what the next page load shows can never disagree.
+  private async readTrackedAction(
+    bikeId: number,
+    componentMountedId: number,
+    eventActionId: number,
+  ): Promise<Response_TrackedActionDto> {
+    const updated = (await this.readBike(bikeId)).find(
+      (row) => row.component_mounted_id === componentMountedId && row.event_action_id === eventActionId,
+    );
+    if (updated === undefined) {
+      throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} not found`);
+    }
+
+    return updated;
+  }
+
+  // The settings a pairing carries, written whether it has a row yet or not. Only what the
+  // caller names: the Extension and the announced band are never written from here.
+  private async writeSettings(
+    componentMountedId: number,
+    eventActionId: number,
+    settings: { interval_override?: number | null; notify?: boolean },
+  ): Promise<void> {
+    const pair = { component_mounted_id: componentMountedId, event_actions_id: eventActionId };
+
+    await this.prisma.tracked_action_state.upsert({
+      where: { component_mounted_id_event_actions_id: pair },
+      create: { ...pair, ...settings },
+      update: settings,
+    });
+  }
+
   // The Extension itself: a fresh row carrying it, or the slice added to what the pairing
   // already holds on that axis.
   private async grantExtension(
@@ -341,11 +426,14 @@ function countIn(readings: Moved[], band: number): number {
 // A move up into a band worth interrupting for is the only thing that announces. A
 // backfill of a whole season lands in the band it ends in, so the thresholds it blew past
 // on the way are not announced one by one.
+//
+// A muted pairing never crosses, so it never announces - but its band still moves below,
+// which is what keeps unmuting quiet rather than a backlog (ADR 0033).
 function moved(action: Response_TrackedActionDto, storedBands: Map<string, number>): Moved {
   const band = reachedBand(action.percentage);
   const stored = storedBands.get(pairKey(action.component_mounted_id, action.event_action_id));
 
-  return { action, band, stored, crossed: announces(band) && band > (stored ?? 0) };
+  return { action, band, stored, crossed: action.notify && announces(band) && band > (stored ?? 0) };
 }
 
 // What has already been announced for each pairing. A pairing with no row has been
@@ -395,6 +483,8 @@ function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response
   const reading = worstAxis(part, interval);
   if (reading === null) return null;
 
+  const state = stateFor(part, interval.event_actions_id);
+
   return {
     bike_id: part.bike_id,
     component_mounted_id: part.id,
@@ -415,13 +505,26 @@ function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response
     percentage: reading.percentage,
     level: attentionLevel(reading.percentage),
     extended: reading.extended,
+    postpone_by: postponeBy(reading),
+    default_interval: reading.planned,
+    interval_override: reading.override,
+    // A pairing with no row of its own has never been muted, which is what announcing by
+    // default means.
+    notify: state?.notify ?? true,
+    mounted_at: part.mounted_at,
+    replace_action: interval.events_action.replace_action,
   };
+}
+
+// The state row one pairing keeps, or undefined where it has never needed one.
+function stateFor(part: TrackedPart, eventActionId: number): TrackedPart['tracked_action_state'][number] | undefined {
+  return part.tracked_action_state.find((row) => row.event_actions_id === eventActionId);
 }
 
 // The axis the bike's interval row fills in. Where it fills in more than one, the part is
 // due when the first of its measures says so, so the highest percentage wins.
 function worstAxis(part: TrackedPart, interval: TrackedInterval): Reading | null {
-  const state = part.tracked_action_state.find((row) => row.event_actions_id === interval.event_actions_id);
+  const state = stateFor(part, interval.event_actions_id);
   const frozen = latestBaseline(part, interval.event_actions_id);
 
   const wear = wearColumns(part, frozen);
@@ -430,27 +533,34 @@ function worstAxis(part: TrackedPart, interval: TrackedInterval): Reading | null
   // has never been recorded on this part, which leaves every Extension standing.
   const servicedAt = frozen?.event_actions_done.events_bikes.created_at ?? null;
 
-  const readings: Reading[] = [
-    readingOn(
-      'km',
-      interval.service_interval_km,
-      liveExtension(state?.extended_by_km, state?.extended_km_at, servicedAt),
-      wear.km,
-    ),
-    readingOn(
-      'min',
-      interval.service_interval_min,
-      liveExtension(state?.extended_by_min, state?.extended_min_at, servicedAt),
-      wear.min,
-    ),
-    // The health index axis keeps its Extension for the life of the part: a Service does
-    // not rebase it, so there is nothing for the Extension to have outlived.
-    readingOn('health_index', interval.health_index_interval, state?.extended_by_healthIndex ?? 0, wear.health_index),
-  ].filter((reading): reading is Reading => reading !== null);
+  // What each axis is measured against, and what an Extension has added to it. The health
+  // index keeps its Extension for the life of the part: a Service does not rebase it.
+  const perAxis: Record<WearAxis, { planned: number | null; extension: number }> = {
+    km: {
+      planned: interval.service_interval_km,
+      extension: liveExtension(state?.extended_by_km, state?.extended_km_at, servicedAt),
+    },
+    min: {
+      planned: interval.service_interval_min,
+      extension: liveExtension(state?.extended_by_min, state?.extended_min_at, servicedAt),
+    },
+    health_index: { planned: interval.health_index_interval, extension: state?.extended_by_healthIndex ?? 0 },
+  };
+
+  const readings = AXIS_ORDER.map((axis) =>
+    readingOn(axis, perAxis[axis].planned, null, perAxis[axis].extension, wear[axis]),
+  ).filter((reading): reading is Reading => reading !== null);
 
   if (readings.length === 0) return null;
 
-  return readings.reduce((worst, reading) => (reading.percentage > worst.percentage ? reading : worst));
+  // Which axis is read is the bike's plan's to decide, never the override's (ADR 0033) - so
+  // the worst is found on the plan, and the override then replaces the value on that axis.
+  const worst = readings.reduce((one, other) => (other.percentage > one.percentage ? other : one));
+  const override = state?.interval_override ?? null;
+  if (override === null) return worst;
+
+  const axis = perAxis[worst.axis];
+  return readingOn(worst.axis, axis.planned, override, axis.extension, wear[worst.axis]) ?? worst;
 }
 
 // Which column each axis reads on this part, paired with the baseline frozen against that
@@ -478,14 +588,7 @@ function wearColumns(part: TrackedPart, frozen: Baseline | null): Record<WearAxi
 // How much of the Service Interval one Extension is worth.
 const EXTENSION_SHARE = 0.1;
 
-// Which column each axis is read from on the bike's plan, and which one it is put off in on
-// the state row. Named beside each other because they are the same three axes twice.
-const INTERVAL_COLUMNS = {
-  km: 'service_interval_km',
-  min: 'service_interval_min',
-  health_index: 'health_index_interval',
-} as const satisfies Record<WearAxis, keyof TrackedInterval>;
-
+// Which column each axis is put off in on the state row.
 const EXTENSION_COLUMNS = {
   km: 'extended_by_km',
   min: 'extended_by_min',
@@ -524,21 +627,31 @@ function liveExtension(
   return grantedAt > servicedAt ? extension : 0;
 }
 
-// What putting one job off adds on one axis: a tenth of the interval the bike's plan sets,
-// never of the interval an earlier Extension already lengthened - so putting the same job
-// off twice adds the same slice twice, and a third time has put it off by 30%.
-function extensionOn(interval: TrackedInterval, axis: WearAxis): number {
-  return Math.round((interval[INTERVAL_COLUMNS[axis]] ?? 0) * EXTENSION_SHARE);
+// The three axes a Tracked Action can be read on, in the order they are read in.
+const AXIS_ORDER = ['km', 'min', 'health_index'] as const satisfies readonly WearAxis[];
+
+// What putting one job off adds: a tenth of the interval in force, never of the one an
+// earlier Extension already lengthened - so twice off is the same slice twice.
+function postponeBy(reading: Reading): number {
+  return Math.round(reading.inForce * EXTENSION_SHARE);
 }
 
 // One axis, or null where the bike keeps no interval on it. Never capped: 132% reads as
 // 132%. Reported in whole percent, which is what the bands are drawn in - so the number on
 // screen and the colour behind it can never disagree. Rounded down, never up: 99.6% of the
 // way to due is not yet due, and must not read as 100%.
-function readingOn(axis: WearAxis, intervalValue: number | null, extension: number, wear: Wear): Reading | null {
-  if (intervalValue === null) return null;
+// The plan says whether an axis is read at all; the override only replaces its value.
+function readingOn(
+  axis: WearAxis,
+  planned: number | null,
+  override: number | null,
+  extension: number,
+  wear: Wear,
+): Reading | null {
+  if (planned === null) return null;
 
-  const interval = intervalValue + extension;
+  const inForce = override ?? planned;
+  const interval = inForce + extension;
   if (interval <= 0) return null;
 
   // A baseline above the accumulator is a part whose wear was corrected downwards, not
@@ -552,6 +665,9 @@ function readingOn(axis: WearAxis, intervalValue: number | null, extension: numb
     interval,
     percentage: Math.floor((current / interval) * 100),
     extended: extension > 0,
+    inForce,
+    planned,
+    override,
   };
 }
 

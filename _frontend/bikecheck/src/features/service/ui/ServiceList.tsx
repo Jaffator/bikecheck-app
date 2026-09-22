@@ -145,7 +145,7 @@ function ServiceRows({
               py={6}
               style={{
                 position: "sticky",
-                top: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+                top: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
                 zIndex: 1,
                 backgroundColor: "var(--mantine-color-background-9)",
               }}

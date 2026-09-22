@@ -1,8 +1,9 @@
 import type { ReactElement, ReactNode } from "react";
 import { Box, Center, Image, Stack, Text } from "@mantine/core";
 
-// The band the copy is centred in, so the group sits mid-screen rather than at a fixed offset.
-const COPY_BAND_HEIGHT = "78dvh";
+// Where the title sits on every empty page, measured from the top of the content area. A page
+// with chrome above it subtracts that chrome, so the title lands on the same line everywhere.
+export const EMPTY_STATE_TOP = "38dvh";
 
 // Crops the illustration so its fade reaches the copy offset.
 const ILLUSTRATION_HEIGHT = "50dvh";
@@ -14,11 +15,12 @@ const FADE_MASK =
 // Separates the illustration from the header edge.
 const ILLUSTRATION_TOP_OFFSET = 5;
 
-// Keeps the illustration visually subordinate to foreground copy.
-const ILLUSTRATION_OPACITY = 0.2;
+// The illustration reads as a picture behind the copy; the fade mask keeps the text legible.
+const ILLUSTRATION_OPACITY = 0.3;
 
-// An icon carries far less ink than an illustration, so it may sit stronger.
-const ICON_OPACITY = 0.45;
+// An icon carries far less ink than an illustration, so it may sit stronger - but not stronger
+// than the dimmed title it heads.
+const ICON_OPACITY = 0.3;
 
 // Separates the icon from the title it heads.
 const ICON_GAP = 16;
@@ -26,20 +28,25 @@ const ICON_GAP = 16;
 // Holds the title and its body together as one block.
 const TITLE_BODY_GAP = 8;
 
+
 interface EmptyStateLayoutProps {
   // The illustration behind the copy. Pages without one pass an icon instead.
   illustration?: string;
-  // Heads the copy on pages with no illustration. Sits in the copy group, not behind it.
+  // Heads the copy on pages with no illustration. Hangs above the title without taking flow
+  // height, so the title keeps its offset on every page.
   icon?: ReactNode;
   title: string;
   body: string;
   // Renders an optional status pill over the illustration.
   badge?: ReactNode;
+  // Content above the copy, inside the layout - so the illustration runs behind it rather
+  // than starting below it.
+  header?: ReactNode;
   // Renders optional actions below the copy.
   children?: ReactNode;
-  // The band the copy is centred in. Pages that centre the state in a fixed area of their
-  // own pass "auto", so the layout adds no height of its own.
-  bandHeight?: string;
+  // The space above the title. Defaults to EMPTY_STATE_TOP; a page with chrome above passes
+  // that offset less its chrome, and a page with content above passes a plain gap instead.
+  topSpace?: string;
 }
 
 // Frames empty-state content inside AppShell.Main.
@@ -49,11 +56,19 @@ export function EmptyStateLayout({
   title,
   body,
   badge,
+  header,
   children,
-  bandHeight = COPY_BAND_HEIGHT,
+  topSpace = EMPTY_STATE_TOP,
 }: EmptyStateLayoutProps): ReactElement {
   return (
-    <Box pos="relative" px={16} pb={64}>
+    // Holds the height the absolutely-placed illustration needs, so a page that clips its
+    // overflow - the rides swipe track - does not cut the image off.
+    <Box
+      pos="relative"
+      px={16}
+      pb={64}
+      mih={illustration === undefined ? undefined : `calc(${String(ILLUSTRATION_TOP_OFFSET)}px + ${ILLUSTRATION_HEIGHT})`}
+    >
       {/* Places the masked illustration behind copy. */}
       {illustration !== undefined && (
         <Box
@@ -85,25 +100,35 @@ export function EmptyStateLayout({
         </Box>
       )}
 
+      {header !== undefined && <Box pos="relative">{header}</Box>}
+
       {/* Positions copy within the illustration fade. */}
-      <Stack pos="relative" mih={bandHeight} justify="center" gap={16}>
-        <Stack gap={ICON_GAP}>
-          {/* In the flow with the copy, so the two move as one when the keyboard resizes the
+      <Stack pos="relative" pt={topSpace} gap={16}>
+        <Box pos="relative">
+          {/* Anchored to the copy block, so the two move as one when the keyboard resizes the
               viewport rather than drifting apart at different rates. */}
           {icon !== undefined && (
-            <Center opacity={ICON_OPACITY} c="var(--color-text-dim)">
+            <Center
+              pos="absolute"
+              left={0}
+              right={0}
+              bottom="100%"
+              mb={ICON_GAP}
+              opacity={ICON_OPACITY}
+              c="var(--color-text-dim)"
+            >
               {icon}
             </Center>
           )}
           <Stack gap={TITLE_BODY_GAP} ta="center">
-            <Text fz={22} lh="32px" fw={600} c="var(--color-text-bright)">
+            <Text fz={18} lh="26px" fw={600} c="text.6">
               {title}
             </Text>
-            <Text fz={15} lh="26px" c="var(--color-text-dim)">
+            <Text fz={14} lh="22px" c="text.8">
               {body}
             </Text>
           </Stack>
-        </Stack>
+        </Box>
         {children}
       </Stack>
     </Box>

@@ -1,4 +1,5 @@
-import { ActionIcon, Button, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import { ActionIcon, Button, Drawer, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import { CONTENT_MAX_WIDTH } from "./layout/contentWidth";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
@@ -185,6 +186,12 @@ export const theme = createTheme({
       vars: (_theme, props) => ({
         root: props.variant === "outline" && props.color === undefined ? quietOutlineVars("ai") : {},
       }),
+    }),
+    // A bottom sheet stays over the content column in a browser instead of spanning the window.
+    Drawer: Drawer.extend({
+      styles: {
+        content: { maxWidth: CONTENT_MAX_WIDTH, marginInline: "auto" },
+      },
     }),
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk
     // track, raised pill, dim labels.

@@ -128,7 +128,7 @@ const OFF_DEFAULTS: Omit<ResponseProfileDto, 'suggested_handle' | 'public_origin
   visibility: 'OFF',
   share_components: true,
   share_setup: true,
-  share_history: true,
+  share_history: false,
   share_costs: false,
   stats: { views: 0, followers: 0, pending_requests: 0 },
 };

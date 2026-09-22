@@ -21,7 +21,7 @@ const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-i
 // The offset is the app header's height - see AppLayout.
 const STICKY_CHIPS_STYLE = {
   position: "sticky",
-  top: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+  top: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
   zIndex: 2,
   backgroundColor: "var(--mantine-color-background-9)",
 } as const;
@@ -80,8 +80,14 @@ export function Service(): ReactElement {
             here. The bar stays outside it, so it keeps its own sideways scroll. */}
         <Box style={SWIPE_AREA_STYLE} {...swipeHandlers}>
           <Box key={panel.key} className={panel.className} style={panel.style}>
-            <Box className="mx-3 mt-3">{attention}</Box>
-            <EmptyService forBike={bikeId !== null} compact />
+            {/* A garage of one has its bike implied, as historyBikeId does above. The card
+                goes inside the empty state, so the illustration runs behind it too. */}
+            <EmptyService
+              forBike={bikeId !== null || bikes?.length === 1}
+              forGarage
+              compact
+              header={<Box pt={12}>{attention}</Box>}
+            />
           </Box>
         </Box>
       </Stack>

@@ -33,6 +33,7 @@ describe('BikeEventService', () => {
     },
     bike_event_attachments: { createMany: jest.fn(), deleteMany: jest.fn() },
     component_types: { findUnique: jest.fn() },
+    tracked_action_state: { findMany: jest.fn(), createMany: jest.fn() },
     rides: { aggregate: jest.fn() },
     bikes: { findFirst: jest.fn(), findFirstOrThrow: jest.fn() },
   };
@@ -134,6 +135,8 @@ describe('BikeEventService', () => {
       Promise.resolve(args.where.id.in.length),
     );
     mockTx.event_actions_done.create.mockResolvedValue({ id: 500 });
+    // A replaced part carries no settings of its own unless a test gives it some.
+    mockTx.tracked_action_state.findMany.mockResolvedValue([]);
     rides({});
     mockPrisma.rides.aggregate.mockResolvedValue(ridesAfter({}));
     mockPrisma.events_bikes.findFirst.mockResolvedValue({ id: 99, bike_id: BIKE_ID });
@@ -1270,6 +1273,121 @@ describe('BikeEventService', () => {
         data: expect.objectContaining({ total_km: 200, drivetrain_km: 150, suspension_min: 0 }),
       }),
     );
+  });
+
+  // What the owner set on the part that came off follows the job onto the part that went
+  // on: their own Service Interval and their mute (ADR 0033). The Extension and the
+  // announced band stay behind - a new chain is born neither deferred nor already
+  // announced.
+  describe('settings carried over by a Replacement', () => {
+    // The Replacement every test here records: part 45 comes off, part 46 goes on.
+    const replacement = (): Create_BikeEventDto =>
+      dto({
+        actions_replaced: [
+          {
+            old_component_mounted_id: 45,
+            component_type_id: 16,
+            new_component_desc: 'Shimano XT Chain HG-701',
+            action_id: 2,
+          },
+        ],
+      });
+
+    // The state rows the old part carries, as the copy's own filter hands them over: only
+    // what is worth copying, and only the columns that are copied.
+    function oldPartHolds(
+      rows: { event_actions_id: number; interval_override: number | null; notify: boolean }[],
+    ): void {
+      mockTx.tracked_action_state.findMany.mockResolvedValue(rows);
+    }
+
+    beforeEach(() => {
+      mockTx.components_mounted.findMany.mockResolvedValue([]);
+      mockTx.components_mounted.create.mockResolvedValue({ id: 46 });
+      mockTx.component_types.findUnique.mockResolvedValue({ component_type: 'Chain' });
+    });
+
+    // The owner does not have to say "2 500 km" again every time they fit a new chain.
+    it('carries the interval and the mute onto the new part', async () => {
+      oldPartHolds([{ event_actions_id: 2, interval_override: 2500, notify: false }]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).toHaveBeenCalledWith({
+        data: [{ component_mounted_id: 46, event_actions_id: 2, interval_override: 2500, notify: false }],
+      });
+    });
+
+    // All of the part's jobs, not only the one the Replacement was: a muted chain
+    // lubrication stays muted through a chain swap.
+    it('carries every job the old part held a setting for', async () => {
+      oldPartHolds([
+        { event_actions_id: 2, interval_override: 2500, notify: true },
+        { event_actions_id: 3, interval_override: null, notify: false },
+      ]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).toHaveBeenCalledWith({
+        data: [
+          { component_mounted_id: 46, event_actions_id: 2, interval_override: 2500, notify: true },
+          { component_mounted_id: 46, event_actions_id: 3, interval_override: null, notify: false },
+        ],
+      });
+    });
+
+    // The Extension, its timestamps and the announced band belong to the cycle that just
+    // ended, so the copy neither reads them nor writes them.
+    it('carries nothing of the Extension or the announced band', async () => {
+      oldPartHolds([{ event_actions_id: 2, interval_override: 2500, notify: true }]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      const [written] = mockTx.tracked_action_state.createMany.mock.calls[0] as [{ data: Record<string, unknown>[] }];
+      expect(Object.keys(written.data[0]).sort()).toEqual([
+        'component_mounted_id',
+        'event_actions_id',
+        'interval_override',
+        'notify',
+      ]);
+    });
+
+    // A row saying only "follow the plan, announce as usual" says nothing worth writing.
+    it('leaves no row on the new part when the old one had nothing to say', async () => {
+      oldPartHolds([]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).not.toHaveBeenCalled();
+    });
+
+    // A new chain is born neither deferred nor already announced: the old part's Extension
+    // and band are not settings, so the filter never hands them over and no row is written.
+    it('leaves the new part with no row when the old one carried only an Extension', async () => {
+      oldPartHolds([]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).not.toHaveBeenCalled();
+      expect(mockTx.tracked_action_state.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ select: { event_actions_id: true, interval_override: true, notify: true } }),
+      );
+    });
+
+    // Which rows are worth copying is asked of the database, so a part following the plan
+    // on every job is never even read into memory.
+    it('asks only for the rows that carry a setting', async () => {
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            component_mounted_id: 45,
+            OR: [{ interval_override: { not: null } }, { notify: false }],
+          },
+        }),
+      );
+    });
   });
 
   // Recording, correcting or removing a service moves the Wear Baselines the readings are

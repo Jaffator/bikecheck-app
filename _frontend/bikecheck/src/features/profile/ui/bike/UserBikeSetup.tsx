@@ -1,10 +1,10 @@
 // The Setup of somebody's bike as one card: it opens on the profile the bike is ridden at,
-// the others a chip away; the numbers are read-only gauges - tyres in the owner's unit,
-// suspension in psi (ADR 0029) - with the tokens and clicks folded under them.
+// the others a chip away under the title; the numbers are read-only gauges - tyres in the
+// owner's unit, suspension in psi with its sag (ADR 0029) - with the tokens and clicks
+// folded under them.
 import { useState, type ReactElement } from "react";
 import {
   Badge,
-  Box,
   Chip,
   Collapse,
   Divider,
@@ -52,30 +52,7 @@ export function UserBikeSetup({ profiles, unit }: UserBikeSetupProps): ReactElem
 
   return (
     <Paper radius="lg" style={{ ...PANEL, overflow: "hidden" }}>
-      <UserBikeSectionTitle
-        icon={<SlidersHorizontal size={16} />}
-        aside={
-          profiles.length > 1 ? (
-            <Box style={{ overflowX: "auto", scrollbarWidth: "none", minWidth: 0 }}>
-              <Group gap={6} wrap="nowrap">
-                {profiles.map((item) => (
-                  <Chip
-                    key={item.id}
-                    size="xs"
-                    radius="xl"
-                    icon={false}
-                    checked={item.id === profile.id}
-                    onChange={() => setSelectedId(item.id)}
-                    styles={chipStyles(item.id === profile.id, { wrap: false, opaque: true })}
-                  >
-                    {item.is_active ? `● ${item.name}` : item.name}
-                  </Chip>
-                ))}
-              </Group>
-            </Box>
-          ) : undefined
-        }
-      >
+      <UserBikeSectionTitle icon={<SlidersHorizontal size={16} />}>
         <Group gap={8} wrap="nowrap">
           {t("setup.title")}
           {profile.is_active && (
@@ -85,6 +62,24 @@ export function UserBikeSetup({ profiles, unit }: UserBikeSetupProps): ReactElem
           )}
         </Group>
       </UserBikeSectionTitle>
+
+      {profiles.length > 1 && (
+        <Group gap={6} px="md" pb="sm">
+          {profiles.map((item) => (
+            <Chip
+              key={item.id}
+              size="xs"
+              radius="xl"
+              icon={false}
+              checked={item.id === profile.id}
+              onChange={() => setSelectedId(item.id)}
+              styles={chipStyles(item.id === profile.id, { opaque: true })}
+            >
+              {item.is_active ? `● ${item.name}` : item.name}
+            </Chip>
+          ))}
+        </Group>
+      )}
 
       <SimpleGrid cols={2} spacing="md" verticalSpacing="lg" px="md" pb="md">
         {readings.map((reading) => (
@@ -131,6 +126,8 @@ function partMark(part: PartIcon): ReactElement | null {
   return Icon === null ? null : <Icon width={PART_ICON_SIZE} height={PART_ICON_SIZE} />;
 }
 
+// The tyre's name sits between the label and the arc; the tyres share a row, so the arcs
+// beside each other stand level whether or not the second row of legs has a name.
 function GaugeCell({ reading }: { reading: GaugeReading }): ReactElement {
   return (
     <Stack gap={6} align="center" style={{ minWidth: 0 }}>
@@ -140,6 +137,11 @@ function GaugeCell({ reading }: { reading: GaugeReading }): ReactElement {
           {reading.label}
         </Text>
       </Group>
+      {reading.under !== undefined && (
+        <Text fz={11} c="var(--color-text-dim)" lineClamp={2} ta="center" maw="100%">
+          {reading.under}
+        </Text>
+      )}
       <ReadOnlyGauge
         value={reading.value}
         max={reading.max}
@@ -148,11 +150,6 @@ function GaugeCell({ reading }: { reading: GaugeReading }): ReactElement {
         hint={reading.hint}
         size={GAUGE_SIZE}
       />
-      {reading.under !== undefined && (
-        <Text fz={11} c="var(--color-text-dim)" lineClamp={1} ta="center" maw="100%">
-          {reading.under}
-        </Text>
-      )}
     </Stack>
   );
 }

@@ -78,10 +78,10 @@ function SubjectDivider({ label }: { label: string }): ReactElement {
   );
 }
 
-// The user's turn sits right and tinted, so the two speakers are told apart by place.
+// The user's turn sits right, tinted with the send button's blue so the two speakers are told apart.
 function Question({ text }: { text: string }): ReactElement {
   return (
-    <Box className="self-end max-w-[85%] rounded-2xl rounded-br-sm bg-primary-600/20 px-4 py-2">
+    <Box className="self-end max-w-[85%] rounded-2xl rounded-br-sm bg-[var(--mantine-color-blue-6)]/60 px-4 py-2">
       <Text size="sm" c="text.6" style={{ whiteSpace: "pre-wrap" }}>
         {text}
       </Text>

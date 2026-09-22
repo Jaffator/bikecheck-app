@@ -1,7 +1,7 @@
 import { CLEARED_ON_VIEW, NOTIFICATION_CONFIG } from './notification-types.config';
 
-// The bell is a receipt: opening the list clears an ask about following, because the Users
-// badge in the top bar carries the pending count until it is answered (#155).
+// The bell is a receipt: opening the list clears an ask about following, because the More
+// tab carries the pending count until it is answered (#155, #158).
 describe('bell badge ownership', () => {
   it('follow_request is cleared by opening the list', () => {
     expect(NOTIFICATION_CONFIG.follow_request.holdsBadge).toBeUndefined();

@@ -2,6 +2,7 @@
 // describes it. What a reading *means* is still the server's: it decides what the dashboard
 // lists (70), what announces (70, 95 and 100) and what may be put off (100). The colour is the
 // frontend's own, and it warns earlier than any of those act — see ADR 0026.
+import { axisValue } from "./intervalFigures";
 import type { AttentionLevel, TrackedAction } from "./tracking.types";
 
 // The colour a reading is read by before it is read as a number. Five steps, warming as the
@@ -60,13 +61,13 @@ export function axisReading(
   language: string,
   translate: (key: string) => string,
 ): string {
-  const format = (value: number): string => new Intl.NumberFormat(language).format(value);
+  const figure = (value: number): string => axisValue(action.axis, value, language);
 
   if (action.axis === "min") {
-    return `${format(Math.round(action.current / 60))} / ${format(Math.round(action.interval / 60))} h`;
+    return `${figure(action.current)} / ${figure(action.interval)} h`;
   }
   if (action.axis === "km") {
-    return `${format(action.current)} / ${format(action.interval)} km`;
+    return `${figure(action.current)} / ${figure(action.interval)} km`;
   }
   return translate("tracking.axisWearIndex");
 }

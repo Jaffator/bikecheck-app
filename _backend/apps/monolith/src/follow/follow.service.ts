@@ -29,10 +29,9 @@ const searchSelect = {
 
 type SearchHit = Prisma.public_profilesGetPayload<{ select: typeof searchSelect }>;
 
-// Who may be found at all: a Discoverable profile that is not the seeker's own, nor one
-// a query before already found.
-function discoverable(seekerId: number, alreadyFound: number[] = []): Prisma.public_profilesWhereInput {
-  return { visibility: { in: ['FOLLOWERS', 'PUBLIC'] }, user_id: { notIn: [seekerId, ...alreadyFound] } };
+// Who may be found at all: a Discoverable profile that is not the seeker's own.
+function discoverable(seekerId: number): Prisma.public_profilesWhereInput {
+  return { visibility: { in: ['FOLLOWERS', 'PUBLIC'] }, user_id: { not: seekerId } };
 }
 
 // One row per pair, keyed as the unique index is.
@@ -141,23 +140,28 @@ export class FollowService {
 
   // ---------- Finding people ----------
 
-  // Discoverable riders by handle prefix or a word of their name - two queries, handle
-  // matches first, alphabetical inside each. One row past the page tells whether it was cut.
+  // Discoverable riders by a word of their name - the handle is an address, not a name, so
+  // it is never searched. One row past the page tells whether it was cut.
   async search(seekerId: number, rawQuery: string): Promise<ResponseFollowSearchDto> {
     const query = rawQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) throw new BadRequestException('QUERY_TOO_SHORT');
     if (query.length > SEARCH_MAX_LENGTH) throw new BadRequestException('QUERY_TOO_LONG');
 
-    const byHandle = await this.prisma.public_profiles.findMany({
-      // Handles are stored lowercase, so lowering the query is the case-insensitive match.
-      where: { ...discoverable(seekerId), handle: { startsWith: query.toLowerCase() } },
-      orderBy: { handle: 'asc' },
+    // Any word of the name starts with the query - no unaccent, so "st" never finds Šťastná.
+    const hits = await this.prisma.public_profiles.findMany({
+      where: {
+        ...discoverable(seekerId),
+        users: {
+          OR: [
+            { name: { startsWith: query, mode: 'insensitive' } },
+            { name: { contains: ` ${query}`, mode: 'insensitive' } },
+          ],
+        },
+      },
+      orderBy: { users: { name: 'asc' } },
       take: SEARCH_PAGE + 1,
       select: searchSelect,
     });
-    const byName = await this.searchByName(seekerId, query, byHandle);
-
-    const hits = [...byHandle, ...byName];
     const page = hits.slice(0, SEARCH_PAGE);
     const relations = await this.relationsWith(
       seekerId,
@@ -168,29 +172,6 @@ export class FollowService {
       results: page.map((hit) => toRow(hit, relations.get(hit.user_id))),
       capped: hits.length > SEARCH_PAGE,
     };
-  }
-
-  // Any word of the name starts with the query - no unaccent, so "st" never finds Šťastná.
-  // Whoever the handle already found is left out; only the page's remaining room is read.
-  private async searchByName(seekerId: number, query: string, found: SearchHit[]): Promise<SearchHit[]> {
-    const room = SEARCH_PAGE + 1 - found.length;
-    if (room <= 0) return [];
-
-    const foundIds = found.map((hit) => hit.user_id);
-    return await this.prisma.public_profiles.findMany({
-      where: {
-        ...discoverable(seekerId, foundIds),
-        users: {
-          OR: [
-            { name: { startsWith: query, mode: 'insensitive' } },
-            { name: { contains: ` ${query}`, mode: 'insensitive' } },
-          ],
-        },
-      },
-      orderBy: { handle: 'asc' },
-      take: room,
-      select: searchSelect,
-    });
   }
 
   // What stands between me and each of these accounts, by their id.

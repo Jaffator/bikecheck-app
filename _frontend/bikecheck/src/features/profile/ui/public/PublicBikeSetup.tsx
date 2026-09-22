@@ -1,6 +1,7 @@
 // The Setup of the bike as one glass card under the hero grid: it opens on the profile the
-// bike is ridden at, the others tabs away; six gauges in the page's tokens - tyres in the
-// owner's unit, suspension in psi (ADR 0029) - with the tokens and clicks folded under them.
+// bike is ridden at, the others tabs away under the title; four gauges in the page's tokens -
+// tyres in the owner's unit, suspension in psi with its sag (ADR 0029) - with the tokens and
+// clicks folded under them.
 import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { componentIcon } from "@/assets/icons/svg_icons/components";
@@ -44,25 +45,27 @@ export function PublicBikeSetup({ profiles, unit }: PublicBikeSetupProps): React
             {t("sharing.bikeSetupActive")}
           </span>
         )}
-        {profiles.length > 1 && (
-          <ul className="ml-auto flex flex-wrap gap-1.5">
-            {profiles.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  aria-current={item.id === profile.id}
-                  onClick={() => setSelectedId(item.id)}
-                  className="pp-seg pp-mono pp-hairline flex min-h-[40px] items-center rounded-lg border bg-[var(--pp-card-inset)] px-3.5 text-[11px] text-[var(--pp-paper-dim)] transition-colors"
-                >
-                  {item.is_active ? `● ${item.name}` : item.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-6">
+      {profiles.length > 1 && (
+        <ul className="mt-3 flex flex-wrap gap-1.5">
+          {profiles.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                aria-current={item.id === profile.id}
+                onClick={() => setSelectedId(item.id)}
+                className="pp-seg pp-mono pp-hairline flex min-h-[40px] items-center rounded-lg border bg-[var(--pp-card-inset)] px-3.5 text-[11px] text-[var(--pp-paper-dim)] transition-colors"
+              >
+                {item.is_active ? `● ${item.name}` : item.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Two by two: the tyres share a row, so the arcs stand level with a name above or not. */}
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6">
         {readings.map((reading) => (
           <GaugeCell key={reading.key} reading={reading} />
         ))}
@@ -96,12 +99,12 @@ function GaugeCell({ reading }: { reading: GaugeReading }): ReactElement {
         {partMark(reading.icon)}
         {reading.label}
       </dt>
+      {reading.under !== undefined && (
+        <dd className="pp-token mt-1 line-clamp-2 max-w-full text-[13px] leading-snug text-[var(--pp-paper-dim)]">{reading.under}</dd>
+      )}
       <dd className="mt-2">
         <PublicGauge value={reading.value} max={reading.max} figure={reading.figure} unit={reading.unit} hint={reading.hint} />
       </dd>
-      {reading.under !== undefined && (
-        <dd className="pp-token mt-1 max-w-full text-[13px] leading-snug text-[var(--pp-paper-dim)]">{reading.under}</dd>
-      )}
     </div>
   );
 }

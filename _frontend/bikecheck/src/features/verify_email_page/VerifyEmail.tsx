@@ -92,7 +92,7 @@ function Shell({ children }: { children: ReactNode }): ReactElement {
         alt="BikeCheck Logo"
         style={{ width: "100%", maxWidth: "200px", position: "absolute", top: "10rem", left: 0, right: 0, margin: "0 auto" }}
       />
-      <Paper w="90%" radius="md" p="lg" mt="180" bg="transparent">
+      <Paper w="90%" maw="26rem" radius="md" p="lg" mt="180" bg="transparent">
         {children}
       </Paper>
     </Stack>
