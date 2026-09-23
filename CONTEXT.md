@@ -193,16 +193,19 @@ Actions (ADR 0027). A pairing the bike keeps no Service Interval for is not one 
 _Avoid_: Due item, maintenance item, service item
 
 **Attention Level**:
-How much attention one Tracked Action is asking for, from its percentage: good below 70, warning
-70–94, critical 95–99, overdue at 100 and above. The colour a reading is read by before it is read
-by number.
+How much attention one Tracked Action is asking for, from its percentage: very good below 60, good
+60–74, warning 75–89, critical 90–99, overdue at 100 and above. One step per stop of the colour
+ramp, so the word and the colour never tell two different stories (ADR 0034). The app speaks from
+warning up; the two below it are a colour and nothing more.
 _Avoid_: Health level, severity, status
 
-**Extension**:
-What putting off a Tracked Action added to its Service Interval — 10% of the interval in force, the
-Interval Override where there is one, on the axis it is measured in. Accumulates when granted again,
-and dies with the part it was granted on, so a new chain is never born already deferred.
-_Avoid_: Snooze, postponement, deferral
+**Band**:
+The step of the percentage a Tracked Action has already announced — 0, 75, 90, then 100 and every
+ten above it. Not the same as the Attention Level, at either end: very good and good share band 0
+because neither announces, and past 100 one level spreads over every band above it, so 110% and
+240% are both overdue and announce separately (ADR 0034). Moves up or down with the reading; moving
+down re-arms the next crossing.
+_Avoid_: Threshold, step, tier
 
 **Interval Override**:
 A Service Interval the owner set on one Tracked Action, standing in for the bike's plan on that part

@@ -10,13 +10,11 @@ import {
 import {
   getBikeTrackedActions,
   getGarageTrackedActions,
-  postponeTrackedAction,
   setTrackedActionInterval,
   setTrackedActionNotify,
 } from "./tracking.api";
 import type {
   GarageTrackedAction,
-  PostponeTrackedActionInput,
   SetTrackedActionIntervalInput,
   SetTrackedActionNotifyInput,
   TrackedAction,
@@ -38,20 +36,6 @@ export function useGarageTrackedActions(minPercentage: number): UseQueryResult<G
   return useQuery({
     queryKey: ["tracked-actions", "garage", minPercentage],
     queryFn: () => getGarageTrackedActions(minPercentage),
-  });
-}
-
-// Putting a job off moves the reading it was put off on, and the bike's list and the
-// dashboard's both show it — so every Tracked Action read is dropped, and the row the
-// owner just tapped redraws itself.
-export function usePostponeTrackedAction(): UseMutationResult<TrackedAction, Error, PostponeTrackedActionInput> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (input: PostponeTrackedActionInput) => postponeTrackedAction(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
-    },
   });
 }
 

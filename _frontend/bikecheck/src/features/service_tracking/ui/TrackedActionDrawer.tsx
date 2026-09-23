@@ -1,14 +1,14 @@
 // One Tracked Action in full: the reading the row showed, the one button that records the
-// job, and the three things about it that had nowhere else to live — the Service Interval
-// it is measured against, putting it off, and whether it announces itself (ADR 0032).
+// job, and the two things about it that had nowhere else to live — the Service Interval it
+// is measured against, and whether it announces itself (ADR 0032, ADR 0034).
 // Opened from the bike's own page and from the dashboard alike, so a row that looks the
 // same behaves the same wherever it is met.
-import { useState, type ReactElement, type ReactNode } from "react";
+import { useEffect, useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Divider, Drawer, Group, NumberInput, Progress, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { Clock3, X } from "lucide-react";
+import { Minus, Plus, RotateCcw, X } from "lucide-react";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { measureLabel, positionLabel } from "@/features/components/componentLabels";
@@ -18,20 +18,24 @@ import {
   axisValue,
   fromAxisUnit,
   inAxisUnit,
+  intervalDeparture,
   intervalInForce,
+  intervalStep,
   remainingWear,
 } from "@/features/service_tracking/intervalFigures";
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
-import {
-  usePostponeTrackedAction,
-  useSetTrackedActionInterval,
-  useSetTrackedActionNotify,
-} from "@/features/service_tracking/tracking.queries";
+import { useSetTrackedActionInterval, useSetTrackedActionNotify } from "@/features/service_tracking/tracking.queries";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 // The same layer every other sheet stands on, so overlays never fight the FAB.
 const SHEET_Z_INDEX = 300;
+
+// How long the stepper waits after the last touch before it writes. Long enough that five
+// taps are one request rather than five, short enough not to feel like a pending save —
+// and the write re-evaluates the whole bike and may announce, so the push lands on the
+// number the owner actually stopped on.
+const WRITE_DELAY_MS = 600;
 
 interface TrackedActionDrawerProps {
   // Null closes the drawer.
@@ -132,7 +136,6 @@ function Body({
       <Stack gap={0}>
         <Divider color="var(--mantine-color-inputs-5)" />
         <IntervalSetting action={action} onWritten={onWritten} />
-        <PostponeSetting action={action} onWritten={onWritten} />
         <AnnounceSetting action={action} onWritten={onWritten} />
       </Stack>
     </Stack>
@@ -211,13 +214,9 @@ function ReadingCard({ action }: { action: TrackedAction }): ReactElement {
           </Text>
         </Group>
 
-        <Group gap={8} wrap="nowrap" align="center">
-          {/* Why the interval read here is longer than the Service Interval row below it. */}
-          {action.extended && <Pill label={t("tracking.extended")} />}
-          <Text className="font-mono" fz={22} fw={100} c={color} lh={1}>
-            {t("tracking.percentage", { value: action.percentage })}
-          </Text>
-        </Group>
+        <Text className="font-mono" fz={22} fw={100} c={color} lh={1}>
+          {t("tracking.percentage", { value: action.percentage })}
+        </Text>
       </Group>
 
       <Progress
@@ -238,8 +237,8 @@ function ReadingCard({ action }: { action: TrackedAction }): ReactElement {
   );
 }
 
-// The small mark that qualifies a reading: extended, or measured against the owner's own
-// interval. One shape, so the two can never be told apart by accident.
+// The small mark that qualifies a reading: measured against the owner's own interval
+// rather than the bike's plan.
 function Pill({ label }: { label: string }): ReactElement {
   return (
     <Text
@@ -277,8 +276,8 @@ function Figure({ label, value }: { label: string; value: string }): ReactElemen
 }
 
 // The Service Interval the percentage is measured against, and the owner's way of
-// disagreeing with it. The editor expands under the row rather than opening a layer, so the
-// reading it changes stays in sight while it is typed (ADR 0033).
+// disagreeing with it. Minus and plus move it by a tenth of the bike's plan, which is the
+// one honest control for "not yet" now that putting a job off is gone (ADR 0034).
 function IntervalSetting({
   action,
   onWritten,
@@ -288,14 +287,13 @@ function IntervalSetting({
 }): ReactElement {
   const { t, i18n } = useTranslation();
   const write = useSetTrackedActionInterval();
-  const [editing, setEditing] = useState(false);
-  const [entered, setEntered] = useState<string | number>(inAxisUnit(action.axis, intervalInForce(action)));
 
+  const saved = intervalInForce(action);
+  const step = intervalStep(action);
   const unit = axisUnit(action.axis);
-  const inForce = `${axisValue(action.axis, intervalInForce(action), i18n.language)} ${unit}`.trim();
-  const plan = `${axisValue(action.axis, action.default_interval, i18n.language)} ${unit}`.trim();
-  const value = Number(entered);
-  const usable = Number.isFinite(value) && value > 0;
+  // What the stepper stands at, in the unit the reading is stored in. Moves under the thumb
+  // and is written behind it, so the control never waits on the network.
+  const [entered, setEntered] = useState(saved);
 
   const save = (override: number | null): void => {
     write.mutate(
@@ -305,134 +303,146 @@ function IntervalSetting({
         interval_override: override,
       },
       {
-        onSuccess: (updated) => {
-          onWritten(updated);
-          setEntered(inAxisUnit(updated.axis, intervalInForce(updated)));
-          setEditing(false);
+        onSuccess: onWritten,
+        // Nothing was written, so the stepper goes back to what still stands rather than
+        // showing a number the server never took.
+        onError: () => {
+          setEntered(saved);
         },
       },
     );
   };
 
+  // One write for a run of taps, and for a run of keystrokes. The write re-evaluates the
+  // bike and may announce, so it has to land on the number the owner stopped on.
+  //
+  // Nothing is scheduled while a write is in flight. Reset sets the field and clears the
+  // override in one gesture, and without this the debounce would follow it by writing that
+  // field back as an override worth exactly the bike's plan - undoing the reset.
+  useEffect(() => {
+    if (entered === saved || write.isPending) return;
+
+    const timer = setTimeout(() => {
+      save(entered);
+    }, WRITE_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entered, saved, write.isPending]);
+
+  const departure = intervalDeparture({ ...action, interval_override: entered });
+  const plan = `${axisValue(action.axis, action.default_interval, i18n.language)} ${unit}`.trim();
+
   return (
     <SettingRow
       label={t("tracking.intervalLabel")}
       badge={action.interval_override === null ? null : t("tracking.intervalCustom")}
-      onTap={() => {
-        setEditing((open) => !open);
-      }}
+      onTap={null}
       value={
-        <Text className="font-mono" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
-          {inForce}
-        </Text>
-      }
-      expanded={
-        editing ? (
-          <Stack gap="sm" pb={12}>
-            <Group gap="sm" wrap="nowrap" align="flex-end">
-              <NumberInput
-                value={entered}
-                min={1}
-                allowNegative={false}
-                allowDecimal={false}
-                hideControls
-                aria-label={t("tracking.intervalLabel")}
-                styles={inputStyles}
-                style={{ flex: 1 }}
-                onChange={setEntered}
-              />
-              {/* Fixed beside the field: the axis is never the owner's to change, so hours
-                  cannot be entered where kilometres were meant. */}
-              {unit !== "" && (
-                <Text className="font-mono" fz={13} c="text.7" pb={8} style={{ whiteSpace: "nowrap" }}>
-                  {unit}
-                </Text>
-              )}
-            </Group>
+        <Group gap={6} wrap="nowrap" align="center">
+          <StepButton
+            label={t("tracking.intervalLess")}
+            disabled={entered <= step}
+            onClick={() => {
+              setEntered((value) => Math.max(step, value - step));
+            }}
+          >
+            <Minus size={16} color="var(--mantine-color-primary-6)" />
+          </StepButton>
 
-            <Text fz={12} c="var(--color-text-dim)">
-              {t("tracking.intervalDefault", { value: plan })}
+          <NumberInput
+            value={inAxisUnit(action.axis, entered)}
+            min={1}
+            allowNegative={false}
+            allowDecimal={false}
+            hideControls
+            suffix={unit === "" ? undefined : ` ${unit}`}
+            aria-label={t("tracking.intervalLabel")}
+            styles={inputStyles}
+            w={96}
+            onChange={(value) => {
+              const typed = Number(value);
+              if (!Number.isFinite(typed) || typed < 1) return;
+              setEntered(fromAxisUnit(action.axis, typed));
+            }}
+          />
+
+          <StepButton
+            label={t("tracking.intervalMore")}
+            disabled={false}
+            onClick={() => {
+              setEntered((value) => value + step);
+            }}
+          >
+            <Plus size={16} color="var(--mantine-color-primary-6)" />
+          </StepButton>
+        </Group>
+      }
+      hint={
+        action.interval_override === null ? null : (
+          <Group justify="space-between" wrap="nowrap" gap="sm" align="center" pb={12}>
+            <Text fz={12} c="var(--color-text-dim)" lineClamp={2}>
+              {t(departureKey(departure), { percent: Math.abs(departure), value: plan })}
             </Text>
-
-            <Group gap="sm" wrap="nowrap">
-              <Button
-                color="primary.6"
-                c="textDark.6"
-                radius="md"
-                size="sm"
-                disabled={!usable}
-                loading={write.isPending}
-                onClick={() => {
-                  save(fromAxisUnit(action.axis, value));
-                }}
-              >
-                {t("tracking.intervalSave")}
-              </Button>
-              {action.interval_override !== null && (
-                <Button
-                  variant="outline"
-                  radius="md"
-                  size="sm"
-                  disabled={write.isPending}
-                  onClick={() => {
-                    save(null);
-                  }}
-                >
-                  {t("tracking.intervalReset")}
-                </Button>
-              )}
-            </Group>
-
-            {write.isError && (
-              <Text fz={11} c="red.5">
-                {t("tracking.intervalFailed")}
-              </Text>
-            )}
-          </Stack>
-        ) : null
+            {/* Only where there is something to take back, and small on purpose: it undoes
+                a year's worth of tapping in one go. */}
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              radius="xl"
+              size="md"
+              aria-label={t("tracking.intervalReset")}
+              disabled={write.isPending}
+              onClick={() => {
+                setEntered(action.default_interval);
+                save(null);
+              }}
+              style={{ flexShrink: 0 }}
+            >
+              <RotateCcw size={16} color="var(--color-text-dim)" />
+            </ActionIcon>
+          </Group>
+        )
       }
+      error={write.isError ? t("tracking.intervalFailed") : null}
     />
   );
 }
 
-// Putting the job off: one tap, no dialog and no number to enter, and offered whatever the
-// reading says — planning does not have to wait for being late.
-function PostponeSetting({
-  action,
-  onWritten,
-}: {
-  action: TrackedAction;
-  onWritten: (action: TrackedAction) => void;
-}): ReactElement {
-  const { t, i18n } = useTranslation();
-  const postpone = usePostponeTrackedAction();
-  const by = `${axisValue(action.axis, action.postpone_by, i18n.language)} ${axisUnit(action.axis)}`.trim();
+// Which way the owner's interval departs from the bike's plan. Landing back on the plan is
+// its own sentence: the override still stands, and saying "0 % longer" would read as a bug.
+function departureKey(departure: number): string {
+  if (departure > 0) return "tracking.intervalLonger";
+  if (departure < 0) return "tracking.intervalShorter";
+  return "tracking.intervalSameAsPlan";
+}
 
+// One end of the stepper. Quiet by default — the theme draws the outline, and the only
+// colour on it is the sign itself.
+function StepButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}): ReactElement {
   return (
-    <SettingRow
-      label={t("tracking.postponeBy", { value: by })}
-      badge={null}
-      // Deaf while the last tap is still in flight: putting the same job off twice by
-      // accident would put it off twice as far.
-      onTap={
-        postpone.isPending
-          ? null
-          : () => {
-              postpone.mutate(
-                { component_mounted_id: action.component_mounted_id, event_action_id: action.event_action_id },
-                { onSuccess: onWritten },
-              );
-            }
-      }
-      value={<Clock3 size={16} color="var(--color-text-dim)" />}
-      expanded={
-        postpone.isError ? (
-          <Text fz={11} c="red.5" pb={12}>
-            {t("tracking.postponeFailed")}
-          </Text>
-        ) : null
-      }
-    />
+    <ActionIcon
+      variant="outline"
+      radius="md"
+      size="lg"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      style={{ flexShrink: 0 }}
+    >
+      {children}
+    </ActionIcon>
   );
 }
 
@@ -460,6 +470,11 @@ function AnnounceSetting({
       label={t("tracking.announceLabel")}
       badge={null}
       onTap={null}
+      hint={
+        <Text fz={12} c="var(--color-text-dim)" pb={12}>
+          {t("tracking.announceBands")}
+        </Text>
+      }
       value={
         <Switch
           withThumbIndicator={false}
@@ -480,33 +495,31 @@ function AnnounceSetting({
           }}
         />
       }
-      expanded={
-        write.isError ? (
-          <Text fz={11} c="red.5" pb={12}>
-            {t("tracking.announceFailed")}
-          </Text>
-        ) : null
-      }
+      error={write.isError ? t("tracking.announceFailed") : null}
     />
   );
 }
 
 // One control in the list under the button: what it is on the left, what it stands at on
-// the right, and whatever it expands into beneath. A row with nothing to tap is not a
-// control at all — its switch is.
+// the right, and under both a line saying what the control means. A row with nothing to
+// tap is not a control at all — its own button is.
 function SettingRow({
   label,
   badge,
   value,
   onTap,
-  expanded,
+  hint,
+  error,
 }: {
   label: string;
   // "Custom", where the owner has departed from the bike's plan.
   badge: string | null;
   value: ReactNode;
   onTap: (() => void) | null;
-  expanded: ReactNode;
+  // What the control means, under it. Styled by the caller, because one row explains itself
+  // in a sentence and the other in a sentence with a button on the end of it.
+  hint: ReactNode;
+  error: string | null;
 }): ReactElement {
   const heading = (
     <Group justify="space-between" wrap="nowrap" gap="md" py={14} align="center">
@@ -539,7 +552,12 @@ function SettingRow({
           {heading}
         </Box>
       )}
-      {expanded}
+      {hint}
+      {error !== null && (
+        <Text fz={11} c="red.5" pb={12}>
+          {error}
+        </Text>
+      )}
       <Divider color="var(--mantine-color-inputs-5)" />
     </>
   );

@@ -37,3 +37,32 @@ export function intervalInForce(action: TrackedAction): number {
 export function remainingWear(action: TrackedAction): number {
   return Math.max(0, action.interval - action.current);
 }
+
+// A tenth of the bike's own plan, which is what one tap of − or + moves the Service
+// Interval by. Taken from the plan and never from the value on screen, so − undoes exactly
+// what + did however many taps deep — a step off the current value would not come back.
+const INTERVAL_STEP_SHARE = 0.1;
+
+// Hours step in fives, and never by less than five. The field holds whole hours, so a step
+// of 3.5 h would show rounded and store exact, and the two would drift apart on the next
+// save.
+const HOUR_STEP_ROUNDING = 5;
+
+export function intervalStep(action: TrackedAction): number {
+  const tenth = action.default_interval * INTERVAL_STEP_SHARE;
+
+  if (action.axis === "min") {
+    const hours = Math.round(tenth / 60 / HOUR_STEP_ROUNDING) * HOUR_STEP_ROUNDING;
+    return Math.max(HOUR_STEP_ROUNDING, hours) * 60;
+  }
+
+  return Math.max(1, Math.round(tenth));
+}
+
+// How far the interval in force departs from the bike's plan, in whole percent. Negative is
+// shorter. Zero where the owner set their own and it lands on the plan anyway, which is
+// what stepping back up to it does.
+export function intervalDeparture(action: TrackedAction): number {
+  if (action.default_interval <= 0) return 0;
+  return Math.round((intervalInForce(action) / action.default_interval - 1) * 100);
+}

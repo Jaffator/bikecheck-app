@@ -1641,41 +1641,6 @@
         "id": {
           "type": "integer"
         },
-        "extended_by_km": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "extended_by_min": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "extended_by_healthIndex": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "extended_km_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "extended_min_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
         "reached_threshold": {
           "type": "integer",
           "default": 0

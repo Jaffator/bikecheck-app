@@ -8,7 +8,7 @@ import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface HealthBadgeProps {
   // The bike's Tracked Actions. The badge shows the worst Attention Level among them, so a
-  // bike with nothing tracked — and only such a bike — reads "good".
+  // bike with nothing tracked — and only such a bike — reads "very good".
   actions: TrackedAction[];
 }
 

@@ -2,7 +2,6 @@
 import { apiFetch } from "@/api/client";
 import type {
   GarageTrackedAction,
-  PostponeTrackedActionInput,
   SetTrackedActionIntervalInput,
   SetTrackedActionNotifyInput,
   TrackedAction,
@@ -18,15 +17,6 @@ export async function getBikeTrackedActions(bikeId: number): Promise<TrackedActi
 export async function getGarageTrackedActions(minPercentage: number): Promise<GarageTrackedAction[]> {
   const query = new URLSearchParams({ minPercentage: String(minPercentage) });
   return apiFetch<GarageTrackedAction[]>(`/service-tracking/attention?${query.toString()}`);
-}
-
-// Put one Tracked Action off, which grants it an Extension. The row comes back as it now
-// reads, with the Extension already in its interval.
-export async function postponeTrackedAction(input: PostponeTrackedActionInput): Promise<TrackedAction> {
-  return apiFetch<TrackedAction>("/service-tracking/postpone", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
 }
 
 // Set the owner's own Service Interval, or clear it with null. The row comes back reading

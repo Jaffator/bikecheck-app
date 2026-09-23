@@ -1,28 +1,29 @@
 // How a reading looks on screen, and how a Tracked Action is turned into the one line that
-// describes it. What a reading *means* is still the server's: it decides what the dashboard
-// lists (70), what announces (70, 95 and 100) and what may be put off (100). The colour is the
-// frontend's own, and it warns earlier than any of those act — see ADR 0026.
+// describes it. What a reading *means* is still the server's: it decides the level, what the
+// dashboard lists (75) and what announces (75, 90, then every ten percent above 100). The
+// ramp below draws one colour per level, so the two never disagree — see ADR 0026.
 import { axisValue } from "./intervalFigures";
 import type { AttentionLevel, TrackedAction } from "./tracking.types";
 
-// The colour a reading is read by before it is read as a number. Five steps, warming as the
-// part runs out: quiet, first tint, clearly hot, reddening, and out of interval. Highest
-// stop first, so the first one a reading clears is the one it wears. Tuned to the warm
-// palette: the first stop is amber, not the brand yellow, and every stop clears 4.5:1 on
-// cards.6 (the overdue red sits at 4.94:1).
+// The colour a reading is read by before it is read as a number. One stop per Attention
+// Level, warming as the part runs out. Highest stop first, so the first one a reading
+// clears is the one it wears. Every stop clears 4.5:1 on cards.6 — the brand yellow at good
+// reads 7.93:1, the overdue red 4.94:1.
 const ATTENTION_RAMP: { from: number; color: string }[] = [
   { from: 100, color: "#F26B5B" },
   { from: 90, color: "#F07B66" },
-  { from: 70, color: "#F0803A" },
-  { from: 60, color: "#E8A33C" },
+  { from: 75, color: "#F0803A" },
+  // primary.6, the brand yellow. A literal because the ramp is read into inline styles
+  // rather than through the theme.
+  { from: 60, color: "#cec053" },
 ];
 
-// The quiet end of the ramp, worn below the first stop — and by the dot that stands for a
+// The quiet end of the ramp, worn by a very good reading — and by the dot that stands for a
 // part with nothing to answer for. Sage rather than neon, so it sits with the mustard.
-export const QUIET_COLOR = "#8FCB9B";
+export const QUIET_COLOR = "#42c95e";
 
-// Below this a reading carries no warning at all. Anything reading it has to read it here,
-// so a row can never be tinted and dimmed at the same time.
+// Below this a reading carries no warning at all, which is what very good means. Anything
+// reading it has to read it here, so a row can never be tinted and dimmed at the same time.
 export const QUIET_BELOW = 60;
 
 export function attentionColor(percentage: number): string {
@@ -31,10 +32,10 @@ export function attentionColor(percentage: number): string {
 
 // The bike's condition as a whole: the worst level among its Tracked Actions. The level is
 // the server's own function of the percentage, so the highest percentage always carries the
-// worst level — the two questions have one answer. A bike with nothing tracked is good,
-// because nothing is telling us otherwise.
+// worst level — the two questions have one answer. A bike with nothing tracked reads very
+// good, because nothing is telling us otherwise.
 export function overallLevel(actions: TrackedAction[]): AttentionLevel {
-  return worstAction(actions)?.level ?? "good";
+  return worstAction(actions)?.level ?? "very_good";
 }
 
 // The one Tracked Action a card leads with: the highest percentage there is. The rest
@@ -56,11 +57,7 @@ export function barFill(action: TrackedAction): number {
 //
 // A wear index has no unit and no scale an owner can hold: "0 / 50 000" says nothing about
 // brake pads. It is named instead, and what it means is behind the info button beside it.
-export function axisReading(
-  action: TrackedAction,
-  language: string,
-  translate: (key: string) => string,
-): string {
+export function axisReading(action: TrackedAction, language: string, translate: (key: string) => string): string {
   const figure = (value: number): string => axisValue(action.axis, value, language);
 
   if (action.axis === "min") {

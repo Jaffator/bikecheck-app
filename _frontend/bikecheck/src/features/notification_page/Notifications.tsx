@@ -34,10 +34,10 @@ const ICONS: Partial<Record<NotificationType, IconType>> = {
   follow_accepted: UserCheck,
 };
 
-// Where each band begins, so the reminder wears the same colour the row on the card does.
+// Where each level begins, so the reminder wears the same colour the row on the card does.
 const LEVEL_PERCENTAGE: Record<NonNullable<NotificationPayload["level"]>, number> = {
-  warning: 70,
-  critical: 95,
+  warning: 75,
+  critical: 90,
   overdue: 100,
 };
 

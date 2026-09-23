@@ -27,9 +27,8 @@ describe('maintenance_due text', () => {
     const text = buildNotificationText('maintenance_due', 'en', {
       bikeName: 'Canyon Strive',
       level: 'warning',
-      soonCount: 2,
+      soonCount: 1,
       crossed: [
-        chain,
         {
           componentKey: null,
           componentName: 'Mudguard',
@@ -41,17 +40,57 @@ describe('maintenance_due text', () => {
     });
 
     expect(text.title).toBe('Service coming up');
-    expect(text.body).toBe('Canyon Strive · Chain – Chain replacement 72 %, Mudguard – Chain replacement 70 %');
+    expect(text.body).toBe('Canyon Strive · Mudguard – Chain replacement 70 %');
   });
 
-  it('sizes the job in counts once something is due', () => {
+  // One label is long enough that a second is cut mid-word in a collapsed push, and the
+  // worst is the one being acted on first anyway.
+  it('names the worst and counts the rest', () => {
+    const text = buildNotificationText('maintenance_due', 'en', {
+      bikeName: 'Canyon Strive',
+      level: 'warning',
+      soonCount: 3,
+      crossed: [
+        chain,
+        { componentKey: null, componentName: 'Mudguard', actionKey: null, actionName: 'Wash', percentage: 71 },
+        { componentKey: null, componentName: 'Saddle', actionKey: null, actionName: 'Check', percentage: 70 },
+      ],
+    });
+
+    expect(text.body).toBe('Canyon Strive · Chain – Chain replacement 72 % +2 more');
+  });
+
+  // Past due the headline and the counts stop moving, so the percentage is the only part
+  // of the push that says anything new - which is the whole reason it is named there.
+  it('names the job and its percentage once it is past due', () => {
+    const text = buildNotificationText('maintenance_due', 'en', {
+      bikeName: 'Canyon Strive',
+      level: 'overdue',
+      overdueCount: 1,
+      crossed: [{ ...chain, percentage: 120 }],
+    });
+
+    expect(text.title).toBe('Service overdue');
+    expect(text.body).toBe('Canyon Strive · Chain – Chain replacement 120 %');
+  });
+
+  // Czech counts the tail differently past four, which is the one place the word changes.
+  it('counts the rest in Czech', () => {
+    const many = Array.from({ length: 6 }, (_, index) => ({ ...chain, percentage: 80 - index }));
+    const text = buildNotificationText('maintenance_due', 'cs', { bikeName: 'Canyon Strive', crossed: many });
+
+    expect(text.body).toBe('Canyon Strive · Řetěz – Výměna řetězu 80 % +5 dalších');
+  });
+
+  // Every notification the app sends now names what moved, so the counts are what a
+  // payload stored before that renders as.
+  it('falls back to the counts for a payload that names nothing', () => {
     const text = buildNotificationText('maintenance_due', 'en', {
       bikeName: 'Canyon Strive',
       level: 'overdue',
       soonCount: 1,
       dueCount: 0,
       overdueCount: 1,
-      crossed: [chain],
     });
 
     expect(text.title).toBe('Service overdue');

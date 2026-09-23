@@ -11,7 +11,7 @@ import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
 import { TrackedActionDrawer } from "./TrackedActionDrawer";
 import { TrackedActionRow } from "./TrackedActionRow";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
-import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import type { AttentionLevel, TrackedAction } from "@/features/service_tracking/tracking.types";
 
 // How many rows stand in for the list while it is arriving.
 const SKELETON_ROWS = 3;
@@ -80,11 +80,14 @@ export function TrackedActionsSection({ bikeId }: TrackedActionsSectionProps): R
 }
 
 // How much of the list a collapsed card shows: every row asking for something, and at least
-// the first three. Only a reading the server calls good is worth putting behind a tap.
+// the first three. A reading below warning is worth a colour, not a place in the fold.
 function visibleCount(actions: TrackedAction[]): number {
-  const asking = actions.filter((action) => action.level !== "good").length;
+  const asking = actions.filter((action) => ASKING_LEVELS.has(action.level)).length;
   return Math.max(MIN_VISIBLE_ROWS, asking);
 }
+
+// The levels the app speaks at, which are the ones a collapsed card keeps in sight.
+const ASKING_LEVELS = new Set<AttentionLevel>(["warning", "critical", "overdue"]);
 
 // The list, and how much of it the owner has asked to see.
 function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactElement {

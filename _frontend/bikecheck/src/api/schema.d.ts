@@ -617,22 +617,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/service-tracking/postpone": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["ServiceTracking postponeTrackedAction"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/notifications/fcm-token": {
         parameters: {
             query?: never;
@@ -1879,12 +1863,7 @@ export interface components {
              * @example warning
              * @enum {string}
              */
-            level: "good" | "warning" | "critical" | "overdue";
-            /**
-             * @description The action has been put off, lengthening its interval
-             * @example false
-             */
-            extended: boolean;
+            level: "very_good" | "good" | "warning" | "critical" | "overdue";
         };
         Response_GarageTrackedActionDto: {
             /**
@@ -1940,24 +1919,13 @@ export interface components {
              * @example warning
              * @enum {string}
              */
-            level: "good" | "warning" | "critical" | "overdue";
-            /**
-             * @description The action has been put off, lengthening its interval
-             * @example false
-             */
-            extended: boolean;
+            level: "very_good" | "good" | "warning" | "critical" | "overdue";
             /** @example Santa Cruz */
             bike_brand: string;
             /** @example Hightower */
             bike_model: string | null;
             /** @example 2022 */
             year: number | null;
-        };
-        PostponeTrackedActionDto: {
-            /** @example 55 */
-            component_mounted_id: number;
-            /** @example 42 */
-            event_action_id: number;
         };
         DeviceTokenDto: {
             /** @example caYcjw...:APA91b... */
@@ -3486,29 +3454,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Response_GarageTrackedActionDto"][];
-                };
-            };
-        };
-    };
-    "ServiceTracking postponeTrackedAction": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PostponeTrackedActionDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Response_TrackedActionDto"];
                 };
             };
         };

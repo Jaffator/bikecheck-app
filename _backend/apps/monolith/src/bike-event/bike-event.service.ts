@@ -1213,8 +1213,8 @@ function endOfServiceDay(serviceDate: Date): Date {
 }
 
 // What the owner set on the part that came off, carried onto the one that went on, for every
-// one of its jobs (ADR 0033). The Extension and the announced band belong to the cycle that
-// just ended and are never copied, so a new part is born neither deferred nor announced.
+// one of its jobs (ADR 0033). The announced band belongs to the cycle that just ended and is
+// never copied, so a new part is born unannounced.
 async function carrySettingsOver(
   tx: Prisma.TransactionClient,
   oldComponentMountedId: number,

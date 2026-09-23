@@ -123,6 +123,7 @@ discover, and a nightly job would mean a corrected mileage did not show up until
   path.
 
 ## Revised 2026-09-15: the first band is 70, and it announces
+<!-- Superseded by the 2026-09-22 revision below; kept for why the first band announces at all. -->
 
 The bands are now **good below 70 · warning 70–94 · critical 95–99 · overdue at 100 and above**,
 and every move up announces — 70, 95 and 100 — not only 95 and 100. The numbers above are left as
@@ -133,3 +134,19 @@ be ordered, and the first push arrived at 95 with the job already at the door. 7
 and says so once, with room to plan; 95 asks for the part; 100 says the interval is behind. The
 notification carries which of the three it is (`level` in the payload), and the headline and the
 icon's colour read it. One push per bike per evaluation is unchanged.
+
+## Revised 2026-09-22: five levels, and the colour stops telling a second story
+
+The levels are now **very good below 60 · good 60–74 · warning 75–89 · critical 90–99 · overdue at
+100 and above**, and the announcements move with them — 75, 90, 100, then every ten above (ADR
+0034). Both revisions above are left as written; what they said about *why* still holds.
+
+The colour ramp always had five stops and the word under it had four, so a part at 65% was tinted
+amber and called *good* at the same time — a reading that argued with itself on the same row. The
+fifth level is that first stop given its name. Nothing below warning announces, so very good and
+good are a colour and nothing more; the ramp's stops and the level boundaries are now the same four
+numbers, read from `ATTENTION_THRESHOLDS`.
+
+70 → 75 and 95 → 90 move the two announcements the owner acts on. 70 fired while there was still
+most of a season left in the part; 95 left too little room to order one. The pair now brackets the
+end of the interval more evenly: a heads-up at three quarters, the order at nine tenths.

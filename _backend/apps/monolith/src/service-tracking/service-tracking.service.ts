@@ -6,8 +6,8 @@ import { NotificationService } from '../notification/notification.service';
 import {
   announces,
   attentionLevel,
-  ATTENTION_THRESHOLDS,
   reachedBand,
+  type AttentionLevel,
   type WearAxis,
   type WearMeasure,
 } from './attention-level';
@@ -25,8 +25,7 @@ const trackedPartInclude = {
         select: {
           event_action_id: true,
           // created_at alongside service_date: the date decides which recording is the
-          // latest, the timestamp decides whether an Extension survived it (see
-          // `liveExtension`).
+          // latest, and where two share a day the timestamp breaks the tie.
           events_bikes: { select: { service_date: true, created_at: true, is_deleted: true } },
         },
       },
@@ -81,12 +80,10 @@ interface Reading {
   axis: WearAxis;
   measure: WearMeasure;
   current: number;
+  // The Service Interval in force: the owner's own where they set one, the bike's plan
+  // otherwise. Nothing is added to it, so the percentage is the part's real wear.
   interval: number;
   percentage: number;
-  extended: boolean;
-  // The Service Interval in force before any Extension, which is what a postponement is a
-  // tenth of - `interval` already carries the Extension and cannot say it.
-  inForce: number;
   // The bike's own plan on this axis, which clearing the override restores.
   planned: number;
   // The owner's own value, or null where this axis follows the plan.
@@ -147,31 +144,6 @@ export class ServiceTrackingService {
     return worstFirst(needingAttention);
   }
 
-  // Putting one Tracked Action off, which grants it an Extension: a tenth of the Service
-  // Interval in force - the owner's own where they set one - on the axis the reading is
-  // taken on. Added to the interval and never taken off the wear, so the reading still says
-  // how far the part has actually gone. Granted again it accumulates, so putting the same
-  // job off three times reads as a growing Extension rather than a cleared flag.
-  //
-  // Offered at every Attention Level, not only overdue: planning does not have to wait for
-  // being late. The write refuses only what nobody may put off: a bike that is not the
-  // caller's or is archived, and a part that came off or was deleted.
-  async postponeTrackedAction(
-    componentMountedId: number,
-    eventActionId: number,
-    userId: number,
-  ): Promise<Response_TrackedActionDto> {
-    const { bikeId, reading } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
-
-    await this.grantExtension(componentMountedId, eventActionId, reading.axis, postponeBy(reading));
-
-    // An Extension lowers the reading, which moves the band down and re-arms the next
-    // crossing - the same rule a Service and a Replacement go through.
-    await this.evaluateBike(bikeId, userId);
-
-    return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
-  }
-
   // The owner's own Service Interval for one Tracked Action, or null to put the bike's plan
   // back. Only the number is theirs - the axis follows the part's type (ADR 0033).
   async setTrackedActionInterval(
@@ -189,7 +161,8 @@ export class ServiceTrackingService {
     await this.writeSettings(componentMountedId, eventActionId, { interval_override: intervalOverride });
 
     // A new interval moves the reading, so it moves the band with it: a longer one re-arms
-    // the next crossing, a shorter one may be that crossing.
+    // the next crossing, a shorter one may be that crossing. Raising it is what an owner
+    // who wants to be told later does, so it has to be able to quiet the reading.
     await this.evaluateBike(bikeId, userId);
 
     return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
@@ -212,14 +185,14 @@ export class ServiceTrackingService {
   }
 
   // Announcements, run at the end of every write that moves an input Service Tracking
-  // reads - a ride, a Service, a Replacement, a corrected accumulator, an Extension. Every
-  // one of those axes moves only through a write the app itself makes, so there is no
+  // reads - a ride, a Service, a Replacement, a corrected accumulator, a changed interval.
+  // Every one of those axes moves only through a write the app itself makes, so there is no
   // scheduler and nothing to poll.
   //
   // One rule covers all of them: `reached_threshold` is moved to whichever band the
-  // reading now falls in, up or down. A move up - to 70, 95 or 100 - announces. A move
-  // down - which is what a Service, a Replacement, an Extension or a lengthened interval
-  // produces - is silent, and by lowering the band it re-arms the next crossing.
+  // reading now falls in, up or down. A move up - to 70, 95, 100 or any ten above it -
+  // announces. A move down - which is what a Service, a Replacement or a lengthened
+  // interval produces - is silent, and by lowering the band it re-arms the next crossing.
   async evaluateBike(bikeId: number, userId: number): Promise<void> {
     // An Archived Bike stays put away: it produces no readings, so it announces nothing.
     const bike = await this.prisma.bikes.findFirst({
@@ -250,9 +223,9 @@ export class ServiceTrackingService {
     // A crossing is what makes the app speak; what it then says is where the bike stands.
     // An action announced last week is still an action waiting, so it is counted too -
     // one line has to size the job, not only report the last thing to move.
-    const overdue = countIn(evaluated, ATTENTION_THRESHOLDS.overdue);
-    const due = countIn(evaluated, ATTENTION_THRESHOLDS.critical);
-    const soon = countIn(evaluated, ATTENTION_THRESHOLDS.warning);
+    const overdue = countAt(evaluated, 'overdue');
+    const due = countAt(evaluated, 'critical');
+    const soon = countAt(evaluated, 'warning');
 
     await this.notificationService.create({
       userId,
@@ -265,8 +238,9 @@ export class ServiceTrackingService {
         overdueCount: overdue,
         // The worst band the bike stands in, which names the notification and colours it.
         level: overdue > 0 ? 'overdue' : due > 0 ? 'critical' : 'warning',
-        // What just moved, worst first - the heads-up names these one by one.
-        crossed: crossings.map(({ action }) => ({
+        // What just moved, worst first - the line names the worst of them and counts the
+        // rest, so the sort is what decides which one gets named.
+        crossed: worstFirst(crossings.map(({ action }) => action)).map((action) => ({
           componentKey: action.component_type_i18n_key,
           componentName: action.component_type,
           actionKey: action.action_i18n_key,
@@ -337,7 +311,7 @@ export class ServiceTrackingService {
   }
 
   // The settings a pairing carries, written whether it has a row yet or not. Only what the
-  // caller names: the Extension and the announced band are never written from here.
+  // caller names: the announced band is never written from here.
   private async writeSettings(
     componentMountedId: number,
     eventActionId: number,
@@ -349,29 +323,6 @@ export class ServiceTrackingService {
       where: { component_mounted_id_event_actions_id: pair },
       create: { ...pair, ...settings },
       update: settings,
-    });
-  }
-
-  // The Extension itself: a fresh row carrying it, or the slice added to what the pairing
-  // already holds on that axis.
-  private async grantExtension(
-    componentMountedId: number,
-    eventActionId: number,
-    axis: WearAxis,
-    granted: number,
-  ): Promise<void> {
-    const pair = { component_mounted_id: componentMountedId, event_actions_id: eventActionId };
-    const column = EXTENSION_COLUMNS[axis];
-    // Which cycle the Extension belongs to. The health index axis keeps none: a Service
-    // never rebases it, so its Extension has nothing to outlive.
-    const stampColumn = EXTENSION_STAMP_COLUMNS[axis];
-    const stamp = stampColumn === null ? {} : { [stampColumn]: new Date() };
-
-    await this.prisma.tracked_action_state.upsert({
-      where: { component_mounted_id_event_actions_id: pair },
-      create: { ...pair, [column]: granted, ...stamp },
-      // Put off again, so the clock restarts: what stands now was granted now.
-      update: { [column]: { increment: granted }, ...stamp },
     });
   }
 
@@ -418,9 +369,11 @@ interface Moved {
   crossed: boolean;
 }
 
-// How many Tracked Actions stand in one band right now.
-function countIn(readings: Moved[], band: number): number {
-  return readings.filter((reading) => reading.band === band).length;
+// How many Tracked Actions stand at one Attention Level right now. Counted by level and
+// not by band: past 100 one level spreads over every band above it, so counting bands
+// would report a chain at 132% as neither overdue nor anything else.
+function countAt(readings: Moved[], level: AttentionLevel): number {
+  return readings.filter((reading) => reading.action.level === level).length;
 }
 
 // A move up into a band worth interrupting for is the only thing that announces. A
@@ -504,8 +457,6 @@ function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response
     interval: reading.interval,
     percentage: reading.percentage,
     level: attentionLevel(reading.percentage),
-    extended: reading.extended,
-    postpone_by: postponeBy(reading),
     default_interval: reading.planned,
     interval_override: reading.override,
     // A pairing with no row of its own has never been muted, which is what announcing by
@@ -529,27 +480,16 @@ function worstAxis(part: TrackedPart, interval: TrackedInterval): Reading | null
 
   const wear = wearColumns(part, frozen);
 
-  // When the Service this reading is measured from entered the record. Null where the job
-  // has never been recorded on this part, which leaves every Extension standing.
-  const servicedAt = frozen?.event_actions_done.events_bikes.created_at ?? null;
-
-  // What each axis is measured against, and what an Extension has added to it. The health
-  // index keeps its Extension for the life of the part: a Service does not rebase it.
-  const perAxis: Record<WearAxis, { planned: number | null; extension: number }> = {
-    km: {
-      planned: interval.service_interval_km,
-      extension: liveExtension(state?.extended_by_km, state?.extended_km_at, servicedAt),
-    },
-    min: {
-      planned: interval.service_interval_min,
-      extension: liveExtension(state?.extended_by_min, state?.extended_min_at, servicedAt),
-    },
-    health_index: { planned: interval.health_index_interval, extension: state?.extended_by_healthIndex ?? 0 },
+  // What each axis is measured against, where the bike's plan fills one in.
+  const planned: Record<WearAxis, number | null> = {
+    km: interval.service_interval_km,
+    min: interval.service_interval_min,
+    health_index: interval.health_index_interval,
   };
 
-  const readings = AXIS_ORDER.map((axis) =>
-    readingOn(axis, perAxis[axis].planned, null, perAxis[axis].extension, wear[axis]),
-  ).filter((reading): reading is Reading => reading !== null);
+  const readings = AXIS_ORDER.map((axis) => readingOn(axis, planned[axis], null, wear[axis])).filter(
+    (reading): reading is Reading => reading !== null,
+  );
 
   if (readings.length === 0) return null;
 
@@ -559,8 +499,7 @@ function worstAxis(part: TrackedPart, interval: TrackedInterval): Reading | null
   const override = state?.interval_override ?? null;
   if (override === null) return worst;
 
-  const axis = perAxis[worst.axis];
-  return readingOn(worst.axis, axis.planned, override, axis.extension, wear[worst.axis]) ?? worst;
+  return readingOn(worst.axis, planned[worst.axis], override, wear[worst.axis]) ?? worst;
 }
 
 // Which column each axis reads on this part, paired with the baseline frozen against that
@@ -585,73 +524,18 @@ function wearColumns(part: TrackedPart, frozen: Baseline | null): Record<WearAxi
   };
 }
 
-// How much of the Service Interval one Extension is worth.
-const EXTENSION_SHARE = 0.1;
-
-// Which column each axis is put off in on the state row.
-const EXTENSION_COLUMNS = {
-  km: 'extended_by_km',
-  min: 'extended_by_min',
-  health_index: 'extended_by_healthIndex',
-} as const;
-
-// When each Extension was granted, which is what tells it from the Service that ends it.
-// Null for the health index, which keeps its Extension for the life of the part.
-const EXTENSION_STAMP_COLUMNS = {
-  km: 'extended_km_at',
-  min: 'extended_min_at',
-  health_index: null,
-} as const satisfies Record<WearAxis, string | null>;
-
-// How much of an Extension still counts. A postponement belongs to the cycle it was
-// granted in, so doing the job ends it: an Extension granted before the Service the
-// reading is measured from is spent, and the interval goes back to what the bike's plan
-// sets. Granted after it - the job put off again since - and it stands.
-//
-// Compared against when the Service entered the record rather than the date on it: the
-// date comes from the user and carries no time, so a job done and logged today sits at
-// midnight, and every postponement made that day would read as newer than it.
-//
-// An Extension with no timestamp was granted before stamping existed, so before any
-// Service it could be compared with: the first Service recorded spends it. Every grant
-// stamps one now, so that exception can only shrink.
-function liveExtension(
-  granted: number | null | undefined,
-  grantedAt: Date | null | undefined,
-  servicedAt: Date | null,
-): number {
-  const extension = granted ?? 0;
-  if (extension === 0 || servicedAt === null) return extension;
-  if (grantedAt === null || grantedAt === undefined) return 0;
-
-  return grantedAt > servicedAt ? extension : 0;
-}
-
 // The three axes a Tracked Action can be read on, in the order they are read in.
 const AXIS_ORDER = ['km', 'min', 'health_index'] as const satisfies readonly WearAxis[];
-
-// What putting one job off adds: a tenth of the interval in force, never of the one an
-// earlier Extension already lengthened - so twice off is the same slice twice.
-function postponeBy(reading: Reading): number {
-  return Math.round(reading.inForce * EXTENSION_SHARE);
-}
 
 // One axis, or null where the bike keeps no interval on it. Never capped: 132% reads as
 // 132%. Reported in whole percent, which is what the bands are drawn in - so the number on
 // screen and the colour behind it can never disagree. Rounded down, never up: 99.6% of the
 // way to due is not yet due, and must not read as 100%.
 // The plan says whether an axis is read at all; the override only replaces its value.
-function readingOn(
-  axis: WearAxis,
-  planned: number | null,
-  override: number | null,
-  extension: number,
-  wear: Wear,
-): Reading | null {
+function readingOn(axis: WearAxis, planned: number | null, override: number | null, wear: Wear): Reading | null {
   if (planned === null) return null;
 
-  const inForce = override ?? planned;
-  const interval = inForce + extension;
+  const interval = override ?? planned;
   if (interval <= 0) return null;
 
   // A baseline above the accumulator is a part whose wear was corrected downwards, not
@@ -664,8 +548,6 @@ function readingOn(
     current,
     interval,
     percentage: Math.floor((current / interval) * 100),
-    extended: extension > 0,
-    inForce,
     planned,
     override,
   };
@@ -688,7 +570,7 @@ function latestBaseline(part: TrackedPart, eventActionId: number): Baseline | nu
 }
 
 // Later work wins. The date on a Service carries no time, so two done on the same day are
-// told apart by which entered the record last - the same clock an Extension is read by.
+// told apart by which entered the record last.
 function recordedLater(candidate: Baseline, than: Baseline): boolean {
   const byDay = servicedAt(candidate) - servicedAt(than);
   if (byDay !== 0) return byDay > 0;

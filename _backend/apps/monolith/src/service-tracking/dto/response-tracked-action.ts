@@ -54,24 +54,15 @@ export class Response_TrackedActionDto {
 
   @ApiProperty({
     example: 4000,
-    description: 'The Service Interval on that axis, including any Extension in force',
+    description: "The Service Interval in force on that axis: the owner's own where they set one",
   })
   interval!: number;
 
   @ApiProperty({ example: 80, description: 'Whole percent of the way to being due. Never capped' })
   percentage!: number;
 
-  @ApiProperty({ enum: ['good', 'warning', 'critical', 'overdue'], example: 'warning' })
+  @ApiProperty({ enum: ['very_good', 'good', 'warning', 'critical', 'overdue'], example: 'warning' })
   level!: AttentionLevel;
-
-  @ApiProperty({ example: false, description: 'The action has been put off, lengthening its interval' })
-  extended!: boolean;
-
-  @ApiProperty({
-    example: 400,
-    description: 'What one postponement adds: a tenth of the interval in force, before any Extension',
-  })
-  postpone_by!: number;
 
   @ApiProperty({
     example: 4000,

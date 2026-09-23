@@ -1,4 +1,4 @@
-// What needs doing: every Tracked Action at 70% or above, in one flat list worst first —
+// What needs doing: every Tracked Action at 75% or above, in one flat list worst first —
 // across the garage, or on the one bike the page is narrowed to. A place the owner goes
 // rather than something that interrupts them — nothing here notifies. A component only
 // talks to hooks.
@@ -13,9 +13,9 @@ import { TrackedActionRow } from "./TrackedActionRow";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 
-// What the card asks the server for. 70 is the band the server calls warning — the point
+// What the card asks the server for. 75 is the level the server calls warning — the point
 // at which a job is on the horizon, and the first the owner hears of it.
-const CUTOFF = 70;
+const CUTOFF = 75;
 
 // How many rows the card leads with. A neglected fleet must not bury everything below it,
 // so the rest waits behind one tap.

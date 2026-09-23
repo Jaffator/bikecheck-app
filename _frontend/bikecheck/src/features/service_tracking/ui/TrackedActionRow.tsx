@@ -11,7 +11,6 @@ import { ExplanationModal } from "@/components/ExplanationModal";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { positionLabel, wearExplanation } from "@/features/components/componentLabels";
 import { attentionColor, axisReading, barFill } from "@/features/service_tracking/attentionLevel";
-import { PostponeControl } from "./PostponeControl";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface TrackedActionRowProps {
@@ -62,36 +61,15 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
             </ActionIcon>
           )}
         </Group>
-        <Group gap={6} wrap="nowrap" align="center" ml="auto" style={{ whiteSpace: "nowrap" }}>
-          {/* What a tap on the control left behind: the interval beside it is longer for it. */}
-          {action.extended && (
-            <Text
-              className="font-mono"
-              fz={9}
-              tt="uppercase"
-              c="primary.5"
-              lts="0.08em"
-              px={6}
-              py={1}
-              style={{
-                borderRadius: "9999px",
-                backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
-                lineHeight: 1.4,
-              }}
-            >
-              {t("tracking.extended")}
-            </Text>
-          )}
-          <Text className="font-mono" fz={12} c={color}>
-            {t("tracking.percentage", { value: action.percentage })}
-          </Text>
-        </Group>
+        <Text className="font-mono" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
+          {t("tracking.percentage", { value: action.percentage })}
+        </Text>
         {onOpen !== null && <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
       </Group>
 
       <Progress
         value={barFill(action) * 100}
-        size={5}
+        size={8}
         radius="xl"
         styles={{
           root: { backgroundColor: "var(--color-decor-sunk)" },
@@ -100,15 +78,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
       />
 
       <Group gap="sm" wrap="nowrap" align="baseline">
-        <Text
-          className="font-mono"
-          fz={11}
-          tt="uppercase"
-          c="text.8"
-          lts="0.08em"
-          lineClamp={1}
-          style={{ minWidth: 0 }}
-        >
+        <Text className="font-mono" fz={11} tt="uppercase" c="text.8" lts="0.08em" lineClamp={1} style={{ minWidth: 0 }}>
           {prefix === null ? part : `${prefix} · ${part}`}
         </Text>
         <Text
@@ -130,7 +100,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
   // opens - so the row carries the tap as a div rather than as a <button>, since a button
   // within a button is not valid markup. It keeps the keyboard by declaring what it is: a
   // control that answers to Enter and to Space, the way the real button did.
-  const body = (
+  return (
     <>
       {onOpen === null ? (
         <Box>{reading}</Box>
@@ -159,18 +129,5 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
         }}
       />
     </>
-  );
-
-  // The one-tap dismissal an overdue row already offered, kept where it was — the drawer
-  // offers the same write at every level. Its own control, outside whatever the row leads
-  // to, so a tap on it never opens the drawer.
-  if (action.level !== "overdue") return body;
-
-  return (
-    <Stack gap={8}>
-      {body}
-
-      <PostponeControl action={action} />
-    </Stack>
   );
 }

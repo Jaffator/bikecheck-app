@@ -140,6 +140,104 @@
         ]
       }
     },
+    "/api/notifications/fcm-token": {
+      "post": {
+        "operationId": "Notification registerFcmToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Register FCM token for the current user",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "operationId": "Notification list",
+        "parameters": [
+          {
+            "name": "unread",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseNotificationDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List notifications for the current user",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications/viewed": {
+      "patch": {
+        "operationId": "Notification markAllViewed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark every notification the list clears on view as read",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "patch": {
+        "operationId": "Notification markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark a notification as read",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
     "/api/auth/test": {
       "get": {
         "operationId": "Auth test",
@@ -174,10 +272,71 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
+                  "$ref": "#/components/schemas/RegisterResponseDto"
                 }
               }
             }
+          },
+          "409": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/verification/resend": {
+      "post": {
+        "operationId": "Auth resendVerification",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/verification/verify": {
+      "post": {
+        "operationId": "Auth verifyEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VERIFICATION_TOKEN_INVALID"
           }
         },
         "tags": [
@@ -282,6 +441,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "EMAIL_NOT_VERIFIED"
           }
         },
         "tags": [
@@ -327,6 +489,12 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "EMAIL_NOT_VERIFIED"
+          },
+          "409": {
+            "description": "GOOGLE_EMAIL_UNVERIFIED"
           }
         },
         "tags": [
@@ -1276,16 +1444,16 @@
         ]
       }
     },
-    "/api/service-tracking/postpone": {
+    "/api/service-tracking/interval": {
       "post": {
-        "operationId": "ServiceTracking postponeTrackedAction",
+        "operationId": "ServiceTracking setTrackedActionInterval",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PostponeTrackedActionDto"
+                "$ref": "#/components/schemas/SetTrackedActionIntervalDto"
               }
             }
           }
@@ -1307,101 +1475,34 @@
         ]
       }
     },
-    "/api/notifications/fcm-token": {
+    "/api/service-tracking/notify": {
       "post": {
-        "operationId": "Notification registerFcmToken",
+        "operationId": "ServiceTracking setTrackedActionNotify",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeviceTokenDto"
+                "$ref": "#/components/schemas/SetTrackedActionNotifyDto"
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Register FCM token for the current user",
-        "tags": [
-          "Notification"
-        ]
-      }
-    },
-    "/api/notifications": {
-      "get": {
-        "operationId": "Notification list",
-        "parameters": [
-          {
-            "name": "unread",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResponseNotificationDto"
-                  }
+                  "$ref": "#/components/schemas/Response_TrackedActionDto"
                 }
               }
             }
           }
         },
-        "summary": "List notifications for the current user",
         "tags": [
-          "Notification"
-        ]
-      }
-    },
-    "/api/notifications/viewed": {
-      "patch": {
-        "operationId": "Notification markAllViewed",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Mark every notification the list clears on view as read",
-        "tags": [
-          "Notification"
-        ]
-      }
-    },
-    "/api/notifications/{id}/read": {
-      "patch": {
-        "operationId": "Notification markRead",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Mark a notification as read",
-        "tags": [
-          "Notification"
+          "ServiceTracking"
         ]
       }
     },
@@ -2731,6 +2832,740 @@
           "Setup"
         ]
       }
+    },
+    "/api/setup/{id}/activate": {
+      "patch": {
+        "operationId": "Setup activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_SetupProfileDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found or not the caller's"
+          },
+          "409": {
+            "description": "Bike is archived"
+          }
+        },
+        "tags": [
+          "Setup"
+        ]
+      }
+    },
+    "/api/profiles/me": {
+      "get": {
+        "operationId": "Profile getMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The caller's Public Profile settings, or the OFF defaults and a suggested handle",
+        "tags": [
+          "Profile"
+        ]
+      },
+      "patch": {
+        "operationId": "Profile updateMine",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseProfileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "HANDLE_TOO_SHORT | HANDLE_TOO_LONG | HANDLE_INVALID_CHARS | HANDLE_LEADING_DASH | HANDLE_RESERVED | HANDLE_REQUIRED"
+          },
+          "409": {
+            "description": "HANDLE_TAKEN"
+          }
+        },
+        "summary": "Save any subset of the caller's Public Profile settings",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/profiles/public/{handle}": {
+      "get": {
+        "operationId": "Profile readPublic",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePublicProfileGarageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Off, followers only, no profile or a handle nobody holds - one answer"
+          }
+        },
+        "summary": "A Public Profile's garage for the web page: open only while PUBLIC",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/profiles/public/{handle}/bikes/{id}": {
+      "get": {
+        "operationId": "Profile readPublicBike",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseProfileBikeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not PUBLIC, or a bike that is unknown, unshared or archived - one answer"
+          }
+        },
+        "summary": "One bike of a Public Profile for the web page: open only while PUBLIC, no view counted",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/profiles/public/{handle}/bikes/{id}/services": {
+      "get": {
+        "operationId": "Profile readPublicBikeServices",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Default 20, at most 100",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseProfileServicesDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The same as the web bike route, and a history the owner keeps in"
+          }
+        },
+        "summary": "One page of the Services the web bike page did not carry, newest first",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/profiles/{handle}": {
+      "get": {
+        "operationId": "Profile read",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseProfileGarageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Off, no profile or a handle nobody holds - one answer for all three"
+          }
+        },
+        "summary": "A Public Profile's garage for the app: always the header, the garage when the rule allows",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/profiles/{handle}/bikes/{id}": {
+      "get": {
+        "operationId": "Profile readBike",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseProfileBikeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not readable by the rule, or a bike that is unknown, unshared or archived - one answer for all"
+          }
+        },
+        "summary": "One bike of a Public Profile for the app: the hero and the sections the owner shares",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/profiles/{handle}/bikes/{id}/services": {
+      "get": {
+        "operationId": "Profile readBikeServices",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Default 20, at most 100",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseProfileServicesDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The same as the bike route, and a history the owner keeps in"
+          }
+        },
+        "summary": "One page of the Services the bike page did not carry, newest first",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/follows/search": {
+      "get": {
+        "operationId": "Follow search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "2 to 50 characters once trimmed",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseFollowSearchDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "QUERY_TOO_SHORT | QUERY_TOO_LONG"
+          }
+        },
+        "summary": "Discoverable riders by handle prefix or a word of their name; the first 20",
+        "tags": [
+          "Follow"
+        ]
+      }
+    },
+    "/api/follows/following": {
+      "get": {
+        "operationId": "Follow following",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FollowingRowDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Whom I follow and whom I asked, one list ordered by name",
+        "tags": [
+          "Follow"
+        ]
+      }
+    },
+    "/api/follows/followers": {
+      "get": {
+        "operationId": "Follow followers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FollowerRowDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Who asked me (PENDING) and who follows me (ACCEPTED), one list ordered by name",
+        "tags": [
+          "Follow"
+        ]
+      }
+    },
+    "/api/follows/followers/{userId}/accept": {
+      "post": {
+        "operationId": "Follow accept",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "No PENDING row from this user"
+          }
+        },
+        "summary": "Accept a Follow Request: the asker is told and their garage opens",
+        "tags": [
+          "Follow"
+        ]
+      }
+    },
+    "/api/follows/followers/{userId}": {
+      "delete": {
+        "operationId": "Follow removeFollower",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Decline a request or remove a follower; nobody is told, the same 204 with no row",
+        "tags": [
+          "Follow"
+        ]
+      }
+    },
+    "/api/follows/{handle}": {
+      "post": {
+        "operationId": "Follow follow",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseFollowDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "CANNOT_FOLLOW_SELF"
+          },
+          "404": {
+            "description": "Off, no profile or a handle nobody holds - one answer for all"
+          }
+        },
+        "summary": "Follow a Public profile or ask to follow a Followers-only one; a row that already stands is answered as it is",
+        "tags": [
+          "Follow"
+        ]
+      },
+      "delete": {
+        "operationId": "Follow unfollow",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Withdraw a request or stop following somebody; the same 204 with no row to remove",
+        "tags": [
+          "Follow"
+        ]
+      }
+    },
+    "/api/preview/u/{handle}": {
+      "get": {
+        "operationId": "Preview garageShell",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The SPA shell with a Public Profile's garage card in <head>; neutral when closed",
+        "tags": [
+          "Preview"
+        ]
+      }
+    },
+    "/api/preview/u/{handle}/image.jpg": {
+      "get": {
+        "operationId": "Preview garageImage",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The garage card: the first Shared Bike with a photo, 1200x630 JPEG",
+        "tags": [
+          "Preview"
+        ]
+      }
+    },
+    "/api/preview/u/{handle}/{bikeId}": {
+      "get": {
+        "operationId": "Preview bikeShell",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The SPA shell with one bike's card in <head>; neutral when closed",
+        "tags": [
+          "Preview"
+        ]
+      }
+    },
+    "/api/preview/u/{handle}/{bikeId}/image.jpg": {
+      "get": {
+        "operationId": "Preview bikeImage",
+        "parameters": [
+          {
+            "name": "handle",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bikeId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "One bike's card: its photo letterboxed to 1200x630 JPEG",
+        "tags": [
+          "Preview"
+        ]
+      }
+    },
+    "/api/preview/r/{token}": {
+      "get": {
+        "operationId": "Preview reportShell",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The SPA shell with a Report's card in <head>; neutral once the link is closed",
+        "tags": [
+          "Preview"
+        ]
+      }
+    },
+    "/api/preview/r/{token}/image.jpg": {
+      "get": {
+        "operationId": "Preview reportImage",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "A Report's card: the frozen bike photo letterboxed to 1200x630 JPEG",
+        "tags": [
+          "Preview"
+        ]
+      }
+    },
+    "/api/preview/image.jpg": {
+      "get": {
+        "operationId": "Preview neutralImage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The neutral BikeCheck card every closed page points at",
+        "tags": [
+          "Preview"
+        ]
+      }
     }
   },
   "info": {
@@ -2960,6 +3795,123 @@
           "tire_pressure_unit"
         ]
       },
+      "DeviceTokenDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "caYcjw...:APA91b..."
+          },
+          "platform": {
+            "type": "string",
+            "example": "android"
+          }
+        },
+        "required": [
+          "token",
+          "platform"
+        ]
+      },
+      "ResponseNotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "type": {
+            "type": "string",
+            "example": "strava_unmatched_activity"
+          },
+          "title": {
+            "type": "string",
+            "example": "Nepřiřazená aktivita ze Stravy"
+          },
+          "body": {
+            "type": "string",
+            "example": "Kolo \"Trek Fuel EX\" ještě nemáš přiřazené"
+          },
+          "payload": {
+            "type": "object",
+            "example": {
+              "gearId": "b12345"
+            },
+            "nullable": true
+          },
+          "is_read": {
+            "type": "boolean",
+            "example": false
+          },
+          "read_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-06-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "payload",
+          "is_read",
+          "read_at",
+          "created_at"
+        ]
+      },
+      "RegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "jaffa@jaffa.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResendVerificationDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "jaffa@jaffa.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "VerifyEmailResponseDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "jaffa@jaffa.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
       "ChangePasswordDto": {
         "type": "object",
         "properties": {
@@ -3044,6 +3996,10 @@
           "year": {
             "type": "number",
             "example": 2024
+          },
+          "is_shared": {
+            "type": "boolean",
+            "example": true
           },
           "description": {
             "type": "string",
@@ -3296,6 +4252,17 @@
             "type": "object",
             "example": "My Enduro Bike",
             "nullable": true
+          },
+          "active_setup_profile_id": {
+            "type": "object",
+            "example": 12,
+            "nullable": true,
+            "description": "The Setup Profile the bike is ridden at right now"
+          },
+          "is_shared": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the bike goes out on the owner's Public Profile"
           }
         },
         "required": [
@@ -3325,7 +4292,9 @@
           "is_deleted",
           "deleted_at",
           "strava_gear_id",
-          "strava_name"
+          "strava_name",
+          "active_setup_profile_id",
+          "is_shared"
         ]
       },
       "SearchBikeExternalResponseDto": {
@@ -4244,6 +5213,11 @@
             "type": "number",
             "example": 12
           },
+          "component_group_id": {
+            "type": "number",
+            "example": 2,
+            "description": "The Component Category the part sits in, which a service link names"
+          },
           "component_type": {
             "type": "string",
             "example": "Chain"
@@ -4305,7 +5279,7 @@
           "interval": {
             "type": "number",
             "example": 4000,
-            "description": "The Service Interval on that axis, including any Extension in force"
+            "description": "The Service Interval in force on that axis: the owner's own where they set one"
           },
           "percentage": {
             "type": "number",
@@ -4315,6 +5289,7 @@
           "level": {
             "type": "string",
             "enum": [
+              "very_good",
               "good",
               "warning",
               "critical",
@@ -4322,16 +5297,39 @@
             ],
             "example": "warning"
           },
-          "extended": {
+          "default_interval": {
+            "type": "number",
+            "example": 4000,
+            "description": "The bike's own plan on that axis, which clearing the override restores"
+          },
+          "interval_override": {
+            "type": "number",
+            "example": 2500,
+            "nullable": true,
+            "description": "The owner's own Service Interval, or null where the reading follows the bike's plan"
+          },
+          "notify": {
             "type": "boolean",
-            "example": false,
-            "description": "The action has been put off, lengthening its interval"
+            "example": true,
+            "description": "False silences this pairing's announcements and nothing else"
+          },
+          "mounted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the part went on the bike, which the reading is judged against"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": true,
+            "description": "The action replaces the part rather than servicing it, which names the button that records it"
           }
         },
         "required": [
           "bike_id",
           "component_mounted_id",
           "component_type_id",
+          "component_group_id",
           "component_type",
           "component_type_i18n_key",
           "component_desc",
@@ -4345,7 +5343,11 @@
           "interval",
           "percentage",
           "level",
-          "extended"
+          "default_interval",
+          "interval_override",
+          "notify",
+          "mounted_at",
+          "replace_action"
         ]
       },
       "Response_GarageTrackedActionDto": {
@@ -4364,6 +5366,11 @@
             "type": "number",
             "example": 12
           },
+          "component_group_id": {
+            "type": "number",
+            "example": 2,
+            "description": "The Component Category the part sits in, which a service link names"
+          },
           "component_type": {
             "type": "string",
             "example": "Chain"
@@ -4425,7 +5432,7 @@
           "interval": {
             "type": "number",
             "example": 4000,
-            "description": "The Service Interval on that axis, including any Extension in force"
+            "description": "The Service Interval in force on that axis: the owner's own where they set one"
           },
           "percentage": {
             "type": "number",
@@ -4435,6 +5442,7 @@
           "level": {
             "type": "string",
             "enum": [
+              "very_good",
               "good",
               "warning",
               "critical",
@@ -4442,10 +5450,32 @@
             ],
             "example": "warning"
           },
-          "extended": {
+          "default_interval": {
+            "type": "number",
+            "example": 4000,
+            "description": "The bike's own plan on that axis, which clearing the override restores"
+          },
+          "interval_override": {
+            "type": "number",
+            "example": 2500,
+            "nullable": true,
+            "description": "The owner's own Service Interval, or null where the reading follows the bike's plan"
+          },
+          "notify": {
             "type": "boolean",
-            "example": false,
-            "description": "The action has been put off, lengthening its interval"
+            "example": true,
+            "description": "False silences this pairing's announcements and nothing else"
+          },
+          "mounted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the part went on the bike, which the reading is judged against"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": true,
+            "description": "The action replaces the part rather than servicing it, which names the button that records it"
           },
           "bike_brand": {
             "type": "string",
@@ -4466,6 +5496,7 @@
           "bike_id",
           "component_mounted_id",
           "component_type_id",
+          "component_group_id",
           "component_type",
           "component_type_i18n_key",
           "component_desc",
@@ -4479,13 +5510,17 @@
           "interval",
           "percentage",
           "level",
-          "extended",
+          "default_interval",
+          "interval_override",
+          "notify",
+          "mounted_at",
+          "replace_action",
           "bike_brand",
           "bike_model",
           "year"
         ]
       },
-      "PostponeTrackedActionDto": {
+      "SetTrackedActionIntervalDto": {
         "type": "object",
         "properties": {
           "component_mounted_id": {
@@ -4495,80 +5530,40 @@
           "event_action_id": {
             "type": "number",
             "example": 42
+          },
+          "interval_override": {
+            "type": "number",
+            "example": 2500,
+            "nullable": true,
+            "description": "Null clears the override, putting the bike's plan back"
           }
         },
         "required": [
           "component_mounted_id",
-          "event_action_id"
+          "event_action_id",
+          "interval_override"
         ]
       },
-      "DeviceTokenDto": {
+      "SetTrackedActionNotifyDto": {
         "type": "object",
         "properties": {
-          "token": {
-            "type": "string",
-            "example": "caYcjw...:APA91b..."
-          },
-          "platform": {
-            "type": "string",
-            "example": "android"
-          }
-        },
-        "required": [
-          "token",
-          "platform"
-        ]
-      },
-      "ResponseNotificationDto": {
-        "type": "object",
-        "properties": {
-          "id": {
+          "component_mounted_id": {
             "type": "number",
-            "example": 1
+            "example": 55
           },
-          "type": {
-            "type": "string",
-            "example": "strava_unmatched_activity"
+          "event_action_id": {
+            "type": "number",
+            "example": 42
           },
-          "title": {
-            "type": "string",
-            "example": "Nepřiřazená aktivita ze Stravy"
-          },
-          "body": {
-            "type": "string",
-            "example": "Kolo \"Trek Fuel EX\" ještě nemáš přiřazené"
-          },
-          "payload": {
-            "type": "object",
-            "example": {
-              "gearId": "b12345"
-            },
-            "nullable": true
-          },
-          "is_read": {
+          "notify": {
             "type": "boolean",
             "example": false
-          },
-          "read_at": {
-            "type": "object",
-            "example": null,
-            "nullable": true
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-06-16T12:00:00.000Z"
           }
         },
         "required": [
-          "id",
-          "type",
-          "title",
-          "body",
-          "payload",
-          "is_read",
-          "read_at",
-          "created_at"
+          "component_mounted_id",
+          "event_action_id",
+          "notify"
         ]
       },
       "CustomComponentsDto": {
@@ -5740,6 +6735,11 @@
             "nullable": true,
             "description": "Clicks from fully closed"
           },
+          "is_active": {
+            "type": "boolean",
+            "example": true,
+            "description": "The profile the bike is ridden at right now"
+          },
           "created_at": {
             "format": "date-time",
             "type": "string",
@@ -5772,6 +6772,7 @@
           "shock_rebound_hs",
           "shock_compression_ls",
           "shock_compression_hs",
+          "is_active",
           "created_at",
           "updated_at"
         ]
@@ -5903,6 +6904,1053 @@
             "description": "Clicks from fully closed"
           }
         }
+      },
+      "ProfileStatsDto": {
+        "type": "object",
+        "properties": {
+          "views": {
+            "type": "number",
+            "example": 128
+          },
+          "followers": {
+            "type": "number",
+            "example": 3
+          },
+          "pending_requests": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "views",
+          "followers",
+          "pending_requests"
+        ]
+      },
+      "ResponseProfileDto": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "object",
+            "example": "jarda-novak",
+            "nullable": true
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "FOLLOWERS",
+              "PUBLIC"
+            ],
+            "example": "OFF"
+          },
+          "share_components": {
+            "type": "boolean",
+            "example": true
+          },
+          "share_setup": {
+            "type": "boolean",
+            "example": true
+          },
+          "share_history": {
+            "type": "boolean",
+            "example": true
+          },
+          "share_costs": {
+            "type": "boolean",
+            "example": false
+          },
+          "stats": {
+            "$ref": "#/components/schemas/ProfileStatsDto"
+          },
+          "suggested_handle": {
+            "type": "object",
+            "example": "jarda-novak",
+            "nullable": true,
+            "description": "Only while no row exists"
+          },
+          "public_origin": {
+            "type": "string",
+            "example": "https://app.bikecheck.cloud"
+          }
+        },
+        "required": [
+          "handle",
+          "visibility",
+          "share_components",
+          "share_setup",
+          "share_history",
+          "share_costs",
+          "stats",
+          "suggested_handle",
+          "public_origin"
+        ]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "example": "jarda-novak",
+            "description": "Stored lowercase"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "FOLLOWERS",
+              "PUBLIC"
+            ]
+          },
+          "share_components": {
+            "type": "boolean",
+            "example": true
+          },
+          "share_setup": {
+            "type": "boolean",
+            "example": true
+          },
+          "share_history": {
+            "type": "boolean",
+            "example": true
+          },
+          "share_costs": {
+            "type": "boolean",
+            "example": false,
+            "description": "Meaningful only with share_history"
+          }
+        }
+      },
+      "ProfileOwnerDto": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "example": "jarda-novak"
+          },
+          "name": {
+            "type": "object",
+            "example": "Jarda Novák",
+            "nullable": true
+          },
+          "avatar_url": {
+            "type": "object",
+            "example": "https://lh3.googleusercontent.com/a/photo",
+            "nullable": true
+          }
+        },
+        "required": [
+          "handle",
+          "name",
+          "avatar_url"
+        ]
+      },
+      "ProfileSharesDto": {
+        "type": "object",
+        "properties": {
+          "components": {
+            "type": "boolean",
+            "example": true
+          },
+          "setup": {
+            "type": "boolean",
+            "example": true
+          },
+          "history": {
+            "type": "boolean",
+            "example": true
+          },
+          "costs": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "components",
+          "setup",
+          "history",
+          "costs"
+        ]
+      },
+      "ProfileTotalsDto": {
+        "type": "object",
+        "properties": {
+          "bikes": {
+            "type": "number",
+            "example": 3
+          },
+          "distance_km": {
+            "type": "number",
+            "example": 12480
+          },
+          "components": {
+            "type": "object",
+            "example": 32,
+            "nullable": true
+          },
+          "services": {
+            "type": "object",
+            "example": 26,
+            "nullable": true
+          }
+        },
+        "required": [
+          "bikes",
+          "distance_km",
+          "components",
+          "services"
+        ]
+      },
+      "ProfileBikeTypeDto": {
+        "type": "object",
+        "properties": {
+          "i18n_key": {
+            "type": "object",
+            "example": "bikeType.enduro",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "example": "Enduro"
+          }
+        },
+        "required": [
+          "i18n_key",
+          "name"
+        ]
+      },
+      "ProfileBikeCardDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 15
+          },
+          "name": {
+            "type": "object",
+            "example": "Rallon",
+            "nullable": true,
+            "description": "The nickname its owner gave it"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Orbea"
+          },
+          "model": {
+            "type": "object",
+            "example": "Rallon M10",
+            "nullable": true
+          },
+          "year": {
+            "type": "object",
+            "example": 2024,
+            "nullable": true
+          },
+          "type": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileBikeTypeDto"
+              }
+            ]
+          },
+          "image_url": {
+            "type": "object",
+            "example": "https://storage.example.com/bikes/rallon.webp",
+            "nullable": true
+          },
+          "distance_km": {
+            "type": "number",
+            "example": 4187
+          },
+          "components": {
+            "type": "object",
+            "example": 32,
+            "nullable": true
+          },
+          "services": {
+            "type": "object",
+            "example": 26,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "brand",
+          "model",
+          "year",
+          "type",
+          "image_url",
+          "distance_km",
+          "components",
+          "services"
+        ]
+      },
+      "ProfileGarageDto": {
+        "type": "object",
+        "properties": {
+          "updated_at": {
+            "type": "string",
+            "example": "2026-09-12T00:00:00.000Z"
+          },
+          "shares": {
+            "$ref": "#/components/schemas/ProfileSharesDto"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ProfileTotalsDto"
+          },
+          "currency": {
+            "type": "string",
+            "example": "CZK"
+          },
+          "tire_pressure_unit": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "psi"
+            ],
+            "example": "bar"
+          },
+          "bikes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileBikeCardDto"
+            }
+          }
+        },
+        "required": [
+          "updated_at",
+          "shares",
+          "totals",
+          "currency",
+          "tire_pressure_unit",
+          "bikes"
+        ]
+      },
+      "ResponsePublicProfileGarageDto": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "$ref": "#/components/schemas/ProfileOwnerDto"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "FOLLOWERS",
+              "PUBLIC"
+            ],
+            "example": "PUBLIC"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "SELF",
+              "NONE",
+              "PENDING",
+              "FOLLOWING"
+            ],
+            "example": "NONE"
+          },
+          "garage": {
+            "nullable": true,
+            "description": "null = header only",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileGarageDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "owner",
+          "visibility",
+          "relation",
+          "garage"
+        ]
+      },
+      "ProfileCatalogueNameDto": {
+        "type": "object",
+        "properties": {
+          "i18n_key": {
+            "type": "object",
+            "example": "component.fork",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "example": "Fork"
+          }
+        },
+        "required": [
+          "i18n_key",
+          "name"
+        ]
+      },
+      "ProfileMountedPartDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 55
+          },
+          "type": {
+            "$ref": "#/components/schemas/ProfileCatalogueNameDto"
+          },
+          "description": {
+            "type": "object",
+            "example": "Fox 38 Factory GRIP2",
+            "nullable": true,
+            "description": "What the owner called it"
+          },
+          "position": {
+            "type": "object",
+            "example": "front",
+            "nullable": true
+          },
+          "distance_km": {
+            "type": "object",
+            "example": 1200,
+            "nullable": true
+          },
+          "time_min": {
+            "type": "object",
+            "example": 4800,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "description",
+          "position",
+          "distance_km",
+          "time_min"
+        ]
+      },
+      "ProfileComponentGroupDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/ProfileCatalogueNameDto"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileMountedPartDto"
+            }
+          }
+        },
+        "required": [
+          "category",
+          "parts"
+        ]
+      },
+      "ProfileClicksDto": {
+        "type": "object",
+        "properties": {
+          "rebound_ls": {
+            "type": "object",
+            "example": 8,
+            "nullable": true
+          },
+          "rebound_hs": {
+            "type": "object",
+            "example": 3,
+            "nullable": true
+          },
+          "compression_ls": {
+            "type": "object",
+            "example": 10,
+            "nullable": true
+          },
+          "compression_hs": {
+            "type": "object",
+            "example": 2,
+            "nullable": true
+          }
+        },
+        "required": [
+          "rebound_ls",
+          "rebound_hs",
+          "compression_ls",
+          "compression_hs"
+        ]
+      },
+      "ProfileLegDto": {
+        "type": "object",
+        "properties": {
+          "pressure_psi": {
+            "type": "object",
+            "example": 85,
+            "nullable": true
+          },
+          "sag_percent": {
+            "type": "object",
+            "example": 20,
+            "nullable": true
+          },
+          "tokens": {
+            "type": "object",
+            "example": 2,
+            "nullable": true
+          },
+          "clicks": {
+            "$ref": "#/components/schemas/ProfileClicksDto"
+          }
+        },
+        "required": [
+          "pressure_psi",
+          "sag_percent",
+          "tokens",
+          "clicks"
+        ]
+      },
+      "ProfileSetupProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 12
+          },
+          "name": {
+            "type": "string",
+            "example": "Trail"
+          },
+          "is_active": {
+            "type": "boolean",
+            "example": true,
+            "description": "The profile the bike is ridden at; exactly one, listed first"
+          },
+          "front_tire_psi": {
+            "type": "object",
+            "example": 24.5,
+            "nullable": true
+          },
+          "rear_tire_psi": {
+            "type": "object",
+            "example": 27,
+            "nullable": true
+          },
+          "front_tire": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileMountedPartDto"
+              }
+            ]
+          },
+          "rear_tire": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileMountedPartDto"
+              }
+            ]
+          },
+          "fork": {
+            "nullable": true,
+            "description": "null unless has_front_suspension",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileLegDto"
+              }
+            ]
+          },
+          "shock": {
+            "nullable": true,
+            "description": "null unless has_rear_suspension",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileLegDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "is_active",
+          "front_tire_psi",
+          "rear_tire_psi",
+          "front_tire",
+          "rear_tire",
+          "fork",
+          "shock"
+        ]
+      },
+      "ProfileMoneyDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "example": 1200
+          },
+          "currency": {
+            "type": "string",
+            "example": "CZK"
+          }
+        },
+        "required": [
+          "amount",
+          "currency"
+        ]
+      },
+      "ProfileHistoryTotalsDto": {
+        "type": "object",
+        "properties": {
+          "services": {
+            "type": "number",
+            "example": 26
+          },
+          "replacements": {
+            "type": "number",
+            "example": 9,
+            "description": "Replacements counted per part, not per Service (ADR 0003)"
+          },
+          "spend": {
+            "$ref": "#/components/schemas/ProfileMoneyDto"
+          }
+        },
+        "required": [
+          "services",
+          "replacements"
+        ]
+      },
+      "ProfileServiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 88
+          },
+          "date": {
+            "type": "object",
+            "example": "2026-08-15T00:00:00.000Z",
+            "nullable": true,
+            "description": "Service Date"
+          },
+          "is_replacement": {
+            "type": "boolean",
+            "example": true,
+            "description": "Any of its actions swapped a part out"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileCatalogueNameDto"
+            }
+          },
+          "parts": {
+            "description": "Component types touched, each once",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileCatalogueNameDto"
+            }
+          },
+          "cost": {
+            "$ref": "#/components/schemas/ProfileMoneyDto"
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "is_replacement",
+          "actions",
+          "parts"
+        ]
+      },
+      "ProfileHistoryDto": {
+        "type": "object",
+        "properties": {
+          "totals": {
+            "$ref": "#/components/schemas/ProfileHistoryTotalsDto"
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileServiceDto"
+            }
+          },
+          "total_count": {
+            "type": "number",
+            "example": 26,
+            "description": "Every Service of the bike, ignoring the page"
+          }
+        },
+        "required": [
+          "totals",
+          "services",
+          "total_count"
+        ]
+      },
+      "ProfileBikeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 15
+          },
+          "name": {
+            "type": "object",
+            "example": "Rallon",
+            "nullable": true,
+            "description": "The nickname its owner gave it"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Orbea"
+          },
+          "model": {
+            "type": "object",
+            "example": "Rallon M10",
+            "nullable": true
+          },
+          "year": {
+            "type": "object",
+            "example": 2024,
+            "nullable": true
+          },
+          "type": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileBikeTypeDto"
+              }
+            ]
+          },
+          "image_url": {
+            "type": "object",
+            "example": "https://storage.example.com/bikes/rallon.webp",
+            "nullable": true
+          },
+          "distance_km": {
+            "type": "number",
+            "example": 4187
+          },
+          "services": {
+            "type": "object",
+            "example": 26,
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "example": "2026-09-12T00:00:00.000Z"
+          },
+          "time_min": {
+            "type": "number",
+            "example": 15000
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": false
+          },
+          "frame_material": {
+            "type": "object",
+            "example": "carbon",
+            "nullable": true
+          },
+          "has_front_suspension": {
+            "type": "boolean",
+            "example": true
+          },
+          "has_rear_suspension": {
+            "type": "boolean",
+            "example": true
+          },
+          "components": {
+            "nullable": true,
+            "description": "null = section off",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileComponentGroupDto"
+            }
+          },
+          "setup": {
+            "nullable": true,
+            "description": "null = section off; [] = no profile yet",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileSetupProfileDto"
+            }
+          },
+          "history": {
+            "nullable": true,
+            "description": "null = section off",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileHistoryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "brand",
+          "model",
+          "year",
+          "type",
+          "image_url",
+          "distance_km",
+          "services",
+          "updated_at",
+          "time_min",
+          "ebike",
+          "frame_material",
+          "has_front_suspension",
+          "has_rear_suspension",
+          "components",
+          "setup",
+          "history"
+        ]
+      },
+      "ResponseProfileBikeDto": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "$ref": "#/components/schemas/ProfileOwnerDto"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "FOLLOWERS",
+              "PUBLIC"
+            ],
+            "example": "PUBLIC"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "SELF",
+              "NONE",
+              "PENDING",
+              "FOLLOWING"
+            ],
+            "example": "NONE"
+          },
+          "currency": {
+            "type": "string",
+            "example": "CZK"
+          },
+          "tire_pressure_unit": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "psi"
+            ],
+            "example": "bar"
+          },
+          "bike": {
+            "$ref": "#/components/schemas/ProfileBikeDto"
+          }
+        },
+        "required": [
+          "owner",
+          "visibility",
+          "relation",
+          "currency",
+          "tire_pressure_unit",
+          "bike"
+        ]
+      },
+      "ResponseProfileServicesDto": {
+        "type": "object",
+        "properties": {
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileServiceDto"
+            }
+          },
+          "total_count": {
+            "type": "number",
+            "example": 26
+          }
+        },
+        "required": [
+          "services",
+          "total_count"
+        ]
+      },
+      "ResponseProfileGarageDto": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "$ref": "#/components/schemas/ProfileOwnerDto"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "FOLLOWERS",
+              "PUBLIC"
+            ],
+            "example": "PUBLIC"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "SELF",
+              "NONE",
+              "PENDING",
+              "FOLLOWING"
+            ],
+            "example": "NONE"
+          },
+          "garage": {
+            "nullable": true,
+            "description": "null = header only",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileGarageDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "owner",
+          "visibility",
+          "relation",
+          "garage"
+        ]
+      },
+      "FollowingRowDto": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "example": "jarda-novak"
+          },
+          "name": {
+            "type": "object",
+            "example": "Jarda Novák",
+            "nullable": true
+          },
+          "avatar_url": {
+            "type": "object",
+            "example": "https://lh3.googleusercontent.com/a/photo",
+            "nullable": true
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "FOLLOWERS",
+              "PUBLIC"
+            ],
+            "example": "PUBLIC"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "PENDING",
+              "FOLLOWING"
+            ],
+            "example": "NONE"
+          }
+        },
+        "required": [
+          "handle",
+          "name",
+          "avatar_url",
+          "visibility",
+          "relation"
+        ]
+      },
+      "ResponseFollowSearchDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowingRowDto"
+            }
+          },
+          "capped": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when more matched than the 20 answered"
+          }
+        },
+        "required": [
+          "results",
+          "capped"
+        ]
+      },
+      "FollowerRowDto": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "number",
+            "example": 42
+          },
+          "handle": {
+            "type": "object",
+            "example": "jarda-novak",
+            "nullable": true,
+            "description": "Null for a follower with no profile"
+          },
+          "name": {
+            "type": "object",
+            "example": "Jarda Novák",
+            "nullable": true
+          },
+          "avatar_url": {
+            "type": "object",
+            "example": "https://lh3.googleusercontent.com/a/photo",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED"
+            ],
+            "example": "PENDING"
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2026-09-20T10:00:00.000Z",
+            "description": "When they asked or followed"
+          }
+        },
+        "required": [
+          "user_id",
+          "handle",
+          "name",
+          "avatar_url",
+          "status",
+          "created_at"
+        ]
+      },
+      "ResponseFollowDto": {
+        "type": "object",
+        "properties": {
+          "relation": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "FOLLOWING"
+            ],
+            "example": "FOLLOWING"
+          }
+        },
+        "required": [
+          "relation"
+        ]
       }
     }
   }
