@@ -5,6 +5,7 @@ import { ActionIcon, Box, Drawer, Group, Stack, Text, UnstyledButton } from "@ma
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { MessageCircleMore, Users, X } from "lucide-react";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import { useMyProfile } from "@/features/profile/profile.queries";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { BADGE_CAP } from "./HeaderCountBadge";
@@ -22,14 +23,6 @@ const CARD: CSSProperties = {
   backgroundImage: "var(--card-glow)",
   boxShadow: "var(--elev-row)",
   transition: "transform 0.12s ease",
-};
-
-// Drawn on the body, above the sheet's own title row.
-const GRABBER: CSSProperties = {
-  width: "2.25rem",
-  height: "0.25rem",
-  borderRadius: "9999px",
-  backgroundColor: "var(--color-border-subtle)",
 };
 
 interface CardProps {
@@ -156,7 +149,7 @@ export function MoreDrawer({ opened, onClose }: MoreDrawerProps): ReactElement {
     >
       {/* In the browser the sheet is the page's own column rather than the whole window. */}
       <Stack gap="sm" maw={CONTENT_MAX_WIDTH} mx="auto">
-        <Box style={GRABBER} mx="auto" mb={4} />
+        <SheetGrabber onClose={onClose} />
         {/* Header: the sheet's name on the left, the way out on the right. */}
         <Group justify="space-between" align="center" wrap="nowrap">
           <Text fw={700} fz={18} c="text.6" lh={1.2}>

@@ -44,3 +44,35 @@ return <Drawer opened={visible} ... />;
 
 A sheet that stays mounted across openings passes `opened` straight through. See
 `BikeComponentFormDrawer` for the remounted case.
+
+## The grabber is what closes a sheet by hand
+
+Every bottom sheet wears `SheetGrabber` at its top. It draws the pill people read as "this
+layer floats", and it is what hangs the closing drag on the sheet. The pill gets 8px either
+side and gives that room straight back with a negative margin, so no sheet moves by adopting
+one.
+
+```tsx
+<SheetGrabber onClose={onClose} />
+```
+
+A sheet that keeps Mantine's own header has nothing to sit above in the flow, so there the
+strip is laid over the header's top edge and the header makes room for it:
+
+```tsx
+styles={{
+  content: { position: "relative", ... },
+  header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, ... },
+}}
+...
+<SheetGrabber onClose={onClose} floating />
+```
+
+The gesture itself is `useSheetSwipe`, and it listens on the sheet rather than on the pill:
+a drag starting anywhere in the sheet's top 120px moves it, while every tap below still lands
+because nothing is laid over the content. It takes the gesture only once the finger has gone
+10px straight down, and only while the list under it is at its top - a sheet being read is
+never dragged out from under the reader. The sheet then stands where the finger is; on release
+it closes when the drag covered a quarter of the sheet's height or ended in a flick, and
+otherwise springs back on the sheet's own transition. Upwards there is nothing to open into,
+so a drag that way moves nothing.

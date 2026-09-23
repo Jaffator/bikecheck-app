@@ -117,21 +117,23 @@ function baseline(
 function stateRow(
   actionId: number,
   reachedThreshold = 0,
-  // What the owner set: no interval of their own, and announcements on, unless said.
-  settings: { intervalOverride?: number | null; notify?: boolean } = {},
+  // What the owner set: no interval of their own, announcements on and nothing put off,
+  // unless said.
+  settings: { intervalOverride?: number | null; notify?: boolean; postponedBand?: number | null } = {},
 ): Record<string, unknown> {
   return {
     event_actions_id: actionId,
     reached_threshold: reachedThreshold,
     interval_override: settings.intervalOverride ?? null,
     notify: settings.notify ?? true,
+    postponed_band: settings.postponedBand ?? null,
   };
 }
 
 // A pairing carrying nothing but a setting: nothing announced.
 function settingRow(
   actionId: number,
-  settings: { intervalOverride?: number | null; notify?: boolean },
+  settings: { intervalOverride?: number | null; notify?: boolean; postponedBand?: number | null },
 ): Record<string, unknown> {
   return stateRow(actionId, 0, settings);
 }
@@ -880,7 +882,6 @@ describe('ServiceTrackingService', () => {
 
       expect(action.notify).toBe(true);
     });
-
   });
 
   describe('getGarageTrackedActions', () => {
@@ -1275,9 +1276,7 @@ describe('ServiceTrackingService', () => {
     // Raising the interval is what an owner who wants to be told later does now, so it has
     // to be able to quiet a reading that is already past due.
     it('re-arms silently when a raised interval pulls a reading back under due', async () => {
-      const parts = [
-        mountedPart({ drivetrain_km: 4400, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, 110)] }),
-      ];
+      const parts = [mountedPart({ drivetrain_km: 4400, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, 110)] })];
       garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
       keepState(parts);
 
@@ -1539,7 +1538,6 @@ describe('ServiceTrackingService', () => {
       );
       expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
     });
-
   });
 
   describe('setTrackedActionNotify', () => {
@@ -1597,6 +1595,133 @@ describe('ServiceTrackingService', () => {
         NotFoundException,
       );
       expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('postponeTrackedAction', () => {
+    // Putting a job off is about the dashboard and nothing else: the part has gone as far
+    // as it has gone, and the reading goes on saying so.
+    it('records the band without touching the reading', async () => {
+      const parts = [mountedPart({ drivetrain_km: 3200 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      const action = await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(held(parts, 'postponed_band')).toEqual({ '55:101': 75 });
+      expect(action.percentage).toBe(80);
+      expect(action.level).toBe('warning');
+    });
+
+    // Past due the bands run every ten percent, so that is what a postponement is worth.
+    it('records the band a reading past due stands in', async () => {
+      const parts = [mountedPart({ drivetrain_km: 4800 })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(held(parts, 'postponed_band')).toEqual({ '55:101': 120 });
+    });
+
+    // Nothing moved, so nothing crossed - the announcements carry on as they would have.
+    it('announces nothing and leaves the announced band alone', async () => {
+      const parts = [mountedPart({ drivetrain_km: 3200, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, 75)] })];
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], parts);
+      keepState(parts);
+
+      await service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID);
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+      expect(held(parts, 'reached_threshold')).toEqual({ '55:101': 75 });
+    });
+
+    // Somebody else's bike is nobody's to put off.
+    it('refuses a Tracked Action the caller does not own', async () => {
+      mockPrismaService.bikes.findFirst.mockResolvedValue(null);
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 3200 })]);
+
+      await expect(service.postponeTrackedAction(55, CHAIN_REPLACEMENT, OWNER_ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('postponed Tracked Actions', () => {
+    const PLAN = [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])];
+
+    // What putting a job off is for: it leaves the list of work waiting.
+    it('leaves the garage list while the reading stays in the band', async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], PLAN, [
+        mountedPart({
+          drivetrain_km: 3200,
+          tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { postponedBand: 75 })],
+        }),
+      ]);
+
+      expect(await service.getGarageTrackedActions(OWNER_ID, 75)).toEqual([]);
+    });
+
+    // The next crossing is what brings it back, which is the whole of the promise.
+    it('returns to the garage list once the reading crosses into the next band', async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], PLAN, [
+        mountedPart({
+          drivetrain_km: 3700,
+          tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { postponedBand: 75 })],
+        }),
+      ]);
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 75);
+
+      expect(actions).toHaveLength(1);
+      expect(actions[0].percentage).toBe(92);
+    });
+
+    // A Service takes the reading down out of the band, which ends the postponement on its
+    // own - so a job done and then worn back up announces and lists again.
+    it('ends when the reading falls below the band it was put off in', async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], PLAN, [
+        mountedPart({
+          drivetrain_km: 2400,
+          tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { postponedBand: 75 })],
+        }),
+      ]);
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 0);
+
+      expect(actions).toHaveLength(1);
+    });
+
+    // The bike's own page is the inventory of what the bike owes, so it hides nothing.
+    it("still lists on the bike's own page", async () => {
+      const parts = [
+        mountedPart({
+          drivetrain_km: 3200,
+          tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { postponedBand: 75 })],
+        }),
+      ];
+      garage(PLAN, parts);
+
+      expect(await service.getBikeTrackedActions(BIKE_ID, OWNER_ID)).toHaveLength(1);
+    });
+
+    // One pairing put off says nothing about the others on the same part.
+    it('leaves the other Tracked Actions on the part alone', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [...PLAN, intervalRow(TYRE_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 3200,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { postponedBand: 75 })],
+          }),
+        ],
+      );
+
+      const actions = await service.getGarageTrackedActions(OWNER_ID, 75);
+
+      expect(actions.map((action) => action.event_action_id)).toEqual([TYRE_REPLACEMENT]);
     });
   });
 });

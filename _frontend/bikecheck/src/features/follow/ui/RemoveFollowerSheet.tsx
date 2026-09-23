@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactElement } from "react";
 import { Button, Drawer, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { useRemoveFollower } from "../follow.queries";
 import type { FollowerRow } from "../follow.types";
@@ -53,6 +54,8 @@ export function RemoveFollowerSheet({ person, opened, onClose }: RemoveFollowerS
         body: { paddingBottom: "calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
       }}
     >
+      <SheetGrabber onClose={onClose} />
+
       {person !== null && (
         <Stack align="center" gap="md" pt="sm">
           <PersonAvatar person={person} size={AVATAR_SIZE} />

@@ -69,6 +69,13 @@ export interface SetTrackedActionIntervalInput {
   interval_override: number | null;
 }
 
+// Which Tracked Action to put off. How long is not the caller's to say — it is off until
+// the reading leaves the band it was put off in.
+export interface PostponeTrackedActionInput {
+  component_mounted_id: number;
+  event_action_id: number;
+}
+
 // What muting one Tracked Action asks for. False stops the push and nothing else.
 export interface SetTrackedActionNotifyInput {
   component_mounted_id: number;

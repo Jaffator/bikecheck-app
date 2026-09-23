@@ -1,9 +1,10 @@
 // Where a Setup Profile is named: a new one, blank or as a copy of the one being read, or
 // an existing one being renamed. One sheet for both, because both ask for the same thing.
 import { useEffect, useState, type ReactElement } from "react";
-import { ActionIcon, Box, Button, Drawer, Group, Stack, Switch, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Button, Drawer, Group, Stack, Switch, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import type { ApiError } from "@/api/client";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -114,16 +115,9 @@ function SetupProfileNameBody({
       }}
     >
       {/* The same grab bar and heading every sheet wears. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        mb="md"
-        w={36}
-        h={4}
-        style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)", flexShrink: 0 }}
-      />
+      <SheetGrabber onClose={onClose} />
 
-      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mb="md">
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mt="md" mb="md">
         <Text fz={20} fw={700} c="text.6" lineClamp={2}>
           {renaming ? t("setup.renameTitle") : t("setup.newProfileTitle")}
         </Text>

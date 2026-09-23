@@ -134,8 +134,12 @@ export class ServiceTrackingService {
     // frontend's one rule, and it already has it.
     const naming = new Map(bikes.map(({ id, ...name }) => [id, name]));
 
+    // Only this list hides what was put off - the bike's own page lists everything it owes.
+    const postponed = postponedBands(parts);
+
     const needingAttention = trackedActions(parts, intervals)
       .filter((action) => action.percentage >= minPercentage)
+      .filter((action) => !isPostponed(action, postponed))
       .flatMap((action) => {
         const name = naming.get(action.bike_id);
         return name === undefined ? [] : [{ ...action, ...name }];
@@ -181,6 +185,23 @@ export class ServiceTrackingService {
 
     // No evaluation: muting moves no reading, and the band went on moving under the mute -
     // so unmuting is quiet and the next genuine crossing is the one that announces.
+    return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
+  }
+
+  // Putting one Tracked Action off: one tap, no dialog and no number to enter. The band it
+  // stands in now is recorded, and the dashboard skips it while it stays in that band - so
+  // the next crossing is what brings it back, and nothing about the reading changes.
+  async postponeTrackedAction(
+    componentMountedId: number,
+    eventActionId: number,
+    userId: number,
+  ): Promise<Response_TrackedActionDto> {
+    const { bikeId, reading } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
+
+    await this.writeSettings(componentMountedId, eventActionId, { postponed_band: reachedBand(reading.percentage) });
+
+    // No evaluation: putting a job off moves no reading, so it crosses nothing and the
+    // announcements carry on exactly as they would have.
     return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
   }
 
@@ -315,7 +336,7 @@ export class ServiceTrackingService {
   private async writeSettings(
     componentMountedId: number,
     eventActionId: number,
-    settings: { interval_override?: number | null; notify?: boolean },
+    settings: { interval_override?: number | null; notify?: boolean; postponed_band?: number | null },
   ): Promise<void> {
     const pair = { component_mounted_id: componentMountedId, event_actions_id: eventActionId };
 
@@ -401,6 +422,29 @@ function announcedBands(parts: TrackedPart[]): Map<string, number> {
       ]),
     ),
   );
+}
+
+// The band each pairing was put off in, for the pairings that were. Null and absent say the
+// same thing here - nothing was put off - so only the numbers are kept.
+function postponedBands(parts: TrackedPart[]): Map<string, number> {
+  return new Map(
+    parts.flatMap((part) =>
+      part.tracked_action_state.flatMap((state) =>
+        state.postponed_band === null
+          ? []
+          : [[pairKey(part.id, state.event_actions_id), state.postponed_band] as [string, number]],
+      ),
+    ),
+  );
+}
+
+// Whether this reading is still the one that was put off. Only the same band counts: the
+// next crossing up ends it, and so does a Service taking the reading back down - which is
+// why nothing ever has to clear the column.
+function isPostponed(action: Response_TrackedActionDto, postponed: Map<string, number>): boolean {
+  const band = postponed.get(pairKey(action.component_mounted_id, action.event_action_id));
+
+  return band !== undefined && band === reachedBand(action.percentage);
 }
 
 // One Tracked Action is a part and an action (ADR 0027), which is what identifies its row.

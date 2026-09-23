@@ -2,6 +2,7 @@
 import { apiFetch } from "@/api/client";
 import type {
   GarageTrackedAction,
+  PostponeTrackedActionInput,
   SetTrackedActionIntervalInput,
   SetTrackedActionNotifyInput,
   TrackedAction,
@@ -31,6 +32,15 @@ export async function setTrackedActionInterval(input: SetTrackedActionIntervalIn
 // Turn this pairing's announcements on or off. The reading itself is untouched.
 export async function setTrackedActionNotify(input: SetTrackedActionNotifyInput): Promise<TrackedAction> {
   return apiFetch<TrackedAction>("/service-tracking/notify", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+// Put one Tracked Action off. Nothing about the reading changes — it simply leaves the
+// dashboard until it crosses into the next band.
+export async function postponeTrackedAction(input: PostponeTrackedActionInput): Promise<TrackedAction> {
+  return apiFetch<TrackedAction>("/service-tracking/postpone", {
     method: "POST",
     body: JSON.stringify(input),
   });

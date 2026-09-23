@@ -17,6 +17,8 @@
     "logService": "Zapsat servis",
     "mountedOn": "nasazeno {{date}}",
     "remaining": "Zbývá",
+    "postpone": "Odložit",
+    "postponeFailed": "Nepodařilo se odložit",
     "intervalLabel": "Servisní interval",
     "intervalCustom": "Vlastní",
     "intervalLess": "Zkrátit interval",

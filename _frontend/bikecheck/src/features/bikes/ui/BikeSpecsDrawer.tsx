@@ -5,6 +5,7 @@ import { ActionIcon, Box, Divider, Drawer, Group, Stack, Text } from "@mantine/c
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import dayjs from "dayjs";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
@@ -55,14 +56,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
         body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
       }}
     >
-      {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        w={36}
-        h={4}
-        style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)", flexShrink: 0 }}
-      />
+      <SheetGrabber onClose={onClose} />
 
       <Box
         px="md"

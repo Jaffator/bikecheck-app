@@ -3,6 +3,7 @@
 import { useState, type ReactElement } from "react";
 import { Button, Drawer, Stack, Text, NumberInput, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { useUpdateUser } from "@/features/users/users.queries";
 import type { User } from "@/features/users/users.types";
@@ -62,12 +63,19 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
       title={t("profile.editTitle")}
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto", maxHeight: "88dvh" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        content: {
+          position: "relative",
+          backgroundColor: "var(--mantine-color-cards-6)",
+          height: "auto",
+          maxHeight: "88dvh",
+        },
+        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
         body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >
+      <SheetGrabber onClose={onClose} floating />
+
       <Stack gap="md">
         <TextInput
           label={t("profile.name")}

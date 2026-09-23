@@ -4,6 +4,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { Button, Drawer, Group, Loader, Stack, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { disabledButtonStyles, fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useAccountDeletionSummary, useDeleteAccount } from "@/features/users/users.queries";
 import type { AccountDeletionSummary } from "@/features/users/users.types";
@@ -83,17 +84,20 @@ function DeleteAccountBody({ opened, onClose, email }: DeleteAccountDrawerProps)
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
+          position: "relative",
           backgroundColor: "var(--mantine-color-cards-6)",
           height: "auto",
           // Rides above the software keyboard, which the webview does not resize for.
           marginBottom: keyboardOffset,
           maxHeight: `calc(88dvh - ${String(keyboardOffset)}px)`,
         },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
         body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >
+      <SheetGrabber onClose={onClose} floating />
+
       <Stack gap="md">
         <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
           {t("profile.deleteAccountBody")}

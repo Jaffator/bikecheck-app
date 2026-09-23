@@ -4,6 +4,7 @@ import { Button, Drawer, Group, Paper, Select, Stack, Text } from "@mantine/core
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { ChevronDown, Clock, Mountain, Route } from "lucide-react";
+import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
@@ -50,12 +51,14 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
+          position: "relative",
           backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
         body: { flex: 1, display: "flex", flexDirection: "column" },
         header: {
+          paddingTop: SHEET_GRABBER_HEADER_PADDING,
           backgroundColor: "var(--mantine-color-cards-6)",
           marginBottom: "1.5rem",
         },
@@ -63,6 +66,8 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
         title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
     >
+      <SheetGrabber onClose={close} floating />
+
       <Stack gap={20} h="100%" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
         <Text fw={900} fz={20} c="text.7" ta="center">
           {t("pendingRides.chooseBikeTitle")}

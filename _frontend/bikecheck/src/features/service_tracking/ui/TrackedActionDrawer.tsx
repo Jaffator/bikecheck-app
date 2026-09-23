@@ -3,12 +3,13 @@
 // is measured against, and whether it announces itself (ADR 0032, ADR 0034).
 // Opened from the bike's own page and from the dashboard alike, so a row that looks the
 // same behaves the same wherever it is met.
-import { useEffect, useState, type ReactElement, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Divider, Drawer, Group, NumberInput, Progress, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { Minus, Plus, RotateCcw, X } from "lucide-react";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { measureLabel, positionLabel } from "@/features/components/componentLabels";
@@ -77,14 +78,7 @@ export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProp
         body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
       }}
     >
-      {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        w={36}
-        h={4}
-        style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)", flexShrink: 0 }}
-      />
+      <SheetGrabber onClose={onClose} />
 
       <Box
         px="md"
@@ -205,7 +199,7 @@ function ReadingCard({ action }: { action: TrackedAction }): ReactElement {
           style={{
             borderRadius: "9999px",
             border: `1px solid ${color}`,
-            backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-4) 60%, transparent)",
+            backgroundColor: "var(--mantine-color-cards-6)",
           }}
         >
           <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
@@ -439,7 +433,16 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      style={{ flexShrink: 0 }}
+      // Drawn as the steppers on the Setup sheet are, so every − and + in the app reads the
+      // same — and squared up to the field it steps, which is 2.4rem tall.
+      style={
+        {
+          flexShrink: 0,
+          "--ai-bg": "var(--mantine-color-cards-6)",
+          "--ai-bd": "1px solid var(--color-border-strong)",
+          "--ai-size": "2.4rem",
+        } as CSSProperties
+      }
     >
       {children}
     </ActionIcon>

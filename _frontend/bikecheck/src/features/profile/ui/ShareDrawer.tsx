@@ -6,6 +6,7 @@ import { Box, Center, Drawer, Group, Image, Loader, SegmentedControl, Stack, Tex
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
+import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
@@ -37,10 +38,6 @@ const PANEL: CSSProperties = {
   boxShadow: "var(--elev-panel)",
   borderRadius: "1rem",
 };
-
-// The grabber rides on Mantine's own header, so the close button stays the stock one.
-const GRABBER_HEADER =
-  "relative pt-14 before:content-[''] before:absolute before:top-2 before:left-1/2 before:-translate-x-1/2 before:w-9 before:h-1 before:rounded-full before:bg-[var(--color-border-subtle)]";
 
 interface SectionProps {
   title: string;
@@ -105,7 +102,6 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
           <span>{t("sharing.title")}</span>
         </Group>
       }
-      classNames={{ header: GRABBER_HEADER }}
       transitionProps={{
         duration: 400,
         exitDuration: 400,
@@ -114,13 +110,20 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
       }}
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto", maxHeight: "92dvh" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        content: {
+          position: "relative",
+          backgroundColor: "var(--mantine-color-cards-6)",
+          height: "auto",
+          maxHeight: "92dvh",
+        },
+        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
         // Cards run closer to the sheet's edges than plain rows would.
         body: { paddingInline: 8, paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >
+      <SheetGrabber onClose={onClose} floating />
+
       {profile && bikes ? (
         <ShareForm profile={profile} bikes={bikes} onPreview={preview} />
       ) : (

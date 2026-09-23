@@ -73,6 +73,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/fcm-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register FCM token for the current user */
+        post: operations["Notification registerFcmToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notifications for the current user */
+        get: operations["Notification list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/viewed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark every notification the list clears on view as read */
+        patch: operations["Notification markAllViewed"];
+        trace?: never;
+    };
+    "/api/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark a notification as read */
+        patch: operations["Notification markRead"];
+        trace?: never;
+    };
     "/api/auth/test": {
         parameters: {
             query?: never;
@@ -99,6 +167,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["Auth createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/verification/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Auth resendVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/verification/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["Auth verifyEmail"];
         delete?: never;
         options?: never;
         head?: never;
@@ -617,7 +717,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/notifications/fcm-token": {
+    "/api/service-tracking/interval": {
         parameters: {
             query?: never;
             header?: never;
@@ -626,32 +726,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register FCM token for the current user */
-        post: operations["Notification registerFcmToken"];
+        post: operations["ServiceTracking setTrackedActionInterval"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List notifications for the current user */
-        get: operations["Notification list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/notifications/{id}/read": {
+    "/api/service-tracking/postpone": {
         parameters: {
             query?: never;
             header?: never;
@@ -660,12 +742,27 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
+        post: operations["ServiceTracking postponeTrackedAction"];
         delete?: never;
         options?: never;
         head?: never;
-        /** Mark a notification as read */
-        patch: operations["Notification markRead"];
+        patch?: never;
+        trace?: never;
+    };
+    "/api/service-tracking/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ServiceTracking setTrackedActionNotify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/components": {
@@ -1206,6 +1303,364 @@ export interface paths {
         patch: operations["Setup update"];
         trace?: never;
     };
+    "/api/setup/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["Setup activate"];
+        trace?: never;
+    };
+    "/api/profiles/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's Public Profile settings, or the OFF defaults and a suggested handle */
+        get: operations["Profile getMine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Save any subset of the caller's Public Profile settings */
+        patch: operations["Profile updateMine"];
+        trace?: never;
+    };
+    "/api/profiles/public/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A Public Profile's garage for the web page: open only while PUBLIC */
+        get: operations["Profile readPublic"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profiles/public/{handle}/bikes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One bike of a Public Profile for the web page: open only while PUBLIC, no view counted */
+        get: operations["Profile readPublicBike"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profiles/public/{handle}/bikes/{id}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One page of the Services the web bike page did not carry, newest first */
+        get: operations["Profile readPublicBikeServices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profiles/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A Public Profile's garage for the app: always the header, the garage when the rule allows */
+        get: operations["Profile read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profiles/{handle}/bikes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One bike of a Public Profile for the app: the hero and the sections the owner shares */
+        get: operations["Profile readBike"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/profiles/{handle}/bikes/{id}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One page of the Services the bike page did not carry, newest first */
+        get: operations["Profile readBikeServices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/follows/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Discoverable riders by handle prefix or a word of their name; the first 20 */
+        get: operations["Follow search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/follows/following": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whom I follow and whom I asked, one list ordered by name */
+        get: operations["Follow following"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/follows/followers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who asked me (PENDING) and who follows me (ACCEPTED), one list ordered by name */
+        get: operations["Follow followers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/follows/followers/{userId}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a Follow Request: the asker is told and their garage opens */
+        post: operations["Follow accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/follows/followers/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Decline a request or remove a follower; nobody is told, the same 204 with no row */
+        delete: operations["Follow removeFollower"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/follows/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Follow a Public profile or ask to follow a Followers-only one; a row that already stands is answered as it is */
+        post: operations["Follow follow"];
+        /** Withdraw a request or stop following somebody; the same 204 with no row to remove */
+        delete: operations["Follow unfollow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preview/u/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The SPA shell with a Public Profile's garage card in <head>; neutral when closed */
+        get: operations["Preview garageShell"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preview/u/{handle}/image.jpg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The garage card: the first Shared Bike with a photo, 1200x630 JPEG */
+        get: operations["Preview garageImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preview/u/{handle}/{bikeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The SPA shell with one bike's card in <head>; neutral when closed */
+        get: operations["Preview bikeShell"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preview/u/{handle}/{bikeId}/image.jpg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One bike's card: its photo letterboxed to 1200x630 JPEG */
+        get: operations["Preview bikeImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preview/r/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The SPA shell with a Report's card in <head>; neutral once the link is closed */
+        get: operations["Preview reportShell"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preview/r/{token}/image.jpg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A Report's card: the frozen bike photo letterboxed to 1200x630 JPEG */
+        get: operations["Preview reportImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preview/image.jpg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The neutral BikeCheck card every closed page points at */
+        get: operations["Preview neutralImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1297,6 +1752,53 @@ export interface components {
              */
             tire_pressure_unit: "bar" | "psi";
         };
+        DeviceTokenDto: {
+            /** @example caYcjw...:APA91b... */
+            token: string;
+            /** @example android */
+            platform: string;
+        };
+        ResponseNotificationDto: {
+            /** @example 1 */
+            id: number;
+            /** @example strava_unmatched_activity */
+            type: string;
+            /** @example Nepřiřazená aktivita ze Stravy */
+            title: string;
+            /** @example Kolo "Trek Fuel EX" ještě nemáš přiřazené */
+            body: string;
+            /**
+             * @example {
+             *       "gearId": "b12345"
+             *     }
+             */
+            payload: Record<string, never> | null;
+            /** @example false */
+            is_read: boolean;
+            /** @example null */
+            read_at: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2026-06-16T12:00:00.000Z
+             */
+            created_at: string;
+        };
+        RegisterResponseDto: {
+            /** @example jaffa@jaffa.com */
+            email: string;
+        };
+        ResendVerificationDto: {
+            /** @example jaffa@jaffa.com */
+            email: string;
+        };
+        VerifyEmailDto: {
+            /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6... */
+            token: string;
+        };
+        VerifyEmailResponseDto: {
+            /** @example jaffa@jaffa.com */
+            email: string;
+        };
         ChangePasswordDto: {
             /** @example currentPassword123 */
             currentPassword: string;
@@ -1332,6 +1834,8 @@ export interface components {
             bikename?: string;
             /** @example 2024 */
             year?: number;
+            /** @example true */
+            is_shared?: boolean;
             /** @example Serviced bike, top health */
             description?: string;
             /** @example 29" */
@@ -1435,6 +1939,16 @@ export interface components {
             strava_gear_id: Record<string, never> | null;
             /** @example My Enduro Bike */
             strava_name: Record<string, never> | null;
+            /**
+             * @description The Setup Profile the bike is ridden at right now
+             * @example 12
+             */
+            active_setup_profile_id: Record<string, never> | null;
+            /**
+             * @description Whether the bike goes out on the owner's Public Profile
+             * @example true
+             */
+            is_shared: boolean;
         };
         SearchBikeExternalResponseDto: {
             /** @example Orbea Rallon */
@@ -1819,6 +2333,11 @@ export interface components {
             component_mounted_id: number;
             /** @example 12 */
             component_type_id: number;
+            /**
+             * @description The Component Category the part sits in, which a service link names
+             * @example 2
+             */
+            component_group_id: number;
             /** @example Chain */
             component_type: string;
             /** @example component.chain */
@@ -1850,7 +2369,7 @@ export interface components {
              */
             current: number;
             /**
-             * @description The Service Interval on that axis, including any Extension in force
+             * @description The Service Interval in force on that axis: the owner's own where they set one
              * @example 4000
              */
             interval: number;
@@ -1864,6 +2383,31 @@ export interface components {
              * @enum {string}
              */
             level: "very_good" | "good" | "warning" | "critical" | "overdue";
+            /**
+             * @description The bike's own plan on that axis, which clearing the override restores
+             * @example 4000
+             */
+            default_interval: number;
+            /**
+             * @description The owner's own Service Interval, or null where the reading follows the bike's plan
+             * @example 2500
+             */
+            interval_override: number | null;
+            /**
+             * @description False silences this pairing's announcements and nothing else
+             * @example true
+             */
+            notify: boolean;
+            /**
+             * Format: date-time
+             * @description When the part went on the bike, which the reading is judged against
+             */
+            mounted_at: string | null;
+            /**
+             * @description The action replaces the part rather than servicing it, which names the button that records it
+             * @example true
+             */
+            replace_action: boolean;
         };
         Response_GarageTrackedActionDto: {
             /**
@@ -1875,6 +2419,11 @@ export interface components {
             component_mounted_id: number;
             /** @example 12 */
             component_type_id: number;
+            /**
+             * @description The Component Category the part sits in, which a service link names
+             * @example 2
+             */
+            component_group_id: number;
             /** @example Chain */
             component_type: string;
             /** @example component.chain */
@@ -1906,7 +2455,7 @@ export interface components {
              */
             current: number;
             /**
-             * @description The Service Interval on that axis, including any Extension in force
+             * @description The Service Interval in force on that axis: the owner's own where they set one
              * @example 4000
              */
             interval: number;
@@ -1920,6 +2469,31 @@ export interface components {
              * @enum {string}
              */
             level: "very_good" | "good" | "warning" | "critical" | "overdue";
+            /**
+             * @description The bike's own plan on that axis, which clearing the override restores
+             * @example 4000
+             */
+            default_interval: number;
+            /**
+             * @description The owner's own Service Interval, or null where the reading follows the bike's plan
+             * @example 2500
+             */
+            interval_override: number | null;
+            /**
+             * @description False silences this pairing's announcements and nothing else
+             * @example true
+             */
+            notify: boolean;
+            /**
+             * Format: date-time
+             * @description When the part went on the bike, which the reading is judged against
+             */
+            mounted_at: string | null;
+            /**
+             * @description The action replaces the part rather than servicing it, which names the button that records it
+             * @example true
+             */
+            replace_action: boolean;
             /** @example Santa Cruz */
             bike_brand: string;
             /** @example Hightower */
@@ -1927,36 +2501,30 @@ export interface components {
             /** @example 2022 */
             year: number | null;
         };
-        DeviceTokenDto: {
-            /** @example caYcjw...:APA91b... */
-            token: string;
-            /** @example android */
-            platform: string;
+        SetTrackedActionIntervalDto: {
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 42 */
+            event_action_id: number;
+            /**
+             * @description Null clears the override, putting the bike's plan back
+             * @example 2500
+             */
+            interval_override: number | null;
         };
-        ResponseNotificationDto: {
-            /** @example 1 */
-            id: number;
-            /** @example strava_unmatched_activity */
-            type: string;
-            /** @example Nepřiřazená aktivita ze Stravy */
-            title: string;
-            /** @example Kolo "Trek Fuel EX" ještě nemáš přiřazené */
-            body: string;
-            /**
-             * @example {
-             *       "gearId": "b12345"
-             *     }
-             */
-            payload: Record<string, never> | null;
+        PostponeTrackedActionDto: {
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 42 */
+            event_action_id: number;
+        };
+        SetTrackedActionNotifyDto: {
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 42 */
+            event_action_id: number;
             /** @example false */
-            is_read: boolean;
-            /** @example null */
-            read_at: Record<string, never> | null;
-            /**
-             * Format: date-time
-             * @example 2026-06-16T12:00:00.000Z
-             */
-            created_at: string;
+            notify: boolean;
         };
         CustomComponentsDto: {
             /** @example 15 */
@@ -2053,6 +2621,16 @@ export interface components {
             component_desc: string | null;
             /** @example front */
             position: string | null;
+            /**
+             * @description The damper has a high-speed rebound adjuster beside the low-speed one
+             * @example false
+             */
+            dual_rebound: boolean;
+            /**
+             * @description The damper has a high-speed compression adjuster beside the low-speed one
+             * @example false
+             */
+            dual_compression: boolean;
             /** @example Mounted after spring service */
             note: string | null;
             /**
@@ -2125,6 +2703,10 @@ export interface components {
             component_desc?: string | null;
             /** @example front */
             position?: string | null;
+            /** @example false */
+            dual_rebound?: boolean;
+            /** @example false */
+            dual_compression?: boolean;
             /**
              * Format: date-time
              * @example 2024-04-01T00:00:00.000Z
@@ -2475,6 +3057,11 @@ export interface components {
              */
             shock_compression_hs: Record<string, never> | null;
             /**
+             * @description The profile the bike is ridden at right now
+             * @example true
+             */
+            is_active: boolean;
+            /**
              * Format: date-time
              * @example 2026-09-11T12:00:00.000Z
              */
@@ -2555,6 +3142,392 @@ export interface components {
              * @example 1
              */
             shock_compression_hs?: Record<string, never> | null;
+        };
+        ProfileStatsDto: {
+            /** @example 128 */
+            views: number;
+            /** @example 3 */
+            followers: number;
+            /** @example 1 */
+            pending_requests: number;
+        };
+        ResponseProfileDto: {
+            /** @example jarda-novak */
+            handle: Record<string, never> | null;
+            /**
+             * @example OFF
+             * @enum {string}
+             */
+            visibility: "OFF" | "FOLLOWERS" | "PUBLIC";
+            /** @example true */
+            share_components: boolean;
+            /** @example true */
+            share_setup: boolean;
+            /** @example true */
+            share_history: boolean;
+            /** @example false */
+            share_costs: boolean;
+            stats: components["schemas"]["ProfileStatsDto"];
+            /**
+             * @description Only while no row exists
+             * @example jarda-novak
+             */
+            suggested_handle: Record<string, never> | null;
+            /** @example https://app.bikecheck.cloud */
+            public_origin: string;
+        };
+        UpdateProfileDto: {
+            /**
+             * @description Stored lowercase
+             * @example jarda-novak
+             */
+            handle?: string;
+            /** @enum {string} */
+            visibility?: "OFF" | "FOLLOWERS" | "PUBLIC";
+            /** @example true */
+            share_components?: boolean;
+            /** @example true */
+            share_setup?: boolean;
+            /** @example true */
+            share_history?: boolean;
+            /**
+             * @description Meaningful only with share_history
+             * @example false
+             */
+            share_costs?: boolean;
+        };
+        ProfileOwnerDto: {
+            /** @example jarda-novak */
+            handle: string;
+            /** @example Jarda Novák */
+            name: Record<string, never> | null;
+            /** @example https://lh3.googleusercontent.com/a/photo */
+            avatar_url: Record<string, never> | null;
+        };
+        ProfileSharesDto: {
+            /** @example true */
+            components: boolean;
+            /** @example true */
+            setup: boolean;
+            /** @example true */
+            history: boolean;
+            /** @example false */
+            costs: boolean;
+        };
+        ProfileTotalsDto: {
+            /** @example 3 */
+            bikes: number;
+            /** @example 12480 */
+            distance_km: number;
+            /** @example 32 */
+            components: Record<string, never> | null;
+            /** @example 26 */
+            services: Record<string, never> | null;
+        };
+        ProfileBikeTypeDto: {
+            /** @example bikeType.enduro */
+            i18n_key: Record<string, never> | null;
+            /** @example Enduro */
+            name: string;
+        };
+        ProfileBikeCardDto: {
+            /** @example 15 */
+            id: number;
+            /**
+             * @description The nickname its owner gave it
+             * @example Rallon
+             */
+            name: Record<string, never> | null;
+            /** @example Orbea */
+            brand: string;
+            /** @example Rallon M10 */
+            model: Record<string, never> | null;
+            /** @example 2024 */
+            year: Record<string, never> | null;
+            type: components["schemas"]["ProfileBikeTypeDto"] | null;
+            /** @example https://storage.example.com/bikes/rallon.webp */
+            image_url: Record<string, never> | null;
+            /** @example 4187 */
+            distance_km: number;
+            /** @example 32 */
+            components: Record<string, never> | null;
+            /** @example 26 */
+            services: Record<string, never> | null;
+        };
+        ProfileGarageDto: {
+            /** @example 2026-09-12T00:00:00.000Z */
+            updated_at: string;
+            shares: components["schemas"]["ProfileSharesDto"];
+            totals: components["schemas"]["ProfileTotalsDto"];
+            /** @example CZK */
+            currency: string;
+            /**
+             * @example bar
+             * @enum {string}
+             */
+            tire_pressure_unit: "bar" | "psi";
+            bikes: components["schemas"]["ProfileBikeCardDto"][];
+        };
+        ResponsePublicProfileGarageDto: {
+            owner: components["schemas"]["ProfileOwnerDto"];
+            /**
+             * @example PUBLIC
+             * @enum {string}
+             */
+            visibility: "OFF" | "FOLLOWERS" | "PUBLIC";
+            /**
+             * @example NONE
+             * @enum {string}
+             */
+            relation: "SELF" | "NONE" | "PENDING" | "FOLLOWING";
+            /** @description null = header only */
+            garage: components["schemas"]["ProfileGarageDto"] | null;
+        };
+        ProfileCatalogueNameDto: {
+            /** @example component.fork */
+            i18n_key: Record<string, never> | null;
+            /** @example Fork */
+            name: string;
+        };
+        ProfileMountedPartDto: {
+            /** @example 55 */
+            id: number;
+            type: components["schemas"]["ProfileCatalogueNameDto"];
+            /**
+             * @description What the owner called it
+             * @example Fox 38 Factory GRIP2
+             */
+            description: Record<string, never> | null;
+            /** @example front */
+            position: Record<string, never> | null;
+            /** @example 1200 */
+            distance_km: Record<string, never> | null;
+            /** @example 4800 */
+            time_min: Record<string, never> | null;
+        };
+        ProfileComponentGroupDto: {
+            category: components["schemas"]["ProfileCatalogueNameDto"];
+            parts: components["schemas"]["ProfileMountedPartDto"][];
+        };
+        ProfileClicksDto: {
+            /** @example 8 */
+            rebound_ls: Record<string, never> | null;
+            /** @example 3 */
+            rebound_hs: Record<string, never> | null;
+            /** @example 10 */
+            compression_ls: Record<string, never> | null;
+            /** @example 2 */
+            compression_hs: Record<string, never> | null;
+        };
+        ProfileLegDto: {
+            /** @example 85 */
+            pressure_psi: Record<string, never> | null;
+            /** @example 20 */
+            sag_percent: Record<string, never> | null;
+            /** @example 2 */
+            tokens: Record<string, never> | null;
+            clicks: components["schemas"]["ProfileClicksDto"];
+        };
+        ProfileSetupProfileDto: {
+            /** @example 12 */
+            id: number;
+            /** @example Trail */
+            name: string;
+            /**
+             * @description The profile the bike is ridden at; exactly one, listed first
+             * @example true
+             */
+            is_active: boolean;
+            /** @example 24.5 */
+            front_tire_psi: Record<string, never> | null;
+            /** @example 27 */
+            rear_tire_psi: Record<string, never> | null;
+            front_tire: components["schemas"]["ProfileMountedPartDto"] | null;
+            rear_tire: components["schemas"]["ProfileMountedPartDto"] | null;
+            /** @description null unless has_front_suspension */
+            fork: components["schemas"]["ProfileLegDto"] | null;
+            /** @description null unless has_rear_suspension */
+            shock: components["schemas"]["ProfileLegDto"] | null;
+        };
+        ProfileMoneyDto: {
+            /** @example 1200 */
+            amount: number;
+            /** @example CZK */
+            currency: string;
+        };
+        ProfileHistoryTotalsDto: {
+            /** @example 26 */
+            services: number;
+            /**
+             * @description Replacements counted per part, not per Service (ADR 0003)
+             * @example 9
+             */
+            replacements: number;
+            spend?: components["schemas"]["ProfileMoneyDto"];
+        };
+        ProfileServiceDto: {
+            /** @example 88 */
+            id: number;
+            /**
+             * @description Service Date
+             * @example 2026-08-15T00:00:00.000Z
+             */
+            date: Record<string, never> | null;
+            /**
+             * @description Any of its actions swapped a part out
+             * @example true
+             */
+            is_replacement: boolean;
+            actions: components["schemas"]["ProfileCatalogueNameDto"][];
+            /** @description Component types touched, each once */
+            parts: components["schemas"]["ProfileCatalogueNameDto"][];
+            cost?: components["schemas"]["ProfileMoneyDto"];
+        };
+        ProfileHistoryDto: {
+            totals: components["schemas"]["ProfileHistoryTotalsDto"];
+            services: components["schemas"]["ProfileServiceDto"][];
+            /**
+             * @description Every Service of the bike, ignoring the page
+             * @example 26
+             */
+            total_count: number;
+        };
+        ProfileBikeDto: {
+            /** @example 15 */
+            id: number;
+            /**
+             * @description The nickname its owner gave it
+             * @example Rallon
+             */
+            name: Record<string, never> | null;
+            /** @example Orbea */
+            brand: string;
+            /** @example Rallon M10 */
+            model: Record<string, never> | null;
+            /** @example 2024 */
+            year: Record<string, never> | null;
+            type: components["schemas"]["ProfileBikeTypeDto"] | null;
+            /** @example https://storage.example.com/bikes/rallon.webp */
+            image_url: Record<string, never> | null;
+            /** @example 4187 */
+            distance_km: number;
+            /** @example 26 */
+            services: Record<string, never> | null;
+            /** @example 2026-09-12T00:00:00.000Z */
+            updated_at: string;
+            /** @example 15000 */
+            time_min: number;
+            /** @example false */
+            ebike: boolean;
+            /** @example carbon */
+            frame_material: Record<string, never> | null;
+            /** @example true */
+            has_front_suspension: boolean;
+            /** @example true */
+            has_rear_suspension: boolean;
+            /** @description null = section off */
+            components: components["schemas"]["ProfileComponentGroupDto"][] | null;
+            /** @description null = section off; [] = no profile yet */
+            setup: components["schemas"]["ProfileSetupProfileDto"][] | null;
+            /** @description null = section off */
+            history: components["schemas"]["ProfileHistoryDto"] | null;
+        };
+        ResponseProfileBikeDto: {
+            owner: components["schemas"]["ProfileOwnerDto"];
+            /**
+             * @example PUBLIC
+             * @enum {string}
+             */
+            visibility: "OFF" | "FOLLOWERS" | "PUBLIC";
+            /**
+             * @example NONE
+             * @enum {string}
+             */
+            relation: "SELF" | "NONE" | "PENDING" | "FOLLOWING";
+            /** @example CZK */
+            currency: string;
+            /**
+             * @example bar
+             * @enum {string}
+             */
+            tire_pressure_unit: "bar" | "psi";
+            bike: components["schemas"]["ProfileBikeDto"];
+        };
+        ResponseProfileServicesDto: {
+            services: components["schemas"]["ProfileServiceDto"][];
+            /** @example 26 */
+            total_count: number;
+        };
+        ResponseProfileGarageDto: {
+            owner: components["schemas"]["ProfileOwnerDto"];
+            /**
+             * @example PUBLIC
+             * @enum {string}
+             */
+            visibility: "OFF" | "FOLLOWERS" | "PUBLIC";
+            /**
+             * @example NONE
+             * @enum {string}
+             */
+            relation: "SELF" | "NONE" | "PENDING" | "FOLLOWING";
+            /** @description null = header only */
+            garage: components["schemas"]["ProfileGarageDto"] | null;
+        };
+        FollowingRowDto: {
+            /** @example jarda-novak */
+            handle: string;
+            /** @example Jarda Novák */
+            name: Record<string, never> | null;
+            /** @example https://lh3.googleusercontent.com/a/photo */
+            avatar_url: Record<string, never> | null;
+            /**
+             * @example PUBLIC
+             * @enum {string}
+             */
+            visibility: "OFF" | "FOLLOWERS" | "PUBLIC";
+            /**
+             * @example NONE
+             * @enum {string}
+             */
+            relation: "NONE" | "PENDING" | "FOLLOWING";
+        };
+        ResponseFollowSearchDto: {
+            results: components["schemas"]["FollowingRowDto"][];
+            /**
+             * @description True when more matched than the 20 answered
+             * @example false
+             */
+            capped: boolean;
+        };
+        FollowerRowDto: {
+            /** @example 42 */
+            user_id: number;
+            /**
+             * @description Null for a follower with no profile
+             * @example jarda-novak
+             */
+            handle: Record<string, never> | null;
+            /** @example Jarda Novák */
+            name: Record<string, never> | null;
+            /** @example https://lh3.googleusercontent.com/a/photo */
+            avatar_url: Record<string, never> | null;
+            /**
+             * @example PENDING
+             * @enum {string}
+             */
+            status: "PENDING" | "ACCEPTED";
+            /**
+             * @description When they asked or followed
+             * @example 2026-09-20T10:00:00.000Z
+             */
+            created_at: string;
+        };
+        ResponseFollowDto: {
+            /**
+             * @example FOLLOWING
+             * @enum {string}
+             */
+            relation: "PENDING" | "FOLLOWING";
         };
     };
     responses: never;
@@ -2670,6 +3643,84 @@ export interface operations {
             };
         };
     };
+    "Notification registerFcmToken": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Notification list": {
+        parameters: {
+            query?: {
+                unread?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseNotificationDto"][];
+                };
+            };
+        };
+    };
+    "Notification markAllViewed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Notification markRead": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "Auth test": {
         parameters: {
             query?: never;
@@ -2705,8 +3756,65 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserResponseDto"];
+                    "application/json": components["schemas"]["RegisterResponseDto"];
                 };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Auth resendVerification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Auth verifyEmail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerifyEmailResponseDto"];
+                };
+            };
+            /** @description VERIFICATION_TOKEN_INVALID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2805,6 +3913,13 @@ export interface operations {
                     "application/json": components["schemas"]["UserResponseDto"];
                 };
             };
+            /** @description EMAIL_NOT_VERIFIED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     "Auth googleAuth": {
@@ -2844,6 +3959,20 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["UserResponseDto"];
                 };
+            };
+            /** @description EMAIL_NOT_VERIFIED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GOOGLE_EMAIL_UNVERIFIED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3458,7 +4587,7 @@ export interface operations {
             };
         };
     };
-    "Notification registerFcmToken": {
+    "ServiceTracking setTrackedActionInterval": {
         parameters: {
             query?: never;
             header?: never;
@@ -3467,55 +4596,63 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeviceTokenDto"];
+                "application/json": components["schemas"]["SetTrackedActionIntervalDto"];
             };
         };
         responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    "Notification list": {
-        parameters: {
-            query?: {
-                unread?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResponseNotificationDto"][];
+                    "application/json": components["schemas"]["Response_TrackedActionDto"];
                 };
             };
         };
     };
-    "Notification markRead": {
+    "ServiceTracking postponeTrackedAction": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                id: string;
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostponeTrackedActionDto"];
+            };
+        };
         responses: {
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Response_TrackedActionDto"];
+                };
+            };
+        };
+    };
+    "ServiceTracking setTrackedActionNotify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetTrackedActionNotifyDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_TrackedActionDto"];
+                };
             };
         };
     };
@@ -4483,6 +5620,576 @@ export interface operations {
             };
             /** @description Bike is archived, or the name is already taken on it */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Setup activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_SetupProfileDto"];
+                };
+            };
+            /** @description Profile not found or not the caller's */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bike is archived */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Profile getMine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseProfileDto"];
+                };
+            };
+        };
+    };
+    "Profile updateMine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseProfileDto"];
+                };
+            };
+            /** @description HANDLE_TOO_SHORT | HANDLE_TOO_LONG | HANDLE_INVALID_CHARS | HANDLE_LEADING_DASH | HANDLE_RESERVED | HANDLE_REQUIRED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HANDLE_TAKEN */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Profile readPublic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponsePublicProfileGarageDto"];
+                };
+            };
+            /** @description Off, followers only, no profile or a handle nobody holds - one answer */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Profile readPublicBike": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseProfileBikeDto"];
+                };
+            };
+            /** @description Not PUBLIC, or a bike that is unknown, unshared or archived - one answer */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Profile readPublicBikeServices": {
+        parameters: {
+            query?: {
+                /** @description Default 20, at most 100 */
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                handle: string;
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseProfileServicesDto"];
+                };
+            };
+            /** @description The same as the web bike route, and a history the owner keeps in */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Profile read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseProfileGarageDto"];
+                };
+            };
+            /** @description Off, no profile or a handle nobody holds - one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Profile readBike": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseProfileBikeDto"];
+                };
+            };
+            /** @description Not readable by the rule, or a bike that is unknown, unshared or archived - one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Profile readBikeServices": {
+        parameters: {
+            query?: {
+                /** @description Default 20, at most 100 */
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                handle: string;
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseProfileServicesDto"];
+                };
+            };
+            /** @description The same as the bike route, and a history the owner keeps in */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Follow search": {
+        parameters: {
+            query: {
+                /** @description 2 to 50 characters once trimmed */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseFollowSearchDto"];
+                };
+            };
+            /** @description QUERY_TOO_SHORT | QUERY_TOO_LONG */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Follow following": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowingRowDto"][];
+                };
+            };
+        };
+    };
+    "Follow followers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowerRowDto"][];
+                };
+            };
+        };
+    };
+    "Follow accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No PENDING row from this user */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Follow removeFollower": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Follow follow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseFollowDto"];
+                };
+            };
+            /** @description CANNOT_FOLLOW_SELF */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Off, no profile or a handle nobody holds - one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Follow unfollow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Preview garageShell": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Preview garageImage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Preview bikeShell": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+                bikeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Preview bikeImage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+                bikeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Preview reportShell": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Preview reportImage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Preview neutralImage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

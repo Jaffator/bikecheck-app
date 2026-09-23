@@ -2,6 +2,7 @@
 import { useState, type ReactElement } from "react";
 import { Anchor, Button, Drawer, Group, Loader, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useGearLinking, useLinkStravaGear } from "@/features/strava/strava.queries";
 import type { GearLink, GearLinkingBike } from "@/features/strava/strava.types";
@@ -79,12 +80,13 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
       // Matches the header background to drawer content.
       styles={{
         content: {
+          position: "relative",
           backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
           maxHeight: "85dvh",
         },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
         // Pins actions below the scrollable list.
         body: {
           flex: 1,
@@ -101,6 +103,8 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
         },
       }}
     >
+      <SheetGrabber onClose={onClose} floating />
+
       <div className="align-center mb-4 -ml-2 mt-5 flex w-full justify-center">
         <StravaConnectBike
           size={40}

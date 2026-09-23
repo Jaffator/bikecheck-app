@@ -6,6 +6,7 @@ import { useState, type ReactElement } from "react";
 import { ActionIcon, Drawer, Group, Loader, Stack, Text } from "@mantine/core";
 import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useCustomComponentTypes, useDeleteComponentType } from "@/features/components/components.queries";
 import type { CustomComponentType } from "@/features/components/components.types";
@@ -41,12 +42,19 @@ export function CustomPartsDrawer({ opened, onClose }: CustomPartsDrawerProps): 
         title={t("customParts.title")}
         overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
         styles={{
-          content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto", maxHeight: "88dvh" },
-          header: { backgroundColor: "var(--mantine-color-cards-6)" },
+          content: {
+            position: "relative",
+            backgroundColor: "var(--mantine-color-cards-6)",
+            height: "auto",
+            maxHeight: "88dvh",
+          },
+          header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
           body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
           title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
         }}
       >
+        <SheetGrabber onClose={onClose} floating />
+
         {isLoading ? (
           <Group justify="center" py="xl">
             <Loader size="sm" color="primary.6" />

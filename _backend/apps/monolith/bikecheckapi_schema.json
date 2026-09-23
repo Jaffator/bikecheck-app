@@ -1475,6 +1475,37 @@
         ]
       }
     },
+    "/api/service-tracking/postpone": {
+      "post": {
+        "operationId": "ServiceTracking postponeTrackedAction",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostponeTrackedActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_TrackedActionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "ServiceTracking"
+        ]
+      }
+    },
     "/api/service-tracking/notify": {
       "post": {
         "operationId": "ServiceTracking setTrackedActionNotify",
@@ -5542,6 +5573,23 @@
           "component_mounted_id",
           "event_action_id",
           "interval_override"
+        ]
+      },
+      "PostponeTrackedActionDto": {
+        "type": "object",
+        "properties": {
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          }
+        },
+        "required": [
+          "component_mounted_id",
+          "event_action_id"
         ]
       },
       "SetTrackedActionNotifyDto": {

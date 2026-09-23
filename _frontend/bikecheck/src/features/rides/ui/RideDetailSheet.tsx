@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { Drawer, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
+import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { RouteMap } from "@/components/RouteMap";
 import type { Ride } from "@/features/rides/rides.types";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
@@ -44,18 +45,22 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
+          position: "relative",
           backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
         body: { flex: 1, display: "flex", flexDirection: "column" },
         header: {
+          paddingTop: SHEET_GRABBER_HEADER_PADDING,
           backgroundColor: "var(--mantine-color-cards-6)",
           marginBottom: "1.5rem",
         },
         title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
     >
+      <SheetGrabber onClose={onClose} floating />
+
       {ride !== null && (
         <Stack gap={20} pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
           <Stack gap={4}>

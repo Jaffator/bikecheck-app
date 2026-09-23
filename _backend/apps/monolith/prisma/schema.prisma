@@ -535,6 +535,10 @@ model tracked_action_state {
   // False silences this pairing's announcements and nothing else - the reading still reads,
   // the colour still warns and the dashboard still lists it. Survives a Replacement.
   notify                  Boolean            @default(true)
+  // The band the owner put this job off in. The dashboard skips the pairing while the
+  // reading still stands in that same band, so the next crossing is what brings it back -
+  // no expiry to run and nothing to clear, since any move off the band ends it.
+  postponed_band          Int?
   created_at              DateTime           @default(now())
   updated_at              DateTime           @updatedAt
   components_mounted      components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade)

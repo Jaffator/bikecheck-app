@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
 import { FileText, Image as ImageIcon, NotebookText, Paperclip, Share2, Trash2, X } from "lucide-react";
 import dayjs from "dayjs";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -112,18 +113,7 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         },
       }}
     >
-      {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        w={36}
-        h={4}
-        style={{
-          borderRadius: 9999,
-          backgroundColor: "var(--color-border-subtle)",
-          flexShrink: 0,
-        }}
-      />
+      <SheetGrabber onClose={close} />
 
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Stack gap="lg" pb="md">

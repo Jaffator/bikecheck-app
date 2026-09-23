@@ -23,6 +23,7 @@ import { CalendarDays, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Lock } from "lucide-react";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import { ApiError } from "@/api/client";
 import {
   useBikeComponents,
@@ -315,20 +316,9 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
     >
       {/* The same grab bar and heading the detail sheet wears, so the form reads as the
           next layer of it rather than as a different screen. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        mb="md"
-        w={36}
-        h={4}
-        style={{
-          borderRadius: 9999,
-          backgroundColor: "var(--color-border-subtle)",
-          flexShrink: 0,
-        }}
-      />
+      <SheetGrabber onClose={onClose} />
 
-      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mb="md">
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mt="md" mb="md">
         <Text fz={20} fw={700} c="text.6" lineClamp={2}>
           {editing
             ? t("bikeComponents.editTitle", {

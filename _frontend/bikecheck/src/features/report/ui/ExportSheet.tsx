@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "
 import { ActionIcon, Box, Button, Drawer, Group, Loader, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Check, Link2, Share2, Trash2, X } from "lucide-react";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "@/features/report/report.queries";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { ReportDocument } from "./ReportDocument";
@@ -393,6 +394,8 @@ function Sheet({
         },
       }}
     >
+      <SheetGrabber onClose={onClose} />
+
       <Group justify="space-between" align="center" px="md" pt="md" wrap="nowrap" style={{ flexShrink: 0 }}>
         <Text component="div" fw={700} fz={20} c="text.6">
           {" "}

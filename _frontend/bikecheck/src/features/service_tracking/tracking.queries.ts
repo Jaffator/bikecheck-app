@@ -10,11 +10,13 @@ import {
 import {
   getBikeTrackedActions,
   getGarageTrackedActions,
+  postponeTrackedAction,
   setTrackedActionInterval,
   setTrackedActionNotify,
 } from "./tracking.api";
 import type {
   GarageTrackedAction,
+  PostponeTrackedActionInput,
   SetTrackedActionIntervalInput,
   SetTrackedActionNotifyInput,
   TrackedAction,
@@ -60,6 +62,19 @@ export function useSetTrackedActionNotify(): UseMutationResult<TrackedAction, Er
 
   return useMutation({
     mutationFn: (input: SetTrackedActionNotifyInput) => setTrackedActionNotify(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
+    },
+  });
+}
+
+// Putting a job off moves no reading either — what it moves is which list the job appears
+// on, so the garage read has to be taken again for the row to go.
+export function usePostponeTrackedAction(): UseMutationResult<TrackedAction, Error, PostponeTrackedActionInput> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: PostponeTrackedActionInput) => postponeTrackedAction(input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
     },

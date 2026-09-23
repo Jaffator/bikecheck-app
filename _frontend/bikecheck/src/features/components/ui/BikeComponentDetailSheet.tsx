@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Info, Pencil, X } from "lucide-react";
 import type { TFunction } from "i18next";
+import { SheetGrabber } from "@/components/SheetGrabber";
 import type { BikeComponent } from "@/features/components/components.types";
 import {
   componentTypeName,
@@ -67,14 +68,7 @@ export function BikeComponentDetailSheet({ component, onClose, onEdit }: BikeCom
         body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
       }}
     >
-      {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        w={36}
-        h={4}
-        style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)", flexShrink: 0 }}
-      />
+      <SheetGrabber onClose={onClose} />
 
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {shown !== null && (
