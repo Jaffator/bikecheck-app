@@ -36,7 +36,7 @@ export function UserProfileBikeCard({ bike, onOpen }: UserProfileBikeCardProps):
         event.preventDefault();
         onOpen();
       }}
-      className="active:scale-[0.985]"
+      className="hover-veil active:scale-[0.985]"
       style={{
         overflow: "hidden",
         backgroundColor: "var(--mantine-color-cards-6)",

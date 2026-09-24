@@ -124,7 +124,7 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
         position: "relative",
       }}
       // Tailwind's active: variant handles the pressed state without tracking it.
-      className="bike-card active:scale-[0.985]"
+      className="bike-card hover-veil active:scale-[0.985]"
     >
       {/* Its own layer rather than a background on the card: the photo and the content sit
           on their own opaque backgrounds and would paint over a card-level gradient,

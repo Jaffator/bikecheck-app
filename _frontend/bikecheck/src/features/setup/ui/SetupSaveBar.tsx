@@ -6,7 +6,7 @@ import { Box, Button, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { CONTENT_MAX_WIDTH } from "@/layout/contentWidth";
+import { CONTENT_MAX_WIDTH, PINNED_BAR_LEFT } from "@/layout/contentWidth";
 
 interface SetupSaveBarProps {
   // Nothing has changed: the bar waits off-screen rather than sitting there disabled.
@@ -24,9 +24,9 @@ export function SetupSaveBar({ visible, saving, saveFailed, onSave }: SetupSaveB
     <Box
       // Exposes the fixed footer to focus-scrolling hooks.
       data-fixed-footer
+      left={PINNED_BAR_LEFT}
       style={{
         position: "fixed",
-        left: 0,
         right: 0,
         bottom: 0,
         // Rides above the software keyboard, which the webview does not resize for; off-screen

@@ -57,7 +57,8 @@ export function ServiceHistoryCard({
         transition: "transform 0.12s ease",
         ...(flat ? {} : SERVICE_CARD_SURFACE),
       }}
-      className="active:scale-[0.985]"
+      // A flat row takes the shared card's corners on desktop, so its hover veil stays inside them.
+      className={`hover-veil active:scale-[0.985] ${flat ? "desktop:rounded-[inherit]" : ""}`}
     >
       <Stack gap={5}>
         {/* Which bike it was and when, with the price at the far edge. */}

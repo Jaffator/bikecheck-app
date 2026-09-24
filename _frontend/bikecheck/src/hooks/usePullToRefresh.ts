@@ -1,5 +1,6 @@
 // Lets a finger pull a list that is already at its top to reload it.
 import { useEffect, useRef, useState } from "react";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // How far the finger has to travel before letting go reloads rather than springs back.
 const PULL_TRIGGER_PX = 70;
@@ -39,6 +40,7 @@ function publish(element: HTMLElement, px: number, settling: boolean): void {
 export function usePullToRefresh(onRefresh: () => Promise<unknown>): PullToRefresh {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const isDesktop = useIsDesktop();
 
   // The listeners are attached once per element, so everything they read at touch time
   // lives in a ref rather than in the closure they were created with.
@@ -49,7 +51,8 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>): PullToRefre
   }, [onRefresh]);
 
   useEffect(() => {
-    if (element === null) return;
+    // Desktop reloads on window focus instead (ADR 0035).
+    if (element === null || isDesktop) return;
 
     let refreshingNow = false;
     // Where the finger went down, or null between gestures and once a gesture has turned
@@ -155,7 +158,7 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>): PullToRefre
       element.removeEventListener("touchend", onTouchEnd);
       element.removeEventListener("touchcancel", onTouchCancel);
     };
-  }, [element]);
+  }, [element, isDesktop]);
 
   return { attach: setElement, refreshing };
 }

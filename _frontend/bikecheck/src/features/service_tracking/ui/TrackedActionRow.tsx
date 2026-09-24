@@ -115,7 +115,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
             event.preventDefault();
             onOpen();
           }}
-          className="active:scale-[0.985]"
+          className="hover-veil active:scale-[0.985]"
           style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
         >
           {reading}

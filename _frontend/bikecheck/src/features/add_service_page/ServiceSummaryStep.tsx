@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { Banknote, Calendar, Check, NotepadText, Paperclip, Pencil, Plus, X } from "lucide-react";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
+import { PINNED_BAR_LEFT, PINNED_BAR_WIDTH } from "@/layout/contentWidth";
 import { useUploadServiceAttachment } from "@/features/service/service.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
@@ -337,9 +338,9 @@ export function ServiceSummaryStep({
         the hub (ADR 0006, ADR 0009). */}
       <Box
         data-fixed-footer
+        left={PINNED_BAR_LEFT}
         style={{
           position: "fixed",
-          left: 0,
           right: 0,
           bottom: 0,
           // Rides above the software keyboard, which the webview does not resize for.
@@ -367,7 +368,7 @@ export function ServiceSummaryStep({
         />
         <Stack
           gap={6}
-          w="92%"
+          w={PINNED_BAR_WIDTH}
           px="md"
           py="sm"
           className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"

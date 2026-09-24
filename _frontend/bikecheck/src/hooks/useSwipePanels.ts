@@ -1,5 +1,6 @@
 // Lets a finger drag horizontally between panels that sit side by side in a track.
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // How far a finger travels before the gesture commits to being a swipe rather than a
 // scroll. Below this nothing moves, so a vertical flick never nudges the panels.
@@ -63,6 +64,7 @@ export function useSwipePanels(index: number, count: number, onSelect: (next: nu
   const [offset, setOffset] = useState(0);
   const [settling, setSettling] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const isDesktop = useIsDesktop();
 
   // The track keeps both panels drawn until it has stopped moving.
   useEffect(() => {
@@ -71,18 +73,23 @@ export function useSwipePanels(index: number, count: number, onSelect: (next: nu
     return () => window.clearTimeout(timer);
   }, [settling]);
 
-  const onPointerDown = useCallback((event: PointerEvent<HTMLDivElement>): void => {
-    // A right-click drag is not a swipe.
-    if (event.pointerType === "mouse" && event.buttons !== 1) return;
-    gesture.current = {
-      x: event.clientX,
-      y: event.clientY,
-      time: event.timeStamp,
-      axis: "undecided",
-      lockTime: event.timeStamp,
-      offset: 0,
-    };
-  }, []);
+  const onPointerDown = useCallback(
+    (event: PointerEvent<HTMLDivElement>): void => {
+      // Desktop switches by its tabs and chips; a drag there selects text (ADR 0035).
+      if (isDesktop) return;
+      // A right-click drag is not a swipe.
+      if (event.pointerType === "mouse" && event.buttons !== 1) return;
+      gesture.current = {
+        x: event.clientX,
+        y: event.clientY,
+        time: event.timeStamp,
+        axis: "undecided",
+        lockTime: event.timeStamp,
+        offset: 0,
+      };
+    },
+    [isDesktop],
+  );
 
   const onPointerMove = useCallback(
     (event: PointerEvent<HTMLDivElement>): void => {

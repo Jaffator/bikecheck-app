@@ -13,6 +13,10 @@ export const WIDE_CONTENT_MAX_WIDTH = "75rem";
 // The desktop sidebar's width; here so the pinned bars can be offset by it too.
 export const SIDEBAR_WIDTH = 240;
 
+// On desktop a pinned bar belongs to the page, not the window (ADR 0035).
+export const PINNED_BAR_LEFT = { base: 0, md: SIDEBAR_WIDTH };
+export const PINNED_BAR_WIDTH = { base: "92%", md: BAR_WIDTH };
+
 // Home, the garage, one bike, Service and Rides - matched whole, so their forms stay narrow.
 const WIDE_ROUTES: RegExp[] = [/^\/$/, /^\/bikes$/, /^\/bikes\/\d+$/, /^\/service$/, /^\/rides$/];
 

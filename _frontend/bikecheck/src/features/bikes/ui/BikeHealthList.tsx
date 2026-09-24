@@ -39,7 +39,7 @@ function BikeRow({ bike, actions, divided, onOpen }: BikeRowProps): ReactElement
   return (
     <UnstyledButton
       onClick={onOpen}
-      className="active:scale-[0.985]"
+      className="hover-veil active:scale-[0.985]"
       px="md"
       py="sm"
       style={{

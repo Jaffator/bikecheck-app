@@ -199,6 +199,43 @@ textarea,
   user-select: text;
 }
 
+/* From ADR 0035's 62em a mouse and keyboard drive it: they need selection, focus and hover a finger does not. */
+@media (min-width: 62em) {
+  body {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+    -webkit-tap-highlight-color: revert;
+  }
+
+  /* Mantine rings its own controls; this gives plain links and role="button" cards the same ring. */
+  :where(a[href], button, [role="button"]):focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 2px;
+  }
+
+  .hover-veil {
+    position: relative;
+    cursor: pointer;
+  }
+
+  /* A veil, not a background: the cards paint theirs inline, which a class cannot beat. */
+  .hover-veil::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: rgba(255, 255, 255, 0.04);
+    opacity: 0;
+    transition: opacity 150ms ease;
+    pointer-events: none;
+  }
+
+  .hover-veil:hover::after {
+    opacity: 1;
+  }
+}
+
 /* Top-level print margin applies to all pages when print margins use Default. */
 @page {
   margin: 14mm;

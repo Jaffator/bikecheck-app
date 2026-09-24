@@ -69,7 +69,7 @@ function NotificationRow({
           border: "1px solid var(--color-border-subtle)",
           transition: "transform 0.12s ease",
         }}
-        className="active:scale-[0.985]"
+        className="hover-veil active:scale-[0.985]"
       >
         <Stack gap={4}>
           {/* The heading line: what it is on the left, whether it still wants the user on

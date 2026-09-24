@@ -50,7 +50,7 @@ export function AttentionRow({ action, onOpen }: AttentionRowProps): ReactElemen
         event.preventDefault();
         onOpen();
       }}
-      className="active:scale-[0.985]"
+      className="hover-veil active:scale-[0.985]"
       style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
     >
       <Stack gap={8}>
