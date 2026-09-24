@@ -8,6 +8,7 @@ import { StatusRow } from "./StatusRow";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
+import { BikeHealthList } from "@/features/bikes/ui/BikeHealthList";
 const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
 export function Dashboard(): ReactElement {
@@ -36,6 +37,8 @@ export function Dashboard(): ReactElement {
         <Stack gap="md">
           {!stravaConnected && <StravaStatusCard />}
           <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
+          {/* Under the work: how the garage stands, and the way into any one bike. */}
+          <BikeHealthList />
         </Stack>
         <StatusRow />
       </SimpleGrid>

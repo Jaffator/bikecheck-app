@@ -160,6 +160,14 @@
   background-color: var(--mantine-color-cards-5);
 }
 
+/* Reserves the scrollbar's width, so the fixed header and tab bar do not shift when a short
+   page briefly stops scrolling. On body too: the gutter rides with the overflow body
+   propagates to the viewport, so on html alone it is ignored. */
+html,
+body {
+  scrollbar-gutter: stable;
+}
+
 body {
   /* `clip`, not `hidden`: hidden would make this the page's scroll container and kill every
      `position: sticky` inside it. And body alone, never html - a non-visible overflow on the

@@ -10,9 +10,11 @@ interface HealthBadgeProps {
   // The bike's Tracked Actions. The badge shows the worst Attention Level among them, so a
   // bike with nothing tracked — and only such a bike — reads "very good".
   actions: TrackedAction[];
+  // Narrower, for a list row where the badge shares its line with the bike's name.
+  compact?: boolean;
 }
 
-export function HealthBadge({ actions }: HealthBadgeProps): ReactElement {
+export function HealthBadge({ actions, compact = false }: HealthBadgeProps): ReactElement {
   const { t } = useTranslation();
   // What it says is the band the server drew; what colour it says it in is the ramp, which
   // warms earlier. A bike with nothing tracked reads quiet on both counts.
@@ -21,9 +23,10 @@ export function HealthBadge({ actions }: HealthBadgeProps): ReactElement {
 
   return (
     <Group
-      gap={5}
-      px={8}
-      py={3}
+      gap={compact ? 4 : 5}
+      px={compact ? 6 : 8}
+      py={compact ? 2 : 3}
+      wrap="nowrap"
       style={{
         borderRadius: "9999px",
         backgroundColor: "rgba(20, 20, 20, 0.75)",
@@ -31,8 +34,12 @@ export function HealthBadge({ actions }: HealthBadgeProps): ReactElement {
         backdropFilter: "blur(4px)",
       }}
     >
-      <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
-      <Text className="font-mono" fz={10} c={color}>
+      <Box
+        w={compact ? 5 : 6}
+        h={compact ? 5 : 6}
+        style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }}
+      />
+      <Text className="font-mono" fz={compact ? 9 : 10} c={color} style={{ whiteSpace: "nowrap" }}>
         {t(`bikes.health.${level}`)}
       </Text>
     </Group>

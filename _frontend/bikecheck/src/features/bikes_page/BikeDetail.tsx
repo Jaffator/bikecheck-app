@@ -243,11 +243,11 @@ export function BikeDetail(): ReactElement {
         </BikePhoto>
 
         <Stack gap={8} p="md">
-          {/* The name leads and holds one line: brand, model and year are one label. The one
-              act the card offers stands beside it - everything else here only reads. */}
+          {/* The name leads and may run to a second line - a long brand, model and year
+              together outrun one. The one act the page offers stands beside it. */}
           <Group gap="sm" wrap="nowrap" align="flex-start" justify="space-between">
             <Stack gap={2} style={{ minWidth: 0 }}>
-              <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={1}>
+              <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
                 {bikeTitle(bike)}
               </Text>
               {/* The garage and this page are the only places a bike answers to its nickname. */}
