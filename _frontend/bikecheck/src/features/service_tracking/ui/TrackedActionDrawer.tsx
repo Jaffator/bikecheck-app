@@ -4,12 +4,12 @@
 // Opened from the bike's own page and from the dashboard alike, so a row that looks the
 // same behaves the same wherever it is met.
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Divider, Drawer, Group, NumberInput, Progress, Stack, Switch, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Divider, Group, NumberInput, Progress, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { Minus, Plus, RotateCcw, X } from "lucide-react";
-import { SheetGrabber } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { measureLabel, positionLabel } from "@/features/components/componentLabels";
@@ -26,7 +26,6 @@ import {
 } from "@/features/service_tracking/intervalFigures";
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { useSetTrackedActionInterval, useSetTrackedActionNotify } from "@/features/service_tracking/tracking.queries";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 // The same layer every other sheet stands on, so overlays never fight the FAB.
@@ -47,39 +46,25 @@ interface TrackedActionDrawerProps {
 export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProps): ReactElement {
   const [shown, opening, written] = useOpenedReading(action);
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(action !== null, onClose);
-
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={action !== null}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         // One reading is as tall as it is, so the sheet takes the height it needs and stops
         // short of covering the page it was opened from.
         content: {
           height: "auto",
           maxHeight: "85vh",
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
         body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
       }}
     >
-      <SheetGrabber onClose={onClose} />
-
       <Box
         px="md"
         pt="md"
@@ -90,7 +75,7 @@ export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProp
             however the last one was left. */}
         {shown !== null && <Body key={opening} action={shown} onWritten={written} onClose={onClose} />}
       </Box>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

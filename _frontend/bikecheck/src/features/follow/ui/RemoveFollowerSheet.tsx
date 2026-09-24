@@ -1,10 +1,9 @@
 // The one confirmation behind Odebrat. Stays mounted and keeps the last person, so the exit
 // slide still has a face to carry down (docs/conventions/drawers.md).
 import type { CSSProperties, ReactElement } from "react";
-import { Button, Drawer, Stack, Text } from "@mantine/core";
+import { Button, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { SheetGrabber } from "@/components/SheetGrabber";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { useRemoveFollower } from "../follow.queries";
 import type { FollowerRow } from "../follow.types";
 import { personName } from "../personName";
@@ -26,36 +25,23 @@ export function RemoveFollowerSheet({ person, opened, onClose }: RemoveFollowerS
   const { t } = useTranslation();
   const remove = useRemoveFollower();
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   function confirm(): void {
     if (person === null) return;
     remove.mutate(person, { onSettled: onClose });
   }
 
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto" },
+        content: { height: "auto" },
         body: { paddingBottom: "calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
       }}
     >
-      <SheetGrabber onClose={onClose} />
-
       {person !== null && (
         <Stack align="center" gap="md" pt="sm">
           <PersonAvatar person={person} size={AVATAR_SIZE} />
@@ -87,6 +73,6 @@ export function RemoveFollowerSheet({ person, opened, onClose }: RemoveFollowerS
           </Stack>
         </Stack>
       )}
-    </Drawer>
+    </ResponsiveSheet>
   );
 }

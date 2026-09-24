@@ -1,12 +1,14 @@
 // UI component using feature hooks.
 import type { ReactElement } from "react";
-import { Drawer, Group, Paper, Stack, Text } from "@mantine/core";
+import { Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { RouteMap } from "@/components/RouteMap";
 import type { Ride } from "@/features/rides/rides.types";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
+
+// Mantine's large sheet: room for the map and both rows of figures.
+const SHEET_HEIGHT = "var(--drawer-size-lg)";
 
 interface RideDetailSheetProps {
   // Null closes the sheet.
@@ -32,35 +34,22 @@ function Stat({ label, value }: { label: string; value: string }): ReactElement 
 export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactElement {
   const { t } = useTranslation();
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(ride !== null, onClose);
-
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={ride !== null}
       onClose={onClose}
-      position="bottom"
-      size="lg"
-      radius="md"
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
+      desktop="panel"
       styles={{
         content: {
-          position: "relative",
-          backgroundColor: "var(--mantine-color-cards-6)",
+          height: SHEET_HEIGHT,
           display: "flex",
           flexDirection: "column",
         },
         body: { flex: 1, display: "flex", flexDirection: "column" },
-        header: {
-          paddingTop: SHEET_GRABBER_HEADER_PADDING,
-          backgroundColor: "var(--mantine-color-cards-6)",
-          marginBottom: "1.5rem",
-        },
+        header: { marginBottom: "1.5rem" },
         title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
     >
-      <SheetGrabber onClose={onClose} floating />
-
       {ride !== null && (
         <Stack gap={20} pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
           <Stack gap={4}>
@@ -102,7 +91,7 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
           </Paper>
         </Stack>
       )}
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

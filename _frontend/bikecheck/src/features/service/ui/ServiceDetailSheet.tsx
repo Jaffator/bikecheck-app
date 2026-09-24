@@ -1,11 +1,11 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Divider, Drawer, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Box, Button, Divider, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
 import { FileText, Image as ImageIcon, NotebookText, Paperclip, Share2, Trash2, X } from "lucide-react";
 import dayjs from "dayjs";
-import { SheetGrabber } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -17,7 +17,6 @@ import { componentTypeIcon } from "./componentIcon";
 import { attachmentSubtitle } from "@/features/service/attachmentLabels";
 import type { ServiceActionDone, ServiceAttachment, ServiceHistoryItem } from "@/features/service/service.types";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // The sheet stands over the list rather than covering it, so the list is still there to
 // come back to. The strip left above it is what says so.
@@ -76,29 +75,17 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
     onClose();
   }
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(serviceId !== null, close);
-
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={serviceId !== null}
       onClose={close}
-      position="bottom"
-      radius="lg"
+      desktop="panel"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-        onExited: () => setLastOpened(null),
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
+      onExited={() => setLastOpened(null)}
       styles={{
         content: {
           height: SHEET_HEIGHT,
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
@@ -113,8 +100,6 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         },
       }}
     >
-      <SheetGrabber onClose={close} />
-
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Stack gap="lg" pb="md">
           {/* Outside the failure branch: a sheet that could not load is still a sheet the
@@ -257,7 +242,7 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         confirmLabel={t("service.delete")}
         pending={remove.isPending}
       />
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

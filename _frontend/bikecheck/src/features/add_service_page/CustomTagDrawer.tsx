@@ -1,15 +1,14 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement } from "react";
-import { ActionIcon, Box, Button, Drawer, Group, Stack, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Pencil, Trash2 } from "lucide-react";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { useCreateActionTag, useDeleteActionTag } from "@/features/service/service.queries";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { ActionTag } from "@/features/service/service.types";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface CustomTagDrawerProps {
   opened: boolean;
@@ -64,36 +63,25 @@ export function CustomTagDrawer({
     );
   }
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      position="bottom"
-      // Fits a short list and caps a long one for scrolling.
-      size="md"
-      radius="md"
+      desktop="modal"
       title={
         <Group gap={6} justify="center" wrap="nowrap">
           <Pencil size={16} />
           <span>{t("addService.customTagTitle", { action: actionLabel })}</span>
         </Group>
       }
-      // Keeps background content visually inactive.
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
-          position: "relative",
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
           maxHeight: "85dvh",
           // Rides above the software keyboard, which the webview does not resize for.
           marginBottom: keyboardOffset,
         },
-        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
         body: {
           flex: 1,
           minHeight: 0,
@@ -109,8 +97,6 @@ export function CustomTagDrawer({
         },
       }}
     >
-      <SheetGrabber onClose={onClose} floating />
-
       {/* Fills the drawer body so the save button keeps the bottom edge however short
           the tag list is; the list above it shrinks and scrolls instead. */}
       <Stack
@@ -185,6 +171,6 @@ export function CustomTagDrawer({
           {t("addService.customTagSave")}
         </Button>
       </Stack>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }

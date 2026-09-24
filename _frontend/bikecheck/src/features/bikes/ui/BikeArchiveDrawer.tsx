@@ -2,17 +2,16 @@
 // nothing, and this is the one place they are reached from - putting a bike back into use
 // or destroying it for good are both offered here and nowhere else (ADR 0024).
 import { useState, type ReactElement } from "react";
-import { Button, Drawer, Group, Image, Loader, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { Button, Group, Image, Loader, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useArchivedBikes, useDeleteBikePermanently, useUnarchiveBike } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Below the confirmations it raises, above the garage it sits on. The same place the
 // custom parts drawer takes, since only one of them is ever open.
@@ -44,9 +43,6 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
   const [typedName, setTypedName] = useState("");
   const archived = bikes ?? [];
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   // The name has to match exactly, so a glance at the wrong row cannot destroy a bike.
   const nameMatches = destroying !== null && typedName === bikeTitle(destroying);
 
@@ -57,28 +53,18 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
 
   return (
     <>
-      <Drawer
+      <ResponsiveSheet
         opened={opened}
         onClose={onClose}
-        position="bottom"
-        radius="lg"
+        desktop="modal"
         zIndex={DRAWER_Z_INDEX}
         title={t("archive.title")}
-        overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
         styles={{
-          content: {
-            position: "relative",
-            backgroundColor: "var(--mantine-color-cards-6)",
-            height: "auto",
-            maxHeight: "88dvh",
-          },
-          header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
+          content: { height: "auto", maxHeight: "88dvh" },
           body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
           title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
         }}
       >
-        <SheetGrabber onClose={onClose} floating />
-
         {isLoading ? (
           <Group justify="center" py="xl">
             <Loader size="sm" color="primary.6" />
@@ -163,7 +149,7 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
             )}
           </Stack>
         )}
-      </Drawer>
+      </ResponsiveSheet>
 
       {/* Putting a bike back costs nothing but says what does not come back with it. */}
       <ConfirmModal

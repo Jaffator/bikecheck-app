@@ -1,8 +1,8 @@
 // UI component backed by Strava query hooks.
 import { useState, type ReactElement } from "react";
-import { Anchor, Button, Drawer, Group, Loader, Select, Stack, Text } from "@mantine/core";
+import { Anchor, Button, Group, Loader, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useGearLinking, useLinkStravaGear } from "@/features/strava/strava.queries";
 import type { GearLink, GearLinkingBike } from "@/features/strava/strava.types";
@@ -12,7 +12,6 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
 import { TbBikeOff } from "react-icons/tb";
 import { Link2, TriangleAlert, MoveRight } from "lucide-react";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 interface GearLinkingSheetProps {
   opened: boolean;
@@ -63,30 +62,20 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
     link.mutate(links, { onSuccess: onClose });
   }
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      position="bottom"
-      // Fits short lists and caps tall lists for scrolling.
-      size="auto"
-      radius="md"
+      desktop="modal"
       title={t("strava.gearLinkingTitle")}
-      // Keeps background content visually inactive.
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
-      // Matches the header background to drawer content.
       styles={{
+        // Fits short lists and caps tall lists for scrolling.
         content: {
-          position: "relative",
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
+          height: "auto",
           maxHeight: "85dvh",
         },
-        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
         // Pins actions below the scrollable list.
         body: {
           flex: 1,
@@ -103,8 +92,6 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
         },
       }}
     >
-      <SheetGrabber onClose={onClose} floating />
-
       <div className="align-center mb-4 -ml-2 mt-5 flex w-full justify-center">
         <StravaConnectBike
           size={40}
@@ -242,6 +229,6 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
           {t("strava.gearLinkingConfirm")}
         </Button>
       </Stack>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }

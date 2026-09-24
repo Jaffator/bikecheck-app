@@ -52,8 +52,10 @@ export function ServiceList({ services, isLoading, isError, grouped = false, foo
   function open(service: ServiceHistoryItem): void {
     const params = new URLSearchParams(searchParams);
     params.set(OPEN_PARAM, String(service.id));
-    openedHere.current = true;
-    setSearchParams(params);
+    // On desktop the list stays live beside the panel; switching rows must not stack entries for back.
+    const switching = openId !== null;
+    if (!switching) openedHere.current = true;
+    setSearchParams(params, { replace: switching });
   }
 
   function close(): void {

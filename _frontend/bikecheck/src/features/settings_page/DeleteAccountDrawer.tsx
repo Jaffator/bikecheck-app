@@ -1,15 +1,14 @@
 // Deleting an Account: the row and everything belonging to the rider, destroyed outright.
 // There is no archive to fall back into, so the sheet says what disappears and asks for the
 // account's email back before it will let the button be pressed (ADR 0028).
-import { useEffect, useState, type ReactElement } from "react";
-import { Button, Drawer, Group, Loader, Stack, Text, TextInput } from "@mantine/core";
+import { useState, type ReactElement } from "react";
+import { Button, Group, Loader, Stack, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { disabledButtonStyles, fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useAccountDeletionSummary, useDeleteAccount } from "@/features/users/users.queries";
 import type { AccountDeletionSummary } from "@/features/users/users.types";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // The same layer the profile's other sheets take; only one of them is ever open.
 const DRAWER_Z_INDEX = 320;
@@ -39,21 +38,6 @@ function DeleteAccountBody({ opened, onClose, email }: DeleteAccountDrawerProps)
   const keyboardOffset = useKeyboardOffset();
   const [typedEmail, setTypedEmail] = useState("");
 
-  // This body is remounted on each opening, and a Drawer that mounts already open skips
-  // its enter transition. So it mounts closed and slides up on the next frame.
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!opened) {
-      setVisible(false);
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => setVisible(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, [opened]);
-
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   // Exactly the account's own address, case and all — the same guard the bike's typed name
   // is, and just as much a guard for the hand rather than for the wire.
   const emailMatches = typedEmail === email;
@@ -67,37 +51,23 @@ function DeleteAccountBody({ opened, onClose, email }: DeleteAccountDrawerProps)
   }
 
   return (
-    <Drawer
-      opened={visible}
+    <ResponsiveSheet
+      opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={DRAWER_Z_INDEX}
       title={t("profile.deleteAccountTitle")}
-      // Opens the same way every other bottom sheet does.
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
-          position: "relative",
-          backgroundColor: "var(--mantine-color-cards-6)",
           height: "auto",
           // Rides above the software keyboard, which the webview does not resize for.
           marginBottom: keyboardOffset,
           maxHeight: `calc(88dvh - ${String(keyboardOffset)}px)`,
         },
-        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
         body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >
-      <SheetGrabber onClose={onClose} floating />
-
       <Stack gap="md">
         <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
           {t("profile.deleteAccountBody")}
@@ -162,7 +132,7 @@ function DeleteAccountBody({ opened, onClose, email }: DeleteAccountDrawerProps)
           {t("profile.deleteAccountConfirm")}
         </Button>
       </Stack>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

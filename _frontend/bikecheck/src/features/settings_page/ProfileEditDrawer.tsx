@@ -1,13 +1,12 @@
 // The two things about the rider the app lets them correct: what they are called, and what
 // they weigh. Everything else on the profile is read off a linked account.
 import { useState, type ReactElement } from "react";
-import { Button, Drawer, Stack, Text, NumberInput, TextInput } from "@mantine/core";
+import { Button, Stack, Text, NumberInput, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { useUpdateUser } from "@/features/users/users.queries";
 import type { User } from "@/features/users/users.types";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above the profile page it sits on, matching the settings drawers.
 const DRAWER_Z_INDEX = 320;
@@ -33,9 +32,6 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
   const [name, setName] = useState<string | null>(null);
   const [weight, setWeight] = useState<number | null | undefined>(undefined);
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   const shownName = name ?? user.name;
   const shownWeight = weight === undefined ? user.weight_kg : weight;
   const nameEmpty = shownName.trim() === "";
@@ -54,28 +50,18 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
   }
 
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={DRAWER_Z_INDEX}
       title={t("profile.editTitle")}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
-        content: {
-          position: "relative",
-          backgroundColor: "var(--mantine-color-cards-6)",
-          height: "auto",
-          maxHeight: "88dvh",
-        },
-        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
+        content: { height: "auto", maxHeight: "88dvh" },
         body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >
-      <SheetGrabber onClose={onClose} floating />
-
       <Stack gap="md">
         <TextInput
           label={t("profile.name")}
@@ -126,6 +112,6 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
           {t("profile.save")}
         </Button>
       </Stack>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }

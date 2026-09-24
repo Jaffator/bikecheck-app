@@ -1,14 +1,13 @@
 // Where a Setup Profile is named: a new one, blank or as a copy of the one being read, or
 // an existing one being renamed. One sheet for both, because both ask for the same thing.
-import { useEffect, useState, type ReactElement } from "react";
-import { ActionIcon, Button, Drawer, Group, Stack, Switch, Text, TextInput } from "@mantine/core";
+import { useState, type ReactElement } from "react";
+import { ActionIcon, Button, Group, Stack, Switch, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
-import { SheetGrabber } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import type { ApiError } from "@/api/client";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { useCreateSetupProfile, useUpdateSetupProfile } from "../setup.queries";
 import type { SetupProfile } from "../setup.types";
 
@@ -56,21 +55,9 @@ function SetupProfileNameBody({
   const create = useCreateSetupProfile();
   const update = useUpdateSetupProfile();
 
-  // A remounted Drawer that mounts already open skips its enter transition, so it mounts
-  // closed and slides up on the next frame (docs/conventions/drawers.md).
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!opened) return;
-    const frame = window.requestAnimationFrame(() => setVisible(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, [opened]);
-
   const renaming = profile !== null;
   const [name, setName] = useState(profile?.name ?? "");
   const [copy, setCopy] = useState(copyByDefault && copySource !== null);
-
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
 
   const trimmed = name.trim();
   const pending = create.isPending || update.isPending;
@@ -89,23 +76,14 @@ function SetupProfileNameBody({
   }
 
   return (
-    <Drawer
-      opened={opened && visible}
+    <ResponsiveSheet
+      opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={DRAWER_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
-          backgroundColor: "var(--mantine-color-cards-6)",
           height: "auto",
           // Rides above the software keyboard, which the webview does not resize for.
           marginBottom: keyboardOffset,
@@ -114,9 +92,6 @@ function SetupProfileNameBody({
         body: { paddingTop: 0 },
       }}
     >
-      {/* The same grab bar and heading every sheet wears. */}
-      <SheetGrabber onClose={onClose} />
-
       <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mt="md" mb="md">
         <Text fz={20} fw={700} c="text.6" lineClamp={2}>
           {renaming ? t("setup.renameTitle") : t("setup.newProfileTitle")}
@@ -188,7 +163,7 @@ function SetupProfileNameBody({
           {renaming ? t("setup.renameAction") : t("setup.createAction")}
         </Button>
       </Stack>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

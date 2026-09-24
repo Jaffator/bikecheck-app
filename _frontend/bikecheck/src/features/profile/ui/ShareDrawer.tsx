@@ -1,17 +1,16 @@
 // The share drawer: one segmented control decides the state, under it the preview, the
 // address (Public only - in the app people go by name), what goes out and which bikes.
 // Every change saves at once; the handle saves on leaving the field.
-import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Box, Center, Drawer, Group, Image, Loader, SegmentedControl, Stack, Text, UnstyledButton } from "@mantine/core";
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { Box, Center, Group, Image, Loader, SegmentedControl, Stack, Text, UnstyledButton } from "@mantine/core";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { handleError, handleErrorFromApi, profileUrl } from "../handle";
 import { useMyProfile, useSaveSharing } from "../profile.queries";
 import {
@@ -66,20 +65,6 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
   const { data: bikes } = useBikes();
   const navigate = useNavigate();
   const location = useLocation();
-  // The form remounts per opening to start from what is saved, so the sheet mounts closed
-  // and opens on the next frame or Mantine skips the slide (docs/conventions/drawers.md).
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!opened) {
-      setVisible(false);
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => setVisible(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, [opened]);
-
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
 
   // Closing pushes nothing, so back from the preview lands where the drawer was opened.
   // Opened over the preview itself, it only closes - the page is already there.
@@ -90,11 +75,10 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
   }
 
   return (
-    <Drawer
-      opened={visible}
+    <ResponsiveSheet
+      opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={DRAWER_Z_INDEX}
       title={
         <Group gap={8} wrap="nowrap">
@@ -102,28 +86,13 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
           <span>{t("sharing.title")}</span>
         </Group>
       }
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
-        content: {
-          position: "relative",
-          backgroundColor: "var(--mantine-color-cards-6)",
-          height: "auto",
-          maxHeight: "92dvh",
-        },
-        header: { paddingTop: SHEET_GRABBER_HEADER_PADDING, backgroundColor: "var(--mantine-color-cards-6)" },
+        content: { height: "auto", maxHeight: "92dvh" },
         // Cards run closer to the sheet's edges than plain rows would.
         body: { paddingInline: 8, paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >
-      <SheetGrabber onClose={onClose} floating />
-
       {profile && bikes ? (
         <ShareForm profile={profile} bikes={bikes} onPreview={preview} />
       ) : (
@@ -131,7 +100,7 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
           <Loader type="oval" color="primary.6" />
         </Center>
       )}
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 
