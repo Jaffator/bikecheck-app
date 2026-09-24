@@ -13,8 +13,11 @@ import { useRides } from "@/features/rides/rides.queries";
 import { RideDetailSheet } from "./RideDetailSheet";
 import type { Ride } from "@/features/rides/rides.types";
 
-// Clears the floating tab bar, so the last ride can be scrolled out from under it.
-const FOOTER_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+// Clears the floating tab bar, so the last ride can be scrolled out from under it. Desktop has none.
+const FOOTER_CLEARANCE = {
+  base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+  md: "md",
+};
 
 // Where the pull indicator sits when the list is at rest: just off the top, so it is
 // uncovered by the pull itself rather than faded in on top of the first card.

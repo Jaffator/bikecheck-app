@@ -13,8 +13,11 @@ import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
 import { EmptyService } from "./EmptyService";
 
-// Clears the FAB and the bottom nav, so the last row can still be tapped.
-const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+// Clears the FAB and the bottom nav, so the last row can still be tapped. Desktop has neither.
+const FAB_CLEARANCE = {
+  base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+  md: "md",
+};
 
 // The chips hold under the app header while the page scrolls, so a bike can be switched
 // from anywhere in the list. They carry the page background: the cards pass under them.

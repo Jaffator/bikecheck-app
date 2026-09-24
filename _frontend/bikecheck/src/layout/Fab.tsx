@@ -3,28 +3,15 @@ import { ActionIcon, Affix, Menu, Stack } from "@mantine/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { GoPlus } from "react-icons/go";
-import type { IconType } from "react-icons";
 import { tapFeedback } from "@/utils/haptics";
 import { useHideOnScrollDown } from "@/hooks/useHideOnScrollDown";
-import { bikecheckIconType } from "@/assets/icons/bikecheck";
-
-const BikecheckIcon = bikecheckIconType("Bikecheck");
-const BikeIconFill = bikecheckIconType("BikeIcon_fill");
-
-interface FabAction {
-  labelKey: string;
-  path: string;
-  icon: IconType;
-}
+import { ADD_BIKE, ADD_SERVICE, type CreateAction } from "./navItems";
 
 // Defines create actions for sections supported by backend endpoints.
-const FAB_ACTIONS: Record<string, FabAction[]> = {
-  "/": [
-    { labelKey: "fab.addBike", path: "/bikes/new", icon: BikeIconFill! },
-    { labelKey: "fab.addService", path: "/service/new", icon: BikecheckIcon! },
-  ],
-  "/bikes": [{ labelKey: "fab.addBike", path: "/bikes/new", icon: BikeIconFill! }],
-  "/service": [{ labelKey: "fab.addService", path: "/service/new", icon: BikecheckIcon! }],
+const FAB_ACTIONS: Record<string, CreateAction[]> = {
+  "/": [ADD_BIKE, ADD_SERVICE],
+  "/bikes": [ADD_BIKE],
+  "/service": [ADD_SERVICE],
 };
 
 // Clears the footer pill using its matching safe-area inset expression.
@@ -42,7 +29,7 @@ const MENU_OFFSET = 16;
 // Separates dropdown action items.
 const MENU_ITEM_GAP = 8;
 
-function getActions(pathname: string): FabAction[] {
+function getActions(pathname: string): CreateAction[] {
   // Matches Home exactly and other sections by route prefix.
   const match = Object.keys(FAB_ACTIONS).find((path) => (path === "/" ? pathname === "/" : pathname.startsWith(path)));
   return match ? FAB_ACTIONS[match] : [];

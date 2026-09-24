@@ -2,10 +2,8 @@ import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Bell, ArrowLeft, House, Route, LayoutGrid } from "lucide-react";
-import { bikecheckIconType } from "@/assets/icons/bikecheck";
+import { Bell, ArrowLeft } from "lucide-react";
 import Logo from "@/assets/icons/bikecheck/Logo_white.svg?react";
-import type { IconType } from "react-icons";
 import { App } from "@capacitor/app";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
@@ -19,23 +17,12 @@ import { useMyProfile } from "@/features/profile/profile.queries";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 import { MoreDrawer } from "./MoreDrawer";
+import { Sidebar } from "./Sidebar";
 import { HeaderCountBadge } from "./HeaderCountBadge";
 import { TRANSPARENT_HEADER_CONTROL } from "./headerControl";
-import { BAR_WIDTH, CONTENT_MAX_WIDTH } from "./contentWidth";
-
-const BikeIcon = bikecheckIconType("BikeIcon");
-const BikeIconFill = bikecheckIconType("BikeIcon_fill");
-const BikecheckIcon = bikecheckIconType("Bikecheck")!;
-const BikecheckOutlineIcon = bikecheckIconType("Bikecheck_outline")!;
-
-interface NavItem {
-  labelKey: string;
-  // The tab that opens the More sheet has no route of its own.
-  path: string | null;
-  icon: IconType;
-  // The app's own marks have a filled twin for the active tab; a lucide icon thickens instead.
-  icon_fill?: IconType;
-}
+import { BAR_WIDTH, CONTENT_MAX_WIDTH, SIDEBAR_WIDTH, WIDE_CONTENT_MAX_WIDTH, isWideRoute } from "./contentWidth";
+import { useIsDesktop } from "./breakpoints";
+import { NAV_ITEMS, TAB_STROKE, TAB_STROKE_ACTIVE, isActivePath } from "./navItems";
 
 // The mark Home wears instead of a title. Its width follows from the artwork's ratio, and it
 // is nudged in because the artwork carries no padding of its own, unlike the tab icons.
@@ -45,34 +32,6 @@ const LOGO_INSET = 8;
 // The tab's mark beside the page title. Two points over the title's own 18px, so it leads the
 // pair without shouting over it.
 const TITLE_ICON_SIZE = 20;
-
-// Stroke widths for the lucide tabs: the resting one matches the app's own outline marks,
-// the active one carries the weight the filled twins carry.
-const TAB_STROKE = 1.75;
-const TAB_STROKE_ACTIVE = 2.5;
-
-// Defines available navigation tabs by stable route paths. Every third-party icon is lucide,
-// the family the rest of the app draws with, so the bar no longer mixes three stroke weights.
-const NAV_ITEMS: NavItem[] = [
-  { labelKey: "nav.home", path: "/", icon: House as IconType },
-  {
-    labelKey: "nav.bikes",
-    path: "/bikes",
-    icon: BikeIcon!,
-    icon_fill: BikeIconFill!,
-  },
-  {
-    labelKey: "nav.service",
-    path: "/service",
-    // Uses the service tab outline icon.
-    icon: BikecheckOutlineIcon!,
-    icon_fill: BikecheckIcon!,
-  },
-  { labelKey: "nav.rides", path: "/rides", icon: Route as IconType },
-  // Riders and the chat have no tab of their own; this one opens the sheet that holds
-  // both (docs/ui/follows-entry.md).
-  { labelKey: "nav.more", path: null, icon: LayoutGrid as IconType },
-];
 
 // Maps routes to translated header titles; Home intentionally has none.
 const PAGE_TITLE_KEYS: Record<string, string> = {
@@ -148,11 +107,6 @@ function getPageTitleKey(pathname: string): string | null {
 // attachment upload. Flip back to true to restore the offline screen.
 const OFFLINE_PAGE_ENABLED = false;
 
-// Shares active-route matching between the header and tab bar.
-function isActivePath(path: string, pathname: string): boolean {
-  return path === "/" ? pathname === "/" : pathname.startsWith(path);
-}
-
 export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
   const [renderOfflinePage, setRenderOfflinePage] = useState(false);
@@ -185,11 +139,23 @@ export function AppLayout(): ReactElement {
   const actionSlot = useHeaderStore((state) => state.actionSlot);
   // A page leading with an image runs its content up under the header - see the store.
   const headerTransparent = useHeaderStore((state) => state.headerTransparent);
-  // Hides chrome when the route or page state requires it.
-  const chromeHidden = chromeHiddenByPage || isFullScreenRoute(location.pathname);
-  // Home has no header icon.
-  const pageTitleKey = overrideTitleKey ?? getPageTitleKey(location.pathname);
+  const isDesktop = useIsDesktop();
+  const fullScreen = isFullScreenRoute(location.pathname);
+  // Hides chrome when the route or page state requires it. On desktop that is the header
+  // alone: the sidebar leaves only with a full-screen route.
+  const chromeHidden = chromeHiddenByPage || fullScreen;
   const subPage = isSubPage(location.pathname);
+  // Home wears the logo instead of a title; on desktop the sidebar wears it, so Home is named.
+  const pageTitleKey =
+    overrideTitleKey ?? getPageTitleKey(location.pathname) ?? (isDesktop && !subPage ? "page.home" : null);
+  // Both widths are the phone's column below the breakpoint.
+  const contentWidth = isDesktop && isWideRoute(location.pathname) ? WIDE_CONTENT_MAX_WIDTH : CONTENT_MAX_WIDTH;
+
+  // The FAB menu and the More sheet have no trigger on desktop, so crossing into it shuts them.
+  if (isDesktop && (fabMenuOpened || moreOpened)) {
+    setFabMenuOpened(false);
+    setMoreOpened(false);
+  }
 
   // Direct entries use the dashboard instead of browser history.
   function goBack(): void {
@@ -240,6 +206,8 @@ export function AppLayout(): ReactElement {
 
   return (
     <AppShell
+      // The sidebar runs the full height; the header sits beside it.
+      layout="alt"
       // Extends header and footer backgrounds into system safe areas.
       header={{
         height: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
@@ -248,10 +216,13 @@ export function AppLayout(): ReactElement {
         collapsed: chromeHidden,
         offset: !headerTransparent,
       }}
+      navbar={{ width: SIDEBAR_WIDTH, breakpoint: "md", collapsed: { mobile: true, desktop: fullScreen } }}
       // Collapse the footer offset with the tab bar.
-      footer={{ height: "4rem", collapsed: subPage || chromeHidden }}
+      footer={{ height: "4rem", collapsed: subPage || chromeHidden || isDesktop }}
       bg="background.9"
     >
+      {isDesktop && !fullScreen && <Sidebar />}
+
       {/* --------- HEADER --------- */}
       <AppShell.Header withBorder={false} bg="transparent">
         {/* Keeps title content below the status bar. */}
@@ -276,7 +247,7 @@ export function AppLayout(): ReactElement {
             h="100%"
             justify="space-between"
             w="100%"
-            maw={CONTENT_MAX_WIDTH}
+            maw={contentWidth}
             mx="auto"
             style={{ pointerEvents: "auto" }}
           >
@@ -330,33 +301,38 @@ export function AppLayout(): ReactElement {
                 <Group gap="sm">
                   {/* Whatever the tab hung here, before the icons; nothing renders when it hung nothing. */}
                   {actionSlot}
-                  {/* NOTIFICATION ICON */}
-                  <ActionIcon
-                    variant="transparent"
-                    radius="sm"
-                    size="lg"
-                    aria-label={t("page.notifications")}
-                    onClick={() => navigate("/notifications")}
-                    pos="relative"
-                  >
-                    <Bell size={25} color="var(--mantine-color-cards-1)" />
-                    <HeaderCountBadge count={unreadCount} />
-                  </ActionIcon>
-                  <UnstyledButton onClick={() => navigate("/settings")} aria-label={t("page.settings")}>
-                    {/* name drives the initials fallback when the user has no picture */}
-                    <Avatar
-                      src={user?.avatar_url}
-                      name={user?.name}
-                      radius="xl"
-                      size={32}
-                      style={
-                        {
-                          "--avatar-bg": "var(--mantine-color-cards-5)",
-                          "--avatar-color": "var(--mantine-color-text-6)",
-                        } as CSSProperties
-                      }
-                    />
-                  </UnstyledButton>
+                  {/* On desktop both live at the sidebar's foot. */}
+                  {!isDesktop && (
+                    <>
+                      {/* NOTIFICATION ICON */}
+                      <ActionIcon
+                        variant="transparent"
+                        radius="sm"
+                        size="lg"
+                        aria-label={t("page.notifications")}
+                        onClick={() => navigate("/notifications")}
+                        pos="relative"
+                      >
+                        <Bell size={25} color="var(--mantine-color-cards-1)" />
+                        <HeaderCountBadge count={unreadCount} />
+                      </ActionIcon>
+                      <UnstyledButton onClick={() => navigate("/settings")} aria-label={t("page.settings")}>
+                        {/* name drives the initials fallback when the user has no picture */}
+                        <Avatar
+                          src={user?.avatar_url}
+                          name={user?.name}
+                          radius="xl"
+                          size={32}
+                          style={
+                            {
+                              "--avatar-bg": "var(--mantine-color-cards-5)",
+                              "--avatar-color": "var(--mantine-color-text-6)",
+                            } as CSSProperties
+                          }
+                        />
+                      </UnstyledButton>
+                    </>
+                  )}
                 </Group>
               </>
             )}
@@ -371,7 +347,7 @@ export function AppLayout(): ReactElement {
         ) : (
           // Remounts each route to replay its entry animation. The column is the page's
           // width in a browser; on a phone it is the phone.
-          <Box key={location.pathname} maw={CONTENT_MAX_WIDTH} mx="auto" style={{ animation: "pageEnter 350ms ease-out" }}>
+          <Box key={location.pathname} maw={contentWidth} mx="auto" style={{ animation: "pageEnter 350ms ease-out" }}>
             {outlet}
           </Box>
         )}
@@ -391,11 +367,12 @@ export function AppLayout(): ReactElement {
         />
       </AppShell.Main>
 
-      {/* Hides the create action on sub-pages. */}
-      {!subPage && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
-      <MoreDrawer opened={moreOpened} onClose={() => setMoreOpened(false)} />
+      {/* Hides the create action on sub-pages. The FAB, More and the tab bar are the phone's;
+          the sidebar holds all three on desktop. */}
+      {!subPage && !isDesktop && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
+      {!isDesktop && <MoreDrawer opened={moreOpened} onClose={() => setMoreOpened(false)} />}
       {/* --------- FOOTER --------- */}
-      {!subPage && (
+      {!subPage && !isDesktop && (
         <AppShell.Footer
           className="flex justify-center"
           bg="transparent"

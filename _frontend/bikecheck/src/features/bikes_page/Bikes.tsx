@@ -48,8 +48,13 @@ export function Bikes(): ReactElement {
   }
 
   return (
-    // Reserve space for bottom navigation.
-    <Stack gap="md" px="md" pt="md" pb="calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+    // Reserve space for bottom navigation, which desktop does not have.
+    <Stack
+      gap="md"
+      px="md"
+      pt="md"
+      pb={{ base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", md: "md" }}
+    >
       {/* One to a row on a phone; two once the column is wide enough for a card each. */}
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
         {bikes.map((bike) => (

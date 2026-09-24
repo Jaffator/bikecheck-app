@@ -126,6 +126,10 @@
 
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+
+  /* `desktop:` at ADR 0035's 62em, written in rem: an em breakpoint sorts before every rem one and
+     `md:` would beat it. sm/md/lg stay for the public profile. */
+  --breakpoint-desktop: 62rem;
 }
 
 /* The card material, in one place. Three elevations and no more: a list row, a panel or

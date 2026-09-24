@@ -9,7 +9,10 @@ import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
 import { BikeHealthList } from "@/features/bikes/ui/BikeHealthList";
-const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+const FAB_CLEARANCE = {
+  base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+  md: "md",
+};
 
 export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();
@@ -30,7 +33,7 @@ export function Dashboard(): ReactElement {
 
   return (
     // Clears the floating create button, so the last card can be scrolled out from under
-    // it. Without the room there is nothing to scroll, and the button sits on the card.
+    // it; desktop has no FAB, so no room.
     <Stack gap="md" p="md" pb={FAB_CLEARANCE}>
       {/* A phone stacks them; a browser column sits the state beside the work. */}
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" style={{ alignItems: "start" }}>
