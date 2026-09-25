@@ -8,6 +8,7 @@ const TODAY = new Date('2026-09-25T10:00:00.000Z');
 
 const RALLON = { id: 21, bike_brand: 'Orbea', bike_model: 'Rallon', year: 2024 };
 const STUMPY = { id: 22, bike_brand: 'Specialized', bike_model: 'Stumpjumper', year: 2021 };
+const TREK = { id: 23, bike_brand: 'Trek', bike_model: null, year: null };
 
 // The Component Categories as seeded, by id.
 const DRIVETRAIN = 1;
@@ -34,6 +35,11 @@ function action(group: number, partial: number | null = null): Row {
   };
 }
 
+// One ride as the distance read loads it.
+function ride(bike: Row, startedAt: string, meters: number | null): Row {
+  return { bike_id: bike.id, started_at: new Date(startedAt), distance_m: meters };
+}
+
 // One Service as the spend read loads it.
 function service(bike: Row, date: string, total: number | null, actions: Row[]): Row {
   return {
@@ -48,11 +54,15 @@ function service(bike: Row, date: string, total: number | null, actions: Row[]):
 describe('StatsService', () => {
   let stats: StatsService;
   let services: Row[];
+  let garage: Row[];
+  let rides: Row[];
 
   const mockPrisma = {
     events_bikes: { findMany: jest.fn() },
     component_groups: { findMany: jest.fn() },
     users: { findUnique: jest.fn() },
+    rides: { findMany: jest.fn() },
+    bikes: { findMany: jest.fn() },
   };
 
   beforeEach(async () => {
@@ -78,6 +88,30 @@ describe('StatsService', () => {
       Promise.resolve(GROUPS.filter((group) => where.id.in.includes(group.id))),
     );
     mockPrisma.users.findUnique.mockResolvedValue({ currency: 'CZK' });
+
+    garage = [];
+    rides = [];
+    // The database narrows by start time and leaves deleted rides and Archived Bikes out when asked to.
+    const archived = (bikeId: unknown): boolean =>
+      garage.some((bike) => bike.id === bikeId && bike.is_deleted === true);
+    mockPrisma.bikes.findMany.mockImplementation(({ where }: { where: { is_deleted?: unknown } }) =>
+      Promise.resolve(garage.filter((bike) => where.is_deleted === undefined || bike.is_deleted !== true)),
+    );
+    mockPrisma.rides.findMany.mockImplementation(
+      ({
+        where,
+      }: {
+        where: { is_deleted?: unknown; started_at: { gte: Date; lt: Date }; bikes: { is_deleted?: unknown } };
+      }) =>
+        Promise.resolve(
+          rides.filter((row) => {
+            const date = row.started_at as Date;
+            const inYear = date >= where.started_at.gte && date < where.started_at.lt;
+            const deleted = where.is_deleted !== undefined && row.is_deleted === true;
+            return inYear && !deleted && (where.bikes.is_deleted === undefined || !archived(row.bike_id));
+          }),
+        ),
+    );
   });
 
   afterEach(() => {
@@ -331,6 +365,161 @@ describe('StatsService', () => {
           },
         }),
       );
+    });
+  });
+
+  describe('getDistance', () => {
+    beforeEach(() => {
+      // A Wednesday in late January keeps each line to five weeks.
+      jest.setSystemTime(new Date('2026-01-28T10:00:00.000Z'));
+      garage = [{ ...RALLON, is_deleted: false }];
+    });
+
+    it('buckets rides into Monday weeks in UTC and adds them up week by week', async () => {
+      // ARRANGE: 1 January is a Thursday, so the first week starts on the last Monday of 2025.
+      rides = [
+        ride(RALLON, '2025-12-30T09:00:00.000Z', 99000),
+        ride(RALLON, '2026-01-01T09:00:00.000Z', 12400),
+        // Late on a Sunday in UTC - already Monday in Prague, still the week before here.
+        ride(RALLON, '2026-01-11T23:30:00.000Z', 30200),
+        ride(RALLON, '2026-01-12T06:00:00.000Z', 8000),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT: last year's ride is out; values rise and stop at the current week.
+      expect(result).toEqual({
+        year: 2026,
+        weeks: ['2025-12-29', '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26'],
+        bikes: [
+          {
+            bike_id: 21,
+            bike_brand: 'Orbea',
+            bike_model: 'Rallon',
+            year: 2024,
+            color_index: 0,
+            cumulative_km: [12, 43, 51, 51, 51],
+            total_km: 51,
+          },
+        ],
+      });
+    });
+
+    it("ranks a bike's colour among all the owner's bikes, so archiving one repaints nothing", async () => {
+      // ARRANGE: the middle bike by id is archived, and was ridden this year.
+      garage = [
+        { ...RALLON, is_deleted: false },
+        { ...STUMPY, is_deleted: true },
+        { ...TREK, is_deleted: false },
+      ];
+      rides = [
+        ride(RALLON, '2026-01-06T09:00:00.000Z', 20000),
+        ride(STUMPY, '2026-01-07T09:00:00.000Z', 90000),
+        ride(TREK, '2026-01-08T09:00:00.000Z', 30000),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT: the archived bike has no line, yet still holds its colour slot.
+      expect(result.bikes.map(({ bike_id, color_index, total_km }) => ({ bike_id, color_index, total_km }))).toEqual([
+        { bike_id: TREK.id, color_index: 2, total_km: 30 },
+        { bike_id: RALLON.id, color_index: 0, total_km: 20 },
+      ]);
+    });
+
+    it('serves last year while this year has no ride yet, with weeks running to its last week', async () => {
+      // ARRANGE
+      rides = [ride(RALLON, '2025-03-04T09:00:00.000Z', 40000), ride(RALLON, '2025-12-31T09:00:00.000Z', 10000)];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT: 1 January 2025 was a Wednesday and 31 December too - 53 Monday weeks.
+      expect(result.year).toBe(2025);
+      expect(result.weeks).toHaveLength(53);
+      expect(result.weeks[0]).toBe('2024-12-30');
+      expect(result.weeks[52]).toBe('2025-12-29');
+      expect(result.bikes[0].cumulative_km[8]).toBe(0);
+      expect(result.bikes[0].cumulative_km[9]).toBe(40);
+      expect(result.bikes[0].cumulative_km[52]).toBe(50);
+      expect(result.bikes[0].total_km).toBe(50);
+    });
+
+    it('serves last year while this year has no ride long enough to draw', async () => {
+      // ARRANGE: this year only a ride without a distance and one that rounds to 0 km.
+      rides = [
+        ride(RALLON, '2025-06-10T09:00:00.000Z', 40000),
+        ride(RALLON, '2026-01-06T09:00:00.000Z', null),
+        ride(RALLON, '2026-01-07T09:00:00.000Z', 300),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT
+      expect(result.year).toBe(2025);
+      expect(result.bikes.map(({ bike_id, total_km }) => ({ bike_id, total_km }))).toEqual([
+        { bike_id: RALLON.id, total_km: 40 },
+      ]);
+    });
+
+    it('stays on this year when last year has no ride either', async () => {
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT: an empty card for the current year, not an empty one for last year.
+      expect(result).toEqual({
+        year: 2026,
+        weeks: ['2025-12-29', '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26'],
+        bikes: [],
+      });
+    });
+
+    it('serves exactly the year asked for', async () => {
+      // ARRANGE: last year has rides, the year asked for has none.
+      rides = [ride(RALLON, '2025-03-04T09:00:00.000Z', 40000)];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 2024);
+
+      // ASSERT
+      expect(result.year).toBe(2024);
+      expect(result.bikes).toEqual([]);
+    });
+
+    it('leaves out a bike that rode no distance this year', async () => {
+      // ARRANGE: a ride without a distance, and one short enough to round to nothing.
+      garage = [
+        { ...RALLON, is_deleted: false },
+        { ...STUMPY, is_deleted: false },
+      ];
+      rides = [
+        ride(RALLON, '2026-01-06T09:00:00.000Z', 5000),
+        ride(STUMPY, '2026-01-07T09:00:00.000Z', null),
+        ride(STUMPY, '2026-01-08T09:00:00.000Z', 300),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT
+      expect(result.bikes.map((bike) => bike.bike_id)).toEqual([RALLON.id]);
+    });
+
+    it('counts no deleted ride', async () => {
+      // ARRANGE
+      rides = [
+        ride(RALLON, '2026-01-06T09:00:00.000Z', 20000),
+        { ...ride(RALLON, '2026-01-07T09:00:00.000Z', 50000), is_deleted: true },
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT
+      expect(result.bikes[0].total_km).toBe(20);
     });
   });
 });

@@ -31,3 +31,22 @@ export interface Spend {
   categories: SpendCategory[];
   bikes: SpendBike[];
 }
+
+export interface DistanceBike {
+  bike_id: number;
+  bike_brand: string;
+  bike_model: string | null;
+  year: number | null;
+  // Rank by id among all the owner's bikes, archived included, so a colour never shifts.
+  color_index: number;
+  // Whole km so far, one per entry of `weeks`.
+  cumulative_km: number[];
+  total_km: number;
+}
+
+export interface Distance {
+  year: number;
+  // Monday of each week (ISO date, UTC), up to the current week.
+  weeks: string[];
+  bikes: DistanceBike[];
+}

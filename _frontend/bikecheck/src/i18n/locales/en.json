@@ -1173,6 +1173,9 @@
     "spendTitle": "Where the money went · {{year}}",
     "spendEmpty": "no prices yet · add a price to a service",
     "other": "Other",
-    "unassigned": "Unassigned"
+    "unassigned": "Unassigned",
+    "distanceTitle": "Distance · {{year}}",
+    "distanceEmpty": "no rides yet · connect Strava",
+    "distanceWeek": "Week of {{date}}"
   }
 }

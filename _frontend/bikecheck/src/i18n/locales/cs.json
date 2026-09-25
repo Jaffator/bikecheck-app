@@ -1231,6 +1231,9 @@
     "spendTitle": "Kam šly peníze · {{year}}",
     "spendEmpty": "zatím bez cen · doplň cenu k servisu",
     "other": "Ostatní",
-    "unassigned": "Nepřiřazeno"
+    "unassigned": "Nepřiřazeno",
+    "distanceTitle": "Najeto · {{year}}",
+    "distanceEmpty": "zatím žádné jízdy · připoj Stravu",
+    "distanceWeek": "Týden od {{date}}"
   }
 }
