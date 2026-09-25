@@ -1168,5 +1168,11 @@
     "categoriesCount_one": "{{count}} category",
     "categoriesCount_other": "{{count}} categories",
     "categoriesNav": "Component categories"
+  },
+  "stats": {
+    "spendTitle": "Where the money went · {{year}}",
+    "spendEmpty": "no prices yet · add a price to a service",
+    "other": "Other",
+    "unassigned": "Unassigned"
   }
 }

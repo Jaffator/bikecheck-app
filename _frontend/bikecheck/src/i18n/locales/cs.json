@@ -1226,5 +1226,11 @@
     "categoriesCount_many": "{{count}} kategoriích",
     "categoriesCount_other": "{{count}} kategoriích",
     "categoriesNav": "Kategorie komponent"
+  },
+  "stats": {
+    "spendTitle": "Kam šly peníze · {{year}}",
+    "spendEmpty": "zatím bez cen · doplň cenu k servisu",
+    "other": "Ostatní",
+    "unassigned": "Nepřiřazeno"
   }
 }

@@ -9,6 +9,7 @@ import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
 import { BikeHealthList } from "@/features/bikes/ui/BikeHealthList";
+import { SpendCard } from "@/features/stats/ui/SpendCard";
 const FAB_CLEARANCE = {
   base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
   md: "md",
@@ -42,6 +43,7 @@ export function Dashboard(): ReactElement {
           <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
           {/* Under the work: how the garage stands, and the way into any one bike. */}
           <BikeHealthList />
+          <SpendCard />
         </Stack>
         <StatusRow />
       </SimpleGrid>
