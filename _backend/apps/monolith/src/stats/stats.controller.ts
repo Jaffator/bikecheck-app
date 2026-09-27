@@ -3,6 +3,7 @@ import { ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { StatsService } from './stats.service';
 import { Response_SpendDto } from './dto/response-spend';
 import { Response_DistanceDto } from './dto/response-distance';
+import { Response_WearForecastDto } from './dto/response-wear-forecast';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 // A pass-through: what each chart counts is decided in StatsService.
@@ -40,5 +41,12 @@ export class StatsController {
     @Query('year', new ParseIntPipe({ optional: true })) year?: number,
   ): Promise<Response_DistanceDto> {
     return await this.statsService.getDistance(Number(userId), year);
+  }
+
+  // ---------- GET the Tracked Actions that run out soonest, with their wear curves ----------
+  @Get('wear-forecast')
+  @ApiResponse({ status: 200, type: Response_WearForecastDto })
+  async getWearForecast(@CurrentUser('userId') userId: string): Promise<Response_WearForecastDto> {
+    return await this.statsService.getWearForecast(Number(userId));
   }
 }

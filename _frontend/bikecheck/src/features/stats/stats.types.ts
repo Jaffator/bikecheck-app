@@ -1,4 +1,5 @@
 // Home's charts, as the API serves them. An Archived Bike is in none of them (ADR 0024).
+import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 
 export interface SpendCategory {
   // "group:<id>", "other" (outside the top three) or "unassigned" (no category).
@@ -49,4 +50,24 @@ export interface Distance {
   // Monday of each week (ISO date, UTC), up to the current week.
   weeks: string[];
   bikes: DistanceBike[];
+}
+
+export interface WearPoint {
+  // ISO date, UTC.
+  date: string;
+  percentage: number;
+}
+
+export interface WearForecastItem extends GarageTrackedAction {
+  // In the reading's unit; null when the bike was not ridden in the last 4 weeks.
+  pace_per_week: number | null;
+  // Null when overdue or without pace.
+  projected_date: string | null;
+  // From the Wear Baseline moment, each week end, then today at the current percentage.
+  points: WearPoint[];
+}
+
+export interface WearForecast {
+  // Up to 5, soonest to run out first, overdue first.
+  items: WearForecastItem[];
 }

@@ -1033,6 +1033,98 @@ describe('ServiceTrackingService', () => {
     });
   });
 
+  describe('getGarageReadings', () => {
+    // Postponing hides a job from the to-do list, not from the wear it keeps piling up.
+    it('keeps a postponed pairing and marks it', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [
+          mountedPart({
+            drivetrain_km: 3200,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { postponedBand: 75 })],
+          }),
+        ],
+      );
+
+      const readings = await service.getGarageReadings(OWNER_ID);
+
+      expect(readings.map(({ action, postponed }) => [action.percentage, action.bike_brand, postponed])).toEqual([
+        [80, 'Santa Cruz', true],
+      ]);
+    });
+
+    // Wear is counted from the last time that job was recorded on that part, deleted Services aside.
+    it('dates the Wear Baseline by the latest recorded occasion of the action', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+          intervalRow(TYRE_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+        ],
+        [
+          mountedPart({
+            drivetrain_km: 3200,
+            action_done_component_map: [
+              baseline(CHAIN_REPLACEMENT, { drivetrainKm: 1000 }, '2026-06-10T00:00:00.000Z'),
+              baseline(CHAIN_REPLACEMENT, { drivetrainKm: 500 }, '2026-03-01T00:00:00.000Z'),
+              baseline(CHAIN_REPLACEMENT, { drivetrainKm: 2000 }, '2026-08-01T00:00:00.000Z', true),
+              baseline(TYRE_REPLACEMENT, { km: 0 }, '2026-09-01T00:00:00.000Z'),
+            ],
+          }),
+        ],
+      );
+
+      const readings = await service.getGarageReadings(OWNER_ID);
+      const chain = readings.find((reading) => reading.action.event_action_id === CHAIN_REPLACEMENT);
+
+      expect(chain?.wearBaselineAt).toEqual(new Date('2026-06-10T00:00:00.000Z'));
+    });
+
+    // Never recorded, the part has worn since it went on.
+    it('dates the Wear Baseline by the mounting when the action was never recorded', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 3200, mounted_at: new Date('2026-02-14T08:00:00.000Z') })],
+      );
+
+      const [reading] = await service.getGarageReadings(OWNER_ID);
+
+      expect(reading.wearBaselineAt).toEqual(new Date('2026-02-14T08:00:00.000Z'));
+    });
+
+    // The mounting would count wear the undated Service already reset.
+    it('leaves the Wear Baseline undated when the latest recorded occasion has no date', async () => {
+      const undated = baseline(CHAIN_REPLACEMENT, { drivetrainKm: 1000 });
+      (undated.event_actions_done as { events_bikes: Record<string, unknown> }).events_bikes.service_date = null;
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 3200, action_done_component_map: [undated] })],
+      );
+
+      const [reading] = await service.getGarageReadings(OWNER_ID);
+
+      expect(reading.wearBaselineAt).toBeNull();
+    });
+
+    it('leaves out an Archived Bike', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek', true)],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE]),
+          intervalRow(CHAIN_REPLACEMENT, { km: 1000 }, [CHAIN_TYPE], OTHER_BIKE_ID),
+        ],
+        [mountedPart({ drivetrain_km: 100 }), mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 5000 })],
+      );
+
+      const readings = await service.getGarageReadings(OWNER_ID);
+
+      expect(readings.map((reading) => reading.action.bike_id)).toEqual([BIKE_ID]);
+    });
+  });
+
   // The announcements. Everything below turns on one rule: the stored band is moved to
   // whichever band the reading now falls in, and only a move up - to 70, 95 or 100 - says
   // anything.

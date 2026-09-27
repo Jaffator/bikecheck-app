@@ -1234,6 +1234,13 @@
     "unassigned": "Nepřiřazeno",
     "distanceTitle": "Najeto · {{year}}",
     "distanceEmpty": "zatím žádné jízdy · připoj Stravu",
-    "distanceWeek": "Týden od {{date}}"
+    "distanceWeek": "Týden od {{date}}",
+    "forecastTitle": "Kdy dojede díl",
+    "forecastEmpty": "žádný sledovaný díl zatím nemá jízdy",
+    "forecastNoRides": "žádné jízdy za poslední 4 týdny",
+    "forecastInWeeks_one": "za {{count}} týden",
+    "forecastInWeeks_few": "za {{count}} týdny",
+    "forecastInWeeks_many": "za {{count}} týdne",
+    "forecastInWeeks_other": "za {{count}} týdnů"
   }
 }

@@ -1176,6 +1176,11 @@
     "unassigned": "Unassigned",
     "distanceTitle": "Distance · {{year}}",
     "distanceEmpty": "no rides yet · connect Strava",
-    "distanceWeek": "Week of {{date}}"
+    "distanceWeek": "Week of {{date}}",
+    "forecastTitle": "When a part runs out",
+    "forecastEmpty": "no tracked part has rides yet",
+    "forecastNoRides": "no rides in the last 4 weeks",
+    "forecastInWeeks_one": "in {{count}} week",
+    "forecastInWeeks_other": "in {{count}} weeks"
   }
 }

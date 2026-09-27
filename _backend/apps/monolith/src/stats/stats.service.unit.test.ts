@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { StatsService } from './stats.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 
 const OWNER_ID = 7;
 const TODAY = new Date('2026-09-25T10:00:00.000Z');
@@ -35,9 +36,36 @@ function action(group: number, partial: number | null = null): Row {
   };
 }
 
-// One ride as the distance read loads it.
-function ride(bike: Row, startedAt: string, meters: number | null): Row {
-  return { bike_id: bike.id, started_at: new Date(startedAt), distance_m: meters };
+// One ride as the distance read loads it; the forecast reads the wear columns too.
+function ride(bike: Row, startedAt: string, meters: number | null, wear: Row = {}): Row {
+  return { bike_id: bike.id, started_at: new Date(startedAt), distance_m: meters, ...wear };
+}
+
+// One Tracked Action as Service Tracking hands it over: the figures behind its percentage and when its wear began.
+function reading(
+  bike: Row,
+  wear: { measure?: string; current: number; interval: number; percentage: number; level?: string },
+  wearBaselineAt: string | null = '2026-06-01T00:00:00.000Z',
+  componentMountedId = 55,
+): Row {
+  return {
+    action: {
+      bike_id: bike.id,
+      bike_brand: bike.bike_brand,
+      bike_model: bike.bike_model,
+      year: bike.year,
+      component_mounted_id: componentMountedId,
+      event_action_id: 101,
+      component_type: 'Chain',
+      measure: wear.measure ?? 'total_km',
+      current: wear.current,
+      interval: wear.interval,
+      percentage: wear.percentage,
+      level: wear.level ?? 'good',
+    },
+    postponed: false,
+    wearBaselineAt: wearBaselineAt === null ? null : new Date(wearBaselineAt),
+  };
 }
 
 // One Service as the spend read loads it.
@@ -56,6 +84,9 @@ describe('StatsService', () => {
   let services: Row[];
   let garage: Row[];
   let rides: Row[];
+  let readings: Row[];
+
+  const mockServiceTracking = { getGarageReadings: jest.fn() };
 
   const mockPrisma = {
     events_bikes: { findMany: jest.fn() },
@@ -67,7 +98,11 @@ describe('StatsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [StatsService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        StatsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ServiceTrackingService, useValue: mockServiceTracking },
+      ],
     }).compile();
 
     stats = module.get<StatsService>(StatsService);
@@ -101,17 +136,28 @@ describe('StatsService', () => {
       ({
         where,
       }: {
-        where: { is_deleted?: unknown; started_at: { gte: Date; lt: Date }; bikes: { is_deleted?: unknown } };
+        where: {
+          is_deleted?: unknown;
+          bike_id?: { in: number[] };
+          started_at: { gte: Date; lt?: Date };
+          bikes?: { is_deleted?: unknown };
+        };
       }) =>
         Promise.resolve(
           rides.filter((row) => {
             const date = row.started_at as Date;
-            const inYear = date >= where.started_at.gte && date < where.started_at.lt;
+            const inSpan =
+              date >= where.started_at.gte && (where.started_at.lt === undefined || date < where.started_at.lt);
             const deleted = where.is_deleted !== undefined && row.is_deleted === true;
-            return inYear && !deleted && (where.bikes.is_deleted === undefined || !archived(row.bike_id));
+            const onBikes = where.bike_id === undefined || where.bike_id.in.includes(row.bike_id as number);
+            const archivedOut = where.bikes?.is_deleted !== undefined && archived(row.bike_id);
+            return inSpan && !deleted && onBikes && !archivedOut;
           }),
         ),
     );
+
+    readings = [];
+    mockServiceTracking.getGarageReadings.mockImplementation(() => Promise.resolve(readings));
   });
 
   afterEach(() => {
@@ -520,6 +566,159 @@ describe('StatsService', () => {
 
       // ASSERT
       expect(result.bikes[0].total_km).toBe(20);
+    });
+  });
+
+  describe('getWearForecast', () => {
+    const paceAndDate = (items: { pace_per_week: number | null; projected_date: string | null }[]): Row[] =>
+      items.map(({ pace_per_week, projected_date }) => ({ pace_per_week, projected_date }));
+
+    it("paces a part by its bike's last 4 weeks of rides and projects the day it reaches 100 %", async () => {
+      // ARRANGE: 3 000 of 4 000 drivetrain km; 160 km in the last 28 days.
+      readings = [reading(RALLON, { measure: 'drivetrain_km', current: 3000, interval: 4000, percentage: 75 })];
+      rides = [
+        // Before the 28 days, deleted, or on another bike: none of them sets the pace.
+        ride(RALLON, '2026-08-20T09:00:00.000Z', 60000, { drivetrain_meters: 50000 }),
+        ride(RALLON, '2026-09-10T09:00:00.000Z', 90000, { drivetrain_meters: 90000, is_deleted: true }),
+        ride(STUMPY, '2026-09-21T09:00:00.000Z', 900000, { drivetrain_meters: 900000 }),
+        ride(RALLON, '2026-09-01T09:00:00.000Z', 120000, { drivetrain_meters: 100000 }),
+        ride(RALLON, '2026-09-20T09:00:00.000Z', 70000, { drivetrain_meters: 60000 }),
+      ];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT: 160 km / 4 = 40 km a week; 1 000 km left is 25 weeks (175 days) after 25 September.
+      expect(paceAndDate(items)).toEqual([{ pace_per_week: 40, projected_date: '2027-03-19' }]);
+    });
+
+    it('projects nothing for a bike not ridden in the last 4 weeks', async () => {
+      // ARRANGE
+      readings = [reading(RALLON, { current: 300, interval: 1000, percentage: 30 })];
+      rides = [ride(RALLON, '2026-08-01T09:00:00.000Z', 50000)];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT
+      expect(paceAndDate(items)).toEqual([{ pace_per_week: null, projected_date: null }]);
+    });
+
+    it('projects nothing for an overdue part, however fast it is ridden', async () => {
+      // ARRANGE
+      readings = [reading(RALLON, { current: 1200, interval: 1000, percentage: 120, level: 'overdue' })];
+      rides = [ride(RALLON, '2026-09-20T09:00:00.000Z', 80000)];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT
+      expect(paceAndDate(items)).toEqual([{ pace_per_week: 20, projected_date: null }]);
+    });
+
+    // 30, 20 and 10 units ridden after a baseline on Monday 7 September, read against 200.
+    it.each([
+      ['total_km', { distance_m: 30000 }, { distance_m: 20000 }, { distance_m: 10000 }],
+      ['drivetrain_km', { drivetrain_meters: 30000 }, { drivetrain_meters: 20000 }, { drivetrain_meters: 10000 }],
+      ['total_time_min', { duration_min: 30 }, { duration_min: 20 }, { duration_min: 10 }],
+      ['suspension_min', { suspension_min: 30 }, { suspension_min: 20 }, { suspension_min: 10 }],
+      ['health_index', { health_index_brake_pad: 30 }, { health_index_brake_pad: 20 }, { health_index_brake_pad: 10 }],
+    ])('rebuilds the %s curve backwards from today, week end by week end', async (measure, first, second, third) => {
+      // ARRANGE: every column is filled, so only the measure's own column may count.
+      const noise = {
+        distance_m: 99000,
+        drivetrain_meters: 99000,
+        duration_min: 99,
+        suspension_min: 99,
+        health_index_brake_pad: 99,
+      };
+      readings = [reading(RALLON, { measure, current: 60, interval: 200, percentage: 30 }, '2026-09-07T00:00:00.000Z')];
+      rides = [
+        ride(RALLON, '2026-09-10T09:00:00.000Z', null, { ...noise, ...first }),
+        ride(RALLON, '2026-09-16T09:00:00.000Z', null, { ...noise, ...second }),
+        ride(RALLON, '2026-09-24T09:00:00.000Z', null, { ...noise, ...third }),
+      ];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT: 0 at the baseline, then 60 - 30 and 60 - 10 at the two Sundays, then today's reading.
+      expect(items[0].points).toEqual([
+        { date: '2026-09-07', percentage: 0 },
+        { date: '2026-09-13', percentage: 15 },
+        { date: '2026-09-20', percentage: 25 },
+        { date: '2026-09-25', percentage: 30 },
+      ]);
+    });
+
+    it('draws one point on the day of a baseline that falls on a Sunday', async () => {
+      // ARRANGE: that Sunday also ends its week.
+      readings = [reading(RALLON, { current: 60, interval: 200, percentage: 30 }, '2026-09-13T10:00:00.000Z')];
+      rides = [ride(RALLON, '2026-09-13T15:00:00.000Z', 20000), ride(RALLON, '2026-09-16T09:00:00.000Z', 40000)];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT: the baseline point keeps the day, measured before the Sunday ride.
+      expect(items[0].points).toEqual([
+        { date: '2026-09-13', percentage: 0 },
+        { date: '2026-09-20', percentage: 30 },
+        { date: '2026-09-25', percentage: 30 },
+      ]);
+    });
+
+    it('never draws the curve below 0 where the wear was corrected by hand', async () => {
+      // ARRANGE: 60 km ridden since the baseline, but only 10 left on the part.
+      readings = [reading(RALLON, { current: 10, interval: 200, percentage: 5 }, '2026-09-07T00:00:00.000Z')];
+      rides = [
+        ride(RALLON, '2026-09-10T09:00:00.000Z', 30000),
+        ride(RALLON, '2026-09-16T09:00:00.000Z', 20000),
+        ride(RALLON, '2026-09-24T09:00:00.000Z', 10000),
+      ];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT
+      expect(items[0].points.map((point) => point.percentage)).toEqual([0, 0, 0, 5]);
+    });
+
+    it('keeps the 5 that run out soonest: overdue first, then by date, those without a date last', async () => {
+      // ARRANGE: the Rallon rides 10 km a week, the Stumpy not at all.
+      readings = [
+        reading(RALLON, { current: 500, interval: 1000, percentage: 50 }, undefined, 1),
+        reading(STUMPY, { current: 950, interval: 1000, percentage: 95 }, undefined, 2),
+        reading(RALLON, { current: 1050, interval: 1000, percentage: 105, level: 'overdue' }, undefined, 3),
+        reading(RALLON, { current: 700, interval: 1000, percentage: 70 }, undefined, 4),
+        reading(RALLON, { current: 900, interval: 1000, percentage: 90 }, undefined, 5),
+        reading(RALLON, { current: 1200, interval: 1000, percentage: 120, level: 'overdue' }, undefined, 6),
+        reading(RALLON, { current: 600, interval: 1000, percentage: 60 }, undefined, 7),
+      ];
+      rides = [ride(RALLON, '2026-09-20T09:00:00.000Z', 40000)];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT: 120 % and 105 % overdue, then 10, 30 and 40 weeks out; 50 weeks and no date are cut.
+      expect(items.map((item) => [item.component_mounted_id, item.projected_date])).toEqual([
+        [6, null],
+        [3, null],
+        [5, '2026-12-04'],
+        [4, '2027-04-23'],
+        [7, '2027-07-02'],
+      ]);
+    });
+
+    // Putting a job off hides it from the to-do list, not from the wear.
+    it('keeps a postponed Tracked Action', async () => {
+      // ARRANGE
+      readings = [{ ...reading(RALLON, { current: 800, interval: 1000, percentage: 80 }), postponed: true }];
+
+      // ACT
+      const { items } = await stats.getWearForecast(OWNER_ID);
+
+      // ASSERT
+      expect(items).toHaveLength(1);
     });
   });
 });

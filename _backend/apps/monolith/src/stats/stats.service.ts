@@ -6,6 +6,13 @@ import { serviceDateInPeriod } from '../bike-event/bike-event.service';
 import { isoDay } from '../ai-chat/tools/tool-dates';
 import { Response_SpendBikeDto, Response_SpendCategoryDto, Response_SpendDto } from './dto/response-spend';
 import { Response_DistanceBikeDto, Response_DistanceDto } from './dto/response-distance';
+import {
+  Response_WearForecastDto,
+  Response_WearForecastItemDto,
+  Response_WearPointDto,
+} from './dto/response-wear-forecast';
+import { GarageReading, ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import type { WearMeasure } from '../service-tracking/attention-level';
 
 // A Service's money follows its Actions' Component Category: the part types an Action
 // targets, or a catch-all Replacement's own category (ADR 0022).
@@ -45,11 +52,46 @@ type DistanceRide = Prisma.ridesGetPayload<{ select: typeof distanceSelect }>;
 const garageSelect = { id: true, bike_brand: true, bike_model: true, year: true } satisfies Prisma.bikesSelect;
 type GarageBike = Prisma.bikesGetPayload<{ select: typeof garageSelect }>;
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+
+const wearRideSelect = {
+  bike_id: true,
+  started_at: true,
+  distance_m: true,
+  drivetrain_meters: true,
+  duration_min: true,
+  suspension_min: true,
+  health_index_brake_pad: true,
+} satisfies Prisma.ridesSelect;
+type WearRide = Prisma.ridesGetPayload<{ select: typeof wearRideSelect }>;
+
+// The ride columns strava.service.ts grows each accumulator by, so the curve rebuilds the same wear.
+const RIDE_WEAR: Record<WearMeasure, (ride: WearRide) => number> = {
+  total_km: (ride) => (ride.distance_m ?? 0) / 1000,
+  drivetrain_km: (ride) => (ride.drivetrain_meters ?? 0) / 1000,
+  total_time_min: (ride) => ride.duration_min ?? 0,
+  suspension_min: (ride) => ride.suspension_min ?? 0,
+  health_index: (ride) => ride.health_index_brake_pad ?? 0,
+};
+
+const PACE_WEEKS = 4;
+const FORECAST_ITEMS = 5;
+
+// Kept together so only the 5 soonest pay for rebuilding their curve.
+interface Projection {
+  reading: GarageReading;
+  rides: WearRide[];
+  pace: number;
+  projectedAt: Date | null;
+}
 
 @Injectable()
 export class StatsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly serviceTracking: ServiceTrackingService,
+  ) {}
 
   async getSpend(userId: number, year?: number): Promise<Response_SpendDto> {
     const [[served, services], user] = await Promise.all([
@@ -156,6 +198,36 @@ export class StatsService {
     }));
 
     return [...rows, ...folded].filter((row) => row.amount > 0);
+  }
+
+  async getWearForecast(userId: number): Promise<Response_WearForecastDto> {
+    const now = new Date();
+    const readings = await this.serviceTracking.getGarageReadings(userId);
+    const rides = await this.wearRides(readings, now);
+
+    const items = readings
+      .map((reading) => projection(reading, rides, now))
+      .sort(soonestFirst(now))
+      .slice(0, FORECAST_ITEMS)
+      .map((soonest) => forecastItem(soonest, now));
+    return { items };
+  }
+
+  // Back to the earliest Wear Baseline, and at least the weeks the pace reads.
+  private async wearRides(readings: GarageReading[], now: Date): Promise<WearRide[]> {
+    if (readings.length === 0) return [];
+
+    const baselines = readings.flatMap(({ wearBaselineAt }) =>
+      wearBaselineAt === null ? [] : [wearBaselineAt.getTime()],
+    );
+    return this.prisma.rides.findMany({
+      where: {
+        is_deleted: { not: true },
+        bike_id: { in: [...new Set(readings.map(({ action }) => action.bike_id))] },
+        started_at: { gte: new Date(Math.min(paceFrom(now), ...baselines)) },
+      },
+      select: wearRideSelect,
+    });
   }
 }
 
@@ -327,4 +399,72 @@ function runningTotal(values: number[]): number[] {
     total += value;
     return total;
   });
+}
+
+function paceFrom(now: Date): number {
+  return now.getTime() - PACE_WEEKS * WEEK_MS;
+}
+
+// Only a part not yet due and still being ridden gets a date.
+function projection(reading: GarageReading, garageRides: WearRide[], now: Date): Projection {
+  const { bike_id, measure, current, interval, level } = reading.action;
+  const rides = garageRides.filter((ride) => ride.bike_id === bike_id);
+  const recent = rides.filter((ride) => startedAfter(ride, paceFrom(now)));
+  const pace = sum(recent.map(RIDE_WEAR[measure])) / PACE_WEEKS;
+  const projectedAt =
+    level !== 'overdue' && pace > 0 ? new Date(now.getTime() + ((interval - current) / pace) * WEEK_MS) : null;
+
+  return { reading, rides, pace, projectedAt };
+}
+
+// A tie goes to the worse reading.
+function soonestFirst(now: Date): (a: Projection, b: Projection) => number {
+  return (a, b) => runsOutAt(a, now) - runsOutAt(b, now) || b.reading.action.percentage - a.reading.action.percentage;
+}
+
+// Overdue runs out today; a part with no date sorts last.
+function runsOutAt({ reading, projectedAt }: Projection, now: Date): number {
+  if (reading.action.level === 'overdue') return now.getTime();
+  return projectedAt?.getTime() ?? Number.POSITIVE_INFINITY;
+}
+
+function forecastItem({ reading, rides, pace, projectedAt }: Projection, now: Date): Response_WearForecastItemDto {
+  return {
+    ...reading.action,
+    pace_per_week: pace > 0 ? pace : null,
+    projected_date: projectedAt === null ? null : isoDay(projectedAt),
+    points: wearPoints(reading, rides, now),
+  };
+}
+
+// Rebuilt backwards: wear at a moment is today's minus every ride after it. Today is the reading itself.
+function wearPoints({ action, wearBaselineAt }: GarageReading, rides: WearRide[], now: Date): Response_WearPointDto[] {
+  const today = { date: isoDay(now), percentage: action.percentage };
+  if (wearBaselineAt === null) return [today];
+
+  const rideWear = RIDE_WEAR[action.measure];
+  const wearAt = (cutoff: Date, labelDay: Date): Response_WearPointDto => {
+    const since = sum(rides.filter((ride) => startedAfter(ride, cutoff.getTime())).map(rideWear));
+    const percentage = Math.floor((Math.max(0, action.current - since) / action.interval) * 100);
+    return { date: isoDay(labelDay), percentage };
+  };
+
+  const first = wearAt(wearBaselineAt, wearBaselineAt);
+  // A week ends when the next Monday begins; dated by its Sunday, which may be the baseline's own day.
+  const weekEnds = mondaysBetween(wearBaselineAt, now)
+    .map((monday) => wearAt(monday, new Date(monday.getTime() - DAY_MS)))
+    .filter((point) => point.date !== first.date);
+  return [first, ...weekEnds, today];
+}
+
+function startedAfter(ride: WearRide, time: number): boolean {
+  return ride.started_at !== null && ride.started_at.getTime() > time;
+}
+
+function mondaysBetween(from: Date, to: Date): Date[] {
+  const mondays: Date[] = [];
+  for (let monday = mondayOf(from).getTime() + WEEK_MS; monday <= to.getTime(); monday += WEEK_MS) {
+    mondays.push(new Date(monday));
+  }
+  return mondays;
 }

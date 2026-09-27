@@ -90,6 +90,14 @@ interface Reading {
   override: number | null;
 }
 
+// Postponed ones are kept, flagged: putting a job off hides it from the to-do list, not from wear.
+export interface GarageReading {
+  action: Response_GarageTrackedActionDto;
+  postponed: boolean;
+  // When the wear it counts began: the latest recording of the job, else the mounting.
+  wearBaselineAt: Date | null;
+}
+
 // Service Tracking: how far every piece of a bike's maintenance has come. A Tracked Action
 // is one mounted part paired with one action the bike keeps a Service Interval for
 // (ADR 0027), and it reads as a percentage of the way to being due.
@@ -121,6 +129,16 @@ export class ServiceTrackingService {
   // about - the dashboard asks for 80. One flat list, worst first: the question it answers
   // is "what needs doing?", not "what needs doing on which bike?".
   async getGarageTrackedActions(userId: number, minPercentage: number): Promise<Response_GarageTrackedActionDto[]> {
+    // Only this list hides what was put off - the bike's own page lists everything it owes.
+    const needingAttention = (await this.getGarageReadings(userId))
+      .filter((reading) => reading.action.percentage >= minPercentage && !reading.postponed)
+      .map((reading) => reading.action);
+
+    return worstFirst(needingAttention);
+  }
+
+  // Every Tracked Action on the owner's non-archived bikes, postponed ones included, in no order.
+  async getGarageReadings(userId: number): Promise<GarageReading[]> {
     // An Archived Bike stays put away, so it is never even loaded.
     const bikes = await this.prisma.bikes.findMany({
       where: ownedBikesWhere(userId),
@@ -133,19 +151,21 @@ export class ServiceTrackingService {
     // The pieces of each bike's name, without its id: how a bike is written out is the
     // frontend's one rule, and it already has it.
     const naming = new Map(bikes.map(({ id, ...name }) => [id, name]));
-
-    // Only this list hides what was put off - the bike's own page lists everything it owes.
     const postponed = postponedBands(parts);
 
-    const needingAttention = trackedActions(parts, intervals)
-      .filter((action) => action.percentage >= minPercentage)
-      .filter((action) => !isPostponed(action, postponed))
-      .flatMap((action) => {
+    return parts.flatMap((part) =>
+      trackedActions([part], intervals).flatMap((action) => {
         const name = naming.get(action.bike_id);
-        return name === undefined ? [] : [{ ...action, ...name }];
-      });
-
-    return worstFirst(needingAttention);
+        if (name === undefined) return [];
+        return [
+          {
+            action: { ...action, ...name },
+            postponed: isPostponed(action, postponed),
+            wearBaselineAt: wearBaselineAt(part, action.event_action_id),
+          },
+        ];
+      }),
+    );
   }
 
   // The owner's own Service Interval for one Tracked Action, or null to put the bike's plan
@@ -611,6 +631,12 @@ function latestBaseline(part: TrackedPart, eventActionId: number): Baseline | nu
   if (recorded.length === 0) return null;
 
   return recorded.reduce((latest, junction) => (recordedLater(junction, latest) ? junction : latest));
+}
+
+// An undated latest Service stays unknown: the mounting would count wear it already reset.
+function wearBaselineAt(part: TrackedPart, eventActionId: number): Date | null {
+  const latest = latestBaseline(part, eventActionId);
+  return latest === null ? part.mounted_at : latest.event_actions_done.events_bikes.service_date;
 }
 
 // Later work wins. The date on a Service carries no time, so two done on the same day are
