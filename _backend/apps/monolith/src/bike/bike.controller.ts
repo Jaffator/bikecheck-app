@@ -23,7 +23,12 @@ import { BikeDataScrapeService } from './bike-data-scraper/bike-data-scraper.ser
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
 import { ApiResponse, ApiBody, ApiQuery, ApiConsumes, ApiExtraModels } from '@nestjs/swagger';
-import { SearchBikeExternalResponseDto, ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
+import {
+  SearchBikeExternalResponseDto,
+  ResponseBikeDto,
+  NewBikeFormDataDto,
+  ResponseListedBikeDto,
+} from './dto/response-bike.dto';
 import { AssembleBikeComponentsDto } from '../component/dto/response-components';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 // import { NewBikeFormData } from './types/bike.types';
@@ -126,12 +131,12 @@ export class BikeController {
   // ---------- GET current user's bikes ----------
   // The garage by default; the archive behind the Settings row when asked for it.
   @Get()
-  @ApiResponse({ status: 200, type: ResponseBikeDto, isArray: true })
+  @ApiResponse({ status: 200, type: ResponseListedBikeDto, isArray: true })
   @ApiQuery({ name: 'archived', type: Boolean, required: false })
   findUserBikes(
     @CurrentUser('userId') userId: string,
     @Query('archived') archived?: string,
-  ): Promise<ResponseBikeDto[]> {
+  ): Promise<ResponseListedBikeDto[]> {
     return this.bikeService.findByUser(Number(userId), archived === 'true');
   }
 

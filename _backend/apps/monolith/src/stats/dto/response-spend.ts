@@ -17,14 +17,6 @@ export class Response_SpendCategoryDto {
   amount!: number;
 }
 
-export class Response_SpendSegmentDto {
-  @ApiProperty({ example: 'group:3' })
-  key!: string;
-
-  @ApiProperty({ example: 4200 })
-  amount!: number;
-}
-
 export class Response_SpendBikeDto {
   @ApiProperty({ example: 21 })
   bike_id!: number;
@@ -40,9 +32,6 @@ export class Response_SpendBikeDto {
 
   @ApiProperty({ example: 9200 })
   total!: number;
-
-  @ApiProperty({ type: [Response_SpendSegmentDto], description: 'Same keys and order as categories' })
-  segments!: Response_SpendSegmentDto[];
 }
 
 export class Response_SpendDto {

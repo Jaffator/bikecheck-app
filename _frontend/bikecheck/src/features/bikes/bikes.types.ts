@@ -37,6 +37,15 @@ export interface Bike {
   is_shared: boolean;
 }
 
+// A bike as the garage and the archive list it; a single bike's read does not carry these.
+export interface ListedBike extends Bike {
+  // Rank by id among all the owner's bikes, archived included, so a colour never shifts.
+  color_index: number;
+  // Lifetime, from the rides: total_time_min is only what the owner typed when adding the bike.
+  ride_count: number;
+  ride_time_min: number;
+}
+
 // Keep multipart photo data separate from the create DTO.
 export interface CreateBikeInput {
   bike: CreateBikePayload;

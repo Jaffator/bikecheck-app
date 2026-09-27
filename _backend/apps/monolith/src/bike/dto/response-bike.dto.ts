@@ -144,3 +144,21 @@ export class ResponseBikeDto implements Omit<bikes, 'bike_weight_kg'> {
   @ApiProperty({ example: true, description: "Whether the bike goes out on the owner's Public Profile" })
   is_shared!: boolean;
 }
+
+// A bike as GET /bike lists it, in the garage or the archive: with its colour and what its rides add up to.
+export class ResponseListedBikeDto extends ResponseBikeDto {
+  @ApiProperty({
+    example: 0,
+    description: "Rank by id among all the owner's bikes, archived included, so a colour never shifts",
+  })
+  color_index!: number;
+
+  @ApiProperty({ example: 42, description: 'Non-deleted rides, lifetime' })
+  ride_count!: number;
+
+  @ApiProperty({
+    example: 3180,
+    description: "Sum of those rides' duration_min; total_time_min is only what the owner typed",
+  })
+  ride_time_min!: number;
+}

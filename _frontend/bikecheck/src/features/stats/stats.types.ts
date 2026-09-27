@@ -10,19 +10,12 @@ export interface SpendCategory {
   amount: number;
 }
 
-export interface SpendSegment {
-  key: string;
-  amount: number;
-}
-
 export interface SpendBike {
   bike_id: number;
   bike_brand: string;
   bike_model: string | null;
   year: number | null;
   total: number;
-  // Same keys and order as the categories.
-  segments: SpendSegment[];
 }
 
 export interface Spend {
@@ -40,15 +33,15 @@ export interface DistanceBike {
   year: number | null;
   // Rank by id among all the owner's bikes, archived included, so a colour never shifts.
   color_index: number;
-  // Whole km so far, one per entry of `weeks`.
-  cumulative_km: number[];
+  // Metres per UTC day, index 0 = 1 January; to today for the current year, the whole of a past one.
+  daily_m: number[];
+  // Whole km of the sum of daily_m.
   total_km: number;
 }
 
 export interface Distance {
   year: number;
-  // Monday of each week (ISO date, UTC), up to the current week.
-  weeks: string[];
+  // Highest total first.
   bikes: DistanceBike[];
 }
 

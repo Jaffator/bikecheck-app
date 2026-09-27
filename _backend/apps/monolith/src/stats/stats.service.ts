@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikesWhere } from '../bike/owned-bike.where';
+import { colorIndexes } from '../bike/color-index';
 import { serviceDateInPeriod } from '../bike-event/bike-event.service';
 import { isoDay } from '../ai-chat/tools/tool-dates';
 import { Response_SpendBikeDto, Response_SpendCategoryDto, Response_SpendDto } from './dto/response-spend';
@@ -50,7 +51,7 @@ const distanceSelect = { bike_id: true, started_at: true, distance_m: true } sat
 type DistanceRide = Prisma.ridesGetPayload<{ select: typeof distanceSelect }>;
 
 const garageSelect = { id: true, bike_brand: true, bike_model: true, year: true } satisfies Prisma.bikesSelect;
-type GarageBike = Prisma.bikesGetPayload<{ select: typeof garageSelect }>;
+type ColoredBike = Prisma.bikesGetPayload<{ select: typeof garageSelect }> & { color_index: number };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
@@ -109,29 +110,28 @@ export class StatsService {
       currency: user?.currency ?? null,
       total: units(sum([...garage.values()])),
       categories,
-      bikes: bikeRows(bikes, top, categories),
+      bikes: bikeRows(bikes),
     };
   }
 
   // Last year while this one draws no line, so the card is not blank all January.
   async getDistance(userId: number, year?: number): Promise<Response_DistanceDto> {
-    // Archived bikes too: a colour ranks over them, so archiving one repaints nothing.
-    const bikes = await this.prisma.bikes.findMany({
-      where: ownedBikesWhere(userId, { includeArchived: true }),
-      select: garageSelect,
-    });
-    const current = await this.distanceIn(userId, year ?? new Date().getUTCFullYear(), bikes);
+    const [bikes, colors] = await Promise.all([
+      this.prisma.bikes.findMany({ where: ownedBikesWhere(userId), select: garageSelect }),
+      colorIndexes(this.prisma, userId),
+    ]);
+    const garage = bikes.map((bike) => ({ ...bike, color_index: colors.get(bike.id) ?? 0 }));
+    const current = await this.distanceIn(userId, year ?? new Date().getUTCFullYear(), garage);
     if (year !== undefined || current.bikes.length > 0) return current;
 
-    const previous = await this.distanceIn(userId, current.year - 1, bikes);
+    const previous = await this.distanceIn(userId, current.year - 1, garage);
     return previous.bikes.length > 0 ? previous : current;
   }
 
-  private async distanceIn(userId: number, year: number, bikes: GarageBike[]): Promise<Response_DistanceDto> {
+  private async distanceIn(userId: number, year: number, garage: ColoredBike[]): Promise<Response_DistanceDto> {
     const rides = await this.ridesIn(userId, year);
-    const weeks = weeksOf(year, new Date());
 
-    return { year, weeks: weeks.map((week) => isoDay(week)), bikes: distanceRows(bikes, rides, weeks) };
+    return { year, bikes: distanceRows(garage, metersByDay(rides, year, daysOf(year, new Date()))) };
   }
 
   // Bucketed in UTC, so the year's edges are UTC too.
@@ -179,7 +179,7 @@ export class StatsService {
     const named = new Map(categories.map((category) => [category.id, category]));
 
     const rows: Response_SpendCategoryDto[] = top.map((id) => ({
-      key: categoryKey(id, top),
+      key: `group:${id}`,
       component_group_id: id,
       group_name: named.get(id)?.group_name ?? null,
       i18n_key: named.get(id)?.i18n_key ?? null,
@@ -286,28 +286,15 @@ function topCategories(garage: Split): number[] {
     .map(([id]) => id);
 }
 
-function categoryKey(id: number | null, top: number[]): string {
-  if (id === null) return 'unassigned';
-  return top.includes(id) ? `group:${id}` : 'other';
-}
-
-function bikeRows(bikes: BikeSpend[], top: number[], categories: Response_SpendCategoryDto[]): Response_SpendBikeDto[] {
+function bikeRows(bikes: BikeSpend[]): Response_SpendBikeDto[] {
   return bikes
-    .map(({ bike, split }) => {
-      const byKey = new Map<string, number>();
-      for (const [id, amount] of split) {
-        const key = categoryKey(id, top);
-        byKey.set(key, (byKey.get(key) ?? 0) + amount);
-      }
-      return {
-        bike_id: bike.id,
-        bike_brand: bike.bike_brand,
-        bike_model: bike.bike_model,
-        year: bike.year,
-        total: units(sum([...split.values()])),
-        segments: categories.map(({ key }) => ({ key, amount: units(byKey.get(key) ?? 0) })),
-      };
-    })
+    .map(({ bike, split }) => ({
+      bike_id: bike.id,
+      bike_brand: bike.bike_brand,
+      bike_model: bike.bike_model,
+      year: bike.year,
+      total: units(sum([...split.values()])),
+    }))
     .filter((row) => row.total > 0)
     .sort((a, b) => b.total - a.total || a.bike_id - b.bike_id);
 }
@@ -336,17 +323,13 @@ function sum(amounts: number[]): number {
   return amounts.reduce((total, amount) => total + amount, 0);
 }
 
-// Mondays from the week holding 1 January to the current week - or the last week of a past
-// year, so the x-axis never runs on into empty months.
-function weeksOf(year: number, today: Date): Date[] {
-  const last = Math.min(today.getTime(), Date.UTC(year, 11, 31));
-  const weeks: Date[] = [];
-  let monday = mondayOf(new Date(Date.UTC(year, 0, 1)));
-  while (monday.getTime() <= last) {
-    weeks.push(monday);
-    monday = new Date(monday.getTime() + WEEK_MS);
-  }
-  return weeks;
+// UTC days from 1 January to today inclusive, or the whole of a past year; none for a year ahead.
+function daysOf(year: number, today: Date): number {
+  const last = Math.min(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
+    Date.UTC(year, 11, 31),
+  );
+  return Math.max(0, (last - Date.UTC(year, 0, 1)) / DAY_MS + 1);
 }
 
 // getUTCDay counts from Sunday.
@@ -355,50 +338,39 @@ function mondayOf(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - sinceMonday));
 }
 
-function distanceRows(bikes: GarageBike[], rides: DistanceRide[], weeks: Date[]): Response_DistanceBikeDto[] {
-  const meters = metersByWeek(rides, weeks);
-
-  return [...bikes]
-    .sort((a, b) => a.id - b.id)
-    .map((bike, rank) => {
-      // Summed in meters and rounded last, so each line only rises and ends at its total.
-      const cumulative = runningTotal(meters.get(bike.id) ?? []).map((total) => Math.round(total / 1000));
-      return {
-        bike_id: bike.id,
-        bike_brand: bike.bike_brand,
-        bike_model: bike.bike_model,
-        year: bike.year,
-        color_index: rank,
-        cumulative_km: cumulative,
-        total_km: cumulative[cumulative.length - 1] ?? 0,
-      };
-    })
-    .filter((row) => row.total_km > 0)
-    .sort((a, b) => b.total_km - a.total_km || a.bike_id - b.bike_id);
-}
-
-// Metres per bike per week. A ride stamped past the current week lands in it, so the total
-// still equals the last value.
-function metersByWeek(rides: DistanceRide[], weeks: Date[]): Map<number, number[]> {
+// Metres per bike per UTC day. A ride stamped after today lands on today, so the days still add
+// up to every metre of the year.
+function metersByDay(rides: DistanceRide[], year: number, days: number): Map<number, number[]> {
   const byBike = new Map<number, number[]>();
-  if (weeks.length === 0) return byBike;
+  if (days === 0) return byBike;
 
   for (const ride of rides) {
     if (ride.started_at === null) continue;
-    const week = Math.min(Math.floor((ride.started_at.getTime() - weeks[0].getTime()) / WEEK_MS), weeks.length - 1);
-    const meters = byBike.get(ride.bike_id) ?? new Array<number>(weeks.length).fill(0);
-    meters[week] += ride.distance_m ?? 0;
+    const day = Math.min(Math.floor((ride.started_at.getTime() - Date.UTC(year, 0, 1)) / DAY_MS), days - 1);
+    const meters = byBike.get(ride.bike_id) ?? new Array<number>(days).fill(0);
+    meters[day] += ride.distance_m ?? 0;
     byBike.set(ride.bike_id, meters);
   }
   return byBike;
 }
 
-function runningTotal(values: number[]): number[] {
-  let total = 0;
-  return values.map((value) => {
-    total += value;
-    return total;
-  });
+// Summed in metres and rounded last, so the client's months add up to the same total.
+function distanceRows(garage: ColoredBike[], meters: Map<number, number[]>): Response_DistanceBikeDto[] {
+  return garage
+    .map(({ id, bike_brand, bike_model, year, color_index }) => {
+      const daily = meters.get(id) ?? [];
+      return {
+        bike_id: id,
+        bike_brand,
+        bike_model,
+        year,
+        color_index,
+        daily_m: daily,
+        total_km: Math.round(sum(daily) / 1000),
+      };
+    })
+    .filter((row) => row.total_km > 0)
+    .sort((a, b) => b.total_km - a.total_km || a.bike_id - b.bike_id);
 }
 
 function paceFrom(now: Date): number {

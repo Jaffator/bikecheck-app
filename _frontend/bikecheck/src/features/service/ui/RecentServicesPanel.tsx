@@ -1,11 +1,14 @@
 // Desktop Home's latest Services; a row opens the Service's detail.
 import { useState, type ReactElement } from "react";
-import { Box, Stack, Text } from "@mantine/core";
+import { Box, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Panel, PanelSkeletonRows } from "@/components/Panel";
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, PRESS_TRANSITION, onPanelRowKey } from "@/components/panelRows";
+import { colorIndexOf } from "@/features/bikes/bikeColors";
+import { useBikes } from "@/features/bikes/bikes.queries";
+import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { useRecentServices } from "@/features/service/service.queries";
 import type { ServiceHistoryItem } from "@/features/service/service.types";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
@@ -21,6 +24,7 @@ export function RecentServicesPanel(): ReactElement {
   const navigate = useNavigate();
   const { data: user } = useCurrentUser();
   const { data, isLoading } = useRecentServices();
+  const { data: bikes } = useBikes();
   const [opened, setOpened] = useState<ServiceHistoryItem | null>(null);
 
   const services = data?.items ?? [];
@@ -66,7 +70,10 @@ export function RecentServicesPanel(): ReactElement {
                   </Text>
                 )}
               </Text>
-              <Eyebrow>{service.bike_name ?? t("service.unknownBike")}</Eyebrow>
+              <Group gap={6} wrap="nowrap">
+                <BikeColorDot colorIndex={colorIndexOf(bikes, service.bike_id)} size={6} />
+                <Eyebrow>{service.bike_name ?? t("service.unknownBike")}</Eyebrow>
+              </Group>
             </Stack>
             {/* A zero is still a price, but not one worth the weight - as the service card says it. */}
             <Text

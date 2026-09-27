@@ -2,9 +2,10 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
-import { ResponseBikeDto, NewBikeFormDataDto } from './dto/response-bike.dto';
+import { ResponseBikeDto, NewBikeFormDataDto, ResponseListedBikeDto } from './dto/response-bike.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, OwnedBikeOptions } from './owned-bike.where';
+import { colorIndexes } from './color-index';
 import { StorageService } from '../storage/storage.service';
 import 'dotenv/config';
 import { Prisma, bikes } from '@prisma/client';
@@ -126,12 +127,39 @@ export class BikeService {
 
   // The garage, or the archive behind the Settings row - one list, one DTO, told apart
   // by the flag alone.
-  async findByUser(userId: number, archived = false): Promise<ResponseBikeDto[]> {
-    const bikes = await this.prisma.bikes.findMany({
-      where: { user_id: userId, is_deleted: archived ? true : { not: true } },
-      include: bikeInclude,
+  async findByUser(userId: number, archived = false): Promise<ResponseListedBikeDto[]> {
+    const [bikes, colors] = await Promise.all([
+      this.prisma.bikes.findMany({
+        where: { user_id: userId, is_deleted: archived ? true : { not: true } },
+        include: bikeInclude,
+      }),
+      colorIndexes(this.prisma, userId),
+    ]);
+    const rides = await this.rideSums(bikes.map(({ id }) => id));
+
+    return bikes.map((bike) => ({
+      ...toBikeDto(bike),
+      color_index: colors.get(bike.id) ?? 0,
+      ...(rides.get(bike.id) ?? NO_RIDES),
+    }));
+  }
+
+  // From the rides, not total_time_min: that holds only what the owner typed, and ride sync never adds to it.
+  private async rideSums(bikeIds: number[]): Promise<Map<number, RideSums>> {
+    if (bikeIds.length === 0) return new Map();
+
+    const groups = await this.prisma.rides.groupBy({
+      by: ['bike_id'],
+      where: { bike_id: { in: bikeIds }, is_deleted: { not: true } },
+      _count: { _all: true },
+      _sum: { duration_min: true },
     });
-    return bikes.map(toBikeDto);
+    return new Map(
+      groups.map((group) => [
+        group.bike_id,
+        { ride_count: group._count._all, ride_time_min: group._sum.duration_min ?? 0 },
+      ]),
+    );
   }
 
   // Serves an Archived Bike too: its detail, its parts and its history stay readable, and
@@ -276,6 +304,10 @@ export class BikeService {
 const bikeInclude = { bike_types: true } satisfies Prisma.bikesInclude;
 
 type BikeRow = bikes & { bike_types?: { type: string | null } | null };
+
+type RideSums = Pick<ResponseListedBikeDto, 'ride_count' | 'ride_time_min'>;
+
+const NO_RIDES: RideSums = { ride_count: 0, ride_time_min: 0 };
 
 // Prisma hands a Decimal column back as a Decimal object, which serialises as neither a
 // number nor anything a client can do arithmetic on. Costs are narrowed the same way, so

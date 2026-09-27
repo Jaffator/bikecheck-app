@@ -19,24 +19,21 @@ export class Response_DistanceBikeDto {
   })
   color_index!: number;
 
-  @ApiProperty({ type: [Number], example: [12, 43, 51], description: 'Whole km so far, one per entry of weeks' })
-  cumulative_km!: number[];
+  @ApiProperty({
+    type: [Number],
+    example: [0, 12400, 0, 38200],
+    description:
+      'Metres per UTC day, index 0 = 1 January; runs to today for the current year, 365/366 days for a past one',
+  })
+  daily_m!: number[];
 
-  @ApiProperty({ example: 51 })
+  @ApiProperty({ example: 51, description: 'Whole km of the sum of daily_m' })
   total_km!: number;
 }
 
 export class Response_DistanceDto {
   @ApiProperty({ example: 2026, description: 'The year served - last year when the current one has no ride yet' })
   year!: number;
-
-  @ApiProperty({
-    type: [String],
-    example: ['2025-12-29', '2026-01-05'],
-    description:
-      'Monday of each week in UTC, from the week of 1 January to the current week (last week for a past year)',
-  })
-  weeks!: string[];
 
   @ApiProperty({ type: [Response_DistanceBikeDto], description: 'Bikes with km in the year, highest total first' })
   bikes!: Response_DistanceBikeDto[];

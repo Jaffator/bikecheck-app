@@ -41,6 +41,11 @@ function ride(bike: Row, startedAt: string, meters: number | null, wear: Row = {
   return { bike_id: bike.id, started_at: new Date(startedAt), distance_m: meters, ...wear };
 }
 
+// A year's metres per day: zero everywhere but the days given, by index from 1 January.
+function days(length: number, ridden: Record<number, number>): number[] {
+  return Array.from({ length }, (_, day) => ridden[day] ?? 0);
+}
+
 // One Tracked Action as Service Tracking hands it over: the figures behind its percentage and when its wear began.
 function reading(
   bike: Row,
@@ -194,7 +199,6 @@ describe('StatsService', () => {
             bike_model: 'Rallon',
             year: 2024,
             total: 3000,
-            segments: [{ key: 'group:1', amount: 3000 }],
           },
         ],
       });
@@ -212,7 +216,6 @@ describe('StatsService', () => {
       expect(result.categories).toEqual([
         { key: 'unassigned', component_group_id: null, group_name: null, i18n_key: null, amount: 5000 },
       ]);
-      expect(result.bikes[0].segments).toEqual([{ key: 'unassigned', amount: 5000 }]);
     });
 
     it('puts each priced action into its category and leaves the rest of the total unassigned', async () => {
@@ -312,7 +315,7 @@ describe('StatsService', () => {
       expect(result.bikes.map((bike) => bike.bike_id)).toEqual([RALLON.id]);
     });
 
-    it('names the garage-wide top three, folds the rest into other, and cuts every bike the same way', async () => {
+    it('names the garage-wide top three, folds the rest into other, and ranks the bikes by what they spent', async () => {
       // ARRANGE: five categories and a large unassigned receipt across two bikes.
       services = [
         service(RALLON, '2026-02-01', 4000, [action(SUSPENSION)]),
@@ -334,30 +337,10 @@ describe('StatsService', () => {
         { key: 'other', amount: 1000 },
         { key: 'unassigned', amount: 9000 },
       ]);
-      // ASSERT: the bike that spent more comes first, and both carry every slice in the same order.
-      expect(result.bikes.map(({ bike_id, total, segments }) => ({ bike_id, total, segments }))).toEqual([
-        {
-          bike_id: STUMPY.id,
-          total: 14000,
-          segments: [
-            { key: 'group:2', amount: 0 },
-            { key: 'group:1', amount: 3000 },
-            { key: 'group:3', amount: 2000 },
-            { key: 'other', amount: 0 },
-            { key: 'unassigned', amount: 9000 },
-          ],
-        },
-        {
-          bike_id: RALLON.id,
-          total: 5000,
-          segments: [
-            { key: 'group:2', amount: 4000 },
-            { key: 'group:1', amount: 0 },
-            { key: 'group:3', amount: 0 },
-            { key: 'other', amount: 1000 },
-            { key: 'unassigned', amount: 0 },
-          ],
-        },
+      // ASSERT: the bike that spent more comes first; how a bike splits is not served, colour tells bikes apart.
+      expect(result.bikes).toEqual([
+        { bike_id: STUMPY.id, bike_brand: 'Specialized', bike_model: 'Stumpjumper', year: 2021, total: 14000 },
+        { bike_id: RALLON.id, bike_brand: 'Orbea', bike_model: 'Rallon', year: 2024, total: 5000 },
       ]);
     });
 
@@ -416,28 +399,27 @@ describe('StatsService', () => {
 
   describe('getDistance', () => {
     beforeEach(() => {
-      // A Wednesday in late January keeps each line to five weeks.
+      // Wednesday 28 January keeps each bike to 28 days.
       jest.setSystemTime(new Date('2026-01-28T10:00:00.000Z'));
       garage = [{ ...RALLON, is_deleted: false }];
     });
 
-    it('buckets rides into Monday weeks in UTC and adds them up week by week', async () => {
-      // ARRANGE: 1 January is a Thursday, so the first week starts on the last Monday of 2025.
+    it('serves metres per UTC day from 1 January to today, each ride on its own day', async () => {
+      // ARRANGE
       rides = [
-        ride(RALLON, '2025-12-30T09:00:00.000Z', 99000),
+        // 23:30 UTC on 31 December - already 1 January in Prague, still last year here.
+        ride(RALLON, '2025-12-31T23:30:00.000Z', 99000),
         ride(RALLON, '2026-01-01T09:00:00.000Z', 12400),
-        // Late on a Sunday in UTC - already Monday in Prague, still the week before here.
+        ride(RALLON, '2026-01-11T06:00:00.000Z', 8000),
         ride(RALLON, '2026-01-11T23:30:00.000Z', 30200),
-        ride(RALLON, '2026-01-12T06:00:00.000Z', 8000),
       ];
 
       // ACT
       const result = await stats.getDistance(OWNER_ID);
 
-      // ASSERT: last year's ride is out; values rise and stop at the current week.
+      // ASSERT: last year's ride is out, and the two rides of 11 January share its day.
       expect(result).toEqual({
         year: 2026,
-        weeks: ['2025-12-29', '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26'],
         bikes: [
           {
             bike_id: 21,
@@ -445,11 +427,46 @@ describe('StatsService', () => {
             bike_model: 'Rallon',
             year: 2024,
             color_index: 0,
-            cumulative_km: [12, 43, 51, 51, 51],
+            daily_m: days(28, { 0: 12400, 10: 38200 }),
             total_km: 51,
           },
         ],
       });
+    });
+
+    it('adds up to exactly the metres ridden, with total_km that sum in whole km', async () => {
+      // ARRANGE: 2 998 m that would read 4 km if each ride were rounded first.
+      rides = [ride(RALLON, '2026-01-05T09:00:00.000Z', 1499), ride(RALLON, '2026-01-06T09:00:00.000Z', 1499)];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT
+      const [bike] = result.bikes;
+      expect(bike.daily_m.reduce((total, metres) => total + metres, 0)).toBe(2998);
+      expect(bike.total_km).toBe(3);
+    });
+
+    it('puts a ride stamped after today on today', async () => {
+      // ARRANGE
+      rides = [ride(RALLON, '2026-02-03T09:00:00.000Z', 20000)];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID);
+
+      // ASSERT
+      expect(result.bikes[0].daily_m).toEqual(days(28, { 27: 20000 }));
+    });
+
+    it('serves every day of a past year, 366 in a leap year', async () => {
+      // ARRANGE
+      rides = [ride(RALLON, '2024-12-31T12:00:00.000Z', 15000)];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 2024);
+
+      // ASSERT
+      expect(result.bikes[0].daily_m).toEqual(days(366, { 365: 15000 }));
     });
 
     it("ranks a bike's colour among all the owner's bikes, so archiving one repaints nothing", async () => {
@@ -468,28 +485,23 @@ describe('StatsService', () => {
       // ACT
       const result = await stats.getDistance(OWNER_ID);
 
-      // ASSERT: the archived bike has no line, yet still holds its colour slot.
+      // ASSERT: the archived bike's rides are not counted, yet it still holds its colour slot.
       expect(result.bikes.map(({ bike_id, color_index, total_km }) => ({ bike_id, color_index, total_km }))).toEqual([
         { bike_id: TREK.id, color_index: 2, total_km: 30 },
         { bike_id: RALLON.id, color_index: 0, total_km: 20 },
       ]);
     });
 
-    it('serves last year while this year has no ride yet, with weeks running to its last week', async () => {
+    it('serves last year while this year has no ride yet, every day of it', async () => {
       // ARRANGE
       rides = [ride(RALLON, '2025-03-04T09:00:00.000Z', 40000), ride(RALLON, '2025-12-31T09:00:00.000Z', 10000)];
 
       // ACT
       const result = await stats.getDistance(OWNER_ID);
 
-      // ASSERT: 1 January 2025 was a Wednesday and 31 December too - 53 Monday weeks.
+      // ASSERT: 4 March is day 62 of 2025, 31 December its 365th.
       expect(result.year).toBe(2025);
-      expect(result.weeks).toHaveLength(53);
-      expect(result.weeks[0]).toBe('2024-12-30');
-      expect(result.weeks[52]).toBe('2025-12-29');
-      expect(result.bikes[0].cumulative_km[8]).toBe(0);
-      expect(result.bikes[0].cumulative_km[9]).toBe(40);
-      expect(result.bikes[0].cumulative_km[52]).toBe(50);
+      expect(result.bikes[0].daily_m).toEqual(days(365, { 62: 40000, 364: 10000 }));
       expect(result.bikes[0].total_km).toBe(50);
     });
 
@@ -516,11 +528,7 @@ describe('StatsService', () => {
       const result = await stats.getDistance(OWNER_ID);
 
       // ASSERT: an empty card for the current year, not an empty one for last year.
-      expect(result).toEqual({
-        year: 2026,
-        weeks: ['2025-12-29', '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26'],
-        bikes: [],
-      });
+      expect(result).toEqual({ year: 2026, bikes: [] });
     });
 
     it('serves exactly the year asked for', async () => {

@@ -27,7 +27,7 @@ export class StatsController {
     return await this.statsService.getSpend(Number(userId), year);
   }
 
-  // ---------- GET the distance each bike covered, week by week, in one calendar year ----------
+  // ---------- GET the distance each bike covered, day by day, in one calendar year ----------
   @Get('distance')
   @ApiQuery({
     name: 'year',
