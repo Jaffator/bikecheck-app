@@ -312,7 +312,8 @@
     "statDescent": "Descent",
     "statAvgSpeed": "Avg speed",
     "statMaxSpeed": "Max speed",
-    "lastRide": "Last ride"
+    "lastRide": "Last ride",
+    "woreOff": "Wore off"
   },
   "service": {
     "emptyTitle": "No Components to Service",

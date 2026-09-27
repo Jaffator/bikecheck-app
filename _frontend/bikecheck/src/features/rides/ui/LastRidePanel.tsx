@@ -15,6 +15,7 @@ import { useRides } from "@/features/rides/rides.queries";
 import type { Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { RideDetailSheet } from "./RideDetailSheet";
+import { WoreOff } from "./WoreOff";
 
 export function LastRidePanel(): ReactElement {
   const { t } = useTranslation();
@@ -72,6 +73,7 @@ export function LastRidePanel(): ReactElement {
                 value={t("pendingRides.elevation", { count: ride.elevation_up_m ?? 0 })}
               />
             </Box>
+            <WoreOff lines={ride.wore_off} />
           </Stack>
         </UnstyledButton>
       )}

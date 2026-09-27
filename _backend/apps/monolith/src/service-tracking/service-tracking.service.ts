@@ -13,6 +13,8 @@ import {
 } from './attention-level';
 import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
+import { Response_WoreOffLineDto } from './dto/response-wore-off-line';
+import { RIDE_WEAR, wearRideSelect, type WearRide } from './ride-wear';
 
 // What a Tracked Action is read from: the part's accumulators, everything ever recorded
 // against it, and the state of its own row. Nothing here is a percentage - the percentage
@@ -166,6 +168,26 @@ export class ServiceTrackingService {
         ];
       }),
     );
+  }
+
+  // What each ride wore off the jobs whose current cycle it belongs to, by ride id. Derived
+  // from the reading as it stands now, rewound by every ride after it (ADR 0026).
+  async getWoreOff(userId: number, rides: WearRide[]): Promise<Map<number, Response_WoreOffLineDto[]>> {
+    const dated = rides.filter(isDated);
+    if (dated.length === 0) return new Map();
+
+    // An Archived Bike has no Tracked Actions, so its rides wore nothing off.
+    const bikes = await this.prisma.bikes.findMany({
+      where: { ...ownedBikesWhere(userId), id: { in: [...new Set(dated.map((ride) => ride.bike_id))] } },
+      select: { id: true },
+    });
+    if (bikes.length === 0) return new Map();
+
+    const [intervals, parts] = await this.loadTracking({ in: bikes.map((bike) => bike.id) });
+    const cycles = currentCycles(parts, intervals);
+    const stored = (await this.ridesFrom(firstCounted(dated, cycles))).filter(isDated);
+
+    return new Map(dated.map((ride) => [ride.id, woreOffBy(ride, cycles, stored)]));
   }
 
   // The owner's own Service Interval for one Tracked Action, or null to put the bike's plan
@@ -399,6 +421,134 @@ export class ServiceTrackingService {
       this.prisma.components_mounted.findMany({ where: { bike_id: bikeId, ...MOUNTED }, include: trackedPartInclude }),
     ]);
   }
+
+  // Each bike's rides from the one given on, once: every ride after a page ride is what rewinds it.
+  private async ridesFrom(first: Map<number, Date>): Promise<WearRide[]> {
+    if (first.size === 0) return [];
+
+    return await this.prisma.rides.findMany({
+      where: {
+        is_deleted: { not: true },
+        OR: [...first].map(([bikeId, from]) => ({ bike_id: bikeId, started_at: { gte: from } })),
+      },
+      select: wearRideSelect,
+    });
+  }
+}
+
+// How many lines one ride shows: the jobs it pushed closest to due, not every one it touched.
+const WORE_OFF_LINES = 3;
+
+type DatedRide = WearRide & { started_at: Date };
+
+// One Tracked Action and the moment its current cycle began; only a ride after it counts.
+interface Cycle {
+  action: Response_TrackedActionDto;
+  startsAfter: Date;
+}
+
+// A ride with no start belongs to no cycle, so nothing about it is guessed.
+function isDated(ride: WearRide): ride is DatedRide {
+  return ride.started_at !== null;
+}
+
+// Every Tracked Action on these parts with the start of its current cycle. A part with no
+// mount date has no known start, so none of its jobs claims any ride.
+function currentCycles(parts: TrackedPart[], intervals: TrackedInterval[]): Cycle[] {
+  return parts.flatMap((part) =>
+    trackedActions([part], intervals).flatMap((action) => {
+      const startsAfter = cycleStart(part, action);
+      return startsAfter === null ? [] : [{ action, startsAfter }];
+    }),
+  );
+}
+
+// The end of the day of the latest Service of the job, else of the mounting - the moment the
+// Wear Baseline freezes at (ADR 0001). A wear index has no baseline, so it counts from the mounting.
+function cycleStart(part: TrackedPart, action: Response_TrackedActionDto): Date | null {
+  const serviced =
+    action.axis === 'health_index'
+      ? null
+      : (latestBaseline(part, action.event_action_id)?.event_actions_done.events_bikes.service_date ?? null);
+  const from = serviced ?? part.mounted_at;
+
+  return from === null ? null : endOfDay(from);
+}
+
+// A Service Date is a day, so a ride on it counts as ridden before the work.
+function endOfDay(day: Date): Date {
+  const end = new Date(day);
+  end.setUTCHours(23, 59, 59, 999);
+  return end;
+}
+
+// Per bike, the earliest ride that falls in any of its cycles; nothing before it is ever summed.
+function firstCounted(rides: DatedRide[], cycles: Cycle[]): Map<number, Date> {
+  const first = new Map<number, Date>();
+  for (const ride of rides.filter((one) => cycles.some((cycle) => inCycle(one, cycle)))) {
+    const known = first.get(ride.bike_id);
+    if (known === undefined || ride.started_at < known) first.set(ride.bike_id, ride.started_at);
+  }
+  return first;
+}
+
+function inCycle(ride: DatedRide, { action, startsAfter }: Cycle): boolean {
+  return ride.bike_id === action.bike_id && ride.started_at > startsAfter;
+}
+
+// One ride's lines: each job it belongs to the cycle of and added wear to, closest to due first.
+function woreOffBy(ride: DatedRide, cycles: Cycle[], stored: DatedRide[]): Response_WoreOffLineDto[] {
+  const later = stored.filter((other) => other.bike_id === ride.bike_id && riddenAfter(other, ride));
+
+  return cycles
+    .filter((cycle) => inCycle(ride, cycle))
+    .map(({ action }) => woreOffLine(action, ride, later))
+    .filter((line) => line.amount > 0)
+    .sort(closestToDue)
+    .slice(0, WORE_OFF_LINES);
+}
+
+// Two rides started at the same moment are told apart by which was stored last.
+function riddenAfter(other: DatedRide, ride: DatedRide): boolean {
+  const byStart = other.started_at.getTime() - ride.started_at.getTime();
+  return byStart === 0 ? other.id > ride.id : byStart > 0;
+}
+
+// The reading as it stood when the ride ended - today's minus every ride after it - and
+// before the ride began. Floored and clamped the way the reading itself is.
+function woreOffLine(action: Response_TrackedActionDto, ride: DatedRide, later: DatedRide[]): Response_WoreOffLineDto {
+  const wear = RIDE_WEAR[action.measure];
+  const amount = wear(ride);
+  const atEnd = action.current - later.reduce((total, other) => total + wear(other), 0);
+
+  return {
+    component_mounted_id: action.component_mounted_id,
+    event_action_id: action.event_action_id,
+    component_type: action.component_type,
+    component_type_i18n_key: action.component_type_i18n_key,
+    position: action.position,
+    action_name: action.action_name,
+    action_i18n_key: action.action_i18n_key,
+    replace_action: action.replace_action,
+    measure: action.measure,
+    amount: Math.round(amount),
+    before: wholePercent(atEnd - amount, action.interval),
+    after: wholePercent(atEnd, action.interval),
+  };
+}
+
+function wholePercent(wear: number, interval: number): number {
+  return Math.floor((Math.max(0, wear) / interval) * 100);
+}
+
+// Highest after first, then the biggest gain; the part and the action keep a tie stable.
+function closestToDue(one: Response_WoreOffLineDto, other: Response_WoreOffLineDto): number {
+  return (
+    other.after - one.after ||
+    other.after - other.before - (one.after - one.before) ||
+    one.component_mounted_id - other.component_mounted_id ||
+    one.event_action_id - other.event_action_id
+  );
 }
 
 // Where one Tracked Action now stands against what was last announced for it.

@@ -23,6 +23,7 @@ import {
   getServiceHistory,
   uploadServiceAttachment,
 } from "./service.api";
+import { invalidateReadings } from "@/features/service_tracking/tracking.queries";
 import type {
   ActionTag,
   HistoryTotals,
@@ -196,7 +197,7 @@ export function useDeleteService(): UseMutationResult<ServiceRecord, Error, numb
 // bike's own condition follows its readings.
 async function invalidateAfterService(queryClient: QueryClient, bikeId: number): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: ["services"] });
-  await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
+  await invalidateReadings(queryClient);
   await queryClient.invalidateQueries({ queryKey: ["bike-components", bikeId] });
   await queryClient.invalidateQueries({ queryKey: ["bikes", bikeId] });
 }

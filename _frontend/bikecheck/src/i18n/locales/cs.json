@@ -332,7 +332,8 @@
     "statDescent": "Klesání",
     "statAvgSpeed": "Prům. rychlost",
     "statMaxSpeed": "Max. rychlost",
-    "lastRide": "Poslední jízda"
+    "lastRide": "Poslední jízda",
+    "woreOff": "Odepsala"
   },
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",

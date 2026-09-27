@@ -19,6 +19,7 @@ import {
   getDefaultComponents,
   updateBikeComponent,
 } from "./components.api";
+import { invalidateReadings } from "@/features/service_tracking/tracking.queries";
 import type {
   AssembleBikeComponent,
   BikeComponent,
@@ -114,6 +115,7 @@ export function useCreateBikeComponent(): UseMutationResult<BikeComponent, Error
     mutationFn: (input: CreateBikeComponentInput) => createBikeComponent(input),
     onSuccess: async (_component, input) => {
       await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bike_id) });
+      await invalidateReadings(queryClient);
     },
   });
 }
@@ -150,6 +152,8 @@ export function useUpdateBikeComponent(): UseMutationResult<
     },
     onSettled: async (_component, _error, input) => {
       await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bikeId) });
+      // A corrected accumulator moves the part's readings.
+      await invalidateReadings(queryClient);
     },
   });
 }
@@ -188,4 +192,5 @@ async function invalidateBuild(
 ): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(bikeId) });
   await queryClient.invalidateQueries({ queryKey: ["bikes", bikeId] });
+  await invalidateReadings(queryClient);
 }

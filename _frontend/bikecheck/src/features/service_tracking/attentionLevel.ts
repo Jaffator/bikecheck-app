@@ -79,7 +79,10 @@ export function axisReading(action: TrackedAction, language: string, translate: 
 }
 
 // Which part owes the Action; the side is what tells two tyres apart, so it never leaves the name.
-export function trackedPartLabel(action: TrackedAction, translate: (key: string) => string): string {
+export function trackedPartLabel(
+  action: Pick<TrackedAction, "component_type" | "component_type_i18n_key" | "position">,
+  translate: (key: string) => string,
+): string {
   const type = catalogueLabel(action.component_type_i18n_key, action.component_type, translate);
   const side = positionLabel(action.position, translate);
   return side === null ? type : `${type} (${side})`;
@@ -87,7 +90,7 @@ export function trackedPartLabel(action: TrackedAction, translate: (key: string)
 
 // What identifies a reading in a list: the part it is on and the job it is about. Neither
 // alone is unique — one part owes several jobs, and one job is owed by several parts.
-export function trackedActionKey(action: TrackedAction): string {
+export function trackedActionKey(action: Pick<TrackedAction, "component_mounted_id" | "event_action_id">): string {
   return `${String(action.component_mounted_id)}-${String(action.event_action_id)}`;
 }
 

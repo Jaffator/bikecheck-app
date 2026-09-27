@@ -1,9 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RideService } from './ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 
 describe('RideService', () => {
   let service: RideService;
+
+  // What each ride wore off is Service Tracking's to say; this suite only reads the ride itself.
+  const mockServiceTracking = { getWoreOff: jest.fn() };
 
   const mockPrisma = {
     rides: {
@@ -14,8 +18,13 @@ describe('RideService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockServiceTracking.getWoreOff.mockResolvedValue(new Map());
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RideService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        RideService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ServiceTrackingService, useValue: mockServiceTracking },
+      ],
     }).compile();
 
     service = module.get<RideService>(RideService);

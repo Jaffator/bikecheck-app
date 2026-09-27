@@ -3,6 +3,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ServiceTrackingService } from './service-tracking.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
+import type { Response_WoreOffLineDto } from './dto/response-wore-off-line';
+import type { WearRide } from './ride-wear';
 
 const OWNER_ID = 7;
 const BIKE_ID = 21;
@@ -171,6 +173,55 @@ function bikeRow(id: number, brand: string, isDeleted = false): Record<string, u
   return { id, bike_brand: brand, bike_model: 'Hightower', year: 2022, is_deleted: isDeleted };
 }
 
+// One ride on the bike with the wear it carries; nothing unless said.
+function rideRow(
+  id: number,
+  startedAt: string | null,
+  wear: {
+    distanceM?: number;
+    drivetrainM?: number;
+    durationMin?: number;
+    suspensionMin?: number;
+    padIndex?: number;
+    bikeId?: number;
+    isDeleted?: boolean;
+  } = {},
+): Record<string, unknown> {
+  return {
+    id,
+    bike_id: wear.bikeId ?? BIKE_ID,
+    started_at: startedAt === null ? null : new Date(startedAt),
+    distance_m: wear.distanceM ?? 0,
+    drivetrain_meters: wear.drivetrainM ?? 0,
+    duration_min: wear.durationMin ?? 0,
+    suspension_min: wear.suspensionMin ?? 0,
+    health_index_brake_pad: wear.padIndex ?? 0,
+    is_deleted: wear.isDeleted ?? false,
+  };
+}
+
+// What a rides read hands the mock, answered the way the database would answer it.
+interface RideWhere {
+  is_deleted?: unknown;
+  bike_id?: unknown;
+  started_at?: { gt?: Date; gte?: Date };
+  OR?: RideWhere[];
+}
+
+function matchesRide(row: Record<string, unknown>, where: RideWhere = {}): boolean {
+  if (where.OR !== undefined && !where.OR.some((clause) => matchesRide(row, clause))) return false;
+  if (typeof where.is_deleted === 'object' && row.is_deleted === true) return false;
+  if (!onBike(row.bike_id, where.bike_id)) return false;
+  return withinStart(row.started_at as Date | null, where.started_at);
+}
+
+// Postgres compares nothing with a missing start, so an undated ride only answers an unbounded read.
+function withinStart(start: Date | null, window: RideWhere['started_at']): boolean {
+  if (window === undefined) return true;
+  if (start === null) return false;
+  return (window.gt === undefined || start > window.gt) && (window.gte === undefined || start >= window.gte);
+}
+
 describe('ServiceTrackingService', () => {
   let service: ServiceTrackingService;
 
@@ -179,6 +230,7 @@ describe('ServiceTrackingService', () => {
     bike_service_interval: { findMany: jest.fn() },
     components_mounted: { findMany: jest.fn() },
     tracked_action_state: { upsert: jest.fn() },
+    rides: { findMany: jest.fn() },
   };
 
   const mockNotifications = { create: jest.fn() };
@@ -1814,6 +1866,349 @@ describe('ServiceTrackingService', () => {
       const actions = await service.getGarageTrackedActions(OWNER_ID, 75);
 
       expect(actions.map((action) => action.event_action_id)).toEqual([TYRE_REPLACEMENT]);
+    });
+  });
+
+  // What each ride wore off the jobs whose current cycle it belongs to.
+  describe('getWoreOff', () => {
+    const CHAIN_PLAN = intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], BIKE_ID, true);
+
+    // The rides stored, and the page of them asked about - every stored one unless said.
+    async function woreOff(
+      stored: Record<string, unknown>[],
+      page: Record<string, unknown>[] = stored,
+    ): Promise<Map<number, Response_WoreOffLineDto[]>> {
+      mockPrismaService.rides.findMany.mockImplementation(({ where }: { where?: RideWhere }) =>
+        Promise.resolve(stored.filter((ride) => matchesRide(ride, where))),
+      );
+      return await service.getWoreOff(OWNER_ID, page as unknown as WearRide[]);
+    }
+
+    // One ride's lines as the figures a line prints: part, action, amount, before and after.
+    function figures(lines: Response_WoreOffLineDto[] | undefined): number[][] {
+      return (lines ?? []).map((line) => [
+        line.component_mounted_id,
+        line.event_action_id,
+        line.amount,
+        line.before,
+        line.after,
+      ]);
+    }
+
+    // The two must never disagree: the latest ride ends where the reading stands now.
+    it("reads the latest ride's after as the Tracked Action's percentage", async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], [CHAIN_PLAN], [mountedPart({ drivetrain_km: 3800 })]);
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 40000 }),
+        rideRow(2, '2026-09-22T09:00:00.000Z', { drivetrainM: 38000 }),
+      ]);
+
+      // 3 800 of 4 000 is 95 %; before the 38 km it read 3 762, which floors to 94.
+      expect(figures(lines.get(2))).toEqual([[55, CHAIN_REPLACEMENT, 38, 94, 95]]);
+    });
+
+    // Each ride shows the reading as it stood when it ended, so everything ridden since is taken back off.
+    it('rewinds an earlier ride by every ride after it, on the page or not', async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], [CHAIN_PLAN], [mountedPart({ drivetrain_km: 3800 })]);
+      const first = rideRow(1, '2026-09-10T09:00:00.000Z', { drivetrainM: 40000 });
+
+      const lines = await woreOff(
+        [
+          first,
+          rideRow(2, '2026-09-15T09:00:00.000Z', { drivetrainM: 60000 }),
+          rideRow(3, '2026-09-20T09:00:00.000Z', { drivetrainM: 100000 }),
+        ],
+        [first],
+      );
+
+      // 3 800 - 160 = 3 640 when it ended (91 %), 3 600 before it (90 %).
+      expect(figures(lines.get(1))).toEqual([[55, CHAIN_REPLACEMENT, 40, 90, 91]]);
+    });
+
+    // A ride that is not stored any more no longer rewinds anything.
+    it('leaves a deleted ride out of the rides after', async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], [CHAIN_PLAN], [mountedPart({ drivetrain_km: 3800 })]);
+      const first = rideRow(1, '2026-09-10T09:00:00.000Z', { drivetrainM: 40000 });
+
+      const lines = await woreOff(
+        [first, rideRow(2, '2026-09-15T09:00:00.000Z', { drivetrainM: 400000, isDeleted: true })],
+        [first],
+      );
+
+      expect(figures(lines.get(1))).toEqual([[55, CHAIN_REPLACEMENT, 40, 94, 95]]);
+    });
+
+    // Every column is filled, so only the measure the reading is taken from may count.
+    it.each([
+      ['a chain by its drivetrain km', CHAIN_TYPE, { km: 1000 }, 'drivetrain_km', 22, 47],
+      ['a tyre by its km', TYRE_TYPE, { km: 1000 }, 'total_km', 11, 48],
+      ['a fork by its suspension minutes', FORK_TYPE, { min: 1000 }, 'suspension_min', 44, 45],
+      ['a brake pad by its index', PAD_TYPE, { healthIndex: 1000 }, 'health_index', 55, 44],
+      ['a job on the time axis by its duration', TYRE_TYPE, { min: 1000 }, 'total_time_min', 33, 46],
+    ])('wears %s', async (_name, type, axes, column, amount, before) => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(TYRE_REPLACEMENT, axes, [type])],
+        [mountedPart({ component_type_id: type, component_types: typeRow(type), [column]: 500 })],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-20T09:00:00.000Z', {
+          distanceM: 11000,
+          drivetrainM: 22000,
+          durationMin: 33,
+          suspensionMin: 44,
+          padIndex: 55,
+        }),
+      ]);
+
+      // 500 of 1 000 is 50 % once the ride ended.
+      expect(figures(lines.get(1))).toEqual([[55, TYRE_REPLACEMENT, amount, before, 50]]);
+      expect(lines.get(1)?.[0].measure).toBe(column);
+    });
+
+    // A ride on the day of the work counts as before it, the way the Wear Baseline froze it (ADR 0001).
+    it('counts only rides after the day of the latest Service of the job', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [
+          mountedPart({
+            drivetrain_km: 3500,
+            action_done_component_map: [
+              baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-10T00:00:00.000Z'),
+            ],
+          }),
+        ],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-09T09:00:00.000Z', { drivetrainM: 20000 }),
+        rideRow(2, '2026-09-10T18:00:00.000Z', { drivetrainM: 20000 }),
+        rideRow(3, '2026-09-11T08:00:00.000Z', { drivetrainM: 20000 }),
+      ]);
+
+      expect([1, 2, 3].map((id) => figures(lines.get(id)))).toEqual([[], [], [[55, CHAIN_REPLACEMENT, 20, 12, 12]]]);
+    });
+
+    it('starts no cycle at a deleted Service', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [
+          mountedPart({
+            drivetrain_km: 3500,
+            action_done_component_map: [
+              baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-10T00:00:00.000Z', true),
+            ],
+          }),
+        ],
+      );
+
+      const lines = await woreOff([rideRow(1, '2026-09-09T09:00:00.000Z', { drivetrainM: 20000 })]);
+
+      expect(figures(lines.get(1))).toHaveLength(1);
+    });
+
+    // Nothing says when an undated Service happened, so the part is read from its mounting.
+    it('counts from the mounting when the latest Service of the job has no date', async () => {
+      const undated = baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 });
+      (undated.event_actions_done as { events_bikes: Record<string, unknown> }).events_bikes.service_date = null;
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [mountedPart({ drivetrain_km: 3500, action_done_component_map: [undated] })],
+      );
+
+      const lines = await woreOff([rideRow(1, '2026-09-09T09:00:00.000Z', { drivetrainM: 20000 })]);
+
+      expect(figures(lines.get(1))).toHaveLength(1);
+    });
+
+    // A part mounted after a ride was not on the bike for it.
+    it('counts only rides after the day the part was mounted', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [mountedPart({ drivetrain_km: 500, mounted_at: new Date('2026-09-10T08:00:00.000Z') })],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-09T09:00:00.000Z', { drivetrainM: 20000 }),
+        rideRow(2, '2026-09-10T18:00:00.000Z', { drivetrainM: 20000 }),
+        rideRow(3, '2026-09-11T08:00:00.000Z', { drivetrainM: 20000 }),
+      ]);
+
+      expect([1, 2, 3].map((id) => figures(lines.get(id)).length)).toEqual([0, 0, 1]);
+    });
+
+    // A wear index has no Wear Baseline, so a Service does not reset it and does not start a cycle.
+    it('counts a wear-index job from the mounting whatever Services exist', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(PADS_REPLACEMENT, { healthIndex: 1000 }, [PAD_TYPE])],
+        [
+          mountedPart({
+            component_type_id: PAD_TYPE,
+            component_types: typeRow(PAD_TYPE),
+            health_index: 300,
+            mounted_at: new Date('2026-09-01T08:00:00.000Z'),
+            action_done_component_map: [baseline(PADS_REPLACEMENT, {}, '2026-09-15T00:00:00.000Z')],
+          }),
+        ],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-10T09:00:00.000Z', { padIndex: 100 }),
+        rideRow(2, '2026-09-20T09:00:00.000Z', { padIndex: 100 }),
+      ]);
+
+      expect([1, 2].map((id) => figures(lines.get(id)))).toEqual([
+        [[55, PADS_REPLACEMENT, 100, 10, 20]],
+        [[55, PADS_REPLACEMENT, 100, 20, 30]],
+      ]);
+    });
+
+    // The line matches the reading seen everywhere else, which is measured against the override.
+    it("measures against the owner's Interval Override", async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [
+          mountedPart({
+            drivetrain_km: 3800,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { intervalOverride: 5000 })],
+          }),
+        ],
+      );
+
+      const lines = await woreOff([rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 38000 })]);
+
+      expect(figures(lines.get(1))).toEqual([[55, CHAIN_REPLACEMENT, 38, 75, 76]]);
+    });
+
+    // Muting stops the announcements and nothing else.
+    it('still lists a Muted job', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [
+          mountedPart({
+            drivetrain_km: 3800,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { notify: false })],
+          }),
+        ],
+      );
+
+      const lines = await woreOff([rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 38000 })]);
+
+      expect(figures(lines.get(1))).toHaveLength(1);
+    });
+
+    // What the ride pushed toward service leads; a job it added nothing to is not listed at all.
+    it('keeps the three closest to due after the ride, then the biggest gain, and drops what it did not wear', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+          intervalRow(TYRE_REPLACEMENT, { km: 1000 }, [TYRE_TYPE]),
+          intervalRow(FORK_SERVICE, { min: 1000 }, [FORK_TYPE]),
+          intervalRow(PADS_REPLACEMENT, { healthIndex: 1000 }, [PAD_TYPE]),
+        ],
+        [
+          mountedPart({ id: 55, drivetrain_km: 2000 }),
+          mountedPart({
+            id: 56,
+            component_type_id: FORK_TYPE,
+            component_types: typeRow(FORK_TYPE),
+            suspension_min: 800,
+          }),
+          mountedPart({ id: 57, component_type_id: PAD_TYPE, component_types: typeRow(PAD_TYPE), health_index: 990 }),
+          mountedPart({ id: 52, component_type_id: TYRE_TYPE, component_types: typeRow(TYRE_TYPE), total_km: 800 }),
+          mountedPart({ id: 61, component_type_id: TYRE_TYPE, component_types: typeRow(TYRE_TYPE), total_km: 900 }),
+        ],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-20T09:00:00.000Z', { distanceM: 50000, drivetrainM: 40000, suspensionMin: 100 }),
+      ]);
+
+      // Rear tyre 85 → 90, fork 70 → 80 ahead of front tyre 75 → 80 by its gain; the chain is fourth, the pads wore nothing.
+      expect(figures(lines.get(1))).toEqual([
+        [61, TYRE_REPLACEMENT, 50, 85, 90],
+        [56, FORK_SERVICE, 100, 70, 80],
+        [52, TYRE_REPLACEMENT, 50, 75, 80],
+      ]);
+    });
+
+    // Nothing is guessed: an Archived Bike has no Tracked Actions, and an undated ride no cycle.
+    it('gives no lines to a ride on an Archived Bike or one with no start', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz', true), bikeRow(OTHER_BIKE_ID, 'Trek')],
+        [CHAIN_PLAN, intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], OTHER_BIKE_ID)],
+        [mountedPart({ drivetrain_km: 3800 }), mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 3800 })],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 38000 }),
+        rideRow(2, null, { drivetrainM: 38000, bikeId: OTHER_BIKE_ID }),
+      ]);
+
+      expect([1, 2].map((id) => figures(lines.get(id)))).toEqual([[], []]);
+    });
+
+    // A ride on one bike wears nothing on another, and is not one of that bike's later rides.
+    it('reads each ride against its own bike', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek')],
+        [CHAIN_PLAN, intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], OTHER_BIKE_ID)],
+        [mountedPart({ drivetrain_km: 3800 }), mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 2000 })],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 38000 }),
+        rideRow(2, '2026-09-22T09:00:00.000Z', { drivetrainM: 40000, bikeId: OTHER_BIKE_ID }),
+      ]);
+
+      expect([1, 2].map((id) => figures(lines.get(id)))).toEqual([
+        [[55, CHAIN_REPLACEMENT, 38, 94, 95]],
+        [[70, CHAIN_REPLACEMENT, 40, 49, 50]],
+      ]);
+    });
+
+    // The accumulator can read lower than the rides after it - a corrected part, a ride the sync counted twice.
+    it('never reads below zero', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [intervalRow(CHAIN_REPLACEMENT, { km: 100 }, [CHAIN_TYPE])],
+        [mountedPart({ drivetrain_km: 20 })],
+      );
+
+      const lines = await woreOff([
+        rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 40000 }),
+        rideRow(2, '2026-09-22T09:00:00.000Z', { drivetrainM: 30000 }),
+      ]);
+
+      expect([1, 2].map((id) => figures(lines.get(id)))).toEqual([
+        [[55, CHAIN_REPLACEMENT, 40, 0, 0]],
+        [[55, CHAIN_REPLACEMENT, 30, 0, 20]],
+      ]);
+    });
+
+    // Named the way the Tracked Action is: a Replacement by its part, anything else by its Action.
+    it('names the part and the job on every line', async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], [CHAIN_PLAN], [mountedPart({ drivetrain_km: 3800, position: 'rear' })]);
+
+      const lines = await woreOff([rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 38000 })]);
+
+      expect(lines.get(1)?.[0]).toMatchObject({
+        component_type: 'Chain',
+        position: 'rear',
+        action_name: `Action ${String(CHAIN_REPLACEMENT)}`,
+        replace_action: true,
+        measure: 'drivetrain_km',
+      });
     });
   });
 });

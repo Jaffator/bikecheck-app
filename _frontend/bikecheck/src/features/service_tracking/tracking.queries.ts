@@ -4,6 +4,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
@@ -21,6 +22,13 @@ import type {
   SetTrackedActionNotifyInput,
   TrackedAction,
 } from "./tracking.types";
+
+// A write that moves a reading moves what every ride wore off with it, so the ride list goes too.
+// Exact: the distance chart shares the prefix and no reading moves it.
+export async function invalidateReadings(queryClient: QueryClient): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
+  await queryClient.invalidateQueries({ queryKey: ["rides"], exact: true });
+}
 
 // One bike's Tracked Actions. Read on its own key, so the section and the badge share one
 // request and neither holds up the photo above them.
@@ -50,7 +58,7 @@ export function useSetTrackedActionInterval(): UseMutationResult<TrackedAction, 
   return useMutation({
     mutationFn: (input: SetTrackedActionIntervalInput) => setTrackedActionInterval(input),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
+      await invalidateReadings(queryClient);
     },
   });
 }

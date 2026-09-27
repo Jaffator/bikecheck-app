@@ -13,7 +13,7 @@ import {
   Response_WearPointDto,
 } from './dto/response-wear-forecast';
 import { GarageReading, ServiceTrackingService } from '../service-tracking/service-tracking.service';
-import type { WearMeasure } from '../service-tracking/attention-level';
+import { RIDE_WEAR, wearRideSelect, type WearRide } from '../service-tracking/ride-wear';
 
 // A Service's money follows its Actions' Component Category: the part types an Action
 // targets, or a catch-all Replacement's own category (ADR 0022).
@@ -82,26 +82,6 @@ export type Period = (typeof PERIODS)[number];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
-
-const wearRideSelect = {
-  bike_id: true,
-  started_at: true,
-  distance_m: true,
-  drivetrain_meters: true,
-  duration_min: true,
-  suspension_min: true,
-  health_index_brake_pad: true,
-} satisfies Prisma.ridesSelect;
-type WearRide = Prisma.ridesGetPayload<{ select: typeof wearRideSelect }>;
-
-// The ride columns strava.service.ts grows each accumulator by, so the curve rebuilds the same wear.
-const RIDE_WEAR: Record<WearMeasure, (ride: WearRide) => number> = {
-  total_km: (ride) => (ride.distance_m ?? 0) / 1000,
-  drivetrain_km: (ride) => (ride.drivetrain_meters ?? 0) / 1000,
-  total_time_min: (ride) => ride.duration_min ?? 0,
-  suspension_min: (ride) => ride.suspension_min ?? 0,
-  health_index: (ride) => ride.health_index_brake_pad ?? 0,
-};
 
 const PACE_WEEKS = 4;
 const FORECAST_ITEMS = 5;

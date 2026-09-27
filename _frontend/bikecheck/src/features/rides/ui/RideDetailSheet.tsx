@@ -7,6 +7,7 @@ import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { RouteMap } from "@/components/RouteMap";
 import type { Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { WoreOff } from "./WoreOff";
 
 // Mantine's large sheet: room for the map and both rows of figures.
 const SHEET_HEIGHT = "var(--drawer-size-lg)";
@@ -88,6 +89,8 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
                 <Stat label={t("rides.statAvgSpeed")} value={`${ride.speed_avg ?? 0} km/h`} />
                 <Stat label={t("rides.statMaxSpeed")} value={`${ride.max_speed_kmh ?? 0} km/h`} />
               </Group>
+
+              <WoreOff lines={ride.wore_off} />
             </Stack>
           </Paper>
         </Stack>
