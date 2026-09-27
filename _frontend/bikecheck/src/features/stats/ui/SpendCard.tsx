@@ -22,10 +22,10 @@ import { useSpend } from "../stats.queries";
 import type { Spend, SpendBike, SpendCategory } from "../stats.types";
 
 const BAR_HEIGHT = 8;
-const GROUP_BAR_HEIGHT = 6;
+const CATEGORY_BAR_HEIGHT = 6;
 const TRACK_COLOR = "var(--color-border-subtle)";
 // Neutral, so colour always means a bike and length always means money.
-const GROUP_COLOR = "var(--mantine-color-cards-4)";
+const CATEGORY_COLOR = "var(--mantine-color-cards-4)";
 
 export function SpendCard(): ReactElement {
   const { t, i18n } = useTranslation();
@@ -75,7 +75,7 @@ export function SpendCard(): ReactElement {
               />
             ))}
           </Stack>
-          <GroupBars spend={spend} />
+          <CategoryBars spend={spend} />
         </>
       )}
     </SpendPaper>
@@ -126,14 +126,14 @@ function BikeBar({
       <Meter
         height={BAR_HEIGHT}
         share={bike.total / largest}
-        color={colorIndex === null ? GROUP_COLOR : bikeColor(colorIndex)}
+        color={colorIndex === null ? CATEGORY_COLOR : bikeColor(colorIndex)}
       />
     </UnstyledButton>
   );
 }
 
 // The Component Categories, grey and scaled against the largest, under the bikes.
-function GroupBars({ spend }: { spend: Spend }): ReactElement {
+function CategoryBars({ spend }: { spend: Spend }): ReactElement {
   const { t } = useTranslation();
   const largest = Math.max(
     ...spend.categories.map((category) => category.amount),
@@ -147,7 +147,7 @@ function GroupBars({ spend }: { spend: Spend }): ReactElement {
     >
       <Eyebrow>{t("stats.byGroup")}</Eyebrow>
       {spend.categories.map((category) => (
-        <GroupBar
+        <CategoryBar
           key={category.key}
           spend={spend}
           category={category}
@@ -158,7 +158,7 @@ function GroupBars({ spend }: { spend: Spend }): ReactElement {
   );
 }
 
-function GroupBar({
+function CategoryBar({
   spend,
   category,
   largest,
@@ -185,9 +185,9 @@ function GroupBar({
         </Text>
       </Group>
       <Meter
-        height={GROUP_BAR_HEIGHT}
+        height={CATEGORY_BAR_HEIGHT}
         share={category.amount / largest}
-        color={GROUP_COLOR}
+        color={CATEGORY_COLOR}
       />
     </Box>
   );
