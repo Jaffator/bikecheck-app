@@ -11,6 +11,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
+import { formatDuration } from "@/features/rides/rideDuration";
 
 // Mantine's large sheet; the assign button is pinned to its foot.
 const SHEET_HEIGHT = "var(--drawer-size-lg)";
@@ -103,7 +104,7 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
                   <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
                     <Clock size={14} color="var(--mantine-color-text-7)" />
                     <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
-                      {t("pendingRides.duration", { count: ride.duration_min })}
+                      {formatDuration(ride.duration_min)}
                     </Text>
                   </Group>
                   <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>

@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { RouteMap } from "@/components/RouteMap";
 import type { Ride } from "@/features/rides/rides.types";
+import { formatDuration } from "@/features/rides/rideDuration";
 
 // Mantine's large sheet: room for the map and both rows of figures.
 const SHEET_HEIGHT = "var(--drawer-size-lg)";
@@ -78,7 +79,7 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
 
               <Group gap="md" wrap="nowrap">
                 <Stat label={t("rides.statDistance")} value={`${toKm(ride.distance_m)} km`} />
-                <Stat label={t("rides.statDuration")} value={`${ride.duration_min ?? 0} min`} />
+                <Stat label={t("rides.statDuration")} value={formatDuration(ride.duration_min ?? 0)} />
                 <Stat label={t("rides.statElevation")} value={`${ride.elevation_up_m ?? 0} m`} />
               </Group>
 

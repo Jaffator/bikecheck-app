@@ -33,6 +33,9 @@ const LOGO_INSET = 8;
 // pair without shouting over it.
 const TITLE_ICON_SIZE = 20;
 
+// The overviews share one large page title on desktop, as a web app's pages do.
+const DESKTOP_TITLE_SIZE = 28;
+
 // Maps routes to translated header titles; Home intentionally has none.
 const PAGE_TITLE_KEYS: Record<string, string> = {
   // More specific route prefixes must precede their parent routes.
@@ -289,9 +292,9 @@ export function AppLayout(): ReactElement {
                   <Logo style={{ height: LOGO_HEIGHT, width: "auto", marginLeft: LOGO_INSET }} />
                 ) : (
                   <Group gap="xs" c="cards.1">
-                    {/* Decorative icon beside the title. */}
-                    {headerIcon()}
-                    <Text fw={600} size="lg">
+                    {/* Decorative icon beside the title; on desktop the sidebar row already shows it. */}
+                    {!isDesktop && headerIcon()}
+                    <Text fw={isDesktop ? 700 : 600} size="lg" fz={isDesktop ? DESKTOP_TITLE_SIZE : undefined}>
                       {t(pageTitleKey)}
                     </Text>
                   </Group>

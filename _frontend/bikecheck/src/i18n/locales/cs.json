@@ -264,7 +264,17 @@
     "servicesCount_other": "{{count}} servisů",
     "notConnected": "nepropojeno",
     "unpairedTitle": "Nespárovaná kola",
-    "allPaired": "vše spárováno"
+    "allPaired": "vše spárováno",
+    "bikesCount_one": "{{count}} kolo",
+    "bikesCount_few": "{{count}} kola",
+    "bikesCount_many": "{{count}} kola",
+    "bikesCount_other": "{{count}} kol",
+    "synced": "sync {{when}}",
+    "garageVisibility": "Garáž: {{visibility}}",
+    "bannerStravaBody": "bez ní se žádná jízda nezapočítá, takže nájezd i opotřebení dílů zůstávají na nule.",
+    "bannerUnpairedBody": "{{names}}. Bez párování se u nich nepočítá nájezd ani opotřebení dílů.",
+    "bannerPairAction": "Propojit kola",
+    "bannerPendingBody": "dokud nemají kolo, nepočítá se u nich nájezd ani opotřebení dílů."
   },
   "chat": {
     "placeholder": "Zeptej se na cokoliv…",
@@ -911,7 +921,6 @@
     "assign": "Přiřadit ke kolu",
     "assignFailed": "Přiřazení se nepodařilo",
     "distance": "{{count}} km",
-    "duration": "{{count}} min",
     "elevation": "{{count}} m",
     "noGear": "Bez kola ze Stravy",
     "tileDetail_one": "{{count}} jízda k přiřazení",

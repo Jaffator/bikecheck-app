@@ -98,7 +98,7 @@ export function Sidebar(): ReactElement {
   return (
     <AppShell.Navbar
       withBorder={false}
-      bg="background.9"
+      bg="background.8"
       px="sm"
       style={{
         paddingTop: SAFE_TOP,

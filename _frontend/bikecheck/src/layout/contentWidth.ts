@@ -7,8 +7,8 @@ export const CONTENT_MAX_WIDTH = "44rem";
 export const BAR_WIDTH = `min(92%, calc(${CONTENT_MAX_WIDTH} - 2rem))`;
 
 // On desktop the overviews lay themselves out in columns; everything read top to bottom
-// keeps the column above (ADR 0035).
-export const WIDE_CONTENT_MAX_WIDTH = "75rem";
+// keeps the column above (ADR 0035). Fluid up to here, so a large monitor gets a dashboard, not a strip.
+export const WIDE_CONTENT_MAX_WIDTH = "100rem";
 
 // The desktop sidebar's width; here so the pinned bars can be offset by it too.
 export const SIDEBAR_WIDTH = 240;

@@ -10,6 +10,7 @@ import { PANEL_HAIRLINE, PRESS_TRANSITION } from "@/components/panelRows";
 import { RouteMap } from "@/components/RouteMap";
 import { useRides } from "@/features/rides/rides.queries";
 import type { Ride } from "@/features/rides/rides.types";
+import { formatDuration } from "@/features/rides/rideDuration";
 import { RideDetailSheet } from "./RideDetailSheet";
 
 export function LastRidePanel(): ReactElement {
@@ -56,7 +57,7 @@ export function LastRidePanel(): ReactElement {
             <Group gap="md" wrap="nowrap">
               <Metric>{t("pendingRides.distance", { count: Math.round((ride.distance_m ?? 0) / 1000) })}</Metric>
               <Metric>{t("pendingRides.elevation", { count: ride.elevation_up_m ?? 0 })}</Metric>
-              <Metric>{t("pendingRides.duration", { count: ride.duration_min ?? 0 })}</Metric>
+              <Metric>{formatDuration(ride.duration_min ?? 0)}</Metric>
             </Group>
           </Stack>
         </UnstyledButton>

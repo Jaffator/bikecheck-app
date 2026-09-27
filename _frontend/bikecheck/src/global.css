@@ -146,12 +146,8 @@
      shadow turned upward and a notch darker, so the hem reads as nearer than the rows. */
   --elev-sill:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 -1px 2px 0 rgba(0, 0, 0, 0.4), 0 -14px 32px -6px rgba(0, 0, 0, 0.45);
-  /* The light every card is lit from the top-left corner by. */
-  --card-glow: radial-gradient(
-    90% 120% at 0% 0%,
-    color-mix(in srgb, var(--mantine-color-primary-6) 7%, transparent) 0%,
-    transparent 45%
-  );
+  /* Off: a calmer surface behind the bike colours. Kept so the cards that still write it need no edit. */
+  --card-glow: none;
 }
 
 /* The provider forces no colour scheme, so Mantine reaches for its light-mode skeleton:

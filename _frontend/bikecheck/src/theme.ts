@@ -35,8 +35,8 @@ const background: MantineColorsTuple = [
   "#868688",
   "#7e7e83",
   "#6c6c71",
-  "#1f1f1f",
-  "#141414",
+  "#101012",
+  "#0a0a0b",
 ];
 // The dark end runs warm on purpose: the primary yellow and the Strava orange are both
 // warm, so a cool grey card read as a different material behind them.

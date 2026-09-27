@@ -23,8 +23,9 @@ page out at 980px, gets the desktop shell too.
 - **The sidebar never leaves.** Sub-pages and wizards keep it; the active row is chosen by path
   prefix, as `isActivePath` already does. Only full-screen routes (`/strava-connected`) drop it,
   and `chromeHidden` hides the header alone.
-- **Two content widths, chosen by the page.** `wide` (~75rem) for the overviews — Home, Bikes,
-  Bike detail, Service, Rides — which lay themselves out in columns. `narrow` (44rem, today's
+- **Two content widths, chosen by the page.** `wide` (fluid up to 100rem) for the overviews — Home,
+  Bikes, Bike detail, Service, Rides — which lay themselves out in columns and would be a narrow
+  strip in the middle of a large monitor at anything less. `narrow` (44rem, today's
   column) for forms, wizards and everything read top to bottom: Settings, Chat, Follows,
   Notifications, Reports, profiles. A form stretched to 1200px is harder to read, not roomier.
 - **It behaves like a desktop page.** Touch gestures are off — swiping panels and bikes,

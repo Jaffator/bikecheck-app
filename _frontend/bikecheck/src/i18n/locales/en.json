@@ -256,7 +256,15 @@
     "servicesCount_other": "{{count}} services",
     "notConnected": "not connected",
     "unpairedTitle": "Unpaired bikes",
-    "allPaired": "all paired"
+    "allPaired": "all paired",
+    "bikesCount_one": "{{count}} bike",
+    "bikesCount_other": "{{count}} bikes",
+    "synced": "sync {{when}}",
+    "garageVisibility": "Garage: {{visibility}}",
+    "bannerStravaBody": "without it no ride is counted, so distance and part wear stay at zero.",
+    "bannerUnpairedBody": "{{names}}. Until they are paired, their distance and part wear are not counted.",
+    "bannerPairAction": "Pair bikes",
+    "bannerPendingBody": "until they have a bike, their distance and part wear are not counted."
   },
   "chat": {
     "placeholder": "Ask anything…",
@@ -870,7 +878,6 @@
     "assign": "Assign to bike",
     "assignFailed": "Could not assign the ride",
     "distance": "{{count}} km",
-    "duration": "{{count}} min",
     "elevation": "{{count}} m",
     "noGear": "No Strava bike",
     "tileDetail_one": "{{count}} ride to assign",
