@@ -19,7 +19,9 @@ export interface SpendBike {
 }
 
 export interface Spend {
-  year: number;
+  // The Service Dates counted, inclusive YYYY-MM-DD; null is an open end, both null is all time.
+  from: string | null;
+  to: string | null;
   currency: string | null;
   total: number;
   categories: SpendCategory[];
@@ -33,17 +35,25 @@ export interface DistanceBike {
   year: number | null;
   // Rank by id among all the owner's bikes, archived included, so a colour never shifts.
   color_index: number;
-  // Metres per UTC day, index 0 = 1 January; to today for the current year, the whole of a past one.
+  // Metres per UTC day, index 0 = the served `from`, one entry per day through `to`.
   daily_m: number[];
   // Whole km of the sum of daily_m.
   total_km: number;
+  // The rides started in the window and the sum of their minutes.
+  ride_count: number;
+  time_min: number;
 }
 
 export interface Distance {
-  year: number;
-  // Highest total first.
+  // UTC days daily_m covers, inclusive YYYY-MM-DD.
+  from: string;
+  to: string;
+  // Every bike ridden in the window, highest total first.
   bikes: DistanceBike[];
 }
+
+// The span desktop Home reads its figures and charts over; no Period is the phone's year.
+export type HomePeriod = "month" | "year" | "all";
 
 export interface WearPoint {
   // ISO date, UTC.

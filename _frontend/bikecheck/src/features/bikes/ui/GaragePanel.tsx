@@ -19,17 +19,21 @@ import {
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
 import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
+import { homePeriodLabel } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
+import type { DistanceBike, HomePeriod } from "@/features/stats/stats.types";
 import { BikeColorDot } from "./BikeColorDot";
 
-const BIKE_COLUMNS = "56px minmax(0, 1.6fr) 100px 56px minmax(0, 1.4fr) 96px 16px";
+const BIKE_COLUMNS = "56px minmax(0, 1.6fr) 112px 88px minmax(0, 1.4fr) 96px 16px";
 
-export function GaragePanel(): ReactElement {
+// Distance and time read Home's Period; the worst part and the status are about now.
+export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: bikes } = useBikes();
   const { data: garage } = useGarageTrackedActions(EVERY_READING);
-  const { data: distance } = useDistance();
+  const { data: distance } = useDistance(period);
+  const label = homePeriodLabel(period, i18n.language, t);
 
   const byBike = new Map<number, GarageTrackedAction[]>();
   for (const action of garage ?? []) byBike.set(action.bike_id, [...(byBike.get(action.bike_id) ?? []), action]);
@@ -38,8 +42,8 @@ export function GaragePanel(): ReactElement {
     (left, right) => (worstOf(right)?.percentage ?? 0) - (worstOf(left)?.percentage ?? 0),
   );
   const number = (value: number): string => new Intl.NumberFormat(i18n.language).format(Math.round(value));
-  // The served year's distance; a bike with no ride in it is not listed, so it reads 0.
-  const yearKm = (bike: Bike): number => distance?.bikes.find((ridden) => ridden.bike_id === bike.id)?.total_km ?? 0;
+  // A bike with no ride in the Period is not listed, so it reads 0 km and 0 h.
+  const ridden = (bike: Bike): DistanceBike | undefined => distance?.bikes.find((row) => row.bike_id === bike.id);
 
   return (
     <Panel
@@ -52,8 +56,8 @@ export function GaragePanel(): ReactElement {
         cells={[
           "",
           t("bikes.columnBike"),
-          distance === undefined ? t("bikes.columnDistance") : t("bikes.columnDistanceYear", { year: distance.year }),
-          t("bikes.time"),
+          t("bikes.columnDistancePeriod", { period: label }),
+          t("bikes.columnTimePeriod", { period: label }),
           t("bikes.columnWorstPart"),
           t("bikes.columnStatus"),
           "",
@@ -96,10 +100,10 @@ export function GaragePanel(): ReactElement {
               </Eyebrow>
             </Stack>
             <Text className="font-mono" fz={13} c="text.7" ta="right">
-              {distance === undefined ? "—" : `${number(yearKm(bike))} km`}
+              {distance === undefined ? "—" : `${number(ridden(bike)?.total_km ?? 0)} km`}
             </Text>
             <Text className="font-mono" fz={13} c="text.7" ta="right">
-              {number(bike.ride_time_min / 60)} h
+              {distance === undefined ? "—" : `${number((ridden(bike)?.time_min ?? 0) / 60)} h`}
             </Text>
             <Text fz={13} c="text.7" lineClamp={1}>
               {worst === null || worst.percentage === 0 ? (

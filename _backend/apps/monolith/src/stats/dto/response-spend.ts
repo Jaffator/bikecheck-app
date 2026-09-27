@@ -36,15 +36,25 @@ export class Response_SpendBikeDto {
 
 export class Response_SpendDto {
   @ApiProperty({
-    example: 2026,
-    description: 'The year served - last year when the current one has no priced service yet',
+    type: String,
+    example: '2026-01-01',
+    nullable: true,
+    description: 'First Service Date counted, inclusive; null is an open end',
   })
-  year!: number;
+  from!: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: null,
+    nullable: true,
+    description: 'Last Service Date counted, inclusive; null is an open end. Both null counts undated Services too',
+  })
+  to!: string | null;
 
   @ApiProperty({ type: String, example: 'CZK', nullable: true })
   currency!: string | null;
 
-  @ApiProperty({ example: 14860, description: 'Equals History Totals for that year across all bikes' })
+  @ApiProperty({ example: 14860, description: 'Equals History Totals for from/to across all bikes' })
   total!: number;
 
   @ApiProperty({

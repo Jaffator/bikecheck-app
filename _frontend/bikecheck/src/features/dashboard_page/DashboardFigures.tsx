@@ -1,25 +1,26 @@
-// Desktop Home's row of figures: the year's distance, time in the saddle, what is due, this year's spend
+// Desktop Home's row of figures: the Period's distance, time in the saddle and spend, what is due now
 // and the next replacement. Strava's problems are the banner's, not a figure's.
 import { Fragment, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { Box, SimpleGrid, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useNavigate } from "react-router-dom";
-import dayjs from "dayjs";
 import { Eyebrow } from "@/components/Eyebrow";
 import { PRESS_TRANSITION } from "@/components/panelRows";
-import { useBikes } from "@/features/bikes/bikes.queries";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useHistoryTotals } from "@/features/service/service.queries";
+import { periodSearch } from "@/features/service/servicePeriod";
 import type { HistoryTotals } from "@/features/service/service.types";
 import { DUE_FROM, attentionColor } from "@/features/service_tracking/attentionLevel";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { AttentionLevel, GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
-import { monthGain, totalMeters } from "@/features/stats/distanceDays";
+import { periodGain, totalMeters } from "@/features/stats/distanceDays";
+import { homePeriodLabel, homePeriodServices } from "@/features/stats/homePeriod";
 import { useNextReplacement } from "@/features/stats/nextReplacement";
 import { useDistance } from "@/features/stats/stats.queries";
+import type { HomePeriod } from "@/features/stats/stats.types";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { formatCost } from "@/utils/money";
 
@@ -32,50 +33,51 @@ const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
 
 const HIGHLIGHT_BORDER = "1px solid color-mix(in srgb, var(--mantine-color-primary-6) 40%, transparent)";
 
-export function DashboardFigures(): ReactElement {
+// Due and the next replacement look at now, so only the Period's readings take it.
+export function DashboardFigures({ period }: { period: HomePeriod }): ReactElement {
   return (
     <SimpleGrid cols={{ base: 3, lg: 5 }} spacing="md">
-      <DistanceFigure />
-      <TimeFigure />
+      <DistanceFigure period={period} />
+      <TimeFigure period={period} />
       <DueFigure />
-      <SpendFigure />
+      <SpendFigure period={period} />
       <NextReplacementFigure />
     </SimpleGrid>
   );
 }
 
-function DistanceFigure(): ReactElement {
+function DistanceFigure({ period }: { period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { data: distance } = useDistance();
+  const { data: distance } = useDistance(period);
 
   return (
     <Figure
-      // The served year, which in early January is still last year.
-      title={t("stats.distanceTitle", { year: distance?.year ?? new Date().getUTCFullYear() })}
+      title={t("stats.distanceTitle", { period: homePeriodLabel(period, i18n.language, t) })}
       value={distance === undefined ? null : formatKm(Math.round(totalMeters(distance) / 1000), i18n.language)}
-      detail={distance === undefined ? "" : monthGain(distance, i18n.language, t)}
+      detail={distance === undefined ? "" : periodGain(distance, period, i18n.language, t)}
       detailMono
       onOpen={() => navigate("/bikes")}
     />
   );
 }
 
-function TimeFigure(): ReactElement {
+// The rides started in the Period, beside the distance they covered.
+function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { data: bikes } = useBikes();
+  const { data: distance } = useDistance(period);
 
-  const rides = (bikes ?? []).reduce((sum, bike) => sum + bike.ride_count, 0);
-  const minutes = (bikes ?? []).reduce((sum, bike) => sum + bike.ride_time_min, 0);
+  const rides = (distance?.bikes ?? []).reduce((sum, bike) => sum + bike.ride_count, 0);
+  const minutes = (distance?.bikes ?? []).reduce((sum, bike) => sum + bike.time_min, 0);
   const hours = new Intl.NumberFormat(i18n.language).format(Math.round(minutes / 60));
-  const average = rides === 0 ? "" : formatDuration(minutes / rides);
+  const average = rides === 0 ? "—" : formatDuration(minutes / rides);
 
   return (
     <Figure
-      title={t("dashboard.timeTitle")}
-      value={bikes === undefined ? null : rides === 0 ? "—" : `${hours} h`}
-      detail={rides === 0 ? "" : `${t("dashboard.ridesCount", { count: rides })} · ø ${average}`}
+      title={t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) })}
+      value={distance === undefined ? null : `${hours} h`}
+      detail={`${t("dashboard.ridesCount", { count: rides })} · ø ${average}`}
       detailMono
       onOpen={() => navigate("/rides")}
     />
@@ -118,21 +120,21 @@ function DueLevels({ due }: { due: GarageTrackedAction[] }): ReactNode {
   ));
 }
 
-function SpendFigure(): ReactElement {
+function SpendFigure({ period }: { period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: user } = useCurrentUser();
-  const year = dayjs().year();
-  const { data: totals } = useHistoryTotals(undefined, { from: `${String(year)}-01-01`, to: null });
+  const services = homePeriodServices(period);
+  const { data: totals } = useHistoryTotals(undefined, services);
   const cost = (amount: number): string => formatCost(amount, user?.currency ?? null, i18n.language);
 
   return (
     <Figure
-      title={t("dashboard.spendTitle", { year })}
+      title={t("dashboard.spendTitle", { period: homePeriodLabel(period, i18n.language, t) })}
       value={totals === undefined ? null : cost(totals.total_cost)}
       detail={totals === undefined ? "" : spendDetail(totals, cost, t)}
       detailMono
-      onOpen={() => navigate(`/service/history?from=${String(year)}-01-01`)}
+      onOpen={() => navigate(`/service/history${periodSearch(services)}`)}
     />
   );
 }

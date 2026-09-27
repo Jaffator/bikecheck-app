@@ -16,10 +16,12 @@ import { bikeColor, colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { periodSearch } from "@/features/service/servicePeriod";
 import { formatCost } from "@/utils/money";
+import { homePeriodLabel } from "../homePeriod";
 import { categoryLabel } from "../spendCategories";
 import { useSpend } from "../stats.queries";
-import type { Spend, SpendBike, SpendCategory } from "../stats.types";
+import type { HomePeriod, Spend, SpendBike, SpendCategory } from "../stats.types";
 
 const BAR_HEIGHT = 8;
 const CATEGORY_BAR_HEIGHT = 6;
@@ -27,9 +29,10 @@ const TRACK_COLOR = "var(--color-border-subtle)";
 // Neutral, so colour always means a bike and length always means money.
 const CATEGORY_COLOR = "var(--mantine-color-cards-4)";
 
-export function SpendCard(): ReactElement {
+// The phone asks for no Period and reads the year it was served; desktop names its Period.
+export function SpendCard({ period }: { period?: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
-  const { data: spend } = useSpend();
+  const { data: spend } = useSpend(period);
   // Spend never lists an Archived Bike, so the garage holds every bike it names.
   const { data: bikes } = useBikes();
 
@@ -46,7 +49,9 @@ export function SpendCard(): ReactElement {
     <SpendPaper>
       <Group justify="space-between" wrap="nowrap" gap="sm">
         <Text fz={16} fw={600} c="text.6">
-          {t("stats.spendTitle", { year: spend.year })}
+          {t("stats.spendTitle", {
+            period: period === undefined ? spend.from?.slice(0, 4) : homePeriodLabel(period, i18n.language, t),
+          })}
         </Text>
         <Text
           className="font-mono"
@@ -95,7 +100,7 @@ function BikeBar({
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const largest = spend.bikes[0].total;
-  const history = `/bikes/${String(bike.bike_id)}/history?from=${String(spend.year)}-01-01&to=${String(spend.year)}-12-31`;
+  const history = `/bikes/${String(bike.bike_id)}/history${periodSearch(spend)}`;
 
   return (
     <UnstyledButton

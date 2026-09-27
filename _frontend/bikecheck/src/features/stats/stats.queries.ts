@@ -1,21 +1,24 @@
 // Home's chart queries.
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { getDistance, getSpend, getWearForecast } from "./stats.api";
-import type { Distance, Spend, WearForecast } from "./stats.types";
+import type { Distance, HomePeriod, Spend, WearForecast } from "./stats.types";
 
-// Keyed under "services", so every write that drops the history drops the spend with it.
-export function useSpend(): UseQueryResult<Spend> {
+// Keyed under "services", so every write that drops the history drops the spend with it. The last
+// Period's numbers hold their place while the next one loads.
+export function useSpend(period?: HomePeriod): UseQueryResult<Spend> {
   return useQuery({
-    queryKey: ["services", "spend"],
-    queryFn: getSpend,
+    queryKey: ["services", "spend", period ?? "default"],
+    queryFn: () => getSpend(period),
+    placeholderData: keepPreviousData,
   });
 }
 
 // Keyed under "rides", so archiving a bike and coming back to the app redraw it.
-export function useDistance(): UseQueryResult<Distance> {
+export function useDistance(period?: HomePeriod): UseQueryResult<Distance> {
   return useQuery({
-    queryKey: ["rides", "distance"],
-    queryFn: getDistance,
+    queryKey: ["rides", "distance", period ?? "default"],
+    queryFn: () => getDistance(period),
+    placeholderData: keepPreviousData,
   });
 }
 

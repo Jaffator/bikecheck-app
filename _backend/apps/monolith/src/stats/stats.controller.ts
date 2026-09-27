@@ -1,46 +1,43 @@
-import { Controller, Get, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { StatsService } from './stats.service';
+import { PERIODS, StatsService } from './stats.service';
 import { Response_SpendDto } from './dto/response-spend';
 import { Response_DistanceDto } from './dto/response-distance';
 import { Response_WearForecastDto } from './dto/response-wear-forecast';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-// A pass-through: what each chart counts is decided in StatsService.
+// A pass-through: what each chart counts, and which Periods exist, is decided in StatsService.
 @Controller('stats')
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
-  // ---------- GET where the money went in one calendar year ----------
+  // ---------- GET where the money went in one Period ----------
   @Get('spend')
   @ApiQuery({
-    name: 'year',
-    type: Number,
+    name: 'period',
+    enum: PERIODS,
     required: false,
     description: 'Omitted: this year, or last year while this one has nothing priced',
   })
   @ApiResponse({ status: 200, type: Response_SpendDto })
-  async getSpend(
-    @CurrentUser('userId') userId: string,
-    @Query('year', new ParseIntPipe({ optional: true })) year?: number,
-  ): Promise<Response_SpendDto> {
-    return await this.statsService.getSpend(Number(userId), year);
+  async getSpend(@CurrentUser('userId') userId: string, @Query('period') period?: string): Promise<Response_SpendDto> {
+    return await this.statsService.getSpend(Number(userId), period);
   }
 
-  // ---------- GET the distance each bike covered, day by day, in one calendar year ----------
+  // ---------- GET the distance each bike covered, day by day, in one Period ----------
   @Get('distance')
   @ApiQuery({
-    name: 'year',
-    type: Number,
+    name: 'period',
+    enum: PERIODS,
     required: false,
     description: 'Omitted: this year, or last year while this one has no ride',
   })
   @ApiResponse({ status: 200, type: Response_DistanceDto })
   async getDistance(
     @CurrentUser('userId') userId: string,
-    @Query('year', new ParseIntPipe({ optional: true })) year?: number,
+    @Query('period') period?: string,
   ): Promise<Response_DistanceDto> {
-    return await this.statsService.getDistance(Number(userId), year);
+    return await this.statsService.getDistance(Number(userId), period);
   }
 
   // ---------- GET the Tracked Actions that run out soonest, with their wear curves ----------

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikesWhere } from '../bike/owned-bike.where';
@@ -45,13 +45,40 @@ interface BikeSpend {
   split: Split;
 }
 
+// Days of Service Date, both inclusive; null is an open end.
+interface ServiceWindow {
+  from: string | null;
+  to: string | null;
+}
+
 const TOP_CATEGORIES = 3;
 
-const distanceSelect = { bike_id: true, started_at: true, distance_m: true } satisfies Prisma.ridesSelect;
+const distanceSelect = {
+  bike_id: true,
+  started_at: true,
+  distance_m: true,
+  duration_min: true,
+} satisfies Prisma.ridesSelect;
 type DistanceRide = Prisma.ridesGetPayload<{ select: typeof distanceSelect }>;
 
 const garageSelect = { id: true, bike_brand: true, bike_model: true, year: true } satisfies Prisma.bikesSelect;
 type ColoredBike = Prisma.bikesGetPayload<{ select: typeof garageSelect }> & { color_index: number };
+
+// UTC midnights, both days inclusive.
+interface DayWindow {
+  from: Date;
+  to: Date;
+}
+
+interface BikeRides {
+  daily_m: number[];
+  ride_count: number;
+  time_min: number;
+}
+
+// The Periods Home reads its figures over.
+export const PERIODS = ['month', 'year', 'all'] as const;
+export type Period = (typeof PERIODS)[number];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
@@ -94,9 +121,10 @@ export class StatsService {
     private readonly serviceTracking: ServiceTrackingService,
   ) {}
 
-  async getSpend(userId: number, year?: number): Promise<Response_SpendDto> {
-    const [[served, services], user] = await Promise.all([
-      this.spendYear(userId, year),
+  async getSpend(userId: number, period?: string): Promise<Response_SpendDto> {
+    const asked = periodOf(period);
+    const [[window, services], user] = await Promise.all([
+      asked === undefined ? this.spendOrLastYear(userId) : this.spendOver(userId, asked),
       this.prisma.users.findUnique({ where: { id: userId }, select: { currency: true } }),
     ]);
 
@@ -106,7 +134,7 @@ export class StatsService {
     const categories = await this.namedCategories(top, garage);
 
     return {
-      year: served,
+      ...window,
       currency: user?.currency ?? null,
       total: units(sum([...garage.values()])),
       categories,
@@ -114,57 +142,96 @@ export class StatsService {
     };
   }
 
-  // Last year while this one draws no line, so the card is not blank all January.
-  async getDistance(userId: number, year?: number): Promise<Response_DistanceDto> {
+  async getDistance(userId: number, period?: string): Promise<Response_DistanceDto> {
+    const asked = periodOf(period);
     const [bikes, colors] = await Promise.all([
       this.prisma.bikes.findMany({ where: ownedBikesWhere(userId), select: garageSelect }),
       colorIndexes(this.prisma, userId),
     ]);
     const garage = bikes.map((bike) => ({ ...bike, color_index: colors.get(bike.id) ?? 0 }));
-    const current = await this.distanceIn(userId, year ?? new Date().getUTCFullYear(), garage);
-    if (year !== undefined || current.bikes.length > 0) return current;
+    const today = utcDay(new Date());
 
-    const previous = await this.distanceIn(userId, current.year - 1, garage);
-    return previous.bikes.length > 0 ? previous : current;
+    return asked === undefined
+      ? this.distanceOrLastYear(userId, garage, today)
+      : this.distanceOver(userId, asked, garage, today);
   }
 
-  private async distanceIn(userId: number, year: number, garage: ColoredBike[]): Promise<Response_DistanceDto> {
-    const rides = await this.ridesIn(userId, year);
-
-    return { year, bikes: distanceRows(garage, metersByDay(rides, year, daysOf(year, new Date()))) };
+  // All time begins on the day of the earliest dated ride, or today when there is none.
+  private async distanceOver(
+    userId: number,
+    period: Period,
+    garage: ColoredBike[],
+    today: Date,
+  ): Promise<Response_DistanceDto> {
+    if (period === 'all') {
+      const rides = await this.ridesSince(userId);
+      return distanceOf({ from: earliestDay(rides, today), to: today }, rides, garage);
+    }
+    const from = period === 'month' ? monthStart(today) : yearStart(today.getUTCFullYear());
+    return distanceOf({ from, to: today }, await this.ridesSince(userId, from), garage);
   }
 
-  // Bucketed in UTC, so the year's edges are UTC too.
-  private async ridesIn(userId: number, year: number): Promise<DistanceRide[]> {
+  // The phone's card asks for no Period: last year while this one draws nothing, so it is not blank all January.
+  private async distanceOrLastYear(userId: number, garage: ColoredBike[], today: Date): Promise<Response_DistanceDto> {
+    const thisYear = { from: yearStart(today.getUTCFullYear()), to: today };
+    const current = distanceOf(thisYear, await this.ridesSince(userId, thisYear.from), garage);
+    if (drawn(current)) return current;
+
+    const lastYear = { from: yearStart(today.getUTCFullYear() - 1), to: new Date(thisYear.from.getTime() - DAY_MS) };
+    const previous = distanceOf(lastYear, await this.ridesSince(userId, lastYear.from, thisYear.from), garage);
+    return drawn(previous) ? previous : current;
+  }
+
+  // Bucketed in UTC, so the edges are UTC too. Open-ended up to today, so a ride stamped later
+  // still counts - on today. A ride with no start belongs to no day, so to no Period.
+  private async ridesSince(userId: number, from?: Date, before?: Date): Promise<DistanceRide[]> {
     return this.prisma.rides.findMany({
       where: {
         is_deleted: { not: true },
         bikes: ownedBikesWhere(userId),
-        started_at: { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) },
+        started_at: {
+          not: null,
+          ...(from === undefined ? {} : { gte: from }),
+          ...(before === undefined ? {} : { lt: before }),
+        },
       },
       select: distanceSelect,
     });
   }
 
-  // The year asked for, else this one - or last year while this one has nothing priced, so
-  // the card is not blank all January.
-  private async spendYear(userId: number, asked?: number): Promise<[number, SpendService[]]> {
-    const year = asked ?? new Date().getFullYear();
-    const services = await this.servicesIn(userId, year);
-    if (asked !== undefined || spent(services) > 0) return [year, services];
-
-    const previous = await this.servicesIn(userId, year - 1);
-    return spent(previous) > 0 ? [year - 1, previous] : [year, services];
+  // Open-ended, as Home asks History Totals for the same Period, so the two totals agree.
+  private async spendOver(userId: number, period: Period): Promise<[ServiceWindow, SpendService[]]> {
+    const now = new Date();
+    const from: Record<Period, string | null> = {
+      month: localDay(now.getFullYear(), now.getMonth(), 1),
+      year: localDay(now.getFullYear(), 0, 1),
+      all: null,
+    };
+    const window = { from: from[period], to: null };
+    return [window, await this.servicesIn(userId, window)];
   }
 
-  // The Services History Totals counts for the same year: archived bikes and deleted
-  // Services left out (ADR 0024), dated by the history's own period rule.
-  private async servicesIn(userId: number, year: number): Promise<SpendService[]> {
+  // The phone's card asks for no Period: this year, or last year while this one has nothing
+  // priced, so it is not blank all January.
+  private async spendOrLastYear(userId: number): Promise<[ServiceWindow, SpendService[]]> {
+    const year = new Date().getFullYear();
+    const current = yearWindow(year);
+    const services = await this.servicesIn(userId, current);
+    if (spent(services) > 0) return [current, services];
+
+    const previous = yearWindow(year - 1);
+    const earlier = await this.servicesIn(userId, previous);
+    return spent(earlier) > 0 ? [previous, earlier] : [current, services];
+  }
+
+  // The Services History Totals counts for the same Period: archived bikes and deleted
+  // Services left out (ADR 0024), dated by the history's own Period rule.
+  private async servicesIn(userId: number, window: ServiceWindow): Promise<SpendService[]> {
     return this.prisma.events_bikes.findMany({
       where: {
         is_deleted: { not: true },
         bikes: ownedBikesWhere(userId),
-        ...serviceDateInPeriod(`${year}-01-01`, `${year}-12-31`),
+        ...serviceDateInPeriod(window.from ?? undefined, window.to ?? undefined),
       },
       select: spendSelect,
     });
@@ -299,6 +366,15 @@ function bikeRows(bikes: BikeSpend[]): Response_SpendBikeDto[] {
     .sort((a, b) => b.total - a.total || a.bike_id - b.bike_id);
 }
 
+function yearWindow(year: number): ServiceWindow {
+  return { from: localDay(year, 0, 1), to: localDay(year, 11, 31) };
+}
+
+// A Service Date is the day the owner wrote down, so its Period is read in local time.
+function localDay(year: number, month: number, day: number): string {
+  return `${String(year)}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 function spent(services: SpendService[]): number {
   return sum(services.map((service) => cents(service.total_cost)));
 }
@@ -323,13 +399,26 @@ function sum(amounts: number[]): number {
   return amounts.reduce((total, amount) => total + amount, 0);
 }
 
-// UTC days from 1 January to today inclusive, or the whole of a past year; none for a year ahead.
-function daysOf(year: number, today: Date): number {
-  const last = Math.min(
-    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
-    Date.UTC(year, 11, 31),
-  );
-  return Math.max(0, (last - Date.UTC(year, 0, 1)) / DAY_MS + 1);
+function utcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function yearStart(year: number): Date {
+  return new Date(Date.UTC(year, 0, 1));
+}
+
+function monthStart(day: Date): Date {
+  return new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1));
+}
+
+// A Period Home knows, or none at all; anything else is the caller's mistake, not an empty chart.
+function periodOf(value?: string): Period | undefined {
+  if (value === undefined || isPeriod(value)) return value;
+  throw new BadRequestException(`Unknown period: ${value}`);
+}
+
+function isPeriod(value: string): value is Period {
+  return (PERIODS as readonly string[]).includes(value);
 }
 
 // getUTCDay counts from Sunday.
@@ -338,38 +427,61 @@ function mondayOf(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - sinceMonday));
 }
 
-// Metres per bike per UTC day. A ride stamped after today lands on today, so the days still add
-// up to every metre of the year.
-function metersByDay(rides: DistanceRide[], year: number, days: number): Map<number, number[]> {
-  const byBike = new Map<number, number[]>();
-  if (days === 0) return byBike;
+function distanceOf(window: DayWindow, rides: DistanceRide[], garage: ColoredBike[]): Response_DistanceDto {
+  return { from: isoDay(window.from), to: isoDay(window.to), bikes: distanceRows(garage, ridesByBike(rides, window)) };
+}
+
+// Today at the latest, so a ride stamped ahead still leaves a window of one day.
+function earliestDay(rides: DistanceRide[], today: Date): Date {
+  const first = rides.reduce(
+    (earliest, { started_at }) => (started_at === null ? earliest : Math.min(earliest, started_at.getTime())),
+    today.getTime(),
+  );
+  return utcDay(new Date(first));
+}
+
+// Something to draw: a window whose rides all round to 0 km is as empty as one without rides.
+function drawn(distance: Response_DistanceDto): boolean {
+  return distance.bikes.some((bike) => bike.total_km > 0);
+}
+
+// Each bike's rides per UTC day of the window. A ride stamped after its last day lands on that
+// day, so the days still add up to every metre ridden.
+function ridesByBike(rides: DistanceRide[], window: DayWindow): Map<number, BikeRides> {
+  const days = (window.to.getTime() - window.from.getTime()) / DAY_MS + 1;
+  const byBike = new Map<number, BikeRides>();
 
   for (const ride of rides) {
     if (ride.started_at === null) continue;
-    const day = Math.min(Math.floor((ride.started_at.getTime() - Date.UTC(year, 0, 1)) / DAY_MS), days - 1);
-    const meters = byBike.get(ride.bike_id) ?? new Array<number>(days).fill(0);
-    meters[day] += ride.distance_m ?? 0;
-    byBike.set(ride.bike_id, meters);
+    const day = Math.min(Math.floor((ride.started_at.getTime() - window.from.getTime()) / DAY_MS), days - 1);
+    const entry = byBike.get(ride.bike_id) ?? { daily_m: new Array<number>(days).fill(0), ride_count: 0, time_min: 0 };
+    entry.daily_m[day] += ride.distance_m ?? 0;
+    entry.ride_count += 1;
+    entry.time_min += ride.duration_min ?? 0;
+    byBike.set(ride.bike_id, entry);
   }
   return byBike;
 }
 
-// Summed in metres and rounded last, so the client's months add up to the same total.
-function distanceRows(garage: ColoredBike[], meters: Map<number, number[]>): Response_DistanceBikeDto[] {
+// Every bike ridden in the window, even for no distance. Summed in metres and rounded last, so
+// the client's buckets add up to the same total.
+function distanceRows(garage: ColoredBike[], ridden: Map<number, BikeRides>): Response_DistanceBikeDto[] {
   return garage
-    .map(({ id, bike_brand, bike_model, year, color_index }) => {
-      const daily = meters.get(id) ?? [];
-      return {
-        bike_id: id,
-        bike_brand,
-        bike_model,
-        year,
-        color_index,
-        daily_m: daily,
-        total_km: Math.round(sum(daily) / 1000),
-      };
+    .flatMap(({ id, bike_brand, bike_model, year, color_index }) => {
+      const rides = ridden.get(id);
+      if (rides === undefined) return [];
+      return [
+        {
+          bike_id: id,
+          bike_brand,
+          bike_model,
+          year,
+          color_index,
+          ...rides,
+          total_km: Math.round(sum(rides.daily_m) / 1000),
+        },
+      ];
     })
-    .filter((row) => row.total_km > 0)
     .sort((a, b) => b.total_km - a.total_km || a.bike_id - b.bike_id);
 }
 

@@ -136,11 +136,12 @@ describe('BikeService', () => {
           }),
         ),
     );
-    mockPrisma.rides.findMany.mockImplementation(({ where }: { where: { started_at: { gte: Date; lt: Date } } }) =>
+    mockPrisma.rides.findMany.mockImplementation(({ where }: { where: { started_at: { gte: Date; lt?: Date } } }) =>
       Promise.resolve(
         rides.filter((row) => {
           const date = row.started_at as Date;
-          const inSpan = date >= where.started_at.gte && date < where.started_at.lt;
+          const inSpan =
+            date >= where.started_at.gte && (where.started_at.lt === undefined || date < where.started_at.lt);
           return inSpan && row.is_deleted !== true && !archived(row.bike_id);
         }),
       ),

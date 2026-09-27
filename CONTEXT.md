@@ -163,9 +163,12 @@ them, one Period or all time.
 _Avoid_: Summary (that is the wizard's hub step), Overview
 
 **Period**:
-The span of Service Dates the history is read for. Either end may be left open; both open is
-all time, which is the only Period that counts a Service carrying no Service Date — such a
-Service falls in no bounded Period.
+The span of days a reading is taken over — the service history and its History Totals, and Home's
+figures and charts. A Service belongs to its Service Date's day, a ride to the UTC day it started
+on; a ride with no start belongs to no Period. Either end may be left open; both open is all time,
+which is the only Period that counts a Service carrying no Service Date — such a Service falls in
+no bounded Period. Home offers three: this month, the year, and all time, which for rides begins
+on the day of the garage's earliest ride.
 _Avoid_: Range, timeframe
 
 **Wear Baseline**:

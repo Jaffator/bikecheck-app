@@ -10,12 +10,19 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
 import { useIsDesktop } from "@/layout/breakpoints";
-import { servedDays, weeklyRunningMeters, weekStarts } from "../distanceDays";
+import { servedDays, servedYear, weeklyRunningMeters, weekStarts } from "../distanceDays";
+import { DISTANCE_BUCKET, homePeriodLabel, type DistanceBucket } from "../homePeriod";
 import { useDistance } from "../stats.queries";
-import type { Distance, DistanceBike } from "../stats.types";
-import { DistanceMonthBars } from "./DistanceMonthBars";
+import type { Distance, DistanceBike, HomePeriod } from "../stats.types";
+import { DistanceBars } from "./DistanceBars";
 
 const CHART_HEIGHT = 180;
+
+const BUCKET_UNIT: Record<DistanceBucket, string> = {
+  day: "stats.distanceByDay",
+  month: "stats.distanceByMonth",
+  year: "stats.distanceByYear",
+};
 
 // Mantine draws its tooltip for a light page; this one sits on the dark card.
 const TOOLTIP_STYLES: LineChartProps["styles"] = {
@@ -35,11 +42,12 @@ const TOOLTIP_STYLES: LineChartProps["styles"] = {
   },
 };
 
-// The phone keeps its weekly running line; desktop reads the same days as monthly bars.
-export function DistanceCard(): ReactElement {
-  const { t } = useTranslation();
-  const { data: distance } = useDistance();
+// The phone asks for no Period and keeps its weekly running line; desktop reads its Period's days as bars.
+export function DistanceCard({ period }: { period?: HomePeriod }): ReactElement {
+  const { t, i18n } = useTranslation();
+  const { data: distance } = useDistance(period);
   const isDesktop = useIsDesktop();
+  const bucket = DISTANCE_BUCKET[period ?? "year"];
 
   if (distance === undefined) {
     return (
@@ -50,29 +58,34 @@ export function DistanceCard(): ReactElement {
     );
   }
 
+  // The phone keeps drawing only bikes that covered a km, as before rides without distance were served.
+  const drawn = isDesktop ? distance : { ...distance, bikes: distance.bikes.filter((bike) => bike.total_km > 0) };
+
   return (
     <DistancePaper>
       <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
         <Text fz={16} fw={600} c="text.6">
-          {t("stats.distanceTitle", { year: distance.year })}
+          {t("stats.distanceTitle", {
+            period: period === undefined ? servedYear(distance) : homePeriodLabel(period, i18n.language, t),
+          })}
         </Text>
         {isDesktop && (
           <Text fz={12} c="var(--color-text-dim)">
-            {t("stats.distanceByMonth")}
+            {t(BUCKET_UNIT[bucket])}
           </Text>
         )}
       </Group>
 
-      {distance.bikes.length === 0 ? (
+      {drawn.bikes.length === 0 ? (
         <Text fz={13} c="var(--color-text-dim)">
-          {t("stats.distanceEmpty")}
+          {t(period === undefined ? "stats.distanceEmpty" : "stats.distanceEmptyPeriod")}
         </Text>
       ) : isDesktop ? (
-        <DistanceMonthBars distance={distance} />
+        <DistanceBars distance={distance} bucket={bucket} />
       ) : (
         <>
-          <DistanceChart distance={distance} />
-          <Legend bikes={distance.bikes} />
+          <DistanceChart distance={drawn} />
+          <Legend bikes={drawn.bikes} />
         </>
       )}
     </DistancePaper>
@@ -82,11 +95,12 @@ export function DistanceCard(): ReactElement {
 function DistanceChart({ distance }: { distance: Distance }): ReactElement {
   const { t, i18n } = useTranslation();
   const kmFormat = new Intl.NumberFormat(i18n.language);
-  const weeks = weekStarts(servedDays(distance), distance.year);
+  const year = servedYear(distance);
+  const weeks = weekStarts(servedDays(distance), year);
   const lastWeek = weeks.length - 1;
   // Rounded here, where the line prints them: the running metres end at the bike's total.
   const running = distance.bikes.map((bike) =>
-    weeklyRunningMeters(bike.daily_m, distance.year).map((meters) => Math.round(meters / 1000)),
+    weeklyRunningMeters(bike.daily_m, year).map((meters) => Math.round(meters / 1000)),
   );
 
   const data = weeks.map((week, index) => ({
@@ -111,8 +125,8 @@ function DistanceChart({ distance }: { distance: Distance }): ReactElement {
       gridColor="var(--color-border-subtle)"
       valueFormatter={(km) => formatKm(km, i18n.language)}
       xAxisProps={{
-        ticks: monthTicks(distance.year, weeks),
-        tickFormatter: (week: string) => weekMonth(distance.year, weeks, week).format("MMM"),
+        ticks: monthTicks(year, weeks),
+        tickFormatter: (week: string) => weekMonth(year, weeks, week).format("MMM"),
       }}
       // Sized to its longest label; Mantine's 10px tick shift is dropped, auto width cannot see it.
       yAxisProps={{
