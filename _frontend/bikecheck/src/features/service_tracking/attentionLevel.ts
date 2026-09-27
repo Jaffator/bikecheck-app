@@ -2,6 +2,9 @@
 // describes it. What a reading *means* is still the server's: it decides the level, what the
 // dashboard lists (75) and what announces (75, 90, then every ten percent above 100). The
 // ramp below draws one colour per level, so the two never disagree — see ADR 0026.
+import { positionLabel } from "@/features/components/componentLabels";
+import type { BikeComponent } from "@/features/components/components.types";
+import { catalogueLabel } from "@/features/service/serviceLabels";
 import { axisValue } from "./intervalFigures";
 import type { AttentionLevel, TrackedAction } from "./tracking.types";
 
@@ -28,6 +31,9 @@ export const QUIET_BELOW = 60;
 
 // What the desktop Home lists and counts as due: the server's warning level.
 export const DUE_FROM = 75;
+
+// Every reading, for a card that judges the whole garage rather than what is due.
+export const EVERY_READING = 0;
 
 export function attentionColor(percentage: number): string {
   return ATTENTION_RAMP.find((step) => percentage >= step.from)?.color ?? QUIET_COLOR;
@@ -72,8 +78,23 @@ export function axisReading(action: TrackedAction, language: string, translate: 
   return translate("tracking.axisWearIndex");
 }
 
+// Which part owes the Action; the side is what tells two tyres apart, so it never leaves the name.
+export function trackedPartLabel(action: TrackedAction, translate: (key: string) => string): string {
+  const type = catalogueLabel(action.component_type_i18n_key, action.component_type, translate);
+  const side = positionLabel(action.position, translate);
+  return side === null ? type : `${type} (${side})`;
+}
+
 // What identifies a reading in a list: the part it is on and the job it is about. Neither
 // alone is unique — one part owes several jobs, and one job is owed by several parts.
 export function trackedActionKey(action: TrackedAction): string {
   return `${String(action.component_mounted_id)}-${String(action.event_action_id)}`;
+}
+
+// Parts still on a bike with no Tracked Action at warning or above; a part nothing tracks is fine too.
+export function fineParts(parts: BikeComponent[], readings: TrackedAction[]): number {
+  const owing = new Set(
+    readings.filter((action) => action.percentage >= DUE_FROM).map((action) => action.component_mounted_id),
+  );
+  return parts.filter((part) => part.removed_at === null && !owing.has(part.id)).length;
 }

@@ -1,6 +1,7 @@
 // Component query hooks.
 import {
   useQuery,
+  useQueries,
   useMutation,
   useQueryClient,
   type UseQueryResult,
@@ -91,6 +92,18 @@ export function useBikeComponents(bikeId: number): UseQueryResult<BikeComponent[
   return useQuery({
     queryKey: bikeComponentsKey(bikeId),
     queryFn: () => getBikeComponents(bikeId),
+  });
+}
+
+// Every listed bike's build, each on the key its own page reads; undefined until all have arrived.
+export function useGarageComponents(bikeIds: number[]): BikeComponent[] | undefined {
+  return useQueries({
+    queries: bikeIds.map((bikeId) => ({
+      queryKey: bikeComponentsKey(bikeId),
+      queryFn: () => getBikeComponents(bikeId),
+    })),
+    combine: (results) =>
+      results.every((result) => result.data !== undefined) ? results.flatMap((result) => result.data ?? []) : undefined,
   });
 }
 

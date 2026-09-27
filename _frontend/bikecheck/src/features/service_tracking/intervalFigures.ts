@@ -38,6 +38,20 @@ export function remainingWear(action: TrackedAction): number {
   return Math.max(0, action.interval - action.current);
 }
 
+// "current / interval" in the reading's unit; a wear index goes bare, as the drawer writes it.
+export function readingFigure(action: TrackedAction, language: string): string {
+  const figure = (value: number): string => axisValue(action.axis, value, language);
+  return `${figure(action.current)} / ${figure(action.interval)} ${axisUnit(action.axis)}`.trim();
+}
+
+// What is left in the reading's unit, or "+X" past due; a wear index goes bare, as the drawer writes it.
+export function remainingFigure(action: TrackedAction, language: string): string {
+  const over = action.current - action.interval;
+  const value =
+    over > 0 ? `+${axisValue(action.axis, over, language)}` : axisValue(action.axis, remainingWear(action), language);
+  return `${value} ${axisUnit(action.axis)}`.trim();
+}
+
 // A tenth of the bike's own plan, which is what one tap of − or + moves the Service
 // Interval by. Taken from the plan and never from the value on screen, so − undoes exactly
 // what + did however many taps deep — a step off the current value would not come back.

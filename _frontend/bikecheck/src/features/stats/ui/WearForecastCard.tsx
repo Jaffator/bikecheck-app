@@ -12,6 +12,7 @@ import { catalogueLabel } from "@/features/service/serviceLabels";
 import { attentionColor, trackedActionKey } from "@/features/service_tracking/attentionLevel";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
+import { weeksUntil } from "../nextReplacement";
 import { useWearForecast } from "../stats.queries";
 import type { WearForecastItem } from "../stats.types";
 
@@ -166,11 +167,6 @@ function forecastNote(item: WearForecastItem, translate: (key: string, options?:
   if (item.level === "overdue") return translate("bikes.health.overdue");
   if (item.projected_date === null) return translate("stats.forecastNoRides");
   return translate("stats.forecastInWeeks", { count: weeksUntil(item.projected_date) });
-}
-
-// Rounded up, so a date a few days out still reads as a week rather than none.
-function weeksUntil(date: string): number {
-  return Math.max(1, Math.ceil(dayjs(date).diff(dayjs().startOf("day"), "day") / 7));
 }
 
 function ForecastChart({ item }: { item: WearForecastItem }): ReactElement {

@@ -1,5 +1,7 @@
 // Months and weeks read from a bike's metres per UTC day. Every sum stays in metres; a value is
 // rounded only where it is printed, so the months add up to exactly the year.
+import type { TFunction } from "i18next";
+import { formatKm } from "@/features/profile/profileFormat";
 import type { Distance } from "./stats.types";
 
 // The UTC day `index` days after 1 January; Date.UTC rolls over into the next months.
@@ -23,6 +25,31 @@ export function monthlyMeters(daily: number[], year: number): number[] {
     months[dayOf(year, day).getUTCMonth()] += meters;
   });
   return months;
+}
+
+// Every bike's metres over the served span, which the monthly bars add up to exactly.
+export function totalMeters(distance: Distance): number {
+  return distance.bikes.reduce((sum, bike) => sum + bike.daily_m.reduce((days, meters) => days + meters, 0), 0);
+}
+
+// Every bike's metres in the last month served: this month, for the current year. 0 is January.
+export function lastMonthServed(distance: Distance): { month: number; meters: number } {
+  const month = monthCount(servedDays(distance), distance.year) - 1;
+  const meters = distance.bikes.reduce(
+    (sum, bike) => sum + (monthlyMeters(bike.daily_m, distance.year)[month] ?? 0),
+    0,
+  );
+  return { month, meters };
+}
+
+// "+440 km in September"; only this year has a current month, a fallback year's last one is long over.
+export function monthGain(distance: Distance, language: string, t: TFunction): string {
+  const { month, meters } = lastMonthServed(distance);
+  if (distance.year !== new Date().getUTCFullYear() || month < 0) return "";
+  const name = new Intl.DateTimeFormat(language, { month: "long", timeZone: "UTC" }).format(
+    new Date(Date.UTC(distance.year, month, 1)),
+  );
+  return t("dashboard.distanceMonth", { km: formatKm(Math.round(meters / 1000), language), month: name });
 }
 
 // Days between the Monday of 1 January's ISO week and 1 January itself; getUTCDay counts from Sunday.

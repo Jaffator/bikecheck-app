@@ -1,4 +1,4 @@
-// Desktop Home (#165, variant D): a context line, the banner, the figures, then tables and charts on one grid.
+// Desktop Home: a context line, the banner, the figures, then work and context as two column stacks, then the charts.
 import { useEffect, type ReactElement } from "react";
 import { Button, Grid, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,6 @@ import { RecentServicesPanel } from "@/features/service/ui/RecentServicesPanel";
 import { JobsPanel } from "@/features/service_tracking/ui/JobsPanel";
 import { DistanceCard } from "@/features/stats/ui/DistanceCard";
 import { SpendCard } from "@/features/stats/ui/SpendCard";
-import { WearForecastCard } from "@/features/stats/ui/WearForecastCard";
 import { ADD_SERVICE } from "@/layout/navItems";
 import { useHeaderStore } from "@/store/store";
 import { ContextLine } from "./ContextLine";
@@ -44,23 +43,23 @@ export function DashboardDesktop(): ReactElement {
       <ContextLine />
       <DashboardBanner />
       <DashboardFigures />
+      {/* Each column stacks its own cards, so a short card is never stretched to its neighbour's height. */}
+      <Grid gap="md" align="flex-start">
+        <Grid.Col span={{ base: 12, lg: 8 }}>
+          <Stack gap="md">
+            <JobsPanel />
+            <GaragePanel />
+          </Stack>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, lg: 4 }}>
+          <Stack gap="md">
+            <LastRidePanel />
+            <RecentServicesPanel />
+          </Stack>
+        </Grid.Col>
+      </Grid>
       <Grid gap="md" align="stretch">
         <Grid.Col span={{ base: 12, lg: 8 }}>
-          <JobsPanel />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 4 }}>
-          <LastRidePanel />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 8 }}>
-          <GaragePanel />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 4 }}>
-          <RecentServicesPanel />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 4 }}>
-          <WearForecastCard />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 4 }}>
           <DistanceCard />
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 4 }}>
