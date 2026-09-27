@@ -1,5 +1,5 @@
 // Home's distance card; which rides count is decided in StatsService.
-import type { ReactElement, ReactNode } from "react";
+import { useState, type ReactElement, type ReactNode } from "react";
 import { Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { LineChart, type LineChartProps } from "@mantine/charts";
 import dayjs from "dayjs";
@@ -45,9 +45,12 @@ const TOOLTIP_STYLES: LineChartProps["styles"] = {
 // The phone asks for no Period and keeps its weekly running line; desktop reads its Period's days as bars.
 export function DistanceCard({ period }: { period?: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
-  const { data: distance } = useDistance(period);
+  const { data: distance, isPlaceholderData } = useDistance(period);
   const isDesktop = useIsDesktop();
-  const bucket = DISTANCE_BUCKET[period ?? "year"];
+  // The last Period's data stands in while the next loads, so it is drawn as that Period until replaced.
+  const [shown, setShown] = useState(period);
+  if (!isPlaceholderData && shown !== period) setShown(period);
+  const bucket = DISTANCE_BUCKET[shown ?? "year"];
 
   if (distance === undefined) {
     return (
@@ -66,7 +69,7 @@ export function DistanceCard({ period }: { period?: HomePeriod }): ReactElement 
       <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
         <Text fz={16} fw={600} c="text.6">
           {t("stats.distanceTitle", {
-            period: period === undefined ? servedYear(distance) : homePeriodLabel(period, i18n.language, t),
+            period: shown === undefined ? servedYear(distance) : homePeriodLabel(shown, i18n.language, t),
           })}
         </Text>
         {isDesktop && (
@@ -78,7 +81,7 @@ export function DistanceCard({ period }: { period?: HomePeriod }): ReactElement 
 
       {drawn.bikes.length === 0 ? (
         <Text fz={13} c="var(--color-text-dim)">
-          {t(period === undefined ? "stats.distanceEmpty" : "stats.distanceEmptyPeriod")}
+          {t(shown === undefined ? "stats.distanceEmpty" : "stats.distanceEmptyPeriod")}
         </Text>
       ) : isDesktop ? (
         <DistanceBars distance={distance} bucket={bucket} />

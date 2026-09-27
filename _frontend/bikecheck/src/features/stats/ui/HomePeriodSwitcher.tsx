@@ -1,9 +1,8 @@
 // Desktop Home's Period: this month, the current year by its number, or all time.
 import type { ReactElement } from "react";
 import { SegmentedControl } from "@mantine/core";
-import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
-import { parseHomePeriod } from "../homePeriod";
+import { homePeriodLabel, parseHomePeriod } from "../homePeriod";
 import type { HomePeriod } from "../stats.types";
 
 interface HomePeriodSwitcherProps {
@@ -12,7 +11,7 @@ interface HomePeriodSwitcherProps {
 }
 
 export function HomePeriodSwitcher({ value, onChange }: HomePeriodSwitcherProps): ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <SegmentedControl
@@ -25,7 +24,7 @@ export function HomePeriodSwitcher({ value, onChange }: HomePeriodSwitcherProps)
       aria-label={t("stats.period")}
       data={[
         { value: "month", label: t("stats.periodMonth") },
-        { value: "year", label: String(dayjs().year()) },
+        { value: "year", label: homePeriodLabel("year", i18n.language, t) },
         { value: "all", label: t("stats.periodAll") },
       ]}
     />

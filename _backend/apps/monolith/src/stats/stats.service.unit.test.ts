@@ -415,6 +415,23 @@ describe('StatsService', () => {
       expect(result.total).toBe(0);
     });
 
+    it('counts only the Services dated in the year', async () => {
+      // ARRANGE: 25 September; the last day of last year and an undated Service fall outside.
+      services = [
+        service(RALLON, '2025-12-31', 900, [action(BRAKES)]),
+        service(RALLON, null, 700, [action(BRAKES)]),
+        service(RALLON, '2026-01-01', 1200, [action(BRAKES)]),
+        service(STUMPY, '2026-09-20', 800, [action(DRIVETRAIN)]),
+      ];
+
+      // ACT
+      const result = await stats.getSpend(OWNER_ID, 'year');
+
+      // ASSERT
+      expect([result.from, result.to]).toEqual(['2026-01-01', null]);
+      expect(result.total).toBe(2000);
+    });
+
     it('serves all time with both ends open, counting every year and the undated Services', async () => {
       // ARRANGE
       services = [

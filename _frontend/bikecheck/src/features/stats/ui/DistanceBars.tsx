@@ -53,7 +53,8 @@ export function DistanceBars({ distance, bucket }: { distance: Distance; bucket:
   const { i18n } = useTranslation();
   const bars = barsOf(distance, bucket);
   const largest = Math.max(0, ...bars.map((bar) => bar.total));
-  const biggest = bars.find((bar) => bar.total === largest)?.index;
+  // Rides with time but no distance leave every bar at 0, and no bar is the biggest.
+  const biggest = largest === 0 ? undefined : bars.find((bar) => bar.total === largest)?.index;
   const columns = `repeat(${String(bars.length)}, minmax(0, 1fr))`;
   const gap = bars.length >= DENSE_FROM ? DENSE_COLUMN_GAP : COLUMN_GAP;
   const axis = new Intl.DateTimeFormat(i18n.language, AXIS_FORMAT[bucket]);
