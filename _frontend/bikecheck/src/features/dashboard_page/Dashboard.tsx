@@ -12,6 +12,8 @@ import { BikeHealthList } from "@/features/bikes/ui/BikeHealthList";
 import { SpendCard } from "@/features/stats/ui/SpendCard";
 import { DistanceCard } from "@/features/stats/ui/DistanceCard";
 import { WearForecastCard } from "@/features/stats/ui/WearForecastCard";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { DashboardDesktop } from "./DashboardDesktop";
 const FAB_CLEARANCE = {
   base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
   md: "md",
@@ -20,6 +22,7 @@ const FAB_CLEARANCE = {
 export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();
   const { data: user } = useCurrentUser();
+  const isDesktop = useIsDesktop();
 
   if (isLoading) {
     return <Loader m="md" />;
@@ -33,6 +36,9 @@ export function Dashboard(): ReactElement {
   // The work the garage owes, then its standing state. An account not yet
   // on Strava sees the pitch where the work would be: for it, connecting is the work.
   const stravaConnected = Boolean(user?.strava_athlete_id);
+
+  // Desktop has its own layout (#165, variant D); the phone keeps the render below.
+  if (isDesktop) return <DashboardDesktop />;
 
   return (
     // Clears the floating create button, so the last card can be scrolled out from under

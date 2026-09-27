@@ -42,6 +42,8 @@ import type { ExportReportInput } from "@/features/report/report.types";
 import { useHeaderStore } from "@/store/store";
 import { IoLogoWebComponent } from "react-icons/io5";
 import { TRANSPARENT_HEADER_CONTROL } from "@/layout/headerControl";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { BikeDetailPrototype } from "./BikeDetailPrototype";
 
 // One hue per reading, so the line is read by colour before it is read by number. The
 // green is the one the health badge already uses; the yellow is the brand's own. The
@@ -83,6 +85,7 @@ export function BikeDetail(): ReactElement {
   const connect = useConnectStrava();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const setHeaderTransparent = useHeaderStore((state) => state.setHeaderTransparent);
+  const isDesktop = useIsDesktop();
 
   const paired = bike?.strava_gear_id != null;
   // An Archived Bike is a frozen record: readable, exportable, and written to by nothing.
@@ -102,10 +105,11 @@ export function BikeDetail(): ReactElement {
     bike?.strava_gear_id == null ? 0 : (pendingRides ?? []).filter((ride) => ride.gear_id === bike.strava_gear_id).length;
 
   // The page leads with its photo, so the header steps out of the way of it.
+  // PROTOTYPE (#165): the desktop variants do not lead with a full-width photo.
   useEffect(() => {
-    setHeaderTransparent(true);
+    setHeaderTransparent(!isDesktop);
     return () => setHeaderTransparent(false);
-  }, [setHeaderTransparent]);
+  }, [setHeaderTransparent, isDesktop]);
 
   // The header carries what is run rarely: correcting the bike, detaching it, throwing it
   // away. None of them belong under the thumb that is scrolling.
@@ -213,14 +217,9 @@ export function BikeDetail(): ReactElement {
     );
   }
 
-  return (
-    <Stack
-      gap="md"
-      px="md"
-      // Clears the transparent header, which no longer holds a place open for the page.
-      pt="calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.4rem)"
-      pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
-    >
+  // PROTOTYPE (#165): the phone's page; desktop swaps it for a layout variant.
+  const phoneContent = (
+    <>
       {/* The bike, read the way it is written on the frame: photo and name are one object,
           so they sit on one card rather than two stacked surfaces. */}
       <Paper
@@ -369,6 +368,30 @@ export function BikeDetail(): ReactElement {
       {/* What the machine is made of, under what can be done with it: the tiles are the
           daily act, the build is read less often. */}
       <BikeComponentsSection bikeId={bike.id} ebike={bike.ebike} readOnly={archived} />
+    </>
+  );
+
+  return (
+    <Stack
+      gap="md"
+      px="md"
+      // Clears the transparent header, which no longer holds a place open for the page.
+      pt={isDesktop ? "md" : "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.4rem)"}
+      pb={isDesktop ? 96 : "calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"}
+    >
+      {isDesktop ? (
+        <BikeDetailPrototype
+          bike={bike}
+          trackedActions={trackedActions ?? []}
+          archived={archived}
+          paired={paired}
+          onOpenSpecs={() => setShowingSpecs(true)}
+          onExport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+          onPairGear={() => setPairingGear(true)}
+        />
+      ) : (
+        phoneContent
+      )}
 
       {archive.isError && (
         <Text size="xs" c="red.5">

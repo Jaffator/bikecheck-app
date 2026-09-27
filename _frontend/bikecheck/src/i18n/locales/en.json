@@ -28,7 +28,11 @@
     "intervalFailed": "The interval could not be saved.",
     "announceLabel": "Service announcements",
     "announceBands": "75 %, 90 %, then every 10 %",
-    "announceFailed": "The setting could not be saved."
+    "announceFailed": "The setting could not be saved.",
+    "columnJob": "Job",
+    "columnBike": "Bike",
+    "columnStatus": "Status",
+    "log": "Log"
   },
   "nav": {
     "home": "Home",
@@ -242,7 +246,17 @@
     "getStarted": "Start by adding your first bike",
     "noActiveData": "NO ACTIVE DATA",
     "addBike": "Add bike",
-    "proTipBody": "Add a bike and components (chain, cassette, tires) <1>BikeCheck</1> predicts maintenance based on your mileage and lets you SHARE your bike setup with others."
+    "proTipBody": "Add a bike and components (chain, cassette, tires) <1>BikeCheck</1> predicts maintenance based on your mileage and lets you SHARE your bike setup with others.",
+    "dueTitle": "Due for service",
+    "overdueCount": "{{value}} overdue",
+    "noneOverdue": "none overdue",
+    "distanceTitle": "Distance",
+    "spendTitle": "Service {{year}}",
+    "servicesCount_one": "{{count}} service",
+    "servicesCount_other": "{{count}} services",
+    "notConnected": "not connected",
+    "unpairedTitle": "Unpaired bikes",
+    "allPaired": "all paired"
   },
   "chat": {
     "placeholder": "Ask anything…",
@@ -283,7 +297,8 @@
     "statElevation": "Elevation",
     "statDescent": "Descent",
     "statAvgSpeed": "Avg speed",
-    "statMaxSpeed": "Max speed"
+    "statMaxSpeed": "Max speed",
+    "lastRide": "Last ride"
   },
   "service": {
     "emptyTitle": "No Components to Service",
@@ -337,7 +352,8 @@
     "deleteFailed": "Could not delete the service. Try again.",
     "deleteConfirmTitle": "Delete this service?",
     "deleteConfirmBody": "The service leaves your history. Parts replaced by it stay on the bike.",
-    "deleteConfirmCancel": "Keep service"
+    "deleteConfirmCancel": "Keep service",
+    "all": "All"
   },
   "bikes": {
     "noBikesFound": "0 BIKES FOUND",
@@ -392,7 +408,11 @@
     "emptyArchivedBody_other": "Nothing is lost: {{count}} bikes are in your archive.",
     "emptyOpenArchive": "Open the archive",
     "archivedBikes_one": "Archived bikes ({{count}})",
-    "archivedBikes_other": "Archived bikes ({{count}})"
+    "archivedBikes_other": "Archived bikes ({{count}})",
+    "columnBike": "Bike",
+    "columnDistance": "Distance",
+    "columnWorstPart": "Worst part",
+    "columnStatus": "Status"
   },
   "bikeComponents": {
     "title": "Components",

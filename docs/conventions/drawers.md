@@ -1,7 +1,7 @@
 # Drawers
 
 Every sheet in the app goes through `ResponsiveSheet` (`src/components/ResponsiveSheet.tsx`).
-Below 62em it is a bottom sheet; from 62em it is a panel from the right or a centred modal
+Below 60em it is a bottom sheet; from 60em it is a panel from the right or a centred modal
 (ADR 0036). One motion, one timing — a sheet that snaps open reads as a different app than the
 one that slides — so no sheet builds a `Drawer` itself or picks its own duration, easing,
 radius, overlay or surface.

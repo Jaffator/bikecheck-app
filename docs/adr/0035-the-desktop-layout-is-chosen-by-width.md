@@ -5,8 +5,10 @@ screen, the tab bar and every sheet sit in one 44rem column (`CONTENT_MAX_WIDTH`
 whatever window they are given. On a laptop the app is a phone standing in the middle of the
 screen, with a pill of tabs floating under it.
 
-**From 62em (992px, Mantine's `md`) the shell is a desktop web app**, not a wider phone. Below it
+**From 60em (960px, Mantine's `md`) the shell is a desktop web app**, not a wider phone. Below it
 nothing changes: the tab bar, the FAB, the bottom sheets and the gestures stay exactly as they are.
+The theme lowers Mantine's default 62em so a phone browser's "Desktop site" mode, which lays the
+page out at 980px, gets the desktop shell too.
 
 ## What the desktop shell is
 
@@ -32,7 +34,7 @@ nothing changes: the tab bar, the FAB, the bottom sheets and the gestures stay e
 
 ## One definition of "desktop"
 
-Mantine's `md` is 62em and Tailwind's `md` is 48rem, so the same word switched two different
+Mantine's `md` is 60em here and Tailwind's `md` is 48rem, so the same word switched two different
 layouts at two different widths. There is now one query, `DESKTOP_QUERY` in `layout/`, read three
 ways: `useIsDesktop()` for logic, Mantine's `visibleFrom="md"` / `hiddenFrom="md"` for markup, and
 a Tailwind variant `desktop:` declared in `global.css`. Tailwind's own `sm`/`md`/`lg` are left

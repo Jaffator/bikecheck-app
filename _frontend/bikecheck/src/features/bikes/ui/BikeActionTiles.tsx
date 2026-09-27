@@ -13,6 +13,8 @@ interface BikeActionTilesProps {
   onOpenHistory: () => void;
   // The Setup screen: the numbers the bike is ridden at (ADR 0029).
   onOpenSetup: () => void;
+  // PROTOTYPE (#165): desktop variants lay the tiles out in one row or one column.
+  cols?: number;
 }
 
 export function BikeActionTiles({
@@ -20,11 +22,12 @@ export function BikeActionTiles({
   onOpenReports,
   onOpenHistory,
   onOpenSetup,
+  cols = 2,
 }: BikeActionTilesProps): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <SimpleGrid cols={2} spacing="sm">
+    <SimpleGrid cols={cols} spacing="sm">
       {onAddService !== undefined && (
         <Tile
           // Servicing is the app's own act, so the tile wears the app's own mark.

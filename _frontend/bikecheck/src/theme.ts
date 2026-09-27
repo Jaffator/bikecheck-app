@@ -165,6 +165,8 @@ export const theme = createTheme({
     fontFamily: "Inter, sans-serif",
   },
   other: otherColor,
+  // Below Mantine's 62em, so a phone's "Desktop site" (a 980px viewport) gets the desktop shell (ADR 0035).
+  breakpoints: { md: "60em" },
   respectReducedMotion: false,
   components: {
     // Disabled buttons sink into the card instead of Mantine's light-grey default.

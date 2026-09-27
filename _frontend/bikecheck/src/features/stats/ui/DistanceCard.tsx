@@ -96,7 +96,12 @@ function DistanceChart({ distance }: { distance: Distance }): ReactElement {
         ticks: monthTicks(distance),
         tickFormatter: (week: string) => weekMonth(distance, week).format("MMM"),
       }}
-      yAxisProps={{ width: 44, tickFormatter: (km: number) => kmFormat.format(km) }}
+      // Sized to its longest label; Mantine's 10px tick shift is dropped, auto width cannot see it.
+      yAxisProps={{
+        width: "auto",
+        tick: { fontSize: 12, fill: "currentColor" },
+        tickFormatter: (km: number) => kmFormat.format(km),
+      }}
       // Room on the right for each line's total.
       lineChartProps={{ margin: { top: 8, right: 52 } }}
       lineProps={(line) => ({
@@ -177,6 +182,8 @@ function DistancePaper({ children }: { children: ReactNode }): ReactElement {
     <Paper
       radius="lg"
       p="md"
+      // Fills a desktop grid cell, so cards side by side end level.
+      h="100%"
       style={{
         overflow: "hidden",
         backgroundColor: "var(--mantine-color-cards-6)",

@@ -26,6 +26,9 @@ export const QUIET_COLOR = "#42c95e";
 // reading it has to read it here, so a row can never be tinted and dimmed at the same time.
 export const QUIET_BELOW = 60;
 
+// What the desktop Home lists and counts as due: the server's warning level.
+export const DUE_FROM = 75;
+
 export function attentionColor(percentage: number): string {
   return ATTENTION_RAMP.find((step) => percentage >= step.from)?.color ?? QUIET_COLOR;
 }

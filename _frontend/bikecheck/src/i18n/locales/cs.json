@@ -30,7 +30,11 @@
     "intervalFailed": "Interval se nepodařilo uložit.",
     "announceLabel": "Upozornění na servis",
     "announceBands": "75 %, 90 %, pak po 10 %",
-    "announceFailed": "Nastavení se nepodařilo uložit."
+    "announceFailed": "Nastavení se nepodařilo uložit.",
+    "columnJob": "Úkol",
+    "columnBike": "Kolo",
+    "columnStatus": "Stav",
+    "log": "Zapsat"
   },
   "nav": {
     "home": "Domů",
@@ -248,7 +252,19 @@
     "getStarted": "Začni přidáním svého prvního kola",
     "noActiveData": "ŽÁDNÁ AKTIVNÍ DATA",
     "addBike": "Přidat kolo",
-    "proTipBody": "Přidáním kola a komponentů umožníš aplikaci <1>BikeCheck</1> předpovídat údržbu na základě reálného nájezdu a sdílet svuj setup s ostatními! "
+    "proTipBody": "Přidáním kola a komponentů umožníš aplikaci <1>BikeCheck</1> předpovídat údržbu na základě reálného nájezdu a sdílet svuj setup s ostatními! ",
+    "dueTitle": "K servisu",
+    "overdueCount": "{{value}} po termínu",
+    "noneOverdue": "nic po termínu",
+    "distanceTitle": "Najeto",
+    "spendTitle": "Servis {{year}}",
+    "servicesCount_one": "{{count}} servis",
+    "servicesCount_few": "{{count}} servisy",
+    "servicesCount_many": "{{count}} servisu",
+    "servicesCount_other": "{{count}} servisů",
+    "notConnected": "nepropojeno",
+    "unpairedTitle": "Nespárovaná kola",
+    "allPaired": "vše spárováno"
   },
   "chat": {
     "placeholder": "Zeptej se na cokoliv…",
@@ -289,7 +305,8 @@
     "statElevation": "Převýšení",
     "statDescent": "Klesání",
     "statAvgSpeed": "Prům. rychlost",
-    "statMaxSpeed": "Max. rychlost"
+    "statMaxSpeed": "Max. rychlost",
+    "lastRide": "Poslední jízda"
   },
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",
@@ -347,7 +364,8 @@
     "deleteFailed": "Servis se nepodařilo smazat. Zkus to znovu.",
     "deleteConfirmTitle": "Smazat tento servis?",
     "deleteConfirmBody": "Servis zmizí z historie. Díly, které při něm byly vyměněny, zůstanou na kole.",
-    "deleteConfirmCancel": "Ponechat servis"
+    "deleteConfirmCancel": "Ponechat servis",
+    "all": "Vše"
   },
   "bikes": {
     "noBikesFound": "ŽÁDNÁ KOLA",
@@ -415,7 +433,11 @@
     "archivedBikes_one": "Archivovaná kola ({{count}})",
     "archivedBikes_few": "Archivovaná kola ({{count}})",
     "archivedBikes_many": "Archivovaná kola ({{count}})",
-    "archivedBikes_other": "Archivovaná kola ({{count}})"
+    "archivedBikes_other": "Archivovaná kola ({{count}})",
+    "columnBike": "Kolo",
+    "columnDistance": "Najeto",
+    "columnWorstPart": "Nejhorší díl",
+    "columnStatus": "Stav"
   },
   "bikeComponents": {
     "title": "Komponenty",

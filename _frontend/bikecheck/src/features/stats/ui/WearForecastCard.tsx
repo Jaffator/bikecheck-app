@@ -250,6 +250,8 @@ function ForecastPaper({ children }: { children: ReactNode }): ReactElement {
     <Paper
       radius="lg"
       p="md"
+      // Fills a desktop grid cell, so cards side by side end level.
+      h="100%"
       style={{
         overflow: "hidden",
         backgroundColor: "var(--mantine-color-cards-6)",
