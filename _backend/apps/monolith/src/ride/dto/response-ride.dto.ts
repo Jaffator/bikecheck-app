@@ -56,7 +56,7 @@ export class ResponseRideDto {
   @ApiProperty({ example: 'ki}fHuqrbBGx@_@lAsA|Bi@n@', nullable: true })
   summary_polyline!: string | null;
 
-  // The jobs the ride pushed closest to due, at most three; empty where it wore off nothing.
+  // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
   @ApiProperty({ type: [Response_WoreOffLineDto] })
   wore_off!: Response_WoreOffLineDto[];
 }

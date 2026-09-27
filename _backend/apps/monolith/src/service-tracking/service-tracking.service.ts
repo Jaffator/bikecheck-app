@@ -170,7 +170,7 @@ export class ServiceTrackingService {
     );
   }
 
-  // What each ride wore off the jobs whose current cycle it belongs to, by ride id. Derived
+  // What each ride wore off the Tracked Actions whose current cycle it belongs to, by ride id. Derived
   // from the reading as it stands now, rewound by every ride after it (ADR 0026).
   async getWoreOff(userId: number, rides: WearRide[]): Promise<Map<number, Response_WoreOffLineDto[]>> {
     const dated = rides.filter(isDated);
@@ -436,7 +436,7 @@ export class ServiceTrackingService {
   }
 }
 
-// How many lines one ride shows: the jobs it pushed closest to due, not every one it touched.
+// How many lines one ride shows: the Tracked Actions it pushed closest to due, not every one it touched.
 const WORE_OFF_LINES = 3;
 
 type DatedRide = WearRide & { started_at: Date };
@@ -453,7 +453,7 @@ function isDated(ride: WearRide): ride is DatedRide {
 }
 
 // Every Tracked Action on these parts with the start of its current cycle. A part with no
-// mount date has no known start, so none of its jobs claims any ride.
+// mount date has no known start, so none of its Tracked Actions claims any ride.
 function currentCycles(parts: TrackedPart[], intervals: TrackedInterval[]): Cycle[] {
   return parts.flatMap((part) =>
     trackedActions([part], intervals).flatMap((action) => {
@@ -463,7 +463,7 @@ function currentCycles(parts: TrackedPart[], intervals: TrackedInterval[]): Cycl
   );
 }
 
-// The end of the day of the latest Service of the job, else of the mounting - the moment the
+// The end of the day of the latest Service recording the Action, else of the mounting - the moment the
 // Wear Baseline freezes at (ADR 0001). A wear index has no baseline, so it counts from the mounting.
 function cycleStart(part: TrackedPart, action: Response_TrackedActionDto): Date | null {
   const serviced =
@@ -496,7 +496,7 @@ function inCycle(ride: DatedRide, { action, startsAfter }: Cycle): boolean {
   return ride.bike_id === action.bike_id && ride.started_at > startsAfter;
 }
 
-// One ride's lines: each job it belongs to the cycle of and added wear to, closest to due first.
+// One ride's lines: each Tracked Action whose cycle it belongs to and added wear to, closest to due first.
 function woreOffBy(ride: DatedRide, cycles: Cycle[], stored: DatedRide[]): Response_WoreOffLineDto[] {
   const later = stored.filter((other) => other.bike_id === ride.bike_id && riddenAfter(other, ride));
 

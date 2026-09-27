@@ -1,10 +1,10 @@
-// How a line of what a ride wore off reads: the job, the wear the ride added and its colour.
+// How a line of what a ride wore off reads: the Tracked Action, the wear the ride added and its colour.
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { attentionColor, DUE_FROM, trackedPartLabel } from "@/features/service_tracking/attentionLevel";
 import { formatDuration } from "./rideDuration";
 import type { WoreOffLine } from "./rides.types";
 
-// A Replacement is named by the part it replaces, any other job by its Action.
+// A Replacement is named by the part it replaces, any other Tracked Action by its Action.
 export function woreOffLabel(line: WoreOffLine, translate: (key: string) => string): string {
   return line.replace_action
     ? trackedPartLabel(line, translate)

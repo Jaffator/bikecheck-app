@@ -42,7 +42,7 @@ export interface Ride {
   // Strava's own simplified route, lifted out of the stored activity by the API so the
   // list never carries the raw payload. Null for a ride recorded without GPS.
   summary_polyline: string | null;
-  // The jobs the ride pushed closest to due, at most three; empty where it wore off nothing.
+  // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
   wore_off: WoreOffLine[];
 }
 

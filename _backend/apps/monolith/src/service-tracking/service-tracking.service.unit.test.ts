@@ -1869,7 +1869,7 @@ describe('ServiceTrackingService', () => {
     });
   });
 
-  // What each ride wore off the jobs whose current cycle it belongs to.
+  // What each ride wore off the Tracked Actions whose current cycle it belongs to.
   describe('getWoreOff', () => {
     const CHAIN_PLAN = intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], BIKE_ID, true);
 
@@ -1945,7 +1945,7 @@ describe('ServiceTrackingService', () => {
       ['a tyre by its km', TYRE_TYPE, { km: 1000 }, 'total_km', 11, 48],
       ['a fork by its suspension minutes', FORK_TYPE, { min: 1000 }, 'suspension_min', 44, 45],
       ['a brake pad by its index', PAD_TYPE, { healthIndex: 1000 }, 'health_index', 55, 44],
-      ['a job on the time axis by its duration', TYRE_TYPE, { min: 1000 }, 'total_time_min', 33, 46],
+      ['a Tracked Action on the time axis by its duration', TYRE_TYPE, { min: 1000 }, 'total_time_min', 33, 46],
     ])('wears %s', async (_name, type, axes, column, amount, before) => {
       fleet(
         [bikeRow(BIKE_ID, 'Santa Cruz')],
@@ -1969,7 +1969,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // A ride on the day of the work counts as before it, the way the Wear Baseline froze it (ADR 0001).
-    it('counts only rides after the day of the latest Service of the job', async () => {
+    it('counts only rides after the day of the latest Service of the Action', async () => {
       fleet(
         [bikeRow(BIKE_ID, 'Santa Cruz')],
         [CHAIN_PLAN],
@@ -2012,7 +2012,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // Nothing says when an undated Service happened, so the part is read from its mounting.
-    it('counts from the mounting when the latest Service of the job has no date', async () => {
+    it('counts from the mounting when the latest Service of the Action has no date', async () => {
       const undated = baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 });
       (undated.event_actions_done as { events_bikes: Record<string, unknown> }).events_bikes.service_date = null;
       fleet(
@@ -2044,7 +2044,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // A wear index has no Wear Baseline, so a Service does not reset it and does not start a cycle.
-    it('counts a wear-index job from the mounting whatever Services exist', async () => {
+    it('counts a wear-index Tracked Action from the mounting whatever Services exist', async () => {
       fleet(
         [bikeRow(BIKE_ID, 'Santa Cruz')],
         [intervalRow(PADS_REPLACEMENT, { healthIndex: 1000 }, [PAD_TYPE])],
@@ -2089,7 +2089,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // Muting stops the announcements and nothing else.
-    it('still lists a Muted job', async () => {
+    it('still lists a Muted Tracked Action', async () => {
       fleet(
         [bikeRow(BIKE_ID, 'Santa Cruz')],
         [CHAIN_PLAN],
@@ -2106,7 +2106,7 @@ describe('ServiceTrackingService', () => {
       expect(figures(lines.get(1))).toHaveLength(1);
     });
 
-    // What the ride pushed toward service leads; a job it added nothing to is not listed at all.
+    // What the ride pushed toward service leads; a Tracked Action it added nothing to is not listed at all.
     it('keeps the three closest to due after the ride, then the biggest gain, and drops what it did not wear', async () => {
       fleet(
         [bikeRow(BIKE_ID, 'Santa Cruz')],
@@ -2197,7 +2197,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // Named the way the Tracked Action is: a Replacement by its part, anything else by its Action.
-    it('names the part and the job on every line', async () => {
+    it('names the part and the Action on every line', async () => {
       fleet([bikeRow(BIKE_ID, 'Santa Cruz')], [CHAIN_PLAN], [mountedPart({ drivetrain_km: 3800, position: 'rear' })]);
 
       const lines = await woreOff([rideRow(1, '2026-09-20T09:00:00.000Z', { drivetrainM: 38000 })]);

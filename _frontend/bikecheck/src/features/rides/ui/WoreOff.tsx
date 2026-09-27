@@ -1,4 +1,4 @@
-// What a ride wore off its jobs, under its figures: `Chain · +32 km · 94 → 95 %`.
+// What a ride wore off its Tracked Actions, under its figures: `Chain · +32 km · 94 → 95 %`.
 import type { ReactElement } from "react";
 import { Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -22,7 +22,7 @@ export function WoreOff({ lines }: { lines: WoreOffLine[] }): ReactElement | nul
           <Text fz={13} c="text.7" lineClamp={1} style={{ minWidth: 0 }}>
             {woreOffLabel(line, t)}
           </Text>
-          <Text className="font-mono" fz={13} c="text.6" style={{ whiteSpace: "nowrap" }}>
+          <Text className="font-mono" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
             {`${woreOffAmount(line, t)} · ${String(line.before)} → `}
             <Text span inherit c={woreOffColor(line)}>
               {t("tracking.percentage", { value: line.after })}
