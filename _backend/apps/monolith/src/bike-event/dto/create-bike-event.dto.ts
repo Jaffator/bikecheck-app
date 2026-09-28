@@ -12,8 +12,13 @@ import {
   IsArray,
   ValidateNested,
   IsDateString,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { service_place } from '@prisma/client';
+
+// The events_bikes.shop_name column's width.
+export const SHOP_NAME_MAX_LENGTH = 100;
 
 // Replaced components during bike event, e.g. "Replaced chain", "Replaced brake pads", etc.
 export class Replaced_ComponentsDto {
@@ -136,6 +141,19 @@ export class Create_BikeEventDto {
   @IsDateString()
   @ApiProperty({ example: '2026-07-01T00:00:00.000Z' })
   service_date!: string;
+
+  // Left out, the Place is not recorded; the wizard always sends it (ADR 0037).
+  @IsOptional()
+  @IsEnum(service_place)
+  @ApiProperty({ enum: service_place, required: false })
+  place?: service_place;
+
+  // Only with place SHOP. Trimmed, and a blank name is saved as no name.
+  @IsOptional()
+  @IsString()
+  @MaxLength(SHOP_NAME_MAX_LENGTH)
+  @ApiProperty({ example: 'Bike Centrum', required: false })
+  shop_name?: string;
 
   @IsArray()
   @IsOptional()

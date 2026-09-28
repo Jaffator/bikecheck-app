@@ -72,6 +72,8 @@ interface ServiceFixture {
   service_date: Date | null;
   total_cost: number | null;
   note: string | null;
+  place: 'HOME' | 'SHOP' | null;
+  shop_name: string | null;
   is_deleted: boolean;
   bikes: BikeFixture;
   event_actions_done: ActionFixture[];
@@ -136,6 +138,8 @@ function service(overrides: Partial<ServiceFixture> = {}): ServiceFixture {
     service_date: SERVICE_DATE,
     total_cost: 1250.5,
     note: 'Jarní servis',
+    place: 'SHOP',
+    shop_name: 'Bike Centrum',
     is_deleted: false,
     bikes: bike(),
     event_actions_done: [action()],
@@ -217,6 +221,8 @@ describe('servicesTools', () => {
       bike_brand: 'Santa Cruz',
       bike_model: 'Hightower',
       service_date: '2026-05-14',
+      place: 'shop',
+      shop_name: 'Bike Centrum',
       cost: 1250.5,
       note: 'Jarní servis',
       actions: [
@@ -248,6 +254,8 @@ describe('servicesTools', () => {
         total_cost: null,
         note: null,
         service_date: null,
+        place: null,
+        shop_name: null,
         event_actions_done: [action({ partial_cost: null, note: null, part_replaced: null })],
       }),
     ]);
@@ -257,6 +265,9 @@ describe('servicesTools', () => {
     expect(row.cost).toBeNull();
     expect(row.note).toBe('');
     expect(row.service_date).toBeNull();
+    // Never recorded is not home.
+    expect(row.place).toBeNull();
+    expect(row.shop_name).toBeNull();
     expect(row.actions[0].cost).toBeNull();
     expect(row.actions[0].note).toBe('');
     expect(row.actions[0].part_replaced).toBe(false);

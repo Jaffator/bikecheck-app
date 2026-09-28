@@ -1,4 +1,5 @@
 import { Readable } from 'stream';
+import { service_place } from '@prisma/client';
 
 // The frozen shape of a Report. Stored as JSON in the `reports` table so the document
 // reads as it did the day it was made, however far the live data moves afterwards
@@ -119,6 +120,10 @@ export interface ReportHistoryTotals {
 export interface ReportService {
   // When the work happened, which may predate when it was recorded.
   serviceDate: string | null;
+  // Where it was done; null was never recorded. Optional: snapshots stored before the Place lack
+  // both, and a reader takes that as null (ADR 0011 - no stored Report is rewritten).
+  place?: service_place | null;
+  shopName?: string | null;
   note: string | null;
   totalCost: number;
   // The bike's odometer as it stood on the service date.

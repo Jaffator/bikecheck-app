@@ -181,6 +181,14 @@ export class BikeEventController {
     );
   }
 
+  // ---------- GET the shop names the caller typed on earlier Services ----------
+  // Declared before ':id' for the same reason as '/history'.
+  @Get('/shops')
+  @ApiResponse({ status: 200, type: String, isArray: true })
+  async shops(@CurrentUser('userId') userId: string): Promise<string[]> {
+    return this.bikeEventService.shopNames(Number(userId));
+  }
+
   // ---------- GET a single Bike Event by ID ----------
   @Get(':id')
   @ApiResponse({ status: 200, type: Response_BikeEvent_Dto })

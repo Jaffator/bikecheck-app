@@ -1,4 +1,5 @@
 // Mirrors the backend report DTOs and the frozen snapshot it stores.
+import type { ServicePlace } from "@/features/service/service.types";
 
 export type ReportKind = "SERVICE" | "PERIOD" | "BIKECHECK";
 
@@ -134,6 +135,10 @@ export interface ReportHistoryTotals {
 
 export interface ReportService {
   serviceDate: string | null;
+  // Where the work was done; null was never recorded. Absent from Reports made before the
+  // Place existed, which read it as null (ADR 0011).
+  place?: ServicePlace | null;
+  shopName?: string | null;
   note: string | null;
   totalCost: number;
   // The bike's odometer as it stood on the service date.

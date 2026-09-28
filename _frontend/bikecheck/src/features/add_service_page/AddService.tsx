@@ -122,6 +122,10 @@ export function AddService(): ReactElement {
           onAnotherCategory={wizard.addAnotherCategory}
           serviceDate={wizard.serviceDate}
           onServiceDateChange={wizard.setServiceDate}
+          place={wizard.place}
+          onPlaceChange={wizard.setPlace}
+          shopName={wizard.shopName}
+          onShopNameChange={wizard.setShopName}
           note={wizard.note}
           onNoteChange={wizard.setNote}
           totalCost={wizard.totalCost}

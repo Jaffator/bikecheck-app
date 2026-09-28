@@ -135,6 +135,12 @@ _Avoid_: Swap (that is a sub-part job, which is not a Replacement)
 When the work actually happened, which may be earlier than when it was recorded.
 _Avoid_: Created at (that is when the record was written)
 
+**Place**:
+Where a Service was done: **Home**, or **Shop** with an optional shop name the owner typed.
+Belongs to the occasion, like the Service Date (ADR 0002). A shop is a name on the Service, not an
+entry in a list (ADR 0037). A Service recorded before the Place existed has none, which is not Home.
+_Avoid_: Location (rides have one), workshop, venue
+
 **Category Block**:
 The Actions recorded against one Component Category within one Service. A wizard-only grouping —
 nothing in the schema represents it, and every block's actions land in the same Service (ADR 0002).

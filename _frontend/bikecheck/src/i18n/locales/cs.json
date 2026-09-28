@@ -392,7 +392,9 @@
     "deleteConfirmTitle": "Smazat tento servis?",
     "deleteConfirmBody": "Servis zmizí z historie. Díly, které při něm byly vyměněny, zůstanou na kole.",
     "deleteConfirmCancel": "Ponechat servis",
-    "all": "Vše"
+    "all": "Vše",
+    "placeHome": "doma",
+    "placeShop": "v servisu"
   },
   "bikes": {
     "noBikesFound": "ŽÁDNÁ KOLA",
@@ -677,6 +679,11 @@
     "customTagDelete": "Smazat štítek",
     "customTagFailed": "Štítek se nepodařilo uložit.",
     "serviceDate": "Datum servisu",
+    "place": "Kde",
+    "placeHome": "Doma",
+    "placeShop": "Servis",
+    "shopName": "Název servisu (nepovinné)",
+    "shopNamePlaceholder": "např. Bike Centrum",
     "newPart": "Nový díl",
     "newPartPlaceholder": "např. řetěz Shimano XT",
     "partialCost": "Cena",

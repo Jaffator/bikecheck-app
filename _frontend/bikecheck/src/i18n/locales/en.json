@@ -368,7 +368,9 @@
     "deleteConfirmTitle": "Delete this service?",
     "deleteConfirmBody": "The service leaves your history. Parts replaced by it stay on the bike.",
     "deleteConfirmCancel": "Keep service",
-    "all": "All"
+    "all": "All",
+    "placeHome": "home",
+    "placeShop": "shop"
   },
   "bikes": {
     "noBikesFound": "0 BIKES FOUND",
@@ -626,6 +628,11 @@
     "customTagDelete": "Delete tag",
     "customTagFailed": "The tag could not be saved.",
     "serviceDate": "Date of service",
+    "place": "Where",
+    "placeHome": "Home",
+    "placeShop": "Shop",
+    "shopName": "Shop name (optional)",
+    "shopNamePlaceholder": "e.g. Bike Centrum",
     "newPart": "New part",
     "newPartPlaceholder": "e.g. Shimano XT chain",
     "partialCost": "Price",

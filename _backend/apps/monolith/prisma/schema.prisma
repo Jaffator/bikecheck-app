@@ -309,6 +309,10 @@ model events_bikes {
   updated_at             DateTime?                @db.Timestamptz(6)
   is_deleted             Boolean?                 @default(false)
   deleted_at             DateTime?                @db.Timestamptz(6)
+  // Where the work was done (ADR 0037). Null on a Service recorded before the Place existed.
+  place                  service_place?
+  // Only ever on a SHOP row; the service enforces it, not the database.
+  shop_name              String?                  @db.VarChar(100)
   bike_event_attachments bike_event_attachments[]
   event_actions_done     event_actions_done[]
   bikes                  bikes?                   @relation(fields: [bike_id], references: [id], onDelete: Cascade, map: "bike_events_bike_id_fkey")
@@ -574,6 +578,12 @@ model reports {
 
   @@index([user_id], map: "reports_user_id")
   @@index([bike_id], map: "reports_bike_id")
+}
+
+// Where a Service was done: the owner's own garage, or a shop.
+enum service_place {
+  HOME
+  SHOP
 }
 
 // Who may open a Public Profile: nobody, approved followers in the app, or anyone at the address.

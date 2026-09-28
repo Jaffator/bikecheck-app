@@ -915,6 +915,22 @@
           ],
           "format": "date-time"
         },
+        "place": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "HOME",
+            "SHOP"
+          ]
+        },
+        "shop_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "bike_event_attachments": {
           "type": "array",
           "items": {

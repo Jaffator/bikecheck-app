@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { SERVICE_CARD_SURFACE } from "@/features/service/serviceCardSurface";
-import { catalogueLabel } from "@/features/service/serviceLabels";
+import { catalogueLabel, placeLabel } from "@/features/service/serviceLabels";
 import { formatServiceDate, formatServiceDateShort } from "@/features/service/serviceDates";
 import type { ServiceHistoryItem } from "@/features/service/service.types";
 import BikeIcon from "@/assets/icons/svg_icons/bike.svg?react";
@@ -70,8 +70,11 @@ export function ServiceHistoryCard({
               style={{ flexShrink: 0 }}
               color="var(--mantine-color-primary-5)"
             />
+            {/* One line cut at its end, so the Place gives way before the bike and the date. */}
             <Text className="font-mono uppercase" fz={11} fw={400} c="text.8" lts="0.08em" lineClamp={1}>
-              {[service.bike_name ?? t("service.unknownBike"), date].filter((part) => part !== null).join(" · ")}
+              {[service.bike_name ?? t("service.unknownBike"), date, placeLabel(service.place, service.shop_name, t)]
+                .filter((part) => part !== null)
+                .join(" · ")}
             </Text>
           </Group>
 

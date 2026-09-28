@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
   IsDateString,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -10,7 +11,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Actions_BikeEventDto, Attachment_BikeEventDto, Replaced_ComponentsDto } from './create-bike-event.dto';
+import { service_place } from '@prisma/client';
+import {
+  Actions_BikeEventDto,
+  Attachment_BikeEventDto,
+  Replaced_ComponentsDto,
+  SHOP_NAME_MAX_LENGTH,
+} from './create-bike-event.dto';
 
 // A correction to an Action already on the Service. Only the fields a receipt can turn
 // out to have got wrong - what the Action was, and what it touched, cannot change.
@@ -49,6 +56,19 @@ export class Update_BikeEventDto {
   @IsOptional()
   @ApiProperty({ example: '2026-07-01T00:00:00.000Z', required: false })
   service_date?: string;
+
+  // Written as one value with shop_name: left out keeps both, null is not recorded (ADR 0037).
+  @IsOptional()
+  @IsEnum(service_place)
+  @ApiProperty({ enum: service_place, required: false, nullable: true })
+  place?: service_place | null;
+
+  // Only with place SHOP; left out or blank there saves no name.
+  @IsOptional()
+  @IsString()
+  @MaxLength(SHOP_NAME_MAX_LENGTH)
+  @ApiProperty({ example: 'Bike Centrum', required: false, nullable: true })
+  shop_name?: string | null;
 
   @IsArray()
   @IsOptional()

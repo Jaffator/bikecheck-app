@@ -12,6 +12,7 @@ import {
   reportCost,
   reportDate,
   reportNumber,
+  reportPlace,
   reportRideTime,
 } from "@/features/report/reportFormat";
 import { reportHeadings } from "@/features/report/reportHeadings";
@@ -26,6 +27,7 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
   const heading = reportHeadings(language);
   const bikeName = reportBikeName(bike);
   const serviceDate = reportDate(service.serviceDate, language);
+  const place = reportPlace(service, heading);
 
   return (
     <article
@@ -50,6 +52,7 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
       >
         <Field label={heading.bike} value={bikeName ?? heading.noBike} muted={bikeName === null} />
         <Field label={heading.date} value={serviceDate ?? heading.noDate} muted={serviceDate === null} />
+        {place !== null && <Field label={heading.place} value={place} />}
         <Field
           label={heading.odometer}
           value={service.odometerKm === null ? "—" : `${reportNumber(service.odometerKm, language)} km`}

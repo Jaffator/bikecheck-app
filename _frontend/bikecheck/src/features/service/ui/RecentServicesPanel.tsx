@@ -12,7 +12,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { useRecentServices } from "@/features/service/service.queries";
 import type { ServiceHistoryItem } from "@/features/service/service.types";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
-import { catalogueLabel } from "@/features/service/serviceLabels";
+import { catalogueLabel, placeLabel } from "@/features/service/serviceLabels";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { formatCost } from "@/utils/money";
 import { ServiceDetailSheet } from "./ServiceDetailSheet";
@@ -72,7 +72,11 @@ export function RecentServicesPanel(): ReactElement {
               </Text>
               <Group gap={6} wrap="nowrap">
                 <BikeColorDot colorIndex={colorIndexOf(bikes, service.bike_id)} size={6} />
-                <Eyebrow>{service.bike_name ?? t("service.unknownBike")}</Eyebrow>
+                <Eyebrow>
+                  {[service.bike_name ?? t("service.unknownBike"), placeLabel(service.place, service.shop_name, t)]
+                    .filter((part) => part !== null)
+                    .join(" · ")}
+                </Eyebrow>
               </Group>
             </Stack>
             {/* A zero is still a price, but not one worth the weight - as the service card says it. */}

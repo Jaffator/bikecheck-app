@@ -21,6 +21,7 @@ import {
   getHistoryTotals,
   getServiceDetail,
   getServiceHistory,
+  getShopNames,
   uploadServiceAttachment,
 } from "./service.api";
 import { invalidateReadings } from "@/features/service_tracking/tracking.queries";
@@ -148,6 +149,14 @@ export function useDeleteActionTag(): UseMutationResult<ActionTag, Error, number
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["services", "category-actions"] });
     },
+  });
+}
+
+// The shop names offered while one is typed. Under "services", so a save or delete refreshes it.
+export function useShopNames(): UseQueryResult<string[]> {
+  return useQuery({
+    queryKey: ["services", "shops"],
+    queryFn: getShopNames,
   });
 }
 
