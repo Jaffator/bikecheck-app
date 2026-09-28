@@ -2,9 +2,9 @@
 import { apiFetch } from "@/api/client";
 import type {
   GarageTrackedAction,
-  PostponeTrackedActionInput,
   SetTrackedActionIntervalInput,
   SetTrackedActionNotifyInput,
+  SetTrackedActionPlanInput,
   TrackedAction,
 } from "./tracking.types";
 
@@ -37,10 +37,9 @@ export async function setTrackedActionNotify(input: SetTrackedActionNotifyInput)
   });
 }
 
-// Put one Tracked Action off. Nothing about the reading changes — it simply leaves the
-// dashboard until it crosses into the next band.
-export async function postponeTrackedAction(input: PostponeTrackedActionInput): Promise<TrackedAction> {
-  return apiFetch<TrackedAction>("/service-tracking/postpone", {
+// Plan one Tracked Action for a day, or remove its plan with null. The reading itself is untouched.
+export async function setTrackedActionPlan(input: SetTrackedActionPlanInput): Promise<TrackedAction> {
+  return apiFetch<TrackedAction>("/service-tracking/plan", {
     method: "POST",
     body: JSON.stringify(input),
   });

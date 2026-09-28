@@ -521,7 +521,7 @@ model users {
 // The state of one Tracked Action - a mounted part paired with one action (ADR 0027).
 // Was `service_snooze`, keyed by bike and action, which could not tell two tyres apart.
 // Everything derived lives nowhere (ADR 0026); this row holds only what a derivation
-// cannot know: what the owner deferred, and what has already been announced.
+// cannot know: what the owner set, what they planned, and what has already been announced.
 model tracked_action_state {
   id                      Int                @id @default(autoincrement())
   component_mounted_id    Int
@@ -539,11 +539,12 @@ model tracked_action_state {
   // False silences this pairing's announcements and nothing else - the reading still reads,
   // the colour still warns and the dashboard still lists it. Survives a Replacement.
   notify                  Boolean            @default(true)
-  // The band the owner put this job off in. The dashboard skips the pairing while the
-  // reading still stands in that same band, so the next crossing is what brings it back -
-  // no expiry to run and nothing to clear, since any move off the band ends it.
-  postponed_band          Int?
-  created_at              DateTime           @default(now())
+  // The day the owner means to do this job (ADR 0038). Cycle state: served only until a
+  // Service records the job after `planned_at`, and never copied by a Replacement.
+  planned_for             DateTime?          @db.Date
+  // When the plan was set; written and cleared with `planned_for`, never served.
+  planned_at              DateTime?          @db.Timestamptz(6)
+  created_at             DateTime           @default(now())
   updated_at              DateTime           @updatedAt
   components_mounted      components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade)
   events_action           events_action      @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)

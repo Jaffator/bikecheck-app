@@ -5,7 +5,7 @@ import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 import { SetTrackedActionIntervalDto } from './dto/set-tracked-action-interval';
 import { SetTrackedActionNotifyDto } from './dto/set-tracked-action-notify';
-import { PostponeTrackedActionDto } from './dto/postpone-tracked-action';
+import { SetTrackedActionPlanDto } from './dto/set-tracked-action-plan';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 // A pass-through: what a caller may read, and what a reading says, is decided in
@@ -53,22 +53,6 @@ export class ServiceTrackingController {
     );
   }
 
-  // ---------- POST putting one Tracked Action off ----------
-  // Nothing about the reading changes; the dashboard simply stops listing it until the
-  // reading leaves the band it was put off in.
-  @Post('postpone')
-  @ApiResponse({ status: 201, type: Response_TrackedActionDto })
-  async postponeTrackedAction(
-    @CurrentUser('userId') userId: string,
-    @Body() dto: PostponeTrackedActionDto,
-  ): Promise<Response_TrackedActionDto> {
-    return await this.serviceTrackingService.postponeTrackedAction(
-      dto.component_mounted_id,
-      dto.event_action_id,
-      Number(userId),
-    );
-  }
-
   // ---------- POST whether one Tracked Action may announce itself ----------
   @Post('notify')
   @ApiResponse({ status: 201, type: Response_TrackedActionDto })
@@ -81,6 +65,22 @@ export class ServiceTrackingController {
       dto.event_action_id,
       Number(userId),
       dto.notify,
+    );
+  }
+
+  // ---------- POST the day one Tracked Action is planned for ----------
+  // Null removes the plan. Answers with the Tracked Action as it now reads.
+  @Post('plan')
+  @ApiResponse({ status: 201, type: Response_TrackedActionDto })
+  async setTrackedActionPlan(
+    @CurrentUser('userId') userId: string,
+    @Body() dto: SetTrackedActionPlanDto,
+  ): Promise<Response_TrackedActionDto> {
+    return await this.serviceTrackingService.setTrackedActionPlan(
+      dto.component_mounted_id,
+      dto.event_action_id,
+      Number(userId),
+      dto.planned_for,
     );
   }
 }

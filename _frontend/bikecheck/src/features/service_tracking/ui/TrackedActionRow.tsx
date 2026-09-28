@@ -11,6 +11,7 @@ import { ExplanationModal } from "@/components/ExplanationModal";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { positionLabel, wearExplanation } from "@/features/components/componentLabels";
 import { attentionColor, axisReading, barFill } from "@/features/service_tracking/attentionLevel";
+import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface TrackedActionRowProps {
@@ -91,6 +92,12 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
           style={{ whiteSpace: "nowrap" }}
         >
           {axisReading(action, i18n.language, t)}
+          {/* Read-only here; the plan is changed in the drawer. */}
+          {action.planned_for !== null && (
+            <Text span inherit c={isPlanPassed(action.planned_for) ? PASSED_PLAN_COLOR : undefined}>
+              {` · ${planDayLabel(action.planned_for, i18n.language)}`}
+            </Text>
+          )}
         </Text>
       </Group>
     </Stack>

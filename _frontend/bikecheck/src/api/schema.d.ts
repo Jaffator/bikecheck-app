@@ -637,6 +637,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bike-events/shops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["BikeEvent shops"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bike-events/{id}": {
         parameters: {
             query?: never;
@@ -733,22 +749,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/service-tracking/postpone": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["ServiceTracking postponeTrackedAction"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/service-tracking/notify": {
         parameters: {
             query?: never;
@@ -759,6 +759,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["ServiceTracking setTrackedActionNotify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/service-tracking/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ServiceTracking setTrackedActionPlan"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1661,6 +1677,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/spend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Stats getSpend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/distance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Stats getDistance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/wear-forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Stats getWearForecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2004,6 +2068,87 @@ export interface components {
             bikeBrands: components["schemas"]["BikeBrands"][];
             bikeModels: components["schemas"]["BikeModels"][];
         };
+        ResponseListedBikeDto: {
+            /** @example 1 */
+            id: number;
+            /** @example 15 */
+            user_id: number;
+            /** @example true */
+            ebike: boolean;
+            /** @example 10 */
+            organization_id: Record<string, never> | null;
+            /** @example Specialized */
+            bike_brand: string | null;
+            /** @example Stumpjumper */
+            bike_model: Record<string, never> | null;
+            /** @example https://example.com/bike-image.jpg */
+            image_url: Record<string, never> | null;
+            /** @example 1 */
+            bike_type_id: Record<string, never> | null;
+            /** @example Enduro */
+            bike_type: Record<string, never> | null;
+            /** @example Tarmac SL7 */
+            bikename: Record<string, never> | null;
+            /** @example 2024 */
+            year: Record<string, never> | null;
+            /** @example Serviced bike, top health */
+            description: Record<string, never> | null;
+            /** @example 29" */
+            wheel_size: Record<string, never> | null;
+            /** @example L */
+            bike_size: Record<string, never> | null;
+            /** @example 1540 */
+            total_km: Record<string, never> | null;
+            /** @example 3600 */
+            total_time_min: Record<string, never> | null;
+            /** @example 7.25 */
+            bike_weight_kg: Record<string, never> | null;
+            /** @example 15623 */
+            total_elevation_m: Record<string, never> | null;
+            /** @example false */
+            has_front_suspension: boolean;
+            /** @example false */
+            has_rear_suspension: boolean;
+            /** @example 2024-01-01T12:00:00.000Z */
+            created_at: Record<string, never> | null;
+            /** @example 2024-01-02T12:00:00.000Z */
+            updated_at: Record<string, never> | null;
+            /** @example Carbon */
+            frame_material: Record<string, never> | null;
+            /** @example false */
+            is_deleted: Record<string, never> | null;
+            /** @example null */
+            deleted_at: Record<string, never> | null;
+            /** @example b12345678 */
+            strava_gear_id: Record<string, never> | null;
+            /** @example My Enduro Bike */
+            strava_name: Record<string, never> | null;
+            /**
+             * @description The Setup Profile the bike is ridden at right now
+             * @example 12
+             */
+            active_setup_profile_id: Record<string, never> | null;
+            /**
+             * @description Whether the bike goes out on the owner's Public Profile
+             * @example true
+             */
+            is_shared: boolean;
+            /**
+             * @description Rank by id among all the owner's bikes, archived included, so a colour never shifts
+             * @example 0
+             */
+            color_index: number;
+            /**
+             * @description Non-deleted rides, lifetime
+             * @example 42
+             */
+            ride_count: number;
+            /**
+             * @description Sum of those rides' duration_min; total_time_min is only what the owner typed
+             * @example 3180
+             */
+            ride_time_min: number;
+        };
         Attachment_BikeEventDto: {
             /** @example faktura.pdf */
             name: string;
@@ -2039,6 +2184,10 @@ export interface components {
             total_cost?: number;
             /** @example 2026-07-01T00:00:00.000Z */
             service_date: string;
+            /** @enum {string} */
+            place?: "HOME" | "SHOP";
+            /** @example Bike Centrum */
+            shop_name?: string;
             attachment: components["schemas"]["Attachment_BikeEventDto"][] | null;
             /** @example Replaced chain and cleaned drivetrain */
             note?: string;
@@ -2146,6 +2295,16 @@ export interface components {
             /** @example 350.5 */
             total_cost: number;
             service_date: Record<string, never> | null;
+            /**
+             * @description Null on a Service recorded before the Place existed
+             * @enum {string|null}
+             */
+            place: "HOME" | "SHOP" | null;
+            /**
+             * @description Only ever on a SHOP; null is a shop with no name
+             * @example Bike Centrum
+             */
+            shop_name: Record<string, never> | null;
             /** Format: date-time */
             created_at: string;
             updated_at: Record<string, never> | null;
@@ -2244,6 +2403,16 @@ export interface components {
             actions: components["schemas"]["ServiceHistoryActionDto"][];
             /** @example 350.5 */
             total_cost: Record<string, never> | null;
+            /**
+             * @description Null on a Service recorded before the Place existed
+             * @enum {string|null}
+             */
+            place: "HOME" | "SHOP" | null;
+            /**
+             * @description Only ever on a SHOP; null is a shop with no name
+             * @example Bike Centrum
+             */
+            shop_name: Record<string, never> | null;
         };
         Response_ServiceHistory_Dto: {
             items: components["schemas"]["ServiceHistoryItemDto"][];
@@ -2302,6 +2471,10 @@ export interface components {
             total_cost?: number;
             /** @example 2026-07-01T00:00:00.000Z */
             service_date?: string;
+            /** @enum {string|null} */
+            place?: "HOME" | "SHOP" | null;
+            /** @example Bike Centrum */
+            shop_name?: Record<string, never> | null;
             actions_updated?: components["schemas"]["Update_ActionDoneDto"][];
             /**
              * @description event_actions_done ids to remove
@@ -2404,6 +2577,12 @@ export interface components {
              */
             mounted_at: string | null;
             /**
+             * Format: date
+             * @description The day the owner means to do the job (YYYY-MM-DD), until a Service records it
+             * @example 2026-10-04
+             */
+            planned_for: string | null;
+            /**
              * @description The action replaces the part rather than servicing it, which names the button that records it
              * @example true
              */
@@ -2490,6 +2669,12 @@ export interface components {
              */
             mounted_at: string | null;
             /**
+             * Format: date
+             * @description The day the owner means to do the job (YYYY-MM-DD), until a Service records it
+             * @example 2026-10-04
+             */
+            planned_for: string | null;
+            /**
              * @description The action replaces the part rather than servicing it, which names the button that records it
              * @example true
              */
@@ -2512,12 +2697,6 @@ export interface components {
              */
             interval_override: number | null;
         };
-        PostponeTrackedActionDto: {
-            /** @example 55 */
-            component_mounted_id: number;
-            /** @example 42 */
-            event_action_id: number;
-        };
         SetTrackedActionNotifyDto: {
             /** @example 55 */
             component_mounted_id: number;
@@ -2525,6 +2704,18 @@ export interface components {
             event_action_id: number;
             /** @example false */
             notify: boolean;
+        };
+        SetTrackedActionPlanDto: {
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 42 */
+            event_action_id: number;
+            /**
+             * Format: date
+             * @description YYYY-MM-DD, today or later; null removes the plan
+             * @example 2026-10-04
+             */
+            planned_for: string | null;
         };
         CustomComponentsDto: {
             /** @example 15 */
@@ -2801,6 +2992,48 @@ export interface components {
             /** @example 1 */
             bikeId: number;
         };
+        Response_WoreOffLineDto: {
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example Chain */
+            component_type: string;
+            /** @example component.chain */
+            component_type_i18n_key: string | null;
+            /** @example front */
+            position: string | null;
+            /** @example 42 */
+            event_action_id: number;
+            /** @example Chain Replacement */
+            action_name: string;
+            /** @example action.chainReplacement */
+            action_i18n_key: string | null;
+            /**
+             * @description Which accumulator the reading was taken from, which is not implied by the axis
+             * @example drivetrain_km
+             * @enum {string}
+             */
+            measure: "total_km" | "drivetrain_km" | "total_time_min" | "suspension_min" | "health_index";
+            /**
+             * @description The action replaces the part rather than servicing it, which names the button that records it
+             * @example true
+             */
+            replace_action: boolean;
+            /**
+             * @description The ride's own wear on the reading's measure: km, minutes or index
+             * @example 32
+             */
+            amount: number;
+            /**
+             * @description Whole percent of the way to due before the ride
+             * @example 94
+             */
+            before: number;
+            /**
+             * @description Whole percent of the way to due once the ride ended
+             * @example 95
+             */
+            after: number;
+        };
         ResponseRideDto: {
             /** @example 42 */
             id: number;
@@ -2828,6 +3061,7 @@ export interface components {
             max_speed_kmh: Record<string, never> | null;
             /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
             summary_polyline: Record<string, never> | null;
+            wore_off: components["schemas"]["Response_WoreOffLineDto"][];
         };
         ResponseRidePageDto: {
             items: components["schemas"]["ResponseRideDto"][];
@@ -3529,6 +3763,236 @@ export interface components {
              */
             relation: "PENDING" | "FOLLOWING";
         };
+        Response_SpendCategoryDto: {
+            /**
+             * @description "group:<id>", "other" or "unassigned"
+             * @example group:3
+             */
+            key: string;
+            /** @example 3 */
+            component_group_id: number | null;
+            /** @example Suspension */
+            group_name: string | null;
+            /** @example componentGroup.suspension */
+            i18n_key: string | null;
+            /** @example 6800 */
+            amount: number;
+        };
+        Response_SpendBikeDto: {
+            /** @example 21 */
+            bike_id: number;
+            /** @example Santa Cruz */
+            bike_brand: string;
+            /** @example Hightower */
+            bike_model: string | null;
+            /** @example 2022 */
+            year: number | null;
+            /** @example 9200 */
+            total: number;
+        };
+        Response_SpendDto: {
+            /**
+             * @description First Service Date counted, inclusive; null is an open end
+             * @example 2026-01-01
+             */
+            from: string | null;
+            /**
+             * @description Last Service Date counted, inclusive; null is an open end. Both null counts undated Services too
+             * @example null
+             */
+            to: string | null;
+            /** @example CZK */
+            currency: string | null;
+            /**
+             * @description Equals History Totals for from/to across all bikes
+             * @example 14860
+             */
+            total: number;
+            /** @description Top 3 categories, then other, then unassigned; non-zero only */
+            categories: components["schemas"]["Response_SpendCategoryDto"][];
+            /** @description Bikes with spend, highest first */
+            bikes: components["schemas"]["Response_SpendBikeDto"][];
+        };
+        Response_DistanceBikeDto: {
+            /** @example 21 */
+            bike_id: number;
+            /** @example Santa Cruz */
+            bike_brand: string;
+            /** @example Hightower */
+            bike_model: string | null;
+            /** @example 2022 */
+            year: number | null;
+            /**
+             * @description Rank by id among all the owner's bikes, archived included, so a colour never shifts
+             * @example 0
+             */
+            color_index: number;
+            /**
+             * @description Metres per UTC day, index 0 = from, one entry per day through to
+             * @example [
+             *       0,
+             *       12400,
+             *       0,
+             *       38200
+             *     ]
+             */
+            daily_m: number[];
+            /**
+             * @description Whole km of the sum of daily_m
+             * @example 51
+             */
+            total_km: number;
+            /**
+             * @description Rides started in the window
+             * @example 4
+             */
+            ride_count: number;
+            /**
+             * @description The sum of those rides' duration_min
+             * @example 312
+             */
+            time_min: number;
+        };
+        Response_DistanceDto: {
+            /**
+             * @description First UTC day daily_m covers, inclusive
+             * @example 2026-01-01
+             */
+            from: string;
+            /**
+             * @description Last UTC day daily_m covers, inclusive
+             * @example 2026-09-28
+             */
+            to: string;
+            /** @description Bikes with at least one ride in the window, highest total first */
+            bikes: components["schemas"]["Response_DistanceBikeDto"][];
+        };
+        Response_WearPointDto: {
+            /**
+             * @description ISO date in UTC
+             * @example 2026-09-20
+             */
+            date: string;
+            /**
+             * @description Whole percent of the way to being due on that day, never below 0
+             * @example 64
+             */
+            percentage: number;
+        };
+        Response_WearForecastItemDto: {
+            /**
+             * @description The bike carrying the part, which a row opens
+             * @example 21
+             */
+            bike_id: number;
+            /** @example 55 */
+            component_mounted_id: number;
+            /** @example 12 */
+            component_type_id: number;
+            /**
+             * @description The Component Category the part sits in, which a service link names
+             * @example 2
+             */
+            component_group_id: number;
+            /** @example Chain */
+            component_type: string;
+            /** @example component.chain */
+            component_type_i18n_key: string | null;
+            /** @example Shimano XT M8100 */
+            component_desc: string | null;
+            /** @example front */
+            position: string | null;
+            /** @example 42 */
+            event_action_id: number;
+            /** @example Chain Replacement */
+            action_name: string;
+            /** @example action.chainReplacement */
+            action_i18n_key: string | null;
+            /**
+             * @example km
+             * @enum {string}
+             */
+            axis: "km" | "min" | "health_index";
+            /**
+             * @description Which accumulator the reading was taken from, which is not implied by the axis
+             * @example drivetrain_km
+             * @enum {string}
+             */
+            measure: "total_km" | "drivetrain_km" | "total_time_min" | "suspension_min" | "health_index";
+            /**
+             * @description Wear on that axis since the Wear Baseline
+             * @example 3200
+             */
+            current: number;
+            /**
+             * @description The Service Interval in force on that axis: the owner's own where they set one
+             * @example 4000
+             */
+            interval: number;
+            /**
+             * @description Whole percent of the way to being due. Never capped
+             * @example 80
+             */
+            percentage: number;
+            /**
+             * @example warning
+             * @enum {string}
+             */
+            level: "very_good" | "good" | "warning" | "critical" | "overdue";
+            /**
+             * @description The bike's own plan on that axis, which clearing the override restores
+             * @example 4000
+             */
+            default_interval: number;
+            /**
+             * @description The owner's own Service Interval, or null where the reading follows the bike's plan
+             * @example 2500
+             */
+            interval_override: number | null;
+            /**
+             * @description False silences this pairing's announcements and nothing else
+             * @example true
+             */
+            notify: boolean;
+            /**
+             * Format: date-time
+             * @description When the part went on the bike, which the reading is judged against
+             */
+            mounted_at: string | null;
+            /**
+             * Format: date
+             * @description The day the owner means to do the job (YYYY-MM-DD), until a Service records it
+             * @example 2026-10-04
+             */
+            planned_for: string | null;
+            /**
+             * @description The action replaces the part rather than servicing it, which names the button that records it
+             * @example true
+             */
+            replace_action: boolean;
+            /** @example Santa Cruz */
+            bike_brand: string;
+            /** @example Hightower */
+            bike_model: string | null;
+            /** @example 2022 */
+            year: number | null;
+            /**
+             * @description Wear per week at the last 4 weeks' pace, in the reading's unit; null when the bike was not ridden
+             * @example 42.5
+             */
+            pace_per_week: number | null;
+            /**
+             * @description When the reading reaches 100 % at that pace; null when overdue or without pace
+             * @example 2026-11-12
+             */
+            projected_date: string | null;
+            /** @description From the Wear Baseline moment, each week end, then today at the current percentage */
+            points: components["schemas"]["Response_WearPointDto"][];
+        };
+        Response_WearForecastDto: {
+            /** @description Up to 5, soonest to run out first, overdue first */
+            items: components["schemas"]["Response_WearForecastItemDto"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -4122,7 +4586,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResponseBikeDto"][];
+                    "application/json": components["schemas"]["ResponseListedBikeDto"][];
                 };
             };
         };
@@ -4457,6 +4921,25 @@ export interface operations {
             };
         };
     };
+    "BikeEvent shops": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
     "BikeEvent findOne": {
         parameters: {
             query?: never;
@@ -4610,7 +5093,7 @@ export interface operations {
             };
         };
     };
-    "ServiceTracking postponeTrackedAction": {
+    "ServiceTracking setTrackedActionNotify": {
         parameters: {
             query?: never;
             header?: never;
@@ -4619,7 +5102,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PostponeTrackedActionDto"];
+                "application/json": components["schemas"]["SetTrackedActionNotifyDto"];
             };
         };
         responses: {
@@ -4633,7 +5116,7 @@ export interface operations {
             };
         };
     };
-    "ServiceTracking setTrackedActionNotify": {
+    "ServiceTracking setTrackedActionPlan": {
         parameters: {
             query?: never;
             header?: never;
@@ -4642,7 +5125,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SetTrackedActionNotifyDto"];
+                "application/json": components["schemas"]["SetTrackedActionPlanDto"];
             };
         };
         responses: {
@@ -6194,6 +6677,69 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    "Stats getSpend": {
+        parameters: {
+            query?: {
+                /** @description Omitted: this year, or last year while this one has nothing priced */
+                period?: "month" | "year" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_SpendDto"];
+                };
+            };
+        };
+    };
+    "Stats getDistance": {
+        parameters: {
+            query?: {
+                /** @description Omitted: this year, or last year while this one has no ride */
+                period?: "month" | "year" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_DistanceDto"];
+                };
+            };
+        };
+    };
+    "Stats getWearForecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_WearForecastDto"];
+                };
             };
         };
     };

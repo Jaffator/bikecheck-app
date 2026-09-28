@@ -9,7 +9,7 @@ import { AlertCircle, AlertTriangle, ChevronRight, OctagonAlert } from "lucide-r
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
 import { axisUnit, axisValue, remainingWear } from "@/features/service_tracking/intervalFigures";
-import { usePostponeTrackedAction } from "@/features/service_tracking/tracking.queries";
+import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import type { AttentionLevel, TrackedAction } from "@/features/service_tracking/tracking.types";
 
 // The level said again in a shape, so a row is readable without its colour. Only the three
@@ -25,18 +25,18 @@ const LEVEL_ICON: Record<AttentionLevel, typeof AlertCircle> = {
 interface AttentionRowProps {
   action: TrackedAction;
   onOpen: () => void;
+  onPlan: () => void;
 }
 
-export function AttentionRow({ action, onOpen }: AttentionRowProps): ReactElement {
+export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): ReactElement {
   const { t, i18n } = useTranslation();
-  const postpone = usePostponeTrackedAction();
   const color = attentionColor(action.percentage);
   const Icon = LEVEL_ICON[action.level];
 
   const job = catalogueLabel(action.action_i18n_key, action.action_name, t);
   const remaining = remainingLabel(action, i18n.language, t);
 
-  // The row carries the tap as a div rather than as a <button>, since the postpone button
+  // The row carries the tap as a div rather than as a <button>, since the plan button
   // sits inside it and a button within a button is not valid markup. It keeps the keyboard
   // by declaring what it is: a control that answers to Enter and to Space.
   return (
@@ -66,19 +66,11 @@ export function AttentionRow({ action, onOpen }: AttentionRowProps): ReactElemen
           <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
         </Group>
 
-        {/* The one write the row holds, and what the reading leaves. A wear index has no
+        {/* The plan the row carries, and what the reading leaves. A wear index has no
             unit an owner could hold, so it says nothing rather than a figure that means
             nothing. */}
         <Group gap="sm" wrap="nowrap" align="center">
-          <PostponeButton
-            onPostpone={() => {
-              postpone.mutate({
-                component_mounted_id: action.component_mounted_id,
-                event_action_id: action.event_action_id,
-              });
-            }}
-            pending={postpone.isPending}
-          />
+          <PlanButton planned={action.planned_for} onPlan={onPlan} />
           <Text
             className="font-mono"
             fz={11}
@@ -89,7 +81,7 @@ export function AttentionRow({ action, onOpen }: AttentionRowProps): ReactElemen
             ml="auto"
             style={{ minWidth: 0 }}
           >
-            {postpone.isError ? t("tracking.postponeFailed") : remaining}
+            {remaining}
           </Text>
         </Group>
       </Stack>
@@ -97,13 +89,11 @@ export function AttentionRow({ action, onOpen }: AttentionRowProps): ReactElemen
   );
 }
 
-// Putting the job off, one tap deep. Its own component so the row around it stays a reading
-// and only this holds a write — and so the tap that opens the drawer stops here.
-//
-// A frame and nothing else: it has to read as a control, but the reading above it is what
-// the owner came for — so it keeps the card's own ground rather than a plate of its own.
-function PostponeButton({ onPostpone, pending }: { onPostpone: () => void; pending: boolean }): ReactElement {
-  const { t } = useTranslation();
+// Plan, or the planned day once there is one - the date is also the control. A frame and nothing
+// else: the reading above it is what the owner came for.
+function PlanButton({ planned, onPlan }: { planned: string | null; onPlan: () => void }): ReactElement {
+  const { t, i18n } = useTranslation();
+  const passed = planned !== null && isPlanPassed(planned);
 
   return (
     <Box style={{ flexShrink: 0 }}>
@@ -112,25 +102,24 @@ function PostponeButton({ onPostpone, pending }: { onPostpone: () => void; pendi
         variant="subtle"
         color="gray"
         radius="sm"
-        loading={pending}
         className="font-mono"
         fz={11}
         tt="uppercase"
         styles={{
           label: { letterSpacing: "0.08em" },
           root: {
-            color: "var(--mantine-color-text-8)",
+            color: passed ? PASSED_PLAN_COLOR : "var(--mantine-color-text-8)",
             border: "1px solid var(--mantine-color-inputs-5)",
             backgroundColor: "transparent",
           },
         }}
         onClick={(event) => {
-          // The row around it opens the drawer; putting the job off does not.
+          // The row around it opens the drawer; planning does not.
           event.stopPropagation();
-          onPostpone();
+          onPlan();
         }}
       >
-        {t("tracking.postpone")}
+        {planned === null ? t("tracking.plan") : planDayLabel(planned, i18n.language)}
       </Button>
     </Box>
   );

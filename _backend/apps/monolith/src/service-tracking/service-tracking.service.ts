@@ -92,10 +92,8 @@ interface Reading {
   override: number | null;
 }
 
-// Postponed ones are kept, flagged: putting a job off hides it from the to-do list, not from wear.
 export interface GarageReading {
   action: Response_GarageTrackedActionDto;
-  postponed: boolean;
   // When the wear it counts began: the latest recording of the job, else the mounting.
   wearBaselineAt: Date | null;
 }
@@ -131,15 +129,14 @@ export class ServiceTrackingService {
   // about - the dashboard asks for 80. One flat list, worst first: the question it answers
   // is "what needs doing?", not "what needs doing on which bike?".
   async getGarageTrackedActions(userId: number, minPercentage: number): Promise<Response_GarageTrackedActionDto[]> {
-    // Only this list hides what was put off - the bike's own page lists everything it owes.
     const needingAttention = (await this.getGarageReadings(userId))
-      .filter((reading) => reading.action.percentage >= minPercentage && !reading.postponed)
+      .filter((reading) => reading.action.percentage >= minPercentage)
       .map((reading) => reading.action);
 
     return worstFirst(needingAttention);
   }
 
-  // Every Tracked Action on the owner's non-archived bikes, postponed ones included, in no order.
+  // Every Tracked Action on the owner's non-archived bikes, in no order.
   async getGarageReadings(userId: number): Promise<GarageReading[]> {
     // An Archived Bike stays put away, so it is never even loaded.
     const bikes = await this.prisma.bikes.findMany({
@@ -153,19 +150,12 @@ export class ServiceTrackingService {
     // The pieces of each bike's name, without its id: how a bike is written out is the
     // frontend's one rule, and it already has it.
     const naming = new Map(bikes.map(({ id, ...name }) => [id, name]));
-    const postponed = postponedBands(parts);
 
     return parts.flatMap((part) =>
       trackedActions([part], intervals).flatMap((action) => {
         const name = naming.get(action.bike_id);
         if (name === undefined) return [];
-        return [
-          {
-            action: { ...action, ...name },
-            postponed: isPostponed(action, postponed),
-            wearBaselineAt: wearBaselineAt(part, action.event_action_id),
-          },
-        ];
+        return [{ action: { ...action, ...name }, wearBaselineAt: wearBaselineAt(part, action.event_action_id) }];
       }),
     );
   }
@@ -230,20 +220,22 @@ export class ServiceTrackingService {
     return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
   }
 
-  // Putting one Tracked Action off: one tap, no dialog and no number to enter. The band it
-  // stands in now is recorded, and the dashboard skips it while it stays in that band - so
-  // the next crossing is what brings it back, and nothing about the reading changes.
-  async postponeTrackedAction(
+  // The day the owner means to do one Tracked Action (YYYY-MM-DD), or null to remove the plan (ADR 0038).
+  async setTrackedActionPlan(
     componentMountedId: number,
     eventActionId: number,
     userId: number,
+    plannedFor: string | null,
   ): Promise<Response_TrackedActionDto> {
-    const { bikeId, reading } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
+    const day = plannedFor === null ? null : plannedDay(plannedFor);
+    const { bikeId } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
 
-    await this.writeSettings(componentMountedId, eventActionId, { postponed_band: reachedBand(reading.percentage) });
+    await this.writeSettings(componentMountedId, eventActionId, {
+      planned_for: day,
+      planned_at: day === null ? null : new Date(),
+    });
 
-    // No evaluation: putting a job off moves no reading, so it crosses nothing and the
-    // announcements carry on exactly as they would have.
+    // No evaluation: a plan moves no reading, so it crosses no band and announces nothing.
     return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
   }
 
@@ -323,12 +315,12 @@ export class ServiceTrackingService {
   }
 
   // What every write asks first: whose bike carries this part, is it still on it, and is the
-  // pairing a Tracked Action at all. Answers with the bike and the reading to act on.
+  // pairing a Tracked Action at all. Answers with the bike it is on.
   private async requireTrackedAction(
     componentMountedId: number,
     eventActionId: number,
     userId: number,
-  ): Promise<{ bikeId: number; reading: Reading }> {
+  ): Promise<{ bikeId: number }> {
     // One question answers the ownership: whose bike carries this part, and is it still on it.
     const bike = await this.prisma.bikes.findFirst({
       where: { ...ownedBikesWhere(userId), components_mounted: { some: { id: componentMountedId, ...MOUNTED } } },
@@ -348,12 +340,11 @@ export class ServiceTrackingService {
       throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} not found`);
     }
 
-    const reading = worstAxis(part, interval);
-    if (reading === null) {
+    if (worstAxis(part, interval) === null) {
       throw new NotFoundException(`Tracked Action ${componentMountedId}:${eventActionId} has no Service Interval`);
     }
 
-    return { bikeId: bike.id, reading };
+    return { bikeId: bike.id };
   }
 
   // What a write answers with: the Tracked Action read the way every other caller reads it,
@@ -378,7 +369,12 @@ export class ServiceTrackingService {
   private async writeSettings(
     componentMountedId: number,
     eventActionId: number,
-    settings: { interval_override?: number | null; notify?: boolean; postponed_band?: number | null },
+    settings: {
+      interval_override?: number | null;
+      notify?: boolean;
+      planned_for?: Date | null;
+      planned_at?: Date | null;
+    },
   ): Promise<void> {
     const pair = { component_mounted_id: componentMountedId, event_actions_id: eventActionId };
 
@@ -594,29 +590,6 @@ function announcedBands(parts: TrackedPart[]): Map<string, number> {
   );
 }
 
-// The band each pairing was put off in, for the pairings that were. Null and absent say the
-// same thing here - nothing was put off - so only the numbers are kept.
-function postponedBands(parts: TrackedPart[]): Map<string, number> {
-  return new Map(
-    parts.flatMap((part) =>
-      part.tracked_action_state.flatMap((state) =>
-        state.postponed_band === null
-          ? []
-          : [[pairKey(part.id, state.event_actions_id), state.postponed_band] as [string, number]],
-      ),
-    ),
-  );
-}
-
-// Whether this reading is still the one that was put off. Only the same band counts: the
-// next crossing up ends it, and so does a Service taking the reading back down - which is
-// why nothing ever has to clear the column.
-function isPostponed(action: Response_TrackedActionDto, postponed: Map<string, number>): boolean {
-  const band = postponed.get(pairKey(action.component_mounted_id, action.event_action_id));
-
-  return band !== undefined && band === reachedBand(action.percentage);
-}
-
 // One Tracked Action is a part and an action (ADR 0027), which is what identifies its row.
 function pairKey(componentMountedId: number, eventActionId: number): string {
   return `${componentMountedId}:${eventActionId}`;
@@ -677,6 +650,7 @@ function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response
     // default means.
     notify: state?.notify ?? true,
     mounted_at: part.mounted_at,
+    planned_for: livePlan(part, interval.event_actions_id),
     replace_action: interval.events_action.replace_action,
   };
 }
@@ -772,15 +746,61 @@ function readingOn(axis: WearAxis, planned: number | null, override: number | nu
 // - the same rule the build dates a part by. None means the reading starts from zero, so
 // the mileage entered when a used part was added counts as wear.
 function latestBaseline(part: TrackedPart, eventActionId: number): Baseline | null {
-  const recorded = part.action_done_component_map.filter(
-    (junction) =>
-      junction.event_actions_done.event_action_id === eventActionId &&
-      junction.event_actions_done.events_bikes.is_deleted !== true,
-  );
+  const recorded = recordingsOf(part, eventActionId);
 
   if (recorded.length === 0) return null;
 
   return recorded.reduce((latest, junction) => (recordedLater(junction, latest) ? junction : latest));
+}
+
+// Every recording of one action on one part that is still on record.
+function recordingsOf(part: TrackedPart, eventActionId: number): Baseline[] {
+  return part.action_done_component_map.filter(
+    (junction) =>
+      junction.event_actions_done.event_action_id === eventActionId &&
+      junction.event_actions_done.events_bikes.is_deleted !== true,
+  );
+}
+
+// The planned day while the plan stands; worked out on read, so no Service write touches it (ADR 0026).
+function livePlan(part: TrackedPart, eventActionId: number): string | null {
+  const state = stateFor(part, eventActionId);
+  if (!state?.planned_for || !state.planned_at) return null;
+
+  const plannedAt = state.planned_at;
+  const ended = recordingsOf(part, eventActionId).some((junction) => recordedSince(junction, plannedAt));
+  return ended ? null : utcDay(state.planned_for);
+}
+
+// Whether a recording falls after the plan was set: a later UTC day, or the same day written later
+// (the Wear Baseline's tie-break). A Service with no date ends nothing.
+function recordedSince(junction: Baseline, plannedAt: Date): boolean {
+  const { service_date: serviceDate, created_at: createdAt } = junction.event_actions_done.events_bikes;
+  if (serviceDate === null) return false;
+
+  const serviceDay = utcDay(serviceDate);
+  const planDay = utcDay(plannedAt);
+  if (serviceDay !== planDay) return serviceDay > planDay;
+  return createdAt !== null && createdAt > plannedAt;
+}
+
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+// A plan's day as the DATE column holds it: midnight UTC. Refuses a day that does not exist or has passed.
+function plannedDay(day: string): Date {
+  const parsed = new Date(`${day}T00:00:00.000Z`);
+  if (!DAY_PATTERN.test(day) || Number.isNaN(parsed.getTime()) || utcDay(parsed) !== day) {
+    throw new BadRequestException(`${day} is not a day`);
+  }
+  if (day < utcDay(new Date())) {
+    throw new BadRequestException('A plan cannot be for a day that has passed');
+  }
+  return parsed;
+}
+
+// A moment's day in UTC, as YYYY-MM-DD - which also sorts as text.
+function utcDay(moment: Date): string {
+  return moment.toISOString().slice(0, 10);
 }
 
 // An undated latest Service stays unknown: the mounting would count wear it already reset.

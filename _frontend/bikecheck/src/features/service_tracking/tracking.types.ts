@@ -48,6 +48,8 @@ export interface TrackedAction {
   notify: boolean;
   // When the part went on the bike, which the reading is judged against.
   mounted_at: string | null;
+  // The day the owner means to do the job (YYYY-MM-DD); null once a Service records it (ADR 0038).
+  planned_for: string | null;
   // Recording this job replaces the part rather than servicing it, which names the button.
   replace_action: boolean;
 }
@@ -69,11 +71,11 @@ export interface SetTrackedActionIntervalInput {
   interval_override: number | null;
 }
 
-// Which Tracked Action to put off. How long is not the caller's to say — it is off until
-// the reading leaves the band it was put off in.
-export interface PostponeTrackedActionInput {
+// What planning one Tracked Action asks for: a day (YYYY-MM-DD, today or later), or null to remove the plan.
+export interface SetTrackedActionPlanInput {
   component_mounted_id: number;
   event_action_id: number;
+  planned_for: string | null;
 }
 
 // What muting one Tracked Action asks for. False stops the push and nothing else.

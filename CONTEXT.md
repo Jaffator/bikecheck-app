@@ -229,6 +229,14 @@ moving silently, so unmuting is quiet rather than a backlog. Carried to the new 
 Replacement, like an Interval Override.
 _Avoid_: Snoozed, disabled, ignored, untracked
 
+**Plan**:
+The day an owner means to do one Tracked Action — a day and nothing more. It puts nothing off: the
+reading, its colour, its band and its announcements stand as they are, and a planned job stays on
+every list with its day beside it. Cycle state, like the announced band: a Service that records the
+job after the plan was set ends it, and a Replacement never carries it to the new part. A day that
+has passed stays until the job is recorded, the plan moves or it is removed (ADR 0038).
+_Avoid_: Schedule (reads as recurring), appointment, reminder (nothing reminds), postpone
+
 ### Setup
 
 **Setup**:

@@ -11,6 +11,7 @@ import { ServiceList } from "@/features/service/ui/ServiceList";
 import { useRecentServices } from "@/features/service/service.queries";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
+import { PlannedCard } from "@/features/service_tracking/ui/PlannedCard";
 import { EmptyService } from "./EmptyService";
 
 // Clears the FAB and the bottom nav, so the last row can still be tapped. Desktop has neither.
@@ -50,6 +51,8 @@ export function Service(): ReactElement {
   // What the chosen bike - or the garage - needs doing, or the all-clear. A garage with no
   // bikes has nothing to track, so it gets neither.
   const attention = hasBikes ? <AttentionCard bikeId={bikeId} whenEmpty={<AllGoodCard />} /> : null;
+  // What is booked, above what is worn; hidden while nothing is planned.
+  const planned = hasBikes ? <PlannedCard bikeId={bikeId} /> : null;
   // A swipe across the content picks a bike, exactly as tapping its chip does.
   const swipeHandlers = useBikeSwipe(bikes ?? [], bikeId, setBikeId);
   // The list the previous bike left on screen dims until the new one lands, and the new one
@@ -89,7 +92,12 @@ export function Service(): ReactElement {
               forBike={bikeId !== null || bikes?.length === 1}
               forGarage
               compact
-              header={<Box pt={12}>{attention}</Box>}
+              header={
+                <Stack gap="sm" pt={12}>
+                  {planned}
+                  {attention}
+                </Stack>
+              }
             />
           </Box>
         </Box>
@@ -109,6 +117,7 @@ export function Service(): ReactElement {
       <Box style={SWIPE_AREA_STYLE} {...swipeHandlers}>
         <Box key={panel.key} className={panel.className} style={panel.style}>
           <Stack gap="sm" className="m-3">
+            {planned}
             {attention}
 
             <Text fw={600} fz={15} c="text.7">

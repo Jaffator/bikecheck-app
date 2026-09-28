@@ -1,6 +1,6 @@
 // One Tracked Action in full: the reading the row showed, the one button that records the
-// job, and the two things about it that had nowhere else to live — the Service Interval it
-// is measured against, and whether it announces itself (ADR 0032, ADR 0034).
+// job, and what had nowhere else to live — the day it is planned for, the Service Interval it
+// is measured against, and whether it announces itself (ADR 0032, ADR 0034, ADR 0038).
 // Opened from the bike's own page and from the dashboard alike, so a row that looks the
 // same behaves the same wherever it is met.
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
@@ -8,7 +8,7 @@ import { ActionIcon, Box, Button, Divider, Group, NumberInput, Progress, Stack, 
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { Minus, Plus, RotateCcw, X } from "lucide-react";
+import { ChevronRight, Minus, Plus, RotateCcw, X } from "lucide-react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
@@ -24,9 +24,11 @@ import {
   intervalStep,
   remainingWear,
 } from "@/features/service_tracking/intervalFigures";
+import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { useSetTrackedActionInterval, useSetTrackedActionNotify } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import { PlanSheet } from "./PlanSheet";
 
 // The same layer every other sheet stands on, so overlays never fight the FAB.
 const SHEET_Z_INDEX = 300;
@@ -91,6 +93,7 @@ function Body({
 }): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [planning, setPlanning] = useState(false);
 
   const job = catalogueLabel(action.action_i18n_key, action.action_name, t);
 
@@ -114,10 +117,54 @@ function Body({
 
       <Stack gap={0}>
         <Divider color="var(--mantine-color-inputs-5)" />
+        <PlanSetting
+          action={action}
+          onTap={() => {
+            setPlanning(true);
+          }}
+        />
         <IntervalSetting action={action} onWritten={onWritten} />
         <AnnounceSetting action={action} onWritten={onWritten} />
       </Stack>
+
+      <PlanSheet
+        action={planning ? action : null}
+        onClose={() => {
+          setPlanning(false);
+        }}
+        onWritten={onWritten}
+      />
     </Stack>
+  );
+}
+
+// The day the owner means to do the job, or Not planned; the row opens the calendar.
+function PlanSetting({ action, onTap }: { action: TrackedAction; onTap: () => void }): ReactElement {
+  const { t, i18n } = useTranslation();
+  const planned = action.planned_for;
+
+  return (
+    <SettingRow
+      label={t("tracking.plannedFor")}
+      badge={null}
+      onTap={onTap}
+      value={
+        <Group gap={6} wrap="nowrap" align="center">
+          {planned === null ? (
+            <Text fz={13} c="var(--color-text-dim)">
+              {t("tracking.notPlanned")}
+            </Text>
+          ) : (
+            <Text className="font-mono" fz={13} c={isPlanPassed(planned) ? PASSED_PLAN_COLOR : "text.7"}>
+              {planDayLabel(planned, i18n.language)}
+            </Text>
+          )}
+          <ChevronRight size={16} color="var(--color-text-dim)" />
+        </Group>
+      }
+      hint={null}
+      error={null}
+    />
   );
 }
 

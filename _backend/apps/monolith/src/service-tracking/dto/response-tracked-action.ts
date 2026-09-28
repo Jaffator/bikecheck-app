@@ -90,6 +90,15 @@ export class Response_TrackedActionDto {
   mounted_at!: Date | null;
 
   @ApiProperty({
+    type: String,
+    format: 'date',
+    example: '2026-10-04',
+    nullable: true,
+    description: 'The day the owner means to do the job (YYYY-MM-DD), until a Service records it',
+  })
+  planned_for!: string | null;
+
+  @ApiProperty({
     example: true,
     description: 'The action replaces the part rather than servicing it, which names the button that records it',
   })

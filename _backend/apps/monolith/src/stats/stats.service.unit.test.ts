@@ -69,7 +69,6 @@ function reading(
       percentage: wear.percentage,
       level: wear.level ?? 'good',
     },
-    postponed: false,
     wearBaselineAt: wearBaselineAt === null ? null : new Date(wearBaselineAt),
   };
 }
@@ -912,18 +911,6 @@ describe('StatsService', () => {
         [4, '2027-04-23'],
         [7, '2027-07-02'],
       ]);
-    });
-
-    // Putting a job off hides it from the to-do list, not from the wear.
-    it('keeps a postponed Tracked Action', async () => {
-      // ARRANGE
-      readings = [{ ...reading(RALLON, { current: 800, interval: 1000, percentage: 80 }), postponed: true }];
-
-      // ACT
-      const { items } = await stats.getWearForecast(OWNER_ID);
-
-      // ASSERT
-      expect(items).toHaveLength(1);
     });
   });
 });

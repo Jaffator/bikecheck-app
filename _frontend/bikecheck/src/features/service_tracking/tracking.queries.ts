@@ -11,15 +11,15 @@ import {
 import {
   getBikeTrackedActions,
   getGarageTrackedActions,
-  postponeTrackedAction,
   setTrackedActionInterval,
   setTrackedActionNotify,
+  setTrackedActionPlan,
 } from "./tracking.api";
 import type {
   GarageTrackedAction,
-  PostponeTrackedActionInput,
   SetTrackedActionIntervalInput,
   SetTrackedActionNotifyInput,
+  SetTrackedActionPlanInput,
   TrackedAction,
 } from "./tracking.types";
 
@@ -76,13 +76,12 @@ export function useSetTrackedActionNotify(): UseMutationResult<TrackedAction, Er
   });
 }
 
-// Putting a job off moves no reading either — what it moves is which list the job appears
-// on, so the garage read has to be taken again for the row to go.
-export function usePostponeTrackedAction(): UseMutationResult<TrackedAction, Error, PostponeTrackedActionInput> {
+// A plan moves no reading, but every card draws its day - so the lists are dropped too.
+export function useSetTrackedActionPlan(): UseMutationResult<TrackedAction, Error, SetTrackedActionPlanInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: PostponeTrackedActionInput) => postponeTrackedAction(input),
+    mutationFn: (input: SetTrackedActionPlanInput) => setTrackedActionPlan(input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
     },

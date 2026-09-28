@@ -78,3 +78,10 @@ Extension. Going silent about a part still on the bike is the app deciding the o
   debounced instead, because it re-evaluates the whole bike and may announce.
 - ADR 0032's third control and ADR 0033's Extension consequences are superseded by this. What those
   say about the Interval Override, about muting, and about the Replacement copy still stands.
+
+## Note 2026-09-28: Postpone came back, and ADR 0038 removes it
+
+A Postpone by band returned one day after this decision (the 23 September `postponed_band`
+migration), with no ADR of its own: it hid a job from Needs attention until the reading reached
+the next band. ADR 0038 removes it and plans a Tracked Action for a day instead, which puts
+nothing off.

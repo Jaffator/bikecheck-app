@@ -1,9 +1,9 @@
-// Desktop Home's Needs attention, worst first; a row opens the Tracked Action drawer, its button logs the Action.
+// Desktop Home's Needs attention, worst first; a row opens the Tracked Action drawer, its buttons log or plan the Action.
 import { useState, type ReactElement } from "react";
 import { Box, Button, Center, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Check } from "lucide-react";
+import { CalendarDays, Check } from "lucide-react";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Panel, PanelSkeletonRows } from "@/components/Panel";
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, onPanelRowKey } from "@/components/panelRows";
@@ -22,10 +22,12 @@ import {
   trackedPartLabel,
 } from "@/features/service_tracking/attentionLevel";
 import { readingFigure, remainingFigure } from "@/features/service_tracking/intervalFigures";
+import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
 import { useNextReplacement, type NextReplacementView } from "@/features/stats/nextReplacement";
+import { PlanSheet } from "./PlanSheet";
 import { TrackedActionDrawer } from "./TrackedActionDrawer";
 
 const JOB_COLUMNS = "minmax(0, 1fr) 130px 104px 136px";
@@ -40,6 +42,7 @@ export function JobsPanel(): ReactElement {
   const { data: bikes } = useBikes();
   const parts = useGarageComponents((bikes ?? []).map((bike) => bike.id));
   const [opened, setOpened] = useState<TrackedAction | null>(null);
+  const [planning, setPlanning] = useState<TrackedAction | null>(null);
 
   const rows = [...(due ?? [])].sort((left, right) => right.percentage - left.percentage);
   const fine = due === undefined || parts === undefined ? 0 : fineParts(parts, due);
@@ -53,7 +56,12 @@ export function JobsPanel(): ReactElement {
       {due === undefined && <PanelSkeletonRows count={4} />}
       {due !== undefined && rows.length === 0 && <NothingDue onOpen={setOpened} />}
       {rows.map((action) => (
-        <JobRow key={trackedActionKey(action)} action={action} onOpen={() => setOpened(action)} />
+        <JobRow
+          key={trackedActionKey(action)}
+          action={action}
+          onOpen={() => setOpened(action)}
+          onPlan={() => setPlanning(action)}
+        />
       ))}
       {rows.length > 0 && fine > 0 && (
         <Text fz={13} c="var(--color-text-dim)" px="md" py={10} style={{ borderTop: PANEL_HAIRLINE }}>
@@ -61,12 +69,21 @@ export function JobsPanel(): ReactElement {
         </Text>
       )}
       <TrackedActionDrawer action={opened} onClose={() => setOpened(null)} />
+      <PlanSheet action={planning} onClose={() => setPlanning(null)} />
     </Panel>
   );
 }
 
-// Carries its own button, so it does not press - docs/ui/card-surface.md.
-function JobRow({ action, onOpen }: { action: GarageTrackedAction; onOpen: () => void }): ReactElement {
+// Carries its own buttons, so it does not press - docs/ui/card-surface.md.
+function JobRow({
+  action,
+  onOpen,
+  onPlan,
+}: {
+  action: GarageTrackedAction;
+  onOpen: () => void;
+  onPlan: () => void;
+}): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: bikes } = useBikes();
@@ -119,21 +136,49 @@ function JobRow({ action, onOpen }: { action: GarageTrackedAction; onOpen: () =>
       <Text className="font-mono" fz={13} c="var(--color-text-dim)" ta="right" lineClamp={1}>
         {remainingLabel(action, i18n.language, t)}
       </Text>
-      <Button
-        fullWidth
-        size="xs"
-        radius="md"
-        variant={urgent ? "filled" : "outline"}
-        color={urgent ? "primary.6" : undefined}
-        c={urgent ? "textDark.6" : undefined}
-        onClick={(event) => {
-          event.stopPropagation();
-          navigate(trackedActionServiceLink(action));
-        }}
-      >
-        {t(action.replace_action ? "tracking.logReplacement" : "tracking.logService")}
-      </Button>
+      {/* Stacked rather than side by side: a second column would squeeze the job's name to nothing at lg. */}
+      <Stack gap={6}>
+        <Button
+          fullWidth
+          size="xs"
+          radius="md"
+          variant={urgent ? "filled" : "outline"}
+          color={urgent ? "primary.6" : undefined}
+          c={urgent ? "textDark.6" : undefined}
+          onClick={(event) => {
+            event.stopPropagation();
+            navigate(trackedActionServiceLink(action));
+          }}
+        >
+          {t(action.replace_action ? "tracking.logReplacement" : "tracking.logService")}
+        </Button>
+        <PlanButton planned={action.planned_for} onPlan={onPlan} />
+      </Stack>
     </Box>
+  );
+}
+
+// Plan, or the planned day in the same frame - the date is also the control.
+function PlanButton({ planned, onPlan }: { planned: string | null; onPlan: () => void }): ReactElement {
+  const { t, i18n } = useTranslation();
+  const passed = planned !== null && isPlanPassed(planned);
+
+  return (
+    <Button
+      fullWidth
+      size="xs"
+      radius="md"
+      variant="outline"
+      c={passed ? PASSED_PLAN_COLOR : undefined}
+      className={planned === null ? undefined : "font-mono"}
+      leftSection={<CalendarDays size={14} color={passed ? PASSED_PLAN_COLOR : "var(--mantine-color-primary-6)"} />}
+      onClick={(event) => {
+        event.stopPropagation();
+        onPlan();
+      }}
+    >
+      {planned === null ? t("tracking.plan") : planDayLabel(planned, i18n.language)}
+    </Button>
   );
 }
 

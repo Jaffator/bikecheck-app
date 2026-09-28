@@ -1678,11 +1678,19 @@
           "type": "boolean",
           "default": true
         },
-        "postponed_band": {
+        "planned_for": {
           "type": [
-            "integer",
+            "string",
             "null"
-          ]
+          ],
+          "format": "date-time"
+        },
+        "planned_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
         },
         "created_at": {
           "type": "string",

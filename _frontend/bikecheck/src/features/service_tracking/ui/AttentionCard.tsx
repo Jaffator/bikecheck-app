@@ -11,6 +11,7 @@ import { Wrench } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
 import { AttentionRow } from "./AttentionRow";
+import { PlanSheet } from "./PlanSheet";
 import { TrackedActionDrawer } from "./TrackedActionDrawer";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
@@ -51,6 +52,7 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
   // The reading the drawer is open on, or null while it is closed. Held here rather than
   // per card, so however many cards stand there is only ever one sheet.
   const [opened, setOpened] = useState<TrackedAction | null>(null);
+  const [planning, setPlanning] = useState<TrackedAction | null>(null);
 
   // Not loaded yet says nothing either way, so neither the list nor the all-clear shows.
   if (!garage) return null;
@@ -59,12 +61,20 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
   if (actions.length === 0) return <>{whenEmpty ?? null}</>;
 
   const drawer = (
-    <TrackedActionDrawer
-      action={opened}
-      onClose={() => {
-        setOpened(null);
-      }}
-    />
+    <>
+      <TrackedActionDrawer
+        action={opened}
+        onClose={() => {
+          setOpened(null);
+        }}
+      />
+      <PlanSheet
+        action={planning}
+        onClose={() => {
+          setPlanning(null);
+        }}
+      />
+    </>
   );
 
   // Narrowed to one bike, the page already says which — so the card keeps the heading it
@@ -83,6 +93,7 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
           }
           actions={actions}
           onOpen={setOpened}
+          onPlan={setPlanning}
         />
         {drawer}
       </>
@@ -103,6 +114,7 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
           }
           actions={group.actions}
           onOpen={setOpened}
+          onPlan={setPlanning}
         />
       ))}
       {drawer}
@@ -115,10 +127,12 @@ function AttentionPaper({
   heading,
   actions,
   onOpen,
+  onPlan,
 }: {
   heading: ReactNode;
   actions: GarageTrackedAction[];
   onOpen: (action: TrackedAction) => void;
+  onPlan: (action: TrackedAction) => void;
 }): ReactElement {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -152,6 +166,9 @@ function AttentionPaper({
                 action={action}
                 onOpen={() => {
                   onOpen(action);
+                }}
+                onPlan={() => {
+                  onPlan(action);
                 }}
               />
             </Fragment>

@@ -716,7 +716,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ResponseBikeDto"
+                    "$ref": "#/components/schemas/ResponseListedBikeDto"
                   }
                 }
               }
@@ -1250,6 +1250,30 @@
         ]
       }
     },
+    "/api/bike-events/shops": {
+      "get": {
+        "operationId": "BikeEvent shops",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
     "/api/bike-events/{id}": {
       "get": {
         "operationId": "BikeEvent findOne",
@@ -1475,16 +1499,16 @@
         ]
       }
     },
-    "/api/service-tracking/postpone": {
+    "/api/service-tracking/notify": {
       "post": {
-        "operationId": "ServiceTracking postponeTrackedAction",
+        "operationId": "ServiceTracking setTrackedActionNotify",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PostponeTrackedActionDto"
+                "$ref": "#/components/schemas/SetTrackedActionNotifyDto"
               }
             }
           }
@@ -1506,16 +1530,16 @@
         ]
       }
     },
-    "/api/service-tracking/notify": {
+    "/api/service-tracking/plan": {
       "post": {
-        "operationId": "ServiceTracking setTrackedActionNotify",
+        "operationId": "ServiceTracking setTrackedActionPlan",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetTrackedActionNotifyDto"
+                "$ref": "#/components/schemas/SetTrackedActionPlanDto"
               }
             }
           }
@@ -3597,6 +3621,99 @@
           "Preview"
         ]
       }
+    },
+    "/api/stats/spend": {
+      "get": {
+        "operationId": "Stats getSpend",
+        "parameters": [
+          {
+            "name": "period",
+            "required": false,
+            "in": "query",
+            "description": "Omitted: this year, or last year while this one has nothing priced",
+            "schema": {
+              "enum": [
+                "month",
+                "year",
+                "all"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_SpendDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Stats"
+        ]
+      }
+    },
+    "/api/stats/distance": {
+      "get": {
+        "operationId": "Stats getDistance",
+        "parameters": [
+          {
+            "name": "period",
+            "required": false,
+            "in": "query",
+            "description": "Omitted: this year, or last year while this one has no ride",
+            "schema": {
+              "enum": [
+                "month",
+                "year",
+                "all"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_DistanceDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Stats"
+        ]
+      }
+    },
+    "/api/stats/wear-forecast": {
+      "get": {
+        "operationId": "Stats getWearForecast",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_WearForecastDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Stats"
+        ]
+      }
     }
   },
   "info": {
@@ -4466,6 +4583,201 @@
           "bikeModels"
         ]
       },
+      "ResponseListedBikeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "user_id": {
+            "type": "number",
+            "example": 15
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": true
+          },
+          "organization_id": {
+            "type": "object",
+            "example": 10,
+            "nullable": true
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Specialized",
+            "nullable": true
+          },
+          "bike_model": {
+            "type": "object",
+            "example": "Stumpjumper",
+            "nullable": true
+          },
+          "image_url": {
+            "type": "object",
+            "example": "https://example.com/bike-image.jpg",
+            "nullable": true
+          },
+          "bike_type_id": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          },
+          "bike_type": {
+            "type": "object",
+            "example": "Enduro",
+            "nullable": true
+          },
+          "bikename": {
+            "type": "object",
+            "example": "Tarmac SL7",
+            "nullable": true
+          },
+          "year": {
+            "type": "object",
+            "example": 2024,
+            "nullable": true
+          },
+          "description": {
+            "type": "object",
+            "example": "Serviced bike, top health",
+            "nullable": true
+          },
+          "wheel_size": {
+            "type": "object",
+            "example": "29\"",
+            "nullable": true
+          },
+          "bike_size": {
+            "type": "object",
+            "example": "L",
+            "nullable": true
+          },
+          "total_km": {
+            "type": "object",
+            "example": 1540,
+            "nullable": true
+          },
+          "total_time_min": {
+            "type": "object",
+            "example": 3600,
+            "nullable": true
+          },
+          "bike_weight_kg": {
+            "type": "object",
+            "example": 7.25,
+            "nullable": true
+          },
+          "total_elevation_m": {
+            "type": "object",
+            "example": 15623,
+            "nullable": true
+          },
+          "has_front_suspension": {
+            "type": "boolean",
+            "example": false
+          },
+          "has_rear_suspension": {
+            "type": "boolean",
+            "example": false
+          },
+          "created_at": {
+            "type": "object",
+            "example": "2024-01-01T12:00:00.000Z",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "object",
+            "example": "2024-01-02T12:00:00.000Z",
+            "nullable": true
+          },
+          "frame_material": {
+            "type": "object",
+            "example": "Carbon",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "example": false,
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "strava_gear_id": {
+            "type": "object",
+            "example": "b12345678",
+            "nullable": true
+          },
+          "strava_name": {
+            "type": "object",
+            "example": "My Enduro Bike",
+            "nullable": true
+          },
+          "active_setup_profile_id": {
+            "type": "object",
+            "example": 12,
+            "nullable": true,
+            "description": "The Setup Profile the bike is ridden at right now"
+          },
+          "is_shared": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the bike goes out on the owner's Public Profile"
+          },
+          "color_index": {
+            "type": "number",
+            "example": 0,
+            "description": "Rank by id among all the owner's bikes, archived included, so a colour never shifts"
+          },
+          "ride_count": {
+            "type": "number",
+            "example": 42,
+            "description": "Non-deleted rides, lifetime"
+          },
+          "ride_time_min": {
+            "type": "number",
+            "example": 3180,
+            "description": "Sum of those rides' duration_min; total_time_min is only what the owner typed"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "ebike",
+          "organization_id",
+          "bike_brand",
+          "bike_model",
+          "image_url",
+          "bike_type_id",
+          "bike_type",
+          "bikename",
+          "year",
+          "description",
+          "wheel_size",
+          "bike_size",
+          "total_km",
+          "total_time_min",
+          "bike_weight_kg",
+          "total_elevation_m",
+          "has_front_suspension",
+          "has_rear_suspension",
+          "created_at",
+          "updated_at",
+          "frame_material",
+          "is_deleted",
+          "deleted_at",
+          "strava_gear_id",
+          "strava_name",
+          "active_setup_profile_id",
+          "is_shared",
+          "color_index",
+          "ride_count",
+          "ride_time_min"
+        ]
+      },
       "Attachment_BikeEventDto": {
         "type": "object",
         "properties": {
@@ -4543,6 +4855,17 @@
           "service_date": {
             "type": "string",
             "example": "2026-07-01T00:00:00.000Z"
+          },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ]
+          },
+          "shop_name": {
+            "type": "string",
+            "example": "Bike Centrum"
           },
           "attachment": {
             "nullable": true,
@@ -4800,6 +5123,21 @@
             "type": "object",
             "nullable": true
           },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ],
+            "nullable": true,
+            "description": "Null on a Service recorded before the Place existed"
+          },
+          "shop_name": {
+            "type": "object",
+            "example": "Bike Centrum",
+            "nullable": true,
+            "description": "Only ever on a SHOP; null is a shop with no name"
+          },
           "created_at": {
             "format": "date-time",
             "type": "string"
@@ -4830,6 +5168,8 @@
           "note",
           "total_cost",
           "service_date",
+          "place",
+          "shop_name",
           "created_at",
           "updated_at",
           "actions_done",
@@ -5050,6 +5390,21 @@
             "type": "object",
             "example": 350.5,
             "nullable": true
+          },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ],
+            "nullable": true,
+            "description": "Null on a Service recorded before the Place existed"
+          },
+          "shop_name": {
+            "type": "object",
+            "example": "Bike Centrum",
+            "nullable": true,
+            "description": "Only ever on a SHOP; null is a shop with no name"
           }
         },
         "required": [
@@ -5059,7 +5414,9 @@
           "service_date",
           "action_count",
           "actions",
-          "total_cost"
+          "total_cost",
+          "place",
+          "shop_name"
         ]
       },
       "Response_ServiceHistory_Dto": {
@@ -5179,6 +5536,19 @@
           "service_date": {
             "type": "string",
             "example": "2026-07-01T00:00:00.000Z"
+          },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ],
+            "nullable": true
+          },
+          "shop_name": {
+            "type": "object",
+            "example": "Bike Centrum",
+            "nullable": true
           },
           "actions_updated": {
             "type": "array",
@@ -5350,6 +5720,13 @@
             "nullable": true,
             "description": "When the part went on the bike, which the reading is judged against"
           },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "The day the owner means to do the job (YYYY-MM-DD), until a Service records it"
+          },
           "replace_action": {
             "type": "boolean",
             "example": true,
@@ -5378,6 +5755,7 @@
           "interval_override",
           "notify",
           "mounted_at",
+          "planned_for",
           "replace_action"
         ]
       },
@@ -5503,6 +5881,13 @@
             "nullable": true,
             "description": "When the part went on the bike, which the reading is judged against"
           },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "The day the owner means to do the job (YYYY-MM-DD), until a Service records it"
+          },
           "replace_action": {
             "type": "boolean",
             "example": true,
@@ -5545,6 +5930,7 @@
           "interval_override",
           "notify",
           "mounted_at",
+          "planned_for",
           "replace_action",
           "bike_brand",
           "bike_model",
@@ -5575,23 +5961,6 @@
           "interval_override"
         ]
       },
-      "PostponeTrackedActionDto": {
-        "type": "object",
-        "properties": {
-          "component_mounted_id": {
-            "type": "number",
-            "example": 55
-          },
-          "event_action_id": {
-            "type": "number",
-            "example": 42
-          }
-        },
-        "required": [
-          "component_mounted_id",
-          "event_action_id"
-        ]
-      },
       "SetTrackedActionNotifyDto": {
         "type": "object",
         "properties": {
@@ -5612,6 +5981,31 @@
           "component_mounted_id",
           "event_action_id",
           "notify"
+        ]
+      },
+      "SetTrackedActionPlanDto": {
+        "type": "object",
+        "properties": {
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "YYYY-MM-DD, today or later; null removes the plan"
+          }
+        },
+        "required": [
+          "component_mounted_id",
+          "event_action_id",
+          "planned_for"
         ]
       },
       "CustomComponentsDto": {
@@ -6267,6 +6661,88 @@
           "bikeId"
         ]
       },
+      "Response_WoreOffLineDto": {
+        "type": "object",
+        "properties": {
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Chain"
+          },
+          "component_type_i18n_key": {
+            "type": "string",
+            "example": "component.chain",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "example": "front",
+            "nullable": true
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Chain Replacement"
+          },
+          "action_i18n_key": {
+            "type": "string",
+            "example": "action.chainReplacement",
+            "nullable": true
+          },
+          "measure": {
+            "type": "string",
+            "enum": [
+              "total_km",
+              "drivetrain_km",
+              "total_time_min",
+              "suspension_min",
+              "health_index"
+            ],
+            "example": "drivetrain_km",
+            "description": "Which accumulator the reading was taken from, which is not implied by the axis"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": true,
+            "description": "The action replaces the part rather than servicing it, which names the button that records it"
+          },
+          "amount": {
+            "type": "number",
+            "example": 32,
+            "description": "The ride's own wear on the reading's measure: km, minutes or index"
+          },
+          "before": {
+            "type": "number",
+            "example": 94,
+            "description": "Whole percent of the way to due before the ride"
+          },
+          "after": {
+            "type": "number",
+            "example": 95,
+            "description": "Whole percent of the way to due once the ride ended"
+          }
+        },
+        "required": [
+          "component_mounted_id",
+          "component_type",
+          "component_type_i18n_key",
+          "position",
+          "event_action_id",
+          "action_name",
+          "action_i18n_key",
+          "measure",
+          "replace_action",
+          "amount",
+          "before",
+          "after"
+        ]
+      },
       "ResponseRideDto": {
         "type": "object",
         "properties": {
@@ -6331,6 +6807,12 @@
             "type": "object",
             "example": "ki}fHuqrbBGx@_@lAsA|Bi@n@",
             "nullable": true
+          },
+          "wore_off": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_WoreOffLineDto"
+            }
           }
         },
         "required": [
@@ -6346,7 +6828,8 @@
           "elevation_down_m",
           "speed_avg",
           "max_speed_kmh",
-          "summary_polyline"
+          "summary_polyline",
+          "wore_off"
         ]
       },
       "ResponseRidePageDto": {
@@ -7998,6 +8481,453 @@
         },
         "required": [
           "relation"
+        ]
+      },
+      "Response_SpendCategoryDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "group:3",
+            "description": "\"group:<id>\", \"other\" or \"unassigned\""
+          },
+          "component_group_id": {
+            "type": "number",
+            "example": 3,
+            "nullable": true
+          },
+          "group_name": {
+            "type": "string",
+            "example": "Suspension",
+            "nullable": true
+          },
+          "i18n_key": {
+            "type": "string",
+            "example": "componentGroup.suspension",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "example": 6800
+          }
+        },
+        "required": [
+          "key",
+          "component_group_id",
+          "group_name",
+          "i18n_key",
+          "amount"
+        ]
+      },
+      "Response_SpendBikeDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 21
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Santa Cruz"
+          },
+          "bike_model": {
+            "type": "string",
+            "example": "Hightower",
+            "nullable": true
+          },
+          "year": {
+            "type": "number",
+            "example": 2022,
+            "nullable": true
+          },
+          "total": {
+            "type": "number",
+            "example": 9200
+          }
+        },
+        "required": [
+          "bike_id",
+          "bike_brand",
+          "bike_model",
+          "year",
+          "total"
+        ]
+      },
+      "Response_SpendDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "example": "2026-01-01",
+            "nullable": true,
+            "description": "First Service Date counted, inclusive; null is an open end"
+          },
+          "to": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "Last Service Date counted, inclusive; null is an open end. Both null counts undated Services too"
+          },
+          "currency": {
+            "type": "string",
+            "example": "CZK",
+            "nullable": true
+          },
+          "total": {
+            "type": "number",
+            "example": 14860,
+            "description": "Equals History Totals for from/to across all bikes"
+          },
+          "categories": {
+            "description": "Top 3 categories, then other, then unassigned; non-zero only",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_SpendCategoryDto"
+            }
+          },
+          "bikes": {
+            "description": "Bikes with spend, highest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_SpendBikeDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "total",
+          "categories",
+          "bikes"
+        ]
+      },
+      "Response_DistanceBikeDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 21
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Santa Cruz"
+          },
+          "bike_model": {
+            "type": "string",
+            "example": "Hightower",
+            "nullable": true
+          },
+          "year": {
+            "type": "number",
+            "example": 2022,
+            "nullable": true
+          },
+          "color_index": {
+            "type": "number",
+            "example": 0,
+            "description": "Rank by id among all the owner's bikes, archived included, so a colour never shifts"
+          },
+          "daily_m": {
+            "example": [
+              0,
+              12400,
+              0,
+              38200
+            ],
+            "description": "Metres per UTC day, index 0 = from, one entry per day through to",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "total_km": {
+            "type": "number",
+            "example": 51,
+            "description": "Whole km of the sum of daily_m"
+          },
+          "ride_count": {
+            "type": "number",
+            "example": 4,
+            "description": "Rides started in the window"
+          },
+          "time_min": {
+            "type": "number",
+            "example": 312,
+            "description": "The sum of those rides' duration_min"
+          }
+        },
+        "required": [
+          "bike_id",
+          "bike_brand",
+          "bike_model",
+          "year",
+          "color_index",
+          "daily_m",
+          "total_km",
+          "ride_count",
+          "time_min"
+        ]
+      },
+      "Response_DistanceDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "example": "2026-01-01",
+            "description": "First UTC day daily_m covers, inclusive"
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-09-28",
+            "description": "Last UTC day daily_m covers, inclusive"
+          },
+          "bikes": {
+            "description": "Bikes with at least one ride in the window, highest total first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_DistanceBikeDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "bikes"
+        ]
+      },
+      "Response_WearPointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-20",
+            "description": "ISO date in UTC"
+          },
+          "percentage": {
+            "type": "number",
+            "example": 64,
+            "description": "Whole percent of the way to being due on that day, never below 0"
+          }
+        },
+        "required": [
+          "date",
+          "percentage"
+        ]
+      },
+      "Response_WearForecastItemDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 21,
+            "description": "The bike carrying the part, which a row opens"
+          },
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "component_type_id": {
+            "type": "number",
+            "example": 12
+          },
+          "component_group_id": {
+            "type": "number",
+            "example": 2,
+            "description": "The Component Category the part sits in, which a service link names"
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Chain"
+          },
+          "component_type_i18n_key": {
+            "type": "string",
+            "example": "component.chain",
+            "nullable": true
+          },
+          "component_desc": {
+            "type": "string",
+            "example": "Shimano XT M8100",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "example": "front",
+            "nullable": true
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Chain Replacement"
+          },
+          "action_i18n_key": {
+            "type": "string",
+            "example": "action.chainReplacement",
+            "nullable": true
+          },
+          "axis": {
+            "type": "string",
+            "enum": [
+              "km",
+              "min",
+              "health_index"
+            ],
+            "example": "km"
+          },
+          "measure": {
+            "type": "string",
+            "enum": [
+              "total_km",
+              "drivetrain_km",
+              "total_time_min",
+              "suspension_min",
+              "health_index"
+            ],
+            "example": "drivetrain_km",
+            "description": "Which accumulator the reading was taken from, which is not implied by the axis"
+          },
+          "current": {
+            "type": "number",
+            "example": 3200,
+            "description": "Wear on that axis since the Wear Baseline"
+          },
+          "interval": {
+            "type": "number",
+            "example": 4000,
+            "description": "The Service Interval in force on that axis: the owner's own where they set one"
+          },
+          "percentage": {
+            "type": "number",
+            "example": 80,
+            "description": "Whole percent of the way to being due. Never capped"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "very_good",
+              "good",
+              "warning",
+              "critical",
+              "overdue"
+            ],
+            "example": "warning"
+          },
+          "default_interval": {
+            "type": "number",
+            "example": 4000,
+            "description": "The bike's own plan on that axis, which clearing the override restores"
+          },
+          "interval_override": {
+            "type": "number",
+            "example": 2500,
+            "nullable": true,
+            "description": "The owner's own Service Interval, or null where the reading follows the bike's plan"
+          },
+          "notify": {
+            "type": "boolean",
+            "example": true,
+            "description": "False silences this pairing's announcements and nothing else"
+          },
+          "mounted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the part went on the bike, which the reading is judged against"
+          },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "The day the owner means to do the job (YYYY-MM-DD), until a Service records it"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": true,
+            "description": "The action replaces the part rather than servicing it, which names the button that records it"
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Santa Cruz"
+          },
+          "bike_model": {
+            "type": "string",
+            "example": "Hightower",
+            "nullable": true
+          },
+          "year": {
+            "type": "number",
+            "example": 2022,
+            "nullable": true
+          },
+          "pace_per_week": {
+            "type": "number",
+            "example": 42.5,
+            "nullable": true,
+            "description": "Wear per week at the last 4 weeks' pace, in the reading's unit; null when the bike was not ridden"
+          },
+          "projected_date": {
+            "type": "string",
+            "example": "2026-11-12",
+            "nullable": true,
+            "description": "When the reading reaches 100 % at that pace; null when overdue or without pace"
+          },
+          "points": {
+            "description": "From the Wear Baseline moment, each week end, then today at the current percentage",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_WearPointDto"
+            }
+          }
+        },
+        "required": [
+          "bike_id",
+          "component_mounted_id",
+          "component_type_id",
+          "component_group_id",
+          "component_type",
+          "component_type_i18n_key",
+          "component_desc",
+          "position",
+          "event_action_id",
+          "action_name",
+          "action_i18n_key",
+          "axis",
+          "measure",
+          "current",
+          "interval",
+          "percentage",
+          "level",
+          "default_interval",
+          "interval_override",
+          "notify",
+          "mounted_at",
+          "planned_for",
+          "replace_action",
+          "bike_brand",
+          "bike_model",
+          "year",
+          "pace_per_week",
+          "projected_date",
+          "points"
+        ]
+      },
+      "Response_WearForecastDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Up to 5, soonest to run out first, overdue first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_WearForecastItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       }
     }
