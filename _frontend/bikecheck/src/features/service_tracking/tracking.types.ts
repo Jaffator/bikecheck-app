@@ -48,7 +48,7 @@ export interface TrackedAction {
   notify: boolean;
   // When the part went on the bike, which the reading is judged against.
   mounted_at: string | null;
-  // The day the owner means to do the job (YYYY-MM-DD); null once a Service records it (ADR 0038).
+  // The day the owner means to do this Tracked Action (YYYY-MM-DD); null once a Service records it (ADR 0038).
   planned_for: string | null;
   // Recording this job replaces the part rather than servicing it, which names the button.
   replace_action: boolean;

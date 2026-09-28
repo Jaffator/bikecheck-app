@@ -3,14 +3,15 @@
 // bike's own page on purpose — the dashboard lists work across the garage, so what it owes
 // each row is a glance, not the figures behind the reading.
 import type { ReactElement } from "react";
-import { Box, Button, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, AlertTriangle, ChevronRight, OctagonAlert } from "lucide-react";
+import { onPanelRowKey } from "@/components/panelRows";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
 import { axisUnit, axisValue, remainingWear } from "@/features/service_tracking/intervalFigures";
-import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import type { AttentionLevel, TrackedAction } from "@/features/service_tracking/tracking.types";
+import { PlanDayButton } from "./PlanDayButton";
 
 // The level said again in a shape, so a row is readable without its colour. Only the three
 // levels the dashboard lists are drawn; nothing quieter ever reaches this row.
@@ -45,11 +46,7 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
       role="button"
       tabIndex={0}
       onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        onOpen();
-      }}
+      onKeyDown={(event) => onPanelRowKey(event, onOpen)}
       className="hover-veil active:scale-[0.985]"
       style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
     >
@@ -70,7 +67,7 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
             unit an owner could hold, so it says nothing rather than a figure that means
             nothing. */}
         <Group gap="sm" wrap="nowrap" align="center">
-          <PlanButton planned={action.planned_for} onPlan={onPlan} />
+          <PlanDayButton planned={action.planned_for} onPlan={onPlan} />
           <Text
             className="font-mono"
             fz={11}
@@ -86,42 +83,6 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
         </Group>
       </Stack>
     </UnstyledButton>
-  );
-}
-
-// Plan, or the planned day once there is one - the date is also the control. A frame and nothing
-// else: the reading above it is what the owner came for.
-function PlanButton({ planned, onPlan }: { planned: string | null; onPlan: () => void }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const passed = planned !== null && isPlanPassed(planned);
-
-  return (
-    <Box style={{ flexShrink: 0 }}>
-      <Button
-        size="compact-xs"
-        variant="subtle"
-        color="gray"
-        radius="sm"
-        className="font-mono"
-        fz={11}
-        tt="uppercase"
-        styles={{
-          label: { letterSpacing: "0.08em" },
-          root: {
-            color: passed ? PASSED_PLAN_COLOR : "var(--mantine-color-text-8)",
-            border: "1px solid var(--mantine-color-inputs-5)",
-            backgroundColor: "transparent",
-          },
-        }}
-        onClick={(event) => {
-          // The row around it opens the drawer; planning does not.
-          event.stopPropagation();
-          onPlan();
-        }}
-      >
-        {planned === null ? t("tracking.plan") : planDayLabel(planned, i18n.language)}
-      </Button>
-    </Box>
   );
 }
 

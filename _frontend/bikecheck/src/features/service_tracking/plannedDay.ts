@@ -9,7 +9,7 @@ const PLAN_DAY_BY_LANGUAGE: Record<string, string> = {
   en: "ddd D MMM",
 };
 
-// A passed plan wears the warning level's colour until the job is recorded or the plan moves.
+// A passed plan wears the warning level's colour until the Action is recorded or the plan moves.
 export const PASSED_PLAN_COLOR = attentionColor(DUE_FROM);
 
 export function planDayLabel(day: string, language: string): string {

@@ -94,7 +94,7 @@ export class Response_TrackedActionDto {
     format: 'date',
     example: '2026-10-04',
     nullable: true,
-    description: 'The day the owner means to do the job (YYYY-MM-DD), until a Service records it',
+    description: 'The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it',
   })
   planned_for!: string | null;
 

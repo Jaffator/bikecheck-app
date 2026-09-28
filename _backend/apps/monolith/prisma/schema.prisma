@@ -539,12 +539,12 @@ model tracked_action_state {
   // False silences this pairing's announcements and nothing else - the reading still reads,
   // the colour still warns and the dashboard still lists it. Survives a Replacement.
   notify                  Boolean            @default(true)
-  // The day the owner means to do this job (ADR 0038). Cycle state: served only until a
-  // Service records the job after `planned_at`, and never copied by a Replacement.
+  // The day the owner means to do this Tracked Action (ADR 0038). Cycle state: served only until
+  // a Service records the Action after `planned_at`, and never copied by a Replacement.
   planned_for             DateTime?          @db.Date
   // When the plan was set; written and cleared with `planned_for`, never served.
   planned_at              DateTime?          @db.Timestamptz(6)
-  created_at             DateTime           @default(now())
+  created_at              DateTime           @default(now())
   updated_at              DateTime           @updatedAt
   components_mounted      components_mounted @relation(fields: [component_mounted_id], references: [id], onDelete: Cascade)
   events_action           events_action      @relation(fields: [event_actions_id], references: [id], onDelete: Cascade)

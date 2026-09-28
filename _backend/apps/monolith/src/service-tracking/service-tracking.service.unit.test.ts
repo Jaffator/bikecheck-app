@@ -1728,9 +1728,9 @@ describe('ServiceTrackingService', () => {
     });
   });
 
-  // A plan is a day and nothing else; it stands until a Service records the job after it was set.
+  // A plan is a day and nothing else; it stands until a Service records the Action after it was set.
   describe('a planned Tracked Action', () => {
-    const PLAN = [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])];
+    const INTERVALS = [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])];
     const PLANNED = { plannedFor: '2026-10-04', plannedAt: '2026-09-20T10:00:00.000Z' };
 
     // The chain with its plan, and whatever has been recorded against it.
@@ -1743,24 +1743,24 @@ describe('ServiceTrackingService', () => {
     }
 
     async function plannedFor(part: Record<string, unknown>): Promise<string | null> {
-      garage(PLAN, [part]);
+      garage(INTERVALS, [part]);
       const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
       return action.planned_for;
     }
 
-    it('serves the day while nothing has recorded the job since', async () => {
+    it('serves the day while nothing has recorded the Action since', async () => {
       expect(await plannedFor(plannedChain())).toBe('2026-10-04');
     });
 
-    // Doing the job early counts: any later day ends the plan, before the planned day or not.
-    it('ends at a Service of the job dated a later day than the plan was set', async () => {
+    // Doing the work early counts: any later day ends the plan, before the planned day or not.
+    it('ends at a Service of the Action dated a later day than the plan was set', async () => {
       const done = baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-25T00:00:00.000Z');
 
       expect(await plannedFor(plannedChain([done]))).toBeNull();
     });
 
     // Back-filling old work does not cancel a booking.
-    it('stands through a Service of the job dated an earlier day', async () => {
+    it('stands through a Service of the Action dated an earlier day', async () => {
       const old = baseline(
         CHAIN_REPLACEMENT,
         { drivetrainKm: 3000 },
@@ -1773,7 +1773,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // The same day is told apart by which was written last - the Wear Baseline's own tie-break.
-    it('ends at a Service of the job dated the same day and written after the plan', async () => {
+    it('ends at a Service of the Action dated the same day and written after the plan', async () => {
       const done = baseline(
         CHAIN_REPLACEMENT,
         { drivetrainKm: 3000 },
@@ -1785,7 +1785,7 @@ describe('ServiceTrackingService', () => {
       expect(await plannedFor(plannedChain([done]))).toBeNull();
     });
 
-    it('stands through a Service of the job dated the same day and written before the plan', async () => {
+    it('stands through a Service of the Action dated the same day and written before the plan', async () => {
       const done = baseline(
         CHAIN_REPLACEMENT,
         { drivetrainKm: 3000 },
@@ -1798,13 +1798,13 @@ describe('ServiceTrackingService', () => {
     });
 
     // The plan follows what is on record, so deleting the Service brings it back.
-    it('stands through a deleted Service of the job', async () => {
+    it('stands through a deleted Service of the Action', async () => {
       const deleted = baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-25T00:00:00.000Z', true);
 
       expect(await plannedFor(plannedChain([deleted]))).toBe('2026-10-04');
     });
 
-    it('stands through a Service of the job with no Service Date', async () => {
+    it('stands through a Service of the Action with no Service Date', async () => {
       const undated = baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-25T00:00:00.000Z');
       (undated.event_actions_done as { events_bikes: Record<string, unknown> }).events_bikes.service_date = null;
 
@@ -1856,10 +1856,10 @@ describe('ServiceTrackingService', () => {
     });
 
     // A plan touches no interval, so the reading is the same with or without it.
-    it('reads the same percentage, level and interval as the job unplanned', async () => {
-      garage(PLAN, [plannedChain()]);
+    it('reads the same percentage, level and interval as the Action unplanned', async () => {
+      garage(INTERVALS, [plannedChain()]);
       const [planned] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
-      garage(PLAN, [mountedPart({ drivetrain_km: 3200 })]);
+      garage(INTERVALS, [mountedPart({ drivetrain_km: 3200 })]);
       const [unplanned] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
 
       expect([planned.percentage, planned.level, planned.interval]).toEqual([80, 'warning', 4000]);
@@ -1868,7 +1868,7 @@ describe('ServiceTrackingService', () => {
 
     // The Planned card reads the garage list at 0, so a plan booked long before it is due is on it.
     it('carries the day on the garage list at any percentage', async () => {
-      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], PLAN, [
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], INTERVALS, [
         mountedPart({ drivetrain_km: 400, tracked_action_state: [settingRow(CHAIN_REPLACEMENT, PLANNED)] }),
       ]);
 
@@ -1879,7 +1879,7 @@ describe('ServiceTrackingService', () => {
   });
 
   describe('setTrackedActionPlan', () => {
-    const PLAN = [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])];
+    const INTERVALS = [intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])];
     const NOW = new Date('2026-09-28T09:30:00.000Z');
 
     beforeEach(() => {
@@ -1892,7 +1892,7 @@ describe('ServiceTrackingService', () => {
 
     it('sets the day, stamps when it was set and answers with the day', async () => {
       const parts = [mountedPart({ drivetrain_km: 3200 })];
-      garage(PLAN, parts);
+      garage(INTERVALS, parts);
       keepState(parts);
 
       const action = await service.setTrackedActionPlan(55, CHAIN_REPLACEMENT, OWNER_ID, '2026-10-04');
@@ -1912,7 +1912,7 @@ describe('ServiceTrackingService', () => {
           ],
         }),
       ];
-      garage(PLAN, parts);
+      garage(INTERVALS, parts);
       keepState(parts);
 
       const action = await service.setTrackedActionPlan(55, CHAIN_REPLACEMENT, OWNER_ID, '2026-10-11');
@@ -1931,7 +1931,7 @@ describe('ServiceTrackingService', () => {
           ],
         }),
       ];
-      garage(PLAN, parts);
+      garage(INTERVALS, parts);
       keepState(parts);
 
       const action = await service.setTrackedActionPlan(55, CHAIN_REPLACEMENT, OWNER_ID, null);
@@ -1944,7 +1944,7 @@ describe('ServiceTrackingService', () => {
     // Today is fine, and a plan always points forward from it.
     it('takes today', async () => {
       const parts = [mountedPart({ drivetrain_km: 3200 })];
-      garage(PLAN, parts);
+      garage(INTERVALS, parts);
       keepState(parts);
 
       const action = await service.setTrackedActionPlan(55, CHAIN_REPLACEMENT, OWNER_ID, '2026-09-28');
@@ -1953,7 +1953,7 @@ describe('ServiceTrackingService', () => {
     });
 
     it.each(['2026-09-27', '2026-02-30', 'soon', '2026-10-4'])('refuses %s and writes nothing', async (day) => {
-      garage(PLAN, [mountedPart({ drivetrain_km: 3200 })]);
+      garage(INTERVALS, [mountedPart({ drivetrain_km: 3200 })]);
 
       await expect(service.setTrackedActionPlan(55, CHAIN_REPLACEMENT, OWNER_ID, day)).rejects.toBeInstanceOf(
         BadRequestException,
@@ -1968,7 +1968,7 @@ describe('ServiceTrackingService', () => {
       ['a pairing with no interval', BIKE_ID, mountedPart({ drivetrain_km: 3200 }), TYRE_REPLACEMENT],
     ])('refuses %s', async (_, ownerBike, part, actionId) => {
       mockPrismaService.bikes.findFirst.mockResolvedValue(ownerBike === null ? null : { id: ownerBike });
-      garage(PLAN, [part]);
+      garage(INTERVALS, [part]);
 
       await expect(service.setTrackedActionPlan(55, actionId, OWNER_ID, '2026-10-04')).rejects.toBeInstanceOf(
         NotFoundException,
@@ -1979,7 +1979,7 @@ describe('ServiceTrackingService', () => {
     // Planning sends nothing on its own; every push is about wear.
     it('writes no band and announces nothing', async () => {
       const parts = [mountedPart({ drivetrain_km: 3800, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, 75)] })];
-      garage(PLAN, parts);
+      garage(INTERVALS, parts);
       keepState(parts);
 
       await service.setTrackedActionPlan(55, CHAIN_REPLACEMENT, OWNER_ID, '2026-10-04');

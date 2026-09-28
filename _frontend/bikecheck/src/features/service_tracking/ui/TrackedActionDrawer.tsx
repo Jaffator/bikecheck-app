@@ -1,5 +1,5 @@
 // One Tracked Action in full: the reading the row showed, the one button that records the
-// job, and what had nowhere else to live — the day it is planned for, the Service Interval it
+// Action, and what had nowhere else to live — the day it is planned for, the Service Interval it
 // is measured against, and whether it announces itself (ADR 0032, ADR 0034, ADR 0038).
 // Opened from the bike's own page and from the dashboard alike, so a row that looks the
 // same behaves the same wherever it is met.
@@ -138,7 +138,7 @@ function Body({
   );
 }
 
-// The day the owner means to do the job, or Not planned; the row opens the calendar.
+// The day the owner means to do the Action, or Not planned; the row opens the calendar.
 function PlanSetting({ action, onTap }: { action: TrackedAction; onTap: () => void }): ReactElement {
   const { t, i18n } = useTranslation();
   const planned = action.planned_for;

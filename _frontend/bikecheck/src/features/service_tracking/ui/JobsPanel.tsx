@@ -136,7 +136,7 @@ function JobRow({
       <Text className="font-mono" fz={13} c="var(--color-text-dim)" ta="right" lineClamp={1}>
         {remainingLabel(action, i18n.language, t)}
       </Text>
-      {/* Stacked rather than side by side: a second column would squeeze the job's name to nothing at lg. */}
+      {/* Stacked rather than side by side: a second column would squeeze the Action's name to nothing at lg. */}
       <Stack gap={6}>
         <Button
           fullWidth

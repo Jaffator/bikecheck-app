@@ -82,6 +82,6 @@ Extension. Going silent about a part still on the bike is the app deciding the o
 ## Note 2026-09-28: Postpone came back, and ADR 0038 removes it
 
 A Postpone by band returned one day after this decision (the 23 September `postponed_band`
-migration), with no ADR of its own: it hid a job from Needs attention until the reading reached
-the next band. ADR 0038 removes it and plans a Tracked Action for a day instead, which puts
+migration), with no ADR of its own: it hid a Tracked Action from Needs attention until the reading
+reached the next band. ADR 0038 removes it and plans a Tracked Action for a day instead, which puts
 nothing off.

@@ -5725,7 +5725,7 @@
             "format": "date",
             "example": "2026-10-04",
             "nullable": true,
-            "description": "The day the owner means to do the job (YYYY-MM-DD), until a Service records it"
+            "description": "The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it"
           },
           "replace_action": {
             "type": "boolean",
@@ -5886,7 +5886,7 @@
             "format": "date",
             "example": "2026-10-04",
             "nullable": true,
-            "description": "The day the owner means to do the job (YYYY-MM-DD), until a Service records it"
+            "description": "The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it"
           },
           "replace_action": {
             "type": "boolean",
@@ -8842,7 +8842,7 @@
             "format": "date",
             "example": "2026-10-04",
             "nullable": true,
-            "description": "The day the owner means to do the job (YYYY-MM-DD), until a Service records it"
+            "description": "The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it"
           },
           "replace_action": {
             "type": "boolean",

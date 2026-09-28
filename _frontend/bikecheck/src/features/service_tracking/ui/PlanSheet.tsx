@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import { trackedActionKey, trackedPartLabel } from "@/features/service_tracking/attentionLevel";
+import { trackedPartLabel } from "@/features/service_tracking/attentionLevel";
 import { isPlanPassed, localToday } from "@/features/service_tracking/plannedDay";
 import { useSetTrackedActionPlan } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
@@ -35,7 +35,7 @@ interface PlanSheetProps {
 }
 
 export function PlanSheet({ action, onClose, onWritten }: PlanSheetProps): ReactElement {
-  const shown = useLastAction(action);
+  const [shown, opening] = useLastAction(action);
 
   return (
     <ResponsiveSheet
@@ -47,14 +47,7 @@ export function PlanSheet({ action, onClose, onWritten }: PlanSheetProps): React
       styles={{ content: { height: "auto", maxHeight: "88dvh" }, body: { paddingTop: 0 } }}
     >
       {/* Remounted per opening, so a day picked and then cancelled never carries into the next one. */}
-      {shown !== null && (
-        <PlanBody
-          key={action === null ? "closed" : trackedActionKey(action)}
-          action={shown}
-          onClose={onClose}
-          onWritten={onWritten}
-        />
-      )}
+      {shown !== null && <PlanBody key={opening} action={shown} onClose={onClose} onWritten={onWritten} />}
     </ResponsiveSheet>
   );
 }
@@ -167,9 +160,18 @@ function PlanBody({
   );
 }
 
-// The last Tracked Action asked about, kept while the sheet slides away with it.
-function useLastAction(action: TrackedAction | null): TrackedAction | null {
+// The last Tracked Action asked about, kept while the sheet slides away, and which opening it is -
+// so the body stays put while closing instead of remounting on a stale snapshot.
+function useLastAction(action: TrackedAction | null): [TrackedAction | null, number] {
+  const [given, setGiven] = useState<TrackedAction | null>(action);
   const [last, setLast] = useState<TrackedAction | null>(action);
-  if (action !== null && action !== last) setLast(action);
-  return action ?? last;
+  const [opening, setOpening] = useState(0);
+
+  if (action !== given) {
+    setGiven(action);
+    if (action !== null) setLast(action);
+    if (given === null && action !== null) setOpening((count) => count + 1);
+  }
+
+  return [action ?? last, opening];
 }
