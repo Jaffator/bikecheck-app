@@ -117,7 +117,7 @@ export function useAddServiceWizard(): AddServiceWizard {
   const [requestedStep, setStep] = useState<WizardStep>("bike");
   const [chosenBikeId, setChosenBikeId] = useState<number | null>(null);
   const [serviceDate, setServiceDate] = useState<string>(today());
-  // Most jobs are the owner's own, so Home costs no tap.
+  // Most Services are the owner's own work, so Home costs no tap.
   const [place, setPlace] = useState<ServicePlace>("HOME");
   const [shopName, setShopName] = useState("");
   const [blocks, setBlocks] = useState<CategoryBlock[]>([]);

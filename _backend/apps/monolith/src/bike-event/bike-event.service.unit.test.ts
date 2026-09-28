@@ -873,13 +873,13 @@ describe('BikeEventService', () => {
         expect(writtenService()).not.toHaveProperty('shop_name');
       });
 
-      it('clears the shop name when a shop job becomes a home one', async () => {
+      it('clears the shop name when a Service moves from a shop to home', async () => {
         await service.update(EVENT_ID, { place: 'HOME' }, OWNER_ID);
 
         expect(writtenService()).toMatchObject({ place: 'HOME', shop_name: null });
       });
 
-      it('sets both when a home job becomes a named shop one', async () => {
+      it('sets both when a Service moves from home to a named shop', async () => {
         await service.update(EVENT_ID, { place: 'SHOP', shop_name: ' Bike Centrum ' }, OWNER_ID);
 
         expect(writtenService()).toMatchObject({ place: 'SHOP', shop_name: 'Bike Centrum' });
@@ -893,7 +893,7 @@ describe('BikeEventService', () => {
 
       it.each([
         ['alone', {}],
-        ['on a home job', { place: 'HOME' as const }],
+        ['on a Service done at home', { place: 'HOME' as const }],
         ['on a Place taken back to not recorded', { place: null }],
       ])('refuses a shop name sent %s', async (_, place) => {
         await expect(service.update(EVENT_ID, { ...place, shop_name: 'Bike Centrum' }, OWNER_ID)).rejects.toThrow(
@@ -933,7 +933,7 @@ describe('BikeEventService', () => {
     const writtenService = (): Record<string, unknown> =>
       (mockTx.events_bikes.create.mock.calls[0] as [{ data: Record<string, unknown> }])[0].data;
 
-    it('saves a job done at home with no shop name', async () => {
+    it('saves a Service done at home with no shop name', async () => {
       await service.create(dto({ place: 'HOME' }), OWNER_ID);
 
       expect(writtenService()).toMatchObject({ place: 'HOME', shop_name: null });
@@ -966,7 +966,7 @@ describe('BikeEventService', () => {
     });
 
     it.each([
-      ['a job done at home', { place: 'HOME' as const }],
+      ['a Service done at home', { place: 'HOME' as const }],
       ['no Place at all', {}],
     ])('refuses a shop name on %s', async (_, place) => {
       await expect(service.create(dto({ ...place, shop_name: 'Bike Centrum' }), OWNER_ID)).rejects.toThrow(
@@ -1056,7 +1056,7 @@ describe('BikeEventService', () => {
       expect(await service.shopNames(OWNER_ID)).toEqual(['Bike Centrum']);
     });
 
-    it('leaves out home jobs, unnamed shops and deleted services', async () => {
+    it('leaves out home Services, unnamed shops and deleted services', async () => {
       database([
         shop('Bike Centrum', '2026-07-01T00:00:00.000Z'),
         shop(null, '2026-07-02T00:00:00.000Z'),
@@ -1080,16 +1080,20 @@ describe('BikeEventService', () => {
     });
 
     it('offers at most twenty names, the latest ones', async () => {
-      database(
-        Array.from({ length: 25 }, (_, day) =>
+      database([
+        ...Array.from({ length: 25 }, (_, day) =>
           shop(`Shop ${day + 1}`, new Date(Date.UTC(2026, 0, day + 1)).toISOString()),
         ),
-      );
+        // The usual shop's repeat visits are one name, not five of the twenty.
+        ...Array.from({ length: 5 }, (_, day) =>
+          shop('shop 25', new Date(Date.UTC(2026, 1, day + 1)).toISOString()),
+        ),
+      ]);
 
       const names = await service.shopNames(OWNER_ID);
 
       expect(names).toHaveLength(20);
-      expect(names[0]).toBe('Shop 25');
+      expect(names[0]).toBe('shop 25');
       expect(names.at(-1)).toBe('Shop 6');
     });
   });

@@ -490,6 +490,7 @@ function PlaceField({
         <Text style={summaryLabel}>{t("addService.place")}</Text>
         <SegmentedControl
           fullWidth
+          aria-label={t("addService.place")}
           value={place}
           onChange={(value) => onPlaceChange(value === "SHOP" ? "SHOP" : "HOME")}
           data={[

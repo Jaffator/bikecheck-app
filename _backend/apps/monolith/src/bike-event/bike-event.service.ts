@@ -1171,7 +1171,7 @@ function placeWrite(
   place: service_place | null | undefined,
   shopName: string | null | undefined,
 ): { place?: service_place | null; shop_name?: string | null } {
-  // A home job never carries a shop, and a name with no Place would claim one.
+  // A Service done at home never carries a shop, and a name with no Place would claim one.
   if (shopName !== undefined && shopName !== null && place !== service_place.SHOP) {
     throw new BadRequestException('A shop name is only recorded with place SHOP');
   }

@@ -1,7 +1,7 @@
 # A shop is a name on the Service, not a list
 
 A Service now records its Place: Home, or a Shop with an optional name (PRD #178). The owner
-wants to see which shop did a job, and wants to type that shop once. The obvious model is a shops
+wants to see which shop did the work, and wants to type that shop once. The obvious model is a shops
 table the Service points at. We reject it: **a shop is a name typed on the Service**, and the only
 thing that knows every shop is the owner's own past Services.
 

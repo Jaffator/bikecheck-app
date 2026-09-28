@@ -7,7 +7,7 @@ export interface ServiceHistoryAction {
   i18n_key: string | null;
 }
 
-// Where a Service was done (ADR 0037). Null on a Service recorded before the Place existed.
+// Where a Service was done (ADR 0037). Fields holding it are nullable: an older Service has none.
 export type ServicePlace = "HOME" | "SHOP";
 
 // One Service as a history card needs it — the full occasion comes from the detail endpoint.
