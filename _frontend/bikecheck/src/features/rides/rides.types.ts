@@ -21,6 +21,25 @@ export type WoreOffLine = Pick<
   after: number;
 };
 
+export type CheckInStatus = "OK" | "ISSUE";
+
+export type CheckInSymptom =
+  | "CREAK"
+  | "SHIFTING_SKIPS"
+  | "SOFT_BRAKE"
+  | "FORK_SETUP"
+  | "SHOCK_SETUP"
+  | "TIRE_LOSES_AIR"
+  | "HEADSET_PLAY"
+  | "OTHER";
+
+// How the bike rode on a ride, as its rider said; symptoms only under ISSUE.
+export interface RideCheckIn {
+  status: CheckInStatus;
+  symptoms: CheckInSymptom[];
+  note: string | null;
+}
+
 // A ride confirmed on a bike.
 export interface Ride {
   id: number;
@@ -44,6 +63,8 @@ export interface Ride {
   summary_polyline: string | null;
   // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
   wore_off: WoreOffLine[];
+  // Null until the rider says how the bike rode.
+  check_in: RideCheckIn | null;
 }
 
 export interface RidePage {

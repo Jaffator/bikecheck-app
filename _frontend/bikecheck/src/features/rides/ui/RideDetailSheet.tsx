@@ -10,9 +10,10 @@ import { RideMap } from "@/components/RideMap";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
-import type { Ride } from "@/features/rides/rides.types";
+import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useIsDesktop } from "@/layout/breakpoints";
+import { RideCheckInSection } from "./RideCheckInSection";
 import { WoreOff } from "./WoreOff";
 
 // Mantine's large sheet: room for the map and both rows of figures.
@@ -29,6 +30,8 @@ interface RideDetailSheetProps {
   // Null closes the sheet.
   ride: Ride | null;
   onClose: () => void;
+  // Opens the check-in form with this answer picked.
+  checkInStartWith?: CheckInStatus;
 }
 
 // Displays one ride statistic.
@@ -74,7 +77,7 @@ function RideTitle({ ride }: { ride: Ride }): ReactElement {
 }
 
 // Displays data already loaded with the ride.
-export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactElement {
+export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailSheetProps): ReactElement {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
 
@@ -120,6 +123,8 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
             </Group>
 
             <WoreOff lines={ride.wore_off} />
+
+            <RideCheckInSection key={ride.id} ride={ride} startWith={checkInStartWith} />
           </Stack>
         </Stack>
       )}

@@ -1,5 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { check_in_status, check_in_symptom } from '@prisma/client';
 import { Response_WoreOffLineDto } from '../../service-tracking/dto/response-wore-off-line';
+
+// How the bike rode on the ride, as its rider said.
+export class ResponseRideCheckInDto {
+  @ApiProperty({ enum: check_in_status })
+  status!: check_in_status;
+
+  // Empty when OK.
+  @ApiProperty({ enum: check_in_symptom, isArray: true })
+  symptoms!: check_in_symptom[];
+
+  @ApiProperty({ example: 'Skips on the 3rd cog', nullable: true })
+  note!: string | null;
+}
 
 // A ride the user has confirmed onto a bike — either matched by gear id or
 // assigned by hand from the pending list. What the Rides list draws.
@@ -59,6 +73,10 @@ export class ResponseRideDto {
   // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
   @ApiProperty({ type: [Response_WoreOffLineDto] })
   wore_off!: Response_WoreOffLineDto[];
+
+  // Null until the rider says how the bike rode.
+  @ApiProperty({ type: ResponseRideCheckInDto, nullable: true })
+  check_in!: ResponseRideCheckInDto | null;
 }
 
 // One page of rides. The total is what tells the client whether another page

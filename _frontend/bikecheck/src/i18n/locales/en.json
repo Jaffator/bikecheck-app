@@ -304,6 +304,33 @@
     "emptyTitle": "Just ask",
     "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides."
   },
+  "checkIn": {
+    "question": "How did the bike ride?",
+    "counter": "{{index}} / {{total}}",
+    "ok": "All good",
+    "issue": "Something's off",
+    "symptomsLabel": "What's off?",
+    "symptom": {
+      "CREAK": "Creaks / cracks",
+      "SHIFTING_SKIPS": "Shifting skips",
+      "SOFT_BRAKE": "Soft brake",
+      "FORK_SETUP": "Fork needs setup",
+      "SHOCK_SETUP": "Shock needs setup",
+      "TIRE_LOSES_AIR": "Tyre loses air",
+      "HEADSET_PLAY": "Headset play",
+      "OTHER": "Other…"
+    },
+    "noteLabel": "Note · optional",
+    "notePlaceholder": "E.g. skips on the 3rd cog",
+    "save": "Save",
+    "skip": "Skip",
+    "add": "Add",
+    "change": "Change",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "saveFailed": "Couldn't save the check-in",
+    "deleteFailed": "Couldn't delete the check-in"
+  },
   "rides": {
     "emptyTitle": "No Rides Yet",
     "emptyBody": "Connect your Strava account or record your first ride to start tracking mileage and component wear.",

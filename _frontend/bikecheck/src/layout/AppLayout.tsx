@@ -14,6 +14,7 @@ import { useOfflineWhenCallApiStore, useHeaderStore, useOverlayStore } from "@/s
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { useMyProfile } from "@/features/profile/profile.queries";
+import { CheckInPromptDrawer } from "@/features/rides/ui/CheckInPromptDrawer";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 import { MoreDrawer } from "./MoreDrawer";
@@ -378,6 +379,8 @@ export function AppLayout(): ReactElement {
           the sidebar holds all three on desktop. */}
       {!subPage && !isDesktop && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {!isDesktop && <MoreDrawer opened={moreOpened} onClose={() => setMoreOpened(false)} />}
+      {/* Desktop asks on Home's Last ride panel instead of popping anything up. */}
+      {!isDesktop && <CheckInPromptDrawer />}
       {/* --------- FOOTER --------- */}
       {!subPage && !isDesktop && (
         <AppShell.Footer

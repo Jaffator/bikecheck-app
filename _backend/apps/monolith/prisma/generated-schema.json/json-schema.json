@@ -1279,6 +1279,16 @@
         },
         "users": {
           "$ref": "#/definitions/users"
+        },
+        "check_in": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ride_check_ins"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -1412,6 +1422,48 @@
         }
       }
     },
+    "ride_check_ins": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "ISSUE"
+          ]
+        },
+        "symptoms": {
+          "type": "array",
+          "enum": [
+            "CREAK",
+            "SHIFTING_SKIPS",
+            "SOFT_BRAKE",
+            "FORK_SETUP",
+            "SHOCK_SETUP",
+            "TIRE_LOSES_AIR",
+            "HEADSET_PLAY",
+            "OTHER"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rides": {
+          "$ref": "#/definitions/rides"
+        }
+      }
+    },
     "account_events": {
       "type": "object",
       "properties": {
@@ -1540,6 +1592,13 @@
           ]
         },
         "strava_last_sync_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "check_in_prompted_at": {
           "type": [
             "string",
             "null"
@@ -2093,6 +2152,9 @@
     },
     "setup_profiles": {
       "$ref": "#/definitions/setup_profiles"
+    },
+    "ride_check_ins": {
+      "$ref": "#/definitions/ride_check_ins"
     },
     "account_events": {
       "$ref": "#/definitions/account_events"

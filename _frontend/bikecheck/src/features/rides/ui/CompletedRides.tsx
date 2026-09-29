@@ -10,6 +10,7 @@ import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { usePullToRefresh, type PullToRefresh } from "@/hooks/usePullToRefresh";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
 import { useRides } from "@/features/rides/rides.queries";
+import { CheckInMark } from "./CheckInMark";
 import { RideDetailSheet } from "./RideDetailSheet";
 import type { Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
@@ -81,7 +82,12 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
       /* The activity's own title leads: it is what the user named the ride, so it
          identifies it faster than the bike or the date. */
       title={ride.name}
-      subtitle={ride.started_at === null ? "" : dayjs(ride.started_at).format("D. M. YYYY H:mm")}
+      subtitle={
+        <>
+          {ride.started_at === null ? "" : dayjs(ride.started_at).format("D. M. YYYY H:mm")}{" "}
+          <CheckInMark checkIn={ride.check_in} size={13} />
+        </>
+      }
       /* The bike sits at metadata weight — it is no longer the heading, so it goes with
          the date rather than competing with the title. */
       meta={

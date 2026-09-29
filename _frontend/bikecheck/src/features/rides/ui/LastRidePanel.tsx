@@ -1,7 +1,9 @@
 // Desktop Home's latest ride: its route, name and figures; a tap opens the ride.
 import { useState, type ReactElement } from "react";
-import { Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Button, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
+import { Check, TriangleAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -11,9 +13,11 @@ import { RideMap } from "@/components/RideMap";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
-import { useRides } from "@/features/rides/rides.queries";
-import type { Ride } from "@/features/rides/rides.types";
+import { CHECK_IN_COLOR } from "@/features/rides/checkIn";
+import { useRides, useSaveRideCheckIn } from "@/features/rides/rides.queries";
+import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { CheckInMark } from "./CheckInMark";
 import { RideDetailSheet } from "./RideDetailSheet";
 import { WoreOff } from "./WoreOff";
 
@@ -22,7 +26,7 @@ export function LastRidePanel(): ReactElement {
   const navigate = useNavigate();
   const { data, isLoading } = useRides();
   const { data: bikes } = useBikes();
-  const [opened, setOpened] = useState<Ride | null>(null);
+  const [opened, setOpened] = useState<{ ride: Ride; checkInStartWith?: CheckInStatus } | null>(null);
 
   const ride = data?.pages[0]?.items[0] ?? null;
 
@@ -36,7 +40,7 @@ export function LastRidePanel(): ReactElement {
       )}
       {ride !== null && (
         <UnstyledButton
-          onClick={() => setOpened(ride)}
+          onClick={() => setOpened({ ride })}
           className="hover-veil active:scale-[0.985]"
           w="100%"
           p="md"
@@ -59,6 +63,7 @@ export function LastRidePanel(): ReactElement {
                     .filter((part) => part !== null)
                     .join(" · ")}
                 </Eyebrow>
+                <CheckInMark checkIn={ride.check_in} size={12} />
               </Group>
             </Stack>
             <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
@@ -76,8 +81,58 @@ export function LastRidePanel(): ReactElement {
           </Stack>
         </UnstyledButton>
       )}
-      <RideDetailSheet ride={opened} onClose={() => setOpened(null)} />
+      {ride !== null && ride.check_in === null && (
+        <CheckInQuestion ride={ride} onIssue={() => setOpened({ ride, checkInStartWith: "ISSUE" })} />
+      )}
+      <RideDetailSheet
+        ride={opened?.ride ?? null}
+        checkInStartWith={opened?.checkInStartWith}
+        onClose={() => setOpened(null)}
+      />
     </Panel>
+  );
+}
+
+// Asked in place rather than popped up: fine saves at once, anything else wants the detail's form.
+function CheckInQuestion({ ride, onIssue }: { ride: Ride; onIssue: () => void }): ReactElement {
+  const { t } = useTranslation();
+  const save = useSaveRideCheckIn();
+
+  function saveOk(): void {
+    save.mutate(
+      { rideId: ride.id, checkIn: { status: "OK", symptoms: [], note: null } },
+      { onError: () => notifications.show({ color: "red.5", message: t("checkIn.saveFailed") }) },
+    );
+  }
+
+  return (
+    <Group justify="space-between" wrap="nowrap" gap="sm" px="md" py="sm" style={{ borderTop: PANEL_HAIRLINE }}>
+      <Text fz={14} fw={600} c="text.6" lineClamp={1}>
+        {t("checkIn.question")}
+      </Text>
+      <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+        <Button
+          variant="outline"
+          radius="md"
+          size="xs"
+          loading={save.isPending}
+          leftSection={<Check size={12} strokeWidth={2.4} color={CHECK_IN_COLOR.OK} />}
+          onClick={saveOk}
+        >
+          {t("checkIn.ok")}
+        </Button>
+        <Button
+          variant="outline"
+          radius="md"
+          size="xs"
+          disabled={save.isPending}
+          leftSection={<TriangleAlert size={12} strokeWidth={2.4} color={CHECK_IN_COLOR.ISSUE} />}
+          onClick={onIssue}
+        >
+          {t("checkIn.issue")}
+        </Button>
+      </Group>
+    </Group>
   );
 }
 

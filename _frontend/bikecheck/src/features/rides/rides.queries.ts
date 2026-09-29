@@ -1,16 +1,48 @@
 // React Query hooks for rides.
 import {
   useInfiniteQuery,
+  useMutation,
   useQuery,
+  useQueryClient,
   type InfiniteData,
   type UseInfiniteQueryResult,
+  type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
-import { getRides } from "./rides.api";
-import type { RidePage } from "./rides.types";
+import type { ApiError } from "@/api/client";
+import { deleteRideCheckIn, getCheckInPrompt, getRides, markCheckInPromptSeen, saveRideCheckIn } from "./rides.api";
+import type { Ride, RideCheckIn, RidePage } from "./rides.types";
 
 // Limits each request payload.
 const PAGE_SIZE = 20;
+
+// Under "rides", so whatever refreshes the ride lists refreshes the prompt with them.
+export const CHECK_IN_PROMPT_KEY = ["rides", "check-in-prompt"];
+
+// The phone's check-in queue; only the phone's drawer asks for it.
+export function useCheckInPrompt(): UseQueryResult<Ride[]> {
+  return useQuery({ queryKey: CHECK_IN_PROMPT_KEY, queryFn: getCheckInPrompt });
+}
+
+export function useMarkCheckInPromptSeen(): UseMutationResult<{ success: boolean }, ApiError, void> {
+  return useMutation({ mutationFn: markCheckInPromptSeen });
+}
+
+export function useSaveRideCheckIn(): UseMutationResult<RideCheckIn, ApiError, { rideId: number; checkIn: RideCheckIn }> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rideId, checkIn }: { rideId: number; checkIn: RideCheckIn }) => saveRideCheckIn(rideId, checkIn),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["rides"] }),
+  });
+}
+
+export function useDeleteRideCheckIn(): UseMutationResult<{ success: boolean }, ApiError, number> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (rideId: number) => deleteRideCheckIn(rideId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["rides"] }),
+  });
+}
 
 // Fetches confirmed rides by page.
 export function useRides(): UseInfiniteQueryResult<InfiniteData<RidePage>, Error> {

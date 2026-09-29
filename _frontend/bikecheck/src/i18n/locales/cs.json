@@ -324,6 +324,33 @@
     "emptyTitle": "Prostě se zeptej",
     "emptyBody": "Napiš vlastními slovy, co chceš vědět o svých kolech, dílech, servisech nebo jízdách."
   },
+  "checkIn": {
+    "question": "Jak kolo jelo?",
+    "counter": "{{index}} / {{total}}",
+    "ok": "V pohodě",
+    "issue": "Něco nesedí",
+    "symptomsLabel": "Co nesedí?",
+    "symptom": {
+      "CREAK": "Vrže / praská",
+      "SHIFTING_SKIPS": "Přeskakuje řazení",
+      "SOFT_BRAKE": "Brzda je měkká",
+      "FORK_SETUP": "Vidlice přenastavit",
+      "SHOCK_SETUP": "Tlumič přenastavit",
+      "TIRE_LOSES_AIR": "Pneu ztrácí vzduch",
+      "HEADSET_PLAY": "Vůle v hlavovém složení",
+      "OTHER": "Jiné…"
+    },
+    "noteLabel": "Poznámka · nepovinné",
+    "notePlaceholder": "Např. přeskakuje na 3. pastorku",
+    "save": "Uložit",
+    "skip": "Přeskočit",
+    "add": "Doplnit",
+    "change": "Změnit",
+    "delete": "Smazat",
+    "cancel": "Zrušit",
+    "saveFailed": "Check-in se nepodařilo uložit",
+    "deleteFailed": "Check-in se nepodařilo smazat"
+  },
   "rides": {
     "emptyTitle": "Zatím žádné jízdy",
     "emptyBody": "Připoj svůj účet Strava nebo zaznamenej první jízdu a začni sledovat nájezd a opotřebení komponentů.",
