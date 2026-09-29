@@ -85,6 +85,8 @@ export interface User {
   strava_lastname: string | null;
   strava_username: string | null;
   strava_avatar_url: string | null;
+  // Moved by an on-demand sync only, never by the webhook. Null until the first one.
+  strava_last_sync_at: string | null;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;

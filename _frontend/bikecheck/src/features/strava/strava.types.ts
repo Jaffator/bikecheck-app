@@ -48,6 +48,12 @@ export interface PendingRide {
   created_at: string;
 }
 
+// Mirrors ResponseStravaSyncDto; queued rides land a few seconds later, not in the response.
+export interface StravaSyncResult {
+  queued: number;
+  synced_at: string;
+}
+
 // Joins available athlete name parts or returns null for a username fallback.
 export function stravaDisplayName(user: { strava_firstname: string | null; strava_lastname: string | null }): string | null {
   const name = [user.strava_firstname, user.strava_lastname].filter(Boolean).join(" ").trim();

@@ -7,6 +7,8 @@ import { CompletedRides } from "@/features/rides/ui/CompletedRides";
 import { PendingRides } from "@/features/strava/ui/PendingRidesCard";
 import { usePendingRides } from "@/features/strava/strava.queries";
 import { SETTLE_MS, useSwipePanels } from "@/hooks/useSwipePanels";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { RidesDesktop } from "./RidesDesktop";
 
 type RidesTab = "completed" | "pending";
 
@@ -82,6 +84,10 @@ export function Rides(): ReactElement {
   // A finished swipe selects a tab, which is the same thing tapping one does.
   const selectIndex = useCallback((next: number): void => selectTab(TAB_ORDER[next]), [selectTab]);
   const swipe = useSwipePanels(activeIndex, TAB_ORDER.length, selectIndex);
+  const isDesktop = useIsDesktop();
+
+  // Desktop has its own layout (#197); the phone keeps the swipe tabs below.
+  if (isDesktop) return <RidesDesktop />;
 
   return (
     <Tabs

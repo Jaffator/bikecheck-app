@@ -8,8 +8,10 @@ import {
   linkStravaGear,
   getPendingRides,
   resolvePendingRide,
+  dismissPendingRide,
+  syncStrava,
 } from "./strava.api";
-import type { GearLinkingData, GearLink, PendingRide } from "./strava.types";
+import type { GearLinkingData, GearLink, PendingRide, StravaSyncResult } from "./strava.types";
 import type { ApiError } from "@/api/client";
 
 // Opens the backend-generated Strava authorization URL in the system browser.
@@ -71,10 +73,41 @@ export function useResolvePendingRide(): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ activityId, bikeId }: { activityId: string; bikeId: number }) => resolvePendingRide(activityId, bikeId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
-      void queryClient.invalidateQueries({ queryKey: ["bikes"] });
-      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    onSuccess: () => invalidateRideLists(queryClient),
+  });
+}
+
+// Queued rides need a few seconds in the pipeline before a refetch can see them.
+const SYNC_SETTLE_MS = 5000;
+
+// Every list a ride leaving Pending can change.
+function invalidateRideLists(queryClient: ReturnType<typeof useQueryClient>): void {
+  void queryClient.invalidateQueries({ queryKey: ["pendingRides"] });
+  void queryClient.invalidateQueries({ queryKey: ["rides"] });
+  void queryClient.invalidateQueries({ queryKey: ["bikes"] });
+  void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+}
+
+// Drops a pending ride for good and refetches what resolving it would.
+export function useDismissPendingRide(): UseMutationResult<{ success: boolean }, ApiError, string> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: dismissPendingRide,
+    onSuccess: () => invalidateRideLists(queryClient),
+  });
+}
+
+// Asks Strava for missed rides; the lists reload once the queued ones have had time to land.
+export function useSyncStrava(): UseMutationResult<StravaSyncResult, ApiError, void> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncStrava,
+    onSuccess: ({ queued }) => {
+      if (queued > 0) setTimeout(() => invalidateRideLists(queryClient), SYNC_SETTLE_MS);
+    },
+    // A 429 still means the backend knows a newer sync time than the client.
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
   });
 }

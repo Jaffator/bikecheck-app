@@ -1,6 +1,6 @@
 // Typed Strava endpoints use the shared API client.
 import { apiFetch } from "@/api/client";
-import type { GearLinkingData, GearLink, PendingRide } from "./strava.types";
+import type { GearLinkingData, GearLink, PendingRide, StravaSyncResult } from "./strava.types";
 
 export interface StravaAuthorizeUrl {
   url: string;
@@ -40,4 +40,14 @@ export async function resolvePendingRide(activityId: string, bikeId: number): Pr
     method: "POST",
     body: JSON.stringify({ bikeId }),
   });
+}
+
+// Drops a pending ride for good: it never counts on any bike.
+export async function dismissPendingRide(activityId: string): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/strava/pending-activities/${activityId}/dismiss`, { method: "POST" });
+}
+
+// Queues the Strava rides the webhook missed; 429 within the cooldown.
+export async function syncStrava(): Promise<StravaSyncResult> {
+  return apiFetch<StravaSyncResult>("/strava/sync", { method: "POST" });
 }
