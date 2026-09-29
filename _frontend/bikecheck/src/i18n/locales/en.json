@@ -910,7 +910,27 @@
   "notifications": {
     "empty": "No notifications yet",
     "emptyBody": "Anything that happens to your bikes or rides shows up here.",
-    "loadFailed": "Notifications could not be loaded"
+    "loadFailed": "Notifications could not be loaded",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread",
+    "allRead": "All read",
+    "markAllRead": "Mark all as read",
+    "settingsAria": "Notification settings",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "nothingUnread": "Nothing unread",
+    "showOlder": "Show older",
+    "group": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "earlier": "Earlier"
+    },
+    "actionLogService": "Log service",
+    "actionViewBike": "View bike",
+    "actionAssignBike": "Assign bike",
+    "actionViewRide": "View ride",
+    "actionView": "View",
+    "actionOpenGarage": "Open garage"
   },
   "pendingRides": {
     "title": "Unassigned rides",

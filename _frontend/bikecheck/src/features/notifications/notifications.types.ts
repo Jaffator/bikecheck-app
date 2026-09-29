@@ -20,9 +20,18 @@ export interface NotificationPayload {
   bikeName?: string;
   // The worst band a service reminder's bike stands in, which colours its icon.
   level?: "warning" | "critical" | "overdue";
+  // What just crossed on a service reminder, worst first; the first one is what Log service opens.
+  crossed?: CrossedAction[];
   // The other party of a follow, as the app names people. Absent when they have none.
   handle?: string;
   personName?: string;
+}
+
+// One Tracked Action a service reminder names. The ids are absent on reminders older than them.
+export interface CrossedAction {
+  componentMountedId?: number;
+  actionId?: number;
+  groupId?: number;
 }
 
 export interface Notification {

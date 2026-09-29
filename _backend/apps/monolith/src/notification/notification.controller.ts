@@ -26,13 +26,21 @@ export class NotificationController {
   // ---------- GET notifications for current user ----------
   @ApiOperation({ summary: 'List notifications for the current user' })
   @ApiResponse({ status: 200, type: ResponseNotificationDto, isArray: true })
-  @ApiQuery({ name: 'unread', required: false, type: Boolean })
+  @ApiQuery({ name: 'unread', required: false, type: Boolean, description: 'Every unread row, never paged' })
+  @ApiQuery({ name: 'before', required: false, type: Number, description: 'Only rows with a lower id (cursor)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Page size, default 30, max 100' })
   @Get()
   async list(
     @CurrentUser('userId') userId: string,
     @Query('unread') unread?: string,
+    @Query('before') before?: string,
+    @Query('limit') limit?: string,
   ): Promise<ResponseNotificationDto[]> {
-    return this.notificationService.list(Number(userId), unread === 'true');
+    return this.notificationService.list(Number(userId), {
+      unreadOnly: unread === 'true',
+      before: optionalNumber(before),
+      limit: optionalNumber(limit),
+    });
   }
 
   // ---------- PATCH mark everything the list clears ----------
@@ -56,4 +64,11 @@ export class NotificationController {
     await this.notificationService.markRead(+id, Number(userId));
     return { success: true };
   }
+}
+
+// An absent, empty or non-numeric query value is no value, not 0 or NaN.
+function optionalNumber(value: string | undefined): number | undefined {
+  if (value === undefined || value === '') return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }

@@ -4151,7 +4151,12 @@ export interface operations {
     "Notification list": {
         parameters: {
             query?: {
+                /** @description Every unread row, never paged */
                 unread?: boolean;
+                /** @description Only rows with a lower id (cursor) */
+                before?: number;
+                /** @description Page size, default 30, max 100 */
+                limit?: number;
             };
             header?: never;
             path?: never;

@@ -313,6 +313,9 @@ export class ServiceTrackingService {
           actionKey: action.action_i18n_key,
           actionName: action.action_name,
           percentage: action.percentage,
+          componentMountedId: action.component_mounted_id,
+          actionId: action.event_action_id,
+          groupId: action.component_group_id,
         })),
       },
     });

@@ -968,7 +968,29 @@
   "notifications": {
     "empty": "Zatím žádné notifikace",
     "emptyBody": "Až se něco stane s tvými koly nebo jízdami, najdeš to tady.",
-    "loadFailed": "Notifikace se nepodařilo načíst"
+    "loadFailed": "Notifikace se nepodařilo načíst",
+    "unreadCount_one": "{{count}} nepřečtené",
+    "unreadCount_few": "{{count}} nepřečtená",
+    "unreadCount_many": "{{count}} nepřečteného",
+    "unreadCount_other": "{{count}} nepřečtených",
+    "allRead": "Vše přečteno",
+    "markAllRead": "Označit vše jako přečtené",
+    "settingsAria": "Nastavení oznámení",
+    "filterAll": "Vše",
+    "filterUnread": "Nepřečtená",
+    "nothingUnread": "Nic nepřečteného",
+    "showOlder": "Zobrazit starší",
+    "group": {
+      "today": "Dnes",
+      "yesterday": "Včera",
+      "earlier": "Dříve"
+    },
+    "actionLogService": "Zapsat servis",
+    "actionViewBike": "Zobrazit kolo",
+    "actionAssignBike": "Přiřadit kolo",
+    "actionViewRide": "Zobrazit jízdu",
+    "actionView": "Zobrazit",
+    "actionOpenGarage": "Otevřít garáž"
   },
   "pendingRides": {
     "title": "Nepřiřazené jízdy",

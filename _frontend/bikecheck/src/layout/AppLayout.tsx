@@ -92,7 +92,11 @@ function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | 
   return DETAIL_ROUTES.find((route) => route.pattern.test(pathname));
 }
 
-function isSubPage(pathname: string): boolean {
+// A sidebar row on desktop, so the page gets the top-level title and no back arrow.
+const DESKTOP_TOP_LEVEL_ROUTES: string[] = ["/notifications"];
+
+function isSubPage(pathname: string, isDesktop: boolean): boolean {
+  if (isDesktop && DESKTOP_TOP_LEVEL_ROUTES.includes(pathname)) return false;
   if (detailRoute(pathname)) return true;
   return SUB_PAGE_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
@@ -147,7 +151,7 @@ export function AppLayout(): ReactElement {
   // Hides chrome when the route or page state requires it. On desktop that is the header
   // alone: the sidebar leaves only with a full-screen route.
   const chromeHidden = chromeHiddenByPage || fullScreen;
-  const subPage = isSubPage(location.pathname);
+  const subPage = isSubPage(location.pathname, isDesktop);
   // Home wears the logo instead of a title; on desktop the sidebar wears it, so Home is named.
   const pageTitleKey =
     overrideTitleKey ?? getPageTitleKey(location.pathname) ?? (isDesktop && !subPage ? "page.home" : null);

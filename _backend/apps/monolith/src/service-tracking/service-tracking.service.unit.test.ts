@@ -1379,6 +1379,18 @@ describe('ServiceTrackingService', () => {
       ]);
     });
 
+    // Log service opens the wizard on the worst job, so each crossing carries the link's ids (ADR 0030).
+    it('carries the ids the service wizard link is built from', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 4000 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      const [call] = mockNotifications.create.mock.calls as [{ payload: { crossed: Record<string, unknown>[] } }][];
+      expect(call[0].payload.crossed).toEqual([
+        expect.objectContaining({ componentMountedId: 55, actionId: CHAIN_REPLACEMENT, groupId: GROUP_ID }),
+      ]);
+    });
+
     // Good is a colour, not an interruption: it shares band 0 with very good, so crossing
     // into it writes nothing and says nothing.
     it('says nothing about a Tracked Action that has only reached good', async () => {
