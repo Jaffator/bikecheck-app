@@ -13,6 +13,8 @@ interface RouteMapProps {
   width: number | string;
   height: number;
   strokeWidth?: number;
+  // Strava orange unless the route is drawn in its bike's colour.
+  color?: string;
   // How far a point may stray from the line before it is dropped, in viewBox units - one
   // unit is a hundredth of the map's longest side. Left out, every point is drawn, which
   // is what a map big enough to show them wants. A thumbnail passes a tolerance because
@@ -51,7 +53,14 @@ function toPath(points: Point[]): string {
 }
 
 // Renders a route outline without map tiles or network requests.
-export function RouteMap({ polyline, width, height, strokeWidth = 2, simplify = 0 }: RouteMapProps): ReactElement {
+export function RouteMap({
+  polyline,
+  width,
+  height,
+  strokeWidth = 2,
+  color = "var(--mantine-color-strava-6)",
+  simplify = 0,
+}: RouteMapProps): ReactElement {
   // Caches decoded route paths across list rerenders.
   const path = useMemo(() => {
     if (polyline === null || polyline.length === 0) return null;
@@ -93,7 +102,7 @@ export function RouteMap({ polyline, width, height, strokeWidth = 2, simplify = 
         <path
           d={path}
           fill="none"
-          stroke="var(--mantine-color-strava-6)"
+          stroke={color}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeLinejoin="round"

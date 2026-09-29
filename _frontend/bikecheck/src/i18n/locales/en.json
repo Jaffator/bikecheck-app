@@ -331,6 +331,37 @@
     "saveFailed": "Couldn't save the check-in",
     "deleteFailed": "Couldn't delete the check-in"
   },
+  "ridesTable": {
+    "allBikes": "All bikes",
+    "allMonths": "All",
+    "month": "Month",
+    "allRides": "All rides",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "columnRide": "Ride",
+    "columnBike": "Bike",
+    "columnKm": "Km",
+    "columnClimb": "↑ m",
+    "columnCheckIn": "Check-in",
+    "descent": "↓ {{value}} m descent",
+    "noComparison": "No rides the month before",
+    "empty": "No rides in this selection",
+    "pageRange": "{{first}}–{{last}} of {{total}}",
+    "vsMonth": {
+      "1": "vs January",
+      "2": "vs February",
+      "3": "vs March",
+      "4": "vs April",
+      "5": "vs May",
+      "6": "vs June",
+      "7": "vs July",
+      "8": "vs August",
+      "9": "vs September",
+      "10": "vs October",
+      "11": "vs November",
+      "12": "vs December"
+    }
+  },
   "rides": {
     "emptyTitle": "No Rides Yet",
     "emptyBody": "Connect your Strava account or record your first ride to start tracking mileage and component wear.",

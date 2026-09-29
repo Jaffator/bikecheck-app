@@ -4,7 +4,8 @@ import { Box, Group, Stack, Tabs, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useRides } from "@/features/rides/rides.queries";
-import { CompletedRides } from "@/features/rides/ui/CompletedRides";
+import { AssignedRidesTable } from "@/features/rides/ui/AssignedRidesTable";
+import { RideFilterBar } from "@/features/rides/ui/RideFilterBar";
 import { usePendingRides } from "@/features/strava/strava.queries";
 import { PendingRidesTable } from "@/features/strava/ui/PendingRidesTable";
 import { StravaSyncStatus } from "@/features/strava/ui/StravaSyncStatus";
@@ -83,11 +84,17 @@ export function RidesDesktop(): ReactElement {
               {pendingCount > 0 && <PendingPill count={pendingCount} />}
             </Group>
           </Tabs.Tab>
+          {/* The filter narrows Přiřazené only, so it stands in the tab row just while that tab is open. */}
+          {tab === "completed" && (
+            <Box ml="auto" pb={6} style={{ alignSelf: "center" }}>
+              <RideFilterBar />
+            </Box>
+          )}
         </Tabs.List>
 
         <Box pt="md">
           {tab === "completed" ? (
-            <CompletedRides openActivityId={requestedRideId} onOpenedActivityHandled={clearRequestedRide} />
+            <AssignedRidesTable openActivityId={requestedRideId} onOpenedActivityHandled={clearRequestedRide} />
           ) : (
             <PendingRidesTable highlightedActivityId={requestedActivityId} />
           )}

@@ -1,12 +1,11 @@
 // Desktop Home's row of figures: the Period's distance, time in the saddle and spend, what is due now
 // and the next replacement. Strava's problems are the banner's, not a figure's.
-import { Fragment, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Box, SimpleGrid, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Fragment, useState, type ReactElement, type ReactNode } from "react";
+import { SimpleGrid, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useNavigate } from "react-router-dom";
-import { Eyebrow } from "@/components/Eyebrow";
-import { PRESS_TRANSITION } from "@/components/panelRows";
+import { Figure } from "@/components/Figure";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useHistoryTotals } from "@/features/service/service.queries";
@@ -30,8 +29,6 @@ const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
   { level: "critical", key: "dashboard.criticalCount" },
   { level: "warning", key: "dashboard.warningCount" },
 ];
-
-const HIGHLIGHT_BORDER = "1px solid color-mix(in srgb, var(--mantine-color-primary-6) 40%, transparent)";
 
 // Due and the next replacement look at now, so only the Period's readings take it.
 export function DashboardFigures({ period }: { period: HomePeriod }): ReactElement {
@@ -180,71 +177,5 @@ function NameAndFigure({ name, figure }: { name: string; figure: string }): Reac
         {figure}
       </Text>
     </>
-  );
-}
-
-interface FigureProps {
-  title: string;
-  // Null while it loads.
-  value: ReactNode | null;
-  valueFigure?: boolean;
-  valueColor?: string;
-  detail: ReactNode;
-  // Numbers get tabular numerals so they line up; words do not.
-  detailFigure?: boolean;
-  // The one figure the eye should reach first.
-  highlighted?: boolean;
-  // Without it the figure is only read, never pressed.
-  onOpen?: () => void;
-}
-
-function Figure({
-  title,
-  value,
-  valueFigure = true,
-  valueColor,
-  detail,
-  detailFigure = false,
-  highlighted = false,
-  onOpen,
-}: FigureProps): ReactElement {
-  const surface: CSSProperties = {
-    borderRadius: "var(--mantine-radius-lg)",
-    backgroundColor: "var(--mantine-color-cards-6)",
-    border: highlighted ? HIGHLIGHT_BORDER : "none",
-    boxShadow: "var(--elev-panel)",
-  };
-  const body = (
-    <Stack gap={4}>
-      <Eyebrow>{title}</Eyebrow>
-      {value === null ? (
-        <Skeleton h={20} w="50%" radius="sm" />
-      ) : (
-        <Text className={valueFigure ? "tabular-nums" : undefined} fz={16} fw={600} c={valueColor ?? "text.6"} lineClamp={1}>
-          {value}
-        </Text>
-      )}
-      <Text className={detailFigure ? "tabular-nums" : undefined} fz={13} c="var(--color-text-dim)" lineClamp={1}>
-        {detail}
-      </Text>
-    </Stack>
-  );
-
-  if (onOpen === undefined) {
-    return (
-      <Box p="md" style={surface}>
-        {body}
-      </Box>
-    );
-  }
-  return (
-    <UnstyledButton
-      onClick={onOpen}
-      className="hover-veil active:scale-[0.985]"
-      p="md"
-      style={{ ...surface, transition: PRESS_TRANSITION }}
-    >
-      {body}
-    </UnstyledButton>
   );
 }

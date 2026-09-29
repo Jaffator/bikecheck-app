@@ -1,5 +1,6 @@
 // React Query hooks for rides.
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -10,8 +11,17 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 import type { ApiError } from "@/api/client";
-import { deleteRideCheckIn, getCheckInPrompt, getRides, markCheckInPromptSeen, saveRideCheckIn } from "./rides.api";
+import {
+  deleteRideCheckIn,
+  getCheckInPrompt,
+  getFilteredRides,
+  getRideMonths,
+  getRides,
+  markCheckInPromptSeen,
+  saveRideCheckIn,
+} from "./rides.api";
 import type { Ride, RideCheckIn, RidePage } from "./rides.types";
+import { TABLE_PAGE_SIZE, type RideFilter } from "./ridesTable";
 
 // Limits each request payload.
 const PAGE_SIZE = 20;
@@ -56,6 +66,19 @@ export function useRides(): UseInfiniteQueryResult<InfiniteData<RidePage>, Error
       return loaded < lastPage.total ? loaded : undefined;
     },
   });
+}
+
+// One page of the desktop table; the last page stays up while the next loads, so the table never blinks empty.
+export function useFilteredRides(filter: RideFilter, page: number): UseQueryResult<RidePage> {
+  return useQuery({
+    queryKey: ["rides", "filtered", filter, page],
+    queryFn: () => getFilteredRides(TABLE_PAGE_SIZE, (page - 1) * TABLE_PAGE_SIZE, filter),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useRideMonths(): UseQueryResult<string[]> {
+  return useQuery({ queryKey: ["rides", "months"], queryFn: getRideMonths });
 }
 
 // How many rides one bike has, which is what the archive dialog says stops counting. One

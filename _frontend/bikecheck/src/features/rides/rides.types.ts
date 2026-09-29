@@ -67,7 +67,29 @@ export interface Ride {
   check_in: RideCheckIn | null;
 }
 
+// A week holding rides on the page, totalled over all its rides inside the filter.
+export interface RideWeek {
+  // The week's Monday in the rider's time zone, YYYY-MM-DD.
+  start: string;
+  count: number;
+  km: number;
+  time_min: number;
+}
+
+// Every ride inside the filter added up, not just the page.
+export interface RideFigures {
+  count: number;
+  distance_m: number;
+  time_min: number;
+  elevation_up_m: number;
+  elevation_down_m: number;
+  // The same span just before the filter; null when the filter is every ride.
+  previous_distance_m: number | null;
+}
+
 export interface RidePage {
   items: Ride[];
   total: number;
+  weeks: RideWeek[];
+  figures: RideFigures;
 }

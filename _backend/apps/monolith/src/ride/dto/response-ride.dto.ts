@@ -79,6 +79,44 @@ export class ResponseRideDto {
   check_in!: ResponseRideCheckInDto | null;
 }
 
+// A week holding rides on the page, totalled over all its rides inside the filter.
+export class ResponseRideWeekDto {
+  // The week's Monday in the rider's time zone.
+  @ApiProperty({ example: '2026-09-21' })
+  start!: string;
+
+  @ApiProperty({ example: 3 })
+  count!: number;
+
+  @ApiProperty({ example: 96.4 })
+  km!: number;
+
+  @ApiProperty({ example: 347 })
+  time_min!: number;
+}
+
+// Every ride inside the filter added up, not just the page.
+export class ResponseRideFiguresDto {
+  @ApiProperty({ example: 9 })
+  count!: number;
+
+  @ApiProperty({ example: 440000 })
+  distance_m!: number;
+
+  @ApiProperty({ example: 1450 })
+  time_min!: number;
+
+  @ApiProperty({ example: 8640 })
+  elevation_up_m!: number;
+
+  @ApiProperty({ example: 9120 })
+  elevation_down_m!: number;
+
+  // The same span just before the filter; null when the filter has no from and to.
+  @ApiProperty({ example: 392000, nullable: true })
+  previous_distance_m!: number | null;
+}
+
 // One page of rides. The total is what tells the client whether another page
 // exists — a short page alone cannot, once rides are filtered out.
 export class ResponseRidePageDto {
@@ -87,4 +125,11 @@ export class ResponseRidePageDto {
 
   @ApiProperty({ example: 137 })
   total!: number;
+
+  // Newest first, one per week the page's rides fall in.
+  @ApiProperty({ type: [ResponseRideWeekDto] })
+  weeks!: ResponseRideWeekDto[];
+
+  @ApiProperty({ type: ResponseRideFiguresDto })
+  figures!: ResponseRideFiguresDto;
 }

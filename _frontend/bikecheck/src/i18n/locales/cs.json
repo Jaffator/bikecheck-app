@@ -351,6 +351,37 @@
     "saveFailed": "Check-in se nepodařilo uložit",
     "deleteFailed": "Check-in se nepodařilo smazat"
   },
+  "ridesTable": {
+    "allBikes": "Všechna kola",
+    "allMonths": "Vše",
+    "month": "Měsíc",
+    "allRides": "Všechny jízdy",
+    "thisWeek": "Tento týden",
+    "lastWeek": "Minulý týden",
+    "columnRide": "Jízda",
+    "columnBike": "Kolo",
+    "columnKm": "Km",
+    "columnClimb": "↑ m",
+    "columnCheckIn": "Check-in",
+    "descent": "↓ {{value}} m klesání",
+    "noComparison": "Minulý měsíc bez jízd",
+    "empty": "V tomto výběru nejsou žádné jízdy",
+    "pageRange": "{{first}}–{{last}} z {{total}}",
+    "vsMonth": {
+      "1": "proti lednu",
+      "2": "proti únoru",
+      "3": "proti březnu",
+      "4": "proti dubnu",
+      "5": "proti květnu",
+      "6": "proti červnu",
+      "7": "proti červenci",
+      "8": "proti srpnu",
+      "9": "proti září",
+      "10": "proti říjnu",
+      "11": "proti listopadu",
+      "12": "proti prosinci"
+    }
+  },
   "rides": {
     "emptyTitle": "Zatím žádné jízdy",
     "emptyBody": "Připoj svůj účet Strava nebo zaznamenej první jízdu a začni sledovat nájezd a opotřebení komponentů.",

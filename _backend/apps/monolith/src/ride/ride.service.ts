@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { check_in_status, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 import { ResponseRideCheckInDto, ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
+import { isDay, isTimeZone, localDay, previousRange, startedWithin, type DayRange } from './ride-period';
+import { figuresOf, summedRideSelect, weeksOf, type SummedRide } from './ride-totals';
 
 const DEFAULT_LIMIT = 20;
 // One request cannot drain the table. The raw Strava payload no longer leaves the
@@ -101,20 +103,29 @@ export class RideService {
    * One page of the user's confirmed rides, newest first. Narrowed to one bike when the
    * caller names one - which is how the archive dialog says how many rides stop counting.
    */
-  async findPage(userId: number, limit: number, offset: number, bikeId?: number): Promise<ResponseRidePageDto> {
+  async findPage(
+    userId: number,
+    limit: number,
+    offset: number,
+    bikeId?: number,
+    period: RidePeriodQuery = {},
+  ): Promise<ResponseRidePageDto> {
     const take = clamp(limit, DEFAULT_LIMIT, 1, MAX_LIMIT);
     const skip = clamp(offset, 0, 0, Number.MAX_SAFE_INTEGER);
+    const { tz, range } = checkedPeriod(period);
 
     // is_deleted is nullable, so `not: true` is what covers both false and the
     // null rows written before the column existed. Across every bike an Archived Bike's
     // rides leave the list with it; asked for by id its own rides still read (ADR 0024).
-    const where = {
+    const ridden: Prisma.ridesWhereInput = {
       user_id: userId,
       is_deleted: { not: true },
       ...(bikeId === undefined ? { bikes: { is_deleted: { not: true } } } : { bike_id: bikeId }),
     };
+    const where = withinRange(ridden, range, tz);
+    const previous = range.from !== undefined && range.to !== undefined ? previousRange(range.from, range.to) : null;
 
-    const [rows, total] = await Promise.all([
+    const [rows, total, summed, before] = await Promise.all([
       this.prisma.rides.findMany({
         where,
         // Nulls last: a ride with no start date belongs at the bottom rather
@@ -125,12 +136,32 @@ export class RideService {
         include: { bikes: { select: BIKE_SELECT }, check_in: { select: CHECK_IN_SELECT } },
       }),
       this.prisma.rides.count({ where }),
+      this.summedRides(where),
+      previous === null ? Promise.resolve(null) : this.summedRides(withinRange(ridden, previous, tz)),
     ]);
 
     // Only this page's rides: the extra reading is paid per page, not per list.
     const woreOff = await this.serviceTracking.getWoreOff(userId, rows);
 
-    return { items: (rows as RideRow[]).map((row) => toRideDto(row, woreOff.get(row.id) ?? [])), total };
+    return {
+      items: (rows as RideRow[]).map((row) => toRideDto(row, woreOff.get(row.id) ?? [])),
+      total,
+      weeks: weeksOf(rows, summed, tz),
+      figures: figuresOf(summed, before),
+    };
+  }
+
+  // The months the desktop filter offers: every month the rider has a ride in, newest first.
+  async findMonths(userId: number, tz = 'UTC'): Promise<string[]> {
+    if (!isTimeZone(tz)) throw new BadRequestException('Unknown time zone');
+    const rows = await this.prisma.rides.findMany({ where: listedRidesWhere(userId), select: { started_at: true } });
+    const months = rows.flatMap((row) => (row.started_at ? [localDay(row.started_at, tz).slice(0, 7)] : []));
+    return [...new Set(months)].sort((a, b) => b.localeCompare(a));
+  }
+
+  // Every ride in the filter, but only the columns the totals add up.
+  private async summedRides(where: Prisma.ridesWhereInput): Promise<SummedRide[]> {
+    return this.prisma.rides.findMany({ where, select: summedRideSelect });
   }
 }
 
@@ -155,6 +186,27 @@ function promptedRides<T extends PromptRow>(rows: T[], promptedAt: Date | null, 
   const recent = rows.filter((row) => row.started_at !== null && row.started_at >= since);
   const arrived = recent.some((row) => promptedAt === null || (row.created_at !== null && row.created_at > promptedAt));
   return arrived ? recent.filter((row) => row.check_in === null) : [];
+}
+
+export interface RidePeriodQuery {
+  from?: string;
+  to?: string;
+  tz?: string;
+}
+
+// Rubbish in the query is the caller's mistake, never an empty page.
+function checkedPeriod(period: RidePeriodQuery): { tz: string; range: DayRange } {
+  const tz = period.tz ?? 'UTC';
+  if (!isTimeZone(tz)) throw new BadRequestException('Unknown time zone');
+  for (const day of [period.from, period.to]) {
+    if (day !== undefined && !isDay(day)) throw new BadRequestException('A day is YYYY-MM-DD');
+  }
+  return { tz, range: { from: period.from, to: period.to } };
+}
+
+function withinRange(where: Prisma.ridesWhereInput, range: DayRange, tz: string): Prisma.ridesWhereInput {
+  const started = startedWithin(range, tz);
+  return started === null ? where : { ...where, started_at: started };
 }
 
 // Keeps a client-supplied number inside what the endpoint will serve, and
