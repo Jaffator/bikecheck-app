@@ -4,13 +4,19 @@ import { Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import { RouteMap } from "@/components/RouteMap";
+import { RideMap } from "@/components/RideMap";
 import type { Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { WoreOff } from "./WoreOff";
 
 // Mantine's large sheet: room for the map and both rows of figures.
 const SHEET_HEIGHT = "var(--drawer-size-lg)";
+
+const MAP_HEIGHT_DESKTOP = 480;
+// Mantine keeps a smaller window's modal inside its margins.
+const MODAL_WIDTH = 960;
+const MAP_HEIGHT_PHONE = 200;
 
 interface RideDetailSheetProps {
   // Null closes the sheet.
@@ -35,12 +41,14 @@ function Stat({ label, value }: { label: string; value: string }): ReactElement 
 // Displays data already loaded with the ride.
 export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
 
   return (
     <ResponsiveSheet
       opened={ride !== null}
       onClose={onClose}
-      desktop="panel"
+      desktop="modal"
+      modalSize={MODAL_WIDTH}
       styles={{
         content: {
           height: SHEET_HEIGHT,
@@ -54,6 +62,13 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
     >
       {ride !== null && (
         <Stack gap={20} pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+          {/* Static on the phone, so a drag on it never fights the sheet's own. */}
+          <RideMap
+            polyline={ride.summary_polyline}
+            height={isDesktop ? MAP_HEIGHT_DESKTOP : MAP_HEIGHT_PHONE}
+            interactive={isDesktop}
+          />
+
           <Stack gap={4}>
             <Text fw={900} fz={20} c="text.7" ta="center">
               {ride.bike_name ?? t("rides.unknownBike")}
@@ -75,9 +90,6 @@ export function RideDetailSheet({ ride, onClose }: RideDetailSheetProps): ReactE
             }}
           >
             <Stack gap="md">
-              {/* Every point Strava gave us: this map is big enough to show them. */}
-              <RouteMap polyline={ride.summary_polyline} width="100%" height={140} strokeWidth={3} />
-
               <Group gap="md" wrap="nowrap">
                 <Stat label={t("rides.statDistance")} value={`${toKm(ride.distance_m)} km`} />
                 <Stat label={t("rides.statDuration")} value={formatDuration(ride.duration_min ?? 0)} />

@@ -1,13 +1,13 @@
 // Desktop Home's latest ride: its route, name and figures; a tap opens the ride.
 import { useState, type ReactElement } from "react";
-import { Box, Center, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Panel, PanelSkeletonRows } from "@/components/Panel";
 import { PANEL_HAIRLINE, PRESS_TRANSITION } from "@/components/panelRows";
-import { RouteMap } from "@/components/RouteMap";
+import { RideMap } from "@/components/RideMap";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
@@ -43,9 +43,8 @@ export function LastRidePanel(): ReactElement {
           style={{ borderTop: PANEL_HAIRLINE, transition: PRESS_TRANSITION }}
         >
           <Stack gap="sm">
-            <Center h={150} style={{ borderRadius: "var(--mantine-radius-sm)", backgroundColor: "var(--color-decor-sunk)" }}>
-              <RouteMap polyline={ride.summary_polyline} width="90%" height={130} strokeWidth={2.5} />
-            </Center>
+            {/* A picture, so the click goes to the card and opens the ride. */}
+            <RideMap polyline={ride.summary_polyline} height={150} interactive={false} />
             <Stack gap={2}>
               <Text fz={16} fw={600} c="text.6" lineClamp={1}>
                 {ride.name}

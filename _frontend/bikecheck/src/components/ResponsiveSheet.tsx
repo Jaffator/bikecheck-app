@@ -1,7 +1,7 @@
 // Every sheet in the app goes through here. Below the desktop breakpoint it is the bottom
 // sheet docs/conventions/drawers.md describes; above it a panel or a modal (ADR 0036).
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Drawer, Modal } from "@mantine/core";
+import { Drawer, Modal, type ModalProps } from "@mantine/core";
 import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { useIsDesktop } from "@/layout/breakpoints";
@@ -23,6 +23,8 @@ interface ResponsiveSheetProps {
   onClose: () => void;
   // A panel shows one item beside the list it came from; a modal asks for something and closes.
   desktop: "panel" | "modal";
+  // Width of the desktop modal; left out, Mantine's default.
+  modalSize?: ModalProps["size"];
   title?: ReactNode;
   // Mantine's own cross; a sheet drawing its own header turns it off.
   withCloseButton?: boolean;
@@ -36,6 +38,7 @@ export function ResponsiveSheet({
   opened,
   onClose,
   desktop,
+  modalSize,
   title,
   withCloseButton = true,
   zIndex,
@@ -114,6 +117,7 @@ export function ResponsiveSheet({
     <Modal
       {...shared}
       centered
+      size={modalSize}
       radius="md"
       overlayProps={OVERLAY}
       styles={{

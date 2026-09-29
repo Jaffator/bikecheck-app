@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string;
   // Strava callback host; development Android WebViews require a LAN address.
   readonly VITE_STRAVA_MICROSERVICE_URL: string;
+  // Without it CARTO serves "API key required" tiles.
+  readonly VITE_CARTO_KEY: string;
 }
 
 interface ImportMeta {

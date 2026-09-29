@@ -30,12 +30,13 @@ grabber, and the entry on the overlay stack that Android's back gesture closes.
 ## Panel or modal
 
 - **`desktop="panel"`** for a sheet that shows one thing out of a list the user is still
-  reading: `ServiceDetailSheet`, `RideDetailSheet`, `PendingRideSheet`,
-  `BikeComponentDetailSheet`, `BikeSpecsDrawer`.
+  reading: `ServiceDetailSheet`, `PendingRideSheet`, `BikeComponentDetailSheet`,
+  `BikeSpecsDrawer`.
 - **`desktop="modal"`** for a sheet that asks for something and closes: every form and
-  confirmation.
+  confirmation. Also `RideDetailSheet`, which opens from Home with no list beside it (ADR 0036).
 
-A modal that turns out to be read more than filled in moves to `panel` in the change that finds it.
+A modal that turns out to be read more than filled in moves to `panel` in the change that finds it,
+unless it also opens where no list stands beside it.
 
 ## On a phone
 
