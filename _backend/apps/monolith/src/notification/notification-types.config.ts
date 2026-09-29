@@ -11,7 +11,10 @@ export type NotificationType =
   | 'strava_activity_saved'
   | 'strava_activity_unassigned'
   | 'maintenance_due'
-  | 'achievement_unlocked';
+  | 'achievement_unlocked'
+  | 'new_follower'
+  | 'follow_request'
+  | 'follow_accepted';
 
 export interface NotificationTypeConfig {
   channels: NotificationChannel[];
@@ -68,6 +71,26 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
   },
   achievement_unlocked: {
     channels: ['inApp'],
+  },
+  // Someone followed a Public profile. In-app only: there is nothing to do about it. Keyed
+  // on the follower, so one person is news once, however often they leave and come back.
+  new_follower: {
+    channels: ['inApp'],
+    route: '/follows?tab=followers',
+  },
+  // An ask, but the bell is only its receipt: the More tab counts pending requests until
+  // answered. Keyed on the asker, so a repeat after a withdrawal or a refusal is silent.
+  follow_request: {
+    channels: ['push', 'inApp'],
+    route: '/follows?tab=followers',
+    pushEmoji: '👋',
+  },
+  // The answer to an ask: pushes, nothing to do but open the garage. Keyed on the owner, so
+  // one garage opening to a person is news once.
+  follow_accepted: {
+    channels: ['push', 'inApp'],
+    route: '/users/:handle',
+    pushEmoji: '✅',
   },
 };
 

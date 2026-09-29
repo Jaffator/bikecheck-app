@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, Card, Group, SegmentedControl, Stack, Switch, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useMyProfile } from "@/features/profile/profile.queries";
+import { SettingsShareRow } from "@/features/profile/ui/SettingsShareRow";
+import { VisibilityBadge } from "@/features/profile/ui/VisibilityBadge";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { useCurrentUser, useLogout, useUpdateUser } from "@/features/users/users.queries";
 import { TIRE_PRESSURE_UNITS, type TirePressureUnit } from "@/features/users/users.types";
@@ -29,6 +32,7 @@ const SEGMENTED_CONTROL_STYLES = {
 export function Settings(): ReactElement | null {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
+  const { data: profile } = useMyProfile();
   const updateUser = useUpdateUser();
   const logout = useLogout();
   const navigate = useNavigate();
@@ -103,6 +107,7 @@ export function Settings(): ReactElement | null {
         <Text fw={700} fz={20} c="text.6" ta="center" mt={6} style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
           {user.name}
         </Text>
+        {profile && <VisibilityBadge visibility={profile.visibility} />}
         <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
           {user.email}
         </Text>
@@ -166,6 +171,7 @@ export function Settings(): ReactElement | null {
       <div className="mx-3 mb-3 mt-0">
         <StravaStatusCard allowDisconnect />
       </div>
+      <SettingsShareRow />
 
       <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
         {t("settings.sectionGeneral")}

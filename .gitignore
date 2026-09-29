@@ -9,6 +9,7 @@ tempCodeRunnerFile.*
 /generated/prisma
 # sensitive environment variables
 .env
+.env.production
 # Operating system and editors
 .DS_Store
 Thumbs.db

@@ -7,10 +7,12 @@ import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
 import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
+import { RIDES_TAB_TOP_SPACE } from "@/features/rides_page/EmptyRides";
 import trailIllustration from "@/assets/images/rides.png";
 import { usePendingRides } from "@/features/strava/strava.queries";
 import { PendingRideSheet } from "./PendingRideSheet";
 import type { PendingRide } from "@/features/strava/strava.types";
+import { formatDuration } from "@/features/rides/rideDuration";
 
 // How far a point may stray before the thumbnail drops it, in viewBox units. Matches the
 // completed list: the same route drawn at the same fifty pixels.
@@ -31,7 +33,7 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
       metrics={
         <>
           <HistoryMetric icon={Route}>{t("pendingRides.distance", { count: ride.distance_km })}</HistoryMetric>
-          <HistoryMetric icon={Clock}>{t("pendingRides.duration", { count: ride.duration_min })}</HistoryMetric>
+          <HistoryMetric icon={Clock}>{formatDuration(ride.duration_min)}</HistoryMetric>
           <HistoryMetric icon={Mountain}>{t("pendingRides.elevation", { count: ride.elevation_up_m })}</HistoryMetric>
         </>
       }
@@ -87,6 +89,7 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled }: Pendin
         illustration={trailIllustration}
         title={t("pendingRides.empty")}
         body={t("pendingRides.emptyBody")}
+        topSpace={RIDES_TAB_TOP_SPACE}
       />
     );
   }

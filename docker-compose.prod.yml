@@ -1,0 +1,132 @@
+# Production stack (docs/research/hosting.md §5): Caddy is the only thing on the host's ports.
+# Build the SPA first (`cd _frontend/bikecheck && npm run build`, VITE_API_BASE_URL=/api), then:
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+# .env.production is git-ignored; .env.production.example lists every variable.
+services:
+  db-monolith:
+    image: postgres:18.1-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: monolith
+    volumes:
+      - pgdata_monolith:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d monolith"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  db-strava-service:
+    image: postgres:18.1-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: strava_service
+    volumes:
+      - pgdata_strava_service:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d strava_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  monolith:
+    build:
+      context: ./_backend
+      dockerfile: Dockerfile.prod
+      args:
+        APP: monolith
+    restart: unless-stopped
+    # Playwright: Chromium runs out of memory without the host IPC namespace; init reaps its zombies.
+    ipc: host
+    init: true
+    command: ["sh", "-c", "npx prisma migrate deploy --config apps/monolith/prisma.config.ts && node dist/apps/monolith/src/main.js"]
+    env_file: .env.production
+    environment:
+      PORT: "3000"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-monolith:5432/monolith
+      REDIS_HOST: redis
+      # Internal calls to the strava-service never leave the compose network.
+      STRAVA_SERVICE_URL: http://strava-service:3002
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL}
+      SPA_INDEX_HTML: /srv/spa/index.html
+    volumes:
+      - ./_frontend/bikecheck/dist:/srv/spa:ro
+    depends_on:
+      db-monolith:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      strava-service:
+        condition: service_started
+    networks: [internal]
+
+  strava-service:
+    build:
+      context: ./_backend
+      dockerfile: Dockerfile.prod
+      args:
+        APP: strava-service
+    restart: unless-stopped
+    command: ["sh", "-c", "npx node-pg-migrate up -m apps/strava-service/migrations && node dist/apps/strava-service/main.js"]
+    env_file: .env.production
+    environment:
+      PORT: "3002"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-strava-service:5432/strava_service
+      REDIS_HOST: redis
+      # Here it is the public base of the OAuth redirect_uri Strava sends the browser back to.
+      STRAVA_SERVICE_URL: ${PUBLIC_APP_URL}
+    depends_on:
+      db-strava-service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [internal]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST}
+      OPS_USER: ${OPS_USER}
+      OPS_PASSWORD_HASH: ${OPS_PASSWORD_HASH}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./_frontend/bikecheck/dist:/srv/spa:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - monolith
+      - strava-service
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  pgdata_monolith:
+  pgdata_strava_service:
+  redis_data:
+  caddy_data:
+  caddy_config:

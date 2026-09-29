@@ -2,6 +2,7 @@
 import { useState, type ReactElement } from "react";
 import {
   ActionIcon,
+  Autocomplete,
   Box,
   Button,
   FileButton,
@@ -9,6 +10,7 @@ import {
   Loader,
   NumberInput,
   Paper,
+  SegmentedControl,
   Stack,
   Text,
   Textarea,
@@ -16,14 +18,20 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Banknote, Calendar, Check, NotepadText, Paperclip, Pencil, Plus, X } from "lucide-react";
+import { Banknote, Calendar, Check, NotepadText, Paperclip, Pencil, Plus, Store, X } from "lucide-react";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
-import { useUploadServiceAttachment } from "@/features/service/service.queries";
+import { PINNED_BAR_LEFT, PINNED_BAR_WIDTH } from "@/layout/contentWidth";
+import { useShopNames, useUploadServiceAttachment } from "@/features/service/service.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
-import type { UploadedAttachment } from "@/features/service/service.types";
-import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
+import type { ServicePlace, UploadedAttachment } from "@/features/service/service.types";
+import {
+  autosizeInputStyles,
+  disabledButtonStyles,
+  dropdownProps,
+  inputStyles,
+} from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { actionNote, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
@@ -33,6 +41,9 @@ import { actionNote, today, type CategoryBlock, type PickedAction } from "./serv
 
 // A receipt, an invoice and a few photos of the work is as many as one visit needs.
 const MAX_ATTACHMENTS = 10;
+
+// The backend's events_bikes.shop_name width.
+const SHOP_NAME_MAX_LENGTH = 100;
 
 const CARD_ICON_SIZE = 20;
 
@@ -73,6 +84,10 @@ interface ServiceSummaryStepProps {
   onAnotherCategory: () => void;
   serviceDate: string;
   onServiceDateChange: (day: string) => void;
+  place: ServicePlace;
+  onPlaceChange: (place: ServicePlace) => void;
+  shopName: string;
+  onShopNameChange: (name: string) => void;
   note: string;
   onNoteChange: (note: string) => void;
   totalCost: number;
@@ -96,6 +111,10 @@ export function ServiceSummaryStep({
   onAnotherCategory,
   serviceDate,
   onServiceDateChange,
+  place,
+  onPlaceChange,
+  shopName,
+  onShopNameChange,
   note,
   onNoteChange,
   totalCost,
@@ -237,6 +256,13 @@ export function ServiceSummaryStep({
           rightSection={<Calendar size={ICON_SIZE} color="var(--color-text-dim)" />}
           onChange={(event) => onServiceDateChange(event.currentTarget.value)}
         />
+        {/* ---------- Place ---------- */}
+        <PlaceField
+          place={place}
+          onPlaceChange={onPlaceChange}
+          shopName={shopName}
+          onShopNameChange={onShopNameChange}
+        />
         {/* ---------- Note ---------- */}
         <Textarea
           label={t("addService.note")}
@@ -337,9 +363,9 @@ export function ServiceSummaryStep({
         the hub (ADR 0006, ADR 0009). */}
       <Box
         data-fixed-footer
+        left={PINNED_BAR_LEFT}
         style={{
           position: "fixed",
-          left: 0,
           right: 0,
           bottom: 0,
           // Rides above the software keyboard, which the webview does not resize for.
@@ -367,7 +393,7 @@ export function ServiceSummaryStep({
         />
         <Stack
           gap={6}
-          w="92%"
+          w={PINNED_BAR_WIDTH}
           px="md"
           py="sm"
           className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
@@ -440,6 +466,55 @@ export function ServiceSummaryStep({
         </Stack>
       </Box>
     </>
+  );
+}
+
+// Where the work was done, set once for the whole occasion like its date (ADR 0002, ADR 0037).
+function PlaceField({
+  place,
+  onPlaceChange,
+  shopName,
+  onShopNameChange,
+}: {
+  place: ServicePlace;
+  onPlaceChange: (place: ServicePlace) => void;
+  shopName: string;
+  onShopNameChange: (name: string) => void;
+}): ReactElement {
+  const { t } = useTranslation();
+  const { data: shopNames } = useShopNames();
+
+  return (
+    <Stack gap="xs">
+      <Stack gap={4}>
+        <Text style={summaryLabel}>{t("addService.place")}</Text>
+        <SegmentedControl
+          fullWidth
+          aria-label={t("addService.place")}
+          value={place}
+          onChange={(value) => onPlaceChange(value === "SHOP" ? "SHOP" : "HOME")}
+          data={[
+            { value: "HOME", label: t("addService.placeHome") },
+            { value: "SHOP", label: t("addService.placeShop") },
+          ]}
+        />
+      </Stack>
+      {/* Suggests the names typed on earlier Services, so a usual shop is typed once. */}
+      {place === "SHOP" && (
+        <Autocomplete
+          label={t("addService.shopName")}
+          placeholder={t("addService.shopNamePlaceholder")}
+          data={shopNames ?? []}
+          limit={8}
+          maxLength={SHOP_NAME_MAX_LENGTH}
+          value={shopName}
+          onChange={onShopNameChange}
+          styles={summaryInputStyles}
+          comboboxProps={dropdownProps}
+          rightSection={<Store size={ICON_SIZE} color="var(--color-text-dim)" />}
+        />
+      )}
+    </Stack>
   );
 }
 

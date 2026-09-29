@@ -1,7 +1,7 @@
 // How a Report writes its own figures. A document is read in the language and currency it
 // was frozen in, never the reader's — so nothing here takes the app's locale.
 import { formatCost } from "@/utils/money";
-import type { ReportBike, ReportComponent, ReportPeriod } from "./report.types";
+import type { ReportBike, ReportComponent, ReportPeriod, ReportService } from "./report.types";
 import type { ReportHeadings } from "./reportHeadings";
 
 // The paper the document is printed on. Fixed values rather than theme tokens: the app is
@@ -36,6 +36,14 @@ export function reportNumber(value: number, language: string): string {
 // maintenance record cares about.
 export function reportRideTime(minutes: number, language: string): string {
   return `${reportNumber(Math.round(minutes / 60), language)} h`;
+}
+
+// Where the work was done, in the document's own words; null prints nothing, not an empty label.
+// A Report made before the Place existed carries no field at all, which reads the same.
+export function reportPlace(service: ReportService, heading: ReportHeadings): string | null {
+  if (service.place === undefined || service.place === null) return null;
+  if (service.place === "HOME") return heading.home;
+  return service.shopName ?? heading.shop;
 }
 
 // The bike as a maintenance record names it: what it is, not the nickname its owner gave

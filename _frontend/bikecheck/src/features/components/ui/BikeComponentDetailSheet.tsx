@@ -3,11 +3,12 @@
 // you are looking at. The sheet carries Edit and nothing else — Replace, Dismount and
 // Delete stay on the row's kebab (ADR 0023).
 import { useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Divider, Drawer, Group, SimpleGrid, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Divider, Group, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Info, Pencil, X } from "lucide-react";
 import type { TFunction } from "i18next";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import type { BikeComponent } from "@/features/components/components.types";
 import {
   componentTypeName,
@@ -16,7 +17,6 @@ import {
   tracksDrivetrain,
   tracksSuspension,
 } from "@/features/components/componentLabels";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { ExplanationModal } from "@/components/ExplanationModal";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
 
@@ -43,39 +43,24 @@ export function BikeComponentDetailSheet({ component, onClose, onEdit }: BikeCom
   // drawn all the way down instead of emptying mid-animation.
   const shown = useLastShown(component);
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(component !== null, onClose);
-
   const removed = shown !== null && isDismounted(shown);
 
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={component !== null}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="panel"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
           height: SHEET_HEIGHT,
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
         body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
       }}
     >
-      {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        w={36}
-        h={4}
-        style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)", flexShrink: 0 }}
-      />
-
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {shown !== null && (
           <Stack gap="lg" pb="md">
@@ -90,7 +75,7 @@ export function BikeComponentDetailSheet({ component, onClose, onEdit }: BikeCom
           </Stack>
         )}
       </Box>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

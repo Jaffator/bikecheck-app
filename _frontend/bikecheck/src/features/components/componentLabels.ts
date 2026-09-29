@@ -52,6 +52,21 @@ const EXPLAINED_MEASURES: Partial<Record<WearMeasure, { label: string; info: str
   health_index: { label: "bikeComponents.detailHealthIndex", info: "bikeComponents.detailHealthIndexInfo" },
 };
 
+// What each accumulator is called, wherever a reading has room to name it. Naming it is
+// what stops a fork's own hours being read as the bike's, and a chain's drivetrain
+// kilometres as the odometer's.
+const MEASURE_LABELS: Record<WearMeasure, string> = {
+  total_km: "bikeComponents.detailDistance",
+  drivetrain_km: "bikeComponents.detailDrivetrain",
+  total_time_min: "bikeComponents.detailTime",
+  suspension_min: "bikeComponents.detailSuspension",
+  health_index: "bikeComponents.detailHealthIndex",
+};
+
+export function measureLabel(measure: WearMeasure, translate: (key: string) => string): string {
+  return translate(MEASURE_LABELS[measure]);
+}
+
 // What a reading is and where its number comes from, for the owner - or null where the
 // reading needs no explaining. One wording, wherever it is asked for.
 export interface WearExplanation {

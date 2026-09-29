@@ -111,6 +111,8 @@ describe('ReportService', () => {
     total_cost: new Prisma.Decimal(1800),
     service_date: SERVICE_DATE,
     is_deleted: false,
+    place: 'SHOP',
+    shop_name: 'Bike Centrum',
     bikes: {
       id: BIKE_ID,
       bikename: 'Firebird',
@@ -361,6 +363,22 @@ describe('ReportService', () => {
       ]);
     });
 
+    it('says where the work was done: which shop did it', async () => {
+      const { snapshot } = await service.exportReport(OWNER_ID, { kind: report_kind.SERVICE, service_id: SERVICE_ID });
+      if (snapshot.kind !== 'SERVICE') throw new Error('expected a service report');
+
+      expect(snapshot.service).toMatchObject({ place: 'SHOP', shopName: 'Bike Centrum' });
+    });
+
+    it('says nothing of where a service recorded before the Place was done', async () => {
+      mockPrisma.events_bikes.findFirst.mockResolvedValue(serviceRow({ place: null, shop_name: null }));
+
+      const { snapshot } = await service.exportReport(OWNER_ID, { kind: report_kind.SERVICE, service_id: SERVICE_ID });
+      if (snapshot.kind !== 'SERVICE') throw new Error('expected a service report');
+
+      expect(snapshot.service).toMatchObject({ place: null, shopName: null });
+    });
+
     it('records each action with its note, its cost and whether it was a replacement', async () => {
       const { snapshot } = await service.exportReport(OWNER_ID, {
         kind: report_kind.SERVICE,
@@ -542,6 +560,23 @@ describe('ReportService', () => {
       expect(snapshot.services).toHaveLength(2);
       // Two services at 1800 each, and one replacement in each of them.
       expect(snapshot.totals).toEqual({ totalCost: 3600, serviceCount: 2, replacementCount: 2 });
+    });
+
+    it('carries where each service was done, and nothing for one never recorded', async () => {
+      mockPrisma.events_bikes.findMany.mockResolvedValue([
+        serviceRow(),
+        serviceRow({ id: 43, place: 'HOME', shop_name: null }),
+        serviceRow({ id: 44, place: null, shop_name: null }),
+      ]);
+
+      const { snapshot } = await exportPeriod();
+      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+
+      expect(snapshot.services.map(({ place, shopName }) => ({ place, shopName }))).toEqual([
+        { place: 'SHOP', shopName: 'Bike Centrum' },
+        { place: 'HOME', shopName: null },
+        { place: null, shopName: null },
+      ]);
     });
 
     it('refuses an empty period rather than exporting a document of nothing', async () => {

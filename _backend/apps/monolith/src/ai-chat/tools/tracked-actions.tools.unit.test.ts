@@ -46,7 +46,6 @@ function action(overrides: Partial<Response_GarageTrackedActionDto> = {}): Respo
     interval: 4000,
     percentage: 90,
     level: 'warning',
-    extended: false,
     ...overrides,
   };
 }
@@ -128,7 +127,6 @@ describe('trackedActionTools', () => {
       remaining: 400,
       percentage: 90,
       level: 'warning',
-      extended: false,
       unfed: false,
     });
   });

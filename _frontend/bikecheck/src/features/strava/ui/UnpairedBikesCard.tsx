@@ -55,9 +55,7 @@ export function UnpairedBikesCard(): ReactElement | null {
           fullWidth
           variant="outline"
           radius="md"
-          color="primary.6"
-          c="primary.6"
-          leftSection={<Link2 size={16} />}
+          leftSection={<Link2 size={16} color="var(--mantine-color-primary-5)" />}
           onClick={() => {
             setPairingGear(true);
           }}

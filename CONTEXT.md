@@ -135,6 +135,12 @@ _Avoid_: Swap (that is a sub-part job, which is not a Replacement)
 When the work actually happened, which may be earlier than when it was recorded.
 _Avoid_: Created at (that is when the record was written)
 
+**Place**:
+Where a Service was done: **Home**, or **Shop** with an optional shop name the owner typed.
+Belongs to the occasion, like the Service Date (ADR 0002). A shop is a name on the Service, not an
+entry in a list (ADR 0037). A Service recorded before the Place existed has none, which is not Home.
+_Avoid_: Location (rides have one), workshop, venue
+
 **Category Block**:
 The Actions recorded against one Component Category within one Service. A wizard-only grouping —
 nothing in the schema represents it, and every block's actions land in the same Service (ADR 0002).
@@ -163,9 +169,12 @@ them, one Period or all time.
 _Avoid_: Summary (that is the wizard's hub step), Overview
 
 **Period**:
-The span of Service Dates the history is read for. Either end may be left open; both open is
-all time, which is the only Period that counts a Service carrying no Service Date — such a
-Service falls in no bounded Period.
+The span of days a reading is taken over — the service history and its History Totals, and Home's
+figures and charts. A Service belongs to its Service Date's day, a ride to the UTC day it started
+on; a ride with no start belongs to no Period. Either end may be left open; both open is all time,
+which is the only Period that counts a Service carrying no Service Date — such a Service falls in
+no bounded Period. Home offers three: this month, the year, and all time, which for rides begins
+on the day of the garage's earliest ride.
 _Avoid_: Range, timeframe
 
 **Wear Baseline**:
@@ -175,7 +184,8 @@ measured against.
 
 **Service Interval**:
 How much wear may pass before an action is due again — expressed in kilometres, minutes or health
-index, depending on the action.
+index, depending on the action. The bike's own plan is seeded when the bike is created and never
+edited; a reading measures against that plan unless its Tracked Action carries an Interval Override.
 
 ### Service Tracking
 
@@ -192,16 +202,41 @@ Actions (ADR 0027). A pairing the bike keeps no Service Interval for is not one 
 _Avoid_: Due item, maintenance item, service item
 
 **Attention Level**:
-How much attention one Tracked Action is asking for, from its percentage: good below 70, warning
-70–94, critical 95–99, overdue at 100 and above. The colour a reading is read by before it is read
-by number.
+How much attention one Tracked Action is asking for, from its percentage: very good below 60, good
+60–74, warning 75–89, critical 90–99, overdue at 100 and above. One step per stop of the colour
+ramp, so the word and the colour never tell two different stories (ADR 0034). The app speaks from
+warning up; the two below it are a colour and nothing more.
 _Avoid_: Health level, severity, status
 
-**Extension**:
-What putting off an overdue Tracked Action added to its Service Interval — 10% of the interval, on
-the axis it is measured in. Accumulates when granted again, and dies with the part it was granted
-on, so a new chain is never born already deferred.
-_Avoid_: Snooze, postponement, deferral
+**Band**:
+The step of the percentage a Tracked Action has already announced — 0, 75, 90, then 100 and every
+ten above it. Not the same as the Attention Level, at either end: very good and good share band 0
+because neither announces, and past 100 one level spreads over every band above it, so 110% and
+240% are both overdue and announce separately (ADR 0034). Moves up or down with the reading; moving
+down re-arms the next crossing.
+_Avoid_: Threshold, step, tier
+
+**Interval Override**:
+A Service Interval the owner set on one Tracked Action, standing in for the bike's plan on that part
+alone — the number only, never the axis. Carried to the new part by a Replacement, so it outlives
+the part it was set on (ADR 0033). Cleared, the bike's plan applies again.
+_Avoid_: Custom interval, per-part interval
+
+**Muted**:
+A Tracked Action whose announcements the owner turned off. Only the announcement stops — the
+reading, its colour and its place on the dashboard all stand, and the band already announced keeps
+moving silently, so unmuting is quiet rather than a backlog. Carried to the new part by a
+Replacement, like an Interval Override.
+_Avoid_: Snoozed, disabled, ignored, untracked
+
+**Plan**:
+The day an owner means to do one Tracked Action — a day and nothing more. It puts nothing off: the
+reading, its colour, its band and its announcements stand as they are, and a planned Tracked Action
+stays on every list with its day beside it. Cycle state, like the announced band: a Service that
+records the Action after the plan was set ends it, and a Replacement never carries it to the new
+part. A day that has passed stays until the Action is recorded, the plan moves or it is removed
+(ADR 0038).
+_Avoid_: Schedule (reads as recurring), appointment, reminder (nothing reminds), postpone
 
 ### Setup
 
@@ -262,6 +297,53 @@ The public address a Report is read at. A Report has one from birth, but it stay
 owner publishes it, and the owner can revoke it afterwards — a revoked link is gone for good, and a
 new one means a new Report.
 _Avoid_: Public URL, share url, token
+
+**Public Profile**:
+The live page of one account's garage at `/u/<handle>` — what is there now, read when opened. The
+opposite of a Report: nothing is frozen, and switching it off takes effect on the next request.
+Every account may keep exactly one.
+_Avoid_: Live report, public page, published profile
+
+**Handle**:
+The name in a Public Profile's address, chosen by the owner: 3–30 characters, letters, digits, dash
+and underscore, starting with a letter or digit, stored lowercase and matched whatever the case it
+is typed in. Brand words and the app's own routes are reserved. Renaming is free and immediate — the
+old Handle stops answering and may be taken by anyone.
+_Avoid_: Username (that is the Strava field), nickname, slug, alias
+
+**Visibility**:
+Who may open a Public Profile: **Off** (nobody, not even a Follower — the settings and the Handle
+stay), **Followers only** (approved Followers, inside the app; the web address answers to no one) or
+**Public** (anyone at the address). One switch, set only in the share drawer.
+_Avoid_: Private (Off is a Visibility, not a privacy setting), privacy, status
+
+**Shared Bike**:
+A bike the owner lets out on their Public Profile — every bike is one until its switch is turned
+off. An archived bike is never shown whatever its switch says, and comes back as it was set when
+un-archived.
+_Avoid_: Public bike, visible bike, published bike
+
+**Last Updated**:
+When a Public Profile last changed, as read on its page: the newest of the profile's own settings,
+its Shared Bikes, their mounted components and their Services. Reading the page does not move it.
+_Avoid_: Modified, last activity, last seen
+
+**Follower**:
+An account whose Follow Request the owner accepted, or one that followed a Public profile — there
+it takes at once. May open a Followers-only profile inside the app, for as long as the owner keeps
+it: the owner may remove a Follower at any time, and the Follower is told nothing.
+_Avoid_: Friend, subscriber, contact
+
+**Follow Request**:
+One account asking to become a Follower of another; pending until the owner accepts or refuses it.
+A Public profile needs none — following it is immediate, and a profile turning Public accepts every
+request still waiting.
+_Avoid_: Friend request, invitation, subscription
+
+**Discoverable**:
+A Public Profile that answers inside the app — Followers only or Public. An Off profile is not, and
+neither is a Handle nobody holds: the two are indistinguishable to anyone but the owner.
+_Avoid_: Listed, searchable, indexed
 
 ### Account
 

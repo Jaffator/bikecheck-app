@@ -11,17 +11,21 @@ import { ServiceList } from "@/features/service/ui/ServiceList";
 import { useRecentServices } from "@/features/service/service.queries";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
+import { PlannedCard } from "@/features/service_tracking/ui/PlannedCard";
 import { EmptyService } from "./EmptyService";
 
-// Clears the FAB and the bottom nav, so the last row can still be tapped.
-const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+// Clears the FAB and the bottom nav, so the last row can still be tapped. Desktop has neither.
+const FAB_CLEARANCE = {
+  base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+  md: "md",
+};
 
 // The chips hold under the app header while the page scrolls, so a bike can be switched
 // from anywhere in the list. They carry the page background: the cards pass under them.
 // The offset is the app header's height - see AppLayout.
 const STICKY_CHIPS_STYLE = {
   position: "sticky",
-  top: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+  top: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
   zIndex: 2,
   backgroundColor: "var(--mantine-color-background-9)",
 } as const;
@@ -47,6 +51,8 @@ export function Service(): ReactElement {
   // What the chosen bike - or the garage - needs doing, or the all-clear. A garage with no
   // bikes has nothing to track, so it gets neither.
   const attention = hasBikes ? <AttentionCard bikeId={bikeId} whenEmpty={<AllGoodCard />} /> : null;
+  // What is booked, above what is worn; hidden while nothing is planned.
+  const planned = hasBikes ? <PlannedCard bikeId={bikeId} /> : null;
   // A swipe across the content picks a bike, exactly as tapping its chip does.
   const swipeHandlers = useBikeSwipe(bikes ?? [], bikeId, setBikeId);
   // The list the previous bike left on screen dims until the new one lands, and the new one
@@ -80,8 +86,19 @@ export function Service(): ReactElement {
             here. The bar stays outside it, so it keeps its own sideways scroll. */}
         <Box style={SWIPE_AREA_STYLE} {...swipeHandlers}>
           <Box key={panel.key} className={panel.className} style={panel.style}>
-            <Box className="mx-3 mt-3">{attention}</Box>
-            <EmptyService forBike={bikeId !== null} compact />
+            {/* A garage of one has its bike implied, as historyBikeId does above. The card
+                goes inside the empty state, so the illustration runs behind it too. */}
+            <EmptyService
+              forBike={bikeId !== null || bikes?.length === 1}
+              forGarage
+              compact
+              header={
+                <Stack gap="sm" pt={12}>
+                  {planned}
+                  {attention}
+                </Stack>
+              }
+            />
           </Box>
         </Box>
       </Stack>
@@ -100,6 +117,7 @@ export function Service(): ReactElement {
       <Box style={SWIPE_AREA_STYLE} {...swipeHandlers}>
         <Box key={panel.key} className={panel.className} style={panel.style}>
           <Stack gap="sm" className="m-3">
+            {planned}
             {attention}
 
             <Text fw={600} fz={15} c="text.7">

@@ -33,6 +33,7 @@ describe('BikeEventService', () => {
     },
     bike_event_attachments: { createMany: jest.fn(), deleteMany: jest.fn() },
     component_types: { findUnique: jest.fn() },
+    tracked_action_state: { findMany: jest.fn(), createMany: jest.fn() },
     rides: { aggregate: jest.fn() },
     bikes: { findFirst: jest.fn(), findFirstOrThrow: jest.fn() },
   };
@@ -134,6 +135,8 @@ describe('BikeEventService', () => {
       Promise.resolve(args.where.id.in.length),
     );
     mockTx.event_actions_done.create.mockResolvedValue({ id: 500 });
+    // A replaced part carries no settings of its own unless a test gives it some.
+    mockTx.tracked_action_state.findMany.mockResolvedValue([]);
     rides({});
     mockPrisma.rides.aggregate.mockResolvedValue(ridesAfter({}));
     mockPrisma.events_bikes.findFirst.mockResolvedValue({ id: 99, bike_id: BIKE_ID });
@@ -858,6 +861,57 @@ describe('BikeEventService', () => {
       });
     });
 
+    describe('the Place', () => {
+      // The row the edit wrote for the service itself.
+      const writtenService = (): Record<string, unknown> =>
+        (mockTx.events_bikes.update.mock.calls[0] as [{ data: Record<string, unknown> }])[0].data;
+
+      it('leaves the Place as it is when the edit does not mention it', async () => {
+        await service.update(EVENT_ID, { note: 'Typo fixed' }, OWNER_ID);
+
+        expect(writtenService()).not.toHaveProperty('place');
+        expect(writtenService()).not.toHaveProperty('shop_name');
+      });
+
+      it('clears the shop name when a Service moves from a shop to home', async () => {
+        await service.update(EVENT_ID, { place: 'HOME' }, OWNER_ID);
+
+        expect(writtenService()).toMatchObject({ place: 'HOME', shop_name: null });
+      });
+
+      it('sets both when a Service moves from home to a named shop', async () => {
+        await service.update(EVENT_ID, { place: 'SHOP', shop_name: ' Bike Centrum ' }, OWNER_ID);
+
+        expect(writtenService()).toMatchObject({ place: 'SHOP', shop_name: 'Bike Centrum' });
+      });
+
+      it('takes the Place back to not recorded, name and all', async () => {
+        await service.update(EVENT_ID, { place: null }, OWNER_ID);
+
+        expect(writtenService()).toMatchObject({ place: null, shop_name: null });
+      });
+
+      it.each([
+        ['alone', {}],
+        ['on a Service done at home', { place: 'HOME' as const }],
+        ['on a Place taken back to not recorded', { place: null }],
+      ])('refuses a shop name sent %s', async (_, place) => {
+        await expect(service.update(EVENT_ID, { ...place, shop_name: 'Bike Centrum' }, OWNER_ID)).rejects.toThrow(
+          BadRequestException,
+        );
+        expect(mockTx.events_bikes.update).not.toHaveBeenCalled();
+      });
+
+      it('rewrites no Wear Baseline when only the Place changes', async () => {
+        mockTx.events_bikes.findUnique.mockResolvedValue(saved([ordinaryAction]));
+
+        await service.update(EVENT_ID, { place: 'SHOP', shop_name: 'Bike Centrum' }, OWNER_ID);
+
+        expect(mockTx.action_done_component_map.update).not.toHaveBeenCalled();
+        expect(mockTx.components_mounted.update).not.toHaveBeenCalled();
+      });
+    });
+
     it('records an attachment with no size on it as having none', async () => {
       // ACT: an older client, or a caller that never learned the field.
       await service.update(
@@ -873,6 +927,177 @@ describe('BikeEventService', () => {
     });
   });
 
+  // Where the work was done: Home, or a Shop with an optional name (ADR 0037).
+  describe('the Place of a new service', () => {
+    // The row create wrote for the service itself.
+    const writtenService = (): Record<string, unknown> =>
+      (mockTx.events_bikes.create.mock.calls[0] as [{ data: Record<string, unknown> }])[0].data;
+
+    it('saves a Service done at home with no shop name', async () => {
+      await service.create(dto({ place: 'HOME' }), OWNER_ID);
+
+      expect(writtenService()).toMatchObject({ place: 'HOME', shop_name: null });
+    });
+
+    it('saves the shop name trimmed, so the same shop reads the same', async () => {
+      await service.create(dto({ place: 'SHOP', shop_name: ' Bike Centrum ' }), OWNER_ID);
+
+      expect(writtenService()).toMatchObject({ place: 'SHOP', shop_name: 'Bike Centrum' });
+    });
+
+    it.each(['', '   '])('saves a shop with a blank name (%p) as a shop with no name', async (blank) => {
+      await service.create(dto({ place: 'SHOP', shop_name: blank }), OWNER_ID);
+
+      expect(writtenService()).toMatchObject({ place: 'SHOP', shop_name: null });
+    });
+
+    it('saves a shop with no name at all', async () => {
+      await service.create(dto({ place: 'SHOP' }), OWNER_ID);
+
+      expect(writtenService()).toMatchObject({ place: 'SHOP', shop_name: null });
+    });
+
+    it('leaves the Place not recorded when none is sent', async () => {
+      await service.create(dto(), OWNER_ID);
+
+      // Not recorded is null in the column, never Home.
+      expect(writtenService().place ?? null).toBeNull();
+      expect(writtenService().shop_name ?? null).toBeNull();
+    });
+
+    it.each([
+      ['a Service done at home', { place: 'HOME' as const }],
+      ['no Place at all', {}],
+    ])('refuses a shop name on %s', async (_, place) => {
+      await expect(service.create(dto({ ...place, shop_name: 'Bike Centrum' }), OWNER_ID)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockTx.events_bikes.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // The names the owner typed on earlier Services, offered back as they type a new one.
+  describe('shop suggestions', () => {
+    const STRANGER_ID = 8;
+
+    interface ShopRow {
+      id: number;
+      service_date: Date | null;
+      is_deleted: boolean;
+      place: 'HOME' | 'SHOP' | null;
+      shop_name: string | null;
+      bikes: { user_id: number; is_deleted: boolean };
+    }
+
+    interface ShopWhere {
+      bikes: { user_id: number; is_deleted?: { not: boolean } };
+      is_deleted?: { not: boolean };
+      place?: string;
+      shop_name?: { not: null };
+    }
+
+    let nextId = 1;
+    // One Service at a named shop on the owner's bike in use, unless a test says otherwise.
+    const shop = (name: string | null, date: string | null, overrides: Partial<ShopRow> = {}): ShopRow => ({
+      id: nextId++,
+      service_date: date === null ? null : new Date(date),
+      is_deleted: false,
+      place: 'SHOP',
+      shop_name: name,
+      bikes: { user_id: OWNER_ID, is_deleted: false },
+      ...overrides,
+    });
+
+    // A flag filter as Prisma reads `{ not: true }`: every row whose flag is anything else.
+    const passes = (flag: boolean, filter?: { not: boolean }): boolean => filter === undefined || flag !== filter.not;
+
+    // The database answers the query's own where, so a test reads what the service made of it.
+    const database = (rows: ShopRow[]): void => {
+      mockPrisma.events_bikes.findMany.mockImplementation(({ where }: { where: ShopWhere }) =>
+        Promise.resolve(
+          rows.filter(
+            (row) =>
+              row.bikes.user_id === where.bikes.user_id &&
+              passes(row.bikes.is_deleted, where.bikes.is_deleted) &&
+              passes(row.is_deleted, where.is_deleted) &&
+              (where.place === undefined || row.place === where.place) &&
+              (where.shop_name === undefined || row.shop_name !== null),
+          ),
+        ),
+      );
+    };
+
+    it('offers the latest used shop first and the undated ones last', async () => {
+      database([
+        shop('Kolo Servis', '2026-03-01T00:00:00.000Z'),
+        shop('Undated Bikes', null),
+        shop('Bike Centrum', '2026-07-01T00:00:00.000Z'),
+        // The same day twice: the one recorded later comes first.
+        shop('Trail Garage', '2026-05-01T00:00:00.000Z'),
+        shop('Velo Praha', '2026-05-01T00:00:00.000Z'),
+      ]);
+
+      expect(await service.shopNames(OWNER_ID)).toEqual([
+        'Bike Centrum',
+        'Velo Praha',
+        'Trail Garage',
+        'Kolo Servis',
+        'Undated Bikes',
+      ]);
+    });
+
+    it('offers a shop once whatever its capitals, spelled as it was last typed', async () => {
+      database([
+        shop('bike centrum', '2026-03-01T00:00:00.000Z'),
+        shop('Bike Centrum', '2026-07-01T00:00:00.000Z'),
+        shop('BIKE CENTRUM', '2026-05-01T00:00:00.000Z'),
+      ]);
+
+      expect(await service.shopNames(OWNER_ID)).toEqual(['Bike Centrum']);
+    });
+
+    it('leaves out home Services, unnamed shops and deleted services', async () => {
+      database([
+        shop('Bike Centrum', '2026-07-01T00:00:00.000Z'),
+        shop(null, '2026-07-02T00:00:00.000Z'),
+        shop('Garage', '2026-07-03T00:00:00.000Z', { place: 'HOME' }),
+        shop('Mistake Bikes', '2026-07-04T00:00:00.000Z', { is_deleted: true }),
+      ]);
+
+      expect(await service.shopNames(OWNER_ID)).toEqual(['Bike Centrum']);
+    });
+
+    it("counts the shops used on the owner's archived bikes", async () => {
+      database([shop('Old Shop', '2025-07-01T00:00:00.000Z', { bikes: { user_id: OWNER_ID, is_deleted: true } })]);
+
+      expect(await service.shopNames(OWNER_ID)).toEqual(['Old Shop']);
+    });
+
+    it("never offers another owner's shops", async () => {
+      database([shop('Their Shop', '2026-07-01T00:00:00.000Z', { bikes: { user_id: STRANGER_ID, is_deleted: false } })]);
+
+      expect(await service.shopNames(OWNER_ID)).toEqual([]);
+    });
+
+    it('offers at most twenty names, the latest ones', async () => {
+      database([
+        ...Array.from({ length: 25 }, (_, day) =>
+          shop(`Shop ${day + 1}`, new Date(Date.UTC(2026, 0, day + 1)).toISOString()),
+        ),
+        // The usual shop's repeat visits are one name, not five of the twenty.
+        ...Array.from({ length: 5 }, (_, day) =>
+          shop('shop 25', new Date(Date.UTC(2026, 1, day + 1)).toISOString()),
+        ),
+      ]);
+
+      const names = await service.shopNames(OWNER_ID);
+
+      expect(names).toHaveLength(20);
+      expect(names[0]).toBe('shop 25');
+      expect(names.at(-1)).toBe('Shop 6');
+    });
+  });
+
   describe('history', () => {
     const historyRow = {
       id: 99,
@@ -880,6 +1105,8 @@ describe('BikeEventService', () => {
       service_date: SERVICE_DATE,
       created_at: SERVICE_DATE,
       total_cost: new Prisma.Decimal(350.5),
+      place: 'SHOP',
+      shop_name: 'Bike Centrum',
       bikes: { bike_brand: 'Santa Cruz', bike_model: 'Hightower', year: 2022 },
       event_actions_done: [
         { events_action: { action_name: 'Chain Replacement', i18n_key: 'action.chainReplacement' } },
@@ -909,6 +1136,8 @@ describe('BikeEventService', () => {
             { name: 'Brake bleed', i18n_key: 'action.bleed' },
           ],
           total_cost: 350.5,
+          place: 'SHOP',
+          shop_name: 'Bike Centrum',
         },
       ]);
 
@@ -921,6 +1150,15 @@ describe('BikeEventService', () => {
           skip: 0,
         }),
       );
+    });
+
+    it('reads a service recorded before the Place existed as having none', async () => {
+      mockPrisma.events_bikes.findMany.mockResolvedValue([{ ...historyRow, place: null, shop_name: null }]);
+      mockPrisma.events_bikes.count.mockResolvedValue(1);
+
+      const result = await service.history(OWNER_ID, 3, 0);
+
+      expect(result.items[0]).toMatchObject({ place: null, shop_name: null });
     });
 
     it('falls back to a default page when no limit is asked for', async () => {
@@ -1210,6 +1448,30 @@ describe('BikeEventService', () => {
       expect(detail.actions_done[0].partial_cost).toBeNull();
     });
 
+    it('says where the work was done, as it was recorded', async () => {
+      mockPrisma.events_bikes.findUnique.mockResolvedValue({
+        ...savedService([savedAction()]),
+        place: 'SHOP',
+        shop_name: 'Bike Centrum',
+      });
+
+      const detail = await service.findById(99, OWNER_ID);
+
+      expect(detail).toMatchObject({ place: 'SHOP', shop_name: 'Bike Centrum' });
+    });
+
+    it('reads a service recorded before the Place existed as having none', async () => {
+      mockPrisma.events_bikes.findUnique.mockResolvedValue({
+        ...savedService([savedAction()]),
+        place: null,
+        shop_name: null,
+      });
+
+      const detail = await service.findById(99, OWNER_ID);
+
+      expect(detail).toMatchObject({ place: null, shop_name: null });
+    });
+
     it('has no odometer reading on a service that carries no actions', async () => {
       // ARRANGE
       mockPrisma.events_bikes.findUnique.mockResolvedValue(savedService([]));
@@ -1270,6 +1532,121 @@ describe('BikeEventService', () => {
         data: expect.objectContaining({ total_km: 200, drivetrain_km: 150, suspension_min: 0 }),
       }),
     );
+  });
+
+  // What the owner set on the part that came off follows the job onto the part that went
+  // on: their own Service Interval and their mute (ADR 0033). The Extension and the
+  // announced band stay behind - a new chain is born neither deferred nor already
+  // announced.
+  describe('settings carried over by a Replacement', () => {
+    // The Replacement every test here records: part 45 comes off, part 46 goes on.
+    const replacement = (): Create_BikeEventDto =>
+      dto({
+        actions_replaced: [
+          {
+            old_component_mounted_id: 45,
+            component_type_id: 16,
+            new_component_desc: 'Shimano XT Chain HG-701',
+            action_id: 2,
+          },
+        ],
+      });
+
+    // The state rows the old part carries, as the copy's own filter hands them over: only
+    // what is worth copying, and only the columns that are copied.
+    function oldPartHolds(
+      rows: { event_actions_id: number; interval_override: number | null; notify: boolean }[],
+    ): void {
+      mockTx.tracked_action_state.findMany.mockResolvedValue(rows);
+    }
+
+    beforeEach(() => {
+      mockTx.components_mounted.findMany.mockResolvedValue([]);
+      mockTx.components_mounted.create.mockResolvedValue({ id: 46 });
+      mockTx.component_types.findUnique.mockResolvedValue({ component_type: 'Chain' });
+    });
+
+    // The owner does not have to say "2 500 km" again every time they fit a new chain.
+    it('carries the interval and the mute onto the new part', async () => {
+      oldPartHolds([{ event_actions_id: 2, interval_override: 2500, notify: false }]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).toHaveBeenCalledWith({
+        data: [{ component_mounted_id: 46, event_actions_id: 2, interval_override: 2500, notify: false }],
+      });
+    });
+
+    // All of the part's jobs, not only the one the Replacement was: a muted chain
+    // lubrication stays muted through a chain swap.
+    it('carries every job the old part held a setting for', async () => {
+      oldPartHolds([
+        { event_actions_id: 2, interval_override: 2500, notify: true },
+        { event_actions_id: 3, interval_override: null, notify: false },
+      ]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).toHaveBeenCalledWith({
+        data: [
+          { component_mounted_id: 46, event_actions_id: 2, interval_override: 2500, notify: true },
+          { component_mounted_id: 46, event_actions_id: 3, interval_override: null, notify: false },
+        ],
+      });
+    });
+
+    // The Extension, its timestamps and the announced band belong to the cycle that just
+    // ended, so the copy neither reads them nor writes them.
+    it('carries nothing of the Extension or the announced band', async () => {
+      oldPartHolds([{ event_actions_id: 2, interval_override: 2500, notify: true }]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      const [written] = mockTx.tracked_action_state.createMany.mock.calls[0] as [{ data: Record<string, unknown>[] }];
+      expect(Object.keys(written.data[0]).sort()).toEqual([
+        'component_mounted_id',
+        'event_actions_id',
+        'interval_override',
+        'notify',
+      ]);
+    });
+
+    // A row saying only "follow the plan, announce as usual" says nothing worth writing.
+    it('leaves no row on the new part when the old one had nothing to say', async () => {
+      oldPartHolds([]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).not.toHaveBeenCalled();
+    });
+
+    // A new chain is born neither deferred nor already announced: the old part's Extension
+    // and band are not settings, so the filter never hands them over and no row is written.
+    it('leaves the new part with no row when the old one carried only an Extension', async () => {
+      oldPartHolds([]);
+
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.createMany).not.toHaveBeenCalled();
+      expect(mockTx.tracked_action_state.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ select: { event_actions_id: true, interval_override: true, notify: true } }),
+      );
+    });
+
+    // Which rows are worth copying is asked of the database, so a part following the plan
+    // on every job is never even read into memory.
+    it('asks only for the rows that carry a setting', async () => {
+      await service.create(replacement(), OWNER_ID);
+
+      expect(mockTx.tracked_action_state.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            component_mounted_id: 45,
+            OR: [{ interval_override: { not: null } }, { notify: false }],
+          },
+        }),
+      );
+    });
   });
 
   // Recording, correcting or removing a service moves the Wear Baselines the readings are

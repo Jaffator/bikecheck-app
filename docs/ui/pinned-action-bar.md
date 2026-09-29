@@ -9,9 +9,10 @@ a pill inset from both edges, blurred, with the page fading out beneath it.
 
 ```tsx
 <Box
+  // Past the sidebar on desktop, the window's edge below it.
+  left={PINNED_BAR_LEFT}
   style={{
     position: "fixed",
-    left: 0,
     right: 0,
     bottom: 0,
     // Rides above the software keyboard, which the webview does not resize for.
@@ -39,7 +40,7 @@ a pill inset from both edges, blurred, with the page fading out beneath it.
   />
   <Stack
     gap={6}
-    w="92%"
+    w={PINNED_BAR_WIDTH}
     px="md"
     py="sm"
     className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
@@ -74,6 +75,11 @@ a pill inset from both edges, blurred, with the page fading out beneath it.
   (`SUB_PAGE_ROUTES` in `AppLayout`); on a tabbed route the two would stack.
 - A number shown here is edited here — it is not also a field in the flow. Two editable copies
   of one value is where the sync bugs come from.
+- On desktop (ADR 0035) the bar belongs to the page, not the window. `PINNED_BAR_LEFT` and
+  `PINNED_BAR_WIDTH` in `layout/contentWidth.ts` start the strip at the sidebar's edge and run
+  the pill as wide as the `narrow` column; below `md` they are `0` and `92%`, as on a phone.
+  Both are Mantine style props, never `style` entries: an inline `left` or `width` beats the
+  breakpoint's class and pins the bar under the sidebar again.
 
 ## Where it lives
 
@@ -91,3 +97,10 @@ contents are not shared:
 
 Same shape, different contents. Extract a shared component only once a screen wants the same
 *contents*, not merely the same shape.
+
+The other bars pinned to the bottom follow the desktop rule too:
+
+- **Setup** — `SetupSaveBar.tsx`. A lone button, already capped at the column less its gutter.
+- **Chat** — `ChatComposer.tsx`. The pill and the bike chips above it share `PINNED_BAR_WIDTH`.
+- **Add Bike** — `AddBikeFooter.tsx`. The flat footer spans from the sidebar to the window's
+  edge; its buttons keep to the form's column inside it.

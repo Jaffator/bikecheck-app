@@ -1,22 +1,22 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Divider, Drawer, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Box, Button, Divider, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
 import { FileText, Image as ImageIcon, NotebookText, Paperclip, Share2, Trash2, X } from "lucide-react";
 import dayjs from "dayjs";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
 import { useDeleteService, useServiceDetail } from "@/features/service/service.queries";
-import { catalogueLabel, componentLabel } from "@/features/service/serviceLabels";
+import { catalogueLabel, componentLabel, placeLabel } from "@/features/service/serviceLabels";
 import { componentTypeIcon } from "./componentIcon";
 import { attachmentSubtitle } from "@/features/service/attachmentLabels";
 import type { ServiceActionDone, ServiceAttachment, ServiceHistoryItem } from "@/features/service/service.types";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // The sheet stands over the list rather than covering it, so the list is still there to
 // come back to. The strip left above it is what says so.
@@ -67,6 +67,8 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
   const known = service ?? shownSeed;
   const bikeName = known === null || known === undefined ? null : (known.bike_name ?? t("service.unknownBike"));
   const serviceDate = known?.service_date ?? null;
+  // Seeded like the date, so it never pops in after the rest of the heading (ADR 0010).
+  const place = known === null || known === undefined ? null : placeLabel(known.place, known.shop_name, t);
   const actionCount = service?.actions_done.length ?? shownSeed?.action_count ?? null;
   const totalCost = service?.total_cost ?? shownSeed?.total_cost ?? null;
 
@@ -75,29 +77,17 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
     onClose();
   }
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(serviceId !== null, close);
-
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={serviceId !== null}
       onClose={close}
-      position="bottom"
-      radius="lg"
+      desktop="panel"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-        onExited: () => setLastOpened(null),
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
+      onExited={() => setLastOpened(null)}
       styles={{
         content: {
           height: SHEET_HEIGHT,
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
@@ -112,19 +102,6 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         },
       }}
     >
-      {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        w={36}
-        h={4}
-        style={{
-          borderRadius: 9999,
-          backgroundColor: "var(--color-border-subtle)",
-          flexShrink: 0,
-        }}
-      />
-
       <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Stack gap="lg" pb="md">
           {/* Outside the failure branch: a sheet that could not load is still a sheet the
@@ -135,6 +112,7 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
             actionCount={actionCount}
             kmAtTime={service?.bike_km_at_time ?? null}
             minutesAtTime={service?.bike_minutes_at_time ?? null}
+            place={place}
             onClose={close}
           />
 
@@ -267,7 +245,7 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         confirmLabel={t("service.delete")}
         pending={remove.isPending}
       />
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 
@@ -278,6 +256,7 @@ function Header({
   actionCount,
   kmAtTime,
   minutesAtTime,
+  place,
   onClose,
 }: {
   bikeName: string | null;
@@ -285,6 +264,8 @@ function Header({
   actionCount: number | null;
   kmAtTime: number | null;
   minutesAtTime: number | null;
+  // Null on a Service recorded before the Place existed, which shows nothing.
+  place: string | null;
   onClose: () => void;
 }): ReactElement {
   const { t } = useTranslation();
@@ -331,6 +312,8 @@ function Header({
             detail knows these, so they arrive a moment after the rest. */}
         {kmAtTime !== null && <MetaText>{t("bikes.kilometres", { count: kmAtTime })}</MetaText>}
         {minutesAtTime !== null && <MetaText>{t("bikes.hours", { count: Math.round(minutesAtTime / 60) })}</MetaText>}
+        {/* The only one that may shrink: a long shop name is cut, the figures never are. */}
+        {place !== null && <MetaText truncate>{place}</MetaText>}
       </Group>
     </Stack>
   );
@@ -479,9 +462,16 @@ function SectionHeading({ children, icon }: { children: ReactNode; icon?: ReactN
 }
 
 // The metadata voice: mono, small, dim — the same one the history cards speak in.
-function MetaText({ children }: { children: ReactNode }): ReactElement {
+function MetaText({ children, truncate = false }: { children: ReactNode; truncate?: boolean }): ReactElement {
   return (
-    <Text className="font-mono uppercase" fz={12} c="var(--color-text-dim)" lts="0.06em">
+    <Text
+      className="font-mono uppercase"
+      fz={12}
+      c="var(--color-text-dim)"
+      lts="0.06em"
+      truncate={truncate ? "end" : undefined}
+      style={truncate ? { minWidth: 0 } : undefined}
+    >
       {children}
     </Text>
   );

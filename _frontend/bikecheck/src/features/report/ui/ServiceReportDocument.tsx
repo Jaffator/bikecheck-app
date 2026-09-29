@@ -5,7 +5,15 @@ import { NotepadText, Paperclip, RefreshCw, Wrench } from "lucide-react";
 import { formatFileSize } from "@/features/service/attachmentLabels";
 import logoDark from "@/assets/icons/bikecheck/Logo_dark.svg";
 import type { ReportAction, ReportAttachment, ServiceReportSnapshot } from "@/features/report/report.types";
-import { REPORT_PAPER, reportBikeName, reportComponentLabel, reportCost, reportDate, reportNumber } from "@/features/report/reportFormat";
+import {
+  REPORT_PAPER,
+  reportBikeName,
+  reportComponentLabel,
+  reportCost,
+  reportDate,
+  reportNumber,
+  reportPlace,
+} from "@/features/report/reportFormat";
 import { reportHeadings, type ReportHeadings } from "@/features/report/reportHeadings";
 
 interface ServiceReportDocumentProps {
@@ -21,6 +29,7 @@ export function ServiceReportDocument({ snapshot, onOpenAttachment }: ServiceRep
   const heading = reportHeadings(language);
   const bikeName = reportBikeName(bike);
   const serviceDate = reportDate(service.serviceDate, language);
+  const place = reportPlace(service, heading);
 
   return (
     <article
@@ -43,6 +52,7 @@ export function ServiceReportDocument({ snapshot, onOpenAttachment }: ServiceRep
       <section className="grid grid-cols-2 gap-x-6 gap-y-4">
         <Field label={heading.bike} value={bikeName ?? heading.noBike} muted={bikeName === null} />
         <Field label={heading.date} value={serviceDate ?? heading.noDate} muted={serviceDate === null} />
+        {place !== null && <Field label={heading.place} value={place} />}
         <Field
           label={heading.odometer}
           value={service.odometerKm === null ? "—" : `${reportNumber(service.odometerKm, language)} km`}

@@ -1,6 +1,18 @@
 // How the catalogue and the parts on a bike read on screen. Shared by the wizard that
 // records a Service and the detail that reads one back — both name the same things.
-import type { MountedComponent } from "./service.types";
+import type { MountedComponent, ServicePlace } from "./service.types";
+
+// Where a Service was done, as every row writes it: `home`, the shop's name, or `shop`.
+// Null for a Service recorded before the Place existed, so the row shows nothing.
+export function placeLabel(
+  place: ServicePlace | null,
+  shopName: string | null,
+  translate: (key: string) => string,
+): string | null {
+  if (place === null) return null;
+  if (place === "HOME") return translate("service.placeHome");
+  return shopName ?? translate("service.placeShop");
+}
 
 // As much of a part's name as a chip can carry without crowding out its neighbours. A
 // seeded type is a word or two, but a type a user created can be as long as they like.

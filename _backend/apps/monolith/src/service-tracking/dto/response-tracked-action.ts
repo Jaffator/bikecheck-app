@@ -54,16 +54,53 @@ export class Response_TrackedActionDto {
 
   @ApiProperty({
     example: 4000,
-    description: 'The Service Interval on that axis, including any Extension in force',
+    description: "The Service Interval in force on that axis: the owner's own where they set one",
   })
   interval!: number;
 
   @ApiProperty({ example: 80, description: 'Whole percent of the way to being due. Never capped' })
   percentage!: number;
 
-  @ApiProperty({ enum: ['good', 'warning', 'critical', 'overdue'], example: 'warning' })
+  @ApiProperty({ enum: ['very_good', 'good', 'warning', 'critical', 'overdue'], example: 'warning' })
   level!: AttentionLevel;
 
-  @ApiProperty({ example: false, description: 'The action has been put off, lengthening its interval' })
-  extended!: boolean;
+  @ApiProperty({
+    example: 4000,
+    description: "The bike's own plan on that axis, which clearing the override restores",
+  })
+  default_interval!: number;
+
+  @ApiProperty({
+    type: Number,
+    example: 2500,
+    nullable: true,
+    description: "The owner's own Service Interval, or null where the reading follows the bike's plan",
+  })
+  interval_override!: number | null;
+
+  @ApiProperty({ example: true, description: "False silences this pairing's announcements and nothing else" })
+  notify!: boolean;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'When the part went on the bike, which the reading is judged against',
+  })
+  mounted_at!: Date | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    example: '2026-10-04',
+    nullable: true,
+    description: 'The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it',
+  })
+  planned_for!: string | null;
+
+  @ApiProperty({
+    example: true,
+    description: 'The action replaces the part rather than servicing it, which names the button that records it',
+  })
+  replace_action!: boolean;
 }

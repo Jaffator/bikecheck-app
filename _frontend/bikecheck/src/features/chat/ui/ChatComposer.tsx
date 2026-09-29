@@ -1,17 +1,16 @@
-// Where the question is typed. Pinned above the tab bar (docs/ui/pinned-action-bar.md), with the
-// bar's height added to the gap so the two do not stack.
+// Where the question is typed. Pinned to the bottom edge (docs/ui/pinned-action-bar.md); chat
+// is a sub-page, so no tab bar stands under it.
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { ActionIcon, Box, Group, Stack, Text, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Send } from "lucide-react";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { PINNED_BAR_LEFT, PINNED_BAR_WIDTH } from "@/layout/contentWidth";
 import { QUESTION_MAX_LENGTH } from "../chat.api";
 import type { ChatFailure } from "../useChatTurn";
 
-// Clears the footer pill, written the way the FAB writes the same gap - with a wider gap of
-// its own at the end, so the composer does not read as sitting on the tab bar.
-const TAB_BAR_CLEARANCE =
-  "calc(4rem + 0.4rem + 0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)) + 1.5rem)";
+// Clears the safe area alone, the gap the pinned action bar keeps.
+const BOTTOM_CLEARANCE = "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
 const SEND_BUTTON_SIZE = 34;
 
@@ -62,9 +61,9 @@ export function ChatComposer({
 
   return (
     <Box
+      left={PINNED_BAR_LEFT}
       style={{
         position: "fixed",
-        left: 0,
         right: 0,
         bottom: 0,
         // Rides above the software keyboard, which the webview does not resize for.
@@ -72,7 +71,7 @@ export function ChatComposer({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingBottom: TAB_BAR_CLEARANCE,
+        paddingBottom: BOTTOM_CLEARANCE,
         zIndex: 100,
         // Only the bar itself takes taps; the rest of this strip is thread underneath.
         pointerEvents: "none",
@@ -93,13 +92,13 @@ export function ChatComposer({
       />
       {chips !== undefined && (
         // The same width as the pill, so the two read as one bar.
-        <Box w="92%" style={{ pointerEvents: "auto" }}>
+        <Box w={PINNED_BAR_WIDTH} style={{ pointerEvents: "auto" }}>
           {chips}
         </Box>
       )}
       <Stack
         gap={6}
-        w="92%"
+        w={PINNED_BAR_WIDTH}
         pl="md"
         // The send button sits nearer the edge than the plus does, so the row reads as
         // running into it rather than ending short of the pill.

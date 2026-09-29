@@ -168,8 +168,7 @@ export function AddBikeSummaryModal({
         <Group gap="sm" grow>
           <Button
             variant="outline"
-            color="cards.9"
-            leftSection={<Pencil size={14} />}
+            leftSection={<Pencil size={14} color="var(--mantine-color-primary-5)" />}
             onClick={onClose}
             disabled={isSaving}
             style={{ height: "3rem" }}

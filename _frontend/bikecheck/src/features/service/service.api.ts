@@ -73,6 +73,11 @@ export async function deleteActionTag(id: number): Promise<ActionTag> {
   return apiFetch<ActionTag>(`/bike-events/action-tags/${id}`, { method: "DELETE" });
 }
 
+// GET /bike-events/shops — the shop names the owner typed before, latest use first.
+export async function getShopNames(): Promise<string[]> {
+  return apiFetch<string[]>("/bike-events/shops");
+}
+
 // GET /bike-events/:id — one Service in full.
 export async function getServiceDetail(id: number): Promise<ServiceRecord> {
   return apiFetch<ServiceRecord>(`/bike-events/${id}`);

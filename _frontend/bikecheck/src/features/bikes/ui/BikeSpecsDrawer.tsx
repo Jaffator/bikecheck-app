@@ -1,13 +1,13 @@
 // Everything the bike is, in one place. The detail page shows the three readings that
 // change; this is where the facts that do not change are read in full.
 import type { ReactElement, ReactNode } from "react";
-import { ActionIcon, Box, Divider, Drawer, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Divider, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import dayjs from "dayjs";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
 // The same layer the service sheet stands on, so overlays never fight the FAB.
@@ -22,48 +22,27 @@ interface BikeSpecsDrawerProps {
 export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps): ReactElement {
   const { t, i18n } = useTranslation();
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   const unknown = t("addBike.summaryNotSpecified");
 
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="panel"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         // A spec list is as long as the bike is described, so the sheet takes the height
         // it needs and stops short of covering the page it was opened from.
         content: {
           height: "auto",
           maxHeight: "85vh",
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
         body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
       }}
     >
-      {/* Says "floating layer" and nothing more: the sheet does not answer to a drag. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        w={36}
-        h={4}
-        style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)", flexShrink: 0 }}
-      />
-
       <Box
         px="md"
         pt="md"
@@ -153,7 +132,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
           )}
         </Stack>
       </Box>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

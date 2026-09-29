@@ -7,6 +7,9 @@ export interface ServiceHistoryAction {
   i18n_key: string | null;
 }
 
+// Where a Service was done (ADR 0037). Fields holding it are nullable: an older Service has none.
+export type ServicePlace = "HOME" | "SHOP";
+
 // One Service as a history card needs it — the full occasion comes from the detail endpoint.
 export interface ServiceHistoryItem {
   id: number;
@@ -18,6 +21,9 @@ export interface ServiceHistoryItem {
   action_count: number;
   actions: ServiceHistoryAction[];
   total_cost: number | null;
+  place: ServicePlace | null;
+  // Only ever on a SHOP; null there is a shop with no name.
+  shop_name: string | null;
 }
 
 // The History Totals: what the history under the current filter adds up to.
@@ -144,6 +150,8 @@ export interface ServiceRecord {
   note?: string | null;
   total_cost: number;
   service_date: string | null;
+  place: ServicePlace | null;
+  shop_name: string | null;
   created_at: string;
   updated_at?: string | null;
   actions_done: ServiceActionDone[];
@@ -186,6 +194,9 @@ export interface CreateServiceInput {
   total_cost?: number;
   // When the work happened.
   service_date: string;
+  place: ServicePlace;
+  // Sent only with a SHOP, and only when a name was typed.
+  shop_name?: string;
   note?: string;
   attachment?: UploadedAttachment[];
   actions_done: ServiceActionInput[];

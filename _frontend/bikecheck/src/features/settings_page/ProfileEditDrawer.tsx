@@ -1,12 +1,12 @@
 // The two things about the rider the app lets them correct: what they are called, and what
 // they weigh. Everything else on the profile is read off a linked account.
 import { useState, type ReactElement } from "react";
-import { Button, Drawer, Stack, Text, NumberInput, TextInput } from "@mantine/core";
+import { Button, Stack, Text, NumberInput, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { useUpdateUser } from "@/features/users/users.queries";
 import type { User } from "@/features/users/users.types";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above the profile page it sits on, matching the settings drawers.
 const DRAWER_Z_INDEX = 320;
@@ -14,6 +14,9 @@ const DRAWER_Z_INDEX = 320;
 // A rider outside this range is a typo, not a rider.
 const MIN_WEIGHT_KG = 30;
 const MAX_WEIGHT_KG = 250;
+
+// The one refusal that belongs under the field rather than under the form.
+const NAME_TAKEN = "NAME_TAKEN";
 
 interface ProfileEditDrawerProps {
   user: User;
@@ -29,12 +32,10 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
   const [name, setName] = useState<string | null>(null);
   const [weight, setWeight] = useState<number | null | undefined>(undefined);
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   const shownName = name ?? user.name;
   const shownWeight = weight === undefined ? user.weight_kg : weight;
   const nameEmpty = shownName.trim() === "";
+  const nameTaken = save.isError && save.error.details.includes(NAME_TAKEN);
   const weightOutOfRange = shownWeight !== null && (shownWeight < MIN_WEIGHT_KG || shownWeight > MAX_WEIGHT_KG);
 
   function submit(): void {
@@ -49,17 +50,14 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
   }
 
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={DRAWER_Z_INDEX}
       title={t("profile.editTitle")}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto", maxHeight: "88dvh" },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        content: { height: "auto", maxHeight: "88dvh" },
         body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
@@ -69,8 +67,12 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
           label={t("profile.name")}
           styles={inputStyles}
           value={shownName}
-          onChange={(event) => setName(event.currentTarget.value)}
-          error={nameEmpty ? t("profile.nameRequired") : undefined}
+          onChange={(event) => {
+            // A refused name stops being refused the moment it is changed.
+            save.reset();
+            setName(event.currentTarget.value);
+          }}
+          error={nameEmpty ? t("profile.nameRequired") : nameTaken ? t("profile.nameTaken") : undefined}
         />
 
         <Stack gap={4}>
@@ -94,7 +96,7 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
         </Stack>
 
         {/* The form stays open on failure, so nothing typed is lost. */}
-        {save.isError && (
+        {save.isError && !nameTaken && (
           <Text fz={13} c="red">
             {t("profile.saveFailed")}
           </Text>
@@ -110,6 +112,6 @@ export function ProfileEditDrawer({ user, opened, onClose }: ProfileEditDrawerPr
           {t("profile.save")}
         </Button>
       </Stack>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }

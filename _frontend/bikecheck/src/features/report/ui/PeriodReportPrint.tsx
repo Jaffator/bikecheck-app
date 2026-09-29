@@ -11,6 +11,7 @@ import {
   reportDate,
   reportNumber,
   reportPeriodLabel,
+  reportPlace,
 } from "@/features/report/reportFormat";
 import { reportHeadings, type ReportHeadings } from "@/features/report/reportHeadings";
 import { ComponentRow } from "./ComponentRow";
@@ -104,13 +105,16 @@ function ServiceRow({
   heading: ReportHeadings;
 }): ReactElement {
   const date = reportDate(service.serviceDate, snapshot.language);
+  const place = reportPlace(service, heading);
   const replaced = service.actions.some((action) => action.replacement);
   const components = service.actions.flatMap((action) => action.components);
 
   return (
     <tr className="break-inside-avoid" style={{ borderBottom: `1px solid ${REPORT_PAPER.rule}` }}>
-      <td className="py-2.5 pr-4 align-top w-[18%] font-mono whitespace-nowrap" style={{ color: REPORT_PAPER.inkMuted }}>
-        {date ?? heading.noDate}
+      {/* The date never breaks; a long shop name wraps under it rather than widening the column. */}
+      <td className="py-2.5 pr-4 align-top w-[18%] font-mono" style={{ color: REPORT_PAPER.inkMuted }}>
+        <span className="whitespace-nowrap">{date ?? heading.noDate}</span>
+        {place !== null && ` · ${place}`}
       </td>
       <td className="py-2.5 pr-4 align-top w-[46%]">
         <span className="font-semibold leading-snug">

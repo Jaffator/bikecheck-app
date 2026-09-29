@@ -16,6 +16,7 @@
  * Respektuje prefers-reduced-motion, vibruje při kliku (Android).
  */
 import { useEffect, useId, useLayoutEffect, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import { tapFeedback } from "@/utils/haptics";
 
 const TAU = Math.PI * 2, DEG = 180 / Math.PI;
 const R_KNOB = 104, R_TEXT = 90, R_FACE = 54, R_HIT = 126;
@@ -124,7 +125,7 @@ function useDialEngine(specs: KnobSpec[], direction: Direction, haptics: boolean
     v = Math.max(0, Math.min(sp.max, Math.round(v)));
     if (v === s.value) return;
     s.value = v;
-    if (hapticsRef.current && "vibrate" in navigator) navigator.vibrate(8);
+    if (hapticsRef.current) tapFeedback();
     sp.onChange(v);
   };
   const nudge = (key: string, d: number) => { spec(key).onActive?.(); setValue(key, state(key).value + d); goTo(key); };

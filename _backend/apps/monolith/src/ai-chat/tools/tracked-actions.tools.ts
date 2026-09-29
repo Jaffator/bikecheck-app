@@ -30,7 +30,6 @@ export interface TrackedActionRow {
   // Whole percent of the way to being due, never capped: 132 stays 132 (ADR 0026).
   percentage: number;
   level: AttentionLevel;
-  extended: boolean;
   // Nothing has ever fed the accumulator this was read from, so the row is not a reading.
   unfed: boolean;
 }
@@ -60,10 +59,12 @@ const LIST_TRACKED_ACTIONS_DESCRIPTION =
   'are in the unit axis names on the same row: kilometres, minutes or wear index points. A ' +
   'remaining below zero is how far past the interval the part already is. percentage is whole ' +
   'percent of the way to being due and is never capped, so 132 means well past due, and level is ' +
-  'the band the app reads that at: "good", "warning" from 80, "critical" from 95, "overdue" from ' +
-  '100. measure says which accumulator the wear was read from, which is the answer to "why is it ' +
-  'at 90% when I only rode 400 km". extended means the job was put off, so interval is longer ' +
-  'than the bike plans. unfed means the accumulator was never fed, so there is nothing to ' +
+  'the band the app reads that at: "very_good" below 60, "good" from 60, "warning" from 75, ' +
+  '"critical" from 90, "overdue" from 100. measure says which accumulator the wear was read from, ' +
+  'which is the answer to "why is it ' +
+  'at 90% when I only rode 400 km". interval is what the reading is measured against: the ' +
+  "owner's own where they set one, the bike's plan otherwise. unfed means the accumulator was " +
+  'never fed, so there is nothing to ' +
   'measure the wear from - never read such a row as being in order.';
 
 // One page of readings. A bike carries tens of pairings, so fifty rows covers a garage's worst
@@ -207,7 +208,6 @@ function toTrackedActionRow(action: Response_GarageTrackedActionDto, unfed: bool
     remaining: action.interval - action.current,
     percentage: action.percentage,
     level: action.level,
-    extended: action.extended,
     unfed,
   };
 }

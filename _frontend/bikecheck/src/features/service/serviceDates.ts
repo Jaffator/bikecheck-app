@@ -39,11 +39,11 @@ export function formatMonthHeading(month: Dayjs): string {
 
 // One month of the history. A dated group knows its month; the group holding Services the
 // user never dated has none, and the header names it instead.
-export interface ServiceMonthGroup {
+export interface ServiceMonthGroup<T = ServiceHistoryItem> {
   // Stable across renders and unique per group, so it keys the list.
   key: string;
   month: Dayjs | null;
-  services: ServiceHistoryItem[];
+  services: T[];
 }
 
 // The key the undated group carries; no month can produce it.
@@ -53,10 +53,17 @@ const UNDATED_KEY = "undated";
 // Services with no Service Date fall into one group of their own, which lands last because
 // the API sorts them there - they are not assigned the month they were recorded in.
 export function groupServicesByMonth(services: ServiceHistoryItem[]): ServiceMonthGroup[] {
-  const groups: ServiceMonthGroup[] = [];
+  return groupByServiceDate(services, (service) => service.service_date);
+}
+
+// The same division over any list that names a Service Date - somebody's shared history
+// reads its rows through it.
+export function groupByServiceDate<T>(services: T[], dateOf: (service: T) => string | null): ServiceMonthGroup<T>[] {
+  const groups: ServiceMonthGroup<T>[] = [];
 
   for (const service of services) {
-    const month = service.service_date === null ? null : dayjs(service.service_date).startOf("month");
+    const date = dateOf(service);
+    const month = date === null ? null : dayjs(date).startOf("month");
     const key = month === null ? UNDATED_KEY : month.format("YYYY-MM");
     const current = groups[groups.length - 1];
 

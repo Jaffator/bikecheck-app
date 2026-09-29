@@ -3,7 +3,7 @@ import { useEffect, type ReactElement } from "react";
 import { Box, Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { BellOff, CircleQuestionMark, TriangleAlert } from "lucide-react";
+import { BellOff, CircleQuestionMark, TriangleAlert, UserCheck, UserPlus, Users } from "lucide-react";
 import { PiPath } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import dayjs from "dayjs";
@@ -23,17 +23,21 @@ dayjs.extend(relativeTime);
 // carries the Rides mark, borrowed from the tab that owns the place. The ask gets a question
 // mark instead of a place: it is the one row that wants something back, and the only one
 // the badge goes on counting. A service reminder gets the warning sign, in the colour of
-// the band it reports.
+// the band it reports. A new follower is people, plainly; an ask to follow is one person
+// at the door; an accepted ask is one person let in.
 const ICONS: Partial<Record<NotificationType, IconType>> = {
   strava_activity_saved: PiPath,
   strava_activity_unassigned: CircleQuestionMark,
   maintenance_due: TriangleAlert,
+  new_follower: Users,
+  follow_request: UserPlus,
+  follow_accepted: UserCheck,
 };
 
-// Where each band begins, so the reminder wears the same colour the row on the card does.
+// Where each level begins, so the reminder wears the same colour the row on the card does.
 const LEVEL_PERCENTAGE: Record<NonNullable<NotificationPayload["level"]>, number> = {
-  warning: 70,
-  critical: 95,
+  warning: 75,
+  critical: 90,
   overdue: 100,
 };
 
@@ -65,7 +69,7 @@ function NotificationRow({
           border: "1px solid var(--color-border-subtle)",
           transition: "transform 0.12s ease",
         }}
-        className="active:scale-[0.985]"
+        className="hover-veil active:scale-[0.985]"
       >
         <Stack gap={4}>
           {/* The heading line: what it is on the left, whether it still wants the user on

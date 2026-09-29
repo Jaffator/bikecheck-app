@@ -42,6 +42,9 @@ export interface NotificationTextPayload {
   level?: 'warning' | 'critical' | 'overdue';
   // The Tracked Actions that crossed a band in this evaluation - the news itself, named.
   crossed?: CrossedAction[];
+  // The other party of a follow, as the app names people. Absent when they have none.
+  handle?: string;
+  personName?: string;
 }
 
 // One Tracked Action that just crossed: the part and the job, each as a catalogue key with
@@ -91,15 +94,16 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
   },
   maintenance_due: {
     cs: {
-      // 70 says a job is on the horizon; 95 asks the owner to order the part; 100 tells
-      // them they are riding on borrowed time. One notification can carry all three, and
-      // the worst of them names it.
+      // 70 says a job is on the horizon; 95 asks the owner to order the part; 100 and every
+      // ten above it tell them how far past due they are riding. The worst band names the
+      // notification; the body names the job that moved.
       title: (payload) => MAINTENANCE_TITLES.cs[payload.level ?? 'critical'],
       body: (payload) =>
         maintenanceBody(payload, 'cs', {
           soon: 'brzy',
           due: 'k servisu',
           overdue: 'po termínu',
+          more: (count) => `+${count} ${count < 5 ? 'další' : 'dalších'}`,
           named: (bike) => `Kolo ${bike} potřebuje servis.`,
           fallback: 'Kolo potřebuje servis.',
         }),
@@ -111,6 +115,7 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
           soon: 'soon',
           due: 'due',
           overdue: 'overdue',
+          more: (count) => `+${count} more`,
           named: (bike) => `${bike} needs a service.`,
           fallback: 'A bike needs a service.',
         }),
@@ -126,7 +131,54 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
       body: () => 'You unlocked a new achievement.',
     },
   },
+  new_follower: {
+    cs: {
+      title: () => 'Nový sledující',
+      body: (payload) => `${personLabel(payload, 'Někdo')} teď sleduje tvoji garáž.`,
+    },
+    en: {
+      title: () => 'New follower',
+      body: (payload) => `${personLabel(payload, 'Someone')} now follows your garage.`,
+    },
+  },
+  follow_request: {
+    cs: {
+      title: () => 'Nová žádost o sledování',
+      body: (payload) => `${personLabel(payload, 'Někdo')} chce sledovat tvoji garáž.`,
+    },
+    en: {
+      title: () => 'New follow request',
+      body: (payload) => `${personLabel(payload, 'Someone')} wants to follow your garage.`,
+    },
+  },
+  follow_accepted: {
+    cs: {
+      title: () => 'Žádost přijata',
+      body: (payload) => `Garáž${garageLabel(payload)} je pro tebe otevřená.`,
+    },
+    en: {
+      title: () => 'Request accepted',
+      body: (payload) => `The garage${garageLabel(payload, ' of')} is open to you.`,
+    },
+  },
 };
+
+// "Jarda Novák (@jaffa)", or whichever half is known: a follower without a profile has no
+// handle, an account without a name reads as its handle alone.
+function personLabel(payload: NotificationTextPayload, anonymous: string): string {
+  const handle = payload.handle ? `@${payload.handle}` : null;
+  if (payload.personName) return handle ? `${payload.personName} (${handle})` : payload.personName;
+  return handle ?? anonymous;
+}
+
+// " @jaffa (Jarda Novák)": the address first, since it is what the reader will open. The
+// lead ("of") comes only with a label - nothing at all rather than a stray word.
+function garageLabel(payload: NotificationTextPayload, lead = ''): string {
+  const handle = payload.handle ? `@${payload.handle}` : null;
+  const owner = payload.personName ?? null;
+  const label = handle && owner ? `${handle} (${owner})` : (handle ?? owner);
+  return label === null ? '' : `${lead} ${label}`;
+}
 
 // "42 km · 620 m ↑ · Canyon Grail" — whichever parts the payload actually carries, so a
 // ride saved without a distance still reads as a sentence rather than a stray
@@ -153,12 +205,25 @@ function climbed(payload: NotificationTextPayload): string | null {
 function maintenanceBody(
   payload: NotificationTextPayload,
   language: NotificationLanguage,
-  words: { soon: string; due: string; overdue: string; named: (bike: string) => string; fallback: string },
+  words: {
+    soon: string;
+    due: string;
+    overdue: string;
+    more: (count: number) => string;
+    named: (bike: string) => string;
+    fallback: string;
+  },
 ): string {
-  // A heads-up names what is coming and how far along it is; nothing is due yet, so
-  // there is no job to size, only jobs to expect.
-  if (payload.level === 'warning' && payload.crossed && payload.crossed.length > 0) {
-    const jobs = payload.crossed.map((action) => crossedLabel(action, language)).join(', ');
+  // What just moved, named and sized: past 100 the band moves every ten percent while the
+  // headline and the counts stay the same, so the percentage here is the only part of the
+  // notification that says anything new.
+  //
+  // Only the worst is named. The label is long enough that a second one is cut mid-word in
+  // a collapsed push, and the worst is the one being acted on first anyway.
+  const [worst, ...rest] = payload.crossed ?? [];
+  if (worst !== undefined) {
+    const job = crossedLabel(worst, language);
+    const jobs = rest.length === 0 ? job : `${job} ${words.more(rest.length)}`;
     return payload.bikeName ? `${payload.bikeName} · ${jobs}` : jobs;
   }
 

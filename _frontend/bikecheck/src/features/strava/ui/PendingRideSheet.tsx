@@ -1,16 +1,20 @@
 // Renders pending ride assignment through query hooks.
 import { useState, type ReactElement } from "react";
-import { Button, Drawer, Group, Paper, Select, Stack, Text } from "@mantine/core";
+import { Button, Group, Paper, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { ChevronDown, Clock, Mountain, Route } from "lucide-react";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
+import { formatDuration } from "@/features/rides/rideDuration";
+
+// Mantine's large sheet; the assign button is pinned to its foot.
+const SHEET_HEIGHT = "var(--drawer-size-lg)";
 
 interface PendingRideSheetProps {
   // Selected ride; null closes the sheet.
@@ -24,12 +28,18 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
   const { data: bikes } = useBikes();
   const resolve = useResolvePendingRide();
 
-  const [bikeId, setBikeId] = useState<string | null>(null);
+  // The bike is chosen for one ride: on desktop the panel can be switched to another while open.
+  const [choice, setChoice] = useState<{ activityId: string; bikeId: string } | null>(null);
+  const bikeId = choice !== null && choice.activityId === ride?.activity_id ? choice.bikeId : null;
 
   function close(): void {
     // Clears the previous bike selection before closing.
-    setBikeId(null);
+    setChoice(null);
     onClose();
+  }
+
+  function choose(value: string | null): void {
+    setChoice(value === null || ride === null ? null : { activityId: ride.activity_id, bikeId: value });
   }
 
   function submit(): void {
@@ -37,28 +47,19 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
     resolve.mutate({ activityId: ride.activity_id, bikeId: Number(bikeId) }, { onSuccess: close });
   }
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(ride !== null, close);
-
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={ride !== null}
       onClose={close}
-      position="bottom"
-      size="lg"
-      radius="md"
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
+      desktop="panel"
       styles={{
         content: {
-          backgroundColor: "var(--mantine-color-cards-6)",
+          height: SHEET_HEIGHT,
           display: "flex",
           flexDirection: "column",
         },
         body: { flex: 1, display: "flex", flexDirection: "column" },
-        header: {
-          backgroundColor: "var(--mantine-color-cards-6)",
-          marginBottom: "1.5rem",
-        },
+        header: { marginBottom: "1.5rem" },
         // Centers the title against the complete header.
         title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
@@ -103,7 +104,7 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
                   <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
                     <Clock size={14} color="var(--mantine-color-text-7)" />
                     <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
-                      {t("pendingRides.duration", { count: ride.duration_min })}
+                      {formatDuration(ride.duration_min)}
                     </Text>
                   </Group>
                   <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
@@ -126,7 +127,8 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
         </Group>
 
         <Select
-          onChange={setBikeId}
+          value={bikeId}
+          onChange={choose}
           placeholder={t("pendingRides.chooseBike")}
           data={(bikes ?? []).map((bike) => ({
             value: String(bike.id),
@@ -173,6 +175,6 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
           {t("pendingRides.assign")}
         </Button>
       </Stack>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }

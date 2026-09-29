@@ -1,13 +1,12 @@
 // Where a part is added to a bike and where one is corrected. One form for both: the two
 // ask for the same things, and only the Component Type picker differs — a part's kind is
 // chosen once and is not a correction afterwards.
-import { useEffect, useState, type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import {
   ActionIcon,
   Box,
   Button,
   Chip,
-  Drawer,
   Group,
   NumberInput,
   Select,
@@ -23,6 +22,7 @@ import { CalendarDays, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Lock } from "lucide-react";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { ApiError } from "@/api/client";
 import {
   useBikeComponents,
@@ -44,7 +44,6 @@ import { catalogueLabel } from "@/features/service/serviceLabels";
 import { chipStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
 import { SIDED_POSITIONS } from "@/features/add_bike_page/bikeComponents.types";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Above the detail sheet it is opened from, below the confirmations it can raise.
 const FORM_Z_INDEX = 320;
@@ -107,18 +106,6 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
   // The build the section has already loaded, read from the same cache entry: what is on
   // the bike is what says which slots are free.
   const { data: mounted } = useBikeComponents(bikeId);
-
-  // This body is remounted on each opening, and a Drawer that mounts already open skips
-  // its enter transition. So it mounts closed and slides up on the next frame.
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!opened) {
-      setVisible(false);
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => setVisible(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, [opened]);
   const create = useCreateBikeComponent();
   const update = useUpdateBikeComponent();
   const createType = useCreateComponentType();
@@ -143,9 +130,6 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
     component === null || component.total_time_min === null ? "" : Math.round(component.total_time_min / 60);
   const [hours, setHours] = useState<number | string>(initialHours);
   const [mountedOn, setMountedOn] = useState<string | null>(initialMountedOn(component));
-
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
 
   const naming = typeId === CREATE_VALUE;
   const taken = takenSlots(mounted);
@@ -276,24 +260,14 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
   }
 
   return (
-    <Drawer
-      opened={visible}
+    <ResponsiveSheet
+      opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={FORM_Z_INDEX}
       withCloseButton={false}
-      // Opens the same way the specs sheet does, so every bottom sheet reads as one motion.
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
           height: editing ? EDIT_HEIGHT : ADD_HEIGHT,
@@ -302,7 +276,6 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
           marginBottom: keyboardOffset,
           maxHeight: `calc(100dvh - ${String(keyboardOffset)}px)`,
         },
-        header: { backgroundColor: "var(--mantine-color-cards-6)" },
         body: {
           flex: 1,
           minHeight: 0,
@@ -313,22 +286,9 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
         },
       }}
     >
-      {/* The same grab bar and heading the detail sheet wears, so the form reads as the
-          next layer of it rather than as a different screen. */}
-      <Box
-        mx="auto"
-        mt="xs"
-        mb="md"
-        w={36}
-        h={4}
-        style={{
-          borderRadius: 9999,
-          backgroundColor: "var(--color-border-subtle)",
-          flexShrink: 0,
-        }}
-      />
-
-      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mb="md">
+      {/* The same heading the detail sheet wears, so the form reads as the next layer of
+          it rather than as a different screen. */}
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mt="md" mb="md">
         <Text fz={20} fw={700} c="text.6" lineClamp={2}>
           {editing
             ? t("bikeComponents.editTitle", {
@@ -544,7 +504,7 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
           flexShrink: 0,
         }}
       >
-        <Button variant="outline" color="var(--mantine-color-cards-2)" radius="md" disabled={pending} onClick={onClose}>
+        <Button variant="outline" radius="md" disabled={pending} onClick={onClose}>
           {t("bikeComponents.cancel")}
         </Button>
         <Button
@@ -558,7 +518,7 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
           {t("bikeComponents.save")}
         </Button>
       </Group>
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

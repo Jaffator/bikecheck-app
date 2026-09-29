@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, service_place } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
@@ -37,6 +37,16 @@ const ATTACHMENT_FOLDER = 'service-attachments' as const;
 // whatever the phone sent.
 const STORED_IMAGE_TYPE = 'image/webp';
 const PDF_TYPE = 'application/pdf';
+
+// Enough to find a usual shop; a misspelled one falls off as newer names outrank it.
+const MAX_SHOP_SUGGESTIONS = 20;
+
+// One Service at a named shop, as the suggestions read it.
+interface ShopUse {
+  id: number;
+  service_date: Date | null;
+  shop_name: string | null;
+}
 
 // Ride sync adds suspension minutes to these alone - see strava.service.ts.
 const SUSPENSION_COMPONENT_TYPES: string[] = ['Shock', 'Fork'];
@@ -341,6 +351,7 @@ export class BikeEventService {
     const bike = await this.findOwnedBike(dto.bike_id, userId);
     // A service entered today reads "now"; a backfilled one carries the date the work happened.
     const serviceDate = dto.service_date ? new Date(dto.service_date) : new Date();
+    const place = placeWrite(dto.place, dto.shop_name);
 
     try {
       const bikeEventID = await this.prisma.$transaction(async (tx) => {
@@ -355,6 +366,7 @@ export class BikeEventService {
             // The resolved date, not the raw field: a create with no date reads "now" here
             // exactly as it does for the baselines below, so the two can never disagree.
             service_date: serviceDate,
+            ...place,
           },
         });
         await this.writeActions(tx, bikeEvent.id, dto.bike_id, dto.actions_done, moment);
@@ -379,6 +391,8 @@ export class BikeEventService {
   // its own replacement - see ADR 0003.
   async update(bikeEventId: number, dto: Update_BikeEventDto, userId: number): Promise<Response_BikeEvent_Dto> {
     await this.assertServiceOwned(bikeEventId, userId);
+    // Refused before anything is written. The Place alone rewrites no Wear Baseline (ADR 0001).
+    const place = placeWrite(dto.place, dto.shop_name);
 
     const bikeId = await this.prisma.$transaction(async (tx) => {
       const saved = await this.loadSavedService(tx, bikeEventId);
@@ -423,6 +437,7 @@ export class BikeEventService {
           total_cost: dto.total_cost,
           // Only a date the caller actually sent overwrites the one on record.
           service_date: dto.service_date ? serviceDate : undefined,
+          ...place,
           updated_at: new Date(),
         },
       });
@@ -509,6 +524,8 @@ export class BikeEventService {
           bike_id: true,
           service_date: true,
           total_cost: true,
+          place: true,
+          shop_name: true,
           bikes: { select: BIKE_SELECT },
           event_actions_done: { select: { events_action: { select: { action_name: true, i18n_key: true } } } },
         },
@@ -529,6 +546,8 @@ export class BikeEventService {
           i18n_key: actionDone.events_action.i18n_key,
         })),
         total_cost: service.total_cost === null ? null : Number(service.total_cost),
+        place: service.place,
+        shop_name: service.shop_name,
       })),
     };
   }
@@ -562,6 +581,23 @@ export class BikeEventService {
       service_count: totals._count._all,
       replacement_count: replacementCount,
     };
+  }
+
+  // The shop names the owner typed before, offered back as they type one. No list of shops is
+  // kept: a shop is a name on the Service (ADR 0037).
+  async shopNames(userId: number): Promise<string[]> {
+    const uses = await this.prisma.events_bikes.findMany({
+      // Archived bikes' Services count, since a shop used before still counts; deleted ones do not.
+      where: {
+        bikes: { user_id: userId },
+        is_deleted: { not: true },
+        place: service_place.SHOP,
+        shop_name: { not: null },
+      },
+      select: { id: true, service_date: true, shop_name: true },
+    });
+
+    return latestShopNames(uses);
   }
 
   async findById(bikeEventId: number, userId: number): Promise<Response_BikeEvent_Dto> {
@@ -786,6 +822,8 @@ export class BikeEventService {
           suspension_min_at_time: 0,
         },
       });
+
+      await carrySettingsOver(tx, replacement.old_component_mounted_id, newComponent.id);
     }
   }
 
@@ -1090,6 +1128,8 @@ export class BikeEventService {
       note: bikeEvent.note,
       total_cost: Number(bikeEvent.total_cost),
       service_date: bikeEvent.service_date ?? null,
+      place: bikeEvent.place ?? null,
+      shop_name: bikeEvent.shop_name ?? null,
       created_at: bikeEvent.created_at!,
       updated_at: bikeEvent.updated_at,
       attachments: bikeEvent.bike_event_attachments?.map((a) => ({
@@ -1124,6 +1164,42 @@ export class BikeEventService {
       })),
     };
   }
+}
+
+// The Place as one value (ADR 0037), for create and edit alike. Left out leaves it as it is.
+function placeWrite(
+  place: service_place | null | undefined,
+  shopName: string | null | undefined,
+): { place?: service_place | null; shop_name?: string | null } {
+  // A Service done at home never carries a shop, and a name with no Place would claim one.
+  if (shopName !== undefined && shopName !== null && place !== service_place.SHOP) {
+    throw new BadRequestException('A shop name is only recorded with place SHOP');
+  }
+  if (place === undefined) return {};
+  if (place !== service_place.SHOP) return { place, shop_name: null };
+  // `Bike Centrum ` and `Bike Centrum` are one shop, and a blank name is no name.
+  const trimmed = shopName?.trim() ?? '';
+  return { place, shop_name: trimmed === '' ? null : trimmed };
+}
+
+// Each shop once whatever its capitals, in the spelling of its latest use, latest first.
+function latestShopNames(uses: ShopUse[]): string[] {
+  const names = new Map<string, string>();
+  for (const use of [...uses].sort(byLatestUse)) {
+    if (names.size === MAX_SHOP_SUGGESTIONS) break;
+    if (use.shop_name === null) continue;
+    const key = use.shop_name.toLocaleLowerCase();
+    if (!names.has(key)) names.set(key, use.shop_name);
+  }
+  return [...names.values()];
+}
+
+// The history's own order: newest Service Date first, undated last, the later record first on a tie.
+function byLatestUse(left: ShopUse, right: ShopUse): number {
+  const leftTime = left.service_date?.getTime() ?? Number.NEGATIVE_INFINITY;
+  const rightTime = right.service_date?.getTime() ?? Number.NEGATIVE_INFINITY;
+  if (leftTime !== rightTime) return rightTime - leftTime;
+  return right.id - left.id;
 }
 
 // A baseline never goes below zero: a component mounted after the service date has less
@@ -1208,4 +1284,26 @@ function endOfServiceDay(serviceDate: Date): Date {
   const end = new Date(serviceDate);
   end.setUTCHours(23, 59, 59, 999);
   return end;
+}
+
+// What the owner set on the part that came off, carried onto the one that went on, for every
+// one of its jobs (ADR 0033). The announced band belongs to the cycle that just ended and is
+// never copied, so a new part is born unannounced.
+async function carrySettingsOver(
+  tx: Prisma.TransactionClient,
+  oldComponentMountedId: number,
+  newComponentMountedId: number,
+): Promise<void> {
+  const settings = await tx.tracked_action_state.findMany({
+    where: {
+      component_mounted_id: oldComponentMountedId,
+      OR: [{ interval_override: { not: null } }, { notify: false }],
+    },
+    select: { event_actions_id: true, interval_override: true, notify: true },
+  });
+  if (settings.length === 0) return;
+
+  await tx.tracked_action_state.createMany({
+    data: settings.map((setting) => ({ ...setting, component_mounted_id: newComponentMountedId })),
+  });
 }

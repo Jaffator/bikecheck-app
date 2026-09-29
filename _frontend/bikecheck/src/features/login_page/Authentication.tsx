@@ -1,5 +1,5 @@
-import { useState, type CSSProperties } from "react";
-import { Anchor, Button, Checkbox, Divider, Group, Paper, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+import { useState, type CSSProperties, type ReactElement } from "react";
+import { Anchor, Box, Button, Checkbox, Divider, Group, Paper, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
 import type { PaperProps } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useToggle } from "@mantine/hooks";
@@ -20,6 +20,8 @@ import type { ApiError } from "@/api/client";
 // The backend's error code for the right password on an account whose address is not yet
 // verified (ADR 0031); it arrives in the response message.
 const EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
+// 409 on registration with this in the details: the name, not the address, is taken.
+const NAME_TAKEN = "NAME_TAKEN";
 
 // The address another screen hands the login form, so the rider only types the password -
 // the verified page sends it here.
@@ -37,9 +39,32 @@ const GOOGLE_EMAIL_UNVERIFIED = "GOOGLE_EMAIL_UNVERIFIED";
 const NATIVE_SHIFT_PX = Capacitor.isNativePlatform() ? 50 : 0;
 const LOGO_TOP = `calc(10rem + ${String(NATIVE_SHIFT_PX)}px)`;
 const FORM_TOP = `calc(180px + ${String(NATIVE_SHIFT_PX)}px)`;
+// A phone pins the logo and the switch link to the screen so the form stays put under the
+// keyboard; from sm up the three flow as one block, centred by the auto margins.
+const PINNED = { base: "absolute", sm: "static" } as const;
+// The form's width on a wide screen: a single column of inputs, not the whole page.
+const FORM_MAX_WIDTH = "26rem";
 
 // Every error on the login screen - field messages, input borders - in the darker red.
 const ERROR_COLOR_STYLE = { "--mantine-color-error": "var(--mantine-color-red-8)" } as CSSProperties;
+
+function Logo(): ReactElement {
+  return (
+    <Box
+      component="img"
+      src={logoName}
+      alt="BikeCheck Logo"
+      w="100%"
+      maw={200}
+      mx="auto"
+      pos={PINNED}
+      top={LOGO_TOP}
+      left={0}
+      right={0}
+      mt={{ base: 0, sm: "auto" }}
+    />
+  );
+}
 
 // The right password on an Unverified Account: the one refusal "Send it again" can fix.
 function isEmailNotVerified(error: ApiError): boolean {
@@ -51,6 +76,12 @@ function loginErrorKey(error: ApiError): string {
   if (error.status === 401) return "auth.invalidCredentials";
   if (isEmailNotVerified(error)) return "auth.emailNotVerified";
   return "auth.genericError";
+}
+
+// A 409 is one of two things taken: the name, or the address.
+function registrationErrorKey(error: ApiError): string {
+  if (error.status !== 409) return "auth.genericError";
+  return error.details.includes(NAME_TAKEN) ? "auth.nameTaken" : "auth.emailTaken";
 }
 
 // What to tell the rider under the Google button when the native sign-in was refused.
@@ -155,20 +186,8 @@ export function AuthenticationForm(props: PaperProps) {
   if (inboxEmail !== null) {
     return (
       <>
-        <img
-          src={logoName}
-          alt="BikeCheck Logo"
-          style={{
-            width: "100%",
-            maxWidth: "200px",
-            position: "absolute",
-            top: LOGO_TOP,
-            left: 0,
-            right: 0,
-            margin: "0 auto",
-          }}
-        />
-        <Paper w="90%" radius="md" p="lg" mt={FORM_TOP} {...props} bg="transparent">
+        <Logo />
+        <Paper w="90%" maw={FORM_MAX_WIDTH} radius="md" p="lg" mt={{ base: FORM_TOP, sm: 0 }} mb={{ base: 0, sm: "auto" }} {...props} bg="transparent">
           <CheckInbox email={inboxEmail} onBackToLogin={backToLogin} />
         </Paper>
         {/* Covers the login gradient: this screen sits on plain background.9. */}
@@ -179,20 +198,18 @@ export function AuthenticationForm(props: PaperProps) {
 
   return (
     <>
-      <img
-        src={logoName}
-        alt="BikeCheck Logo"
-        style={{
-          width: "100%",
-          maxWidth: "200px",
-          position: "absolute",
-          top: LOGO_TOP,
-          left: 0,
-          right: 0,
-          margin: "0 auto",
-        }}
-      />
-      <Paper w="90%" radius="md" p="lg" mt={FORM_TOP} {...props} bg="transparent" ref={formRef} style={ERROR_COLOR_STYLE}>
+      <Logo />
+      <Paper
+        w="90%"
+        maw={FORM_MAX_WIDTH}
+        radius="md"
+        p="lg"
+        mt={{ base: FORM_TOP, sm: 0 }}
+        {...props}
+        bg="transparent"
+        ref={formRef}
+        style={ERROR_COLOR_STYLE}
+      >
         <form
           // Submit the active form.
           onSubmit={form.onSubmit((values) => {
@@ -342,7 +359,7 @@ export function AuthenticationForm(props: PaperProps) {
             )}
             {registration.isError && (
               <Text size="sm" c="red.8" ta="center">
-                {registration.error.status === 409 ? t("auth.emailTaken") : t("auth.genericError")}
+                {t(registrationErrorKey(registration.error))}
               </Text>
             )}
             {form.errors.terms && (
@@ -402,8 +419,11 @@ export function AuthenticationForm(props: PaperProps) {
         align="center"
         justify="center"
         gap={4}
-        style={{ position: "absolute", bottom: "1.5rem", left: 0, right: 0 }}
-        mb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+        pos={PINNED}
+        bottom="1.5rem"
+        left={0}
+        right={0}
+        mb={{ base: "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", sm: "auto" }}
       >
         <Text size="sm" lh={1} c="background.9">
           {type === "register" ? t("auth.haveAccount") : t("auth.noAccount")}

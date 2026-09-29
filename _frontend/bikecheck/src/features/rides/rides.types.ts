@@ -1,4 +1,25 @@
 // Mirrors backend ride DTOs.
+import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+
+// What a ride wore off one Tracked Action, named by the same pieces the Tracked Action carries.
+export type WoreOffLine = Pick<
+  TrackedAction,
+  | "component_mounted_id"
+  | "event_action_id"
+  | "component_type"
+  | "component_type_i18n_key"
+  | "position"
+  | "action_name"
+  | "action_i18n_key"
+  | "replace_action"
+  | "measure"
+> & {
+  // The ride's own wear on the reading's measure: km, minutes or the wear index.
+  amount: number;
+  // Whole percent of the way to due before the ride and once it ended.
+  before: number;
+  after: number;
+};
 
 // A ride confirmed on a bike.
 export interface Ride {
@@ -21,6 +42,8 @@ export interface Ride {
   // Strava's own simplified route, lifted out of the stored activity by the API so the
   // list never carries the raw payload. Null for a ride recorded without GPS.
   summary_polyline: string | null;
+  // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
+  wore_off: WoreOffLine[];
 }
 
 export interface RidePage {

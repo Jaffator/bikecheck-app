@@ -5,14 +5,13 @@
 import { useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import { Box, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
-import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
+import { TrackedActionDrawer } from "./TrackedActionDrawer";
 import { TrackedActionRow } from "./TrackedActionRow";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
-import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import type { AttentionLevel, TrackedAction } from "@/features/service_tracking/tracking.types";
 
 // How many rows stand in for the list while it is arriving.
 const SKELETON_ROWS = 3;
@@ -81,24 +80,28 @@ export function TrackedActionsSection({ bikeId }: TrackedActionsSectionProps): R
 }
 
 // How much of the list a collapsed card shows: every row asking for something, and at least
-// the first three. Only a reading the server calls good is worth putting behind a tap.
+// the first three. A reading below warning is worth a colour, not a place in the fold.
 function visibleCount(actions: TrackedAction[]): number {
-  const asking = actions.filter((action) => action.level !== "good").length;
+  const asking = actions.filter((action) => ASKING_LEVELS.has(action.level)).length;
   return Math.max(MIN_VISIBLE_ROWS, asking);
 }
+
+// The levels the app speaks at, which are the ones a collapsed card keeps in sight.
+const ASKING_LEVELS = new Set<AttentionLevel>(["warning", "critical", "overdue"]);
 
 // The list, and how much of it the owner has asked to see.
 function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactElement {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [restHeight, setRestHeight] = useState(0);
   const restRef = useRef<HTMLDivElement>(null);
+  // The reading the drawer is open on, or null while it is closed.
+  const [opened, setOpened] = useState<TrackedAction | null>(null);
 
   const shown = visibleCount(actions);
   const rest = actions.slice(shown);
 
-  // Every row is about this bike, so no prefix — and every one leads to recording the job
+  // Every row is about this bike, so no prefix — and every one opens the drawer for the job
   // it names, the quiet ones too: a part is replaced early as often as it is replaced late.
   const renderRow = (action: TrackedAction): ReactElement => (
     <TrackedActionRow
@@ -106,7 +109,16 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
       action={action}
       prefix={null}
       onOpen={() => {
-        navigate(trackedActionServiceLink(action));
+        setOpened(action);
+      }}
+    />
+  );
+
+  const drawer = (
+    <TrackedActionDrawer
+      action={opened}
+      onClose={() => {
+        setOpened(null);
       }}
     />
   );
@@ -119,7 +131,13 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
   }, [actions]);
 
   // Nothing is being held back, so there is nothing to open.
-  if (rest.length === 0) return <Stack gap={ROW_GAP}>{actions.map(renderRow)}</Stack>;
+  if (rest.length === 0)
+    return (
+      <Stack gap={ROW_GAP}>
+        {actions.map(renderRow)}
+        {drawer}
+      </Stack>
+    );
 
   return (
     <Stack gap={ROW_GAP}>
@@ -173,6 +191,8 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
           )}
         </Group>
       </UnstyledButton>
+
+      {drawer}
     </Stack>
   );
 }

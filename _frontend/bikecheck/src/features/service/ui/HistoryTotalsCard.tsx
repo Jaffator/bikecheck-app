@@ -79,11 +79,10 @@ export function HistoryTotalsCard({
           {onShare !== null && (
             <Button
               variant="outline"
-              color="primary.6"
               radius="md"
               size="xs"
               ml="auto"
-              leftSection={<Share2 size={16} />}
+              leftSection={<Share2 size={16} color="var(--mantine-color-primary-5)" />}
               disabled={!canShare}
               onClick={onShare}
             >

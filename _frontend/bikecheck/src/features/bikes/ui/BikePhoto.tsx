@@ -74,8 +74,9 @@ export function BikePhoto({
       >
         {showCaption && (
           <Stack gap={2} style={{ minWidth: 0 }}>
-            {/* Clamped so the text block always ends inside the gradient. */}
-            <Text fw={700} fz={titleSize} c="#FFFFFF" lh={1.2} lineClamp={1}>
+            {/* Two lines at most: a long name has to fit, but the block still ends inside
+                the gradient. */}
+            <Text fw={700} fz={titleSize} c="#FFFFFF" lh={1.2} lineClamp={2}>
               {title}
             </Text>
             {subtitle !== null && subtitle !== "" && (

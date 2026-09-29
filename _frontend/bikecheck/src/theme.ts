@@ -1,4 +1,5 @@
-import { SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import { ActionIcon, Button, Drawer, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import { CONTENT_MAX_WIDTH } from "./layout/contentWidth";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
@@ -34,8 +35,8 @@ const background: MantineColorsTuple = [
   "#868688",
   "#7e7e83",
   "#6c6c71",
-  "#1f1f1f",
-  "#141414",
+  "#101012",
+  "#0a0a0b",
 ];
 // The dark end runs warm on purpose: the primary yellow and the Strava orange are both
 // warm, so a cool grey card read as a different material behind them.
@@ -131,6 +132,17 @@ export const otherColor = {
   decor: "#352E28",
 } as const;
 
+// An outline without a colour is the quiet secondary: neutral frame and text on the card,
+// the accent left to the icon. Button and ActionIcon prefix their vars differently.
+function quietOutlineVars(prefix: "button" | "ai"): Record<string, string> {
+  return {
+    [`--${prefix}-bg`]: "var(--mantine-color-cards-7)",
+    [`--${prefix}-bd`]: "1px solid var(--mantine-color-inputs-5)",
+    [`--${prefix}-color`]: "var(--mantine-color-text-6)",
+    [`--${prefix}-hover`]: "var(--mantine-color-cards-5)",
+  };
+}
+
 export const theme = createTheme({
   autoContrast: true,
   primaryColor: "primary",
@@ -147,12 +159,42 @@ export const theme = createTheme({
     textDark,
   },
   fontFamily: "Inter, sans-serif",
+  // One family for headings and body: the card typography rule keeps Inter for names and
+  // mono for data, so a third face had nowhere left to go.
   headings: {
-    fontFamily: "Space Grotesk, sans-serif",
+    fontFamily: "Inter, sans-serif",
   },
   other: otherColor,
+  // Below Mantine's 62em, so a phone's "Desktop site" (a 980px viewport) gets the desktop shell (ADR 0035).
+  breakpoints: { md: "60em" },
   respectReducedMotion: false,
   components: {
+    // Disabled buttons sink into the card instead of Mantine's light-grey default.
+    Button: Button.extend({
+      // A coloured outline (red.5 delete) keeps its colour.
+      vars: (_theme, props) => ({
+        root: props.variant === "outline" && props.color === undefined ? quietOutlineVars("button") : {},
+      }),
+      styles: (_theme, props) => ({
+        root: {
+          "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+          "--mantine-color-disabled-color": "var(--mantine-color-text-8)",
+          opacity: props.disabled ? 0.45 : undefined,
+        } as React.CSSProperties,
+      }),
+    }),
+    // The same quiet secondary on an icon-only button (the ✗ beside a request's ✓).
+    ActionIcon: ActionIcon.extend({
+      vars: (_theme, props) => ({
+        root: props.variant === "outline" && props.color === undefined ? quietOutlineVars("ai") : {},
+      }),
+    }),
+    // A bottom sheet stays over the content column in a browser instead of spanning the window.
+    Drawer: Drawer.extend({
+      styles: {
+        content: { maxWidth: CONTENT_MAX_WIDTH, marginInline: "auto" },
+      },
+    }),
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk
     // track, raised pill, dim labels.
     SegmentedControl: SegmentedControl.extend({

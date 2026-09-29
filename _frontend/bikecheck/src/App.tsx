@@ -23,8 +23,13 @@ import { useAppLinks } from "@/hooks/useAppLinks";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
+import { Follows } from "@/features/follow_page/Follows";
 import { Legal } from "@/features/legal_page/Legal";
 import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";
+import { UserProfile } from "@/features/profile_page/UserProfile";
+import { UserProfileBike } from "@/features/profile_page/UserProfileBike";
+import { PublicProfile } from "@/features/profile_page/PublicProfile";
+import { PublicProfileBike } from "@/features/profile_page/PublicProfileBike";
 import { applyLanguage, detectLanguage } from "./i18n";
 
 function App(): ReactElement {
@@ -37,6 +42,10 @@ function App(): ReactElement {
       {/* Public routes remain outside the authentication gate. A share link opens the
           report and nothing else: no nav, no tab bar, no session fetch. */}
       <Route path="/r/:token" element={<PublicReport />} />
+      {/* Somebody's garage the way a link in a chat opens it: no session, no shell, the
+          design's own look. Every open counts a view, so the page is read once per load. */}
+      <Route path="/u/:handle" element={<PublicProfile />} />
+      <Route path="/u/:handle/:bikeId" element={<PublicProfileBike />} />
       {/* The registration checkbox links to the terms, so they have to open without a
           session. Logged in, the same route serves the Settings rows. */}
       <Route path="/legal/:document" element={<Legal />} />
@@ -116,6 +125,8 @@ function ProtectedApp(): ReactElement {
           <Route path="/bikes/:id/setup" element={<Setup />} />
           <Route path="/bikes/:id/history" element={<ServiceHistory />} />
           <Route path="/reports" element={<Reports />} />
+          {/* Whom I follow and who follows me; ?tab=followers opens the second tab. */}
+          <Route path="/follows" element={<Follows />} />
           <Route path="/service" element={<Service />} />
           <Route path="/service/new" element={<AddService />} />
           <Route path="/service/history" element={<ServiceHistory />} />
@@ -125,6 +136,9 @@ function ProtectedApp(): ReactElement {
           <Route path="/profile" element={<Navigate to="/settings" replace />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
+          {/* Somebody's garage, and my own the way others see it. */}
+          <Route path="/users/:handle" element={<UserProfile />} />
+          <Route path="/users/:handle/:bikeId" element={<UserProfileBike />} />
           {/* Handles the completed Strava OAuth deep link. */}
           <Route path="/strava-connected" element={<StravaConnected />} />
         </Route>

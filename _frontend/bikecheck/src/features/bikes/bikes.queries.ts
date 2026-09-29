@@ -26,6 +26,7 @@ import type {
   BikeSearchResult,
   CreateBikeInput,
   ExternalBikeComponent,
+  ListedBike,
   UpdateBikeInput,
 } from "./bikes.types";
 
@@ -34,7 +35,7 @@ interface BikeSearchInput {
   year: string;
 }
 
-export function useBikes(): UseQueryResult<Bike[]> {
+export function useBikes(): UseQueryResult<ListedBike[]> {
   return useQuery({
     queryKey: ["bikes"],
     queryFn: () => getBikes(),
@@ -43,7 +44,7 @@ export function useBikes(): UseQueryResult<Bike[]> {
 
 // The archive behind the Settings row. Its own key, so putting a bike aside never has to
 // be reconciled into the garage list.
-export function useArchivedBikes(enabled = true): UseQueryResult<Bike[]> {
+export function useArchivedBikes(enabled = true): UseQueryResult<ListedBike[]> {
   return useQuery({
     queryKey: ["bikes", "archived"],
     queryFn: () => getBikes(true),

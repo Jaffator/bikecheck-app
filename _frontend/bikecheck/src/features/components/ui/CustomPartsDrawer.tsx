@@ -3,14 +3,14 @@
 // done to them here, so a list of thirty of them would be scenery around the four rows that
 // act (ADR 0021).
 import { useState, type ReactElement } from "react";
-import { ActionIcon, Drawer, Group, Loader, Stack, Text } from "@mantine/core";
+import { ActionIcon, Group, Loader, Stack, Text } from "@mantine/core";
 import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useCustomComponentTypes, useDeleteComponentType } from "@/features/components/components.queries";
 import type { CustomComponentType } from "@/features/components/components.types";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // Below the confirmation it raises, above the bike page it sits on.
 const DRAWER_Z_INDEX = 320;
@@ -27,22 +27,16 @@ export function CustomPartsDrawer({ opened, onClose }: CustomPartsDrawerProps): 
   const [removing, setRemoving] = useState<CustomComponentType | null>(null);
   const owned = types ?? [];
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
-
   return (
     <>
-      <Drawer
+      <ResponsiveSheet
         opened={opened}
         onClose={onClose}
-        position="bottom"
-        radius="lg"
+        desktop="modal"
         zIndex={DRAWER_Z_INDEX}
         title={t("customParts.title")}
-        overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
         styles={{
-          content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto", maxHeight: "88dvh" },
-          header: { backgroundColor: "var(--mantine-color-cards-6)" },
+          content: { height: "auto", maxHeight: "88dvh" },
           body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
           title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
         }}
@@ -90,7 +84,7 @@ export function CustomPartsDrawer({ opened, onClose }: CustomPartsDrawerProps): 
             )}
           </Stack>
         )}
-      </Drawer>
+      </ResponsiveSheet>
 
       {/* One question, worded by the count: the extra line exists to say that the parts
           already carrying the name survive, which is only reassuring while it is true. */}

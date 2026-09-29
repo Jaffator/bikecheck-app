@@ -357,6 +357,10 @@
             "null"
           ]
         },
+        "is_shared": {
+          "type": "boolean",
+          "default": true
+        },
         "active_setup_profile": {
           "anyOf": [
             {
@@ -911,6 +915,22 @@
           ],
           "format": "date-time"
         },
+        "place": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "HOME",
+            "SHOP"
+          ]
+        },
+        "shop_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "bike_event_attachments": {
           "type": "array",
           "items": {
@@ -1414,10 +1434,7 @@
           "type": "integer"
         },
         "name": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "email": {
           "type": "string"
@@ -1592,6 +1609,28 @@
             "$ref": "#/definitions/organization_members"
           }
         },
+        "public_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/public_profiles"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "following": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/follows"
+          }
+        },
+        "followers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/follows"
+          }
+        },
         "refresh_tokens": {
           "type": "array",
           "items": {
@@ -1618,46 +1657,35 @@
         "id": {
           "type": "integer"
         },
-        "extended_by_km": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "extended_by_min": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "extended_by_healthIndex": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": 0
-        },
-        "extended_km_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "extended_min_at": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
         "reached_threshold": {
           "type": "integer",
           "default": 0
         },
         "announced_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "interval_override": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "notify": {
+          "type": "boolean",
+          "default": true
+        },
+        "planned_for": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "planned_at": {
           "type": [
             "string",
             "null"
@@ -1741,6 +1769,90 @@
           "format": "date-time"
         },
         "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "public_profiles": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "default": "OFF",
+          "enum": [
+            "OFF",
+            "FOLLOWERS",
+            "PUBLIC"
+          ]
+        },
+        "share_components": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_setup": {
+          "type": "boolean",
+          "default": true
+        },
+        "share_history": {
+          "type": "boolean",
+          "default": false
+        },
+        "share_costs": {
+          "type": "boolean",
+          "default": false
+        },
+        "view_count": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_viewed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "users": {
+          "$ref": "#/definitions/users"
+        }
+      }
+    },
+    "follows": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "ACCEPTED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "accepted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "follower": {
+          "$ref": "#/definitions/users"
+        },
+        "followed": {
           "$ref": "#/definitions/users"
         }
       }
@@ -1980,6 +2092,12 @@
     },
     "reports": {
       "$ref": "#/definitions/reports"
+    },
+    "public_profiles": {
+      "$ref": "#/definitions/public_profiles"
+    },
+    "follows": {
+      "$ref": "#/definitions/follows"
     },
     "strava_pending_activities": {
       "$ref": "#/definitions/strava_pending_activities"

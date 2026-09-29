@@ -71,8 +71,7 @@ export function BikeSearchFallback({
           </Button>
           <Button
             variant="outline"
-            color="secondary.6"
-            leftSection={<SquarePen size={16} />}
+            leftSection={<SquarePen size={16} color="var(--mantine-color-primary-5)" />}
             onClick={onEnterManually}
             fullWidth
             radius="sm"

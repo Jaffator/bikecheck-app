@@ -18,8 +18,11 @@ import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import { EmptyService } from "./EmptyService";
 import type { ExportReportInput } from "@/features/report/report.types";
 
-// Clears the FAB and the bottom nav, so the last row can still be tapped.
-const FAB_CLEARANCE = "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+// Clears the FAB and the bottom nav, so the last row can still be tapped. Desktop has neither.
+const FAB_CLEARANCE = {
+  base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+  md: "md",
+};
 
 // A bike id the user cannot have typed by hand reads as no filter at all, so junk in the
 // URL never reaches the API as ?bikeId=NaN.

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { service_place } from '@prisma/client';
 
 // 1. Attachments and components (used in Response_BikeEvent_Dto) ----
 export class AttachmentDto {
@@ -141,6 +142,12 @@ export class Response_BikeEvent_Dto {
   @ApiProperty({ nullable: true })
   service_date!: Date | null;
 
+  @ApiProperty({ enum: service_place, nullable: true, description: 'Null on a Service recorded before the Place existed' })
+  place!: service_place | null;
+
+  @ApiProperty({ example: 'Bike Centrum', nullable: true, description: 'Only ever on a SHOP; null is a shop with no name' })
+  shop_name!: string | null;
+
   @ApiProperty()
   created_at!: Date;
 
@@ -274,6 +281,12 @@ export class ServiceHistoryItemDto {
 
   @ApiProperty({ example: 350.5, nullable: true })
   total_cost!: number | null;
+
+  @ApiProperty({ enum: service_place, nullable: true, description: 'Null on a Service recorded before the Place existed' })
+  place!: service_place | null;
+
+  @ApiProperty({ example: 'Bike Centrum', nullable: true, description: 'Only ever on a SHOP; null is a shop with no name' })
+  shop_name!: string | null;
 }
 
 // The History Totals: what the history the user is currently looking at adds up to.

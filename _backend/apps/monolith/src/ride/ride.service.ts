@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 import { ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
 
 const DEFAULT_LIMIT = 20;
@@ -29,7 +31,10 @@ interface RideRow {
 
 @Injectable()
 export class RideService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly serviceTracking: ServiceTrackingService,
+  ) {}
 
   /**
    * One page of the user's confirmed rides, newest first. Narrowed to one bike when the
@@ -61,7 +66,10 @@ export class RideService {
       this.prisma.rides.count({ where }),
     ]);
 
-    return { items: (rows as RideRow[]).map(toRideDto), total };
+    // Only this page's rides: the extra reading is paid per page, not per list.
+    const woreOff = await this.serviceTracking.getWoreOff(userId, rows);
+
+    return { items: (rows as RideRow[]).map((row) => toRideDto(row, woreOff.get(row.id) ?? [])), total };
   }
 }
 
@@ -124,7 +132,7 @@ function bikeName(bike: RideRow['bikes']): string | null {
   return parts.length > 0 ? parts.join(' ') : null;
 }
 
-function toRideDto(row: RideRow): ResponseRideDto {
+function toRideDto(row: RideRow, woreOff: Response_WoreOffLineDto[]): ResponseRideDto {
   const facts = activityFacts(row.json_data);
 
   return {
@@ -142,5 +150,6 @@ function toRideDto(row: RideRow): ResponseRideDto {
     speed_avg: row.speed_avg ?? null,
     max_speed_kmh: row.max_speed_kmh ?? null,
     summary_polyline: facts.summary_polyline,
+    wore_off: woreOff,
   };
 }

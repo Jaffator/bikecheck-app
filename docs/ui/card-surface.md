@@ -8,15 +8,17 @@ card only says which of the three elevations it is.
   radius="lg"
   p="md"
   style={{
-    // Colour, glow and shadow are separate fields on purpose: `bg` would emit the
-    // `background` shorthand and wipe the gradient.
     backgroundColor: "var(--mantine-color-cards-6)",
-    backgroundImage: "var(--card-glow)",
     border: "none",
     boxShadow: "var(--elev-panel)",
   }}
 >
 ```
+
+The card carries no glow: it stands flat on the page, so the bike colours and the charts on
+it are the only colour there is. `--card-glow` is `none` and stays only because the cards
+that still write `backgroundImage: "var(--card-glow)"` then need no edit; a new card leaves
+it out.
 
 ## Elevation
 
@@ -40,13 +42,10 @@ notch darker than `--elev-row` so the hem reads as nearer than the rows.
 The card clips it with `overflow: hidden`, which keeps the hem inside the corners without
 touching the card's own shadow.
 
-## Cards on a saturated surface
+## Cards on a coloured fill
 
-`--card-glow` is lit for the near-black `cards.6`: a 7% primary tint that disappears on a
-brand-coloured fill, leaving the card flat. `BikeStravaCard` on `strava.6` was the first to
-hit it.
-
-Do not answer that by lighting the surface. Every tool for it fails on a bright fill: a white
+A card on a brand-coloured fill (`BikeStravaCard` on `strava.6`) does not take its depth from
+light. Every tool for it fails on a bright fill: a white
 inset hairline reads as a 2008 bevel, a white sheen across the top reads as a glossy iOS 6
 button, and a tonal gradient long enough to model the card crosses the luminance point where
 the readable text colour flips — over `strava.6` to `strava.8`, dark text falls to 3.10:1 at
@@ -84,7 +83,7 @@ the 4.5:1 floor. Never a weight under 400 below 14px — Inter Thin breaks up at
 ## Rules
 
 - Use `backgroundColor`, never Mantine's `bg` prop. `bg` emits the `background` shorthand,
-  which wipes the gradient.
+  which wipes any `backgroundImage` beside it — `ReportCard`'s perforation, for one.
 - The hairline border stays on every card. `ReportCard` is the one exception: its
   perforation bites notches out of the card edge and a border would draw across them.
 - Margins belong to the page, not to the card. A card that carries its own `m-3` doubles
@@ -112,9 +111,9 @@ screen while that month scrolls past. The surface itself lives in
 `_frontend/bikecheck/src/features/service/serviceCardSurface.ts`, so the standalone card
 and the cards inside a month cannot drift apart.
 
-Everything that is _not_ a list row writes the four fields out inline and reaches for the
+Everything that is _not_ a list row writes the three fields out inline and reaches for the
 tokens — sheets, the dashboard cards, the wizard steps, `InAppNotification`. The values
-they used to copy are gone; only the choice of elevation is theirs. Pulling the four fields
+they used to copy are gone; only the choice of elevation is theirs. Pulling the three fields
 themselves into a component is a structural change — ask before doing it.
 
 `ReportCard` is the one card that reads its surface off its own state: a published link

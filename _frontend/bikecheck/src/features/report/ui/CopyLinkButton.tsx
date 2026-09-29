@@ -13,8 +13,9 @@ interface CopyLinkButtonProps {
   // The sheet hands its buttons the full width; a list row wears a smaller one.
   size?: "xs" | "sm" | "compact-sm";
   // Weight and colour belong to the screen the button stands on, not to the button: the
-  // Reports list runs it solid beside Open, the sheet keeps it outlined.
+  // sheet runs it in the accent, the Reports list keeps it quiet beside Open.
   variant?: string;
+  // Left out, the theme draws the quiet outline (neutral frame, accent only in the icon).
   color?: string;
 }
 
@@ -24,7 +25,7 @@ export function CopyLinkButton({
   shareUrl,
   size = "sm",
   variant = "outline",
-  color = "primary.5",
+  color,
 }: CopyLinkButtonProps): ReactElement {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -54,7 +55,13 @@ export function CopyLinkButton({
       color={color}
       radius="md"
       size={size}
-      leftSection={copied ? <Check size={16} /> : <Copy size={16} />}
+      leftSection={
+        copied ? (
+          <Check size={16} color="var(--mantine-color-primary-5)" />
+        ) : (
+          <Copy size={16} color="var(--mantine-color-primary-5)" />
+        )
+      }
       onClick={() => void copy()}
     >
       {copied ? t("report.copied") : t("report.copy")}

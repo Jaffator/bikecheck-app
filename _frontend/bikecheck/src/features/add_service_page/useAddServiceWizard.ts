@@ -12,6 +12,7 @@ import type {
   CategoryActions,
   CreateServiceInput,
   ServiceActionInput,
+  ServicePlace,
   ServiceReplacementInput,
   UploadedAttachment,
 } from "@/features/service/service.types";
@@ -52,6 +53,11 @@ export interface AddServiceWizard {
   bikeId: number | null;
   serviceDate: string;
   setServiceDate: (day: string) => void;
+  // Where the work was done. The typed name outlives a switch to Home until save (ADR 0037).
+  place: ServicePlace;
+  setPlace: (place: ServicePlace) => void;
+  shopName: string;
+  setShopName: (name: string) => void;
   blocks: CategoryBlock[];
   draft: DraftBlock | null;
   note: string;
@@ -111,6 +117,9 @@ export function useAddServiceWizard(): AddServiceWizard {
   const [requestedStep, setStep] = useState<WizardStep>("bike");
   const [chosenBikeId, setChosenBikeId] = useState<number | null>(null);
   const [serviceDate, setServiceDate] = useState<string>(today());
+  // Most Services are the owner's own work, so Home costs no tap.
+  const [place, setPlace] = useState<ServicePlace>("HOME");
+  const [shopName, setShopName] = useState("");
   const [blocks, setBlocks] = useState<CategoryBlock[]>([]);
   // The block the user is working on. Null until they touch one - and while the seed below
   // stands in for it.
@@ -375,6 +384,7 @@ export function useAddServiceWizard(): AddServiceWizard {
       {
         bike_id: bikeId,
         service_date: toIsoDate(serviceDate),
+        ...placeInput(place, shopName),
         total_cost: totalCost,
         note: note.trim() === "" ? undefined : note.trim(),
         attachment: attachments.length > 0 ? attachments : undefined,
@@ -387,7 +397,7 @@ export function useAddServiceWizard(): AddServiceWizard {
           navigate(bikeFromUrl === null ? "/service" : `/bikes/${String(bikeFromUrl)}`, { replace: true }),
       },
     );
-  }, [bikeId, bikeFromUrl, serviceDate, totalCost, note, attachments, blocks, create, navigate, t]);
+  }, [bikeId, bikeFromUrl, serviceDate, place, shopName, totalCost, note, attachments, blocks, create, navigate, t]);
 
   return {
     step,
@@ -396,6 +406,10 @@ export function useAddServiceWizard(): AddServiceWizard {
     bikeId,
     serviceDate,
     setServiceDate,
+    place,
+    setPlace,
+    shopName,
+    setShopName,
     blocks,
     draft,
     note,
@@ -423,6 +437,12 @@ export function useAddServiceWizard(): AddServiceWizard {
     saving: create.isPending,
     saveFailed: create.isError,
   };
+}
+
+// The Place as the API takes it: a name only on a Shop, and only when one was typed.
+function placeInput(place: ServicePlace, shopName: string): Pick<CreateServiceInput, "place" | "shop_name"> {
+  const name = shopName.trim();
+  return place === "SHOP" && name !== "" ? { place, shop_name: name } : { place };
 }
 
 // A Replacement describes each part going on, prefilled from the one it replaces. The map

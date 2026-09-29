@@ -5,6 +5,8 @@ import { Prisma } from '@prisma/client';
 import { BikeService } from './bike.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { StatsService } from '../stats/stats.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 
 const OWNER_ID = 7;
 const STRANGER_ID = 8;
@@ -15,8 +17,35 @@ const STORED_IMAGE = 'https://storage.example.com/bikes/tarmac.webp';
 const WITH_TYPE = { bike_types: true };
 const NEW_IMAGE = 'https://storage.example.com/bikes/tarmac-new.webp';
 
+type Row = Record<string, unknown>;
+
+// One ride of a bike, as both the ride sums and the distance chart read it.
+function ride(bikeId: number, minutes: number): Row {
+  return {
+    bike_id: bikeId,
+    started_at: new Date('2026-03-01T09:00:00.000Z'),
+    distance_m: 20000,
+    duration_min: minutes,
+    is_deleted: false,
+  };
+}
+
+// Each bike's colour by its id, the way a list reads it.
+function colors(bikes: { id: number; color_index: number }[]): Record<number, number> {
+  return Object.fromEntries(bikes.map(({ id, color_index }) => [id, color_index]));
+}
+
+// true is the archive, { not: true } the garage, and no flag at all is every bike.
+function inState(bike: Row, wanted: unknown): boolean {
+  if (wanted === undefined) return true;
+  return wanted === true ? bike.is_deleted === true : bike.is_deleted !== true;
+}
+
 describe('BikeService', () => {
   let service: BikeService;
+  let stats: StatsService;
+  let garage: Row[];
+  let rides: Row[];
 
   const mockPrisma = {
     bikes: {
@@ -28,6 +57,7 @@ describe('BikeService', () => {
       delete: jest.fn(),
     },
     bike_types: { findMany: jest.fn(), findUnique: jest.fn() },
+    rides: { findMany: jest.fn(), groupBy: jest.fn() },
     components_mounted: { createMany: jest.fn() },
     strava_pending_activities: { deleteMany: jest.fn() },
     $transaction: jest.fn(),
@@ -76,10 +106,46 @@ describe('BikeService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: StorageService, useValue: mockStorageService },
         { provide: getLoggerToken(BikeService.name), useValue: mockLogger },
+        StatsService,
+        { provide: ServiceTrackingService, useValue: {} },
       ],
     }).compile();
 
     service = module.get<BikeService>(BikeService);
+    stats = module.get<StatsService>(StatsService);
+
+    // The owner's bikes in the state asked for, and their rides grouped the way the database would.
+    garage = [bikeRow()];
+    rides = [];
+    const archived = (bikeId: unknown): boolean =>
+      garage.some((bike) => bike.id === bikeId && bike.is_deleted === true);
+    mockPrisma.bikes.findMany.mockImplementation(({ where }: { where: { is_deleted?: unknown } }) =>
+      Promise.resolve(garage.filter((bike) => inState(bike, where.is_deleted))),
+    );
+    mockPrisma.rides.groupBy.mockImplementation(
+      ({ where }: { where: { bike_id: { in: number[] }; is_deleted?: unknown } }) =>
+        Promise.resolve(
+          where.bike_id.in.flatMap((bikeId) => {
+            const counted = rides.filter(
+              (row) => row.bike_id === bikeId && (where.is_deleted === undefined || row.is_deleted !== true),
+            );
+            const minutes = counted.reduce((total, row) => total + (row.duration_min as number), 0);
+            return counted.length === 0
+              ? []
+              : [{ bike_id: bikeId, _count: { _all: counted.length }, _sum: { duration_min: minutes } }];
+          }),
+        ),
+    );
+    mockPrisma.rides.findMany.mockImplementation(({ where }: { where: { started_at: { gte: Date; lt?: Date } } }) =>
+      Promise.resolve(
+        rides.filter((row) => {
+          const date = row.started_at as Date;
+          const inSpan =
+            date >= where.started_at.gte && (where.started_at.lt === undefined || date < where.started_at.lt);
+          return inSpan && row.is_deleted !== true && !archived(row.bike_id);
+        }),
+      ),
+    );
 
     // The caller owns the bike unless a test says otherwise, and the update answers
     // with the row it just wrote.
@@ -226,6 +292,66 @@ describe('BikeService', () => {
         where: { user_id: OWNER_ID, is_deleted: true },
         include: WITH_TYPE,
       });
+    });
+
+    it("colours each bike by its rank among all the owner's bikes, in the garage and the archive alike", async () => {
+      // ARRANGE: the middle bike by id is archived.
+      garage = [bikeRow({ id: 15 }), bikeRow({ id: 16, is_deleted: true }), bikeRow({ id: 17 })];
+
+      // ACT
+      const active = await service.findByUser(OWNER_ID);
+      const archived = await service.findByUser(OWNER_ID, true);
+
+      // ASSERT: the archived bike keeps its slot, so neither list has a gap filled.
+      expect(colors(active)).toEqual({ 15: 0, 17: 2 });
+      expect(colors(archived)).toEqual({ 16: 1 });
+    });
+
+    it("leaves every other bike's colour as it was when one is archived", async () => {
+      // ARRANGE
+      garage = [bikeRow({ id: 15 }), bikeRow({ id: 16 }), bikeRow({ id: 17 })];
+      const before = colors(await service.findByUser(OWNER_ID));
+
+      // ACT
+      garage = [bikeRow({ id: 15 }), bikeRow({ id: 16, is_deleted: true }), bikeRow({ id: 17 })];
+      const after = colors(await service.findByUser(OWNER_ID));
+
+      // ASSERT
+      expect(before).toEqual({ 15: 0, 16: 1, 17: 2 });
+      expect(after).toEqual({ 15: 0, 17: 2 });
+    });
+
+    it('gives each bike the colour the distance chart gives it', async () => {
+      // ARRANGE: every bike rode this year, and one of them has since been archived.
+      jest.useFakeTimers().setSystemTime(new Date('2026-06-15T10:00:00.000Z'));
+      garage = [bikeRow({ id: 15 }), bikeRow({ id: 16, is_deleted: true }), bikeRow({ id: 17 }), bikeRow({ id: 18 })];
+      rides = [ride(15, 60), ride(16, 60), ride(17, 60), ride(18, 60)];
+
+      // ACT
+      const bikes = await service.findByUser(OWNER_ID);
+      const distance = await stats.getDistance(OWNER_ID);
+      jest.useRealTimers();
+
+      // ASSERT
+      expect(colors(bikes)).toEqual({ 15: 0, 17: 2, 18: 3 });
+      expect(colors(distance.bikes.map(({ bike_id, color_index }) => ({ id: bike_id, color_index })))).toEqual(
+        colors(bikes),
+      );
+    });
+
+    it("sums each bike's rides for its lifetime, leaving deleted rides out and a bike never ridden at 0", async () => {
+      // ARRANGE: the typed-in odometer says 9 360 minutes; the rides say otherwise.
+      garage = [bikeRow({ id: 15, total_time_min: 9360 }), bikeRow({ id: 16, total_time_min: 9360 })];
+      rides = [ride(15, 95), ride(15, 40), { ...ride(15, 300), is_deleted: true }];
+
+      // ACT
+      const bikes = await service.findByUser(OWNER_ID);
+
+      // ASSERT
+      expect(bikes.map(({ id, ride_count, ride_time_min }) => ({ id, ride_count, ride_time_min }))).toEqual([
+        { id: 15, ride_count: 2, ride_time_min: 135 },
+        { id: 16, ride_count: 0, ride_time_min: 0 },
+      ]);
     });
   });
 

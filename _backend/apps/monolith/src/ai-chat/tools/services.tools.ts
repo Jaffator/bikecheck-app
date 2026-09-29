@@ -38,6 +38,9 @@ export interface ServiceRow {
   bike_model: string;
   // ISO day, or null on a service whose date nobody recorded.
   service_date: string | null;
+  // Where the work was done; null was never recorded, which is not home.
+  place: 'home' | 'shop' | null;
+  shop_name: string | null;
   cost: number | null;
   note: string;
   actions: ServiceActionRow[];
@@ -67,7 +70,8 @@ const LIST_SERVICES_DESCRIPTION =
   'occasion and a matching occasion comes back whole, so read the actions to see which of them ' +
   'touched the part you asked about. Filters other than the dates must all hold on one and the ' +
   'same action. `tags` says what an action covers in general; only `note` says what was done ' +
-  'this time.';
+  'this time. `place` is where it was done (`home`, or `shop` with `shop_name` when the owner ' +
+  'named the shop); null means it was never recorded, not that it was done at home.';
 
 // One page of services. A row carries its actions and their parts, so fifty would be a page the
 // model reads badly.
@@ -91,6 +95,8 @@ const servicesSelect = {
   service_date: true,
   total_cost: true,
   note: true,
+  place: true,
+  shop_name: true,
   bikes: { select: { bike_brand: true, bike_model: true } },
   event_actions_done: {
     orderBy: { id: 'asc' },
@@ -233,6 +239,8 @@ function toServiceRow(service: ServiceRecord, userId: number): ServiceRow {
     bike_brand: service.bikes?.bike_brand ?? '',
     bike_model: service.bikes?.bike_model ?? '',
     service_date: isoDay(service.service_date),
+    place: service.place === null ? null : service.place === 'HOME' ? 'home' : 'shop',
+    shop_name: service.shop_name,
     cost: service.total_cost === null ? null : Number(service.total_cost),
     note: service.note ?? '',
     actions: service.event_actions_done.map((action) => toServiceActionRow(action, userId)),

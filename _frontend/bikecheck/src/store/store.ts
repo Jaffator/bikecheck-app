@@ -35,7 +35,7 @@ interface HeaderStore {
   backHidden: boolean;
   setBackHidden: (value: boolean) => void;
   // A control the page hangs at the right edge of the header — the history's period filter.
-  // Sub-pages only: the main tabs already carry the avatar, bell and settings there.
+  // On a main tab it stands beside the bell, before it — the garage's share icon.
   actionSlot: ReactNode | null;
   setActionSlot: (value: ReactNode | null) => void;
 }
@@ -62,14 +62,14 @@ export const useHeaderStore = create<HeaderStore>((set) => ({
 // the thing on top", so the hardware handler empties this before it touches the router -
 // see useOverlayBack and AppLayout.
 interface Overlay {
-  id: number;
+  id: string;
   close: () => void;
 }
 
 interface OverlayStore {
   stack: Overlay[];
   pushOverlay: (overlay: Overlay) => void;
-  removeOverlay: (id: number) => void;
+  removeOverlay: (id: string) => void;
   // True when there was one to close, which is also when the router must stay put.
   closeTopOverlay: () => boolean;
 }

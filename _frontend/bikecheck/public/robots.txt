@@ -1,0 +1,4 @@
+# Link previews depend on crawlers reaching /u/, /r/ and the images under /api/preview/.
+# Never disallow them - X and Facebook drop the card for a blocked URL. Nothing here is blocked.
+User-agent: *
+Allow: /

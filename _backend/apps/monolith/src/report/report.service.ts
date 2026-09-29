@@ -479,6 +479,8 @@ export class ReportService {
 
     return {
       serviceDate: service.service_date?.toISOString() ?? null,
+      place: service.place,
+      shopName: service.shop_name,
       note: service.note,
       // A history where nobody recorded a price cost zero, which is a number - not an
       // absent one.

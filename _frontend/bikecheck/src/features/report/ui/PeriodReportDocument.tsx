@@ -13,6 +13,7 @@ import {
   reportDate,
   reportNumber,
   reportPeriodLabel,
+  reportPlace,
 } from "@/features/report/reportFormat";
 import { reportHeadings, type ReportHeadings } from "@/features/report/reportHeadings";
 import { ComponentRow } from "./ComponentRow";
@@ -110,6 +111,7 @@ function ServiceEntry({
   onOpenAttachment: (attachment: ReportAttachment) => void;
 }): ReactElement {
   const date = reportDate(service.serviceDate, snapshot.language);
+  const place = reportPlace(service, heading);
   const replaced = service.actions.some((action) => action.replacement);
 
   return (
@@ -118,8 +120,9 @@ function ServiceEntry({
       style={{ borderBottom: `1px solid ${REPORT_PAPER.rule}` }}
     >
       <div className="flex justify-between items-baseline gap-4">
-        <span className="font-mono text-xs shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
+        <span className="font-mono text-xs min-w-0" style={{ color: REPORT_PAPER.inkMuted }}>
           {date ?? heading.noDate}
+          {place !== null && ` · ${place}`}
         </span>
         <span className="font-mono text-sm shrink-0">{reportCost(service.totalCost, snapshot)}</span>
       </div>

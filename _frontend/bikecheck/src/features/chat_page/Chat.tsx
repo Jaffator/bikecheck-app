@@ -16,13 +16,13 @@ import { EmptyChat } from "./EmptyChat";
 
 // Room for the composer, which floats and so keeps nothing clear of itself. The bike bar
 // rides on it, so its row is part of the gap.
-const COMPOSER_ROOM = "calc(15rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+const COMPOSER_ROOM = "calc(9rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
 // The app header's height - see AppLayout, which the empty page measures itself from.
-const HEADER_OFFSET = "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))";
+const HEADER_OFFSET = "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))";
 
 // With nothing in the thread there is nothing to scroll, so the page is held to exactly the
-// space between the header and the composer and the empty state is centred in it.
+// space between the header and the composer.
 const EMPTY_PAGE_HEIGHT = `calc(100dvh - ${HEADER_OFFSET} - ${COMPOSER_ROOM})`;
 
 // A bike id the user cannot have typed by hand reads as no selection, the same as in the
@@ -45,7 +45,7 @@ export function Chat(): ReactElement {
 
   const garage = bikes ?? [];
   // The selection lives in the URL alone, as it does in the history: /chat?bike=12 is the way
-  // in from a bike, and switching tab drops it because the tab bar navigates to the bare path.
+  // in from a bike, and the More sheet opens the bare path, which drops it.
   const fromUrl = parseBikeId(searchParams.get("bike"));
   // An id no bike of theirs answers to reads as all bikes. A garage of one has nothing to
   // widen to, so its single bike is the selection whether the URL says so or not.
@@ -101,20 +101,9 @@ export function Chat(): ReactElement {
     >
       <Box
         px="md"
-        pt="md"
+        // The empty state carries its own offset from the header, so the page adds none.
+        pt={empty ? 0 : "md"}
         pb={empty ? 0 : COMPOSER_ROOM}
-        // The empty state takes the whole page between header and composer and centres itself.
-        style={
-          empty
-            ? {
-                flex: 1,
-                minHeight: 0,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-              }
-            : undefined
-        }
       >
         {isLoading && (
           <Stack gap="md">

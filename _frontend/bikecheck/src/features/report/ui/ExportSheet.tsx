@@ -1,8 +1,9 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Drawer, Group, Loader, Stack, Switch, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Group, Loader, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Check, Link2, Share2, Trash2, X } from "lucide-react";
+import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "@/features/report/report.queries";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { ReportDocument } from "./ReportDocument";
@@ -10,7 +11,6 @@ import { REPORT_KIND_KEY } from "@/features/report/reportListLabels";
 import type { ExportReportInput, ExportedReport, ReportKind } from "@/features/report/report.types";
 import { ApiError } from "@/api/client";
 import { canShareLink, shareLink } from "@/utils/shareLink";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
 
 // The sheet stands over what it was opened from, the same way the service detail does.
 const SHEET_HEIGHT = "90%";
@@ -117,9 +117,6 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
 
   const isPublished = shareUrl !== null;
 
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, close);
-
   return (
     <Sheet
       opened={opened}
@@ -217,7 +214,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
 
       {isPublished && (
         <Footer>
-          <Button variant="outline" color="text.8" radius="md" onClick={reset}>
+          <Button variant="outline" radius="md" onClick={reset}>
             {t("action.close")}
           </Button>
         </Footer>
@@ -320,7 +317,7 @@ function Published({
       </Box>
 
       <Group gap="sm" grow wrap="nowrap">
-        <CopyLinkButton shareUrl={shareUrl} />
+        <CopyLinkButton shareUrl={shareUrl} color="primary.5" />
         {canShare && (
           <Button
             color="primary.6"
@@ -363,24 +360,15 @@ function Sheet({
   const { t } = useTranslation();
 
   return (
-    <Drawer
+    <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      position="bottom"
-      radius="lg"
+      desktop="modal"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 350,
-        exitDuration: 300,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
-      overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       styles={{
         content: {
           height: SHEET_HEIGHT,
-          backgroundColor: "var(--mantine-color-cards-6)",
           display: "flex",
           flexDirection: "column",
         },
@@ -410,7 +398,7 @@ function Sheet({
         </ActionIcon>
       </Group>
       {children}
-    </Drawer>
+    </ResponsiveSheet>
   );
 }
 

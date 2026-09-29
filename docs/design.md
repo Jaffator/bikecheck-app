@@ -31,26 +31,31 @@ service event. The owner can generate a shareable report (e.g. when selling a bi
 
 ## 3. Information architecture (screen map)
 
-Navigation is **adaptive** — same destinations, different chrome per screen size.
-The top bar (everywhere) holds the **bell** (unread notifications) and the **user avatar**
-(account menu). Neither notifications nor profile is a primary tab.
+Navigation is **adaptive** — same destinations, different chrome per screen size. The switch is
+the window's width at 60em (Mantine `md`), see [ADR 0035](adr/0035-the-desktop-layout-is-chosen-by-width.md).
+Neither notifications nor the account is a primary tab.
 
 ```
-MOBILE                              DESKTOP
-┌────────────────────────────┐      ┌──────────┬───────────────────────┐
-│ BikeCheck        🔔(3)  👤 │      │ 🏠 Home  │ BikeCheck    🔔(3)  👤 │
-├────────────────────────────┤      │ 🚲 Bikes │                       │
-│                            │      │ 🔧 Service│    (active screen)    │
-│      (active screen)       │      │ 📋 Rides │                       │
-├──────┬──────┬──────┬───────┤      └──────────┴───────────────────────┘
-│🏠    │🚲    │🔧    │📋     │
-│Home  │Bikes │Servic│Rides  │  (Home/Bikes/Service/Rides; sidebar on desktop)
-└──────┴──────┴──────┴───────┘
+MOBILE (< 60em)                     DESKTOP (≥ 60em)
+┌────────────────────────────┐      ┌──────────────┬───────────────────────┐
+│ BikeCheck        🔔(3)  👤 │      │ 🚲 BikeCheck │ Title          [action]│
+├────────────────────────────┤      │ [+ New    ▾] ├───────────────────────┤
+│                            │      │ 🏠 Home      │                       │
+│      (active screen)       │      │ 🚲 Bikes     │    (active screen)    │
+│                     (+)FAB │      │ 🔧 Service   │    wide or narrow     │
+├─────┬─────┬─────┬─────┬────┤      │ 〰 Rides     │                       │
+│Home │Bikes│Serv.│Rides│More│      │ ──────────── │                       │
+└─────┴─────┴─────┴─────┴────┘      │ 👥 Riders  • │                       │
+                                    │ 💬 Chat      │                       │
+More → drawer: Riders, Chat         │ 🔔 Notif.  3 │                       │
+                                    │ (J) Name     │                       │
+                                    └──────────────┴───────────────────────┘
 
-🔔 Bell (top bar, everywhere) → opens Inbox as a Drawer/Modal (not a tab)
+🔔 Bell (top bar on mobile, sidebar row on desktop) → /notifications
    └─ Notification list → navigate by notification.route ; mark read
-👤 Avatar (top bar, everywhere) → account menu (not a tab):
-   Profile, Strava account, notification settings, organization, logout
+👤 Avatar (top bar on mobile, sidebar foot on desktop) → /settings
+   Profile, Strava account, notification settings, logout
++  Create: FAB with per-page actions on mobile, global "+ New" menu on desktop
 
 🏠 Home (Dashboard) — landing screen after login
    ├─ Needs attention (service due + health alerts)
@@ -96,8 +101,8 @@ Public (outside the logged-in app)
 | Bike detail   | Components w/ mileage & health, service history, rides, Strava, reports | Generate report, mark service   |
 | Service       | Due/soon items **+ record a service event** (category → event → auto-filled actions/components → note + cost) | Log event; mark done / snooze |
 | Rides         | Recent rides feed across bikes, with AI summary + rating            | Open ride detail                |
-| Inbox (bell)  | Notifications (unread first), grouped by date — opens as drawer     | Navigate via `route`; mark read |
-| Account (avatar) | Profile, Strava connection, notification prefs — opened from avatar menu | Connect Strava, logout      |
+| Inbox (bell)  | Notifications (unread first), grouped by date — `/notifications`   | Navigate via `route`; mark read |
+| Account (avatar) | Profile, Strava connection, notification prefs — `/settings`     | Connect Strava, logout          |
 | Public report | Frozen snapshot of one bike for buyers                              | Download PDF                    |
 
 ## 5. Key flows
@@ -143,20 +148,25 @@ Profile → connect Strava → unmatched gear notification
 ## 6. Navigation & routing
 
 - Tab destinations: `/`, `/bikes`, `/service`, `/rides`. Landing after login = `/`.
-- Inbox opens from the **bell** as a Drawer/Modal over the current screen (no own tab); deep-linkable as `/inbox` if needed.
-- Account (`/profile`, settings, Strava, logout) opens from the **avatar menu** in the top bar — not a tab.
+- Inbox (`/notifications`) opens from the **bell** — top bar on mobile, sidebar row on desktop.
+- Account (`/settings`; `/profile` redirects there) opens from the **avatar** — top bar on mobile,
+  sidebar foot on desktop.
+- **Follows** (`/follows`, "Riders") and **Chat** (`/chat`) sit in the **More** tab's drawer on mobile,
+  dot = pending follow requests — see [Follows entry](ui/follows-entry.md). On desktop both are
+  sidebar rows and More does not exist.
 - Detail routes: `/bikes/:id`, `/bikes/:id/maintenance`, `/bikes/:id/strava-link`, `/bikes/:id/rides` —
   these mirror the backend `NotificationType.route` values so a notification tap maps straight to a screen.
 - Public report route `/r/:token` is **outside** the authenticated shell (no nav, no login).
 - **Adaptive shell:** one layout component renders bottom tabs on mobile and a sidebar on desktop
-  (Mantine `AppShell` + `useMediaQuery`).
+  (Mantine `AppShell` + `useIsDesktop()`), see [ADR 0035](adr/0035-the-desktop-layout-is-chosen-by-width.md).
+  Sheets become side panels or modals on desktop, see [ADR 0036](adr/0036-on-desktop-a-sheet-is-a-panel-or-a-modal.md).
 
 ## 7. Notifications UX (recap)
 
 - **In-app banner** when app is open (own React component / Mantine notifications).
 - **System tray** when app is in background (rendered by Android via FCM).
 - **Inbox** (DB) is the source of truth; push is just a signal to refetch.
-- **Bell** in the top bar everywhere; badge = unread count; shared `useUnreadCount` hook so a foreground push updates it.
+- **Bell** in the top bar on mobile, a sidebar row on desktop; badge = unread count; shared `useUnreadCount` hook so a foreground push updates it.
 
 ## 8. Shared reports UX
 
@@ -171,7 +181,8 @@ Profile → connect Strava → unmatched gear notification
 - **Brand palette:** derived from the logo — warm beige/tan + dark slate (extract exact hex from `Design/logo`,
   define as a Mantine theme color with 10 shades). Accent TBD.
 - **Theme:** Mantine `MantineProvider` with a single theme; light/dark via `colorScheme` (Mantine built-in) later.
-- **Responsive:** Mantine breakpoints + `useMediaQuery` drive the mobile/desktop layout switch.
+- **Responsive:** one `DESKTOP_QUERY` (60em) drives the switch — `useIsDesktop()`, Mantine `md`,
+  Tailwind `desktop:`. Tailwind's own `md` (48rem) is a different width; don't use it in the app shell.
 - **Tone:** clean, functional, sporty. No overengineering.
 
 ### Disabled buttons (pattern)

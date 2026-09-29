@@ -43,7 +43,7 @@ export function Legal(): ReactElement {
           position: "sticky",
           top: 0,
           zIndex: 10,
-          height: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+          height: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
           paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
         }}
       >

@@ -245,7 +245,7 @@ export function Setup(): ReactElement {
           mt={-6}
           style={{
             position: "sticky",
-            top: "calc(3.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+            top: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
             zIndex: 2,
             backgroundColor: "var(--mantine-color-background-9)",
           }}

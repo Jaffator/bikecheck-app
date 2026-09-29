@@ -11,7 +11,7 @@ import { ExplanationModal } from "@/components/ExplanationModal";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { positionLabel, wearExplanation } from "@/features/components/componentLabels";
 import { attentionColor, axisReading, barFill } from "@/features/service_tracking/attentionLevel";
-import { PostponeControl } from "./PostponeControl";
+import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
 interface TrackedActionRowProps {
@@ -52,7 +52,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
               size="xs"
               aria-label={explanation.aria}
               onClick={(event) => {
-                // The row around it leads to recording the job; asking what a reading is does not.
+                // The row around it opens the job; asking what a reading is does not.
                 event.stopPropagation();
                 setExplained(true);
               }}
@@ -70,7 +70,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
 
       <Progress
         value={barFill(action) * 100}
-        size={5}
+        size={8}
         radius="xl"
         styles={{
           root: { backgroundColor: "var(--color-decor-sunk)" },
@@ -79,37 +79,35 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
       />
 
       <Group gap="sm" wrap="nowrap" align="baseline">
+        <Text className="font-mono" fz={11} tt="uppercase" c="text.8" lts="0.08em" lineClamp={1} style={{ minWidth: 0 }}>
+          {prefix === null ? part : `${prefix} · ${part}`}
+        </Text>
         <Text
           className="font-mono"
           fz={11}
           tt="uppercase"
-          c="var(--color-text-dim)"
+          c="text.8"
           lts="0.08em"
-          lineClamp={1}
-          style={{ minWidth: 0 }}
+          ml="auto"
+          style={{ whiteSpace: "nowrap" }}
         >
-          {prefix === null ? part : `${prefix} · ${part}`}
-        </Text>
-        <Group gap="sm" wrap="nowrap" ml="auto" style={{ whiteSpace: "nowrap" }}>
-          {/* What a tap on the control left behind: the interval beside it is longer for it. */}
-          {action.extended && (
-            <Text className="font-mono" fz={11} tt="uppercase" c="primary.6" lts="0.08em">
-              {t("tracking.extended")}
+          {axisReading(action, i18n.language, t)}
+          {/* Read-only here; the plan is changed in the drawer. */}
+          {action.planned_for !== null && (
+            <Text span inherit c={isPlanPassed(action.planned_for) ? PASSED_PLAN_COLOR : undefined}>
+              {` · ${planDayLabel(action.planned_for, i18n.language)}`}
             </Text>
           )}
-          <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em">
-            {axisReading(action, i18n.language, t)}
-          </Text>
-        </Group>
+        </Text>
       </Group>
     </Stack>
   );
 
   // The info button sits on the heading it explains, which puts it inside whatever the row
-  // leads through - so the row carries the tap as a div rather than as a <button>, since a
-  // button within a button is not valid markup. It keeps the keyboard by declaring what it
-  // is: a control that answers to Enter and to Space, the way the real button did.
-  const body = (
+  // opens - so the row carries the tap as a div rather than as a <button>, since a button
+  // within a button is not valid markup. It keeps the keyboard by declaring what it is: a
+  // control that answers to Enter and to Space, the way the real button did.
+  return (
     <>
       {onOpen === null ? (
         <Box>{reading}</Box>
@@ -124,7 +122,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
             event.preventDefault();
             onOpen();
           }}
-          className="active:scale-[0.985]"
+          className="hover-veil active:scale-[0.985]"
           style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
         >
           {reading}
@@ -138,18 +136,5 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
         }}
       />
     </>
-  );
-
-  // Only a job already past due is worth putting off — anything else is not being ridden
-  // on borrowed time yet. Its own control, outside whatever the row leads to, so a tap on
-  // it is never a tap into the wizard.
-  if (action.level !== "overdue") return body;
-
-  return (
-    <Stack gap={8}>
-      {body}
-
-      <PostponeControl action={action} />
-    </Stack>
   );
 }

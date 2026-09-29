@@ -2,9 +2,10 @@
 // every figure is derived from the part's wear, its Wear Baseline and the bike's Service
 // Interval at the moment of the read.
 
-// How much attention one Tracked Action is asking for: good below 70%, warning 70–94,
-// critical 95–99, overdue at 100 and above.
-export type AttentionLevel = "good" | "warning" | "critical" | "overdue";
+// How much attention one Tracked Action is asking for: very good below 60%, good 60–74,
+// warning 75–89, critical 90–99, overdue at 100 and above. One step per stop of the colour
+// ramp, so the word and the colour can never tell two different stories.
+export type AttentionLevel = "very_good" | "good" | "warning" | "critical" | "overdue";
 
 // Which measure the Service Interval behind a reading is expressed in.
 export type WearAxis = "km" | "min" | "health_index";
@@ -30,15 +31,27 @@ export interface TrackedAction {
   action_i18n_key: string | null;
   axis: WearAxis;
   measure: WearMeasure;
-  // Wear on that axis since the Wear Baseline, and the interval it is measured against —
-  // the two numbers behind the percentage, so it can be checked rather than trusted.
+  // Wear on that axis since the Wear Baseline, and the Service Interval in force it is
+  // measured against — the two numbers behind the percentage, so it can be checked rather
+  // than trusted.
   current: number;
   interval: number;
   // Whole percent of the way to being due. Never capped: a neglected chain reads 132.
   percentage: number;
   level: AttentionLevel;
-  // The action has been put off, which lengthened the interval above.
-  extended: boolean;
+  // The bike's own plan on this axis, which Reset to default restores.
+  default_interval: number;
+  // The owner's own Service Interval, or null where the reading follows the bike's plan —
+  // which is also what tells a custom interval from the app's.
+  interval_override: number | null;
+  // False silences this pairing's announcements and nothing else.
+  notify: boolean;
+  // When the part went on the bike, which the reading is judged against.
+  mounted_at: string | null;
+  // The day the owner means to do this Tracked Action (YYYY-MM-DD); null once a Service records it (ADR 0038).
+  planned_for: string | null;
+  // Recording this job replaces the part rather than servicing it, which names the button.
+  replace_action: boolean;
 }
 
 // The same reading on the dashboard, where the list is flat across the whole garage and a
@@ -50,10 +63,24 @@ export interface GarageTrackedAction extends TrackedAction {
   year: number | null;
 }
 
-// What putting one Tracked Action off asks for: the part and the job, which is what
-// identifies one. What the Extension is worth is the server's rule — there is no number
-// to enter and no dialog to enter it in.
-export interface PostponeTrackedActionInput {
+// What setting an owner's own Service Interval asks for. Null clears it, which puts the
+// bike's plan back — only the number is theirs, never the axis.
+export interface SetTrackedActionIntervalInput {
   component_mounted_id: number;
   event_action_id: number;
+  interval_override: number | null;
+}
+
+// What planning one Tracked Action asks for: a day (YYYY-MM-DD, today or later), or null to remove the plan.
+export interface SetTrackedActionPlanInput {
+  component_mounted_id: number;
+  event_action_id: number;
+  planned_for: string | null;
+}
+
+// What muting one Tracked Action asks for. False stops the push and nothing else.
+export interface SetTrackedActionNotifyInput {
+  component_mounted_id: number;
+  event_action_id: number;
+  notify: boolean;
 }

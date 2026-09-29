@@ -12,6 +12,9 @@ export const SWIPE_AREA_STYLE: CSSProperties = {
   touchAction: "pan-y",
   overscrollBehaviorX: "contain",
   minHeight: "60dvh",
+  // The panel slides in from 16px past the edge; unclipped, that overflow makes a phone
+  // viewport briefly widen and every fixed bar jump.
+  overflowX: "clip",
 };
 
 // The all-bikes chip leads the bar, so it leads the swipe order too.

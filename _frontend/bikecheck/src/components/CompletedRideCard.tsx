@@ -44,7 +44,7 @@ export function CompletedRideCard({
           boxShadow: "var(--elev-row)",
           transition: "transform 0.12s ease",
         }}
-        className="active:scale-[0.985]"
+        className="hover-veil active:scale-[0.985]"
       >
         <Group gap="lg" wrap="nowrap" align="center">
           {leading}

@@ -1,6 +1,7 @@
 // Component query hooks.
 import {
   useQuery,
+  useQueries,
   useMutation,
   useQueryClient,
   type UseQueryResult,
@@ -18,6 +19,7 @@ import {
   getDefaultComponents,
   updateBikeComponent,
 } from "./components.api";
+import { invalidateReadings } from "@/features/service_tracking/tracking.queries";
 import type {
   AssembleBikeComponent,
   BikeComponent,
@@ -94,6 +96,18 @@ export function useBikeComponents(bikeId: number): UseQueryResult<BikeComponent[
   });
 }
 
+// Every listed bike's build, each on the key its own page reads; undefined until all have arrived.
+export function useGarageComponents(bikeIds: number[]): BikeComponent[] | undefined {
+  return useQueries({
+    queries: bikeIds.map((bikeId) => ({
+      queryKey: bikeComponentsKey(bikeId),
+      queryFn: () => getBikeComponents(bikeId),
+    })),
+    combine: (results) =>
+      results.every((result) => result.data !== undefined) ? results.flatMap((result) => result.data ?? []) : undefined,
+  });
+}
+
 export function useCreateBikeComponent(): UseMutationResult<BikeComponent, Error, CreateBikeComponentInput> {
   const queryClient = useQueryClient();
 
@@ -101,6 +115,7 @@ export function useCreateBikeComponent(): UseMutationResult<BikeComponent, Error
     mutationFn: (input: CreateBikeComponentInput) => createBikeComponent(input),
     onSuccess: async (_component, input) => {
       await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bike_id) });
+      await invalidateReadings(queryClient);
     },
   });
 }
@@ -137,6 +152,8 @@ export function useUpdateBikeComponent(): UseMutationResult<
     },
     onSettled: async (_component, _error, input) => {
       await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(input.bikeId) });
+      // A corrected accumulator moves the part's readings.
+      await invalidateReadings(queryClient);
     },
   });
 }
@@ -175,4 +192,5 @@ async function invalidateBuild(
 ): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: bikeComponentsKey(bikeId) });
   await queryClient.invalidateQueries({ queryKey: ["bikes", bikeId] });
+  await invalidateReadings(queryClient);
 }

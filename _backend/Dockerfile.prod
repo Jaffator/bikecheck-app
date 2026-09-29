@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1
+# Production image for one app of the monorepo: --build-arg APP=monolith|strava-service.
+# The dev Dockerfile next to it is untouched; docker-compose.prod.yml builds this one.
+ARG APP=monolith
+
+FROM node:22-bookworm-slim AS build
+WORKDIR /app
+# Prisma picks its engine flavour from the OpenSSL it finds at install time; slim images ship without the binary.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci
+# Only the sources the build reads, so no .env or local dump ever enters a layer.
+COPY nest-cli.json tsconfig.json tsconfig.build.json ./
+COPY libs ./libs
+COPY apps/monolith/tsconfig.json apps/monolith/tsconfig.app.json apps/monolith/prisma.config.ts ./apps/monolith/
+COPY apps/monolith/prisma ./apps/monolith/prisma
+COPY apps/monolith/src ./apps/monolith/src
+COPY apps/strava-service/tsconfig.json apps/strava-service/tsconfig.app.json ./apps/strava-service/
+COPY apps/strava-service/src ./apps/strava-service/src
+COPY apps/strava-service/migrations ./apps/strava-service/migrations
+ARG APP
+RUN npx prisma generate --config apps/monolith/prisma.config.ts && npx nest build ${APP}
+
+FROM node:22-bookworm-slim AS runtime
+ARG APP
+ENV NODE_ENV=production
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+# Full node_modules: `prisma migrate deploy` and `node-pg-migrate` run at container start.
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/apps/monolith/prisma ./apps/monolith/prisma
+COPY --from=build /app/apps/monolith/prisma.config.ts ./apps/monolith/prisma.config.ts
+COPY --from=build /app/apps/strava-service/migrations ./apps/strava-service/migrations
+# Only the monolith prints PDFs and scrapes; Alpine cannot run Playwright's Chromium, Debian can.
+RUN if [ "$APP" = "monolith" ]; then npx playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*; fi
+EXPOSE 3000 3002
+# docker-compose.prod.yml overrides this per service (migrations first, then the app).
+CMD ["node", "dist/apps/monolith/src/main.js"]

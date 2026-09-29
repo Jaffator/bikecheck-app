@@ -35,6 +35,9 @@ export interface ReportHeadings {
   noServices: string;
   bike: string;
   date: string;
+  place: string;
+  home: string;
+  shop: string;
   odometer: string;
   total: string;
   work: string;
@@ -81,6 +84,9 @@ const en: ReportHeadings = {
   noServices: "No services in this period",
   bike: "Bike",
   date: "Service date",
+  place: "Place",
+  home: "Home",
+  shop: "Shop",
   odometer: "Odometer",
   total: "Total",
   work: "Work done",
@@ -127,6 +133,9 @@ const cs: ReportHeadings = {
   noServices: "V tomto období žádné servisy",
   bike: "Kolo",
   date: "Datum servisu",
+  place: "Kde",
+  home: "Doma",
+  shop: "Servis",
   odometer: "Nájezd",
   total: "Celkem",
   work: "Provedené práce",

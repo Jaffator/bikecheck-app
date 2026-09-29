@@ -1,5 +1,5 @@
 // Tyre pressure between the psi the API stores and the unit the owner reads (ADR 0029).
-// Suspension pressure never passes through here: a fork or shock is always read in psi.
+// A fork or shock is always read in psi: no conversion for it here, only the gauge ceilings.
 import type { TirePressureUnit } from "@/features/users/users.types";
 
 const PSI_PER_BAR = 14.5037738;
@@ -24,6 +24,12 @@ export const TYRE_PRESSURE_STEP: Record<TirePressureUnit, number> = {
 
 // Where a tyre stands before the owner has written it: 1 bar, or the same in psi.
 export const TYRE_PRESSURE_START: Record<TirePressureUnit, number> = { bar: 1, psi: 15 };
+
+// Where a suspension gauge ends: no fork or shock is pumped past this.
+export const SUSPENSION_PSI_MAX = 350;
+
+// Sag is set between a fifth and a third of the travel; half is already far past any chart.
+export const SAG_MAX = 50;
 
 function round(value: number, decimals: number): number {
   const factor = 10 ** decimals;

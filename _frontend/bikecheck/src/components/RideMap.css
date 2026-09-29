@@ -1,0 +1,17 @@
+.ride-map {
+  background-color: var(--color-decor-sunk);
+  border-radius: var(--mantine-radius-sm);
+}
+
+/* A static map is a picture: clicks and swipes belong to the card or sheet around it. */
+.ride-map--static,
+.ride-map--static .leaflet-control {
+  pointer-events: none;
+}
+
+.ride-map .leaflet-control-attribution {
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--color-text-dim);
+  background-color: rgba(0, 0, 0, 0.5);
+}

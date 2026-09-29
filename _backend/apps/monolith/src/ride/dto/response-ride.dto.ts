@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Response_WoreOffLineDto } from '../../service-tracking/dto/response-wore-off-line';
 
 // A ride the user has confirmed onto a bike — either matched by gear id or
 // assigned by hand from the pending list. What the Rides list draws.
@@ -54,6 +55,10 @@ export class ResponseRideDto {
   // without GPS.
   @ApiProperty({ example: 'ki}fHuqrbBGx@_@lAsA|Bi@n@', nullable: true })
   summary_polyline!: string | null;
+
+  // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
+  @ApiProperty({ type: [Response_WoreOffLineDto] })
+  wore_off!: Response_WoreOffLineDto[];
 }
 
 // One page of rides. The total is what tells the client whether another page

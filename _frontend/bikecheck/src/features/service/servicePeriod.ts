@@ -46,6 +46,15 @@ export const PERIOD_PRESETS: PeriodPreset[] = [
   },
 ];
 
+// The period as the history's address carries it, "?from=…&to=…"; an open end is left out.
+export function periodSearch(period: ServicePeriod): string {
+  const params = new URLSearchParams();
+  if (period.from !== null) params.set("from", period.from);
+  if (period.to !== null) params.set("to", period.to);
+  const query = params.toString();
+  return query === "" ? "" : `?${query}`;
+}
+
 // Which preset a period is, if any. A period the user typed by hand matches none, and the
 // filter shows no preset as chosen.
 export function matchPreset(period: ServicePeriod): PeriodPresetId | null {

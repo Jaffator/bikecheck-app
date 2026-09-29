@@ -6,12 +6,13 @@ import type {
   BikeSearchResult,
   CreateBikeInput,
   ExternalBikeComponent,
+  ListedBike,
   UpdateBikeInput,
 } from "./bikes.types";
 
 // GET /bike — the garage, or the archive behind the Settings row. Same shape either way.
-export async function getBikes(archived = false): Promise<Bike[]> {
-  return apiFetch<Bike[]>(archived ? "/bike?archived=true" : "/bike");
+export async function getBikes(archived = false): Promise<ListedBike[]> {
+  return apiFetch<ListedBike[]>(archived ? "/bike?archived=true" : "/bike");
 }
 
 // GET /bike/:id — one bike by id.
