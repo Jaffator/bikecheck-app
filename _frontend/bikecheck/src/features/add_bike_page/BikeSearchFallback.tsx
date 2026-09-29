@@ -55,11 +55,11 @@ export function BikeSearchFallback({
           >
             <Group gap="xs" mb={4}>
               <Terminal size={14} color="var(--mantine-color-text-8)" />
-              <Text size="xs" c="text.8" tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+              <Text size="xs" c="text.8" tt="uppercase" lts="var(--tracking-label)">
                 {t("addBike.diagnosticCode")}
               </Text>
             </Group>
-            <Text size="sm" c="text.6" ff="monospace">
+            <Text size="sm" c="text.6" className="tabular-nums">
               {diagnosticCode}
             </Text>
           </Paper>

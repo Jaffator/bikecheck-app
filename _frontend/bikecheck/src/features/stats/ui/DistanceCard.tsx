@@ -33,12 +33,12 @@ const TOOLTIP_STYLES: LineChartProps["styles"] = {
   tooltipLabel: {
     color: "var(--mantine-color-text-6)",
     fontSize: 13,
-    fontFamily: "var(--font-mono)",
+    fontVariantNumeric: "tabular-nums",
   },
   tooltipItemName: { color: "var(--mantine-color-text-7)" },
   tooltipItemData: {
     color: "var(--mantine-color-text-6)",
-    fontFamily: "var(--font-mono)",
+    fontVariantNumeric: "tabular-nums",
   },
 };
 
@@ -182,7 +182,7 @@ function EndLabel({ lastIndex, lineColor, kmFormat, x, y, value, index }: EndLab
   if (index !== lastIndex || value === undefined) return null;
 
   return (
-    <text x={Number(x) + 6} y={Number(y)} dy={4} fill={lineColor} fontSize={13} className="font-mono">
+    <text x={Number(x) + 6} y={Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
       {kmFormat.format(Number(value))}
     </text>
   );

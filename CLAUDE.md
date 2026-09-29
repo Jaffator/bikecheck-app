@@ -75,6 +75,11 @@ only the route and its empty state. See `docs/conventions/frontend-structure.md`
 Every bottom sheet opens with the same slide-up transition; a remounted one flips `opened`
 on the next frame so it animates. See `docs/conventions/drawers.md`.
 
+### Typography
+
+Geist only; figures get `tabular-nums`, weights 400–700, letter-spacing only via `--tracking-*` tokens.
+See `docs/design.md` §9 Typography.
+
 ### Domain docs
 
 Single-context — one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/conventions/domain.md`.

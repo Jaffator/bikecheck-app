@@ -44,9 +44,9 @@ export function PeriodReportDocument({ snapshot, onOpenAttachment }: PeriodRepor
         <Field
           label={heading.odometer}
           value={bike.totalKm === null ? "—" : `${reportNumber(bike.totalKm, language)} km`}
-          mono
+          figure
         />
-        <Field label={heading.spent} value={reportCost(totals.totalCost, snapshot)} mono accent />
+        <Field label={heading.spent} value={reportCost(totals.totalCost, snapshot)} figure accent />
       </section>
 
       <section className="flex gap-8">
@@ -120,11 +120,11 @@ function ServiceEntry({
       style={{ borderBottom: `1px solid ${REPORT_PAPER.rule}` }}
     >
       <div className="flex justify-between items-baseline gap-4">
-        <span className="font-mono text-xs min-w-0" style={{ color: REPORT_PAPER.inkMuted }}>
+        <span className="tabular-nums text-xs min-w-0" style={{ color: REPORT_PAPER.inkMuted }}>
           {date ?? heading.noDate}
           {place !== null && ` · ${place}`}
         </span>
-        <span className="font-mono text-sm shrink-0">{reportCost(service.totalCost, snapshot)}</span>
+        <span className="tabular-nums text-sm shrink-0">{reportCost(service.totalCost, snapshot)}</span>
       </div>
 
       {service.actions.length === 0 ? (
@@ -140,7 +140,7 @@ function ServiceEntry({
       {/* A buyer must be able to tell a new part from a serviced one. */}
       {replaced && (
         <span
-          className="font-mono uppercase text-[10px] font-semibold tracking-[0.12em] self-start px-1.5 py-0.5 rounded"
+          className="tabular-nums uppercase text-[10px] font-semibold tracking-label self-start px-1.5 py-0.5 rounded"
           style={{ backgroundColor: REPORT_PAPER.accentWash, color: REPORT_PAPER.accent }}
         >
           <RefreshCw size={10} className="inline-block mr-1 -mt-0.5" />
@@ -191,7 +191,7 @@ function ServiceEntry({
                 {attachment.name}
               </button>
               {attachment.sizeBytes !== null && (
-                <span className="font-mono text-xs shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
+                <span className="tabular-nums text-xs shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
                   {formatFileSize(attachment.sizeBytes, snapshot.language)}
                 </span>
               )}
@@ -208,7 +208,7 @@ function Count({ label, value }: { label: string; value: number }): ReactElement
   return (
     <div className="flex flex-col gap-0.5">
       <RowLabel>{label}</RowLabel>
-      <span className="font-mono text-lg font-semibold">{value}</span>
+      <span className="tabular-nums text-lg font-semibold">{value}</span>
     </div>
   );
 }

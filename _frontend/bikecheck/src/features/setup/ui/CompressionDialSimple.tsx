@@ -149,7 +149,7 @@ export function CompressionDialSimple({
             −
           </PolarText>
           <ArcArrow geom={arcArrowGeom(123, 113, 120)} opacity={0.9} />
-          <ArcText href={`#${defId("arcLSC")}`} size={16} spacing={2}>
+          <ArcText href={`#${defId("arcLSC")}`} size={16}>
             LSC
           </ArcText>
           {brand === "fox" && <FoxLogo transform={FOX_LOGO_TR} />}

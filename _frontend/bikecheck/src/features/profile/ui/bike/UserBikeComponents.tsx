@@ -97,7 +97,7 @@ function PartRow({ part }: { part: ProfileMountedPart }): ReactElement {
           </Text>
         )}
       </Stack>
-      <Text className="font-mono" fz={11} c="var(--color-text-dim)" pt={2} style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
+      <Text className="tabular-nums" fz={11} c="var(--color-text-dim)" pt={2} style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
         {part.distance_km === null ? t("sharing.sinceNew") : formatKm(part.distance_km, i18n.language)}
       </Text>
     </Group>

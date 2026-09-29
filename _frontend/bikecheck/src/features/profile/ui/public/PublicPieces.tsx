@@ -28,7 +28,7 @@ export function PublicAvatar({ owner, className }: { owner: ProfileOwner; classN
   }
   return (
     <span
-      className={`pp-display flex shrink-0 items-center justify-center rounded-full bg-[var(--pp-gold-500)] font-bold text-[var(--pp-dark)] ${className}`}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-[var(--pp-gold-500)] font-bold text-[var(--pp-dark)] ${className}`}
       aria-hidden="true"
     >
       {initialsOf(owner.name, owner.handle)}
@@ -45,8 +45,8 @@ interface ReadingProps {
 export function Reading({ label, value, unit }: ReadingProps): ReactElement {
   return (
     <div>
-      <dt className="pp-mono text-[10px] uppercase tracking-[0.14em] text-[var(--pp-paper-faint)]">{label}</dt>
-      <dd className="pp-mono mt-1.5 text-[22px] tabular-nums leading-none text-[var(--pp-paper)] sm:text-[26px]">
+      <dt className="tabular-nums text-[10px] uppercase tracking-label text-[var(--pp-paper-faint)]">{label}</dt>
+      <dd className="tabular-nums mt-1.5 text-[22px] leading-none text-[var(--pp-paper)] sm:text-[26px]">
         {value}
         {unit && <span className="ml-1 text-[13px] text-[var(--pp-paper-faint)]">{unit}</span>}
       </dd>
@@ -60,7 +60,7 @@ export function Chips({ items }: { items: string[] }): ReactElement {
       {items.map((item) => (
         <li
           key={item}
-          className="pp-mono pp-hairline rounded-md border bg-[var(--pp-card-inset)] px-2.5 py-1 text-[11px] text-[var(--pp-paper-dim)]"
+          className="tabular-nums pp-hairline rounded-md border bg-[var(--pp-card-inset)] px-2.5 py-1 text-[11px] text-[var(--pp-paper-dim)]"
         >
           {item}
         </li>
@@ -79,7 +79,7 @@ export function PhotoBox({ imageUrl, alt }: { imageUrl: string | null; alt: stri
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[var(--pp-card-inset)] text-[var(--pp-paper-faint)]">
       <Icon id="i-bike" className="size-10 opacity-60" />
-      <span className="pp-mono text-[10px] uppercase tracking-[0.14em]">{t("publicProfile.noPhoto")}</span>
+      <span className="tabular-nums text-[10px] uppercase tracking-label">{t("publicProfile.noPhoto")}</span>
     </div>
   );
 }
@@ -97,7 +97,7 @@ export function PublicMessage({ icon, title, children }: PublicMessageProps): Re
       <span className="pp-hairline flex size-14 items-center justify-center rounded-2xl border bg-[var(--pp-card-inset)] text-[var(--pp-paper-faint)]">
         <Icon id={icon} className="size-6" />
       </span>
-      <h1 className="pp-display mt-6 text-[28px] font-extrabold leading-[1.1] tracking-tight sm:text-[36px]">{title}</h1>
+      <h1 className="mt-6 text-[28px] font-bold leading-[1.1] tracking-display sm:text-[36px]">{title}</h1>
       {children}
     </section>
   );
@@ -108,7 +108,7 @@ export function PublicLoading(): ReactElement {
 
   return (
     <p
-      className="pp-mono px-4 py-24 text-center text-[11px] uppercase tracking-[0.14em] text-[var(--pp-paper-faint)]"
+      className="tabular-nums px-4 py-24 text-center text-[11px] uppercase tracking-label text-[var(--pp-paper-faint)]"
       aria-busy="true"
     >
       {t("publicProfile.loading")}

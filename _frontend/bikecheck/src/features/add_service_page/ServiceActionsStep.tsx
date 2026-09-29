@@ -162,7 +162,7 @@ export function ServiceActionsStep({
             <Group gap={6} wrap="nowrap" align="center">
               <BikecheckIcon size={18} color="var(--mantine-color-text-6)" />
               {showGroupHeadings && (
-                <Text fz={15} c="text.6" ff="Inter" fw={500}>
+                <Text fz={15} c="text.6" fw={500}>
                   {t("addService.groupService")}
                 </Text>
               )}
@@ -176,7 +176,7 @@ export function ServiceActionsStep({
             <Group gap={6} wrap="nowrap" align="center">
               <RefreshCcw size={18} color="var(--mantine-color-text-6)" />
               {showGroupHeadings && (
-                <Text fz={15} c="text.6" ff="Inter" fw={800}>
+                <Text fz={15} c="text.6" fw={700}>
                   {t("addService.groupReplacement")}
                 </Text>
               )}

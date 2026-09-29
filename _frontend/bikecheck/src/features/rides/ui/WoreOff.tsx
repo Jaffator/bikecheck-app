@@ -22,7 +22,7 @@ export function WoreOff({ lines }: { lines: WoreOffLine[] }): ReactElement | nul
           <Text fz={13} c="text.7" lineClamp={1} style={{ minWidth: 0 }}>
             {woreOffLabel(line, t)}
           </Text>
-          <Text className="font-mono" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
+          <Text className="tabular-nums" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
             {`${woreOffAmount(line, t)} · ${String(line.before)} → `}
             <Text span inherit c={woreOffColor(line)}>
               {t("tracking.percentage", { value: line.after })}

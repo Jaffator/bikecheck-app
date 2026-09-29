@@ -66,7 +66,7 @@ export function StravaConnected(): ReactElement {
             style={{
               fontSize: "2rem",
               fontWeight: 600,
-              letterSpacing: "-0.0188em",
+              letterSpacing: "var(--tracking-display)",
               lineHeight: 1.1,
             }}
           >
@@ -81,7 +81,7 @@ export function StravaConnected(): ReactElement {
               )}
               <Stack gap={2} align={user.strava_avatar_url ? "flex-start" : "center"}>
                 {stravaName && (
-                  <Text fw={600} size="sm" c="#E8E2D4" style={{ letterSpacing: "-0.016em" }}>
+                  <Text fw={600} size="sm" c="#E8E2D4">
                     {stravaName}
                   </Text>
                 )}
@@ -122,7 +122,7 @@ export function StravaConnected(): ReactElement {
               label: {
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                letterSpacing: "0.1em",
+                letterSpacing: "var(--tracking-label)",
                 textTransform: "uppercase",
               },
             }}

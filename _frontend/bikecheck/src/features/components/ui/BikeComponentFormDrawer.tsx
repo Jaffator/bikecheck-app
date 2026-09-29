@@ -626,7 +626,7 @@ function CategoryCard({
         }}
       >
         {categoryIcon(group.group_name, CATEGORY_ICON_SIZE)}
-        <Text className="font-mono" fz={11} ta="center" lineClamp={1} c={selected ? "primary.6" : "var(--color-text-dim)"}>
+        <Text className="tabular-nums" fz={11} ta="center" lineClamp={1} c={selected ? "primary.6" : "var(--color-text-dim)"}>
           {catalogueLabel(group.i18n_key, group.group_name, t)}
         </Text>
       </Stack>

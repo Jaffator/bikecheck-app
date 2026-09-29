@@ -56,7 +56,7 @@ function DistanceFigure({ period }: { period: HomePeriod }): ReactElement {
       title={t("stats.distanceTitle", { period: homePeriodLabel(period, i18n.language, t) })}
       value={distance === undefined ? null : formatKm(Math.round(totalMeters(distance) / 1000), i18n.language)}
       detail={distance === undefined ? "" : periodGain(distance, period, i18n.language, t)}
-      detailMono
+      detailFigure
       onOpen={() => navigate("/bikes")}
     />
   );
@@ -78,7 +78,7 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
       title={t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) })}
       value={distance === undefined ? null : `${hours} h`}
       detail={`${t("dashboard.ridesCount", { count: rides })} · ø ${average}`}
-      detailMono
+      detailFigure
       onOpen={() => navigate("/rides")}
     />
   );
@@ -95,7 +95,7 @@ function DueFigure(): ReactElement {
       value={due === undefined ? null : new Intl.NumberFormat(i18n.language).format(due.length)}
       detail={due === undefined ? "" : <DueLevels due={due} />}
       // The counts are figures; "All good" is words.
-      detailMono={due !== undefined && due.length > 0}
+      detailFigure={due !== undefined && due.length > 0}
       onOpen={() => navigate("/service")}
     />
   );
@@ -133,7 +133,7 @@ function SpendFigure({ period }: { period: HomePeriod }): ReactElement {
       title={t("dashboard.spendTitle", { period: homePeriodLabel(period, i18n.language, t) })}
       value={totals === undefined ? null : cost(totals.total_cost)}
       detail={totals === undefined ? "" : spendDetail(totals, cost, t)}
-      detailMono
+      detailFigure
       onOpen={() => navigate(`/service/history${periodSearch(services)}`)}
     />
   );
@@ -159,7 +159,7 @@ function NextReplacementFigure(): ReactElement {
           highlighted
           title={t("stats.nextReplacement")}
           value={<NameAndFigure name={next.part} figure={next.left} />}
-          valueMono={false}
+          valueFigure={false}
           valueColor={attentionColor(next.item.percentage)}
           detail={<NameAndFigure name={next.bike} figure={next.weeks} />}
           onOpen={() => setOpened(next.item)}
@@ -171,12 +171,12 @@ function NextReplacementFigure(): ReactElement {
   );
 }
 
-// A name in the body font, then its figure in mono.
+// A name, then its figure in tabular numerals.
 function NameAndFigure({ name, figure }: { name: string; figure: string }): ReactElement {
   return (
     <>
       {`${name} · `}
-      <Text span inherit className="font-mono">
+      <Text span inherit className="tabular-nums">
         {figure}
       </Text>
     </>
@@ -187,11 +187,11 @@ interface FigureProps {
   title: string;
   // Null while it loads.
   value: ReactNode | null;
-  valueMono?: boolean;
+  valueFigure?: boolean;
   valueColor?: string;
   detail: ReactNode;
-  // Numbers read in mono, words in the body font.
-  detailMono?: boolean;
+  // Numbers get tabular numerals so they line up; words do not.
+  detailFigure?: boolean;
   // The one figure the eye should reach first.
   highlighted?: boolean;
   // Without it the figure is only read, never pressed.
@@ -201,10 +201,10 @@ interface FigureProps {
 function Figure({
   title,
   value,
-  valueMono = true,
+  valueFigure = true,
   valueColor,
   detail,
-  detailMono = false,
+  detailFigure = false,
   highlighted = false,
   onOpen,
 }: FigureProps): ReactElement {
@@ -220,11 +220,11 @@ function Figure({
       {value === null ? (
         <Skeleton h={20} w="50%" radius="sm" />
       ) : (
-        <Text className={valueMono ? "font-mono" : undefined} fz={16} fw={600} c={valueColor ?? "text.6"} lineClamp={1}>
+        <Text className={valueFigure ? "tabular-nums" : undefined} fz={16} fw={600} c={valueColor ?? "text.6"} lineClamp={1}>
           {value}
         </Text>
       )}
-      <Text className={detailMono ? "font-mono" : undefined} fz={13} c="var(--color-text-dim)" lineClamp={1}>
+      <Text className={detailFigure ? "tabular-nums" : undefined} fz={13} c="var(--color-text-dim)" lineClamp={1}>
         {detail}
       </Text>
     </Stack>

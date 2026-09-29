@@ -311,7 +311,7 @@ function Published({
           border: "1px solid var(--color-border-subtle)",
         }}
       >
-        <Text className="font-mono" fz={12} c="text.7" style={{ wordBreak: "break-all" }}>
+        <Text className="tabular-nums" fz={12} c="text.7" style={{ wordBreak: "break-all" }}>
           {shareUrl}
         </Text>
       </Box>

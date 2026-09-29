@@ -1268,6 +1268,12 @@
             "null"
           ]
         },
+        "descent_min": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "bikes": {
           "$ref": "#/definitions/bikes"
         },
@@ -1532,6 +1538,13 @@
             "string",
             "null"
           ]
+        },
+        "strava_last_sync_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
         },
         "notifications_enabled": {
           "type": [

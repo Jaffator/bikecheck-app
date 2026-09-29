@@ -39,7 +39,7 @@ export function HealthBadge({ actions, compact = false }: HealthBadgeProps): Rea
         h={compact ? 5 : 6}
         style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }}
       />
-      <Text className="font-mono" fz={compact ? 9 : 10} c={color} style={{ whiteSpace: "nowrap" }}>
+      <Text className="tabular-nums" fz={compact ? 9 : 10} c={color} style={{ whiteSpace: "nowrap" }}>
         {t(`bikes.health.${level}`)}
       </Text>
     </Group>

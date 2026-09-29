@@ -2148,6 +2148,11 @@ export interface components {
              * @example 3180
              */
             ride_time_min: number;
+            /**
+             * @description Start of the newest non-deleted ride; null when the bike has none
+             * @example 2026-09-23T08:00:00.000Z
+             */
+            last_ride_at: string | null;
         };
         Attachment_BikeEventDto: {
             /** @example faktura.pdf */
@@ -2587,6 +2592,11 @@ export interface components {
              * @example true
              */
             replace_action: boolean;
+            /**
+             * @description Minutes of descent left before the interval, at the bike's recent pace. Null off the health index axis, once due, or with too few rides to tell
+             * @example 540
+             */
+            remaining_descent_min: number | null;
         };
         Response_GarageTrackedActionDto: {
             /**
@@ -2679,6 +2689,11 @@ export interface components {
              * @example true
              */
             replace_action: boolean;
+            /**
+             * @description Minutes of descent left before the interval, at the bike's recent pace. Null off the health index axis, once due, or with too few rides to tell
+             * @example 540
+             */
+            remaining_descent_min: number | null;
             /** @example Santa Cruz */
             bike_brand: string;
             /** @example Hightower */
@@ -3970,6 +3985,11 @@ export interface components {
              * @example true
              */
             replace_action: boolean;
+            /**
+             * @description Minutes of descent left before the interval, at the bike's recent pace. Null off the health index axis, once due, or with too few rides to tell
+             * @example 540
+             */
+            remaining_descent_min: number | null;
             /** @example Santa Cruz */
             bike_brand: string;
             /** @example Hightower */

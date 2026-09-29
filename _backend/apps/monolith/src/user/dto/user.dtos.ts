@@ -151,6 +151,9 @@ export class UserResponseDto {
   strava_username!: string | null;
   @ApiProperty({ example: 'https://dgalywyr863hv.cloudfront.net/pictures/athletes/.../large.jpg', nullable: true })
   strava_avatar_url!: string | null;
+  // Last manual sync; null until the first. Drives "synced X ago" and the sync cooldown.
+  @ApiProperty({ example: '2026-09-29T10:00:00Z', nullable: true })
+  strava_last_sync_at!: Date | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })
   last_login_at!: Date | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })

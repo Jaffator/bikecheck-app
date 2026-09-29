@@ -185,6 +185,39 @@ Profile → connect Strava → unmatched gear notification
   Tailwind `desktop:`. Tailwind's own `md` (48rem) is a different width; don't use it in the app shell.
 - **Tone:** clean, functional, sporty. No overengineering.
 
+### Typography
+
+The single source of truth for type. ADR 0039 records why.
+
+**One typeface: Geist**, everywhere — app, public profile, print reports and setup dials. Loaded
+once from Google Fonts in `index.html`; `theme.ts` and `--font-sans` point at it. There is no mono
+face and no display face.
+
+**Figures use `tabular-nums`**, not a different face, so columns of numbers and dates line up:
+`className="tabular-nums"` on Mantine or Tailwind, `fontVariantNumeric: "tabular-nums"` in a
+`styles` object.
+
+**Weights: 400, 500, 600, 700.** Nothing else is loaded — no 100, no 800/900.
+
+**Letter-spacing is a token, never a number.** Three tokens in `@theme` of `global.css`; the
+default is `0`:
+
+| Token                | Value   | When                                                         |
+| -------------------- | ------- | ------------------------------------------------------------ |
+| `--tracking-label`   | 0.08em  | uppercase ≤ 13px — labels, chips, eyebrows, button labels    |
+| —                    | 0       | body text, and an uppercase title of 14–19px                 |
+| `--tracking-title`   | -0.01em | 20–27px                                                      |
+| `--tracking-display` | -0.02em | ≥ 28px                                                       |
+
+```tsx
+<Text fz={11} tt="uppercase" lts="var(--tracking-label)">…</Text>
+<h2 className="text-[26px] tracking-title sm:text-[34px] sm:tracking-display">…</h2>
+```
+
+A heading whose size crosses a band at a breakpoint takes the token for each size. Inside an SVG,
+use `style={{ letterSpacing: "var(--tracking-label)" }}` — a presentation attribute does not read
+`var()`.
+
 ### Disabled buttons (pattern)
 
 Always use this pattern for a button that can be blocked — the Mantine default disabled state is

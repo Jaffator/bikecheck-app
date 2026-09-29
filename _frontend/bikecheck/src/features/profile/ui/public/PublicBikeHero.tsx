@@ -47,7 +47,7 @@ function OwnerRow({ handle, owner }: OwnerRowProps): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <p className="pp-mono flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-[0.18em]">
+    <p className="tabular-nums flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-label">
       {/* Padded out and pulled back, so the tap target grows without moving the line. */}
       <Link
         to={publicGaragePath(handle)}
@@ -92,7 +92,7 @@ export function PublicBikeHero({ handle, page, children }: PublicBikeHeroProps):
         <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div>
             <OwnerRow handle={handle} owner={owner} />
-            <h1 className="pp-display mt-3 text-[34px] font-extrabold leading-[1.05] tracking-tight sm:text-[46px] lg:text-[56px]">
+            <h1 className="mt-3 text-[34px] font-bold leading-[1.05] tracking-display sm:text-[46px] lg:text-[56px]">
               {bike.brand}
               {bike.model !== null && <span className="block text-[var(--pp-gold-500)]">{bike.model}</span>}
             </h1>
@@ -132,7 +132,7 @@ export function PublicBikeHero({ handle, page, children }: PublicBikeHeroProps):
                 ))}
               </div>
             )}
-            <p className="pp-mono mt-5 text-[11px] leading-relaxed text-[var(--pp-paper-faint)]">
+            <p className="tabular-nums mt-5 text-[11px] leading-relaxed text-[var(--pp-paper-faint)]">
               {/* The locale is named here rather than left to dayjs' global, so a switch never renders half-way. */}
               {t("publicProfile.ownerLine", {
                 owner: owner.name ?? owner.handle,

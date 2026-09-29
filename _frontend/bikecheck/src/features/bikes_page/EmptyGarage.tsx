@@ -7,9 +7,9 @@ import bikeIllustration from "@/assets/images/empty_garage_bike.png";
 
 interface EmptyGarageProps {
   // How many bikes sit in the archive, and the way to open it. Both come from the garage
-  // page, which owns the drawer.
+  // page, which owns the drawer; desktop passes no way in, its switch is the door.
   archivedCount: number;
-  onOpenArchive: () => void;
+  onOpenArchive?: () => void;
 }
 
 // Show the empty Garage tab. An owner whose bikes are all archived is told so here - an
@@ -23,7 +23,7 @@ export function EmptyGarage({ archivedCount, onOpenArchive }: EmptyGarageProps):
       title={t("bikes.emptyTitle")}
       body={archivedCount > 0 ? t("bikes.emptyArchivedBody", { count: archivedCount }) : t("bikes.emptyBody")}
     >
-      {archivedCount > 0 && (
+      {archivedCount > 0 && onOpenArchive && (
         <Button variant="default" radius="md" onClick={onOpenArchive}>
           {t("bikes.emptyOpenArchive")}
         </Button>

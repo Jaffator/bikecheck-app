@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useArchivedBikes, useBikes } from "@/features/bikes/bikes.queries";
 import { BikeCard } from "@/features/bikes/ui/BikeCard";
 import { BikeArchiveDrawer } from "@/features/bikes/ui/BikeArchiveDrawer";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { BikesDesktop } from "./BikesDesktop";
 import { EmptyGarage } from "./EmptyGarage";
 
 export function Bikes(): ReactElement {
@@ -17,6 +19,10 @@ export function Bikes(): ReactElement {
   // The archive opens over the garage: it is the garage's own back room (ADR 0024).
   const [archive, setArchive] = useState(false);
   const archivedCount = archived?.length ?? 0;
+  const isDesktop = useIsDesktop();
+
+  // Desktop has its own layout (#194); the phone keeps the render below.
+  if (isDesktop) return <BikesDesktop />;
 
   // Preserve layout while bikes load.
   if (isLoading) {
@@ -67,7 +73,7 @@ export function Bikes(): ReactElement {
       {archivedCount > 0 && (
         <UnstyledButton onClick={() => setArchive(true)} px="md" py="sm" className="active:scale-[0.985]">
           <Group justify="space-between" wrap="nowrap">
-            <Text className="font-mono uppercase" fz={12} fw={500} c="var(--color-text-dim)" lts="0.08em">
+            <Text className="tabular-nums uppercase" fz={12} fw={500} c="var(--color-text-dim)" lts="var(--tracking-label)">
               {t("bikes.archivedBikes", { count: archivedCount })}
             </Text>
             <ChevronRight size={18} color="var(--color-text-dim)" />

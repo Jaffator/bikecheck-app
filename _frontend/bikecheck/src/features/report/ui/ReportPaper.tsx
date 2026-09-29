@@ -1,5 +1,5 @@
 // The furniture every Report is printed on: the sheet, its sections, and the two voices a
-// document speaks in — Inter for what a thing is called, mono for the metadata around it.
+// document speaks in — a name for what a thing is, small uppercase metadata around it.
 import type { ReactElement, ReactNode } from "react";
 import logoDark from "@/assets/icons/bikecheck/Logo_dark.svg";
 import { REPORT_PAPER, reportDate } from "@/features/report/reportFormat";
@@ -38,7 +38,7 @@ export function DocumentHeader({ title, print = false }: { title: string; print?
     <header className={`flex flex-col items-center ${print ? "gap-4" : "gap-1"}`}>
       <img src={logoDark} alt="BikeCheck" className={print ? "h-10 w-auto" : "h-9 w-auto"} />
       <span
-        className={`font-mono uppercase font-semibold ${print ? "text-xs tracking-[0.22em]" : "text-[11px] tracking-[0.18em]"}`}
+        className={`tabular-nums uppercase font-semibold tracking-label ${print ? "text-xs" : "text-[11px]"}`}
         style={{ color: REPORT_PAPER.inkMuted }}
       >
         {title}
@@ -61,7 +61,7 @@ export function DocumentFooter({
 }): ReactElement {
   return (
     <footer
-      className={`mt-auto pt-5 text-center font-mono uppercase tracking-[0.14em] ${print ? "text-[9px]" : "text-[10px]"}`}
+      className={`mt-auto pt-5 text-center tabular-nums uppercase tracking-label ${print ? "text-[9px]" : "text-[10px]"}`}
       style={{ borderTop: `1px solid ${REPORT_PAPER.rule}`, color: REPORT_PAPER.inkMuted }}
     >
       {issued} {reportDate(generatedAt, language)} · bikecheck.cloud
@@ -73,13 +73,13 @@ export function DocumentFooter({
 export function Field({
   label,
   value,
-  mono = false,
+  figure = false,
   accent = false,
   muted = false,
 }: {
   label: string;
   value: string;
-  mono?: boolean;
+  figure?: boolean;
   accent?: boolean;
   muted?: boolean;
 }): ReactElement {
@@ -87,7 +87,7 @@ export function Field({
     <div className="flex flex-col gap-0.5 min-w-0">
       <RowLabel>{label}</RowLabel>
       <span
-        className={`${mono ? "font-mono" : ""} text-sm leading-snug break-words`}
+        className={`${figure ? "tabular-nums" : ""} text-sm leading-snug break-words`}
         style={{ color: accent ? REPORT_PAPER.accent : muted ? REPORT_PAPER.inkMuted : REPORT_PAPER.ink }}
       >
         {value}
@@ -112,18 +112,18 @@ export function Section({
         style={{ borderBottom: `1px solid ${REPORT_PAPER.ruleStrong}`, color: REPORT_PAPER.ink }}
       >
         {icon}
-        <h3 className="font-mono uppercase text-xs font-semibold tracking-[0.14em]">{title}</h3>
+        <h3 className="tabular-nums uppercase text-xs font-semibold tracking-label">{title}</h3>
       </div>
       {children}
     </section>
   );
 }
 
-// The metadata voice: mono, small, quiet. Names a thing without speaking for the section.
+// The metadata voice: uppercase, small, quiet. Names a thing without speaking for the section.
 export function RowLabel({ children }: { children: ReactNode }): ReactElement {
   return (
     <span
-      className="font-mono uppercase text-[10px] font-semibold tracking-[0.12em]"
+      className="tabular-nums uppercase text-[10px] font-semibold tracking-label"
       style={{ color: REPORT_PAPER.inkMuted }}
     >
       {children}

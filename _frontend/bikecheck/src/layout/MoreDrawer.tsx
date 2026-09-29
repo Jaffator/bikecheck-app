@@ -62,7 +62,7 @@ function MoreCard({ icon, title, detail, tag, onOpen }: CardProps): ReactElement
             {title}
           </Text>
           {/* Two lines: "12 sledujících · 2 žádosti" does not fit one at this width. */}
-          <Text className="font-mono" fz={11} tt="uppercase" lts="0.06em" c="var(--color-text-dim)" lineClamp={2}>
+          <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={2}>
             {detail}
           </Text>
         </Stack>
@@ -87,7 +87,7 @@ function CountPill({ count }: { count: number }): ReactElement {
         flexShrink: 0,
       }}
     >
-      <Text className="font-mono" fz={11} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
+      <Text className="tabular-nums" fz={11} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
         {count > BADGE_CAP ? `${BADGE_CAP}+` : count}
       </Text>
     </Box>
@@ -180,7 +180,7 @@ export function MoreDrawer({ opened, onClose }: MoreDrawerProps): ReactElement {
             title={t("page.chat")}
             detail={t("more.chatDetail")}
             tag={
-              <Text className="font-mono" fz={10} fw={700} tt="uppercase" lts="0.08em" c="primary.6" style={{ flexShrink: 0 }}>
+              <Text className="tabular-nums" fz={10} fw={700} tt="uppercase" lts="var(--tracking-label)" c="primary.6" style={{ flexShrink: 0 }}>
                 {t("more.chatTag")}
               </Text>
             }

@@ -4,7 +4,6 @@ import type { ReactElement, ReactNode, SVGProps } from "react";
 import { FOCUS_CLASS, RING_CLASS } from "../dialEngine";
 import { fmt, polar, type ArrowGeom } from "../dialGeometry";
 
-export const DIAL_FONT = "Archivo, system-ui, sans-serif";
 // The off-white every dial is lettered in.
 export const INK = "#f4f4f5";
 
@@ -37,7 +36,6 @@ export function PolarText({ r, deg, size, children, ...rest }: PolarTextProps): 
       y={fmt(y)}
       textAnchor="middle"
       dominantBaseline="central"
-      fontFamily={DIAL_FONT}
       fontWeight={700}
       fontSize={size}
       fill={INK}
@@ -52,15 +50,18 @@ interface ArcTextProps {
   // Id reference of an arc in the dial's <defs>.
   href: string;
   size: number;
-  spacing?: number;
   weight?: number;
   children: ReactNode;
 }
 
+// Uppercase lettering: label tracking up to 13px, none above (docs/design.md §9).
+const LABEL_MAX_SIZE = 13;
+
 // Text running along an arc, centred on it.
-export function ArcText({ href, size, spacing = 1, weight = 700, children }: ArcTextProps): ReactElement {
+export function ArcText({ href, size, weight = 700, children }: ArcTextProps): ReactElement {
+  const letterSpacing = size <= LABEL_MAX_SIZE ? "var(--tracking-label)" : undefined;
   return (
-    <text fontFamily={DIAL_FONT} fontWeight={weight} fontSize={size} fill={INK} letterSpacing={spacing}>
+    <text fontWeight={weight} fontSize={size} fill={INK} style={{ letterSpacing }}>
       <textPath href={href} xlinkHref={href} startOffset="50%" textAnchor="middle">
         {children}
       </textPath>

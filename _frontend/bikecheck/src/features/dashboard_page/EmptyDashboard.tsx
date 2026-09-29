@@ -49,7 +49,7 @@ export function EmptyDashboard(): ReactElement {
         <Stack pos="relative" gap={3}>
           <Group gap={8} align="center" wrap="nowrap">
             <Lightbulb size={16} color="var(--color-accent)" className="shrink-0" />
-            <Text className="font-mono" fz={11} lh="16px" fw={500} lts="0.05em" c="var(--color-accent)">
+            <Text className="tabular-nums" fz={11} lh="16px" fw={500} lts="var(--tracking-label)" c="var(--color-accent)">
               {t("common.proTip")}
             </Text>
           </Group>

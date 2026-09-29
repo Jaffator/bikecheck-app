@@ -153,11 +153,16 @@ export class BikeService {
       where: { bike_id: { in: bikeIds }, is_deleted: { not: true } },
       _count: { _all: true },
       _sum: { duration_min: true },
+      _max: { started_at: true },
     });
     return new Map(
       groups.map((group) => [
         group.bike_id,
-        { ride_count: group._count._all, ride_time_min: group._sum.duration_min ?? 0 },
+        {
+          ride_count: group._count._all,
+          ride_time_min: group._sum.duration_min ?? 0,
+          last_ride_at: group._max.started_at?.toISOString() ?? null,
+        },
       ]),
     );
   }
@@ -305,9 +310,9 @@ const bikeInclude = { bike_types: true } satisfies Prisma.bikesInclude;
 
 type BikeRow = bikes & { bike_types?: { type: string | null } | null };
 
-type RideSums = Pick<ResponseListedBikeDto, 'ride_count' | 'ride_time_min'>;
+type RideSums = Pick<ResponseListedBikeDto, 'ride_count' | 'ride_time_min' | 'last_ride_at'>;
 
-const NO_RIDES: RideSums = { ride_count: 0, ride_time_min: 0 };
+const NO_RIDES: RideSums = { ride_count: 0, ride_time_min: 0, last_ride_at: null };
 
 // Prisma hands a Decimal column back as a Decimal object, which serialises as neither a
 // number nor anything a client can do arithmetic on. Costs are narrowed the same way, so

@@ -161,4 +161,12 @@ export class ResponseListedBikeDto extends ResponseBikeDto {
     description: "Sum of those rides' duration_min; total_time_min is only what the owner typed",
   })
   ride_time_min!: number;
+
+  @ApiProperty({
+    type: String,
+    example: '2026-09-23T08:00:00.000Z',
+    nullable: true,
+    description: 'Start of the newest non-deleted ride; null when the bike has none',
+  })
+  last_ride_at!: string | null;
 }

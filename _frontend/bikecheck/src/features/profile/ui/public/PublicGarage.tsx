@@ -25,7 +25,7 @@ function GarageHero({ owner, garage }: GarageHeroProps): ReactElement {
   return (
     <section className="pp-hairline border-b">
       <div className="mx-auto max-w-[1240px] px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-12 lg:px-8">
-        <p className="pp-mono flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-[0.18em] text-[var(--pp-gold-500)]">
+        <p className="tabular-nums flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-label text-[var(--pp-gold-500)]">
           BikeCheck
           <span className="text-[var(--pp-paper-faint)]" aria-hidden="true">
             /
@@ -35,10 +35,10 @@ function GarageHero({ owner, garage }: GarageHeroProps): ReactElement {
         <div className="mt-4 flex items-center gap-4">
           <PublicAvatar owner={owner} className="size-14 text-[20px] sm:size-16 sm:text-[22px]" />
           <div className="min-w-0">
-            <h1 className="pp-display text-[30px] font-extrabold leading-[1.05] tracking-tight sm:text-[40px]">
+            <h1 className="text-[30px] font-bold leading-[1.05] tracking-display sm:text-[40px]">
               {owner.name ?? owner.handle}
             </h1>
-            <p className="pp-mono mt-1 text-[12px] text-[var(--pp-paper-dim)]">
+            <p className="tabular-nums mt-1 text-[12px] text-[var(--pp-paper-dim)]">
               {window.location.host}/u/{owner.handle}
             </p>
           </div>
@@ -56,7 +56,7 @@ function GarageHero({ owner, garage }: GarageHeroProps): ReactElement {
           {totals.components !== null && <Reading label={t("publicProfile.figureComponents")} value={totals.components} />}
           {totals.services !== null && <Reading label={t("publicProfile.figureServices")} value={totals.services} />}
         </dl>
-        <p className="pp-mono mt-5 text-[11px] leading-relaxed text-[var(--pp-paper-faint)]">
+        <p className="tabular-nums mt-5 text-[11px] leading-relaxed text-[var(--pp-paper-faint)]">
           {/* The locale is named here rather than left to dayjs' global, so a switch never renders half-way. */}
           {t("publicProfile.updated", { when: dayjs(garage.updated_at).locale(i18n.language).fromNow() })}
         </p>
@@ -84,7 +84,7 @@ function BikeCard({ handle, bike }: BikeCardProps): ReactElement {
         <PhotoBox imageUrl={bike.image_url} alt={title} />
       </div>
       <div className="p-4">
-        <p className="pp-display text-[19px] font-bold leading-tight tracking-tight">
+        <p className="text-[19px] font-bold leading-tight">
           {bike.brand} {bike.model !== null && <span className="text-[var(--pp-gold-500)]">{bike.model}</span>}
         </p>
         {chips.length > 0 && (
@@ -92,7 +92,7 @@ function BikeCard({ handle, bike }: BikeCardProps): ReactElement {
             <Chips items={chips} />
           </div>
         )}
-        <p className="pp-mono mt-4 flex items-center gap-2 text-[11px] tabular-nums text-[var(--pp-paper-dim)]">
+        <p className="tabular-nums mt-4 flex items-center gap-2 text-[11px] text-[var(--pp-paper-dim)]">
           <span className="min-w-0 flex-1">{bikeStatsLine(bike, i18n.language, t)}</span>
           <Icon
             id="i-arrow"
@@ -120,8 +120,8 @@ export function PublicGarage({ handle, page }: PublicGarageProps): ReactElement 
       <section>
         <div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
           <div className="flex items-end justify-between gap-4">
-            <h2 className="pp-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">{t("publicProfile.bikes")}</h2>
-            <p className="pp-mono text-[12px] tabular-nums text-[var(--pp-paper-dim)]">{garage.bikes.length}</p>
+            <h2 className="text-[26px] font-bold tracking-title sm:text-[34px] sm:tracking-display">{t("publicProfile.bikes")}</h2>
+            <p className="tabular-nums text-[12px] text-[var(--pp-paper-dim)]">{garage.bikes.length}</p>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {garage.bikes.map((bike) => (

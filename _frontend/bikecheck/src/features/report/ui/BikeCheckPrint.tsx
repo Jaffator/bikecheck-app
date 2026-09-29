@@ -34,19 +34,19 @@ export function BikeCheckPrint({ snapshot }: BikeCheckPrintProps): ReactElement 
             {bikeName ?? heading.noBike}
           </h1>
           <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-            <Field label={heading.year} value={bike.year === null ? "—" : String(bike.year)} mono />
+            <Field label={heading.year} value={bike.year === null ? "—" : String(bike.year)} figure />
             <Field label={heading.frameMaterial} value={bike.frameMaterial ?? "—"} />
             <Field label={heading.bikeType} value={bike.type ?? "—"} />
             <Field label={heading.ebike} value={bike.ebike ? heading.yes : "—"} />
             <Field
               label={heading.odometer}
               value={bike.totalKm === null ? "—" : `${reportNumber(bike.totalKm, language)} km`}
-              mono
+              figure
             />
             <Field
               label={heading.rideTime}
               value={bike.totalTimeMin === null ? "—" : reportRideTime(bike.totalTimeMin, language)}
-              mono
+              figure
             />
           </div>
         </div>

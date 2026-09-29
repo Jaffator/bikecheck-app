@@ -387,7 +387,7 @@ function Category({
             </Text>
           </Group>
           <Group gap={8} wrap="nowrap" style={{ flexShrink: 0 }}>
-            <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+            <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
               {countLabel}
             </Text>
             {open ? (
@@ -426,7 +426,7 @@ function Category({
                   ) : (
                     <ChevronRight size={14} color="var(--color-text-dim)" />
                   )}
-                  <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+                  <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
                     {t("bikeComponents.dismountedCount", { count: category.dismounted.length })}
                   </Text>
                 </Group>

@@ -47,7 +47,7 @@ export function PendingRidesCard(): ReactElement | null {
           >
             <CalendarClock size={18} color="var(--mantine-color-primary-6)" />
           </Box>
-          <Text fw={600} fz={15} tt="uppercase" c="text.6" style={{ lineHeight: 1.15, letterSpacing: "-0.01em" }}>
+          <Text fw={600} fz={15} tt="uppercase" c="text.6" style={{ lineHeight: 1.15 }}>
             {t("pendingRides.title")} ({pendingCount})
           </Text>
         </Group>
@@ -72,7 +72,7 @@ export function PendingRidesCard(): ReactElement | null {
             label: {
               fontWeight: 700,
               fontSize: "0.8125rem",
-              letterSpacing: "0.08em",
+              letterSpacing: "var(--tracking-label)",
               textTransform: "uppercase",
             },
           }}

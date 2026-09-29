@@ -30,7 +30,7 @@ export function HeaderCountBadge({ count }: HeaderCountBadgeProps): ReactElement
         border: "none",
       }}
     >
-      <Text className="font-mono" fz={10} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
+      <Text className="tabular-nums" fz={10} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
         {count > BADGE_CAP ? `${BADGE_CAP}+` : count}
       </Text>
     </Box>

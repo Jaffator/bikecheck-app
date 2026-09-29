@@ -8,6 +8,15 @@ import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.cont
 
 const VERIFY_TOKEN = 'STRAVA';
 
+// Strava's maximum page; sixty days of rides fit in one request.
+const SYNC_PAGE_SIZE = 200;
+const RIDE_TYPES = ['Ride', 'EBikeRide'];
+
+interface StravaActivitySummary {
+  id: number;
+  type: string;
+}
+
 @Injectable()
 export class StravaWebhookService {
   constructor(
@@ -126,6 +135,34 @@ export class StravaWebhookService {
       }
       throw new Error(`Error fetching Gear from Strava, athlete id ${athlete_id}, error: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Ids of the athlete's rides started after `after` (unix seconds) that were never stored here.
+   * Every processed ride, assigned or dismissed, has a raw row, so only missed webhooks come back.
+   */
+  async findMissingRideIds(athlete_id: number, after: number): Promise<number[]> {
+    const access_token = await this.tokenService.getAccessToken(athlete_id);
+    const listed: StravaActivitySummary[] = [];
+    for (let page = 1; ; page++) {
+      const response = await axios.get<StravaActivitySummary[]>('https://www.strava.com/api/v3/athlete/activities', {
+        params: { after, page, per_page: SYNC_PAGE_SIZE },
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      listed.push(...response.data);
+      if (response.data.length < SYNC_PAGE_SIZE) break;
+    }
+
+    // The same filter the processor applies, so a run or a hike is never downloaded just to be skipped.
+    const rideIds = listed.filter((a) => RIDE_TYPES.includes(a.type)).map((a) => a.id);
+    if (rideIds.length === 0) return [];
+
+    const stored = await this.databaseService.query<{ activity_id: string }>(
+      'SELECT activity_id FROM strava_activities_raw WHERE athlete_id = $1 AND activity_id = ANY($2::bigint[])',
+      [athlete_id, rideIds],
+    );
+    const storedIds = new Set(stored.map((row) => Number(row.activity_id)));
+    return rideIds.filter((id) => !storedIds.has(id));
   }
 
   /**

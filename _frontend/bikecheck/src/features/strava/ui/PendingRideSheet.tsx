@@ -65,7 +65,7 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
       }}
     >
       <Stack gap={20} h="100%" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-        <Text fw={900} fz={20} c="text.7" ta="center">
+        <Text fw={700} fz={20} c="text.7" ta="center">
           {t("pendingRides.chooseBikeTitle")}
         </Text>
         {/* Reuses list-card lighting for the selected ride. */}

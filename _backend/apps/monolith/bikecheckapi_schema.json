@@ -1250,6 +1250,30 @@
         ]
       }
     },
+    "/api/bike-events/shops": {
+      "get": {
+        "operationId": "BikeEvent shops",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "BikeEvent"
+        ]
+      }
+    },
     "/api/bike-events/{id}": {
       "get": {
         "operationId": "BikeEvent findOne",
@@ -1475,16 +1499,16 @@
         ]
       }
     },
-    "/api/service-tracking/postpone": {
+    "/api/service-tracking/notify": {
       "post": {
-        "operationId": "ServiceTracking postponeTrackedAction",
+        "operationId": "ServiceTracking setTrackedActionNotify",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PostponeTrackedActionDto"
+                "$ref": "#/components/schemas/SetTrackedActionNotifyDto"
               }
             }
           }
@@ -1506,16 +1530,16 @@
         ]
       }
     },
-    "/api/service-tracking/notify": {
+    "/api/service-tracking/plan": {
       "post": {
-        "operationId": "ServiceTracking setTrackedActionNotify",
+        "operationId": "ServiceTracking setTrackedActionPlan",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetTrackedActionNotifyDto"
+                "$ref": "#/components/schemas/SetTrackedActionPlanDto"
               }
             }
           }
@@ -3603,12 +3627,17 @@
         "operationId": "Stats getSpend",
         "parameters": [
           {
-            "name": "year",
+            "name": "period",
             "required": false,
             "in": "query",
             "description": "Omitted: this year, or last year while this one has nothing priced",
             "schema": {
-              "type": "number"
+              "enum": [
+                "month",
+                "year",
+                "all"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -3634,12 +3663,17 @@
         "operationId": "Stats getDistance",
         "parameters": [
           {
-            "name": "year",
+            "name": "period",
             "required": false,
             "in": "query",
             "description": "Omitted: this year, or last year while this one has no ride",
             "schema": {
-              "type": "number"
+              "enum": [
+                "month",
+                "year",
+                "all"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -4822,6 +4856,17 @@
             "type": "string",
             "example": "2026-07-01T00:00:00.000Z"
           },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ]
+          },
+          "shop_name": {
+            "type": "string",
+            "example": "Bike Centrum"
+          },
           "attachment": {
             "nullable": true,
             "type": "array",
@@ -5078,6 +5123,21 @@
             "type": "object",
             "nullable": true
           },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ],
+            "nullable": true,
+            "description": "Null on a Service recorded before the Place existed"
+          },
+          "shop_name": {
+            "type": "object",
+            "example": "Bike Centrum",
+            "nullable": true,
+            "description": "Only ever on a SHOP; null is a shop with no name"
+          },
           "created_at": {
             "format": "date-time",
             "type": "string"
@@ -5108,6 +5168,8 @@
           "note",
           "total_cost",
           "service_date",
+          "place",
+          "shop_name",
           "created_at",
           "updated_at",
           "actions_done",
@@ -5328,6 +5390,21 @@
             "type": "object",
             "example": 350.5,
             "nullable": true
+          },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ],
+            "nullable": true,
+            "description": "Null on a Service recorded before the Place existed"
+          },
+          "shop_name": {
+            "type": "object",
+            "example": "Bike Centrum",
+            "nullable": true,
+            "description": "Only ever on a SHOP; null is a shop with no name"
           }
         },
         "required": [
@@ -5337,7 +5414,9 @@
           "service_date",
           "action_count",
           "actions",
-          "total_cost"
+          "total_cost",
+          "place",
+          "shop_name"
         ]
       },
       "Response_ServiceHistory_Dto": {
@@ -5457,6 +5536,19 @@
           "service_date": {
             "type": "string",
             "example": "2026-07-01T00:00:00.000Z"
+          },
+          "place": {
+            "type": "string",
+            "enum": [
+              "HOME",
+              "SHOP"
+            ],
+            "nullable": true
+          },
+          "shop_name": {
+            "type": "object",
+            "example": "Bike Centrum",
+            "nullable": true
           },
           "actions_updated": {
             "type": "array",
@@ -5628,10 +5720,23 @@
             "nullable": true,
             "description": "When the part went on the bike, which the reading is judged against"
           },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it"
+          },
           "replace_action": {
             "type": "boolean",
             "example": true,
             "description": "The action replaces the part rather than servicing it, which names the button that records it"
+          },
+          "remaining_descent_min": {
+            "type": "number",
+            "example": 540,
+            "nullable": true,
+            "description": "Minutes of descent left before the interval, at the bike's recent pace. Null off the health index axis, once due, or with too few rides to tell"
           }
         },
         "required": [
@@ -5656,7 +5761,9 @@
           "interval_override",
           "notify",
           "mounted_at",
-          "replace_action"
+          "planned_for",
+          "replace_action",
+          "remaining_descent_min"
         ]
       },
       "Response_GarageTrackedActionDto": {
@@ -5781,10 +5888,23 @@
             "nullable": true,
             "description": "When the part went on the bike, which the reading is judged against"
           },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it"
+          },
           "replace_action": {
             "type": "boolean",
             "example": true,
             "description": "The action replaces the part rather than servicing it, which names the button that records it"
+          },
+          "remaining_descent_min": {
+            "type": "number",
+            "example": 540,
+            "nullable": true,
+            "description": "Minutes of descent left before the interval, at the bike's recent pace. Null off the health index axis, once due, or with too few rides to tell"
           },
           "bike_brand": {
             "type": "string",
@@ -5823,7 +5943,9 @@
           "interval_override",
           "notify",
           "mounted_at",
+          "planned_for",
           "replace_action",
+          "remaining_descent_min",
           "bike_brand",
           "bike_model",
           "year"
@@ -5853,23 +5975,6 @@
           "interval_override"
         ]
       },
-      "PostponeTrackedActionDto": {
-        "type": "object",
-        "properties": {
-          "component_mounted_id": {
-            "type": "number",
-            "example": 55
-          },
-          "event_action_id": {
-            "type": "number",
-            "example": 42
-          }
-        },
-        "required": [
-          "component_mounted_id",
-          "event_action_id"
-        ]
-      },
       "SetTrackedActionNotifyDto": {
         "type": "object",
         "properties": {
@@ -5890,6 +5995,31 @@
           "component_mounted_id",
           "event_action_id",
           "notify"
+        ]
+      },
+      "SetTrackedActionPlanDto": {
+        "type": "object",
+        "properties": {
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "YYYY-MM-DD, today or later; null removes the plan"
+          }
+        },
+        "required": [
+          "component_mounted_id",
+          "event_action_id",
+          "planned_for"
         ]
       },
       "CustomComponentsDto": {
@@ -6545,6 +6675,88 @@
           "bikeId"
         ]
       },
+      "Response_WoreOffLineDto": {
+        "type": "object",
+        "properties": {
+          "component_mounted_id": {
+            "type": "number",
+            "example": 55
+          },
+          "component_type": {
+            "type": "string",
+            "example": "Chain"
+          },
+          "component_type_i18n_key": {
+            "type": "string",
+            "example": "component.chain",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "example": "front",
+            "nullable": true
+          },
+          "event_action_id": {
+            "type": "number",
+            "example": 42
+          },
+          "action_name": {
+            "type": "string",
+            "example": "Chain Replacement"
+          },
+          "action_i18n_key": {
+            "type": "string",
+            "example": "action.chainReplacement",
+            "nullable": true
+          },
+          "measure": {
+            "type": "string",
+            "enum": [
+              "total_km",
+              "drivetrain_km",
+              "total_time_min",
+              "suspension_min",
+              "health_index"
+            ],
+            "example": "drivetrain_km",
+            "description": "Which accumulator the reading was taken from, which is not implied by the axis"
+          },
+          "replace_action": {
+            "type": "boolean",
+            "example": true,
+            "description": "The action replaces the part rather than servicing it, which names the button that records it"
+          },
+          "amount": {
+            "type": "number",
+            "example": 32,
+            "description": "The ride's own wear on the reading's measure: km, minutes or index"
+          },
+          "before": {
+            "type": "number",
+            "example": 94,
+            "description": "Whole percent of the way to due before the ride"
+          },
+          "after": {
+            "type": "number",
+            "example": 95,
+            "description": "Whole percent of the way to due once the ride ended"
+          }
+        },
+        "required": [
+          "component_mounted_id",
+          "component_type",
+          "component_type_i18n_key",
+          "position",
+          "event_action_id",
+          "action_name",
+          "action_i18n_key",
+          "measure",
+          "replace_action",
+          "amount",
+          "before",
+          "after"
+        ]
+      },
       "ResponseRideDto": {
         "type": "object",
         "properties": {
@@ -6609,6 +6821,12 @@
             "type": "object",
             "example": "ki}fHuqrbBGx@_@lAsA|Bi@n@",
             "nullable": true
+          },
+          "wore_off": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_WoreOffLineDto"
+            }
           }
         },
         "required": [
@@ -6624,7 +6842,8 @@
           "elevation_down_m",
           "speed_avg",
           "max_speed_kmh",
-          "summary_polyline"
+          "summary_polyline",
+          "wore_off"
         ]
       },
       "ResponseRidePageDto": {
@@ -8351,10 +8570,17 @@
       "Response_SpendDto": {
         "type": "object",
         "properties": {
-          "year": {
-            "type": "number",
-            "example": 2026,
-            "description": "The year served - last year when the current one has no priced service yet"
+          "from": {
+            "type": "string",
+            "example": "2026-01-01",
+            "nullable": true,
+            "description": "First Service Date counted, inclusive; null is an open end"
+          },
+          "to": {
+            "type": "string",
+            "example": null,
+            "nullable": true,
+            "description": "Last Service Date counted, inclusive; null is an open end. Both null counts undated Services too"
           },
           "currency": {
             "type": "string",
@@ -8364,7 +8590,7 @@
           "total": {
             "type": "number",
             "example": 14860,
-            "description": "Equals History Totals for that year across all bikes"
+            "description": "Equals History Totals for from/to across all bikes"
           },
           "categories": {
             "description": "Top 3 categories, then other, then unassigned; non-zero only",
@@ -8382,7 +8608,8 @@
           }
         },
         "required": [
-          "year",
+          "from",
+          "to",
           "currency",
           "total",
           "categories",
@@ -8422,7 +8649,7 @@
               0,
               38200
             ],
-            "description": "Metres per UTC day, index 0 = 1 January; runs to today for the current year, 365/366 days for a past one",
+            "description": "Metres per UTC day, index 0 = from, one entry per day through to",
             "type": "array",
             "items": {
               "type": "number"
@@ -8432,6 +8659,16 @@
             "type": "number",
             "example": 51,
             "description": "Whole km of the sum of daily_m"
+          },
+          "ride_count": {
+            "type": "number",
+            "example": 4,
+            "description": "Rides started in the window"
+          },
+          "time_min": {
+            "type": "number",
+            "example": 312,
+            "description": "The sum of those rides' duration_min"
           }
         },
         "required": [
@@ -8441,19 +8678,26 @@
           "year",
           "color_index",
           "daily_m",
-          "total_km"
+          "total_km",
+          "ride_count",
+          "time_min"
         ]
       },
       "Response_DistanceDto": {
         "type": "object",
         "properties": {
-          "year": {
-            "type": "number",
-            "example": 2026,
-            "description": "The year served - last year when the current one has no ride yet"
+          "from": {
+            "type": "string",
+            "example": "2026-01-01",
+            "description": "First UTC day daily_m covers, inclusive"
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-09-28",
+            "description": "Last UTC day daily_m covers, inclusive"
           },
           "bikes": {
-            "description": "Bikes with km in the year, highest total first",
+            "description": "Bikes with at least one ride in the window, highest total first",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Response_DistanceBikeDto"
@@ -8461,7 +8705,8 @@
           }
         },
         "required": [
-          "year",
+          "from",
+          "to",
           "bikes"
         ]
       },
@@ -8606,10 +8851,23 @@
             "nullable": true,
             "description": "When the part went on the bike, which the reading is judged against"
           },
+          "planned_for": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-04",
+            "nullable": true,
+            "description": "The day the owner means to do this Tracked Action (YYYY-MM-DD), until a Service records it"
+          },
           "replace_action": {
             "type": "boolean",
             "example": true,
             "description": "The action replaces the part rather than servicing it, which names the button that records it"
+          },
+          "remaining_descent_min": {
+            "type": "number",
+            "example": 540,
+            "nullable": true,
+            "description": "Minutes of descent left before the interval, at the bike's recent pace. Null off the health index axis, once due, or with too few rides to tell"
           },
           "bike_brand": {
             "type": "string",
@@ -8667,7 +8925,9 @@
           "interval_override",
           "notify",
           "mounted_at",
+          "planned_for",
           "replace_action",
+          "remaining_descent_min",
           "bike_brand",
           "bike_model",
           "year",

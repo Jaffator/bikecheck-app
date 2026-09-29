@@ -2,16 +2,15 @@
 // nothing, and this is the one place they are reached from - putting a bike back into use
 // or destroying it for good are both offered here and nowhere else (ADR 0024).
 import { useState, type ReactElement } from "react";
-import { Button, Group, Image, Loader, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { Button, Group, Image, Loader, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { fieldLabel, inputStyles } from "@/features/add_bike_page/formStyles";
-import { useArchivedBikes, useDeleteBikePermanently, useUnarchiveBike } from "@/features/bikes/bikes.queries";
+import { useArchivedBikes } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { ArchivedBikeConfirms } from "./ArchivedBikeConfirms";
 
 // Below the confirmations it raises, above the garage it sits on. The same place the
 // custom parts drawer takes, since only one of them is ever open.
@@ -19,12 +18,6 @@ const DRAWER_Z_INDEX = 320;
 
 // How large the photo runs beside a name. A thumbnail, not a hero.
 const THUMBNAIL = 56;
-
-// The wizard's field, with the label dimmed to sit quietly above the typed-back name.
-const confirmInputStyles = {
-  ...inputStyles,
-  label: { ...fieldLabel, color: "var(--mantine-color-cards-4)" },
-};
 
 interface BikeArchiveDrawerProps {
   opened: boolean;
@@ -35,21 +28,9 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: bikes, isLoading } = useArchivedBikes(opened);
-  const unarchive = useUnarchiveBike();
-  const destroy = useDeleteBikePermanently();
   const [restoring, setRestoring] = useState<Bike | null>(null);
-  // The bike whose destruction is being asked about, and the name typed back so far.
   const [destroying, setDestroying] = useState<Bike | null>(null);
-  const [typedName, setTypedName] = useState("");
   const archived = bikes ?? [];
-
-  // The name has to match exactly, so a glance at the wrong row cannot destroy a bike.
-  const nameMatches = destroying !== null && typedName === bikeTitle(destroying);
-
-  function askToDestroy(bike: Bike): void {
-    setTypedName("");
-    setDestroying(bike);
-  }
 
   return (
     <>
@@ -114,7 +95,7 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
                           {bikeTitle(bike)}
                         </Text>
                         {bike.bikename !== null && bike.bikename !== "" && (
-                          <Text fz={12} c="var(--color-text-dim)" className="font-mono" truncate>
+                          <Text fz={12} c="var(--color-text-dim)" className="tabular-nums" truncate>
                             {bike.bikename}
                           </Text>
                         )}
@@ -133,7 +114,7 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
                       radius="md"
                       size="xs"
                       styles={{ root: { "--button-color": "black" } as React.CSSProperties }}
-                      onClick={() => askToDestroy(bike)}
+                      onClick={() => setDestroying(bike)}
                     >
                       {t("archive.deleteForever")}
                     </Button>
@@ -141,57 +122,16 @@ export function BikeArchiveDrawer({ opened, onClose }: BikeArchiveDrawerProps): 
                 </Stack>
               ))
             )}
-
-            {(unarchive.isError || destroy.isError) && (
-              <Text fz={13} c="red.5">
-                {t("archive.actionFailed")}
-              </Text>
-            )}
           </Stack>
         )}
       </ResponsiveSheet>
 
-      {/* Putting a bike back costs nothing but says what does not come back with it. */}
-      <ConfirmModal
-        opened={restoring !== null}
-        onCancel={() => setRestoring(null)}
-        onConfirm={() => {
-          if (restoring === null) return;
-          unarchive.mutate(restoring.id, { onSuccess: () => setRestoring(null) });
-        }}
-        title={t("archive.unarchiveConfirmTitle", { name: restoring === null ? "" : bikeTitle(restoring) })}
-        body={t("archive.unarchiveConfirmBody")}
-        cancelLabel={t("archive.cancel")}
-        confirmLabel={t("archive.unarchive")}
-        pending={unarchive.isPending}
+      <ArchivedBikeConfirms
+        restoring={restoring}
+        onRestoreClose={() => setRestoring(null)}
+        destroying={destroying}
+        onDestroyClose={() => setDestroying(null)}
       />
-
-      {/* The irreversible one. The name is typed back here and never sent - the server
-          already knows it; this guard is for the hand, not for the wire. */}
-      <ConfirmModal
-        opened={destroying !== null}
-        onCancel={() => setDestroying(null)}
-        onConfirm={() => {
-          if (destroying === null || !nameMatches) return;
-          destroy.mutate(destroying.id, { onSuccess: () => setDestroying(null) });
-        }}
-        title={t("archive.deleteConfirmTitle", { name: destroying === null ? "" : bikeTitle(destroying) })}
-        body={t("archive.deleteConfirmBody")}
-        cancelLabel={t("archive.cancel")}
-        confirmLabel={t("archive.deleteForever")}
-        pending={destroy.isPending}
-        confirmDisabled={!nameMatches}
-      >
-        <TextInput
-          value={typedName}
-          onChange={(event) => setTypedName(event.currentTarget.value)}
-          placeholder={destroying === null ? "" : bikeTitle(destroying)}
-          label={t("archive.deleteConfirmTypeName")}
-          styles={confirmInputStyles}
-          autoCapitalize="none"
-          autoCorrect="off"
-        />
-      </ConfirmModal>
     </>
   );
 }

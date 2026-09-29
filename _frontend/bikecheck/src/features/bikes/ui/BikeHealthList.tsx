@@ -70,7 +70,7 @@ function BikeRow({ bike, actions, divided, onOpen }: BikeRowProps): ReactElement
             {title}
           </Text>
           {bike.bike_type !== null && bike.bike_type !== "" && (
-            <Text className="font-mono" fz={11} tt="uppercase" lts="0.06em" c="text.8" lineClamp={1}>
+            <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="text.8" lineClamp={1}>
               {bike.bike_type}
             </Text>
           )}

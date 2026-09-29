@@ -57,7 +57,7 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
           <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0, flex: 1 }}>
             {job}
           </Text>
-          <Text className="font-mono" fz={12} c={color} style={{ whiteSpace: "nowrap" }}>
+          <Text className="tabular-nums" fz={12} c={color} style={{ whiteSpace: "nowrap" }}>
             {t("tracking.percentage", { value: action.percentage })}
           </Text>
           <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
@@ -69,11 +69,11 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
         <Group gap="sm" wrap="nowrap" align="center">
           <PlanDayButton planned={action.planned_for} onPlan={onPlan} />
           <Text
-            className="font-mono"
+            className="tabular-nums"
             fz={11}
             tt="uppercase"
             c="text.8"
-            lts="0.08em"
+            lts="var(--tracking-label)"
             lineClamp={1}
             ml="auto"
             style={{ minWidth: 0 }}

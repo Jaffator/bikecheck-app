@@ -366,9 +366,9 @@ export function CaneCreekReboundDial({ lsr, hsr, direction = "right", haptics = 
         </filter>
       </defs>
       <style>{`
-        .cc-lbl{font-family:Archivo,system-ui,sans-serif;font-weight:900;fill:#fff;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(40,0,6,.6);stroke-width:1.6px}
+        .cc-lbl{font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(40,0,6,.6);stroke-width:1.6px}
         .cc-focus{opacity:0}g:has(.cc-knob:focus-visible)~.cc-focus{opacity:1}
-        .cc-hint{font-family:Archivo,system-ui,sans-serif;font-weight:700;letter-spacing:.08em;fill:#c9ccd1;stroke:#c9ccd1;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+        .cc-hint{font-weight:700;fill:#c9ccd1;stroke:#c9ccd1;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
         .cc-hint text{stroke:none;dominant-baseline:central}
         .cc-hint path{fill:none}
       `}</style>

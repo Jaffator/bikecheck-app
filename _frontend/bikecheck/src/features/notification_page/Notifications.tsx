@@ -103,7 +103,7 @@ function NotificationRow({
           <Text fz={13} c="var(--color-text-dim)" lh={1.4}>
             {notification.body}
           </Text>
-          <Text className="font-mono" fz={10} tt="uppercase" c="var(--color-text-dim)">
+          <Text className="tabular-nums" fz={10} tt="uppercase" c="var(--color-text-dim)">
             {dayjs(notification.created_at).fromNow()}
           </Text>
         </Stack>

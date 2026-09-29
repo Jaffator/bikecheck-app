@@ -44,7 +44,7 @@ interface BikeSpecificationProps {
 
 export function FieldLabel({ children, dimmed = false }: { children: string; dimmed?: boolean }): ReactElement {
   return (
-    <Text size="xs" fw={600} c={dimmed ? "text.9" : "text.7"} tt="uppercase" style={{ letterSpacing: "0.05em" }}>
+    <Text size="xs" fw={600} c={dimmed ? "text.9" : "text.7"} tt="uppercase" lts="var(--tracking-label)">
       {children}
     </Text>
   );

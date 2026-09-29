@@ -127,7 +127,7 @@ function PlannedRow({
             </Text>
           </Group>
         </Stack>
-        <Text className="font-mono" fz={13} c={attentionColor(action.percentage)} style={{ whiteSpace: "nowrap" }}>
+        <Text className="tabular-nums" fz={13} c={attentionColor(action.percentage)} style={{ whiteSpace: "nowrap" }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
       </Group>

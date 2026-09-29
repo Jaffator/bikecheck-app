@@ -39,9 +39,9 @@ export function PublicBikeSetup({ profiles, unit }: PublicBikeSetupProps): React
         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--pp-card-inset)] text-[var(--pp-gold-500)]">
           <Icon id="i-dial" className="size-[18px]" />
         </span>
-        <h2 className="pp-display text-[19px] font-bold tracking-tight">{t("setup.title")}</h2>
+        <h2 className="text-[19px] font-bold">{t("setup.title")}</h2>
         {profile.is_active && (
-          <span className="pp-mono rounded-full border border-[var(--pp-gold-500)] px-2 py-0.5 text-[10px] uppercase tracking-wider text-[var(--pp-gold-500)]">
+          <span className="tabular-nums rounded-full border border-[var(--pp-gold-500)] px-2 py-0.5 text-[10px] uppercase tracking-label text-[var(--pp-gold-500)]">
             {t("sharing.bikeSetupActive")}
           </span>
         )}
@@ -55,7 +55,7 @@ export function PublicBikeSetup({ profiles, unit }: PublicBikeSetupProps): React
                 type="button"
                 aria-current={item.id === profile.id}
                 onClick={() => setSelectedId(item.id)}
-                className="pp-seg pp-mono pp-hairline flex min-h-[40px] items-center rounded-lg border bg-[var(--pp-card-inset)] px-3.5 text-[11px] text-[var(--pp-paper-dim)] transition-colors"
+                className="pp-seg tabular-nums pp-hairline flex min-h-[40px] items-center rounded-lg border bg-[var(--pp-card-inset)] px-3.5 text-[11px] text-[var(--pp-paper-dim)] transition-colors"
               >
                 {item.is_active ? `● ${item.name}` : item.name}
               </button>
@@ -73,7 +73,7 @@ export function PublicBikeSetup({ profiles, unit }: PublicBikeSetupProps): React
 
       {hasLegs && (
         <details className="pp-hairline mt-4 border-t pt-3">
-          <summary className="pp-mono cursor-pointer list-none text-[11px] uppercase tracking-wider text-[var(--pp-paper-dim)] hover:text-[var(--pp-paper)]">
+          <summary className="tabular-nums cursor-pointer list-none text-[11px] uppercase tracking-label text-[var(--pp-paper-dim)] hover:text-[var(--pp-paper)]">
             {t("sharing.tokensAndClicks")}
           </summary>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -95,7 +95,7 @@ function partMark(part: PartIcon): ReactElement | null {
 function GaugeCell({ reading }: { reading: GaugeReading }): ReactElement {
   return (
     <div className="flex min-w-0 flex-col items-center text-center">
-      <dt className="pp-mono flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-[var(--pp-paper-faint)]">
+      <dt className="tabular-nums flex items-center gap-1.5 text-[10px] uppercase tracking-label text-[var(--pp-paper-faint)]">
         {partMark(reading.icon)}
         {reading.label}
       </dt>
@@ -122,12 +122,12 @@ function ClickList({ label, leg }: { label: string; leg: ProfileLeg }): ReactEle
 
   return (
     <div>
-      <p className="pp-mono text-[10px] uppercase tracking-[0.14em] text-[var(--pp-gold-500)]">{label}</p>
+      <p className="tabular-nums text-[10px] uppercase tracking-label text-[var(--pp-gold-500)]">{label}</p>
       <dl className="mt-2 grid grid-cols-5 gap-x-3 gap-y-2">
         {cells.map(([name, value]) => (
           <div key={name}>
-            <dt className="pp-mono text-[10px] text-[var(--pp-paper-faint)]">{name}</dt>
-            <dd className="pp-mono text-[13px] tabular-nums">{value === null ? NO_READING : String(value)}</dd>
+            <dt className="tabular-nums text-[10px] text-[var(--pp-paper-faint)]">{name}</dt>
+            <dd className="tabular-nums text-[13px]">{value === null ? NO_READING : String(value)}</dd>
           </div>
         ))}
       </dl>

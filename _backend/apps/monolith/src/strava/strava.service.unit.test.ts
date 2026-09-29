@@ -20,9 +20,17 @@ describe('StravaEventsService', () => {
   let service: StravaEventsService;
 
   const mockPrisma = {
-    users: { findFirst: jest.fn(), findUnique: jest.fn() },
+    users: { findFirst: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     bikes: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    strava_pending_activities: { upsert: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+    strava_pending_activities: {
+      upsert: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    rides: { findUnique: jest.fn(), upsert: jest.fn() },
+    components_mounted: { updateMany: jest.fn() },
   };
 
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
@@ -134,6 +142,61 @@ describe('StravaEventsService', () => {
     });
   });
 
+  describe('descent time', () => {
+    // One Strava split: metres covered, metres gained (negative downhill) and seconds moving.
+    const split = (distance: number, elevation: number, movingTime: number): Record<string, number> => ({
+      distance,
+      elevation_difference: elevation,
+      moving_time: movingTime,
+    });
+
+    // The same downhill splits the pad index counts, so index and time come from one source.
+    it('sums the moving time of downhill splits, in minutes', async () => {
+      mockPrisma.users.findFirst.mockResolvedValue({ weight_kg: 75 });
+
+      const analyzed = await service.analyzeStravaData({
+        id: 1,
+        athlete: { id: ATHLETE_ID },
+        splits_metric: {
+          '1': split(1000, -50, 300),
+          '2': split(1000, -20, 240),
+          '3': split(1000, 30, 600),
+          '4': split(1000, 0, 100),
+          // No distance, so no slope: not counted as descent.
+          '5': split(0, -5, 60),
+        },
+      });
+
+      expect(analyzed.analyzedData.descent_min).toBe(9);
+    });
+
+    // What saveRide writes for a ride with this analysis, new and re-synced alike.
+    async function savedDescent(analyzedData: Record<string, unknown>): Promise<unknown[]> {
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrisma.rides.findUnique.mockResolvedValue(null);
+      mockPrisma.rides.upsert.mockResolvedValue({ id: 1 });
+
+      await service.saveAnalyzedData({
+        ...activity(),
+        analyzedData: { distance_km: 42, started_at: '2026-09-20T08:00:00.000Z', ...analyzedData },
+      } as unknown as Parameters<StravaEventsService['saveAnalyzedData']>[0]);
+
+      const [{ create, update }] = mockPrisma.rides.upsert.mock.calls[0] as [
+        { create: Record<string, unknown>; update: Record<string, unknown> },
+      ];
+      return [create.descent_min, update.descent_min];
+    }
+
+    it('writes descent time on import and on re-sync', async () => {
+      expect(await savedDescent({ descent_min: 9 })).toEqual([9, 9]);
+    });
+
+    // A ride parked as pending before descent time existed carries none, and none is guessed.
+    it('writes null for an analysis with no descent time', async () => {
+      expect(await savedDescent({})).toEqual([null, null]);
+    });
+  });
+
   describe('the unmatched gear listing', () => {
     it('offers no archived bike to pair a gear with', async () => {
       (axios.get as jest.Mock).mockResolvedValue({ data: { athlete_id: ATHLETE_ID, bikes: [] } });
@@ -143,6 +206,128 @@ describe('StravaEventsService', () => {
       expect(mockPrisma.bikes.findMany).toHaveBeenCalledWith({
         where: { user_id: OWNER_ID, ...NOT_ARCHIVED },
       });
+    });
+  });
+
+  describe('dismissing a pending ride', () => {
+    it('resolves the ride without saving it and clears its ask', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue({ id: 3, activity_id: 98765n });
+      const saveRide = jest.spyOn(service, 'saveRide');
+
+      await service.dismissPendingActivity(OWNER_ID, 98765n);
+
+      expect(mockPrisma.strava_pending_activities.update).toHaveBeenCalledWith({
+        where: { id: 3 },
+        data: { resolved_at: expect.any(Date) },
+      });
+      expect(saveRide).not.toHaveBeenCalled();
+      expect(mockNotifications.resolveActivityAsk).toHaveBeenCalledWith(OWNER_ID, '98765');
+    });
+
+    it('refuses a ride that is not pending for this user', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue(null);
+
+      await expect(service.dismissPendingActivity(OWNER_ID, 98765n)).rejects.toThrow('Pending activity not found');
+    });
+
+    // An update webhook for a dismissed ride must neither save it nor ask about it again.
+    it('skips a later webhook for a dismissed ride', async () => {
+      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue({ resolved_at: new Date() });
+      mockPrisma.rides.findUnique.mockResolvedValue(null);
+
+      await service.saveAnalyzedData(activity());
+
+      expect(mockPrisma.bikes.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.strava_pending_activities.upsert).not.toHaveBeenCalled();
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    // Resolved onto a bike is not dismissed: its updates still reach the ride.
+    it('still processes a webhook for a ride resolved onto a bike', async () => {
+      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue({ resolved_at: new Date() });
+      mockPrisma.rides.findUnique.mockResolvedValue({ id: 1 });
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      const saveRide = jest.spyOn(service, 'saveRide').mockResolvedValue({ message: 'saved', isNew: false });
+
+      await service.saveAnalyzedData(activity());
+
+      expect(saveRide).toHaveBeenCalled();
+    });
+  });
+
+  describe('syncing from Strava', () => {
+    const NOW = new Date('2026-09-29T10:00:00.000Z');
+    const SIXTY_DAYS_S = 60 * 24 * 60 * 60;
+    // A standalone fn, so asserting on it does not detach axios.post from axios.
+    const post = jest.fn();
+
+    beforeEach(() => {
+      jest.useFakeTimers({ now: NOW });
+      (axios.post as jest.Mock).mockImplementation(post);
+      post.mockResolvedValue({ data: { queued: 2 } });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('asks strava-service for the last 60 days and stamps the sync', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({
+        strava_athlete_id: String(ATHLETE_ID),
+        strava_last_sync_at: null,
+      });
+
+      const result = await service.syncFromStrava(OWNER_ID);
+
+      expect(post).toHaveBeenCalledWith(
+        expect.stringMatching(/\/strava\/sync$/),
+        { athleteId: ATHLETE_ID, after: NOW.getTime() / 1000 - SIXTY_DAYS_S },
+        expect.anything(),
+      );
+      expect(mockPrisma.users.update).toHaveBeenCalledWith({
+        where: { id: OWNER_ID },
+        data: { strava_last_sync_at: NOW },
+      });
+      expect(result).toEqual({ queued: 2, synced_at: NOW });
+    });
+
+    it('refuses a second sync within five minutes', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({
+        strava_athlete_id: String(ATHLETE_ID),
+        strava_last_sync_at: new Date(NOW.getTime() - 4 * 60 * 1000),
+      });
+
+      await expect(service.syncFromStrava(OWNER_ID)).rejects.toMatchObject({ status: 429 });
+      expect(post).not.toHaveBeenCalled();
+    });
+
+    it('syncs again once five minutes have passed', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({
+        strava_athlete_id: String(ATHLETE_ID),
+        strava_last_sync_at: new Date(NOW.getTime() - 5 * 60 * 1000),
+      });
+
+      await service.syncFromStrava(OWNER_ID);
+
+      expect(post).toHaveBeenCalled();
+    });
+
+    // A failed sync never reached Strava, so it must not lock the user out for five minutes.
+    it('leaves the stamp alone when strava-service fails', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({
+        strava_athlete_id: String(ATHLETE_ID),
+        strava_last_sync_at: null,
+      });
+      post.mockRejectedValue(new Error('down'));
+
+      await expect(service.syncFromStrava(OWNER_ID)).rejects.toThrow('Failed to sync Strava');
+      expect(mockPrisma.users.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses a user without Strava', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ strava_athlete_id: null, strava_last_sync_at: null });
+
+      await expect(service.syncFromStrava(OWNER_ID)).rejects.toThrow('No Strava account');
     });
   });
 });

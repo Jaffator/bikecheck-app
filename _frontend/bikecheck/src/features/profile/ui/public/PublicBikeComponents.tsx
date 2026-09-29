@@ -40,7 +40,7 @@ function ChipRail({ groups, seededName }: RailProps): ReactElement {
           <li key={group.category.name}>
             <a
               href={`#${categoryId(group.category)}`}
-              className="pp-chip pp-mono pp-hairline flex min-h-[44px] items-center gap-1.5 whitespace-nowrap rounded-lg border bg-[var(--pp-card-inset)] px-3 text-[11px] text-[var(--pp-paper-dim)] transition-colors duration-200"
+              className="pp-chip tabular-nums pp-hairline flex min-h-[44px] items-center gap-1.5 whitespace-nowrap rounded-lg border bg-[var(--pp-card-inset)] px-3 text-[11px] text-[var(--pp-paper-dim)] transition-colors duration-200"
             >
               {seededName(group.category.i18n_key, group.category.name)}
               <span className="tabular-nums opacity-60">{group.parts.length}</span>
@@ -66,7 +66,7 @@ function SideRail({ groups, seededName }: RailProps): ReactElement {
             >
               {categoryMark(group.category, "size-4 shrink-0 opacity-70")}
               <span className="min-w-0 flex-1 truncate">{seededName(group.category.i18n_key, group.category.name)}</span>
-              <span className="pp-mono text-[10px] tabular-nums opacity-60">{group.parts.length}</span>
+              <span className="tabular-nums text-[10px] opacity-60">{group.parts.length}</span>
             </a>
           </li>
         ))}
@@ -89,11 +89,11 @@ function PartRow({ part }: { part: ProfileMountedPart }): ReactElement {
     <div className="pp-part-card flex min-h-[56px] items-center gap-3 rounded-xl px-3 py-2.5 sm:px-4">
       <div className="pp-token min-w-0 flex-1">
         {eyebrow !== "" && (
-          <p className="pp-mono text-[10px] uppercase tracking-[0.14em] text-[var(--pp-paper-dim)]">{eyebrow}</p>
+          <p className="tabular-nums text-[10px] uppercase tracking-label text-[var(--pp-paper-dim)]">{eyebrow}</p>
         )}
         <p className="mt-0.5 text-[15px] font-semibold leading-snug">{title}</p>
       </div>
-      <p className="pp-mono shrink-0 text-[11px] tabular-nums text-[var(--pp-paper-dim)]">
+      <p className="tabular-nums shrink-0 text-[11px] text-[var(--pp-paper-dim)]">
         {part.distance_km === null ? t("sharing.sinceNew") : formatKm(part.distance_km, i18n.language)}
       </p>
     </div>
@@ -109,10 +109,10 @@ function CategoryBlock({ group }: { group: ProfileComponentGroup }): ReactElemen
         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--pp-card-inset)] text-[var(--pp-gold-500)]">
           {categoryMark(group.category, "size-[18px]")}
         </span>
-        <h3 className="pp-display text-[19px] font-bold tracking-tight sm:text-[21px]">
+        <h3 className="text-[19px] font-bold sm:text-[21px] sm:tracking-title">
           {seededName(group.category.i18n_key, group.category.name)}
         </h3>
-        <span className="pp-mono ml-auto text-[11px] tabular-nums text-[var(--pp-paper-dim)]">{group.parts.length}</span>
+        <span className="tabular-nums ml-auto text-[11px] text-[var(--pp-paper-dim)]">{group.parts.length}</span>
       </div>
       <div className="mt-3 space-y-1.5">
         {group.parts.map((part) => (
@@ -139,7 +139,7 @@ export function PublicBikeComponents({ groups }: PublicBikeComponentsProps): Rea
     <section id="build" className="relative scroll-mt-32 overflow-hidden">
       <div className="relative mx-auto max-w-[1240px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
         <div>
-          <h2 className="pp-display text-[26px] font-extrabold tracking-tight sm:text-[34px]">
+          <h2 className="text-[26px] font-bold tracking-title sm:text-[34px] sm:tracking-display">
             {t("sharing.bikeComponentsTitle")}
           </h2>
           <p className="mt-2 max-w-[56ch] text-[15px] text-[var(--pp-paper-dim)]">

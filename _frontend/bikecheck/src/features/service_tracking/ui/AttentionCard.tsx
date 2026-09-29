@@ -182,7 +182,7 @@ function AttentionPaper({
               setExpanded(!expanded);
             }}
           >
-            <Text className="font-mono" fz={11} tt="uppercase" c="primary.6" lts="0.08em">
+            <Text className="tabular-nums" fz={11} tt="uppercase" c="primary.6" lts="var(--tracking-label)">
               {expanded ? t("tracking.showLess") : t("tracking.showRemaining", { value: hidden })}
             </Text>
           </UnstyledButton>

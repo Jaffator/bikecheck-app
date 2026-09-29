@@ -107,7 +107,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
           style={{
             fontSize: "clamp(1.5rem, 6vw, 2rem)",
             fontWeight: 600,
-            letterSpacing: "-0.0188em",
+            letterSpacing: "var(--tracking-display)",
             lineHeight: 1.15,
           }}
         >
@@ -157,7 +157,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
             label: {
               fontSize: "0.75rem",
               fontWeight: 700,
-              letterSpacing: "0.1em",
+              letterSpacing: "var(--tracking-label)",
               textTransform: "uppercase",
             },
           }}
@@ -184,7 +184,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
             label: {
               fontSize: "0.75rem",
               fontWeight: 700,
-              letterSpacing: "0.1em",
+              letterSpacing: "var(--tracking-label)",
               textTransform: "uppercase",
             },
           }}

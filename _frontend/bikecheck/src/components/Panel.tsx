@@ -31,7 +31,7 @@ export function Panel({ title, count, link, children }: PanelProps): ReactElemen
             {title}
           </Text>
           {count !== undefined && (
-            <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+            <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
               {count}
             </Text>
           )}

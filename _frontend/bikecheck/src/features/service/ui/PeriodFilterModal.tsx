@@ -88,7 +88,7 @@ function PeriodFilterModalBody({ opened, onClose, period, onApply }: PeriodFilte
       radius="lg"
       zIndex={MODAL_Z_INDEX}
       title={
-        <Text className="font-mono uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="0.08em">
+        <Text className="tabular-nums uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="var(--tracking-label)">
           {t("service.periodTitle")}
         </Text>
       }

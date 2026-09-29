@@ -152,7 +152,7 @@ function ServiceRows({
                 backgroundColor: "var(--mantine-color-background-9)",
               }}
             >
-              <Text className="font-mono uppercase" fz={12} fw={600} c="var(--color-text-dim)" lts="0.08em">
+              <Text className="tabular-nums uppercase" fz={12} fw={600} c="var(--color-text-dim)" lts="var(--tracking-label)">
                 {group.month === null ? t("service.noDateGroup") : formatMonthHeading(group.month)}
               </Text>
             </Box>

@@ -37,10 +37,10 @@ export function PublicGauge({ value, max, figure, unit, hint }: PublicGaugeProps
         )}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center" style={{ paddingBottom: stroke }}>
-        <span className="pp-mono text-[20px] font-bold leading-none tabular-nums text-[var(--pp-paper)]">{figure}</span>
-        <span className="pp-mono mt-1 text-[12px] leading-none text-[var(--pp-paper-dim)]">{unit}</span>
+        <span className="tabular-nums text-[20px] font-bold leading-none text-[var(--pp-paper)]">{figure}</span>
+        <span className="tabular-nums mt-1 text-[12px] leading-none text-[var(--pp-paper-dim)]">{unit}</span>
         {/* A blank line where no hint is, so the figures across a row stand on one line. */}
-        <span className="pp-mono mt-1 text-[11px] leading-none text-[var(--pp-paper-faint)]">{hint ?? " "}</span>
+        <span className="tabular-nums mt-1 text-[11px] leading-none text-[var(--pp-paper-faint)]">{hint ?? " "}</span>
       </div>
     </div>
   );

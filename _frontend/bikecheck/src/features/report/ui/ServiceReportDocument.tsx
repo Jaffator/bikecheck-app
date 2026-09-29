@@ -40,7 +40,7 @@ export function ServiceReportDocument({ snapshot, onOpenAttachment }: ServiceRep
       <header className="flex flex-col items-center gap-1">
         <img src={logoDark} alt="BikeCheck" className="h-9 w-auto" />
         <span
-          className="font-mono uppercase text-[11px] font-semibold tracking-[0.18em]"
+          className="tabular-nums uppercase text-[11px] font-semibold tracking-label"
           style={{ color: REPORT_PAPER.inkMuted }}
         >
           {heading.serviceDocument}
@@ -56,9 +56,9 @@ export function ServiceReportDocument({ snapshot, onOpenAttachment }: ServiceRep
         <Field
           label={heading.odometer}
           value={service.odometerKm === null ? "—" : `${reportNumber(service.odometerKm, language)} km`}
-          mono
+          figure
         />
-        <Field label={heading.total} value={reportCost(service.totalCost, snapshot)} mono accent />
+        <Field label={heading.total} value={reportCost(service.totalCost, snapshot)} figure accent />
       </section>
 
       <Section icon={<Wrench size={16} />} title={heading.work}>
@@ -98,7 +98,7 @@ export function ServiceReportDocument({ snapshot, onOpenAttachment }: ServiceRep
       )}
 
       <footer
-        className="mt-2 pt-5 text-center font-mono text-[10px] uppercase tracking-[0.14em]"
+        className="mt-2 pt-5 text-center tabular-nums text-[10px] uppercase tracking-label"
         style={{ borderTop: `1px solid ${REPORT_PAPER.rule}`, color: REPORT_PAPER.inkMuted }}
       >
         {heading.issued} {reportDate(snapshot.generatedAt, language)} · bikecheck.cloud
@@ -125,7 +125,7 @@ function ActionBlock({
     >
       <div className="flex justify-between items-baseline gap-4">
         <h4 className="font-semibold text-[15px] leading-snug min-w-0">{action.name}</h4>
-        <span className="font-mono text-sm shrink-0">
+        <span className="tabular-nums text-sm shrink-0">
           {action.cost === null ? "—" : reportCost(action.cost, snapshot)}
         </span>
       </div>
@@ -133,7 +133,7 @@ function ActionBlock({
       {/* A buyer must be able to tell a new part from a serviced one. */}
       {action.replacement && (
         <span
-          className="font-mono uppercase text-[10px] font-semibold tracking-[0.12em] self-start px-1.5 py-0.5 rounded"
+          className="tabular-nums uppercase text-[10px] font-semibold tracking-label self-start px-1.5 py-0.5 rounded"
           style={{ backgroundColor: REPORT_PAPER.accentWash, color: REPORT_PAPER.accent }}
         >
           <RefreshCw size={10} className="inline-block mr-1 -mt-0.5" />
@@ -172,7 +172,7 @@ function AttachmentRow({
 }): ReactElement {
   const size =
     attachment.sizeBytes === null ? null : (
-      <span className="font-mono text-xs shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
+      <span className="tabular-nums text-xs shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
         {formatFileSize(attachment.sizeBytes, language)}
       </span>
     );
@@ -196,13 +196,13 @@ function AttachmentRow({
 function Field({
   label,
   value,
-  mono = false,
+  figure = false,
   accent = false,
   muted = false,
 }: {
   label: string;
   value: string;
-  mono?: boolean;
+  figure?: boolean;
   accent?: boolean;
   muted?: boolean;
 }): ReactElement {
@@ -210,7 +210,7 @@ function Field({
     <div className="flex flex-col gap-0.5 min-w-0">
       <RowLabel>{label}</RowLabel>
       <span
-        className={`${mono ? "font-mono" : ""} text-sm leading-snug break-words`}
+        className={`${figure ? "tabular-nums" : ""} text-sm leading-snug break-words`}
         style={{ color: accent ? REPORT_PAPER.accent : muted ? REPORT_PAPER.inkMuted : REPORT_PAPER.ink }}
       >
         {value}
@@ -227,18 +227,18 @@ function Section({ icon, title, children }: { icon: ReactNode; title: string; ch
         style={{ borderBottom: `1px solid ${REPORT_PAPER.ruleStrong}`, color: REPORT_PAPER.ink }}
       >
         {icon}
-        <h3 className="font-mono uppercase text-xs font-semibold tracking-[0.14em]">{title}</h3>
+        <h3 className="tabular-nums uppercase text-xs font-semibold tracking-label">{title}</h3>
       </div>
       {children}
     </section>
   );
 }
 
-// The metadata voice: mono, small, quiet. Names a thing without speaking for the section.
+// The metadata voice: uppercase, small, quiet. Names a thing without speaking for the section.
 function RowLabel({ children }: { children: ReactNode }): ReactElement {
   return (
     <span
-      className="font-mono uppercase text-[10px] font-semibold tracking-[0.12em]"
+      className="tabular-nums uppercase text-[10px] font-semibold tracking-label"
       style={{ color: REPORT_PAPER.inkMuted }}
     >
       {children}

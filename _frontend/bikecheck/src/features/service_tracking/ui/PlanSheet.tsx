@@ -88,7 +88,7 @@ function PlanBody({
           <Text fz={20} fw={700} c="text.6" lh={1.2} lineClamp={2}>
             {catalogueLabel(action.action_i18n_key, action.action_name, t)}
           </Text>
-          <Text className="font-mono" fz={11} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" lineClamp={1}>
+          <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={1}>
             {trackedPartLabel(action, t)}
           </Text>
         </Stack>

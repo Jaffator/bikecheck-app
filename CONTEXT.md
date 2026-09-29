@@ -238,6 +238,12 @@ part. A day that has passed stays until the Action is recorded, the plan moves o
 (ADR 0038).
 _Avoid_: Schedule (reads as recurring), appointment, reminder (nothing reminds), postpone
 
+**Descent Time**:
+The minutes a ride spent moving downhill — the same downhill splits the brake pad wear index counts.
+Paced against that index over the bike's latest rides, it says how much descent a pad has left
+(ADR 0040). Rides imported before it was kept have none and are left out.
+_Avoid_: Downhill time, descent metres (the index is not metres)
+
 ### Setup
 
 **Setup**:

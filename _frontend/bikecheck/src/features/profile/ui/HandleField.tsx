@@ -18,7 +18,7 @@ const HANDLE_INPUT_STYLES = {
   ...inputStyles,
   input: {
     ...inputStyles.input,
-    fontFamily: "var(--font-mono)",
+    fontVariantNumeric: "tabular-nums",
     paddingLeft: PREFIX_WIDTH,
     "--input-disabled-bg": "var(--mantine-color-cards-7)",
     "--input-disabled-color": "var(--mantine-color-text-9)",
@@ -76,7 +76,7 @@ export function HandleField({ handle, onChange, onCommit, error, origin, savedUr
           if (event.key === "Enter") event.currentTarget.blur();
         }}
         leftSection={
-          <Text className="font-mono" fz={13} c={dim} pl={4}>
+          <Text className="tabular-nums" fz={13} c={dim} pl={4}>
             /u/
           </Text>
         }
@@ -88,7 +88,7 @@ export function HandleField({ handle, onChange, onCommit, error, origin, savedUr
         spellCheck={false}
         aria-label={t("sharing.sectionAddress")}
       />
-      <Text className="font-mono" fz={12} c={dim} truncate>
+      <Text className="tabular-nums" fz={12} c={dim} truncate>
         {url}
       </Text>
       <Group gap="sm" grow wrap="nowrap">

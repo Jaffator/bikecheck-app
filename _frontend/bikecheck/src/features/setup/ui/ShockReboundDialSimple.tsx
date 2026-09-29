@@ -6,7 +6,7 @@ import type { ReactElement } from "react";
 import type { ReboundRing, SimpleReboundDialProps } from "../dial.types";
 import { DIAL_SVG_STYLE, FOCUS_CLASS, sideRing, useDialEngine, type RingGroupProps } from "../dialEngine";
 import { TAU } from "../dialGeometry";
-import { DIAL_FONT, DialFocusStyle } from "./dialParts";
+import { DialFocusStyle } from "./dialParts";
 
 const RING: ReboundRing = "lsr";
 // Radius and height of the cylinder; the drawing is local to its top centre.
@@ -147,8 +147,7 @@ function Knob({ groupProps, url }: KnobProps): ReactElement {
             <rect x={-R} y={BAND.y0} width={2 * R} height={BAND.y1 - BAND.y0} fill={url("anod")} />
             <rect x={-R} y={BAND.y0} width={2 * R} height={BAND.y1 - BAND.y0} fill={url("band")} />
             <g
-              fontFamily={DIAL_FONT}
-              fontWeight={900}
+              fontWeight={700}
               fontSize={BAND.font}
               fill="#fff"
               textAnchor="middle"
@@ -200,10 +199,8 @@ function DirectionHint(): ReactElement {
   const y = HINT_Y;
   return (
     <g
-      fontFamily={DIAL_FONT}
       fontWeight={700}
       fontSize={18}
-      letterSpacing="0.08em"
       fill={HINT_COLOR}
       stroke={HINT_COLOR}
       strokeWidth={2}

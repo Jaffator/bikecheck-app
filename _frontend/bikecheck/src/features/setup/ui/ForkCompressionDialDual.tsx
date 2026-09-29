@@ -140,7 +140,7 @@ export function GenericCompressionDial({
           <path d={HSC_EDGE} fill="#1c1d20" />
           <circle cx={CX} cy={CY} r={146} fill={defUrl("hscFace")} />
           <RadialLine r1={108} r2={150} deg={0} stroke="#fff" strokeWidth={3} strokeLinecap="round" />
-          <ArcText href={`#${defId("arcHSC")}`} size={12} spacing={1.5}>
+          <ArcText href={`#${defId("arcHSC")}`} size={12}>
             HSC
           </ArcText>
           <PolarText r={125} deg={-119} size={15}>
@@ -189,7 +189,7 @@ export function GenericCompressionDial({
             −
           </PolarText>
           <ArcArrow geom={arcArrowGeom(88, 113, 120)} opacity={0.9} />
-          <ArcText href={`#${defId("arcLSC")}`} size={12} spacing={1.5}>
+          <ArcText href={`#${defId("arcLSC")}`} size={12}>
             LSC
           </ArcText>
           <circle cx={CX} cy={CY} r={44} fill={defUrl("accentRing")} />

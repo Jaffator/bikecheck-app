@@ -121,7 +121,7 @@ function JobRow({
           </Text>
           <Text inherit style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
             ·{" "}
-            <Text span inherit className="font-mono">
+            <Text span inherit className="tabular-nums">
               {readingFigure(action, i18n.language)}
             </Text>
           </Text>
@@ -129,11 +129,11 @@ function JobRow({
       </Stack>
       <Group gap={10} wrap="nowrap">
         <BulletBar percentage={action.percentage} color={color} />
-        <Text className="font-mono" fz={13} fw={600} c={color} ta="right" w={48} style={{ flexShrink: 0 }}>
+        <Text className="tabular-nums" fz={13} fw={600} c={color} ta="right" w={48} style={{ flexShrink: 0 }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
       </Group>
-      <Text className="font-mono" fz={13} c="var(--color-text-dim)" ta="right" lineClamp={1}>
+      <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" ta="right" lineClamp={1}>
         {remainingLabel(action, i18n.language, t)}
       </Text>
       {/* Stacked rather than side by side: a second column would squeeze the Action's name to nothing at lg. */}
@@ -170,7 +170,7 @@ function PlanButton({ planned, onPlan }: { planned: string | null; onPlan: () =>
       radius="md"
       variant="outline"
       c={passed ? PASSED_PLAN_COLOR : undefined}
-      className={planned === null ? undefined : "font-mono"}
+      className={planned === null ? undefined : "tabular-nums"}
       leftSection={<CalendarDays size={14} color={passed ? PASSED_PLAN_COLOR : "var(--mantine-color-primary-6)"} />}
       onClick={(event) => {
         event.stopPropagation();
@@ -255,12 +255,12 @@ function NextReplacementLine({ next, onOpen }: { next: NextReplacementView; onOp
         <Text fz={13} c="text.7" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
           <Text span inherit c={attentionColor(next.item.percentage)}>
             {`${next.part} · `}
-            <Text span inherit className="font-mono">
+            <Text span inherit className="tabular-nums">
               {next.left}
             </Text>
           </Text>
           {` · ${next.bike} · `}
-          <Text span inherit className="font-mono">
+          <Text span inherit className="tabular-nums">
             {next.weeks}
           </Text>
         </Text>

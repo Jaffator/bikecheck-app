@@ -1,10 +1,10 @@
 import type { ListedBike } from "./bikes.types";
 
-// One colour per bike on every card and chart. Clear of the money ramp's yellows and the attention
-// reds, so a bike never reads as spend or as a warning.
-const BIKE_COLORS = ["#5B9BF0", "#B18CF0", "#3EC4C4", "#EC7FC0", "#B7C9D3"];
+// One colour per bike on the charts. Lightness varies as much as hue so neighbours never blur; no
+// yellow, orange or red, so a bike never reads as spend, Strava or a warning.
+const BIKE_COLORS = ["#0F92F7", "#52EB63", "#C52BBF", "#FF7A5C", "#E4E9F0", "#428731"];
 
-// The index is the bike's rank among all the owner's bikes; a sixth bike wraps round to the first colour.
+// The index is the bike's rank among all the owner's bikes; a seventh bike wraps round to the first colour.
 export function bikeColor(colorIndex: number): string {
   return BIKE_COLORS[colorIndex % BIKE_COLORS.length];
 }

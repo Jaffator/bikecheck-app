@@ -1,4 +1,4 @@
-// One section of the Follows screen: a mono eyebrow over rows split by hairlines, straight on
+// One section of the Follows screen: an eyebrow over rows split by hairlines, straight on
 // the page background. An empty one stays and says so in one dim line.
 import { Fragment, type ReactElement, type ReactNode } from "react";
 import { Divider, Stack, Text } from "@mantine/core";

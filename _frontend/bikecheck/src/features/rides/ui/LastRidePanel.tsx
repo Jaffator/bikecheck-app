@@ -85,7 +85,7 @@ export function LastRidePanel(): ReactElement {
 function Metric({ label, value }: { label: string; value: string }): ReactElement {
   return (
     <Stack gap={0} style={{ minWidth: 0 }}>
-      <Text className="font-mono" fz={16} fw={600} c="text.6" lineClamp={1}>
+      <Text className="tabular-nums" fz={16} fw={600} c="text.6" lineClamp={1}>
         {value}
       </Text>
       <Eyebrow>{label}</Eyebrow>

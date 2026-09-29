@@ -185,7 +185,7 @@ function TrackedActionsList({ actions }: { actions: TrackedAction[] }): ReactEle
             }}
           />
           {!open && (
-            <Text className="font-mono" fz={11} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+            <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
               {t("tracking.moreCount", { count: rest.length })}
             </Text>
           )}

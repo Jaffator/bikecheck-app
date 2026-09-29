@@ -67,11 +67,11 @@ export function BikeComponentRow({
             </Text>
             {position !== null && (
               <Text
-                className="font-mono"
+                className="tabular-nums"
                 fz={11}
                 fw={400}
                 tt="uppercase"
-                lts="0.08em"
+                lts="var(--tracking-label)"
                 c="var(--color-text-dim)"
                 style={{ flexShrink: 0 }}
               >
@@ -90,17 +90,17 @@ export function BikeComponentRow({
             </Text>
           )}
 
-          {/* What the part has accumulated, in the mono face. A part with nothing on
+          {/* What the part has accumulated, in tabular figures. A part with nothing on
               record yet has no line at all, rather than one holding a placeholder. */}
           {(wear !== null || readOnly) && (
             <Group gap={10} wrap="wrap" mt={2}>
               {wear !== null && (
-                <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+                <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
                   {wear}
                 </Text>
               )}
               {readOnly && (
-                <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+                <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
                   {removedLabel(component, t)}
                 </Text>
               )}

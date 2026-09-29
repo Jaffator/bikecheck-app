@@ -54,7 +54,7 @@ export function SpendCard({ period }: { period?: HomePeriod }): ReactElement {
           })}
         </Text>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={16}
           fw={600}
           c="text.6"
@@ -120,7 +120,7 @@ function BikeBar({
           </Text>
         </Group>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={13}
           c="text.7"
           style={{ flexShrink: 0 }}
@@ -181,7 +181,7 @@ function CategoryBar({
           {categoryLabel(category, t)}
         </Text>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={13}
           c="text.7"
           style={{ flexShrink: 0 }}

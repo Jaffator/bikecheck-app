@@ -251,7 +251,7 @@ export function BikeDetail(): ReactElement {
               </Text>
               {/* The garage and this page are the only places a bike answers to its nickname. */}
               {bike.bikename !== null && bike.bikename !== "" && (
-                <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
+                <Text className="tabular-nums" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
                   {bike.bikename}
                 </Text>
               )}
@@ -479,7 +479,7 @@ function Metric({ icon, value }: { icon: ReactElement; value: string }): ReactEl
   return (
     <Group gap={6} wrap="nowrap">
       {icon}
-      <Text className="font-mono" fz={13} c="text.6" lineClamp={1}>
+      <Text className="tabular-nums" fz={13} c="text.6" lineClamp={1}>
         {value}
       </Text>
     </Group>

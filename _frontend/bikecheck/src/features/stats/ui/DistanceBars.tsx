@@ -86,7 +86,7 @@ export function DistanceBars({ distance, bucket }: { distance: Distance; bucket:
 
       <Box style={{ display: "grid", gridTemplateColumns: columns, gap }}>
         {bars.map((bar) => (
-          <Text key={bar.index} className="font-mono" fz={10} tt="uppercase" lts="0.04em" c="text.8" ta="center">
+          <Text key={bar.index} className="tabular-nums" fz={10} tt="uppercase" lts="var(--tracking-label)" c="text.8" ta="center">
             {axis.format(bar.start)}
           </Text>
         ))}
@@ -124,7 +124,7 @@ function BucketBar({ distance, bucket, bar, largest, printed }: BucketBarProps):
     <Tooltip label={<BarTooltip distance={distance} bucket={bucket} bar={bar} />} styles={TOOLTIP_STYLES}>
       <Box h="100%" style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
         {printed && (
-          <Text className="font-mono" fz={11} c="text.7" ta="center" mb={4} style={{ whiteSpace: "nowrap" }}>
+          <Text className="tabular-nums" fz={11} c="text.7" ta="center" mb={4} style={{ whiteSpace: "nowrap" }}>
             {new Intl.NumberFormat(i18n.language).format(Math.round(bar.total / 1000))}
           </Text>
         )}
@@ -158,7 +158,7 @@ function BarTooltip({ distance, bucket, bar }: { distance: Distance; bucket: Dis
 
   return (
     <Stack gap={4} miw={180}>
-      <Text className="font-mono" fz={12} c="text.7" tt="capitalize">
+      <Text className="tabular-nums" fz={12} c="text.7" tt="capitalize">
         {new Intl.DateTimeFormat(i18n.language, TOOLTIP_FORMAT[bucket]).format(bar.start)}
       </Text>
       {distance.bikes.map((bike, row) => (
@@ -169,7 +169,7 @@ function BarTooltip({ distance, bucket, bar }: { distance: Distance; bucket: Dis
               {bikeTitle(bike)}
             </Text>
           </Group>
-          <Text className="font-mono" fz={13} c="text.6">
+          <Text className="tabular-nums" fz={13} c="text.6">
             {km(bar.meters[row])}
           </Text>
         </Group>
@@ -184,7 +184,7 @@ function BarTooltip({ distance, bucket, bar }: { distance: Distance; bucket: Dis
         <Text fz={13} fw={600} c="text.6">
           {t("stats.monthTotal")}
         </Text>
-        <Text className="font-mono" fz={13} fw={600} c="text.6">
+        <Text className="tabular-nums" fz={13} fw={600} c="text.6">
           {km(bar.total)}
         </Text>
       </Group>
@@ -204,7 +204,7 @@ function Legend({ bikes }: { bikes: DistanceBike[] }): ReactElement {
           <Text fz={13} c="text.7">
             {bikeTitle(bike)}
           </Text>
-          <Text className="font-mono" fz={13} c="text.6">
+          <Text className="tabular-nums" fz={13} c="text.6">
             {kmFormat.format(bike.total_km)}
           </Text>
         </Group>

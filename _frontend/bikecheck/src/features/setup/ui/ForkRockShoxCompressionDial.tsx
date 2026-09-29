@@ -132,10 +132,10 @@ export function RockShoxCompressionDial({
           {[0, 105, 255].map((a) => (
             <RadialLine key={a} r1={108} r2={150} deg={a} stroke="#fff" strokeWidth={3} strokeLinecap="round" />
           ))}
-          <ArcText href={`#${defId("arcCharger")}`} size={10.5} spacing={1.2}>
+          <ArcText href={`#${defId("arcCharger")}`} size={10.5}>
             CHARGER
           </ArcText>
-          <ArcText href={`#${defId("arcHSC")}`} size={12} spacing={1.5}>
+          <ArcText href={`#${defId("arcHSC")}`} size={12}>
             HSC
           </ArcText>
           <PolarText r={125} deg={-119} size={15}>
@@ -185,7 +185,7 @@ export function RockShoxCompressionDial({
             −
           </PolarText>
           <ArcArrow geom={arcArrowGeom(88, 113, 120)} opacity={0.9} />
-          <ArcText href={`#${defId("arcLSC")}`} size={12} spacing={1.5}>
+          <ArcText href={`#${defId("arcLSC")}`} size={12}>
             LSC
           </ArcText>
           <circle cx={CX} cy={CY} r={44} fill={defUrl("blueRing")} />

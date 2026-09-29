@@ -17,10 +17,10 @@ function staleStyle(stale: boolean): CSSProperties {
 function Metric({ label, value, isStale }: { label: string; value: number; isStale: boolean }): ReactElement {
   return (
     <Stack gap={2} style={staleStyle(isStale)}>
-      <Text className="font-mono uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="0.08em">
+      <Text className="tabular-nums uppercase" fz={11} fw={400} c="var(--color-text-dim)" lts="var(--tracking-label)">
         {label}
       </Text>
-      <Text className="font-mono" fz={15} fw={600} c="text.6">
+      <Text className="tabular-nums" fz={15} fw={600} c="text.6">
         {value}
       </Text>
     </Stack>
@@ -68,7 +68,7 @@ export function HistoryTotalsCard({
           {/* The eyebrow and the bike read as one heading over the figure, so they sit in
               one column beside the button rather than each on a row of its height. */}
           <Stack gap={4} style={{ minWidth: 0 }}>
-            <Text className="font-mono uppercase" fz={11} fw={400} c="primary.7" lts="0.08em" lineClamp={1}>
+            <Text className="tabular-nums uppercase" fz={11} fw={400} c="primary.7" lts="var(--tracking-label)" lineClamp={1}>
               {`${t("service.totalsTitle")} · ${periodLabel}`}
             </Text>
             <Text fz={15} fw={600} c="text.6" lineClamp={1}>
@@ -94,7 +94,7 @@ export function HistoryTotalsCard({
         {isLoading || totals === undefined ? (
           <Skeleton height={34} width="60%" radius="sm" />
         ) : (
-          <Text className="font-mono" fz={32} fw={700} c="primary.6" lh={1.1} style={staleStyle(isStale)}>
+          <Text className="tabular-nums" fz={32} fw={700} c="primary.6" lh={1.1} style={staleStyle(isStale)}>
             {formatCost(totals.total_cost, user?.currency ?? null, i18n.language)}
           </Text>
         )}
@@ -107,7 +107,7 @@ export function HistoryTotalsCard({
         </Group>
 
         {blockedBy !== null && (
-          <Text className="font-mono" fz={11} c="var(--color-text-dim)" lineClamp={2}>
+          <Text className="tabular-nums" fz={11} c="var(--color-text-dim)" lineClamp={2}>
             {blockedBy}
           </Text>
         )}

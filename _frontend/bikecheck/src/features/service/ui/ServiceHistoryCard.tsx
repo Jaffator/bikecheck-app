@@ -71,7 +71,7 @@ export function ServiceHistoryCard({
               color="var(--mantine-color-primary-5)"
             />
             {/* One line cut at its end, so the Place gives way before the bike and the date. */}
-            <Text className="font-mono uppercase" fz={11} fw={400} c="text.8" lts="0.08em" lineClamp={1}>
+            <Text className="tabular-nums uppercase" fz={11} fw={400} c="text.8" lts="var(--tracking-label)" lineClamp={1}>
               {[service.bike_name ?? t("service.unknownBike"), date, placeLabel(service.place, service.shop_name, t)]
                 .filter((part) => part !== null)
                 .join(" · ")}
@@ -83,7 +83,7 @@ export function ServiceHistoryCard({
                 reads as zero, because the user said the work was free. */}
             {service.total_cost !== null && (
               <Text
-                className="font-mono"
+                className="tabular-nums"
                 fz={13}
                 fw={service.total_cost === 0 ? 400 : 600}
                 // A zero is still a price, but not one worth the weight.
@@ -98,7 +98,7 @@ export function ServiceHistoryCard({
 
         {/* What was done, one Action per line. */}
         {shown.length === 0 ? (
-          <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+          <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
             {t("service.noActions")}
           </Text>
         ) : (

@@ -38,7 +38,7 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
       <header className="flex flex-col items-center gap-4">
         <img src={logoDark} alt="BikeCheck" className="h-10 w-auto" />
         <h1
-          className="font-mono uppercase text-xs font-semibold tracking-[0.22em]"
+          className="tabular-nums uppercase text-xs font-semibold tracking-label"
           style={{ color: REPORT_PAPER.inkMuted }}
         >
           {heading.serviceDocument}
@@ -56,17 +56,17 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
         <Field
           label={heading.odometer}
           value={service.odometerKm === null ? "—" : `${reportNumber(service.odometerKm, language)} km`}
-          mono
+          figure
         />
         <Field
           label={heading.rideTime}
           value={service.odometerTimeMin === null ? "—" : reportRideTime(service.odometerTimeMin, language)}
-          mono
+          figure
         />
       </section>
 
       <section className="flex items-baseline gap-3">
-        <span className="font-mono text-3xl font-semibold" style={{ color: REPORT_PAPER.accent }}>
+        <span className="tabular-nums text-3xl font-semibold" style={{ color: REPORT_PAPER.accent }}>
           {reportCost(service.totalCost, snapshot)}
         </span>
         <span className="text-base">{heading.total}</span>
@@ -100,7 +100,7 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
                     {/* A buyer must be able to tell a new part from a serviced one. */}
                     {action.replacement && (
                       <span
-                        className="block mt-1 font-mono uppercase text-[9px] font-semibold tracking-[0.12em]"
+                        className="block mt-1 tabular-nums uppercase text-[9px] font-semibold tracking-label"
                         style={{ color: REPORT_PAPER.accent }}
                       >
                         {heading.replacement}
@@ -117,7 +117,7 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
                       </span>
                     ))}
                   </td>
-                  <td className="py-2.5 align-top text-right font-mono whitespace-nowrap">
+                  <td className="py-2.5 align-top text-right tabular-nums whitespace-nowrap">
                     {action.cost === null ? "—" : reportCost(action.cost, snapshot)}
                   </td>
                 </tr>
@@ -152,7 +152,7 @@ export function ServiceReportPrint({ snapshot }: ServiceReportPrintProps): React
           <span className="flex-1 h-4" style={{ borderBottom: `1px solid ${REPORT_PAPER.ruleStrong}` }} />
         </div>
         <span
-          className="text-center font-mono text-[9px] uppercase tracking-[0.14em]"
+          className="text-center tabular-nums text-[9px] uppercase tracking-label"
           style={{ color: REPORT_PAPER.inkMuted }}
         >
           {heading.issued} {reportDate(snapshot.generatedAt, language)} · bikecheck.cloud
@@ -167,7 +167,7 @@ function AttachmentRow({ attachment, language }: { attachment: ReportAttachment;
     <li className="flex justify-between items-baseline gap-4 text-[12px]">
       <span className="min-w-0 break-all">{attachment.name}</span>
       {attachment.sizeBytes !== null && (
-        <span className="font-mono text-[11px] shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
+        <span className="tabular-nums text-[11px] shrink-0" style={{ color: REPORT_PAPER.inkMuted }}>
           {formatFileSize(attachment.sizeBytes, language)}
         </span>
       )}
@@ -179,19 +179,19 @@ function AttachmentRow({ attachment, language }: { attachment: ReportAttachment;
 function Field({
   label,
   value,
-  mono = false,
+  figure = false,
   muted = false,
 }: {
   label: string;
   value: string;
-  mono?: boolean;
+  figure?: boolean;
   muted?: boolean;
 }): ReactElement {
   return (
     <div className="flex flex-col gap-0.5 min-w-0">
       <RowLabel>{label}</RowLabel>
       <span
-        className={`${mono ? "font-mono" : ""} text-[13px] leading-snug break-words`}
+        className={`${figure ? "tabular-nums" : ""} text-[13px] leading-snug break-words`}
         style={{ color: muted ? REPORT_PAPER.inkMuted : REPORT_PAPER.ink }}
       >
         {value}
@@ -204,7 +204,7 @@ function Section({ title, children }: { title: string; children: ReactNode }): R
   return (
     <section className="flex flex-col gap-3">
       <h2
-        className="font-mono uppercase text-[11px] font-semibold tracking-[0.14em] pb-1.5"
+        className="tabular-nums uppercase text-[11px] font-semibold tracking-label pb-1.5"
         style={{ borderBottom: `1px solid ${REPORT_PAPER.ruleStrong}` }}
       >
         {title}
@@ -217,7 +217,7 @@ function Section({ title, children }: { title: string; children: ReactNode }): R
 function HeaderCell({ children, align = "left" }: { children: ReactNode; align?: "left" | "right" }): ReactElement {
   return (
     <th
-      className={`font-mono uppercase text-[9px] font-semibold tracking-[0.12em] pb-2 ${align === "right" ? "text-right" : "pr-4"}`}
+      className={`tabular-nums uppercase text-[9px] font-semibold tracking-label pb-2 ${align === "right" ? "text-right" : "pr-4"}`}
       style={{ color: REPORT_PAPER.inkMuted }}
     >
       {children}
@@ -225,11 +225,11 @@ function HeaderCell({ children, align = "left" }: { children: ReactNode; align?:
   );
 }
 
-// The metadata voice: mono, small, quiet. Names a thing without speaking for the section.
+// The metadata voice: uppercase, small, quiet. Names a thing without speaking for the section.
 function RowLabel({ children }: { children: ReactNode }): ReactElement {
   return (
     <span
-      className="font-mono uppercase text-[9px] font-semibold tracking-[0.12em]"
+      className="tabular-nums uppercase text-[9px] font-semibold tracking-label"
       style={{ color: REPORT_PAPER.inkMuted }}
     >
       {children}

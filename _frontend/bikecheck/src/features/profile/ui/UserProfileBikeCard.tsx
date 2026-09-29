@@ -1,5 +1,5 @@
 // One of somebody's bikes on their garage page: the photo card the garage draws, minus
-// everything that is the owner's business - health, attention, Strava, actions. One mono
+// everything that is the owner's business - health, attention, Strava, actions. One
 // line of numbers and a chevron into the bike.
 import type { ReactElement } from "react";
 import { Box, Group, Paper, Text } from "@mantine/core";
@@ -48,7 +48,7 @@ export function UserProfileBikeCard({ bike, onOpen }: UserProfileBikeCardProps):
     >
       <BikePhoto imageUrl={bike.image_url} title={title} subtitle={subtitle} titleSize={20} />
       <Group justify="space-between" wrap="nowrap" px="md" py="sm">
-        <Text className="font-mono" fz={13} tt="uppercase" c="text.6" lts="0.02em" lineClamp={1}>
+        <Text className="tabular-nums" fz={13} tt="uppercase" c="text.6" lts="var(--tracking-label)" lineClamp={1}>
           {bikeStatsLine(bike, i18n.language, t)}
         </Text>
         <Box style={{ display: "flex", flexShrink: 0 }}>

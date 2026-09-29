@@ -6,7 +6,7 @@ import type { CompressionDialProps } from "../dial.types";
 import { DIAL_SVG_STYLE, FOCUS_CLASS, radialRing, useDialEngine } from "../dialEngine";
 import { arcArrowGeom, arcPath, CX, CY, fmt, hexPoints, wavyCircle } from "../dialGeometry";
 import { FoxLogo } from "./dialLogos";
-import { ArcArrow, ArcText, DIAL_FONT, DialFocusStyle, INK, PolarText, RadialLine } from "./dialParts";
+import { ArcArrow, ArcText, DialFocusStyle, INK, PolarText, RadialLine } from "./dialParts";
 
 // Clicks per turn: HSC 22.5 degrees a click, LSC 15.
 const HSC_CLICKS_PER_TURN = 16;
@@ -164,15 +164,15 @@ export function FoxCompressionDial({
               />
             ))}
           </g>
-          <ArcText href={`#${defId("arcHSC")}`} size={10.5} spacing={1.4} weight={800}>
+          <ArcText href={`#${defId("arcHSC")}`} size={10.5} weight={700}>
             HIGH SPEED COMPRESSION
           </ArcText>
           <ArcArrow geom={RING_ARROW_MINUS} color={GREY} width={6} />
-          <PolarText r={128} deg={206} size={17} fontWeight={800} fill={GREY}>
+          <PolarText r={128} deg={206} size={17} fontWeight={700} fill={GREY}>
             −
           </PolarText>
           <ArcArrow geom={RING_ARROW_PLUS} color={GREY} width={6} />
-          <PolarText r={128} deg={154} size={17} fontWeight={800} fill={GREY}>
+          <PolarText r={128} deg={154} size={17} fontWeight={700} fill={GREY}>
             +
           </PolarText>
           <FoxLogo transform={FOX_LOGO_TR} />
@@ -196,7 +196,7 @@ export function FoxCompressionDial({
           <Cross w={38} color="#060607" />
           <Cross w={34} color="#1f2125" />
           <Cross w={20} color="#272a2f" />
-          <PolarText r={60} deg={180} size={11.5} fontWeight={800} letterSpacing={1.5}>
+          <PolarText r={60} deg={180} size={11.5} fontWeight={700} style={{ letterSpacing: "var(--tracking-label)" }}>
             LSC
           </PolarText>
           <text
@@ -204,8 +204,7 @@ export function FoxCompressionDial({
             y={CY - 24}
             textAnchor="middle"
             dominantBaseline="central"
-            fontFamily={DIAL_FONT}
-            fontWeight={800}
+            fontWeight={700}
             fontSize={17}
             fill={INK}
           >
@@ -217,8 +216,7 @@ export function FoxCompressionDial({
             y={CY - 24}
             textAnchor="middle"
             dominantBaseline="central"
-            fontFamily={DIAL_FONT}
-            fontWeight={800}
+            fontWeight={700}
             fontSize={17}
             fill={INK}
           >

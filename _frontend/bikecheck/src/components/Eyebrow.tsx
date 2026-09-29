@@ -12,11 +12,11 @@ interface EyebrowProps {
 export function Eyebrow({ children, align, color }: EyebrowProps): ReactElement {
   return (
     <Text
-      className="font-mono"
+      className="tabular-nums"
       fz={11}
       fw={400}
       tt="uppercase"
-      lts="0.08em"
+      lts="var(--tracking-label)"
       c={color ?? "var(--color-text-dim)"}
       ta={align}
       lineClamp={1}

@@ -1,4 +1,4 @@
-// One of somebody's bikes as a hero card: the bare photo, the name, one mono line of what
+// One of somebody's bikes as a hero card: the bare photo, the name, one metadata line of what
 // it is, and the readings - distance and saddle time always, parts and Services only while
 // the owner shares those sections.
 import type { ReactElement } from "react";
@@ -49,7 +49,7 @@ export function UserBikeHero({ bike }: UserBikeHeroProps): ReactElement {
             {title}
           </Text>
           {chips !== "" && (
-            <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
+            <Text className="tabular-nums" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
               {chips}
             </Text>
           )}
@@ -83,7 +83,7 @@ function Metric({ icon, value }: { icon: ReactElement; value: string }): ReactEl
   return (
     <Group gap={6} wrap="nowrap">
       {icon}
-      <Text className="font-mono" fz={13} c="text.6" lineClamp={1}>
+      <Text className="tabular-nums" fz={13} c="text.6" lineClamp={1}>
         {value}
       </Text>
     </Group>

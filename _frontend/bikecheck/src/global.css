@@ -124,8 +124,12 @@
      which carries less light than the hero and would read as a hole at the deep shade. */
   --color-decor-sunk: #201b1b;
 
-  --font-sans: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Geist", sans-serif;
+
+  /* Letter-spacing by role, default 0 - see docs/design.md §9 Typography. */
+  --tracking-label: 0.08em;
+  --tracking-title: -0.01em;
+  --tracking-display: -0.02em;
 
   /* `desktop:` at ADR 0035's 60em, written in rem: an em breakpoint sorts before every rem one and
      `md:` would beat it. sm/md/lg stay for the public profile. */

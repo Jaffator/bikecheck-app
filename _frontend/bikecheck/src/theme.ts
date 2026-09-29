@@ -158,11 +158,10 @@ export const theme = createTheme({
     text,
     textDark,
   },
-  fontFamily: "Inter, sans-serif",
-  // One family for headings and body: the card typography rule keeps Inter for names and
-  // mono for data, so a third face had nowhere left to go.
+  fontFamily: "Geist, sans-serif",
+  // One typeface everywhere; figures differ by tabular-nums, not a face (ADR 0039).
   headings: {
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "Geist, sans-serif",
   },
   other: otherColor,
   // Below Mantine's 62em, so a phone's "Desktop site" (a 980px viewport) gets the desktop shell (ADR 0035).

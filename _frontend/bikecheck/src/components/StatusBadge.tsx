@@ -16,7 +16,7 @@ export function StatusBadge({ label }: StatusBadgeProps): ReactElement {
       style={{ border: "1px solid var(--color-border-solid)" }}
     >
       <Box w={8} h={8} bg="var(--color-status-idle)" className="rounded-full" />
-      <Text className="font-mono" fz={10} lh="15px" w="auto" ta="center" c="var(--color-text-dim)">
+      <Text className="tabular-nums" fz={10} lh="15px" w="auto" ta="center" c="var(--color-text-dim)">
         {label}
       </Text>
     </Group>

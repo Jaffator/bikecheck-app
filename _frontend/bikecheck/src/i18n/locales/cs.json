@@ -472,7 +472,27 @@
     "columnDistancePeriod": "Najeto · {{period}}",
     "columnTimePeriod": "Čas · {{period}}",
     "columnWorstPart": "Nejhorší díl",
-    "columnStatus": "Stav"
+    "columnStatus": "Stav",
+    "myParts": "Moje díly",
+    "activeCount_one": "{{count}} aktivní",
+    "activeCount_few": "{{count}} aktivní",
+    "activeCount_many": "{{count}} aktivních",
+    "activeCount_other": "{{count}} aktivních",
+    "archivedCount_one": "{{count}} v archivu",
+    "archivedCount_few": "{{count}} v archivu",
+    "archivedCount_many": "{{count}} v archivu",
+    "archivedCount_other": "{{count}} v archivu",
+    "distanceThisYear": "{{km}} letos",
+    "tabActive": "Aktivní {{count}}",
+    "tabArchived": "Archiv {{count}}",
+    "sortBy": "Řadit podle",
+    "sortHealth": "Stav dílů",
+    "sortDistance": "Vzdálenost",
+    "sortLastRide": "Poslední jízda",
+    "sortName": "Název",
+    "lastRide": "Poslední jízda {{date}}",
+    "columnType": "Typ",
+    "columnArchivedOn": "Archivováno"
   },
   "bikeComponents": {
     "title": "Komponenty",
@@ -931,7 +951,8 @@
     "unpairConfirmTitle": "Odpárovat toto kolo?",
     "unpairConfirmCancel": "Nechat spárované",
     "linkedToLabel": "Propojeno s",
-    "unpairFailed": "Kolo se nepodařilo odpárovat. Zkus to znovu."
+    "unpairFailed": "Kolo se nepodařilo odpárovat. Zkus to znovu.",
+    "pair": "Propojit"
   },
   "notifications": {
     "empty": "Zatím žádné notifikace",
