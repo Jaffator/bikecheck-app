@@ -17,6 +17,7 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { StravaWebhookService } from './strava-webhook.service';
 import { StravaWebhookEventDto } from './dto/strava-webhook-event.dto';
 import { SyncAthleteDto } from './dto/sync-athlete.dto';
+import { SyncEnqueueDto } from './dto/sync-enqueue.dto';
 import { InternalAuthGuard } from '../common/internal-auth.guard';
 import type { StravaGearResponse } from '@contracts/strava-gear.contract';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -43,14 +44,22 @@ export class WebhookController {
   // ------------------------------------------------------------
   // ---------- Catch up on missed rides (called by monolith) ---
   // ------------------------------------------------------------
-  // Missing rides go through the webhook queue as create events, so they are processed like any ride.
   @UseGuards(InternalAuthGuard)
-  @Post('/sync')
+  @Post('/sync/list')
   @HttpCode(200)
-  async syncAthlete(@Body(new ValidationPipe({ whitelist: true })) body: SyncAthleteDto): Promise<{ queued: number }> {
-    const missing = await this.stravaWebhookService.findMissingRideIds(body.athleteId, body.after);
+  async listRides(
+    @Body(new ValidationPipe({ whitelist: true })) body: SyncAthleteDto,
+  ): Promise<{ activityIds: number[] }> {
+    return { activityIds: await this.stravaWebhookService.listRideIds(body.athleteId, body.after) };
+  }
+
+  // Missed rides go through the webhook queue as create events, so they are processed like any ride.
+  @UseGuards(InternalAuthGuard)
+  @Post('/sync/enqueue')
+  @HttpCode(200)
+  async enqueueRides(@Body(new ValidationPipe({ whitelist: true })) body: SyncEnqueueDto): Promise<{ queued: number }> {
     const eventTime = Math.floor(Date.now() / 1000);
-    for (const activityId of missing) {
+    for (const activityId of body.activityIds) {
       await this.webhookQueue.add('process-strava-event', {
         aspect_type: 'create',
         event_time: eventTime,
@@ -61,8 +70,11 @@ export class WebhookController {
         updates: {},
       } satisfies StravaWebhookEventDto);
     }
-    this.logger.info({ custom: true, athleteId: body.athleteId, queued: missing.length }, 'Strava sync queued rides');
-    return { queued: missing.length };
+    this.logger.info(
+      { custom: true, athleteId: body.athleteId, queued: body.activityIds.length },
+      'Strava sync queued rides',
+    );
+    return { queued: body.activityIds.length };
   }
 
   // ------------------------------------------------------------

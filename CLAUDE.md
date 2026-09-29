@@ -53,7 +53,6 @@ General:
 - Reuse existing types and utilities
 - Ask before large structural changes
 - Use concise answers by default
-- Explain shortly but also with example
 
 ## Project conventions
 

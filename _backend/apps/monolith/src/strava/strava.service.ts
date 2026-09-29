@@ -18,7 +18,7 @@ import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
 
 // Strava's API limits are per app, shared by every user, so a user may sync this often at most.
 const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
-// One list request covers the window whatever its length, so it is always the full 60 days.
+// The window starts at the last sync; this caps how far back a first or late sync walks.
 const SYNC_LOOKBACK_MS = 60 * 24 * 60 * 60 * 1000;
 
 interface SplitMetricEntry {
@@ -540,8 +540,8 @@ export class StravaEventsService {
   }
 
   /**
-   * Asks strava-service to queue the rides of the last 60 days it never received, at most once
-   * per cooldown. They arrive through the webhook pipeline, so this returns only how many.
+   * Queues unseen Strava rides since the last sync (max 60 days), once per cooldown.
+   * They arrive through the webhook pipeline, so this returns only how many.
    */
   async syncFromStrava(userId: number): Promise<ResponseStravaSyncDto> {
     const user = await this.prisma.users.findUnique({
@@ -555,27 +555,54 @@ export class StravaEventsService {
       throw new HttpException('Strava sync is cooling down', HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    let queued: number;
+    const athleteId = Number(user.strava_athlete_id);
+    const windowStart = Math.max(now.getTime() - SYNC_LOOKBACK_MS, user.strava_last_sync_at?.getTime() ?? 0);
+    let missing: number[];
     try {
-      const response = await axios.post<{ queued: number }>(
-        `${process.env.STRAVA_SERVICE_URL}/strava/sync`,
-        {
-          athleteId: Number(user.strava_athlete_id),
-          after: Math.floor((now.getTime() - SYNC_LOOKBACK_MS) / 1000),
-        },
-        {
-          headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
-          timeout: 15000,
-        },
-      );
-      queued = response.data.queued;
+      const listed = await this.postToStravaService<{ activityIds: number[] }>('/strava/sync/list', {
+        athleteId,
+        after: Math.floor(windowStart / 1000),
+      });
+      missing = await this.findUnseenActivityIds(listed.activityIds);
+      if (missing.length > 0) {
+        await this.postToStravaService('/strava/sync/enqueue', { athleteId, activityIds: missing });
+      }
     } catch (error) {
       throw new Error(`Failed to sync Strava: ${(error as Error).message}`);
     }
 
     // Only a sync that reached Strava starts the cooldown, so a failed one can be retried.
     await this.prisma.users.update({ where: { id: userId }, data: { strava_last_sync_at: now } });
-    return { queued, synced_at: now };
+    return { queued: missing.length, synced_at: now };
+  }
+
+  // Resolved pending rows count as seen, so a dismissed ride is never queued again.
+  private async findUnseenActivityIds(activityIds: number[]): Promise<number[]> {
+    if (activityIds.length === 0) return [];
+    const ids = activityIds.map((id) => BigInt(id));
+    const [rides, pending] = await Promise.all([
+      this.prisma.rides.findMany({
+        where: { activity_strava_id: { in: ids } },
+        select: { activity_strava_id: true },
+      }),
+      this.prisma.strava_pending_activities.findMany({
+        where: { activity_id: { in: ids } },
+        select: { activity_id: true },
+      }),
+    ]);
+    const seen = new Set([
+      ...rides.map((ride) => String(ride.activity_strava_id)),
+      ...pending.map((row) => String(row.activity_id)),
+    ]);
+    return activityIds.filter((id) => !seen.has(String(id)));
+  }
+
+  private async postToStravaService<T>(path: string, body: object): Promise<T> {
+    const response = await axios.post<T>(`${process.env.STRAVA_SERVICE_URL}${path}`, body, {
+      headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
+      timeout: 15000,
+    });
+    return response.data;
   }
 
   /**
