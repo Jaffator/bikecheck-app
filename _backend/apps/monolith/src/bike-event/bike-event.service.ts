@@ -20,6 +20,7 @@ import {
   Response_ServiceAttachment_Dto,
   Response_HistoryTotals_Dto,
   Response_ServiceHistory_Dto,
+  ServiceMonthTotalDto,
 } from './dto/response-bike-event.dto';
 
 // A history page the user scrolls; the UI asks for more when it needs them.
@@ -500,7 +501,7 @@ export class BikeEventService {
     // is_deleted is nullable, so `not: true` is what covers both false and the null
     // rows written before the column existed. Across every bike an Archived Bike drops
     // out; asked for by id its own history still reads (ADR 0024).
-    const where = {
+    const where: Prisma.events_bikesWhereInput = {
       is_deleted: { not: true },
       ...(bikeId !== undefined ? { bike_id: bikeId } : { bikes: { user_id: userId, is_deleted: { not: true } } }),
       // The period the History Totals are counted for narrows the list under them too,
@@ -532,9 +533,14 @@ export class BikeEventService {
       }),
       this.prisma.events_bikes.count({ where }),
     ]);
+    const monthTotals = await this.monthTotals(
+      where,
+      services.map((service) => service.service_date),
+    );
 
     return {
       total,
+      month_totals: monthTotals,
       items: services.map((service) => ({
         id: service.id,
         bike_id: service.bike_id!,
@@ -652,6 +658,39 @@ export class BikeEventService {
 
     await this.prisma.events_bikes.delete({ where: { id: bikeEventId } });
     await this.evaluateService(service, userId);
+  }
+
+  // Whole-month totals for the months on the page, so a month split across pages reads the same on both.
+  // Summed here because Prisma groupBy cannot truncate a date to its month.
+  private async monthTotals(
+    where: Prisma.events_bikesWhereInput,
+    pageDates: (Date | null)[],
+  ): Promise<ServiceMonthTotalDto[]> {
+    const dated = pageDates.filter((date): date is Date => date !== null);
+    const scopes: Prisma.events_bikesWhereInput[] = [];
+    if (dated.length > 0) scopes.push({ service_date: monthsSpanning(dated) });
+    if (dated.length < pageDates.length) scopes.push({ service_date: null });
+    if (scopes.length === 0) return [];
+
+    const rows = await this.prisma.events_bikes.findMany({
+      where: { AND: [where, { OR: scopes }] },
+      select: { service_date: true, total_cost: true },
+    });
+
+    const sums = new Map<string | null, { count: number; cost: Prisma.Decimal }>();
+    for (const row of rows) {
+      const key = monthKey(row.service_date);
+      const sum = sums.get(key) ?? { count: 0, cost: new Prisma.Decimal(0) };
+      sums.set(key, { count: sum.count + 1, cost: row.total_cost ? sum.cost.plus(row.total_cost) : sum.cost });
+    }
+
+    // The page is already newest first with undated last, so its distinct months come in that order.
+    const months = [...new Set(pageDates.map(monthKey))];
+    return months.map((month) => ({
+      month,
+      service_count: sums.get(month)?.count ?? 0,
+      total_cost: sums.get(month)?.cost.toNumber() ?? 0,
+    }));
   }
 
   // A service with no bike on it is a row the schema still allows and nothing can be
@@ -1267,6 +1306,23 @@ function parseDay(day?: string): Date | undefined {
 
 function nextDay(day: Date): Date {
   return new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+}
+
+// YYYY-MM in local time, matching how serviceDateInPeriod reads a day.
+function monthKey(date: Date | null): string | null {
+  if (date === null) return null;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// From the first day of the oldest month to the first day after the newest one.
+function monthsSpanning(dates: Date[]): { gte: Date; lt: Date } {
+  const times = dates.map((date) => date.getTime());
+  const oldest = new Date(Math.min(...times));
+  const newest = new Date(Math.max(...times));
+  return {
+    gte: new Date(oldest.getFullYear(), oldest.getMonth(), 1),
+    lt: new Date(newest.getFullYear(), newest.getMonth() + 1, 1),
+  };
 }
 
 // A page size the caller left out arrives as NaN and takes the default; one they

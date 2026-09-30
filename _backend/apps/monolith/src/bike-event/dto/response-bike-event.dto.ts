@@ -302,10 +302,25 @@ export class Response_HistoryTotals_Dto {
   replacement_count!: number;
 }
 
+// One month header over the history: the whole month under the list's filter, not just the rows on the page.
+export class ServiceMonthTotalDto {
+  @ApiProperty({ type: String, example: '2026-09', nullable: true, description: 'YYYY-MM; null gathers the services with no date' })
+  month!: string | null;
+
+  @ApiProperty({ example: 6 })
+  service_count!: number;
+
+  @ApiProperty({ example: 3290, description: 'Services with no cost add nothing' })
+  total_cost!: number;
+}
+
 export class Response_ServiceHistory_Dto {
   @ApiProperty({ type: [ServiceHistoryItemDto] })
   items!: ServiceHistoryItemDto[];
 
   @ApiProperty({ example: 12, description: 'Services matching the filter, ignoring limit and offset' })
   total!: number;
+
+  @ApiProperty({ type: [ServiceMonthTotalDto], description: 'One entry per month on this page, newest first' })
+  month_totals!: ServiceMonthTotalDto[];
 }

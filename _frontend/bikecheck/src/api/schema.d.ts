@@ -2419,6 +2419,20 @@ export interface components {
              */
             shop_name: Record<string, never> | null;
         };
+        ServiceMonthTotalDto: {
+            /**
+             * @description YYYY-MM; null gathers the services with no date
+             * @example 2026-09
+             */
+            month: string | null;
+            /** @example 6 */
+            service_count: number;
+            /**
+             * @description Services with no cost add nothing
+             * @example 3290
+             */
+            total_cost: number;
+        };
         Response_ServiceHistory_Dto: {
             items: components["schemas"]["ServiceHistoryItemDto"][];
             /**
@@ -2426,6 +2440,8 @@ export interface components {
              * @example 12
              */
             total: number;
+            /** @description One entry per month on this page, newest first */
+            month_totals: components["schemas"]["ServiceMonthTotalDto"][];
         };
         Response_HistoryTotals_Dto: {
             /**

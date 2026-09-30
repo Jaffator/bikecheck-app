@@ -40,10 +40,20 @@ export interface ServicePeriod {
   to: string | null;
 }
 
+// A whole month under the history's filter, even when the page shows only part of it.
+export interface ServiceMonthTotal {
+  // YYYY-MM, or null for the services with no date.
+  month: string | null;
+  service_count: number;
+  total_cost: number;
+}
+
 export interface ServiceHistoryPage {
   items: ServiceHistoryItem[];
   // Services matching the filter, ignoring limit and offset.
   total: number;
+  // One per month on this page, newest first.
+  month_totals: ServiceMonthTotal[];
 }
 
 // ------------------------------------------------------------------

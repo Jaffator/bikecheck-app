@@ -1225,6 +1225,116 @@ describe('BikeEventService', () => {
       const [call] = mockPrisma.events_bikes.findMany.mock.calls.at(-1) as [{ where: Record<string, unknown> }];
       expect(call.where).not.toHaveProperty('service_date');
     });
+
+    describe('month totals', () => {
+      const SEPT = new Date(2026, 8, 20);
+      const AUG = new Date(2026, 7, 5);
+
+      const pageRow = (serviceDate: Date | null, id = 1): typeof historyRow =>
+        ({ ...historyRow, id, service_date: serviceDate }) as unknown as typeof historyRow;
+      const totalRow = (serviceDate: Date | null, cost: number | null): Record<string, unknown> => ({
+        service_date: serviceDate,
+        total_cost: cost === null ? null : new Prisma.Decimal(cost),
+      });
+      const totalsWhere = (): Record<string, unknown> =>
+        (mockPrisma.events_bikes.findMany.mock.calls[1] as [{ where: Record<string, unknown> }])[0].where;
+
+      beforeEach(() => {
+        mockPrisma.events_bikes.count.mockResolvedValue(45);
+      });
+
+      it('sums every service in each month on the page, not only the rows shown', async () => {
+        // ARRANGE: the page holds one September and one August row; the months hold more.
+        mockPrisma.events_bikes.findMany
+          .mockResolvedValueOnce([pageRow(SEPT, 2), pageRow(AUG, 1)])
+          .mockResolvedValueOnce([
+            totalRow(new Date(2026, 8, 20), 1000),
+            totalRow(new Date(2026, 8, 1), 290.5),
+            totalRow(new Date(2026, 7, 31), 9100),
+            totalRow(new Date(2026, 7, 2), null),
+          ]);
+
+        // ACT
+        const result = await service.history(OWNER_ID, 2, 0);
+
+        // ASSERT: newest month first, the unpriced service counted but adding nothing.
+        expect(result.month_totals).toEqual([
+          { month: '2026-09', service_count: 2, total_cost: 1290.5 },
+          { month: '2026-08', service_count: 2, total_cost: 9100 },
+        ]);
+      });
+
+      it('counts whole months under the same filter the list uses', async () => {
+        // ARRANGE
+        mockPrisma.events_bikes.findMany.mockResolvedValueOnce([pageRow(SEPT, 2), pageRow(AUG, 1)]).mockResolvedValueOnce([]);
+
+        // ACT: one bike, one period.
+        await service.history(OWNER_ID, 2, 0, BIKE_ID, '2026-01-01', '2026-12-31');
+
+        // ASSERT: the list's own where, narrowed to 1 August up to 1 October.
+        const [listCall] = mockPrisma.events_bikes.findMany.mock.calls[0] as [{ where: Record<string, unknown> }];
+        expect(totalsWhere()).toEqual({
+          AND: [listCall.where, { OR: [{ service_date: { gte: new Date(2026, 7, 1), lt: new Date(2026, 9, 1) } }] }],
+        });
+        expect(listCall.where).toMatchObject({
+          bike_id: BIKE_ID,
+          service_date: { gte: new Date(2026, 0, 1), lt: new Date(2027, 0, 1) },
+        });
+      });
+
+      it('gives the services with no date one entry of their own when they reach the page', async () => {
+        // ARRANGE
+        mockPrisma.events_bikes.findMany
+          .mockResolvedValueOnce([pageRow(AUG, 2), pageRow(null, 1)])
+          .mockResolvedValueOnce([totalRow(AUG, 100), totalRow(null, 50), totalRow(null, null)]);
+
+        // ACT
+        const result = await service.history(OWNER_ID, 2, 0);
+
+        // ASSERT: undated last, as in the list.
+        expect(result.month_totals).toEqual([
+          { month: '2026-08', service_count: 1, total_cost: 100 },
+          { month: null, service_count: 2, total_cost: 50 },
+        ]);
+        expect(totalsWhere()).toMatchObject({
+          AND: [
+            expect.anything(),
+            { OR: [{ service_date: { gte: new Date(2026, 7, 1), lt: new Date(2026, 8, 1) } }, { service_date: null }] },
+          ],
+        });
+      });
+
+      it('gives a month split across two pages the same totals on both', async () => {
+        // ARRANGE: September spans the end of page one and the start of page two.
+        const september = [totalRow(new Date(2026, 8, 20), 100), totalRow(new Date(2026, 8, 2), 200)];
+        mockPrisma.events_bikes.findMany
+          .mockResolvedValueOnce([pageRow(new Date(2026, 8, 20), 2)])
+          .mockResolvedValueOnce(september)
+          .mockResolvedValueOnce([pageRow(new Date(2026, 8, 2), 1)])
+          .mockResolvedValueOnce(september);
+
+        // ACT
+        const first = await service.history(OWNER_ID, 1, 0);
+        const second = await service.history(OWNER_ID, 1, 1);
+
+        // ASSERT: the totals query is never paged.
+        expect(first.month_totals).toEqual([{ month: '2026-09', service_count: 2, total_cost: 300 }]);
+        expect(second.month_totals).toEqual(first.month_totals);
+        expect(mockPrisma.events_bikes.findMany.mock.calls[3][0]).not.toHaveProperty('skip');
+      });
+
+      it('asks nothing more for an empty page', async () => {
+        // ARRANGE
+        mockPrisma.events_bikes.findMany.mockResolvedValueOnce([]);
+
+        // ACT
+        const result = await service.history(OWNER_ID, 2, 0);
+
+        // ASSERT
+        expect(result.month_totals).toEqual([]);
+        expect(mockPrisma.events_bikes.findMany).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe('the History Totals', () => {

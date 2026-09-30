@@ -5919,6 +5919,31 @@
           "shop_name"
         ]
       },
+      "ServiceMonthTotalDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-09",
+            "nullable": true,
+            "description": "YYYY-MM; null gathers the services with no date"
+          },
+          "service_count": {
+            "type": "number",
+            "example": 6
+          },
+          "total_cost": {
+            "type": "number",
+            "example": 3290,
+            "description": "Services with no cost add nothing"
+          }
+        },
+        "required": [
+          "month",
+          "service_count",
+          "total_cost"
+        ]
+      },
       "Response_ServiceHistory_Dto": {
         "type": "object",
         "properties": {
@@ -5932,11 +5957,19 @@
             "type": "number",
             "example": 12,
             "description": "Services matching the filter, ignoring limit and offset"
+          },
+          "month_totals": {
+            "description": "One entry per month on this page, newest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceMonthTotalDto"
+            }
           }
         },
         "required": [
           "items",
-          "total"
+          "total",
+          "month_totals"
         ]
       },
       "Response_HistoryTotals_Dto": {
