@@ -145,22 +145,22 @@ export class ResponseBikeDto implements Omit<bikes, 'bike_weight_kg'> {
   is_shared!: boolean;
 }
 
-// A bike as GET /bike lists it, in the garage or the archive: with its colour and what its rides add up to.
-export class ResponseListedBikeDto extends ResponseBikeDto {
-  @ApiProperty({
-    example: 0,
-    description: "Rank by id among all the owner's bikes, archived included, so a colour never shifts",
-  })
-  color_index!: number;
-
+// A bike with what its rides add up to: GET /bike/:id, and the base of the listed bike.
+export class ResponseRiddenBikeDto extends ResponseBikeDto {
   @ApiProperty({ example: 42, description: 'Non-deleted rides, lifetime' })
   ride_count!: number;
+
+  @ApiProperty({ example: 1840, description: "Sum of those rides' distance in whole km; total_km is only what the owner typed" })
+  ride_km!: number;
 
   @ApiProperty({
     example: 3180,
     description: "Sum of those rides' duration_min; total_time_min is only what the owner typed",
   })
   ride_time_min!: number;
+
+  @ApiProperty({ example: 25400, description: "Sum of those rides' elevation_up_m" })
+  ride_elevation_m!: number;
 
   @ApiProperty({
     type: String,
@@ -169,4 +169,13 @@ export class ResponseListedBikeDto extends ResponseBikeDto {
     description: 'Start of the newest non-deleted ride; null when the bike has none',
   })
   last_ride_at!: string | null;
+}
+
+// A bike as GET /bike lists it, in the garage or the archive: with its colour and what its rides add up to.
+export class ResponseListedBikeDto extends ResponseRiddenBikeDto {
+  @ApiProperty({
+    example: 0,
+    description: "Rank by id among all the owner's bikes, archived included, so a colour never shifts",
+  })
+  color_index!: number;
 }

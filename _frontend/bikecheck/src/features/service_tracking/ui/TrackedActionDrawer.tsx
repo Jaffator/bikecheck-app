@@ -103,18 +103,6 @@ function Body({
 
       <ReadingCard action={action} />
 
-      <Button
-        fullWidth
-        color="primary.6"
-        c="textDark.6"
-        radius="md"
-        onClick={() => {
-          navigate(trackedActionServiceLink(action));
-        }}
-      >
-        {t(action.replace_action ? "tracking.logReplacement" : "tracking.logService")}
-      </Button>
-
       <Stack gap={0}>
         <Divider color="var(--mantine-color-inputs-5)" />
         <PlanSetting
@@ -126,6 +114,18 @@ function Body({
         <IntervalSetting action={action} onWritten={onWritten} />
         <AnnounceSetting action={action} onWritten={onWritten} />
       </Stack>
+
+      <Button
+        fullWidth
+        color="primary.6"
+        c="textDark.6"
+        radius="md"
+        onClick={() => {
+          navigate(trackedActionServiceLink(action));
+        }}
+      >
+        {t(action.replace_action ? "tracking.logReplacement" : "tracking.logService")}
+      </Button>
 
       <PlanSheet
         action={planning ? action : null}
@@ -535,7 +535,7 @@ function AnnounceSetting({
   );
 }
 
-// One control in the list under the button: what it is on the left, what it stands at on
+// One control in the list above the button: what it is on the left, what it stands at on
 // the right, and under both a line saying what the control means. A row with nothing to
 // tap is not a control at all — its own button is.
 function SettingRow({

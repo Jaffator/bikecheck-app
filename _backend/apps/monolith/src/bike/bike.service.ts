@@ -2,7 +2,12 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CreateBikeDto, CreateBikeWithComponentsDto } from './dto/create-bike.dto';
 import { UpdateBikeDto } from './dto/update-bike.dto';
-import { ResponseBikeDto, NewBikeFormDataDto, ResponseListedBikeDto } from './dto/response-bike.dto';
+import {
+  ResponseBikeDto,
+  NewBikeFormDataDto,
+  ResponseListedBikeDto,
+  ResponseRiddenBikeDto,
+} from './dto/response-bike.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, OwnedBikeOptions } from './owned-bike.where';
 import { colorIndexes } from './color-index';
@@ -144,7 +149,7 @@ export class BikeService {
     }));
   }
 
-  // From the rides, not total_time_min: that holds only what the owner typed, and ride sync never adds to it.
+  // From the rides, not the bike's totals: those hold only what the owner typed, and ride sync never adds to them.
   private async rideSums(bikeIds: number[]): Promise<Map<number, RideSums>> {
     if (bikeIds.length === 0) return new Map();
 
@@ -152,7 +157,7 @@ export class BikeService {
       by: ['bike_id'],
       where: { bike_id: { in: bikeIds }, is_deleted: { not: true } },
       _count: { _all: true },
-      _sum: { duration_min: true },
+      _sum: { distance_m: true, duration_min: true, elevation_up_m: true },
       _max: { started_at: true },
     });
     return new Map(
@@ -160,7 +165,9 @@ export class BikeService {
         group.bike_id,
         {
           ride_count: group._count._all,
+          ride_km: Math.floor((group._sum.distance_m ?? 0) / 1000),
           ride_time_min: group._sum.duration_min ?? 0,
+          ride_elevation_m: group._sum.elevation_up_m ?? 0,
           last_ride_at: group._max.started_at?.toISOString() ?? null,
         },
       ]),
@@ -169,8 +176,10 @@ export class BikeService {
 
   // Serves an Archived Bike too: its detail, its parts and its history stay readable, and
   // the client derives the read-only state from is_deleted.
-  async findByID(id: number, userId: number): Promise<ResponseBikeDto> {
-    return this.findOwnedBike(id, userId, { includeArchived: true });
+  async findByID(id: number, userId: number): Promise<ResponseRiddenBikeDto> {
+    const bike = await this.findOwnedBike(id, userId, { includeArchived: true });
+    const rides = await this.rideSums([id]);
+    return { ...bike, ...(rides.get(id) ?? NO_RIDES) };
   }
 
   // Corrects a bike the caller owns. The client sends the type by name and the photo as a
@@ -310,9 +319,9 @@ const bikeInclude = { bike_types: true } satisfies Prisma.bikesInclude;
 
 type BikeRow = bikes & { bike_types?: { type: string | null } | null };
 
-type RideSums = Pick<ResponseListedBikeDto, 'ride_count' | 'ride_time_min' | 'last_ride_at'>;
+type RideSums = Omit<ResponseRiddenBikeDto, keyof ResponseBikeDto>;
 
-const NO_RIDES: RideSums = { ride_count: 0, ride_time_min: 0, last_ride_at: null };
+const NO_RIDES: RideSums = { ride_count: 0, ride_km: 0, ride_time_min: 0, ride_elevation_m: 0, last_ride_at: null };
 
 // Prisma hands a Decimal column back as a Decimal object, which serialises as neither a
 // number nor anything a client can do arithmetic on. Costs are narrowed the same way, so

@@ -54,7 +54,7 @@ export function BikeIdentityForm({
             <Autocomplete
               placeholder={t("addBike.brandPlaceholder")}
               data={brandNames}
-              limit={8}
+              maxDropdownHeight={280}
               leftSection={<Tag size={18} />}
               value={form.values.brand}
               onChange={(value) => form.setFieldValue("brand", value)}

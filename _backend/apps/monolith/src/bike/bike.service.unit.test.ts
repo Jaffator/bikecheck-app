@@ -26,6 +26,7 @@ function ride(bikeId: number, minutes: number): Row {
     started_at: new Date('2026-03-01T09:00:00.000Z'),
     distance_m: 20000,
     duration_min: minutes,
+    elevation_up_m: 300,
     is_deleted: false,
   };
 }
@@ -129,7 +130,7 @@ describe('BikeService', () => {
             const counted = rides.filter(
               (row) => row.bike_id === bikeId && (where.is_deleted === undefined || row.is_deleted !== true),
             );
-            const minutes = counted.reduce((total, row) => total + (row.duration_min as number), 0);
+            const sum = (column: string): number => counted.reduce((total, row) => total + (row[column] as number), 0);
             const latest = counted.reduce<Date | null>((max, row) => {
               const start = row.started_at as Date;
               return max === null || start > max ? start : max;
@@ -140,7 +141,11 @@ describe('BikeService', () => {
                   {
                     bike_id: bikeId,
                     _count: { _all: counted.length },
-                    _sum: { duration_min: minutes },
+                    _sum: {
+                      distance_m: sum('distance_m'),
+                      duration_min: sum('duration_min'),
+                      elevation_up_m: sum('elevation_up_m'),
+                    },
                     _max: { started_at: latest },
                   },
                 ];
@@ -398,6 +403,25 @@ describe('BikeService', () => {
         include: WITH_TYPE,
       });
       expect(bike.is_deleted).toBe(true);
+    });
+
+    // The detail shows the same ridden figures the garage card does.
+    it("adds up the bike's rides, leaving deleted rides out", async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ id: 15 }));
+      garage = [bikeRow({ id: 15 })];
+      rides = [ride(15, 95), { ...ride(15, 40), distance_m: 12500 }, { ...ride(15, 300), is_deleted: true }];
+
+      const bike = await service.findByID(15, OWNER_ID);
+
+      expect(bike).toMatchObject({ ride_count: 2, ride_km: 32, ride_time_min: 135, ride_elevation_m: 600 });
+    });
+
+    it('reads a bike never ridden at 0', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ id: 16 }));
+
+      const bike = await service.findByID(16, OWNER_ID);
+
+      expect(bike).toMatchObject({ ride_count: 0, ride_km: 0, ride_time_min: 0, ride_elevation_m: 0, last_ride_at: null });
     });
   });
 

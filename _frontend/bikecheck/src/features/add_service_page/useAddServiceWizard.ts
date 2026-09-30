@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCategoryActions, useCreateService } from "@/features/service/service.queries";
-import type { Bike } from "@/features/bikes/bikes.types";
+import type { ListedBike } from "@/features/bikes/bikes.types";
 import type {
   BikeCategory,
   CatalogueAction,
@@ -48,7 +48,7 @@ function parseId(raw: string | null): number | null {
 
 export interface AddServiceWizard {
   step: WizardStep;
-  bikes: Bike[] | undefined;
+  bikes: ListedBike[] | undefined;
   bikesLoading: boolean;
   bikeId: number | null;
   serviceDate: string;

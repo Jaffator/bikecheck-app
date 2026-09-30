@@ -3,14 +3,15 @@ import type { ReactElement } from "react";
 import { Box, Group, Image, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Gauge } from "lucide-react";
-import type { Bike } from "@/features/bikes/bikes.types";
+import type { ListedBike } from "@/features/bikes/bikes.types";
+import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 
 // Keeps the row compact next to the garage's full-width photo cards.
 const PHOTO_SIZE = 64;
 
 interface ServiceBikeStepProps {
-  bikes: Bike[] | undefined;
+  bikes: ListedBike[] | undefined;
   isLoading: boolean;
   onChoose: (bikeId: number) => void;
 }
@@ -41,7 +42,7 @@ export function ServiceBikeStep({ bikes, isLoading, onChoose }: ServiceBikeStepP
 }
 
 // One bike, recognisable the same way the garage shows it.
-function BikeTile({ bike, onChoose }: { bike: Bike; onChoose: () => void }): ReactElement {
+function BikeTile({ bike, onChoose }: { bike: ListedBike; onChoose: () => void }): ReactElement {
   const { t } = useTranslation();
   const title = bikeTitle(bike);
 
@@ -97,7 +98,7 @@ function BikeTile({ bike, onChoose }: { bike: Bike; onChoose: () => void }): Rea
               {title}
             </Text>
             <Text fz={13} c="var(--color-text-dim)">
-              {t("bikes.kilometres", { count: bike.total_km ?? 0 })}
+              {t("bikes.kilometres", { count: bikeFigures(bike).km })}
             </Text>
           </Stack>
         </Group>

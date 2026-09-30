@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import dayjs from "dayjs";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import type { Bike } from "@/features/bikes/bikes.types";
+import type { Bike, RiddenBike } from "@/features/bikes/bikes.types";
+import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
@@ -16,7 +17,7 @@ const SHEET_Z_INDEX = 300;
 interface BikeSpecsDrawerProps {
   opened: boolean;
   onClose: () => void;
-  bike: Bike;
+  bike: RiddenBike;
 }
 
 export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps): ReactElement {
@@ -91,11 +92,11 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
           </Section>
 
           <Section title={t("bikes.specsTotals")}>
-            <SpecRow label={t("bikes.distance")} value={t("bikes.kilometres", { count: bike.total_km ?? 0 })} />
-            <SpecRow label={t("bikes.elevation")} value={t("bikes.metres", { count: bike.total_elevation_m ?? 0 })} />
+            <SpecRow label={t("bikes.distance")} value={t("bikes.kilometres", { count: bikeFigures(bike).km })} />
+            <SpecRow label={t("bikes.elevation")} value={t("bikes.metres", { count: bikeFigures(bike).elevationM })} />
             <SpecRow
               label={t("bikes.time")}
-              value={t("bikes.hours", { count: Math.round((bike.total_time_min ?? 0) / 60) })}
+              value={t("bikes.hours", { count: Math.round(bikeFigures(bike).timeMin / 60) })}
             />
           </Section>
 

@@ -1,20 +1,9 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useState, type ReactElement } from "react";
-import { ActionIcon, Group, Menu, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowUpRight,
-  ChevronRight,
-  Clock,
-  Gauge,
-  Archive,
-  Info,
-  MoreVertical,
-  Pencil,
-  Share2,
-  Unlink,
-} from "lucide-react";
+import { ArrowUpRight, ChevronRight, Clock, Gauge, Archive, Info, Share2 } from "lucide-react";
 import { useBike, useArchiveBike } from "@/features/bikes/bikes.queries";
 import { useBikeRideCount } from "@/features/rides/rides.queries";
 import { useHistoryTotals } from "@/features/service/service.queries";
@@ -36,14 +25,15 @@ import { BikeComponentsSection } from "@/features/components/ui/BikeComponentsSe
 import { CustomPartsDrawer } from "@/features/components/ui/CustomPartsDrawer";
 import { useCustomComponentTypes } from "@/features/components/components.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import type { ExportReportInput } from "@/features/report/report.types";
 import { useHeaderStore } from "@/store/store";
-import { IoLogoWebComponent } from "react-icons/io5";
+import { BikeActionsMenu } from "@/features/bikes/ui/BikeActionsMenu";
 import { TRANSPARENT_HEADER_CONTROL } from "@/layout/headerControl";
 import { useIsDesktop } from "@/layout/breakpoints";
-import { BikeDetailPrototype } from "./BikeDetailPrototype";
+import { BikeDetailBreadcrumbs, BikeDetailDesktop, BikeDetailHeaderActions } from "./BikeDetailDesktop";
 
 // One hue per reading, so the line is read by colour before it is read by number. The
 // green is the one the health badge already uses; the yellow is the brand's own. The
@@ -85,6 +75,8 @@ export function BikeDetail(): ReactElement {
   const connect = useConnectStrava();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const setHeaderTransparent = useHeaderStore((state) => state.setHeaderTransparent);
+  const setTitleSlot = useHeaderStore((state) => state.setTitleSlot);
+  const setBackHidden = useHeaderStore((state) => state.setBackHidden);
   const isDesktop = useIsDesktop();
 
   const paired = bike?.strava_gear_id != null;
@@ -104,97 +96,45 @@ export function BikeDetail(): ReactElement {
   const pendingForBike =
     bike?.strava_gear_id == null ? 0 : (pendingRides ?? []).filter((ride) => ride.gear_id === bike.strava_gear_id).length;
 
-  // The page leads with its photo, so the header steps out of the way of it.
-  // PROTOTYPE (#165): the desktop variants do not lead with a full-width photo.
+  // The phone page leads with its photo, so the header steps out of the way of it; desktop does not.
   useEffect(() => {
     setHeaderTransparent(!isDesktop);
     return () => setHeaderTransparent(false);
   }, [setHeaderTransparent, isDesktop]);
 
-  // The header carries what is run rarely: correcting the bike, detaching it, throwing it
-  // away. None of them belong under the thumb that is scrolling.
+  // Desktop reads its place in the app from breadcrumbs, so it has no back arrow.
   useEffect(() => {
+    if (!isDesktop) return;
+    setTitleSlot(<BikeDetailBreadcrumbs />);
+    setBackHidden(true);
+    return () => {
+      setTitleSlot(null);
+      setBackHidden(false);
+    };
+  }, [isDesktop, setTitleSlot, setBackHidden]);
+
+  // The header carries what is run rarely, out from under the scrolling thumb; desktop adds its
+  // main acts beside the menu.
+  useEffect(() => {
+    if (!bike) return;
+
     // Nothing in the menu applies to an Archived Bike: unarchiving and destroying it are
     // offered from the archive, and everything else is a write.
-    if (!bike || archived) return;
-
+    const menu = archived ? null : (
+      <BikeActionsMenu
+        onEdit={isDesktop ? undefined : () => navigate(`/bikes/${String(bike.id)}/edit`)}
+        onUnpair={bike.strava_gear_id === null ? undefined : () => setConfirmingUnpair(true)}
+        onManageParts={hasCustomTypes ? () => setManagingParts(true) : undefined}
+        onArchive={() => setConfirmingArchive(true)}
+        targetStyle={isDesktop ? undefined : TRANSPARENT_HEADER_CONTROL}
+      />
+    );
     setActionSlot(
-      <Menu position="bottom-end" radius="md" withinPortal>
-        <Menu.Target>
-          <ActionIcon
-            variant="transparent"
-            radius="xl"
-            size="lg"
-            aria-label={t("bikes.cardMenu")}
-            style={TRANSPARENT_HEADER_CONTROL}
-          >
-            <MoreVertical size={22} color="var(--mantine-color-text-6)" />
-          </ActionIcon>
-        </Menu.Target>
-
-        {/* Wears the same surface as the Reports menu, so the app has one dropdown. */}
-        <Menu.Dropdown
-          bg="cards.6"
-          p={8}
-          style={{
-            border: "1px solid var(--mantine-color-cards-6)",
-            boxShadow: "var(--elev-panel)",
-          }}
-        >
-          <Menu.Item
-            color="text"
-            py={12}
-            fw={600}
-            leftSection={<Pencil size={18} />}
-            onClick={() => navigate(`/bikes/${String(bike.id)}/edit`)}
-          >
-            {t("bikes.edit")}
-          </Menu.Item>
-
-          {/* Only a paired bike can be detached, so an unpaired one is not offered it. */}
-          {bike.strava_gear_id !== null && (
-            <Menu.Item
-              color="text"
-              py={12}
-              fw={600}
-              leftSection={<Unlink size={18} />}
-              onClick={() => setConfirmingUnpair(true)}
-            >
-              {t("strava.unpairBike")}
-            </Menu.Item>
-          )}
-
-          {/* The custom types are the owner's, not this bike's: removing one here takes it
-              out of the picker on every bike. */}
-          {hasCustomTypes && (
-            <Menu.Item
-              color="text"
-              py={12}
-              fw={600}
-              leftSection={<IoLogoWebComponent size={18} />}
-              onClick={() => setManagingParts(true)}
-            >
-              {t("customParts.title")}
-            </Menu.Item>
-          )}
-
-          {/* Archiving is the only way out of the garage; destroying the bike is offered
-              in the archive alone, never one tap from this page (ADR 0024). */}
-          <Menu.Item
-            color="red.5"
-            py={12}
-            fw={600}
-            leftSection={<Archive size={18} />}
-            onClick={() => setConfirmingArchive(true)}
-          >
-            {t("bikes.archive")}
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>,
+      isDesktop ? <BikeDetailHeaderActions bikeId={bike.id} archived={archived} menu={menu} /> : menu,
     );
 
     return () => setActionSlot(null);
-  }, [setActionSlot, t, navigate, bike, archived, hasCustomTypes]);
+  }, [setActionSlot, navigate, bike, archived, hasCustomTypes, isDesktop]);
 
   // Show loading state for deep links without cached garage data.
   if (isLoading) {
@@ -217,7 +157,7 @@ export function BikeDetail(): ReactElement {
     );
   }
 
-  // PROTOTYPE (#165): the phone's page; desktop swaps it for a layout variant.
+  // Desktop lays the same pieces out in columns - see BikeDetailDesktop.
   const phoneContent = (
     <>
       {/* The bike, read the way it is written on the frame: photo and name are one object,
@@ -277,16 +217,16 @@ export function BikeDetail(): ReactElement {
           <Group gap="md" wrap="wrap">
             <Metric
               icon={<Gauge size={14} color={METRIC_COLORS.distance} />}
-              value={t("bikes.kilometres", { count: bike.total_km ?? 0 })}
+              value={t("bikes.kilometres", { count: bikeFigures(bike).km })}
             />
             <Metric
               icon={<ArrowUpRight size={14} color={METRIC_COLORS.elevation} />}
-              value={t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
+              value={t("bikes.metres", { count: bikeFigures(bike).elevationM })}
             />
             <Metric
               icon={<Clock size={14} color={METRIC_COLORS.time} />}
               value={t("bikes.hours", {
-                count: Math.round((bike.total_time_min ?? 0) / 60),
+                count: Math.round(bikeFigures(bike).timeMin / 60),
               })}
             />
           </Group>
@@ -380,7 +320,7 @@ export function BikeDetail(): ReactElement {
       pb={isDesktop ? 96 : "calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"}
     >
       {isDesktop ? (
-        <BikeDetailPrototype
+        <BikeDetailDesktop
           bike={bike}
           trackedActions={trackedActions ?? []}
           archived={archived}
@@ -451,7 +391,7 @@ export function BikeDetail(): ReactElement {
         body={t("bikes.archiveConfirmBody", {
           count: rideCount ?? 0,
           spend: formatCost(totals?.total_cost ?? 0, user?.currency ?? null, i18n.language),
-          km: bike.total_km ?? 0,
+          km: bikeFigures(bike).km,
         })}
         cancelLabel={t("bikes.archiveConfirmCancel")}
         confirmLabel={t("bikes.archive")}

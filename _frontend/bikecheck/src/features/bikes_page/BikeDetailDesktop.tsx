@@ -1,24 +1,35 @@
-// PROTOTYPE (#165) — throwaway. Three desktop layouts of one bike on `/bikes/:id`, switched by `?variant=`.
-import { useState, type ReactElement, type ReactNode } from "react";
+// Desktop `/bikes/:id`: the bike itself on the left, what it owes and is made of on the right.
+import type { ReactElement, ReactNode } from "react";
 import {
   ActionIcon,
+  Anchor,
   Box,
-  Divider,
+  Breadcrumbs,
+  Button,
   Grid,
   Group,
   Paper,
-  SegmentedControl,
-  SimpleGrid,
   Stack,
   Text,
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { Archive, ArrowRight, ArrowUpRight, ChevronRight, Clock, Gauge, Info, Share2 } from "lucide-react";
-import { PrototypeSwitcher } from "@/components/PrototypeSwitcher";
-import { usePrototypeVariant, type PrototypeVariant } from "@/components/prototypeVariant";
-import type { Bike } from "@/features/bikes/bikes.types";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Archive,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronRight,
+  Clock,
+  FileText,
+  Gauge,
+  Info,
+  Pencil,
+  Plus,
+  Share2,
+} from "lucide-react";
+import type { Bike, RiddenBike } from "@/features/bikes/bikes.types";
+import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikePhoto } from "@/features/bikes/ui/BikePhoto";
 import { BikeActionTiles } from "@/features/bikes/ui/BikeActionTiles";
@@ -33,11 +44,8 @@ import { BikeStravaCard } from "@/features/strava/ui/BikeStravaCard";
 import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
 import { useCurrentUser } from "@/features/users/users.queries";
 
-const BIKE_VARIANTS: PrototypeVariant[] = [
-  { key: "A", name: "Two columns (baseline)" },
-  { key: "B", name: "Banner + three columns" },
-  { key: "C", name: "Sticky rail + tabs" },
-];
+// Matches the header's own desktop page title.
+const TITLE_TEXT = { fontSize: 28, fontWeight: 700, letterSpacing: "var(--tracking-display)" } as const;
 
 const CARD = {
   backgroundColor: "var(--mantine-color-cards-6)",
@@ -46,12 +54,8 @@ const CARD = {
   overflow: "hidden",
 } as const;
 
-// The rail holds under the desktop header while the tabs scroll.
-const RAIL_TOP = "calc(3rem + var(--mantine-spacing-md))";
-const RAIL_WIDTH = 340;
-
-interface BikeDetailPrototypeProps {
-  bike: Bike;
+interface BikeDetailDesktopProps {
+  bike: RiddenBike;
   trackedActions: TrackedAction[];
   archived: boolean;
   paired: boolean;
@@ -60,125 +64,96 @@ interface BikeDetailPrototypeProps {
   onPairGear: () => void;
 }
 
-export function BikeDetailPrototype(props: BikeDetailPrototypeProps): ReactElement {
-  const variant = usePrototypeVariant(BIKE_VARIANTS);
-
-  return (
-    <>
-      {variant === "A" && <TwoColumns {...props} />}
-      {variant === "B" && <BannerThreeColumns {...props} />}
-      {variant === "C" && <RailTabs {...props} />}
-      <PrototypeSwitcher variants={BIKE_VARIANTS} />
-    </>
-  );
-}
-
-// A — photo, specs and health on the left; the build and its history on the right.
-function TwoColumns(props: BikeDetailPrototypeProps): ReactElement {
+export function BikeDetailDesktop(props: BikeDetailDesktopProps): ReactElement {
   const { bike, archived } = props;
 
+  // Below lg the columns stack, bike first.
   return (
     <Grid gap="lg" align="flex-start">
-      <Grid.Col span={5}>
+      <Grid.Col span={{ base: 12, lg: 4 }}>
         <Stack gap="md">
           <HeroCard {...props} />
           <Leftovers {...props} />
-          <Tiles bike={bike} archived={archived} cols={2} />
-          <TrackedActionsSection bikeId={bike.id} />
+          <Tiles bikeId={bike.id} />
+          <RecentHistory bikeId={bike.id} />
         </Stack>
       </Grid.Col>
-      <Grid.Col span={7}>
+      <Grid.Col span={{ base: 12, lg: 8 }}>
         <Stack gap="md">
+          <TrackedActionsSection bikeId={bike.id} />
           <BikeComponentsSection bikeId={bike.id} ebike={bike.ebike} readOnly={archived} />
-          <RecentHistory bikeId={bike.id} />
         </Stack>
       </Grid.Col>
     </Grid>
   );
 }
 
-// B — a banner (photo beside name, figures and specs), the acts in one row, then three equal columns.
-function BannerThreeColumns(props: BikeDetailPrototypeProps): ReactElement {
-  const { bike, trackedActions, archived, onOpenSpecs, onExport } = props;
+export function BikeDetailBreadcrumbs(): ReactElement {
+  const { t } = useTranslation();
 
   return (
-    <Stack gap="lg">
-      <Paper radius="lg" style={{ ...CARD, boxShadow: "var(--elev-hero)" }}>
-        <Grid gap={0} align="stretch">
-          <Grid.Col span={6}>
-            <Photo bike={bike} trackedActions={trackedActions} />
-          </Grid.Col>
-          <Grid.Col span={6}>
-            <Stack gap="md" p="lg">
-              <NameBlock bike={bike} onExport={onExport} />
-              <Divider color="var(--color-border-subtle)" />
-              <SpecGrid bike={bike} cols={2} />
-              <AllSpecsLink onOpenSpecs={onOpenSpecs} />
-            </Stack>
-          </Grid.Col>
-        </Grid>
-      </Paper>
-      <Leftovers {...props} />
-      <Tiles bike={bike} archived={archived} cols={4} />
-      <SimpleGrid cols={3} spacing="lg" style={{ alignItems: "start" }}>
-        <TrackedActionsSection bikeId={bike.id} />
-        <BikeComponentsSection bikeId={bike.id} ebike={bike.ebike} readOnly={archived} />
-        <RecentHistory bikeId={bike.id} />
-      </SimpleGrid>
-    </Stack>
+    <Breadcrumbs separator="›" separatorMargin="xs" c="var(--color-text-dim)" style={TITLE_TEXT}>
+      <Anchor component={Link} to="/bikes" c="var(--color-text-dim)" underline="hover" style={TITLE_TEXT}>
+        {t("page.bikes")}
+      </Anchor>
+      <Text c="text.6" aria-current="page" style={TITLE_TEXT}>
+        {t("bikes.detailTitle")}
+      </Text>
+    </Breadcrumbs>
   );
 }
 
-type Tab = "health" | "build" | "history";
+interface BikeDetailHeaderActionsProps {
+  bikeId: number;
+  archived: boolean;
+  // The `⋯` menu; an Archived Bike has none, since everything in it is a write.
+  menu: ReactNode;
+}
 
-// C — the bike stays put in a rail on the left; the right reads one thing at a time.
-function RailTabs(props: BikeDetailPrototypeProps): ReactElement {
+export function BikeDetailHeaderActions({ bikeId, archived, menu }: BikeDetailHeaderActionsProps): ReactElement {
   const { t } = useTranslation();
-  const { bike, trackedActions, archived, onOpenSpecs, onExport } = props;
-  const [tab, setTab] = useState<Tab>("health");
+  const navigate = useNavigate();
+  const id = String(bikeId);
+  const reportButton = (
+    <Button
+      variant="outline"
+      radius="md"
+      leftSection={<FileText size={16} color="var(--mantine-color-primary-5)" />}
+      onClick={() => navigate(`/reports?bike=${id}`)}
+    >
+      {t("bikes.headerReport")}
+    </Button>
+  );
+
+  if (archived) return reportButton;
 
   return (
-    <Group gap="lg" align="flex-start" wrap="nowrap">
-      <Box w={RAIL_WIDTH} style={{ flexShrink: 0, position: "sticky", top: RAIL_TOP }}>
-        <Stack gap="md">
-          <Paper radius="lg" style={{ ...CARD, boxShadow: "var(--elev-hero)" }}>
-            <Photo bike={bike} trackedActions={trackedActions} />
-            <Stack gap="md" p="md">
-              <NameBlock bike={bike} onExport={onExport} />
-              <Divider color="var(--color-border-subtle)" />
-              <SpecGrid bike={bike} cols={1} />
-              <AllSpecsLink onOpenSpecs={onOpenSpecs} />
-            </Stack>
-          </Paper>
-          <Tiles bike={bike} archived={archived} cols={1} />
-        </Stack>
-      </Box>
-
-      <Stack gap="md" style={{ flex: 1, minWidth: 0 }}>
-        <Leftovers {...props} />
-        <SegmentedControl
-          value={tab}
-          onChange={(value) => setTab(value as Tab)}
-          radius="md"
-          data={[
-            { value: "health", label: t("tracking.title") },
-            { value: "build", label: t("bikeComponents.title") },
-            { value: "history", label: t("service.recentTitle") },
-          ]}
-          style={{ alignSelf: "flex-start" }}
-        />
-        {tab === "health" && <TrackedActionsSection bikeId={bike.id} />}
-        {tab === "build" && <BikeComponentsSection bikeId={bike.id} ebike={bike.ebike} readOnly={archived} />}
-        {tab === "history" && <RecentHistory bikeId={bike.id} />}
-      </Stack>
+    <Group gap="sm" wrap="nowrap">
+      <Button
+        variant="outline"
+        radius="md"
+        leftSection={<Pencil size={16} color="var(--mantine-color-primary-5)" />}
+        onClick={() => navigate(`/bikes/${id}/edit`)}
+      >
+        {t("bikes.headerEdit")}
+      </Button>
+      {reportButton}
+      <Button
+        color="primary.6"
+        c="textDark.6"
+        radius="md"
+        leftSection={<Plus size={16} />}
+        onClick={() => navigate(`/service/new?bike=${id}`)}
+      >
+        {t("fab.addService")}
+      </Button>
+      {menu}
     </Group>
   );
 }
 
-// ---------- pieces the variants arrange ----------
-
 // The phone's hero card, as is.
-function HeroCard({ bike, trackedActions, onOpenSpecs, onExport }: BikeDetailPrototypeProps): ReactElement {
+function HeroCard({ bike, trackedActions, onOpenSpecs, onExport }: BikeDetailDesktopProps): ReactElement {
   return (
     <Paper radius="lg" style={{ ...CARD, boxShadow: "var(--elev-hero)" }}>
       <Photo bike={bike} trackedActions={trackedActions} />
@@ -186,7 +161,7 @@ function HeroCard({ bike, trackedActions, onOpenSpecs, onExport }: BikeDetailPro
         <NameBlock bike={bike} onExport={onExport} />
       </Box>
       <Box style={{ borderTop: "1px solid var(--color-border-subtle)" }}>
-        <AllSpecsLink onOpenSpecs={onOpenSpecs} padded />
+        <AllSpecsLink onOpenSpecs={onOpenSpecs} />
       </Box>
     </Paper>
   );
@@ -203,8 +178,9 @@ function Photo({ bike, trackedActions }: { bike: Bike; trackedActions: TrackedAc
   );
 }
 
-function NameBlock({ bike, onExport }: { bike: Bike; onExport: () => void }): ReactElement {
+function NameBlock({ bike, onExport }: { bike: RiddenBike; onExport: () => void }): ReactElement {
   const { t } = useTranslation();
+  const figures = bikeFigures(bike);
 
   return (
     <Stack gap={8}>
@@ -231,11 +207,11 @@ function NameBlock({ bike, onExport }: { bike: Bike; onExport: () => void }): Re
         </ActionIcon>
       </Group>
       <Group gap="md" wrap="wrap">
-        <Metric icon={<Gauge size={14} />} value={t("bikes.kilometres", { count: bike.total_km ?? 0 })} />
-        <Metric icon={<ArrowUpRight size={14} />} value={t("bikes.metres", { count: bike.total_elevation_m ?? 0 })} />
+        <Metric icon={<Gauge size={14} />} value={t("bikes.kilometres", { count: figures.km })} />
+        <Metric icon={<ArrowUpRight size={14} />} value={t("bikes.metres", { count: figures.elevationM })} />
         <Metric
           icon={<Clock size={14} />}
-          value={t("bikes.hours", { count: Math.round((bike.total_time_min ?? 0) / 60) })}
+          value={t("bikes.hours", { count: Math.round(figures.timeMin / 60) })}
         />
       </Group>
     </Stack>
@@ -253,48 +229,11 @@ function Metric({ icon, value }: { icon: ReactElement; value: string }): ReactEl
   );
 }
 
-// The specs read inline, since desktop has the room; the full sheet stays one click away.
-function SpecGrid({ bike, cols }: { bike: Bike; cols: number }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const unknown = t("addBike.summaryNotSpecified");
-  const orUnknown = (value: string | null): string => (value === null || value === "" ? unknown : value);
-  const weight =
-    bike.bike_weight_kg === null
-      ? unknown
-      : t("bikes.kilograms", {
-          weight: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(bike.bike_weight_kg),
-        });
-
-  return (
-    <SimpleGrid cols={cols} spacing="lg" verticalSpacing={8}>
-      <SpecRow label={t("addBike.category")} value={orUnknown(bike.bike_type)} />
-      <SpecRow label={t("addBike.year")} value={bike.year === null ? unknown : String(bike.year)} />
-      <SpecRow label={t("addBike.frameSize")} value={orUnknown(bike.bike_size)} />
-      <SpecRow label={t("addBike.wheelSize")} value={orUnknown(bike.wheel_size)} />
-      <SpecRow label={t("bikes.frameMaterial")} value={orUnknown(bike.frame_material)} />
-      <SpecRow label={t("bikes.weight")} value={weight} />
-    </SimpleGrid>
-  );
-}
-
-function SpecRow({ label, value }: { label: string; value: string }): ReactElement {
-  return (
-    <Group justify="space-between" gap="md" wrap="nowrap">
-      <Text fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
-        {label}
-      </Text>
-      <Text className="tabular-nums" fz={13} c="text.6" ta="right" lineClamp={1}>
-        {value}
-      </Text>
-    </Group>
-  );
-}
-
-function AllSpecsLink({ onOpenSpecs, padded = false }: { onOpenSpecs: () => void; padded?: boolean }): ReactElement {
+function AllSpecsLink({ onOpenSpecs }: { onOpenSpecs: () => void }): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <UnstyledButton onClick={onOpenSpecs} className="hover-veil" px={padded ? "md" : 0} py={padded ? 15 : 0} w="100%">
+    <UnstyledButton onClick={onOpenSpecs} className="hover-veil" px="md" py={15} w="100%">
       <Group justify="space-between" wrap="nowrap">
         <Group gap={8} wrap="nowrap">
           <Info size={16} color="var(--color-text-dim)" />
@@ -309,7 +248,7 @@ function AllSpecsLink({ onOpenSpecs, padded = false }: { onOpenSpecs: () => void
 }
 
 // The archived note and the Strava pitch - each only when it applies.
-function Leftovers({ bike, archived, paired, onPairGear }: BikeDetailPrototypeProps): ReactElement | null {
+function Leftovers({ bike, archived, paired, onPairGear }: BikeDetailDesktopProps): ReactElement | null {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
   const connect = useConnectStrava();
@@ -344,15 +283,13 @@ function Leftovers({ bike, archived, paired, onPairGear }: BikeDetailPrototypePr
   );
 }
 
-function Tiles({ bike, archived, cols }: { bike: Bike; archived: boolean; cols: number }): ReactElement {
+// Add service and Reports live in the header here, so only the two places to go remain.
+function Tiles({ bikeId }: { bikeId: number }): ReactElement {
   const navigate = useNavigate();
-  const id = String(bike.id);
+  const id = String(bikeId);
 
   return (
     <BikeActionTiles
-      cols={cols}
-      onAddService={archived ? undefined : () => navigate(`/service/new?bike=${id}`)}
-      onOpenReports={() => navigate(`/reports?bike=${id}`)}
       onOpenHistory={() => navigate(`/bikes/${id}/history`)}
       onOpenSetup={() => navigate(`/bikes/${id}/setup`)}
     />

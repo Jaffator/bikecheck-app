@@ -23,6 +23,7 @@ function row(id: number, isRead = false): notifications {
     read_at: null,
     created_at: new Date(Date.UTC(2026, 0, 1, 0, id)),
     dedup_key: null,
+    deleted_at: null,
   };
 }
 
@@ -76,5 +77,40 @@ describe('NotificationService.list', () => {
 
     expect(list).toHaveLength(120);
     expect(ids(list)).not.toContain(121);
+  });
+});
+
+describe('NotificationService.remove', () => {
+  function serviceWithUpdate(): { service: NotificationService; updateMany: jest.Mock } {
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const prisma = { notifications: { updateMany } } as unknown as PrismaService;
+    return { service: new NotificationService({ add: jest.fn() } as unknown as Queue, prisma), updateMany };
+  }
+
+  type RemoveWhere = { OR: [{ is_read: boolean }, { type: { in: string[] } }] };
+
+  it('hides the owner row instead of deleting it', async () => {
+    const { service, updateMany } = serviceWithUpdate();
+
+    await service.remove(5, OWNER_ID);
+
+    const { where, data } = updateMany.mock.calls[0][0] as {
+      where: Record<string, unknown>;
+      data: { deleted_at: Date };
+    };
+    expect(where).toMatchObject({ id: 5, user_id: OWNER_ID, deleted_at: null });
+    expect(data.deleted_at).toBeInstanceOf(Date);
+  });
+
+  // An unassigned ride holds the badge until a bike is picked, so only a resolved one may go.
+  it('leaves an unassigned ride that still waits for a bike', async () => {
+    const { service, updateMany } = serviceWithUpdate();
+
+    await service.removeAll(OWNER_ID);
+
+    const { where } = updateMany.mock.calls[0][0] as { where: RemoveWhere };
+    expect(where.OR[0]).toEqual({ is_read: true });
+    expect(where.OR[1].type.in).not.toContain('strava_activity_unassigned');
+    expect(where.OR[1].type.in).toContain('strava_activity_saved');
   });
 });

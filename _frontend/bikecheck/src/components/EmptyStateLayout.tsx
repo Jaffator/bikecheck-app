@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { Box, Center, Image, Stack, Text } from "@mantine/core";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // Where the title sits on every empty page, measured from the top of the content area. A page
 // with chrome above it subtracts that chrome, so the title lands on the same line everywhere.
@@ -28,6 +29,20 @@ const ICON_GAP = 16;
 // Holds the title and its body together as one block.
 const TITLE_BODY_GAP = 8;
 
+// Desktop centres the state in a column this wide, so the copy and the actions keep a phone's measure.
+const DESKTOP_WIDTH = 480;
+
+// Desktop sets the illustration above the copy instead of behind it, at a fixed height.
+const DESKTOP_ILLUSTRATION_HEIGHT = 240;
+
+// Fades every edge, since the picture now ends inside the page on all four sides.
+const DESKTOP_FADE_MASK = "radial-gradient(closest-side, rgba(0, 0, 0, 1) 55%, rgba(0, 0, 0, 0) 100%)";
+
+// Desktop has no tab bar or swipe chrome to offset, so one gap under the header serves every page.
+const DESKTOP_TOP_SPACE = "10dvh";
+
+// Under content (the service attention card) the state only needs to read as a separate block.
+const DESKTOP_TOP_SPACE_UNDER_HEADER = 48;
 
 interface EmptyStateLayoutProps {
   // The illustration behind the copy. Pages without one pass an icon instead.
@@ -50,7 +65,73 @@ interface EmptyStateLayoutProps {
 }
 
 // Frames empty-state content inside AppShell.Main.
-export function EmptyStateLayout({
+export function EmptyStateLayout(props: EmptyStateLayoutProps): ReactElement {
+  const isDesktop = useIsDesktop();
+  return isDesktop ? <DesktopEmptyState {...props} /> : <PhoneEmptyState {...props} />;
+}
+
+function EmptyStateCopy({ title, body }: Pick<EmptyStateLayoutProps, "title" | "body">): ReactElement {
+  return (
+    <Stack gap={TITLE_BODY_GAP} ta="center">
+      <Text fz={18} lh="26px" fw={600} c="text.6">
+        {title}
+      </Text>
+      <Text fz={14} lh="22px" c="text.8">
+        {body}
+      </Text>
+    </Stack>
+  );
+}
+
+// Everything in flow: the page is wide enough that nothing has to sit behind the copy.
+function DesktopEmptyState({
+  illustration,
+  icon,
+  title,
+  body,
+  badge,
+  header,
+  children,
+}: EmptyStateLayoutProps): ReactElement {
+  return (
+    <Box px={16} pb={64}>
+      {header !== undefined && <Box>{header}</Box>}
+      <Stack
+        pos="relative"
+        maw={DESKTOP_WIDTH}
+        mx="auto"
+        pt={header === undefined ? DESKTOP_TOP_SPACE : DESKTOP_TOP_SPACE_UNDER_HEADER}
+        gap={16}
+      >
+        {badge && (
+          <Box pos="absolute" top={16} right={0}>
+            {badge}
+          </Box>
+        )}
+        {illustration !== undefined && (
+          <Image
+            src={illustration}
+            alt=""
+            w="100%"
+            h={DESKTOP_ILLUSTRATION_HEIGHT}
+            fit="cover"
+            opacity={ILLUSTRATION_OPACITY}
+            style={{ maskImage: DESKTOP_FADE_MASK, WebkitMaskImage: DESKTOP_FADE_MASK }}
+          />
+        )}
+        {icon !== undefined && (
+          <Center opacity={ICON_OPACITY} c="var(--color-text-dim)">
+            {icon}
+          </Center>
+        )}
+        <EmptyStateCopy title={title} body={body} />
+        {children}
+      </Stack>
+    </Box>
+  );
+}
+
+function PhoneEmptyState({
   illustration,
   icon,
   title,
@@ -120,14 +201,7 @@ export function EmptyStateLayout({
               {icon}
             </Center>
           )}
-          <Stack gap={TITLE_BODY_GAP} ta="center">
-            <Text fz={18} lh="26px" fw={600} c="text.6">
-              {title}
-            </Text>
-            <Text fz={14} lh="22px" c="text.8">
-              {body}
-            </Text>
-          </Stack>
+          <EmptyStateCopy title={title} body={body} />
         </Box>
         {children}
       </Stack>

@@ -28,6 +28,7 @@ import {
   ResponseBikeDto,
   NewBikeFormDataDto,
   ResponseListedBikeDto,
+  ResponseRiddenBikeDto,
 } from './dto/response-bike.dto';
 import { AssembleBikeComponentsDto } from '../component/dto/response-components';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -142,8 +143,8 @@ export class BikeController {
 
   // ---------- GET bike by ID ----------
   @Get(':id')
-  @ApiResponse({ status: 200, type: ResponseBikeDto })
-  findBike(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseBikeDto> {
+  @ApiResponse({ status: 200, type: ResponseRiddenBikeDto })
+  findBike(@CurrentUser('userId') userId: string, @Param('id') id: string): Promise<ResponseRiddenBikeDto> {
     return this.bikeService.findByID(+id, Number(userId));
   }
 

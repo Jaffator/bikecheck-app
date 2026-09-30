@@ -7,6 +7,7 @@ import type {
   CreateBikeInput,
   ExternalBikeComponent,
   ListedBike,
+  RiddenBike,
   UpdateBikeInput,
 } from "./bikes.types";
 
@@ -16,8 +17,8 @@ export async function getBikes(archived = false): Promise<ListedBike[]> {
 }
 
 // GET /bike/:id — one bike by id.
-export async function getBike(id: number): Promise<Bike> {
-  return apiFetch<Bike>(`/bike/${id}`);
+export async function getBike(id: number): Promise<RiddenBike> {
+  return apiFetch<RiddenBike>(`/bike/${id}`);
 }
 
 export async function getBikeFormOptions(): Promise<BikeFormOptions> {

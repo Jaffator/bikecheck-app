@@ -10,6 +10,8 @@ import {
   type UseMutationResult,
 } from "@tanstack/react-query";
 import {
+  deleteAllNotifications,
+  deleteNotification,
   getNotifications,
   getUnreadNotifications,
   markNotificationRead,
@@ -63,6 +65,26 @@ export function useMarkAllNotificationsRead(): UseMutationResult<{ success: bool
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: markNotificationsViewed,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useDeleteNotification(): UseMutationResult<{ success: boolean }, Error, number> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteNotification,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useDeleteAllNotifications(): UseMutationResult<{ success: boolean }, Error, void> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAllNotifications,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },

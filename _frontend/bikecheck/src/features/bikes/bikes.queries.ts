@@ -27,6 +27,7 @@ import type {
   CreateBikeInput,
   ExternalBikeComponent,
   ListedBike,
+  RiddenBike,
   UpdateBikeInput,
 } from "./bikes.types";
 
@@ -52,14 +53,14 @@ export function useArchivedBikes(enabled = true): UseQueryResult<ListedBike[]> {
   });
 }
 
-export function useBike(id: number): UseQueryResult<Bike> {
+export function useBike(id: number): UseQueryResult<RiddenBike> {
   const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: ["bikes", id],
     queryFn: () => getBike(id),
     // Seed details from the garage cache while refetching.
-    initialData: () => queryClient.getQueryData<Bike[]>(["bikes"])?.find((bike) => bike.id === id),
+    initialData: () => queryClient.getQueryData<ListedBike[]>(["bikes"])?.find((bike) => bike.id === id),
     // Preserve the garage cache timestamp for stale-data refetching.
     initialDataUpdatedAt: () => queryClient.getQueryState(["bikes"])?.dataUpdatedAt,
   });
@@ -112,7 +113,8 @@ export function useUpdateBike(): UseMutationResult<Bike, Error, UpdateBikeInput>
     mutationFn: (input: UpdateBikeInput) => updateBike(input),
     onSuccess: async (bike) => {
       // The detail page reads this key, so it is written before anything is invalidated.
-      queryClient.setQueryData(["bikes", bike.id], bike);
+      // The update response has no ride sums, so they are kept from the cached read.
+      queryClient.setQueryData<RiddenBike>(["bikes", bike.id], (cached) => (cached ? { ...cached, ...bike } : cached));
       await queryClient.invalidateQueries({ queryKey: ["bikes"] });
       await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
     },

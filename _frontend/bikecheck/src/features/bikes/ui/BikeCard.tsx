@@ -6,6 +6,7 @@ import { StravaPairingHint } from "@/features/strava/ui/StravaPairingHint";
 import { ArrowUpRight, Clock, Gauge } from "lucide-react";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { lastRideDate } from "@/features/bikes/lastRideDate";
 import { BikePhoto } from "./BikePhoto";
 import { attentionColor, barFill, QUIET_BELOW, worstAction } from "@/features/service_tracking/attentionLevel";
@@ -93,7 +94,8 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
   const worst = worstAction(actions ?? []);
   // Three zeros read as a broken card, not as a bike that has not ridden yet. A bike with
   // nothing on the clock shows only where its figures would come from.
-  const hasFigures = (bike.total_km ?? 0) > 0 || (bike.total_elevation_m ?? 0) > 0 || (bike.total_time_min ?? 0) > 0;
+  const figures = bikeFigures(bike);
+  const hasFigures = figures.km > 0 || figures.elevationM > 0 || figures.timeMin > 0;
 
   return (
     <Paper
@@ -160,15 +162,15 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
           {hasFigures ? (
             <>
               <Metric icon={<Gauge size={14} color="var(--color-text-dim)" />}>
-                {t("bikes.kilometres", { count: bike.total_km ?? 0 })}
+                {t("bikes.kilometres", { count: figures.km })}
               </Metric>
               <Rule />
               <Metric icon={<ArrowUpRight size={14} color="var(--color-text-dim)" />}>
-                {t("bikes.metres", { count: bike.total_elevation_m ?? 0 })}
+                {t("bikes.metres", { count: figures.elevationM })}
               </Metric>
               <Rule />
               <Metric icon={<Clock size={14} color="var(--color-text-dim)" />}>
-                {t("bikes.hours", { count: Math.round((bike.total_time_min ?? 0) / 60) })}
+                {t("bikes.hours", { count: Math.round(figures.timeMin / 60) })}
               </Metric>
             </>
           ) : (

@@ -24,6 +24,16 @@ export async function markNotificationRead(id: number): Promise<{ success: boole
   return apiFetch<{ success: boolean }>(`/notifications/${id}/read`, { method: "PATCH" });
 }
 
+// Delete one notification; a ride still waiting for a bike stays.
+export async function deleteNotification(id: number): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/notifications/${id}`, { method: "DELETE" });
+}
+
+// Delete everything except rides still waiting for a bike.
+export async function deleteAllNotifications(): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>("/notifications", { method: "DELETE" });
+}
+
 // Register an FCM device token.
 export async function registerFcmToken(token: string, platform: string): Promise<{ success: boolean }> {
   return apiFetch<{ success: boolean }>("/notifications/fcm-token", {

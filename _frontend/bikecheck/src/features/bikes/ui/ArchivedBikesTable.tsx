@@ -11,6 +11,7 @@ import { formatKm } from "@/features/profile/profileFormat";
 import { useArchivedBikes } from "@/features/bikes/bikes.queries";
 import type { Bike, ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { ArchivedBikeConfirms } from "./ArchivedBikeConfirms";
 import { BikeThumb } from "./BikeThumb";
 
@@ -107,7 +108,7 @@ function ArchivedRow({ bike, onRestore, onDestroy }: ArchivedRowProps): ReactEle
         {bike.bike_type ?? "—"}
       </Text>
       <Text className="tabular-nums" fz={13} c="text.7" ta="right">
-        {formatKm(bike.total_km ?? 0, i18n.language)}
+        {formatKm(bikeFigures(bike).km, i18n.language)}
       </Text>
       <Text className="tabular-nums" fz={13} c="text.7" ta="right">
         {bike.deleted_at === null ? "—" : dayjs(bike.deleted_at).format("D. M. YYYY")}

@@ -27,6 +27,12 @@ export interface ListNotificationsQuery {
   limit?: number;
 }
 
+// What the owner may delete: anything but an ask still waiting on them (an unassigned ride).
+const DELETABLE: Prisma.notificationsWhereInput = {
+  deleted_at: null,
+  OR: [{ is_read: true }, { type: { in: CLEARED_ON_VIEW } }],
+};
+
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
 
@@ -87,13 +93,17 @@ export class NotificationService {
   async list(userId: number, query: ListNotificationsQuery): Promise<notifications[]> {
     if (query.unreadOnly === true) {
       return await this.prisma.notifications.findMany({
-        where: { user_id: userId, is_read: false },
+        where: { user_id: userId, is_read: false, deleted_at: null },
         orderBy: { id: 'desc' },
       });
     }
 
     return await this.prisma.notifications.findMany({
-      where: { user_id: userId, ...(query.before === undefined ? {} : { id: { lt: query.before } }) },
+      where: {
+        user_id: userId,
+        deleted_at: null,
+        ...(query.before === undefined ? {} : { id: { lt: query.before } }),
+      },
       orderBy: { id: 'desc' },
       take: pageSize(query.limit),
     });
@@ -115,6 +125,20 @@ export class NotificationService {
     await this.prisma.notifications.updateMany({
       where: { id, user_id: userId },
       data: { is_read: true, read_at: new Date() },
+    });
+  }
+
+  async remove(id: number, userId: number): Promise<void> {
+    await this.prisma.notifications.updateMany({
+      where: { id, user_id: userId, ...DELETABLE },
+      data: { deleted_at: new Date() },
+    });
+  }
+
+  async removeAll(userId: number): Promise<void> {
+    await this.prisma.notifications.updateMany({
+      where: { user_id: userId, ...DELETABLE },
+      data: { deleted_at: new Date() },
     });
   }
 

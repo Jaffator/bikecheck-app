@@ -173,8 +173,27 @@
             "name": "unread",
             "required": false,
             "in": "query",
+            "description": "Every unread row, never paged",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Only rows with a lower id (cursor)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size, default 30, max 100",
+            "schema": {
+              "type": "number"
             }
           }
         ],
@@ -747,7 +766,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseBikeDto"
+                  "$ref": "#/components/schemas/ResponseRiddenBikeDto"
                 }
               }
             }
@@ -2140,6 +2159,31 @@
         ]
       }
     },
+    "/api/strava/sync": {
+      "post": {
+        "operationId": "Strava syncStrava",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseStravaSyncDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Synced less than 5 minutes ago"
+          }
+        },
+        "summary": "Queue the last 60 days of Strava rides the app never received",
+        "tags": [
+          "Strava"
+        ]
+      }
+    },
     "/api/strava/gear-linking": {
       "get": {
         "operationId": "Strava listUnmatchedStravaGear",
@@ -2275,6 +2319,168 @@
         ]
       }
     },
+    "/api/strava/pending-activities/{activityId}/dismiss": {
+      "post": {
+        "operationId": "Strava dismissPendingActivity",
+        "parameters": [
+          {
+            "name": "activityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Drop a pending ride ridden on a bike that is not in BikeCheck",
+        "tags": [
+          "Strava"
+        ]
+      }
+    },
+    "/api/rides/check-in-prompt": {
+      "get": {
+        "operationId": "Ride findCheckInPrompt",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponseRideDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Recent rides without a check-in; empty unless a ride arrived since the last drawer",
+        "tags": [
+          "Ride"
+        ]
+      }
+    },
+    "/api/rides/check-in-prompt/seen": {
+      "post": {
+        "operationId": "Ride markCheckInPromptSeen",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Mark the check-in drawer as shown now",
+        "tags": [
+          "Ride"
+        ]
+      }
+    },
+    "/api/rides/{id}/check-in": {
+      "put": {
+        "operationId": "Ride saveCheckIn",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRideCheckInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseRideCheckInDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Save how the bike rode on one of the user rides",
+        "tags": [
+          "Ride"
+        ]
+      },
+      "delete": {
+        "operationId": "Ride deleteCheckIn",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Remove the check-in from one of the user rides",
+        "tags": [
+          "Ride"
+        ]
+      }
+    },
+    "/api/rides/months": {
+      "get": {
+        "operationId": "Ride findMonths",
+        "parameters": [
+          {
+            "name": "tz",
+            "required": false,
+            "in": "query",
+            "description": "IANA time zone; UTC when left out",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Months with a ride, YYYY-MM, newest first",
+        "tags": [
+          "Ride"
+        ]
+      }
+    },
     "/api/rides": {
       "get": {
         "operationId": "Ride listRides",
@@ -2302,6 +2508,33 @@
             "schema": {
               "type": "number"
             }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "First day, YYYY-MM-DD, in tz",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Last day, YYYY-MM-DD, in tz",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tz",
+            "required": false,
+            "in": "query",
+            "description": "IANA time zone; UTC when left out",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2317,6 +2550,40 @@
           }
         },
         "summary": "List the current user's rides, newest first",
+        "tags": [
+          "Ride"
+        ]
+      }
+    },
+    "/api/rides/{id}/bike": {
+      "patch": {
+        "operationId": "Ride changeBike",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRideBikeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Move a ride and its wear to another of the user bikes",
         "tags": [
           "Ride"
         ]
@@ -3833,6 +4100,11 @@
             "example": "https://dgalywyr863hv.cloudfront.net/pictures/athletes/.../large.jpg",
             "nullable": true
           },
+          "strava_last_sync_at": {
+            "type": "object",
+            "example": "2026-09-29T10:00:00Z",
+            "nullable": true
+          },
           "last_login_at": {
             "type": "object",
             "example": "2024-01-01T12:00:00Z"
@@ -3865,6 +4137,7 @@
           "strava_lastname",
           "strava_username",
           "strava_avatar_url",
+          "strava_last_sync_at",
           "last_login_at",
           "created_at",
           "updated_at"
@@ -4727,20 +5000,36 @@
             "example": true,
             "description": "Whether the bike goes out on the owner's Public Profile"
           },
-          "color_index": {
-            "type": "number",
-            "example": 0,
-            "description": "Rank by id among all the owner's bikes, archived included, so a colour never shifts"
-          },
           "ride_count": {
             "type": "number",
             "example": 42,
             "description": "Non-deleted rides, lifetime"
           },
+          "ride_km": {
+            "type": "number",
+            "example": 1840,
+            "description": "Sum of those rides' distance in whole km; total_km is only what the owner typed"
+          },
           "ride_time_min": {
             "type": "number",
             "example": 3180,
             "description": "Sum of those rides' duration_min; total_time_min is only what the owner typed"
+          },
+          "ride_elevation_m": {
+            "type": "number",
+            "example": 25400,
+            "description": "Sum of those rides' elevation_up_m"
+          },
+          "last_ride_at": {
+            "type": "string",
+            "example": "2026-09-23T08:00:00.000Z",
+            "nullable": true,
+            "description": "Start of the newest non-deleted ride; null when the bike has none"
+          },
+          "color_index": {
+            "type": "number",
+            "example": 0,
+            "description": "Rank by id among all the owner's bikes, archived included, so a colour never shifts"
           }
         },
         "required": [
@@ -4773,9 +5062,220 @@
           "strava_name",
           "active_setup_profile_id",
           "is_shared",
-          "color_index",
           "ride_count",
-          "ride_time_min"
+          "ride_km",
+          "ride_time_min",
+          "ride_elevation_m",
+          "last_ride_at",
+          "color_index"
+        ]
+      },
+      "ResponseRiddenBikeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "user_id": {
+            "type": "number",
+            "example": 15
+          },
+          "ebike": {
+            "type": "boolean",
+            "example": true
+          },
+          "organization_id": {
+            "type": "object",
+            "example": 10,
+            "nullable": true
+          },
+          "bike_brand": {
+            "type": "string",
+            "example": "Specialized",
+            "nullable": true
+          },
+          "bike_model": {
+            "type": "object",
+            "example": "Stumpjumper",
+            "nullable": true
+          },
+          "image_url": {
+            "type": "object",
+            "example": "https://example.com/bike-image.jpg",
+            "nullable": true
+          },
+          "bike_type_id": {
+            "type": "object",
+            "example": 1,
+            "nullable": true
+          },
+          "bike_type": {
+            "type": "object",
+            "example": "Enduro",
+            "nullable": true
+          },
+          "bikename": {
+            "type": "object",
+            "example": "Tarmac SL7",
+            "nullable": true
+          },
+          "year": {
+            "type": "object",
+            "example": 2024,
+            "nullable": true
+          },
+          "description": {
+            "type": "object",
+            "example": "Serviced bike, top health",
+            "nullable": true
+          },
+          "wheel_size": {
+            "type": "object",
+            "example": "29\"",
+            "nullable": true
+          },
+          "bike_size": {
+            "type": "object",
+            "example": "L",
+            "nullable": true
+          },
+          "total_km": {
+            "type": "object",
+            "example": 1540,
+            "nullable": true
+          },
+          "total_time_min": {
+            "type": "object",
+            "example": 3600,
+            "nullable": true
+          },
+          "bike_weight_kg": {
+            "type": "object",
+            "example": 7.25,
+            "nullable": true
+          },
+          "total_elevation_m": {
+            "type": "object",
+            "example": 15623,
+            "nullable": true
+          },
+          "has_front_suspension": {
+            "type": "boolean",
+            "example": false
+          },
+          "has_rear_suspension": {
+            "type": "boolean",
+            "example": false
+          },
+          "created_at": {
+            "type": "object",
+            "example": "2024-01-01T12:00:00.000Z",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "object",
+            "example": "2024-01-02T12:00:00.000Z",
+            "nullable": true
+          },
+          "frame_material": {
+            "type": "object",
+            "example": "Carbon",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "object",
+            "example": false,
+            "nullable": true
+          },
+          "deleted_at": {
+            "type": "object",
+            "example": null,
+            "nullable": true
+          },
+          "strava_gear_id": {
+            "type": "object",
+            "example": "b12345678",
+            "nullable": true
+          },
+          "strava_name": {
+            "type": "object",
+            "example": "My Enduro Bike",
+            "nullable": true
+          },
+          "active_setup_profile_id": {
+            "type": "object",
+            "example": 12,
+            "nullable": true,
+            "description": "The Setup Profile the bike is ridden at right now"
+          },
+          "is_shared": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the bike goes out on the owner's Public Profile"
+          },
+          "ride_count": {
+            "type": "number",
+            "example": 42,
+            "description": "Non-deleted rides, lifetime"
+          },
+          "ride_km": {
+            "type": "number",
+            "example": 1840,
+            "description": "Sum of those rides' distance in whole km; total_km is only what the owner typed"
+          },
+          "ride_time_min": {
+            "type": "number",
+            "example": 3180,
+            "description": "Sum of those rides' duration_min; total_time_min is only what the owner typed"
+          },
+          "ride_elevation_m": {
+            "type": "number",
+            "example": 25400,
+            "description": "Sum of those rides' elevation_up_m"
+          },
+          "last_ride_at": {
+            "type": "string",
+            "example": "2026-09-23T08:00:00.000Z",
+            "nullable": true,
+            "description": "Start of the newest non-deleted ride; null when the bike has none"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "ebike",
+          "organization_id",
+          "bike_brand",
+          "bike_model",
+          "image_url",
+          "bike_type_id",
+          "bike_type",
+          "bikename",
+          "year",
+          "description",
+          "wheel_size",
+          "bike_size",
+          "total_km",
+          "total_time_min",
+          "bike_weight_kg",
+          "total_elevation_m",
+          "has_front_suspension",
+          "has_rear_suspension",
+          "created_at",
+          "updated_at",
+          "frame_material",
+          "is_deleted",
+          "deleted_at",
+          "strava_gear_id",
+          "strava_name",
+          "active_setup_profile_id",
+          "is_shared",
+          "ride_count",
+          "ride_km",
+          "ride_time_min",
+          "ride_elevation_m",
+          "last_ride_at"
         ]
       },
       "Attachment_BikeEventDto": {
@@ -6014,6 +6514,11 @@
             "example": "2026-10-04",
             "nullable": true,
             "description": "YYYY-MM-DD, today or later; null removes the plan"
+          },
+          "time_zone": {
+            "type": "string",
+            "example": "Europe/Prague",
+            "description": "IANA zone the 08:00 reminder is timed in; not stored. Europe/Prague when absent"
           }
         },
         "required": [
@@ -6540,6 +7045,24 @@
           "url"
         ]
       },
+      "ResponseStravaSyncDto": {
+        "type": "object",
+        "properties": {
+          "queued": {
+            "type": "number",
+            "example": 2
+          },
+          "synced_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-29T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "queued",
+          "synced_at"
+        ]
+      },
       "ResponseUnmatchedStravaGearDto": {
         "type": "object",
         "properties": {
@@ -6757,6 +7280,44 @@
           "after"
         ]
       },
+      "ResponseRideCheckInDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ISSUE"
+            ]
+          },
+          "symptoms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "CREAK",
+                "SHIFTING_SKIPS",
+                "SOFT_BRAKE",
+                "FORK_SETUP",
+                "SHOCK_SETUP",
+                "TIRE_LOSES_AIR",
+                "HEADSET_PLAY",
+                "OTHER"
+              ]
+            }
+          },
+          "note": {
+            "type": "object",
+            "example": "Skips on the 3rd cog",
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "symptoms",
+          "note"
+        ]
+      },
       "ResponseRideDto": {
         "type": "object",
         "properties": {
@@ -6827,6 +7388,15 @@
             "items": {
               "$ref": "#/components/schemas/Response_WoreOffLineDto"
             }
+          },
+          "check_in": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseRideCheckInDto"
+              }
+            ]
           }
         },
         "required": [
@@ -6843,7 +7413,108 @@
           "speed_avg",
           "max_speed_kmh",
           "summary_polyline",
-          "wore_off"
+          "wore_off",
+          "check_in"
+        ]
+      },
+      "SaveRideCheckInDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ISSUE"
+            ]
+          },
+          "symptoms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "CREAK",
+                "SHIFTING_SKIPS",
+                "SOFT_BRAKE",
+                "FORK_SETUP",
+                "SHOCK_SETUP",
+                "TIRE_LOSES_AIR",
+                "HEADSET_PLAY",
+                "OTHER"
+              ]
+            }
+          },
+          "note": {
+            "type": "string",
+            "example": "Skips on the 3rd cog"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ResponseRideWeekDto": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "example": "2026-09-21"
+          },
+          "count": {
+            "type": "number",
+            "example": 3
+          },
+          "km": {
+            "type": "number",
+            "example": 96.4
+          },
+          "time_min": {
+            "type": "number",
+            "example": 347
+          }
+        },
+        "required": [
+          "start",
+          "count",
+          "km",
+          "time_min"
+        ]
+      },
+      "ResponseRideFiguresDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 9
+          },
+          "distance_m": {
+            "type": "number",
+            "example": 440000
+          },
+          "time_min": {
+            "type": "number",
+            "example": 1450
+          },
+          "elevation_up_m": {
+            "type": "number",
+            "example": 8640
+          },
+          "elevation_down_m": {
+            "type": "number",
+            "example": 9120
+          },
+          "previous_distance_m": {
+            "type": "object",
+            "example": 392000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "count",
+          "distance_m",
+          "time_min",
+          "elevation_up_m",
+          "elevation_down_m",
+          "previous_distance_m"
         ]
       },
       "ResponseRidePageDto": {
@@ -6858,11 +7529,34 @@
           "total": {
             "type": "number",
             "example": 137
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseRideWeekDto"
+            }
+          },
+          "figures": {
+            "$ref": "#/components/schemas/ResponseRideFiguresDto"
           }
         },
         "required": [
           "items",
-          "total"
+          "total",
+          "weeks",
+          "figures"
+        ]
+      },
+      "ChangeRideBikeDto": {
+        "type": "object",
+        "properties": {
+          "bikeId": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "bikeId"
         ]
       },
       "ExportReportDto": {
@@ -8557,6 +9251,11 @@
           "total": {
             "type": "number",
             "example": 9200
+          },
+          "service_count": {
+            "type": "number",
+            "example": 4,
+            "description": "Services in from/to, free ones included"
           }
         },
         "required": [
@@ -8564,7 +9263,8 @@
           "bike_brand",
           "bike_model",
           "year",
-          "total"
+          "total",
+          "service_count"
         ]
       },
       "Response_SpendDto": {

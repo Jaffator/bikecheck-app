@@ -7,14 +7,13 @@ import { ChevronRight, FileText, History, SlidersHorizontal } from "lucide-react
 import { Bikecheck } from "@/assets/icons/bikecheck";
 
 interface BikeActionTilesProps {
-  // Absent on an Archived Bike, which takes no new work - the grid is then reads only.
+  // Absent on an Archived Bike, which takes no new work, and on desktop, where the header carries it.
   onAddService?: () => void;
-  onOpenReports: () => void;
+  // Absent on desktop, where the header carries Reports.
+  onOpenReports?: () => void;
   onOpenHistory: () => void;
   // The Setup screen: the numbers the bike is ridden at (ADR 0029).
   onOpenSetup: () => void;
-  // PROTOTYPE (#165): desktop variants lay the tiles out in one row or one column.
-  cols?: number;
 }
 
 export function BikeActionTiles({
@@ -22,12 +21,11 @@ export function BikeActionTiles({
   onOpenReports,
   onOpenHistory,
   onOpenSetup,
-  cols = 2,
 }: BikeActionTilesProps): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <SimpleGrid cols={cols} spacing="sm">
+    <SimpleGrid cols={2} spacing="sm">
       {onAddService !== undefined && (
         <Tile
           // Servicing is the app's own act, so the tile wears the app's own mark.
@@ -41,7 +39,9 @@ export function BikeActionTiles({
       )}
       <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} chevron />
       <Tile icon={<SlidersHorizontal size={20} />} label={t("setup.tile")} onClick={onOpenSetup} chevron />
-      <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron />
+      {onOpenReports !== undefined && (
+        <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron />
+      )}
     </SimpleGrid>
   );
 }

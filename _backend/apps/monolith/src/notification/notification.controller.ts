@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query, Post, Body } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Query, Post, Body, Delete } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { NotificationService } from './notification.service';
 import { ResponseNotificationDto } from './dto/response-notification.dto';
@@ -62,6 +62,24 @@ export class NotificationController {
   // JSON, and an empty response would leave it parsing nothing.
   async markRead(@Param('id') id: string, @CurrentUser('userId') userId: string): Promise<{ success: boolean }> {
     await this.notificationService.markRead(+id, Number(userId));
+    return { success: true };
+  }
+
+  // ---------- DELETE every notification the owner may delete ----------
+  @ApiOperation({ summary: 'Delete every notification except rides still waiting for a bike' })
+  @ApiResponse({ status: 200 })
+  @Delete()
+  async removeAll(@CurrentUser('userId') userId: string): Promise<{ success: boolean }> {
+    await this.notificationService.removeAll(Number(userId));
+    return { success: true };
+  }
+
+  // ---------- DELETE one notification ----------
+  @ApiOperation({ summary: 'Delete a notification; a ride still waiting for a bike stays' })
+  @ApiResponse({ status: 200 })
+  @Delete(':id')
+  async remove(@Param('id') id: string, @CurrentUser('userId') userId: string): Promise<{ success: boolean }> {
+    await this.notificationService.remove(+id, Number(userId));
     return { success: true };
   }
 }
