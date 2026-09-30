@@ -7,6 +7,8 @@ const ROUTES: Partial<Record<NotificationType, string>> = {
   // Open the pending rides tab.
   strava_activity_unassigned: "/rides?pending=:activityId",
   maintenance_due: "/bikes/:bikeId",
+  // The service wizard on the most worn job planned for today.
+  service_planned: "/service/new?bike=:bikeId&category=:groupId&action=:actionId&component=:componentMountedId",
   // The owner's side of the Follows page, whoever the follower or the asker was.
   new_follower: "/follows?tab=followers",
   follow_request: "/follows?tab=followers",

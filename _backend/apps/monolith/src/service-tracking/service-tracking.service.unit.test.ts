@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { getQueueToken } from '@nestjs/bullmq';
 import { ServiceTrackingService } from './service-tracking.service';
+import { PLAN_REMINDER_QUEUE } from './plan-reminder';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import type { Response_WoreOffLineDto } from './dto/response-wore-off-line';
@@ -245,6 +247,7 @@ describe('ServiceTrackingService', () => {
   };
 
   const mockNotifications = { create: jest.fn() };
+  const mockPlanReminders = { add: jest.fn() };
 
   // The plans and the parts, filtered the way the database would filter them - so what a
   // read leaves out is exercised as behaviour rather than asserted on.
@@ -316,6 +319,7 @@ describe('ServiceTrackingService', () => {
         ServiceTrackingService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: getQueueToken(PLAN_REMINDER_QUEUE), useValue: mockPlanReminders },
       ],
     }).compile();
 
@@ -2131,7 +2135,7 @@ describe('ServiceTrackingService', () => {
       expect(mockPrismaService.tracked_action_state.upsert).not.toHaveBeenCalled();
     });
 
-    // Planning sends nothing on its own; every push is about wear.
+    // The reminder comes on the day, never at the moment of planning.
     it('writes no band and announces nothing', async () => {
       const parts = [mountedPart({ drivetrain_km: 3800, tracked_action_state: [stateRow(CHAIN_REPLACEMENT, 75)] })];
       garage(INTERVALS, parts);
@@ -2141,6 +2145,150 @@ describe('ServiceTrackingService', () => {
 
       expect(held(parts, 'reached_threshold')).toEqual({ '55:101': 75 });
       expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    // 08:00 on the planned day in the owner's zone; one job per user per day (ADR 0038, revised).
+    describe('the reminder', () => {
+      async function plan(day: string | null, timeZone?: string): Promise<void> {
+        const parts = [mountedPart({ drivetrain_km: 3200 })];
+        garage(INTERVALS, parts);
+        keepState(parts);
+        await service.setTrackedActionPlan(55, CHAIN_REPLACEMENT, OWNER_ID, day, timeZone);
+      }
+
+      function scheduledAt(): { jobId: string; at: string } {
+        const [, data, options] = mockPlanReminders.add.mock.calls[0] as [string, unknown, { jobId: string; delay: number }];
+        expect(data).toEqual({ userId: OWNER_ID, day: expect.any(String) as string });
+        return { jobId: options.jobId, at: new Date(NOW.getTime() + options.delay).toISOString() };
+      }
+
+      it('is scheduled for 08:00 on the day, keyed on the owner and the day', async () => {
+        await plan('2026-10-04', 'Europe/Prague');
+
+        expect(scheduledAt()).toEqual({ jobId: 'plan-7-2026-10-04', at: '2026-10-04T06:00:00.000Z' });
+      });
+
+      // The last Sunday of October 2026 is back on winter time by 08:00.
+      it('lands on 08:00 on the day the clocks change', async () => {
+        await plan('2026-10-25', 'Europe/Prague');
+
+        expect(scheduledAt().at).toBe('2026-10-25T07:00:00.000Z');
+      });
+
+      it('follows the zone the client sent', async () => {
+        await plan('2026-10-04', 'America/New_York');
+
+        expect(scheduledAt().at).toBe('2026-10-04T12:00:00.000Z');
+      });
+
+      // Now is 11:30 in Prague but 05:30 in New York.
+      it('is not scheduled for today once 08:00 has passed there', async () => {
+        await plan('2026-09-28', 'Europe/Prague');
+
+        expect(mockPlanReminders.add).not.toHaveBeenCalled();
+      });
+
+      it('is scheduled for today while 08:00 is still ahead there', async () => {
+        await plan('2026-09-28', 'America/New_York');
+
+        expect(scheduledAt().at).toBe('2026-09-28T12:00:00.000Z');
+      });
+
+      it('falls back to Prague when the client sent no zone', async () => {
+        await plan('2026-10-04');
+
+        expect(scheduledAt().at).toBe('2026-10-04T06:00:00.000Z');
+      });
+
+      it('is not scheduled when the plan is removed', async () => {
+        await plan(null, 'Europe/Prague');
+
+        expect(mockPlanReminders.add).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // What the morning job does: one summary of the plans still standing for that day, across the garage.
+  describe('remindPlans', () => {
+    const DAY = '2026-10-04';
+    const SET = '2026-09-20T10:00:00.000Z';
+    const INTERVALS = [
+      intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE]),
+      intervalRow(TYRE_REPLACEMENT, { km: 2000 }, [TYRE_TYPE]),
+      intervalRow(FORK_SERVICE, { min: 3000 }, [FORK_TYPE], OTHER_BIKE_ID),
+    ];
+
+    // The chain at 80 % with its announcements muted, the other bike's fork at 95 %, a tyre planned for another day.
+    function plannedGarage(chainRecorded: Record<string, unknown>[] = []): void {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Canyon')],
+        INTERVALS,
+        [
+          mountedPart({
+            drivetrain_km: 3200,
+            action_done_component_map: chainRecorded,
+            tracked_action_state: [settingRow(CHAIN_REPLACEMENT, { plannedFor: DAY, plannedAt: SET, notify: false })],
+          }),
+          mountedPart({
+            id: 56,
+            bike_id: OTHER_BIKE_ID,
+            component_type_id: FORK_TYPE,
+            component_types: typeRow(FORK_TYPE),
+            suspension_min: 2850,
+            tracked_action_state: [settingRow(FORK_SERVICE, { plannedFor: DAY, plannedAt: SET })],
+          }),
+          mountedPart({
+            id: 57,
+            component_type_id: TYRE_TYPE,
+            component_types: typeRow(TYRE_TYPE),
+            total_km: 200,
+            tracked_action_state: [settingRow(TYRE_REPLACEMENT, { plannedFor: '2026-10-11', plannedAt: SET })],
+          }),
+        ],
+      );
+    }
+
+    it('sends one reminder naming the most worn plan and opening its wizard', async () => {
+      plannedGarage();
+
+      await service.remindPlans(OWNER_ID, DAY);
+
+      expect(mockNotifications.create).toHaveBeenCalledTimes(1);
+      expect(mockNotifications.create).toHaveBeenCalledWith({
+        userId: OWNER_ID,
+        type: 'service_planned',
+        dedupKey: 'plan-2026-10-04',
+        payload: {
+          bikeId: OTHER_BIKE_ID,
+          groupId: GROUP_ID,
+          actionId: FORK_SERVICE,
+          componentMountedId: 56,
+          bikeName: 'Canyon Hightower 2022',
+          planned: [
+            expect.objectContaining({ componentName: 'Fork', percentage: 95 }) as unknown,
+            // Muted announcements do not mute the owner's own booking.
+            expect.objectContaining({ componentName: 'Chain', percentage: 80 }) as unknown,
+          ],
+        },
+      });
+    });
+
+    // A plan recorded, moved or removed since the job was queued leaves nothing to say.
+    it('sends nothing when no plan stands for the day', async () => {
+      plannedGarage([baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-25T00:00:00.000Z')]);
+
+      await service.remindPlans(OWNER_ID, '2026-10-05');
+
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    it('leaves out a plan a Service has ended', async () => {
+      plannedGarage([baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-25T00:00:00.000Z')]);
+
+      await service.remindPlans(OWNER_ID, DAY);
+
+      const [{ payload }] = mockNotifications.create.mock.calls[0] as [{ payload: { planned: unknown[] } }];
+      expect(payload.planned).toEqual([expect.objectContaining({ componentName: 'Fork' })]);
     });
   });
 

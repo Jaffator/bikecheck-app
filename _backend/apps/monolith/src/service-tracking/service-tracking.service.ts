@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Prisma } from '@prisma/client';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, ownedBikesWhere } from '../bike/owned-bike.where';
 import { NotificationService } from '../notification/notification.service';
@@ -15,6 +17,14 @@ import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 import { Response_WoreOffLineDto } from './dto/response-wore-off-line';
 import { RIDE_WEAR, wearRideSelect, type WearRide } from './ride-wear';
+import {
+  DEFAULT_TIME_ZONE,
+  PLAN_REMINDER_JOB,
+  PLAN_REMINDER_QUEUE,
+  planReminderJobId,
+  reminderAt,
+  type PlanReminderJob,
+} from './plan-reminder';
 
 // What a Tracked Action is read from: the part's accumulators, everything ever recorded
 // against it, and the state of its own row. Nothing here is a percentage - the percentage
@@ -117,6 +127,7 @@ export class ServiceTrackingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
+    @InjectQueue(PLAN_REMINDER_QUEUE) private readonly planReminders: Queue<PlanReminderJob>,
   ) {}
 
   // Every Tracked Action on one bike, worst first - the quiet ones included, so work that
@@ -238,6 +249,7 @@ export class ServiceTrackingService {
     eventActionId: number,
     userId: number,
     plannedFor: string | null,
+    timeZone: string = DEFAULT_TIME_ZONE,
   ): Promise<Response_TrackedActionDto> {
     const day = plannedFor === null ? null : plannedDay(plannedFor);
     const { bikeId } = await this.requireTrackedAction(componentMountedId, eventActionId, userId);
@@ -246,9 +258,52 @@ export class ServiceTrackingService {
       planned_for: day,
       planned_at: day === null ? null : new Date(),
     });
+    if (plannedFor !== null) await this.schedulePlanReminder(userId, plannedFor, timeZone);
 
     // No evaluation: a plan moves no reading, so it crosses no band and announces nothing.
     return await this.readTrackedAction(bikeId, componentMountedId, eventActionId);
+  }
+
+  // The morning of a planned day: one reminder of the plans still standing for it, worst first.
+  // Ignores the mute - `notify` silences wear announcements, not the owner's own booking.
+  async remindPlans(userId: number, day: string): Promise<void> {
+    const planned = worstFirst(
+      (await this.getGarageReadings(userId)).map((reading) => reading.action).filter((action) => action.planned_for === day),
+    );
+    const [worst] = planned;
+    if (worst === undefined) return;
+
+    await this.notificationService.create({
+      userId,
+      type: 'service_planned',
+      dedupKey: `plan-${day}`,
+      payload: {
+        bikeId: worst.bike_id,
+        groupId: worst.component_group_id,
+        actionId: worst.event_action_id,
+        componentMountedId: worst.component_mounted_id,
+        bikeName: [worst.bike_brand, worst.bike_model, worst.year].filter(Boolean).join(' '),
+        planned: planned.map((action) => ({
+          componentKey: action.component_type_i18n_key,
+          componentName: action.component_type,
+          actionKey: action.action_i18n_key,
+          actionName: action.action_name,
+          percentage: action.percentage,
+        })),
+      },
+    });
+  }
+
+  // A moved or removed plan leaves its old job in place; the job re-reads the plans when it fires.
+  private async schedulePlanReminder(userId: number, day: string, timeZone: string): Promise<void> {
+    const delay = reminderAt(day, timeZone).getTime() - Date.now();
+    // Planned for today after 08:00: the owner has just set it and needs no reminder.
+    if (delay <= 0) return;
+
+    await this.planReminders.add(PLAN_REMINDER_JOB, { userId, day } satisfies PlanReminderJob, {
+      jobId: planReminderJobId(userId, day),
+      delay,
+    });
   }
 
   // Announcements, run at the end of every write that moves an input Service Tracking

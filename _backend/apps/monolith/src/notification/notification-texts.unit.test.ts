@@ -207,3 +207,34 @@ describe('follow_accepted text', () => {
     expect(buildNotificationText('follow_accepted', 'en', {}).body).toBe('The garage is open to you.');
   });
 });
+
+// A plan reminder names the most worn job booked for today and counts the rest.
+describe('service_planned text', () => {
+  const chain = {
+    componentKey: 'component.chain',
+    componentName: 'Chain',
+    actionKey: 'action.chainReplacement',
+    actionName: 'Chain replacement',
+    percentage: 92,
+  };
+
+  it('names the planned job, translated', () => {
+    const text = buildNotificationText('service_planned', 'cs', { bikeName: 'Canyon Strive', planned: [chain] });
+
+    expect(text.title).toBe('Dnes máš naplánovaný servis');
+    expect(text.body).toBe('Canyon Strive · Řetěz – Výměna řetězu 92 %');
+  });
+
+  it('names the worst and counts the rest', () => {
+    const text = buildNotificationText('service_planned', 'en', {
+      bikeName: 'Canyon Strive',
+      planned: [
+        chain,
+        { componentKey: null, componentName: 'Mudguard', actionKey: null, actionName: 'Wash', percentage: 40 },
+      ],
+    });
+
+    expect(text.title).toBe('Service planned for today');
+    expect(text.body).toBe('Canyon Strive · Chain – Chain replacement 92 % +1 more');
+  });
+});

@@ -66,3 +66,23 @@ then have to restore it, which is exactly the class of write-path bug ADR 0026 r
   planned Tracked Action may show twice there — in Planned by day and in Needs attention by wear.
 - Days compare in UTC. A plan made just after local midnight in Prague is stamped with the day
   before; a Service dated on that UTC day and written later still ends it, so this is harmless.
+
+## Revised 2026-09-30: a plan reminds on its day
+
+The rejected reminder comes back. A plan is the owner's own word about a day, and a booking nobody
+is told about is easy to forget; the push is caused by that word, not by a date the app picked.
+It needs no clock either: setting the plan enqueues one **delayed BullMQ job** on
+`plan-reminder-queue` (service-tracking's own processor), so nothing polls and ADR 0026 still holds for the reading.
+
+- **When**: 08:00 on the planned day, in the owner's local time. The client sends its IANA time zone
+  with the plan; no column stores it. A plan for today set after 08:00 schedules nothing.
+- **One per day**: the job is keyed `plan-{userId}-{day}`, one summary across every bike. It names
+  the most worn planned Tracked Action and counts the rest; the tap opens the service wizard on that one (ADR 0030).
+- **Checked when it fires**: the job re-reads which plans are still live on that day (liveness as
+  above). A moved, removed or already-recorded plan leaves nothing to say, and nothing is sent. A
+  moved plan only adds a job for its new day; the old one fires into silence.
+- **The mute does not apply**: `notify = false` silences wear announcements, not the owner's own
+  booking.
+- Plans set before this revision get no job.
+- The job lives in Redis, so production Redis runs with AOF (`appendfsync everysec`); on RDB alone a
+  crash loses every reminder scheduled since the last snapshot.

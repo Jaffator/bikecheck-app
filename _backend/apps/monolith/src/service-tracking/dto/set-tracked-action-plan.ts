@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, Matches, ValidateIf } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsTimeZone, Matches, ValidateIf } from 'class-validator';
 
 // The day the owner means to do one Tracked Action - a part and an action (ADR 0027). A day and nothing else (ADR 0038).
 export class SetTrackedActionPlanDto {
@@ -22,4 +22,12 @@ export class SetTrackedActionPlanDto {
   @ValidateIf((_, value) => value !== null)
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
   planned_for!: string | null;
+
+  @ApiPropertyOptional({
+    example: 'Europe/Prague',
+    description: 'IANA zone the 08:00 reminder is timed in; not stored. Europe/Prague when absent',
+  })
+  @IsOptional()
+  @IsTimeZone()
+  time_zone?: string;
 }

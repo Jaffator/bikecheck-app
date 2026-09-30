@@ -5,6 +5,7 @@ export type NotificationType =
   | "strava_activity_saved"
   | "strava_activity_unassigned"
   | "maintenance_due"
+  | "service_planned"
   | "achievement_unlocked"
   | "new_follower"
   | "follow_request"
@@ -18,6 +19,10 @@ export interface NotificationPayload {
   km?: number;
   elevationM?: number;
   bikeName?: string;
+  // The service wizard's ids for the most worn job a plan reminder opens.
+  groupId?: number;
+  actionId?: number;
+  componentMountedId?: number;
   // The worst band a service reminder's bike stands in, which colours its icon.
   level?: "warning" | "critical" | "overdue";
   // What just crossed on a service reminder, worst first; the first one is what Log service opens.

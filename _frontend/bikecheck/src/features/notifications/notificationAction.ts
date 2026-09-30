@@ -40,6 +40,8 @@ export function notificationAction(notification: Notification): NotificationActi
       return notification.payload?.level === "warning"
         ? { labelKey: "notifications.actionViewBike", route, emphasis: "outline" }
         : { labelKey: "notifications.actionLogService", route: logServiceRoute(notification), emphasis: "filled" };
+    case "service_planned":
+      return { labelKey: "notifications.actionLogService", route, emphasis: "filled" };
     case "strava_activity_unassigned":
       return { labelKey: "notifications.actionAssignBike", route, emphasis: "filled" };
     case "strava_activity_saved":

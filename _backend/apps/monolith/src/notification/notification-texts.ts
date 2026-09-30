@@ -24,6 +24,10 @@ export interface NotificationTextPayload {
   bikeId?: number;
   activityId?: string;
   gearId?: string;
+  // The service wizard's ids for the job a plan reminder opens.
+  groupId?: number;
+  actionId?: number;
+  componentMountedId?: number;
   // Text values.
   bikeName?: string;
   km?: number;
@@ -42,6 +46,8 @@ export interface NotificationTextPayload {
   level?: 'warning' | 'critical' | 'overdue';
   // The Tracked Actions that crossed a band in this evaluation - the news itself, named.
   crossed?: CrossedAction[];
+  // The Tracked Actions planned for today, worst first.
+  planned?: CrossedAction[];
   // The other party of a follow, as the app names people. Absent when they have none.
   handle?: string;
   personName?: string;
@@ -123,6 +129,16 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
           named: (bike) => `${bike} needs a service.`,
           fallback: 'A bike needs a service.',
         }),
+    },
+  },
+  service_planned: {
+    cs: {
+      title: () => 'Dnes máš naplánovaný servis',
+      body: (payload) => plannedBody(payload, 'cs', (count) => `+${count} ${count < 5 ? 'další' : 'dalších'}`),
+    },
+    en: {
+      title: () => 'Service planned for today',
+      body: (payload) => plannedBody(payload, 'en', (count) => `+${count} more`),
     },
   },
   achievement_unlocked: {
@@ -238,6 +254,20 @@ function maintenanceBody(
 
   if (counts.length === 0) return payload.bikeName ? words.named(payload.bikeName) : words.fallback;
   return payload.bikeName ? `${payload.bikeName} · ${counts.join(', ')}` : counts.join(', ');
+}
+
+// "Canyon Strive · Chain – Chain replacement 92 % +1 more": only the worst is named, as in a wear reminder.
+function plannedBody(
+  payload: NotificationTextPayload,
+  language: NotificationLanguage,
+  more: (count: number) => string,
+): string {
+  const [worst, ...rest] = payload.planned ?? [];
+  if (worst === undefined) return payload.bikeName ?? '';
+
+  const job = crossedLabel(worst, language);
+  const jobs = rest.length === 0 ? job : `${job} ${more(rest.length)}`;
+  return payload.bikeName ? `${payload.bikeName} · ${jobs}` : jobs;
 }
 
 // The ride's own name identifies it better than anything else, so it takes the

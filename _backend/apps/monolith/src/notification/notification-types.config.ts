@@ -11,6 +11,7 @@ export type NotificationType =
   | 'strava_activity_saved'
   | 'strava_activity_unassigned'
   | 'maintenance_due'
+  | 'service_planned'
   | 'achievement_unlocked'
   | 'new_follower'
   | 'follow_request'
@@ -68,6 +69,13 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     // thing the app can actually open.
     route: '/bikes/:bikeId',
     pushEmoji: '🔧',
+  },
+  // The morning of a day the owner planned work for (ADR 0038, revised). One per user per day;
+  // opens the service wizard on the most worn planned job.
+  service_planned: {
+    channels: ['push', 'inApp'],
+    route: '/service/new?bike=:bikeId&category=:groupId&action=:actionId&component=:componentMountedId',
+    pushEmoji: '🗓️',
   },
   achievement_unlocked: {
     channels: ['inApp'],

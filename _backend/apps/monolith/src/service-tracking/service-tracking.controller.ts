@@ -81,6 +81,7 @@ export class ServiceTrackingController {
       dto.event_action_id,
       Number(userId),
       dto.planned_for,
+      dto.time_zone,
     );
   }
 }

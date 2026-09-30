@@ -38,6 +38,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    # AOF so delayed BullMQ jobs (plan reminders) survive a crash, not just a clean stop.
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
     volumes:
       - redis_data:/data
     healthcheck:

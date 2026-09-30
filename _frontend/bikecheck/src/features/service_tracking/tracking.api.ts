@@ -39,8 +39,10 @@ export async function setTrackedActionNotify(input: SetTrackedActionNotifyInput)
 
 // Plan one Tracked Action for a day, or remove its plan with null. The reading itself is untouched.
 export async function setTrackedActionPlan(input: SetTrackedActionPlanInput): Promise<TrackedAction> {
+  // The device's zone times the 08:00 reminder on the planned day.
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return apiFetch<TrackedAction>("/service-tracking/plan", {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, time_zone: timeZone }),
   });
 }
