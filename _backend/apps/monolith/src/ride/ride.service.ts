@@ -1,7 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { check_in_status, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { ownedBikeWhere } from '../bike/owned-bike.where';
+import { endOfDay, ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import {
+  BRAKE_PAD_PART,
+  DRIVETRAIN_PARTS,
+  SUSPENSION_PARTS,
+  wearRideSelect,
+  type WearRide,
+} from '../service-tracking/ride-wear';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 import { ResponseRideCheckInDto, ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
@@ -163,6 +171,88 @@ export class RideService {
   private async summedRides(where: Prisma.ridesWhereInput): Promise<SummedRide[]> {
     return this.prisma.rides.findMany({ where, select: summedRideSelect });
   }
+
+  /**
+   * Moves a ride to another of the user's bikes, taking its wear off the parts that carried it
+   * and putting it on the parts the new bike had mounted at the time.
+   */
+  async changeBike(userId: number, rideId: number, bikeId: number): Promise<void> {
+    const ride = await this.prisma.rides.findFirst({
+      where: { id: rideId, user_id: userId, is_deleted: { not: true }, bikes: { is_deleted: { not: true } } },
+      select: movedRideSelect,
+    });
+    if (!ride) throw new NotFoundException('Ride not found');
+    if (ride.bike_id === bikeId) return;
+
+    const target = await this.prisma.bikes.findFirst({ where: ownedBikeWhere(bikeId, userId), select: { id: true } });
+    if (!target) throw new NotFoundException('Bike not found');
+
+    await this.prisma.$transaction(async (tx) => {
+      await shiftWear(tx, ride.bike_id, ride, -1);
+      await shiftWear(tx, bikeId, ride, 1);
+      await tx.rides.update({ where: { id: ride.id }, data: { bike_id: bikeId } });
+    });
+
+    // One bike's readings dropped and the other's grew, so both may cross a band.
+    await this.serviceTracking.evaluateBikes([ride.bike_id, bikeId], userId);
+  }
+}
+
+const movedRideSelect = { ...wearRideSelect, elevation_up_m: true } satisfies Prisma.ridesSelect;
+type MovedRide = WearRide & { elevation_up_m: number | null };
+
+const wornPartSelect = {
+  id: true,
+  mounted_at: true,
+  total_km: true,
+  total_time_min: true,
+  drivetrain_km: true,
+  suspension_min: true,
+  health_index: true,
+  component_types: { select: { component_type: true } },
+} satisfies Prisma.components_mountedSelect;
+type WornPart = Prisma.components_mountedGetPayload<{ select: typeof wornPartSelect }>;
+
+// Adds (sign 1) or removes (sign -1) the ride's wear on one bike, never below zero.
+async function shiftWear(tx: Prisma.TransactionClient, bikeId: number, ride: MovedRide, sign: 1 | -1): Promise<void> {
+  const parts = await tx.components_mounted.findMany({
+    where: { bike_id: bikeId, is_active: true, is_deleted: { not: true } },
+    select: wornPartSelect,
+  });
+  for (const part of parts.filter((one) => carried(one, ride))) {
+    await tx.components_mounted.update({ where: { id: part.id }, data: partWear(part, ride, sign) });
+  }
+
+  const bike = await tx.bikes.findUnique({ where: { id: bikeId }, select: { total_elevation_m: true } });
+  await tx.bikes.update({
+    where: { id: bikeId },
+    data: { total_elevation_m: shifted(bike?.total_elevation_m, Math.round(ride.elevation_up_m ?? 0), sign) },
+  });
+}
+
+// A part carries rides from the day after its mount day (ADR 0001); an undated ride or part is assumed to.
+function carried(part: WornPart, ride: MovedRide): boolean {
+  return ride.started_at === null || part.mounted_at === null || endOfDay(part.mounted_at) < ride.started_at;
+}
+
+// The same columns, per part kind, that saveRide grows in strava.service.ts.
+function partWear(part: WornPart, ride: MovedRide, sign: 1 | -1): Prisma.components_mountedUpdateInput {
+  const type = part.component_types.component_type;
+  return {
+    total_km: shifted(part.total_km, Math.floor((ride.distance_m ?? 0) / 1000), sign),
+    total_time_min: shifted(part.total_time_min, ride.duration_min ?? 0, sign),
+    ...(DRIVETRAIN_PARTS.includes(type)
+      ? { drivetrain_km: shifted(part.drivetrain_km, Math.floor((ride.drivetrain_meters ?? 0) / 1000), sign) }
+      : {}),
+    ...(SUSPENSION_PARTS.includes(type)
+      ? { suspension_min: shifted(part.suspension_min, ride.suspension_min ?? 0, sign) }
+      : {}),
+    ...(type === BRAKE_PAD_PART ? { health_index: shifted(part.health_index, ride.health_index_brake_pad ?? 0, sign) } : {}),
+  };
+}
+
+function shifted(current: number | null | undefined, amount: number, sign: 1 | -1): number {
+  return Math.max(0, (current ?? 0) + sign * amount);
 }
 
 // The user's rides the lists show: not deleted, and not on an Archived Bike (ADR 0024).

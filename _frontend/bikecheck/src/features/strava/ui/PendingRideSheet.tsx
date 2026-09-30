@@ -3,13 +3,14 @@ import { useState, type ReactElement } from "react";
 import { Button, Group, Paper, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { ChevronDown, Clock, Mountain, Route } from "lucide-react";
+import { Ban, ChevronDown, Clock, Mountain, Route } from "lucide-react";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
-import { useResolvePendingRide } from "@/features/strava/strava.queries";
+import { useDismissPendingRide, useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
 import { formatDuration } from "@/features/rides/rideDuration";
 
@@ -27,6 +28,8 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
   const { t } = useTranslation();
   const { data: bikes } = useBikes();
   const resolve = useResolvePendingRide();
+  const dismiss = useDismissPendingRide();
+  const [confirmingDismiss, setConfirmingDismiss] = useState(false);
 
   // The bike is chosen for one ride: on desktop the panel can be switched to another while open.
   const [choice, setChoice] = useState<{ activityId: string; bikeId: string } | null>(null);
@@ -36,6 +39,21 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
     // Clears the previous bike selection before closing.
     setChoice(null);
     onClose();
+  }
+
+  function cancelDismiss(): void {
+    dismiss.reset();
+    setConfirmingDismiss(false);
+  }
+
+  function confirmDismiss(): void {
+    if (ride === null) return;
+    dismiss.mutate(ride.activity_id, {
+      onSuccess: () => {
+        setConfirmingDismiss(false);
+        close();
+      },
+    });
   }
 
   function choose(value: string | null): void {
@@ -134,24 +152,9 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
             value: String(bike.id),
             label: bikeTitle(bike),
           }))}
-          // Adds an edge to the wizard field on the card background.
-          styles={{
-            input: {
-              ...inputStyles.input,
-              border: "1px solid var(--mantine-color-cards-4)",
-            },
-          }}
+          styles={inputStyles}
           radius="md"
-          // Matches the dropdown edge to its input field.
-          comboboxProps={{
-            ...dropdownProps,
-            styles: {
-              dropdown: {
-                ...dropdownProps.styles.dropdown,
-                border: "1px solid var(--mantine-color-cards-4)",
-              },
-            },
-          }}
+          comboboxProps={dropdownProps}
         />
 
         {resolve.isError && (
@@ -174,7 +177,33 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
         >
           {t("pendingRides.assign")}
         </Button>
+        <Button
+          variant="outline"
+          fullWidth
+          radius="md"
+          leftSection={<Ban size={16} />}
+          onClick={() => setConfirmingDismiss(true)}
+        >
+          {t("pendingRides.dismiss")}
+        </Button>
       </Stack>
+
+      <ConfirmModal
+        opened={confirmingDismiss}
+        onCancel={cancelDismiss}
+        onConfirm={confirmDismiss}
+        title={t("pendingRides.dismissTitle")}
+        body={t("pendingRides.dismissBody")}
+        cancelLabel={t("pendingRides.dismissCancel")}
+        confirmLabel={t("pendingRides.dismissConfirm")}
+        pending={dismiss.isPending}
+      >
+        {dismiss.isError && (
+          <Text fz={13} c="red.5">
+            {t("pendingRides.dismissFailed")}
+          </Text>
+        )}
+      </ConfirmModal>
     </ResponsiveSheet>
   );
 }

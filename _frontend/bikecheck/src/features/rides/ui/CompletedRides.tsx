@@ -1,13 +1,14 @@
 // UI component using feature hooks.
-import { memo, useState, type ReactElement, type ReactNode } from "react";
-import { Box, Group, Loader, Stack, Text } from "@mantine/core";
+import { memo, useState, type ReactElement } from "react";
+import { Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Bike, Clock, Mountain, RefreshCw, Route } from "lucide-react";
+import { Bike, Clock, Mountain, Route } from "lucide-react";
 import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
 import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
-import { usePullToRefresh, type PullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullFrame } from "@/components/PullFrame";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
 import { useRides } from "@/features/rides/rides.queries";
 import { CheckInMark } from "./CheckInMark";
@@ -21,55 +22,10 @@ const FOOTER_CLEARANCE = {
   md: "md",
 };
 
-// Where the pull indicator sits when the list is at rest: just off the top, so it is
-// uncovered by the pull itself rather than faded in on top of the first card.
-const INDICATOR_OFFSET_PX = 40;
-
 // How far a point may stray before the thumbnail drops it, in viewBox units. The card
 // draws the route at fifty pixels, where one unit is half a pixel - a quarter of the
 // stroke, so nothing that survives here is anything the eye could have seen.
 const CARD_SIMPLIFY = 1;
-
-// Wraps the list in the pull gesture. The indicator sits just above the first card and is
-// uncovered by the pull itself, so nothing is ever drawn over a ride.
-function PullFrame({ attach, refreshing, children }: PullToRefresh & { children: ReactNode }): ReactElement {
-  return (
-    <Box ref={attach} style={{ overscrollBehaviorY: "contain" }}>
-      {/* Both boxes read the pull the gesture writes onto the element above, so a finger
-          moves them without re-rendering a single card. --pull-transition is "none" while
-          the finger is down and an ease-out once it lifts, whether the list springs back
-          or settles under the spinner. */}
-      <Box
-        pos="relative"
-        style={{
-          transform: "translate3d(0, var(--pull, 0px), 0)",
-          transition: "var(--pull-transition, none)",
-        }}
-      >
-        <Box
-          pos="absolute"
-          left={0}
-          right={0}
-          top={-INDICATOR_OFFSET_PX}
-          className="flex justify-center"
-          style={{ opacity: "var(--pull-progress, 0)" }}
-        >
-          {refreshing ? (
-            <Loader size="sm" />
-          ) : (
-            /* Turns with the pull, so the arrow is upright exactly when letting go reloads. */
-            <RefreshCw
-              size={20}
-              color="var(--color-text-dim)"
-              style={{ transform: "rotate(calc(var(--pull-progress, 0) * 180deg))" }}
-            />
-          )}
-        </Box>
-        {children}
-      </Box>
-    </Box>
-  );
-}
 
 // Displays one confirmed ride.
 function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactElement {
@@ -120,6 +76,8 @@ interface CompletedRidesProps {
   // Strava activity id from a notification URL, opened once the list has loaded it.
   openActivityId?: string;
   onOpenedActivityHandled?: () => void;
+  // Replaces the plain refetch on pull; must be stable, the list is memoised.
+  onRefresh?: () => Promise<unknown>;
 }
 
 // Lists confirmed rides with infinite scrolling. Memoised because its props are stable and
@@ -128,6 +86,7 @@ interface CompletedRidesProps {
 export const CompletedRides = memo(function CompletedRides({
   openActivityId,
   onOpenedActivityHandled,
+  onRefresh,
 }: CompletedRidesProps): ReactElement {
   const { t } = useTranslation();
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useRides();
@@ -136,7 +95,7 @@ export const CompletedRides = memo(function CompletedRides({
   // Load the next page when the sentinel is visible.
   const sentinel = useInfiniteScrollSentinel(hasNextPage, () => void fetchNextPage());
   // A pull at the top reloads every page the list has already loaded.
-  const pull = usePullToRefresh(refetch);
+  const pull = usePullToRefresh(onRefresh ?? refetch);
 
   const rides = data?.pages.flatMap((page) => page.items) ?? [];
 

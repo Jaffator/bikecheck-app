@@ -4,6 +4,7 @@ import { Button, Group, SegmentedControl, Select, SimpleGrid, Skeleton, Stack, T
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
 import { BIKE_SORTS, parseBikeSort, sortBikes, type BikeSort } from "@/features/bikes/bikeSort";
 import { useArchivedBikes, useBikes } from "@/features/bikes/bikes.queries";
 import { ArchivedBikesTable } from "@/features/bikes/ui/ArchivedBikesTable";
@@ -85,7 +86,7 @@ export function BikesDesktop(): ReactElement {
   return (
     // No top padding: the context line belongs to the header's title just above it.
     <Stack gap="md" p="md" pt={0}>
-      <BikesContextLine activeCount={activeCount} archivedCount={archivedCount} />
+      <BikesContextLine />
 
       <Group justify="space-between" wrap="nowrap">
         <SegmentedControl
@@ -113,6 +114,8 @@ export function BikesDesktop(): ReactElement {
               aria-label={t("bikes.sortBy")}
               radius="md"
               w={180}
+              styles={inputStyles}
+              comboboxProps={dropdownProps}
             />
           </Group>
         )}

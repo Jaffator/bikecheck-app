@@ -238,15 +238,8 @@ export function BikeSpecification({
           data={categories}
           value={values.category}
           onChange={(value) => onChange("category", value)}
-          radius="lg"
-          styles={{
-            input: {
-              backgroundColor: "var(--mantine-color-cards-6)",
-              border: "none",
-              color: "var(--mantine-color-text-6)",
-              height: "3rem",
-            },
-          }}
+          radius="md"
+          styles={inputStyles}
           comboboxProps={dropdownProps}
         />
       </Stack>

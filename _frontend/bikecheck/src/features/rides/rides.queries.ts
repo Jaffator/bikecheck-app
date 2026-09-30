@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-query";
 import type { ApiError } from "@/api/client";
 import {
+  changeRideBike,
   deleteRideCheckIn,
   getCheckInPrompt,
   getFilteredRides,
@@ -88,5 +89,24 @@ export function useBikeRideCount(bikeId: number | null): UseQueryResult<number> 
     queryKey: ["rides", "count", bikeId],
     queryFn: async () => (await getRides(1, 0, bikeId ?? 0)).total,
     enabled: bikeId !== null,
+  });
+}
+
+// Moves a ride to another bike; both bikes' readings, the ride lists and any band announcement change.
+export function useChangeRideBike(): UseMutationResult<
+  { success: boolean },
+  ApiError,
+  { rideId: number; bikeId: number }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rideId, bikeId }: { rideId: number; bikeId: number }) => changeRideBike(rideId, bikeId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["rides"] });
+      void queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      void queryClient.invalidateQueries({ queryKey: ["bike-components"] });
+      void queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }

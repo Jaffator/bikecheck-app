@@ -512,7 +512,7 @@ function cycleStart(part: TrackedPart, action: Response_TrackedActionDto): Date 
 }
 
 // A Service Date is a day, so a ride on it counts as ridden before the work.
-function endOfDay(day: Date): Date {
+export function endOfDay(day: Date): Date {
   const end = new Date(day);
   end.setUTCHours(23, 59, 59, 999);
   return end;

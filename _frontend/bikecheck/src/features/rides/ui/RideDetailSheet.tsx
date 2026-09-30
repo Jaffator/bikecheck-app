@@ -13,6 +13,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useIsDesktop } from "@/layout/breakpoints";
+import { ChangeBikeMenu } from "./ChangeBikeMenu";
 import { RideCheckInSection } from "./RideCheckInSection";
 import { WoreOff } from "./WoreOff";
 
@@ -125,6 +126,8 @@ export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailS
             <WoreOff lines={ride.wore_off} />
 
             <RideCheckInSection key={ride.id} ride={ride} startWith={checkInStartWith} />
+
+            <ChangeBikeMenu ride={ride} onMoved={onClose} />
           </Stack>
         </Stack>
       )}

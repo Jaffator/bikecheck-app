@@ -209,6 +209,7 @@ describe('StatsService', () => {
             bike_model: 'Rallon',
             year: 2024,
             total: 3000,
+            service_count: 1,
           },
         ],
       });
@@ -349,8 +350,15 @@ describe('StatsService', () => {
       ]);
       // ASSERT: the bike that spent more comes first; how a bike splits is not served, colour tells bikes apart.
       expect(result.bikes).toEqual([
-        { bike_id: STUMPY.id, bike_brand: 'Specialized', bike_model: 'Stumpjumper', year: 2021, total: 14000 },
-        { bike_id: RALLON.id, bike_brand: 'Orbea', bike_model: 'Rallon', year: 2024, total: 5000 },
+        {
+          bike_id: STUMPY.id,
+          bike_brand: 'Specialized',
+          bike_model: 'Stumpjumper',
+          year: 2021,
+          total: 14000,
+          service_count: 3,
+        },
+        { bike_id: RALLON.id, bike_brand: 'Orbea', bike_model: 'Rallon', year: 2024, total: 5000, service_count: 2 },
       ]);
     });
 
@@ -448,6 +456,23 @@ describe('StatsService', () => {
       expect(result.bikes.map(({ bike_id, total }) => ({ bike_id, total }))).toEqual([
         { bike_id: RALLON.id, total: 1700 },
         { bike_id: STUMPY.id, total: 800 },
+      ]);
+    });
+
+    it('counts every Service of a bike, the free ones too, but lists no bike that spent nothing', async () => {
+      // ARRANGE: Rallon paid once and was lubed for free; Stumpy was only lubed.
+      services = [
+        service(RALLON, '2026-05-01', 1200, [action(BRAKES)]),
+        service(RALLON, '2026-06-01', null, [action(DRIVETRAIN)]),
+        service(STUMPY, '2026-07-01', null, [action(DRIVETRAIN)]),
+      ];
+
+      // ACT
+      const result = await stats.getSpend(OWNER_ID, 'year');
+
+      // ASSERT
+      expect(result.bikes.map(({ bike_id, service_count }) => ({ bike_id, service_count }))).toEqual([
+        { bike_id: RALLON.id, service_count: 2 },
       ]);
     });
 
@@ -765,6 +790,23 @@ describe('StatsService', () => {
       // ASSERT: in January every Period but all time leaves out November's ride.
       const expected = period === 'all' ? 8567 : 7333;
       expect(result.bikes[0].daily_m.reduce((total, metres) => total + metres, 0)).toBe(expected);
+    });
+
+    it('counts every Service of a bike, the free ones too, but lists no bike that spent nothing', async () => {
+      // ARRANGE: Rallon paid once and was lubed for free; Stumpy was only lubed.
+      services = [
+        service(RALLON, '2026-05-01', 1200, [action(BRAKES)]),
+        service(RALLON, '2026-06-01', null, [action(DRIVETRAIN)]),
+        service(STUMPY, '2026-07-01', null, [action(DRIVETRAIN)]),
+      ];
+
+      // ACT
+      const result = await stats.getSpend(OWNER_ID, 'year');
+
+      // ASSERT
+      expect(result.bikes.map(({ bike_id, service_count }) => ({ bike_id, service_count }))).toEqual([
+        { bike_id: RALLON.id, service_count: 2 },
+      ]);
     });
 
     it('rejects a period Home does not know', async () => {

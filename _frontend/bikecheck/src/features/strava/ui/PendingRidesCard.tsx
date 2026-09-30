@@ -7,6 +7,8 @@ import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
 import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
 import { EmptyStateLayout } from "@/components/EmptyStateLayout";
+import { PullFrame } from "@/components/PullFrame";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { RIDES_TAB_TOP_SPACE } from "@/features/rides_page/EmptyRides";
 import trailIllustration from "@/assets/images/rides.png";
 import { usePendingRides } from "@/features/strava/strava.queries";
@@ -45,13 +47,16 @@ interface PendingRidesProps {
   // Optional activity id from a notification URL.
   openActivityId?: string;
   onOpenedActivityHandled?: () => void;
+  // The page decides what a pull does; the Strava sync lives there.
+  onRefresh?: () => Promise<unknown>;
 }
 
 // The Pending tab: every ride still waiting to be told which bike it was on.
-export function PendingRides({ openActivityId, onOpenedActivityHandled }: PendingRidesProps): ReactElement {
+export function PendingRides({ openActivityId, onOpenedActivityHandled, onRefresh }: PendingRidesProps): ReactElement {
   const { t } = useTranslation();
-  const { data, isLoading, isError } = usePendingRides();
+  const { data, isLoading, isError, refetch } = usePendingRides();
   const [openedRide, setOpenedRide] = useState<PendingRide | null>(null);
+  const pull = usePullToRefresh(onRefresh ?? refetch);
 
   const rides = data ?? [];
 
@@ -76,37 +81,43 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled }: Pendin
 
   if (isError) {
     return (
-      <Text size="sm" c="red.5" className="m-3">
-        {t("pendingRides.loadFailed")}
-      </Text>
+      <PullFrame {...pull}>
+        <Text size="sm" c="red.5" className="m-3">
+          {t("pendingRides.loadFailed")}
+        </Text>
+      </PullFrame>
     );
   }
 
   if (rides.length === 0) {
     // Reuses the rides tab empty-state layout.
     return (
-      <EmptyStateLayout
-        illustration={trailIllustration}
-        title={t("pendingRides.empty")}
-        body={t("pendingRides.emptyBody")}
-        topSpace={RIDES_TAB_TOP_SPACE}
-      />
+      <PullFrame {...pull}>
+        <EmptyStateLayout
+          illustration={trailIllustration}
+          title={t("pendingRides.empty")}
+          body={t("pendingRides.emptyBody")}
+          topSpace={RIDES_TAB_TOP_SPACE}
+        />
+      </PullFrame>
     );
   }
 
   return (
     <>
-      <Stack gap="sm" className="m-3">
-        {rides.map((ride) => (
-          <PendingRideRow
-            key={ride.activity_id}
-            ride={ride}
-            onOpen={() => {
-              setOpenedRide(ride);
-            }}
-          />
-        ))}
-      </Stack>
+      <PullFrame {...pull}>
+        <Stack gap="sm" className="m-3">
+          {rides.map((ride) => (
+            <PendingRideRow
+              key={ride.activity_id}
+              ride={ride}
+              onOpen={() => {
+                setOpenedRide(ride);
+              }}
+            />
+          ))}
+        </Stack>
+      </PullFrame>
 
       <PendingRideSheet ride={shownRide} onClose={closeSheet} />
     </>

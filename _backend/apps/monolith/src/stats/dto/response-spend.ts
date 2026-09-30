@@ -32,6 +32,9 @@ export class Response_SpendBikeDto {
 
   @ApiProperty({ example: 9200 })
   total!: number;
+
+  @ApiProperty({ example: 4, description: 'Services in from/to, free ones included' })
+  service_count!: number;
 }
 
 export class Response_SpendDto {

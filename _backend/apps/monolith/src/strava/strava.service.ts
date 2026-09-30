@@ -6,6 +6,7 @@ import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { BRAKE_PAD_PART, DRIVETRAIN_PARTS, SUSPENSION_PARTS } from '../service-tracking/ride-wear';
 import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
@@ -380,7 +381,14 @@ export class StravaEventsService {
     // An update webhook for a dismissed ride must not bring it back, as a ride or as an ask.
     if (await this.isDismissed(data.activity_id)) return { message: 'Dismissed activity, skipped' };
 
-    const bike = data.gearid
+    // A ride already saved stays on its bike: the owner may have moved it off Strava's gear.
+    const saved = await this.prisma.rides.findUnique({
+      where: { activity_strava_id: BigInt(data.activity_id) },
+      select: { bike_id: true },
+    });
+    const bike = saved
+      ? { id: saved.bike_id }
+      : data.gearid
       ? await this.prisma.bikes.findFirst({
           // An Archived Bike collects nothing. Archiving clears the gear id anyway, so
           // this only guards a row archived by some other route (ADR 0024).
@@ -774,13 +782,13 @@ export class StravaEventsService {
       where: {
         bike_id: bikeId,
         is_deleted: false,
-        component_types: { component_type: { in: ['Shock', 'Fork'] } },
+        component_types: { component_type: { in: SUSPENSION_PARTS } },
       },
       data: { suspension_min: { increment: diff.suspension_min } },
     });
 
     await this.prisma.components_mounted.updateMany({
-      where: { bike_id: bikeId, is_deleted: false, component_types: { component_type: 'Brake pad' } },
+      where: { bike_id: bikeId, is_deleted: false, component_types: { component_type: BRAKE_PAD_PART } },
       data: { health_index: { increment: diff.health_index_brake_pad } },
     });
 
@@ -793,7 +801,7 @@ export class StravaEventsService {
       where: {
         bike_id: bikeId,
         is_deleted: false,
-        component_types: { component_type: { in: ['Chain', 'Cassette', 'Chainring'] } },
+        component_types: { component_type: { in: DRIVETRAIN_PARTS } },
       },
       data: { drivetrain_km: { increment: diff.drivetrain_km } },
     });

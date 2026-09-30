@@ -11,13 +11,11 @@ import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
-import { useGarageComponents } from "@/features/components/components.queries";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import {
   DUE_FROM,
   QUIET_COLOR,
   attentionColor,
-  fineParts,
   trackedActionKey,
   trackedPartLabel,
 } from "@/features/service_tracking/attentionLevel";
@@ -39,13 +37,10 @@ export function JobsPanel(): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: due } = useGarageTrackedActions(DUE_FROM);
-  const { data: bikes } = useBikes();
-  const parts = useGarageComponents((bikes ?? []).map((bike) => bike.id));
   const [opened, setOpened] = useState<TrackedAction | null>(null);
   const [planning, setPlanning] = useState<TrackedAction | null>(null);
 
   const rows = [...(due ?? [])].sort((left, right) => right.percentage - left.percentage);
-  const fine = due === undefined || parts === undefined ? 0 : fineParts(parts, due);
 
   return (
     <Panel
@@ -63,11 +58,6 @@ export function JobsPanel(): ReactElement {
           onPlan={() => setPlanning(action)}
         />
       ))}
-      {rows.length > 0 && fine > 0 && (
-        <Text fz={13} c="var(--color-text-dim)" px="md" py={10} style={{ borderTop: PANEL_HAIRLINE }}>
-          {t("tracking.moreFine", { count: fine })}
-        </Text>
-      )}
       <TrackedActionDrawer action={opened} onClose={() => setOpened(null)} />
       <PlanSheet action={planning} onClose={() => setPlanning(null)} />
     </Panel>

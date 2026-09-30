@@ -3,7 +3,6 @@
 // dashboard lists (75) and what announces (75, 90, then every ten percent above 100). The
 // ramp below draws one colour per level, so the two never disagree — see ADR 0026.
 import { positionLabel } from "@/features/components/componentLabels";
-import type { BikeComponent } from "@/features/components/components.types";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { axisValue } from "./intervalFigures";
 import type { AttentionLevel, TrackedAction } from "./tracking.types";
@@ -92,12 +91,4 @@ export function trackedPartLabel(
 // alone is unique — one part owes several jobs, and one job is owed by several parts.
 export function trackedActionKey(action: Pick<TrackedAction, "component_mounted_id" | "event_action_id">): string {
   return `${String(action.component_mounted_id)}-${String(action.event_action_id)}`;
-}
-
-// Parts still on a bike with no Tracked Action at warning or above; a part nothing tracks is fine too.
-export function fineParts(parts: BikeComponent[], readings: TrackedAction[]): number {
-  const owing = new Set(
-    readings.filter((action) => action.percentage >= DUE_FROM).map((action) => action.component_mounted_id),
-  );
-  return parts.filter((part) => part.removed_at === null && !owing.has(part.id)).length;
 }

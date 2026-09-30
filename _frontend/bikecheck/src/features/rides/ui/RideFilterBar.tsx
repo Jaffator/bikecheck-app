@@ -2,6 +2,7 @@
 import type { ReactElement } from "react";
 import { Group, Select, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
@@ -36,9 +37,10 @@ export function RideFilterBar(): ReactElement {
         />
       ))}
       <Select
-        size="xs"
         radius="md"
         w={150}
+        styles={inputStyles}
+        comboboxProps={dropdownProps}
         data={options}
         value={month}
         allowDeselect={false}

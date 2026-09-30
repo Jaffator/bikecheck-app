@@ -24,10 +24,14 @@ export function RidesDesktop(): ReactElement {
   // Same address as the phone's tabs, so notifications and Home's banner land on the right tab.
   const requestedActivityId = searchParams.get("pending") ?? undefined;
   const requestedRideId = searchParams.get("ride") ?? undefined;
+  const requestedTab = searchParams.get("tab");
+  // An explicit tab wins, so `?pending=` can stay in the URL while Přiřazené is open.
   const tab: RidesTab =
-    requestedRideId === undefined && (requestedActivityId !== undefined || searchParams.get("tab") === "pending")
-      ? "pending"
-      : "completed";
+    requestedTab === "completed" || requestedTab === "pending"
+      ? requestedTab
+      : requestedRideId === undefined && requestedActivityId !== undefined
+        ? "pending"
+        : "completed";
 
   const assignedCount = rides?.pages[0]?.total;
   const pendingCount = pending?.length ?? 0;
@@ -35,9 +39,12 @@ export function RidesDesktop(): ReactElement {
   // Replaced rather than pushed, so Back leaves the page instead of stepping through tabs.
   const selectTab = useCallback(
     (next: RidesTab): void => {
-      setSearchParams(next === "pending" ? { tab: "pending" } : {}, { replace: true });
+      // Keeps `?pending=`, so its row is still highlighted after a visit to the other tab.
+      const params: Record<string, string> = requestedActivityId === undefined ? {} : { pending: requestedActivityId };
+      if (next === "pending" || requestedActivityId !== undefined) params.tab = next;
+      setSearchParams(params, { replace: true });
     },
-    [setSearchParams],
+    [requestedActivityId, setSearchParams],
   );
 
   // Drops `?ride=` once its sheet closes, so it does not open again.

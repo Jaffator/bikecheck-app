@@ -67,6 +67,8 @@ describe('StravaEventsService', () => {
     mockPrisma.users.findUnique.mockResolvedValue({ strava_athlete_id: String(ATHLETE_ID) });
     mockPrisma.bikes.findMany.mockResolvedValue([]);
     mockPrisma.strava_pending_activities.upsert.mockResolvedValue({});
+    // No ride saved yet unless a case says so, so the gear decides the bike.
+    mockPrisma.rides.findUnique.mockResolvedValue(null);
   });
 
   describe('gear resolution', () => {
@@ -90,6 +92,19 @@ describe('StravaEventsService', () => {
       await service.saveAnalyzedData(activity());
 
       expect(saveRide).toHaveBeenCalledWith(BIKE_ID, OWNER_ID, 98765, expect.anything());
+    });
+
+    // The owner may have moved the ride off Strava's gear; an update webhook must not undo that.
+    it('keeps an existing ride on the bike it is on, whatever gear Strava sends', async () => {
+      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue(null);
+      mockPrisma.rides.findUnique.mockResolvedValue({ bike_id: 22 });
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      const saveRide = jest.spyOn(service, 'saveRide').mockResolvedValue({ message: 'saved', isNew: false });
+
+      await service.saveAnalyzedData(activity());
+
+      expect(saveRide).toHaveBeenCalledWith(22, OWNER_ID, 98765, expect.anything());
+      expect(mockServiceTracking.evaluateBike).toHaveBeenCalledWith(22, OWNER_ID);
     });
   });
 
@@ -245,7 +260,7 @@ describe('StravaEventsService', () => {
     // Resolved onto a bike is not dismissed: its updates still reach the ride.
     it('still processes a webhook for a ride resolved onto a bike', async () => {
       mockPrisma.strava_pending_activities.findUnique.mockResolvedValue({ resolved_at: new Date() });
-      mockPrisma.rides.findUnique.mockResolvedValue({ id: 1 });
+      mockPrisma.rides.findUnique.mockResolvedValue({ id: 1, bike_id: BIKE_ID });
       mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
       const saveRide = jest.spyOn(service, 'saveRide').mockResolvedValue({ message: 'saved', isNew: false });
 

@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -16,6 +17,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RideService } from './ride.service';
 import { ResponseRideCheckInDto, ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
+import { ChangeRideBikeDto } from './dto/change-ride-bike.dto';
 
 @Controller('rides')
 export class RideController {
@@ -104,6 +106,21 @@ export class RideController {
       Number.isNaN(bike) ? undefined : bike,
       { from: from || undefined, to: to || undefined, tz: tz || undefined },
     );
+  }
+
+  // ---------- PATCH move a ride to another bike ----------
+  @ApiOperation({ summary: 'Move a ride and its wear to another of the user bikes' })
+  @ApiBody({ type: ChangeRideBikeDto })
+  @ApiResponse({ status: 200 })
+  @Patch(':id/bike')
+  // Returns a body on purpose: the shared frontend client parses every 2xx as JSON.
+  async changeBike(
+    @CurrentUser('userId') userId: string,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: ChangeRideBikeDto,
+  ): Promise<{ success: boolean }> {
+    await this.rideService.changeBike(Number(userId), id, body.bikeId);
+    return { success: true };
   }
 }
 

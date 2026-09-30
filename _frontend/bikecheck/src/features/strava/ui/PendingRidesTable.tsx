@@ -187,17 +187,23 @@ function PendingRow({ ride, bikes, highlighted, assigning, onAssign, onDismiss }
               {t("pendingRides.assignMenu")}
             </Button>
           </Menu.Target>
-          <Menu.Dropdown>
+          <Menu.Dropdown
+            bg="cards.6"
+            p={8}
+            style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
+          >
             {bikes.map((bike) => (
               <Menu.Item
                 key={bike.id}
+                color="text"
+                fw={600}
                 leftSection={<BikeColorDot colorIndex={bike.color_index} />}
                 onClick={() => onAssign(bike.id)}
               >
                 {bikeTitle(bike)}
               </Menu.Item>
             ))}
-            <Menu.Divider />
+            <Menu.Divider style={{ borderTopColor: "var(--mantine-color-cards-5)" }} />
             <Menu.Item leftSection={<Ban size={14} />} c="var(--color-text-dim)" onClick={onDismiss}>
               {t("pendingRides.dismiss")}
             </Menu.Item>

@@ -14,13 +14,12 @@ import { CONTENT_MAX_WIDTH } from "./contentWidth";
 // Over the tab bar the sheet is opened from, as the settings drawers sit over their page.
 const DRAWER_Z_INDEX = 320;
 
-// A list row's surface, the same one the dashboard tiles stand on.
+// A step lighter than the sheet, which is cards-6 like every drawer, so the tiles stand off it.
 const CARD: CSSProperties = {
   display: "block",
   width: "100%",
   borderRadius: "var(--mantine-radius-lg)",
-  backgroundColor: "var(--mantine-color-cards-6)",
-  backgroundImage: "var(--card-glow)",
+  backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-6), white 4%)",  backgroundImage: "var(--card-glow)",
   boxShadow: "var(--elev-row)",
   transition: "transform 0.12s ease",
 };
@@ -50,7 +49,7 @@ function MoreCard({ icon, title, detail, tag, onOpen }: CardProps): ReactElement
               height: "2.25rem",
               borderRadius: "0.625rem",
               flexShrink: 0,
-              backgroundColor: "var(--mantine-color-cards-5)",
+              backgroundColor: "rgba(255,255,255,0.06)",
             }}
           >
             {icon}

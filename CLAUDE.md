@@ -32,7 +32,6 @@ Rules:
 - Explicit return types
 - Prefer composition over inheritance
 - Keep functions small and focused
-- Do not invent new patterns, if it's necessary, discuss first
 - never ever delete node_modules, package-lock.json, or yarn.lock
 - if you bump to a big problem, better stop and ask
 - after every implementation, give me very clear review what was done and what is the biggest problem - be very concise, if any, and what is the next step
@@ -53,6 +52,7 @@ General:
 - Reuse existing types and utilities
 - Ask before large structural changes
 - Use concise answers by default
+- after every implementation, give me 3 clear areas, what was done, what is the biggest problem, and what is the next step. Be very concise.
 
 ## Project conventions
 

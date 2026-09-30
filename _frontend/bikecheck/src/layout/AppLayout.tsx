@@ -236,7 +236,6 @@ export function AppLayout(): ReactElement {
         {/* Keeps title content below the status bar. */}
         <Box
           h="100%"
-          px="md"
           style={{
             paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
             // Nothing sits behind the controls now, so they are given their own shade to
@@ -257,6 +256,8 @@ export function AppLayout(): ReactElement {
             w="100%"
             maw={contentWidth}
             mx="auto"
+            // Padding inside the column, like the pages', so the title lines up with their edge.
+            px="md"
             style={{ pointerEvents: "auto" }}
           >
             {subPage ? (

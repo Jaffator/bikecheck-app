@@ -16,6 +16,8 @@ export interface SpendBike {
   bike_model: string | null;
   year: number | null;
   total: number;
+  // Every Service in the window, the free ones too.
+  service_count: number;
 }
 
 export interface Spend {

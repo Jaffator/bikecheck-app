@@ -47,3 +47,11 @@ export async function getRides(limit: number, offset: number, bikeId?: number): 
   const bike = bikeId === undefined ? "" : `&bikeId=${bikeId}`;
   return apiFetch<RidePage>(`/rides?limit=${limit}&offset=${offset}${bike}`);
 }
+
+// Moves a ride, and the wear it put on its parts, to another bike.
+export async function changeRideBike(rideId: number, bikeId: number): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/rides/${rideId}/bike`, {
+    method: "PATCH",
+    body: JSON.stringify({ bikeId }),
+  });
+}
