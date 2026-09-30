@@ -155,7 +155,7 @@ function PlanSetting({ action, onTap }: { action: TrackedAction; onTap: () => vo
               {t("tracking.notPlanned")}
             </Text>
           ) : (
-            <Text className="font-mono" fz={13} c={isPlanPassed(planned) ? PASSED_PLAN_COLOR : "text.7"}>
+            <Text className="tabular-nums" fz={13} c={isPlanPassed(planned) ? PASSED_PLAN_COLOR : "text.7"}>
               {planDayLabel(planned, i18n.language)}
             </Text>
           )}
@@ -191,7 +191,7 @@ function Header({
         <Text fz={20} fw={700} c="text.6" lh={1.2} lineClamp={2}>
           {job}
         </Text>
-        <Text className="font-mono" fz={11} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" lineClamp={2}>
+        <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={2}>
           {mounted === null ? part : `${part} · ${t("tracking.mountedOn", { date: mounted })}`}
         </Text>
       </Stack>
@@ -235,12 +235,12 @@ function ReadingCard({ action }: { action: TrackedAction }): ReactElement {
           }}
         >
           <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
-          <Text className="font-mono" fz={10} tt="uppercase" lts="0.08em" c={color}>
+          <Text className="tabular-nums" fz={10} tt="uppercase" lts="var(--tracking-label)" c={color}>
             {t(`bikes.health.${action.level}`)}
           </Text>
         </Group>
 
-        <Text className="font-mono" fz={22} fw={100} c={color} lh={1}>
+        <Text className="tabular-nums" fz={22} fw={400} c={color} lh={1}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
       </Group>
@@ -268,11 +268,11 @@ function ReadingCard({ action }: { action: TrackedAction }): ReactElement {
 function Pill({ label }: { label: string }): ReactElement {
   return (
     <Text
-      className="font-mono"
+      className="tabular-nums"
       fz={9}
       tt="uppercase"
       c="primary.5"
-      lts="0.08em"
+      lts="var(--tracking-label)"
       px={6}
       py={1}
       style={{
@@ -291,10 +291,10 @@ function Pill({ label }: { label: string }): ReactElement {
 function Figure({ label, value }: { label: string; value: string }): ReactElement {
   return (
     <Group justify="space-between" wrap="nowrap" gap="md" align="baseline">
-      <Text className="font-mono" fz={11} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" lineClamp={1}>
+      <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={1}>
         {label}
       </Text>
-      <Text className="font-mono" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
+      <Text className="tabular-nums" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
         {value}
       </Text>
     </Group>

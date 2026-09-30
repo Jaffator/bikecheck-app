@@ -116,14 +116,18 @@ export function chipStyles(
 // The dropdown renders in a portal, so it needs its own styles - and its own z-index:
 // Mantine's default for a popover is 300, which the sheets it opens inside sit at or above.
 // Kept under ConfirmModal at 400, which must stay over everything.
+// Drawn like a Menu.Dropdown (design.md "Selects"), so every list that drops down looks the same.
 export const dropdownProps = {
   withinPortal: true,
   zIndex: 350,
   styles: {
     dropdown: {
-      backgroundColor: "var(--mantine-color-background-8)",
-      border: "1px solid var(--mantine-color-inputs-4)",
+      backgroundColor: "var(--mantine-color-cards-6)",
+      border: "1px solid var(--mantine-color-cards-6)",
+      boxShadow: "var(--elev-panel)",
       color: "var(--mantine-color-text-6)",
+      padding: 8,
     },
+    option: { fontWeight: 600 },
   },
 };

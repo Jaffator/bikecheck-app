@@ -151,11 +151,11 @@ function ForecastHeader({ item, onOpen }: { item: WearForecastItem; onOpen: () =
           <Text fz={14} fw={600} c="text.6" lineClamp={1}>
             {catalogueLabel(item.action_i18n_key, item.action_name, t)}
           </Text>
-          <Text className="font-mono" fz={11} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" lineClamp={1}>
+          <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={1}>
             {forecastNote(item, t)}
           </Text>
         </Stack>
-        <Text className="font-mono" fz={20} c={attentionColor(item.percentage)} lh={1} style={{ flexShrink: 0 }}>
+        <Text className="tabular-nums" fz={20} c={attentionColor(item.percentage)} lh={1} style={{ flexShrink: 0 }}>
           {figure}
         </Text>
       </Group>

@@ -1,4 +1,4 @@
-// What a ride wore off its Tracked Actions, under its figures: `Chain · +32 km · 94 → 95 %`.
+// What a ride wore off its Tracked Actions, under its figures: `Chain · +32 km · 94 % → 95 %`.
 import type { ReactElement } from "react";
 import { Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -17,19 +17,22 @@ export function WoreOff({ lines }: { lines: WoreOffLine[] }): ReactElement | nul
   return (
     <Stack gap={6} pt="sm" style={{ borderTop: PANEL_HAIRLINE }}>
       <Eyebrow>{t("rides.woreOff")}</Eyebrow>
-      {lines.map((line) => (
-        <Group key={trackedActionKey(line)} gap="sm" wrap="nowrap" justify="space-between">
-          <Text fz={13} c="text.7" lineClamp={1} style={{ minWidth: 0 }}>
-            {woreOffLabel(line, t)}
-          </Text>
-          <Text className="font-mono" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
-            {`${woreOffAmount(line, t)} · ${String(line.before)} → `}
-            <Text span inherit c={woreOffColor(line)}>
-              {t("tracking.percentage", { value: line.after })}
+      {lines.map((line) => {
+        const amount = woreOffAmount(line, t);
+        return (
+          <Group key={trackedActionKey(line)} gap="sm" wrap="nowrap" justify="space-between">
+            <Text fz={13} c="text.7" lineClamp={1} style={{ minWidth: 0 }}>
+              {woreOffLabel(line, t)}
             </Text>
-          </Text>
-        </Group>
-      ))}
+            <Text className="tabular-nums" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
+              {amount !== null && `${amount} · `}
+              <Text span inherit c={woreOffColor(line)}>
+                {`${t("tracking.percentage", { value: line.before })} → ${t("tracking.percentage", { value: line.after })}`}
+              </Text>
+            </Text>
+          </Group>
+        );
+      })}
     </Stack>
   );
 }

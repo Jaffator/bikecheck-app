@@ -1,12 +1,31 @@
 // Notification query hooks.
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
-import { getNotifications, markNotificationRead, markNotificationsViewed } from "./notifications.api";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+  type UseInfiniteQueryResult,
+  type UseQueryResult,
+  type UseMutationResult,
+} from "@tanstack/react-query";
+import {
+  getNotifications,
+  getUnreadNotifications,
+  markNotificationRead,
+  markNotificationsViewed,
+} from "./notifications.api";
 import type { Notification } from "./notifications.types";
 
-export function useNotifications(): UseQueryResult<Notification[]> {
-  return useQuery({
+const PAGE_SIZE = 30;
+
+// Newest first, 30 at a time; a short page means there is nothing older.
+export function useNotifications(): UseInfiniteQueryResult<InfiniteData<Notification[], number | undefined>, Error> {
+  return useInfiniteQuery({
     queryKey: ["notifications"],
-    queryFn: () => getNotifications(false),
+    queryFn: ({ pageParam }) => getNotifications(PAGE_SIZE, pageParam),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => (lastPage.length === PAGE_SIZE ? lastPage[lastPage.length - 1].id : undefined),
   });
 }
 
@@ -19,7 +38,7 @@ const BADGE_POLL_MS = 30_000;
 export function useUnreadNotifications(): UseQueryResult<Notification[]> {
   return useQuery({
     queryKey: ["notifications", "unread"],
-    queryFn: () => getNotifications(true),
+    queryFn: getUnreadNotifications,
     refetchOnWindowFocus: true,
     refetchInterval: BADGE_POLL_MS,
   });
@@ -35,6 +54,17 @@ export function useMarkNotificationsViewed(): UseMutationResult<{ success: boole
       // Only the badge. The list keeps the unread marks it was opened with, so the rows
       // the user is reading do not go grey under their eyes.
       void queryClient.invalidateQueries({ queryKey: ["notifications", "unread"] });
+    },
+  });
+}
+
+// Desktop's Mark all as read: the same clearing as opening the phone's list, but the rows update too.
+export function useMarkAllNotificationsRead(): UseMutationResult<{ success: boolean }, Error, void> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markNotificationsViewed,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

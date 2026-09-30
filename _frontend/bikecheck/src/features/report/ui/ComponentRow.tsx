@@ -31,14 +31,14 @@ export function ComponentRow({
         <span className={`font-semibold leading-snug ${compact ? "text-[12px]" : "text-[15px]"}`}>
           {reportComponentLabel(component)}
         </span>
-        <span className="font-mono text-[11px]" style={{ color: REPORT_PAPER.inkMuted }}>
+        <span className="tabular-nums text-[11px]" style={{ color: REPORT_PAPER.inkMuted }}>
           {mounted === null ? "" : `${heading.mounted}: ${mounted} · `}
           {`${heading.lastService}: ${lastService ?? heading.neverServiced}`}
         </span>
       </div>
       <div className="flex flex-col items-end gap-0.5 shrink-0">
         <RowLabel>{heading.wear}</RowLabel>
-        <span className={`font-mono ${compact ? "text-[11px]" : "text-sm"}`}>{wear(component, language)}</span>
+        <span className={`tabular-nums ${compact ? "text-[11px]" : "text-sm"}`}>{wear(component, language)}</span>
       </div>
     </div>
   );

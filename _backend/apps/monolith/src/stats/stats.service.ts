@@ -43,6 +43,8 @@ type Split = Map<number | null, number>;
 interface BikeSpend {
   bike: SpendBike;
   split: Split;
+  // Every Service in the window, the free ones too: how often the bike was looked after.
+  services: number;
 }
 
 // Days of Service Date, both inclusive; null is an open end.
@@ -282,8 +284,9 @@ function splitByBike(services: SpendService[]): BikeSpend[] {
   const bikes = new Map<number, BikeSpend>();
   for (const service of services) {
     if (service.bikes === null) continue;
-    const entry = bikes.get(service.bikes.id) ?? { bike: service.bikes, split: new Map() };
+    const entry = bikes.get(service.bikes.id) ?? { bike: service.bikes, split: new Map(), services: 0 };
     entry.split = sumSplits([entry.split, splitService(service)]);
+    entry.services += 1;
     bikes.set(service.bikes.id, entry);
   }
   return [...bikes.values()];
@@ -335,12 +338,13 @@ function topCategories(garage: Split): number[] {
 
 function bikeRows(bikes: BikeSpend[]): Response_SpendBikeDto[] {
   return bikes
-    .map(({ bike, split }) => ({
+    .map(({ bike, split, services }) => ({
       bike_id: bike.id,
       bike_brand: bike.bike_brand,
       bike_model: bike.bike_model,
       year: bike.year,
       total: units(sum([...split.values()])),
+      service_count: services,
     }))
     .filter((row) => row.total > 0)
     .sort((a, b) => b.total - a.total || a.bike_id - b.bike_id);

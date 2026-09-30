@@ -150,12 +150,12 @@ function Header({
               flexShrink: 0,
             }}
           />
-          <Text className="font-mono" fz={12} c="text.7">
+          <Text className="tabular-nums" fz={12} c="text.7">
             {t(removed ? "bikeComponents.stateDismounted" : "bikeComponents.stateActive")}
           </Text>
         </Group>
         {position !== null && (
-          <Text className="font-mono" fz={12} c="var(--color-text-dim)">
+          <Text className="tabular-nums" fz={12} c="var(--color-text-dim)">
             {t("bikeComponents.detailPositionValue", { position })}
           </Text>
         )}
@@ -213,7 +213,7 @@ function Wear({ component }: { component: BikeComponent }): ReactElement {
         {tiles.map((tile) => (
           <Stack key={tile.label} gap={4}>
             <Group gap={4} wrap="nowrap" align="center">
-              <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+              <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
                 {tile.label}
               </Text>
               {tile.explanation !== undefined && (
@@ -229,7 +229,7 @@ function Wear({ component }: { component: BikeComponent }): ReactElement {
                 </ActionIcon>
               )}
             </Group>
-            <Text className="font-mono" fz={18} fw={100} c="text.6" lh={1.1}>
+            <Text className="tabular-nums" fz={18} fw={400} c="text.6" lh={1.1}>
               {tile.value}
             </Text>
           </Stack>
@@ -279,18 +279,18 @@ function Reading({ label, value, wrap = false }: { label: string; value: ReactNo
     <>
       <Group justify="space-between" wrap="nowrap" gap="md" py={12} align="flex-start">
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={11}
           fw={400}
           tt="uppercase"
-          lts="0.08em"
+          lts="var(--tracking-label)"
           c="var(--color-text-dim)"
           style={{ flexShrink: 0 }}
         >
           {label}
         </Text>
         <Text
-          className={wrap ? undefined : "font-mono"}
+          className={wrap ? undefined : "tabular-nums"}
           fz={13}
           c="text.7"
           ta="right"

@@ -6,9 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Panel, PanelSkeletonRows } from "@/components/Panel";
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, PRESS_TRANSITION, onPanelRowKey } from "@/components/panelRows";
-import { colorIndexOf } from "@/features/bikes/bikeColors";
-import { useBikes } from "@/features/bikes/bikes.queries";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { useRecentServices } from "@/features/service/service.queries";
 import type { ServiceHistoryItem } from "@/features/service/service.types";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
@@ -24,7 +21,6 @@ export function RecentServicesPanel(): ReactElement {
   const navigate = useNavigate();
   const { data: user } = useCurrentUser();
   const { data, isLoading } = useRecentServices();
-  const { data: bikes } = useBikes();
   const [opened, setOpened] = useState<ServiceHistoryItem | null>(null);
 
   const services = data?.items ?? [];
@@ -71,7 +67,6 @@ export function RecentServicesPanel(): ReactElement {
                 )}
               </Text>
               <Group gap={6} wrap="nowrap">
-                <BikeColorDot colorIndex={colorIndexOf(bikes, service.bike_id)} size={6} />
                 <Eyebrow>
                   {[service.bike_name ?? t("service.unknownBike"), placeLabel(service.place, service.shop_name, t)]
                     .filter((part) => part !== null)
@@ -81,7 +76,7 @@ export function RecentServicesPanel(): ReactElement {
             </Stack>
             {/* A zero is still a price, but not one worth the weight - as the service card says it. */}
             <Text
-              className="font-mono"
+              className="tabular-nums"
               fz={13}
               fw={cost === null || cost === 0 ? 400 : 600}
               c={cost === null || cost === 0 ? "var(--color-text-dim)" : "text.7"}

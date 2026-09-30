@@ -83,7 +83,7 @@ function Tile({ label, value }: { label: string; value: string }): ReactElement 
   return (
     <Stack gap={2} style={{ minWidth: 0 }}>
       <Text {...EYEBROW}>{label}</Text>
-      <Text className="font-mono" fz={17} fw={600} c="text.6" lh={1.1} lineClamp={1}>
+      <Text className="tabular-nums" fz={17} fw={600} c="text.6" lh={1.1} lineClamp={1}>
         {value}
       </Text>
     </Stack>
@@ -103,7 +103,7 @@ function MonthGroup({ group }: { group: ServiceMonthGroup<ProfileService> }): Re
           {group.month === null ? t("sharing.noDate") : formatMonthHeading(group.month)}
         </Text>
         {sum !== null && (
-          <Text className="font-mono" fz={11} c="primary.6" style={{ flexShrink: 0 }}>
+          <Text className="tabular-nums" fz={11} c="primary.6" style={{ flexShrink: 0 }}>
             {formatCost(sum.amount, sum.currency, i18n.language)}
           </Text>
         )}
@@ -143,7 +143,7 @@ function ServiceRow({ service }: { service: ProfileService }): ReactElement {
           </Group>
         </Stack>
         {service.cost !== undefined && (
-          <Text className="font-mono" fz={13} fw={600} c="primary.6" style={{ flexShrink: 0 }}>
+          <Text className="tabular-nums" fz={13} fw={600} c="primary.6" style={{ flexShrink: 0 }}>
             {formatCost(service.cost.amount, service.cost.currency, i18n.language)}
           </Text>
         )}

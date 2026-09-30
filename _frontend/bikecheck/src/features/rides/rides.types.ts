@@ -21,6 +21,25 @@ export type WoreOffLine = Pick<
   after: number;
 };
 
+export type CheckInStatus = "OK" | "ISSUE";
+
+export type CheckInSymptom =
+  | "CREAK"
+  | "SHIFTING_SKIPS"
+  | "SOFT_BRAKE"
+  | "FORK_SETUP"
+  | "SHOCK_SETUP"
+  | "TIRE_LOSES_AIR"
+  | "HEADSET_PLAY"
+  | "OTHER";
+
+// How the bike rode on a ride, as its rider said; symptoms only under ISSUE.
+export interface RideCheckIn {
+  status: CheckInStatus;
+  symptoms: CheckInSymptom[];
+  note: string | null;
+}
+
 // A ride confirmed on a bike.
 export interface Ride {
   id: number;
@@ -44,9 +63,33 @@ export interface Ride {
   summary_polyline: string | null;
   // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
   wore_off: WoreOffLine[];
+  // Null until the rider says how the bike rode.
+  check_in: RideCheckIn | null;
+}
+
+// A week holding rides on the page, totalled over all its rides inside the filter.
+export interface RideWeek {
+  // The week's Monday in the rider's time zone, YYYY-MM-DD.
+  start: string;
+  count: number;
+  km: number;
+  time_min: number;
+}
+
+// Every ride inside the filter added up, not just the page.
+export interface RideFigures {
+  count: number;
+  distance_m: number;
+  time_min: number;
+  elevation_up_m: number;
+  elevation_down_m: number;
+  // The same span just before the filter; null when the filter is every ride.
+  previous_distance_m: number | null;
 }
 
 export interface RidePage {
   items: Ride[];
   total: number;
+  weeks: RideWeek[];
+  figures: RideFigures;
 }

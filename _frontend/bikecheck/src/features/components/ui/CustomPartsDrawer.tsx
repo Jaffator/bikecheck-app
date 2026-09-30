@@ -61,7 +61,7 @@ export function CustomPartsDrawer({ opened, onClose }: CustomPartsDrawerProps): 
                     </Text>
                     {/* The category tells two similar names apart, and the count is the one
                         place the owner sees what still leans on the type before removing it. */}
-                    <Text fz={12} c="var(--color-text-dim)" className="font-mono" truncate>
+                    <Text fz={12} c="var(--color-text-dim)" className="tabular-nums" truncate>
                       {catalogueLabel(type.component_group_i18n_key, type.component_group, t)}
                       {" · "}
                       {type.parts_in_use === 0

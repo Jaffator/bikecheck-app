@@ -6,7 +6,7 @@ import type { CSSProperties, ReactElement } from "react";
 import type { ReboundRing, RingValue } from "../dial.types";
 import { DIAL_SVG_STYLE, FOCUS_CLASS, sideRing, useDialEngine, type RingGroupProps, type RingSpec } from "../dialEngine";
 import { TAU } from "../dialGeometry";
-import { DIAL_FONT, DialFocusStyle } from "./dialParts";
+import { DialFocusStyle } from "./dialParts";
 
 export interface ForkReboundDialProps {
   hsr: RingValue;
@@ -207,8 +207,7 @@ function SideRing({ ring, groupProps, url }: SideRingProps): ReactElement {
       {g.dropShade && <rect x={cx - R} y={top} width={2 * R} height={height * 0.45} fill={url("dropShade")} />}
 
       <g
-        fontFamily={DIAL_FONT}
-        fontWeight={800}
+        fontWeight={700}
         fontSize={fontSize}
         fill="#fff"
         textAnchor="middle"

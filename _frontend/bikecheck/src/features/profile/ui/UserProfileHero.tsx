@@ -40,7 +40,7 @@ export function UserProfileHero({ page, onOpenSharing }: UserProfileHeroProps): 
             <Text fw={700} fz={18} c="text.6" lineClamp={1} lh={1.2}>
               {owner.name}
             </Text>
-            <Text className="font-mono" fz={12} c="var(--color-text-dim)" lineClamp={1}>
+            <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
               @{owner.handle}
             </Text>
             <VisibilityBadge visibility={page.visibility} />
@@ -69,16 +69,16 @@ export function UserProfileHero({ page, onOpenSharing }: UserProfileHeroProps): 
             <Group gap="lg" wrap="nowrap" style={{ overflowX: "auto", scrollbarWidth: "none" }}>
               {figuresOf(garage, i18n.language, t).map((figure) => (
                 <Stack key={figure.label} gap={2} style={{ flexShrink: 0 }}>
-                  <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+                  <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
                     {figure.label}
                   </Text>
-                  <Text className="font-mono" fz={17} fw={600} c="text.6" lh={1.1}>
+                  <Text className="tabular-nums" fz={17} fw={600} c="text.6" lh={1.1}>
                     {figure.value}
                   </Text>
                 </Stack>
               ))}
             </Group>
-            <Text className="font-mono" fz={11} c="var(--color-text-dim)">
+            <Text className="tabular-nums" fz={11} c="var(--color-text-dim)">
               {t("sharing.updatedAt", { when: dayjs(garage.updated_at).fromNow() })}
             </Text>
           </>

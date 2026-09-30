@@ -66,7 +66,7 @@ where it turns out to be missed.
   `notification-types.config.ts`; the bell becomes a receipt (clears on read), More the task
   (clears on resolution). `strava_activity_unassigned` keeps holding the bell.
 - **New follower on a PUBLIC profile** is information, not a task — bell only.
-- **Look:** the card's badge is a copy of the bell badge — `primary-6` pill, mono, `9+` cap.
+- **Look:** the card's badge is a copy of the bell badge — `primary-6` pill, `tabular-nums` (`docs/design.md` §9), `9+` cap.
   The tab's dot is `primary-6`, 7 px, top-right of the icon.
 
 ```

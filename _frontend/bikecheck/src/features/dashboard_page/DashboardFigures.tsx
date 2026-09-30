@@ -1,28 +1,21 @@
-// Desktop Home's row of figures: the Period's distance, time in the saddle and spend, what is due now
-// and the next replacement. Strava's problems are the banner's, not a figure's.
-import { Fragment, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Box, SimpleGrid, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+// Desktop Home's row of figures: the Period's distance and time in the saddle, what is due now
+// and the next replacement. Spend is the spend card's; Strava's problems are the banner's.
+import { Fragment, useState, type ReactElement, type ReactNode } from "react";
+import { SimpleGrid, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import { useNavigate } from "react-router-dom";
-import { Eyebrow } from "@/components/Eyebrow";
-import { PRESS_TRANSITION } from "@/components/panelRows";
+import { Figure } from "@/components/Figure";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatDuration } from "@/features/rides/rideDuration";
-import { useHistoryTotals } from "@/features/service/service.queries";
-import { periodSearch } from "@/features/service/servicePeriod";
-import type { HistoryTotals } from "@/features/service/service.types";
 import { DUE_FROM, attentionColor } from "@/features/service_tracking/attentionLevel";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { AttentionLevel, GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
 import { periodGain, totalMeters } from "@/features/stats/distanceDays";
-import { homePeriodLabel, homePeriodServices } from "@/features/stats/homePeriod";
+import { homePeriodLabel } from "@/features/stats/homePeriod";
 import { useNextReplacement } from "@/features/stats/nextReplacement";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { HomePeriod } from "@/features/stats/stats.types";
-import { useCurrentUser } from "@/features/users/users.queries";
-import { formatCost } from "@/utils/money";
 
 // Worst first, and only the levels the app speaks at.
 const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
@@ -31,16 +24,13 @@ const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
   { level: "warning", key: "dashboard.warningCount" },
 ];
 
-const HIGHLIGHT_BORDER = "1px solid color-mix(in srgb, var(--mantine-color-primary-6) 40%, transparent)";
-
 // Due and the next replacement look at now, so only the Period's readings take it.
 export function DashboardFigures({ period }: { period: HomePeriod }): ReactElement {
   return (
-    <SimpleGrid cols={{ base: 3, lg: 5 }} spacing="md">
+    <SimpleGrid cols={{ base: 2, lg: 4 }} spacing="md">
       <DistanceFigure period={period} />
       <TimeFigure period={period} />
       <DueFigure />
-      <SpendFigure period={period} />
       <NextReplacementFigure />
     </SimpleGrid>
   );
@@ -56,7 +46,7 @@ function DistanceFigure({ period }: { period: HomePeriod }): ReactElement {
       title={t("stats.distanceTitle", { period: homePeriodLabel(period, i18n.language, t) })}
       value={distance === undefined ? null : formatKm(Math.round(totalMeters(distance) / 1000), i18n.language)}
       detail={distance === undefined ? "" : periodGain(distance, period, i18n.language, t)}
-      detailMono
+      detailFigure
       onOpen={() => navigate("/bikes")}
     />
   );
@@ -78,7 +68,7 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
       title={t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) })}
       value={distance === undefined ? null : `${hours} h`}
       detail={`${t("dashboard.ridesCount", { count: rides })} · ø ${average}`}
-      detailMono
+      detailFigure
       onOpen={() => navigate("/rides")}
     />
   );
@@ -95,7 +85,7 @@ function DueFigure(): ReactElement {
       value={due === undefined ? null : new Intl.NumberFormat(i18n.language).format(due.length)}
       detail={due === undefined ? "" : <DueLevels due={due} />}
       // The counts are figures; "All good" is words.
-      detailMono={due !== undefined && due.length > 0}
+      detailFigure={due !== undefined && due.length > 0}
       onOpen={() => navigate("/service")}
     />
   );
@@ -120,31 +110,6 @@ function DueLevels({ due }: { due: GarageTrackedAction[] }): ReactNode {
   ));
 }
 
-function SpendFigure({ period }: { period: HomePeriod }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const { data: user } = useCurrentUser();
-  const services = homePeriodServices(period);
-  const { data: totals } = useHistoryTotals(undefined, services);
-  const cost = (amount: number): string => formatCost(amount, user?.currency ?? null, i18n.language);
-
-  return (
-    <Figure
-      title={t("dashboard.spendTitle", { period: homePeriodLabel(period, i18n.language, t) })}
-      value={totals === undefined ? null : cost(totals.total_cost)}
-      detail={totals === undefined ? "" : spendDetail(totals, cost, t)}
-      detailMono
-      onOpen={() => navigate(`/service/history${periodSearch(services)}`)}
-    />
-  );
-}
-
-function spendDetail(totals: HistoryTotals, cost: (amount: number) => string, t: TFunction): string {
-  const count = t("dashboard.servicesCount", { count: totals.service_count });
-  if (totals.service_count === 0) return count;
-  return `${count} · ø ${cost(totals.total_cost / totals.service_count)}`;
-}
-
 function NextReplacementFigure(): ReactElement {
   const { t } = useTranslation();
   const next = useNextReplacement();
@@ -159,7 +124,7 @@ function NextReplacementFigure(): ReactElement {
           highlighted
           title={t("stats.nextReplacement")}
           value={<NameAndFigure name={next.part} figure={next.left} />}
-          valueMono={false}
+          valueFigure={false}
           valueColor={attentionColor(next.item.percentage)}
           detail={<NameAndFigure name={next.bike} figure={next.weeks} />}
           onOpen={() => setOpened(next.item)}
@@ -171,80 +136,14 @@ function NextReplacementFigure(): ReactElement {
   );
 }
 
-// A name in the body font, then its figure in mono.
+// A name, then its figure in tabular numerals.
 function NameAndFigure({ name, figure }: { name: string; figure: string }): ReactElement {
   return (
     <>
       {`${name} · `}
-      <Text span inherit className="font-mono">
+      <Text span inherit className="tabular-nums">
         {figure}
       </Text>
     </>
-  );
-}
-
-interface FigureProps {
-  title: string;
-  // Null while it loads.
-  value: ReactNode | null;
-  valueMono?: boolean;
-  valueColor?: string;
-  detail: ReactNode;
-  // Numbers read in mono, words in the body font.
-  detailMono?: boolean;
-  // The one figure the eye should reach first.
-  highlighted?: boolean;
-  // Without it the figure is only read, never pressed.
-  onOpen?: () => void;
-}
-
-function Figure({
-  title,
-  value,
-  valueMono = true,
-  valueColor,
-  detail,
-  detailMono = false,
-  highlighted = false,
-  onOpen,
-}: FigureProps): ReactElement {
-  const surface: CSSProperties = {
-    borderRadius: "var(--mantine-radius-lg)",
-    backgroundColor: "var(--mantine-color-cards-6)",
-    border: highlighted ? HIGHLIGHT_BORDER : "none",
-    boxShadow: "var(--elev-panel)",
-  };
-  const body = (
-    <Stack gap={4}>
-      <Eyebrow>{title}</Eyebrow>
-      {value === null ? (
-        <Skeleton h={20} w="50%" radius="sm" />
-      ) : (
-        <Text className={valueMono ? "font-mono" : undefined} fz={16} fw={600} c={valueColor ?? "text.6"} lineClamp={1}>
-          {value}
-        </Text>
-      )}
-      <Text className={detailMono ? "font-mono" : undefined} fz={13} c="var(--color-text-dim)" lineClamp={1}>
-        {detail}
-      </Text>
-    </Stack>
-  );
-
-  if (onOpen === undefined) {
-    return (
-      <Box p="md" style={surface}>
-        {body}
-      </Box>
-    );
-  }
-  return (
-    <UnstyledButton
-      onClick={onOpen}
-      className="hover-veil active:scale-[0.985]"
-      p="md"
-      style={{ ...surface, transition: PRESS_TRANSITION }}
-    >
-      {body}
-    </UnstyledButton>
   );
 }

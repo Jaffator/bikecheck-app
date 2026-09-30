@@ -14,13 +14,12 @@ import { CONTENT_MAX_WIDTH } from "./contentWidth";
 // Over the tab bar the sheet is opened from, as the settings drawers sit over their page.
 const DRAWER_Z_INDEX = 320;
 
-// A list row's surface, the same one the dashboard tiles stand on.
+// A step lighter than the sheet, which is cards-6 like every drawer, so the tiles stand off it.
 const CARD: CSSProperties = {
   display: "block",
   width: "100%",
   borderRadius: "var(--mantine-radius-lg)",
-  backgroundColor: "var(--mantine-color-cards-6)",
-  backgroundImage: "var(--card-glow)",
+  backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-6), white 4%)",  backgroundImage: "var(--card-glow)",
   boxShadow: "var(--elev-row)",
   transition: "transform 0.12s ease",
 };
@@ -50,7 +49,7 @@ function MoreCard({ icon, title, detail, tag, onOpen }: CardProps): ReactElement
               height: "2.25rem",
               borderRadius: "0.625rem",
               flexShrink: 0,
-              backgroundColor: "var(--mantine-color-cards-5)",
+              backgroundColor: "rgba(255,255,255,0.06)",
             }}
           >
             {icon}
@@ -62,7 +61,7 @@ function MoreCard({ icon, title, detail, tag, onOpen }: CardProps): ReactElement
             {title}
           </Text>
           {/* Two lines: "12 sledujících · 2 žádosti" does not fit one at this width. */}
-          <Text className="font-mono" fz={11} tt="uppercase" lts="0.06em" c="var(--color-text-dim)" lineClamp={2}>
+          <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={2}>
             {detail}
           </Text>
         </Stack>
@@ -87,7 +86,7 @@ function CountPill({ count }: { count: number }): ReactElement {
         flexShrink: 0,
       }}
     >
-      <Text className="font-mono" fz={11} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
+      <Text className="tabular-nums" fz={11} fw={700} c="var(--mantine-color-cards-8)" lh={1}>
         {count > BADGE_CAP ? `${BADGE_CAP}+` : count}
       </Text>
     </Box>
@@ -180,7 +179,7 @@ export function MoreDrawer({ opened, onClose }: MoreDrawerProps): ReactElement {
             title={t("page.chat")}
             detail={t("more.chatDetail")}
             tag={
-              <Text className="font-mono" fz={10} fw={700} tt="uppercase" lts="0.08em" c="primary.6" style={{ flexShrink: 0 }}>
+              <Text className="tabular-nums" fz={10} fw={700} tt="uppercase" lts="var(--tracking-label)" c="primary.6" style={{ flexShrink: 0 }}>
                 {t("more.chatTag")}
               </Text>
             }

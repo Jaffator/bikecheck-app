@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
@@ -6,6 +6,7 @@ import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { BRAKE_PAD_PART, DRIVETRAIN_PARTS, SUSPENSION_PARTS } from '../service-tracking/ride-wear';
 import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
@@ -14,6 +15,12 @@ import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import type { strava_pending_activities } from '@prisma/client';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
+import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
+
+// Strava's API limits are per app, shared by every user, so a user may sync this often at most.
+const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
+// The window starts at the last sync; this caps how far back a first or late sync walks.
+const SYNC_LOOKBACK_MS = 60 * 24 * 60 * 60 * 1000;
 
 interface SplitMetricEntry {
   distance: number;
@@ -38,6 +45,8 @@ interface StravaActivityData {
     summary_polyline: string | null;
     suspension_minutes: number;
     health_index_brake_pad: number;
+    // Absent on analyses parked as pending before descent time was kept.
+    descent_min?: number;
     drivetrain_km: number;
     distance_km: number;
     duration_min: number;
@@ -136,6 +145,7 @@ export class StravaEventsService {
         strava_lastname: null,
         strava_username: null,
         strava_avatar_url: null,
+        strava_last_sync_at: null,
       },
     });
 
@@ -289,6 +299,7 @@ export class StravaEventsService {
 
     // Declare variables to store results
     let health_index_brake_pad = 0;
+    let descent_seconds = 0;
     let suspension_minutes = 0;
     let drivetrain_meters = 0;
     let total_elevation_loss = 0;
@@ -307,6 +318,7 @@ export class StravaEventsService {
         const slopePercentDown = Number(Math.abs(slopeSigned).toFixed(2));
         const splitIndexWear = split.elevation_difference * getKslopeDH(slopePercentDown) * parameters.kweight;
         health_index_brake_pad += Math.abs(splitIndexWear);
+        descent_seconds += split.moving_time;
       }
 
       /*
@@ -342,6 +354,7 @@ export class StravaEventsService {
         summary_polyline: stravaData.map?.summary_polyline ?? null,
         suspension_minutes: Math.floor(suspension_minutes / 60),
         health_index_brake_pad: Math.floor(health_index_brake_pad),
+        descent_min: Math.round(descent_seconds / 60),
         drivetrain_km: Math.floor(drivetrain_meters / 1000),
         distance_km: Math.floor(stravaData.distance / 1000),
         duration_min: Math.floor(stravaData.moving_time / 60),
@@ -365,7 +378,17 @@ export class StravaEventsService {
     });
     if (!user) throw new Error('User not found for Strava athlete ID: ' + data.athleteid);
 
-    const bike = data.gearid
+    // An update webhook for a dismissed ride must not bring it back, as a ride or as an ask.
+    if (await this.isDismissed(data.activity_id)) return { message: 'Dismissed activity, skipped' };
+
+    // A ride already saved stays on its bike: the owner may have moved it off Strava's gear.
+    const saved = await this.prisma.rides.findUnique({
+      where: { activity_strava_id: BigInt(data.activity_id) },
+      select: { bike_id: true },
+    });
+    const bike = saved
+      ? { id: saved.bike_id }
+      : data.gearid
       ? await this.prisma.bikes.findFirst({
           // An Archived Bike collects nothing. Archiving clears the gear id anyway, so
           // this only guards a row archived by some other route (ADR 0024).
@@ -446,6 +469,20 @@ export class StravaEventsService {
     }
   }
 
+  // Dismissed = resolved in Pending without ever becoming a ride.
+  private async isDismissed(activityId: number): Promise<boolean> {
+    const pending = await this.prisma.strava_pending_activities.findUnique({
+      where: { activity_id: activityId },
+      select: { resolved_at: true },
+    });
+    if (!pending?.resolved_at) return false;
+    const ride = await this.prisma.rides.findUnique({
+      where: { activity_strava_id: BigInt(activityId) },
+      select: { id: true },
+    });
+    return ride === null;
+  }
+
   /**
    * The user's unresolved pending activities, newest first.
    */
@@ -491,6 +528,89 @@ export class StravaEventsService {
       elevation_up_m: Math.round(analyzed.elevation_up_m),
       created_at: activity.created_at,
     };
+  }
+
+  /**
+   * Takes a ride the user did not ride on their own bike out of Pending for good. No ride is
+   * created; the resolved row stays so a later webhook or sync does not bring it back.
+   */
+  async dismissPendingActivity(userId: number, activityId: bigint): Promise<void> {
+    const pending = await this.prisma.strava_pending_activities.findFirst({
+      where: { user_id: userId, activity_id: activityId, resolved_at: null },
+    });
+    if (!pending) throw new NotFoundException('Pending activity not found');
+
+    await this.prisma.strava_pending_activities.update({
+      where: { id: pending.id },
+      data: { resolved_at: new Date() },
+    });
+    await this.notificationService.resolveActivityAsk(userId, String(pending.activity_id));
+  }
+
+  /**
+   * Queues unseen Strava rides since the last sync (max 60 days), once per cooldown.
+   * They arrive through the webhook pipeline, so this returns only how many.
+   */
+  async syncFromStrava(userId: number): Promise<ResponseStravaSyncDto> {
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      select: { strava_athlete_id: true, strava_last_sync_at: true },
+    });
+    if (!user?.strava_athlete_id) throw new NotFoundException('No Strava account is linked to this user');
+
+    const now = new Date();
+    if (user.strava_last_sync_at && now.getTime() - user.strava_last_sync_at.getTime() < SYNC_COOLDOWN_MS) {
+      throw new HttpException('Strava sync is cooling down', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    const athleteId = Number(user.strava_athlete_id);
+    const windowStart = Math.max(now.getTime() - SYNC_LOOKBACK_MS, user.strava_last_sync_at?.getTime() ?? 0);
+    let missing: number[];
+    try {
+      const listed = await this.postToStravaService<{ activityIds: number[] }>('/strava/sync/list', {
+        athleteId,
+        after: Math.floor(windowStart / 1000),
+      });
+      missing = await this.findUnseenActivityIds(listed.activityIds);
+      if (missing.length > 0) {
+        await this.postToStravaService('/strava/sync/enqueue', { athleteId, activityIds: missing });
+      }
+    } catch (error) {
+      throw new Error(`Failed to sync Strava: ${(error as Error).message}`);
+    }
+
+    // Only a sync that reached Strava starts the cooldown, so a failed one can be retried.
+    await this.prisma.users.update({ where: { id: userId }, data: { strava_last_sync_at: now } });
+    return { queued: missing.length, synced_at: now };
+  }
+
+  // Resolved pending rows count as seen, so a dismissed ride is never queued again.
+  private async findUnseenActivityIds(activityIds: number[]): Promise<number[]> {
+    if (activityIds.length === 0) return [];
+    const ids = activityIds.map((id) => BigInt(id));
+    const [rides, pending] = await Promise.all([
+      this.prisma.rides.findMany({
+        where: { activity_strava_id: { in: ids } },
+        select: { activity_strava_id: true },
+      }),
+      this.prisma.strava_pending_activities.findMany({
+        where: { activity_id: { in: ids } },
+        select: { activity_id: true },
+      }),
+    ]);
+    const seen = new Set([
+      ...rides.map((ride) => String(ride.activity_strava_id)),
+      ...pending.map((row) => String(row.activity_id)),
+    ]);
+    return activityIds.filter((id) => !seen.has(String(id)));
+  }
+
+  private async postToStravaService<T>(path: string, body: object): Promise<T> {
+    const response = await axios.post<T>(`${process.env.STRAVA_SERVICE_URL}${path}`, body, {
+      headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
+      timeout: 15000,
+    });
+    return response.data;
   }
 
   /**
@@ -613,6 +733,7 @@ export class StravaEventsService {
         started_at: new Date(analyzedData.started_at),
         json_data: JSON.stringify(analyzedData.rawJson),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
+        descent_min: analyzedData.descent_min ?? null,
         activity_strava_id: BigInt(activityId),
         distance_m: analyzedData.distance_km * 1000,
         duration_min: analyzedData.duration_min,
@@ -627,6 +748,7 @@ export class StravaEventsService {
         started_at: new Date(analyzedData.started_at),
         json_data: JSON.stringify(analyzedData.rawJson),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
+        descent_min: analyzedData.descent_min ?? null,
         distance_m: analyzedData.distance_km * 1000,
         duration_min: analyzedData.duration_min,
         elevation_up_m: analyzedData.elevation_up_m,
@@ -660,13 +782,13 @@ export class StravaEventsService {
       where: {
         bike_id: bikeId,
         is_deleted: false,
-        component_types: { component_type: { in: ['Shock', 'Fork'] } },
+        component_types: { component_type: { in: SUSPENSION_PARTS } },
       },
       data: { suspension_min: { increment: diff.suspension_min } },
     });
 
     await this.prisma.components_mounted.updateMany({
-      where: { bike_id: bikeId, is_deleted: false, component_types: { component_type: 'Brake pad' } },
+      where: { bike_id: bikeId, is_deleted: false, component_types: { component_type: BRAKE_PAD_PART } },
       data: { health_index: { increment: diff.health_index_brake_pad } },
     });
 
@@ -679,7 +801,7 @@ export class StravaEventsService {
       where: {
         bike_id: bikeId,
         is_deleted: false,
-        component_types: { component_type: { in: ['Chain', 'Cassette', 'Chainring'] } },
+        component_types: { component_type: { in: DRIVETRAIN_PARTS } },
       },
       data: { drivetrain_km: { increment: diff.drivetrain_km } },
     });

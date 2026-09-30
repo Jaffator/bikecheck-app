@@ -72,12 +72,12 @@ function PersonIdentity({ person }: { person: Person }): ReactElement {
           {personName(person, t("follow.unnamed"))}
         </Text>
         {person.handle !== null && (
-          <Text className="font-mono" fz={12} c="var(--color-text-dim)" lineClamp={1} style={faded}>
+          <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1} style={faded}>
             @{person.handle}
           </Text>
         )}
         {off && (
-          <Text className="font-mono" fz={11} c="var(--color-text-dim)">
+          <Text className="tabular-nums" fz={11} c="var(--color-text-dim)">
             {t("follow.profileOff")}
           </Text>
         )}

@@ -11,9 +11,9 @@ interface SetupSectionProps {
 export function SetupSection({ title, children }: SetupSectionProps): ReactElement {
   return (
     <Stack gap="xs">
-      {/* Mono and upper-case, as section headings are lettered across the app, so the section's
-          name stands apart from the Inter labels of the fields inside the card. */}
-      <Text className="font-mono" fz={13} fw={500} tt="uppercase" lts="0.08em" c="text.6" px="xs">
+      {/* Upper-case and tracked, as section headings are lettered across the app, so the
+          section's name stands apart from the field labels inside the card. */}
+      <Text className="tabular-nums" fz={13} fw={500} tt="uppercase" lts="var(--tracking-label)" c="text.6" px="xs">
         {title}
       </Text>
       <Paper

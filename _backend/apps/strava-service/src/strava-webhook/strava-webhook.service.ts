@@ -8,6 +8,15 @@ import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.cont
 
 const VERIFY_TOKEN = 'STRAVA';
 
+// Strava's maximum page size.
+const SYNC_PAGE_SIZE = 200;
+const RIDE_TYPES = ['Ride', 'EBikeRide'];
+
+interface StravaActivitySummary {
+  id: number;
+  type: string;
+}
+
 @Injectable()
 export class StravaWebhookService {
   constructor(
@@ -49,10 +58,17 @@ export class StravaWebhookService {
   }
 
   /**
-   * Inserts the raw Strava activity JSON into the database.
-   * @returns The id of the inserted row.
+   * Inserts the raw Strava activity JSON, or refreshes the row already there.
+   * @returns The id of the saved row.
    */
   async saveActivityData(activityData: any, athlete_id: number, activity_id: number): Promise<any> {
+    // A synced ride can already have a raw row from a run the monolith never finished.
+    const existing = await this.databaseService.query(
+      'UPDATE strava_activities_raw SET strava_data = $1, updated_at = NOW() WHERE athlete_id = $2 AND activity_id = $3 RETURNING id',
+      [activityData, athlete_id, activity_id],
+    );
+    if (existing.length > 0) return existing[0];
+
     const savedActivity = await this.databaseService.query(
       'INSERT INTO strava_activities_raw (strava_data, athlete_id, activity_id) VALUES ($1, $2, $3) RETURNING id',
       [activityData, athlete_id, activity_id],
@@ -126,6 +142,26 @@ export class StravaWebhookService {
       }
       throw new Error(`Error fetching Gear from Strava, athlete id ${athlete_id}, error: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Ids of the athlete's rides started after `after` (unix seconds). The monolith decides which
+   * of them it has not seen, since only it knows the saved and dismissed rides.
+   */
+  async listRideIds(athlete_id: number, after: number): Promise<number[]> {
+    const access_token = await this.tokenService.getAccessToken(athlete_id);
+    const listed: StravaActivitySummary[] = [];
+    for (let page = 1; ; page++) {
+      const response = await axios.get<StravaActivitySummary[]>('https://www.strava.com/api/v3/athlete/activities', {
+        params: { after, page, per_page: SYNC_PAGE_SIZE },
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      listed.push(...response.data);
+      if (response.data.length < SYNC_PAGE_SIZE) break;
+    }
+
+    // The same filter the processor applies, so a run or a hike is never downloaded just to be skipped.
+    return listed.filter((a) => RIDE_TYPES.includes(a.type)).map((a) => a.id);
   }
 
   /**

@@ -143,7 +143,7 @@ export function Service(): ReactElement {
                   className="active:scale-[0.985]"
                 >
                   <Group justify="center" align="center" gap={8} wrap="nowrap">
-                    <Text className="font-mono uppercase" fz={12} fw={500} c="text.6" lts="0.08em">
+                    <Text className="tabular-nums uppercase" fz={12} fw={500} c="text.6" lts="var(--tracking-label)">
                       {t("service.viewAll")}
                     </Text>
                     <ArrowRight size={14} color="var(--mantine-color-text-6)" />

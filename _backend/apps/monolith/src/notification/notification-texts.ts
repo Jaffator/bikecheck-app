@@ -55,6 +55,10 @@ export interface CrossedAction {
   actionKey: string | null;
   actionName: string;
   percentage: number;
+  // The service wizard link's ids (ADR 0030); absent on notifications created before they were added.
+  componentMountedId?: number;
+  actionId?: number;
+  groupId?: number;
 }
 
 // Both halves are written from the payload, because a maintenance reminder's headline

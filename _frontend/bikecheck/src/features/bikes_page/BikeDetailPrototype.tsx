@@ -214,7 +214,7 @@ function NameBlock({ bike, onExport }: { bike: Bike; onExport: () => void }): Re
             {bikeTitle(bike)}
           </Text>
           {bike.bikename !== null && bike.bikename !== "" && (
-            <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
+            <Text className="tabular-nums" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
               {bike.bikename}
             </Text>
           )}
@@ -246,7 +246,7 @@ function Metric({ icon, value }: { icon: ReactElement; value: string }): ReactEl
   return (
     <Group gap={6} wrap="nowrap" c="var(--mantine-color-text-8)">
       {icon}
-      <Text className="font-mono" fz={13} c="text.6" lineClamp={1}>
+      <Text className="tabular-nums" fz={13} c="text.6" lineClamp={1}>
         {value}
       </Text>
     </Group>
@@ -283,7 +283,7 @@ function SpecRow({ label, value }: { label: string; value: string }): ReactEleme
       <Text fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
         {label}
       </Text>
-      <Text className="font-mono" fz={13} c="text.6" ta="right" lineClamp={1}>
+      <Text className="tabular-nums" fz={13} c="text.6" ta="right" lineClamp={1}>
         {value}
       </Text>
     </Group>
@@ -379,7 +379,7 @@ function RecentHistory({ bikeId }: { bikeId: number }): ReactElement {
             w="100%"
           >
             <Group justify="center" gap={8} wrap="nowrap">
-              <Text className="font-mono uppercase" fz={12} fw={500} c="text.6" lts="0.08em">
+              <Text className="tabular-nums uppercase" fz={12} fw={500} c="text.6" lts="var(--tracking-label)">
                 {t("service.viewAll")}
               </Text>
               <ArrowRight size={14} color="var(--mantine-color-text-6)" />

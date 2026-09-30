@@ -4,8 +4,9 @@ import { Box, Group, Paper, Progress, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { StravaPairingHint } from "@/features/strava/ui/StravaPairingHint";
 import { ArrowUpRight, Clock, Gauge } from "lucide-react";
-import type { Bike } from "@/features/bikes/bikes.types";
+import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { lastRideDate } from "@/features/bikes/lastRideDate";
 import { BikePhoto } from "./BikePhoto";
 import { attentionColor, barFill, QUIET_BELOW, worstAction } from "@/features/service_tracking/attentionLevel";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
@@ -15,7 +16,7 @@ import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
 import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
 
 interface BikeCardProps {
-  bike: Bike;
+  bike: ListedBike;
   onOpen: () => void;
 }
 
@@ -33,7 +34,7 @@ function Metric({ icon, children }: { icon: ReactNode; children: ReactNode }): R
   return (
     <Group gap={6} wrap="nowrap">
       {icon}
-      <Text className="font-mono" fz={13} tt="uppercase" c="text.6" lts="0.02em" style={{ whiteSpace: "nowrap" }}>
+      <Text className="tabular-nums" fz={13} tt="uppercase" c="text.6" lts="var(--tracking-label)" style={{ whiteSpace: "nowrap" }}>
         {children}
       </Text>
     </Group>
@@ -61,14 +62,14 @@ function AttentionMeter({ action }: { action: TrackedAction }): ReactElement {
           section: { backgroundColor: color },
         }}
       />
-      <Text className="font-mono" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="0.08em" lineClamp={1}>
+      <Text className="tabular-nums" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="var(--tracking-label)" lineClamp={1}>
         {catalogueLabel(action.action_i18n_key, action.action_name, t)}
       </Text>
       <Text
-        className="font-mono"
+        className="tabular-nums"
         fz={11}
         tt="uppercase"
-        lts="0.08em"
+        lts="var(--tracking-label)"
         ml="auto"
         // Emphasize a reading the ramp has started to warm.
         c={action.percentage < QUIET_BELOW ? "var(--color-text-dim)" : color}
@@ -154,7 +155,7 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
 
       <Stack gap="xs" px="md" py="sm" style={{ position: "relative", zIndex: 2 }}>
         {/* The three readings a bike keeps by itself, in the order the bike's own page
-            gives them. The pairing hint takes whatever room is left. */}
+            gives them. */}
         <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
           {hasFigures ? (
             <>
@@ -173,12 +174,20 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
           ) : (
             <Metric icon={<Gauge size={14} color="var(--color-text-dim)" />}>{t("bikes.noRidesYet")}</Metric>
           )}
-          <StravaPairingHint stravaGearId={bike.strava_gear_id} />
         </Group>
 
         {/* A bike whose worst reading is still 0% has nothing to report: the meter would
             say so with an empty bar and a zero, which is a line of card spent on nothing. */}
         {worst !== null && worst.percentage > 0 && <AttentionMeter action={worst} />}
+
+        <Group gap="sm" wrap="nowrap" justify="space-between">
+          <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" style={{ whiteSpace: "nowrap" }}>
+            {bike.last_ride_at === null
+              ? t("bikes.noRidesYet")
+              : t("bikes.lastRide", { date: lastRideDate(bike.last_ride_at) })}
+          </Text>
+          <StravaPairingHint bikeId={bike.id} stravaGearId={bike.strava_gear_id} />
+        </Group>
       </Stack>
     </Paper>
   );

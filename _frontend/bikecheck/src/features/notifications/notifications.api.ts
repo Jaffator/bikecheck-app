@@ -2,9 +2,16 @@
 import { apiFetch } from "@/api/client";
 import type { Notification } from "./notifications.types";
 
-// Get notifications, optionally unread only.
-export async function getNotifications(unreadOnly = false): Promise<Notification[]> {
-  return apiFetch<Notification[]>(`/notifications${unreadOnly ? "?unread=true" : ""}`);
+// One page of notifications, newest first and older than `before`.
+export async function getNotifications(limit: number, before?: number): Promise<Notification[]> {
+  const query = new URLSearchParams({ limit: String(limit) });
+  if (before !== undefined) query.set("before", String(before));
+  return apiFetch<Notification[]>(`/notifications?${query.toString()}`);
+}
+
+// Every unread notification; the server does not page these.
+export async function getUnreadNotifications(): Promise<Notification[]> {
+  return apiFetch<Notification[]>("/notifications?unread=true");
 }
 
 // Mark everything the list clears on view as read.

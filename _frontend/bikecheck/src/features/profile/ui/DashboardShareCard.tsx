@@ -92,7 +92,7 @@ function StateCard({ visibility, figures, onOpenDrawer }: StateCardProps): React
         {/* The heading is the drawer's handle; the figures below are each their own way. */}
         <UnstyledButton onClick={onOpenDrawer} className="active:scale-[0.985]" style={{ display: "block" }}>
           <Group justify="space-between" wrap="nowrap">
-            <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+            <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
               {`${t("sharing.cardTitle")} · ${t(VISIBILITY_LABEL_KEY[visibility])}`}
             </Text>
             <Icon size={16} color={VISIBILITY_COLOR[visibility]} />
@@ -115,11 +115,11 @@ function FigureCell({ figure }: { figure: Figure }): ReactElement {
 
   const body = (
     <Stack gap={0}>
-      <Text className="font-mono" fz={32} fw={700} c="text.6" style={{ lineHeight: 1.1 }}>
+      <Text className="tabular-nums" fz={32} fw={700} c="text.6" style={{ lineHeight: 1.1 }}>
         {figure.value}
       </Text>
       <Group gap={2} wrap="nowrap">
-        <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+        <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
           {t(figure.labelKey)}
         </Text>
         {figure.linked && <ChevronRight size={12} color="var(--color-text-dim)" />}

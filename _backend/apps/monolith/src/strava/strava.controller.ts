@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { StravaEventsService } from './strava.service';
@@ -7,6 +7,7 @@ import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-u
 import { LinkStravaGearDto } from './dto/link-strava-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import { ResolvePendingActivityDto } from './dto/resolve-pending-activity.dto';
+import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
 
 @Controller('strava')
 export class StravaController {
@@ -29,6 +30,16 @@ export class StravaController {
   async disconnectStrava(@CurrentUser('userId') userId: string): Promise<{ success: boolean }> {
     await this.stravaEventService.disconnect(Number(userId));
     return { success: true };
+  }
+
+  // ---------- POST catch up on rides the webhook missed ----------
+  @ApiOperation({ summary: 'Queue the last 60 days of Strava rides the app never received' })
+  @ApiResponse({ status: 200, type: ResponseStravaSyncDto })
+  @ApiResponse({ status: 429, description: 'Synced less than 5 minutes ago' })
+  @Post('sync')
+  @HttpCode(200)
+  syncStrava(@CurrentUser('userId') userId: string): Promise<ResponseStravaSyncDto> {
+    return this.stravaEventService.syncFromStrava(Number(userId));
   }
 
   // ---------- GET strava + bikecheck gear for linking ----------
@@ -92,6 +103,19 @@ export class StravaController {
       bikeId: body.bikeId,
       gearId: null,
     });
+    return { success: true };
+  }
+
+  // ---------- POST dismiss a pending ride ----------
+  @ApiOperation({ summary: 'Drop a pending ride ridden on a bike that is not in BikeCheck' })
+  @ApiResponse({ status: 201 })
+  @Post('pending-activities/:activityId/dismiss')
+  // Returns a body on purpose: the shared frontend client parses every 2xx as JSON.
+  async dismissPendingActivity(
+    @CurrentUser('userId') userId: string,
+    @Param('activityId') activityId: string,
+  ): Promise<{ success: boolean }> {
+    await this.stravaEventService.dismissPendingActivity(Number(userId), BigInt(activityId));
     return { success: true };
   }
 }

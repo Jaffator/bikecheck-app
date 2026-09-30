@@ -41,14 +41,14 @@ export function PeriodReportPrint({ snapshot }: PeriodReportPrintProps): ReactEl
         <Field
           label={heading.odometer}
           value={bike.totalKm === null ? "—" : `${reportNumber(bike.totalKm, language)} km`}
-          mono
+          figure
         />
-        <Field label={heading.services} value={String(totals.serviceCount)} mono />
-        <Field label={heading.replacements} value={String(totals.replacementCount)} mono />
+        <Field label={heading.services} value={String(totals.serviceCount)} figure />
+        <Field label={heading.replacements} value={String(totals.replacementCount)} figure />
       </section>
 
       <section className="flex items-baseline gap-3">
-        <span className="font-mono text-3xl font-semibold" style={{ color: REPORT_PAPER.accent }}>
+        <span className="tabular-nums text-3xl font-semibold" style={{ color: REPORT_PAPER.accent }}>
           {reportCost(totals.totalCost, snapshot)}
         </span>
         <span className="text-base">{heading.spent}</span>
@@ -112,7 +112,7 @@ function ServiceRow({
   return (
     <tr className="break-inside-avoid" style={{ borderBottom: `1px solid ${REPORT_PAPER.rule}` }}>
       {/* The date never breaks; a long shop name wraps under it rather than widening the column. */}
-      <td className="py-2.5 pr-4 align-top w-[18%] font-mono" style={{ color: REPORT_PAPER.inkMuted }}>
+      <td className="py-2.5 pr-4 align-top w-[18%] tabular-nums" style={{ color: REPORT_PAPER.inkMuted }}>
         <span className="whitespace-nowrap">{date ?? heading.noDate}</span>
         {place !== null && ` · ${place}`}
       </td>
@@ -123,7 +123,7 @@ function ServiceRow({
         {/* A buyer must be able to tell a new part from a serviced one. */}
         {replaced && (
           <span
-            className="block mt-1 font-mono uppercase text-[9px] font-semibold tracking-[0.12em]"
+            className="block mt-1 tabular-nums uppercase text-[9px] font-semibold tracking-label"
             style={{ color: REPORT_PAPER.accent }}
           >
             {heading.replacement}
@@ -140,7 +140,7 @@ function ServiceRow({
           </span>
         ))}
       </td>
-      <td className="py-2.5 align-top text-right font-mono whitespace-nowrap">
+      <td className="py-2.5 align-top text-right tabular-nums whitespace-nowrap">
         {reportCost(service.totalCost, snapshot)}
       </td>
     </tr>

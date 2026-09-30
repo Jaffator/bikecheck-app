@@ -23,11 +23,11 @@ export function PlanDayButton({ planned, onPlan, width }: PlanDayButtonProps): R
         variant="subtle"
         color="gray"
         radius="sm"
-        className="font-mono"
+        className="tabular-nums"
         fz={11}
         tt="uppercase"
         styles={{
-          label: { letterSpacing: "0.08em" },
+          label: { letterSpacing: "var(--tracking-label)" },
           root: {
             color: frameColor(planned),
             border: "1px solid var(--mantine-color-inputs-5)",

@@ -68,17 +68,18 @@ Check the text against the mark, not the fill: `textDark.6` over the blended sha
 at 12% opacity, and 4.53:1 at 20%, which is where this technique runs out.
 ## Type scale
 
-Four roles carry every card. Anything else is drift.
+Four roles carry every card. Anything else is drift. Face, weights and tracking follow
+`docs/design.md` §9 Typography.
 
-| role          | style                                                                                            |
-| ------------- | ------------------------------------------------------------------------------------------------ |
-| eyebrow       | `fz={11} fw={400}` mono, uppercase, `lts="0.08em"`, `var(--color-text-dim)`                      |
-| title         | `fz={16} fw={600} c="text.6"`                                                                    |
-| body and data | `fz={13}` — mono for numbers and dates, sans for words — `c="text.7"` or `var(--color-text-dim)` |
-| hero number   | `fz={32} fw={700}` mono (`HistoryTotalsCard` only)                                               |
+| role          | style                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| eyebrow       | `fz={11} fw={400}` uppercase, `lts="var(--tracking-label)"`, `var(--color-text-dim)`           |
+| title         | `fz={16} fw={600} c="text.6"`                                                                  |
+| body and data | `fz={13}` — `tabular-nums` on numbers and dates — `c="text.7"` or `var(--color-text-dim)`      |
+| hero number   | `fz={32} fw={700}` `tabular-nums` (`HistoryTotalsCard` only)                                   |
 
 Never `c="cards.3"` for text: it is a surface shade and lands at 4.15:1 on `cards.6`, under
-the 4.5:1 floor. Never a weight under 400 below 14px — Inter Thin breaks up at that size.
+the 4.5:1 floor.
 
 ## Rules
 
@@ -104,8 +105,8 @@ metric row. New history lists belong here too.
 
 **Service rows are the exception.** They left `CompletedRideCard`: a service card leads with an
 eyebrow (`SERVICE · 3 ACTIONS`), puts its price at the top edge and lists its Actions as
-bullets, which is no longer the ride row's shape. They lean on mono for the eyebrow,
-date, bullets and price, but the roles above still decide their sizes. Inside a Month Group each service keeps its
+bullets, which is no longer the ride row's shape. Eyebrow, date, bullets and price carry
+`tabular-nums`, and the roles above still decide their sizes. Inside a Month Group each service keeps its
 own card — the month only gathers them under a heading, which sticks to the top of the
 screen while that month scrolls past. The surface itself lives in
 `_frontend/bikecheck/src/features/service/serviceCardSurface.ts`, so the standalone card

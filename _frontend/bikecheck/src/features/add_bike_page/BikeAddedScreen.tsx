@@ -48,12 +48,12 @@ export function BikeAddedScreen({ bikeName, onContinue }: BikeAddedScreenProps):
           order={1}
           ta="center"
           c="text.6"
-          style={{ fontSize: "2rem", fontWeight: 600, letterSpacing: "-0.0188em", lineHeight: 1.1 }}
+          style={{ fontSize: "2rem", fontWeight: 600, letterSpacing: "var(--tracking-display)", lineHeight: 1.1 }}
         >
           {t("addBike.addedTitle")}
         </Title>
 
-        <Text ta="center" fw={600} size="xl" c="#E8E2D4" style={{ letterSpacing: "-0.016em" }}>
+        <Text ta="center" fw={600} size="xl" c="#E8E2D4" lts="var(--tracking-title)">
           {bikeName}
         </Text>
       </Stack>
@@ -78,7 +78,7 @@ export function BikeAddedScreen({ bikeName, onContinue }: BikeAddedScreenProps):
             label: {
               fontSize: "0.75rem",
               fontWeight: 700,
-              letterSpacing: "0.1em",
+              letterSpacing: "var(--tracking-label)",
               textTransform: "uppercase",
             },
           }}

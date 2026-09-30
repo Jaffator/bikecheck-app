@@ -6,7 +6,7 @@ import type { ReactElement } from "react";
 import type { ReboundRing, SimpleReboundDialProps } from "../dial.types";
 import { DIAL_SVG_STYLE, FOCUS_CLASS, sideRing, useDialEngine, type RingGroupProps } from "../dialEngine";
 import { TAU } from "../dialGeometry";
-import { DIAL_FONT, DialFocusStyle } from "./dialParts";
+import { DialFocusStyle } from "./dialParts";
 
 // One letter of the label, at its angle round the cylinder.
 interface Letter {
@@ -158,8 +158,7 @@ function SideRing({ groupProps, url }: SideRingProps): ReactElement {
       <rect x={CX - RADIUS} y={TOP} width={2 * RADIUS} height={HEIGHT * 0.3} fill={url("dropShade")} />
 
       <g
-        fontFamily={DIAL_FONT}
-        fontWeight={800}
+        fontWeight={700}
         fontSize={fontSize}
         fill="#fff"
         textAnchor="middle"

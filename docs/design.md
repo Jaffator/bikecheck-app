@@ -185,6 +185,39 @@ Profile → connect Strava → unmatched gear notification
   Tailwind `desktop:`. Tailwind's own `md` (48rem) is a different width; don't use it in the app shell.
 - **Tone:** clean, functional, sporty. No overengineering.
 
+### Typography
+
+The single source of truth for type. ADR 0039 records why.
+
+**One typeface: Geist**, everywhere — app, public profile, print reports and setup dials. Loaded
+once from Google Fonts in `index.html`; `theme.ts` and `--font-sans` point at it. There is no mono
+face and no display face.
+
+**Figures use `tabular-nums`**, not a different face, so columns of numbers and dates line up:
+`className="tabular-nums"` on Mantine or Tailwind, `fontVariantNumeric: "tabular-nums"` in a
+`styles` object.
+
+**Weights: 400, 500, 600, 700.** Nothing else is loaded — no 100, no 800/900.
+
+**Letter-spacing is a token, never a number.** Three tokens in `@theme` of `global.css`; the
+default is `0`:
+
+| Token                | Value   | When                                                         |
+| -------------------- | ------- | ------------------------------------------------------------ |
+| `--tracking-label`   | 0.08em  | uppercase ≤ 13px — labels, chips, eyebrows, button labels    |
+| —                    | 0       | body text, and an uppercase title of 14–19px                 |
+| `--tracking-title`   | -0.01em | 20–27px                                                      |
+| `--tracking-display` | -0.02em | ≥ 28px                                                       |
+
+```tsx
+<Text fz={11} tt="uppercase" lts="var(--tracking-label)">…</Text>
+<h2 className="text-[26px] tracking-title sm:text-[34px] sm:tracking-display">…</h2>
+```
+
+A heading whose size crosses a band at a breakpoint takes the token for each size. Inside an SVG,
+use `style={{ letterSpacing: "var(--tracking-label)" }}` — a presentation attribute does not read
+`var()`.
+
 ### Disabled buttons (pattern)
 
 Always use this pattern for a button that can be blocked — the Mantine default disabled state is
@@ -255,6 +288,51 @@ icon exists, so `false` drops the reserved width too, while a transparent icon l
 where the tick would have been.
 
 Reference: `features/add_service_page/ServiceActionsStep.tsx`.
+
+### Menus (pattern)
+
+Every `Menu.Dropdown` is dark. Mantine's default dropdown is white, so the styling must never be
+left off:
+
+```tsx
+<Menu.Dropdown
+  bg="cards.6"
+  p={8}
+  style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
+>
+  <Menu.Item color="text" fw={600} leftSection={<Icon size={18} />}>…</Menu.Item>
+</Menu.Dropdown>
+```
+
+- Items get `color="text"`. A destructive item gets `color="red.5"`, and a quiet one
+  (for example `Nepřiřazovat`) gets `c="var(--color-text-dim)"`.
+- Separate the item groups with
+  `<Menu.Divider style={{ borderTopColor: "var(--mantine-color-cards-5)" }} />`. The default
+  divider is light grey, drawn for a white dropdown.
+- One rule in `global.css` (`[data-menu-item]`) sets the item hover to `cards.5` for every item,
+  whatever its `color`. Don't override it per menu.
+
+Reference: `features/components/ui/BikeComponentRow.tsx`, `features/strava/ui/PendingRidesTable.tsx`.
+
+### Selects (pattern)
+
+Every `Select` and `Autocomplete` takes the two shared props, never its own `styles`. The field
+then reads like the quiet outline button and the dropdown like a `Menu.Dropdown` above:
+
+```tsx
+import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
+
+<Select radius="md" styles={inputStyles} comboboxProps={dropdownProps} … />
+```
+
+- `inputStyles`: `cards.7` field, `inputs.5` border, `text.6` — the same as `variant="outline"`.
+- `dropdownProps`: `cards.6` dropdown, `p` 8, `--elev-panel`, options `fw` 600, portal at `zIndex` 350
+  so it opens over sheets.
+- One rule in `global.css` (`[data-combobox-option]`) sets the option hover and keyboard
+  highlight to `cards.5`, as for menu items. Don't override it per select.
+- No `size` prop: `inputStyles` fixes the height, so a select lines up with the other fields.
+
+Reference: `features/bikes_page/BikesDesktop.tsx`, `features/strava/ui/PendingRideSheet.tsx`.
 
 ## 10. Frontend tech
 

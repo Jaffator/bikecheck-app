@@ -130,9 +130,20 @@ describe('BikeService', () => {
               (row) => row.bike_id === bikeId && (where.is_deleted === undefined || row.is_deleted !== true),
             );
             const minutes = counted.reduce((total, row) => total + (row.duration_min as number), 0);
+            const latest = counted.reduce<Date | null>((max, row) => {
+              const start = row.started_at as Date;
+              return max === null || start > max ? start : max;
+            }, null);
             return counted.length === 0
               ? []
-              : [{ bike_id: bikeId, _count: { _all: counted.length }, _sum: { duration_min: minutes } }];
+              : [
+                  {
+                    bike_id: bikeId,
+                    _count: { _all: counted.length },
+                    _sum: { duration_min: minutes },
+                    _max: { started_at: latest },
+                  },
+                ];
           }),
         ),
     );
@@ -351,6 +362,25 @@ describe('BikeService', () => {
       expect(bikes.map(({ id, ride_count, ride_time_min }) => ({ id, ride_count, ride_time_min }))).toEqual([
         { id: 15, ride_count: 2, ride_time_min: 135 },
         { id: 16, ride_count: 0, ride_time_min: 0 },
+      ]);
+    });
+
+    it("gives each bike's newest ride start, leaving deleted rides out and a bike never ridden at null", async () => {
+      // ARRANGE: the deleted ride is the newest and must not count.
+      garage = [bikeRow({ id: 15 }), bikeRow({ id: 16 })];
+      rides = [
+        { ...ride(15, 60), started_at: new Date('2026-09-20T08:00:00.000Z') },
+        { ...ride(15, 60), started_at: new Date('2026-09-23T08:00:00.000Z') },
+        { ...ride(15, 60), started_at: new Date('2026-09-25T08:00:00.000Z'), is_deleted: true },
+      ];
+
+      // ACT
+      const bikes = await service.findByUser(OWNER_ID);
+
+      // ASSERT
+      expect(bikes.map(({ id, last_ride_at }) => ({ id, last_ride_at }))).toEqual([
+        { id: 15, last_ride_at: '2026-09-23T08:00:00.000Z' },
+        { id: 16, last_ride_at: null },
       ]);
     });
   });

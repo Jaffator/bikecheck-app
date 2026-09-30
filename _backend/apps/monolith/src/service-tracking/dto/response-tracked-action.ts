@@ -103,4 +103,13 @@ export class Response_TrackedActionDto {
     description: 'The action replaces the part rather than servicing it, which names the button that records it',
   })
   replace_action!: boolean;
+
+  @ApiProperty({
+    type: Number,
+    example: 540,
+    nullable: true,
+    description:
+      "Minutes of descent left before the interval, at the bike's recent pace. Null off the health index axis, once due, or with too few rides to tell",
+  })
+  remaining_descent_min!: number | null;
 }

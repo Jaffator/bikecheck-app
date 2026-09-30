@@ -130,6 +130,7 @@ export class UserController {
       strava_lastname: user.strava_lastname ?? null,
       strava_username: user.strava_username ?? null,
       strava_avatar_url: user.strava_avatar_url ?? null,
+      strava_last_sync_at: user.strava_last_sync_at ?? null,
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
       created_at: user.created_at || new Date(),

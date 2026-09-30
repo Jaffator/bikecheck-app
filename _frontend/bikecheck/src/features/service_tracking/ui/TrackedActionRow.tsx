@@ -62,7 +62,7 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
             </ActionIcon>
           )}
         </Group>
-        <Text className="font-mono" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
+        <Text className="tabular-nums" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
         {onOpen !== null && <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
@@ -79,15 +79,15 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
       />
 
       <Group gap="sm" wrap="nowrap" align="baseline">
-        <Text className="font-mono" fz={11} tt="uppercase" c="text.8" lts="0.08em" lineClamp={1} style={{ minWidth: 0 }}>
+        <Text className="tabular-nums" fz={11} tt="uppercase" c="text.8" lts="var(--tracking-label)" lineClamp={1} style={{ minWidth: 0 }}>
           {prefix === null ? part : `${prefix} · ${part}`}
         </Text>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={11}
           tt="uppercase"
           c="text.8"
-          lts="0.08em"
+          lts="var(--tracking-label)"
           ml="auto"
           style={{ whiteSpace: "nowrap" }}
         >

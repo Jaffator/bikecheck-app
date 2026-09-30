@@ -28,7 +28,7 @@ export function GaugeReadout({ size, align, children, unit, hint, style }: Gauge
       <Text fz={unitFontSize(size)} fw={500} c="var(--color-text-dim)" lh={UNIT_LINE_HEIGHT}>
         {unit ?? BLANK}
       </Text>
-      <Text className="font-mono" fz={HINT_FONT_SIZE} c="var(--mantine-color-text-9)" lh={HINT_LINE_HEIGHT}>
+      <Text className="tabular-nums" fz={HINT_FONT_SIZE} c="var(--mantine-color-text-9)" lh={HINT_LINE_HEIGHT}>
         {hint ?? BLANK}
       </Text>
     </Stack>

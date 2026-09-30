@@ -1,4 +1,4 @@
-// How the numbers on somebody's pages read: the distance with its unit, the mono line
+// How the numbers on somebody's pages read: the distance with its unit, the metadata line
 // under a bike - distance, then parts and Services only while they are shared - and what a
 // month of Services adds up to.
 import type { ProfileBikeCard, ProfileMoney, ProfileService } from "./profile.types";

@@ -1,9 +1,9 @@
 // Desktop Home's garage table, worst-off bike first; a row opens the bike.
 import type { ReactElement } from "react";
-import { Box, Center, Group, Image, Skeleton, Stack, Text } from "@mantine/core";
+import { Box, Group, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Gauge } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Panel, PanelTableHead } from "@/components/Panel";
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, PRESS_TRANSITION, onPanelRowKey } from "@/components/panelRows";
@@ -22,7 +22,7 @@ import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
 import { homePeriodLabel } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { DistanceBike, HomePeriod } from "@/features/stats/stats.types";
-import { BikeColorDot } from "./BikeColorDot";
+import { BikeThumb } from "./BikeThumb";
 
 const BIKE_COLUMNS = "56px minmax(0, 1.6fr) 112px 88px minmax(0, 1.4fr) 96px 16px";
 
@@ -47,7 +47,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
 
   return (
     <Panel
-      title={t("sharing.cardTitle")}
+      title={t("page.bikes")}
       count={bikes?.length}
       link={{ label: t("page.bikes"), onClick: () => navigate("/bikes") }}
     >
@@ -87,10 +87,9 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
               transition: PRESS_TRANSITION,
             }}
           >
-            <Thumb bike={bike} />
+            <BikeThumb bike={bike} />
             <Stack gap={0} style={{ minWidth: 0 }}>
               <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                <BikeColorDot colorIndex={bike.color_index} size={7} />
                 <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
                   {bikeTitle(bike)}
                 </Text>
@@ -99,10 +98,10 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
                 {[bike.bike_type, bike.wheel_size].filter((part) => part !== null && part !== "").join(" · ")}
               </Eyebrow>
             </Stack>
-            <Text className="font-mono" fz={13} c="text.7" ta="right">
+            <Text className="tabular-nums" fz={13} c="text.7" ta="right">
               {distance === undefined ? "—" : `${number(ridden(bike)?.total_km ?? 0)} km`}
             </Text>
-            <Text className="font-mono" fz={13} c="text.7" ta="right">
+            <Text className="tabular-nums" fz={13} c="text.7" ta="right">
               {distance === undefined ? "—" : `${number((ridden(bike)?.time_min ?? 0) / 60)} h`}
             </Text>
             <Text fz={13} c="text.7" lineClamp={1}>
@@ -111,7 +110,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
               ) : (
                 <>
                   {trackedPartLabel(worst, t)}{" "}
-                  <Text span className="font-mono" fz={13} c={attentionColor(worst.percentage)}>
+                  <Text span className="tabular-nums" fz={13} c={attentionColor(worst.percentage)}>
                     {t("tracking.percentage", { value: worst.percentage })}
                   </Text>
                 </>
@@ -129,19 +128,5 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
         );
       })}
     </Panel>
-  );
-}
-
-function Thumb({ bike }: { bike: Bike }): ReactElement {
-  return (
-    <Box w={56} h={28} style={{ borderRadius: "var(--mantine-radius-sm)", overflow: "hidden" }}>
-      {bike.image_url ? (
-        <Image src={bike.image_url} alt={bikeTitle(bike)} w="100%" h="100%" fit="cover" loading="lazy" bg="#FFFFFF" />
-      ) : (
-        <Center h="100%" bg="cards.7">
-          <Gauge size={14} color="var(--mantine-color-text-9)" />
-        </Center>
-      )}
-    </Box>
   );
 }

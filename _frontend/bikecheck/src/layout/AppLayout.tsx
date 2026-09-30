@@ -14,6 +14,7 @@ import { useOfflineWhenCallApiStore, useHeaderStore, useOverlayStore } from "@/s
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { useMyProfile } from "@/features/profile/profile.queries";
+import { CheckInPromptDrawer } from "@/features/rides/ui/CheckInPromptDrawer";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 import { MoreDrawer } from "./MoreDrawer";
@@ -92,7 +93,11 @@ function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | 
   return DETAIL_ROUTES.find((route) => route.pattern.test(pathname));
 }
 
-function isSubPage(pathname: string): boolean {
+// A sidebar row on desktop, so the page gets the top-level title and no back arrow.
+const DESKTOP_TOP_LEVEL_ROUTES: string[] = ["/notifications"];
+
+function isSubPage(pathname: string, isDesktop: boolean): boolean {
+  if (isDesktop && DESKTOP_TOP_LEVEL_ROUTES.includes(pathname)) return false;
   if (detailRoute(pathname)) return true;
   return SUB_PAGE_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
@@ -147,7 +152,7 @@ export function AppLayout(): ReactElement {
   // Hides chrome when the route or page state requires it. On desktop that is the header
   // alone: the sidebar leaves only with a full-screen route.
   const chromeHidden = chromeHiddenByPage || fullScreen;
-  const subPage = isSubPage(location.pathname);
+  const subPage = isSubPage(location.pathname, isDesktop);
   // Home wears the logo instead of a title; on desktop the sidebar wears it, so Home is named.
   const pageTitleKey =
     overrideTitleKey ?? getPageTitleKey(location.pathname) ?? (isDesktop && !subPage ? "page.home" : null);
@@ -231,7 +236,6 @@ export function AppLayout(): ReactElement {
         {/* Keeps title content below the status bar. */}
         <Box
           h="100%"
-          px="md"
           style={{
             paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
             // Nothing sits behind the controls now, so they are given their own shade to
@@ -252,6 +256,8 @@ export function AppLayout(): ReactElement {
             w="100%"
             maw={contentWidth}
             mx="auto"
+            // Padding inside the column, like the pages', so the title lines up with their edge.
+            px="md"
             style={{ pointerEvents: "auto" }}
           >
             {subPage ? (
@@ -374,6 +380,8 @@ export function AppLayout(): ReactElement {
           the sidebar holds all three on desktop. */}
       {!subPage && !isDesktop && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {!isDesktop && <MoreDrawer opened={moreOpened} onClose={() => setMoreOpened(false)} />}
+      {/* Desktop asks on Home's Last ride panel instead of popping anything up. */}
+      {!isDesktop && <CheckInPromptDrawer />}
       {/* --------- FOOTER --------- */}
       {!subPage && !isDesktop && (
         <AppShell.Footer

@@ -25,7 +25,7 @@ const BAR_GAP = 10;
 const COLUMN_WIDTH = `(100% - var(--mantine-spacing-${GAUGE_GRID_SPACING})) / 2`;
 const PAIR_INSET = `calc(${COLUMN_WIDTH} / 2 - ${STEP_PAIR_WIDTH / 2}px)`;
 
-// A filled block carries its own count, small, black and mono as metadata is set; an empty
+// A filled block carries its own count, small and black as metadata is set; an empty
 // one stays blank, so the numbers grow with the fill.
 const NUMBER_FONT_SIZE = 10;
 
@@ -103,13 +103,13 @@ export function TokenBar({ label, value, onChange, max, readOnly = false }: Toke
               borderBottomRightRadius: index === max - 1 ? END_RADIUS : 0,
             };
             return readOnly ? (
-              <div key={index} className="font-mono" style={style} aria-hidden="true">
+              <div key={index} className="tabular-nums" style={style} aria-hidden="true">
                 {index + 1}
               </div>
             ) : (
               <UnstyledButton
                 key={index}
-                className="font-mono"
+                className="tabular-nums"
                 style={style}
                 aria-label={`${label}: ${index + 1}`}
                 aria-pressed={filled}

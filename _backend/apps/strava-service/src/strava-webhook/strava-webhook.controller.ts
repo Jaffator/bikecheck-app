@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   ForbiddenException,
   Get,
@@ -9,11 +10,14 @@ import {
   RawBody,
   Param,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { StravaWebhookService } from './strava-webhook.service';
 import { StravaWebhookEventDto } from './dto/strava-webhook-event.dto';
+import { SyncAthleteDto } from './dto/sync-athlete.dto';
+import { SyncEnqueueDto } from './dto/sync-enqueue.dto';
 import { InternalAuthGuard } from '../common/internal-auth.guard';
 import type { StravaGearResponse } from '@contracts/strava-gear.contract';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -35,6 +39,42 @@ export class WebhookController {
   async getGear(@Param('athleteId') athleteId: string): Promise<StravaGearResponse> {
     console.log('STRAVA MICROSERVICE CALLED');
     return this.stravaWebhookService.downloadGear(Number(athleteId));
+  }
+
+  // ------------------------------------------------------------
+  // ---------- Catch up on missed rides (called by monolith) ---
+  // ------------------------------------------------------------
+  @UseGuards(InternalAuthGuard)
+  @Post('/sync/list')
+  @HttpCode(200)
+  async listRides(
+    @Body(new ValidationPipe({ whitelist: true })) body: SyncAthleteDto,
+  ): Promise<{ activityIds: number[] }> {
+    return { activityIds: await this.stravaWebhookService.listRideIds(body.athleteId, body.after) };
+  }
+
+  // Missed rides go through the webhook queue as create events, so they are processed like any ride.
+  @UseGuards(InternalAuthGuard)
+  @Post('/sync/enqueue')
+  @HttpCode(200)
+  async enqueueRides(@Body(new ValidationPipe({ whitelist: true })) body: SyncEnqueueDto): Promise<{ queued: number }> {
+    const eventTime = Math.floor(Date.now() / 1000);
+    for (const activityId of body.activityIds) {
+      await this.webhookQueue.add('process-strava-event', {
+        aspect_type: 'create',
+        event_time: eventTime,
+        object_id: activityId,
+        object_type: 'activity',
+        owner_id: body.athleteId,
+        subscription_id: 0,
+        updates: {},
+      } satisfies StravaWebhookEventDto);
+    }
+    this.logger.info(
+      { custom: true, athleteId: body.athleteId, queued: body.activityIds.length },
+      'Strava sync queued rides',
+    );
+    return { queued: body.activityIds.length };
   }
 
   // ------------------------------------------------------------

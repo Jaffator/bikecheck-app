@@ -59,6 +59,17 @@ type TrackedInterval = Prisma.bike_service_intervalGetPayload<{ include: typeof 
 // existed, is not part of it any more and owes it nothing.
 const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
 
+// A descent rate reads the latest rides, and says nothing until enough of them are behind it.
+const LATEST_RIDES_FOR_RATE = 10;
+const MIN_RATE_RIDES = 3;
+const MIN_RATE_DESCENT_MIN = 30;
+
+// One ride as a descent rate reads it: the pad index it added over its minutes of descent.
+type RateRide = Prisma.ridesGetPayload<{ select: { health_index_brake_pad: true; descent_min: true } }>;
+
+// Pad index per minute of descent, by bike; null where there is too little to say.
+type DescentRates = Map<number, number | null>;
+
 // A Wear Baseline as one recorded occasion froze it, per axis.
 type Baseline = TrackedPart['action_done_component_map'][number];
 
@@ -146,13 +157,14 @@ export class ServiceTrackingService {
     if (bikes.length === 0) return [];
 
     const [intervals, parts] = await this.loadTracking({ in: bikes.map((bike) => bike.id) });
+    const rates = await this.descentRates(intervals);
 
     // The pieces of each bike's name, without its id: how a bike is written out is the
     // frontend's one rule, and it already has it.
     const naming = new Map(bikes.map(({ id, ...name }) => [id, name]));
 
     return parts.flatMap((part) =>
-      trackedActions([part], intervals).flatMap((action) => {
+      trackedActions([part], intervals, rates).flatMap((action) => {
         const name = naming.get(action.bike_id);
         if (name === undefined) return [];
         return [{ action: { ...action, ...name }, wearBaselineAt: wearBaselineAt(part, action.event_action_id) }];
@@ -301,6 +313,9 @@ export class ServiceTrackingService {
           actionKey: action.action_i18n_key,
           actionName: action.action_name,
           percentage: action.percentage,
+          componentMountedId: action.component_mounted_id,
+          actionId: action.event_action_id,
+          groupId: action.component_group_id,
         })),
       },
     });
@@ -390,7 +405,32 @@ export class ServiceTrackingService {
   private async readBike(bikeId: number): Promise<Response_TrackedActionDto[]> {
     const [intervals, parts] = await this.loadTracking(bikeId);
 
-    return trackedActions(parts, intervals);
+    return trackedActions(parts, intervals, await this.descentRates(intervals));
+  }
+
+  // Each bike's descent rate, read only for bikes that plan anything on the health index.
+  private async descentRates(intervals: TrackedInterval[]): Promise<DescentRates> {
+    const bikeIds = [
+      ...new Set(intervals.filter((row) => row.health_index_interval !== null).map((row) => row.bike_id)),
+    ];
+
+    return new Map(
+      await Promise.all(
+        bikeIds.map(
+          async (bikeId): Promise<[number, number | null]> => [bikeId, descentRate(await this.rateRides(bikeId))],
+        ),
+      ),
+    );
+  }
+
+  // The bike's latest rides that know their descent time; older imports have none.
+  private async rateRides(bikeId: number): Promise<RateRide[]> {
+    return await this.prisma.rides.findMany({
+      where: { bike_id: bikeId, is_deleted: { not: true }, descent_min: { not: null } },
+      orderBy: [{ started_at: { sort: 'desc', nulls: 'last' } }, { id: 'desc' }],
+      take: LATEST_RIDES_FOR_RATE,
+      select: { health_index_brake_pad: true, descent_min: true },
+    });
   }
 
   // The band this Tracked Action now stands in, written whether it moved or not, so the
@@ -472,7 +512,7 @@ function cycleStart(part: TrackedPart, action: Response_TrackedActionDto): Date 
 }
 
 // A Service Date is a day, so a ride on it counts as ridden before the work.
-function endOfDay(day: Date): Date {
+export function endOfDay(day: Date): Date {
   const end = new Date(day);
   end.setUTCHours(23, 59, 59, 999);
   return end;
@@ -597,11 +637,16 @@ function pairKey(componentMountedId: number, eventActionId: number): string {
 
 // Every pairing of these parts with these plans, each read as it stands. A plan belongs to
 // one bike, so a bike's parts are only ever read against that bike's own intervals.
-function trackedActions(parts: TrackedPart[], intervals: TrackedInterval[]): Response_TrackedActionDto[] {
+function trackedActions(
+  parts: TrackedPart[],
+  intervals: TrackedInterval[],
+  // Only the reads a client sees load rates; without them no descent left is estimated.
+  rates: DescentRates = new Map(),
+): Response_TrackedActionDto[] {
   return parts.flatMap((part) =>
     intervals
       .filter((interval) => interval.bike_id === part.bike_id && targets(interval).has(part.component_type_id))
-      .map((interval) => toTrackedAction(part, interval))
+      .map((interval) => toTrackedAction(part, interval, rates.get(part.bike_id) ?? null))
       .filter((action): action is Response_TrackedActionDto => action !== null),
   );
 }
@@ -619,7 +664,11 @@ function targets(interval: TrackedInterval): Set<number> {
 
 // One pairing read as a percentage. Null when the bike's plan sets no usable axis for it -
 // an interval of zero can say nothing about how far along anything is.
-function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response_TrackedActionDto | null {
+function toTrackedAction(
+  part: TrackedPart,
+  interval: TrackedInterval,
+  descentRate: number | null,
+): Response_TrackedActionDto | null {
   const reading = worstAxis(part, interval);
   if (reading === null) return null;
 
@@ -652,7 +701,24 @@ function toTrackedAction(part: TrackedPart, interval: TrackedInterval): Response
     mounted_at: part.mounted_at,
     planned_for: livePlan(part, interval.event_actions_id),
     replace_action: interval.events_action.replace_action,
+    remaining_descent_min: remainingDescentMin(reading, descentRate),
   };
+}
+
+// Too few rides or minutes give a pace that swings ride to ride; no wear gives no pace to count down at.
+function descentRate(rides: RateRide[]): number | null {
+  const minutes = rides.reduce((total, ride) => total + (ride.descent_min ?? 0), 0);
+  const index = rides.reduce((total, ride) => total + (ride.health_index_brake_pad ?? 0), 0);
+  if (rides.length < MIN_RATE_RIDES || minutes < MIN_RATE_DESCENT_MIN || index <= 0) return null;
+
+  return index / minutes;
+}
+
+// Rounded down like the percentage: less left is the safe side. Once due, the percentage already says so.
+function remainingDescentMin(reading: Reading, rate: number | null): number | null {
+  if (reading.axis !== 'health_index' || rate === null || reading.current >= reading.interval) return null;
+
+  return Math.floor((reading.interval - reading.current) / rate);
 }
 
 // The state row one pairing keeps, or undefined where it has never needed one.

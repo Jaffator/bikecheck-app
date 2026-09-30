@@ -24,11 +24,11 @@ function ServiceReportMobileSingle() {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="font-display font-bold text-xs uppercase text-text-main">user email</span>
-                  <span className="font-mono text-sm mt-1 break-all">jaroslav.lufinka@gmail.com</span>
+                  <span className="tabular-nums text-sm mt-1 break-all">jaroslav.lufinka@gmail.com</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="font-display font-bold text-xs uppercase text-text-main">Service ID</span>
-                  <span className="font-mono text-sm mt-1">456789</span>
+                  <span className="tabular-nums text-sm mt-1">456789</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="font-display font-bold text-xs uppercase text-text-main">Service Date</span>
@@ -36,11 +36,11 @@ function ServiceReportMobileSingle() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-display font-bold text-xs uppercase text-text-main">Odometer</span>
-                  <span className="font-mono text-sm mt-1">2450 KM</span>
+                  <span className="tabular-nums text-sm mt-1">2450 KM</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="font-display text-xs uppercase text-text-main">Total</span>
-                  <span className="font-mono text-sm mt-1 text-branddark">$82.00</span>
+                  <span className="tabular-nums text-sm mt-1 text-branddark">$82.00</span>
                 </div>
               </div>
             </section>
@@ -53,17 +53,17 @@ function ServiceReportMobileSingle() {
                 <div className="rounded-sm bg-white/50 flex flex-col gap-3 border-b border-border-light pb-3">
                   <div className="flex justify-between items-start gap-4">
                     <h4 className="font-display font-bold text-base text-text-main">Brake Bleed</h4>
-                    <span className="font-mono text-base font-semibold">$60.00</span>
+                    <span className="tabular-nums text-base font-semibold">$60.00</span>
                   </div>
                   <div className="flex-grow">
                     <p className="font-sans text-sm text-text-main">
                       Dot 5.1 fluid replaced. Lever stroke adjusted for instant bite.
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="bg-brand/15 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
+                      <span className="bg-brand/15 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-label">
                         Brakes: SRAM Red Rotors
                       </span>
-                      <span className="bg-brand/20 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
+                      <span className="bg-brand/20 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-label">
                         Caliper: Shimano XT 4554
                       </span>
                     </div>
@@ -72,14 +72,14 @@ function ServiceReportMobileSingle() {
                 <div className="rounded-sm bg-white/50 flex flex-col gap-3 border-b border-border-light pb-3">
                   <div className="flex justify-between items-start gap-4">
                     <h4 className="font-display font-bold text-base text-text-main">Tire Sealant Refresh</h4>
-                    <span className="font-mono text-base font-semibold">$20.00</span>
+                    <span className="tabular-nums text-base font-semibold">$20.00</span>
                   </div>
                   <div className="flex-grow">
                     <p className="font-sans text-sm text-text-main">
                       60ml added per tire. Valve cores cleaned and inspected.
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="bg-brand/20 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
+                      <span className="bg-brand/20 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-label">
                         TIRE: Maxxis Assegai DD
                       </span>
                     </div>
@@ -88,17 +88,17 @@ function ServiceReportMobileSingle() {
                 <div className="rounded-sm bg-white/50 flex flex-col gap-3 border-b border-border-light pb-3">
                   <div className="flex justify-between items-start gap-4">
                     <h4 className="font-display font-bold text-base text-text-main">Chain Lubrication</h4>
-                    <span className="font-mono text-base font-semibold">$60.00</span>
+                    <span className="tabular-nums text-base font-semibold">$60.00</span>
                   </div>
                   <div className="flex-grow">
                     <p className="font-sans text-sm text-text-main">
                       Full degrease and wax application for minimum friction.
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="bg-brand/20 text-brand font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
+                      <span className="bg-brand/20 text-brand font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-label">
                         Chain: CeramicSpeed UFO Drip
                       </span>
-                      <span className="bg-brand/20 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
+                      <span className="bg-brand/20 text-text-main font-display font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-label">
                         Caliper: Shimano XT 4554
                       </span>
                     </div>

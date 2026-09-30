@@ -338,7 +338,7 @@ function TotalRow({
         {cost === null ? (
           <Skeleton h={20} w={80} radius="sm" />
         ) : (
-          <Text className="font-mono" fw={700} fz={18} c="primary.5">
+          <Text className="tabular-nums" fw={700} fz={18} c="primary.5">
             {formatCost(cost, currency, language)}
           </Text>
         )}
@@ -368,7 +368,7 @@ function ActionRow({
           {catalogueLabel(action.action_i18n_key, action.action_name, t)}
         </Text>
         {/* Work with no price recorded reads as the zero it came to. */}
-        <Text className="font-mono" fz={14} ta="right" c="text.7" style={{ flexShrink: 0 }}>
+        <Text className="tabular-nums" fz={14} ta="right" c="text.7" style={{ flexShrink: 0 }}>
           {formatCost(action.partial_cost ?? 0, currency, language)}
         </Text>
       </Group>
@@ -409,7 +409,7 @@ function ActionRow({
 // the whole sheet.
 function RowLabel({ children }: { children: ReactNode }): ReactElement {
   return (
-    <Text className="font-mono uppercase" fz={11} fw={600} c="text.7" lts="0.06em">
+    <Text className="tabular-nums uppercase" fz={11} fw={600} c="text.7" lts="var(--tracking-label)">
       {children}
     </Text>
   );
@@ -454,21 +454,21 @@ function SectionHeading({ children, icon }: { children: ReactNode; icon?: ReactN
   return (
     <Group gap={6} align="center" wrap="nowrap" c="var(--mantine-color-text-8)">
       {icon}
-      <Text className="font-mono uppercase" fz={12} fw={600} c="var(--mantine-color-text-8)" lts="0.08em">
+      <Text className="tabular-nums uppercase" fz={12} fw={600} c="var(--mantine-color-text-8)" lts="var(--tracking-label)">
         {children}
       </Text>
     </Group>
   );
 }
 
-// The metadata voice: mono, small, dim — the same one the history cards speak in.
+// The metadata voice: uppercase, small, dim — the same one the history cards speak in.
 function MetaText({ children, truncate = false }: { children: ReactNode; truncate?: boolean }): ReactElement {
   return (
     <Text
-      className="font-mono uppercase"
+      className="tabular-nums uppercase"
       fz={12}
       c="var(--color-text-dim)"
-      lts="0.06em"
+      lts="var(--tracking-label)"
       truncate={truncate ? "end" : undefined}
       style={truncate ? { minWidth: 0 } : undefined}
     >

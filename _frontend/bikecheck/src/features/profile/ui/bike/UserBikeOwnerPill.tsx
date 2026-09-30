@@ -26,7 +26,7 @@ export function UserBikeOwnerPill({ owner, onClick }: UserBikeOwnerPillProps): R
         <Text fz={15} fw={700} c="text.6" lineClamp={1}>
           {owner.name}
         </Text>
-        <Text className="font-mono" fz={12} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
+        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
           @{owner.handle}
         </Text>
       </Group>

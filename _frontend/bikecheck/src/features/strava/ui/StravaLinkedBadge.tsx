@@ -24,7 +24,7 @@ export function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | nul
       }}
     >
       <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
-      <Text className="font-mono" fz={10} c="var(--mantine-color-strava-6)">
+      <Text className="tabular-nums" fz={10} c="var(--mantine-color-strava-6)">
         {t("strava.paired")}
       </Text>
     </Group>

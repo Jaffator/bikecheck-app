@@ -24,7 +24,7 @@ function TabLabel({ label, count }: { label: string; count: number | undefined }
     <>
       {label}
       {count !== undefined && (
-        <Text component="span" className="font-mono" fz={12} c="text.8" ml={6}>
+        <Text component="span" className="tabular-nums" fz={12} c="text.8" ml={6}>
           {count}
         </Text>
       )}

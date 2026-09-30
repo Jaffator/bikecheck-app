@@ -104,7 +104,7 @@ export function Settings(): ReactElement | null {
           }
         />
         {/* The name stands a little further off the avatar than the email stands off the name. */}
-        <Text fw={700} fz={20} c="text.6" ta="center" mt={6} style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
+        <Text fw={700} fz={20} c="text.6" ta="center" mt={6} style={{ lineHeight: 1.25 }} lts="var(--tracking-title)">
           {user.name}
         </Text>
         {profile && <VisibilityBadge visibility={profile.visibility} />}
@@ -113,7 +113,7 @@ export function Settings(): ReactElement | null {
         </Text>
       </Stack>
 
-      <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
+      <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" px="md">
         {t("settings.sectionAccount")}
       </Text>
       {/* Name and weight are one form, so both rows open the same drawer. */}
@@ -137,13 +137,13 @@ export function Settings(): ReactElement | null {
               {t("profile.weight")}
             </Text>
             <Group gap="xs" wrap="nowrap">
-              {/* A figure, so the mono face - and never a zero standing in for no answer. */}
+              {/* A figure, so tabular numerals - and never a zero standing in for no answer. */}
               {user.weight_kg === null ? (
                 <Text fz={13} c="var(--color-text-dim)">
                   {t("profile.weightEmpty")}
                 </Text>
               ) : (
-                <Text className="font-mono" fz={13} c="var(--color-text-dim)" style={{ letterSpacing: "0.02em" }}>
+                <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
                   {`${String(user.weight_kg)} kg`}
                 </Text>
               )}
@@ -173,7 +173,7 @@ export function Settings(): ReactElement | null {
       </div>
       <SettingsShareRow />
 
-      <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
+      <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" px="md">
         {t("settings.sectionGeneral")}
       </Text>
       <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
@@ -245,7 +245,7 @@ export function Settings(): ReactElement | null {
         </Stack>
       </Card>
 
-      <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)" px="md">
+      <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" px="md">
         {t("settings.sectionAbout")}
       </Text>
       <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
@@ -255,7 +255,7 @@ export function Settings(): ReactElement | null {
             <Text c="text.6" fz={15} fw={600}>
               {t("settings.version")}
             </Text>
-            <Text className="font-mono" fz={13} c="var(--color-text-dim)">
+            <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
               {__APP_VERSION__}
             </Text>
           </Group>

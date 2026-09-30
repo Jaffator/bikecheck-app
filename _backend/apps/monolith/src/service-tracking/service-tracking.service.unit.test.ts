@@ -189,6 +189,7 @@ function rideRow(
     durationMin?: number;
     suspensionMin?: number;
     padIndex?: number;
+    descentMin?: number | null;
     bikeId?: number;
     isDeleted?: boolean;
   } = {},
@@ -202,6 +203,8 @@ function rideRow(
     duration_min: wear.durationMin ?? 0,
     suspension_min: wear.suspensionMin ?? 0,
     health_index_brake_pad: wear.padIndex ?? 0,
+    // A ride imported before descent time was kept has none.
+    descent_min: wear.descentMin ?? null,
     is_deleted: wear.isDeleted ?? false,
   };
 }
@@ -211,12 +214,14 @@ interface RideWhere {
   is_deleted?: unknown;
   bike_id?: unknown;
   started_at?: { gt?: Date; gte?: Date };
+  descent_min?: { not: null };
   OR?: RideWhere[];
 }
 
 function matchesRide(row: Record<string, unknown>, where: RideWhere = {}): boolean {
   if (where.OR !== undefined && !where.OR.some((clause) => matchesRide(row, clause))) return false;
   if (typeof where.is_deleted === 'object' && row.is_deleted === true) return false;
+  if (where.descent_min !== undefined && row.descent_min === null) return false;
   if (!onBike(row.bike_id, where.bike_id)) return false;
   return withinStart(row.started_at as Date | null, where.started_at);
 }
@@ -325,6 +330,8 @@ describe('ServiceTrackingService', () => {
       year: 2022,
     });
     mockPrismaService.tracked_action_state.upsert.mockResolvedValue({});
+    // No rides unless a test stores some.
+    mockPrismaService.rides.findMany.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -942,6 +949,142 @@ describe('ServiceTrackingService', () => {
     });
   });
 
+  // How much descent is left on a pad, at the pace the bike's latest rides have worn it.
+  describe('remaining_descent_min', () => {
+    const PAD_PLAN = intervalRow(PADS_REPLACEMENT, { healthIndex: 1000 }, [PAD_TYPE], BIKE_ID, true);
+
+    function pad(healthIndex: number, state: Record<string, unknown>[] = []): Record<string, unknown> {
+      return mountedPart({
+        component_type_id: PAD_TYPE,
+        component_types: typeRow(PAD_TYPE),
+        health_index: healthIndex,
+        tracked_action_state: state,
+      });
+    }
+
+    // The rides stored, served newest first and capped the way the database would serve them.
+    function storeRides(rides: Record<string, unknown>[]): void {
+      mockPrismaService.rides.findMany.mockImplementation(({ where, take }: { where?: RideWhere; take?: number }) =>
+        Promise.resolve(
+          rides
+            .filter((ride) => matchesRide(ride, where))
+            .sort((one, other) => (other.started_at as Date).getTime() - (one.started_at as Date).getTime())
+            .slice(0, take),
+        ),
+      );
+    }
+
+    // `count` rides a day apart, later by id, each wearing `padIndex` over `descentMin` minutes of descent.
+    function ridesAt(
+      count: number,
+      padIndex: number,
+      descentMin: number | null,
+      firstId = 1,
+    ): Record<string, unknown>[] {
+      return Array.from({ length: count }, (_, index) =>
+        rideRow(firstId + index, `2026-09-${String(9 + firstId + index).padStart(2, '0')}T08:00:00.000Z`, {
+          padIndex,
+          descentMin,
+        }),
+      );
+    }
+
+    async function remaining(): Promise<number | null> {
+      const [action] = await service.getBikeTrackedActions(BIKE_ID, OWNER_ID);
+      return action.remaining_descent_min;
+    }
+
+    // 2 index per minute, so the 600 left on the interval is 300 minutes of descent.
+    it("divides what is left of the interval by the bike's descent rate", async () => {
+      garage([PAD_PLAN], [pad(400)]);
+      storeRides(ridesAt(5, 20, 10));
+
+      expect(await remaining()).toBe(300);
+    });
+
+    // Two old rides at 100 index a minute would pull the rate far off if they were counted.
+    it('reads the rate from the latest 10 rides only', async () => {
+      garage([PAD_PLAN], [pad(400)]);
+      storeRides([...ridesAt(2, 100, 1), ...ridesAt(10, 20, 10, 3)]);
+
+      expect(await remaining()).toBe(300);
+    });
+
+    // An owner's own interval is the one in force, so it is the one counted down.
+    it('counts down to the Interval Override', async () => {
+      garage([PAD_PLAN], [pad(400, [settingRow(PADS_REPLACEMENT, { intervalOverride: 800 })])]);
+      storeRides(ridesAt(5, 20, 10));
+
+      expect(await remaining()).toBe(200);
+    });
+
+    // Rides imported before descent time was kept would count wear with no minutes behind it.
+    it('ignores rides with no descent time', async () => {
+      garage([PAD_PLAN], [pad(400)]);
+      storeRides([...ridesAt(3, 20, 10), ...ridesAt(5, 500, null, 4)]);
+
+      expect(await remaining()).toBe(300);
+    });
+
+    it('ignores deleted rides', async () => {
+      garage([PAD_PLAN], [pad(400)]);
+      storeRides([
+        ...ridesAt(2, 20, 20),
+        rideRow(9, '2026-09-20T08:00:00.000Z', { padIndex: 20, descentMin: 20, isDeleted: true }),
+      ]);
+
+      expect(await remaining()).toBeNull();
+    });
+
+    it('is null with fewer than 3 rides to read a rate from', async () => {
+      garage([PAD_PLAN], [pad(400)]);
+      storeRides(ridesAt(2, 20, 30));
+
+      expect(await remaining()).toBeNull();
+    });
+
+    it('is null with under 30 minutes of descent behind the rate', async () => {
+      garage([PAD_PLAN], [pad(400)]);
+      storeRides(ridesAt(3, 20, 9));
+
+      expect(await remaining()).toBeNull();
+    });
+
+    // Descent that wore nothing gives no pace to count down at.
+    it('is null when the rides wore the pads by nothing', async () => {
+      garage([PAD_PLAN], [pad(400)]);
+      storeRides(ridesAt(5, 0, 10));
+
+      expect(await remaining()).toBeNull();
+    });
+
+    // The percentage and its colour already say it is due; a time left would contradict them.
+    it('is null once the interval is passed', async () => {
+      garage([PAD_PLAN], [pad(1200)]);
+      storeRides(ridesAt(5, 20, 10));
+
+      expect(await remaining()).toBeNull();
+    });
+
+    it('is null off the health index axis', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 3200 })]);
+      storeRides(ridesAt(5, 20, 10));
+
+      expect(await remaining()).toBeNull();
+      expect(mockPrismaService.rides.findMany).not.toHaveBeenCalled();
+    });
+
+    // The dashboard opens the same drawer, so its rows carry the same estimate.
+    it('is carried on the garage list', async () => {
+      fleet([bikeRow(BIKE_ID, 'Santa Cruz')], [PAD_PLAN], [pad(900)]);
+      storeRides(ridesAt(5, 20, 10));
+
+      const [action] = await service.getGarageTrackedActions(OWNER_ID, 80);
+
+      expect(action.remaining_descent_min).toBe(50);
+    });
+  });
+
   describe('getGarageTrackedActions', () => {
     // The dashboard asks only about what has come far enough to be worth showing; the
     // quiet ones belong on the bike's own page.
@@ -1233,6 +1376,18 @@ describe('ServiceTrackingService', () => {
       ][];
       expect(call[0].payload.crossed).toEqual([
         expect.objectContaining({ componentName: 'Chain', actionKey: null, percentage: 75 }),
+      ]);
+    });
+
+    // Log service opens the wizard on the worst job, so each crossing carries the link's ids (ADR 0030).
+    it('carries the ids the service wizard link is built from', async () => {
+      garage([intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE])], [mountedPart({ drivetrain_km: 4000 })]);
+
+      await service.evaluateBike(BIKE_ID, OWNER_ID);
+
+      const [call] = mockNotifications.create.mock.calls as [{ payload: { crossed: Record<string, unknown>[] } }][];
+      expect(call[0].payload.crossed).toEqual([
+        expect.objectContaining({ componentMountedId: 55, actionId: CHAIN_REPLACEMENT, groupId: GROUP_ID }),
       ]);
     });
 

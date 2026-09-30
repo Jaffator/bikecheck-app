@@ -63,14 +63,14 @@ export function ReportCard({ report, onRevoke, onDelete }: ReportCardProps): Rea
       <Stack gap={5} p="sm">
         {/* Which of the three documents this is, and where its link stands. */}
         <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
-          <Text className="font-mono uppercase" fz={11} fw={400} c="cards.3" lts="0.08em" lineClamp={1}>
+          <Text className="tabular-nums uppercase" fz={11} fw={400} c="cards.3" lts="var(--tracking-label)" lineClamp={1}>
             {t(REPORT_KIND_KEY[report.kind])}
           </Text>
           <Badge
             variant={STATE[state].variant}
             color={STATE[state].color}
             radius="sm"
-            className="font-mono"
+            className="tabular-nums"
             styles={{
               root: {
                 flexShrink: 0,
@@ -91,12 +91,12 @@ export function ReportCard({ report, onRevoke, onDelete }: ReportCardProps): Rea
         <Text fw={600} fz={15} c="text.6" lineClamp={1}>
           {report.covers.bike}
         </Text>
-        <Text className="font-mono" fz={12} c="var(--color-text-dim)" lineClamp={1}>
+        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
           {coversLabel(report.kind, report.covers, t, i18n.language)}
         </Text>
 
         {/* Enough to tell two links apart: when it was made, and what has happened to it. */}
-        <Text className="font-mono" fz={12} c="var(--color-text-dim)" lineClamp={2}>
+        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={2}>
           {[
             made === null ? null : t("report.made", { date: made }),
             t("report.views", { count: report.view_count }),

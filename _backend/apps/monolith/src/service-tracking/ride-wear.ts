@@ -14,6 +14,11 @@ export const wearRideSelect = {
 } satisfies Prisma.ridesSelect;
 export type WearRide = Prisma.ridesGetPayload<{ select: typeof wearRideSelect }>;
 
+// The part kinds that carry a type-specific accumulator; syncing a ride and moving it split parts alike.
+export const SUSPENSION_PARTS = ['Shock', 'Fork'];
+export const BRAKE_PAD_PART = 'Brake pad';
+export const DRIVETRAIN_PARTS = ['Chain', 'Cassette', 'Chainring'];
+
 // The ride columns strava.service.ts grows each accumulator by, so a reading is rebuilt from the same wear.
 export const RIDE_WEAR: Record<WearMeasure, (ride: WearRide) => number> = {
   total_km: (ride) => (ride.distance_m ?? 0) / 1000,

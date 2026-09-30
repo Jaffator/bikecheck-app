@@ -283,7 +283,7 @@ export function ServiceSummaryStep({
           sight while the rest of the page scrolls. */}
         {/* ---------- Attachments ---------- */}
         <Stack gap="xs">
-          <Text fz={13} c="text.7" fw={100}>
+          <Text fz={13} c="text.7" fw={400}>
             {t("addService.attachments")}
           </Text>
 

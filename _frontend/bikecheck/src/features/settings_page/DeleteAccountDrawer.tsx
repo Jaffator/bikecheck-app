@@ -143,8 +143,8 @@ function DeletionCount({ label, value }: { label: string; value: number }): Reac
       <Text fz={14} c="text.6">
         {label}
       </Text>
-      {/* A figure, so the mono face. */}
-      <Text className="font-mono" fz={14} c="var(--color-text-dim)" style={{ letterSpacing: "0.02em" }}>
+      {/* A figure, so tabular numerals. */}
+      <Text className="tabular-nums" fz={14} c="var(--color-text-dim)">
         {String(value)}
       </Text>
     </Group>

@@ -180,7 +180,7 @@ function ClicksRow({ label, leg }: { label: string; leg: ProfileLeg }): ReactEle
             <Text {...EYEBROW} fz={10}>
               {name}
             </Text>
-            <Text className="font-mono" fz={13} c="text.6">
+            <Text className="tabular-nums" fz={13} c="text.6">
               {value === null ? NO_READING : String(value)}
             </Text>
           </Stack>

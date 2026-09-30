@@ -31,7 +31,7 @@ export function ClickStepper({ code, name, value, onChange, max, readOnly = fals
 
   return (
     <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
-      <Text className="font-mono" fz={12} fw={600} tt="uppercase" c="var(--color-text-bright)">
+      <Text className="tabular-nums" fz={12} fw={600} tt="uppercase" c="var(--color-text-bright)">
         {code}
       </Text>
       <Group gap={0} wrap="nowrap" align="center">

@@ -407,8 +407,11 @@ model rides {
   suspension_min         Int?
   updated_at             DateTime? @db.Timestamptz(6)
   activity_strava_id     BigInt?   @unique
+  // Moving minutes on downhill splits, the ones the pad index counts; null on rides imported before it existed.
+  descent_min            Int?
   bikes                  bikes     @relation(fields: [bike_id], references: [id], onDelete: Cascade)
   users                  users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  check_in               ride_check_ins?
 
   @@index([bike_id], map: "rides_bike_id")
   @@index([started_at], map: "rides_started_at")
@@ -447,6 +450,34 @@ model setup_profiles {
 
   // Two profiles on one bike never share a name, so switching between them is unambiguous.
   @@unique([bike_id, name])
+}
+
+// How the bike rode on one ride, as its rider said. One per ride, overwritten, never a history.
+model ride_check_ins {
+  ride_id    Int                @id
+  status     check_in_status
+  // Empty when OK.
+  symptoms   check_in_symptom[] @default([])
+  note       String?            @db.VarChar(500)
+  created_at DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at DateTime           @default(now()) @updatedAt @db.Timestamptz(6)
+  rides      rides              @relation(fields: [ride_id], references: [id], onDelete: Cascade)
+}
+
+enum check_in_status {
+  OK
+  ISSUE
+}
+
+enum check_in_symptom {
+  CREAK
+  SHIFTING_SKIPS
+  SOFT_BRAKE
+  FORK_SETUP
+  SHOCK_SETUP
+  TIRE_LOSES_AIR
+  HEADSET_PLAY
+  OTHER
 }
 
 // The Tyre Pressure Unit: what tyre pressures are read and typed in, chosen once per account.
@@ -490,6 +521,10 @@ model users {
   strava_lastname       String?                @db.VarChar
   strava_username       String?                @db.VarChar
   strava_avatar_url     String?                @db.VarChar
+  // Last manual Strava sync; webhooks do not move it. Drives "synced X ago" and the cooldown.
+  strava_last_sync_at   DateTime?              @db.Timestamptz(6)
+  // When the phone last opened the check-in drawer; only a ride created after it opens it again.
+  check_in_prompted_at  DateTime?              @db.Timestamptz(6)
   notifications_enabled Boolean?               @default(true)
   // Bar or psi for tyre pressures, account-wide. Suspension is always psi (ADR 0029).
   tire_pressure_unit    tire_pressure_unit     @default(bar)

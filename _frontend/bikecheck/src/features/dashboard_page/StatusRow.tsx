@@ -59,10 +59,10 @@ function Tile({ icon, tint, title, detail, onOpen }: TileProps): ReactElement {
           {title}
         </Text>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={11}
           tt="uppercase"
-          lts="0.06em"
+          lts="var(--tracking-label)"
           c="var(--color-text-dim)"
           lineClamp={1}
         >

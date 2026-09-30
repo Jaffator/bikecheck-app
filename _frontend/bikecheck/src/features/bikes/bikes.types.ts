@@ -44,6 +44,8 @@ export interface ListedBike extends Bike {
   // Lifetime, from the rides: total_time_min is only what the owner typed when adding the bike.
   ride_count: number;
   ride_time_min: number;
+  // Start of the newest ride; null when the bike has none.
+  last_ride_at: string | null;
 }
 
 // Keep multipart photo data separate from the create DTO.

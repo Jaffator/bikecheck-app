@@ -1,6 +1,6 @@
-// The furniture of every public page /u/*: the design's fonts and tokens, the sticky bar
-// with the "Živé" pill and the CS/EN switch, the footer CTA. Outside the app shell, so it
-// brings its own fonts and sprite and takes them away again.
+// The furniture of every public page /u/*: the design's tokens, the sticky bar with the
+// "Živé" pill and the CS/EN switch, the footer CTA. Outside the app shell, so it brings its
+// own sprite and takes it away again.
 import { useEffect, type ReactElement, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -9,24 +9,6 @@ import { usePublicLanguage } from "../../usePublicLanguage";
 import { PUBLIC_ICON_SPRITE } from "./publicIcons";
 import { Icon } from "./PublicPieces";
 import "./publicProfile.css";
-
-const FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=Martian+Mono:wdth,wght@75..112.5,400..700&display=swap";
-const FONTS_ID = "pp-fonts";
-
-// The app loads Inter; the design wants Archivo and Martian Mono. Linked while a public page
-// is up, never in index.html.
-function usePublicFonts(): void {
-  useEffect(() => {
-    if (document.getElementById(FONTS_ID)) return;
-    const link = document.createElement("link");
-    link.id = FONTS_ID;
-    link.rel = "stylesheet";
-    link.href = FONTS_HREF;
-    document.head.appendChild(link);
-    return () => link.remove();
-  }, []);
-}
 
 function useDocumentTitle(title: string): void {
   useEffect(() => {
@@ -45,7 +27,7 @@ function LivePill(): ReactElement {
   return (
     <p className="pp-hairline flex min-w-0 items-center gap-2 rounded-full border bg-[var(--pp-card-inset)] px-2.5 py-1.5 sm:px-3">
       <span className="block size-1.5 shrink-0 rounded-full bg-[var(--pp-sage)]" aria-hidden="true" />
-      <span className="pp-mono truncate text-[10px] leading-tight tracking-wide text-[var(--pp-paper-dim)] sm:text-[11px]">
+      <span className="tabular-nums truncate text-[10px] leading-tight text-[var(--pp-paper-dim)] sm:text-[11px]">
         {t("publicProfile.live")}
       </span>
     </p>
@@ -66,10 +48,10 @@ function Header({ handle, live, onToggleLanguage }: HeaderProps): ReactElement {
       <div className="mx-auto flex max-w-[1240px] items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
         <Link to={publicGaragePath(handle)} className="flex min-h-[44px] shrink-0 items-center gap-2.5">
           <Icon id="bc-mark" className="size-7 rounded-md" />
-          <span className="pp-display hidden text-[15px] font-semibold tracking-tight sm:block">BikeCheck</span>
+          <span className="hidden text-[15px] font-semibold sm:block">BikeCheck</span>
         </Link>
         <span className="hidden h-5 w-px bg-white/10 sm:block" aria-hidden="true" />
-        <p className="pp-mono hidden text-[10px] uppercase tracking-[0.16em] text-[var(--pp-paper-dim)] sm:block">
+        <p className="tabular-nums hidden text-[10px] uppercase tracking-label text-[var(--pp-paper-dim)] sm:block">
           {t("publicProfile.title")}
         </p>
         <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
@@ -78,7 +60,7 @@ function Header({ handle, live, onToggleLanguage }: HeaderProps): ReactElement {
             type="button"
             onClick={onToggleLanguage}
             aria-label={t("publicProfile.switchLanguage")}
-            className="pp-mono pp-hairline flex min-h-[44px] items-center rounded-lg border px-3 text-[11px] uppercase tracking-wider text-[var(--pp-paper-dim)] transition-colors duration-200 hover:border-[rgba(206,192,83,0.4)] hover:text-[var(--pp-paper)]"
+            className="tabular-nums pp-hairline flex min-h-[44px] items-center rounded-lg border px-3 text-[11px] uppercase tracking-label text-[var(--pp-paper-dim)] transition-colors duration-200 hover:border-[rgba(206,192,83,0.4)] hover:text-[var(--pp-paper)]"
           >
             {t("publicProfile.langButton")}
           </button>
@@ -98,7 +80,7 @@ function Footer(): ReactElement {
           <div>
             <div className="flex items-center gap-2.5">
               <Icon id="bc-mark" className="size-8 rounded-md" />
-              <p className="pp-display text-[17px] font-bold tracking-tight">BikeCheck</p>
+              <p className="text-[17px] font-bold">BikeCheck</p>
             </div>
             <p className="mt-3 max-w-[54ch] text-[14px] leading-relaxed text-[var(--pp-paper-dim)]">
               {t("publicProfile.footerNote")}
@@ -128,7 +110,6 @@ interface PublicShellProps {
 
 export function PublicShell({ handle, title, live, children }: PublicShellProps): ReactElement {
   const { language, toggle } = usePublicLanguage();
-  usePublicFonts();
   useDocumentTitle(title);
 
   return (

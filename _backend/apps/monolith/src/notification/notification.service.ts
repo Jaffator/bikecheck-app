@@ -20,6 +20,21 @@ export interface CreateNotificationParams {
   dedupKey?: string;
 }
 
+export interface ListNotificationsQuery {
+  unreadOnly?: boolean;
+  // Only rows older than this id - the last row of the page already shown.
+  before?: number;
+  limit?: number;
+}
+
+const DEFAULT_PAGE_SIZE = 30;
+const MAX_PAGE_SIZE = 100;
+
+function pageSize(limit: number | undefined): number {
+  if (limit === undefined || !Number.isFinite(limit)) return DEFAULT_PAGE_SIZE;
+  return Math.min(Math.max(Math.trunc(limit), 1), MAX_PAGE_SIZE);
+}
+
 @Injectable()
 export class NotificationService {
   constructor(
@@ -68,10 +83,19 @@ export class NotificationService {
     } satisfies NotificationDeliveryJob);
   }
 
-  async list(userId: number, unreadOnly: boolean): Promise<notifications[]> {
+  // Newest first, paged by an id cursor. Unread stays whole: the badge and the Unread filter count all of it.
+  async list(userId: number, query: ListNotificationsQuery): Promise<notifications[]> {
+    if (query.unreadOnly === true) {
+      return await this.prisma.notifications.findMany({
+        where: { user_id: userId, is_read: false },
+        orderBy: { id: 'desc' },
+      });
+    }
+
     return await this.prisma.notifications.findMany({
-      where: { user_id: userId, ...(unreadOnly ? { is_read: false } : {}) },
-      orderBy: { created_at: 'desc' },
+      where: { user_id: userId, ...(query.before === undefined ? {} : { id: { lt: query.before } }) },
+      orderBy: { id: 'desc' },
+      take: pageSize(query.limit),
     });
   }
 

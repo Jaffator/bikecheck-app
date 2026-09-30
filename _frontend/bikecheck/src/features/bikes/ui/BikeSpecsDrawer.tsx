@@ -55,7 +55,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
               <Text fw={700} fz={22} c="text.6" lh={1.2} lineClamp={2}>
                 {bikeTitle(bike)}
               </Text>
-              <Text className="font-mono uppercase" fz={11} c="var(--color-text-dim)" lts="0.06em">
+              <Text className="tabular-nums uppercase" fz={11} c="var(--color-text-dim)" lts="var(--tracking-label)">
                 {t("bikes.specsTitle")}
               </Text>
             </Stack>
@@ -126,7 +126,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
           )}
 
           {bike.created_at !== null && (
-            <Text className="font-mono uppercase" fz={11} c="var(--color-text-dim)" lts="0.06em">
+            <Text className="tabular-nums uppercase" fz={11} c="var(--color-text-dim)" lts="var(--tracking-label)">
               {t("bikes.addedOn", { date: dayjs(bike.created_at).format("D. M. YYYY") })}
             </Text>
           )}
@@ -140,7 +140,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
 function Section({ title, children }: { title: string; children: ReactNode }): ReactElement {
   return (
     <Stack gap="xs">
-      <Text className="font-mono uppercase" fz={12} fw={600} c="var(--mantine-color-text-8)" lts="0.08em">
+      <Text className="tabular-nums uppercase" fz={12} fw={600} c="var(--mantine-color-text-8)" lts="var(--tracking-label)">
         {title}
       </Text>
       <Divider color="var(--mantine-color-inputs-5)" />
@@ -158,7 +158,7 @@ function SpecRow({ label, value, icon }: { label: string; value: string; icon?: 
       </Text>
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
         {icon}
-        <Text className="font-mono" fz={14} c="text.6" ta="right" lineClamp={2}>
+        <Text className="tabular-nums" fz={14} c="text.6" ta="right" lineClamp={2}>
           {value}
         </Text>
       </Group>

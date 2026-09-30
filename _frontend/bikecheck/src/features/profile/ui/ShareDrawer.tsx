@@ -46,7 +46,7 @@ interface SectionProps {
 function Section({ title, children }: SectionProps): ReactElement {
   return (
     <Box px="md" pt="sm" pb={4} style={PANEL}>
-      <Text className="font-mono" fz={11} fw={400} tt="uppercase" lts="0.08em" c="var(--color-text-dim)">
+      <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
         {title}
       </Text>
       {children}

@@ -54,7 +54,7 @@ export function SpendCard({ period }: { period?: HomePeriod }): ReactElement {
           })}
         </Text>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={16}
           fw={600}
           c="text.6"
@@ -97,7 +97,7 @@ function BikeBar({
   bike: SpendBike;
   colorIndex: number | null;
 }): ReactElement {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const largest = spend.bikes[0].total;
   const history = `/bikes/${String(bike.bike_id)}/history${periodSearch(spend)}`;
@@ -118,9 +118,13 @@ function BikeBar({
           <Text fz={13} c="text.7" lineClamp={1}>
             {bikeTitle(bike)}
           </Text>
+          {/* Outside the clamp, so a long name is cut before the count is. */}
+          <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
+            {`· ${t("dashboard.servicesCount", { count: bike.service_count })}`}
+          </Text>
         </Group>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={13}
           c="text.7"
           style={{ flexShrink: 0 }}
@@ -181,7 +185,7 @@ function CategoryBar({
           {categoryLabel(category, t)}
         </Text>
         <Text
-          className="font-mono"
+          className="tabular-nums"
           fz={13}
           c="text.7"
           style={{ flexShrink: 0 }}

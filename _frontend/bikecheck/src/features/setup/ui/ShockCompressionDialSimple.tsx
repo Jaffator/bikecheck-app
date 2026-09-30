@@ -236,10 +236,10 @@ function Knob({ spec, sign, u, id, knobProps }: KnobArtProps) {
           <circle r={R_KNOB} fill={u(`anod-${spec.key}`)} />
           <circle r={R_KNOB - 1} fill="none" stroke={u("bevel")} strokeWidth={2} opacity={0.55} />
           <circle r={R_KNOB * 0.56} fill="none" stroke="#000" strokeOpacity={0.45} strokeWidth={1.5} />
-          <text className="cc-etch" fontSize={15.5} letterSpacing={2.6}><textPath href={`#${id(`arc-${k}-title`)}`} startOffset="50%" textAnchor="middle">{spec.title}</textPath></text>
-          <text className="cc-etch" fontSize={11} letterSpacing={2}><textPath href={`#${id(`arc-${k}-soft`)}`} startOffset="50%" textAnchor="middle">SOFT −</textPath></text>
+          <text className="cc-etch" fontSize={15.5}><textPath href={`#${id(`arc-${k}-title`)}`} startOffset="50%" textAnchor="middle">{spec.title}</textPath></text>
+          <text className="cc-etch" fontSize={11} style={{ letterSpacing: "var(--tracking-label)" }}><textPath href={`#${id(`arc-${k}-soft`)}`} startOffset="50%" textAnchor="middle">SOFT −</textPath></text>
           <ArcArrow geom={arcArrowGeom(R_TEXT, soft.from, soft.to)} />
-          <text className="cc-etch" fontSize={11} letterSpacing={2}><textPath href={`#${id(`arc-${k}-firm`)}`} startOffset="50%" textAnchor="middle">FIRM +</textPath></text>
+          <text className="cc-etch" fontSize={11} style={{ letterSpacing: "var(--tracking-label)" }}><textPath href={`#${id(`arc-${k}-firm`)}`} startOffset="50%" textAnchor="middle">FIRM +</textPath></text>
           <ArcArrow geom={arcArrowGeom(R_TEXT, firm.from, firm.to)} />
           <circle r={R_FACE} fill={u("well")} />
           <circle r={24} fill={u("steel")} />
@@ -315,7 +315,7 @@ export function ShockCompressionDialSimple({ lsc, direction = "cw", haptics = tr
         </filter>
       </defs>
       <style>{`
-        .cc-etch{font-family:Archivo,system-ui,sans-serif;font-weight:800;fill:#f2f3f5}
+        .cc-etch{font-weight:700;fill:#f2f3f5}
         .cc-focus{opacity:0}g:has(.cc-knob:focus-visible)~.cc-focus{opacity:1}
       `}</style>
 

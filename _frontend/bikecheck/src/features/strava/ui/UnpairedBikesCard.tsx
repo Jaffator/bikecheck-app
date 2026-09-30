@@ -47,7 +47,7 @@ export function UnpairedBikesCard(): ReactElement | null {
           >
             <Link2Off size={18} color="var(--mantine-color-primary-6)" />
           </Box>
-          <Text fw={600} fz={15} tt="uppercase" c="text.6" style={{ lineHeight: 1.15, letterSpacing: "-0.01em" }}>
+          <Text fw={600} fz={15} tt="uppercase" c="text.6" style={{ lineHeight: 1.15 }}>
             {t("strava.unpairedBikes", { count: unpairedCount })}
           </Text>
         </Group>
@@ -65,7 +65,7 @@ export function UnpairedBikesCard(): ReactElement | null {
             label: {
               fontWeight: 700,
               fontSize: "0.8125rem",
-              letterSpacing: "0.08em",
+              letterSpacing: "var(--tracking-label)",
               textTransform: "uppercase",
             },
           }}

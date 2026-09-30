@@ -17,12 +17,12 @@ export const AVATAR_STYLE = {
   "--avatar-color": "var(--mantine-color-text-6)",
 } as CSSProperties;
 
-// A small mono label over a figure or beside a name - the profile's one caption style.
+// A small uppercase label over a figure or beside a name - the profile's one caption style.
 export const EYEBROW = {
   fz: 11,
   fw: 400,
   tt: "uppercase" as const,
-  lts: "0.08em",
+  lts: "var(--tracking-label)",
   c: "var(--color-text-dim)",
-  className: "font-mono",
+  className: "tabular-nums",
 };

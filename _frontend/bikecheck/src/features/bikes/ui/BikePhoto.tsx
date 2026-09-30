@@ -80,7 +80,7 @@ export function BikePhoto({
               {title}
             </Text>
             {subtitle !== null && subtitle !== "" && (
-              <Text className="font-mono" fz={11} tt="uppercase" c="rgba(255, 255, 255, 0.72)" lineClamp={1}>
+              <Text className="tabular-nums" fz={11} tt="uppercase" c="rgba(255, 255, 255, 0.72)" lineClamp={1}>
                 {subtitle}
               </Text>
             )}

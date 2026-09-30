@@ -91,7 +91,7 @@ export function StravaStatusCard({
           </Box>
 
           <Stack gap={8} align="center">
-            <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25, letterSpacing: "-0.016em" }}>
+            <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25 }} lts="var(--tracking-title)">
               {t("strava.pitchTitle")}
             </Text>
             <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
@@ -118,7 +118,7 @@ export function StravaStatusCard({
               label: {
                 fontWeight: 700,
                 fontSize: "0.8125rem",
-                letterSpacing: "0.08em",
+                letterSpacing: "var(--tracking-label)",
                 textTransform: "uppercase",
               },
             }}
@@ -195,7 +195,7 @@ export function StravaStatusCard({
               </Text>
               <Group gap={5} wrap="nowrap">
                 <CircleCheck size={13} color="var(--mantine-color-green-8)" />
-                <Text className="font-mono" fz={10} c="green.8" style={{ letterSpacing: "0.08em" }}>
+                <Text className="tabular-nums" fz={10} c="green.8">
                   {t("strava.statusConnected")}
                 </Text>
               </Group>
@@ -207,7 +207,7 @@ export function StravaStatusCard({
               </Text>
               <Group gap={5} wrap="nowrap">
                 <CircleCheck size={13} color="var(--mantine-color-green-8)" />
-                <Text className="font-mono" fz={10} c="green.8" style={{ letterSpacing: "0.08em" }}>
+                <Text className="tabular-nums" fz={10} c="green.8">
                   {t("strava.statusConnectedShort")}
                 </Text>
               </Group>

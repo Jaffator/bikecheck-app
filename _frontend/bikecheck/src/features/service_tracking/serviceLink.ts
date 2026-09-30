@@ -6,11 +6,28 @@
 import type { TrackedAction } from "./tracking.types";
 
 export function trackedActionServiceLink(action: TrackedAction): string {
+  return serviceLink({
+    bikeId: action.bike_id,
+    groupId: action.component_group_id,
+    actionId: action.event_action_id,
+    componentMountedId: action.component_mounted_id,
+  });
+}
+
+export interface ServiceLinkIds {
+  bikeId: number;
+  groupId: number;
+  actionId: number;
+  componentMountedId: number;
+}
+
+// The same link from bare ids, for a caller that holds no Tracked Action (a service reminder).
+export function serviceLink(ids: ServiceLinkIds): string {
   const query = new URLSearchParams({
-    bike: String(action.bike_id),
-    category: String(action.component_group_id),
-    action: String(action.event_action_id),
-    component: String(action.component_mounted_id),
+    bike: String(ids.bikeId),
+    category: String(ids.groupId),
+    action: String(ids.actionId),
+    component: String(ids.componentMountedId),
   });
   return `/service/new?${query.toString()}`;
 }

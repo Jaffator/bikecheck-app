@@ -26,20 +26,12 @@
   min-height: 100dvh;
   background: var(--pp-ink-950);
   color: var(--pp-paper);
-  font-family: Archivo, system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
   /* A page, not the app: the body forbids selection, a reader copies an address. */
   -webkit-user-select: text;
   user-select: text;
-}
-.pp .pp-display {
-  font-family: Archivo, system-ui, sans-serif;
-  font-stretch: 96%;
-}
-.pp .pp-mono {
-  font-family: "Martian Mono", ui-monospace, monospace;
-  font-stretch: 82%;
 }
 .pp .pp-hairline {
   border-color: var(--pp-hairline);
