@@ -247,7 +247,9 @@ function partWear(part: WornPart, ride: MovedRide, sign: 1 | -1): Prisma.compone
     ...(SUSPENSION_PARTS.includes(type)
       ? { suspension_min: shifted(part.suspension_min, ride.suspension_min ?? 0, sign) }
       : {}),
-    ...(type === BRAKE_PAD_PART ? { health_index: shifted(part.health_index, ride.health_index_brake_pad ?? 0, sign) } : {}),
+    ...(type === BRAKE_PAD_PART
+      ? { health_index: shifted(part.health_index, ride.health_index_brake_pad ?? 0, sign) }
+      : {}),
   };
 }
 
@@ -352,9 +354,7 @@ function asActivity(jsonData: unknown): StravaActivity | null {
 // are joined rather than templated.
 function bikeName(bike: RideRow['bikes']): string | null {
   if (bike === null) return null;
-  const parts = [bike.bike_brand, bike.bike_model, bike.year].filter(
-    (part): part is string | number => Boolean(part),
-  );
+  const parts = [bike.bike_brand, bike.bike_model, bike.year].filter((part): part is string | number => Boolean(part));
   return parts.length > 0 ? parts.join(' ') : null;
 }
 
@@ -377,6 +377,8 @@ function toRideDto(row: RideRow, woreOff: Response_WoreOffLineDto[]): ResponseRi
     max_speed_kmh: row.max_speed_kmh ?? null,
     summary_polyline: facts.summary_polyline,
     wore_off: woreOff,
-    check_in: row.check_in ? { status: row.check_in.status, symptoms: row.check_in.symptoms, note: row.check_in.note } : null,
+    check_in: row.check_in
+      ? { status: row.check_in.status, symptoms: row.check_in.symptoms, note: row.check_in.note }
+      : null,
   };
 }
