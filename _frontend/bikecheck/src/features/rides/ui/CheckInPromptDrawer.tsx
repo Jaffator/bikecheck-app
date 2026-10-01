@@ -16,12 +16,13 @@ import { bikeColor } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { checkInOf, draftOf, isHalfFilled, type CheckInDraft } from "@/features/rides/checkIn";
-import { checkInSaveOf } from "@/features/rides/checkInSave";
+import { checkInSaveOf, type BikePick, type CheckInSave } from "@/features/rides/checkInSave";
 import { rideSummaryOf } from "@/features/rides/rideSummary";
 import {
   CHECK_IN_PROMPT_KEY,
   useChangeRideBike,
   useCheckInPrompt,
+  useDismissRide,
   useMarkCheckInPromptSeen,
   useSaveRideCheckIn,
 } from "@/features/rides/rides.queries";
@@ -36,6 +37,8 @@ dayjs.extend(relativeTime);
 
 // Above the page's own sheets, which sit at 320.
 const DRAWER_Z_INDEX = 330;
+
+const NO_BIKE_ROUTE = "var(--mantine-color-text-8)";
 
 // The desktop modal holds the ride and the answers side by side.
 const MODAL_WIDTH = 920;
@@ -53,14 +56,15 @@ export function CheckInPromptDrawer(): ReactElement {
   const { mutate: markSeen } = useMarkCheckInPromptSeen();
   const save = useSaveRideCheckIn();
   const changeBike = useChangeRideBike();
+  const dismiss = useDismissRide();
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   // A snapshot: saving refreshes the prompt, and the walk must not shift under the rider.
   const [queue, setQueue] = useState<Ride[]>([]);
   const [position, setPosition] = useState(0);
   const [draft, setDraft] = useState<CheckInDraft>(draftOf(null));
-  // Null keeps the ride's own bike; the ride moves only when it is saved.
-  const [pickedBikeId, setPickedBikeId] = useState<number | null>(null);
+  // Null keeps the ride's own bike; nothing is written until the ride is saved.
+  const [pick, setPick] = useState<BikePick | null>(null);
   const [pickerOpened, setPickerOpened] = useState(false);
 
   if (!opened && prompt !== undefined && prompt.length > 0) {
@@ -81,7 +85,7 @@ export function CheckInPromptDrawer(): ReactElement {
   function showRide(index: number): void {
     setPosition(index);
     setDraft(draftOf(null));
-    setPickedBikeId(null);
+    setPick(null);
     setPickerOpened(false);
   }
 
@@ -93,16 +97,22 @@ export function CheckInPromptDrawer(): ReactElement {
     showRide(position + 1);
   }
 
-  // The bike moves first, so the check-in lands on the ride where it now is. Both are optional.
   async function submit(current: Ride): Promise<void> {
-    const { moveTo, checkIn } = checkInSaveOf(current.bike_id, pickedBikeId ?? current.bike_id, checkInOf(draft));
+    const answer = checkInSaveOf(current.bike_id, pick ?? ownBikeOf(current), checkInOf(draft));
+    const done =
+      answer.kind === "dismiss"
+        ? await attempt(dismiss.mutateAsync(current.id), "pendingRides.dismissFailed")
+        : await moveAndCheckIn(current, answer);
+    if (done) next();
+  }
+
+  // The bike moves first, so the check-in lands on the ride where it now is. Both are optional.
+  async function moveAndCheckIn(current: Ride, { moveTo, checkIn }: RideSave): Promise<boolean> {
     const moved =
       moveTo === null ||
       (await attempt(changeBike.mutateAsync({ rideId: current.id, bikeId: moveTo }), "rides.changeBikeFailed"));
-    if (!moved) return;
-    const saved =
-      checkIn === null || (await attempt(save.mutateAsync({ rideId: current.id, checkIn }), "checkIn.saveFailed"));
-    if (saved) next();
+    if (!moved) return false;
+    return checkIn === null || (await attempt(save.mutateAsync({ rideId: current.id, checkIn }), "checkIn.saveFailed"));
   }
 
   // A failed write keeps the rider on this ride, told why.
@@ -116,16 +126,19 @@ export function CheckInPromptDrawer(): ReactElement {
     }
   }
 
-  const pickedId = ride === null ? null : (pickedBikeId ?? ride.bike_id);
+  const picked = ride === null ? null : (pick ?? ownBikeOf(ride));
+  const pickedId = picked?.kind === "bike" ? picked.bikeId : null;
+  const notMine = picked?.kind === "notMine";
   const step: PromptStep | null =
     ride === null
       ? null
       : {
           ride,
           bikes: bikes ?? [],
-          pickedBike: bikes?.find((one) => one.id === pickedId) ?? null,
+          pickedBike: pickedId === null ? null : (bikes?.find((one) => one.id === pickedId) ?? null),
+          notMine,
           pickedByHand: pickedId !== ride.bike_id,
-          onPick: setPickedBikeId,
+          onPick: setPick,
           pickerOpened,
           onPickerOpenedChange: setPickerOpened,
           index: position,
@@ -134,8 +147,9 @@ export function CheckInPromptDrawer(): ReactElement {
           onDraft: setDraft,
           onSkip: next,
           onSave: () => void submit(ride),
-          canSave: !isHalfFilled(draft),
-          saving: save.isPending || changeBike.isPending,
+          // A hidden check-in is not saved, so a half-filled one cannot hold the ride back.
+          canSave: notMine || !isHalfFilled(draft),
+          saving: save.isPending || changeBike.isPending || dismiss.isPending,
         };
 
   return (
@@ -154,13 +168,20 @@ export function CheckInPromptDrawer(): ReactElement {
   );
 }
 
+type RideSave = Extract<CheckInSave, { kind: "save" }>;
+
+function ownBikeOf(ride: Ride): BikePick {
+  return { kind: "bike", bikeId: ride.bike_id };
+}
+
 interface PromptStep {
   ride: Ride;
   bikes: ListedBike[];
-  // Null while the garage loads.
+  // Null while the garage loads, or with none of the rider's bikes picked.
   pickedBike: ListedBike | null;
+  notMine: boolean;
   pickedByHand: boolean;
-  onPick: (bikeId: number) => void;
+  onPick: (pick: BikePick) => void;
   pickerOpened: boolean;
   onPickerOpenedChange: (opened: boolean) => void;
   index: number;
@@ -183,7 +204,7 @@ function PhonePrompt({ step }: { step: PromptStep }): ReactElement {
           <Counter step={step} />
         </Group>
       </Stack>
-      <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step.pickedBike)} />
+      <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step)} />
       <BikeField step={step} />
       <CheckInSection step={step} />
       <PromptActions step={step} compact={false} />
@@ -214,7 +235,7 @@ function DesktopPrompt({ step }: { step: PromptStep }): ReactElement {
 
       <Group align="stretch" gap={0} wrap="nowrap">
         <Box p={24} w={RIDE_COLUMN_WIDTH} style={RIDE_COLUMN}>
-          <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step.pickedBike)} detailed />
+          <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step)} detailed />
         </Box>
         <Stack gap={20} p={24} style={{ flex: 1, minWidth: 0 }}>
           <BikeField step={step} />
@@ -275,6 +296,7 @@ function BikeField({ step }: { step: PromptStep }): ReactElement {
       ride={step.ride}
       bikes={step.bikes}
       picked={step.pickedBike}
+      notMine={step.notMine}
       pickedByHand={step.pickedByHand}
       onPick={step.onPick}
       pickerOpened={step.pickerOpened}
@@ -283,9 +305,10 @@ function BikeField({ step }: { step: PromptStep }): ReactElement {
   );
 }
 
-// Dimmed and out of reach while the bike list lies over it.
-function CheckInSection({ step }: { step: PromptStep }): ReactElement {
+// Dimmed and out of reach while the bike list lies over it; gone with a ride that is not the rider's.
+function CheckInSection({ step }: { step: PromptStep }): ReactElement | null {
   const { t } = useTranslation();
+  if (step.notMine) return null;
   return (
     <Stack
       gap={8}
@@ -326,20 +349,21 @@ function PromptActions({ step, compact }: { step: PromptStep; compact: boolean }
         c="textDark.6"
         radius="md"
         size={size}
-        leftSection={<Check size={compact ? 16 : 18} strokeWidth={2.4} />}
+        leftSection={step.notMine ? undefined : <Check size={compact ? 16 : 18} strokeWidth={2.4} />}
         disabled={!step.canSave}
         loading={step.saving}
         styles={disabledButtonStyles}
         style={compact ? undefined : { flex: 1 }}
         onClick={step.onSave}
       >
-        {t("checkIn.saveAndNext")}
+        {t(step.notMine ? "checkIn.saveWithoutBike" : "checkIn.saveAndNext")}
       </Button>
     </Group>
   );
 }
 
-// The route in its bike's colour; Strava orange until the garage loads.
-function routeColor(bike: ListedBike | null): string | undefined {
-  return bike === null ? undefined : bikeColor(bike.color_index);
+// The route in its bike's colour, grey on none; Strava orange until the garage loads.
+function routeColor(step: PromptStep): string | undefined {
+  if (step.notMine) return NO_BIKE_ROUTE;
+  return step.pickedBike === null ? undefined : bikeColor(step.pickedBike.color_index);
 }

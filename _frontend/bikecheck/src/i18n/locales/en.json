@@ -338,7 +338,12 @@
     "woreOff": "Wears off",
     "optional": "optional",
     "optionalHint": "The rating is optional. Without it, the ride is just assigned to the bike.",
-    "saveAndNext": "Save and next"
+    "saveAndNext": "Save and next",
+    "notMyBike": "Not my bike",
+    "notMyBikeHint": "rental, test, someone else's",
+    "noBikeRide": "Ride without a bike",
+    "notMyBikeInfo": "The ride is removed from BikeCheck and doesn't count toward wear.",
+    "saveWithoutBike": "Save without a bike"
   },
   "ridesTable": {
     "allBikes": "All bikes",

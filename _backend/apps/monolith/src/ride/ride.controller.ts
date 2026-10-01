@@ -122,6 +122,20 @@ export class RideController {
     await this.rideService.changeBike(Number(userId), id, body.bikeId);
     return { success: true };
   }
+
+  // ---------- POST remove a ride ridden on none of the user's bikes ----------
+  @ApiOperation({ summary: "Remove a ride ridden on none of the user's bikes; its wear comes off for good" })
+  @ApiResponse({ status: 200 })
+  @Post(':id/dismiss')
+  @HttpCode(HttpStatus.OK)
+  // Returns a body on purpose: the shared frontend client parses every 2xx as JSON.
+  async dismiss(
+    @CurrentUser('userId') userId: string,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ success: boolean }> {
+    await this.rideService.dismiss(Number(userId), id);
+    return { success: true };
+  }
 }
 
 // A query parameter the caller left out is not a number at all.

@@ -356,7 +356,12 @@
     "woreOff": "Odepíše",
     "optional": "nepovinné",
     "optionalHint": "Hodnocení je nepovinné. Bez něj se jízda jen přiřadí ke kolu.",
-    "saveAndNext": "Uložit a další"
+    "saveAndNext": "Uložit a další",
+    "notMyBike": "Nebylo to moje kolo",
+    "notMyBikeHint": "půjčené, testovací, cizí",
+    "noBikeRide": "Jízda bez kola",
+    "notMyBikeInfo": "Jízda se z BikeChecku odebere a do opotřebení se nepočítá.",
+    "saveWithoutBike": "Uložit bez kola"
   },
   "ridesTable": {
     "allBikes": "Všechna kola",

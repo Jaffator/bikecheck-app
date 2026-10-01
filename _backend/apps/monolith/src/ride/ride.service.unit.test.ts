@@ -16,9 +16,11 @@ describe('RideService', () => {
       findFirst: jest.fn(),
       count: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
     bikes: { findFirst: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     components_mounted: { findMany: jest.fn(), update: jest.fn() },
+    strava_pending_activities: { upsert: jest.fn() },
     $transaction: jest.fn(),
   };
 
@@ -235,68 +237,69 @@ describe('RideService', () => {
     });
   });
 
+  // A ride and the garage it was ridden in, shared by the cases that move its wear.
+  const OLD_BIKE = 1;
+  const NEW_BIKE = 2;
+
+  interface Part {
+    id: number;
+    bike_id: number;
+    mounted_at: Date | null;
+    total_km: number;
+    total_time_min: number;
+    drivetrain_km: number;
+    suspension_min: number;
+    health_index: number;
+    component_types: { component_type: string };
+  }
+
+  const part = (id: number, bikeId: number, type: string, overrides: Partial<Part> = {}): Part => ({
+    id,
+    bike_id: bikeId,
+    mounted_at: new Date('2026-01-01T00:00:00.000Z'),
+    total_km: 500,
+    total_time_min: 1000,
+    drivetrain_km: 600,
+    suspension_min: 200,
+    health_index: 10,
+    component_types: { component_type: type },
+    ...overrides,
+  });
+
+  // 32 km, 38 drivetrain km, 2 h, 90 suspension minutes, index 4, 612 m up.
+  const ride = {
+    id: 5,
+    bike_id: OLD_BIKE,
+    started_at: new Date('2026-09-20T08:00:00.000Z') as Date | null,
+    distance_m: 32000,
+    drivetrain_meters: 38000,
+    duration_min: 120,
+    suspension_min: 90,
+    health_index_brake_pad: 4,
+    elevation_up_m: 612.4,
+  };
+
+  // Each bike's mounted parts and climbing; the service picks which parts the ride wore.
+  function garage(parts: Part[], climbing: Record<number, number> = { [OLD_BIKE]: 1000, [NEW_BIKE]: 0 }): void {
+    mockPrisma.rides.findFirst.mockResolvedValue(ride);
+    mockPrisma.bikes.findFirst.mockResolvedValue({ id: NEW_BIKE });
+    mockPrisma.components_mounted.findMany.mockImplementation(({ where }: { where: { bike_id: number } }) =>
+      Promise.resolve(parts.filter((one) => one.bike_id === where.bike_id)),
+    );
+    mockPrisma.bikes.findUnique.mockImplementation(({ where }: { where: { id: number } }) =>
+      Promise.resolve({ total_elevation_m: climbing[where.id] }),
+    );
+  }
+
+  // What each part was set to, by id.
+  function written(): Map<number, Record<string, number>> {
+    const calls = mockPrisma.components_mounted.update.mock.calls as [
+      { where: { id: number }; data: Record<string, number> },
+    ][];
+    return new Map(calls.map(([args]) => [args.where.id, args.data]));
+  }
+
   describe('changeBike', () => {
-    const OLD_BIKE = 1;
-    const NEW_BIKE = 2;
-
-    interface Part {
-      id: number;
-      bike_id: number;
-      mounted_at: Date | null;
-      total_km: number;
-      total_time_min: number;
-      drivetrain_km: number;
-      suspension_min: number;
-      health_index: number;
-      component_types: { component_type: string };
-    }
-
-    const part = (id: number, bikeId: number, type: string, overrides: Partial<Part> = {}): Part => ({
-      id,
-      bike_id: bikeId,
-      mounted_at: new Date('2026-01-01T00:00:00.000Z'),
-      total_km: 500,
-      total_time_min: 1000,
-      drivetrain_km: 600,
-      suspension_min: 200,
-      health_index: 10,
-      component_types: { component_type: type },
-      ...overrides,
-    });
-
-    // 32 km, 38 drivetrain km, 2 h, 90 suspension minutes, index 4, 612 m up.
-    const ride = {
-      id: 5,
-      bike_id: OLD_BIKE,
-      started_at: new Date('2026-09-20T08:00:00.000Z') as Date | null,
-      distance_m: 32000,
-      drivetrain_meters: 38000,
-      duration_min: 120,
-      suspension_min: 90,
-      health_index_brake_pad: 4,
-      elevation_up_m: 612.4,
-    };
-
-    // Each bike's mounted parts and climbing; the service picks which parts the ride wore.
-    function garage(parts: Part[], climbing: Record<number, number> = { [OLD_BIKE]: 1000, [NEW_BIKE]: 0 }): void {
-      mockPrisma.rides.findFirst.mockResolvedValue(ride);
-      mockPrisma.bikes.findFirst.mockResolvedValue({ id: NEW_BIKE });
-      mockPrisma.components_mounted.findMany.mockImplementation(({ where }: { where: { bike_id: number } }) =>
-        Promise.resolve(parts.filter((one) => one.bike_id === where.bike_id)),
-      );
-      mockPrisma.bikes.findUnique.mockImplementation(({ where }: { where: { id: number } }) =>
-        Promise.resolve({ total_elevation_m: climbing[where.id] }),
-      );
-    }
-
-    // What each part was set to, by id.
-    function written(): Map<number, Record<string, number>> {
-      const calls = mockPrisma.components_mounted.update.mock.calls as [
-        { where: { id: number }; data: Record<string, number> },
-      ][];
-      return new Map(calls.map(([args]) => [args.where.id, args.data]));
-    }
-
     it('moves every measure off the old bike parts and onto the new bike parts', async () => {
       garage([
         part(10, OLD_BIKE, 'Chain'),
@@ -405,6 +408,115 @@ describe('RideService', () => {
         is_deleted: { not: true },
       });
       expect(mockPrisma.rides.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('dismiss', () => {
+    const stravaRide = {
+      ...ride,
+      activity_strava_id: BigInt('13579246810'),
+      json_data: JSON.stringify({ name: 'Morning Ride', map: { summary_polyline: 'ki}fH' } }),
+      elevation_down_m: 598,
+      speed_avg: 16,
+      max_speed_kmh: 54,
+      descent_min: 31,
+    };
+
+    // The Strava ride above, saved on the old bike among these parts.
+    function saved(parts: Part[]): void {
+      garage(parts);
+      mockPrisma.rides.findFirst.mockResolvedValue(stravaRide);
+    }
+
+    // The parts a bike change would take the ride from: mounted before the ride day.
+    it('takes the ride wear off exactly the parts a bike change would take it from', async () => {
+      saved([
+        part(10, OLD_BIKE, 'Chain'),
+        part(11, OLD_BIKE, 'Fork'),
+        part(12, OLD_BIKE, 'Brake pad'),
+        part(13, OLD_BIKE, 'Tyre', { mounted_at: new Date('2026-09-20T06:00:00.000Z') }),
+      ]);
+
+      await service.dismiss(7, 5);
+
+      const parts = written();
+      expect(parts.get(10)).toEqual({ total_km: 468, total_time_min: 880, drivetrain_km: 562 });
+      expect(parts.get(11)).toEqual({ total_km: 468, total_time_min: 880, suspension_min: 110 });
+      expect(parts.get(12)).toEqual({ total_km: 468, total_time_min: 880, health_index: 6 });
+      expect(parts.has(13)).toBe(false);
+      expect(mockPrisma.bikes.update).toHaveBeenCalledWith({
+        where: { id: OLD_BIKE },
+        data: { total_elevation_m: 388 },
+      });
+    });
+
+    // "Resolved and no ride" is what the Strava webhook and sync read as dismissed.
+    it('deletes the ride and leaves a resolved pending row, so the activity reads as dismissed', async () => {
+      saved([]);
+
+      await service.dismiss(7, 5);
+
+      expect(mockPrisma.rides.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+      const upsert = mockPrisma.strava_pending_activities.upsert.mock.calls[0][0];
+      expect(upsert.where).toEqual({ activity_id: BigInt('13579246810') });
+      expect(upsert.create).toMatchObject({ activity_id: BigInt('13579246810'), user_id: 7 });
+      expect(upsert.create.resolved_at).toBeInstanceOf(Date);
+      expect(upsert.update.resolved_at).toBeInstanceOf(Date);
+    });
+
+    // analyzed_data is required, so the row carries the ride as a pending row would.
+    it('stores the ride own figures as the pending row analysis', async () => {
+      saved([]);
+
+      await service.dismiss(7, 5);
+
+      expect(mockPrisma.strava_pending_activities.upsert.mock.calls[0][0].create.analyzed_data).toEqual({
+        rawJson: { name: 'Morning Ride', map: { summary_polyline: 'ki}fH' } },
+        started_at: '2026-09-20T08:00:00.000Z',
+        name: 'Morning Ride',
+        summary_polyline: 'ki}fH',
+        suspension_minutes: 90,
+        health_index_brake_pad: 4,
+        descent_min: 31,
+        drivetrain_km: 38,
+        distance_km: 32,
+        duration_min: 120,
+        elevation_up_m: 612.4,
+        elevation_down_m: 598,
+        speed_avg: 16,
+        max_speed_kmh: 54,
+      });
+    });
+
+    it('evaluates the bike the wear came off', async () => {
+      saved([]);
+
+      await service.dismiss(7, 5);
+
+      expect(mockServiceTracking.evaluateBikes).toHaveBeenCalledWith([OLD_BIKE], 7);
+    });
+
+    it('refuses another user ride and writes nothing', async () => {
+      saved([part(10, OLD_BIKE, 'Chain')]);
+      mockPrisma.rides.findFirst.mockResolvedValue(null);
+
+      await expect(service.dismiss(8, 5)).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.rides.findFirst.mock.calls[0][0].where).toMatchObject({ id: 5, user_id: 8 });
+      expect(mockPrisma.components_mounted.update).not.toHaveBeenCalled();
+      expect(mockPrisma.rides.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.strava_pending_activities.upsert).not.toHaveBeenCalled();
+    });
+
+    // Nothing can send a ride without a Strava id again, so there is nothing to mark.
+    it('deletes a ride with no Strava id, with its wear, and writes no pending row', async () => {
+      saved([part(10, OLD_BIKE, 'Tyre')]);
+      mockPrisma.rides.findFirst.mockResolvedValue({ ...stravaRide, activity_strava_id: null });
+
+      await service.dismiss(7, 5);
+
+      expect(written().get(10)).toEqual({ total_km: 468, total_time_min: 880 });
+      expect(mockPrisma.rides.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+      expect(mockPrisma.strava_pending_activities.upsert).not.toHaveBeenCalled();
     });
   });
 });

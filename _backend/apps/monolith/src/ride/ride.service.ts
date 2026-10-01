@@ -13,6 +13,7 @@ import {
   type WearRide,
 } from '../service-tracking/ride-wear';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
+import type { StravaActivityData } from '../strava/strava.service';
 import { ResponseRideCheckInDto, ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
 import { isDay, isTimeZone, localDay, previousRange, startedWithin, type DayRange } from './ride-period';
@@ -181,7 +182,7 @@ export class RideService {
    */
   async changeBike(userId: number, rideId: number, bikeId: number): Promise<void> {
     const ride = await this.prisma.rides.findFirst({
-      where: { id: rideId, user_id: userId, is_deleted: { not: true }, bikes: { is_deleted: { not: true } } },
+      where: movableRideWhere(userId, rideId),
       select: movedRideSelect,
     });
     if (!ride) throw new NotFoundException('Ride not found');
@@ -199,6 +200,34 @@ export class RideService {
     // One bike's readings dropped and the other's grew, so both may cross a band.
     await this.serviceTracking.evaluateBikes([ride.bike_id, bikeId], userId);
   }
+
+  /**
+   * Removes a ride that was on none of the user's bikes: its wear comes off its bike, the way a
+   * bike change takes it off.
+   */
+  async dismiss(userId: number, rideId: number): Promise<void> {
+    const ride = await this.prisma.rides.findFirst({
+      where: movableRideWhere(userId, rideId),
+      select: dismissedRideSelect,
+    });
+    if (!ride) throw new NotFoundException('Ride not found');
+
+    await this.prisma.$transaction(async (tx) => {
+      await shiftWear(tx, ride.bike_id, ride, -1);
+      // Hard, not soft: a soft-deleted ride would still be found when Strava sends the activity again.
+      await tx.rides.delete({ where: { id: ride.id } });
+      if (ride.activity_strava_id !== null) {
+        await markDismissed(tx, userId, ride.activity_strava_id, pendingAnalysisOf(ride));
+      }
+    });
+
+    await this.serviceTracking.evaluateBikes([ride.bike_id], userId);
+  }
+}
+
+// Only a ride the lists show may move its wear: an Archived Bike is never written to (ADR 0024).
+function movableRideWhere(userId: number, rideId: number): Prisma.ridesWhereInput {
+  return { id: rideId, ...listedRidesWhere(userId) };
 }
 
 const movedRideSelect = { ...wearRideSelect, elevation_up_m: true } satisfies Prisma.ridesSelect;
@@ -250,6 +279,56 @@ function partWear(part: WornPart, ride: MovedRide, sign: 1 | -1): Prisma.compone
 
 function shifted(current: number | null | undefined, amount: number, sign: 1 | -1): number {
   return Math.max(0, (current ?? 0) + sign * amount);
+}
+
+const dismissedRideSelect = {
+  ...movedRideSelect,
+  activity_strava_id: true,
+  json_data: true,
+  elevation_down_m: true,
+  speed_avg: true,
+  max_speed_kmh: true,
+  descent_min: true,
+} satisfies Prisma.ridesSelect;
+type DismissedRide = Prisma.ridesGetPayload<{ select: typeof dismissedRideSelect }>;
+type PendingAnalysis = StravaActivityData['analyzedData'];
+
+// Resolved with no ride is what the Strava webhook and sync read as dismissed.
+async function markDismissed(
+  tx: Prisma.TransactionClient,
+  userId: number,
+  activityId: bigint,
+  analysis: PendingAnalysis,
+): Promise<void> {
+  const now = new Date();
+  await tx.strava_pending_activities.upsert({
+    where: { activity_id: activityId },
+    create: { activity_id: activityId, user_id: userId, analyzed_data: analysis, resolved_at: now },
+    update: { resolved_at: now },
+  });
+}
+
+// The analysis Strava parks a pending activity with, rebuilt from the saved ride (the inverse of saveRide).
+function pendingAnalysisOf(ride: DismissedRide): PendingAnalysis {
+  const rawJson = asActivity(ride.json_data);
+  const facts = activityFacts(rawJson);
+  return {
+    rawJson,
+    // A Strava ride is always saved with its start; the fallback only satisfies the type.
+    started_at: ride.started_at?.toISOString() ?? '',
+    name: facts.name,
+    summary_polyline: facts.summary_polyline,
+    suspension_minutes: ride.suspension_min ?? 0,
+    health_index_brake_pad: ride.health_index_brake_pad ?? 0,
+    descent_min: ride.descent_min ?? undefined,
+    drivetrain_km: (ride.drivetrain_meters ?? 0) / 1000,
+    distance_km: (ride.distance_m ?? 0) / 1000,
+    duration_min: ride.duration_min ?? 0,
+    elevation_up_m: ride.elevation_up_m ?? 0,
+    elevation_down_m: ride.elevation_down_m ?? 0,
+    speed_avg: ride.speed_avg ?? 0,
+    max_speed_kmh: ride.max_speed_kmh ?? 0,
+  };
 }
 
 // The user's rides the lists show: not deleted, and not on an Archived Bike (ADR 0024).

@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import type { ListedBike } from "@/features/bikes/bikes.types";
+import type { BikePick } from "@/features/rides/checkInSave";
 import type { Ride } from "@/features/rides/rides.types";
 import { woreOffColor, woreOffLabel } from "@/features/rides/woreOff";
 import { QUIET_COLOR, trackedActionKey } from "@/features/service_tracking/attentionLevel";
@@ -15,9 +16,11 @@ interface CheckInBikeFieldProps {
   bikes: ListedBike[];
   // Null while the garage loads; the ride's own bike name stands in.
   picked: ListedBike | null;
-  // Another bike than the one the ride is saved on.
+  // The rider picked none of their bikes.
+  notMine: boolean;
+  // Anything but the bike the ride is saved on.
   pickedByHand: boolean;
-  onPick: (bikeId: number) => void;
+  onPick: (pick: BikePick) => void;
   pickerOpened: boolean;
   onPickerOpenedChange: (opened: boolean) => void;
 }
@@ -26,6 +29,7 @@ export function CheckInBikeField({
   ride,
   bikes,
   picked,
+  notMine,
   pickedByHand,
   onPick,
   pickerOpened,
@@ -42,6 +46,7 @@ export function CheckInBikeField({
       <BikePicker
         bikes={bikes}
         picked={picked}
+        notMine={notMine}
         fallbackName={ride.bike_name ?? t("rides.unknownBike")}
         onPick={onPick}
         opened={pickerOpened}
@@ -49,6 +54,11 @@ export function CheckInBikeField({
       />
       {/* What the ride wore off holds only for the bike it is saved on. */}
       {!pickedByHand && <WoreOffLine ride={ride} />}
+      {notMine && (
+        <Text fz={13} lh={1.4} c="var(--color-text-dim)" px={2}>
+          {t("checkIn.notMyBikeInfo")}
+        </Text>
+      )}
     </Stack>
   );
 }

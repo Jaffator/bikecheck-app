@@ -50,3 +50,8 @@ export async function changeRideBike(rideId: number, bikeId: number): Promise<{ 
     body: JSON.stringify({ bikeId }),
   });
 }
+
+// Removes a ride ridden on none of the rider's bikes; its wear comes off and Strava never sends it back.
+export async function dismissRide(rideId: number): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(`/rides/${rideId}/dismiss`, { method: "POST" });
+}

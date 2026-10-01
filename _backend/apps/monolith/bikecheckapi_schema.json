@@ -2626,6 +2626,30 @@
         ]
       }
     },
+    "/api/rides/{id}/dismiss": {
+      "post": {
+        "operationId": "Ride dismiss",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Remove a ride ridden on none of the user's bikes; its wear comes off for good",
+        "tags": [
+          "Ride"
+        ]
+      }
+    },
     "/api/reports/export": {
       "post": {
         "operationId": "Report exportReport",

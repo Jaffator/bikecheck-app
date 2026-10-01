@@ -1222,6 +1222,23 @@ export interface paths {
         patch: operations["Ride changeBike"];
         trace?: never;
     };
+    "/api/rides/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a ride ridden on none of the user's bikes; its wear comes off for good */
+        post: operations["Ride dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/export": {
         parameters: {
             query?: never;
@@ -6233,6 +6250,25 @@ export interface operations {
                 "application/json": components["schemas"]["ChangeRideBikeDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Ride dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

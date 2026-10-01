@@ -6,6 +6,7 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
+  type QueryClient,
   type UseInfiniteQueryResult,
   type UseMutationResult,
   type UseQueryResult,
@@ -14,6 +15,7 @@ import type { ApiError } from "@/api/client";
 import {
   changeRideBike,
   deleteRideCheckIn,
+  dismissRide,
   getCheckInPrompt,
   getFilteredRides,
   getRides,
@@ -96,12 +98,24 @@ export function useChangeRideBike(): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ rideId, bikeId }: { rideId: number; bikeId: number }) => changeRideBike(rideId, bikeId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["rides"] });
-      void queryClient.invalidateQueries({ queryKey: ["bikes"] });
-      void queryClient.invalidateQueries({ queryKey: ["bike-components"] });
-      void queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
-      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
+    onSuccess: () => invalidateRideWear(queryClient),
   });
+}
+
+// Removes a ride that was on none of the rider's bikes; its bike's readings drop with it.
+export function useDismissRide(): UseMutationResult<{ success: boolean }, ApiError, number> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (rideId: number) => dismissRide(rideId),
+    onSuccess: () => invalidateRideWear(queryClient),
+  });
+}
+
+// Everything a ride's wear leaving a bike changes: the lists, the readings and any band announcement.
+function invalidateRideWear(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: ["rides"] });
+  void queryClient.invalidateQueries({ queryKey: ["bikes"] });
+  void queryClient.invalidateQueries({ queryKey: ["bike-components"] });
+  void queryClient.invalidateQueries({ queryKey: ["tracked-actions"] });
+  void queryClient.invalidateQueries({ queryKey: ["notifications"] });
 }

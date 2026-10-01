@@ -41,7 +41,7 @@ interface SplitMetricEntry {
   pace_zone: number;
 }
 
-interface StravaActivityData {
+export interface StravaActivityData {
   activity_id: number;
   athleteid: number;
   gearid: string | null;

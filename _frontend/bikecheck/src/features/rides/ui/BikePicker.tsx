@@ -1,17 +1,21 @@
-// Picks the bike a ride goes on. Picking only reports the bike: the caller moves the ride
-// when it is saved, unlike ChangeBikeMenu, which moves it on pick.
-import type { CSSProperties, ReactElement } from "react";
+// Picks the bike a ride goes on, or none of the rider's. Picking only reports it: the caller
+// writes it when the ride is saved, unlike ChangeBikeMenu, which moves the ride on pick.
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { Box, Combobox, Group, Stack, Text, UnstyledButton, useCombobox } from "@mantine/core";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Ban, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import { bikeTitle, bikeTypeAndYear } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import type { BikePick } from "@/features/rides/checkInSave";
 import { useIsDesktop } from "@/layout/breakpoints";
 
 // The accent marks only "Změnit" and the picked bike's check.
 const ACCENT = "var(--mantine-color-primary-6)";
+const NOT_MINE_INK = "var(--mantine-color-text-7)";
+// The option's value; a bike's is its id, so it can never clash.
+const NOT_MINE = "not-mine";
 
 // A finger needs the taller row; a pointer gets the denser list.
 const ROW_HEIGHT = { phone: 48, desktop: 36 };
@@ -22,8 +26,10 @@ interface BikePickerProps {
   bikes: ListedBike[];
   // Null while the garage loads, or for a bike no longer in it; `fallbackName` stands in.
   picked: ListedBike | null;
+  // The rider picked none of their bikes; `picked` is then null.
+  notMine: boolean;
   fallbackName: string;
-  onPick: (bikeId: number) => void;
+  onPick: (pick: BikePick) => void;
   // Held by the caller, which dims what the open list covers.
   opened: boolean;
   onOpenedChange: (opened: boolean) => void;
@@ -32,12 +38,14 @@ interface BikePickerProps {
 export function BikePicker({
   bikes,
   picked,
+  notMine,
   fallbackName,
   onPick,
   opened,
   onOpenedChange,
 }: BikePickerProps): ReactElement {
-  const rowHeight = useIsDesktop() ? ROW_HEIGHT.desktop : ROW_HEIGHT.phone;
+  const isDesktop = useIsDesktop();
+  const rowHeight = isDesktop ? ROW_HEIGHT.desktop : ROW_HEIGHT.phone;
   const combobox = useCombobox({
     opened,
     onOpenedChange,
@@ -46,7 +54,7 @@ export function BikePicker({
   });
 
   function submit(value: string): void {
-    onPick(Number(value));
+    onPick(value === NOT_MINE ? { kind: "notMine" } : { kind: "bike", bikeId: Number(value) });
     combobox.closeDropdown();
   }
 
@@ -71,7 +79,7 @@ export function BikePicker({
             borderColor: opened ? "var(--color-border-solid)" : "var(--mantine-color-inputs-5)",
           }}
         >
-          {opened ? <ChooseBikeLabel /> : <PickedBike bike={picked} fallbackName={fallbackName} />}
+          <TriggerContent opened={opened} notMine={notMine} picked={picked} fallbackName={fallbackName} />
         </UnstyledButton>
       </Combobox.Target>
 
@@ -86,6 +94,7 @@ export function BikePicker({
               rowHeight={rowHeight}
             />
           ))}
+          <NotMineOption active={notMine} rowHeight={rowHeight} withHint={isDesktop} />
         </Combobox.Options>
       </Combobox.Dropdown>
     </Combobox>
@@ -104,14 +113,41 @@ const TRIGGER_STYLE: CSSProperties = {
   backgroundColor: "var(--mantine-color-cards-7)",
 };
 
-function PickedBike({ bike, fallbackName }: { bike: ListedBike | null; fallbackName: string }): ReactElement {
+interface TriggerContentProps {
+  opened: boolean;
+  notMine: boolean;
+  picked: ListedBike | null;
+  fallbackName: string;
+}
+
+function TriggerContent({ opened, notMine, picked, fallbackName }: TriggerContentProps): ReactElement {
   const { t } = useTranslation();
-  const name = bike === null ? fallbackName : nameWithoutYear(bike);
-  const meta = bike === null ? "" : bikeTypeAndYear(bike);
+  if (opened) return <ChooseBikeLabel />;
+  if (notMine) {
+    return (
+      <PickedRow
+        mark={<NotMineMark />}
+        name={t("checkIn.notMyBike")}
+        meta={t("checkIn.noBikeRide")}
+      />
+    );
+  }
+
+  return (
+    <PickedRow
+      mark={<BikeColorDot colorIndex={picked?.color_index ?? null} size={10} />}
+      name={picked === null ? fallbackName : nameWithoutYear(picked)}
+      meta={picked === null ? "" : bikeTypeAndYear(picked)}
+    />
+  );
+}
+
+function PickedRow({ mark, name, meta }: { mark: ReactNode; name: string; meta: string }): ReactElement {
+  const { t } = useTranslation();
 
   return (
     <>
-      <BikeColorDot colorIndex={bike?.color_index ?? null} size={10} />
+      {mark}
       <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
         <Text fz={16} fw={600} c="text.6" lineClamp={1}>
           {name}
@@ -172,6 +208,41 @@ function BikeOption({ bike, active, separated, rowHeight }: BikeOptionProps): Re
       {active && <Check size={16} strokeWidth={2.8} color={ACCENT} style={{ flexShrink: 0 }} />}
     </Combobox.Option>
   );
+}
+
+interface NotMineOptionProps {
+  active: boolean;
+  rowHeight: number;
+  // Desktop has the room to say what kind of bike that was.
+  withHint: boolean;
+}
+
+// Under a firmer line than the bikes': it is not one of them.
+function NotMineOption({ active, rowHeight, withHint }: NotMineOptionProps): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Combobox.Option
+      value={NOT_MINE}
+      active={active}
+      style={{ ...OPTION_STYLE, minHeight: rowHeight, borderTop: "1px solid var(--color-border-strong)" }}
+    >
+      <NotMineMark />
+      <Text fz={14} fw={600} c="text.7" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+        {t("checkIn.notMyBike")}
+        {withHint && (
+          <Text span inherit fw={400} c="var(--color-text-dim)">
+            {` · ${t("checkIn.notMyBikeHint")}`}
+          </Text>
+        )}
+      </Text>
+      {active && <Check size={16} strokeWidth={2.8} color={ACCENT} style={{ flexShrink: 0 }} />}
+    </Combobox.Option>
+  );
+}
+
+function NotMineMark(): ReactElement {
+  return <Ban size={16} strokeWidth={2} color={NOT_MINE_INK} style={{ flexShrink: 0 }} />;
 }
 
 const OPTION_STYLE: CSSProperties = {
