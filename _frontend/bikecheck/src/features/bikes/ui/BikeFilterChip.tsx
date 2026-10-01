@@ -1,4 +1,4 @@
-// A desktop filter chip: every bike or one, in its colour. Rides and Service share it.
+// A bike filter chip: every bike or one, in its colour. Rides, Service and the wear forecast share it.
 import type { ReactElement } from "react";
 import { UnstyledButton } from "@mantine/core";
 import { BikeColorDot } from "./BikeColorDot";

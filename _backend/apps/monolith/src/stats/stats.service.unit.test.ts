@@ -929,7 +929,7 @@ describe('StatsService', () => {
       expect(items[0].points.map((point) => point.percentage)).toEqual([0, 0, 0, 5]);
     });
 
-    it('keeps the 5 that run out soonest: overdue first, then by date, those without a date last', async () => {
+    it('lists every tracked action: overdue first, then by date, those without a date last', async () => {
       // ARRANGE: the Rallon rides 10 km a week, the Stumpy not at all.
       readings = [
         reading(RALLON, { current: 500, interval: 1000, percentage: 50 }, undefined, 1),
@@ -945,13 +945,15 @@ describe('StatsService', () => {
       // ACT
       const { items } = await stats.getWearForecast(OWNER_ID);
 
-      // ASSERT: 120 % and 105 % overdue, then 10, 30 and 40 weeks out; 50 weeks and no date are cut.
+      // ASSERT: 120 % and 105 % overdue, then 10, 30, 40 and 50 weeks out, then the Stumpy's with no date.
       expect(items.map((item) => [item.component_mounted_id, item.projected_date])).toEqual([
         [6, null],
         [3, null],
         [5, '2026-12-04'],
         [4, '2027-04-23'],
         [7, '2027-07-02'],
+        [1, '2027-09-10'],
+        [2, null],
       ]);
     });
   });

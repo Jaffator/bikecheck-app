@@ -40,7 +40,7 @@ export class StatsController {
     return await this.statsService.getDistance(Number(userId), period);
   }
 
-  // ---------- GET the Tracked Actions that run out soonest, with their wear curves ----------
+  // ---------- GET every Tracked Action, soonest to run out first, with its wear curve ----------
   @Get('wear-forecast')
   @ApiResponse({ status: 200, type: Response_WearForecastDto })
   async getWearForecast(@CurrentUser('userId') userId: string): Promise<Response_WearForecastDto> {

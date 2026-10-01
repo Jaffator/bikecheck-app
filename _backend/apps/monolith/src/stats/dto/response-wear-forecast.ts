@@ -36,7 +36,7 @@ export class Response_WearForecastItemDto extends Response_GarageTrackedActionDt
 export class Response_WearForecastDto {
   @ApiProperty({
     type: [Response_WearForecastItemDto],
-    description: 'Up to 5, soonest to run out first, overdue first',
+    description: 'Every tracked action, soonest to run out first, overdue first',
   })
   items!: Response_WearForecastItemDto[];
 }

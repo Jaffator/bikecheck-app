@@ -4430,7 +4430,7 @@ export interface components {
             points: components["schemas"]["Response_WearPointDto"][];
         };
         Response_WearForecastDto: {
-            /** @description Up to 5, soonest to run out first, overdue first */
+            /** @description Every tracked action, soonest to run out first, overdue first */
             items: components["schemas"]["Response_WearForecastItemDto"][];
         };
     };

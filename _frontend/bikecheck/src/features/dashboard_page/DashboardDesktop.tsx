@@ -11,6 +11,7 @@ import type { HomePeriod } from "@/features/stats/stats.types";
 import { DistanceCard } from "@/features/stats/ui/DistanceCard";
 import { HomePeriodSwitcher } from "@/features/stats/ui/HomePeriodSwitcher";
 import { SpendCard } from "@/features/stats/ui/SpendCard";
+import { WearForecastCard } from "@/features/stats/ui/WearForecastCard";
 import { useHeaderStore } from "@/store/store";
 import { ContextLine } from "./ContextLine";
 import { DashboardBanner } from "./DashboardBanner";
@@ -60,6 +61,7 @@ export function DashboardDesktop(): ReactElement {
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 4 }}>
           <Stack gap="md">
+            <WearForecastCard />
             <LastRidePanel />
             <RecentServicesPanel />
           </Stack>

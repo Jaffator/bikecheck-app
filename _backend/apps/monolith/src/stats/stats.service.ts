@@ -86,9 +86,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
 const PACE_WEEKS = 4;
-const FORECAST_ITEMS = 5;
 
-// Kept together so only the 5 soonest pay for rebuilding their curve.
+// Kept together so the sort reads the date before the curve is rebuilt.
 interface Projection {
   reading: GarageReading;
   rides: WearRide[];
@@ -257,7 +256,6 @@ export class StatsService {
     const items = readings
       .map((reading) => projection(reading, rides, now))
       .sort(soonestFirst(now))
-      .slice(0, FORECAST_ITEMS)
       .map((soonest) => forecastItem(soonest, now));
     return { items };
   }

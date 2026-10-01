@@ -73,6 +73,6 @@ export interface WearForecastItem extends GarageTrackedAction {
 }
 
 export interface WearForecast {
-  // Up to 5, soonest to run out first, overdue first.
+  // Every tracked action, soonest to run out first, overdue first.
   items: WearForecastItem[];
 }
