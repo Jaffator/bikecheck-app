@@ -2,12 +2,13 @@
 // writes it when the ride is saved, unlike ChangeBikeMenu, which moves the ride on pick.
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { Box, Combobox, Group, Stack, Text, UnstyledButton, useCombobox } from "@mantine/core";
-import { Ban, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Ban, Check, ChevronDown, ChevronUp, TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import { bikeTitle, bikeTypeAndYear } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { MISSING_BIKE_COLOR } from "@/features/rides/checkIn";
 import type { BikePick } from "@/features/rides/checkInSave";
 import { useIsDesktop } from "@/layout/breakpoints";
 
@@ -28,6 +29,8 @@ interface BikePickerProps {
   picked: ListedBike | null;
   // The rider picked none of their bikes; `picked` is then null.
   notMine: boolean;
+  // A pending ride with no bike picked yet; `picked` is then null.
+  missing: boolean;
   fallbackName: string;
   onPick: (pick: BikePick) => void;
   // Held by the caller, which dims what the open list covers.
@@ -39,6 +42,7 @@ export function BikePicker({
   bikes,
   picked,
   notMine,
+  missing,
   fallbackName,
   onPick,
   opened,
@@ -72,14 +76,14 @@ export function BikePicker({
       styles={{ dropdown: { overflow: "hidden" } }}
     >
       <Combobox.Target targetType="button">
-        <UnstyledButton
-          onClick={() => combobox.toggleDropdown()}
-          style={{
-            ...TRIGGER_STYLE,
-            borderColor: opened ? "var(--color-border-solid)" : "var(--mantine-color-inputs-5)",
-          }}
-        >
-          <TriggerContent opened={opened} notMine={notMine} picked={picked} fallbackName={fallbackName} />
+        <UnstyledButton onClick={() => combobox.toggleDropdown()} style={triggerStyle(opened, missing)}>
+          <TriggerContent
+            opened={opened}
+            notMine={notMine}
+            missing={missing}
+            picked={picked}
+            fallbackName={fallbackName}
+          />
         </UnstyledButton>
       </Combobox.Target>
 
@@ -113,16 +117,31 @@ const TRIGGER_STYLE: CSSProperties = {
   backgroundColor: "var(--mantine-color-cards-7)",
 };
 
+// A missing bike is framed and tinted in the due colour until the list opens over it.
+function triggerStyle(opened: boolean, missing: boolean): CSSProperties {
+  if (opened) return { ...TRIGGER_STYLE, borderColor: "var(--color-border-solid)" };
+  if (missing) {
+    return {
+      ...TRIGGER_STYLE,
+      borderColor: MISSING_BIKE_COLOR,
+      backgroundColor: `color-mix(in srgb, ${MISSING_BIKE_COLOR} 10%, var(--mantine-color-cards-7))`,
+    };
+  }
+  return { ...TRIGGER_STYLE, borderColor: "var(--mantine-color-inputs-5)" };
+}
+
 interface TriggerContentProps {
   opened: boolean;
   notMine: boolean;
+  missing: boolean;
   picked: ListedBike | null;
   fallbackName: string;
 }
 
-function TriggerContent({ opened, notMine, picked, fallbackName }: TriggerContentProps): ReactElement {
+function TriggerContent({ opened, notMine, missing, picked, fallbackName }: TriggerContentProps): ReactElement {
   const { t } = useTranslation();
   if (opened) return <ChooseBikeLabel />;
+  if (missing) return <MissingBikeLabel />;
   if (notMine) {
     return (
       <PickedRow
@@ -172,6 +191,19 @@ function ChooseBikeLabel(): ReactElement {
         {t("checkIn.chooseBike")}
       </Text>
       <ChevronUp size={16} strokeWidth={2.4} color="var(--mantine-color-text-7)" style={{ flexShrink: 0 }} />
+    </>
+  );
+}
+
+function MissingBikeLabel(): ReactElement {
+  const { t } = useTranslation();
+  return (
+    <>
+      <TriangleAlert size={18} strokeWidth={2} color={MISSING_BIKE_COLOR} style={{ flexShrink: 0 }} />
+      <Text fz={15} fw={600} c="text.6" style={{ flex: 1 }}>
+        {t("checkIn.chooseBike")}
+      </Text>
+      <ChevronDown size={16} strokeWidth={2.4} color={MISSING_BIKE_COLOR} style={{ flexShrink: 0 }} />
     </>
   );
 }

@@ -7,6 +7,7 @@ import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-u
 import { LinkStravaGearDto } from './dto/link-strava-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import { ResolvePendingActivityDto } from './dto/resolve-pending-activity.dto';
+import { ResponseResolvePendingActivityDto } from './dto/response-resolve-pending-activity.dto';
 import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
 
 @Controller('strava')
@@ -88,22 +89,20 @@ export class StravaController {
   // ---------- POST assign a pending ride to a bike ----------
   @ApiOperation({ summary: 'Assign a pending ride to a BikeCheck bike' })
   @ApiBody({ type: ResolvePendingActivityDto })
-  @ApiResponse({ status: 201 })
+  @ApiResponse({ status: 201, type: ResponseResolvePendingActivityDto })
   @Post('pending-activities/:activityId/resolve')
-  // Returns a body on purpose: the shared frontend client parses every 2xx as
-  // JSON, and an empty response would leave it parsing nothing.
   async resolvePendingActivity(
     @CurrentUser('userId') userId: string,
     @Param('activityId') activityId: string,
     @Body() body: ResolvePendingActivityDto,
-  ): Promise<{ success: boolean }> {
-    await this.stravaEventService.resolvePendingActivities_noGear({
+  ): Promise<ResponseResolvePendingActivityDto> {
+    const rideId = await this.stravaEventService.resolvePendingActivities_noGear({
       userId: Number(userId),
       activityId: BigInt(activityId),
       bikeId: body.bikeId,
       gearId: null,
     });
-    return { success: true };
+    return { success: true, rideId };
   }
 
   // ---------- POST dismiss a pending ride ----------

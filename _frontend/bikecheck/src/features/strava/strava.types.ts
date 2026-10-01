@@ -42,10 +42,18 @@ export interface PendingRide {
   name: string;
   // Strava's simplified route, encoded. Null for rides recorded without GPS.
   summary_polyline: string | null;
+  // Strava's sport type, e.g. "MountainBikeRide"; null where Strava sent none.
+  sport_type: string | null;
   distance_km: number;
   duration_min: number;
   elevation_up_m: number;
   created_at: string;
+}
+
+// Mirrors ResponseResolvePendingActivityDto: the ride the pending one became.
+export interface ResolvedPendingRide {
+  success: boolean;
+  rideId: number;
 }
 
 // Mirrors ResponseStravaSyncDto; queued rides land a few seconds later, not in the response.

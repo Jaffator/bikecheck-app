@@ -11,7 +11,7 @@ import {
   dismissPendingRide,
   syncStrava,
 } from "./strava.api";
-import type { GearLinkingData, GearLink, PendingRide, StravaSyncResult } from "./strava.types";
+import type { GearLinkingData, GearLink, PendingRide, ResolvedPendingRide, StravaSyncResult } from "./strava.types";
 import type { ApiError } from "@/api/client";
 import { BADGE_POLL_MS } from "@/features/notifications/notifications.queries";
 
@@ -69,7 +69,7 @@ export function usePendingRides(): UseQueryResult<PendingRide[]> {
 
 // Assigns a pending ride and refetches affected ride, bike, and notification data.
 export function useResolvePendingRide(): UseMutationResult<
-  { success: boolean },
+  ResolvedPendingRide,
   ApiError,
   { activityId: string; bikeId: number }
 > {

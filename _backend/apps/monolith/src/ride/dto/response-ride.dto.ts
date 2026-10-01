@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { check_in_status, check_in_symptom } from '@prisma/client';
 import { Response_WoreOffLineDto } from '../../service-tracking/dto/response-wore-off-line';
+import { ResponsePendingStravaDto } from '../../strava/dto/response-pending-strava.dto';
 
 // How the bike rode on the ride, as its rider said.
 export class ResponseRideCheckInDto {
@@ -140,4 +141,13 @@ export class ResponseRidePageDto {
 
   @ApiProperty({ type: ResponseRideFiguresDto })
   figures!: ResponseRideFiguresDto;
+}
+
+// What the check-in drawer walks: rides without a check-in and rides still waiting for a bike.
+export class ResponseCheckInPromptDto {
+  @ApiProperty({ type: [ResponseRideDto] })
+  rides!: ResponseRideDto[];
+
+  @ApiProperty({ type: [ResponsePendingStravaDto] })
+  pending!: ResponsePendingStravaDto[];
 }

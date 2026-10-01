@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { check_in_status, Prisma } from '@prisma/client';
+import { check_in_status, Prisma, type strava_pending_activities } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere } from '../bike/owned-bike.where';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
@@ -14,7 +14,14 @@ import {
 } from '../service-tracking/ride-wear';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 import type { StravaActivityData } from '../strava/strava.service';
-import { ResponseRideCheckInDto, ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
+import type { ResponsePendingStravaDto } from '../strava/dto/response-pending-strava.dto';
+import { toPendingDto } from '../strava/pending-activity';
+import {
+  ResponseCheckInPromptDto,
+  ResponseRideCheckInDto,
+  ResponseRideDto,
+  ResponseRidePageDto,
+} from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
 import { isDay, isTimeZone, localDay, previousRange, startedWithin, type DayRange } from './ride-period';
 import { figuresOf, summedRideSelect, weeksOf, type SummedRide } from './ride-totals';
@@ -61,20 +68,33 @@ export class RideService {
   ) {}
 
   /**
-   * The rides the phone's check-in drawer offers: recent ones without a check-in, newest first,
-   * and none at all until a ride has arrived since the drawer last opened.
+   * What the check-in drawer walks: recent rides without a check-in and recent rides still waiting
+   * for a bike, and nothing at all until one of either has arrived since the drawer last opened.
    */
-  async findCheckInPrompt(userId: number, now: Date = new Date()): Promise<ResponseRideDto[]> {
+  async findCheckInPrompt(userId: number, now: Date = new Date()): Promise<ResponseCheckInPromptDto> {
+    const since = promptSince(now);
     const user = await this.prisma.users.findUnique({ where: { id: userId }, select: { check_in_prompted_at: true } });
     const rows = await this.prisma.rides.findMany({
-      where: { ...listedRidesWhere(userId), started_at: { gte: promptSince(now) } },
+      where: { ...listedRidesWhere(userId), started_at: { gte: since } },
       orderBy: { started_at: 'desc' },
       include: { bikes: { select: BIKE_SELECT }, check_in: { select: CHECK_IN_SELECT } },
     });
+    // Resolved rows too: they date the rides assigned from them. Arrived before it started is
+    // impossible, so the arrival bound narrows the read safely.
+    const pendingRows = await this.prisma.strava_pending_activities.findMany({
+      where: { user_id: userId, created_at: { gte: since } },
+      orderBy: { created_at: 'desc' },
+    });
+    const pending = waitingForBike(pendingRows, since);
 
-    const offered = promptedRides(rows, user?.check_in_prompted_at ?? null, now);
+    const recent = rows.filter((row) => row.started_at !== null && row.started_at >= since);
+    const arrivals = [...recent.map((row) => arrivedAt(row, pendingRows)), ...pending.map((one) => one.created_at)];
+    if (!anyArrived(arrivals, user?.check_in_prompted_at ?? null)) return { rides: [], pending: [] };
+
+    // Skipped rides come back with the next arrival while they are recent.
+    const offered = recent.filter((row) => row.check_in === null);
     const woreOff = await this.serviceTracking.getWoreOff(userId, offered);
-    return (offered as RideRow[]).map((row) => toRideDto(row, woreOff.get(row.id) ?? []));
+    return { rides: (offered as RideRow[]).map((row) => toRideDto(row, woreOff.get(row.id) ?? [])), pending };
   }
 
   // Saving again overwrites: a ride keeps only its last check-in.
@@ -340,18 +360,28 @@ function promptSince(now: Date): Date {
   return new Date(now.getTime() - CHECK_IN_PROMPT_DAYS * DAY_MS);
 }
 
-interface PromptRow {
-  started_at: Date | null;
-  created_at: Date | null;
-  check_in: CheckInRow | null;
+// Unresolved and started in the window; a backfill lands now but may have been ridden long ago.
+function waitingForBike(rows: strava_pending_activities[], since: Date): ResponsePendingStravaDto[] {
+  return rows
+    .filter((row) => row.resolved_at === null)
+    .map(toPendingDto)
+    .filter((one) => new Date(one.started_at) >= since);
 }
 
-// A ride that arrived after the last drawer opens it; skipped rides come back with it while recent.
-function promptedRides<T extends PromptRow>(rows: T[], promptedAt: Date | null, now: Date): T[] {
-  const since = promptSince(now);
-  const recent = rows.filter((row) => row.started_at !== null && row.started_at >= since);
-  const arrived = recent.some((row) => promptedAt === null || (row.created_at !== null && row.created_at > promptedAt));
-  return arrived ? recent.filter((row) => row.check_in === null) : [];
+// A ride assigned from Pending reached BikeCheck when its pending row did, not when it was assigned.
+function arrivedAt(
+  ride: { activity_strava_id: bigint | null; created_at: Date | null },
+  pendingRows: { activity_id: bigint; created_at: Date }[],
+): Date | null {
+  const parked = pendingRows.find(
+    (row) => ride.activity_strava_id !== null && row.activity_id === ride.activity_strava_id,
+  );
+  return parked?.created_at ?? ride.created_at;
+}
+
+// Anything that reached BikeCheck after the last drawer opens it; a drawer never opened takes all.
+function anyArrived(arrivals: (Date | null)[], promptedAt: Date | null): boolean {
+  return arrivals.some((arrived) => promptedAt === null || (arrived !== null && arrived > promptedAt));
 }
 
 export interface RidePeriodQuery {

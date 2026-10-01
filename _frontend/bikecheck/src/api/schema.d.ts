@@ -1126,7 +1126,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Recent rides without a check-in; empty unless a ride arrived since the last drawer */
+        /** Recent rides without a check-in and pending rides; empty unless one arrived since the last drawer */
         get: operations["Ride findCheckInPrompt"];
         put?: never;
         post?: never;
@@ -3279,6 +3279,8 @@ export interface components {
             name: string;
             /** @example snttH{s`|A[VJrD */
             summary_polyline: Record<string, never> | null;
+            /** @example MountainBikeRide */
+            sport_type: string | null;
             /** @example 42 */
             distance_km: number;
             /** @example 96 */
@@ -3294,6 +3296,12 @@ export interface components {
         ResolvePendingActivityDto: {
             /** @example 1 */
             bikeId: number;
+        };
+        ResponseResolvePendingActivityDto: {
+            /** @example true */
+            success: boolean;
+            /** @example 42 */
+            rideId: number;
         };
         Response_WoreOffLineDto: {
             /** @example 55 */
@@ -3377,6 +3385,10 @@ export interface components {
             created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
             check_in: components["schemas"]["ResponseRideCheckInDto"] | null;
+        };
+        ResponseCheckInPromptDto: {
+            rides: components["schemas"]["ResponseRideDto"][];
+            pending: components["schemas"]["ResponsePendingStravaDto"][];
         };
         SaveRideCheckInDto: {
             /** @enum {string} */
@@ -6082,7 +6094,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ResponseResolvePendingActivityDto"];
+                };
             };
         };
     };
@@ -6119,7 +6133,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResponseRideDto"][];
+                    "application/json": components["schemas"]["ResponseCheckInPromptDto"];
                 };
             };
         };

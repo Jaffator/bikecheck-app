@@ -1,5 +1,6 @@
 // Mirrors backend ride DTOs.
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import type { PendingRide } from "@/features/strava/strava.types";
 
 // What a ride wore off one Tracked Action, named by the same pieces the Tracked Action carries.
 export type WoreOffLine = Pick<
@@ -69,6 +70,12 @@ export interface Ride {
   wore_off: WoreOffLine[];
   // Null until the rider says how the bike rode.
   check_in: RideCheckIn | null;
+}
+
+// What the check-in walks: rides on a bike without a check-in, and rides still waiting for a bike.
+export interface CheckInPrompt {
+  rides: Ride[];
+  pending: PendingRide[];
 }
 
 // A week holding rides on the page, totalled over all its rides inside the filter.

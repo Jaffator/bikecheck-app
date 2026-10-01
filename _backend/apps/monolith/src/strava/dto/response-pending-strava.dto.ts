@@ -27,6 +27,10 @@ export class ResponsePendingStravaDto {
   @ApiProperty({ example: 'snttH{s`|A[VJrD', nullable: true })
   summary_polyline!: string | null;
 
+  // Strava's sport type, lifted out of the raw payload. Null where Strava sent none.
+  @ApiProperty({ type: String, example: 'MountainBikeRide', nullable: true })
+  sport_type!: string | null;
+
   @ApiProperty({ example: 42 })
   distance_km!: number;
 

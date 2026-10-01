@@ -343,7 +343,10 @@
     "notMyBikeHint": "rental, test, someone else's",
     "noBikeRide": "Ride without a bike",
     "notMyBikeInfo": "The ride is removed from BikeCheck and doesn't count toward wear.",
-    "saveWithoutBike": "Save without a bike"
+    "saveWithoutBike": "Save without a bike",
+    "required": "Required",
+    "missingBikeInfo": "This ride has no bike. Until you pick one, it doesn't count toward part wear.",
+    "pickBikeFirst": "Pick a bike first"
   },
   "ridesTable": {
     "allBikes": "All bikes",

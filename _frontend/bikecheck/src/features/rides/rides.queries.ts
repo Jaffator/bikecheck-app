@@ -22,7 +22,7 @@ import {
   markCheckInPromptSeen,
   saveRideCheckIn,
 } from "./rides.api";
-import type { Ride, RideCheckIn, RidePage } from "./rides.types";
+import type { CheckInPrompt, RideCheckIn, RidePage } from "./rides.types";
 import { TABLE_PAGE_SIZE, type RideFilter } from "./ridesTable";
 
 // Limits each request payload.
@@ -31,8 +31,8 @@ const PAGE_SIZE = 20;
 // Under "rides", so whatever refreshes the ride lists refreshes the prompt with them.
 export const CHECK_IN_PROMPT_KEY = ["rides", "check-in-prompt"];
 
-// The phone's check-in queue; only the phone's drawer asks for it.
-export function useCheckInPrompt(): UseQueryResult<Ride[]> {
+// The check-in's queue; only the check-in asks for it.
+export function useCheckInPrompt(): UseQueryResult<CheckInPrompt> {
   return useQuery({ queryKey: CHECK_IN_PROMPT_KEY, queryFn: getCheckInPrompt });
 }
 

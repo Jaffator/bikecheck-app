@@ -15,7 +15,7 @@ import {
 import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RideService } from './ride.service';
-import { ResponseRideCheckInDto, ResponseRideDto, ResponseRidePageDto } from './dto/response-ride.dto';
+import { ResponseCheckInPromptDto, ResponseRideCheckInDto, ResponseRidePageDto } from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
 import { ChangeRideBikeDto } from './dto/change-ride-bike.dto';
 
@@ -24,10 +24,12 @@ export class RideController {
   constructor(private readonly rideService: RideService) {}
 
   // ---------- GET the rides the check-in drawer offers ----------
-  @ApiOperation({ summary: 'Recent rides without a check-in; empty unless a ride arrived since the last drawer' })
-  @ApiResponse({ status: 200, type: [ResponseRideDto] })
+  @ApiOperation({
+    summary: 'Recent rides without a check-in and pending rides; empty unless one arrived since the last drawer',
+  })
+  @ApiResponse({ status: 200, type: ResponseCheckInPromptDto })
   @Get('check-in-prompt')
-  findCheckInPrompt(@CurrentUser('userId') userId: string): Promise<ResponseRideDto[]> {
+  findCheckInPrompt(@CurrentUser('userId') userId: string): Promise<ResponseCheckInPromptDto> {
     return this.rideService.findCheckInPrompt(Number(userId));
   }
 

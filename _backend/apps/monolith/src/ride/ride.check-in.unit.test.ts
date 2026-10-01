@@ -25,6 +25,32 @@ function ride(id: number, startedDaysAgo: number, createdDaysAgo: number, checkI
   };
 }
 
+// A pending Strava activity as the prompt query reads it.
+function pending(
+  activityId: number,
+  startedDaysAgo: number,
+  createdDaysAgo: number,
+  resolvedAt: Date | null = null,
+): object {
+  return {
+    id: activityId,
+    activity_id: BigInt(activityId),
+    user_id: 1,
+    gear_id: null,
+    analyzed_data: {
+      started_at: daysAgo(startedDaysAgo).toISOString(),
+      name: 'Evening Ride',
+      summary_polyline: null,
+      distance_km: 30.4,
+      duration_min: 90.2,
+      elevation_up_m: 512.3,
+      rawJson: { sport_type: 'MountainBikeRide' },
+    },
+    created_at: daysAgo(createdDaysAgo),
+    resolved_at: resolvedAt,
+  };
+}
+
 describe('RideService check-in', () => {
   let service: RideService;
 
@@ -33,11 +59,13 @@ describe('RideService check-in', () => {
     rides: { findMany: jest.fn(), findFirst: jest.fn() },
     users: { findUnique: jest.fn(), update: jest.fn() },
     ride_check_ins: { upsert: jest.fn(), deleteMany: jest.fn() },
+    strava_pending_activities: { findMany: jest.fn() },
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     mockServiceTracking.getWoreOff.mockResolvedValue(new Map());
+    mockPrisma.strava_pending_activities.findMany.mockResolvedValue([]);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RideService,
@@ -56,7 +84,7 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.map((one) => one.id)).toEqual([3, 2]);
+      expect(prompt.rides.map((one) => one.id)).toEqual([3, 2]);
     });
 
     // The drawer has already shown these, so it stays shut on every phone.
@@ -66,7 +94,7 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt).toEqual([]);
+      expect(prompt.rides).toEqual([]);
     });
 
     it('leaves out a ride started more than 14 days ago, even a skipped one', async () => {
@@ -75,7 +103,7 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.map((one) => one.id)).toEqual([3]);
+      expect(prompt.rides.map((one) => one.id)).toEqual([3]);
       const since = mockPrisma.rides.findMany.mock.calls[0][0].where.started_at.gte as Date;
       expect(since).toEqual(daysAgo(14));
     });
@@ -89,7 +117,7 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.map((one) => one.id)).toEqual([3]);
+      expect(prompt.rides.map((one) => one.id)).toEqual([3]);
     });
 
     // Skipped rides come back with the next new ride, even when that one was checked in elsewhere.
@@ -102,7 +130,7 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.map((one) => one.id)).toEqual([2]);
+      expect(prompt.rides.map((one) => one.id)).toEqual([2]);
     });
 
     it('offers every recent ride to a user the drawer has never opened for', async () => {
@@ -111,14 +139,16 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.map((one) => one.id)).toEqual([3, 2]);
+      expect(prompt.rides.map((one) => one.id)).toEqual([3, 2]);
     });
 
     it('carries the check-in on the ride it serves', async () => {
       mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
       mockPrisma.rides.findMany.mockResolvedValue([ride(3, 1, 1)]);
 
-      const [offered] = await service.findCheckInPrompt(1, NOW);
+      const {
+        rides: [offered],
+      } = await service.findCheckInPrompt(1, NOW);
 
       expect(offered.check_in).toBeNull();
     });
@@ -128,9 +158,89 @@ describe('RideService check-in', () => {
       mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
       mockPrisma.rides.findMany.mockResolvedValue([ride(3, 2, 1)]);
 
-      const [offered] = await service.findCheckInPrompt(1, NOW);
+      const {
+        rides: [offered],
+      } = await service.findCheckInPrompt(1, NOW);
 
       expect(offered.created_at).toBe('2026-09-28T12:00:00.000Z');
+    });
+  });
+
+  describe('findCheckInPrompt with pending rides', () => {
+    // A ride with no bike is news too, so it wakes the drawer on its own.
+    it('opens on a pending ride that arrived since the drawer last opened, even with no new ride', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(1) });
+      mockPrisma.rides.findMany.mockResolvedValue([ride(2, 3, 3)]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([pending(900, 0.5, 0.5)]);
+
+      const prompt = await service.findCheckInPrompt(1, NOW);
+
+      expect(prompt.rides.map((one) => one.id)).toEqual([2]);
+      expect(prompt.pending.map((one) => one.activity_id)).toEqual(['900']);
+    });
+
+    it('offers both lists once a ride has arrived, the rides by their usual rules', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(2) });
+      mockPrisma.rides.findMany.mockResolvedValue([
+        ride(3, 1, 1),
+        ride(2, 3, 3, { status: 'OK', symptoms: [], note: null }),
+        ride(1, 4, 4),
+      ]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([pending(900, 5, 5)]);
+
+      const prompt = await service.findCheckInPrompt(1, NOW);
+
+      expect(prompt.rides.map((one) => one.id)).toEqual([3, 1]);
+      expect(prompt.pending.map((one) => one.activity_id)).toEqual(['900']);
+    });
+
+    it('offers neither list when nothing has arrived since the drawer last opened', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(1) });
+      mockPrisma.rides.findMany.mockResolvedValue([ride(2, 3, 3)]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([pending(900, 3, 3)]);
+
+      const prompt = await service.findCheckInPrompt(1, NOW);
+
+      expect(prompt).toEqual({ rides: [], pending: [] });
+    });
+
+    // The desktop card names what Strava recorded the ride as.
+    it('carries the sport type of a pending ride', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
+      mockPrisma.rides.findMany.mockResolvedValue([]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([pending(900, 1, 1)]);
+
+      const {
+        pending: [offered],
+      } = await service.findCheckInPrompt(1, NOW);
+
+      expect(offered.sport_type).toBe('MountainBikeRide');
+    });
+
+    // A 60-day backfill lands now, but only rides started in the window are asked about.
+    it('leaves out a pending ride started more than 14 days ago, and a resolved one', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
+      mockPrisma.rides.findMany.mockResolvedValue([]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([
+        pending(901, 1, 1),
+        pending(902, 15, 1),
+        pending(903, 2, 2, daysAgo(1)),
+      ]);
+
+      const prompt = await service.findCheckInPrompt(1, NOW);
+
+      expect(prompt.pending.map((one) => one.activity_id)).toEqual(['901']);
+    });
+
+    // Assigning a pending ride, here or in the drawer, is not a new arrival on any device.
+    it('dates a ride assigned from a pending ride by when the pending ride arrived', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(1) });
+      mockPrisma.rides.findMany.mockResolvedValue([{ ...ride(5, 3, 0.1), activity_strava_id: 900n }]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([pending(900, 3, 3, daysAgo(0.1))]);
+
+      const prompt = await service.findCheckInPrompt(1, NOW);
+
+      expect(prompt).toEqual({ rides: [], pending: [] });
     });
   });
 

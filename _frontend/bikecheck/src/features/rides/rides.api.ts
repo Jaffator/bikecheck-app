@@ -1,11 +1,11 @@
 // Ride API calls use the shared client.
 import { apiFetch } from "@/api/client";
-import type { Ride, RideCheckIn, RidePage } from "./rides.types";
+import type { CheckInPrompt, RideCheckIn, RidePage } from "./rides.types";
 import type { RideFilter } from "./ridesTable";
 
-// The rides the phone's check-in drawer offers; empty unless a ride arrived since it last opened.
-export async function getCheckInPrompt(): Promise<Ride[]> {
-  return apiFetch<Ride[]>("/rides/check-in-prompt");
+// What the check-in walks; both lists empty unless a ride arrived since it last opened.
+export async function getCheckInPrompt(): Promise<CheckInPrompt> {
+  return apiFetch<CheckInPrompt>("/rides/check-in-prompt");
 }
 
 export async function markCheckInPromptSeen(): Promise<{ success: boolean }> {

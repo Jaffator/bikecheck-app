@@ -19,7 +19,7 @@ import type { PendingActivities } from '../notification/notification-types.confi
 import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
-import type { strava_pending_activities } from '@prisma/client';
+import { toPendingDto } from './pending-activity';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
 import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
@@ -501,7 +501,7 @@ export class StravaEventsService {
       where: { user_id: userId, resolved_at: null },
       orderBy: { created_at: 'desc' },
     });
-    return pending.map((activity) => this.toPendingDto(activity));
+    return pending.map(toPendingDto);
   }
 
   /**
@@ -512,29 +512,7 @@ export class StravaEventsService {
       where: { user_id: userId, activity_id: activityId, resolved_at: null },
     });
     if (!pending) throw new NotFoundException('Pending activity not found');
-    return this.toPendingDto(pending);
-  }
-
-  // Lifts the ride's own figures out of the stored analysis, so the client gets
-  // a flat row instead of the whole raw Strava blob.
-  private toPendingDto(activity: strava_pending_activities): ResponsePendingStravaDto {
-    const analyzed = activity.analyzed_data as StravaActivityData['analyzedData'];
-    return {
-      activity_id: String(activity.activity_id),
-      gear_id: activity.gear_id,
-      started_at: analyzed.started_at,
-      // Rides stored before the name was lifted out still carry it in the raw
-      // blob, so read that rather than showing them nameless.
-      name: analyzed.name ?? (analyzed.rawJson?.name as string | undefined) ?? '',
-      // Same fallback as the name: rides stored before the route was lifted out
-      // still carry it in the raw blob. Null for rides recorded without GPS.
-      summary_polyline:
-        analyzed.summary_polyline ?? (analyzed.rawJson?.map?.summary_polyline as string | undefined) ?? null,
-      distance_km: Math.round(analyzed.distance_km),
-      duration_min: Math.round(analyzed.duration_min),
-      elevation_up_m: Math.round(analyzed.elevation_up_m),
-      created_at: activity.created_at,
-    };
+    return toPendingDto(pending);
   }
 
   /**
@@ -624,8 +602,12 @@ export class StravaEventsService {
    * Resolves pending activities that have no Strava gearId.
    * - If activityId is provided: assigns a single activity to the given bike.
    * - If activityId is omitted: assigns ALL pending activities without gearId to the given bike.
+   * Returns the ride the one activity became; null after a backfill of all.
    */
-  async resolvePendingActivities_noGear(params: PendingActivities): Promise<void> {
+  async resolvePendingActivities_noGear(params: PendingActivities & { activityId: bigint }): Promise<number>;
+  async resolvePendingActivities_noGear(params: PendingActivities): Promise<number | null>;
+  async resolvePendingActivities_noGear(params: PendingActivities): Promise<number | null> {
+    let rideId: number | null = null;
     if (params.activityId) {
       // Resolve only one selected activity
       // No gear_id filter: the user assigns the ride by hand either way, and a
@@ -637,7 +619,7 @@ export class StravaEventsService {
       if (!pending) throw new NotFoundException('No pending activity found');
 
       const analyzedData = pending.analyzed_data as StravaActivityData['analyzedData'];
-      await this.saveRide(params.bikeId, params.userId, Number(pending.activity_id), analyzedData);
+      ({ rideId } = await this.saveRide(params.bikeId, params.userId, Number(pending.activity_id), analyzedData));
       await this.prisma.strava_pending_activities.update({
         where: { id: pending.id },
         data: { resolved_at: new Date() },
@@ -665,6 +647,7 @@ export class StravaEventsService {
     // Once, after the whole backfill rather than after each ride in it: the owner is told
     // where the bike stands now, not about every threshold it passed on the way.
     await this.serviceTracking.evaluateBike(params.bikeId, params.userId);
+    return rideId;
   }
   /**
    * Called when user links a Strava gear to a BikeCheck bike in settings.
@@ -718,7 +701,7 @@ export class StravaEventsService {
     userId: number,
     activityId: number,
     analyzedData: StravaActivityData['analyzedData'],
-  ): Promise<{ message: string; isNew: boolean }> {
+  ): Promise<{ message: string; isNew: boolean; rideId: number }> {
     // Fetch existing ride to compute diff and avoid double-counting on re-sync
     const existingRide = await this.prisma.rides.findUnique({
       where: { activity_strava_id: BigInt(activityId) },
@@ -824,7 +807,7 @@ export class StravaEventsService {
     } satisfies GeminiRideSummaryJob);
     // Callers announce a first-time ride and stay quiet about a re-sync, so the
     // upsert has to say which of the two it just did.
-    return { message: 'Ride saved and summary generation queued', isNew: existingRide === null };
+    return { message: 'Ride saved and summary generation queued', isNew: existingRide === null, rideId: ride.id };
   }
 
   private async wornPartIds(bikeId: number, ride: Pick<WearRide, 'started_at'>): Promise<number[]> {

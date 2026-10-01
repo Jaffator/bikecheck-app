@@ -2347,7 +2347,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResolvePendingActivityDto"
+                }
+              }
+            }
           }
         },
         "summary": "Assign a pending ride to a BikeCheck bike",
@@ -2390,16 +2397,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResponseRideDto"
-                  }
+                  "$ref": "#/components/schemas/ResponseCheckInPromptDto"
                 }
               }
             }
           }
         },
-        "summary": "Recent rides without a check-in; empty unless a ride arrived since the last drawer",
+        "summary": "Recent rides without a check-in and pending rides; empty unless one arrived since the last drawer",
         "tags": [
           "Ride"
         ]
@@ -7250,6 +7254,11 @@
             "example": "snttH{s`|A[VJrD",
             "nullable": true
           },
+          "sport_type": {
+            "type": "string",
+            "example": "MountainBikeRide",
+            "nullable": true
+          },
           "distance_km": {
             "type": "number",
             "example": 42
@@ -7274,6 +7283,7 @@
           "started_at",
           "name",
           "summary_polyline",
+          "sport_type",
           "distance_km",
           "duration_min",
           "elevation_up_m",
@@ -7290,6 +7300,23 @@
         },
         "required": [
           "bikeId"
+        ]
+      },
+      "ResponseResolvePendingActivityDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "rideId": {
+            "type": "number",
+            "example": 42
+          }
+        },
+        "required": [
+          "success",
+          "rideId"
         ]
       },
       "Response_WoreOffLineDto": {
@@ -7521,6 +7548,27 @@
           "created_at",
           "wore_off",
           "check_in"
+        ]
+      },
+      "ResponseCheckInPromptDto": {
+        "type": "object",
+        "properties": {
+          "rides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseRideDto"
+            }
+          },
+          "pending": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsePendingStravaDto"
+            }
+          }
+        },
+        "required": [
+          "rides",
+          "pending"
         ]
       },
       "SaveRideCheckInDto": {

@@ -1,6 +1,6 @@
 // Typed Strava endpoints use the shared API client.
 import { apiFetch } from "@/api/client";
-import type { GearLinkingData, GearLink, PendingRide, StravaSyncResult } from "./strava.types";
+import type { GearLinkingData, GearLink, PendingRide, ResolvedPendingRide, StravaSyncResult } from "./strava.types";
 
 export interface StravaAuthorizeUrl {
   url: string;
@@ -34,9 +34,9 @@ export async function getPendingRides(): Promise<PendingRide[]> {
   return apiFetch<PendingRide[]>("/strava/pending-activities");
 }
 
-// Assigns a pending ride and dismisses its notification.
-export async function resolvePendingRide(activityId: string, bikeId: number): Promise<{ success: boolean }> {
-  return apiFetch<{ success: boolean }>(`/strava/pending-activities/${activityId}/resolve`, {
+// Assigns a pending ride and dismisses its notification; answers with the ride it became.
+export async function resolvePendingRide(activityId: string, bikeId: number): Promise<ResolvedPendingRide> {
+  return apiFetch<ResolvedPendingRide>(`/strava/pending-activities/${activityId}/resolve`, {
     method: "POST",
     body: JSON.stringify({ bikeId }),
   });

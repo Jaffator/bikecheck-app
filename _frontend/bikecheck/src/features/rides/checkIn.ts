@@ -22,6 +22,9 @@ export const CHECK_IN_COLOR: Record<CheckInStatus, string> = {
   ISSUE: attentionColor(DUE_FROM),
 };
 
+// A ride with no bike reads as due: it counts on no part until one is picked.
+export const MISSING_BIKE_COLOR = attentionColor(DUE_FROM);
+
 // Status stays null until one is picked; symptoms survive a switch to OK and back.
 export interface CheckInDraft {
   status: CheckInStatus | null;

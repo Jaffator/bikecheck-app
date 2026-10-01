@@ -361,7 +361,10 @@
     "notMyBikeHint": "půjčené, testovací, cizí",
     "noBikeRide": "Jízda bez kola",
     "notMyBikeInfo": "Jízda se z BikeChecku odebere a do opotřebení se nepočítá.",
-    "saveWithoutBike": "Uložit bez kola"
+    "saveWithoutBike": "Uložit bez kola",
+    "required": "Povinné",
+    "missingBikeInfo": "Tahle jízda nemá kolo. Dokud ho nevybereš, nepočítá se do opotřebení dílů.",
+    "pickBikeFirst": "Nejdřív vyber kolo"
   },
   "ridesTable": {
     "allBikes": "Všechna kola",

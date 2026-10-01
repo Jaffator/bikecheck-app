@@ -225,6 +225,27 @@ describe('StravaEventsService', () => {
     });
   });
 
+  describe('assigning a pending ride', () => {
+    // The check-in drawer saves its check-in on the ride the pending one became.
+    it('returns the id of the ride it created', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue({
+        id: 3,
+        activity_id: 98765n,
+        analyzed_data: { distance_km: 42, started_at: '2026-09-20T08:00:00.000Z' },
+      });
+      mockPrisma.rides.upsert.mockResolvedValue({ id: 55, started_at: new Date('2026-09-20T08:00:00.000Z') });
+
+      const rideId = await service.resolvePendingActivities_noGear({
+        activityId: 98765n,
+        bikeId: BIKE_ID,
+        userId: OWNER_ID,
+        gearId: null,
+      });
+
+      expect(rideId).toBe(55);
+    });
+  });
+
   describe('dismissing a pending ride', () => {
     it('resolves the ride without saving it and clears its ask', async () => {
       mockPrisma.strava_pending_activities.findFirst.mockResolvedValue({ id: 3, activity_id: 98765n });

@@ -1,4 +1,5 @@
 // What the ride card draws, from a confirmed ride or a pending one alike.
+import type { CheckInItem } from "./checkInQueue";
 import type { Ride } from "./rides.types";
 
 export interface RideSummary {
@@ -8,8 +9,7 @@ export interface RideSummary {
   duration_min: number;
   elevation_up_m: number;
   summary_polyline: string | null;
-  // Only a confirmed ride carries it so far.
-  sport_type?: string | null;
+  sport_type: string | null;
 }
 
 // Whole km, the way a pending ride already arrives.
@@ -23,4 +23,9 @@ export function rideSummaryOf(ride: Ride): RideSummary {
     summary_polyline: ride.summary_polyline,
     sport_type: ride.sport_type,
   };
+}
+
+// A pending ride already arrives in the card's shape.
+export function checkInSummaryOf(item: CheckInItem): RideSummary {
+  return item.kind === "ride" ? rideSummaryOf(item.ride) : item.ride;
 }
