@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Drawer, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import { ActionIcon, Button, Drawer, Pagination, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
 import { CONTENT_MAX_WIDTH } from "./layout/contentWidth";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
@@ -143,6 +143,19 @@ function quietOutlineVars(prefix: "button" | "ai"): Record<string, string> {
   };
 }
 
+// Mantine runs in its light scheme here, so its own subtle hover is near-white; this keeps it on the card.
+const SUBTLE_HOVER = "var(--mantine-color-cards-5)";
+
+// Disabled buttons sink into the card instead of Mantine's light-grey default.
+function disabledLook(disabled: boolean | undefined): React.CSSProperties {
+  return {
+    "--mantine-color-disabled": "var(--mantine-color-cards-5)",
+    "--mantine-color-disabled-color": "var(--mantine-color-text-8)",
+    "--mantine-color-disabled-border": "var(--mantine-color-inputs-5)",
+    opacity: disabled === true ? 0.45 : undefined,
+  } as React.CSSProperties;
+}
+
 export const theme = createTheme({
   autoContrast: true,
   primaryColor: "primary",
@@ -168,25 +181,25 @@ export const theme = createTheme({
   breakpoints: { md: "60em" },
   respectReducedMotion: false,
   components: {
-    // Disabled buttons sink into the card instead of Mantine's light-grey default.
     Button: Button.extend({
       // A coloured outline (red.5 delete) keeps its colour.
       vars: (_theme, props) => ({
-        root: props.variant === "outline" && props.color === undefined ? quietOutlineVars("button") : {},
-      }),
-      styles: (_theme, props) => ({
         root: {
-          "--mantine-color-disabled": "var(--mantine-color-cards-5)",
-          "--mantine-color-disabled-color": "var(--mantine-color-text-8)",
-          opacity: props.disabled ? 0.45 : undefined,
-        } as React.CSSProperties,
+          ...(props.variant === "outline" && props.color === undefined ? quietOutlineVars("button") : {}),
+          ...(props.variant === "subtle" ? { "--button-hover": SUBTLE_HOVER } : {}),
+        },
       }),
+      styles: (_theme, props) => ({ root: disabledLook(props.disabled) }),
     }),
     // The same quiet secondary on an icon-only button (the ✗ beside a request's ✓).
     ActionIcon: ActionIcon.extend({
       vars: (_theme, props) => ({
-        root: props.variant === "outline" && props.color === undefined ? quietOutlineVars("ai") : {},
+        root: {
+          ...(props.variant === "outline" && props.color === undefined ? quietOutlineVars("ai") : {}),
+          ...(props.variant === "subtle" ? { "--ai-hover": SUBTLE_HOVER } : {}),
+        },
       }),
+      styles: (_theme, props) => ({ root: disabledLook(props.disabled) }),
     }),
     // A bottom sheet stays over the content column in a browser instead of spanning the window.
     Drawer: Drawer.extend({
@@ -201,6 +214,23 @@ export const theme = createTheme({
         root: { backgroundColor: "var(--mantine-color-inputs-6)" },
         indicator: { backgroundColor: "var(--mantine-color-cards-5)" },
         label: { color: "var(--color-text-dim)" },
+      },
+    }),
+    // Mantine's light-scheme controls read white/gray-4/gray-0 directly, so those are remapped to the quiet outline.
+    Pagination: Pagination.extend({
+      vars: () => ({
+        root: {
+          "--pagination-active-bg": "var(--mantine-color-primary-6)",
+          "--pagination-active-color": "var(--mantine-color-textDark-6)",
+        },
+      }),
+      styles: {
+        root: {
+          "--mantine-color-white": "var(--mantine-color-cards-7)",
+          "--mantine-color-gray-4": "var(--mantine-color-inputs-5)",
+          "--mantine-color-gray-0": "var(--mantine-color-cards-5)",
+          "--mantine-color-text": "var(--mantine-color-text-6)",
+        } as React.CSSProperties,
       },
     }),
   },

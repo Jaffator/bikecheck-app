@@ -1,14 +1,13 @@
 // The desktop rides table: its filter as the URL carries it, its weeks and how its figures read.
 import dayjs from "dayjs";
 import type { TFunction } from "i18next";
+import { parseHomePeriod } from "@/features/stats/homePeriod";
+import type { HomePeriod } from "@/features/stats/stats.types";
 import type { Ride } from "./rides.types";
 
 export const TABLE_PAGE_SIZE = 20;
-export const ALL_MONTHS = "all";
 
 const DAY_FORMAT = "YYYY-MM-DD";
-const MONTH_FORMAT = "YYYY-MM";
-const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 // Both days inclusive, YYYY-MM-DD, in the rider's time zone.
 export interface DayRange {
@@ -22,56 +21,56 @@ export interface RideFilter {
   range: DayRange | null;
 }
 
-// `?bike=&month=&page=`; a month is YYYY-MM or `all`.
+// `?bike=&period=&page=`, the same Period switcher Service has.
 export interface RideTableParams {
   bikeId: number | null;
-  month: string;
+  period: HomePeriod;
   page: number;
 }
 
-// Anything unreadable falls back to every bike, this month and the first page.
-export function readTableParams(params: URLSearchParams, today: dayjs.Dayjs = dayjs()): RideTableParams {
+// Anything unreadable falls back to every bike, the year and the first page.
+export function readTableParams(params: URLSearchParams): RideTableParams {
   const bike = Number(params.get("bike"));
-  const month = params.get("month");
   const page = Number(params.get("page"));
   return {
     bikeId: Number.isInteger(bike) && bike > 0 ? bike : null,
-    month: month !== null && (month === ALL_MONTHS || MONTH_PATTERN.test(month)) ? month : today.format(MONTH_FORMAT),
+    period: parseHomePeriod(params.get("period")),
     page: Number.isInteger(page) && page > 0 ? page : 1,
   };
 }
 
-export function filterOf(params: RideTableParams): RideFilter {
-  return { bikeId: params.bikeId, range: monthRange(params.month) };
+export function filterOf(params: RideTableParams, today: dayjs.Dayjs = dayjs()): RideFilter {
+  return { bikeId: params.bikeId, range: periodRange(params.period, today) };
 }
 
-function monthRange(month: string): DayRange | null {
-  if (month === ALL_MONTHS) return null;
-  const start = dayjs(`${month}-01`);
+// The whole calendar month or year, so the server compares it with the one before.
+function periodRange(period: HomePeriod, today: dayjs.Dayjs): DayRange | null {
+  if (period === "all") return null;
   return {
-    from: start.format(DAY_FORMAT),
-    to: start.endOf("month").format(DAY_FORMAT),
+    from: today.startOf(period).format(DAY_FORMAT),
+    to: today.endOf(period).format(DAY_FORMAT),
   };
 }
 
-// This month and the chosen one stay offered even before they have a ride.
-export function monthOptions(months: string[], chosen: string, today: dayjs.Dayjs = dayjs()): string[] {
-  const offered = new Set([...months, today.format(MONTH_FORMAT), ...(chosen === ALL_MONTHS ? [] : [chosen])]);
-  return [...offered].sort((a, b) => b.localeCompare(a));
+// "Září 2026" or "2026"; null for every ride.
+export function periodLabel(period: HomePeriod, language: string, today: dayjs.Dayjs = dayjs()): string | null {
+  if (period === "all") return null;
+  if (period === "year") return String(today.year());
+  return monthLabel(today, language);
 }
 
 // "Září 2026"; capitalised because it heads a figure, though Czech writes months small.
-export function monthLabel(month: string, language: string): string {
+function monthLabel(month: dayjs.Dayjs, language: string): string {
   const label = new Intl.DateTimeFormat(language, {
     month: "long",
     year: "numeric",
-  }).format(dayjs(`${month}-01`).toDate());
+  }).format(month.toDate());
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 // 1–12, which picks the grammatical form "proti srpnu" needs.
-export function previousMonthNumber(month: string): number {
-  return dayjs(`${month}-01`).subtract(1, "month").month() + 1;
+export function previousMonthNumber(today: dayjs.Dayjs = dayjs()): number {
+  return today.subtract(1, "month").month() + 1;
 }
 
 // The Monday of the rider's week, the way the server keys its weeks.
@@ -113,8 +112,4 @@ export function weekLabel(start: string, language: string, t: TFunction, today: 
 export function distanceChange(current: number, previous: number | null): number | null {
   if (previous === null || previous === 0) return null;
   return Math.round(((current - previous) / previous) * 100);
-}
-
-export function pageCount(total: number): number {
-  return Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
 }

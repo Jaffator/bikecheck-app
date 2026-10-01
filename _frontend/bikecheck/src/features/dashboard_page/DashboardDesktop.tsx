@@ -1,9 +1,7 @@
 // Desktop Home: a context line, the banner, the figures, then work and context as two column stacks, then the charts.
 import { useCallback, useEffect, type ReactElement } from "react";
-import { Button, Grid, Group, Stack } from "@mantine/core";
-import { useTranslation } from "react-i18next";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Grid, Stack } from "@mantine/core";
+import { useSearchParams } from "react-router-dom";
 import { GaragePanel } from "@/features/bikes/ui/GaragePanel";
 import { LastRidePanel } from "@/features/rides/ui/LastRidePanel";
 import { RecentServicesPanel } from "@/features/service/ui/RecentServicesPanel";
@@ -13,15 +11,12 @@ import type { HomePeriod } from "@/features/stats/stats.types";
 import { DistanceCard } from "@/features/stats/ui/DistanceCard";
 import { HomePeriodSwitcher } from "@/features/stats/ui/HomePeriodSwitcher";
 import { SpendCard } from "@/features/stats/ui/SpendCard";
-import { ADD_SERVICE } from "@/layout/navItems";
 import { useHeaderStore } from "@/store/store";
 import { ContextLine } from "./ContextLine";
 import { DashboardBanner } from "./DashboardBanner";
 import { DashboardFigures } from "./DashboardFigures";
 
 export function DashboardDesktop(): ReactElement {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const [searchParams, setSearchParams] = useSearchParams();
   // In the address, so a reload or Back keeps it; the year is the default and is not written.
@@ -43,28 +38,15 @@ export function DashboardDesktop(): ReactElement {
     [setSearchParams],
   );
 
-  // Home's controls hang in the header beside its title - see the header store. They leave with the page.
+  // Home's period switcher hangs in the header beside its title - see the header store. It leaves with the page.
   useEffect(() => {
-    setActionSlot(
-      <Group gap="sm" wrap="nowrap">
-        <HomePeriodSwitcher value={period} onChange={changePeriod} />
-        <Button
-          color="primary.6"
-          c="textDark.6"
-          radius="md"
-          leftSection={<Plus size={16} />}
-          onClick={() => navigate(ADD_SERVICE.path)}
-        >
-          {t(ADD_SERVICE.labelKey)}
-        </Button>
-      </Group>,
-    );
+    setActionSlot(<HomePeriodSwitcher value={period} onChange={changePeriod} />);
     return () => setActionSlot(null);
-  }, [setActionSlot, t, navigate, period, changePeriod]);
+  }, [setActionSlot, period, changePeriod]);
 
   return (
     // No top padding: the context line belongs to the header's title just above it.
-    <Stack gap="md" p="md" pt={0}>
+    <Stack gap="md" p="xl" pt={0}>
       <ContextLine />
       <DashboardBanner />
       <DashboardFigures period={period} />

@@ -17,7 +17,6 @@ import {
   QUIET_COLOR,
   attentionColor,
   trackedActionKey,
-  trackedPartLabel,
 } from "@/features/service_tracking/attentionLevel";
 import { readingFigure, remainingFigure } from "@/features/service_tracking/intervalFigures";
 import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
@@ -33,20 +32,27 @@ const JOB_COLUMNS = "minmax(0, 1fr) 130px 104px 136px";
 // The bar runs past the interval, so an overdue job reads beyond the mark rather than stopping at it.
 const BULLET_MAX = 125;
 
-export function JobsPanel(): ReactElement {
+interface JobsPanelProps {
+  // Set on the Service page, where null is every bike; Home passes none and links to Service.
+  bikeId?: number | null;
+}
+
+export function JobsPanel({ bikeId }: JobsPanelProps): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: due } = useGarageTrackedActions(DUE_FROM);
   const [opened, setOpened] = useState<TrackedAction | null>(null);
   const [planning, setPlanning] = useState<TrackedAction | null>(null);
 
-  const rows = [...(due ?? [])].sort((left, right) => right.percentage - left.percentage);
+  const rows = (due ?? [])
+    .filter((action) => bikeId === undefined || bikeId === null || action.bike_id === bikeId)
+    .sort((left, right) => right.percentage - left.percentage);
 
   return (
     <Panel
       title={t("tracking.needsAttention")}
-      count={due?.length}
-      link={{ label: t("page.service"), onClick: () => navigate("/service") }}
+      count={due === undefined ? undefined : rows.length}
+      link={bikeId === undefined ? { label: t("page.service"), onClick: () => navigate("/service") } : undefined}
     >
       {due === undefined && <PanelSkeletonRows count={4} />}
       {due !== undefined && rows.length === 0 && <NothingDue onOpen={setOpened} />}
@@ -80,7 +86,6 @@ function JobRow({
   const color = attentionColor(action.percentage);
   // Critical and overdue pull the eye; a warning waits its turn.
   const urgent = action.level === "critical" || action.level === "overdue";
-  const bike = [bikeTitle(action), action.component_desc].filter((part) => part !== null && part !== "").join(" · ");
 
   return (
     <Box
@@ -102,27 +107,25 @@ function JobRow({
         <Text fz={13} fw={600} c="text.6" lineClamp={1}>
           {catalogueLabel(action.action_i18n_key, action.action_name, t)}
         </Text>
-        <Eyebrow>{trackedPartLabel(action, t)}</Eyebrow>
-        {/* The bike's name gives way first; the reading behind the percentage stays whole. */}
-        <Group gap={6} wrap="nowrap" fz={13} c="var(--color-text-dim)" style={{ minWidth: 0 }}>
+        {/* The part is the drawer's to name; the row says only which bike. */}
+        <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
           <BikeColorDot colorIndex={colorIndexOf(bikes, action.bike_id)} size={6} />
-          <Text inherit lineClamp={1} style={{ minWidth: 0 }}>
-            {bike}
-          </Text>
-          <Text inherit style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
-            ·{" "}
-            <Text span inherit className="tabular-nums">
-              {readingFigure(action, i18n.language)}
-            </Text>
+          <Text fz={13} c="var(--color-text-dim)" lineClamp={1} style={{ minWidth: 0 }}>
+            {bikeTitle(action)}
           </Text>
         </Group>
       </Stack>
-      <Group gap={10} wrap="nowrap">
-        <BulletBar percentage={action.percentage} color={color} />
-        <Text className="tabular-nums" fz={13} fw={600} c={color} ta="right" w={48} style={{ flexShrink: 0 }}>
-          {t("tracking.percentage", { value: action.percentage })}
+      <Stack gap={4} style={{ minWidth: 0 }}>
+        <Group gap={10} wrap="nowrap">
+          <BulletBar percentage={action.percentage} color={color} />
+          <Text className="tabular-nums" fz={13} fw={600} c={color} ta="right" w={48} style={{ flexShrink: 0 }}>
+            {t("tracking.percentage", { value: action.percentage })}
+          </Text>
+        </Group>
+        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
+          {readingFigure(action, i18n.language)}
         </Text>
-      </Group>
+      </Stack>
       <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" ta="right" lineClamp={1}>
         {remainingLabel(action, i18n.language, t)}
       </Text>

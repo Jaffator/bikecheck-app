@@ -74,6 +74,13 @@ only the route and its empty state. See `docs/conventions/frontend-structure.md`
 Every bottom sheet opens with the same slide-up transition; a remounted one flips `opened`
 on the next frame so it animates. See `docs/conventions/drawers.md`.
 
+### Dark theme
+
+The app is dark only, but Mantine runs in its light scheme, so any Mantine component left on its
+defaults comes out white, with black text. Every new or changed component must use the dark tokens
+(`cards`/`inputs`/`text` ramps, `--color-*`). If a Mantine component has no override yet, add one
+to `theme.ts`. Check every new UI against the dark look before reporting it done.
+
 ### Typography
 
 Geist only; figures get `tabular-nums`, weights 400–700, letter-spacing only via `--tracking-*` tokens.

@@ -290,7 +290,7 @@ function Tiles({ bikeId }: { bikeId: number }): ReactElement {
 
   return (
     <BikeActionTiles
-      onOpenHistory={() => navigate(`/bikes/${id}/history`)}
+      onOpenHistory={() => navigate(`/service?bike=${id}`)}
       onOpenSetup={() => navigate(`/bikes/${id}/setup`)}
     />
   );
@@ -310,7 +310,7 @@ function RecentHistory({ bikeId }: { bikeId: number }): ReactElement {
         isError={isError}
         footer={
           <UnstyledButton
-            onClick={() => navigate(`/bikes/${String(bikeId)}/history`)}
+            onClick={() => navigate(`/service?bike=${String(bikeId)}`)}
             className="hover-veil"
             p="0.875rem"
             w="100%"

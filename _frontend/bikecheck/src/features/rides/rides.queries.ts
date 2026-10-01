@@ -16,7 +16,6 @@ import {
   deleteRideCheckIn,
   getCheckInPrompt,
   getFilteredRides,
-  getRideMonths,
   getRides,
   markCheckInPromptSeen,
   saveRideCheckIn,
@@ -76,10 +75,6 @@ export function useFilteredRides(filter: RideFilter, page: number): UseQueryResu
     queryFn: () => getFilteredRides(TABLE_PAGE_SIZE, (page - 1) * TABLE_PAGE_SIZE, filter),
     placeholderData: keepPreviousData,
   });
-}
-
-export function useRideMonths(): UseQueryResult<string[]> {
-  return useQuery({ queryKey: ["rides", "months"], queryFn: getRideMonths });
 }
 
 // How many rides one bike has, which is what the archive dialog says stops counting. One

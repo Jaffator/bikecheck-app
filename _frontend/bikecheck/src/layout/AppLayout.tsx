@@ -36,6 +36,10 @@ const TITLE_ICON_SIZE = 20;
 
 // The overviews share one large page title on desktop, as a web app's pages do.
 const DESKTOP_TITLE_SIZE = 28;
+// Air above the overview's title row; little below it, so the context line reads as its subtitle.
+const DESKTOP_HEADER_PAD_TOP = 24;
+const DESKTOP_HEADER_PAD_BOTTOM = 4;
+const DESKTOP_HEADER_ROW = 40;
 
 // Maps routes to translated header titles; Home intentionally has none.
 const PAGE_TITLE_KEYS: Record<string, string> = {
@@ -158,6 +162,10 @@ export function AppLayout(): ReactElement {
     overrideTitleKey ?? getPageTitleKey(location.pathname) ?? (isDesktop && !subPage ? "page.home" : null);
   // Both widths are the phone's column below the breakpoint.
   const contentWidth = isDesktop && isWideRoute(location.pathname) ? WIDE_CONTENT_MAX_WIDTH : CONTENT_MAX_WIDTH;
+  const desktopOverview = isDesktop && !subPage;
+  const headerBase = desktopOverview
+    ? `${String(DESKTOP_HEADER_PAD_TOP + DESKTOP_HEADER_ROW + DESKTOP_HEADER_PAD_BOTTOM)}px`
+    : "3rem";
 
   // The FAB menu and the More sheet have no trigger on desktop, so crossing into it shuts them.
   if (isDesktop && (fabMenuOpened || moreOpened)) {
@@ -218,7 +226,7 @@ export function AppLayout(): ReactElement {
       layout="alt"
       // Extends header and footer backgrounds into system safe areas.
       header={{
-        height: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+        height: `calc(${headerBase} + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))`,
         // Full-screen routes have neither header nor header offset. A transparent header
         // keeps its controls but stops reserving its height, so content passes beneath it.
         collapsed: chromeHidden,
@@ -237,7 +245,8 @@ export function AppLayout(): ReactElement {
         <Box
           h="100%"
           style={{
-            paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
+            paddingTop: `calc(${String(desktopOverview ? DESKTOP_HEADER_PAD_TOP : 0)}px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))`,
+            paddingBottom: desktopOverview ? DESKTOP_HEADER_PAD_BOTTOM : undefined,
             // Nothing sits behind the controls now, so they are given their own shade to
             // stand on - enough to read a dark arrow against a bright photo.
             backgroundImage: headerTransparent
@@ -257,7 +266,7 @@ export function AppLayout(): ReactElement {
             maw={contentWidth}
             mx="auto"
             // Padding inside the column, like the pages', so the title lines up with their edge.
-            px="md"
+            px={desktopOverview ? "xl" : "md"}
             style={{ pointerEvents: "auto" }}
           >
             {subPage ? (

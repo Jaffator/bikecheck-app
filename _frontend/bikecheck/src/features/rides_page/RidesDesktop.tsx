@@ -60,7 +60,7 @@ export function RidesDesktop(): ReactElement {
 
   return (
     // No top padding: the status line belongs to the header's title just above it.
-    <Stack gap="md" p="md" pt={0}>
+    <Stack gap="md" p="xl" pt={0}>
       <Group fz={13} c="var(--color-text-dim)" className="tabular-nums">
         <StravaSyncStatus withConnect />
       </Group>
@@ -91,17 +91,15 @@ export function RidesDesktop(): ReactElement {
               {pendingCount > 0 && <PendingPill count={pendingCount} />}
             </Group>
           </Tabs.Tab>
-          {/* The filter narrows Přiřazené only, so it stands in the tab row just while that tab is open. */}
-          {tab === "completed" && (
-            <Box ml="auto" pb={6} style={{ alignSelf: "center" }}>
-              <RideFilterBar />
-            </Box>
-          )}
         </Tabs.List>
 
         <Box pt="md">
+          {/* The filter narrows Přiřazené only, so it opens that tab. */}
           {tab === "completed" ? (
-            <AssignedRidesTable openActivityId={requestedRideId} onOpenedActivityHandled={clearRequestedRide} />
+            <Stack gap="md">
+              <RideFilterBar />
+              <AssignedRidesTable openActivityId={requestedRideId} onOpenedActivityHandled={clearRequestedRide} />
+            </Stack>
           ) : (
             <PendingRidesTable highlightedActivityId={requestedActivityId} />
           )}

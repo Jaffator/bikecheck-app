@@ -85,7 +85,7 @@ export function BikesDesktop(): ReactElement {
 
   return (
     // No top padding: the context line belongs to the header's title just above it.
-    <Stack gap="md" p="md" pt={0}>
+    <Stack gap="md" p="xl" pt={0}>
       <BikesContextLine />
 
       <Group justify="space-between" wrap="nowrap">

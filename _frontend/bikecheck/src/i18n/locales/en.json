@@ -236,7 +236,8 @@
     "ebike": "E-bike"
   },
   "common": {
-    "proTip": "PRO TIP"
+    "proTip": "PRO TIP",
+    "pageRange": "{{first}}–{{last}} of {{total}}"
   },
   "fab": {
     "open": "Add",
@@ -272,7 +273,8 @@
     "bannerStravaBody": "without it no ride is counted, so distance and part wear stay at zero.",
     "bannerUnpairedBody": "{{names}}. Until they are paired, their distance and part wear are not counted.",
     "bannerPairAction": "Pair bikes",
-    "bannerPendingBody": "until they have a bike, their distance and part wear are not counted."
+    "bannerPendingBody": "until they have a bike, their distance and part wear are not counted.",
+    "bannerNotCountedShort": "Distance and wear are not counted."
   },
   "chat": {
     "placeholder": "Ask anything…",
@@ -330,8 +332,6 @@
   },
   "ridesTable": {
     "allBikes": "All bikes",
-    "allMonths": "All",
-    "month": "Month",
     "allRides": "All rides",
     "thisWeek": "This week",
     "lastWeek": "Last week",
@@ -342,8 +342,9 @@
     "columnCheckIn": "Check-in",
     "descent": "↓ {{value}} m descent",
     "noComparison": "No rides the month before",
+    "noComparisonYear": "No rides last year",
+    "vsYear": "vs {{year}}",
     "empty": "No rides in this selection",
-    "pageRange": "{{first}}–{{last}} of {{total}}",
     "vsMonth": {
       "1": "vs January",
       "2": "vs February",
@@ -383,6 +384,11 @@
     "emptyTitle": "No Components to Service",
     "emptyBody": "Add your bike first — to start adding services and monitoring maintenance health and precision mileage.",
     "emptyBikeTitle": "No serviced yet",
+    "noServiceYet": "No service yet",
+    "lastService": "Last service {{when}}",
+    "lastServiceToday": "today",
+    "lastServiceYesterday": "yesterday",
+    "lastServiceUndated": "Last service undated",
     "emptyBikeBody": "This bike has no service records yet — add one to start tracking its maintenance.",
     "emptyGarageTitle": "No services yet",
     "emptyGarageBody": "No service recorded yet — add the first one to start tracking maintenance.",
@@ -434,7 +440,26 @@
     "deleteConfirmCancel": "Keep service",
     "all": "All",
     "placeHome": "home",
-    "placeShop": "shop"
+    "placeShop": "shop",
+    "tileServices": "Services · {{period}}",
+    "tileCosts": "Costs · {{period}}",
+    "tileWaiting": "Waiting for service",
+    "replacementCount_one": "{{count}} part replaced",
+    "replacementCount_other": "{{count}} parts replaced",
+    "averageCost": "ø {{value}} per service",
+    "soonCount_one": "{{count}} soon",
+    "soonCount_other": "{{count}} soon",
+    "plannedCount_one": "{{count}} planned",
+    "plannedCount_other": "{{count}} planned",
+    "historyTitle": "History",
+    "columnDate": "Date",
+    "columnService": "Service",
+    "columnBike": "Bike",
+    "columnPlace": "Where",
+    "columnCost": "Cost",
+    "emptyFilter": "No services in this selection.",
+    "export": "Export",
+    "exportPickBike": "Pick a bike"
   },
   "bikes": {
     "noBikesFound": "0 BIKES FOUND",
@@ -919,12 +944,14 @@
     "pitchTitle": "Connect Strava for smart service",
     "pitchBody": "Track component wear automatically, based on your real activities.",
     "gearLinkingTitle": "Pair bikes with Strava gear",
-    "gearLinkingBody": "Match your bikes to your Strava gear so rides land on the right bike.",
+    "gearLinkingBody": "Strava tags every ride with the bike you rode. Pair it with your BikeCheck bike and rides land on it automatically, so component wear is counted right. Unpaired rides have to be assigned by hand.",
+    "gearLinkingInfo": "Why pair bikes",
     "gearLinkingPlaceholder": "Pick Strava gear",
     "gearTakenBy": "{{name}} — used by {{bike}}",
     "gearLinkingNoGear": "You have no gear on Strava yet. Add a bike in your Strava profile, then come back.",
     "gearLinkStrava": "https://www.strava.com/settings/gear",
     "gearLinkingConfirm": "Confirm",
+    "gearLinkingCancel": "Cancel",
     "gearLinkingSkip": "Not now",
     "gearLinkingFailed": "Could not save the pairing. Try again.",
     "notPaired": "Not paired",
@@ -941,8 +968,6 @@
     "disconnectConfirmCancel": "Keep connected",
     "unpairedBikesBody": "Connecting with Strava gear automates mileage tracking and service reminders for your bikes without picking a right bike after every ride.",
     "unpairedBikesAction": "Pair gear",
-    "unpairedTile_one": "{{count}} unpaired",
-    "unpairedTile_other": "{{count}} unpaired",
     "gearLinkingLoadFailed": "Could not load your Strava gear. Try again.",
     "notConnectedTitle": "Strava not connected",
     "notConnectedBody": "Connect your account to smart service",
@@ -996,8 +1021,6 @@
     "actionOpenGarage": "Open garage"
   },
   "pendingRides": {
-    "title": "Unassigned rides",
-    "cardBody": "A Strava ride arrived without a bike. Pick the one it belongs to.",
     "cardAction": "Resolve",
     "listTitle": "Unassigned rides",
     "empty": "No unassigned rides",

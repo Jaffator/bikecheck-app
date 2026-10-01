@@ -8,6 +8,7 @@ import { Bell, ChevronDown, MessageCircleMore, Plus, Users } from "lucide-react"
 import Logo from "@/assets/icons/bikecheck/Logo_white.svg?react";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
+import { usePendingRides } from "@/features/strava/strava.queries";
 import { useMyProfile } from "@/features/profile/profile.queries";
 import { HeaderCountBadge } from "./HeaderCountBadge";
 import { ADD_BIKE, ADD_SERVICE, NAV_ITEMS, TAB_STROKE, TAB_STROKE_ACTIVE, isActivePath } from "./navItems";
@@ -92,6 +93,8 @@ export function Sidebar(): ReactElement {
   const { data: user } = useCurrentUser();
   const { data: unreadNotifications } = useUnreadNotifications();
   const unreadCount = unreadNotifications?.length ?? 0;
+  const { data: pendingRides } = usePendingRides();
+  const pendingRideCount = pendingRides?.length ?? 0;
   const { data: profile } = useMyProfile();
   const pendingRequests = profile?.stats.pending_requests ?? 0;
 
@@ -128,6 +131,14 @@ export function Sidebar(): ReactElement {
                 active={active}
                 icon={<RowIcon size={ICON_SIZE} strokeWidth={active ? TAB_STROKE_ACTIVE : TAB_STROKE} />}
                 label={t(labelKey)}
+                // Rides waiting for a bike; the row still opens the Assigned tab.
+                trailing={
+                  path === "/rides" && (
+                    <Box pos="relative" w={20} h={20}>
+                      <HeaderCountBadge count={pendingRideCount} />
+                    </Box>
+                  )
+                }
               />
             );
           })}

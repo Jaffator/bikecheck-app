@@ -1,31 +1,33 @@
-// Desktop Přiřazené's three figures for the filter: distance against the month before, time, climbing.
+// Desktop Přiřazené's three figures for the filter: distance against the period before, time, climbing.
 import type { ReactElement, ReactNode } from "react";
+import dayjs from "dayjs";
 import { SimpleGrid, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Figure } from "@/components/Figure";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { RideFigures } from "@/features/rides/rides.types";
-import { ALL_MONTHS, distanceChange, monthLabel, previousMonthNumber } from "@/features/rides/ridesTable";
+import { distanceChange, periodLabel, previousMonthNumber } from "@/features/rides/ridesTable";
+import type { HomePeriod } from "@/features/stats/stats.types";
 
 interface RideFiguresRowProps {
   // Undefined while the first page loads.
   figures: RideFigures | undefined;
-  month: string;
+  period: HomePeriod;
 }
 
-export function RideFiguresRow({ figures, month }: RideFiguresRowProps): ReactElement {
+export function RideFiguresRow({ figures, period }: RideFiguresRowProps): ReactElement {
   const { t, i18n } = useTranslation();
   const number = (value: number): string => new Intl.NumberFormat(i18n.language).format(value);
-  const distanceTitle =
-    month === ALL_MONTHS ? t("rides.statDistance") : `${monthLabel(month, i18n.language)} · ${t("rides.statDistance")}`;
+  const label = periodLabel(period, i18n.language);
+  const distanceTitle = label === null ? t("rides.statDistance") : `${label} · ${t("rides.statDistance")}`;
 
   return (
     <SimpleGrid cols={3} spacing="md">
       <Figure
         title={distanceTitle}
         value={figures === undefined ? null : formatKm(Math.round(figures.distance_m / 1000), i18n.language)}
-        detail={figures === undefined || month === ALL_MONTHS ? "" : <DistanceChange figures={figures} month={month} />}
+        detail={figures === undefined || period === "all" ? "" : <DistanceChange figures={figures} period={period} />}
         detailFigure
       />
       <Figure
@@ -56,11 +58,15 @@ export function RideFiguresRow({ figures, month }: RideFiguresRowProps): ReactEl
   );
 }
 
-// "+12 % proti srpnu"; a month before with no distance leaves nothing to compare.
-function DistanceChange({ figures, month }: { figures: RideFigures; month: string }): ReactNode {
+// "+12 % proti srpnu" or "proti roku 2025"; a period before with no distance leaves nothing to compare.
+function DistanceChange({ figures, period }: { figures: RideFigures; period: HomePeriod }): ReactNode {
   const { t } = useTranslation();
   const change = distanceChange(figures.distance_m, figures.previous_distance_m);
-  if (change === null) return t("ridesTable.noComparison");
+  if (change === null) return t(period === "year" ? "ridesTable.noComparisonYear" : "ridesTable.noComparison");
+  const versus =
+    period === "year"
+      ? t("ridesTable.vsYear", { year: dayjs().year() - 1 })
+      : t(`ridesTable.vsMonth.${String(previousMonthNumber())}`);
 
   return (
     <>
@@ -69,7 +75,7 @@ function DistanceChange({ figures, month }: { figures: RideFigures; month: strin
           value: change > 0 ? `+${String(change)}` : String(change),
         })}
       </Text>
-      {` ${t(`ridesTable.vsMonth.${String(previousMonthNumber(month))}`)}`}
+      {` ${versus}`}
     </>
   );
 }

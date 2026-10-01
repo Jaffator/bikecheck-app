@@ -34,7 +34,7 @@ export function useNotifications(): UseInfiniteQueryResult<InfiniteData<Notifica
 // How often the badge asks again while the app stays open. Without it the count only
 // moves on a window focus, so a notification that arrives mid-session is never counted
 // and one cleared elsewhere keeps showing.
-const BADGE_POLL_MS = 30_000;
+export const BADGE_POLL_MS = 30_000;
 
 // Fetch unread notifications for the header badge.
 export function useUnreadNotifications(): UseQueryResult<Notification[]> {

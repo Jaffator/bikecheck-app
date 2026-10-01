@@ -32,11 +32,6 @@ export async function getFilteredRides(limit: number, offset: number, filter: Ri
   return apiFetch<RidePage>(`/rides?${params.toString()}`);
 }
 
-// Months with a ride, YYYY-MM, newest first.
-export async function getRideMonths(): Promise<string[]> {
-  return apiFetch<string[]>(`/rides/months?tz=${encodeURIComponent(riderTimeZone())}`);
-}
-
 // Days and weeks are the rider's own, so the server reads them in the browser's zone.
 function riderTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;

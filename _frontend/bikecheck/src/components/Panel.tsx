@@ -1,7 +1,8 @@
 // A desktop dashboard card holding a table, on the standard surface: glow, --elev-panel, radius lg.
 import type { ReactElement, ReactNode } from "react";
-import { Box, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, Pagination, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Eyebrow } from "./Eyebrow";
 import { PANEL_HAIRLINE } from "./panelRows";
 
@@ -83,5 +84,43 @@ export function PanelSkeletonRows({ count }: { count: number }): ReactElement {
         <Skeleton key={index} h={28} radius="sm" />
       ))}
     </Stack>
+  );
+}
+
+// "1–25 z 45" and numbered pages; the numbers only once there is a second page.
+export function PanelPageFooter({
+  page,
+  pageSize,
+  total,
+  onPage,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPage: (page: number) => void;
+}): ReactElement {
+  const { t } = useTranslation();
+  const first = Math.min((page - 1) * pageSize + 1, total);
+  const last = Math.min(page * pageSize, total);
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+
+  return (
+    <Group justify="space-between" wrap="nowrap" px="md" py="sm" style={{ borderTop: PANEL_HAIRLINE }}>
+      <Text className="tabular-nums" fz={12} c="var(--color-text-dim)">
+        {t("common.pageRange", { first, last, total })}
+      </Text>
+      {pages > 1 && (
+        <Pagination
+          total={pages}
+          value={Math.min(page, pages)}
+          onChange={onPage}
+          size="sm"
+          radius="md"
+          color="primary.6"
+          autoContrast
+          className="tabular-nums"
+        />
+      )}
+    </Group>
   );
 }

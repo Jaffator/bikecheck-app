@@ -27,6 +27,12 @@ the Bike carries rather than one its components do. Not backfilled (ADR 0014), s
 before the reading existed reads lower than it has truly climbed.
 _Avoid_: Elevation gain, ascent
 
+**Unassigned Ride**:
+A Strava ride that arrived without a Bike the app could recognise — its gear is unpaired, or it has
+none. Counts toward no odometer and wears no part until the owner gives it a Bike or dismisses it.
+Pairing a Bike gives it that gear's Unassigned Rides on its own. Survives disconnecting Strava.
+_Avoid_: Pending ride
+
 **Archived Bike**:
 A Bike its owner has taken out of use. It leaves the garage, the dashboard and every list and
 total, keeps its whole history, and is reached only through the archive. Reversible, and nothing

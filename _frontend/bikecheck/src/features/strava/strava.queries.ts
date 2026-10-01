@@ -13,6 +13,7 @@ import {
 } from "./strava.api";
 import type { GearLinkingData, GearLink, PendingRide, StravaSyncResult } from "./strava.types";
 import type { ApiError } from "@/api/client";
+import { BADGE_POLL_MS } from "@/features/notifications/notifications.queries";
 
 // Opens the backend-generated Strava authorization URL in the system browser.
 export function useConnectStrava(): UseMutationResult<void, ApiError, void> {
@@ -61,6 +62,8 @@ export function usePendingRides(): UseQueryResult<PendingRide[]> {
   return useQuery({
     queryKey: ["pendingRides"],
     queryFn: getPendingRides,
+    // Polls like the bell, so a ride landing mid-session reaches the banner and the sidebar count.
+    refetchInterval: BADGE_POLL_MS,
   });
 }
 

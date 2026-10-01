@@ -14,6 +14,7 @@ import { DistanceCard } from "@/features/stats/ui/DistanceCard";
 import { WearForecastCard } from "@/features/stats/ui/WearForecastCard";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { DashboardDesktop } from "./DashboardDesktop";
+import { DashboardBannerPhone } from "./DashboardBanner";
 const FAB_CLEARANCE = {
   base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
   md: "md",
@@ -48,6 +49,7 @@ export function Dashboard(): ReactElement {
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" style={{ alignItems: "start" }}>
         <Stack gap="md">
           {!stravaConnected && <StravaStatusCard />}
+          <DashboardBannerPhone />
           <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
           <WearForecastCard />
           {/* Under the work: how the garage stands, and the way into any one bike. */}

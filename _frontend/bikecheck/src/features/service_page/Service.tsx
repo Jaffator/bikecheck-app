@@ -12,7 +12,9 @@ import { useRecentServices } from "@/features/service/service.queries";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
 import { PlannedCard } from "@/features/service_tracking/ui/PlannedCard";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { EmptyService } from "./EmptyService";
+import { ServiceDesktop } from "./ServiceDesktop";
 
 // Clears the FAB and the bottom nav, so the last row can still be tapped. Desktop has neither.
 const FAB_CLEARANCE = {
@@ -30,8 +32,13 @@ const STICKY_CHIPS_STYLE = {
   backgroundColor: "var(--mantine-color-background-9)",
 } as const;
 
-// Shows the maintenance history: the latest few services, with the full list one tap away.
+// Desktop has its own one-page layout (#210); the phone keeps the two pages below.
 export function Service(): ReactElement {
+  return useIsDesktop() ? <ServiceDesktop /> : <ServicePhone />;
+}
+
+// Shows the maintenance history: the latest few services, with the full list one tap away.
+function ServicePhone(): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: bikes } = useBikes();

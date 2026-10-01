@@ -154,7 +154,8 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
           }))}
           styles={inputStyles}
           radius="md"
-          comboboxProps={dropdownProps}
+          // A portalled dropdown made the whole sheet flicker in the Capacitor webview.
+          comboboxProps={{ ...dropdownProps, withinPortal: false }}
         />
 
         {resolve.isError && (

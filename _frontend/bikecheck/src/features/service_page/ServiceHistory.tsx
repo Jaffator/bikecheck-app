@@ -15,6 +15,7 @@ import { periodLabel } from "@/features/service/servicePeriod";
 import type { ServicePeriod } from "@/features/service/service.types";
 import { useHistoryTotals, useServiceHistory } from "@/features/service/service.queries";
 import { ExportSheet } from "@/features/report/ui/ExportSheet";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { EmptyService } from "./EmptyService";
 import type { ExportReportInput } from "@/features/report/report.types";
 
@@ -44,6 +45,18 @@ function parseDay(raw: string | null): string | null {
 // whole garage's, `/bikes/:id/history` one bike's alone. Which one is chosen before coming
 // here, on the service page, and the History Totals above the list name it.
 export function ServiceHistory(): ReactElement {
+  const isDesktop = useIsDesktop();
+  const { id: routeBikeId } = useParams();
+
+  // Desktop's history is part of /service itself (#210).
+  if (isDesktop) {
+    const bike = parseBikeId(routeBikeId);
+    return <Navigate to={bike === null ? "/service" : `/service?bike=${String(bike)}`} replace />;
+  }
+  return <ServiceHistoryPhone />;
+}
+
+function ServiceHistoryPhone(): ReactElement {
   const { t, i18n } = useTranslation();
   const { id: routeBikeId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();

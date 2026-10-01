@@ -1,17 +1,18 @@
 // UI component backed by Strava query hooks.
 import { useState, type ReactElement } from "react";
-import { Anchor, Button, Group, Loader, Select, Stack, Text } from "@mantine/core";
+import { ActionIcon, Anchor, Button, Group, Loader, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useGearLinking, useLinkStravaGear } from "@/features/strava/strava.queries";
 import type { GearLink, GearLinkingBike } from "@/features/strava/strava.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { useIsDesktop } from "@/layout/breakpoints";
 // import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
 // import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
 import { TbBikeOff } from "react-icons/tb";
-import { Link2, TriangleAlert, MoveRight } from "lucide-react";
+import { Info, Link2, TriangleAlert, MoveRight } from "lucide-react";
 
 interface GearLinkingSheetProps {
   opened: boolean;
@@ -23,10 +24,12 @@ interface GearLinkingSheetProps {
 // Pair BikeCheck bikes with their Strava gear.
 export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetProps): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
   const { data, isLoading, isError } = useGearLinking(opened);
   const link = useLinkStravaGear();
   // Keep only changes; untouched rows use their stored pairing.
   const [changed, setChanged] = useState<Record<number, string | null>>({});
+  const [explained, setExplained] = useState(false);
 
   function chosenFor(bike: GearLinkingBike): string | null {
     return bike.id in changed ? changed[bike.id] : bike.strava_gear_id;
@@ -67,7 +70,22 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
       opened={opened}
       onClose={onClose}
       desktop="modal"
-      title={t("strava.gearLinkingTitle")}
+      modalSize="lg"
+      title={
+        <Group gap={6} wrap="nowrap" justify="center">
+          {t("strava.gearLinkingTitle")}
+          <ActionIcon
+            variant="transparent"
+            color="gray"
+            size="sm"
+            aria-label={t("strava.gearLinkingInfo")}
+            aria-expanded={explained}
+            onClick={() => setExplained((current) => !current)}
+          >
+            <Info size={16} color="var(--color-text-dim)" />
+          </ActionIcon>
+        </Group>
+      }
       styles={{
         // Fits short lists and caps tall lists for scrolling.
         content: {
@@ -103,9 +121,11 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
         />
       </div>
       <Stack gap="md" style={{ flex: 1, minHeight: 0 }}>
-        {/* <Text size="sm" c="text.7">
-          {t("strava.gearLinkingBody")}
-        </Text> */}
+        {explained && (
+          <Text size="sm" c="text.7" ta="center">
+            {t("strava.gearLinkingBody")}
+          </Text>
+        )}
 
         {/* --------- LOADING --------- */}
         {isLoading && <Loader size="sm" />}
@@ -164,7 +184,14 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
               const chosen = chosenFor(bike);
               return (
                 <Group key={bike.id} gap="sm" wrap="nowrap" align="center">
-                  <Text size="sm" fw={600} c="text.6" style={{ minWidth: 0 }} truncate>
+                  {/* Mobile wraps: the narrow column would cut most of the name. */}
+                  <Text
+                    size="sm"
+                    fw={600}
+                    c="text.6"
+                    style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}
+                    truncate={isDesktop}
+                  >
                     {bikeTitle(bike)}
                   </Text>
                   <MoveRight color="var(--mantine-color-text-7)"></MoveRight>
@@ -195,7 +222,8 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
                     styles={inputStyles}
                     rightSection={link.isPending && <Loader size="xs" />}
                     rightSectionWidth={link.isPending ? 24 : undefined}
-                    style={{ flex: 1, minWidth: 0 }}
+                    // Same width on every row so the selects line up on the right.
+                    style={{ flex: "0 0 55%" }}
                     radius="sm"
                     comboboxProps={dropdownProps}
                   />
@@ -212,22 +240,25 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
         )}
 
         {/* Keeps confirmation above the Android gesture area. */}
-        <Button
-          fullWidth
-          radius="sm"
-          mt="auto"
-          mb="var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px))"
-          loading={link.isPending}
-          disabled={rows.length === 0}
-          // Reuses the wizard disabled state.
-          styles={disabledButtonStyles}
-          style={{ height: "3rem" }}
-          onClick={() => {
-            submit();
-          }}
-        >
-          {t("strava.gearLinkingConfirm")}
-        </Button>
+        <Group grow gap="sm" mt="xl" mb="var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px))">
+          <Button variant="outline" radius="sm" style={{ height: "2.5rem" }} onClick={onClose}>
+            {t("strava.gearLinkingCancel")}
+          </Button>
+          <Button
+            radius="sm"
+            c="textDark.6"
+            loading={link.isPending}
+            disabled={rows.length === 0}
+            // Reuses the wizard disabled state.
+            styles={disabledButtonStyles}
+            style={{ height: "2.5rem" }}
+            onClick={() => {
+              submit();
+            }}
+          >
+            {t("strava.gearLinkingConfirm")}
+          </Button>
+        </Group>
       </Stack>
     </ResponsiveSheet>
   );

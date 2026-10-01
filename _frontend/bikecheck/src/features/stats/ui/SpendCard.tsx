@@ -75,6 +75,7 @@ export function SpendCard({ period }: { period?: HomePeriod }): ReactElement {
               <BikeBar
                 key={bike.bike_id}
                 spend={spend}
+                period={period}
                 bike={bike}
                 colorIndex={colorIndexOf(bikes, bike.bike_id)}
               />
@@ -90,17 +91,19 @@ export function SpendCard({ period }: { period?: HomePeriod }): ReactElement {
 // Scaled against the bike that spent most, so the lengths compare directly.
 function BikeBar({
   spend,
+  period,
   bike,
   colorIndex,
 }: {
   spend: Spend;
+  period: HomePeriod | undefined;
   bike: SpendBike;
   colorIndex: number | null;
 }): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const largest = spend.bikes[0].total;
-  const history = `/bikes/${String(bike.bike_id)}/history${periodSearch(spend)}`;
+  const history = historyLink(bike.bike_id, spend, period);
 
   return (
     <UnstyledButton
@@ -139,6 +142,14 @@ function BikeBar({
       />
     </UnstyledButton>
   );
+}
+
+// Only desktop names a Period, and its history is /service; the phone keeps the bike's own page.
+function historyLink(bikeId: number, spend: Spend, period: HomePeriod | undefined): string {
+  if (period === undefined) return `/bikes/${String(bikeId)}/history${periodSearch(spend)}`;
+  const query = new URLSearchParams({ bike: String(bikeId) });
+  if (period !== "year") query.set("period", period);
+  return `/service?${query.toString()}`;
 }
 
 // The Component Categories, grey and scaled against the largest, under the bikes.

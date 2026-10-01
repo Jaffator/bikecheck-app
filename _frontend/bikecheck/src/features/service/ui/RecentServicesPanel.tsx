@@ -28,7 +28,7 @@ export function RecentServicesPanel(): ReactElement {
   return (
     <Panel
       title={t("service.recentTitle")}
-      link={{ label: t("service.all"), onClick: () => navigate("/service/history") }}
+      link={{ label: t("service.all"), onClick: () => navigate("/service") }}
     >
       {isLoading && <PanelSkeletonRows count={3} />}
       {services.map((service) => {

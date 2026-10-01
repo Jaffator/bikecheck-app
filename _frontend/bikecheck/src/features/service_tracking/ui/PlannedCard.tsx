@@ -14,7 +14,6 @@ import {
   EVERY_READING,
   attentionColor,
   trackedActionKey,
-  trackedPartLabel,
 } from "@/features/service_tracking/attentionLevel";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
@@ -114,11 +113,9 @@ function PlannedRow({
       <Group gap="sm" wrap="nowrap" align="center">
         <PlanDayButton planned={action.planned_for} onPlan={onPlan} width={DAY_WIDTH} />
         <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-          <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
-            <Text span inherit fw={600} c="text.6">
-              {catalogueLabel(action.action_i18n_key, action.action_name, t)}
-            </Text>
-            {` · ${trackedPartLabel(action, t)}`}
+          {/* The part is the drawer's to name. */}
+          <Text fz={13} fw={600} c="text.6" lineClamp={1}>
+            {catalogueLabel(action.action_i18n_key, action.action_name, t)}
           </Text>
           <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
             <BikeColorDot colorIndex={colorIndexOf(bikes, action.bike_id)} size={6} />

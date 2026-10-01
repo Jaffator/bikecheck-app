@@ -242,7 +242,8 @@
     "ebike": "E-bike"
   },
   "common": {
-    "proTip": "PRO TIP"
+    "proTip": "PRO TIP",
+    "pageRange": "{{first}}–{{last}} z {{total}}"
   },
   "fab": {
     "open": "Přidat",
@@ -290,7 +291,8 @@
     "bannerStravaBody": "bez ní se žádná jízda nezapočítá, takže nájezd i opotřebení dílů zůstávají na nule.",
     "bannerUnpairedBody": "{{names}}. Bez párování se u nich nepočítá nájezd ani opotřebení dílů.",
     "bannerPairAction": "Propojit kola",
-    "bannerPendingBody": "dokud nemají kolo, nepočítá se u nich nájezd ani opotřebení dílů."
+    "bannerPendingBody": "dokud nemají kolo, nepočítá se u nich nájezd ani opotřebení dílů.",
+    "bannerNotCountedShort": "Nepočítá se nájezd ani opotřebení."
   },
   "chat": {
     "placeholder": "Zeptej se na cokoliv…",
@@ -348,8 +350,6 @@
   },
   "ridesTable": {
     "allBikes": "Všechna kola",
-    "allMonths": "Vše",
-    "month": "Měsíc",
     "allRides": "Všechny jízdy",
     "thisWeek": "Tento týden",
     "lastWeek": "Minulý týden",
@@ -360,8 +360,9 @@
     "columnCheckIn": "Check-in",
     "descent": "↓ {{value}} m klesání",
     "noComparison": "Minulý měsíc bez jízd",
+    "noComparisonYear": "Minulý rok bez jízd",
+    "vsYear": "proti roku {{year}}",
     "empty": "V tomto výběru nejsou žádné jízdy",
-    "pageRange": "{{first}}–{{last}} z {{total}}",
     "vsMonth": {
       "1": "proti lednu",
       "2": "proti únoru",
@@ -401,6 +402,11 @@
     "emptyTitle": "Žádné komponenty k servisu",
     "emptyBody": "Nejdřív přidej kolo — pak můžeš zadávat servisy a sledovat stav údržby i přesný nájezd.",
     "emptyBikeTitle": "Zatím žádný servis",
+    "noServiceYet": "Zatím žádný servis",
+    "lastService": "Poslední servis {{when}}",
+    "lastServiceToday": "dnes",
+    "lastServiceYesterday": "včera",
+    "lastServiceUndated": "Poslední servis bez data",
     "emptyBikeBody": "U tohoto kola zatím není žádný servis — přidej první a začni sledovat údržbu.",
     "emptyGarageTitle": "Zatím žádný servis",
     "emptyGarageBody": "Zatím jsi nezaznamenal žádný servis — přidej první a začni sledovat údržbu.",
@@ -456,7 +462,32 @@
     "deleteConfirmCancel": "Ponechat servis",
     "all": "Vše",
     "placeHome": "doma",
-    "placeShop": "v servisu"
+    "placeShop": "v servisu",
+    "tileServices": "Servisů · {{period}}",
+    "tileCosts": "Náklady · {{period}}",
+    "tileWaiting": "Čeká na servis",
+    "replacementCount_one": "{{count}} výměna dílu",
+    "replacementCount_few": "{{count}} výměny dílů",
+    "replacementCount_many": "{{count}} výměny dílu",
+    "replacementCount_other": "{{count}} výměn dílů",
+    "averageCost": "ø {{value}} na servis",
+    "soonCount_one": "{{count}} brzy",
+    "soonCount_few": "{{count}} brzy",
+    "soonCount_many": "{{count}} brzy",
+    "soonCount_other": "{{count}} brzy",
+    "plannedCount_one": "{{count}} naplánovaný",
+    "plannedCount_few": "{{count}} naplánované",
+    "plannedCount_many": "{{count}} naplánovaného",
+    "plannedCount_other": "{{count}} naplánovaných",
+    "historyTitle": "Historie",
+    "columnDate": "Datum",
+    "columnService": "Servis",
+    "columnBike": "Kolo",
+    "columnPlace": "Kde",
+    "columnCost": "Cena",
+    "emptyFilter": "V tomto výběru není žádný servis.",
+    "export": "Export",
+    "exportPickBike": "Vyber kolo"
   },
   "bikes": {
     "noBikesFound": "ŽÁDNÁ KOLA",
@@ -967,12 +998,14 @@
     "disconnectFailed": "Odpojení se nepodařilo. Zkus to znovu.",
     "pitchTitle": "Připoj Stravu, ať se synchronizují jízdy",
     "pitchBody": "Automaticky sleduj opotřebení komponent na základě tvých reálných aktivit.",
-    "gearLinkingTitle": "Propojit se Stravou",
-    "gearLinkingBody": "Přiřaď svá kola ke Strava gearu, ať se jízdy načítají ke správnému kolu.",
+    "gearLinkingTitle": "Propojit kola se Stravou",
+    "gearLinkingBody": "Strava u každé jízdy posílá kolo, na kterém jsi jel. Když ho propojíš s kolem v BikeChecku, jízdy se mu připíšou automaticky a komponentám se správně počítá opotřebení. Nepropojené jízdy musíš přiřazovat ručně.",
+    "gearLinkingInfo": "Proč propojit kola",
     "gearLinkingPlaceholder": "Vyber Strava kolo",
     "gearTakenBy": "{{name}} — už používá {{bike}}",
     "gearLinkingNoGear": "Na Stravě zatím nemáš žádná kola. Přidej kolo ve svém Strava profilu a vrať se sem.",
     "gearLinkingConfirm": "Potvrdit",
+    "gearLinkingCancel": "Zrušit",
     "gearLinkingSkip": "Teď ne",
     "gearLinkingFailed": "Propojení se nepodařilo uložit. Zkus to znovu.",
     "notPaired": "Nepropojeno",
@@ -991,9 +1024,6 @@
     "disconnectConfirmCancel": "Nechat propojené",
     "unpairedBikesBody": "Propojení se Strava gearem automaticky hlídá kilometry a připomínky servisu tvých kol.",
     "unpairedBikesAction": "Propojit kola",
-    "unpairedTile_one": "{{count}} nespárované",
-    "unpairedTile_few": "{{count}} nespárovaná",
-    "unpairedTile_other": "{{count}} nespárovaných",
     "gearLinkingLoadFailed": "Strava gear se nepodařilo načíst. Zkus to znovu.",
     "notConnectedTitle": "Strava není propojena",
     "notConnectedBody": "Propoj účet pro chytrý servis",
@@ -1050,8 +1080,6 @@
     "actionOpenGarage": "Otevřít garáž"
   },
   "pendingRides": {
-    "title": "Nepřiřazené jízdy",
-    "cardBody": "Jízda ze Stravy dorazila bez kola. Vyber, ke kterému patří.",
     "cardAction": "Vyřešit",
     "listTitle": "Nepřiřazené jízdy",
     "empty": "Žádné nepřiřazené jízdy",

@@ -85,6 +85,24 @@ export function useServiceHistory(
   });
 }
 
+// Desktop history's numbered pages.
+export const HISTORY_TABLE_PAGE_SIZE = 25;
+
+// One numbered page of the history; 1 is the newest.
+export function useServiceHistoryPage(
+  bikeId: number | undefined,
+  period: ServicePeriod,
+  page: number,
+): UseQueryResult<ServiceHistoryPage> {
+  return useQuery({
+    queryKey: ["services", "history-page", bikeKey(bikeId), periodKey(period), page],
+    queryFn: () =>
+      getServiceHistory(HISTORY_TABLE_PAGE_SIZE, (page - 1) * HISTORY_TABLE_PAGE_SIZE, bikeId, period),
+    // The page on screen holds until the next one lands, so paging dims rather than blanks.
+    placeholderData: keepPreviousData,
+  });
+}
+
 // The History Totals for the filter the history is showing. A key of its own, so paging
 // the list does not refetch them and they survive the scroll.
 export function useHistoryTotals(bikeId: number | undefined, period: ServicePeriod): UseQueryResult<HistoryTotals> {

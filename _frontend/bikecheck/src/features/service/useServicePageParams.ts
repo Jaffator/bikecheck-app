@@ -1,29 +1,44 @@
-// The desktop table's bike, period and page, kept in the URL so a refresh keeps them.
+// Desktop Service's bike, period and page, kept in the URL: `?bike=&period=&page=`.
 import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { parseHomePeriod } from "@/features/stats/homePeriod";
 import type { HomePeriod } from "@/features/stats/stats.types";
-import { readTableParams, type RideTableParams } from "./ridesTable";
 
-export interface RideTableControls extends RideTableParams {
+export interface ServicePageParams {
+  // Null is every bike.
+  bikeId: number | null;
+  period: HomePeriod;
+  page: number;
+}
+
+export interface ServicePageControls extends ServicePageParams {
   setBike: (bikeId: number | null) => void;
   setPeriod: (period: HomePeriod) => void;
   setPage: (page: number) => void;
 }
 
-export function useRideTableParams(): RideTableControls {
+// Anything unreadable falls back to every bike, the year and the first page.
+export function readServicePageParams(params: URLSearchParams): ServicePageParams {
+  const bike = Number(params.get("bike"));
+  const page = Number(params.get("page"));
+  return {
+    bikeId: Number.isInteger(bike) && bike > 0 ? bike : null,
+    period: parseHomePeriod(params.get("period")),
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+  };
+}
+
+export function useServicePageParams(): ServicePageControls {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Replaced, not pushed, so Back leaves the page; the other parameters stay.
+  // Pushed, so Back undoes a filter or a page; defaults stay out of the URL.
   const update = useCallback(
     (change: (params: URLSearchParams) => void): void => {
-      setSearchParams(
-        (current) => {
-          const next = new URLSearchParams(current);
-          change(next);
-          return next;
-        },
-        { replace: true },
-      );
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        change(next);
+        return next;
+      });
     },
     [setSearchParams],
   );
@@ -52,5 +67,5 @@ export function useRideTableParams(): RideTableControls {
     [update],
   );
 
-  return { ...readTableParams(searchParams), setBike, setPeriod, setPage };
+  return { ...readServicePageParams(searchParams), setBike, setPeriod, setPage };
 }

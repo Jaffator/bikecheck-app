@@ -1,15 +1,10 @@
-// The garage's standing state, in one row of small tiles under the work: Strava, gear left
-// to pair, rides left to assign, and who can see the garage. Each used to be a card of its
-// own above the work; here they are a glance, and a tap where there is something to do.
+// The garage's standing state, in one row of small tiles under the work: Strava and who can
+// see the garage. Gear to pair and rides to assign are banners at the top of Home (#211).
 import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { Box, Grid, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { CalendarClock, ChevronRight, Link2Off } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { useBikes } from "@/features/bikes/bikes.queries";
-import { usePendingRides } from "@/features/strava/strava.queries";
-import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import { useMyProfile } from "@/features/profile/profile.queries";
 import { VISIBILITY_COLOR, VISIBILITY_ICON, VISIBILITY_LABEL_KEY } from "@/features/profile/profileVisibility";
 import { ShareDrawer } from "@/features/profile/ui/ShareDrawer";
@@ -83,17 +78,11 @@ function Tile({ icon, tint, title, detail, onOpen }: TileProps): ReactElement {
 
 export function StatusRow(): ReactElement | null {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { data: user } = useCurrentUser();
-  const { data: bikes } = useBikes();
-  const { data: rides } = usePendingRides();
   const { data: profile } = useMyProfile();
-  const [pairingGear, setPairingGear] = useState(false);
   const [sharing, setSharing] = useState(false);
 
   const stravaConnected = Boolean(user?.strava_athlete_id);
-  const unpairedCount = stravaConnected ? (bikes ?? []).filter((bike) => bike.strava_gear_id === null).length : 0;
-  const pendingCount = stravaConnected ? (rides?.length ?? 0) : 0;
 
   const tiles: ReactElement[] = [];
 
@@ -108,32 +97,6 @@ export function StatusRow(): ReactElement | null {
         title={t("strava.statusTitle")}
         detail={t("strava.statusConnectedShort")}
         onOpen={null}
-      />,
-    );
-  }
-
-  if (unpairedCount > 0) {
-    tiles.push(
-      <Tile
-        key="unpaired"
-        icon={<Link2Off size={15} color="var(--mantine-color-primary-6)" />}
-        tint="var(--mantine-color-primary-6)"
-        title={t("strava.unpairedBikesAction")}
-        detail={t("strava.unpairedTile", { count: unpairedCount })}
-        onOpen={() => setPairingGear(true)}
-      />,
-    );
-  }
-
-  if (pendingCount > 0) {
-    tiles.push(
-      <Tile
-        key="pending"
-        icon={<CalendarClock size={15} color="var(--mantine-color-primary-6)" />}
-        tint="var(--mantine-color-primary-6)"
-        title={t("pendingRides.title")}
-        detail={t("pendingRides.tileDetail", { count: pendingCount })}
-        onOpen={() => navigate("/rides?tab=pending")}
       />,
     );
   }
@@ -177,7 +140,6 @@ export function StatusRow(): ReactElement | null {
         })}
       </Grid>
 
-      <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} />
       <ShareDrawer opened={sharing} onClose={() => setSharing(false)} />
     </>
   );

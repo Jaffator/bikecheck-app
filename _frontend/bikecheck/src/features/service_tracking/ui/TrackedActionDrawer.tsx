@@ -53,6 +53,8 @@ export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProp
       opened={action !== null}
       onClose={onClose}
       desktop="modal"
+      // Wider than Mantine's default, so the part line and the bar read on one line.
+      modalSize="lg"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
       styles={{
@@ -182,7 +184,9 @@ function Header({
   const { t } = useTranslation();
   const side = positionLabel(action.position, t);
   const type = catalogueLabel(action.component_type_i18n_key, action.component_type, t);
-  const part = side === null ? type : `${type} (${side})`;
+  const typeAndSide = side === null ? type : `${type} (${side})`;
+  // The rows no longer name the part, so the drawer carries its description too.
+  const part = [typeAndSide, action.component_desc].filter((piece) => piece !== null && piece !== "").join(" · ");
   const mounted = action.mounted_at === null ? null : dayjs(action.mounted_at).format("D. M. YYYY");
 
   return (

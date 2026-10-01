@@ -40,7 +40,7 @@ export function NotificationsDesktop(): ReactElement {
 
   return (
     // No top padding: the unread line belongs to the header's title just above it.
-    <Stack gap="md" p="md" pt={0}>
+    <Stack gap="md" p="xl" pt={0}>
       <Text fz={13} c="var(--color-text-dim)" className="tabular-nums">
         {unreadCount > 0 ? t("notifications.unreadCount", { count: unreadCount }) : t("notifications.allRead")}
       </Text>

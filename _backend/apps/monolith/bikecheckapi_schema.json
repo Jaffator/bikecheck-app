@@ -216,6 +216,19 @@
         "tags": [
           "Notification"
         ]
+      },
+      "delete": {
+        "operationId": "Notification removeAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete every notification except rides still waiting for a bike",
+        "tags": [
+          "Notification"
+        ]
       }
     },
     "/api/notifications/viewed": {
@@ -252,6 +265,30 @@
           }
         },
         "summary": "Mark a notification as read",
+        "tags": [
+          "Notification"
+        ]
+      }
+    },
+    "/api/notifications/{id}": {
+      "delete": {
+        "operationId": "Notification remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a notification; a ride still waiting for a bike stays",
         "tags": [
           "Notification"
         ]
