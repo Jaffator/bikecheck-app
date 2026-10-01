@@ -6,7 +6,14 @@ import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
-import { BRAKE_PAD_PART, DRIVETRAIN_PARTS, SUSPENSION_PARTS } from '../service-tracking/ride-wear';
+import {
+  BRAKE_PAD_PART,
+  carried,
+  DRIVETRAIN_PARTS,
+  mountedPartsWhere,
+  SUSPENSION_PARTS,
+  type WearRide,
+} from '../service-tracking/ride-wear';
 import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
@@ -778,31 +785,27 @@ export class StravaEventsService {
           elevation_up_m: analyzedData.elevation_up_m,
         };
 
+    // Only the parts a move would take the ride back from (ride.service.ts), so moving it leaves no wear behind.
+    const wornIds = await this.wornPartIds(bikeId, ride);
+    const wornWhere = { id: { in: wornIds } };
+
     await this.prisma.components_mounted.updateMany({
-      where: {
-        bike_id: bikeId,
-        is_deleted: false,
-        component_types: { component_type: { in: SUSPENSION_PARTS } },
-      },
+      where: { ...wornWhere, component_types: { component_type: { in: SUSPENSION_PARTS } } },
       data: { suspension_min: { increment: diff.suspension_min } },
     });
 
     await this.prisma.components_mounted.updateMany({
-      where: { bike_id: bikeId, is_deleted: false, component_types: { component_type: BRAKE_PAD_PART } },
+      where: { ...wornWhere, component_types: { component_type: BRAKE_PAD_PART } },
       data: { health_index: { increment: diff.health_index_brake_pad } },
     });
 
     await this.prisma.components_mounted.updateMany({
-      where: { bike_id: bikeId, is_deleted: false },
+      where: wornWhere,
       data: { total_km: { increment: diff.total_km }, total_time_min: { increment: diff.duration_min } },
     });
 
     await this.prisma.components_mounted.updateMany({
-      where: {
-        bike_id: bikeId,
-        is_deleted: false,
-        component_types: { component_type: { in: DRIVETRAIN_PARTS } },
-      },
+      where: { ...wornWhere, component_types: { component_type: { in: DRIVETRAIN_PARTS } } },
       data: { drivetrain_km: { increment: diff.drivetrain_km } },
     });
 
@@ -822,6 +825,14 @@ export class StravaEventsService {
     // Callers announce a first-time ride and stay quiet about a re-sync, so the
     // upsert has to say which of the two it just did.
     return { message: 'Ride saved and summary generation queued', isNew: existingRide === null };
+  }
+
+  private async wornPartIds(bikeId: number, ride: Pick<WearRide, 'started_at'>): Promise<number[]> {
+    const parts = await this.prisma.components_mounted.findMany({
+      where: mountedPartsWhere(bikeId),
+      select: { id: true, mounted_at: true },
+    });
+    return parts.filter((part) => carried(part, ride)).map((part) => part.id);
   }
 
   async deleteStravaActivity(stravaData: any) {

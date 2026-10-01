@@ -16,7 +16,7 @@ import {
 import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 import { Response_WoreOffLineDto } from './dto/response-wore-off-line';
-import { RIDE_WEAR, wearRideSelect, type WearRide } from './ride-wear';
+import { endOfDay, MOUNTED, RIDE_WEAR, wearRideSelect, type WearRide } from './ride-wear';
 import {
   DEFAULT_TIME_ZONE,
   PLAN_REMINDER_JOB,
@@ -64,10 +64,6 @@ const trackedIntervalInclude = {
 } satisfies Prisma.bike_service_intervalInclude;
 
 type TrackedInterval = Prisma.bike_service_intervalGetPayload<{ include: typeof trackedIntervalInclude }>;
-
-// Only what is on the machine now: a part that came off, or one that should never have
-// existed, is not part of it any more and owes it nothing.
-const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
 
 // A descent rate reads the latest rides, and says nothing until enough of them are behind it.
 const LATEST_RIDES_FOR_RATE = 10;
@@ -564,13 +560,6 @@ function cycleStart(part: TrackedPart, action: Response_TrackedActionDto): Date 
   const from = serviced ?? part.mounted_at;
 
   return from === null ? null : endOfDay(from);
-}
-
-// A Service Date is a day, so a ride on it counts as ridden before the work.
-export function endOfDay(day: Date): Date {
-  const end = new Date(day);
-  end.setUTCHours(23, 59, 59, 999);
-  return end;
 }
 
 // Per bike, the earliest ride that falls in any of its cycles; nothing before it is ever summed.

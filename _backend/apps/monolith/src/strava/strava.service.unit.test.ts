@@ -30,7 +30,7 @@ describe('StravaEventsService', () => {
       update: jest.fn(),
     },
     rides: { findUnique: jest.fn(), findMany: jest.fn(), upsert: jest.fn() },
-    components_mounted: { updateMany: jest.fn() },
+    components_mounted: { findMany: jest.fn(), updateMany: jest.fn() },
   };
 
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
@@ -69,6 +69,7 @@ describe('StravaEventsService', () => {
     mockPrisma.strava_pending_activities.upsert.mockResolvedValue({});
     // No ride saved yet unless a case says so, so the gear decides the bike.
     mockPrisma.rides.findUnique.mockResolvedValue(null);
+    mockPrisma.components_mounted.findMany.mockResolvedValue([]);
   });
 
   describe('gear resolution', () => {

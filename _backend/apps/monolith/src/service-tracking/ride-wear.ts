@@ -19,6 +19,27 @@ export const SUSPENSION_PARTS = ['Shock', 'Fork'];
 export const BRAKE_PAD_PART = 'Brake pad';
 export const DRIVETRAIN_PARTS = ['Chain', 'Cassette', 'Chainring'];
 
+// Only what is on the machine now: a part that came off, or one that should never have
+// existed, is not part of it any more and owes it nothing.
+export const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
+
+// The parts a ride can wear, so a dismounted part stops accumulating.
+export function mountedPartsWhere(bikeId: number): Prisma.components_mountedWhereInput {
+  return { bike_id: bikeId, ...MOUNTED };
+}
+
+// A part carries rides from the day after its mount day (ADR 0001); an undated ride or part is assumed to.
+export function carried(part: { mounted_at: Date | null }, ride: Pick<WearRide, 'started_at'>): boolean {
+  return ride.started_at === null || part.mounted_at === null || endOfDay(part.mounted_at) < ride.started_at;
+}
+
+// A Service Date or mount day is a whole day, so a ride on it counts as ridden before the work.
+export function endOfDay(day: Date): Date {
+  const end = new Date(day);
+  end.setUTCHours(23, 59, 59, 999);
+  return end;
+}
+
 // The ride columns strava.service.ts grows each accumulator by, so a reading is rebuilt from the same wear.
 export const RIDE_WEAR: Record<WearMeasure, (ride: WearRide) => number> = {
   total_km: (ride) => (ride.distance_m ?? 0) / 1000,

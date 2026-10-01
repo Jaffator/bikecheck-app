@@ -2,10 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { check_in_status, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere } from '../bike/owned-bike.where';
-import { endOfDay, ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import {
   BRAKE_PAD_PART,
+  carried,
   DRIVETRAIN_PARTS,
+  mountedPartsWhere,
   SUSPENSION_PARTS,
   wearRideSelect,
   type WearRide,
@@ -215,10 +217,7 @@ type WornPart = Prisma.components_mountedGetPayload<{ select: typeof wornPartSel
 
 // Adds (sign 1) or removes (sign -1) the ride's wear on one bike, never below zero.
 async function shiftWear(tx: Prisma.TransactionClient, bikeId: number, ride: MovedRide, sign: 1 | -1): Promise<void> {
-  const parts = await tx.components_mounted.findMany({
-    where: { bike_id: bikeId, is_active: true, is_deleted: { not: true } },
-    select: wornPartSelect,
-  });
+  const parts = await tx.components_mounted.findMany({ where: mountedPartsWhere(bikeId), select: wornPartSelect });
   for (const part of parts.filter((one) => carried(one, ride))) {
     await tx.components_mounted.update({ where: { id: part.id }, data: partWear(part, ride, sign) });
   }
@@ -228,11 +227,6 @@ async function shiftWear(tx: Prisma.TransactionClient, bikeId: number, ride: Mov
     where: { id: bikeId },
     data: { total_elevation_m: shifted(bike?.total_elevation_m, Math.round(ride.elevation_up_m ?? 0), sign) },
   });
-}
-
-// A part carries rides from the day after its mount day (ADR 0001); an undated ride or part is assumed to.
-function carried(part: WornPart, ride: MovedRide): boolean {
-  return ride.started_at === null || part.mounted_at === null || endOfDay(part.mounted_at) < ride.started_at;
 }
 
 // The same columns, per part kind, that saveRide grows in strava.service.ts.
