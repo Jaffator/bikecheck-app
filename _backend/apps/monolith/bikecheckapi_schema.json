@@ -7453,6 +7453,16 @@
             "example": "ki}fHuqrbBGx@_@lAsA|Bi@n@",
             "nullable": true
           },
+          "sport_type": {
+            "type": "string",
+            "example": "MountainBikeRide",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2026-08-19T08:40:00.000Z",
+            "nullable": true
+          },
           "wore_off": {
             "type": "array",
             "items": {
@@ -7483,6 +7493,8 @@
           "speed_avg",
           "max_speed_kmh",
           "summary_polyline",
+          "sport_type",
+          "created_at",
           "wore_off",
           "check_in"
         ]

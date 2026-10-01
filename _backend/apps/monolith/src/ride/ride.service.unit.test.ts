@@ -175,6 +175,26 @@ describe('RideService', () => {
       expect(page.items[0]).not.toHaveProperty('json_data');
     });
 
+    it('lifts the sport type out of the payload', async () => {
+      mockPrisma.rides.findMany.mockResolvedValue([
+        {
+          id: 5,
+          activity_strava_id: null,
+          bike_id: 7,
+          bikes: null,
+          json_data: JSON.stringify({ name: 'Morning Ride', sport_type: 'MountainBikeRide', type: 'Ride' }),
+        },
+        { id: 6, activity_strava_id: null, bike_id: 7, bikes: null, json_data: { name: 'Old Ride' } },
+      ]);
+      mockPrisma.rides.count.mockResolvedValue(2);
+
+      const page = await service.findPage(1, 20, 0);
+
+      expect(page.items[0].sport_type).toBe('MountainBikeRide');
+      // A payload without one says nothing, rather than guessing from the older `type`.
+      expect(page.items[1].sport_type).toBeNull();
+    });
+
     it('reads a ride recorded without GPS as having no route', async () => {
       mockPrisma.rides.findMany.mockResolvedValue([
         {

@@ -52,6 +52,11 @@ export function checkInOf(draft: CheckInDraft): RideCheckIn | null {
   };
 }
 
+// A note with no answer cannot be saved, and moving on would drop it unseen.
+export function isHalfFilled(draft: CheckInDraft): boolean {
+  return draft.status === null && draft.note.trim() !== "";
+}
+
 export function symptomKey(symptom: CheckInSymptom): string {
   return `checkIn.symptom.${symptom}`;
 }

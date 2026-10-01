@@ -346,7 +346,15 @@
     "delete": "Smazat",
     "cancel": "Zrušit",
     "saveFailed": "Check-in se nepodařilo uložit",
-    "deleteFailed": "Check-in se nepodařilo smazat"
+    "deleteFailed": "Check-in se nepodařilo smazat",
+    "newRide": "Nová jízda",
+    "fromStrava": "Ze Stravy",
+    "bike": "Kolo",
+    "bikeFromStrava": "přiřazeno ze Stravy",
+    "woreOff": "Odepíše",
+    "optional": "nepovinné",
+    "optionalHint": "Hodnocení je nepovinné. Bez něj se jízda jen přiřadí ke kolu.",
+    "saveAndNext": "Uložit a další"
   },
   "ridesTable": {
     "allBikes": "Všechna kola",

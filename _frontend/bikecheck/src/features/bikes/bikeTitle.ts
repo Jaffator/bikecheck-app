@@ -12,6 +12,11 @@ export function bikeTitle(bike: NamedBike): string {
   return [bike.bike_brand, bike.bike_model, bike.year].filter(Boolean).join(" ");
 }
 
+// "Enduro · 2022", the line under a name that leaves the year out.
+export function bikeTypeAndYear(bike: { bike_type: string | null; year: number | null }): string {
+  return [bike.bike_type, bike.year].filter(Boolean).join(" · ");
+}
+
 // The same name, split the way the bike detail reads it: the brand as a kicker above, and
 // everything else as the heading. A bike with no model is named by its brand alone, so the
 // heading is never empty - the kicker is what gives way.

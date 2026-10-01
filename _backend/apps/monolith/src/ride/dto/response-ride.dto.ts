@@ -70,6 +70,14 @@ export class ResponseRideDto {
   @ApiProperty({ example: 'ki}fHuqrbBGx@_@lAsA|Bi@n@', nullable: true })
   summary_polyline!: string | null;
 
+  // Strava's sport type, lifted out of the stored payload like the route. Null where Strava sent none.
+  @ApiProperty({ type: String, example: 'MountainBikeRide', nullable: true })
+  sport_type!: string | null;
+
+  // When the ride reached BikeCheck, which the check-in reads as "arrived N min ago".
+  @ApiProperty({ type: String, example: '2026-08-19T08:40:00.000Z', nullable: true })
+  created_at!: string | null;
+
   // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
   @ApiProperty({ type: [Response_WoreOffLineDto] })
   wore_off!: Response_WoreOffLineDto[];

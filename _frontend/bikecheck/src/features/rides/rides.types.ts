@@ -61,6 +61,10 @@ export interface Ride {
   // Strava's own simplified route, lifted out of the stored activity by the API so the
   // list never carries the raw payload. Null for a ride recorded without GPS.
   summary_polyline: string | null;
+  // Strava's sport type, e.g. "MountainBikeRide"; null where Strava sent none.
+  sport_type: string | null;
+  // When the ride reached BikeCheck, not when it was ridden.
+  created_at: string | null;
   // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
   wore_off: WoreOffLine[];
   // Null until the rider says how the bike rode.

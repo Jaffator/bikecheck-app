@@ -101,7 +101,8 @@ export interface paths {
         get: operations["Notification list"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete every notification except rides still waiting for a bike */
+        delete: operations["Notification removeAll"];
         options?: never;
         head?: never;
         patch?: never;
@@ -139,6 +140,23 @@ export interface paths {
         head?: never;
         /** Mark a notification as read */
         patch: operations["Notification markRead"];
+        trace?: never;
+    };
+    "/api/notifications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a notification; a ride still waiting for a bike stays */
+        delete: operations["Notification remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/auth/test": {
@@ -998,6 +1016,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/strava/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queue the last 60 days of Strava rides the app never received */
+        post: operations["Strava syncStrava"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/strava/gear-linking": {
         parameters: {
             query?: never;
@@ -1067,6 +1102,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/strava/pending-activities/{activityId}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Drop a pending ride ridden on a bike that is not in BikeCheck */
+        post: operations["Strava dismissPendingActivity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rides/check-in-prompt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent rides without a check-in; empty unless a ride arrived since the last drawer */
+        get: operations["Ride findCheckInPrompt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rides/check-in-prompt/seen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark the check-in drawer as shown now */
+        post: operations["Ride markCheckInPromptSeen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rides/{id}/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save how the bike rode on one of the user rides */
+        put: operations["Ride saveCheckIn"];
+        post?: never;
+        /** Remove the check-in from one of the user rides */
+        delete: operations["Ride deleteCheckIn"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rides/months": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Months with a ride, YYYY-MM, newest first */
+        get: operations["Ride findMonths"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rides": {
         parameters: {
             query?: never;
@@ -1082,6 +1203,23 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/rides/{id}/bike": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Move a ride and its wear to another of the user bikes */
+        patch: operations["Ride changeBike"];
         trace?: never;
     };
     "/api/reports/export": {
@@ -1774,6 +1912,8 @@ export interface components {
             strava_username: Record<string, never> | null;
             /** @example https://dgalywyr863hv.cloudfront.net/pictures/athletes/.../large.jpg */
             strava_avatar_url: Record<string, never> | null;
+            /** @example 2026-09-29T10:00:00Z */
+            strava_last_sync_at: Record<string, never> | null;
             /** @example 2024-01-01T12:00:00Z */
             last_login_at: Record<string, never>;
             /**
@@ -2134,20 +2274,121 @@ export interface components {
              */
             is_shared: boolean;
             /**
+             * @description Non-deleted rides, lifetime
+             * @example 42
+             */
+            ride_count: number;
+            /**
+             * @description Sum of those rides' distance in whole km; total_km is only what the owner typed
+             * @example 1840
+             */
+            ride_km: number;
+            /**
+             * @description Sum of those rides' duration_min; total_time_min is only what the owner typed
+             * @example 3180
+             */
+            ride_time_min: number;
+            /**
+             * @description Sum of those rides' elevation_up_m
+             * @example 25400
+             */
+            ride_elevation_m: number;
+            /**
+             * @description Start of the newest non-deleted ride; null when the bike has none
+             * @example 2026-09-23T08:00:00.000Z
+             */
+            last_ride_at: string | null;
+            /**
              * @description Rank by id among all the owner's bikes, archived included, so a colour never shifts
              * @example 0
              */
             color_index: number;
+        };
+        ResponseRiddenBikeDto: {
+            /** @example 1 */
+            id: number;
+            /** @example 15 */
+            user_id: number;
+            /** @example true */
+            ebike: boolean;
+            /** @example 10 */
+            organization_id: Record<string, never> | null;
+            /** @example Specialized */
+            bike_brand: string | null;
+            /** @example Stumpjumper */
+            bike_model: Record<string, never> | null;
+            /** @example https://example.com/bike-image.jpg */
+            image_url: Record<string, never> | null;
+            /** @example 1 */
+            bike_type_id: Record<string, never> | null;
+            /** @example Enduro */
+            bike_type: Record<string, never> | null;
+            /** @example Tarmac SL7 */
+            bikename: Record<string, never> | null;
+            /** @example 2024 */
+            year: Record<string, never> | null;
+            /** @example Serviced bike, top health */
+            description: Record<string, never> | null;
+            /** @example 29" */
+            wheel_size: Record<string, never> | null;
+            /** @example L */
+            bike_size: Record<string, never> | null;
+            /** @example 1540 */
+            total_km: Record<string, never> | null;
+            /** @example 3600 */
+            total_time_min: Record<string, never> | null;
+            /** @example 7.25 */
+            bike_weight_kg: Record<string, never> | null;
+            /** @example 15623 */
+            total_elevation_m: Record<string, never> | null;
+            /** @example false */
+            has_front_suspension: boolean;
+            /** @example false */
+            has_rear_suspension: boolean;
+            /** @example 2024-01-01T12:00:00.000Z */
+            created_at: Record<string, never> | null;
+            /** @example 2024-01-02T12:00:00.000Z */
+            updated_at: Record<string, never> | null;
+            /** @example Carbon */
+            frame_material: Record<string, never> | null;
+            /** @example false */
+            is_deleted: Record<string, never> | null;
+            /** @example null */
+            deleted_at: Record<string, never> | null;
+            /** @example b12345678 */
+            strava_gear_id: Record<string, never> | null;
+            /** @example My Enduro Bike */
+            strava_name: Record<string, never> | null;
+            /**
+             * @description The Setup Profile the bike is ridden at right now
+             * @example 12
+             */
+            active_setup_profile_id: Record<string, never> | null;
+            /**
+             * @description Whether the bike goes out on the owner's Public Profile
+             * @example true
+             */
+            is_shared: boolean;
             /**
              * @description Non-deleted rides, lifetime
              * @example 42
              */
             ride_count: number;
             /**
+             * @description Sum of those rides' distance in whole km; total_km is only what the owner typed
+             * @example 1840
+             */
+            ride_km: number;
+            /**
              * @description Sum of those rides' duration_min; total_time_min is only what the owner typed
              * @example 3180
              */
             ride_time_min: number;
+            /**
+             * @description Sum of those rides' elevation_up_m
+             * @example 25400
+             */
+            ride_elevation_m: number;
             /**
              * @description Start of the newest non-deleted ride; null when the bike has none
              * @example 2026-09-23T08:00:00.000Z
@@ -2747,6 +2988,11 @@ export interface components {
              * @example 2026-10-04
              */
             planned_for: string | null;
+            /**
+             * @description IANA zone the 08:00 reminder is timed in; not stored. Europe/Prague when absent
+             * @example Europe/Prague
+             */
+            time_zone?: string;
         };
         CustomComponentsDto: {
             /** @example 15 */
@@ -2977,6 +3223,15 @@ export interface components {
             /** @example https://www.strava.com/oauth/authorize?client_id=235898&state=a3f2... */
             url: string;
         };
+        ResponseStravaSyncDto: {
+            /** @example 2 */
+            queued: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-29T10:00:00.000Z
+             */
+            synced_at: string;
+        };
         ResponseUnmatchedStravaGearDto: {
             /** @example 1 */
             user_id: number;
@@ -3065,6 +3320,13 @@ export interface components {
              */
             after: number;
         };
+        ResponseRideCheckInDto: {
+            /** @enum {string} */
+            status: "OK" | "ISSUE";
+            symptoms: ("CREAK" | "SHIFTING_SKIPS" | "SOFT_BRAKE" | "FORK_SETUP" | "SHOCK_SETUP" | "TIRE_LOSES_AIR" | "HEADSET_PLAY" | "OTHER")[];
+            /** @example Skips on the 3rd cog */
+            note: Record<string, never> | null;
+        };
         ResponseRideDto: {
             /** @example 42 */
             id: number;
@@ -3092,12 +3354,54 @@ export interface components {
             max_speed_kmh: Record<string, never> | null;
             /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
             summary_polyline: Record<string, never> | null;
+            /** @example MountainBikeRide */
+            sport_type: string | null;
+            /** @example 2026-08-19T08:40:00.000Z */
+            created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
+            check_in: components["schemas"]["ResponseRideCheckInDto"] | null;
+        };
+        SaveRideCheckInDto: {
+            /** @enum {string} */
+            status: "OK" | "ISSUE";
+            symptoms?: ("CREAK" | "SHIFTING_SKIPS" | "SOFT_BRAKE" | "FORK_SETUP" | "SHOCK_SETUP" | "TIRE_LOSES_AIR" | "HEADSET_PLAY" | "OTHER")[];
+            /** @example Skips on the 3rd cog */
+            note?: string;
+        };
+        ResponseRideWeekDto: {
+            /** @example 2026-09-21 */
+            start: string;
+            /** @example 3 */
+            count: number;
+            /** @example 96.4 */
+            km: number;
+            /** @example 347 */
+            time_min: number;
+        };
+        ResponseRideFiguresDto: {
+            /** @example 9 */
+            count: number;
+            /** @example 440000 */
+            distance_m: number;
+            /** @example 1450 */
+            time_min: number;
+            /** @example 8640 */
+            elevation_up_m: number;
+            /** @example 9120 */
+            elevation_down_m: number;
+            /** @example 392000 */
+            previous_distance_m: Record<string, never> | null;
         };
         ResponseRidePageDto: {
             items: components["schemas"]["ResponseRideDto"][];
             /** @example 137 */
             total: number;
+            weeks: components["schemas"]["ResponseRideWeekDto"][];
+            figures: components["schemas"]["ResponseRideFiguresDto"];
+        };
+        ChangeRideBikeDto: {
+            /** @example 2 */
+            bikeId: number;
         };
         ExportReportDto: {
             /**
@@ -3820,6 +4124,11 @@ export interface components {
             year: number | null;
             /** @example 9200 */
             total: number;
+            /**
+             * @description Services in from/to, free ones included
+             * @example 4
+             */
+            service_count: number;
         };
         Response_SpendDto: {
             /**
@@ -4190,6 +4499,23 @@ export interface operations {
             };
         };
     };
+    "Notification removeAll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "Notification markAllViewed": {
         parameters: {
             query?: never;
@@ -4208,6 +4534,25 @@ export interface operations {
         };
     };
     "Notification markRead": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Notification remove": {
         parameters: {
             query?: never;
             header?: never;
@@ -4648,7 +4993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResponseBikeDto"];
+                    "application/json": components["schemas"]["ResponseRiddenBikeDto"];
                 };
             };
         };
@@ -5595,6 +5940,32 @@ export interface operations {
             };
         };
     };
+    "Strava syncStrava": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseStravaSyncDto"];
+                };
+            };
+            /** @description Synced less than 5 minutes ago */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "Strava listUnmatchedStravaGear": {
         parameters: {
             query?: never;
@@ -5698,12 +6069,139 @@ export interface operations {
             };
         };
     };
+    "Strava dismissPendingActivity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Ride findCheckInPrompt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseRideDto"][];
+                };
+            };
+        };
+    };
+    "Ride markCheckInPromptSeen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Ride saveCheckIn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRideCheckInDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseRideCheckInDto"];
+                };
+            };
+        };
+    };
+    "Ride deleteCheckIn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Ride findMonths": {
+        parameters: {
+            query?: {
+                /** @description IANA time zone; UTC when left out */
+                tz?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
     "Ride listRides": {
         parameters: {
             query?: {
                 limit?: number;
                 offset?: number;
                 bikeId?: number;
+                /** @description First day, YYYY-MM-DD, in tz */
+                from?: string;
+                /** @description Last day, YYYY-MM-DD, in tz */
+                to?: string;
+                /** @description IANA time zone; UTC when left out */
+                tz?: string;
             };
             header?: never;
             path?: never;
@@ -5718,6 +6216,29 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ResponseRidePageDto"];
                 };
+            };
+        };
+    };
+    "Ride changeBike": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeRideBikeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

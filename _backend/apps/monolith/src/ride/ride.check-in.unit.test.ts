@@ -122,6 +122,16 @@ describe('RideService check-in', () => {
 
       expect(offered.check_in).toBeNull();
     });
+
+    // The drawer says how long ago the ride arrived, not when it was ridden.
+    it('carries when the ride arrived', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
+      mockPrisma.rides.findMany.mockResolvedValue([ride(3, 2, 1)]);
+
+      const [offered] = await service.findCheckInPrompt(1, NOW);
+
+      expect(offered.created_at).toBe('2026-09-28T12:00:00.000Z');
+    });
   });
 
   describe('saveCheckIn', () => {

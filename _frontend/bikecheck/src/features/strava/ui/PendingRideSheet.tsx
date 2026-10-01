@@ -1,18 +1,16 @@
 // Renders pending ride assignment through query hooks.
 import { useState, type ReactElement } from "react";
-import { Button, Group, Paper, Select, Stack, Text } from "@mantine/core";
+import { Button, Group, Select, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import dayjs from "dayjs";
-import { Ban, ChevronDown, Clock, Mountain, Route } from "lucide-react";
+import { Ban, ChevronDown } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { inputStyles, dropdownProps, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useDismissPendingRide, useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
-import { formatDuration } from "@/features/rides/rideDuration";
+import { RideSummaryCard } from "@/features/rides/ui/RideSummaryCard";
 
 // Mantine's large sheet; the assign button is pinned to its foot.
 const SHEET_HEIGHT = "var(--drawer-size-lg)";
@@ -86,58 +84,7 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
         <Text fw={700} fz={20} c="text.7" ta="center">
           {t("pendingRides.chooseBikeTitle")}
         </Text>
-        {/* Reuses list-card lighting for the selected ride. */}
-        {ride !== null && (
-          <Paper
-            radius="lg"
-            p="md"
-            style={{
-              // Uses separate background fields to preserve the gradient.
-              backgroundColor: "var(--mantine-color-cards-6)",
-              backgroundImage: "var(--card-glow)",
-              border: "1px solid var(--color-border-subtle)",
-              boxShadow: "var(--elev-panel)",
-            }}
-          >
-            <Group gap="sm" wrap="nowrap" align="center" w="100%">
-              <RouteMap polyline={ride.summary_polyline} width={80} height={80} strokeWidth={3} />
-              {/* minWidth enables title line clamping in the flexible column. */}
-              <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
-                <Stack gap={4}>
-                  <Text fw={600} fz={15} c="text.6" lineClamp={1}>
-                    {ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
-                  </Text>
-                  <Text fz={13} c="text.7">
-                    {dayjs(ride.started_at).format("D. M. YYYY H:mm")}
-                  </Text>
-                </Stack>
-                {/* Distributes metrics evenly across the available width. */}
-                <Group justify="space-between" wrap="nowrap" w="90%" style={{ flexShrink: 0 }}>
-                  <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
-                    <Route size={14} color="var(--mantine-color-text-7)" />
-                    <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
-                      {t("pendingRides.distance", { count: ride.distance_km })}
-                    </Text>
-                  </Group>
-                  <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
-                    <Clock size={14} color="var(--mantine-color-text-7)" />
-                    <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
-                      {formatDuration(ride.duration_min)}
-                    </Text>
-                  </Group>
-                  <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
-                    <Mountain size={14} color="var(--mantine-color-text-7)" />
-                    <Text fz={14} c="text.7" style={{ whiteSpace: "nowrap" }}>
-                      {t("pendingRides.elevation", {
-                        count: ride.elevation_up_m,
-                      })}
-                    </Text>
-                  </Group>
-                </Group>
-              </Stack>
-            </Group>
-          </Paper>
-        )}
+        {ride !== null && <RideSummaryCard ride={ride} />}
 
         {/* Connects the ride summary to its bike-selection field. */}
         <Group justify="center">

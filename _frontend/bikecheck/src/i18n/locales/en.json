@@ -328,7 +328,15 @@
     "delete": "Delete",
     "cancel": "Cancel",
     "saveFailed": "Couldn't save the check-in",
-    "deleteFailed": "Couldn't delete the check-in"
+    "deleteFailed": "Couldn't delete the check-in",
+    "newRide": "New ride",
+    "fromStrava": "From Strava",
+    "bike": "Bike",
+    "bikeFromStrava": "assigned from Strava",
+    "woreOff": "Wears off",
+    "optional": "optional",
+    "optionalHint": "The rating is optional. Without it, the ride is just assigned to the bike.",
+    "saveAndNext": "Save and next"
   },
   "ridesTable": {
     "allBikes": "All bikes",

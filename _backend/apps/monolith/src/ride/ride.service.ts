@@ -34,6 +34,7 @@ interface RideRow {
   bike_id: number;
   bikes: { bike_brand?: string | null; bike_model?: string | null; year?: number | null } | null;
   started_at?: Date | null;
+  created_at?: Date | null;
   distance_m?: number | null;
   duration_min?: number | null;
   elevation_up_m?: number | null;
@@ -303,19 +304,21 @@ function clamp(value: number, fallback: number, min: number, max: number): numbe
 }
 
 // What the list needs out of the stored Strava payload. Read together in one pass:
-// the blob is large, and parsing it twice to answer two questions is the cost this
-// endpoint is trying to avoid.
+// the blob is large, and parsing it once per question is the cost this endpoint is
+// trying to avoid.
 interface ActivityFacts {
   name: string;
   summary_polyline: string | null;
+  sport_type: string | null;
 }
 
 interface StravaActivity {
   name?: unknown;
   map?: { summary_polyline?: unknown } | null;
+  sport_type?: unknown;
 }
 
-// The title and the route, read out of the stored payload. It is written with
+// The title, the route and the sport type, read out of the stored payload. It is written with
 // JSON.stringify, but Prisma hands a Json column back parsed, so both shapes are
 // accepted rather than assuming either. Strava always sends a name, so the empty
 // string is a type-level floor, not an expected state; the route is genuinely
@@ -324,10 +327,12 @@ function activityFacts(jsonData: unknown): ActivityFacts {
   const activity = asActivity(jsonData);
   const name = activity?.name;
   const polyline = activity?.map?.summary_polyline;
+  const sportType = activity?.sport_type;
 
   return {
     name: typeof name === 'string' ? name : '',
     summary_polyline: typeof polyline === 'string' && polyline.length > 0 ? polyline : null,
+    sport_type: typeof sportType === 'string' && sportType.length > 0 ? sportType : null,
   };
 }
 
@@ -370,6 +375,8 @@ function toRideDto(row: RideRow, woreOff: Response_WoreOffLineDto[]): ResponseRi
     speed_avg: row.speed_avg ?? null,
     max_speed_kmh: row.max_speed_kmh ?? null,
     summary_polyline: facts.summary_polyline,
+    sport_type: facts.sport_type,
+    created_at: row.created_at ? row.created_at.toISOString() : null,
     wore_off: woreOff,
     check_in: row.check_in
       ? { status: row.check_in.status, symptoms: row.check_in.symptoms, note: row.check_in.note }
