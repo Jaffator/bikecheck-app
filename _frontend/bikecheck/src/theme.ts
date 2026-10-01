@@ -1,4 +1,13 @@
-import { ActionIcon, Button, Drawer, Pagination, SegmentedControl, createTheme, type MantineColorsTuple } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  Combobox,
+  Drawer,
+  Pagination,
+  SegmentedControl,
+  createTheme,
+  type MantineColorsTuple,
+} from "@mantine/core";
 import { CONTENT_MAX_WIDTH } from "./layout/contentWidth";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
@@ -205,6 +214,17 @@ export const theme = createTheme({
     Drawer: Drawer.extend({
       styles: {
         content: { maxWidth: CONTENT_MAX_WIDTH, marginInline: "auto" },
+      },
+    }),
+    // Mantine's light scheme drops a white list. Only a bare Combobox reads this; a Select takes `dropdownProps`.
+    Combobox: Combobox.extend({
+      styles: {
+        dropdown: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          border: "1px solid var(--color-border-strong)",
+          boxShadow: "var(--elev-panel)",
+          color: "var(--mantine-color-text-6)",
+        },
       },
     }),
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk

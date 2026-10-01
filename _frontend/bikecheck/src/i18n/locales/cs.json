@@ -351,6 +351,8 @@
     "fromStrava": "Ze Stravy",
     "bike": "Kolo",
     "bikeFromStrava": "přiřazeno ze Stravy",
+    "bikePickedByHand": "vybráno ručně",
+    "chooseBike": "Vyber kolo",
     "woreOff": "Odepíše",
     "optional": "nepovinné",
     "optionalHint": "Hodnocení je nepovinné. Bez něj se jízda jen přiřadí ke kolu.",

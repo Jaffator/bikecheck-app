@@ -16,9 +16,11 @@ import { bikeColor } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { checkInOf, draftOf, isHalfFilled, type CheckInDraft } from "@/features/rides/checkIn";
+import { checkInSaveOf } from "@/features/rides/checkInSave";
 import { rideSummaryOf } from "@/features/rides/rideSummary";
 import {
   CHECK_IN_PROMPT_KEY,
+  useChangeRideBike,
   useCheckInPrompt,
   useMarkCheckInPromptSeen,
   useSaveRideCheckIn,
@@ -50,18 +52,21 @@ export function CheckInPromptDrawer(): ReactElement {
   const { data: bikes } = useBikes();
   const { mutate: markSeen } = useMarkCheckInPromptSeen();
   const save = useSaveRideCheckIn();
+  const changeBike = useChangeRideBike();
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   // A snapshot: saving refreshes the prompt, and the walk must not shift under the rider.
   const [queue, setQueue] = useState<Ride[]>([]);
   const [position, setPosition] = useState(0);
   const [draft, setDraft] = useState<CheckInDraft>(draftOf(null));
+  // Null keeps the ride's own bike; the ride moves only when it is saved.
+  const [pickedBikeId, setPickedBikeId] = useState<number | null>(null);
+  const [pickerOpened, setPickerOpened] = useState(false);
 
   if (!opened && prompt !== undefined && prompt.length > 0) {
     setOpened(true);
     setQueue(prompt);
-    setPosition(0);
-    setDraft(draftOf(null));
+    showRide(0);
   }
 
   // Seen as it opens, so another phone or the next start stays shut until a new ride arrives.
@@ -73,46 +78,64 @@ export function CheckInPromptDrawer(): ReactElement {
 
   const ride = queue[position] ?? null;
 
+  function showRide(index: number): void {
+    setPosition(index);
+    setDraft(draftOf(null));
+    setPickedBikeId(null);
+    setPickerOpened(false);
+  }
+
   function next(): void {
     if (position + 1 >= queue.length) {
       setOpened(false);
       return;
     }
-    setPosition(position + 1);
-    setDraft(draftOf(null));
+    showRide(position + 1);
   }
 
-  // The check-in is optional: without one the ride stays as it is and the walk moves on.
-  function submit(): void {
-    const toSave = checkInOf(draft);
-    if (ride === null) return;
-    if (toSave === null) {
-      next();
-      return;
+  // The bike moves first, so the check-in lands on the ride where it now is. Both are optional.
+  async function submit(current: Ride): Promise<void> {
+    const { moveTo, checkIn } = checkInSaveOf(current.bike_id, pickedBikeId ?? current.bike_id, checkInOf(draft));
+    const moved =
+      moveTo === null ||
+      (await attempt(changeBike.mutateAsync({ rideId: current.id, bikeId: moveTo }), "rides.changeBikeFailed"));
+    if (!moved) return;
+    const saved =
+      checkIn === null || (await attempt(save.mutateAsync({ rideId: current.id, checkIn }), "checkIn.saveFailed"));
+    if (saved) next();
+  }
+
+  // A failed write keeps the rider on this ride, told why.
+  async function attempt(write: Promise<unknown>, failedKey: string): Promise<boolean> {
+    try {
+      await write;
+      return true;
+    } catch {
+      notifications.show({ color: "red.5", message: t(failedKey) });
+      return false;
     }
-    save.mutate(
-      { rideId: ride.id, checkIn: toSave },
-      {
-        onSuccess: next,
-        onError: () => notifications.show({ color: "red.5", message: t("checkIn.saveFailed") }),
-      },
-    );
   }
 
+  const pickedId = ride === null ? null : (pickedBikeId ?? ride.bike_id);
   const step: PromptStep | null =
     ride === null
       ? null
       : {
           ride,
-          bike: bikes?.find((one) => one.id === ride.bike_id) ?? null,
+          bikes: bikes ?? [],
+          pickedBike: bikes?.find((one) => one.id === pickedId) ?? null,
+          pickedByHand: pickedId !== ride.bike_id,
+          onPick: setPickedBikeId,
+          pickerOpened,
+          onPickerOpenedChange: setPickerOpened,
           index: position,
           total: queue.length,
           draft,
           onDraft: setDraft,
           onSkip: next,
-          onSave: submit,
+          onSave: () => void submit(ride),
           canSave: !isHalfFilled(draft),
-          saving: save.isPending,
+          saving: save.isPending || changeBike.isPending,
         };
 
   return (
@@ -133,8 +156,13 @@ export function CheckInPromptDrawer(): ReactElement {
 
 interface PromptStep {
   ride: Ride;
+  bikes: ListedBike[];
   // Null while the garage loads.
-  bike: ListedBike | null;
+  pickedBike: ListedBike | null;
+  pickedByHand: boolean;
+  onPick: (bikeId: number) => void;
+  pickerOpened: boolean;
+  onPickerOpenedChange: (opened: boolean) => void;
   index: number;
   total: number;
   draft: CheckInDraft;
@@ -155,8 +183,8 @@ function PhonePrompt({ step }: { step: PromptStep }): ReactElement {
           <Counter step={step} />
         </Group>
       </Stack>
-      <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step.bike)} />
-      <CheckInBikeField ride={step.ride} bike={step.bike} />
+      <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step.pickedBike)} />
+      <BikeField step={step} />
       <CheckInSection step={step} />
       <PromptActions step={step} compact={false} />
     </Stack>
@@ -186,10 +214,10 @@ function DesktopPrompt({ step }: { step: PromptStep }): ReactElement {
 
       <Group align="stretch" gap={0} wrap="nowrap">
         <Box p={24} w={RIDE_COLUMN_WIDTH} style={RIDE_COLUMN}>
-          <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step.bike)} detailed />
+          <RideSummaryCard ride={rideSummaryOf(step.ride)} routeColor={routeColor(step.pickedBike)} detailed />
         </Box>
         <Stack gap={20} p={24} style={{ flex: 1, minWidth: 0 }}>
-          <CheckInBikeField ride={step.ride} bike={step.bike} />
+          <BikeField step={step} />
           <CheckInSection step={step} />
         </Stack>
       </Group>
@@ -241,10 +269,29 @@ function Counter({ step }: { step: PromptStep }): ReactElement {
   );
 }
 
+function BikeField({ step }: { step: PromptStep }): ReactElement {
+  return (
+    <CheckInBikeField
+      ride={step.ride}
+      bikes={step.bikes}
+      picked={step.pickedBike}
+      pickedByHand={step.pickedByHand}
+      onPick={step.onPick}
+      pickerOpened={step.pickerOpened}
+      onPickerOpenedChange={step.onPickerOpenedChange}
+    />
+  );
+}
+
+// Dimmed and out of reach while the bike list lies over it.
 function CheckInSection({ step }: { step: PromptStep }): ReactElement {
   const { t } = useTranslation();
   return (
-    <Stack gap={8}>
+    <Stack
+      gap={8}
+      inert={step.pickerOpened}
+      style={{ opacity: step.pickerOpened ? 0.4 : 1, transition: "opacity 150ms ease" }}
+    >
       <Group justify="space-between" align="baseline" gap="sm" wrap="nowrap">
         <Eyebrow>{t("checkIn.question")}</Eyebrow>
         <Text fz={13} c="var(--color-text-dim)">

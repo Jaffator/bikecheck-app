@@ -333,6 +333,8 @@
     "fromStrava": "From Strava",
     "bike": "Bike",
     "bikeFromStrava": "assigned from Strava",
+    "bikePickedByHand": "picked by hand",
+    "chooseBike": "Choose a bike",
     "woreOff": "Wears off",
     "optional": "optional",
     "optionalHint": "The rating is optional. Without it, the ride is just assigned to the bike.",
