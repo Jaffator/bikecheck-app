@@ -389,8 +389,8 @@ export function AppLayout(): ReactElement {
           the sidebar holds all three on desktop. */}
       {!subPage && !isDesktop && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {!isDesktop && <MoreDrawer opened={moreOpened} onClose={() => setMoreOpened(false)} />}
-      {/* Desktop asks on Home's Last ride panel instead of popping anything up. */}
-      {!isDesktop && <CheckInPromptDrawer />}
+      {/* A drawer on the phone, a modal on desktop: a ride on the wrong bike is caught on either. */}
+      <CheckInPromptDrawer />
       {/* --------- FOOTER --------- */}
       {!subPage && !isDesktop && (
         <AppShell.Footer

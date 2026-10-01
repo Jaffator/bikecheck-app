@@ -36,12 +36,12 @@ interface Gesture {
 }
 
 // Attach to any element inside the sheet; the gesture is read from the sheet itself, so
-// nothing is laid over the content and every tap below it still lands.
-export function useSheetSwipe(onClose: () => void): (node: HTMLElement | null) => void {
+// nothing is laid over the content and every tap below it still lands. No onClose, no drag.
+export function useSheetSwipe(onClose: (() => void) | undefined): (node: HTMLElement | null) => void {
   return useCallback(
     (node: HTMLElement | null) => {
       const sheet = node?.closest<HTMLElement>('[role="dialog"]');
-      if (!sheet) return;
+      if (!sheet || onClose === undefined) return;
 
       let gesture: Gesture | null = null;
       let frame = 0;

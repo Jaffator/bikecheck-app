@@ -8,7 +8,8 @@ import { useSheetSwipe } from "@/hooks/useSheetSwipe";
 export const SHEET_GRABBER_HEADER_PADDING = 28;
 
 interface SheetGrabberProps {
-  onClose: () => void;
+  // Left out, the pill is drawn but the sheet cannot be dragged away.
+  onClose?: () => void;
   // A sheet that keeps Mantine's header has nothing to sit above in the flow, so the strip
   // is laid over the header's top edge instead of taking a row of its own.
   floating?: boolean;
@@ -28,8 +29,7 @@ export function SheetGrabber({ onClose, floating = false }: SheetGrabberProps): 
         ...(floating ? { position: "absolute", top: 0, insetInline: 0, zIndex: 1 } : { marginBottom: -8 }),
         flexShrink: 0,
         // The gesture is the sheet's, not the browser's.
-        touchAction: "none",
-        cursor: "grab",
+        ...(onClose !== undefined ? { touchAction: "none", cursor: "grab" } : {}),
       }}
     >
       <Box mx="auto" w={36} h={4} style={{ borderRadius: 9999, backgroundColor: "var(--color-border-subtle)" }} />

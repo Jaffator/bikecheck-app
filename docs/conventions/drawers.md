@@ -24,6 +24,9 @@ radius, overlay or surface.
 What it holds, whether it is a panel or a modal on desktop, and its own layout. A sheet that
 draws its own header with its own ✕ passes `withCloseButton={false}` and no `title`.
 
+A sheet that must be answered passes `dismissible={false}`: no outside click, Esc, swipe or back
+button closes it, and it closes itself once answered. Only `CheckInPromptDrawer` does.
+
 The wrapper brings the rest: the transition, the radius, the overlay, the card surface, the
 grabber, and the entry on the overlay stack that Android's back gesture closes.
 
@@ -58,7 +61,8 @@ How tall the sheet stands is the sheet's own: `height`, `maxHeight` and the keyb
   back and ✕ still close the panel rather than walking through every row opened.
 - **Modal**: a centred `Modal` with Mantine's own entrance, the one `ConfirmModal` makes, over
   the same overlay.
-- No grabber and no drag. Closed by ✕, Esc and — the modal — a click outside.
+- No grabber and no drag. Closed by ✕, Esc and — the modal — a click outside, unless
+  `dismissible={false}`.
 - The content's `height`, `maxHeight` and `marginBottom` are dropped: a panel is as tall as the
   window, a modal as its content.
 - Esc closes the top layer only. A panel under a confirmation, or a modal under another, stays.
@@ -75,7 +79,7 @@ body is remounted per opening (the usual way to discard a cancelled form) would 
 Every bottom sheet wears `SheetGrabber` at its top, and `ResponsiveSheet` places it. It draws the
 pill people read as "this layer floats", and it is what hangs the closing drag on the sheet. The
 pill gets 8px either side and gives that room straight back with a negative margin, so no sheet
-moves by adopting one.
+moves by adopting one. A sheet with `dismissible={false}` keeps the pill but not the drag.
 
 A sheet with a `title` or Mantine's close button has a header with nothing above it in the flow,
 so there the strip is laid over the header's top edge and the header makes room for it

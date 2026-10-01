@@ -16,6 +16,9 @@ const SURFACE: CSSProperties = { backgroundColor: "var(--mantine-color-cards-6)"
 // A bottom sheet's height is its own: a panel is as tall as the window, a modal as its content.
 const UNSIZED: CSSProperties = { height: undefined, maxHeight: undefined, marginBottom: undefined };
 
+// Back still lands on a sheet that cannot be dismissed, so the page under it stays put.
+const IGNORE_BACK = (): void => {};
+
 type SheetStyles = Partial<Record<"content" | "header" | "body" | "title", CSSProperties>>;
 
 interface ResponsiveSheetProps {
@@ -28,6 +31,8 @@ interface ResponsiveSheetProps {
   title?: ReactNode;
   // Mantine's own cross; a sheet drawing its own header turns it off.
   withCloseButton?: boolean;
+  // False for a sheet that must be answered: no outside click, Esc, swipe or back button.
+  dismissible?: boolean;
   zIndex?: number;
   styles?: SheetStyles;
   onExited?: () => void;
@@ -41,13 +46,14 @@ export function ResponsiveSheet({
   modalSize,
   title,
   withCloseButton = true,
+  dismissible = true,
   zIndex,
   styles,
   onExited,
   children,
 }: ResponsiveSheetProps): ReactElement {
   const isDesktop = useIsDesktop();
-  const onTop = useOverlayBack(opened, onClose);
+  const onTop = useOverlayBack(opened, dismissible ? onClose : IGNORE_BACK);
   const visible = useOpenedOnNextFrame(opened);
   const hasHeader = title !== undefined || withCloseButton;
 
@@ -58,7 +64,8 @@ export function ResponsiveSheet({
     withCloseButton,
     zIndex,
     // A sheet under a confirmation stays put when Esc dismisses the confirmation.
-    closeOnEscape: onTop,
+    closeOnEscape: dismissible && onTop,
+    closeOnClickOutside: dismissible,
     onExitTransitionEnd: onExited,
   };
 
@@ -77,7 +84,7 @@ export function ResponsiveSheet({
           header: { ...SURFACE, ...(hasHeader ? { paddingTop: SHEET_GRABBER_HEADER_PADDING } : {}), ...styles?.header },
         }}
       >
-        <SheetGrabber onClose={onClose} floating={hasHeader} />
+        <SheetGrabber onClose={dismissible ? onClose : undefined} floating={hasHeader} />
         {children}
       </Drawer>
     );

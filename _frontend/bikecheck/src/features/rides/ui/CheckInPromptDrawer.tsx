@@ -1,9 +1,9 @@
-// The phone's check-in drawer: opens when a new ride has arrived and walks the recent rides without one.
+// The check-in, a drawer on the phone and a modal on desktop: opens when a new ride has arrived and
+// walks the recent rides without one. Nothing dismisses it; each ride is saved or skipped.
 import { useEffect, useState, type ReactElement } from "react";
-import { ActionIcon, Button, Group, Stack, Text } from "@mantine/core";
+import { Button, Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -78,38 +78,27 @@ export function CheckInPromptDrawer(): ReactElement {
       onClose={() => setOpened(false)}
       desktop="modal"
       withCloseButton={false}
+      dismissible={false}
       zIndex={DRAWER_Z_INDEX}
       styles={{ content: { height: "auto", maxHeight: "88dvh" } }}
     >
       {ride !== null && (
         <Stack gap="md" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-          <Group justify="space-between" align="flex-start" wrap="nowrap">
-            <Stack gap={4} style={{ minWidth: 0 }}>
-              <Eyebrow>
-                {ride.started_at === null ? ride.bike_name : dayjs(ride.started_at).format("D. M. YYYY · HH:mm")}
-              </Eyebrow>
-              <Text fw={700} fz={22} c="text.6" lh={1.1}>
-                {t("checkIn.question")}
-                <Text span inherit c="var(--color-text-dim)" className="tabular-nums">
-                  {" · "}
-                  {t("checkIn.counter", { index: position + 1, total: queue.length })}
-                </Text>
+          <Stack gap={4}>
+            <Eyebrow>
+              {ride.started_at === null ? ride.bike_name : dayjs(ride.started_at).format("D. M. YYYY · HH:mm")}
+            </Eyebrow>
+            <Text fw={700} fz={22} c="text.6" lh={1.1}>
+              {t("checkIn.question")}
+              <Text span inherit c="var(--color-text-dim)" className="tabular-nums">
+                {" · "}
+                {t("checkIn.counter", { index: position + 1, total: queue.length })}
               </Text>
-              <Text fz={13} c="var(--color-text-dim)" lineClamp={1} className="tabular-nums">
-                {rideSummary(ride, t("pendingRides.distance", { count: Math.round((ride.distance_m ?? 0) / 1000) }))}
-              </Text>
-            </Stack>
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              radius="xl"
-              size="lg"
-              aria-label={t("action.close")}
-              onClick={() => setOpened(false)}
-            >
-              <X size={20} color="var(--mantine-color-text-6)" />
-            </ActionIcon>
-          </Group>
+            </Text>
+            <Text fz={13} c="var(--color-text-dim)" lineClamp={1} className="tabular-nums">
+              {rideSummary(ride, t("pendingRides.distance", { count: Math.round((ride.distance_m ?? 0) / 1000) }))}
+            </Text>
+          </Stack>
 
           <CheckInForm draft={draft} onChange={setDraft} />
 
