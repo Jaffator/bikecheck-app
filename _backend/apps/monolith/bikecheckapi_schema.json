@@ -9714,6 +9714,19 @@
               "type": "number"
             }
           },
+          "daily_elevation_m": {
+            "example": [
+              0,
+              310,
+              0,
+              845
+            ],
+            "description": "Metres climbed per UTC day, indexed like daily_m; a ride without elevation_up_m climbs 0",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
           "total_km": {
             "type": "number",
             "example": 51,
@@ -9737,6 +9750,7 @@
           "year",
           "color_index",
           "daily_m",
+          "daily_elevation_m",
           "total_km",
           "ride_count",
           "time_min"

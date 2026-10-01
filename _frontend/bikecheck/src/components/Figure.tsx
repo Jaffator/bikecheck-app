@@ -4,19 +4,17 @@ import { Box, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { Eyebrow } from "./Eyebrow";
 import { PRESS_TRANSITION } from "./panelRows";
 
-const HIGHLIGHT_BORDER = "1px solid color-mix(in srgb, var(--mantine-color-primary-6) 40%, transparent)";
+// The skeleton holds the value's line, so nothing jumps when it loads.
+const VALUE_LINE = 28;
 
 export interface FigureProps {
   title: string;
   // Null while it loads.
   value: ReactNode | null;
   valueFigure?: boolean;
-  valueColor?: string;
   detail: ReactNode;
   // Numbers get tabular numerals so they line up; words do not.
   detailFigure?: boolean;
-  // The one figure the eye should reach first.
-  highlighted?: boolean;
   // Without it the figure is only read, never pressed.
   onOpen?: () => void;
 }
@@ -25,25 +23,30 @@ export function Figure({
   title,
   value,
   valueFigure = true,
-  valueColor,
   detail,
   detailFigure = false,
-  highlighted = false,
   onOpen,
 }: FigureProps): ReactElement {
   const surface: CSSProperties = {
     borderRadius: "var(--mantine-radius-lg)",
     backgroundColor: "var(--mantine-color-cards-6)",
-    border: highlighted ? HIGHLIGHT_BORDER : "none",
     boxShadow: "var(--elev-panel)",
   };
   const body = (
     <Stack gap={4}>
       <Eyebrow>{title}</Eyebrow>
       {value === null ? (
-        <Skeleton h={20} w="50%" radius="sm" />
+        <Skeleton h={VALUE_LINE} w="50%" radius="sm" />
       ) : (
-        <Text className={valueFigure ? "tabular-nums" : undefined} fz={16} fw={600} c={valueColor ?? "text.6"} lineClamp={1}>
+        <Text
+          className={valueFigure ? "tabular-nums" : undefined}
+          fz={22}
+          fw={600}
+          lh={`${String(VALUE_LINE)}px`}
+          lts="var(--tracking-title)"
+          c="text.6"
+          lineClamp={1}
+        >
           {value}
         </Text>
       )}

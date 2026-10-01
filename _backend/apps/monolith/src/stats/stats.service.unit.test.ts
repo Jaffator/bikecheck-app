@@ -530,6 +530,7 @@ describe('StatsService', () => {
             year: 2024,
             color_index: 0,
             daily_m: days(28, { 0: 12400, 10: 38200 }),
+            daily_elevation_m: days(28, {}),
             total_km: 51,
             ride_count: 3,
             time_min: 170,
@@ -549,6 +550,22 @@ describe('StatsService', () => {
       const [bike] = result.bikes;
       expect(bike.daily_m.reduce((total, metres) => total + metres, 0)).toBe(2998);
       expect(bike.total_km).toBe(3);
+    });
+
+    it('serves metres climbed per UTC day on the same days as the metres ridden, no climb as 0', async () => {
+      // ARRANGE
+      rides = [
+        ride(RALLON, '2026-01-01T09:00:00.000Z', 12400, { elevation_up_m: 310 }),
+        ride(RALLON, '2026-01-11T06:00:00.000Z', 8000, { elevation_up_m: null }),
+        ride(RALLON, '2026-01-11T23:30:00.000Z', 30200, { elevation_up_m: 845 }),
+        ride(RALLON, '2026-02-03T09:00:00.000Z', 5000, { elevation_up_m: 120 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'year');
+
+      // ASSERT: the ride stamped after today climbs on today, like its metres.
+      expect(result.bikes[0].daily_elevation_m).toEqual(days(28, { 0: 310, 10: 845, 27: 120 }));
     });
 
     it('puts a ride stamped after today on today', async () => {
@@ -675,6 +692,7 @@ describe('StatsService', () => {
             year: 2024,
             color_index: 0,
             daily_m: days(25, { 0: 20000, 24: 15000 }),
+            daily_elevation_m: days(25, {}),
             total_km: 35,
             ride_count: 2,
             time_min: 110,

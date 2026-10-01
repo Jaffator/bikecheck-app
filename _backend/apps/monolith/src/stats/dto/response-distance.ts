@@ -26,6 +26,13 @@ export class Response_DistanceBikeDto {
   })
   daily_m!: number[];
 
+  @ApiProperty({
+    type: [Number],
+    example: [0, 310, 0, 845],
+    description: 'Metres climbed per UTC day, indexed like daily_m; a ride without elevation_up_m climbs 0',
+  })
+  daily_elevation_m!: number[];
+
   @ApiProperty({ example: 51, description: 'Whole km of the sum of daily_m' })
   total_km!: number;
 

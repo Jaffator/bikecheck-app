@@ -39,6 +39,8 @@ export interface DistanceBike {
   color_index: number;
   // Metres per UTC day, index 0 = the served `from`, one entry per day through `to`.
   daily_m: number[];
+  // Metres climbed per UTC day, indexed like daily_m.
+  daily_elevation_m: number[];
   // Whole km of the sum of daily_m.
   total_km: number;
   // The rides started in the window and the sum of their minutes.

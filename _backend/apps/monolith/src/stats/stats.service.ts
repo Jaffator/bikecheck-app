@@ -60,6 +60,7 @@ const distanceSelect = {
   started_at: true,
   distance_m: true,
   duration_min: true,
+  elevation_up_m: true,
 } satisfies Prisma.ridesSelect;
 type DistanceRide = Prisma.ridesGetPayload<{ select: typeof distanceSelect }>;
 
@@ -74,6 +75,7 @@ interface DayWindow {
 
 interface BikeRides {
   daily_m: number[];
+  daily_elevation_m: number[];
   ride_count: number;
   time_min: number;
 }
@@ -436,13 +438,23 @@ function ridesByBike(rides: DistanceRide[], window: DayWindow): Map<number, Bike
   for (const ride of rides) {
     if (ride.started_at === null) continue;
     const day = Math.min(Math.floor((ride.started_at.getTime() - window.from.getTime()) / DAY_MS), days - 1);
-    const entry = byBike.get(ride.bike_id) ?? { daily_m: new Array<number>(days).fill(0), ride_count: 0, time_min: 0 };
+    const entry = byBike.get(ride.bike_id) ?? noRides(days);
     entry.daily_m[day] += ride.distance_m ?? 0;
+    entry.daily_elevation_m[day] += ride.elevation_up_m ?? 0;
     entry.ride_count += 1;
     entry.time_min += ride.duration_min ?? 0;
     byBike.set(ride.bike_id, entry);
   }
   return byBike;
+}
+
+function noRides(days: number): BikeRides {
+  return {
+    daily_m: new Array<number>(days).fill(0),
+    daily_elevation_m: new Array<number>(days).fill(0),
+    ride_count: 0,
+    time_min: 0,
+  };
 }
 
 // Every bike ridden in the window, even for no distance. Summed in metres and rounded last, so

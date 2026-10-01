@@ -1,19 +1,16 @@
-// Desktop Home's row of figures: the Period's distance and time in the saddle, what is due now
-// and the next replacement. Spend is the spend card's; Strava's problems are the banner's.
-import { Fragment, useState, type ReactElement, type ReactNode } from "react";
+// Desktop Home's row of figures: the Period's distance, time in the saddle and climb, and what is
+// due now. Spend is the spend card's, the next replacement the forecast card's.
+import { Fragment, type ReactElement, type ReactNode } from "react";
 import { SimpleGrid, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Figure } from "@/components/Figure";
-import { formatKm } from "@/features/profile/profileFormat";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { DUE_FROM, attentionColor } from "@/features/service_tracking/attentionLevel";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
-import type { AttentionLevel, GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
-import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
-import { periodGain, totalMeters } from "@/features/stats/distanceDays";
+import type { AttentionLevel, GarageTrackedAction } from "@/features/service_tracking/tracking.types";
+import { CLIMBED, RIDDEN, periodGain, totalMeters, type DailySeries } from "@/features/stats/distanceDays";
 import { homePeriodLabel } from "@/features/stats/homePeriod";
-import { useNextReplacement } from "@/features/stats/nextReplacement";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { HomePeriod } from "@/features/stats/stats.types";
 
@@ -24,30 +21,38 @@ const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
   { level: "warning", key: "dashboard.warningCount" },
 ];
 
-// Due and the next replacement look at now, so only the Period's readings take it.
+// Due looks at now, so only the Period's readings take it.
 export function DashboardFigures({ period }: { period: HomePeriod }): ReactElement {
   return (
     <SimpleGrid cols={{ base: 2, lg: 4 }} spacing="md">
-      <DistanceFigure period={period} />
+      <MetersFigure period={period} series={RIDDEN} titleKey="stats.distanceTitle" to="/bikes" />
       <TimeFigure period={period} />
+      <MetersFigure period={period} series={CLIMBED} titleKey="dashboard.climbTitle" to="/rides" />
       <DueFigure />
-      <NextReplacementFigure />
     </SimpleGrid>
   );
 }
 
-function DistanceFigure({ period }: { period: HomePeriod }): ReactElement {
+interface MetersFigureProps {
+  period: HomePeriod;
+  series: DailySeries;
+  titleKey: string;
+  to: string;
+}
+
+// Ridden and climbed read the same response the same way, so one tile serves both.
+function MetersFigure({ period, series, titleKey, to }: MetersFigureProps): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: distance } = useDistance(period);
 
   return (
     <Figure
-      title={t("stats.distanceTitle", { period: homePeriodLabel(period, i18n.language, t) })}
-      value={distance === undefined ? null : formatKm(Math.round(totalMeters(distance) / 1000), i18n.language)}
-      detail={distance === undefined ? "" : periodGain(distance, period, i18n.language, t)}
+      title={t(titleKey, { period: homePeriodLabel(period, i18n.language, t) })}
+      value={distance === undefined ? null : series.format(totalMeters(distance, series), i18n.language)}
+      detail={distance === undefined ? "" : periodGain(distance, period, series, i18n.language, t)}
       detailFigure
-      onOpen={() => navigate("/bikes")}
+      onOpen={() => navigate(to)}
     />
   );
 }
@@ -108,42 +113,4 @@ function DueLevels({ due }: { due: GarageTrackedAction[] }): ReactNode {
       </Text>
     </Fragment>
   ));
-}
-
-function NextReplacementFigure(): ReactElement {
-  const { t } = useTranslation();
-  const next = useNextReplacement();
-  const [opened, setOpened] = useState<TrackedAction | null>(null);
-
-  return (
-    <>
-      {next === undefined || next === null ? (
-        <Figure highlighted title={t("stats.nextReplacement")} value={next === undefined ? null : "—"} detail="" />
-      ) : (
-        <Figure
-          highlighted
-          title={t("stats.nextReplacement")}
-          value={<NameAndFigure name={next.part} figure={next.left} />}
-          valueFigure={false}
-          valueColor={attentionColor(next.item.percentage)}
-          detail={<NameAndFigure name={next.bike} figure={next.weeks} />}
-          onOpen={() => setOpened(next.item)}
-        />
-      )}
-      {/* Mounted either way, so logging the part from it does not tear the drawer down mid-close. */}
-      <TrackedActionDrawer action={opened} onClose={() => setOpened(null)} />
-    </>
-  );
-}
-
-// A name, then its figure in tabular numerals.
-function NameAndFigure({ name, figure }: { name: string; figure: string }): ReactElement {
-  return (
-    <>
-      {`${name} · `}
-      <Text span inherit className="tabular-nums">
-        {figure}
-      </Text>
-    </>
-  );
 }

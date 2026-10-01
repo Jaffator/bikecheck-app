@@ -3,9 +3,25 @@
 import type { TFunction } from "i18next";
 import { formatKm } from "@/features/profile/profileFormat";
 import type { DistanceBucket } from "./homePeriod";
-import type { Distance, HomePeriod } from "./stats.types";
+import type { Distance, DistanceBike, HomePeriod } from "./stats.types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Distance and climb share one span and one detail rule; only the days summed and the unit differ.
+export interface DailySeries {
+  daily: (bike: DistanceBike) => number[];
+  format: (meters: number, language: string) => string;
+}
+
+export const RIDDEN: DailySeries = {
+  daily: (bike) => bike.daily_m,
+  format: (meters, language) => formatKm(Math.round(meters / 1000), language),
+};
+
+export const CLIMBED: DailySeries = {
+  daily: (bike) => bike.daily_elevation_m,
+  format: (meters, language) => `${new Intl.NumberFormat(language).format(meters)} m`,
+};
 
 // The UTC day `index` days after `from`.
 function dayOf(from: string, index: number): Date {
@@ -50,15 +66,15 @@ export function bucketMeters(daily: number[], distance: Distance, bucket: Distan
 }
 
 // Every bike's metres over the served span, which the bars add up to exactly.
-export function totalMeters(distance: Distance): number {
-  return distance.bikes.reduce((sum, bike) => sum + bike.daily_m.reduce((days, meters) => days + meters, 0), 0);
+export function totalMeters(distance: Distance, series: DailySeries): number {
+  return metersSince(distance, dayOf(distance.from, 0), series);
 }
 
 // Every bike's metres from `since` to the last day served; a day before `from` reads as `from`.
-function metersSince(distance: Distance, since: Date): number {
+function metersSince(distance: Distance, since: Date, series: DailySeries): number {
   const first = Math.max(0, bucketIndex(dayOf(distance.from, 0), since, "day"));
-  const ridden = distance.bikes.flatMap((bike) => bike.daily_m.slice(first));
-  return ridden.reduce((sum, meters) => sum + meters, 0);
+  const days = distance.bikes.flatMap((bike) => series.daily(bike).slice(first));
+  return days.reduce((sum, meters) => sum + meters, 0);
 }
 
 // getUTCDay counts from Sunday.
@@ -67,18 +83,24 @@ function mondayOf(day: Date): Date {
 }
 
 // The current bucket one level down: this month of the year, this week of the month, this year of all time.
-export function periodGain(distance: Distance, period: HomePeriod, language: string, t: TFunction): string {
+export function periodGain(
+  distance: Distance,
+  period: HomePeriod,
+  series: DailySeries,
+  language: string,
+  t: TFunction,
+): string {
   const today = dayOf(distance.to, 0);
-  const km = (since: Date): string => formatKm(Math.round(metersSince(distance, since) / 1000), language);
+  const amount = (since: Date): string => series.format(metersSince(distance, since, series), language);
 
-  if (period === "month") return t("dashboard.distanceWeek", { km: km(mondayOf(today)) });
+  if (period === "month") return t("dashboard.gainWeek", { amount: amount(mondayOf(today)) });
   if (period === "all") {
     const year = today.getUTCFullYear();
-    return t("dashboard.distanceYear", { km: km(new Date(Date.UTC(year, 0, 1))), year });
+    return t("dashboard.gainYear", { amount: amount(new Date(Date.UTC(year, 0, 1))), year });
   }
   const month = new Intl.DateTimeFormat(language, { month: "long", timeZone: "UTC" }).format(today);
-  return t("dashboard.distanceMonth", {
-    km: km(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))),
+  return t("dashboard.gainMonth", {
+    amount: amount(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))),
     month,
   });
 }

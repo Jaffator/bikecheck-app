@@ -4273,6 +4273,16 @@ export interface components {
              */
             daily_m: number[];
             /**
+             * @description Metres climbed per UTC day, indexed like daily_m; a ride without elevation_up_m climbs 0
+             * @example [
+             *       0,
+             *       310,
+             *       0,
+             *       845
+             *     ]
+             */
+            daily_elevation_m: number[];
+            /**
              * @description Whole km of the sum of daily_m
              * @example 51
              */
