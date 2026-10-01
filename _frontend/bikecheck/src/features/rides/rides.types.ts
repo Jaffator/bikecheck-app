@@ -72,10 +72,20 @@ export interface Ride {
   check_in: RideCheckIn | null;
 }
 
+// What a ride wears off one bike: its own wore_off on the bike it is saved on, a preview on any other.
+export interface BikeWoreOff {
+  bike_id: number;
+  wore_off: WoreOffLine[];
+}
+
+// A ride in the check-in carries what it wears off each of the rider's active bikes.
+export type CheckInRide = Ride & { wore_off_by_bike: BikeWoreOff[] };
+export type CheckInPendingRide = PendingRide & { wore_off_by_bike: BikeWoreOff[] };
+
 // What the check-in walks: rides on a bike without a check-in, and rides still waiting for a bike.
 export interface CheckInPrompt {
-  rides: Ride[];
-  pending: PendingRide[];
+  rides: CheckInRide[];
+  pending: CheckInPendingRide[];
 }
 
 // A week holding rides on the page, totalled over all its rides inside the filter.

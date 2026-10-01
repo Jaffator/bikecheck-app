@@ -13,6 +13,8 @@ export const wearRideSelect = {
   health_index_brake_pad: true,
 } satisfies Prisma.ridesSelect;
 export type WearRide = Prisma.ridesGetPayload<{ select: typeof wearRideSelect }>;
+// Its wear alone, which a ride not saved on the bike yet - pending, or on another bike - also has.
+export type RideWear = Omit<WearRide, 'id' | 'bike_id'>;
 
 // The part kinds that carry a type-specific accumulator; syncing a ride and moving it split parts alike.
 export const SUSPENSION_PARTS = ['Shock', 'Fork'];
@@ -41,7 +43,7 @@ export function endOfDay(day: Date): Date {
 }
 
 // The ride columns strava.service.ts grows each accumulator by, so a reading is rebuilt from the same wear.
-export const RIDE_WEAR: Record<WearMeasure, (ride: WearRide) => number> = {
+export const RIDE_WEAR: Record<WearMeasure, (ride: RideWear) => number> = {
   total_km: (ride) => (ride.distance_m ?? 0) / 1000,
   drivetrain_km: (ride) => (ride.drivetrain_meters ?? 0) / 1000,
   total_time_min: (ride) => ride.duration_min ?? 0,

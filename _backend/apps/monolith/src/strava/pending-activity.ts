@@ -1,12 +1,13 @@
 // A pending Strava activity as the client reads it; shared by the Pending list and the check-in prompt.
 import type { strava_pending_activities } from '@prisma/client';
+import type { RideWear } from '../service-tracking/ride-wear';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import type { StravaActivityData } from './strava.service';
 
 // Lifts the ride's own figures out of the stored analysis, so the client gets
 // a flat row instead of the whole raw Strava blob.
 export function toPendingDto(activity: strava_pending_activities): ResponsePendingStravaDto {
-  const analyzed = activity.analyzed_data as StravaActivityData['analyzedData'];
+  const analyzed = analysisOf(activity);
   const sportType = analyzed.rawJson?.sport_type as unknown;
   return {
     activity_id: String(activity.activity_id),
@@ -25,4 +26,22 @@ export function toPendingDto(activity: strava_pending_activities): ResponsePendi
     elevation_up_m: Math.round(analyzed.elevation_up_m),
     created_at: activity.created_at,
   };
+}
+
+// In the columns saveRide stores it under, so a ride with no bike yet previews like a saved one.
+export function pendingWear(activity: strava_pending_activities): RideWear {
+  const analyzed = analysisOf(activity);
+  return {
+    started_at: new Date(analyzed.started_at),
+    distance_m: analyzed.distance_km * 1000,
+    drivetrain_meters: analyzed.drivetrain_km * 1000,
+    duration_min: analyzed.duration_min,
+    suspension_min: analyzed.suspension_minutes,
+    health_index_brake_pad: analyzed.health_index_brake_pad,
+  };
+}
+
+// The column is Json; Strava parks it in this shape.
+export function analysisOf(activity: strava_pending_activities): StravaActivityData['analyzedData'] {
+  return activity.analyzed_data as StravaActivityData['analyzedData'];
 }

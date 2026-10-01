@@ -23,7 +23,7 @@ interface CheckInBikeFieldProps {
   notMine: boolean;
   source: BikeSource;
   fallbackName: string;
-  // What the ride wore off its own bike; empty for any other pick.
+  // What the ride wears off the picked bike; empty with no bike.
   woreOff: WoreOff[];
   onPick: (pick: BikePick) => void;
   pickerOpened: boolean;

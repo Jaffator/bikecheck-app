@@ -3352,6 +3352,83 @@ export interface components {
             /** @example Skips on the 3rd cog */
             note: Record<string, never> | null;
         };
+        Response_BikeWoreOffDto: {
+            /** @example 7 */
+            bike_id: number;
+            wore_off: components["schemas"]["Response_WoreOffLineDto"][];
+        };
+        ResponseCheckInRideDto: {
+            /** @example 42 */
+            id: number;
+            /** @example 13579246810 */
+            activity_strava_id: Record<string, never> | null;
+            /** @example 7 */
+            bike_id: number;
+            /** @example S-Works Tarmac */
+            bike_name: Record<string, never> | null;
+            /** @example Morning Mountain Bike Ride */
+            name: string;
+            /** @example 2026-08-19T06:12:00.000Z */
+            started_at: Record<string, never> | null;
+            /** @example 42000 */
+            distance_m: Record<string, never> | null;
+            /** @example 96 */
+            duration_min: Record<string, never> | null;
+            /** @example 612 */
+            elevation_up_m: Record<string, never> | null;
+            /** @example 598 */
+            elevation_down_m: Record<string, never> | null;
+            /** @example 26 */
+            speed_avg: Record<string, never> | null;
+            /** @example 54 */
+            max_speed_kmh: Record<string, never> | null;
+            /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
+            summary_polyline: Record<string, never> | null;
+            /** @example MountainBikeRide */
+            sport_type: string | null;
+            /** @example 2026-08-19T08:40:00.000Z */
+            created_at: string | null;
+            wore_off: components["schemas"]["Response_WoreOffLineDto"][];
+            check_in: components["schemas"]["ResponseRideCheckInDto"] | null;
+            wore_off_by_bike: components["schemas"]["Response_BikeWoreOffDto"][];
+        };
+        ResponseCheckInPendingDto: {
+            /** @example 13579246810 */
+            activity_id: string;
+            /** @example b12345 */
+            gear_id: Record<string, never> | null;
+            /** @example 2026-08-19T06:12:00.000Z */
+            started_at: string;
+            /** @example Morning Ride */
+            name: string;
+            /** @example snttH{s`|A[VJrD */
+            summary_polyline: Record<string, never> | null;
+            /** @example MountainBikeRide */
+            sport_type: string | null;
+            /** @example 42 */
+            distance_km: number;
+            /** @example 96 */
+            duration_min: number;
+            /** @example 612 */
+            elevation_up_m: number;
+            /**
+             * Format: date-time
+             * @example 2026-08-19T06:40:00.000Z
+             */
+            created_at: string;
+            wore_off_by_bike: components["schemas"]["Response_BikeWoreOffDto"][];
+        };
+        ResponseCheckInPromptDto: {
+            rides: components["schemas"]["ResponseCheckInRideDto"][];
+            pending: components["schemas"]["ResponseCheckInPendingDto"][];
+        };
+        SaveRideCheckInDto: {
+            /** @enum {string} */
+            status: "OK" | "ISSUE";
+            symptoms?: ("CREAK" | "SHIFTING_SKIPS" | "SOFT_BRAKE" | "FORK_SETUP" | "SHOCK_SETUP" | "TIRE_LOSES_AIR" | "HEADSET_PLAY" | "OTHER")[];
+            /** @example Skips on the 3rd cog */
+            note?: string;
+        };
         ResponseRideDto: {
             /** @example 42 */
             id: number;
@@ -3385,17 +3462,6 @@ export interface components {
             created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
             check_in: components["schemas"]["ResponseRideCheckInDto"] | null;
-        };
-        ResponseCheckInPromptDto: {
-            rides: components["schemas"]["ResponseRideDto"][];
-            pending: components["schemas"]["ResponsePendingStravaDto"][];
-        };
-        SaveRideCheckInDto: {
-            /** @enum {string} */
-            status: "OK" | "ISSUE";
-            symptoms?: ("CREAK" | "SHIFTING_SKIPS" | "SOFT_BRAKE" | "FORK_SETUP" | "SHOCK_SETUP" | "TIRE_LOSES_AIR" | "HEADSET_PLAY" | "OTHER")[];
-            /** @example Skips on the 3rd cog */
-            note?: string;
         };
         ResponseRideWeekDto: {
             /** @example 2026-09-21 */

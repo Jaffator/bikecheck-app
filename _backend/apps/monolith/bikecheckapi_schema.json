@@ -7439,6 +7439,267 @@
           "note"
         ]
       },
+      "Response_BikeWoreOffDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 7
+          },
+          "wore_off": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_WoreOffLineDto"
+            }
+          }
+        },
+        "required": [
+          "bike_id",
+          "wore_off"
+        ]
+      },
+      "ResponseCheckInRideDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 42
+          },
+          "activity_strava_id": {
+            "type": "object",
+            "example": "13579246810",
+            "nullable": true
+          },
+          "bike_id": {
+            "type": "number",
+            "example": 7
+          },
+          "bike_name": {
+            "type": "object",
+            "example": "S-Works Tarmac",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "example": "Morning Mountain Bike Ride"
+          },
+          "started_at": {
+            "type": "object",
+            "example": "2026-08-19T06:12:00.000Z",
+            "nullable": true
+          },
+          "distance_m": {
+            "type": "object",
+            "example": 42000,
+            "nullable": true
+          },
+          "duration_min": {
+            "type": "object",
+            "example": 96,
+            "nullable": true
+          },
+          "elevation_up_m": {
+            "type": "object",
+            "example": 612,
+            "nullable": true
+          },
+          "elevation_down_m": {
+            "type": "object",
+            "example": 598,
+            "nullable": true
+          },
+          "speed_avg": {
+            "type": "object",
+            "example": 26,
+            "nullable": true
+          },
+          "max_speed_kmh": {
+            "type": "object",
+            "example": 54,
+            "nullable": true
+          },
+          "summary_polyline": {
+            "type": "object",
+            "example": "ki}fHuqrbBGx@_@lAsA|Bi@n@",
+            "nullable": true
+          },
+          "sport_type": {
+            "type": "string",
+            "example": "MountainBikeRide",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "example": "2026-08-19T08:40:00.000Z",
+            "nullable": true
+          },
+          "wore_off": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_WoreOffLineDto"
+            }
+          },
+          "check_in": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseRideCheckInDto"
+              }
+            ]
+          },
+          "wore_off_by_bike": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_BikeWoreOffDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "activity_strava_id",
+          "bike_id",
+          "bike_name",
+          "name",
+          "started_at",
+          "distance_m",
+          "duration_min",
+          "elevation_up_m",
+          "elevation_down_m",
+          "speed_avg",
+          "max_speed_kmh",
+          "summary_polyline",
+          "sport_type",
+          "created_at",
+          "wore_off",
+          "check_in",
+          "wore_off_by_bike"
+        ]
+      },
+      "ResponseCheckInPendingDto": {
+        "type": "object",
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "example": "13579246810"
+          },
+          "gear_id": {
+            "type": "object",
+            "example": "b12345",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "string",
+            "example": "2026-08-19T06:12:00.000Z"
+          },
+          "name": {
+            "type": "string",
+            "example": "Morning Ride"
+          },
+          "summary_polyline": {
+            "type": "object",
+            "example": "snttH{s`|A[VJrD",
+            "nullable": true
+          },
+          "sport_type": {
+            "type": "string",
+            "example": "MountainBikeRide",
+            "nullable": true
+          },
+          "distance_km": {
+            "type": "number",
+            "example": 42
+          },
+          "duration_min": {
+            "type": "number",
+            "example": 96
+          },
+          "elevation_up_m": {
+            "type": "number",
+            "example": 612
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-19T06:40:00.000Z"
+          },
+          "wore_off_by_bike": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_BikeWoreOffDto"
+            }
+          }
+        },
+        "required": [
+          "activity_id",
+          "gear_id",
+          "started_at",
+          "name",
+          "summary_polyline",
+          "sport_type",
+          "distance_km",
+          "duration_min",
+          "elevation_up_m",
+          "created_at",
+          "wore_off_by_bike"
+        ]
+      },
+      "ResponseCheckInPromptDto": {
+        "type": "object",
+        "properties": {
+          "rides": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseCheckInRideDto"
+            }
+          },
+          "pending": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseCheckInPendingDto"
+            }
+          }
+        },
+        "required": [
+          "rides",
+          "pending"
+        ]
+      },
+      "SaveRideCheckInDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "ISSUE"
+            ]
+          },
+          "symptoms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "CREAK",
+                "SHIFTING_SKIPS",
+                "SOFT_BRAKE",
+                "FORK_SETUP",
+                "SHOCK_SETUP",
+                "TIRE_LOSES_AIR",
+                "HEADSET_PLAY",
+                "OTHER"
+              ]
+            }
+          },
+          "note": {
+            "type": "string",
+            "example": "Skips on the 3rd cog"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "ResponseRideDto": {
         "type": "object",
         "properties": {
@@ -7548,62 +7809,6 @@
           "created_at",
           "wore_off",
           "check_in"
-        ]
-      },
-      "ResponseCheckInPromptDto": {
-        "type": "object",
-        "properties": {
-          "rides": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResponseRideDto"
-            }
-          },
-          "pending": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResponsePendingStravaDto"
-            }
-          }
-        },
-        "required": [
-          "rides",
-          "pending"
-        ]
-      },
-      "SaveRideCheckInDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "OK",
-              "ISSUE"
-            ]
-          },
-          "symptoms": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "CREAK",
-                "SHIFTING_SKIPS",
-                "SOFT_BRAKE",
-                "FORK_SETUP",
-                "SHOCK_SETUP",
-                "TIRE_LOSES_AIR",
-                "HEADSET_PLAY",
-                "OTHER"
-              ]
-            }
-          },
-          "note": {
-            "type": "string",
-            "example": "Skips on the 3rd cog"
-          }
-        },
-        "required": [
-          "status"
         ]
       },
       "ResponseRideWeekDto": {

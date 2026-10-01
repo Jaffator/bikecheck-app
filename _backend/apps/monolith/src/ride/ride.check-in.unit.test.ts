@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RideService } from './ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 
 const NOW = new Date('2026-09-29T12:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -44,6 +45,9 @@ function pending(
       distance_km: 30.4,
       duration_min: 90.2,
       elevation_up_m: 512.3,
+      drivetrain_km: 21,
+      suspension_minutes: 34,
+      health_index_brake_pad: 12,
       rawJson: { sport_type: 'MountainBikeRide' },
     },
     created_at: daysAgo(createdDaysAgo),
@@ -54,7 +58,9 @@ function pending(
 describe('RideService check-in', () => {
   let service: RideService;
 
-  const mockServiceTracking = { getWoreOff: jest.fn(), evaluateBikes: jest.fn() };
+  const mockServiceTracking = { getWoreOff: jest.fn(), getWearPreview: jest.fn(), evaluateBikes: jest.fn() };
+  // Stands in for the garage read: answers each ride with what the test sets.
+  const preview = jest.fn();
   const mockPrisma = {
     rides: { findMany: jest.fn(), findFirst: jest.fn() },
     users: { findUnique: jest.fn(), update: jest.fn() },
@@ -65,6 +71,8 @@ describe('RideService check-in', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockServiceTracking.getWoreOff.mockResolvedValue(new Map());
+    preview.mockReturnValue([]);
+    mockServiceTracking.getWearPreview.mockResolvedValue(preview);
     mockPrisma.strava_pending_activities.findMany.mockResolvedValue([]);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -241,6 +249,69 @@ describe('RideService check-in', () => {
       const prompt = await service.findCheckInPrompt(1, NOW);
 
       expect(prompt).toEqual({ rides: [], pending: [] });
+    });
+  });
+
+  describe('findCheckInPrompt wear by bike', () => {
+    // One line of what a ride wears off, told apart by its part.
+    function line(componentMountedId: number): Response_WoreOffLineDto {
+      return {
+        component_mounted_id: componentMountedId,
+        event_action_id: 101,
+        component_type: 'Chain',
+        component_type_i18n_key: null,
+        position: null,
+        action_name: 'Replace',
+        action_i18n_key: null,
+        replace_action: true,
+        measure: 'drivetrain_km',
+        amount: 21,
+        before: 50,
+        after: 51,
+      };
+    }
+
+    // A pending ride has no row in rides, so its wear is read where Strava parked it.
+    it('previews a pending ride from its stored analysis', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
+      mockPrisma.rides.findMany.mockResolvedValue([]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([pending(900, 1, 1)]);
+      preview.mockReturnValue([{ bike_id: 7, wore_off: [line(55)] }]);
+
+      const {
+        pending: [offered],
+      } = await service.findCheckInPrompt(1, NOW);
+
+      expect(preview).toHaveBeenCalledWith({
+        started_at: daysAgo(1),
+        distance_m: 30400,
+        drivetrain_meters: 21000,
+        duration_min: 90.2,
+        suspension_min: 34,
+        health_index_brake_pad: 12,
+      });
+      expect(offered.wore_off_by_bike).toEqual([{ bike_id: 7, wore_off: [line(55)] }]);
+    });
+
+    // The ride is already in its own bike's reading, so adding it there again would count it twice.
+    it("keeps the ride's own wore_off on the bike it is saved on and previews every other bike", async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
+      mockPrisma.rides.findMany.mockResolvedValue([ride(3, 1, 1)]);
+      mockServiceTracking.getWoreOff.mockResolvedValue(new Map([[3, [line(55)]]]));
+      preview.mockReturnValue([
+        { bike_id: 7, wore_off: [line(56)] },
+        { bike_id: 8, wore_off: [line(70)] },
+      ]);
+
+      const {
+        rides: [offered],
+      } = await service.findCheckInPrompt(1, NOW);
+
+      expect(offered.wore_off).toEqual([line(55)]);
+      expect(offered.wore_off_by_bike).toEqual([
+        { bike_id: 7, wore_off: [line(55)] },
+        { bike_id: 8, wore_off: [line(70)] },
+      ]);
     });
   });
 

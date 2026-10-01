@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { check_in_status, check_in_symptom } from '@prisma/client';
 import { Response_WoreOffLineDto } from '../../service-tracking/dto/response-wore-off-line';
+import { Response_BikeWoreOffDto } from '../../service-tracking/dto/response-bike-wore-off';
 import { ResponsePendingStravaDto } from '../../strava/dto/response-pending-strava.dto';
 
 // How the bike rode on the ride, as its rider said.
@@ -143,11 +144,24 @@ export class ResponseRidePageDto {
   figures!: ResponseRideFiguresDto;
 }
 
+// A ride in the check-in, with what it wears off each active bike: its own wore_off on the bike it
+// is saved on, a preview on every other.
+export class ResponseCheckInRideDto extends ResponseRideDto {
+  @ApiProperty({ type: [Response_BikeWoreOffDto] })
+  wore_off_by_bike!: Response_BikeWoreOffDto[];
+}
+
+// A ride waiting for a bike, with what it would wear off each active bike.
+export class ResponseCheckInPendingDto extends ResponsePendingStravaDto {
+  @ApiProperty({ type: [Response_BikeWoreOffDto] })
+  wore_off_by_bike!: Response_BikeWoreOffDto[];
+}
+
 // What the check-in drawer walks: rides without a check-in and rides still waiting for a bike.
 export class ResponseCheckInPromptDto {
-  @ApiProperty({ type: [ResponseRideDto] })
-  rides!: ResponseRideDto[];
+  @ApiProperty({ type: [ResponseCheckInRideDto] })
+  rides!: ResponseCheckInRideDto[];
 
-  @ApiProperty({ type: [ResponsePendingStravaDto] })
-  pending!: ResponsePendingStravaDto[];
+  @ApiProperty({ type: [ResponseCheckInPendingDto] })
+  pending!: ResponseCheckInPendingDto[];
 }

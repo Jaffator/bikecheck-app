@@ -6,7 +6,7 @@ import { PLAN_REMINDER_QUEUE } from './plan-reminder';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import type { Response_WoreOffLineDto } from './dto/response-wore-off-line';
-import type { WearRide } from './ride-wear';
+import type { RideWear, WearRide } from './ride-wear';
 
 const OWNER_ID = 7;
 const BIKE_ID = 21;
@@ -2632,6 +2632,168 @@ describe('ServiceTrackingService', () => {
         replace_action: true,
         measure: 'drivetrain_km',
       });
+    });
+  });
+
+  // What a ride would wear off each active bike if it were added there now.
+  describe('getWearPreview', () => {
+    const CHAIN_PLAN = intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], BIKE_ID, true);
+    const OTHER_CHAIN_PLAN = intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], OTHER_BIKE_ID, true);
+
+    // The ride's wear as the preview reads it; started after every fixture's mounting unless said.
+    function ridden(wear: { drivetrainM?: number; distanceM?: number; startedAt?: string } = {}): RideWear {
+      return {
+        started_at: new Date(wear.startedAt ?? '2026-09-20T09:00:00.000Z'),
+        distance_m: wear.distanceM ?? 0,
+        drivetrain_meters: wear.drivetrainM ?? 0,
+        duration_min: 0,
+        suspension_min: 0,
+        health_index_brake_pad: 0,
+      };
+    }
+
+    // One bike's lines as the figures a line prints: part, action, amount, before and after.
+    async function figuresOn(bikeId: number, ride: RideWear): Promise<number[][]> {
+      const preview = await service.getWearPreview(OWNER_ID);
+      const lines = preview(ride).find((bike) => bike.bike_id === bikeId)?.wore_off ?? [];
+      return lines.map((line) => [
+        line.component_mounted_id,
+        line.event_action_id,
+        line.amount,
+        line.before,
+        line.after,
+      ]);
+    }
+
+    // The ride is not in that bike's reading yet, so it starts where the reading stands and adds the ride.
+    it('reads before as the bike reading now and after as that plus the ride', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek')],
+        [CHAIN_PLAN, OTHER_CHAIN_PLAN],
+        [mountedPart({ drivetrain_km: 3800 }), mountedPart({ id: 70, bike_id: OTHER_BIKE_ID, drivetrain_km: 2000 })],
+      );
+
+      // 2 000 of 4 000 is 50 %; with the 40 km it reads 2 040, which floors to 51.
+      expect(await figuresOn(OTHER_BIKE_ID, ridden({ drivetrainM: 40000 }))).toEqual([
+        [70, CHAIN_REPLACEMENT, 40, 50, 51],
+      ]);
+    });
+
+    // The picker offers only the bikes in use, so an Archived Bike gets no preview.
+    it('previews every active bike and no archived one', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz'), bikeRow(OTHER_BIKE_ID, 'Trek'), bikeRow(23, 'Canyon', true)],
+        [CHAIN_PLAN],
+        [mountedPart({ drivetrain_km: 3800 })],
+      );
+
+      const preview = await service.getWearPreview(OWNER_ID);
+
+      expect(preview(ridden({ drivetrainM: 40000 })).map((bike) => [bike.bike_id, bike.wore_off.length])).toEqual([
+        [BIKE_ID, 1],
+        [OTHER_BIKE_ID, 0],
+      ]);
+    });
+
+    // A ride from before the latest Service, or on its day, belongs to no cycle the reading counts (ADR 0001).
+    it('leaves out a Tracked Action whose latest Service is not before the ride day', async () => {
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [
+          mountedPart({
+            drivetrain_km: 3500,
+            action_done_component_map: [
+              baseline(CHAIN_REPLACEMENT, { drivetrainKm: 3000 }, '2026-09-10T00:00:00.000Z'),
+            ],
+          }),
+        ],
+      );
+
+      const lines = await Promise.all(
+        ['2026-09-09T09:00:00.000Z', '2026-09-10T18:00:00.000Z', '2026-09-11T08:00:00.000Z'].map((startedAt) =>
+          figuresOn(BIKE_ID, ridden({ drivetrainM: 20000, startedAt })),
+        ),
+      );
+
+      // 500 of 4 000 since the Service is 12 %; the 20 km take it to 520, 13 %.
+      expect(lines).toEqual([[], [], [[55, CHAIN_REPLACEMENT, 20, 12, 13]]]);
+    });
+
+    // A part fitted after the ride was not on the bike for it, even where a Service dated before the
+    // fitting is on record against it.
+    it('leaves out a part mounted on or after the ride day', async () => {
+      const mountedOn = new Date('2026-09-20T07:00:00.000Z');
+      fleet(
+        [bikeRow(BIKE_ID, 'Santa Cruz')],
+        [CHAIN_PLAN],
+        [
+          mountedPart({ drivetrain_km: 500, mounted_at: mountedOn }),
+          mountedPart({
+            id: 56,
+            drivetrain_km: 500,
+            mounted_at: mountedOn,
+            action_done_component_map: [baseline(CHAIN_REPLACEMENT, { drivetrainKm: 0 }, '2026-09-01T00:00:00.000Z')],
+          }),
+        ],
+      );
+
+      expect(await figuresOn(BIKE_ID, ridden({ drivetrainM: 20000, startedAt: '2026-09-20T18:00:00.000Z' }))).toEqual(
+        [],
+      );
+    });
+
+    // Ranked like the ride's own line: closest to due after it, then the biggest gain, nothing it did not wear.
+    it('keeps the three closest to due after the ride and drops what it did not wear', async () => {
+      fleet(
+        [bikeRow(OTHER_BIKE_ID, 'Trek')],
+        [
+          intervalRow(CHAIN_REPLACEMENT, { km: 4000 }, [CHAIN_TYPE], OTHER_BIKE_ID),
+          intervalRow(TYRE_REPLACEMENT, { km: 1000 }, [TYRE_TYPE], OTHER_BIKE_ID),
+          intervalRow(FORK_SERVICE, { min: 1000 }, [FORK_TYPE], OTHER_BIKE_ID),
+          intervalRow(PADS_REPLACEMENT, { healthIndex: 1000 }, [PAD_TYPE], OTHER_BIKE_ID),
+        ],
+        [
+          mountedPart({ id: 55, bike_id: OTHER_BIKE_ID, drivetrain_km: 2000 }),
+          mountedPart({
+            id: 56,
+            bike_id: OTHER_BIKE_ID,
+            component_type_id: FORK_TYPE,
+            component_types: typeRow(FORK_TYPE),
+            suspension_min: 700,
+          }),
+          mountedPart({
+            id: 57,
+            bike_id: OTHER_BIKE_ID,
+            component_type_id: PAD_TYPE,
+            component_types: typeRow(PAD_TYPE),
+            health_index: 990,
+          }),
+          mountedPart({
+            id: 52,
+            bike_id: OTHER_BIKE_ID,
+            component_type_id: TYRE_TYPE,
+            component_types: typeRow(TYRE_TYPE),
+            total_km: 750,
+          }),
+          mountedPart({
+            id: 61,
+            bike_id: OTHER_BIKE_ID,
+            component_type_id: TYRE_TYPE,
+            component_types: typeRow(TYRE_TYPE),
+            total_km: 850,
+          }),
+        ],
+      );
+
+      const ride = { ...ridden({ distanceM: 50000, drivetrainM: 40000 }), suspension_min: 100 };
+
+      // Rear tyre 85 → 90, fork 70 → 80 ahead of front tyre 75 → 80 by its gain; the chain is fourth, the pads wore nothing.
+      expect(await figuresOn(OTHER_BIKE_ID, ride)).toEqual([
+        [61, TYRE_REPLACEMENT, 50, 85, 90],
+        [56, FORK_SERVICE, 100, 70, 80],
+        [52, TYRE_REPLACEMENT, 50, 75, 80],
+      ]);
     });
   });
 });

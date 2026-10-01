@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { check_in_status, Prisma, type strava_pending_activities } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere } from '../bike/owned-bike.where';
-import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { ServiceTrackingService, type WearPreview } from '../service-tracking/service-tracking.service';
 import {
   BRAKE_PAD_PART,
   carried,
@@ -13,11 +13,13 @@ import {
   type WearRide,
 } from '../service-tracking/ride-wear';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
+import type { Response_BikeWoreOffDto } from '../service-tracking/dto/response-bike-wore-off';
 import type { StravaActivityData } from '../strava/strava.service';
-import type { ResponsePendingStravaDto } from '../strava/dto/response-pending-strava.dto';
-import { toPendingDto } from '../strava/pending-activity';
+import { analysisOf, pendingWear, toPendingDto } from '../strava/pending-activity';
 import {
+  ResponseCheckInPendingDto,
   ResponseCheckInPromptDto,
+  ResponseCheckInRideDto,
   ResponseRideCheckInDto,
   ResponseRideDto,
   ResponseRidePageDto,
@@ -85,16 +87,24 @@ export class RideService {
       where: { user_id: userId, created_at: { gte: since } },
       orderBy: { created_at: 'desc' },
     });
-    const pending = waitingForBike(pendingRows, since);
+    const waiting = waitingForBike(pendingRows, since);
 
     const recent = rows.filter((row) => row.started_at !== null && row.started_at >= since);
-    const arrivals = [...recent.map((row) => arrivedAt(row, pendingRows)), ...pending.map((one) => one.created_at)];
+    const arrivals = [...recent.map((row) => arrivedAt(row, pendingRows)), ...waiting.map((row) => row.created_at)];
     if (!anyArrived(arrivals, user?.check_in_prompted_at ?? null)) return { rides: [], pending: [] };
 
     // Skipped rides come back with the next arrival while they are recent.
     const offered = recent.filter((row) => row.check_in === null);
-    const woreOff = await this.serviceTracking.getWoreOff(userId, offered);
-    return { rides: (offered as RideRow[]).map((row) => toRideDto(row, woreOff.get(row.id) ?? [])), pending };
+    if (offered.length === 0 && waiting.length === 0) return { rides: [], pending: [] };
+
+    const [woreOff, preview] = await Promise.all([
+      this.serviceTracking.getWoreOff(userId, offered),
+      this.serviceTracking.getWearPreview(userId),
+    ]);
+    return {
+      rides: (offered as OfferedRide[]).map((row) => toCheckInRideDto(row, woreOff.get(row.id) ?? [], preview)),
+      pending: waiting.map((row) => toCheckInPendingDto(row, preview)),
+    };
   }
 
   // Saving again overwrites: a ride keeps only its last check-in.
@@ -361,11 +371,8 @@ function promptSince(now: Date): Date {
 }
 
 // Unresolved and started in the window; a backfill lands now but may have been ridden long ago.
-function waitingForBike(rows: strava_pending_activities[], since: Date): ResponsePendingStravaDto[] {
-  return rows
-    .filter((row) => row.resolved_at === null)
-    .map(toPendingDto)
-    .filter((one) => new Date(one.started_at) >= since);
+function waitingForBike(rows: strava_pending_activities[], since: Date): strava_pending_activities[] {
+  return rows.filter((row) => row.resolved_at === null && new Date(analysisOf(row).started_at) >= since);
 }
 
 // A ride assigned from Pending reached BikeCheck when its pending row did, not when it was assigned.
@@ -464,6 +471,30 @@ function bikeName(bike: RideRow['bikes']): string | null {
   if (bike === null) return null;
   const parts = [bike.bike_brand, bike.bike_model, bike.year].filter((part): part is string | number => Boolean(part));
   return parts.length > 0 ? parts.join(' ') : null;
+}
+
+type OfferedRide = RideRow & WearRide;
+
+function toCheckInRideDto(
+  row: OfferedRide,
+  woreOff: Response_WoreOffLineDto[],
+  preview: WearPreview,
+): ResponseCheckInRideDto {
+  return { ...toRideDto(row, woreOff), wore_off_by_bike: woreOffByBike(row, woreOff, preview) };
+}
+
+function toCheckInPendingDto(row: strava_pending_activities, preview: WearPreview): ResponseCheckInPendingDto {
+  return { ...toPendingDto(row), wore_off_by_bike: preview(pendingWear(row)) };
+}
+
+// The ride is already in its own bike's reading, so that bike keeps its wore_off; every other bike gets the preview.
+function woreOffByBike(
+  ride: WearRide,
+  woreOff: Response_WoreOffLineDto[],
+  preview: WearPreview,
+): Response_BikeWoreOffDto[] {
+  const elsewhere = preview(ride).filter((bike) => bike.bike_id !== ride.bike_id);
+  return [{ bike_id: ride.bike_id, wore_off: woreOff }, ...elsewhere];
 }
 
 function toRideDto(row: RideRow, woreOff: Response_WoreOffLineDto[]): ResponseRideDto {

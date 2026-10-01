@@ -16,7 +16,7 @@ import { bikeColor } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { checkInOf, draftOf, isHalfFilled, type CheckInDraft } from "@/features/rides/checkIn";
-import { checkInQueueOf, type CheckInItem } from "@/features/rides/checkInQueue";
+import { checkInQueueOf, woreOffOn, type CheckInItem } from "@/features/rides/checkInQueue";
 import { checkInSaveOf, pickedOf, type BikePick, type CheckInSave } from "@/features/rides/checkInSave";
 import { checkInSummaryOf } from "@/features/rides/rideSummary";
 import {
@@ -167,6 +167,7 @@ export function CheckInPromptDrawer(): ReactElement {
           pickedBike: pickedId === null ? null : (bikes?.find((one) => one.id === pickedId) ?? null),
           notMine,
           source: sourceOf(item, picked),
+          woreOff: woreOffOn(item, pickedId),
           fallbackName: item.kind === "ride" ? (item.ride.bike_name ?? t("rides.unknownBike")) : "",
           onPick: setPick,
           pickerOpened,
@@ -214,6 +215,7 @@ interface PromptStep {
   pickedBike: ListedBike | null;
   notMine: boolean;
   source: BikeSource;
+  woreOff: WoreOffLine[];
   fallbackName: string;
   onPick: (pick: BikePick) => void;
   pickerOpened: boolean;
@@ -332,17 +334,12 @@ function BikeField({ step }: { step: PromptStep }): ReactElement {
       notMine={step.notMine}
       source={step.source}
       fallbackName={step.fallbackName}
-      woreOff={woreOffOf(step)}
+      woreOff={step.woreOff}
       onPick={step.onPick}
       pickerOpened={step.pickerOpened}
       onPickerOpenedChange={step.onPickerOpenedChange}
     />
   );
-}
-
-// What the ride wore off holds only for the bike it is saved on; a pending ride wore off nothing yet.
-function woreOffOf(step: PromptStep): WoreOffLine[] {
-  return step.item.kind === "ride" && step.source === "strava" ? step.item.ride.wore_off : [];
 }
 
 // Dimmed and out of reach while the bike list lies over it or no bike is picked; gone with a ride

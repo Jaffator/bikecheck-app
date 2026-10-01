@@ -16,7 +16,8 @@ import {
 import { Response_TrackedActionDto } from './dto/response-tracked-action';
 import { Response_GarageTrackedActionDto } from './dto/response-garage-tracked-action';
 import { Response_WoreOffLineDto } from './dto/response-wore-off-line';
-import { endOfDay, MOUNTED, RIDE_WEAR, wearRideSelect, type WearRide } from './ride-wear';
+import { Response_BikeWoreOffDto } from './dto/response-bike-wore-off';
+import { carried, endOfDay, MOUNTED, RIDE_WEAR, wearRideSelect, type RideWear, type WearRide } from './ride-wear';
 import {
   DEFAULT_TIME_ZONE,
   PLAN_REMINDER_JOB,
@@ -109,6 +110,9 @@ interface Reading {
   override: number | null;
 }
 
+// A function, not a list: the garage is read once, then each ride of a queue is only arithmetic.
+export type WearPreview = (ride: RideWear) => Response_BikeWoreOffDto[];
+
 export interface GarageReading {
   action: Response_GarageTrackedActionDto;
   // When the wear it counts began: the latest recording of the job, else the mounting.
@@ -197,6 +201,18 @@ export class ServiceTrackingService {
     const stored = (await this.ridesFrom(firstCounted(dated, cycles))).filter(isDated);
 
     return new Map(dated.map((ride) => [ride.id, woreOffBy(ride, cycles, stored)]));
+  }
+
+  // Today's reading plus the ride, on every active bike. The garage is read once here, so previewing
+  // any number of rides after it costs no query.
+  async getWearPreview(userId: number): Promise<WearPreview> {
+    const bikes = await this.prisma.bikes.findMany({ where: ownedBikesWhere(userId), select: { id: true } });
+    if (bikes.length === 0) return () => [];
+
+    const [intervals, parts] = await this.loadTracking({ in: bikes.map((bike) => bike.id) });
+    const cycles = currentCycles(parts, intervals);
+
+    return (ride) => bikes.map((bike) => ({ bike_id: bike.id, wore_off: previewOn(bike.id, ride, cycles) }));
   }
 
   // The owner's own Service Interval for one Tracked Action, or null to put the bike's plan
@@ -572,7 +588,7 @@ function firstCounted(rides: DatedRide[], cycles: Cycle[]): Map<number, Date> {
   return first;
 }
 
-function inCycle(ride: DatedRide, { action, startsAfter }: Cycle): boolean {
+function inCycle(ride: Pick<DatedRide, 'bike_id' | 'started_at'>, { action, startsAfter }: Cycle): boolean {
   return ride.bike_id === action.bike_id && ride.started_at > startsAfter;
 }
 
@@ -580,9 +596,28 @@ function inCycle(ride: DatedRide, { action, startsAfter }: Cycle): boolean {
 function woreOffBy(ride: DatedRide, cycles: Cycle[], stored: DatedRide[]): Response_WoreOffLineDto[] {
   const later = stored.filter((other) => other.bike_id === ride.bike_id && riddenAfter(other, ride));
 
-  return cycles
-    .filter((cycle) => inCycle(ride, cycle))
-    .map(({ action }) => woreOffLine(action, ride, later))
+  return topLines(cycles.filter((cycle) => inCycle(ride, cycle)).map(({ action }) => woreOffLine(action, ride, later)));
+}
+
+// The ride is not in this bike's reading yet, so it starts from today's and adds the ride.
+function previewOn(bikeId: number, ride: RideWear, cycles: Cycle[]): Response_WoreOffLineDto[] {
+  if (ride.started_at === null) return [];
+  const placed = { bike_id: bikeId, started_at: ride.started_at };
+
+  return topLines(
+    cycles
+      // Carried too: a Service dated before the mounting would otherwise open the cycle early.
+      .filter((cycle) => inCycle(placed, cycle) && carried(cycle.action, ride))
+      .map(({ action }) => {
+        const amount = RIDE_WEAR[action.measure](ride);
+        return lineEndingAt(action, amount, action.current + amount);
+      }),
+  );
+}
+
+// Shared by the saved ride and the preview, so both rank and cap alike.
+function topLines(lines: Response_WoreOffLineDto[]): Response_WoreOffLineDto[] {
+  return lines
     .filter((line) => line.amount > 0)
     .sort(closestToDue)
     .slice(0, WORE_OFF_LINES);
@@ -598,9 +633,10 @@ function riddenAfter(other: DatedRide, ride: DatedRide): boolean {
 // before the ride began. Floored and clamped the way the reading itself is.
 function woreOffLine(action: Response_TrackedActionDto, ride: DatedRide, later: DatedRide[]): Response_WoreOffLineDto {
   const wear = RIDE_WEAR[action.measure];
-  const amount = wear(ride);
-  const atEnd = action.current - later.reduce((total, other) => total + wear(other), 0);
+  return lineEndingAt(action, wear(ride), action.current - later.reduce((total, other) => total + wear(other), 0));
+}
 
+function lineEndingAt(action: Response_TrackedActionDto, amount: number, atEnd: number): Response_WoreOffLineDto {
   return {
     component_mounted_id: action.component_mounted_id,
     event_action_id: action.event_action_id,
