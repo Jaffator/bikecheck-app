@@ -70,8 +70,8 @@ export class RideService {
   ) {}
 
   /**
-   * What the check-in drawer walks: recent rides without a check-in and recent rides still waiting
-   * for a bike, and nothing at all until one of either has arrived since the drawer last opened.
+   * What the check-in drawer walks: rides arrived since it last opened and still without a check-in,
+   * and recent rides waiting for a bike. Nothing at all until one of either has arrived.
    */
   async findCheckInPrompt(userId: number, now: Date = new Date()): Promise<ResponseCheckInPromptDto> {
     const since = promptSince(now);
@@ -90,11 +90,14 @@ export class RideService {
     const waiting = waitingForBike(pendingRows, since);
 
     const recent = rows.filter((row) => row.started_at !== null && row.started_at >= since);
+    const promptedAt = user?.check_in_prompted_at ?? null;
     const arrivals = [...recent.map((row) => arrivedAt(row, pendingRows)), ...waiting.map((row) => row.created_at)];
-    if (!anyArrived(arrivals, user?.check_in_prompted_at ?? null)) return { rides: [], pending: [] };
+    if (!arrivals.some((arrived) => arrivedAfterPrompt(arrived, promptedAt))) return { rides: [], pending: [] };
 
-    // Skipped rides come back with the next arrival while they are recent.
-    const offered = recent.filter((row) => row.check_in === null);
+    // The check-in is optional, so a ride with a bike is offered once; only a missing bike comes back.
+    const offered = recent.filter(
+      (row) => row.check_in === null && arrivedAfterPrompt(arrivedAt(row, pendingRows), promptedAt),
+    );
     if (offered.length === 0 && waiting.length === 0) return { rides: [], pending: [] };
 
     const [woreOff, preview] = await Promise.all([
@@ -409,9 +412,9 @@ function arrivedAt(
   return parked?.created_at ?? ride.created_at;
 }
 
-// Anything that reached BikeCheck after the last drawer opens it; a drawer never opened takes all.
-function anyArrived(arrivals: (Date | null)[], promptedAt: Date | null): boolean {
-  return arrivals.some((arrived) => promptedAt === null || (arrived !== null && arrived > promptedAt));
+// Reached BikeCheck after the drawer last opened; a drawer never opened takes all.
+function arrivedAfterPrompt(arrived: Date | null, promptedAt: Date | null): boolean {
+  return promptedAt === null || (arrived !== null && arrived > promptedAt);
 }
 
 export interface RidePeriodQuery {

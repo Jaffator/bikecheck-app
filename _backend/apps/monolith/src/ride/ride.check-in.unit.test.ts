@@ -86,13 +86,14 @@ describe('RideService check-in', () => {
   });
 
   describe('findCheckInPrompt', () => {
-    it('offers every recent ride without a check-in, newest first, once a new ride has arrived', async () => {
+    // A ride with a bike is offered once: one the drawer already opened on stays out, skipped or not.
+    it('offers only the rides that arrived since the drawer last opened, newest first', async () => {
       mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(2) });
-      mockPrisma.rides.findMany.mockResolvedValue([ride(3, 1, 1), ride(2, 3, 3)]);
+      mockPrisma.rides.findMany.mockResolvedValue([ride(4, 0.5, 0.5), ride(3, 1, 1), ride(2, 3, 3)]);
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.rides.map((one) => one.id)).toEqual([3, 2]);
+      expect(prompt.rides.map((one) => one.id)).toEqual([4, 3]);
     });
 
     // The drawer has already shown these, so it stays shut on every phone.
@@ -105,9 +106,9 @@ describe('RideService check-in', () => {
       expect(prompt.rides).toEqual([]);
     });
 
-    it('leaves out a ride started more than 14 days ago, even a skipped one', async () => {
+    it('leaves out a ride started more than 14 days ago, even one that just arrived', async () => {
       mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(2) });
-      mockPrisma.rides.findMany.mockResolvedValue([ride(3, 1, 1), ride(1, 15, 15)]);
+      mockPrisma.rides.findMany.mockResolvedValue([ride(3, 1, 1), ride(1, 15, 1)]);
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
@@ -128,8 +129,8 @@ describe('RideService check-in', () => {
       expect(prompt.rides.map((one) => one.id)).toEqual([3]);
     });
 
-    // Skipped rides come back with the next new ride, even when that one was checked in elsewhere.
-    it('brings skipped rides back when the newly arrived ride already has a check-in', async () => {
+    // The check-in is optional, so skipping a ride with a bike is an answer too.
+    it('does not bring a skipped ride back, even when the new one was checked in elsewhere', async () => {
       mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(2) });
       mockPrisma.rides.findMany.mockResolvedValue([
         ride(3, 1, 1, { status: 'ISSUE', symptoms: ['CREAK'], note: null }),
@@ -138,7 +139,7 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.rides.map((one) => one.id)).toEqual([2]);
+      expect(prompt).toEqual({ rides: [], pending: [] });
     });
 
     it('offers every recent ride to a user the drawer has never opened for', async () => {
@@ -183,11 +184,12 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.rides.map((one) => one.id)).toEqual([2]);
+      expect(prompt.rides).toEqual([]);
       expect(prompt.pending.map((one) => one.activity_id)).toEqual(['900']);
     });
 
-    it('offers both lists once a ride has arrived, the rides by their usual rules', async () => {
+    // A missing bike is the one answer the drawer needs, so a skipped Unassigned Ride comes back.
+    it('brings a skipped ride back with the next arrival only while it has no bike', async () => {
       mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(2) });
       mockPrisma.rides.findMany.mockResolvedValue([
         ride(3, 1, 1),
@@ -198,7 +200,7 @@ describe('RideService check-in', () => {
 
       const prompt = await service.findCheckInPrompt(1, NOW);
 
-      expect(prompt.rides.map((one) => one.id)).toEqual([3, 1]);
+      expect(prompt.rides.map((one) => one.id)).toEqual([3]);
       expect(prompt.pending.map((one) => one.activity_id)).toEqual(['900']);
     });
 
@@ -249,6 +251,19 @@ describe('RideService check-in', () => {
       const prompt = await service.findCheckInPrompt(1, NOW);
 
       expect(prompt).toEqual({ rides: [], pending: [] });
+    });
+
+    it('leaves out a ride assigned from an old Unassigned Ride when another ride opens the drawer', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(1) });
+      mockPrisma.rides.findMany.mockResolvedValue([
+        ride(6, 0.5, 0.5),
+        { ...ride(5, 3, 0.1), activity_strava_id: 900n },
+      ]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([pending(900, 3, 3, daysAgo(0.1))]);
+
+      const prompt = await service.findCheckInPrompt(1, NOW);
+
+      expect(prompt.rides.map((one) => one.id)).toEqual([6]);
     });
   });
 

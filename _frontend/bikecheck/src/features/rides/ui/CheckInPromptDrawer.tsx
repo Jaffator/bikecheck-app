@@ -1,5 +1,5 @@
-// The check-in, a drawer on the phone and a modal on desktop: opens when a new ride has arrived and
-// walks the recent rides without a check-in or a bike. Nothing dismisses it; each is saved or skipped.
+// The check-in, a drawer on the phone and a modal on desktop: walks the newly arrived rides without a
+// check-in and every recent one still without a bike. Nothing dismisses it; each is saved or skipped.
 import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
 import { Box, Button, Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
