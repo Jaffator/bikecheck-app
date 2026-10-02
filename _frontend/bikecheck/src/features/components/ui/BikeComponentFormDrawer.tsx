@@ -44,6 +44,7 @@ import { catalogueLabel } from "@/features/service/serviceLabels";
 import { chipStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
 import { SIDED_POSITIONS } from "@/features/add_bike_page/bikeComponents.types";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // Above the detail sheet it is opened from, below the confirmations it can raise.
 const FORM_Z_INDEX = 320;
@@ -100,6 +101,7 @@ function formKey({ opened, component }: BikeComponentFormDrawerProps): string {
 
 function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: BikeComponentFormDrawerProps): ReactElement {
   const { t, i18n } = useTranslation();
+  const isDesktop = useIsDesktop();
   const keyboardOffset = useKeyboardOffset();
   const { data: catalogue } = useDefaultComponents(ebike);
   const { data: groups } = useComponentGroups();
@@ -282,13 +284,12 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          paddingTop: 0,
         },
       }}
     >
       {/* The same heading the detail sheet wears, so the form reads as the next layer of
           it rather than as a different screen. */}
-      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mt="md" mb="md">
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mb="md">
         <Text fz={20} fw={700} c="text.6" lineClamp={2}>
           {editing
             ? t("bikeComponents.editTitle", {
@@ -296,17 +297,20 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
               })
             : t("bikeComponents.addTitle")}
         </Text>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          radius="xl"
-          size="md"
-          aria-label={t("action.close")}
-          onClick={onClose}
-          style={{ flexShrink: 0 }}
-        >
-          <X size={18} color="var(--color-text-dim)" />
-        </ActionIcon>
+        {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+        {isDesktop && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            radius="xl"
+            size="md"
+            aria-label={t("action.close")}
+            onClick={onClose}
+            style={{ flexShrink: 0 }}
+          >
+            <X size={18} color="var(--color-text-dim)" />
+          </ActionIcon>
+        )}
       </Group>
 
       {/* Only the questions scroll. Save and Cancel stay on the bottom edge, where the
@@ -499,7 +503,6 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
         gap="sm"
         wrap="nowrap"
         pt="md"
-        pb="calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
         style={{
           flexShrink: 0,
         }}

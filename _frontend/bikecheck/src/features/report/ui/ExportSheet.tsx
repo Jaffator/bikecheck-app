@@ -10,6 +10,7 @@ import { ReportDocument } from "./ReportDocument";
 import { REPORT_KIND_KEY } from "@/features/report/reportListLabels";
 import type { ExportReportInput, ExportedReport, ReportKind } from "@/features/report/report.types";
 import { ApiError } from "@/api/client";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { canShareLink, shareLink } from "@/utils/shareLink";
 
 // The sheet stands over what it was opened from, the same way the service detail does.
@@ -29,6 +30,7 @@ interface ExportSheetProps {
 // the world are two deliberate acts, and the second is never a reflex.
 export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
   const made = useExportReport();
   const publish = usePublishReport();
   const discard = useDiscardReport();
@@ -133,7 +135,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
         )
       }
     >
-      <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+      <Box px={isDesktop ? "md" : undefined} pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {/* The one question a Period Report asks, before anything is written down. */}
         {needsOptions && <Options checked={includeComponents} onChange={setIncludeComponents} />}
 
@@ -358,6 +360,7 @@ function Sheet({
   children: ReactNode;
 }): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
 
   return (
     <ResponsiveSheet
@@ -372,30 +375,41 @@ function Sheet({
           display: "flex",
           flexDirection: "column",
         },
+        // The desktop modal pads each section instead; a bottom sheet takes the wrapper's padding.
         body: {
           flex: 1,
           minHeight: 0,
-          padding: 0,
           display: "flex",
           flexDirection: "column",
+          ...(isDesktop ? { padding: 0 } : {}),
         },
       }}
     >
-      <Group justify="space-between" align="center" px="md" pt="md" wrap="nowrap" style={{ flexShrink: 0 }}>
+      <Group
+        justify="space-between"
+        align="center"
+        px={isDesktop ? "md" : undefined}
+        pt={isDesktop ? "md" : undefined}
+        wrap="nowrap"
+        style={{ flexShrink: 0 }}
+      >
         <Text component="div" fw={700} fz={20} c="text.6">
           {" "}
           {title}
         </Text>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          radius="xl"
-          size="lg"
-          aria-label={t("action.close")}
-          onClick={onClose}
-        >
-          <X size={20} color="var(--mantine-color-text-6)" />
-        </ActionIcon>
+        {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+        {isDesktop && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            radius="xl"
+            size="lg"
+            aria-label={t("action.close")}
+            onClick={onClose}
+          >
+            <X size={20} color="var(--mantine-color-text-6)" />
+          </ActionIcon>
+        )}
       </Group>
       {children}
     </ResponsiveSheet>
@@ -403,13 +417,15 @@ function Sheet({
 }
 
 function Footer({ children }: { children: ReactNode }): ReactElement {
+  const isDesktop = useIsDesktop();
+
   return (
     <Group
       gap="sm"
       grow
-      px="md"
+      px={isDesktop ? "md" : undefined}
       pt="sm"
-      pb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+      pb={isDesktop ? "0.75rem" : undefined}
       wrap="nowrap"
       style={{ flexShrink: 0 }}
     >

@@ -2,7 +2,8 @@
 // sheet docs/conventions/drawers.md describes; above it a panel or a modal (ADR 0036).
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { Drawer, Modal, type ModalProps } from "@mantine/core";
-import { SheetGrabber, SHEET_GRABBER_HEADER_PADDING } from "@/components/SheetGrabber";
+import { SheetCloseButton } from "@/components/SheetCloseButton";
+import { SheetGrabber, SHEET_GRABBER_ROOM } from "@/components/SheetGrabber";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { useIsDesktop } from "@/layout/breakpoints";
 
@@ -15,6 +16,27 @@ const SURFACE: CSSProperties = { backgroundColor: "var(--mantine-color-cards-6)"
 
 // A bottom sheet's height is its own: a panel is as tall as the window, a modal as its content.
 const UNSIZED: CSSProperties = { height: undefined, maxHeight: undefined, marginBottom: undefined };
+
+// Keeps a bottom sheet's last element clear of Android's gesture bar.
+export const SHEET_PAD_BOTTOM =
+  "calc(var(--sheet-pad-bottom) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+
+// Only the body scrolls, so the grabber, a title and the ✕ stay where they are.
+const SHEET_CONTENT: CSSProperties = { position: "relative", display: "flex", flexDirection: "column" };
+const SHEET_BODY_SCROLL: CSSProperties = { flex: "1 1 auto", minHeight: 0, overflowY: "auto" };
+
+// Spread after a sheet's own styles: on a phone the spacing is the wrapper's alone.
+const SHEET_HEADER: CSSProperties = {
+  // Mantine's min-height would let a scrolling body squeeze the heading.
+  flexShrink: 0,
+  paddingTop: SHEET_GRABBER_ROOM,
+  paddingInline: "var(--sheet-pad-x)",
+};
+const SHEET_TITLE: CSSProperties = { paddingRight: "var(--sheet-title-pad-right)" };
+const SHEET_BODY_PADDING: CSSProperties = {
+  paddingInline: "var(--sheet-pad-x)",
+  paddingBottom: SHEET_PAD_BOTTOM,
+};
 
 // Back still lands on a sheet that cannot be dismissed, so the page under it stays put.
 const IGNORE_BACK = (): void => {};
@@ -29,7 +51,8 @@ interface ResponsiveSheetProps {
   // Width of the desktop modal; left out, Mantine's default.
   modalSize?: ModalProps["size"];
   title?: ReactNode;
-  // Mantine's own cross; a sheet drawing its own header turns it off.
+  // Mantine's own cross on desktop; a sheet drawing its own header turns it off. A bottom
+  // sheet wears the wrapper's ✕ instead.
   withCloseButton?: boolean;
   // False for a sheet that must be answered: no outside click, Esc, swipe or back button.
   dismissible?: boolean;
@@ -55,7 +78,6 @@ export function ResponsiveSheet({
   const isDesktop = useIsDesktop();
   const onTop = useOverlayBack(opened, dismissible ? onClose : IGNORE_BACK);
   const visible = useOpenedOnNextFrame(opened);
-  const hasHeader = title !== undefined || withCloseButton;
 
   const shared = {
     opened: visible,
@@ -70,21 +92,32 @@ export function ResponsiveSheet({
   };
 
   if (!isDesktop) {
+    const titled = Boolean(title);
+
     return (
       <Drawer
         {...shared}
+        // The ✕ is the wrapper's own, so only a title makes Mantine's header.
+        withCloseButton={false}
         position="bottom"
         radius="lg"
         transitionProps={{ ...MOTION, transition: "slide-up" }}
         overlayProps={OVERLAY}
         styles={{
           ...styles,
-          // Mantine's header has nothing above it in the flow, so the grabber floats over its top edge.
-          content: { ...SURFACE, ...(hasHeader ? { position: "relative" } : {}), ...styles?.content },
-          header: { ...SURFACE, ...(hasHeader ? { paddingTop: SHEET_GRABBER_HEADER_PADDING } : {}), ...styles?.header },
+          content: { ...SURFACE, ...SHEET_CONTENT, ...styles?.content },
+          header: { ...SURFACE, ...styles?.header, ...SHEET_HEADER },
+          title: { ...styles?.title, ...SHEET_TITLE },
+          body: {
+            ...SHEET_BODY_SCROLL,
+            ...styles?.body,
+            ...SHEET_BODY_PADDING,
+            paddingTop: titled ? 0 : SHEET_GRABBER_ROOM,
+          },
         }}
       >
-        <SheetGrabber onClose={dismissible ? onClose : undefined} floating={hasHeader} />
+        <SheetGrabber onClose={dismissible ? onClose : undefined} />
+        {dismissible && <SheetCloseButton onClose={onClose} />}
         {children}
       </Drawer>
     );

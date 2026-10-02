@@ -88,8 +88,9 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
       }
       styles={{
         content: { height: "auto", maxHeight: "92dvh" },
-        // Cards run closer to the sheet's edges than plain rows would.
-        body: { paddingInline: 8, paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
+        // The desktop modal's, where cards run closer to the edges than plain rows would; a
+        // bottom sheet takes the wrapper's.
+        body: { paddingInline: 8, paddingBottom: "3rem" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >

@@ -9,6 +9,7 @@ import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import type { Bike, RiddenBike } from "@/features/bikes/bikes.types";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { useIsDesktop } from "@/layout/breakpoints";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 
 // The same layer the service sheet stands on, so overlays never fight the FAB.
@@ -22,6 +23,7 @@ interface BikeSpecsDrawerProps {
 
 export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps): ReactElement {
   const { t, i18n } = useTranslation();
+  const isDesktop = useIsDesktop();
 
   const unknown = t("addBike.summaryNotSpecified");
 
@@ -41,13 +43,14 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
           display: "flex",
           flexDirection: "column",
         },
-        body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
+        // The desktop panel pads its scroll instead; a bottom sheet takes the wrapper's padding.
+        body: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", ...(isDesktop ? { padding: 0 } : {}) },
       }}
     >
       <Box
-        px="md"
-        pt="md"
-        pb="calc(1.25rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+        px={isDesktop ? "md" : undefined}
+        pt={isDesktop ? "md" : undefined}
+        pb={isDesktop ? "1.25rem" : undefined}
         style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
       >
         <Stack gap="lg">
@@ -60,9 +63,12 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
                 {t("bikes.specsTitle")}
               </Text>
             </Stack>
-            <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label={t("action.close")} onClick={onClose}>
-              <X size={20} color="var(--mantine-color-text-6)" />
-            </ActionIcon>
+            {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+            {isDesktop && (
+              <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label={t("action.close")} onClick={onClose}>
+                <X size={20} color="var(--mantine-color-text-6)" />
+              </ActionIcon>
+            )}
           </Group>
 
           <Section title={t("addBike.stepSpecification")}>

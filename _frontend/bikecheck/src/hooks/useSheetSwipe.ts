@@ -66,7 +66,8 @@ export function useSheetSwipe(onClose: (() => void) | undefined): (node: HTMLEle
         // A right-click drag is not a swipe.
         if (event.pointerType === "mouse" && event.buttons !== 1) return;
         if (event.clientY - sheet.getBoundingClientRect().top > GRAB_ZONE_PX) return;
-        if (scrolled(event.target)) return;
+        // The grabber sits in the scrolling body, so a pull on a pinned title waits for its top too.
+        if (scrolled(event.target) || scrolled(node)) return;
 
         gesture = {
           pointerId: event.pointerId,

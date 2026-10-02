@@ -232,7 +232,7 @@ interface PromptStep {
 
 function PhonePrompt({ step }: { step: PromptStep }): ReactElement {
   return (
-    <Stack gap="md" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+    <Stack gap="md">
       <Stack gap={4}>
         <ArrivedEyebrow createdAt={step.item.ride.created_at} />
         <Group gap={10} align="baseline" wrap="nowrap">

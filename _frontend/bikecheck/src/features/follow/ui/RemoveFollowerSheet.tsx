@@ -39,11 +39,12 @@ export function RemoveFollowerSheet({ person, opened, onClose }: RemoveFollowerS
       withCloseButton={false}
       styles={{
         content: { height: "auto" },
-        body: { paddingBottom: "calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
+        // The desktop modal's; a bottom sheet takes the wrapper's.
+        body: { paddingTop: "1.75rem", paddingBottom: "2rem" },
       }}
     >
       {person !== null && (
-        <Stack align="center" gap="md" pt="sm">
+        <Stack align="center" gap="md">
           <PersonAvatar person={person} size={AVATAR_SIZE} />
           <Stack gap={4} align="center">
             <Text fw={700} fz={18} c="text.6">

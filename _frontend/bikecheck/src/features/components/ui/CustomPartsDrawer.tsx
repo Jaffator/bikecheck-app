@@ -37,7 +37,8 @@ export function CustomPartsDrawer({ opened, onClose }: CustomPartsDrawerProps): 
         title={t("customParts.title")}
         styles={{
           content: { height: "auto", maxHeight: "88dvh" },
-          body: { paddingBottom: "calc(3rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))" },
+          // The desktop modal's; a bottom sheet takes the wrapper's.
+          body: { paddingBottom: "3rem" },
           title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
         }}
       >

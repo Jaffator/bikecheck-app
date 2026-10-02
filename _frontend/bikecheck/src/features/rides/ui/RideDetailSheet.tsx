@@ -103,7 +103,8 @@ export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailS
       }}
     >
       {ride !== null && (
-        <Stack gap={20} pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+        // A bottom sheet's foot is the wrapper's.
+        <Stack gap={20} pb={isDesktop ? "1rem" : undefined}>
           {/* Static on the phone, so a drag on it never fights the sheet's own. */}
           <RideMap
             polyline={ride.summary_polyline}

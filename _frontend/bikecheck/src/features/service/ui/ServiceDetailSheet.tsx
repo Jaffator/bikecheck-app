@@ -16,6 +16,7 @@ import { catalogueLabel, componentLabel, placeLabel } from "@/features/service/s
 import { componentTypeIcon } from "./componentIcon";
 import { attachmentSubtitle } from "@/features/service/attachmentLabels";
 import type { ServiceActionDone, ServiceAttachment, ServiceHistoryItem } from "@/features/service/service.types";
+import { useIsDesktop } from "@/layout/breakpoints";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 
 // The sheet stands over the list rather than covering it, so the list is still there to
@@ -40,6 +41,7 @@ interface ServiceDetailSheetProps {
 // One recorded Service: the whole occasion, over the list it was opened from.
 export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSheetProps): ReactElement {
   const { t, i18n } = useTranslation();
+  const isDesktop = useIsDesktop();
   const { data: user } = useCurrentUser();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   // What the Share button is exporting. Null keeps the export sheet shut.
@@ -91,18 +93,18 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
           display: "flex",
           flexDirection: "column",
         },
-        // The body carries the scroll and the pinned bar, so it takes the padding away
-        // from Mantine and hands it back per section.
+        // The body carries the scroll and the pinned bar, so the desktop panel takes the
+        // padding away from Mantine and hands it back per section. A bottom sheet takes the wrapper's.
         body: {
           flex: 1,
           minHeight: 0,
-          padding: 0,
           display: "flex",
           flexDirection: "column",
+          ...(isDesktop ? { padding: 0 } : {}),
         },
       }}
     >
-      <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+      <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? "md" : undefined} style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Stack gap="lg" pb="md">
           {/* Outside the failure branch: a sheet that could not load is still a sheet the
               user has to be able to shut. */}
@@ -185,9 +187,9 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
       <Group
         gap="sm"
         grow
-        px="md"
+        px={isDesktop ? "md" : undefined}
         pt="sm"
-        pb="calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+        pb={isDesktop ? "0.75rem" : undefined}
         wrap="nowrap"
         style={{
           flexShrink: 0,
@@ -269,6 +271,7 @@ function Header({
   onClose: () => void;
 }): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
 
   return (
     <Stack gap={8}>
@@ -280,16 +283,19 @@ function Header({
             {bikeName}
           </Text>
         )}
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          radius="xl"
-          size="lg"
-          aria-label={t("action.close")}
-          onClick={onClose}
-        >
-          <X size={20} color="var(--mantine-color-text-6)" />
-        </ActionIcon>
+        {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+        {isDesktop && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            radius="xl"
+            size="lg"
+            aria-label={t("action.close")}
+            onClick={onClose}
+          >
+            <X size={20} color="var(--mantine-color-text-6)" />
+          </ActionIcon>
+        )}
       </Group>
 
       <Group gap={8} wrap="nowrap">

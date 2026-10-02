@@ -87,6 +87,8 @@ export function CustomTagDrawer({
           minHeight: 0,
           display: "flex",
           flexDirection: "column",
+          // The desktop modal's; a bottom sheet takes the wrapper's.
+          paddingBottom: "2rem",
         },
         title: {
           fontWeight: 600,
@@ -99,11 +101,7 @@ export function CustomTagDrawer({
     >
       {/* Fills the drawer body so the save button keeps the bottom edge however short
           the tag list is; the list above it shrinks and scrolls instead. */}
-      <Stack
-        gap="md"
-        pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
-        style={{ flex: 1, minHeight: 0 }}
-      >
+      <Stack gap="md" style={{ flex: 1, minHeight: 0 }}>
         <Text fz={13} c="var(--color-text-dim)">
           {t("addService.customTagFor", { action: actionLabel })}
         </Text>

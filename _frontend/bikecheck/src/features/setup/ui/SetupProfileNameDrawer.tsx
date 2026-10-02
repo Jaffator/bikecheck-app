@@ -8,6 +8,7 @@ import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import type { ApiError } from "@/api/client";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { useCreateSetupProfile, useUpdateSetupProfile } from "../setup.queries";
 import type { SetupProfile } from "../setup.types";
 
@@ -51,6 +52,7 @@ function SetupProfileNameBody({
   onSaved,
 }: SetupProfileNameDrawerProps): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
   const keyboardOffset = useKeyboardOffset();
   const create = useCreateSetupProfile();
   const update = useUpdateSetupProfile();
@@ -89,27 +91,29 @@ function SetupProfileNameBody({
           marginBottom: keyboardOffset,
           maxHeight: `calc(100dvh - ${String(keyboardOffset)}px)`,
         },
-        body: { paddingTop: 0 },
       }}
     >
-      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mt="md" mb="md">
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mb="md">
         <Text fz={20} fw={700} c="text.6" lineClamp={2}>
           {renaming ? t("setup.renameTitle") : t("setup.newProfileTitle")}
         </Text>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          radius="xl"
-          size="md"
-          aria-label={t("action.close")}
-          onClick={onClose}
-          style={{ flexShrink: 0 }}
-        >
-          <X size={18} color="var(--color-text-dim)" />
-        </ActionIcon>
+        {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+        {isDesktop && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            radius="xl"
+            size="md"
+            aria-label={t("action.close")}
+            onClick={onClose}
+            style={{ flexShrink: 0 }}
+          >
+            <X size={18} color="var(--color-text-dim)" />
+          </ActionIcon>
+        )}
       </Group>
 
-      <Stack gap="md" pb="calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+      <Stack gap="md">
         <TextInput
           label={t("setup.profileName")}
           placeholder={t("setup.profileNamePlaceholder")}

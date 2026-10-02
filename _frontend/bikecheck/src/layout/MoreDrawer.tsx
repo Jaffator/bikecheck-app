@@ -1,11 +1,13 @@
 // The sheet the More tab opens: the two places that have no tab of their own - the riders
 // the user is tied to, and the chat. Cards, not a menu, so each says what is waiting inside.
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { ActionIcon, Box, Drawer, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Drawer, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { MessageCircleMore, Users, X } from "lucide-react";
-import { SheetGrabber } from "@/components/SheetGrabber";
+import { MessageCircleMore, Users } from "lucide-react";
+import { SHEET_PAD_BOTTOM } from "@/components/ResponsiveSheet";
+import { SheetCloseButton } from "@/components/SheetCloseButton";
+import { SheetGrabber, SHEET_GRABBER_ROOM } from "@/components/SheetGrabber";
 import { useMyProfile } from "@/features/profile/profile.queries";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { BADGE_CAP } from "./HeaderCountBadge";
@@ -137,34 +139,23 @@ export function MoreDrawer({ opened, onClose }: MoreDrawerProps): ReactElement {
         timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
       }}
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
+      // The spacing every bottom sheet gets from ResponsiveSheet, by hand.
       styles={{
-        content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto" },
+        content: { backgroundColor: "var(--mantine-color-cards-6)", height: "auto", position: "relative" },
         body: {
-          paddingInline: 8,
-          paddingTop: 8,
-          paddingBottom: "calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+          paddingInline: "var(--sheet-pad-x)",
+          paddingTop: SHEET_GRABBER_ROOM,
+          paddingBottom: SHEET_PAD_BOTTOM,
         },
       }}
     >
+      <SheetGrabber onClose={onClose} />
+      <SheetCloseButton onClose={onClose} />
       {/* In the browser the sheet is the page's own column rather than the whole window. */}
       <Stack gap="sm" maw={CONTENT_MAX_WIDTH} mx="auto">
-        <SheetGrabber onClose={onClose} />
-        {/* Header: the sheet's name on the left, the way out on the right. */}
-        <Group justify="space-between" align="center" wrap="nowrap">
-          <Text fw={700} fz={18} c="text.6" lh={1.2}>
-            {t("nav.more")}
-          </Text>
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            radius="xl"
-            size="lg"
-            aria-label={t("action.close")}
-            onClick={onClose}
-          >
-            <X size={20} color="var(--mantine-color-text-6)" />
-          </ActionIcon>
-        </Group>
+        <Text fw={700} fz={18} c="text.6" lh={1.2} pr="var(--sheet-title-pad-right)">
+          {t("nav.more")}
+        </Text>
         {/* Side by side and equal: two tiles, neither the headline of the other. */}
         <Group grow align="stretch" gap="sm" wrap="nowrap">
           <MoreCard

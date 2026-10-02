@@ -19,6 +19,7 @@ import {
 } from "@/features/components/componentLabels";
 import { ExplanationModal } from "@/components/ExplanationModal";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // Half the screen, fixed rather than content-sized, so the sheet does not jump in height
 // between parts and the build it was opened from stays visible behind it.
@@ -42,6 +43,7 @@ export function BikeComponentDetailSheet({ component, onClose, onEdit }: BikeCom
   // The sheet is still on screen while it slides out, so what it was last showing stays
   // drawn all the way down instead of emptying mid-animation.
   const shown = useLastShown(component);
+  const isDesktop = useIsDesktop();
 
   const removed = shown !== null && isDismounted(shown);
 
@@ -58,12 +60,13 @@ export function BikeComponentDetailSheet({ component, onClose, onEdit }: BikeCom
           display: "flex",
           flexDirection: "column",
         },
-        body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
+        // The desktop panel pads its scroll instead; a bottom sheet takes the wrapper's padding.
+        body: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", ...(isDesktop ? { padding: 0 } : {}) },
       }}
     >
-      <Box px="md" pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+      <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? "md" : undefined} style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {shown !== null && (
-          <Stack gap="lg" pb="md">
+          <Stack gap="lg" pb={isDesktop ? "md" : undefined}>
             <Header
               component={shown}
               removed={removed}
@@ -94,6 +97,7 @@ function Header({
   onEdit?: () => void;
 }): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
   const position = positionLabel(component.position, t);
   const described = component.component_desc?.trim();
 
@@ -130,11 +134,14 @@ function Header({
           </Stack>
         </Group>
 
-        <Group gap={5} wrap="nowrap" style={{ flexShrink: 0 }}>
-          <ActionIcon variant="subtle" color="gray" radius="xl" size="md" aria-label={t("action.close")} onClick={onClose}>
-            <X size={18} color="var(--color-text-dim)" />
-          </ActionIcon>
-        </Group>
+        {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+        {isDesktop && (
+          <Group gap={5} wrap="nowrap" style={{ flexShrink: 0 }}>
+            <ActionIcon variant="subtle" color="gray" radius="xl" size="md" aria-label={t("action.close")} onClick={onClose}>
+              <X size={18} color="var(--color-text-dim)" />
+            </ActionIcon>
+          </Group>
+        )}
       </Group>
 
       {/* On the bike or off it, and which side it holds. A part recorded without a side

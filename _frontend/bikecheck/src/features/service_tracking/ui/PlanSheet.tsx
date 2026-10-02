@@ -11,6 +11,7 @@ import { trackedPartLabel } from "@/features/service_tracking/attentionLevel";
 import { isPlanPassed, localToday } from "@/features/service_tracking/plannedDay";
 import { useSetTrackedActionPlan } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // Above the Tracked Action drawer it is also opened from.
 const SHEET_Z_INDEX = 320;
@@ -44,7 +45,8 @@ export function PlanSheet({ action, onClose, onWritten }: PlanSheetProps): React
       desktop="modal"
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
-      styles={{ content: { height: "auto", maxHeight: "88dvh" }, body: { paddingTop: 0 } }}
+      // The desktop modal's foot; a bottom sheet takes the wrapper's.
+      styles={{ content: { height: "auto", maxHeight: "88dvh" }, body: { paddingBottom: "2rem" } }}
     >
       {/* Remounted per opening, so a day picked and then cancelled never carries into the next one. */}
       {shown !== null && <PlanBody key={opening} action={shown} onClose={onClose} onWritten={onWritten} />}
@@ -62,6 +64,7 @@ function PlanBody({
   onWritten?: (action: TrackedAction) => void;
 }): ReactElement {
   const { t, i18n } = useTranslation();
+  const isDesktop = useIsDesktop();
   const write = useSetTrackedActionPlan();
   const today = localToday();
   const planned = action.planned_for;
@@ -82,8 +85,8 @@ function PlanBody({
   const removing = write.isPending && write.variables?.planned_for === null;
 
   return (
-    <Stack gap="md" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
-      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm" mt="md">
+    <Stack gap="md">
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
         <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
           <Text fz={20} fw={700} c="text.6" lh={1.2} lineClamp={2}>
             {catalogueLabel(action.action_i18n_key, action.action_name, t)}
@@ -92,17 +95,20 @@ function PlanBody({
             {trackedPartLabel(action, t)}
           </Text>
         </Stack>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          radius="xl"
-          size="md"
-          aria-label={t("action.close")}
-          onClick={onClose}
-          style={{ flexShrink: 0 }}
-        >
-          <X size={18} color="var(--color-text-dim)" />
-        </ActionIcon>
+        {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+        {isDesktop && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            radius="xl"
+            size="md"
+            aria-label={t("action.close")}
+            onClick={onClose}
+            style={{ flexShrink: 0 }}
+          >
+            <X size={18} color="var(--color-text-dim)" />
+          </ActionIcon>
+        )}
       </Group>
 
       {/* The calendar names its months in the app's language, not the browser's. */}

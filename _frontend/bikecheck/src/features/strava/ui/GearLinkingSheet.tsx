@@ -239,8 +239,7 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
           </Text>
         )}
 
-        {/* Keeps confirmation above the Android gesture area. */}
-        <Group grow gap="sm" mt="xl" mb="var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px))">
+        <Group grow gap="sm" mt="xl">
           <Button variant="outline" radius="sm" style={{ height: "2.5rem" }} onClick={onClose}>
             {t("strava.gearLinkingCancel")}
           </Button>

@@ -74,13 +74,14 @@ export function PendingRideSheet({ ride, onClose }: PendingRideSheetProps): Reac
           display: "flex",
           flexDirection: "column",
         },
-        body: { flex: 1, display: "flex", flexDirection: "column" },
+        // The desktop panel's foot; a bottom sheet takes the wrapper's.
+        body: { flex: 1, display: "flex", flexDirection: "column", paddingBottom: "2rem" },
         header: { marginBottom: "1.5rem" },
         // Centers the title against the complete header.
         title: { flex: 1, textAlign: "center", marginInlineStart: "2rem" },
       }}
     >
-      <Stack gap={20} h="100%" pb="calc(1rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+      <Stack gap={20} h="100%">
         <Text fw={700} fz={20} c="text.7" ta="center">
           {t("pendingRides.chooseBikeTitle")}
         </Text>

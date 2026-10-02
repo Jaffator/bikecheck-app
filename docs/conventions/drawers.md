@@ -22,7 +22,8 @@ radius, overlay or surface.
 ```
 
 What it holds, whether it is a panel or a modal on desktop, and its own layout. A sheet that
-draws its own header with its own ✕ passes `withCloseButton={false}` and no `title`.
+draws its own header passes `withCloseButton={false}` and no `title`; on a phone the ✕ is still
+the wrapper's (see [Spacing and the ✕](#spacing-and-the--on-a-phone)).
 
 A sheet that must be answered passes `dismissible={false}`: no outside click, Esc, swipe or back
 button closes it, and it closes itself once answered. Only `CheckInPromptDrawer` does.
@@ -53,6 +54,42 @@ overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
 How tall the sheet stands is the sheet's own: `height`, `maxHeight` and the keyboard's
 `marginBottom` in `styles.content`.
 
+## Spacing and the ✕ on a phone
+
+Design: [BikeCheck – drawer spacing](https://claude.ai/artifact/YKgZLEbo11bZ2qGk4t9x97), artboard
+"Pravidlo pro všechny drawery". The wrapper owns every number here, so no sheet sets its own and
+no sheet overrides them. Tokens in `global.css`, never a literal:
+
+| Token                     | Value | What                                          |
+| ------------------------- | ----- | --------------------------------------------- |
+| `--sheet-handle-top`      | 16px  | top edge → pill                               |
+| `--sheet-handle-bottom`   | 20px  | pill → first element                          |
+| `--sheet-pad-x`           | 16px  | both sides                                    |
+| `--sheet-pad-bottom`      | 24px  | last element → system bar, plus the safe area |
+| `--sheet-close-target`    | 44px  | ✕ touch area                                  |
+| `--sheet-close-inset`     | 4px   | ✕ target from the top and right edge          |
+| `--sheet-title-pad-right` | 24px  | title → ✕                                     |
+
+- **Bottom.** The last element ends 24px above the system bar, in scrolled content too:
+  `calc(var(--sheet-pad-bottom) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`
+  (`SHEET_PAD_BOTTOM`), the safe-area expression the rest of the app uses. Without it a button
+  sits under Android's gesture bar.
+- **✕.** Every bottom sheet has one, and the wrapper draws it (`SheetCloseButton`). The icon stands
+  alone, 16px with a 2px stroke and no circle behind it. It sits in the sheet's top-right corner
+  whatever the title does: a 44px target 4px from the top and right edge,
+  `aria-label={t("action.close")}`. A sheet with its own header draws no ✕ of its own on a phone.
+- **Title.** It keeps 24px clear on the right, so a long one wraps before it reaches the ✕.
+- **No ✕** on a sheet with `dismissible={false}` (`CheckInPromptDrawer`): it must be answered.
+- **Scroll.** Only the body scrolls, so the grabber, a `title` and the ✕ stay where they are while
+  a long sheet is read.
+- `MoreDrawer` builds its own `Drawer` but takes the same tokens.
+
+The wrapper lays its padding over whatever a sheet passes in `styles`, so a sheet's own padding
+reaches only the desktop panel or modal. A sheet passes the `padding` shorthand on desktop only:
+mixed with the wrapper's longhands, it is lost when an open panel crosses the breakpoint.
+
+On desktop nothing here applies: a panel or modal keeps Mantine's header and ✕, or the sheet's own.
+
 ## On desktop
 
 - **Panel**: a right-side `Drawer`, the window's full height. No overlay, no scroll lock, no
@@ -78,12 +115,13 @@ body is remounted per opening (the usual way to discard a cancelled form) would 
 
 Every bottom sheet wears `SheetGrabber` at its top, and `ResponsiveSheet` places it. It draws the
 pill people read as "this layer floats", and it is what hangs the closing drag on the sheet. The
-pill gets 8px either side and gives that room straight back with a negative margin, so no sheet
-moves by adopting one. A sheet with `dismissible={false}` keeps the pill but not the drag.
+pill stands `--sheet-handle-top` below the sheet's edge and `--sheet-handle-bottom` above the first
+element (see [Spacing and the ✕](#spacing-and-the--on-a-phone)). A sheet with `dismissible={false}`
+keeps the pill but not the drag.
 
-A sheet with a `title` or Mantine's close button has a header with nothing above it in the flow,
-so there the strip is laid over the header's top edge and the header makes room for it
-(`SHEET_GRABBER_HEADER_PADDING`).
+The strip is laid over the sheet's top edge on the sheet's own surface, and whatever comes first
+makes room for it (`SHEET_GRABBER_ROOM`): Mantine's header when there is a `title`, the body when
+there is not. A scrolled body passes under it.
 
 The gesture itself is `useSheetSwipe`, and it listens on the sheet rather than on the pill:
 a drag starting anywhere in the sheet's top 120px moves it, while every tap below still lands

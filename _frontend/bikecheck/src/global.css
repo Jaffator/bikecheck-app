@@ -154,6 +154,17 @@
   --card-glow: none;
 }
 
+/* Every bottom sheet's spacing and ✕: ResponsiveSheet's, and MoreDrawer's by hand - see docs/conventions/drawers.md. */
+:root {
+  --sheet-handle-top: 16px;
+  --sheet-handle-bottom: 20px;
+  --sheet-pad-x: 16px;
+  --sheet-pad-bottom: 24px;
+  --sheet-close-target: 44px;
+  --sheet-close-inset: 4px;
+  --sheet-title-pad-right: 24px;
+}
+
 /* The provider forces no colour scheme, so Mantine reaches for its light-mode skeleton:
    a white block and a pale sweep. Both are repainted in the card's own material. */
 .mantine-Skeleton-root[data-visible]::before {

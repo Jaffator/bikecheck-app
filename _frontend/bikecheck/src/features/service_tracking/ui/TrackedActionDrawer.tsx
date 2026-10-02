@@ -28,6 +28,7 @@ import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/servic
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { useSetTrackedActionInterval, useSetTrackedActionNotify } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { PlanSheet } from "./PlanSheet";
 
 // The same layer every other sheet stands on, so overlays never fight the FAB.
@@ -47,6 +48,7 @@ interface TrackedActionDrawerProps {
 
 export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProps): ReactElement {
   const [shown, opening, written] = useOpenedReading(action);
+  const isDesktop = useIsDesktop();
 
   return (
     <ResponsiveSheet
@@ -66,13 +68,14 @@ export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProp
           display: "flex",
           flexDirection: "column",
         },
-        body: { flex: 1, minHeight: 0, padding: 0, display: "flex", flexDirection: "column" },
+        // The desktop modal pads its scroll instead; a bottom sheet takes the wrapper's padding.
+        body: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", ...(isDesktop ? { padding: 0 } : {}) },
       }}
     >
       <Box
-        px="md"
-        pt="md"
-        pb="calc(1.25rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
+        px={isDesktop ? "md" : undefined}
+        pt={isDesktop ? "md" : undefined}
+        pb={isDesktop ? "1.25rem" : undefined}
         style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
       >
         {/* Keyed on the opening, so every one starts with a closed editor rather than
@@ -182,6 +185,7 @@ function Header({
   onClose: () => void;
 }): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
   const side = positionLabel(action.position, t);
   const type = catalogueLabel(action.component_type_i18n_key, action.component_type, t);
   const typeAndSide = side === null ? type : `${type} (${side})`;
@@ -200,17 +204,20 @@ function Header({
         </Text>
       </Stack>
 
-      <ActionIcon
-        variant="subtle"
-        color="gray"
-        radius="xl"
-        size="md"
-        aria-label={t("action.close")}
-        onClick={onClose}
-        style={{ flexShrink: 0 }}
-      >
-        <X size={18} color="var(--color-text-dim)" />
-      </ActionIcon>
+      {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
+      {isDesktop && (
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          radius="xl"
+          size="md"
+          aria-label={t("action.close")}
+          onClick={onClose}
+          style={{ flexShrink: 0 }}
+        >
+          <X size={18} color="var(--color-text-dim)" />
+        </ActionIcon>
+      )}
     </Group>
   );
 }
