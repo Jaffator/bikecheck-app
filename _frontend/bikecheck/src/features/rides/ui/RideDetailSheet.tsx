@@ -14,6 +14,7 @@ import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { ChangeBikeMenu } from "./ChangeBikeMenu";
+import { DeleteRideButton } from "./DeleteRideButton";
 import { RideCheckInSection } from "./RideCheckInSection";
 import { WoreOff } from "./WoreOff";
 
@@ -128,6 +129,8 @@ export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailS
             <RideCheckInSection key={ride.id} ride={ride} startWith={checkInStartWith} />
 
             <ChangeBikeMenu ride={ride} onMoved={onClose} />
+
+            <DeleteRideButton ride={ride} onDeleted={onClose} />
           </Stack>
         </Stack>
       )}

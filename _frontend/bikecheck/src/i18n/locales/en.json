@@ -397,7 +397,14 @@
     "woreOff": "Wore off",
     "changeBike": "Change bike",
     "bikeChanged": "Ride moved to {{bike}}",
-    "changeBikeFailed": "Couldn't change the bike"
+    "changeBikeFailed": "Couldn't change the bike",
+    "delete": "Delete ride",
+    "deleteTitle": "Delete ride?",
+    "deleteBody": "{{ride}}. Its km come off the bike's parts, and Strava won't bring the ride back.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete",
+    "deleted": "Ride deleted",
+    "deleteFailed": "Could not delete the ride. Try again."
   },
   "service": {
     "emptyTitle": "No Components to Service",

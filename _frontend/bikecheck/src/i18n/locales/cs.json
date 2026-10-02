@@ -415,7 +415,14 @@
     "woreOff": "Odepsala",
     "changeBike": "Změnit kolo",
     "bikeChanged": "Jízda přesunuta na {{bike}}",
-    "changeBikeFailed": "Kolo se nepodařilo změnit"
+    "changeBikeFailed": "Kolo se nepodařilo změnit",
+    "delete": "Smazat jízdu",
+    "deleteTitle": "Smazat jízdu?",
+    "deleteBody": "{{ride}}. Ujeté km se odečtou z dílů kola a ze Stravy se jízda už znovu nenačte.",
+    "deleteCancel": "Zrušit",
+    "deleteConfirm": "Smazat",
+    "deleted": "Jízda smazána",
+    "deleteFailed": "Jízdu se nepodařilo smazat. Zkus to znovu."
   },
   "service": {
     "emptyTitle": "Žádné komponenty k servisu",

@@ -6,6 +6,7 @@ import { Queue } from 'bullmq';
 import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { RideService } from '../ride/ride.service';
 import {
   BRAKE_PAD_PART,
   carried,
@@ -89,6 +90,7 @@ export class StravaEventsService {
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
     private readonly serviceTracking: ServiceTrackingService,
+    private readonly rides: RideService,
   ) {}
 
   /**
@@ -818,15 +820,13 @@ export class StravaEventsService {
     return parts.filter((part) => carried(part, ride)).map((part) => part.id);
   }
 
-  async deleteStravaActivity(stravaData: any) {
+  async deleteStravaActivity(stravaData: { owner_id: number; object_id: number }): Promise<void> {
     const user = await this.prisma.users.findFirst({
       where: { strava_athlete_id: String(stravaData.owner_id) },
       select: { id: true },
     });
     if (!user) throw new Error('User not found for Strava athlete ID: ' + stravaData.owner_id);
-    await this.prisma.rides.delete({
-      where: { activity_strava_id: BigInt(stravaData.object_id) },
-    });
+    await this.rides.removeStravaRide(user.id, BigInt(stravaData.object_id));
     this.logger.info({ custom: true, user: user.id }, 'Strava activity deleted');
   }
   // The profile fields are a snapshot: Strava sends them with the token, so they

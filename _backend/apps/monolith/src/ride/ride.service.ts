@@ -253,6 +253,29 @@ export class RideService {
 
     await this.serviceTracking.evaluateBikes([ride.bike_id], userId);
   }
+
+  /** Removes a ride whose activity was deleted on Strava, with its wear. A ride already gone is no error. */
+  async removeStravaRide(userId: number, activityId: bigint): Promise<void> {
+    const ride = await this.prisma.rides.findFirst({
+      where: { activity_strava_id: activityId, user_id: userId, is_deleted: { not: true } },
+      select: { ...movedRideSelect, bikes: { select: { is_deleted: true } } },
+    });
+    if (!ride) return;
+
+    // An Archived Bike is never written to (ADR 0024): the ride goes, its wear stays frozen.
+    if (ride.bikes.is_deleted === true) {
+      await this.prisma.rides.delete({ where: { id: ride.id } });
+      return;
+    }
+
+    // No dismissed mark: Strava will never send a deleted activity again.
+    await this.prisma.$transaction(async (tx) => {
+      await shiftWear(tx, ride.bike_id, ride, -1);
+      await tx.rides.delete({ where: { id: ride.id } });
+    });
+
+    await this.serviceTracking.evaluateBikes([ride.bike_id], userId);
+  }
 }
 
 // Only a ride the lists show may move its wear: an Archived Bike is never written to (ADR 0024).

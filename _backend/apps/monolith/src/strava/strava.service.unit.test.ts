@@ -6,6 +6,7 @@ import { StravaEventsService } from './strava.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { RideService } from '../ride/ride.service';
 
 jest.mock('axios');
 
@@ -35,6 +36,7 @@ describe('StravaEventsService', () => {
 
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
   const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn() };
+  const mockRides = { removeStravaRide: jest.fn() };
   const mockQueue = { add: jest.fn() };
   const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 
@@ -56,6 +58,7 @@ describe('StravaEventsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationService, useValue: mockNotifications },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
+        { provide: RideService, useValue: mockRides },
         { provide: getQueueToken('gemini-queue'), useValue: mockQueue },
         { provide: getLoggerToken(StravaEventsService.name), useValue: mockLogger },
       ],
@@ -448,6 +451,16 @@ describe('StravaEventsService', () => {
       mockPrisma.users.findUnique.mockResolvedValue({ strava_athlete_id: null, strava_last_sync_at: null });
 
       await expect(service.syncFromStrava(OWNER_ID)).rejects.toThrow('No Strava account');
+    });
+  });
+
+  describe('deleteStravaActivity', () => {
+    // Wear rollback and the missing-ride case live in RideService.removeStravaRide.
+    it('removes the athlete ride by its activity id', async () => {
+      await service.deleteStravaActivity({ owner_id: ATHLETE_ID, object_id: 98765 });
+
+      expect(mockPrisma.users.findFirst.mock.calls[0][0].where).toEqual({ strava_athlete_id: String(ATHLETE_ID) });
+      expect(mockRides.removeStravaRide).toHaveBeenCalledWith(OWNER_ID, BigInt(98765));
     });
   });
 });

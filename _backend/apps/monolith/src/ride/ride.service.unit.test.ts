@@ -519,4 +519,58 @@ describe('RideService', () => {
       expect(mockPrisma.strava_pending_activities.upsert).not.toHaveBeenCalled();
     });
   });
+
+  describe('removeStravaRide', () => {
+    const ACTIVITY_ID = BigInt('13579246810');
+    const stravaRide = { ...ride, activity_strava_id: ACTIVITY_ID, bikes: { is_deleted: false } };
+
+    it('takes the ride wear off its parts, deletes it and evaluates the bike', async () => {
+      garage([part(10, OLD_BIKE, 'Chain')]);
+      mockPrisma.rides.findFirst.mockResolvedValue(stravaRide);
+
+      await service.removeStravaRide(7, ACTIVITY_ID);
+
+      expect(mockPrisma.rides.findFirst.mock.calls[0][0].where).toMatchObject({
+        activity_strava_id: ACTIVITY_ID,
+        user_id: 7,
+      });
+      expect(written().get(10)).toEqual({ total_km: 468, total_time_min: 880, drivetrain_km: 562 });
+      expect(mockPrisma.rides.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+      expect(mockServiceTracking.evaluateBikes).toHaveBeenCalledWith([OLD_BIKE], 7);
+    });
+
+    // The activity is gone from Strava, so nothing can send it again.
+    it('writes no pending row', async () => {
+      garage([]);
+      mockPrisma.rides.findFirst.mockResolvedValue(stravaRide);
+
+      await service.removeStravaRide(7, ACTIVITY_ID);
+
+      expect(mockPrisma.strava_pending_activities.upsert).not.toHaveBeenCalled();
+    });
+
+    // An Archived Bike is never written to (ADR 0024), but the gone activity must not come back with it.
+    it('deletes a ride on an archived bike without touching the bike', async () => {
+      garage([part(10, OLD_BIKE, 'Chain')]);
+      mockPrisma.rides.findFirst.mockResolvedValue({ ...stravaRide, bikes: { is_deleted: true } });
+
+      await service.removeStravaRide(7, ACTIVITY_ID);
+
+      expect(mockPrisma.rides.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+      expect(mockPrisma.components_mounted.update).not.toHaveBeenCalled();
+      expect(mockPrisma.bikes.update).not.toHaveBeenCalled();
+      expect(mockServiceTracking.evaluateBikes).not.toHaveBeenCalled();
+    });
+
+    // The user deleted it first; the webhook must not fail on it.
+    it('does nothing when the ride is already gone', async () => {
+      mockPrisma.rides.findFirst.mockResolvedValue(null);
+
+      await service.removeStravaRide(7, ACTIVITY_ID);
+
+      expect(mockPrisma.components_mounted.update).not.toHaveBeenCalled();
+      expect(mockPrisma.rides.delete).not.toHaveBeenCalled();
+      expect(mockServiceTracking.evaluateBikes).not.toHaveBeenCalled();
+    });
+  });
 });
