@@ -41,11 +41,12 @@ export function StravaStatusCard({
   if (!connected) {
     return (
       <Paper
-        bg="cards.6"
         radius="lg"
         style={{
           overflow: "hidden",
-          border: "1px solid var(--color-border-subtle)",
+          backgroundColor: "var(--mantine-color-cards-6)",
+          border: "none",
+          boxShadow: "var(--elev-panel)",
           position: "relative",
           // Orange radial glow identifies the Strava connection pitch.
           backgroundImage:
@@ -138,11 +139,12 @@ export function StravaStatusCard({
 
   return (
     <Paper
-      bg="cards.6"
       radius="lg"
       style={{
         overflow: "hidden",
-        border: "1px solid var(--color-border-subtle)",
+        backgroundColor: "var(--mantine-color-cards-6)",
+        border: "none",
+        boxShadow: "var(--elev-panel)",
         position: "relative",
       }}
     >

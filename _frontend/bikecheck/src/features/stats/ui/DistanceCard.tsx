@@ -36,8 +36,8 @@ const TOOLTIP_STYLES: LineChartProps["styles"] = {
   },
 };
 
-// Each bike's running km over the Period; the phone asks for no Period and reads its year.
-export function DistanceCard({ period }: { period?: HomePeriod }): ReactElement {
+// Each bike's running km over the Period.
+export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: distance, isPlaceholderData } = useDistance(period);
   const isDesktop = useIsDesktop();
@@ -60,14 +60,12 @@ export function DistanceCard({ period }: { period?: HomePeriod }): ReactElement 
   return (
     <DistancePaper>
       <Text fz={16} fw={600} c="text.6">
-        {t("stats.distanceTitle", {
-          period: shown === undefined ? servedYear(distance) : homePeriodLabel(shown, i18n.language, t),
-        })}
+        {t("stats.distanceTitle", { period: homePeriodLabel(shown, i18n.language, t) })}
       </Text>
 
       {drawn.bikes.length === 0 ? (
         <Text fz={13} c="var(--color-text-dim)">
-          {t(shown === undefined ? "stats.distanceEmpty" : "stats.distanceEmptyPeriod")}
+          {t("stats.distanceEmptyPeriod")}
         </Text>
       ) : (
         <>
@@ -79,7 +77,7 @@ export function DistanceCard({ period }: { period?: HomePeriod }): ReactElement 
   );
 }
 
-function DistanceChart({ distance, period }: { distance: Distance; period: HomePeriod | undefined }): ReactElement {
+function DistanceChart({ distance, period }: { distance: Distance; period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const kmFormat = new Intl.NumberFormat(i18n.language);
   const line = runningDistance(distance, period);

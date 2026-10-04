@@ -55,6 +55,17 @@ export function checkInOf(draft: CheckInDraft): RideCheckIn | null {
   };
 }
 
+// Symptoms compare as a set: the server need not keep the chips' order.
+export function sameCheckIn(a: RideCheckIn | null, b: RideCheckIn | null): boolean {
+  if (a === null || b === null) return a === b;
+  return (
+    a.status === b.status &&
+    a.note === b.note &&
+    a.symptoms.length === b.symptoms.length &&
+    a.symptoms.every((symptom) => b.symptoms.includes(symptom))
+  );
+}
+
 // A note with no answer cannot be saved, and moving on would drop it unseen.
 export function isHalfFilled(draft: CheckInDraft): boolean {
   return draft.status === null && draft.note.trim() !== "";

@@ -1,6 +1,6 @@
 // UI component using feature hooks.
-import type { ReactElement } from "react";
-import { Button, Divider, Group, Stack, Text } from "@mantine/core";
+import { useState, type ReactElement } from "react";
+import { Box, Button, Divider, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Clock, Gauge, Route, TrendingDown, TrendingUp, Zap, type LucideIcon } from "lucide-react";
 import dayjs from "dayjs";
@@ -12,15 +12,19 @@ import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
-import { useRideCheckIn } from "@/features/rides/useRideCheckIn";
+import { useRideCheckIn, type RideCheckInState } from "@/features/rides/useRideCheckIn";
 import { useIsDesktop } from "@/layout/breakpoints";
-import { ChangeBikeMenu } from "./ChangeBikeMenu";
+import { BAR_BUTTON_HEIGHT } from "./actionBar";
+import { CheckInBikeField } from "./CheckInBikeField";
 import { DeleteRideButton } from "./DeleteRideButton";
-import { RideCheckInSection } from "./RideCheckInSection";
+import { RideCheckInFields } from "./RideCheckInFields";
 import { WoreOff } from "./WoreOff";
 
-// Mantine's large sheet: room for the map and both rows of figures.
-const SHEET_HEIGHT = "var(--drawer-size-lg)";
+// Nearly full height: the map, both rows of figures and the check-in all want room.
+const SHEET_HEIGHT = "92dvh";
+
+// Same layer as every other sheet: Mantine gives the FAB's Affix and a drawer one z-index.
+const SHEET_Z_INDEX = 300;
 
 const MAP_HEIGHT_DESKTOP = 480;
 // Mantine keeps a smaller window's modal inside its margins.
@@ -28,6 +32,7 @@ const MODAL_WIDTH = 960;
 const MAP_HEIGHT_PHONE = 200;
 // Between Mantine's lg (20px) and xl (32px), which read too tight and too loose.
 const MODAL_PADDING = "1.5rem";
+const SAVE_MIN_WIDTH = 120;
 
 interface RideDetailSheetProps {
   // Null closes the sheet.
@@ -90,6 +95,7 @@ export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailS
       onClose={onClose}
       desktop="modal"
       modalSize={MODAL_WIDTH}
+      zIndex={SHEET_Z_INDEX}
       title={ride === null ? undefined : <RideTitle ride={ride} />}
       styles={{
         content: {
@@ -146,46 +152,95 @@ interface RideDetailFootProps {
   onClose: () => void;
 }
 
-// Check-in, bike and delete; on desktop the actions share one bar below the check-in.
+// Each action beside what it changes: the bike in its row, the check-in inline, one Uložit for both.
 function RideDetailFoot({ ride, startWith, onClose }: RideDetailFootProps): ReactElement {
   const { t } = useTranslation();
-  const isDesktop = useIsDesktop();
-  const checkIn = useRideCheckIn(ride, startWith);
+  const { data: bikes } = useBikes();
+  const checkIn = useRideCheckIn(ride, onClose, startWith);
+  const [pickerOpened, setPickerOpened] = useState(false);
 
-  if (!isDesktop) {
-    return (
-      <>
-        <Stack gap="md">
-          <RideCheckInSection checkIn={checkIn} />
-          <ChangeBikeMenu ride={ride} onMoved={onClose} />
-        </Stack>
+  const pickedId = checkIn.pick.kind === "bike" ? checkIn.pick.bikeId : null;
+  const notMine = checkIn.pick.kind === "notMine";
 
-        <Divider color="var(--color-border-subtle)" />
-
-        <DeleteRideButton ride={ride} onDeleted={onClose} />
-      </>
-    );
-  }
-
-  const canAdd = checkIn.saved === null && checkIn.draft === null;
   return (
     <>
-      <RideCheckInSection checkIn={checkIn} withAdd={false} />
+      <CheckInBikeField
+        bikes={bikes ?? []}
+        picked={bikes?.find((bike) => bike.id === pickedId) ?? null}
+        notMine={notMine}
+        source={checkIn.moved ? "byHand" : "strava"}
+        fallbackName={ride.bike_name ?? t("rides.unknownBike")}
+        onPick={checkIn.setPick}
+        pickerOpened={pickerOpened}
+        onPickerOpenedChange={setPickerOpened}
+      />
+
+      {/* A ride that was not the rider's leaves, so it has nothing to rate. */}
+      {!notMine && (
+        <>
+          <Divider color="var(--color-border-subtle)" />
+          {/* Out of reach while the bike list lies over it. */}
+          <Box inert={pickerOpened} style={{ opacity: pickerOpened ? 0.4 : 1, transition: "opacity 150ms ease" }}>
+            <RideCheckInFields draft={checkIn.draft} onChange={checkIn.setDraft} />
+          </Box>
+        </>
+      )}
 
       <Divider color="var(--color-border-subtle)" />
 
-      <Group justify="space-between" wrap="nowrap">
-        <DeleteRideButton ride={ride} onDeleted={onClose} inBar />
-        <Group gap="xs" wrap="nowrap">
-          <ChangeBikeMenu ride={ride} onMoved={onClose} inBar />
-          {canAdd && (
-            <Button color="primary.6" c="textDark.6" radius="md" size="sm" onClick={checkIn.edit}>
-              {t("checkIn.addInBar")}
-            </Button>
-          )}
-        </Group>
-      </Group>
+      <RideDetailActions ride={ride} checkIn={checkIn} onClose={onClose} />
     </>
+  );
+}
+
+interface RideDetailActionsProps {
+  ride: Ride;
+  checkIn: RideCheckInState;
+  onClose: () => void;
+}
+
+// Fixed places: delete quiet on the left, Uložit only once there is something to save.
+function RideDetailActions({ ride, checkIn, onClose }: RideDetailActionsProps): ReactElement {
+  const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
+
+  const save = checkIn.dirty && (
+    <Button
+      color="primary.6"
+      c="textDark.6"
+      radius="md"
+      size="sm"
+      h={BAR_BUTTON_HEIGHT}
+      miw={SAVE_MIN_WIDTH}
+      loading={checkIn.saving}
+      onClick={() => void checkIn.submit()}
+    >
+      {t("checkIn.save")}
+    </Button>
+  );
+
+  // The phone sheet closes by its ✕ or a swipe, so delete just goes last.
+  if (!isDesktop) {
+    return (
+      <Stack gap="xs">
+        {save}
+        <Group>
+          <DeleteRideButton ride={ride} onDeleted={onClose} inBar />
+        </Group>
+      </Stack>
+    );
+  }
+
+  return (
+    <Group justify="space-between" wrap="nowrap">
+      <DeleteRideButton ride={ride} onDeleted={onClose} inBar />
+      <Group gap="xs" wrap="nowrap">
+        <Button variant="outline" radius="md" size="sm" h={BAR_BUTTON_HEIGHT} onClick={onClose}>
+          {t("action.close")}
+        </Button>
+        {save}
+      </Group>
+    </Group>
   );
 }
 

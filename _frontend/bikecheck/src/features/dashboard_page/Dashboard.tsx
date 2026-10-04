@@ -11,10 +11,14 @@ import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
 import { BikeHealthList } from "@/features/bikes/ui/BikeHealthList";
 import { SpendCard } from "@/features/stats/ui/SpendCard";
 import { DistanceCard } from "@/features/stats/ui/DistanceCard";
+import { HomePeriodSwitcher } from "@/features/stats/ui/HomePeriodSwitcher";
 import { WearForecastCard } from "@/features/stats/ui/WearForecastCard";
+import { useHomePeriod } from "@/features/stats/useHomePeriod";
+import { LastRidePanel } from "@/features/rides/ui/LastRidePanel";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { DashboardDesktop } from "./DashboardDesktop";
 import { DashboardBannerPhone } from "./DashboardBanner";
+import { DashboardFigures } from "./DashboardFigures";
 const FAB_CLEARANCE = {
   base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
   md: "md",
@@ -24,6 +28,7 @@ export function Dashboard(): ReactElement {
   const { data: bikes, isLoading } = useBikes();
   const { data: user } = useCurrentUser();
   const isDesktop = useIsDesktop();
+  const { period, setPeriod } = useHomePeriod();
 
   if (isLoading) {
     return <Loader m="md" />;
@@ -48,12 +53,15 @@ export function Dashboard(): ReactElement {
       <ContextLine withDate={false} />
       {!stravaConnected && <StravaStatusCard />}
       <DashboardBannerPhone />
+      <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
+      <DashboardFigures period={period} />
+      <LastRidePanel />
       <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
       <WearForecastCard />
       {/* Under the work: how the garage stands, and the way into any one bike. */}
       <BikeHealthList />
-      <DistanceCard />
-      <SpendCard />
+      <DistanceCard period={period} />
+      <SpendCard period={period} />
     </Stack>
   );
 }

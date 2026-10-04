@@ -1,4 +1,4 @@
-// Desktop Home's row of figures: the Period's distance, time in the saddle and climb, and what is
+// Home's row of figures: the Period's distance, time in the saddle and climb, and on desktop what is
 // due now. Spend is the spend card's, the next replacement the forecast card's.
 import { Fragment, type ReactElement, type ReactNode } from "react";
 import { SimpleGrid, Text } from "@mantine/core";
@@ -13,6 +13,7 @@ import { CLIMBED, RIDDEN, periodGain, totalMeters, type DailySeries } from "@/fe
 import { homePeriodLabel } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { HomePeriod } from "@/features/stats/stats.types";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // Worst first, and only the levels the app speaks at.
 const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
@@ -21,46 +22,61 @@ const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
   { level: "warning", key: "dashboard.warningCount" },
 ];
 
-// Due looks at now, so only the Period's readings take it.
+// Due looks at now, so only the Period's readings take it. The phone leaves it to the attention card
+// and fits three across; the switcher above names the Period, so the titles drop it.
 export function DashboardFigures({ period }: { period: HomePeriod }): ReactElement {
+  const compact = !useIsDesktop();
+
   return (
-    <SimpleGrid cols={{ base: 2, lg: 4 }} spacing="md">
-      <MetersFigure period={period} series={RIDDEN} titleKey="stats.distanceTitle" to="/bikes" />
-      <TimeFigure period={period} />
-      <MetersFigure period={period} series={CLIMBED} titleKey="dashboard.climbTitle" to="/rides" />
-      <DueFigure />
+    <SimpleGrid cols={compact ? 3 : { base: 2, lg: 4 }} spacing={compact ? "sm" : "md"}>
+      <MetersFigure
+        period={period}
+        compact={compact}
+        series={RIDDEN}
+        titleKey={compact ? "dashboard.riddenShort" : "stats.distanceTitle"}
+      />
+      <TimeFigure period={period} compact={compact} />
+      <MetersFigure
+        period={period}
+        compact={compact}
+        series={CLIMBED}
+        titleKey={compact ? "dashboard.climbShort" : "dashboard.climbTitle"}
+      />
+      {!compact && <DueFigure />}
     </SimpleGrid>
   );
 }
 
-interface MetersFigureProps {
+interface PeriodFigureProps {
   period: HomePeriod;
+  compact: boolean;
+}
+
+interface MetersFigureProps extends PeriodFigureProps {
   series: DailySeries;
   titleKey: string;
-  to: string;
 }
 
 // Ridden and climbed read the same response the same way, so one tile serves both.
-function MetersFigure({ period, series, titleKey, to }: MetersFigureProps): ReactElement {
+function MetersFigure({ period, compact, series, titleKey }: MetersFigureProps): ReactElement {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const { data: distance } = useDistance(period);
+  const detail = distance === undefined ? "" : periodGain(distance, period, series, i18n.language, t);
 
   return (
     <Figure
       title={t(titleKey, { period: homePeriodLabel(period, i18n.language, t) })}
       value={distance === undefined ? null : series.format(totalMeters(distance, series), i18n.language)}
-      detail={distance === undefined ? "" : periodGain(distance, period, series, i18n.language, t)}
+      detail={compact ? undefined : detail}
       detailFigure
-      onOpen={() => navigate(to)}
+      compact={compact}
     />
   );
 }
 
 // The rides started in the Period, beside the distance they covered.
-function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
+function TimeFigure({ period, compact }: PeriodFigureProps): ReactElement {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const { data: distance } = useDistance(period);
 
   const rides = (distance?.bikes ?? []).reduce((sum, bike) => sum + bike.ride_count, 0);
@@ -70,11 +86,13 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
 
   return (
     <Figure
-      title={t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) })}
+      title={t(compact ? "dashboard.timeShort" : "dashboard.timeTitle", {
+        period: homePeriodLabel(period, i18n.language, t),
+      })}
       value={distance === undefined ? null : `${hours} h`}
-      detail={`${t("dashboard.ridesCount", { count: rides })} · ø ${average}`}
+      detail={compact ? undefined : `${t("dashboard.ridesCount", { count: rides })} · ø ${average}`}
       detailFigure
-      onOpen={() => navigate("/rides")}
+      compact={compact}
     />
   );
 }

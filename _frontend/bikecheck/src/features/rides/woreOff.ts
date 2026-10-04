@@ -34,6 +34,22 @@ export function woreOffGain(line: WoreOffLine, translate: (key: string, options:
   return `<${translate("tracking.percentage", { value: 1 })}`;
 }
 
+// "Řetěz +32 km · Destičky 95 %": the wear index has no unit, so it says where the reading ended.
+export function woreOffSummary(
+  lines: WoreOffLine[],
+  shown: number,
+  translate: (key: string, options?: Record<string, unknown>) => string,
+): string | null {
+  if (lines.length === 0) return null;
+  return lines
+    .slice(0, shown)
+    .map((line) => {
+      const amount = woreOffAmount(line, translate) ?? translate("tracking.percentage", { value: line.after });
+      return `${woreOffLabel(line, translate)} ${amount}`;
+    })
+    .join(" · ");
+}
+
 // The app speaks from warning up, so below it the figure stays plain.
 export function woreOffColor(line: WoreOffLine): string | undefined {
   return line.after >= DUE_FROM ? attentionColor(line.after) : undefined;

@@ -9,12 +9,13 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { useChangeRideBike } from "@/features/rides/rides.queries";
 import type { Ride } from "@/features/rides/rides.types";
+import { BAR_BUTTON_HEIGHT } from "./actionBar";
 
 interface ChangeBikeMenuProps {
   ride: Ride;
   // The sheet holds a snapshot of the ride, so it closes rather than show the old bike.
   onMoved: () => void;
-  // Desktop's action bar: a bar-sized button in the row instead of one at the section's end.
+  // The detail's action bar: a bar-sized button in the row instead of one at the section's end.
   inBar?: boolean;
 }
 
@@ -43,6 +44,7 @@ export function ChangeBikeMenu({ ride, onMoved, inBar = false }: ChangeBikeMenuP
           variant="outline"
           radius="md"
           size={inBar ? "sm" : "xs"}
+          h={inBar ? BAR_BUTTON_HEIGHT : undefined}
           loading={change.isPending}
           rightSection={<ChevronDown size={14} />}
           style={inBar ? undefined : { alignSelf: "flex-end" }}

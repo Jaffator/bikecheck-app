@@ -22,6 +22,13 @@ import { ProfileEditDrawer } from "./ProfileEditDrawer";
 // same 20px whether a row is first, last or in the middle.
 const ROW_GAP_HALF = 10;
 
+// The panel surface every card in the app stands on - docs/ui/card-surface.md.
+const CARD_STYLE = {
+  backgroundColor: "var(--mantine-color-cards-6)",
+  border: "none",
+  boxShadow: "var(--elev-panel)",
+} as const;
+
 // Darker than Mantine's light-scheme default, to sit on the dark card without glowing.
 const SEGMENTED_CONTROL_STYLES = {
   root: { backgroundColor: "var(--mantine-color-inputs-6)" },
@@ -117,7 +124,7 @@ export function Settings(): ReactElement | null {
         {t("settings.sectionAccount")}
       </Text>
       {/* Name and weight are one form, so both rows open the same drawer. */}
-      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+      <Card className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={CARD_STYLE}>
         <UnstyledButton onClick={() => setEditing(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
           <Group justify="space-between" wrap="nowrap">
             <Text fw={600} fz={15} c="text.6">
@@ -176,7 +183,7 @@ export function Settings(): ReactElement | null {
       <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" px="md">
         {t("settings.sectionGeneral")}
       </Text>
-      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+      <Card className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={CARD_STYLE}>
         <Stack gap={0}>
           <Group justify="space-between" px="md" py={ROW_GAP_HALF}>
             <Text c="text.6" fz={15} fw={600}>
@@ -248,7 +255,7 @@ export function Settings(): ReactElement | null {
       <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" px="md">
         {t("settings.sectionAbout")}
       </Text>
-      <Card bg="cards.6" className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+      <Card className="m-3" px={0} py={ROW_GAP_HALF} radius="lg" style={CARD_STYLE}>
         <Stack gap={0}>
           {/* States the build; switches nothing. */}
           <Group justify="space-between" px="md" py={ROW_GAP_HALF} wrap="nowrap">
@@ -284,13 +291,12 @@ export function Settings(): ReactElement | null {
       {/* Both ways out, in the same card as everything else on the page - the last one, because
           leaving is not why anyone opened it. */}
       <Card
-        bg="cards.6"
         className="m-3"
         mb="calc(1.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
         px={0}
         py={ROW_GAP_HALF}
         radius="lg"
-        style={{ border: "1px solid var(--mantine-color-inputs-5)" }}
+        style={CARD_STYLE}
       >
         <Stack gap={0}>
           {/* Nothing is lost by logging out, so it asks nothing before it does. */}

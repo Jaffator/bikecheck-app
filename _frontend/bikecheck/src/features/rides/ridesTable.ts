@@ -28,7 +28,7 @@ export interface RideTableParams {
   page: number;
 }
 
-// Anything unreadable falls back to every bike, the year and the first page.
+// Anything unreadable falls back to every bike, the default Period and the first page.
 export function readTableParams(params: URLSearchParams): RideTableParams {
   const bike = Number(params.get("bike"));
   const page = Number(params.get("page"));

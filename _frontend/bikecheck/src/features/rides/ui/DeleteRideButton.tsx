@@ -8,16 +8,24 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { lastRideDate } from "@/features/bikes/lastRideDate";
 import { useDismissRide } from "@/features/rides/rides.queries";
 import type { Ride } from "@/features/rides/rides.types";
+import { BAR_BUTTON_HEIGHT } from "./actionBar";
 
 interface DeleteRideButtonProps {
   ride: Ride;
   // The sheet holds a snapshot of the ride, so it closes once the ride is gone.
   onDeleted: () => void;
-  // Desktop's action bar: red text without a frame, at the row's quiet end.
+  // The detail's action bar: red text without a frame, at its quiet end.
   inBar?: boolean;
 }
 
-const BAR_LOOK = { variant: "subtle", color: "red.5", size: "sm" } as const;
+const BAR_LOOK = {
+  variant: "subtle",
+  color: "red.5",
+  size: "sm",
+  h: BAR_BUTTON_HEIGHT,
+  // Mantine's left padding with a section: pulled back, the icon lines up with the content edge.
+  style: { marginInlineStart: "calc(var(--button-padding-x) / -1.5)" },
+} as const;
 const STACK_LOOK = { variant: "outline", size: "xs", style: { alignSelf: "flex-start" } } as const;
 
 export function DeleteRideButton({ ride, onDeleted, inBar = false }: DeleteRideButtonProps): ReactElement {

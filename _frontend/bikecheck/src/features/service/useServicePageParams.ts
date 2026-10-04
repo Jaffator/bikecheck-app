@@ -1,7 +1,7 @@
 // Desktop Service's bike, period and page, kept in the URL: `?bike=&period=&page=`.
 import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { parseHomePeriod } from "@/features/stats/homePeriod";
+import { DEFAULT_HOME_PERIOD, parseHomePeriod } from "@/features/stats/homePeriod";
 import type { HomePeriod } from "@/features/stats/stats.types";
 
 export interface ServicePageParams {
@@ -17,7 +17,7 @@ export interface ServicePageControls extends ServicePageParams {
   setPage: (page: number) => void;
 }
 
-// Anything unreadable falls back to every bike, the year and the first page.
+// Anything unreadable falls back to every bike, the default Period and the first page.
 export function readServicePageParams(params: URLSearchParams): ServicePageParams {
   const bike = Number(params.get("bike"));
   const page = Number(params.get("page"));
@@ -56,7 +56,7 @@ export function useServicePageParams(): ServicePageControls {
   const setPeriod = useCallback(
     (period: HomePeriod): void =>
       update((params) => {
-        if (period === "year") params.delete("period");
+        if (period === DEFAULT_HOME_PERIOD) params.delete("period");
         else params.set("period", period);
         params.delete("page");
       }),

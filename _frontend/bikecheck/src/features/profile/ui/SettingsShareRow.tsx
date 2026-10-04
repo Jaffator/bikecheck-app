@@ -19,7 +19,13 @@ export function SettingsShareRow(): ReactElement {
 
   return (
     <>
-      <Card bg="cards.6" className="mx-3 mb-3" px={0} py={ROW_GAP_HALF} radius="lg" style={{ border: "1px solid var(--mantine-color-inputs-5)" }}>
+      <Card
+        className="mx-3 mb-3"
+        px={0}
+        py={ROW_GAP_HALF}
+        radius="lg"
+        style={{ backgroundColor: "var(--mantine-color-cards-6)", border: "none", boxShadow: "var(--elev-panel)" }}
+      >
         <UnstyledButton onClick={() => setSharing(true)} className="w-full" px="md" py={ROW_GAP_HALF}>
           <Group justify="space-between" wrap="nowrap">
             <Text fw={600} fz={15} c="text.6">

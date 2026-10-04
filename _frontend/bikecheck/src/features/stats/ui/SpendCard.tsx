@@ -18,8 +18,9 @@ import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { periodSearch } from "@/features/service/servicePeriod";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { formatCost } from "@/utils/money";
-import { homePeriodLabel } from "../homePeriod";
+import { DEFAULT_HOME_PERIOD, homePeriodLabel } from "../homePeriod";
 import { categoryLabel } from "../spendCategories";
 import { useSpend } from "../stats.queries";
 import type { HomePeriod, Spend, SpendBike, SpendCategory } from "../stats.types";
@@ -31,8 +32,7 @@ const TRACK_COLOR = "var(--color-border-subtle)";
 // Neutral, so colour always means a bike and length always means money.
 const CATEGORY_COLOR = "var(--mantine-color-cards-4)";
 
-// The phone asks for no Period and reads the year it was served; desktop names its Period.
-export function SpendCard({ period }: { period?: HomePeriod }): ReactElement {
+export function SpendCard({ period }: { period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: spend } = useSpend(period);
   // Spend never lists an Archived Bike, so the garage holds every bike it names.
@@ -51,9 +51,7 @@ export function SpendCard({ period }: { period?: HomePeriod }): ReactElement {
     <SpendPaper>
       <Group justify="space-between" wrap="nowrap" gap="sm">
         <Text fz={16} fw={600} c="text.6">
-          {t("stats.spendTitle", {
-            period: period === undefined ? spend.from?.slice(0, 4) : homePeriodLabel(period, i18n.language, t),
-          })}
+          {t("stats.spendTitle", { period: homePeriodLabel(period, i18n.language, t) })}
         </Text>
         <Text
           className="tabular-nums"
@@ -98,14 +96,15 @@ function BikeBar({
   colorIndex,
 }: {
   spend: Spend;
-  period: HomePeriod | undefined;
+  period: HomePeriod;
   bike: SpendBike;
   colorIndex: number | null;
 }): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
   const largest = spend.bikes[0].total;
-  const history = historyLink(bike.bike_id, spend, period);
+  const history = historyLink(bike.bike_id, spend, period, isDesktop);
 
   return (
     <UnstyledButton
@@ -148,11 +147,11 @@ function BikeBar({
   );
 }
 
-// Only desktop names a Period, and its history is /service; the phone keeps the bike's own page.
-function historyLink(bikeId: number, spend: Spend, period: HomePeriod | undefined): string {
-  if (period === undefined) return `/bikes/${String(bikeId)}/history${periodSearch(spend)}`;
+// Desktop's history is /service; the phone keeps the bike's own page, over the window spend counted.
+function historyLink(bikeId: number, spend: Spend, period: HomePeriod, isDesktop: boolean): string {
+  if (!isDesktop) return `/bikes/${String(bikeId)}/history${periodSearch(spend)}`;
   const query = new URLSearchParams({ bike: String(bikeId) });
-  if (period !== "year") query.set("period", period);
+  if (period !== DEFAULT_HOME_PERIOD) query.set("period", period);
   return `/service?${query.toString()}`;
 }
 

@@ -1,4 +1,4 @@
-// Desktop Home's Period: how the address carries it, how a reading names it, and what it asks
+// Home's Period: how the address carries it, how a reading names it, and what it asks
 // History Totals and the distance chart for.
 import dayjs from "dayjs";
 import type { TFunction } from "i18next";
@@ -9,9 +9,12 @@ import type { HomePeriod } from "./stats.types";
 // A span the distance is summed over.
 export type DistanceBucket = "day" | "month" | "year";
 
-// Nothing, or anything Home does not know, is the year, so a broken link still opens a working page.
+// What Home, Rides and Service open on; never written to the address.
+export const DEFAULT_HOME_PERIOD: HomePeriod = "month";
+
+// Nothing, or anything Home does not know, is the default, so a broken link still opens a working page.
 export function parseHomePeriod(raw: string | null): HomePeriod {
-  return raw === "month" || raw === "all" ? raw : "year";
+  return raw === "year" || raw === "all" ? raw : DEFAULT_HOME_PERIOD;
 }
 
 // "September", "2026" or "all time".

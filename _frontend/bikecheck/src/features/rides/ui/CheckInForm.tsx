@@ -43,23 +43,7 @@ export function CheckInForm({ draft, onChange }: CheckInFormProps): ReactElement
       {draft.status === "ISSUE" && (
         <Stack gap={8}>
           <Eyebrow>{t("checkIn.symptomsLabel")}</Eyebrow>
-          <Group gap="xs">
-            {CHECK_IN_SYMPTOMS.map((symptom) => {
-              const checked = draft.symptoms.includes(symptom);
-              return (
-                <Chip
-                  key={symptom}
-                  checked={checked}
-                  onChange={() => onChange(toggleSymptom(draft, symptom))}
-                  radius="xl"
-                  size="sm"
-                  styles={chipStyles(checked)}
-                >
-                  {t(symptomKey(symptom))}
-                </Chip>
-              );
-            })}
-          </Group>
+          <SymptomChips draft={draft} onChange={onChange} />
         </Stack>
       )}
 
@@ -75,17 +59,51 @@ export function CheckInForm({ draft, onChange }: CheckInFormProps): ReactElement
   );
 }
 
+export function SymptomChips({ draft, onChange }: CheckInFormProps): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Group gap="xs">
+      {CHECK_IN_SYMPTOMS.map((symptom) => {
+        const checked = draft.symptoms.includes(symptom);
+        return (
+          <Chip
+            key={symptom}
+            checked={checked}
+            onChange={() => onChange(toggleSymptom(draft, symptom))}
+            radius="xl"
+            size="sm"
+            styles={chipStyles(checked)}
+          >
+            {t(symptomKey(symptom))}
+          </Chip>
+        );
+      })}
+    </Group>
+  );
+}
+
 interface StatusButtonProps {
   status: CheckInStatus;
   label: string;
   selected: boolean;
   onPick: () => void;
+  // The ride detail's low button, icon beside word, instead of the tall tile.
+  low?: boolean;
 }
 
-// A tall tile, icon over word, tinted in its own colour once picked.
-function StatusButton({ status, label, selected, onPick }: StatusButtonProps): ReactElement {
+// Tinted in its own colour once picked.
+export function StatusButton({ status, label, selected, onPick, low = false }: StatusButtonProps): ReactElement {
   const Icon = STATUS_ICON[status];
   const color = CHECK_IN_COLOR[status];
+  const content = (
+    <>
+      <Icon size={low ? 16 : 22} color={selected ? color : "var(--mantine-color-text-7)"} />
+      <Text fz={low ? 14 : 13} fw={selected ? 700 : 600} c={selected ? "text.6" : "text.7"}>
+        {label}
+      </Text>
+    </>
+  );
 
   return (
     <UnstyledButton
@@ -93,20 +111,23 @@ function StatusButton({ status, label, selected, onPick }: StatusButtonProps): R
       aria-pressed={selected}
       className="active:scale-[0.985]"
       style={{
-        minHeight: 66,
-        borderRadius: 14,
+        minHeight: low ? 44 : 66,
+        borderRadius: low ? 10 : 14,
         padding: "8px 4px",
         border: `1px solid ${selected ? color : "var(--mantine-color-inputs-5)"}`,
         backgroundColor: selected ? `color-mix(in srgb, ${color} 14%, transparent)` : "var(--mantine-color-cards-7)",
         transition: "transform 0.12s ease",
       }}
     >
-      <Stack gap={6} align="center">
-        <Icon size={22} color={selected ? color : "var(--mantine-color-text-7)"} />
-        <Text fz={13} fw={selected ? 700 : 600} c={selected ? "text.6" : "text.7"}>
-          {label}
-        </Text>
-      </Stack>
+      {low ? (
+        <Group gap={8} justify="center" wrap="nowrap">
+          {content}
+        </Group>
+      ) : (
+        <Stack gap={6} align="center">
+          {content}
+        </Stack>
+      )}
     </UnstyledButton>
   );
 }

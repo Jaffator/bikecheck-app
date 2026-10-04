@@ -1,66 +1,83 @@
-// A ride's check-in in its detail, shared by its section and the desktop action bar.
+// A ride's bike and check-in in its detail, held until "Uložit" writes both and closes the sheet.
 import { useState } from "react";
 import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
-import { checkInOf, draftOf, type CheckInDraft } from "@/features/rides/checkIn";
-import { useDeleteRideCheckIn, useSaveRideCheckIn } from "@/features/rides/rides.queries";
-import type { CheckInStatus, Ride, RideCheckIn } from "@/features/rides/rides.types";
+import { checkInOf, draftOf, sameCheckIn, type CheckInDraft } from "@/features/rides/checkIn";
+import type { BikePick } from "@/features/rides/checkInSave";
+import {
+  useChangeRideBike,
+  useDeleteRideCheckIn,
+  useDismissRide,
+  useSaveRideCheckIn,
+} from "@/features/rides/rides.queries";
+import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 
 export interface RideCheckInState {
-  saved: RideCheckIn | null;
-  // Null while the form is closed.
-  draft: CheckInDraft | null;
-  setDraft: (draft: CheckInDraft | null) => void;
-  // Null until the form holds something worth saving.
-  toSave: RideCheckIn | null;
+  pick: BikePick;
+  setPick: (pick: BikePick) => void;
+  // Another bike, or none of the rider's, is picked.
+  moved: boolean;
+  draft: CheckInDraft;
+  setDraft: (draft: CheckInDraft) => void;
+  dirty: boolean;
   saving: boolean;
-  deleting: boolean;
-  edit: () => void;
-  submit: () => void;
-  remove: () => void;
+  submit: () => Promise<void>;
 }
 
-export function useRideCheckIn(ride: Ride, startWith?: CheckInStatus): RideCheckInState {
+export function useRideCheckIn(ride: Ride, onSaved: () => void, startWith?: CheckInStatus): RideCheckInState {
   const { t } = useTranslation();
+  const changeBike = useChangeRideBike();
   const save = useSaveRideCheckIn();
   const deleteCheckIn = useDeleteRideCheckIn();
-  // The sheet holds a snapshot of the ride, so this keeps what it last saved itself.
-  const [saved, setSaved] = useState<RideCheckIn | null>(ride.check_in);
-  const [draft, setDraft] = useState<CheckInDraft | null>(
-    startWith === undefined ? null : draftOf(ride.check_in, startWith),
-  );
-  const toSave = draft === null ? null : checkInOf(draft);
+  const dismiss = useDismissRide();
+  const [pick, setPick] = useState<BikePick>({ kind: "bike", bikeId: ride.bike_id });
+  const [draft, setDraft] = useState<CheckInDraft>(draftOf(ride.check_in, startWith));
 
-  function submit(): void {
-    if (toSave === null) return;
-    save.mutate(
-      { rideId: ride.id, checkIn: toSave },
-      {
-        onSuccess: (checkIn) => {
-          setSaved(checkIn);
-          setDraft(null);
-        },
-        onError: () => notifications.show({ color: "red.5", message: t("checkIn.saveFailed") }),
-      },
-    );
+  const moveTo = pick.kind === "bike" && pick.bikeId !== ride.bike_id ? pick.bikeId : null;
+  const moved = pick.kind === "notMine" || moveTo !== null;
+  const checkIn = checkInOf(draft);
+  // A cleared answer on a ride that had one deletes it.
+  const checkInChanged = !sameCheckIn(checkIn, ride.check_in);
+
+  // The bike moves first, so the check-in lands on the ride where it now is.
+  async function submit(): Promise<void> {
+    if (pick.kind === "notMine") {
+      if (await succeeded(dismiss.mutateAsync(ride.id), "pendingRides.dismissFailed")) onSaved();
+      return;
+    }
+    if (moveTo !== null) {
+      const moving = changeBike.mutateAsync({ rideId: ride.id, bikeId: moveTo });
+      if (!(await succeeded(moving, "rides.changeBikeFailed"))) return;
+    }
+    if (checkInChanged && !(await writeCheckIn())) return;
+    onSaved();
   }
 
-  function remove(): void {
-    deleteCheckIn.mutate(ride.id, {
-      onSuccess: () => setSaved(null),
-      onError: () => notifications.show({ color: "red.5", message: t("checkIn.deleteFailed") }),
-    });
+  function writeCheckIn(): Promise<boolean> {
+    return checkIn === null
+      ? succeeded(deleteCheckIn.mutateAsync(ride.id), "checkIn.deleteFailed")
+      : succeeded(save.mutateAsync({ rideId: ride.id, checkIn }), "checkIn.saveFailed");
+  }
+
+  // A failed write keeps the sheet open, told why.
+  async function succeeded(pending: Promise<unknown>, failedKey: string): Promise<boolean> {
+    try {
+      await pending;
+      return true;
+    } catch {
+      notifications.show({ color: "red.5", message: t(failedKey) });
+      return false;
+    }
   }
 
   return {
-    saved,
+    pick,
+    setPick,
+    moved,
     draft,
     setDraft,
-    toSave,
-    saving: save.isPending,
-    deleting: deleteCheckIn.isPending,
-    edit: () => setDraft(draftOf(saved)),
+    dirty: moved || checkInChanged,
+    saving: [changeBike, save, deleteCheckIn, dismiss].some((write) => write.isPending),
     submit,
-    remove,
   };
 }

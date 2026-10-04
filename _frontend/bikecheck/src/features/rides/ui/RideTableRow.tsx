@@ -11,7 +11,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { CHECK_IN_COLOR, symptomKey } from "@/features/rides/checkIn";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { Ride, RideCheckIn } from "@/features/rides/rides.types";
-import { woreOffAmount, woreOffLabel } from "@/features/rides/woreOff";
+import { woreOffSummary } from "@/features/rides/woreOff";
 
 export const RIDE_TABLE_COLUMNS = "minmax(0, 2fr) minmax(0, 1.1fr) 56px 64px 64px minmax(0, 1.4fr) 104px";
 // The table draws the route at 52 px, about the phone card's size.
@@ -83,7 +83,7 @@ export function RideTableRow({ ride, colorIndex, onOpen }: RideTableRowProps): R
         {figure(ride.elevation_up_m ?? 0)}
       </Text>
       <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
-        {woreOffSummary(ride, t) ?? "—"}
+        {woreOffSummary(ride.wore_off, WORE_OFF_SHOWN, t) ?? "—"}
       </Text>
       <CheckInCell checkIn={ride.check_in} />
     </Box>
@@ -96,18 +96,6 @@ function startLabel(startedAt: string, language: string): string {
     weekday: "short",
   }).format(new Date(startedAt));
   return `${weekday} ${dayjs(startedAt).format("D. M. · HH:mm")}`;
-}
-
-// "Řetěz +32 km · Destičky 95 %": the wear index has no unit, so it says where the reading ended.
-function woreOffSummary(ride: Ride, t: (key: string, options?: Record<string, unknown>) => string): string | null {
-  if (ride.wore_off.length === 0) return null;
-  return ride.wore_off
-    .slice(0, WORE_OFF_SHOWN)
-    .map((line) => {
-      const amount = woreOffAmount(line, t) ?? t("tracking.percentage", { value: line.after });
-      return `${woreOffLabel(line, t)} ${amount}`;
-    })
-    .join(" · ");
 }
 
 // Quiet when there is none: a missing check-in is never a nag.
