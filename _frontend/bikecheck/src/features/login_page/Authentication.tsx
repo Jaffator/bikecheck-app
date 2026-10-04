@@ -34,6 +34,15 @@ export const LOGIN_EMAIL_PARAM = "email";
 const EMAIL_NOT_VERIFIED_PARAM = "emailNotVerified";
 const GOOGLE_ERROR_PARAM = "googleError";
 const GOOGLE_EMAIL_UNVERIFIED = "GOOGLE_EMAIL_UNVERIFIED";
+// The round trip itself failed (Google error, token exchange); a cancel comes back with no flag.
+const GOOGLE_SIGN_IN_FAILED = "GOOGLE_SIGN_IN_FAILED";
+
+// What to tell the rider for the web callback's code, or null for none worth showing.
+function webGoogleErrorKey(code: string | null): string | null {
+  if (code === GOOGLE_EMAIL_UNVERIFIED) return "auth.googleEmailUnverified";
+  if (code === GOOGLE_SIGN_IN_FAILED) return "auth.genericError";
+  return null;
+}
 
 // The native app sits under a status bar the web page does not, so the block starts lower.
 const NATIVE_SHIFT_PX = Capacitor.isNativePlatform() ? 50 : 0;
@@ -103,8 +112,8 @@ export function AuthenticationForm(props: PaperProps) {
   // The address the inbox state shows, or null while the form is up. Set by a registration,
   // a refused native Google sign-in, or the web callback's flag.
   const [inboxEmail, setInboxEmail] = useState<string | null>(() => searchParams.get(EMAIL_NOT_VERIFIED_PARAM));
-  // The code the web callback came back with; the native answer lives on the mutation.
-  const webGoogleError = searchParams.get(GOOGLE_ERROR_PARAM);
+  // The message for the web callback's code; the native answer lives on the mutation.
+  const webGoogleError = webGoogleErrorKey(searchParams.get(GOOGLE_ERROR_PARAM));
   // Keep focused fields above the keyboard.
   const formRef = useScrollIntoViewOnFocus<HTMLDivElement>();
   const form = useForm({
@@ -408,30 +417,57 @@ export function AuthenticationForm(props: PaperProps) {
               {t(googleErrorKey(googleToken.error))}
             </Text>
           )}
-          {!googleToken.isError && webGoogleError === GOOGLE_EMAIL_UNVERIFIED && (
+          {!googleToken.isError && webGoogleError !== null && (
             <Text size="sm" c="red.8" ta="center">
-              {t("auth.googleEmailUnverified")}
+              {t(webGoogleError)}
             </Text>
           )}
         </Stack>
       </Paper>
-      <Group
+      <Stack
         align="center"
-        justify="center"
-        gap={4}
+        gap="xl"
         pos={PINNED}
         bottom="1.5rem"
         left={0}
         right={0}
         mb={{ base: "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", sm: "auto" }}
       >
-        <Text size="sm" lh={1} c="background.9">
-          {type === "register" ? t("auth.haveAccount") : t("auth.noAccount")}
-        </Text>
-        <Anchor component="button" type="button" lh={1} c="background.9" fw={600} size="md" onClick={switchType}>
-          {type === "register" ? t("auth.login") : t("auth.register")}
-        </Anchor>
-      </Group>
+        <Group align="center" justify="center" gap={4}>
+          <Text size="sm" lh={1} c="background.9">
+            {type === "register" ? t("auth.haveAccount") : t("auth.noAccount")}
+          </Text>
+          <Anchor component="button" type="button" lh={1} c="background.9" fw={600} size="md" onClick={switchType}>
+            {type === "register" ? t("auth.login") : t("auth.register")}
+          </Anchor>
+        </Group>
+        {/* `/` is the public homepage Google's brand check reads: what the app is, and its legal pages. */}
+        {type === "login" && (
+          <Stack gap="xs" align="center">
+            <Text size="xs" c="background.9" ta="center" maw={FORM_MAX_WIDTH} px="md">
+              {t("auth.landingTagline")}
+            </Text>
+            <LegalLinks />
+          </Stack>
+        )}
+      </Stack>
     </>
+  );
+}
+
+function LegalLinks(): ReactElement {
+  const { t } = useTranslation();
+  return (
+    <Group gap="xs" justify="center">
+      <Anchor component={Link} to="/legal/privacy" size="xs" c="background.9" td="underline">
+        {t("page.legalPrivacy")}
+      </Anchor>
+      <Text size="xs" c="background.9" aria-hidden>
+        ·
+      </Text>
+      <Anchor component={Link} to="/legal/terms" size="xs" c="background.9" td="underline">
+        {t("page.legalTerms")}
+      </Anchor>
+    </Group>
   );
 }

@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 // Matches the Strava OAuth callback path registered by the native shell.
 const STRAVA_CONNECTED_PATH = "strava-connected";
 const STRAVA_CONNECTED_ROUTE = "/strava-connected";
+// The athlete declined on Strava's page; the screen they connected from is still underneath.
+const STRAVA_DENIED_PATH = "strava-denied";
 
 // Closes completed OAuth and refreshes account state after Strava linking.
 export function useStravaDeepLink(): void {
@@ -18,6 +20,10 @@ export function useStravaDeepLink(): void {
     if (!Capacitor.isNativePlatform()) return;
 
     const listener = App.addListener("appUrlOpen", (event) => {
+      if (event.url.includes(STRAVA_DENIED_PATH)) {
+        void Browser.close();
+        return;
+      }
       if (!event.url.includes(STRAVA_CONNECTED_PATH)) return;
 
       // Closes the OAuth tab remaining behind the app.

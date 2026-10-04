@@ -4,11 +4,12 @@ import { useEffect, useState, type CSSProperties, type ReactElement, type ReactN
 import { Drawer, Modal, type ModalProps } from "@mantine/core";
 import { SheetCloseButton } from "@/components/SheetCloseButton";
 import { SheetGrabber, SHEET_GRABBER_ROOM } from "@/components/SheetGrabber";
+import { SHEET_TRANSITION } from "@/components/sheetMotion";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { useIsDesktop } from "@/layout/breakpoints";
 
-// One timing for every sheet; the direction is the edge it comes from.
-const MOTION = { duration: 400, exitDuration: 400, timingFunction: "cubic-bezier(0.2, 0, 0, 1)" };
+// The desktop panel's timing; a bottom sheet takes SHEET_TRANSITION.
+const PANEL_MOTION = { duration: 400, exitDuration: 400, timingFunction: "cubic-bezier(0.2, 0, 0, 1)" };
 
 const OVERLAY = { backgroundOpacity: 0.7, blur: 4 };
 
@@ -78,11 +79,13 @@ export function ResponsiveSheet({
   const isDesktop = useIsDesktop();
   const onTop = useOverlayBack(opened, dismissible ? onClose : IGNORE_BACK);
   const visible = useOpenedOnNextFrame(opened);
+  const shownTitle = useShownWhileOpen(opened, title);
+  const shownChildren = useShownWhileOpen(opened, children);
 
   const shared = {
     opened: visible,
     onClose,
-    title,
+    title: shownTitle,
     withCloseButton,
     zIndex,
     // A sheet under a confirmation stays put when Esc dismisses the confirmation.
@@ -92,7 +95,7 @@ export function ResponsiveSheet({
   };
 
   if (!isDesktop) {
-    const titled = Boolean(title);
+    const titled = Boolean(shownTitle);
 
     return (
       <Drawer
@@ -101,7 +104,7 @@ export function ResponsiveSheet({
         withCloseButton={false}
         position="bottom"
         radius="lg"
-        transitionProps={{ ...MOTION, transition: "slide-up" }}
+        transitionProps={SHEET_TRANSITION}
         overlayProps={OVERLAY}
         styles={{
           ...styles,
@@ -118,7 +121,7 @@ export function ResponsiveSheet({
       >
         <SheetGrabber onClose={dismissible ? onClose : undefined} />
         {dismissible && <SheetCloseButton onClose={onClose} />}
-        {children}
+        {shownChildren}
       </Drawer>
     );
   }
@@ -129,7 +132,7 @@ export function ResponsiveSheet({
         {...shared}
         position="right"
         radius={0}
-        transitionProps={MOTION}
+        transitionProps={PANEL_MOTION}
         // The list stays live beside it: another row swaps what the panel shows.
         withOverlay={false}
         lockScroll={false}
@@ -147,7 +150,7 @@ export function ResponsiveSheet({
           header: { ...SURFACE, ...styles?.header },
         }}
       >
-        {children}
+        {shownChildren}
       </Drawer>
     );
   }
@@ -166,7 +169,7 @@ export function ResponsiveSheet({
         header: { ...SURFACE, ...styles?.header },
       }}
     >
-      {children}
+      {shownChildren}
     </Modal>
   );
 }
@@ -183,4 +186,11 @@ function useOpenedOnNextFrame(opened: boolean): boolean {
   }, [opened, ready]);
 
   return opened && ready;
+}
+
+// What an open sheet last showed, so a closing one slides out full instead of emptied.
+function useShownWhileOpen<T>(opened: boolean, value: T): T {
+  const [kept, setKept] = useState(value);
+  if (opened && kept !== value) setKept(value);
+  return opened ? value : kept;
 }

@@ -9,6 +9,7 @@ import { ApiError } from "@/api/client";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { useChangePassword } from "@/features/users/users.queries";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useOpeningCount } from "@/hooks/useOpeningCount";
 
 // The same layer the profile's edit sheet takes; only one of them is ever open.
 const DRAWER_Z_INDEX = 320;
@@ -24,7 +25,8 @@ interface ChangePasswordDrawerProps {
 // Remounting the body on each opening is what discards the typed passwords: nothing that
 // was entered survives a close, and a second attempt starts from three empty fields.
 export function ChangePasswordDrawer(props: ChangePasswordDrawerProps): ReactElement {
-  return <ChangePasswordBody key={props.opened ? "open" : "closed"} {...props} />;
+  const opening = useOpeningCount(props.opened);
+  return <ChangePasswordBody key={opening} {...props} />;
 }
 
 function ChangePasswordBody({ opened, onClose }: ChangePasswordDrawerProps): ReactElement {

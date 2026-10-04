@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { StravaEventsService } from './strava.service';
@@ -9,6 +9,7 @@ import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import { ResolvePendingActivityDto } from './dto/resolve-pending-activity.dto';
 import { ResponseResolvePendingActivityDto } from './dto/response-resolve-pending-activity.dto';
 import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
+import { ConnectStravaQueryDto } from './dto/connect-strava-query.dto';
 
 @Controller('strava')
 export class StravaController {
@@ -18,8 +19,11 @@ export class StravaController {
   @ApiOperation({ summary: 'Build the Strava authorize URL for the current user' })
   @ApiResponse({ status: 200, type: ResponseStravaAuthorizeUrlDto })
   @Get('connect')
-  connectStrava(@CurrentUser('userId') userId: string): Promise<ResponseStravaAuthorizeUrlDto> {
-    return this.stravaEventService.buildAuthorizeUrl(Number(userId));
+  connectStrava(
+    @CurrentUser('userId') userId: string,
+    @Query() query: ConnectStravaQueryDto,
+  ): Promise<ResponseStravaAuthorizeUrlDto> {
+    return this.stravaEventService.buildAuthorizeUrl(Number(userId), query.platform ?? 'native');
   }
 
   // ---------- DELETE unlink the Strava account ----------

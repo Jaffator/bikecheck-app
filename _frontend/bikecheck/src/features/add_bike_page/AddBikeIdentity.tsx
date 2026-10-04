@@ -17,9 +17,17 @@ import { BikeAddedScreen } from "./BikeAddedScreen";
 import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import { StravaConnectScreen } from "./StravaConnectScreen";
 import { TOTAL_STEPS, useAddBikeWizard } from "./useAddBikeWizard";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { AddBikeDesktopPrototype } from "./prototype/AddBikeDesktopPrototype";
+
+// PROTOTYPE (proto/desktop-wizards): desktop gets the two-column layout, the phone keeps the wizard.
+export function AddBikeIdentity(): ReactElement {
+  const isDesktop = useIsDesktop();
+  return isDesktop ? <AddBikeDesktopPrototype /> : <AddBikeWizardFrame />;
+}
 
 // Render the add-bike wizard frame around its step components.
-export function AddBikeIdentity(): ReactElement {
+function AddBikeWizardFrame(): ReactElement {
   const wizard = useAddBikeWizard();
   const { t } = useTranslation();
   // The webview does not shrink for the keyboard, so a step short enough to fit the screen

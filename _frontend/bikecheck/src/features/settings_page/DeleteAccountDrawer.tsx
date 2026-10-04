@@ -9,6 +9,7 @@ import { disabledButtonStyles, fieldLabel, inputStyles } from "@/features/add_bi
 import { useAccountDeletionSummary, useDeleteAccount } from "@/features/users/users.queries";
 import type { AccountDeletionSummary } from "@/features/users/users.types";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useOpeningCount } from "@/hooks/useOpeningCount";
 
 // The same layer the profile's other sheets take; only one of them is ever open.
 const DRAWER_Z_INDEX = 320;
@@ -28,7 +29,8 @@ interface DeleteAccountDrawerProps {
 // Remounting the body on each opening is what discards the typed email: a sheet that was
 // closed halfway through never reopens one keystroke from deleting the account.
 export function DeleteAccountDrawer(props: DeleteAccountDrawerProps): ReactElement {
-  return <DeleteAccountBody key={props.opened ? "open" : "closed"} {...props} />;
+  const opening = useOpeningCount(props.opened);
+  return <DeleteAccountBody key={opening} {...props} />;
 }
 
 function DeleteAccountBody({ opened, onClose, email }: DeleteAccountDrawerProps): ReactElement {

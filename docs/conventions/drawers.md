@@ -47,9 +47,14 @@ unless it also opens where no list stands beside it.
 ```tsx
 position="bottom"
 radius="lg"
-transitionProps={{ duration: 400, exitDuration: 400, transition: "slide-up", timingFunction: "cubic-bezier(0.2, 0, 0, 1)" }}
+transitionProps={SHEET_TRANSITION}
 overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
 ```
+
+The motion lives in `src/components/sheetMotion.ts`, the one place to tune it. In: 400 ms,
+`cubic-bezier(0.2, 0, 0, 1)`. Out: 300 ms, `cubic-bezier(0.3, 0, 0.8, 0.15)`. The sheet slides
+without fading. With one decelerating curve for both ways (Mantine's `slide-up`), the exit spent
+its slow tail already transparent and off screen, so it read as a snap.
 
 How tall the sheet stands is the sheet's own: `height`, `maxHeight` and the keyboard's
 `marginBottom` in `styles.content`.
@@ -82,7 +87,7 @@ no sheet overrides them. Tokens in `global.css`, never a literal:
 - **No ✕** on a sheet with `dismissible={false}` (`CheckInPromptDrawer`): it must be answered.
 - **Scroll.** Only the body scrolls, so the grabber, a `title` and the ✕ stay where they are while
   a long sheet is read.
-- `MoreDrawer` builds its own `Drawer` but takes the same tokens.
+- `MoreDrawer` builds its own `Drawer` but takes the same tokens and `SHEET_TRANSITION`.
 
 The wrapper lays its padding over whatever a sheet passes in `styles`, so a sheet's own padding
 reaches only the desktop panel or modal. A sheet passes the `padding` shorthand on desktop only:
@@ -110,6 +115,15 @@ Mantine skips the enter transition for a sheet that mounts already `opened` — 
 body is remounted per opening (the usual way to discard a cancelled form) would snap open.
 `ResponsiveSheet` mounts it closed and flips it on the next frame itself, so the sheet passes
 `opened` straight through either way. See `BikeComponentFormDrawer` for the remounted case.
+
+Key the body on `useOpeningCount(opened)`, never on `opened` itself: a key that changes on close
+throws the sheet away before it can slide out.
+
+## A closing sheet keeps what it showed
+
+`ResponsiveSheet` keeps drawing the last `title` and children it had while open until the exit
+ends. So a sheet may render its body as `{ride !== null && …}` and still slide out full, not as
+an empty card.
 
 ## The grabber is what closes a sheet by hand
 

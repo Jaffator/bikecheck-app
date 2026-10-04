@@ -79,6 +79,7 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
 
 function DistanceChart({ distance, period }: { distance: Distance; period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
+  const isDesktop = useIsDesktop();
   const kmFormat = new Intl.NumberFormat(i18n.language);
   const line = runningDistance(distance, period);
   const lastIndex = line.starts.length - 1;
@@ -99,6 +100,8 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
   return (
     <LineChart
       h={CHART_HEIGHT}
+      // The phone reads the totals off the line ends; a tap would only focus the surface and ring it.
+      style={isDesktop ? undefined : { pointerEvents: "none" }}
       data={data}
       dataKey="start"
       series={series}

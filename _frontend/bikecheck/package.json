@@ -9,6 +9,7 @@
     "dev": "vite",
     "gen:api": "openapi-typescript http://localhost:3000/api-json -o src/api/schema.d.ts",
     "build": "tsc -b && vite build",
+    "build:web": "tsc -b && vite build --mode web",
     "lint": "eslint .",
     "preview": "vite preview"
   },

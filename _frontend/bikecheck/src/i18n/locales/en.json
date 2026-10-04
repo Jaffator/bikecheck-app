@@ -106,7 +106,8 @@
     "or": "OR",
     "continueWithGoogle": "Continue with Google",
     "haveAccount": "Already have an account?",
-    "noAccount": "Don't have an account?"
+    "noAccount": "Don't have an account?",
+    "landingTagline": "Track the service and wear of your bikes. Rides from Strava, components and service history in one place."
   },
   "settings": {
     "sectionAccount": "Account",

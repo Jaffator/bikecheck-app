@@ -468,7 +468,7 @@ function seedDraft(category: CategoryActions, actionId: number, componentId: num
 // One catalogue Action as the draft holds it, performed on the given parts. Run through
 // the same writer an edit uses, so the part going on is described from the part it
 // replaces here too rather than in a second place.
-function pickAction(action: CatalogueAction, componentIds: number[]): PickedAction {
+export function pickAction(action: CatalogueAction, componentIds: number[]): PickedAction {
   return withPrefilledDescriptions({
     actionId: action.id,
     actionName: action.action_name,
@@ -485,7 +485,7 @@ function pickAction(action: CatalogueAction, componentIds: number[]): PickedActi
   });
 }
 
-function withPrefilledDescriptions(action: PickedAction): PickedAction {
+export function withPrefilledDescriptions(action: PickedAction): PickedAction {
   if (!action.replaceAction) {
     return Object.keys(action.newDescriptions).length === 0 ? action : { ...action, newDescriptions: {} };
   }

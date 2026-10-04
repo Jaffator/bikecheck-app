@@ -3,13 +3,21 @@ import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { Injectable } from '@nestjs/common';
 import 'dotenv/config';
 
+// Without these Google answers every sign-in with an error page, so the app refuses to boot.
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (value === undefined || value === '') throw new Error(`${name} is not set; Google sign-in cannot start`);
+  return value;
+}
+
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor() {
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID!,
+      clientID: requiredEnv('GOOGLE_CLIENT_ID'),
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: 'http://localhost:3000/api/auth/google/callback',
+      // Must equal a redirect URI on the Google Web client.
+      callbackURL: requiredEnv('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
     });
   }

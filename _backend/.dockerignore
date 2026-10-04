@@ -6,3 +6,7 @@ pokusy/
 scripts/
 tests/
 monitoring/
+# Secrets and data dumps never enter the build context.
+**/.env
+**/*adminsdk*.json
+**/db_dump*

@@ -18,7 +18,17 @@ export const PINNED_BAR_LEFT = { base: 0, md: SIDEBAR_WIDTH };
 export const PINNED_BAR_WIDTH = { base: "92%", md: BAR_WIDTH };
 
 // Home, the garage, one bike, Service, Rides and Notifications - matched whole, so their forms stay narrow.
-const WIDE_ROUTES: RegExp[] = [/^\/$/, /^\/bikes$/, /^\/bikes\/\d+$/, /^\/service$/, /^\/rides$/, /^\/notifications$/];
+// PROTOTYPE (proto/desktop-wizards): the two wizards run wide too, for their side panel.
+const WIDE_ROUTES: RegExp[] = [
+  /^\/$/,
+  /^\/bikes$/,
+  /^\/bikes\/\d+$/,
+  /^\/service$/,
+  /^\/rides$/,
+  /^\/notifications$/,
+  /^\/bikes\/new$/,
+  /^\/service\/new$/,
+];
 
 export function isWideRoute(pathname: string): boolean {
   return WIDE_ROUTES.some((pattern) => pattern.test(pathname));

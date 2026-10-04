@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, type UseFormReturnType } from "@mantine/form";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Browser } from "@capacitor/browser";
 import { ApiError } from "@/api/client";
 import {
   useBikeFormOptions,
@@ -12,7 +11,7 @@ import {
   useCreateBike,
 } from "@/features/bikes/bikes.queries";
 import type { BikeSearchResult, CreateBikePayload } from "@/features/bikes/bikes.types";
-import { getStravaAuthorizeUrl } from "@/features/strava/strava.api";
+import { openStravaAuthorize } from "@/features/strava/strava.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import type { AssembleBikeComponent } from "@/features/components/components.types";
 import { useComponentGroups, useDefaultComponents } from "@/features/components/components.queries";
@@ -558,8 +557,7 @@ export function useAddBikeWizard(): AddBikeWizard {
     connectStrava: async () => {
       setConnectingStrava(true);
       try {
-        const { url } = await getStravaAuthorizeUrl();
-        await Browser.open({ url });
+        await openStravaAuthorize();
       } catch {
         setConnectingStrava(false);
         navigate("/bikes");

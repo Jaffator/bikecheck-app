@@ -1,5 +1,5 @@
 # Production stack (docs/research/hosting.md §5): Caddy is the only thing on the host's ports.
-# Build the SPA first (`cd _frontend/bikecheck && npm run build`, VITE_API_BASE_URL=/api), then:
+# Build the SPA first (`cd _frontend/bikecheck && npm run build:web`, env from the committed .env.web), then:
 #   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 # .env.production is git-ignored; .env.production.example lists every variable.
 services:
@@ -59,7 +59,8 @@ services:
     # Playwright: Chromium runs out of memory without the host IPC namespace; init reaps its zombies.
     ipc: host
     init: true
-    command: ["sh", "-c", "npx prisma migrate deploy --config apps/monolith/prisma.config.ts && node dist/apps/monolith/src/main.js"]
+    # `exec` replaces sh with node, so Docker's SIGTERM reaches Nest's shutdown hooks instead of sh.
+    command: ["sh", "-c", "npx prisma migrate deploy --config apps/monolith/prisma.config.ts && exec node dist/apps/monolith/src/main.js"]
     env_file: .env.production
     environment:
       PORT: "3000"
@@ -87,7 +88,9 @@ services:
       args:
         APP: strava-service
     restart: unless-stopped
-    command: ["sh", "-c", "npx node-pg-migrate up -m apps/strava-service/migrations && node dist/apps/strava-service/main.js"]
+    # A real PID 1 that forwards SIGTERM and reaps zombies, as on the monolith.
+    init: true
+    command: ["sh", "-c", "npx node-pg-migrate up -m apps/strava-service/migrations && exec node dist/apps/strava-service/main.js"]
     env_file: .env.production
     environment:
       PORT: "3002"

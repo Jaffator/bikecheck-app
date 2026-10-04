@@ -10,6 +10,7 @@ import { attentionColor } from "@/features/service_tracking/attentionLevel";
 import { remainingLabel } from "@/features/service_tracking/intervalFigures";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { useWearForecast } from "../stats.queries";
 import type { WearForecastItem } from "../stats.types";
 import { forecastBikes, forecastFigure, forecastNote, forecastSelection, hasRides } from "../wearForecast";
@@ -118,6 +119,8 @@ function ForecastHeader({ item, onOpen }: { item: WearForecastItem; onOpen: () =
   const color = attentionColor(item.percentage);
   const percentage = t("tracking.percentage", { value: item.percentage });
   const figure = forecastFigure(item, t, (date) => formatServiceDate(date, i18n.language));
+  // The phone sets the figure in the card title's type, so it does not outweigh it.
+  const compact = !useIsDesktop();
 
   return (
     <UnstyledButton
@@ -129,10 +132,10 @@ function ForecastHeader({ item, onOpen }: { item: WearForecastItem; onOpen: () =
         <Group gap={10} wrap="nowrap">
           <Text
             className="tabular-nums"
-            fz={22}
-            fw={700}
-            lh="28px"
-            lts="var(--tracking-title)"
+            fz={compact ? 16 : 22}
+            fw={compact ? 600 : 700}
+            lh={compact ? "22px" : "28px"}
+            lts={compact ? undefined : "var(--tracking-title)"}
             c="text.6"
             style={{ flexShrink: 0 }}
           >

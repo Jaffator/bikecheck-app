@@ -6,9 +6,12 @@ export interface StravaAuthorizeUrl {
   url: string;
 }
 
+// Where Strava's callback returns: the web app's route, or the installed app's deep link.
+export type StravaPlatform = "web" | "native";
+
 // Retrieves the backend-generated Strava authorization URL.
-export async function getStravaAuthorizeUrl(): Promise<StravaAuthorizeUrl> {
-  return apiFetch<StravaAuthorizeUrl>("/strava/connect");
+export async function getStravaAuthorizeUrl(platform: StravaPlatform): Promise<StravaAuthorizeUrl> {
+  return apiFetch<StravaAuthorizeUrl>(`/strava/connect?platform=${platform}`);
 }
 
 // Revokes the Strava grant and clears the linked athlete.

@@ -35,7 +35,8 @@ export default defineConfig({
         target: process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:3000",
         changeOrigin: false,
       },
-      "/strava": {
+      // Trailing slash: a bare "/strava" prefix would also swallow the SPA route /strava-connected.
+      "/strava/": {
         target: process.env.VITE_STRAVA_PROXY_TARGET ?? "http://127.0.0.1:3002",
         changeOrigin: false,
         rewrite: (path) => path.replace(/^\/strava/, ""),

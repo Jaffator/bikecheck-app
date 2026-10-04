@@ -35,6 +35,8 @@ import pino from 'pino';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
 const isProductionEnv = process.env.NODE_ENV === 'production';
+// Dev runs the compose Loki; prod pushes only to a Loki someone configured, stdout is always there.
+const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http://localhost:3100');
 
 @Module({
   imports: [
@@ -69,31 +71,33 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
           ? undefined
           : {
               targets: [
-                {
-                  target: 'pino-loki',
-                  level: 'info',
-                  options: {
-                    host: process.env.LOKI_HOST ?? 'http://localhost:3100',
-                    labels: { app: 'bikecheck-monolith' },
-                    batching: true,
-                    interval: 5,
-                    replaceTimestamp: true,
-                    convertArrays: true,
-                  },
-                },
-                ...(!isProductionEnv
+                ...(lokiHost !== undefined
                   ? [
                       {
-                        target: 'pino-pretty',
+                        target: 'pino-loki',
                         level: 'info',
                         options: {
-                          colorize: true,
-                          singleLine: true,
-                          translateTime: 'SYS:standard',
+                          host: lokiHost,
+                          labels: { app: 'bikecheck-monolith' },
+                          batching: true,
+                          interval: 5,
+                          replaceTimestamp: true,
+                          convertArrays: true,
                         },
                       },
                     ]
                   : []),
+                isProductionEnv
+                  ? { target: 'pino/file', level: 'info', options: { destination: 1 } }
+                  : {
+                      target: 'pino-pretty',
+                      level: 'info',
+                      options: {
+                        colorize: true,
+                        singleLine: true,
+                        translateTime: 'SYS:standard',
+                      },
+                    },
               ],
             },
         redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],

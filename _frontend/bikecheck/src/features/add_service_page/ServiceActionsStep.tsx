@@ -270,9 +270,22 @@ export function ServiceActionsStep({
   );
 }
 
+// Wide enough for "Cena servisu" and the currency beside it.
+const PRICE_BESIDE_WIDTH = "11rem";
+// As tall as one line of the note it sits next to.
+const PRICE_BESIDE_STYLES = {
+  ...inputStyles,
+  input: { ...inputStyles.input, height: autosizeInputStyles.input.height },
+};
+// Twice a one-line field, so it reads as a place to write rather than one more input.
+const NOTE_BESIDE_STYLES = {
+  ...autosizeInputStyles,
+  input: { ...autosizeInputStyles.input, minHeight: "4.5rem" },
+};
+
 // One catalogue Action: a tick, and everything the tick reveals. The header opens even
 // an unticked action, so the tags can be read before the user commits to it.
-function ActionRow({
+export function ActionRow({
   action,
   picked,
   opened,
@@ -280,6 +293,7 @@ function ActionRow({
   onToggle,
   onUpdate,
   onToggleTag,
+  priceBeside,
 }: {
   action: CatalogueAction;
   picked: PickedAction | undefined;
@@ -288,6 +302,8 @@ function ActionRow({
   onToggle: () => void;
   onUpdate: (patch: Partial<PickedAction>) => void;
   onToggleTag: (tagName: string) => void;
+  // PROTOTYPE (proto/desktop-wizards): desktop sets the price beside the note; the phone stacks them.
+  priceBeside?: { placeholder: string };
 }): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
@@ -377,6 +393,55 @@ function ActionRow({
           .map((component) => componentTypeLabel(component, t))
           .join(", ")
       : "";
+
+  // This field holds what the user wrote and nothing else. The tags join it on the way to
+  // the Service, which is where the two become one note.
+  function renderNote(styles: typeof autosizeInputStyles = autosizeInputStyles): ReactElement {
+    return (
+      <Textarea
+        placeholder={t("addService.customNotePlaceholder")}
+        value={picked?.customNote ?? ""}
+        disabled={picked === undefined}
+        autosize
+        minRows={1}
+        maxLength={500}
+        styles={styles}
+        rightSection={<NotepadText size={18} color="var(--mantine-color-text-7)" />}
+        // The field grows as it is filled, and a centred section would drift down with
+        // it. Pinned to the top so the icon keeps sitting beside the first line.
+        rightSectionProps={{
+          style: { alignItems: "flex-start", paddingTop: "0.45rem" },
+        }}
+        onChange={(event) => onUpdate({ customNote: event.currentTarget.value })}
+      />
+    );
+  }
+
+  function renderPrice(placeholder: string, styles: typeof inputStyles = inputStyles): ReactElement {
+    return (
+      <NumberInput
+        // label={t("addService.partialCost")}
+        placeholder={placeholder}
+        value={picked?.partialCost ?? ""}
+        disabled={picked === undefined}
+        min={0}
+        hideControls
+        styles={styles}
+        // Decoration rather than part of the value, so an emptied field is still
+        // empty and still means "no figure recorded" rather than a price of zero.
+        // Sized explicitly: Mantine derives a section's width from the input's
+        // height, which is too narrow for "CZK".
+        rightSectionWidth={54}
+        rightSectionPointerEvents="none"
+        rightSection={
+          <Text fz={13} c="var(--mantine-color-text-2)">
+            {currencySymbol(user?.currency ?? null, i18n.language)}
+          </Text>
+        }
+        onChange={(value) => onUpdate({ partialCost: value === "" ? null : Number(value) })}
+      />
+    );
+  }
 
   return (
     <Paper
@@ -569,48 +634,18 @@ function ActionRow({
             </Group>
           </Stack>
 
-          {/* This field holds what the user wrote and nothing else. The tags join it on
-              the way to the Service, which is where the two become one note. */}
-          <Textarea
-            placeholder={t("addService.customNotePlaceholder")}
-            value={picked?.customNote ?? ""}
-            disabled={picked === undefined}
-            autosize
-            minRows={1}
-            maxLength={500}
-            styles={autosizeInputStyles}
-            rightSection={<NotepadText size={18} color="var(--mantine-color-text-7)" />}
-            // The field grows as it is filled, and a centred section would drift down with
-            // it. Pinned to the top so the icon keeps sitting beside the first line.
-            rightSectionProps={{
-              style: { alignItems: "flex-start", paddingTop: "0.45rem" },
-            }}
-            onChange={(event) => onUpdate({ customNote: event.currentTarget.value })}
-          />
-
-          {picked && (
+          {priceBeside === undefined ? (
             <>
-              <NumberInput
-                // label={t("addService.partialCost")}
-                placeholder={t("addService.partialCostPlaceholder")}
-                value={picked.partialCost ?? ""}
-                min={0}
-                hideControls
-                styles={inputStyles}
-                // Decoration rather than part of the value, so an emptied field is still
-                // empty and still means "no figure recorded" rather than a price of zero.
-                // Sized explicitly: Mantine derives a section's width from the input's
-                // height, which is too narrow for "CZK".
-                rightSectionWidth={54}
-                rightSectionPointerEvents="none"
-                rightSection={
-                  <Text fz={13} c="var(--mantine-color-text-2)">
-                    {currencySymbol(user?.currency ?? null, i18n.language)}
-                  </Text>
-                }
-                onChange={(value) => onUpdate({ partialCost: value === "" ? null : Number(value) })}
-              />
+              {renderNote()}
+              {picked && renderPrice(t("addService.partialCostPlaceholder"))}
             </>
+          ) : (
+            <Group gap="sm" align="flex-start" wrap="nowrap">
+              <Box style={{ flex: 1, minWidth: 0 }}>{renderNote(NOTE_BESIDE_STYLES)}</Box>
+              <Box w={PRICE_BESIDE_WIDTH} style={{ flexShrink: 0 }}>
+                {renderPrice(priceBeside.placeholder, PRICE_BESIDE_STYLES)}
+              </Box>
+            </Group>
           )}
         </Stack>
       )}
