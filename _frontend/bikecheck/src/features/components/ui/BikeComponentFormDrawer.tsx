@@ -44,6 +44,7 @@ import { catalogueLabel } from "@/features/service/serviceLabels";
 import { chipStyles, disabledButtonStyles, dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
 import { SIDED_POSITIONS } from "@/features/add_bike_page/bikeComponents.types";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useOpeningCount } from "@/hooks/useOpeningCount";
 import { useIsDesktop } from "@/layout/breakpoints";
 
 // Above the detail sheet it is opened from, below the confirmations it can raise.
@@ -91,12 +92,8 @@ interface BikeComponentFormDrawerProps {
 // born from the part rather than being reset back to it afterwards, and a second add does
 // not inherit the first.
 export function BikeComponentFormDrawer(props: BikeComponentFormDrawerProps): ReactElement {
-  return <BikeComponentFormBody key={formKey(props)} {...props} />;
-}
-
-function formKey({ opened, component }: BikeComponentFormDrawerProps): string {
-  if (!opened) return "closed";
-  return component === null ? "add" : `edit-${String(component.id)}`;
+  const opening = useOpeningCount(props.opened);
+  return <BikeComponentFormBody key={opening} {...props} />;
 }
 
 function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: BikeComponentFormDrawerProps): ReactElement {

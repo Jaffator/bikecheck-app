@@ -8,6 +8,7 @@ import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import type { ApiError } from "@/api/client";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { useOpeningCount } from "@/hooks/useOpeningCount";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { useCreateSetupProfile, useUpdateSetupProfile } from "../setup.queries";
 import type { SetupProfile } from "../setup.types";
@@ -33,13 +34,8 @@ interface SetupProfileNameDrawerProps {
 // Remounting the body on each opening discards a cancelled name: the field is born from the
 // profile rather than reset back to it, and a second "+" does not inherit the first.
 export function SetupProfileNameDrawer(props: SetupProfileNameDrawerProps): ReactElement {
-  return <SetupProfileNameBody key={bodyKey(props)} {...props} />;
-}
-
-function bodyKey({ opened, profile, copyByDefault }: SetupProfileNameDrawerProps): string {
-  if (!opened) return "closed";
-  if (profile !== null) return `rename-${String(profile.id)}`;
-  return copyByDefault ? "duplicate" : "create";
+  const opening = useOpeningCount(props.opened);
+  return <SetupProfileNameBody key={opening} {...props} />;
 }
 
 function SetupProfileNameBody({

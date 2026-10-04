@@ -8,6 +8,7 @@ import { MessageCircleMore, Users } from "lucide-react";
 import { SHEET_PAD_BOTTOM } from "@/components/ResponsiveSheet";
 import { SheetCloseButton } from "@/components/SheetCloseButton";
 import { SheetGrabber, SHEET_GRABBER_ROOM } from "@/components/SheetGrabber";
+import { SHEET_TRANSITION } from "@/components/sheetMotion";
 import { useMyProfile } from "@/features/profile/profile.queries";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { BADGE_CAP } from "./HeaderCountBadge";
@@ -132,12 +133,7 @@ export function MoreDrawer({ opened, onClose }: MoreDrawerProps): ReactElement {
       radius="lg"
       zIndex={DRAWER_Z_INDEX}
       withCloseButton={false}
-      transitionProps={{
-        duration: 400,
-        exitDuration: 400,
-        transition: "slide-up",
-        timingFunction: "cubic-bezier(0.2, 0, 0, 1)",
-      }}
+      transitionProps={SHEET_TRANSITION}
       overlayProps={{ backgroundOpacity: 0.7, blur: 4 }}
       // The spacing every bottom sheet gets from ResponsiveSheet, by hand.
       styles={{
