@@ -78,24 +78,28 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
         boxShadow: "var(--elev-panel)",
       }}
     >
-      <Text fw={700} fz={16} c="text.6" px="lg" pt="lg" pb="sm">
-        {COPY.panelTitle}
-      </Text>
+      {proto.saved ? (
+        <SavedState proto={proto} currency={currency} />
+      ) : (
+        <>
+          <Text fw={700} fz={16} c="text.6" px="lg" pt="lg" pb="sm">
+            {COPY.panelTitle}
+          </Text>
 
-      {/* Everything but the total and Save scrolls inside the panel. */}
-      <Stack
-        gap="md"
-        px="lg"
-        pb="md"
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          // The browser's own bar is white on this surface.
-          scrollbarWidth: "thin",
-          scrollbarColor: "var(--mantine-color-cards-4) transparent",
-        }}
-      >
+          {/* Everything but the total and Save scrolls inside the panel. */}
+          <Stack
+            gap="md"
+            px="lg"
+            pb="md"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              // The browser's own bar is white on this surface.
+              scrollbarWidth: "thin",
+              scrollbarColor: "var(--mantine-color-cards-4) transparent",
+            }}
+          >
             <Select
               label={COPY.bike}
               data={(proto.bikes ?? []).map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
@@ -159,6 +163,8 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
           </Stack>
 
           <PanelFooter proto={proto} currency={currency} />
+        </>
+      )}
     </Paper>
   );
 }
@@ -419,3 +425,35 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
   );
 }
 
+function SavedState({ proto, currency }: { proto: ServiceDesktopPrototypeState; currency: string }): ReactElement {
+  return (
+    <Stack gap={10} align="center" px="lg" py={40}>
+      <Box
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 52,
+          height: 52,
+          borderRadius: "50%",
+          backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
+          color: "var(--mantine-color-primary-6)",
+        }}
+      >
+        <Check size={24} strokeWidth={2.5} />
+      </Box>
+      <Text fw={700} fz={20} c="text.6" lts="var(--tracking-title)" mt={6}>
+        {COPY.savedTitle}
+      </Text>
+      <Text fz={14} c="var(--color-text-dim)" ta="center" className="tabular-nums">
+        {COPY.savedCount}: {proto.pickedCount} · {COPY.savedTotal} {proto.totalCost} {currency}
+      </Text>
+      <Button variant="outline" radius="md" fullWidth mt="sm" onClick={proto.reset}>
+        {COPY.another}
+      </Button>
+      <Text fz={12} c="text.9" ta="center">
+        {COPY.stub}
+      </Text>
+    </Stack>
+  );
+}
