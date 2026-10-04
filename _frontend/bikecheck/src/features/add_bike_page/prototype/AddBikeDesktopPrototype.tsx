@@ -38,27 +38,30 @@ export function AddBikeDesktopPrototype(): ReactElement {
     <Stack gap="xl" px="md" pt="sm" pb="xl">
       <StepIndicator active={active} onStepClick={wizard.goToStep} />
 
-      <Box className="grid items-start gap-6 grid-cols-[minmax(0,1fr)_20rem]">
-        <Stack gap="lg" style={{ minWidth: 0 }}>
-          <Box>
-            <Text component="h2" fw={700} fz={22} c="text.6" lts="var(--tracking-title)" m={0}>
-              {STEP_TITLES[active]}
-            </Text>
-            <Text fz={14} c="var(--color-text-dim)" mt={6}>
-              {t(STEP_BODY_KEYS[active])}
-            </Text>
+      <Stack gap="lg">
+        {/* Above both columns, so the step's card and "Tvoje kolo" start on one edge. */}
+        <Box>
+          <Text component="h2" fw={700} fz={22} c="text.6" lts="var(--tracking-title)" m={0}>
+            {STEP_TITLES[active]}
+          </Text>
+          <Text fz={14} c="var(--color-text-dim)" mt={6}>
+            {t(STEP_BODY_KEYS[active])}
+          </Text>
+        </Box>
+
+        <Box className="grid items-start gap-6 grid-cols-[minmax(0,1fr)_20rem]">
+          <Box style={{ minWidth: 0 }}>
+            {active === 0 && <BikeSearchDesktop wizard={wizard} />}
+            {active === 1 && <BikeSpecDesktop wizard={wizard} />}
+            {active === 2 && <BikePartsDesktop wizard={wizard} />}
           </Box>
 
-          {active === 0 && <BikeSearchDesktop wizard={wizard} />}
-          {active === 1 && <BikeSpecDesktop wizard={wizard} />}
-          {active === 2 && <BikePartsDesktop wizard={wizard} />}
-        </Stack>
-
-        {/* Stretched to the row, so the panel inside has room to stay in view. */}
-        <Box className="self-stretch">
-          <BikeAsidePrototype wizard={wizard} />
+          {/* Stretched to the row, so the panel inside has room to stay in view. */}
+          <Box className="self-stretch">
+            <BikeAsidePrototype wizard={wizard} />
+          </Box>
         </Box>
-      </Box>
+      </Stack>
 
       <PhotoCropModal
         file={wizard.photoToCrop}
