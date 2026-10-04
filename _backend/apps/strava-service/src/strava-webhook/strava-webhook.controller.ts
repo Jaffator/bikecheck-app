@@ -136,7 +136,7 @@ export class WebhookController {
 // ---------------------------------------------
 //-------------DELETE SUBSCRIPTION -------------
 // ---------------------------------------------
-// curl -X DELETE "https://www.strava.com/api/v3/push_subscriptions/346258?client_id=235898&client_secret=3c70e23b491afd63f6a5add7a724858ace130b90"
+// curl -X DELETE "https://www.strava.com/api/v3/push_subscriptions/346258?client_id=235898&client_secret=$STRAVA_CLIENT_SECRET"
 
 // ---------------------------------------------
 // -------------CREATE SUBSCRIPTION-------------
@@ -144,7 +144,7 @@ export class WebhookController {
 // curl -X POST \
 //   https://www.strava.com/api/v3/push_subscriptions \
 //   -F client_id=235898 \
-//   -F client_secret=3c70e23b491afd63f6a5add7a724858ace130b90 \
+//   -F client_secret=$STRAVA_CLIENT_SECRET \
 //   -F callback_url=https://syrup-latch-certainty.ngrok-free.dev/strava/webhook \
 //   -F verify_token=STRAVA
 
@@ -156,7 +156,7 @@ export class WebhookController {
 // ---------------------------------------------
 // 2. GET this url after authorization to exchange code for access token
 // ---------------------------------------------
-// GET https://www.strava.com/oauth/token?client_id=235898&client_secret=266e76f34e4608992e69bff363a2fb1124ad8e0e&code=266e76f34e4608992e69bff363a2fb1124ad8e0e&grant_type=authorization_code
+// GET https://www.strava.com/oauth/token?client_id=235898&client_secret=$STRAVA_CLIENT_SECRET&code=<code>&grant_type=authorization_code
 
 // ---------------------------------------------
 // Example of incoming webhook event from Strava

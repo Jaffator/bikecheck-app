@@ -183,6 +183,12 @@ body {
   scrollbar-gutter: stable;
 }
 
+/* Mantine runs in its light scheme, so native scrollbars come out pale grey. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-cards-4) transparent;
+}
+
 body {
   /* `clip`, not `hidden`: hidden would make this the page's scroll container and kill every
      `position: sticky` inside it. And body alone, never html - a non-visible overflow on the

@@ -16,6 +16,7 @@ import {
   type WearRide,
 } from '../service-tracking/ride-wear';
 import type { StravaBike, StravaGearResponse } from '@contracts/strava-gear.contract';
+import type { StravaReturnTo } from '@contracts/strava-oauth.contract';
 import type { PendingActivities } from '../notification/notification-types.config';
 import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
@@ -98,11 +99,11 @@ export class StravaEventsService {
    * is only ever passed over the internal call — the URL itself carries a random
    * state, so nothing the browser can edit identifies the account.
    */
-  async buildAuthorizeUrl(userId: number): Promise<ResponseStravaAuthorizeUrlDto> {
+  async buildAuthorizeUrl(userId: number, returnTo: StravaReturnTo): Promise<ResponseStravaAuthorizeUrlDto> {
     try {
       const response = await axios.post<ResponseStravaAuthorizeUrlDto>(
         `${process.env.STRAVA_SERVICE_URL}/strava/oauth-state`,
-        { userId },
+        { userId, returnTo },
         {
           headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
           timeout: 5000,

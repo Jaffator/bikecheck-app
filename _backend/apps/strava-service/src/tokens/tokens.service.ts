@@ -7,6 +7,12 @@ import { Queue } from 'bullmq';
 import axios from 'axios';
 import 'dotenv/config';
 import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
+import type { StravaReturnTo } from '@contracts/strava-oauth.contract';
+
+export interface OAuthState {
+  user_id: number;
+  return_to: StravaReturnTo;
+}
 
 interface StravaTokenResponse {
   athlete_id: number;
@@ -33,13 +39,13 @@ export class TokenService {
    * The returned URL carries a random state, never the user id — the user could
    * edit the id in the browser and link their Strava account to someone else.
    */
-  async buildAuthorizeUrl(userId: number): Promise<string> {
+  async buildAuthorizeUrl(userId: number, returnTo: StravaReturnTo): Promise<string> {
     const state = randomUUID();
 
     await this.databaseService.query(
-      `INSERT INTO oauth_states (state, user_id, expires_at)
-       VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
-      [state, userId],
+      `INSERT INTO oauth_states (state, user_id, return_to, expires_at)
+       VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes')`,
+      [state, userId, returnTo],
     );
 
     const params = new URLSearchParams({
@@ -60,17 +66,17 @@ export class TokenService {
    * DELETE ... RETURNING makes the lookup atomic and single-use, so a state
    * cannot be replayed. Expired or unknown states resolve to null.
    */
-  async consumeState(state: string): Promise<number | null> {
+  async consumeState(state: string): Promise<OAuthState | null> {
     if (!state) return null;
 
-    const rows = await this.databaseService.query<{ user_id: number }>(
+    const rows = await this.databaseService.query<OAuthState>(
       `DELETE FROM oauth_states
        WHERE state = $1 AND expires_at > NOW()
-       RETURNING user_id`,
+       RETURNING user_id, return_to`,
       [state],
     );
 
-    return rows[0]?.user_id ?? null;
+    return rows[0] ?? null;
   }
 
   async getAccessToken(athleteID: number): Promise<string> {

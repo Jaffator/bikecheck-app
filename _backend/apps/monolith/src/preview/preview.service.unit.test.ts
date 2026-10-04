@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { access, readFile } from 'fs/promises';
+import { access, readFile, stat } from 'fs/promises';
 import { Readable } from 'stream';
 import sharp from 'sharp';
 import { getLoggerToken } from 'nestjs-pino';
@@ -17,10 +17,12 @@ jest.mock('fs/promises', () => ({
   ...jest.requireActual<typeof import('fs/promises')>('fs/promises'),
   readFile: jest.fn(),
   access: jest.fn(),
+  stat: jest.fn(),
 }));
 
 const readFileMock = readFile as jest.Mock;
 const accessMock = access as jest.Mock;
+const statMock = stat as jest.Mock;
 
 const ORIGIN = 'https://app.bikecheck.cloud';
 const INDEX_PATH = '/srv/dist/index.html';
@@ -218,6 +220,7 @@ describe('PreviewService', () => {
     process.env.SPA_INDEX_HTML = INDEX_PATH;
     readFileMock.mockResolvedValue(SHELL);
     accessMock.mockResolvedValue(undefined);
+    statMock.mockResolvedValue({ mtimeMs: 1 });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -564,6 +567,18 @@ describe('PreviewService', () => {
 
       expect(readFileMock).toHaveBeenCalledTimes(1);
       expect(readFileMock).toHaveBeenCalledWith(INDEX_PATH, 'utf8');
+    });
+
+    // An SPA redeploy writes a new index.html; the old one names asset hashes that are gone.
+    it('reads index.html again once its mtime changes', async () => {
+      mockProfile.read.mockResolvedValue(garageResponse());
+      await service.garageShell(HANDLE);
+
+      statMock.mockResolvedValue({ mtimeMs: 2 });
+      readFileMock.mockResolvedValue(SHELL.replace('index-abc.js', 'index-def.js'));
+
+      await expect(service.garageShell(HANDLE)).resolves.toContain('index-def.js');
+      expect(readFileMock).toHaveBeenCalledTimes(2);
     });
 
     it('refuses with a clear error when SPA_INDEX_HTML is unset, rather than answering an empty page', async () => {

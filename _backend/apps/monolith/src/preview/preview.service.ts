@@ -5,7 +5,7 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
-import { access, readFile } from 'fs/promises';
+import { access, readFile, stat } from 'fs/promises';
 import { buffer } from 'stream/consumers';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { publicAppOrigin } from '../_config/public-app-origin';
@@ -25,6 +25,11 @@ const PREVIEW_PATH = '/api/preview';
 
 const SHELL_UNSET = 'SPA_INDEX_HTML is not set, so the preview shell cannot be served';
 
+function unreadableShell(path: string, error: unknown): InternalServerErrorException {
+  const message = error instanceof Error ? error.message : 'unknown error';
+  return new InternalServerErrorException(`SPA_INDEX_HTML could not be read from ${path}: ${message}`);
+}
+
 // What a closed page says - Off, Followers only, an unknown handle, a closed Report: one
 // text, so a link cannot be probed for which of them it is.
 const NEUTRAL_TITLE = 'BikeCheck';
@@ -42,8 +47,8 @@ const REPORT_KIND_LABEL: Record<ReportSnapshot['kind'], string> = {
 
 @Injectable()
 export class PreviewService implements OnModuleInit {
-  // The built index.html, read once. A promise, so two first requests read it once too.
-  private shellPromise: Promise<string> | null = null;
+  // The built index.html, read again only when its mtime moves. A promise, so two first requests read it once too.
+  private shellCache: { mtimeMs: number; html: Promise<string> } | null = null;
   // The neutral card never changes, so it is drawn once.
   private neutralPromise: Promise<Buffer> | null = null;
 
@@ -232,24 +237,33 @@ export class PreviewService implements OnModuleInit {
   }
 
   private async shell(): Promise<string> {
-    this.shellPromise ??= this.loadShell();
+    const path = process.env.SPA_INDEX_HTML;
+    if (path === undefined || path === '') throw new InternalServerErrorException(SHELL_UNSET);
+    // An SPA redeploy rewrites index.html with new asset hashes; a cached copy would point at deleted files.
+    const mtimeMs = await this.shellMtime(path);
+    if (this.shellCache?.mtimeMs !== mtimeMs) this.shellCache = { mtimeMs, html: this.loadShell(path) };
     try {
-      return await this.shellPromise;
+      return await this.shellCache.html;
     } catch (error) {
       // A failed read is not cached: the file may be mounted a moment later.
-      this.shellPromise = null;
+      this.shellCache = null;
       throw error;
     }
   }
 
-  private async loadShell(): Promise<string> {
-    const path = process.env.SPA_INDEX_HTML;
-    if (path === undefined || path === '') throw new InternalServerErrorException(SHELL_UNSET);
+  private async shellMtime(path: string): Promise<number> {
+    try {
+      return (await stat(path)).mtimeMs;
+    } catch (error) {
+      throw unreadableShell(path, error);
+    }
+  }
+
+  private async loadShell(path: string): Promise<string> {
     try {
       return stripTitle(await readFile(path, 'utf8'));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'unknown error';
-      throw new InternalServerErrorException(`SPA_INDEX_HTML could not be read from ${path}: ${message}`);
+      throw unreadableShell(path, error);
     }
   }
 

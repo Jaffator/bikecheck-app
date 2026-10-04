@@ -1,12 +1,12 @@
 // PROTOTYPE (proto/desktop-wizards): the service wizard on desktop as one screen in three zones -
 // which part, what was done, and the Service itself. Design: "BikeCheck desktop redesign" canvas.
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactElement } from "react";
 import { Box, Button, Group, Loader, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import type { BikeCategory, CatalogueAction } from "@/features/service/service.types";
+import type { BikeCategory, CatalogueAction, CategoryActions } from "@/features/service/service.types";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { useHeaderStore } from "@/store/store";
 import { ActionRow } from "../ServiceActionsStep";
@@ -16,8 +16,17 @@ import { ServicePanelPrototype } from "./ServicePanelPrototype";
 import { ServiceSavedModal } from "./ServiceSavedModal";
 import { useServiceDesktopPrototype, type ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype";
 
-// Below Tailwind's xl the category nav folds into a row above the actions, so the middle keeps its width.
-const GRID_CLASS = "grid items-start gap-6 grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[13.75rem_minmax(0,1fr)_22.5rem]";
+// Two rows: what names a column, then what fills it - so the category list, the first card and
+// the panel all start on one edge. Below Tailwind's xl the categories fold into a row on top.
+const GRID_CLASS =
+  "grid items-start gap-x-6 gap-y-2.5 grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[13.75rem_minmax(0,1fr)_22.5rem]";
+const NAV_LABEL_CELL = "hidden xl:block xl:col-start-1 xl:row-start-1 xl:self-end";
+const NAV_CELL =
+  "col-start-1 col-end-3 row-start-1 mb-3 flex flex-row flex-wrap gap-1 xl:col-end-2 xl:row-start-2 xl:mb-0 xl:sticky xl:top-16 xl:flex-col xl:flex-nowrap";
+const HEADING_CELL = "col-start-1 row-start-2 xl:col-start-2 xl:row-start-1";
+const CARDS_CELL = "col-start-1 row-start-3 xl:col-start-2 xl:row-start-2";
+// Stretched to the row, so the panel inside has room to stay in view.
+const PANEL_CELL = "col-start-2 row-start-3 self-stretch xl:col-start-3 xl:row-start-2";
 
 // Sits beside a 14px label in a nav row.
 const NAV_ICON_SIZE = 20;
@@ -86,8 +95,9 @@ export function ServiceDesktopPrototype(): ReactElement {
     <Box px="md" pt="sm" pb="xl">
       <Box className={GRID_CLASS}>
         <CategoryNav proto={proto} />
-        <ActionsColumn proto={proto} />
-        <Box className="col-start-2 row-start-1 row-span-2 self-stretch xl:col-start-3 xl:row-span-1">
+        <ActionsHeading proto={proto} />
+        <ActionsList proto={proto} />
+        <Box className={PANEL_CELL}>
           <ServicePanelPrototype proto={proto} onRequestBike={requestBike} />
         </Box>
       </Box>
@@ -126,33 +136,50 @@ function CategoryNav({ proto }: { proto: ServiceDesktopPrototypeState }): ReactE
   const { t } = useTranslation();
 
   return (
-    <Box
-      component="nav"
-      aria-label={t("addService.stepCategory")}
-      className="col-start-1 row-start-1 flex flex-row flex-wrap gap-1 xl:sticky xl:top-16 xl:flex-col xl:flex-nowrap"
-    >
-      <Text
-        fz={11}
-        fw={600}
-        tt="uppercase"
-        lts="var(--tracking-label)"
-        c="var(--color-text-dim)"
-        px={12}
-        mb={8}
-        className="hidden xl:block"
-      >
+    <>
+      <SectionTitle className={NAV_LABEL_CELL} px={12}>
         {t("addService.stepCategory")}
-      </Text>
-      {proto.categories?.map((category) => (
-        <CategoryButton
-          key={category.group_id}
-          category={category}
-          active={category.group_id === proto.categoryId}
-          picked={proto.blocks.find((block) => block.categoryId === category.group_id)?.actions.length ?? 0}
-          onChoose={() => proto.chooseCategory(category.group_id)}
-        />
-      ))}
-    </Box>
+      </SectionTitle>
+      <Box component="nav" aria-label={t("addService.stepCategory")} className={NAV_CELL}>
+        {proto.categories?.map((category) => (
+          <CategoryButton
+            key={category.group_id}
+            category={category}
+            active={category.group_id === proto.categoryId}
+            picked={proto.blocks.find((block) => block.categoryId === category.group_id)?.actions.length ?? 0}
+            onChoose={() => proto.chooseCategory(category.group_id)}
+          />
+        ))}
+      </Box>
+    </>
+  );
+}
+
+// The small capitals that name a column or a run of cards.
+function SectionTitle({
+  children,
+  className,
+  px,
+  mt,
+}: {
+  children: string;
+  className?: string;
+  px?: number;
+  mt?: number;
+}): ReactElement {
+  return (
+    <Text
+      fz={11}
+      fw={600}
+      tt="uppercase"
+      lts="var(--tracking-label)"
+      c="var(--color-text-dim)"
+      className={className}
+      px={px}
+      mt={mt}
+    >
+      {children}
+    </Text>
   );
 }
 
@@ -217,8 +244,51 @@ function CategoryButton({
   );
 }
 
+interface ActionSectionData {
+  title: string;
+  actions: CatalogueAction[];
+}
+
+// Maintenance and Replacements are told apart before either is ticked (ADR 0003).
+function actionSections(
+  catalogue: CategoryActions | undefined,
+  translate: (key: string) => string,
+): ActionSectionData[] {
+  if (catalogue === undefined) return [];
+  return [
+    {
+      title: translate("addService.groupService"),
+      actions: catalogue.actions.filter((action) => !action.replace_action),
+    },
+    {
+      title: translate("addService.groupReplacement"),
+      actions: catalogue.actions.filter((action) => action.replace_action),
+    },
+  ].filter((section) => section.actions.length > 0);
+}
+
+// Names the chosen category, and the first run of cards - so the cards themselves open the row below.
+function ActionsHeading({ proto }: { proto: ServiceDesktopPrototypeState }): ReactElement | null {
+  const { t } = useTranslation();
+  const { catalogue } = proto;
+  if (proto.categories?.length === 0) return null;
+  const firstSection = actionSections(catalogue, t).at(0);
+
+  return (
+    <Box className={HEADING_CELL}>
+      <Text component="h2" fw={700} fz={22} c="text.6" lts="var(--tracking-title)" m={0}>
+        {catalogue === undefined ? "" : catalogueLabel(catalogue.group_i18n_key, catalogue.group_name, t)}
+      </Text>
+      <Text fz={14} c="var(--color-text-dim)" mt={6}>
+        {COPY.actionsHint}
+      </Text>
+      {firstSection !== undefined && <SectionTitle mt={22}>{firstSection.title}</SectionTitle>}
+    </Box>
+  );
+}
+
 // What was done in the chosen category. The card is the phone's own, so both record the same way.
-function ActionsColumn({ proto }: { proto: ServiceDesktopPrototypeState }): ReactElement {
+function ActionsList({ proto }: { proto: ServiceDesktopPrototypeState }): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { catalogue } = proto;
@@ -226,7 +296,7 @@ function ActionsColumn({ proto }: { proto: ServiceDesktopPrototypeState }): Reac
   // Nothing is mounted, so there is no work to record against.
   if (proto.categories?.length === 0) {
     return (
-      <Stack gap="md" align="flex-start" className="col-start-1 row-start-2 xl:col-start-2 xl:row-start-1">
+      <Stack gap="md" align="flex-start" className={CARDS_CELL}>
         <Text fw={600} fz={15} c="text.6">
           {t("addService.noComponentsTitle")}
         </Text>
@@ -246,8 +316,6 @@ function ActionsColumn({ proto }: { proto: ServiceDesktopPrototypeState }): Reac
       action,
     ]),
   );
-  const serviceActions = catalogue?.actions.filter((action) => !action.replace_action) ?? [];
-  const replacementActions = catalogue?.actions.filter((action) => action.replace_action) ?? [];
 
   function renderAction(action: CatalogueAction): ReactElement {
     return (
@@ -263,21 +331,13 @@ function ActionsColumn({ proto }: { proto: ServiceDesktopPrototypeState }): Reac
         }}
         onUpdate={(patch) => proto.updateAction(action.id, patch)}
         onToggleTag={(tagName) => proto.toggleActionTag(action.id, tagName)}
+        priceBeside={{ placeholder: COPY.pricePlaceholder }}
       />
     );
   }
 
   return (
-    <Stack gap="md" className="col-start-1 row-start-2 xl:col-start-2 xl:row-start-1" style={{ minWidth: 0 }}>
-      <Box>
-        <Text component="h2" fw={700} fz={22} c="text.6" lts="var(--tracking-title)" m={0}>
-          {catalogue === undefined ? "" : catalogueLabel(catalogue.group_i18n_key, catalogue.group_name, t)}
-        </Text>
-        <Text fz={14} c="var(--color-text-dim)" mt={6}>
-          {COPY.actionsHint}
-        </Text>
-      </Box>
-
+    <Stack gap={10} className={CARDS_CELL} style={{ minWidth: 0 }}>
       {(proto.categoriesLoading || proto.catalogueLoading) && (
         <Group justify="center" p="xl">
           <Loader size="sm" />
@@ -299,24 +359,13 @@ function ActionsColumn({ proto }: { proto: ServiceDesktopPrototypeState }): Reac
         </Text>
       )}
 
-      {serviceActions.length > 0 && (
-        <ActionSection title={t("addService.groupService")}>{serviceActions.map(renderAction)}</ActionSection>
-      )}
-      {replacementActions.length > 0 && (
-        <ActionSection title={t("addService.groupReplacement")}>{replacementActions.map(renderAction)}</ActionSection>
-      )}
-    </Stack>
-  );
-}
-
-// Maintenance and Replacements are told apart before either is ticked (ADR 0003).
-function ActionSection({ title, children }: { title: string; children: ReactElement[] }): ReactElement {
-  return (
-    <Stack gap={10} mt={6}>
-      <Text fz={11} fw={600} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
-        {title}
-      </Text>
-      {children}
+      {actionSections(catalogue, t).map((section, index) => (
+        <Fragment key={section.title}>
+          {/* The first run is named in the heading above, so its cards start this row. */}
+          {index > 0 && <SectionTitle mt={12}>{section.title}</SectionTitle>}
+          {section.actions.map(renderAction)}
+        </Fragment>
+      ))}
     </Stack>
   );
 }

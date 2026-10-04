@@ -13,6 +13,8 @@ async function bootstrap() {
   });
 
   app.useLogger(app.get(Logger));
+  // SIGTERM from Docker closes the BullMQ workers instead of being killed mid-job.
+  app.enableShutdownHooks();
   app.useGlobalFilters(new HttpExceptionFilter(app.get(Logger)));
 
   await app.listen(process.env.PORT ?? 3002);

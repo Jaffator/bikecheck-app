@@ -108,7 +108,8 @@
     "or": "NEBO",
     "continueWithGoogle": "Pokračovat přes Google",
     "haveAccount": "Už máte účet?",
-    "noAccount": "Nemáte účet?"
+    "noAccount": "Nemáte účet?",
+    "landingTagline": "Sledujte servis a opotřebení svých kol. Jízdy ze Stravy, komponenty a historie servisu na jednom místě."
   },
   "settings": {
     "sectionAccount": "Účet",

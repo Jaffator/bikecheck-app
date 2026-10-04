@@ -1,6 +1,7 @@
 // PROTOTYPE (proto/desktop-wizards): copy with no i18n key yet. Czech only; moves to the locales when folded in.
 export const COPY = {
   actionsHint: "Zaškrtni, co se dělalo. Podrobnosti a cenu doplníš po rozbalení.",
+  pricePlaceholder: "Cena servisu",
   panelTitle: "Tento servis",
   bike: "Kolo",
   nothingDone: "Zatím nic. Zaškrtni vlevo, co se na kole dělalo.",

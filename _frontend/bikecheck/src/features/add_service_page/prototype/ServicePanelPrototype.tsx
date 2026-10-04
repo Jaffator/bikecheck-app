@@ -1,5 +1,13 @@
 // PROTOTYPE (proto/desktop-wizards): the Summary as a live side panel - head, scrolling body, pinned total and Save.
-import { useState, type CSSProperties, type ReactElement } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+  type RefObject,
+} from "react";
 import {
   ActionIcon,
   Autocomplete,
@@ -20,6 +28,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { Calendar, Check, Paperclip, Store, X } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import type { ListedBike } from "@/features/bikes/bikes.types";
+import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { useShopNames } from "@/features/service/service.queries";
 import { catalogueLabel, componentTypeLabel } from "@/features/service/serviceLabels";
 import { useCurrentUser } from "@/features/users/users.queries";
@@ -34,10 +44,41 @@ import { today, type CategoryBlock, type PickedAction } from "../serviceWizard.t
 import { COPY } from "./serviceCopy";
 import type { ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype";
 
-// Clears the 3rem header plus a rem of air; the panel is never taller than what is left,
-// so a full panel adds no scroll to the page.
+// Clears the 3rem header plus a rem of air once the page scrolls the panel up to it.
 const PANEL_TOP = "4rem";
-const PANEL_MAX_HEIGHT = "calc(100dvh - 6rem)";
+// Kept clear under the panel: the page's own bottom padding, so a full panel adds no scroll to it.
+const PANEL_BOTTOM_AIR = 32;
+
+const BIKE_DOT_SIZE = 10;
+
+// The panel starts beside the first card and sticks under the header later, so the room
+// beneath it changes as the page scrolls. Written straight to the element: no re-render per frame.
+function fitToWindow(element: HTMLElement | null): void {
+  if (element === null) return;
+  const room = window.innerHeight - element.getBoundingClientRect().top - PANEL_BOTTOM_AIR;
+  element.style.maxHeight = `${String(room)}px`;
+}
+
+function usePanelRoom(): RefObject<HTMLDivElement | null> {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // The heading above the panel changes height with what is loaded, and that fires no event.
+  useLayoutEffect(() => {
+    fitToWindow(ref.current);
+  });
+
+  useEffect(() => {
+    const refit = (): void => fitToWindow(ref.current);
+    window.addEventListener("scroll", refit, { passive: true });
+    window.addEventListener("resize", refit);
+    return () => {
+      window.removeEventListener("scroll", refit);
+      window.removeEventListener("resize", refit);
+    };
+  }, []);
+
+  return ref;
+}
 
 const SHOP_NAME_MAX_LENGTH = 100;
 
@@ -60,16 +101,17 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
   const currency = currencySymbol(user?.currency ?? null, i18n.language);
+  const panelRef = usePanelRoom();
 
   return (
     <Paper
+      ref={panelRef}
       component="aside"
       aria-label={COPY.panelTitle}
       radius="lg"
       style={{
         position: "sticky",
         top: PANEL_TOP,
-        maxHeight: PANEL_MAX_HEIGHT,
         display: "flex",
         flexDirection: "column",
         backgroundColor: "var(--mantine-color-cards-6)",
@@ -78,94 +120,120 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
         boxShadow: "var(--elev-panel)",
       }}
     >
-      {proto.saved ? (
-        <SavedState proto={proto} currency={currency} />
-      ) : (
-        <>
-          <Text fw={700} fz={16} c="text.6" px="lg" pt="lg" pb="sm">
-            {COPY.panelTitle}
-          </Text>
+      <Text fw={700} fz={16} c="text.6" px="lg" pt="lg" pb="sm">
+        {COPY.panelTitle}
+      </Text>
 
-          {/* Everything but the total and Save scrolls inside the panel. */}
-          <Stack
-            gap="md"
-            px="lg"
-            pb="md"
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
-              // The browser's own bar is white on this surface.
-              scrollbarWidth: "thin",
-              scrollbarColor: "var(--mantine-color-cards-4) transparent",
-            }}
-          >
-            <Select
-              label={COPY.bike}
-              data={(proto.bikes ?? []).map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
-              value={proto.bikeId === null ? null : String(proto.bikeId)}
-              allowDeselect={false}
+      {/* Everything but the total and Save scrolls inside the panel. */}
+      <Stack
+        gap="md"
+        px="lg"
+        pb="md"
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+        }}
+      >
+        <BikeSelect bikes={proto.bikes ?? []} bikeId={proto.bikeId} onRequestBike={onRequestBike} />
+
+        <DoneList proto={proto} currency={currency} />
+
+        <Box style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem" }}>
+          {/* Both labelled the same way, so the two controls share a baseline. */}
+          <Stack gap={4}>
+            <Text style={panelLabel}>{t("addService.serviceDate")}</Text>
+            <TextInput
+              type="date"
+              aria-label={t("addService.serviceDate")}
+              value={proto.serviceDate}
+              max={today()}
               styles={panelInputStyles}
-              comboboxProps={dropdownProps}
-              onChange={(value) => {
-                if (value !== null && Number(value) !== proto.bikeId) onRequestBike(Number(value));
-              }}
+              className="tabular-nums"
+              rightSection={<Calendar size={16} color="var(--color-text-dim)" />}
+              onChange={(event) => proto.setServiceDate(event.currentTarget.value)}
             />
-
-            <DoneList proto={proto} currency={currency} />
-
-            <Box style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem" }}>
-              {/* Both labelled the same way, so the two controls share a baseline. */}
-              <Stack gap={4}>
-                <Text style={panelLabel}>{t("addService.serviceDate")}</Text>
-                <TextInput
-                  type="date"
-                  aria-label={t("addService.serviceDate")}
-                  value={proto.serviceDate}
-                  max={today()}
-                  styles={panelInputStyles}
-                  className="tabular-nums"
-                  rightSection={<Calendar size={16} color="var(--color-text-dim)" />}
-                  onChange={(event) => proto.setServiceDate(event.currentTarget.value)}
-                />
-              </Stack>
-              <Stack gap={4}>
-                <Text style={panelLabel}>{t("addService.place")}</Text>
-                <SegmentedControl
-                  fullWidth
-                  aria-label={t("addService.place")}
-                  value={proto.place}
-                  onChange={(value) => proto.setPlace(value === "SHOP" ? "SHOP" : "HOME")}
-                  data={[
-                    { value: "HOME", label: t("addService.placeHome") },
-                    { value: "SHOP", label: t("addService.placeShop") },
-                  ]}
-                />
-              </Stack>
-            </Box>
-
-            {proto.place === "SHOP" && (
-              <ShopNameField shopName={proto.shopName} onShopNameChange={proto.setShopName} />
-            )}
-
-            <Textarea
-              label={t("addService.note")}
-              placeholder={t("addService.notePlaceholder")}
-              value={proto.note}
-              autosize
-              minRows={2}
-              maxLength={500}
-              styles={panelAutosizeStyles}
-              onChange={(event) => proto.setNote(event.currentTarget.value)}
-            />
-
-            <AttachmentsField files={proto.files} onAdd={proto.addFiles} onRemove={proto.removeFile} />
           </Stack>
+          <Stack gap={4}>
+            <Text style={panelLabel}>{t("addService.place")}</Text>
+            <SegmentedControl
+              fullWidth
+              aria-label={t("addService.place")}
+              value={proto.place}
+              onChange={(value) => proto.setPlace(value === "SHOP" ? "SHOP" : "HOME")}
+              data={[
+                { value: "HOME", label: t("addService.placeHome") },
+                { value: "SHOP", label: t("addService.placeShop") },
+              ]}
+            />
+          </Stack>
+        </Box>
 
-          <PanelFooter proto={proto} currency={currency} />
-        </>
-      )}
+        {proto.place === "SHOP" && (
+          <ShopNameField shopName={proto.shopName} onShopNameChange={proto.setShopName} />
+        )}
+
+        <Textarea
+          label={t("addService.note")}
+          placeholder={t("addService.notePlaceholder")}
+          value={proto.note}
+          autosize
+          minRows={2}
+          maxLength={500}
+          styles={panelAutosizeStyles}
+          onChange={(event) => proto.setNote(event.currentTarget.value)}
+        />
+
+        <AttachmentsField files={proto.files} onAdd={proto.addFiles} onRemove={proto.removeFile} />
+      </Stack>
+
+      <PanelFooter proto={proto} currency={currency} />
     </Paper>
+  );
+}
+
+// Each bike wears the colour dot it has on the dashboard, in the field and in the list.
+function BikeSelect({
+  bikes,
+  bikeId,
+  onRequestBike,
+}: {
+  bikes: ListedBike[];
+  bikeId: number | null;
+  onRequestBike: (bikeId: number) => void;
+}): ReactElement {
+  const picked = bikes.find((bike) => bike.id === bikeId);
+
+  return (
+    <Select
+      label={COPY.bike}
+      data={bikes.map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
+      value={bikeId === null ? null : String(bikeId)}
+      allowDeselect={false}
+      styles={panelInputStyles}
+      comboboxProps={dropdownProps}
+      leftSection={
+        picked === undefined ? undefined : <BikeColorDot colorIndex={picked.color_index} size={BIKE_DOT_SIZE} />
+      }
+      leftSectionPointerEvents="none"
+      renderOption={({ option, checked }) => (
+        <Group gap={10} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+          <BikeColorDot
+            colorIndex={bikes.find((bike) => String(bike.id) === option.value)?.color_index ?? null}
+            size={BIKE_DOT_SIZE}
+          />
+          <Text fz={14} fw={600} c="text.6" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+            {option.label}
+          </Text>
+          {checked && (
+            <Check size={16} strokeWidth={2.8} color="var(--mantine-color-primary-6)" style={{ flexShrink: 0 }} />
+          )}
+        </Group>
+      )}
+      onChange={(value) => {
+        if (value !== null && Number(value) !== bikeId) onRequestBike(Number(value));
+      }}
+    />
   );
 }
 
@@ -417,39 +485,6 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
         onClick={proto.save}
       >
         {t("addService.save")}
-      </Button>
-      <Text fz={12} c="text.9" ta="center">
-        {COPY.stub}
-      </Text>
-    </Stack>
-  );
-}
-
-function SavedState({ proto, currency }: { proto: ServiceDesktopPrototypeState; currency: string }): ReactElement {
-  return (
-    <Stack gap={10} align="center" px="lg" py={40}>
-      <Box
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 52,
-          height: 52,
-          borderRadius: "50%",
-          backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
-          color: "var(--mantine-color-primary-6)",
-        }}
-      >
-        <Check size={24} strokeWidth={2.5} />
-      </Box>
-      <Text fw={700} fz={20} c="text.6" lts="var(--tracking-title)" mt={6}>
-        {COPY.savedTitle}
-      </Text>
-      <Text fz={14} c="var(--color-text-dim)" ta="center" className="tabular-nums">
-        {COPY.savedCount}: {proto.pickedCount} · {COPY.savedTotal} {proto.totalCost} {currency}
-      </Text>
-      <Button variant="outline" radius="md" fullWidth mt="sm" onClick={proto.reset}>
-        {COPY.another}
       </Button>
       <Text fz={12} c="text.9" ta="center">
         {COPY.stub}

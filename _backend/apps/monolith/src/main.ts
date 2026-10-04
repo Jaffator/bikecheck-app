@@ -1,16 +1,21 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
 
   app.useLogger(app.get(Logger));
+  // Caddy sits on the Docker bridge; without this req.ip is Caddy's and every visitor shares one throttle bucket.
+  app.set('trust proxy', 'loopback, uniquelocal');
+  // SIGTERM from Docker closes the BullMQ workers and Prisma instead of being killed mid-job.
+  app.enableShutdownHooks();
 
   app.setGlobalPrefix('api');
   app.use(cookieParser());

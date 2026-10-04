@@ -13,6 +13,7 @@ import {
   ForbiddenException,
   NotFoundException,
   UnauthorizedException,
+  UseFilters,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -38,16 +39,11 @@ import {
 import { users as UserFull } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { UAParser } from 'ua-parser-js';
+import { GOOGLE_EMAIL_NOT_VERIFIED_PARAM, GOOGLE_ERROR_PARAM, GoogleCallbackFilter } from './filters/google-callback.filter';
 
 export interface AuthRequest extends Request {
   user: UserFull;
 }
-
-// The query flags a refused web Google sign-in carries back to the login page (ADR 0031).
-// The frontend reads the same names: the address of an Unverified Account, for the inbox
-// state, or the error code to show under the Google button.
-const GOOGLE_EMAIL_NOT_VERIFIED_PARAM = 'emailNotVerified';
-const GOOGLE_ERROR_PARAM = 'googleError';
 
 @Controller('auth')
 export class AuthController {
@@ -238,6 +234,7 @@ export class AuthController {
   // login page as a query flag instead (see googleRefusalUrl). No cookies either way.
   @Public()
   @UseGuards(GoogleAuthGuard)
+  @UseFilters(GoogleCallbackFilter)
   @ApiResponse({ status: 201 | 202, type: UserResponseDto })
   @Get('google/callback')
   async googleAuthRedirect(

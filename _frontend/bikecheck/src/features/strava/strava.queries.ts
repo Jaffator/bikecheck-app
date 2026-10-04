@@ -1,6 +1,7 @@
 // React Query hooks own Strava loading, error, and cache state.
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 import {
   getStravaAuthorizeUrl,
   disconnectStrava,
@@ -15,14 +16,21 @@ import type { GearLinkingData, GearLink, PendingRide, ResolvedPendingRide, Strav
 import type { ApiError } from "@/api/client";
 import { BADGE_POLL_MS } from "@/features/notifications/notifications.queries";
 
-// Opens the backend-generated Strava authorization URL in the system browser.
+// The web leaves in the same tab and comes back to /strava-connected; a new tab would be left
+// behind. The phone opens a Custom Tab and returns through the deep link.
+export async function openStravaAuthorize(): Promise<void> {
+  if (Capacitor.getPlatform() === "web") {
+    const { url } = await getStravaAuthorizeUrl("web");
+    window.location.assign(url);
+    return;
+  }
+  const { url } = await getStravaAuthorizeUrl("native");
+  await Browser.open({ url });
+}
+
+// Starts the Strava authorization.
 export function useConnectStrava(): UseMutationResult<void, ApiError, void> {
-  return useMutation({
-    mutationFn: async () => {
-      const { url } = await getStravaAuthorizeUrl();
-      await Browser.open({ url });
-    },
-  });
+  return useMutation({ mutationFn: openStravaAuthorize });
 }
 
 // Unlinks Strava and refetches the user connection state.
