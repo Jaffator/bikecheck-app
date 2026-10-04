@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { ReferenceDot } from "recharts";
 import { formatServiceDate } from "@/features/service/serviceDates";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
+import { useIsDesktop } from "@/layout/breakpoints";
 import type { WearForecastItem } from "../stats.types";
 
 export const CHART_HEIGHT = 160;
@@ -37,11 +38,14 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
   const first = rows[0].at;
   const last = rows[rows.length - 1].at;
   const todayLabel = t("stats.forecastToday", { value: t("tracking.percentage", { value: item.percentage }) });
+  const isDesktop = useIsDesktop();
 
   return (
     <Stack gap={10}>
       <LineChart
         h={CHART_HEIGHT}
+        // Nothing here answers a touch; a tap would only focus the surface and ring it.
+        style={isDesktop ? undefined : { pointerEvents: "none" }}
         data={rows}
         dataKey="at"
         series={[

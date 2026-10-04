@@ -57,10 +57,10 @@ export function Dashboard(): ReactElement {
       <DashboardFigures period={period} />
       <LastRidePanel />
       <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
-      <WearForecastCard />
       {/* Under the work: how the garage stands, and the way into any one bike. */}
       <BikeHealthList />
       <DistanceCard period={period} />
+      <WearForecastCard />
       <SpendCard period={period} />
     </Stack>
   );

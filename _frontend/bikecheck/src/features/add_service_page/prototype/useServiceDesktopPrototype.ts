@@ -76,8 +76,17 @@ export interface ServiceDesktopPrototypeState {
   unattributed: boolean;
   canSave: boolean;
   saved: boolean;
+  // What the last Save recorded, kept past a reset so its confirmation can still read it.
+  lastSaved: SavedSummary | null;
   save: () => void;
   reset: () => void;
+  // The bike the wizard was entered from, which is where a finished Service returns to.
+  entryBikeId: number | null;
+}
+
+export interface SavedSummary {
+  actionCount: number;
+  totalCost: number;
 }
 
 export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
@@ -103,6 +112,7 @@ export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
   const [files, setFiles] = useState<File[]>([]);
   const [totalCostOverride, setTotalCostOverride] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
+  const [lastSaved, setLastSaved] = useState<SavedSummary | null>(null);
 
   // No bike step on desktop: the link's bike, else the first in the garage, changed in the panel.
   const bikeId = chosenBikeId ?? bikeFromUrl ?? bikes?.[0]?.id ?? null;
@@ -237,6 +247,13 @@ export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
   const picked = blocks.flatMap((block) => block.actions);
   const unattributed = picked.some((action) => action.componentIds.length === 0);
   const suggestedTotal = blocks.reduce((total, block) => total + actionsCost(block.actions), 0);
+  const totalCost = totalCostOverride ?? suggestedTotal;
+
+  // The stub: nothing is sent, the Service is only counted for its confirmation.
+  function save(): void {
+    setLastSaved({ actionCount: picked.length, totalCost });
+    setSaved(true);
+  }
 
   const reset = useCallback((): void => {
     setSaved(false);
@@ -280,13 +297,15 @@ export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
     files,
     addFiles,
     removeFile,
-    totalCost: totalCostOverride ?? suggestedTotal,
+    totalCost,
     setTotalCost: setTotalCostOverride,
     pickedCount: picked.length,
     unattributed,
     canSave: picked.length > 0 && !unattributed,
     saved,
-    save: () => setSaved(true),
+    lastSaved,
+    save,
     reset,
+    entryBikeId: bikeFromUrl,
   };
 }

@@ -7,15 +7,20 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { BikeCategory, CatalogueAction } from "@/features/service/service.types";
+import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { useHeaderStore } from "@/store/store";
 import { ActionRow } from "../ServiceActionsStep";
 import type { PickedAction } from "../serviceWizard.types";
 import { COPY } from "./serviceCopy";
 import { ServicePanelPrototype } from "./ServicePanelPrototype";
+import { ServiceSavedModal } from "./ServiceSavedModal";
 import { useServiceDesktopPrototype, type ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype";
 
 // Below Tailwind's xl the category nav folds into a row above the actions, so the middle keeps its width.
 const GRID_CLASS = "grid items-start gap-6 grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[13.75rem_minmax(0,1fr)_22.5rem]";
+
+// Sits beside a 14px label in a nav row.
+const NAV_ICON_SIZE = 20;
 
 export function ServiceDesktopPrototype(): ReactElement {
   const proto = useServiceDesktopPrototype();
@@ -45,6 +50,16 @@ export function ServiceDesktopPrototype(): ReactElement {
     setHeaderOnBack(() => backRef.current());
     return () => setHeaderOnBack(null);
   }, [setHeaderOnBack]);
+
+  // Back where the work was started from, as the phone's wizard goes after saving.
+  function finish(): void {
+    navigate(proto.entryBikeId === null ? "/service" : `/bikes/${String(proto.entryBikeId)}`, { replace: true });
+  }
+
+  function startAnother(): void {
+    proto.reset();
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
 
   function requestBike(bikeId: number): void {
     if (proto.pickedCount > 0) setPendingBikeId(bikeId);
@@ -101,6 +116,7 @@ export function ServiceDesktopPrototype(): ReactElement {
         cancelLabel={t("addService.keep")}
         confirmLabel={t("addService.discard")}
       />
+      <ServiceSavedModal opened={proto.saved} summary={proto.lastSaved} onAnother={startAnother} onDone={finish} />
     </Box>
   );
 }
@@ -172,7 +188,10 @@ function CategoryButton({
         color: active ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
       }}
     >
-      <span>{catalogueLabel(category.group_i18n_key, category.group_name, t)}</span>
+      <Group component="span" gap={10} wrap="nowrap">
+        {categoryIcon(category.group_name, NAV_ICON_SIZE)}
+        <span>{catalogueLabel(category.group_i18n_key, category.group_name, t)}</span>
+      </Group>
       {picked > 0 && (
         <Box
           component="span"

@@ -3,6 +3,7 @@ import { useState, type ReactElement } from "react";
 import { Box, Button, Group, Loader, Paper, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { AssembleBikeComponent } from "@/features/components/components.types";
+import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import {
   componentTypeId,
   countConfigured,
@@ -19,6 +20,9 @@ import { COPY, cardSurface } from "./bikeProto";
 
 // Room for "Rozdělit" and "Nemám" side by side.
 const TOGGLES_WIDTH = "10.75rem";
+
+// Sits beside a 14px label in a nav row.
+const NAV_ICON_SIZE = 20;
 
 function translatedName(i18nKey: string | null, fallback: string, translate: (key: string) => string): string {
   return i18nKey ? translate(i18nKey) : fallback;
@@ -185,7 +189,10 @@ export function BikePartsDesktop({ wizard }: { wizard: AddBikeWizard }): ReactEl
                 color: active ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
               }}
             >
-              <span>{translatedName(group.i18n_key, group.group_name, t)}</span>
+              <Group component="span" gap={10} wrap="nowrap">
+                {categoryIcon(group.group_name, NAV_ICON_SIZE)}
+                <span>{translatedName(group.i18n_key, group.group_name, t)}</span>
+              </Group>
               <Text
                 component="span"
                 fz={12}

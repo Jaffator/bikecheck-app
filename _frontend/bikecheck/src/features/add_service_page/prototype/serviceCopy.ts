@@ -13,6 +13,7 @@ export const COPY = {
   savedCount: "Úkonů",
   savedTotal: "celkem",
   another: "Zapsat další servis",
+  done: "Hotovo",
   remove: "Odebrat",
   stub: "Prototyp: nic se neuloží.",
   noBikes: "V garáži zatím není žádné kolo.",
