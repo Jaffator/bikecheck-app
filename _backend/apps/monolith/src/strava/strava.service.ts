@@ -175,7 +175,6 @@ export class StravaEventsService {
     });
     if (!user?.strava_athlete_id) throw new Error('User has no linked Strava account');
     console.log('RESPONSEEEEEEEEEEEEEEE', `${process.env.STRAVA_SERVICE_URL}/strava/gear/${user.strava_athlete_id}`);
-    console.log('INTERVAL API SECRET', process.env.INTERNAL_API_SECRET);
 
     try {
       const response = await axios.get<StravaGearResponse>(
