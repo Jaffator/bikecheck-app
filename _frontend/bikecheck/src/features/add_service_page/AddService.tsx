@@ -9,6 +9,8 @@ import { ServiceCategoryStep } from "./ServiceCategoryStep";
 import { ServiceActionsStep } from "./ServiceActionsStep";
 import { ServiceSummaryStep } from "./ServiceSummaryStep";
 import { useAddServiceWizard, type BackPrompt, type WizardStep } from "./useAddServiceWizard";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { ServiceDesktopPrototype } from "./prototype/ServiceDesktopPrototype";
 
 // Each loss the user can be warned about names itself; nothing is assembled from the
 // prompt at the call site, so every key stays greppable.
@@ -35,8 +37,14 @@ const TITLE_KEY_BY_STEP: Record<WizardStep, string> = {
   summary: "addService.stepSummary",
 };
 
-// The frame around the four steps that record one Service.
+// PROTOTYPE (proto/desktop-wizards): desktop gets the one-screen layout, the phone keeps the wizard.
 export function AddService(): ReactElement {
+  const isDesktop = useIsDesktop();
+  return isDesktop ? <ServiceDesktopPrototype /> : <AddServiceWizard />;
+}
+
+// The frame around the four steps that record one Service.
+function AddServiceWizard(): ReactElement {
   const wizard = useAddServiceWizard();
   const setHeaderTitleKey = useHeaderStore((state) => state.setTitleKey);
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);

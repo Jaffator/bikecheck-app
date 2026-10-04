@@ -272,7 +272,7 @@ export function ServiceActionsStep({
 
 // One catalogue Action: a tick, and everything the tick reveals. The header opens even
 // an unticked action, so the tags can be read before the user commits to it.
-function ActionRow({
+export function ActionRow({
   action,
   picked,
   opened,
