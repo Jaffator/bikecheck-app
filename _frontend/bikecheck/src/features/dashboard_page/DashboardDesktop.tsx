@@ -1,4 +1,4 @@
-// Desktop Home: a context line, the banner, the figures, then work and context as two column stacks, then the charts.
+// Desktop Home: a context line, the banner, the figures, then two column stacks of cards.
 import { useCallback, useEffect, type ReactElement } from "react";
 import { Grid, Stack } from "@mantine/core";
 import { useSearchParams } from "react-router-dom";
@@ -51,12 +51,14 @@ export function DashboardDesktop(): ReactElement {
       <ContextLine />
       <DashboardBanner />
       <DashboardFigures period={period} />
-      {/* Each column stacks its own cards, so a short card is never stretched to its neighbour's height. */}
+      {/* Each column stacks its own cards, so a short card never leaves a gap under it.
+          The last ride and the last services sit together on the right. */}
       <Grid gap="md" align="flex-start">
         <Grid.Col span={{ base: 12, lg: 8 }}>
           <Stack gap="md">
             <JobsPanel />
             <GaragePanel period={period} />
+            <DistanceCard period={period} />
           </Stack>
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 4 }}>
@@ -64,15 +66,8 @@ export function DashboardDesktop(): ReactElement {
             <WearForecastCard />
             <LastRidePanel />
             <RecentServicesPanel />
+            <SpendCard period={period} />
           </Stack>
-        </Grid.Col>
-      </Grid>
-      <Grid gap="md" align="stretch">
-        <Grid.Col span={{ base: 12, lg: 8 }}>
-          <DistanceCard period={period} />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, lg: 4 }}>
-          <SpendCard period={period} />
         </Grid.Col>
       </Grid>
     </Stack>

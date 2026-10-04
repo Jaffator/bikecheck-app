@@ -1,10 +1,10 @@
 // Dashboard page.
 import type { ReactElement } from "react";
-import { Loader, SimpleGrid, Stack } from "@mantine/core";
+import { Loader, Stack } from "@mantine/core";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
-import { StatusRow } from "./StatusRow";
+import { ContextLine } from "./ContextLine";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
@@ -43,22 +43,17 @@ export function Dashboard(): ReactElement {
 
   return (
     // Clears the floating create button, so the last card can be scrolled out from under
-    // it; desktop has no FAB, so no room.
-    <Stack gap="md" p="md" pb={FAB_CLEARANCE}>
-      {/* A phone stacks them; a browser column sits the state beside the work. */}
-      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" style={{ alignItems: "start" }}>
-        <Stack gap="md">
-          {!stravaConnected && <StravaStatusCard />}
-          <DashboardBannerPhone />
-          <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
-          <WearForecastCard />
-          {/* Under the work: how the garage stands, and the way into any one bike. */}
-          <BikeHealthList />
-          <DistanceCard />
-          <SpendCard />
-        </Stack>
-        <StatusRow />
-      </SimpleGrid>
+    // it; desktop has no FAB, so no room. No `p` here: its inline padding beats the responsive `pb` class.
+    <Stack gap="md" px="md" pt="md" pb={FAB_CLEARANCE}>
+      <ContextLine withDate={false} />
+      {!stravaConnected && <StravaStatusCard />}
+      <DashboardBannerPhone />
+      <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
+      <WearForecastCard />
+      {/* Under the work: how the garage stands, and the way into any one bike. */}
+      <BikeHealthList />
+      <DistanceCard />
+      <SpendCard />
     </Stack>
   );
 }

@@ -6,13 +6,14 @@ import dayjs from "dayjs";
 import { Clock, Mountain, Route, type LucideIcon } from "lucide-react";
 import { Eyebrow } from "@/components/Eyebrow";
 import { PANEL_HAIRLINE } from "@/components/panelRows";
+import { RideMap } from "@/components/RideMap";
 import { RouteMap } from "@/components/RouteMap";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { RideSummary } from "@/features/rides/rideSummary";
 
 interface RideSummaryCardProps {
   ride: RideSummary;
-  // Left out, the route keeps RouteMap's Strava orange.
+  // Left out, the route stays Strava orange.
   routeColor?: string;
   // Desktop has the room to name the figures and the sport.
   detailed?: boolean;
@@ -39,13 +40,14 @@ function CompactCard({ ride, routeColor }: CardProps): ReactElement {
       radius="lg"
       p="md"
       style={{
-        backgroundColor: "var(--mantine-color-cards-6)",
+        backgroundColor: "transparent",
         border: "1px solid var(--color-border-subtle)",
-        boxShadow: "var(--elev-panel)",
       }}
     >
       <Group gap="sm" wrap="nowrap" align="center" w="100%">
-        <RouteMap polyline={ride.summary_polyline} width={80} height={80} strokeWidth={3} color={routeColor} />
+        <Box w={80} style={{ flexShrink: 0 }}>
+          <RideMap polyline={ride.summary_polyline} height={80} interactive={false} color={routeColor} thumbnail />
+        </Box>
         {/* minWidth lets the title clamp inside the flexible column. */}
         <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
           <Stack gap={4}>

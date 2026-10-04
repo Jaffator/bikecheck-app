@@ -9,11 +9,13 @@ import { PANEL_HAIRLINE } from "./panelRows";
 interface PanelProps {
   title: string;
   count?: number;
+  // Drawn in place of the plain count, for a panel whose number asks for action.
+  badge?: ReactNode;
   link?: { label: string; onClick: () => void };
   children: ReactNode;
 }
 
-export function Panel({ title, count, link, children }: PanelProps): ReactElement {
+export function Panel({ title, count, badge, link, children }: PanelProps): ReactElement {
   return (
     <Paper
       radius="lg"
@@ -31,7 +33,8 @@ export function Panel({ title, count, link, children }: PanelProps): ReactElemen
           <Text fz={16} fw={600} c="text.6" lineClamp={1}>
             {title}
           </Text>
-          {count !== undefined && (
+          {badge}
+          {badge === undefined && count !== undefined && (
             <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
               {count}
             </Text>

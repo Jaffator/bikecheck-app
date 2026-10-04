@@ -6,10 +6,8 @@ import { ALL_TIME } from "@/features/service/servicePeriod";
 import type { ServicePeriod } from "@/features/service/service.types";
 import type { HomePeriod } from "./stats.types";
 
-// What one bar of the distance chart holds.
+// A span the distance is summed over.
 export type DistanceBucket = "day" | "month" | "year";
-
-export const DISTANCE_BUCKET: Record<HomePeriod, DistanceBucket> = { month: "day", year: "month", all: "year" };
 
 // Nothing, or anything Home does not know, is the year, so a broken link still opens a working page.
 export function parseHomePeriod(raw: string | null): HomePeriod {

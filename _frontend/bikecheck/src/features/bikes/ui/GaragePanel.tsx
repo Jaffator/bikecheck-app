@@ -19,12 +19,13 @@ import {
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
 import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
+import { SetupShortcut } from "@/features/setup/ui/SetupShortcut";
 import { homePeriodLabel } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { DistanceBike, HomePeriod } from "@/features/stats/stats.types";
 import { BikeThumb } from "./BikeThumb";
 
-const BIKE_COLUMNS = "56px minmax(0, 1.6fr) 112px 88px minmax(0, 1.4fr) 96px 16px";
+const BIKE_COLUMNS = "56px minmax(0, 1.6fr) 112px 88px minmax(0, 1.4fr) 96px 34px 16px";
 
 // Distance and time read Home's Period; the worst part and the status are about now.
 export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
@@ -60,6 +61,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
           t("bikes.columnTimePeriod", { period: label }),
           t("bikes.columnWorstPart"),
           t("bikes.columnStatus"),
+          "",
           "",
         ]}
         rightAligned={[2, 3, 5]}
@@ -123,6 +125,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
                 <HealthBadge actions={byBike.get(bike.id) ?? []} compact />
               )}
             </Box>
+            <SetupShortcut bikeId={bike.id} />
             <ChevronRight size={16} color="var(--color-text-dim)" />
           </Box>
         );

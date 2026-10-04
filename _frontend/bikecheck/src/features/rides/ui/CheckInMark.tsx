@@ -23,8 +23,8 @@ export function CheckInMark({ checkIn, size = 14 }: CheckInMarkProps): ReactElem
       color={CHECK_IN_COLOR[checkIn.status]}
       aria-label={label}
       role="img"
-      // Sits on the text baseline when drawn inline beside a date.
-      style={{ flexShrink: 0, verticalAlign: "-0.125em" }}
+      // Sits on the text baseline when drawn inline; Tailwind's preflight makes every svg a block.
+      style={{ display: "inline", flexShrink: 0, verticalAlign: "-0.125em" }}
     />
   );
 }

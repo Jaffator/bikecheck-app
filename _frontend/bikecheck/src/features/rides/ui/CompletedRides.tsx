@@ -37,13 +37,15 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
       leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
       /* The activity's own title leads: it is what the user named the ride, so it
          identifies it faster than the bike or the date. */
-      title={ride.name}
-      subtitle={
+      title={
         <>
-          {ride.started_at === null ? "" : dayjs(ride.started_at).format("D. M. YYYY H:mm")}{" "}
-          <CheckInMark checkIn={ride.check_in} size={13} />
+          {ride.name}
+          <span style={{ marginInlineStart: 8 }}>
+            <CheckInMark checkIn={ride.check_in} size={15} />
+          </span>
         </>
       }
+      subtitle={ride.started_at === null ? "" : dayjs(ride.started_at).format("D. M. YYYY H:mm")}
       /* The bike sits at metadata weight — it is no longer the heading, so it goes with
          the date rather than competing with the title. */
       meta={

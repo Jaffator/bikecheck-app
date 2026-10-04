@@ -225,7 +225,8 @@ export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetP
                     // Same width on every row so the selects line up on the right.
                     style={{ flex: "0 0 55%" }}
                     radius="sm"
-                    comboboxProps={dropdownProps}
+                    // A portalled dropdown flickers in Capacitor; opening down runs under the Android nav bar.
+                    comboboxProps={{ ...dropdownProps, withinPortal: false, position: "top" }}
                   />
                 </Group>
               );

@@ -20,17 +20,23 @@ interface RideMapProps {
   height: number;
   // Off, the map is a picture: no drag, zoom or controls.
   interactive: boolean;
+  // Left out, the route stays Strava orange.
+  color?: string;
+  // Too small for the credits line and the start and finish dots.
+  thumbnail?: boolean;
 }
 
 // The route on real map tiles.
-export function RideMap({ polyline, height, interactive }: RideMapProps): ReactElement {
+export function RideMap({ polyline, height, interactive, color, thumbnail = false }: RideMapProps): ReactElement {
   const points = useMemo(() => (polyline === null ? [] : decodePolyline(polyline)), [polyline]);
 
-  if (points.length < 2) return <RouteMap polyline={null} width="100%" height={NO_ROUTE_HEIGHT} />;
+  if (points.length < 2) {
+    return <RouteMap polyline={null} width="100%" height={Math.min(height, NO_ROUTE_HEIGHT)} />;
+  }
 
   return (
     <Suspense fallback={<Box h={height} style={LOADING_STYLE} />}>
-      <RideMapLeaflet points={points} height={height} interactive={interactive} />
+      <RideMapLeaflet points={points} height={height} interactive={interactive} color={color} thumbnail={thumbnail} />
     </Suspense>
   );
 }

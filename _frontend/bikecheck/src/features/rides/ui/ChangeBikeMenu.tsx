@@ -14,9 +14,11 @@ interface ChangeBikeMenuProps {
   ride: Ride;
   // The sheet holds a snapshot of the ride, so it closes rather than show the old bike.
   onMoved: () => void;
+  // Desktop's action bar: a bar-sized button in the row instead of one at the section's end.
+  inBar?: boolean;
 }
 
-export function ChangeBikeMenu({ ride, onMoved }: ChangeBikeMenuProps): ReactElement {
+export function ChangeBikeMenu({ ride, onMoved, inBar = false }: ChangeBikeMenuProps): ReactElement {
   const { t } = useTranslation();
   const { data: bikes } = useBikes();
   const change = useChangeRideBike();
@@ -35,15 +37,15 @@ export function ChangeBikeMenu({ ride, onMoved }: ChangeBikeMenuProps): ReactEle
   }
 
   return (
-    <Menu position="bottom-start" radius="md" shadow="md">
+    <Menu position="bottom-end" radius="md" shadow="md">
       <Menu.Target>
         <Button
           variant="outline"
           radius="md"
-          size="xs"
+          size={inBar ? "sm" : "xs"}
           loading={change.isPending}
           rightSection={<ChevronDown size={14} />}
-          style={{ alignSelf: "flex-start" }}
+          style={inBar ? undefined : { alignSelf: "flex-end" }}
         >
           {t("rides.changeBike")}
         </Button>

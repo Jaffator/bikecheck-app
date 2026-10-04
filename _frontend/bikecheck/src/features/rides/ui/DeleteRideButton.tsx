@@ -13,9 +13,14 @@ interface DeleteRideButtonProps {
   ride: Ride;
   // The sheet holds a snapshot of the ride, so it closes once the ride is gone.
   onDeleted: () => void;
+  // Desktop's action bar: red text without a frame, at the row's quiet end.
+  inBar?: boolean;
 }
 
-export function DeleteRideButton({ ride, onDeleted }: DeleteRideButtonProps): ReactElement {
+const BAR_LOOK = { variant: "subtle", color: "red.5", size: "sm" } as const;
+const STACK_LOOK = { variant: "outline", size: "xs", style: { alignSelf: "flex-start" } } as const;
+
+export function DeleteRideButton({ ride, onDeleted, inBar = false }: DeleteRideButtonProps): ReactElement {
   const { t } = useTranslation();
   // Same server action as "not my bike": wear rolls back and Strava never re-imports it.
   const dismiss = useDismissRide();
@@ -39,11 +44,9 @@ export function DeleteRideButton({ ride, onDeleted }: DeleteRideButtonProps): Re
   return (
     <>
       <Button
-        variant="outline"
+        {...(inBar ? BAR_LOOK : STACK_LOOK)}
         radius="md"
-        size="xs"
         leftSection={<Trash2 size={14} color="var(--mantine-color-red-5)" />}
-        style={{ alignSelf: "flex-start" }}
         onClick={() => setConfirming(true)}
       >
         {t("rides.delete")}

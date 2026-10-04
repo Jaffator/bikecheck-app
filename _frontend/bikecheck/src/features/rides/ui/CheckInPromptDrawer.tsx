@@ -34,6 +34,7 @@ import { useIsDesktop } from "@/layout/breakpoints";
 import { CheckInBikeField, type BikeSource } from "./CheckInBikeField";
 import { CheckInForm } from "./CheckInForm";
 import { RideSummaryCard } from "./RideSummaryCard";
+import { WoreOffLedger } from "./WoreOffLedger";
 
 dayjs.extend(relativeTime);
 
@@ -242,6 +243,7 @@ function PhonePrompt({ step }: { step: PromptStep }): ReactElement {
       </Stack>
       <RideSummaryCard ride={checkInSummaryOf(step.item)} routeColor={routeColor(step)} />
       <BikeField step={step} />
+      <WoreOffLedger lines={step.woreOff} />
       <CheckInSection step={step} />
       <PromptActions step={step} compact={false} />
     </Stack>
@@ -275,6 +277,7 @@ function DesktopPrompt({ step }: { step: PromptStep }): ReactElement {
         </Box>
         <Stack gap={20} p={24} style={{ flex: 1, minWidth: 0 }}>
           <BikeField step={step} />
+          <WoreOffLedger lines={step.woreOff} />
           <CheckInSection step={step} />
         </Stack>
       </Group>
@@ -334,7 +337,6 @@ function BikeField({ step }: { step: PromptStep }): ReactElement {
       notMine={step.notMine}
       source={step.source}
       fallbackName={step.fallbackName}
-      woreOff={step.woreOff}
       onPick={step.onPick}
       pickerOpened={step.pickerOpened}
       onPickerOpenedChange={step.onPickerOpenedChange}
@@ -367,13 +369,12 @@ function PromptActions({ step, compact }: { step: PromptStep; compact: boolean }
   const withCheck = !step.notMine && step.source !== "missing";
 
   return (
-    <Group gap={8} wrap="nowrap" style={compact ? { flexShrink: 0 } : undefined}>
+    <Group gap={8} wrap="nowrap" grow={!compact} style={compact ? { flexShrink: 0 } : undefined}>
       {/* Held while a save runs, whose success moves on by itself. */}
       <Button
         variant="outline"
         radius="md"
         size={size}
-        w={compact ? undefined : 112}
         disabled={step.saving}
         styles={disabledButtonStyles}
         onClick={step.onSkip}
@@ -389,7 +390,6 @@ function PromptActions({ step, compact }: { step: PromptStep; compact: boolean }
         disabled={!step.canSave}
         loading={step.saving}
         styles={disabledButtonStyles}
-        style={compact ? undefined : { flex: 1 }}
         onClick={step.onSave}
       >
         {t(saveLabelKey(step))}
@@ -400,7 +400,7 @@ function PromptActions({ step, compact }: { step: PromptStep; compact: boolean }
 
 function saveLabelKey(step: PromptStep): string {
   if (step.source === "missing") return "checkIn.pickBikeFirst";
-  return step.notMine ? "checkIn.saveWithoutBike" : "checkIn.saveAndNext";
+  return step.notMine ? "checkIn.saveWithoutBike" : "checkIn.save";
 }
 
 // The route in its bike's colour, grey on none; Strava orange until the garage loads.

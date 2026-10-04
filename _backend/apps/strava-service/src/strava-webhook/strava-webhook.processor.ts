@@ -4,6 +4,8 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { StravaWebhookEventDto } from './dto/strava-webhook-event.dto';
 import { StravaWebhookService } from './strava-webhook.service';
 import stravaJsonData_forTest from '../example_strava_data/example_strava_data.json';
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 // Decorator name must exactly match the Queue name registered in the module
 @Processor('strava-webhook-queue')
@@ -17,10 +19,23 @@ export class StravaProcessor extends WorkerHost {
   }
   // NestJS automatically calls this method when a new job appears in the queue
   async process(job: Job<any, any, string>) {
-    if (job.name === 'test-strava-event') {
+    // ------------------------ Mock Single route ------------------------
+    if (job.name === 'test-strava-event-single') {
       console.log(`Processing TEST MOCK STRAVA DATA id: ${job.id}, name: ${job.name}`);
       const slimActivityData = this.stravaWebhookService.simplifyActivityData(this.getRandomMockStravaActivityData());
       return { type: 'test', data: slimActivityData };
+    }
+    // ------------------------ Mock Set of routes ------------------------
+    if (job.name === 'test-strava-event-set') {
+      console.log(`Processing TEST MOCK STRAVA DATA SET id: ${job.id}, name: ${job.name}`);
+      const dir = './apps/strava-service/src/example_strava_data/set_data';
+      for (const file of await readdir(dir)) {
+        const activity = JSON.parse(await readFile(join(dir, file), 'utf-8')).data;
+        console.log(`Processing file: ${file}, activity: ${activity}`);
+        const slimActivityData = this.stravaWebhookService.simplifyActivityData(activity);
+        await this.eventsQueue.add('strava_activity-created', slimActivityData);
+      }
+      return { skipped: true, reason: 'Mock set sent ride by ride' };
     }
 
     if (job.name === 'process-strava-event') {
@@ -82,7 +97,7 @@ export class StravaProcessor extends WorkerHost {
         : result.type === 'update'
           ? 'strava_activity-updated'
           : 'strava_activity-deleted';
-
+    console.log(jobName);
     // Continue to queue in monolithic app for further processing
     await this.eventsQueue.add(jobName, result.data);
   }

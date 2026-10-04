@@ -1,15 +1,13 @@
-// The check-in's bike: the one the ride goes on, where it came from, and what the ride wore off it.
+// The check-in's bike: the one the ride goes on and where it came from.
 import type { ReactElement } from "react";
-import { Box, Group, Stack, Text } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { MISSING_BIKE_COLOR } from "@/features/rides/checkIn";
 import type { BikePick } from "@/features/rides/checkInSave";
-import type { WoreOffLine as WoreOff } from "@/features/rides/rides.types";
-import { woreOffColor, woreOffLabel } from "@/features/rides/woreOff";
-import { QUIET_COLOR, trackedActionKey } from "@/features/service_tracking/attentionLevel";
+import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
 import { BikePicker } from "./BikePicker";
 
 // Where the picked bike came from: the ride's own, a pick in this drawer, or none yet.
@@ -23,8 +21,6 @@ interface CheckInBikeFieldProps {
   notMine: boolean;
   source: BikeSource;
   fallbackName: string;
-  // What the ride wears off the picked bike; empty with no bike.
-  woreOff: WoreOff[];
   onPick: (pick: BikePick) => void;
   pickerOpened: boolean;
   onPickerOpenedChange: (opened: boolean) => void;
@@ -36,7 +32,6 @@ export function CheckInBikeField({
   notMine,
   source,
   fallbackName,
-  woreOff,
   onPick,
   pickerOpened,
   onPickerOpenedChange,
@@ -59,7 +54,6 @@ export function CheckInBikeField({
         opened={pickerOpened}
         onOpenedChange={onPickerOpenedChange}
       />
-      <WoreOffLine woreOff={woreOff} />
       {source === "missing" && <FieldNote text={t("checkIn.missingBikeInfo")} color="text.7" />}
       {notMine && <FieldNote text={t("checkIn.notMyBikeInfo")} color="var(--color-text-dim)" />}
     </Stack>
@@ -113,30 +107,5 @@ function FieldNote({ text, color }: { text: string; color: string }): ReactEleme
     <Text fz={13} lh={1.4} c={color} px={2}>
       {text}
     </Text>
-  );
-}
-
-// Kept to one line: the drawer must not grow with a long list.
-function WoreOffLine({ woreOff }: { woreOff: WoreOff[] }): ReactElement | null {
-  const { t } = useTranslation();
-  if (woreOff.length === 0) return null;
-
-  return (
-    <Group gap={8} wrap="nowrap" align="baseline" px={2}>
-      <Text fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
-        {t("checkIn.woreOff")}
-      </Text>
-      <Text fz={13} c="text.7" className="tabular-nums" lineClamp={1} style={{ minWidth: 0 }}>
-        {woreOff.map((line, index) => (
-          <Box component="span" key={trackedActionKey(line)}>
-            {index > 0 && " · "}
-            {`${woreOffLabel(line, t)} ${t("tracking.percentage", { value: line.before })} → `}
-            <Text span inherit c={woreOffColor(line)}>
-              {t("tracking.percentage", { value: line.after })}
-            </Text>
-          </Box>
-        ))}
-      </Text>
-    </Group>
   );
 }

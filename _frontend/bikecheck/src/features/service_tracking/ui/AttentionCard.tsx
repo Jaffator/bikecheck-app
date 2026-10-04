@@ -1,46 +1,21 @@
-// What needs doing: every Tracked Action at 75% or above, one card per bike, worst bike
-// first. A place the owner goes rather than something that interrupts them — nothing here
-// notifies. A component only talks to hooks.
-//
-// One card per bike rather than one list under bike headings: the garage's work only reads
-// as an overview when each machine has an edge of its own.
+// What needs doing: every Tracked Action at 75% or above in one card, worst first, the
+// phone's twin of the desktop JobsPanel. Nothing here notifies; a component only talks to hooks.
 import { Fragment, useState, type ReactElement, type ReactNode } from "react";
 import { Divider, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Wrench } from "lucide-react";
-import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
+import { DUE_FROM, trackedActionKey } from "@/features/service_tracking/attentionLevel";
+import { AttentionCount } from "./AttentionCount";
 import { AttentionRow } from "./AttentionRow";
 import { PlanSheet } from "./PlanSheet";
 import { TrackedActionDrawer } from "./TrackedActionDrawer";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
-import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
+import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 
-// What the card asks the server for. 75 is the level the server calls warning — the point
-// at which a job is on the horizon, and the first the owner hears of it.
-const CUTOFF = 75;
-
-// How many rows one card leads with. A neglected bike must not bury the ones below it, so
-// the rest of its list waits behind one tap.
-const LEAD_ROWS = 3;
-
-// The garage list gathered under its bikes, in the order the bikes first appear — which is
-// worst first, since the list is.
-function groupByBike(
-  actions: GarageTrackedAction[],
-): { bikeId: number; title: string; actions: GarageTrackedAction[] }[] {
-  const groups: { bikeId: number; title: string; actions: GarageTrackedAction[] }[] = [];
-  for (const action of actions) {
-    const group = groups.find((entry) => entry.bikeId === action.bike_id);
-    if (group) group.actions.push(action);
-    else groups.push({ bikeId: action.bike_id, title: bikeTitle(action), actions: [action] });
-  }
-  return groups;
-}
+// A long list must not push the rest of the page out of reach, so the tail waits behind one tap.
+const LEAD_ROWS = 5;
 
 interface AttentionCardProps {
-  // Null reads as every bike. One garage read serves both, narrowed here rather than on
-  // the server, so the dashboard and a bike's page share one cache entry.
+  // Null reads as every bike. One garage read serves both, so Home and Service share a cache entry.
   bikeId: number | null;
   // What stands in when nothing needs doing. Left off, the card simply is not there.
   whenEmpty?: ReactNode;
@@ -48,20 +23,75 @@ interface AttentionCardProps {
 
 export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactElement | null {
   const { t } = useTranslation();
-  const { data: garage } = useGarageTrackedActions(CUTOFF);
-  // The reading the drawer is open on, or null while it is closed. Held here rather than
-  // per card, so however many cards stand there is only ever one sheet.
+  const { data: garage } = useGarageTrackedActions(DUE_FROM);
   const [opened, setOpened] = useState<TrackedAction | null>(null);
   const [planning, setPlanning] = useState<TrackedAction | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   // Not loaded yet says nothing either way, so neither the list nor the all-clear shows.
   if (!garage) return null;
 
-  const actions = bikeId === null ? garage : garage.filter((action) => action.bike_id === bikeId);
+  const actions = garage
+    .filter((action) => bikeId === null || action.bike_id === bikeId)
+    .sort((left, right) => right.percentage - left.percentage);
   if (actions.length === 0) return <>{whenEmpty ?? null}</>;
 
-  const drawer = (
+  const shown = expanded ? actions : actions.slice(0, LEAD_ROWS);
+  const hidden = actions.length - shown.length;
+
+  return (
     <>
+      <Paper
+        radius="lg"
+        p="md"
+        style={{
+          overflow: "hidden",
+          backgroundColor: "var(--mantine-color-cards-6)",
+          backgroundImage: "var(--card-glow)",
+          border: "none",
+          boxShadow: "var(--elev-panel)",
+        }}
+      >
+        <Stack gap="md">
+          <Group gap={8} wrap="nowrap">
+            <Text fz={16} fw={600} c="text.6" lineClamp={1}>
+              {t("tracking.needsAttention")}
+            </Text>
+            <AttentionCount count={actions.length} />
+          </Group>
+
+          {/* Each row opens the job's drawer (ADR 0032); the hairline keeps two jobs from reading as one. */}
+          <Stack gap="sm">
+            {shown.map((action, index) => (
+              <Fragment key={trackedActionKey(action)}>
+                {index > 0 && <Divider color="var(--mantine-color-inputs-5)" />}
+                <AttentionRow
+                  action={action}
+                  onOpen={() => {
+                    setOpened(action);
+                  }}
+                  onPlan={() => {
+                    setPlanning(action);
+                  }}
+                />
+              </Fragment>
+            ))}
+          </Stack>
+
+          {actions.length > LEAD_ROWS && (
+            <UnstyledButton
+              onClick={() => {
+                setExpanded(!expanded);
+              }}
+            >
+              <Text className="tabular-nums" fz={11} tt="uppercase" c="primary.6" lts="var(--tracking-label)">
+                {expanded ? t("tracking.showLess") : t("tracking.showRemaining", { value: hidden })}
+              </Text>
+            </UnstyledButton>
+          )}
+        </Stack>
+      </Paper>
+
       <TrackedActionDrawer
         action={opened}
         onClose={() => {
@@ -75,119 +105,5 @@ export function AttentionCard({ bikeId, whenEmpty }: AttentionCardProps): ReactE
         }}
       />
     </>
-  );
-
-  // Narrowed to one bike, the page already says which — so the card keeps the heading it
-  // has always worn and names no bike.
-  if (bikeId !== null) {
-    return (
-      <>
-        <AttentionPaper
-          heading={
-            <Group gap={8} wrap="nowrap">
-              <Wrench size={16} color="var(--color-text-dim)" />
-              <Text fz={13} fw={600} c="text.6">
-                {t("tracking.needsAttention")} ({actions.length})
-              </Text>
-            </Group>
-          }
-          actions={actions}
-          onOpen={setOpened}
-          onPlan={setPlanning}
-        />
-        {drawer}
-      </>
-    );
-  }
-
-  // The cards carry their own air between them, so a caller can drop the list anywhere
-  // without knowing it is a list.
-  return (
-    <Stack gap="md">
-      {groupByBike(actions).map((group) => (
-        <AttentionPaper
-          key={group.bikeId}
-          heading={
-            <Text fz={14} fw={600} c="text.6" lineClamp={1}>
-              {group.title} ({group.actions.length})
-            </Text>
-          }
-          actions={group.actions}
-          onOpen={setOpened}
-          onPlan={setPlanning}
-        />
-      ))}
-      {drawer}
-    </Stack>
-  );
-}
-
-// One card: its heading, the rows it leads with, and the way to the rest of them.
-function AttentionPaper({
-  heading,
-  actions,
-  onOpen,
-  onPlan,
-}: {
-  heading: ReactNode;
-  actions: GarageTrackedAction[];
-  onOpen: (action: TrackedAction) => void;
-  onPlan: (action: TrackedAction) => void;
-}): ReactElement {
-  const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
-
-  const shown = expanded ? actions : actions.slice(0, LEAD_ROWS);
-  const hidden = actions.length - shown.length;
-
-  return (
-    <Paper
-      radius="lg"
-      p="md"
-      style={{
-        overflow: "hidden",
-        backgroundColor: "var(--mantine-color-cards-6)",
-        backgroundImage: "var(--card-glow)",
-        border: "none",
-        boxShadow: "var(--elev-panel)",
-      }}
-    >
-      <Stack gap="md">
-        {heading}
-
-        {/* A row opens the drawer for the job it names, the same one the bike's own page
-            opens (ADR 0032). A hairline between them is what keeps two jobs on one bike from
-            reading as one — the air alone was not enough once the bar was gone. */}
-        <Stack gap="sm">
-          {shown.map((action, index) => (
-            <Fragment key={trackedActionKey(action)}>
-              {index > 0 && <Divider color="var(--mantine-color-inputs-5)" />}
-              <AttentionRow
-                action={action}
-                onOpen={() => {
-                  onOpen(action);
-                }}
-                onPlan={() => {
-                  onPlan(action);
-                }}
-              />
-            </Fragment>
-          ))}
-        </Stack>
-
-        {/* The way to the rest, and back. Only shown while there is a rest to reach. */}
-        {actions.length > LEAD_ROWS && (
-          <UnstyledButton
-            onClick={() => {
-              setExpanded(!expanded);
-            }}
-          >
-            <Text className="tabular-nums" fz={11} tt="uppercase" c="primary.6" lts="var(--tracking-label)">
-              {expanded ? t("tracking.showLess") : t("tracking.showRemaining", { value: hidden })}
-            </Text>
-          </UnstyledButton>
-        )}
-      </Stack>
-    </Paper>
   );
 }

@@ -334,6 +334,13 @@ import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles"
 
 Reference: `features/bikes_page/BikesDesktop.tsx`, `features/strava/ui/PendingRideSheet.tsx`.
 
+### Drawers (pattern)
+
+Every sheet goes through `ResponsiveSheet`: motion, grabber and swipe are in
+[conventions/drawers.md](conventions/drawers.md). Spacing and the close button of a bottom sheet
+follow the design [BikeCheck – drawer spacing](https://claude.ai/artifact/YKgZLEbo11bZ2qGk4t9x97),
+artboard "Pravidlo pro všechny drawery".
+
 ## 10. Frontend tech
 
 - React + TypeScript, functional components + hooks (per project rules).

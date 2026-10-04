@@ -1,4 +1,4 @@
-// What "Uložit a další" writes for one ride of the check-in.
+// What "Uložit" writes for one ride of the check-in.
 import type { PendingRide } from "@/features/strava/strava.types";
 import type { CheckInItem } from "./checkInQueue";
 import type { Ride, RideCheckIn } from "./rides.types";

@@ -16,12 +16,18 @@ interface RideMapLeafletProps {
   points: LatLng[];
   height: number;
   interactive: boolean;
+  color?: string;
+  thumbnail: boolean;
 }
 
-export default function RideMapLeaflet({ points, height, interactive }: RideMapLeafletProps): ReactElement {
+export default function RideMapLeaflet({
+  points,
+  height,
+  interactive,
+  color = ROUTE_COLOR,
+  thumbnail,
+}: RideMapLeafletProps): ReactElement {
   const bounds = useMemo(() => latLngBounds(points), [points]);
-  const start = points[0];
-  const finish = points[points.length - 1];
 
   return (
     <MapContainer
@@ -44,20 +50,28 @@ export default function RideMapLeaflet({ points, height, interactive }: RideMapL
       keyboard={interactive}
     >
       <TileLayer url={TILES} attribution={ATTRIBUTION} />
-      <AttributionControl position="bottomright" prefix={false} />
-      <Polyline positions={points} pathOptions={{ color: ROUTE_COLOR, weight: 3 }} interactive={false} />
+      {!thumbnail && <AttributionControl position="bottomright" prefix={false} />}
+      <Polyline positions={points} pathOptions={{ color, weight: 3 }} interactive={false} />
+      {!thumbnail && <RouteEnds start={points[0]} finish={points[points.length - 1]} color={color} />}
+    </MapContainer>
+  );
+}
+
+function RouteEnds({ start, finish, color }: { start: LatLng; finish: LatLng; color: string }): ReactElement {
+  return (
+    <>
       <CircleMarker
         center={start}
         radius={5}
-        pathOptions={{ color: ROUTE_COLOR, fillColor: MARKER_COLOR, fillOpacity: 1, weight: 2 }}
+        pathOptions={{ color, fillColor: MARKER_COLOR, fillOpacity: 1, weight: 2 }}
         interactive={false}
       />
       <CircleMarker
         center={finish}
         radius={5}
-        pathOptions={{ color: MARKER_COLOR, fillColor: ROUTE_COLOR, fillOpacity: 1, weight: 2 }}
+        pathOptions={{ color: MARKER_COLOR, fillColor: color, fillOpacity: 1, weight: 2 }}
         interactive={false}
       />
-    </MapContainer>
+    </>
   );
 }

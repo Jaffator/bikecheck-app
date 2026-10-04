@@ -1,6 +1,6 @@
 // UI component using feature hooks.
 import type { ReactElement } from "react";
-import { Group, Stack, Text } from "@mantine/core";
+import { Button, Divider, Group, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Clock, Gauge, Route, TrendingDown, TrendingUp, Zap, type LucideIcon } from "lucide-react";
 import dayjs from "dayjs";
@@ -12,6 +12,7 @@ import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { useRideCheckIn } from "@/features/rides/useRideCheckIn";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { ChangeBikeMenu } from "./ChangeBikeMenu";
 import { DeleteRideButton } from "./DeleteRideButton";
@@ -112,30 +113,79 @@ export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailS
             interactive={isDesktop}
           />
 
-          <Stack gap="md">
-            <Group gap="md" wrap="nowrap">
-              <Stat icon={Route} label={t("rides.statDistance")} value={`${toKm(ride.distance_m)} km`} />
-              <Stat icon={Clock} label={t("rides.statDuration")} value={formatDuration(ride.duration_min ?? 0)} />
-              <Stat icon={TrendingUp} label={t("rides.statElevation")} value={`${ride.elevation_up_m ?? 0} m`} />
-            </Group>
+          <Stack gap="lg">
+            <Stack gap="md">
+              <Group gap="md" wrap="nowrap">
+                <Stat icon={Route} label={t("rides.statDistance")} value={`${toKm(ride.distance_m)} km`} />
+                <Stat icon={Clock} label={t("rides.statDuration")} value={formatDuration(ride.duration_min ?? 0)} />
+                <Stat icon={TrendingUp} label={t("rides.statElevation")} value={`${ride.elevation_up_m ?? 0} m`} />
+              </Group>
 
-            <Group gap="md" wrap="nowrap">
-              <Stat icon={TrendingDown} label={t("rides.statDescent")} value={`${ride.elevation_down_m ?? 0} m`} />
-              <Stat icon={Gauge} label={t("rides.statAvgSpeed")} value={`${ride.speed_avg ?? 0} km/h`} />
-              <Stat icon={Zap} label={t("rides.statMaxSpeed")} value={`${ride.max_speed_kmh ?? 0} km/h`} />
-            </Group>
+              <Group gap="md" wrap="nowrap">
+                <Stat icon={TrendingDown} label={t("rides.statDescent")} value={`${ride.elevation_down_m ?? 0} m`} />
+                <Stat icon={Gauge} label={t("rides.statAvgSpeed")} value={`${ride.speed_avg ?? 0} km/h`} />
+                <Stat icon={Zap} label={t("rides.statMaxSpeed")} value={`${ride.max_speed_kmh ?? 0} km/h`} />
+              </Group>
 
-            <WoreOff lines={ride.wore_off} />
+              <WoreOff lines={ride.wore_off} />
+            </Stack>
 
-            <RideCheckInSection key={ride.id} ride={ride} startWith={checkInStartWith} />
+            <Divider color="var(--color-border-subtle)" />
 
-            <ChangeBikeMenu ride={ride} onMoved={onClose} />
-
-            <DeleteRideButton ride={ride} onDeleted={onClose} />
+            <RideDetailFoot key={ride.id} ride={ride} startWith={checkInStartWith} onClose={onClose} />
           </Stack>
         </Stack>
       )}
     </ResponsiveSheet>
+  );
+}
+
+interface RideDetailFootProps {
+  ride: Ride;
+  startWith?: CheckInStatus;
+  onClose: () => void;
+}
+
+// Check-in, bike and delete; on desktop the actions share one bar below the check-in.
+function RideDetailFoot({ ride, startWith, onClose }: RideDetailFootProps): ReactElement {
+  const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
+  const checkIn = useRideCheckIn(ride, startWith);
+
+  if (!isDesktop) {
+    return (
+      <>
+        <Stack gap="md">
+          <RideCheckInSection checkIn={checkIn} />
+          <ChangeBikeMenu ride={ride} onMoved={onClose} />
+        </Stack>
+
+        <Divider color="var(--color-border-subtle)" />
+
+        <DeleteRideButton ride={ride} onDeleted={onClose} />
+      </>
+    );
+  }
+
+  const canAdd = checkIn.saved === null && checkIn.draft === null;
+  return (
+    <>
+      <RideCheckInSection checkIn={checkIn} withAdd={false} />
+
+      <Divider color="var(--color-border-subtle)" />
+
+      <Group justify="space-between" wrap="nowrap">
+        <DeleteRideButton ride={ride} onDeleted={onClose} inBar />
+        <Group gap="xs" wrap="nowrap">
+          <ChangeBikeMenu ride={ride} onMoved={onClose} inBar />
+          {canAdd && (
+            <Button color="primary.6" c="textDark.6" radius="md" size="sm" onClick={checkIn.edit}>
+              {t("checkIn.addInBar")}
+            </Button>
+          )}
+        </Group>
+      </Group>
+    </>
   );
 }
 

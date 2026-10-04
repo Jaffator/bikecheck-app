@@ -134,3 +134,41 @@ export function weeklyRunningMeters(daily: number[], year: number): number[] {
     return total;
   });
 }
+
+// What one point of the distance line covers: a month steps by day, a year by week, all time by month.
+export type DistanceStep = "day" | "week" | "month";
+
+export interface RunningDistance {
+  step: DistanceStep;
+  // The first UTC day of each step, YYYY-MM-DD.
+  starts: string[];
+  // Per bike, in the order of the served bikes: metres ridden by the end of each step.
+  meters: number[][];
+}
+
+// No Period is the phone's year, so it steps by week as desktop's year does.
+export function runningDistance(distance: Distance, period: HomePeriod | undefined): RunningDistance {
+  if (period === "month" || period === "all") {
+    const bucket = period === "month" ? "day" : "month";
+    return {
+      step: bucket,
+      starts: bucketStarts(distance, bucket).map((start) => start.toISOString().slice(0, 10)),
+      meters: distance.bikes.map((bike) => runningSum(bucketMeters(bike.daily_m, distance, bucket))),
+    };
+  }
+
+  const year = servedYear(distance);
+  return {
+    step: "week",
+    starts: weekStarts(servedDays(distance), year),
+    meters: distance.bikes.map((bike) => weeklyRunningMeters(bike.daily_m, year)),
+  };
+}
+
+function runningSum(values: number[]): number[] {
+  let total = 0;
+  return values.map((value) => {
+    total += value;
+    return total;
+  });
+}

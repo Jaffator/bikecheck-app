@@ -100,11 +100,12 @@ export class WebhookController {
   // ------------------------------------------------------------
   // ---------- TEST Handle incoming MOCK webhook events from Strava ------
   // ------------------------------------------------------------
-  @Post('/mock-webhook')
+  @Post('/mock-webhook/')
   @HttpCode(200)
-  async handleTestWebhook(@Req() req: Request): Promise<string> {
+  async handleTestWebhook(@Req() req: Request, @Query('type') type: string): Promise<string> {
     // Add the event to the BullMQ queue for processing
-    await this.webhookQueue.add('test-strava-event', req.body as StravaWebhookEventDto);
+    await this.webhookQueue.add('test-strava-event-single', req.body as StravaWebhookEventDto);
+    if (type === 'set') await this.webhookQueue.add('test-strava-event-set', req.body as StravaWebhookEventDto);
 
     // response under 2sec with OK HTTP 200 to avoid retries from Strava
     // event is in Redis queue

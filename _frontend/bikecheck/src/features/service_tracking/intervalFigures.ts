@@ -52,6 +52,16 @@ export function remainingFigure(action: TrackedAction, language: string): string
   return `${value} ${axisUnit(action.axis)}`.trim();
 }
 
+// Past due the figure already says "+X"; before it, it says what is left.
+export function remainingLabel(
+  action: TrackedAction,
+  language: string,
+  translate: (key: string, options: { value: string }) => string,
+): string {
+  const figure = remainingFigure(action, language);
+  return action.current > action.interval ? figure : translate("tracking.leftValue", { value: figure });
+}
+
 // A tenth of the bike's own plan, which is what one tap of − or + moves the Service
 // Interval by. Taken from the plan and never from the value on screen, so − undoes exactly
 // what + did however many taps deep — a step off the current value would not come back.

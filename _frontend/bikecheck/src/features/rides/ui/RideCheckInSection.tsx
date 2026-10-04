@@ -1,69 +1,46 @@
 // A ride's check-in in its detail: read, add, change or delete it.
-import { useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { Button, Group, Stack, Text } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import { disabledButtonStyles } from "@/features/add_bike_page/formStyles";
-import { checkInOf, draftOf, symptomKey, type CheckInDraft } from "@/features/rides/checkIn";
-import { useDeleteRideCheckIn, useSaveRideCheckIn } from "@/features/rides/rides.queries";
-import type { CheckInStatus, Ride, RideCheckIn } from "@/features/rides/rides.types";
+import { symptomKey } from "@/features/rides/checkIn";
+import type { RideCheckIn } from "@/features/rides/rides.types";
+import type { RideCheckInState } from "@/features/rides/useRideCheckIn";
 import { CheckInForm } from "./CheckInForm";
 import { CheckInMark } from "./CheckInMark";
 
 interface RideCheckInSectionProps {
-  ride: Ride;
-  // Opens straight into the form with this answer picked, as Home's "something's off" does.
-  startWith?: CheckInStatus;
+  checkIn: RideCheckInState;
+  // False on desktop, where adding one lives in the action bar below.
+  withAdd?: boolean;
 }
 
-export function RideCheckInSection({ ride, startWith }: RideCheckInSectionProps): ReactElement {
+export function RideCheckInSection({ checkIn, withAdd = true }: RideCheckInSectionProps): ReactElement {
   const { t } = useTranslation();
-  const save = useSaveRideCheckIn();
-  const remove = useDeleteRideCheckIn();
-  // The sheet holds a snapshot of the ride, so the section keeps what it last saved itself.
-  const [saved, setSaved] = useState<RideCheckIn | null>(ride.check_in);
-  const [draft, setDraft] = useState<CheckInDraft | null>(
-    startWith === undefined ? null : draftOf(ride.check_in, startWith),
-  );
-  const toSave = draft === null ? null : checkInOf(draft);
+  const { saved, draft, toSave } = checkIn;
 
-  function submit(): void {
-    if (toSave === null) return;
-    save.mutate(
-      { rideId: ride.id, checkIn: toSave },
-      {
-        onSuccess: (checkIn) => {
-          setSaved(checkIn);
-          setDraft(null);
-        },
-        onError: () => notifications.show({ color: "red.5", message: t("checkIn.saveFailed") }),
-      },
+  if (draft === null && saved === null && !withAdd) {
+    return (
+      <Group justify="space-between" wrap="nowrap">
+        <Eyebrow>{t("checkIn.question")}</Eyebrow>
+        <Text fz={14} c="var(--color-text-dim)">
+          {t("checkIn.empty")}
+        </Text>
+      </Group>
     );
-  }
-
-  function deleteCheckIn(): void {
-    remove.mutate(ride.id, {
-      onSuccess: () => setSaved(null),
-      onError: () => notifications.show({ color: "red.5", message: t("checkIn.deleteFailed") }),
-    });
   }
 
   return (
     <Stack gap={8}>
       <Eyebrow>{t("checkIn.question")}</Eyebrow>
       {draft === null ? (
-        <SavedCheckIn
-          checkIn={saved}
-          deleting={remove.isPending}
-          onEdit={() => setDraft(draftOf(saved))}
-          onDelete={deleteCheckIn}
-        />
+        <SavedCheckIn checkIn={saved} deleting={checkIn.deleting} onEdit={checkIn.edit} onDelete={checkIn.remove} />
       ) : (
         <Stack gap="md">
-          <CheckInForm draft={draft} onChange={setDraft} />
+          <CheckInForm draft={draft} onChange={checkIn.setDraft} />
           <Group gap="sm" justify="flex-end">
-            <Button variant="outline" radius="md" size="xs" onClick={() => setDraft(null)}>
+            <Button variant="outline" radius="md" size="xs" onClick={() => checkIn.setDraft(null)}>
               {t("checkIn.cancel")}
             </Button>
             <Button
@@ -72,9 +49,9 @@ export function RideCheckInSection({ ride, startWith }: RideCheckInSectionProps)
               radius="md"
               size="xs"
               disabled={toSave === null}
-              loading={save.isPending}
+              loading={checkIn.saving}
               styles={disabledButtonStyles}
-              onClick={submit}
+              onClick={checkIn.submit}
             >
               {t("checkIn.save")}
             </Button>

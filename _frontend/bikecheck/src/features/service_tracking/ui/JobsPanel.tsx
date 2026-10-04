@@ -18,19 +18,18 @@ import {
   attentionColor,
   trackedActionKey,
 } from "@/features/service_tracking/attentionLevel";
-import { readingFigure, remainingFigure } from "@/features/service_tracking/intervalFigures";
+import { readingFigure, remainingLabel } from "@/features/service_tracking/intervalFigures";
 import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
 import { useNextReplacement, type NextReplacementView } from "@/features/stats/nextReplacement";
+import { AttentionCount } from "./AttentionCount";
+import { BulletBar } from "./BulletBar";
 import { PlanSheet } from "./PlanSheet";
 import { TrackedActionDrawer } from "./TrackedActionDrawer";
 
 const JOB_COLUMNS = "minmax(0, 1fr) 130px 104px 136px";
-
-// The bar runs past the interval, so an overdue job reads beyond the mark rather than stopping at it.
-const BULLET_MAX = 125;
 
 interface JobsPanelProps {
   // Set on the Service page, where null is every bike; Home passes none and links to Service.
@@ -51,7 +50,7 @@ export function JobsPanel({ bikeId }: JobsPanelProps): ReactElement {
   return (
     <Panel
       title={t("tracking.needsAttention")}
-      count={due === undefined ? undefined : rows.length}
+      badge={due === undefined ? undefined : <AttentionCount count={rows.length} />}
       link={bikeId === undefined ? { label: t("page.service"), onClick: () => navigate("/service") } : undefined}
     >
       {due === undefined && <PanelSkeletonRows count={4} />}
@@ -172,41 +171,6 @@ function PlanButton({ planned, onPlan }: { planned: string | null; onPlan: () =>
     >
       {planned === null ? t("tracking.plan") : planDayLabel(planned, i18n.language)}
     </Button>
-  );
-}
-
-// Past due the figure already says "+X"; before it, it says what is left.
-function remainingLabel(
-  action: TrackedAction,
-  language: string,
-  translate: (key: string, options: { value: string }) => string,
-): string {
-  const figure = remainingFigure(action, language);
-  return action.current > action.interval ? figure : translate("tracking.leftValue", { value: figure });
-}
-
-// A job read against its interval: the mark is the interval, the fill how far the part has come.
-function BulletBar({ percentage, color }: { percentage: number; color: string }): ReactElement {
-  const fill = (Math.min(percentage, BULLET_MAX) / BULLET_MAX) * 100;
-  const mark = (100 / BULLET_MAX) * 100;
-
-  return (
-    <Box
-      aria-hidden
-      pos="relative"
-      h={6}
-      style={{ flex: 1, minWidth: 0, borderRadius: 9999, backgroundColor: "var(--color-decor-sunk)" }}
-    >
-      <Box h="100%" w={`${String(fill)}%`} style={{ borderRadius: 9999, backgroundColor: color }} />
-      <Box
-        pos="absolute"
-        top={-4}
-        bottom={-4}
-        left={`${String(mark)}%`}
-        w={2}
-        style={{ borderRadius: 1, backgroundColor: "var(--mantine-color-text-6)", opacity: 0.55 }}
-      />
-    </Box>
   );
 }
 

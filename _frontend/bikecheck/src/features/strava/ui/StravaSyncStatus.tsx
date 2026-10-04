@@ -4,14 +4,11 @@ import { Anchor, Box, Group } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import { useRides } from "@/features/rides/rides.queries";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
 import { useConnectStrava, usePendingRides } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
 import { useCurrentUser } from "@/features/users/users.queries";
-
-dayjs.extend(relativeTime);
 
 interface StravaSyncStatusProps {
   // Offers the OAuth flow right in the line while Strava is not connected.
@@ -73,5 +70,15 @@ function stravaStatus(connected: boolean, lastSync: string | null, t: TFunction)
   const strava = t("strava.statusTitle");
   if (!connected) return `${strava} · ${t("dashboard.notConnected")}`;
   if (lastSync === null) return strava;
-  return `${strava} · ${t("dashboard.synced", { when: dayjs(lastSync).fromNow() })}`;
+  return `${strava} · ${syncedAgo(lastSync, t)}`;
+}
+
+// The line has no room for "3 hours ago", so a letter carries the unit.
+function syncedAgo(lastSync: string, t: TFunction): string {
+  const minutes = dayjs().diff(lastSync, "minute");
+  if (minutes < 1) return t("dashboard.syncedJustNow");
+  if (minutes < 60) return t("dashboard.syncedMinutes", { count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return t("dashboard.syncedHours", { count: hours });
+  return t("dashboard.syncedDays", { count: Math.floor(hours / 24) });
 }

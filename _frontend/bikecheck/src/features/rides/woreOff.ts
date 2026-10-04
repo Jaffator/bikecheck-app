@@ -27,6 +27,13 @@ export function woreOffAmount(
   return null;
 }
 
+// Both readings are floored, so a short ride can leave them equal; it still wore the part.
+export function woreOffGain(line: WoreOffLine, translate: (key: string, options: { value: number }) => string): string {
+  const gain = line.after - line.before;
+  if (gain > 0) return `+${translate("tracking.percentage", { value: gain })}`;
+  return `<${translate("tracking.percentage", { value: 1 })}`;
+}
+
 // The app speaks from warning up, so below it the figure stays plain.
 export function woreOffColor(line: WoreOffLine): string | undefined {
   return line.after >= DUE_FROM ? attentionColor(line.after) : undefined;

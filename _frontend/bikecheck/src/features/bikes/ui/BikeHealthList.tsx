@@ -1,9 +1,10 @@
 // The garage at a glance under the work the dashboard leads with: one narrow row per bike,
 // its condition on the right, and a tap into the bike. A component only talks to hooks.
 import type { ReactElement } from "react";
-import { Box, Group, Image, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, Image, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { ChevronRight, Gauge } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { onPanelRowKey } from "@/components/panelRows";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { worstAction } from "@/features/service_tracking/attentionLevel";
@@ -11,6 +12,7 @@ import { useGarageTrackedActions } from "@/features/service_tracking/tracking.qu
 import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
+import { SetupShortcut } from "@/features/setup/ui/SetupShortcut";
 
 // Everything the garage tracks, quiet readings included - one request for the whole list,
 // rather than one per bike.
@@ -37,14 +39,15 @@ function BikeRow({ bike, actions, divided, onOpen }: BikeRowProps): ReactElement
   const title = bikeTitle(bike);
 
   return (
-    <UnstyledButton
+    <Box
+      role="button"
+      tabIndex={0}
       onClick={onOpen}
+      onKeyDown={(event) => onPanelRowKey(event, onOpen)}
       className="hover-veil active:scale-[0.985]"
       px="md"
       py="sm"
       style={{
-        display: "block",
-        width: "100%",
         transition: "transform 0.12s ease",
         borderTop: divided ? "1px solid var(--mantine-color-cards-5)" : undefined,
       }}
@@ -81,9 +84,10 @@ function BikeRow({ bike, actions, divided, onOpen }: BikeRowProps): ReactElement
         ) : (
           <HealthBadge actions={actions} compact />
         )}
+        <SetupShortcut bikeId={bike.id} />
         <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
       </Group>
-    </UnstyledButton>
+    </Box>
   );
 }
 

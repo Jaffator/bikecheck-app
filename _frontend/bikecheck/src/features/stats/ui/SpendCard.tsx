@@ -2,6 +2,7 @@
 import type { ReactElement, ReactNode } from "react";
 import {
   Box,
+  Center,
   Group,
   Paper,
   Skeleton,
@@ -25,6 +26,7 @@ import type { HomePeriod, Spend, SpendBike, SpendCategory } from "../stats.types
 
 const BAR_HEIGHT = 8;
 const CATEGORY_BAR_HEIGHT = 6;
+const NAME_LINE_HEIGHT = 20;
 const TRACK_COLOR = "var(--color-border-subtle)";
 // Neutral, so colour always means a bike and length always means money.
 const CATEGORY_COLOR = "var(--mantine-color-cards-4)";
@@ -115,15 +117,17 @@ function BikeBar({
         transition: "transform 0.12s ease",
       }}
     >
-      <Group justify="space-between" wrap="nowrap" gap="sm" mb={6}>
-        <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-          <BikeColorDot colorIndex={colorIndex} />
-          <Text fz={13} c="text.7" lineClamp={1}>
+      <Group justify="space-between" wrap="nowrap" gap="sm" mb={6} align="flex-start">
+        <Group gap={6} wrap="nowrap" align="flex-start" style={{ minWidth: 0 }}>
+          {/* Sits on the name's first line, so a wrapped name keeps its dot beside it. */}
+          <Center h={NAME_LINE_HEIGHT} style={{ flexShrink: 0 }}>
+            <BikeColorDot colorIndex={colorIndex} />
+          </Center>
+          <Text fz={13} lh={`${String(NAME_LINE_HEIGHT)}px`} c="text.7">
             {bikeTitle(bike)}
-          </Text>
-          {/* Outside the clamp, so a long name is cut before the count is. */}
-          <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
-            {`· ${t("dashboard.servicesCount", { count: bike.service_count })}`}
+            <Text span inherit className="tabular-nums" c="text.8" style={{ whiteSpace: "nowrap" }}>
+              {` · ${t("dashboard.servicesCount", { count: bike.service_count })}`}
+            </Text>
           </Text>
         </Group>
         <Text
@@ -246,8 +250,6 @@ function SpendPaper({ children }: { children: ReactNode }): ReactElement {
     <Paper
       radius="lg"
       p="md"
-      // Fills a desktop grid cell, so cards side by side end level.
-      h="100%"
       style={{
         overflow: "hidden",
         backgroundColor: "var(--mantine-color-cards-6)",

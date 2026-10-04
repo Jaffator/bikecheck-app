@@ -1,0 +1,1457 @@
+{
+    "data": {
+        "resource_state": 3,
+        "athlete": {
+            "id": 337774625,
+            "resource_state": 1
+        },
+        "name": "Morning Mountain Bike Ride",
+        "distance": 44017.3,
+        "moving_time": 11453,
+        "elapsed_time": 12696,
+        "total_elevation_gain": 925,
+        "type": "Ride",
+        "sport_type": "MountainBikeRide",
+        "workout_type": null,
+        "device_name": "Garmin fēnix 6X",
+        "id": 18088765709,
+        "start_date": "2026-08-04T08:41:52Z",
+        "start_date_local": "2026-08-04T10:41:52Z",
+        "timezone": "(GMT+01:00) Europe/Prague",
+        "utc_offset": 7200,
+        "location_city": null,
+        "location_state": null,
+        "location_country": null,
+        "achievement_count": 2,
+        "kudos_count": 5,
+        "comment_count": 0,
+        "athlete_count": 1,
+        "photo_count": 0,
+        "map": {
+            "id": "a18088765709",
+            "polyline": "_i_uHoll{AEf@Eh@Ch@?j@?j@@l@Dn@Dn@Fp@Hp@Jp@Lr@Nt@Nt@Pt@Rt@Rv@Rt@Tv@Tv@Tv@Vx@Tv@Vv@Tt@Tv@Tv@Rt@Rt@Rt@Pt@Pr@Nr@Lr@Lr@Lp@Hp@Jp@Fn@Fp@Fn@Bl@Dn@Bl@@n@Bl@@l@?l@@l@?l@@l@?n@?l@@l@@l@?n@Bn@@l@Bn@Bp@Dn@Dp@Dn@Hp@Fr@Hp@Jr@Jp@Lr@Lr@Nt@Nr@Nt@Pt@Rr@Pt@Rt@Rt@Tv@Rt@Tt@Rt@Tt@Tt@Rt@Tv@Rt@Rt@Rr@Rt@Rt@Pt@Pr@Nt@Nr@Nt@Lr@Lr@Lt@Jr@Jr@Jr@Hr@Hr@Hr@Fr@Hr@Fr@Dr@Fr@Fr@Dt@Fr@Dr@Dt@Fr@Dt@Fr@Ft@Ft@Ft@Ft@Ht@Ft@Ht@Ht@Jv@Jt@Jv@Jt@Lv@Lv@Lv@Nv@Lv@Pv@Nv@Pv@Pv@Pv@Rx@Pv@Rv@Tx@Rv@Tv@Tx@Tv@Tx@Vv@Vx@Vv@Vx@Vv@Vx@Xx@Xv@Xx@Xv@Xx@Xv@Zx@Zv@Zx@Zv@Zx@Zv@Zx@\\v@\\x@\\v@\\x@\\v@\\v@^x@^v@\\v@^v@^v@^v@`@x@^v@^v@`@v@`@v@^v@`@t@`@v@`@v@`@v@`@v@`@t@`@v@`@v@b@t@`@v@`@t@b@v@`@t@`@v@b@t@`@v@b@t@`@t@b@v@b@t@`@t@b@t@b@t@b@t@b@t@b@t@b@t@b@t@b@t@b@t@d@t@b@r@d@t@d@r@d@r@d@t@d@r@d@r@d@r@f@r@d@r@f@p@f@r@f@r@f@p@f@p@f@p@f@p@h@p@f@p@h@p@h@n@h@p@h@n@h@n@h@n@h@p@h@l@h@n@j@n@h@l@h@n@j@l@h@l@j@l@j@l@h@l@j@l@j@l@j@j@j@j@j@l@j@j@j@h@j@j@l@j@j@h@l@h@j@h@l@h@j@h@l@f@l@h@l@f@l@f@l@d@n@f@l@d@l@d@n@d@l@b@n@d@n@b@l@b@n@b@n@b@l@`@n@b@n@`@l@`@n@`@l@`@n@`@l@`@l@`@l@`@l@`@l@`@j@`@l@`@j@`@j@b@h@`@j@b@h@b@h@b@h@b@f@d@h@d@f@d@d@f@f@d@d@f@d@h@d@f@d@h@d@h@b@j@b@h@b@j@b@j@b@j@b@l@`@j@b@l@b@l@`@j@b@l@b@j@`@l@b@j@b@j@d@j@b@j@b@h@d@h@d@f@d@f@d@f@f@d@d@d@f@b@f@`@h@`@f@^h@\\h@\\j@Zh@Zj@Vj@Xj@Tj@Tj@Tj@Pl@Rj@Nl@Pj@Nl@Ll@Nj@Ll@Jj@Lj@Lj@Jj@Lj@Jj@Lj@Lh@Lh@Nh@Nh@Nh@Pf@Pf@Rf@Rf@Td@Td@Vd@Xd@Xd@Zd@Zb@\\b@^b@^b@^b@`@b@b@b@`@b@b@`@b@b@d@b@b@`@d@b@b@b@d@`@b@b@b@b@b@b@`@b@`@b@^b@^b@\\d@\\b@Zd@Xb@Vd@Td@Tb@Pd@Pd@Nd@Ld@Ld@Hd@Fd@Fd@Dd@Dd@Bd@@b@@d@?d@?b@?d@?b@?b@Ad@?b@@b@?`@@b@Bb@B`@Db@F`@Hb@H`@L`@N`@P`@T`@V`@X`@Z`@^b@`@`@d@`@f@`@h@`@l@b@n@`@p@b@r@b@v@`@v@b@z@d@z@b@|@b@|@d@~@b@`Ad@`Ad@`Ad@`Ad@`Ad@~@d@`Af@~@d@|@f@|@d@x@f@x@d@v@f@t@d@r@f@n@d@l@f@j@d@f@d@b@d@b@d@\\d@Zb@Xd@Tb@Rb@Nb@Lb@H`@F`@Db@B`@@^A`@A^A^E`@E^E\\G^G^E^G\\G^E\\E^C^C\\A^A^@^@^B`@F^F`@H`@L`@L`@P`@Pb@Tb@Vb@Vb@Zd@\\d@\\d@^d@`@d@`@d@b@f@d@f@d@f@d@f@d@f@d@f@f@f@d@f@f@f@d@f@d@h@b@f@b@f@b@f@`@d@`@f@^f@\\d@\\f@Zd@Zd@Xd@Vb@Vd@Td@Rb@Rb@Pb@Pb@Pb@Nb@Nb@N`@Lb@Nb@L`@Nb@Lb@Nb@Lb@Nb@Pb@Nb@Pb@Pd@Rd@Rb@Td@Tf@Td@Vf@Xd@Xf@Xf@Zh@Zf@Zh@\\f@\\h@\\h@^h@\\h@^h@^h@\\j@^h@\\h@^h@\\j@\\h@\\h@\\h@Zh@Zh@Zh@Xh@Xf@Xh@Xh@Vf@Vh@Vf@Tf@Vh@Tf@Tf@Th@Tf@Th@Tf@Vh@Th@Vh@Vh@Vh@Vh@Xj@Xj@Xj@Zj@Zj@\\l@Zl@\\l@^l@\\l@^l@^n@^l@\\n@^l@^n@\\l@\\l@\\l@Zl@Xl@Xj@Vj@Th@Rh@Pf@Lf@Jd@Hb@Fb@B`@?^A^CZIZKXMVSVSRYRYP_@P_@Lc@Le@Lg@Jg@Hk@Hk@Hk@Fm@Hm@Fm@Fm@Hk@Fk@Hi@Jg@Hg@Lc@La@L_@N[RWRUTQVOXIZG\\C^?`@Bb@Fd@Hf@Lh@Pj@Rl@Tl@Xp@Xn@Zr@^p@\\r@^r@^r@^t@^p@\\r@\\p@Zp@Xn@Vn@Rj@Pj@Nf@Hf@Fb@B`@A^CZIXMVQRWNYN_@Jc@Fg@Dk@Bo@@q@?u@Ay@Cy@E}@G}@GaAG_AIaAIaAIaAIaAI_AG}@G}@Ey@Cw@As@Aq@@o@Bi@Dg@Ha@H_@NYNUTSVMXIZE`@?`@?d@Df@Hh@Hj@Nn@Nn@Rp@Rp@Tr@Vr@Vt@Tr@Vr@Vr@Tr@Rp@Rn@Nn@Nl@Jh@Ff@Dd@?b@A^E\\IXMTQRUN[J_@Fc@Dg@@k@?o@Cu@Gu@I{@K}@OaAQaAQeAUgAWiAWkAYiAYmAYkA[kAYmAYiAYkAYgAWgAWeAScASaAQ_AO{@My@Kw@Gs@Eo@Cm@Ak@@g@Bc@Da@F_@J[LYNWPSPQTQVOVKXMZIZKZIZI\\GZI\\KZIZKXKXMVOVOTSPSPUNYLYJ]H]Fa@Bc@@e@?i@Ai@Cm@Em@Gq@Ks@Ks@Ow@Ow@Qy@Sy@U}@U{@U}@Y_AW_AY}@Y_AY_AY_AY_AY}@Y}@W}@W{@W{@Uy@Sw@Sw@Qu@Os@Mq@Kq@Km@Gm@Ei@Ei@Ae@?e@@c@B_@D_@F]J[JYLWPUPURSTQVOXOZOZK\\M^K^I^K`@I`@Ib@Gb@Ib@Ib@Ib@Ib@Ib@I`@Ib@K`@K`@K`@M^M^O\\O\\OZQZSXSVUVUTWRWRYP[P[N[L]L_@J_@H_@Ha@Ha@Fc@Dc@Dc@De@Bc@De@@g@Be@Bg@@e@@g@@g@Bg@@e@@g@@g@Bg@@e@Bg@Bg@Be@Be@Dg@Be@De@De@De@Fc@Fe@De@Fc@Fe@He@Fc@Fe@Hc@Fe@Fe@Fe@Fe@Fe@Fe@Dg@Dg@Dg@Bg@Bg@Bi@@i@@k@?i@?k@Ak@Cm@Cm@Cm@Go@Em@Iq@Io@Iq@Mq@Kq@Os@Ms@Os@Qs@Qs@Su@Qs@Su@Uu@Su@Uu@Uu@Uu@Us@Su@Uu@Uu@Ss@Uu@Ss@Qs@Ss@Os@Qs@Oq@Mq@Mq@Mq@Kq@Io@Go@Go@Go@Cm@Cm@Cm@?m@?k@?m@@k@Bk@Dk@Bk@Fk@Fk@Fi@Hk@Hk@Ji@Jk@Ji@Jk@Lk@Jk@Lk@Lk@Jk@Lk@Jm@Jk@Jm@Jm@Hm@Ho@Hm@Fo@Do@Fq@Bo@Bq@@q@@s@?q@As@Cs@Cs@Eu@Es@Iu@Iu@Kw@Ku@Mw@Ou@Ow@Sw@Qw@Sy@Uw@Uw@Wy@Ww@Wy@Yw@Wy@Yw@[y@Yw@Yy@Yw@[y@Yy@Yw@Yw@Wy@Yw@Wy@Uw@Ww@Uy@Uw@Sw@Sy@Sw@Qy@Qw@Ow@Oy@Ow@My@Ow@My@Ky@My@Mw@Ky@Ky@My@Ky@M{@My@My@M{@Oy@O{@Qy@Q{@Sy@S{@Uy@W{@Wy@Y{@[y@]y@]y@_@y@a@y@a@y@e@y@e@w@e@y@i@w@i@w@i@w@k@u@m@w@m@u@o@u@m@u@o@u@q@u@o@s@q@u@o@s@q@s@o@u@o@s@o@s@o@s@m@q@m@s@m@s@k@s@i@u@i@s@i@s@g@s@e@u@e@u@c@u@c@u@a@u@_@u@_@w@_@u@]w@]w@[y@[w@[y@Yy@Yw@[y@Yy@Yy@Y{@Yy@[y@[y@[y@[w@]y@]w@_@y@_@w@a@u@a@w@c@u@c@u@e@s@g@s@g@s@i@q@k@q@k@o@k@o@m@o@m@m@o@m@q@k@o@k@q@k@q@i@s@k@q@i@s@g@q@i@s@g@q@i@q@g@s@g@o@g@q@i@o@g@o@i@o@i@m@i@k@i@m@k@i@k@k@k@g@m@i@m@e@m@g@o@c@o@e@q@c@q@a@q@c@s@a@s@_@s@a@u@_@u@_@u@_@u@_@u@_@w@_@u@a@u@_@w@a@u@_@u@a@s@c@s@a@s@c@s@e@q@e@o@e@o@g@o@g@k@i@m@i@i@i@i@m@g@k@e@m@e@m@c@o@a@o@_@o@_@q@]q@]q@[q@[s@Ys@Wq@Ys@Ws@Uq@Ws@Uq@Us@Uq@Wq@Uo@Uq@Wo@Wo@Wo@Wm@Ym@Yk@[m@[k@[i@]k@_@i@_@g@a@i@a@g@a@g@c@g@c@e@e@e@e@g@g@e@e@e@g@c@i@e@g@e@g@e@i@c@i@e@g@e@i@c@g@e@g@e@g@e@g@e@e@g@e@e@e@e@e@g@c@g@a@e@a@g@a@g@_@g@_@i@]g@]g@[i@[g@[i@Yi@Wg@Yi@Wi@Ui@Wi@Ug@Ui@Si@Ug@Si@Si@Sg@Si@Sg@Sg@Si@Sg@Sg@Sg@Sg@Ug@Sg@Sg@Sg@Ue@Sg@Ue@Sg@Ue@Sg@Ue@Ue@Ug@Se@Ue@Ue@Ue@Se@Ue@Ue@Ue@Ue@Se@Ue@Ue@Ue@Uc@Ue@Ue@Uc@Ue@Wc@Ue@Wc@We@Wc@We@Yc@Yc@Ye@Yc@Yc@[e@[c@]c@[c@]e@]c@_@c@]e@_@c@]c@_@e@_@c@_@c@_@e@]c@_@c@]e@]c@]c@]e@[c@[e@Yc@Yc@Ye@Uc@Wc@Sc@Sc@Qc@Qc@Oc@Mc@Mc@Kc@Ia@Ic@Ga@Gc@Ea@Ea@Ea@Ca@Ca@Ca@Ca@Ca@Ca@Ea@Ca@E_@Ea@Ga@Ga@Ia@Ka@Ka@Ma@Oa@Oc@Sa@Sc@Wc@Wc@Yc@Yc@]c@]e@_@c@a@e@a@e@c@e@c@e@e@e@c@e@e@e@e@e@e@g@c@e@e@e@c@e@a@e@a@e@_@e@_@e@]e@Yc@Yc@Wc@Sc@Sc@Oa@Ma@Ka@I_@E_@C_@C_@?]@]B]D]D[F]H[H[HYJ[J[J[HYH[H[F[F[D]B[@]A]A_@E]Ga@I_@Ka@Qa@Qc@Ue@Wc@[e@]g@a@g@a@g@e@i@g@i@i@k@k@i@m@m@m@k@o@k@q@m@o@m@q@m@q@m@q@m@o@m@o@m@o@m@m@k@k@m@k@k@i@k@e@i@e@i@a@i@_@i@]g@Ye@We@Ue@Qc@Oc@Ma@Ia@G_@E_@C_@A]@]@[D[D[DYF[HYHYHYJYHYJYHYHYHYHYD[F[D[B[@]@[?_@?]C_@C_@Ea@G_@Ga@Ic@Ka@Kc@Me@Oc@Oe@Oe@Qe@Qe@Qe@Se@Qg@Se@Sg@Qe@Sg@Qe@Qe@Qg@Qe@Oc@Oe@Oe@Mc@Kc@Kc@Kc@Ic@Ga@Ga@Ga@E_@Ca@C_@A]A_@?]?]?]B]@[B[D[D[DYFYFYHYHYHWJYHWLWJWLULWLULWLUNUNULWNUNULUNWLULWLUJWJWJYHWH[FYF[D[B]@]@_@A_@Aa@Ca@Ec@Gc@Gg@Ke@Mi@Mi@Qi@Qk@Sm@Um@Um@Wo@Wo@Yo@Yq@[q@Yq@[q@Yo@Yq@Yq@Wo@Wm@Uo@Sk@Qk@Oi@Mi@Ie@Ge@Ca@Aa@@]D[HYJWNSRSVOZK\\K`@Gd@Gf@Cj@Al@An@@p@@r@@t@Dv@Bt@Dx@Dv@Dv@Dt@Bv@Br@Br@@p@?l@Aj@Ch@Ed@G`@I^MXOVSRWLWJ]F_@@a@?e@Cg@Gk@Km@Mo@Qq@Su@Uu@Wu@Ww@Yy@Yy@[w@Yy@Yw@Yw@Uu@Us@Qq@Oo@Mm@Ik@Ce@Ac@@a@F[JWNUTOXK^Gd@Cf@?l@Br@Fv@Jx@L~@P`ATfAVfAXjAZjA\\nA^nA^pA`@nA^pA`@nA^nA\\lA\\jAZhAXfAVbAR~@P|@Nx@Ht@Fn@@l@?f@Cd@G^KXQVSRWL[J_@Fa@De@?g@?i@Ck@Co@Eo@Go@Iq@Gq@Go@Iq@Eo@Gm@Cm@Ai@Ag@@e@Dc@F_@J[LYPSTQXM\\I`@Eb@Ah@@j@Dn@Hr@Jt@Nx@Rz@R|@V~@X`AZbAZbA^dA\\bA^dA\\dA\\bA\\bA\\bAZ~@X~@T|@Tx@Rx@Nt@Jr@Hn@Fl@@h@@f@Cd@G`@I\\MZOXSTWTWP]N]L_@Lc@Jc@He@He@Fe@Hg@Fg@He@Hg@He@Jc@Jc@Ja@N_@N]P[TWTWVSXQZO\\K`@I`@Gb@Ef@Af@?h@@j@@j@Dn@Fl@Fp@Hn@Jr@Jp@Jp@Jr@Jp@Lr@Jp@Jp@Hp@Hp@Fn@Fl@Dl@Bl@Bj@@h@Ah@Ah@Cd@Ef@Eb@Id@I`@Kb@M`@M^O`@O^Q^Q^Q\\Q^S^Q^Q`@Q^O`@O`@Mb@Mb@Ib@Kd@Gf@",
+            "resource_state": 3,
+            "summary_polyline": "_i_uHoll{AKrG`A~HxBzInCdJ~BvIrAbId@nHHdHFhH`@vHhAdInBrIdCxIbCvInBrIrAlIz@hIj@lIn@rI|@xItA`JjBdJ`ChJrChJ`DjJlDjJxDhJfEfJnEdJtE`JzE~I|EzI`FzIfFtIlFnIxFhI`G~HfGtHnGlHrGdHxGvG|GlGdHzFjHjFlH|EfHvExGzEfGhFtF~FdFtG`F~GdFtGtFxFdGhEvGvC|GhB|GtAnGzA~F|BnFjDbFtE`FhFbF|EhFlDnFlBpFh@lFBbFD|Ez@xExCzEdG`FfJlF|KtFtKxFpIpFdFfFlBtEHjEi@dEc@lERxEfBjFvDxFjF`GrFzFxErFfDfFxB`F`BbFbBlF`CzFdDhG~DlGdEjGvDfG~C`GnCfGpCrGdD`H~DhHfE`HfD|FxAfE]dC}CnA}Fv@aHjAoFfC{BxETbHpCfIfExH~ClF`@dCiCVoHm@sKw@sK?uHhByC|EHrHxBjIpCzGbAlDmAf@{FsAmK{C{McDwMkBkKKwGtAcD~CuAtDaAvCeBnAqDKoG_B_JwCmKcDoKeCmJgAmHL}EbBwCjD}AvEaAbF_ApEuAhD}BvBgDdAqE`@mFNyFR{F^sFn@mFt@mFj@wFLkG]eHkA}HsBoIgCuIcCsIiBcI}@sHGaHf@wGfAqGrAyGdAgH^wHUkImA{IaCgJ_DiJgDkJwCiJ}BiJ_BiJqAqJ}AuJcCwJ{DsJwFgJeH}IuHoIiHiIcGoIuE{IsDiJgDqJ{DkJaFyIsGyHwHyGcIeGuHeGuGwGmFsHsEqImE{I_FkI_GcHcHkF}HwDeIuC{HqCeHeDkGkEyFmFmFcGoF_GwFgFaGcEgGaDgGiCcG_C_G_CyFeCuFgCsFiCmFiCmFqCiFaDgFuDiFeEiFeEiFoDgFcCaFmA{Eg@wEYuEu@}EoBeFsDoFeFuFiFmF}D_FgBiEKuDv@oD`AwDPsEqAsFcEqGyGcHyH}GwGeG_EaFuA}DHiD|@eD|@uDTkEc@eFyAsFuBuFuBmF{A}Eu@gEIuD\\cD|@uCrAoC`BqCvAcDx@eEAsFgAaHkCyHiDoHoC{Fw@eDnAcA|EFdIb@~IE`HeBxC_FEcI_CiJeD{H}A}D`A[dGvBlLhE|NvD~MpA`JkAtD{E\\qHo@eH[aEnAm@bFbBjJvDpLtDfL`BtI_@`F_DvBmF~@oFfAoD`CkArERxGfA`IdAzHRxGo@lFeBnEsBlEoAfF"
+        },
+        "trainer": false,
+        "commute": false,
+        "manual": false,
+        "private": false,
+        "visibility": "everyone",
+        "flagged": false,
+        "gear_id": "b16637292",
+        "start_latlng": {
+            "0": 50.792,
+            "1": 15.142
+        },
+        "end_latlng": {
+            "0": 50.792,
+            "1": 15.142
+        },
+        "average_speed": 3.843,
+        "max_speed": 9.73,
+        "average_temp": 25,
+        "has_heartrate": true,
+        "average_heartrate": 137.3,
+        "max_heartrate": 172,
+        "heartrate_opt_out": false,
+        "display_hide_heartrate_option": true,
+        "elev_high": 801.5,
+        "elev_low": 409.9,
+        "upload_id": 18172912311,
+        "upload_id_str": "18172912311",
+        "external_id": "garmin_ping_564945198715",
+        "from_accepted_tag": false,
+        "pr_count": 5,
+        "total_photo_count": 0,
+        "has_kudoed": false,
+        "description": "Testování nového pláště",
+        "calories": 2289,
+        "perceived_exertion": null,
+        "prefer_perceived_exertion": null,
+        "segment_efforts": {
+            "0": {
+                "id": 3491042059300137000,
+                "resource_state": 2,
+                "name": "Novoveská poesie",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 207,
+                "moving_time": 207,
+                "start_date": "2026-08-04T09:13:30Z",
+                "start_date_local": "2026-08-04T11:13:30Z",
+                "distance": 871.9,
+                "start_index": 794,
+                "end_index": 976,
+                "device_watts": false,
+                "average_heartrate": 123.6,
+                "max_heartrate": 134,
+                "segment": {
+                    "id": 39428971,
+                    "resource_state": 2,
+                    "name": "Novoveská poesie",
+                    "activity_type": "Ride",
+                    "distance": 871.9,
+                    "average_grade": 3.2,
+                    "maximum_grade": 7.1,
+                    "elevation_high": 643.6,
+                    "elevation_low": 615.4,
+                    "start_latlng": {
+                        "0": 50.732215,
+                        "1": 15.226579
+                    },
+                    "end_latlng": {
+                        "0": 50.72448,
+                        "1": 15.225571
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 0,
+                    "city": "Smržovka",
+                    "state": "Northeast",
+                    "country": "Czechia",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": null,
+                "achievements": {},
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "1": {
+                "id": 3491042059302332400,
+                "resource_state": 2,
+                "name": "Segment",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 638,
+                "moving_time": 636,
+                "start_date": "2026-08-04T09:15:22Z",
+                "start_date_local": "2026-08-04T11:15:22Z",
+                "distance": 1326.5,
+                "start_index": 898,
+                "end_index": 1485,
+                "device_watts": false,
+                "average_heartrate": 135.6,
+                "max_heartrate": 145,
+                "segment": {
+                    "id": 5838639,
+                    "resource_state": 2,
+                    "name": "Segment",
+                    "activity_type": "Ride",
+                    "distance": 1326.5,
+                    "average_grade": 7.4,
+                    "maximum_grade": 46.8,
+                    "elevation_high": 669.8,
+                    "elevation_low": 571.8,
+                    "start_latlng": {
+                        "0": 50.727816,
+                        "1": 15.226072
+                    },
+                    "end_latlng": {
+                        "0": 50.718199,
+                        "1": 15.234651
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 1,
+                    "city": "Smržovka",
+                    "state": "Liberec Region",
+                    "country": "Czech Republic",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": null,
+                "achievements": {},
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "2": {
+                "id": 3491042059302829000,
+                "resource_state": 2,
+                "name": "sankarska dr.-Berany",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 425,
+                "moving_time": 424,
+                "start_date": "2026-08-04T09:27:32Z",
+                "start_date_local": "2026-08-04T11:27:32Z",
+                "distance": 1088.2,
+                "start_index": 1543,
+                "end_index": 1927,
+                "device_watts": false,
+                "average_heartrate": 131.5,
+                "max_heartrate": 144,
+                "segment": {
+                    "id": 25823093,
+                    "resource_state": 2,
+                    "name": "sankarska dr.-Berany",
+                    "activity_type": "Ride",
+                    "distance": 1088.2,
+                    "average_grade": 5.5,
+                    "maximum_grade": 12.2,
+                    "elevation_high": 795.3,
+                    "elevation_low": 735.8,
+                    "start_latlng": {
+                        "0": 50.718494,
+                        "1": 15.241399
+                    },
+                    "end_latlng": {
+                        "0": 50.713706,
+                        "1": 15.251566
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 0,
+                    "city": "Smržovka",
+                    "state": "Liberecký kraj",
+                    "country": "Czechia",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": null,
+                "achievements": {},
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "3": {
+                "id": 3491042059301133300,
+                "resource_state": 2,
+                "name": "Berany - Vrchůra (MTB trail)",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 633,
+                "moving_time": 491,
+                "start_date": "2026-08-04T09:34:44Z",
+                "start_date_local": "2026-08-04T11:34:44Z",
+                "distance": 1985.4,
+                "start_index": 1934,
+                "end_index": 2376,
+                "device_watts": false,
+                "average_heartrate": 121.1,
+                "max_heartrate": 146,
+                "segment": {
+                    "id": 9896369,
+                    "resource_state": 2,
+                    "name": "Berany - Vrchůra (MTB trail)",
+                    "activity_type": "Ride",
+                    "distance": 1985.4,
+                    "average_grade": -2.4,
+                    "maximum_grade": 12.8,
+                    "elevation_high": 830,
+                    "elevation_low": 752.7,
+                    "start_latlng": {
+                        "0": 50.713704,
+                        "1": 15.251815
+                    },
+                    "end_latlng": {
+                        "0": 50.719167,
+                        "1": 15.275924
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 0,
+                    "city": "Velké Hamry",
+                    "state": "Liberec Region",
+                    "country": "Czech Republic",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": 2,
+                "achievements": {
+                    "0": {
+                        "type_id": 3,
+                        "type": "pr",
+                        "rank": 2
+                    }
+                },
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "4": {
+                "id": 3491042059303099400,
+                "resource_state": 2,
+                "name": "DH Muchov - žlutou - Smržovka",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 274,
+                "moving_time": 232,
+                "start_date": "2026-08-04T09:59:15Z",
+                "start_date_local": "2026-08-04T11:59:15Z",
+                "distance": 927.1,
+                "start_index": 2814,
+                "end_index": 3023,
+                "device_watts": false,
+                "average_heartrate": 106.5,
+                "max_heartrate": 128,
+                "segment": {
+                    "id": 7266724,
+                    "resource_state": 2,
+                    "name": "DH Muchov - žlutou - Smržovka",
+                    "activity_type": "Ride",
+                    "distance": 927.1,
+                    "average_grade": -18.1,
+                    "maximum_grade": 7.3,
+                    "elevation_high": 764.7,
+                    "elevation_low": 594.4,
+                    "start_latlng": {
+                        "0": 50.72422,
+                        "1": 15.29103
+                    },
+                    "end_latlng": {
+                        "0": 50.731438,
+                        "1": 15.285772
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 0,
+                    "city": "Velké Hamry",
+                    "state": "Liberec Region",
+                    "country": "Czech Republic",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": 1,
+                "achievements": {
+                    "0": {
+                        "type_id": 3,
+                        "type": "pr",
+                        "rank": 1
+                    }
+                },
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "5": {
+                "id": 3491042059301867500,
+                "resource_state": 2,
+                "name": "stoupací trail Kotlina",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 572,
+                "moving_time": 551,
+                "start_date": "2026-08-04T10:18:32Z",
+                "start_date_local": "2026-08-04T12:18:32Z",
+                "distance": 1192.6,
+                "start_index": 3713,
+                "end_index": 4237,
+                "device_watts": false,
+                "average_heartrate": 139.4,
+                "max_heartrate": 146,
+                "segment": {
+                    "id": 34087277,
+                    "resource_state": 2,
+                    "name": "stoupací trail Kotlina",
+                    "activity_type": "Ride",
+                    "distance": 1192.6,
+                    "average_grade": 7.1,
+                    "maximum_grade": 31.7,
+                    "elevation_high": 680.6,
+                    "elevation_low": 595.4,
+                    "start_latlng": {
+                        "0": 50.743401,
+                        "1": 15.280598
+                    },
+                    "end_latlng": {
+                        "0": 50.745637,
+                        "1": 15.291091
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 1,
+                    "city": "Tanvald",
+                    "state": "Northeast",
+                    "country": "Czechia",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": 1,
+                "achievements": {
+                    "0": {
+                        "type_id": 3,
+                        "type": "pr",
+                        "rank": 1
+                    }
+                },
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "6": {
+                "id": 3491042059302760400,
+                "resource_state": 2,
+                "name": "ze sedla Špičáku k rozhledně",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 914,
+                "moving_time": 908,
+                "start_date": "2026-08-04T10:30:56Z",
+                "start_date_local": "2026-08-04T12:30:56Z",
+                "distance": 1449.9,
+                "start_index": 4329,
+                "end_index": 5021,
+                "device_watts": false,
+                "average_heartrate": 134.3,
+                "max_heartrate": 147,
+                "segment": {
+                    "id": 13310153,
+                    "resource_state": 2,
+                    "name": "ze sedla Špičáku k rozhledně",
+                    "activity_type": "Ride",
+                    "distance": 1449.9,
+                    "average_grade": 9.5,
+                    "maximum_grade": 37,
+                    "elevation_high": 798.5,
+                    "elevation_low": 653,
+                    "start_latlng": {
+                        "0": 50.746576,
+                        "1": 15.285541
+                    },
+                    "end_latlng": {
+                        "0": 50.751251,
+                        "1": 15.282955
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 1,
+                    "city": "Tanvald",
+                    "state": "Liberec Region",
+                    "country": "Czech Republic",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": null,
+                "achievements": {},
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "7": {
+                "id": 3491042059300147000,
+                "resource_state": 2,
+                "name": "Segment",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 361,
+                "moving_time": 358,
+                "start_date": "2026-08-04T10:31:36Z",
+                "start_date_local": "2026-08-04T12:31:36Z",
+                "distance": 596.2,
+                "start_index": 4369,
+                "end_index": 4650,
+                "device_watts": false,
+                "average_heartrate": 134,
+                "max_heartrate": 147,
+                "segment": {
+                    "id": 5660801,
+                    "resource_state": 2,
+                    "name": "Segment",
+                    "activity_type": "Ride",
+                    "distance": 596.2,
+                    "average_grade": 15.3,
+                    "maximum_grade": 31.7,
+                    "elevation_high": 746,
+                    "elevation_low": 654.9,
+                    "start_latlng": {
+                        "0": 50.747203,
+                        "1": 15.284747
+                    },
+                    "end_latlng": {
+                        "0": 50.751985,
+                        "1": 15.287483
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 1,
+                    "city": "Tanvald",
+                    "state": "Liberec Region",
+                    "country": "Czech Republic",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": 1,
+                "achievements": {
+                    "0": {
+                        "type_id": 3,
+                        "type": "pr",
+                        "rank": 1
+                    }
+                },
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "8": {
+                "id": 3491042059300708400,
+                "resource_state": 2,
+                "name": "Špičák závěr",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 404,
+                "moving_time": 401,
+                "start_date": "2026-08-04T10:38:53Z",
+                "start_date_local": "2026-08-04T12:38:53Z",
+                "distance": 478,
+                "start_index": 4700,
+                "end_index": 4998,
+                "device_watts": false,
+                "average_heartrate": 137.1,
+                "max_heartrate": 147,
+                "segment": {
+                    "id": 23211397,
+                    "resource_state": 2,
+                    "name": "Špičák závěr",
+                    "activity_type": "Ride",
+                    "distance": 478,
+                    "average_grade": 15.7,
+                    "maximum_grade": 28.3,
+                    "elevation_high": 829,
+                    "elevation_low": 753.8,
+                    "start_latlng": {
+                        "0": 50.753368,
+                        "1": 15.288816
+                    },
+                    "end_latlng": {
+                        "0": 50.75145,
+                        "1": 15.283787
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 0,
+                    "city": "Tanvald",
+                    "state": "Liberecký kraj",
+                    "country": "Czechia",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": 2,
+                "achievements": {
+                    "0": {
+                        "type_id": 3,
+                        "type": "pr",
+                        "rank": 2
+                    }
+                },
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "9": {
+                "id": 3491042059302369300,
+                "resource_state": 2,
+                "name": "Segment",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 366,
+                "moving_time": 356,
+                "start_date": "2026-08-04T11:21:18Z",
+                "start_date_local": "2026-08-04T13:21:18Z",
+                "distance": 596.2,
+                "start_index": 6140,
+                "end_index": 6472,
+                "device_watts": false,
+                "average_heartrate": 140.9,
+                "max_heartrate": 151,
+                "segment": {
+                    "id": 5660801,
+                    "resource_state": 2,
+                    "name": "Segment",
+                    "activity_type": "Ride",
+                    "distance": 596.2,
+                    "average_grade": 15.3,
+                    "maximum_grade": 31.7,
+                    "elevation_high": 746,
+                    "elevation_low": 654.9,
+                    "start_latlng": {
+                        "0": 50.747203,
+                        "1": 15.284747
+                    },
+                    "end_latlng": {
+                        "0": 50.751985,
+                        "1": 15.287483
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 1,
+                    "city": "Tanvald",
+                    "state": "Liberec Region",
+                    "country": "Czech Republic",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": 2,
+                "achievements": {
+                    "0": {
+                        "type_id": 3,
+                        "type": "pr",
+                        "rank": 2
+                    }
+                },
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "10": {
+                "id": 3491042059301846000,
+                "resource_state": 2,
+                "name": "Bikepark TS - spodní část",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 271,
+                "moving_time": 271,
+                "start_date": "2026-08-04T11:34:58Z",
+                "start_date_local": "2026-08-04T13:34:58Z",
+                "distance": 1528.5,
+                "start_index": 6829,
+                "end_index": 7050,
+                "device_watts": false,
+                "average_heartrate": 135.3,
+                "max_heartrate": 149,
+                "segment": {
+                    "id": 16375994,
+                    "resource_state": 2,
+                    "name": "Bikepark TS - spodní část",
+                    "activity_type": "Ride",
+                    "distance": 1528.5,
+                    "average_grade": -5.8,
+                    "maximum_grade": 16.2,
+                    "elevation_high": 639.6,
+                    "elevation_low": 548.6,
+                    "start_latlng": {
+                        "0": 50.756107,
+                        "1": 15.279209
+                    },
+                    "end_latlng": {
+                        "0": 50.759537,
+                        "1": 15.273646
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 0,
+                    "city": "Tanvald",
+                    "state": "Liberecký kraj",
+                    "country": "Czechia",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": 3,
+                "achievements": {
+                    "0": {
+                        "type_id": 3,
+                        "type": "pr",
+                        "rank": 3
+                    }
+                },
+                "visibility": "everyone",
+                "hidden": false
+            },
+            "11": {
+                "id": 3491042059301164000,
+                "resource_state": 2,
+                "name": "Segment",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 896,
+                "moving_time": 865,
+                "start_date": "2026-08-04T11:45:22Z",
+                "start_date_local": "2026-08-04T13:45:22Z",
+                "distance": 1500.1,
+                "start_index": 7253,
+                "end_index": 7945,
+                "device_watts": false,
+                "average_heartrate": 134,
+                "max_heartrate": 143,
+                "segment": {
+                    "id": 4203028,
+                    "resource_state": 2,
+                    "name": "Segment",
+                    "activity_type": "Ride",
+                    "distance": 1500.1,
+                    "average_grade": 10,
+                    "maximum_grade": 28.8,
+                    "elevation_high": 668.6,
+                    "elevation_low": 518.9,
+                    "start_latlng": {
+                        "0": 50.754883,
+                        "1": 15.262006
+                    },
+                    "end_latlng": {
+                        "0": 50.746774,
+                        "1": 15.24741
+                    },
+                    "elevation_profile": null,
+                    "elevation_profiles": null,
+                    "climb_category": 1,
+                    "city": "Smržovka",
+                    "state": "Liberec Region",
+                    "country": "Czech Republic",
+                    "private": false,
+                    "hazardous": false,
+                    "starred": false
+                },
+                "pr_rank": null,
+                "achievements": {},
+                "visibility": "everyone",
+                "hidden": false
+            }
+        },
+        "splits_metric": {
+            "0": {
+                "distance": 1004.1,
+                "elapsed_time": 354,
+                "elevation_difference": 73,
+                "moving_time": 354,
+                "split": 1,
+                "average_speed": 2.84,
+                "average_grade_adjusted_speed": 3.98,
+                "average_heartrate": 117.50145772594752,
+                "pace_zone": 0
+            },
+            "1": {
+                "distance": 1002.2,
+                "elapsed_time": 138,
+                "elevation_difference": -27.4,
+                "moving_time": 138,
+                "split": 2,
+                "average_speed": 7.26,
+                "average_grade_adjusted_speed": 6.98,
+                "average_heartrate": 129.05072463768116,
+                "pace_zone": 0
+            },
+            "2": {
+                "distance": 1000.1,
+                "elapsed_time": 1365,
+                "elevation_difference": -3,
+                "moving_time": 1365,
+                "split": 3,
+                "average_speed": 0.73,
+                "average_grade_adjusted_speed": 0.81,
+                "average_heartrate": 110.89105058365759,
+                "pace_zone": 0
+            },
+            "3": {
+                "distance": 995.9,
+                "elapsed_time": 192,
+                "elevation_difference": 14.6,
+                "moving_time": 192,
+                "split": 4,
+                "average_speed": 5.19,
+                "average_grade_adjusted_speed": 5.5,
+                "average_heartrate": 119.33333333333333,
+                "pace_zone": 0
+            },
+            "4": {
+                "distance": 999.5,
+                "elapsed_time": 464,
+                "elevation_difference": 73.4,
+                "moving_time": 464,
+                "split": 5,
+                "average_speed": 2.15,
+                "average_grade_adjusted_speed": 2.89,
+                "average_heartrate": 134.95689655172413,
+                "pace_zone": 0
+            },
+            "5": {
+                "distance": 1007.7,
+                "elapsed_time": 312,
+                "elevation_difference": 28.4,
+                "moving_time": 312,
+                "split": 6,
+                "average_speed": 3.23,
+                "average_grade_adjusted_speed": 3.75,
+                "average_heartrate": 133.16774193548386,
+                "pace_zone": 0
+            },
+            "6": {
+                "distance": 991.9,
+                "elapsed_time": 388,
+                "elevation_difference": 51.6,
+                "moving_time": 388,
+                "split": 7,
+                "average_speed": 2.56,
+                "average_grade_adjusted_speed": 3.11,
+                "average_heartrate": 133.51679586563307,
+                "pace_zone": 0
+            },
+            "7": {
+                "distance": 1006.1,
+                "elapsed_time": 453,
+                "elevation_difference": 19.2,
+                "moving_time": 453,
+                "split": 8,
+                "average_speed": 2.22,
+                "average_grade_adjusted_speed": 2.56,
+                "average_heartrate": 126.51446945337621,
+                "pace_zone": 0
+            },
+            "8": {
+                "distance": 993.7,
+                "elapsed_time": 258,
+                "elevation_difference": -45.4,
+                "moving_time": 258,
+                "split": 9,
+                "average_speed": 3.85,
+                "average_grade_adjusted_speed": 3.85,
+                "average_heartrate": 119.45736434108527,
+                "pace_zone": 0
+            },
+            "9": {
+                "distance": 1014,
+                "elapsed_time": 353,
+                "elevation_difference": -6.2,
+                "moving_time": 353,
+                "split": 10,
+                "average_speed": 2.87,
+                "average_grade_adjusted_speed": 3.08,
+                "average_heartrate": 144.80979827089337,
+                "pace_zone": 0
+            },
+            "10": {
+                "distance": 985.9,
+                "elapsed_time": 637,
+                "elevation_difference": -174.8,
+                "moving_time": 637,
+                "split": 11,
+                "average_speed": 1.55,
+                "average_grade_adjusted_speed": 1.62,
+                "average_heartrate": 106.73553719008264,
+                "pace_zone": 0
+            },
+            "11": {
+                "distance": 1000.5,
+                "elapsed_time": 339,
+                "elevation_difference": -79.6,
+                "moving_time": 339,
+                "split": 12,
+                "average_speed": 2.95,
+                "average_grade_adjusted_speed": 2.8,
+                "average_heartrate": 107.10106382978724,
+                "pace_zone": 0
+            },
+            "12": {
+                "distance": 1000.4,
+                "elapsed_time": 533,
+                "elevation_difference": 87.8,
+                "moving_time": 533,
+                "split": 13,
+                "average_speed": 1.88,
+                "average_grade_adjusted_speed": 2.69,
+                "average_heartrate": 131.6704331450094,
+                "pace_zone": 0
+            },
+            "13": {
+                "distance": 998.3,
+                "elapsed_time": 471,
+                "elevation_difference": 70.8,
+                "moving_time": 471,
+                "split": 14,
+                "average_speed": 2.12,
+                "average_grade_adjusted_speed": 2.81,
+                "average_heartrate": 139.32765957446807,
+                "pace_zone": 0
+            },
+            "14": {
+                "distance": 1001.9,
+                "elapsed_time": 489,
+                "elevation_difference": 22.4,
+                "moving_time": 489,
+                "split": 15,
+                "average_speed": 2.05,
+                "average_grade_adjusted_speed": 2.54,
+                "average_heartrate": 128.64676616915423,
+                "pace_zone": 0
+            },
+            "15": {
+                "distance": 997.9,
+                "elapsed_time": 679,
+                "elevation_difference": 107.4,
+                "moving_time": 679,
+                "split": 16,
+                "average_speed": 1.47,
+                "average_grade_adjusted_speed": 2.35,
+                "average_heartrate": 135.66913946587536,
+                "pace_zone": 0
+            },
+            "16": {
+                "distance": 1000.2,
+                "elapsed_time": 1082,
+                "elevation_difference": -46.6,
+                "moving_time": 1073,
+                "split": 17,
+                "average_speed": 0.93,
+                "average_grade_adjusted_speed": 1.19,
+                "average_heartrate": 111.13612565445027,
+                "pace_zone": 0
+            },
+            "17": {
+                "distance": 1001.4,
+                "elapsed_time": 476,
+                "elevation_difference": -153.4,
+                "moving_time": 476,
+                "split": 18,
+                "average_speed": 2.1,
+                "average_grade_adjusted_speed": 2.58,
+                "average_heartrate": 114.93767705382436,
+                "pace_zone": 0
+            },
+            "18": {
+                "distance": 999.8,
+                "elapsed_time": 825,
+                "elevation_difference": 110.8,
+                "moving_time": 825,
+                "split": 19,
+                "average_speed": 1.21,
+                "average_grade_adjusted_speed": 2.06,
+                "average_heartrate": 137.87269938650306,
+                "pace_zone": 0
+            },
+            "19": {
+                "distance": 1011.3,
+                "elapsed_time": 377,
+                "elevation_difference": 8.8,
+                "moving_time": 377,
+                "split": 20,
+                "average_speed": 2.68,
+                "average_grade_adjusted_speed": 2.99,
+                "average_heartrate": 137.56268221574345,
+                "pace_zone": 0
+            },
+            "20": {
+                "distance": 990.6,
+                "elapsed_time": 173,
+                "elevation_difference": -54.4,
+                "moving_time": 173,
+                "split": 21,
+                "average_speed": 5.73,
+                "average_grade_adjusted_speed": 5.34,
+                "average_heartrate": 136.53179190751445,
+                "pace_zone": 0
+            },
+            "21": {
+                "distance": 998.5,
+                "elapsed_time": 179,
+                "elevation_difference": -62.6,
+                "moving_time": 179,
+                "split": 22,
+                "average_speed": 5.58,
+                "average_grade_adjusted_speed": 5.09,
+                "average_heartrate": 139.31843575418995,
+                "pace_zone": 0
+            },
+            "22": {
+                "distance": 1000.2,
+                "elapsed_time": 209,
+                "elevation_difference": -68,
+                "moving_time": 209,
+                "split": 23,
+                "average_speed": 4.79,
+                "average_grade_adjusted_speed": 4.39,
+                "average_heartrate": 134.24852071005918,
+                "pace_zone": 0
+            },
+            "23": {
+                "distance": 1001,
+                "elapsed_time": 270,
+                "elevation_difference": -4,
+                "moving_time": 270,
+                "split": 24,
+                "average_speed": 3.71,
+                "average_grade_adjusted_speed": 3.91,
+                "average_heartrate": 119.93617021276596,
+                "pace_zone": 0
+            },
+            "24": {
+                "distance": 997.3,
+                "elapsed_time": 473,
+                "elevation_difference": 60.4,
+                "moving_time": 473,
+                "split": 25,
+                "average_speed": 2.11,
+                "average_grade_adjusted_speed": 2.71,
+                "average_heartrate": 134.3779193205945,
+                "pace_zone": 0
+            },
+            "25": {
+                "distance": 1000.5,
+                "elapsed_time": 759,
+                "elevation_difference": 81.6,
+                "moving_time": 759,
+                "split": 26,
+                "average_speed": 1.32,
+                "average_grade_adjusted_speed": 2.05,
+                "average_heartrate": 129.90196078431373,
+                "pace_zone": 0
+            },
+            "26": {
+                "distance": 999.3,
+                "elapsed_time": 285,
+                "elevation_difference": -71.8,
+                "moving_time": 285,
+                "split": 27,
+                "average_speed": 3.51,
+                "average_grade_adjusted_speed": 3.62,
+                "average_heartrate": 115.98920863309353,
+                "pace_zone": 0
+            },
+            "27": {
+                "distance": 381.5,
+                "elapsed_time": 165,
+                "elevation_difference": -2,
+                "moving_time": 165,
+                "split": 28,
+                "average_speed": 2.31,
+                "average_grade_adjusted_speed": 2.4,
+                "average_heartrate": 123.76027397260275,
+                "pace_zone": 0
+            }
+        },
+        "splits_standard": {
+            "0": {
+                "distance": 1613.8,
+                "elapsed_time": 431,
+                "elevation_difference": 51.2,
+                "moving_time": 431,
+                "split": 1,
+                "average_speed": 3.74,
+                "average_grade_adjusted_speed": 4.62,
+                "average_heartrate": 120.20952380952382,
+                "pace_zone": 0
+            },
+            "1": {
+                "distance": 1605,
+                "elapsed_time": 1451,
+                "elevation_difference": -12.6,
+                "moving_time": 1451,
+                "split": 2,
+                "average_speed": 1.11,
+                "average_grade_adjusted_speed": 1.16,
+                "average_heartrate": 113.38192419825073,
+                "pace_zone": 0
+            },
+            "2": {
+                "distance": 1609.7,
+                "elapsed_time": 530,
+                "elevation_difference": 71.8,
+                "moving_time": 530,
+                "split": 3,
+                "average_speed": 3.04,
+                "average_grade_adjusted_speed": 3.61,
+                "average_heartrate": 129.2188679245283,
+                "pace_zone": 0
+            },
+            "3": {
+                "distance": 1609.8,
+                "elapsed_time": 579,
+                "elevation_difference": 69.8,
+                "moving_time": 579,
+                "split": 4,
+                "average_speed": 2.78,
+                "average_grade_adjusted_speed": 3.38,
+                "average_heartrate": 132.7105719237435,
+                "pace_zone": 0
+            },
+            "4": {
+                "distance": 1612.1,
+                "elapsed_time": 682,
+                "elevation_difference": 46.2,
+                "moving_time": 682,
+                "split": 5,
+                "average_speed": 2.36,
+                "average_grade_adjusted_speed": 2.78,
+                "average_heartrate": 131.22634508348793,
+                "pace_zone": 0
+            },
+            "5": {
+                "distance": 1606.9,
+                "elapsed_time": 507,
+                "elevation_difference": -39.4,
+                "moving_time": 507,
+                "split": 6,
+                "average_speed": 3.17,
+                "average_grade_adjusted_speed": 3.27,
+                "average_heartrate": 132.99401197604791,
+                "pace_zone": 0
+            },
+            "6": {
+                "distance": 1608.8,
+                "elapsed_time": 934,
+                "elevation_difference": -232.4,
+                "moving_time": 934,
+                "split": 7,
+                "average_speed": 1.72,
+                "average_grade_adjusted_speed": 1.79,
+                "average_heartrate": 114.80412371134021,
+                "pace_zone": 0
+            },
+            "7": {
+                "distance": 1609.9,
+                "elapsed_time": 599,
+                "elevation_difference": 44.2,
+                "moving_time": 599,
+                "split": 8,
+                "average_speed": 2.69,
+                "average_grade_adjusted_speed": 3.24,
+                "average_heartrate": 126.2190635451505,
+                "pace_zone": 0
+            },
+            "8": {
+                "distance": 1618.7,
+                "elapsed_time": 820,
+                "elevation_difference": 89,
+                "moving_time": 820,
+                "split": 9,
+                "average_speed": 1.97,
+                "average_grade_adjusted_speed": 2.52,
+                "average_heartrate": 135.85928961748633,
+                "pace_zone": 0
+            },
+            "9": {
+                "distance": 1600.8,
+                "elapsed_time": 939,
+                "elevation_difference": 132.2,
+                "moving_time": 939,
+                "split": 10,
+                "average_speed": 1.7,
+                "average_grade_adjusted_speed": 2.58,
+                "average_heartrate": 134.14255091103965,
+                "pace_zone": 0
+            },
+            "10": {
+                "distance": 1611.4,
+                "elapsed_time": 1406,
+                "elevation_difference": -210.6,
+                "moving_time": 1397,
+                "split": 11,
+                "average_speed": 1.15,
+                "average_grade_adjusted_speed": 1.46,
+                "average_heartrate": 107.49742710120069,
+                "pace_zone": 0
+            },
+            "11": {
+                "distance": 1605.9,
+                "elapsed_time": 1079,
+                "elevation_difference": 138,
+                "moving_time": 1079,
+                "split": 12,
+                "average_speed": 1.49,
+                "average_grade_adjusted_speed": 2.27,
+                "average_heartrate": 137.89380530973452,
+                "pace_zone": 0
+            },
+            "12": {
+                "distance": 1609.4,
+                "elapsed_time": 380,
+                "elevation_difference": -64,
+                "moving_time": 380,
+                "split": 13,
+                "average_speed": 4.24,
+                "average_grade_adjusted_speed": 4.09,
+                "average_heartrate": 134.99425287356323,
+                "pace_zone": 0
+            },
+            "13": {
+                "distance": 1613.1,
+                "elapsed_time": 293,
+                "elevation_difference": -103.2,
+                "moving_time": 293,
+                "split": 14,
+                "average_speed": 5.51,
+                "average_grade_adjusted_speed": 5.04,
+                "average_heartrate": 137.26621160409556,
+                "pace_zone": 0
+            },
+            "14": {
+                "distance": 1608.2,
+                "elapsed_time": 416,
+                "elevation_difference": -34.2,
+                "moving_time": 416,
+                "split": 15,
+                "average_speed": 3.87,
+                "average_grade_adjusted_speed": 3.93,
+                "average_heartrate": 124.22448979591837,
+                "pace_zone": 0
+            },
+            "15": {
+                "distance": 1627.6,
+                "elapsed_time": 999,
+                "elevation_difference": 143.4,
+                "moving_time": 999,
+                "split": 16,
+                "average_speed": 1.63,
+                "average_grade_adjusted_speed": 2.37,
+                "average_heartrate": 134.3099173553719,
+                "pace_zone": 0
+            },
+            "16": {
+                "distance": 1588.7,
+                "elapsed_time": 613,
+                "elevation_difference": -76.8,
+                "moving_time": 613,
+                "split": 17,
+                "average_speed": 2.59,
+                "average_grade_adjusted_speed": 2.81,
+                "average_heartrate": 116.375,
+                "pace_zone": 0
+            },
+            "17": {
+                "distance": 21.9,
+                "elapsed_time": 40,
+                "elevation_difference": -1.6,
+                "moving_time": 40,
+                "split": 18,
+                "average_speed": 0.55,
+                "average_grade_adjusted_speed": 0.53,
+                "average_heartrate": 131.57142857142858,
+                "pace_zone": 0
+            }
+        },
+        "laps": {
+            "0": {
+                "id": 66334110425,
+                "resource_state": 2,
+                "name": "Lap 1",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 3672,
+                "moving_time": 3672,
+                "start_date": "2026-08-04T08:41:52Z",
+                "start_date_local": "2026-08-04T10:41:52Z",
+                "distance": 8046.72,
+                "average_speed": 2.19,
+                "max_speed": 11.083,
+                "lap_index": 1,
+                "split": 1,
+                "start_index": 0,
+                "end_index": 2278,
+                "total_elevation_gain": 322.6,
+                "device_watts": false,
+                "average_heartrate": 126.7,
+                "max_heartrate": 146
+            },
+            "1": {
+                "id": 66334110443,
+                "resource_state": 2,
+                "name": "Lap 2",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 3798,
+                "moving_time": 3798,
+                "start_date": "2026-08-04T09:43:07Z",
+                "start_date_local": "2026-08-04T11:43:07Z",
+                "distance": 8046.72,
+                "average_speed": 2.12,
+                "max_speed": 11.26,
+                "lap_index": 2,
+                "split": 2,
+                "start_index": 2279,
+                "end_index": 5036,
+                "total_elevation_gain": 358.8,
+                "device_watts": false,
+                "average_heartrate": 130.5,
+                "max_heartrate": 152
+            },
+            "2": {
+                "id": 66334110458,
+                "resource_state": 2,
+                "name": "Lap 3",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 3574,
+                "moving_time": 3565,
+                "start_date": "2026-08-04T10:46:26Z",
+                "start_date_local": "2026-08-04T12:46:26Z",
+                "distance": 8046.72,
+                "average_speed": 2.26,
+                "max_speed": 9.52,
+                "lap_index": 3,
+                "split": 3,
+                "start_index": 5037,
+                "end_index": 7290,
+                "total_elevation_gain": 226.8,
+                "device_watts": false,
+                "average_heartrate": 128.4,
+                "max_heartrate": 156
+            },
+            "3": {
+                "id": 66334110474,
+                "resource_state": 2,
+                "name": "Lap 4",
+                "activity": {
+                    "id": 18088765709,
+                    "visibility": "everyone",
+                    "resource_state": 1
+                },
+                "athlete": {
+                    "id": 20678962,
+                    "resource_state": 1
+                },
+                "elapsed_time": 1651,
+                "moving_time": 1651,
+                "start_date": "2026-08-04T11:46:00Z",
+                "start_date_local": "2026-08-04T13:46:00Z",
+                "distance": 3241.55,
+                "average_speed": 1.96,
+                "max_speed": 9.58,
+                "lap_index": 4,
+                "split": 4,
+                "start_index": 7291,
+                "end_index": 8493,
+                "total_elevation_gain": 181.2,
+                "device_watts": false,
+                "average_heartrate": 128.3,
+                "max_heartrate": 143
+            }
+        },
+        "gear": {
+            "id": "b186511770",
+            "primary": false,
+            "name": "Orbea Rallon",
+            "nickname": "Orbea Rallon",
+            "resource_state": 2,
+            "retired": false,
+            "distance": 27381,
+            "converted_distance": 27.4
+        },
+        "photos": {
+            "primary": null,
+            "count": 0
+        },
+        "stats_visibility": {
+            "0": {
+                "type": "heart_rate",
+                "visibility": "everyone"
+            },
+            "1": {
+                "type": "pace",
+                "visibility": "everyone"
+            },
+            "2": {
+                "type": "power",
+                "visibility": "everyone"
+            },
+            "3": {
+                "type": "speed",
+                "visibility": "everyone"
+            },
+            "4": {
+                "type": "calories",
+                "visibility": "everyone"
+            }
+        },
+        "hide_from_home": false,
+        "embed_token": "a8177dd4692041b456afaa8986b62d8133ff3438",
+        "private_note": "",
+        "available_zones": {}
+    }
+}
