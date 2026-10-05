@@ -1,0 +1,2927 @@
+<!doctype html>
+<html lang="cs" data-lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BikeCheck: servisní deník pro tvoje kolo</title>
+    <meta
+      name="description"
+      content="Servisní deník pro cyklisty. Propoj Stravu a nájezd z každé jízdy se sám rozpustí do opotřebení řetězu, brzd i odpružení."
+    />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="canonical" href="https://bikecheck.cloud/" />
+
+    <!-- Crawlers need absolute addresses: a relative og:image gives no card. -->
+    <meta property="og:site_name" content="BikeCheck" />
+    <meta property="og:title" content="BikeCheck: servisní deník pro tvoje kolo" />
+    <meta
+      property="og:description"
+      content="Strava počítá tvoje kilometry, BikeCheck ty na dílech. Servisní intervaly, historie každého kusu a reporty ke sdílení."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://bikecheck.cloud/" />
+    <meta property="og:image" content="https://bikecheck.cloud/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="BikeCheck" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&display=swap"
+    />
+
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Labels and readings: same face as everything else, but with figures
+     of equal width so columns of numbers stay aligned. */
+      .font-mono {
+        font-variant-numeric: tabular-nums;
+      }
+
+      body {
+        background: #0a0a0b;
+      }
+
+      /* Hairline that reads on the slate ground without going grey */
+      .hairline {
+        border-color: rgba(255, 255, 255, 0.075);
+      }
+      .hairline-strong {
+        border-color: rgba(255, 255, 255, 0.13);
+      }
+
+      /* Focus is never removed - gold ring on the dark ground */
+      :focus-visible {
+        outline: 2px solid #cec053;
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+
+      /* Anodised grain. Keeps the dark ground reading as a machined surface
+     rather than flat digital black. Sits above everything at a low enough
+     opacity to be felt and not seen. */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+
+      /* Scroll reveal - only hides when JS is running, so content never
+     depends on a script to become visible. */
+      .js .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+      }
+      .js .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+
+      /* Frosted panels. Surfaces are translucent and let the ground behind them
+     show through, so depth comes from layering rather than from a lighter fill.
+     The bright top edge is what sells the glass. */
+      .glass {
+        position: relative;
+        background: linear-gradient(
+          155deg,
+          rgba(255, 255, 255, 0.055),
+          rgba(255, 255, 255, 0.018) 45%,
+          rgba(255, 255, 255, 0.008)
+        );
+        backdrop-filter: blur(18px) saturate(118%);
+        -webkit-backdrop-filter: blur(18px) saturate(118%);
+        border: 1px solid rgba(255, 255, 255, 0.075);
+        box-shadow:
+          inset 0 1px 0 0 rgba(255, 255, 255, 0.085),
+          0 24px 60px -30px rgba(0, 0, 0, 0.95);
+      }
+      .glass-deep {
+        background: linear-gradient(155deg, rgba(255, 255, 255, 0.032), rgba(10, 10, 11, 0.66) 60%);
+        backdrop-filter: blur(26px) saturate(120%);
+        -webkit-backdrop-filter: blur(26px) saturate(120%);
+      }
+
+      /* Ambient ground the glass has something to blur: soft pools of gold and
+     slate, fixed so panels pick up different light as the page moves. */
+      .ambient {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          radial-gradient(900px 620px at 78% 4%, rgba(206, 192, 83, 0.055), transparent 62%),
+          radial-gradient(820px 600px at 10% 30%, rgba(64, 67, 72, 0.34), transparent 66%),
+          radial-gradient(700px 520px at 62% 48%, rgba(206, 192, 83, 0.025), transparent 60%),
+          radial-gradient(920px 640px at 92% 70%, rgba(64, 67, 72, 0.28), transparent 64%),
+          radial-gradient(760px 540px at 18% 92%, rgba(206, 192, 83, 0.04), transparent 62%);
+      }
+
+      /* Cards wear the app's card material (docs/ui/card-surface.md in the app
+     repo): a solid cards.6 surface, no border, and the app's elevations - a
+     hairline of light along the top edge, a tight contact shadow and a soft
+     cast one. Opaque like the app's, so the ghosts stop at the card edge. No
+     hover: none of these is a button, and in the app only a card that is one
+     reacts. */
+      :root {
+        --elev-panel:
+          inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.38), 0 8px 16px -6px rgba(0, 0, 0, 0.5);
+      }
+      .card {
+        background-color: #1b1c1e;
+        box-shadow: var(--elev-panel);
+      }
+
+      /* The strip under the hero: four plain statements, white on the band, so
+     the only colour in it is Strava's. Two by two on a phone, one row from lg
+     up, with a hairline between neighbours and none round the outside. */
+      .trust {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .trust li {
+        padding: 26px 20px 26px 0;
+      }
+      .trust li:nth-child(even) {
+        padding: 26px 0 26px 20px;
+        border-left: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .trust li:nth-child(n + 3) {
+        border-top: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .trust-title {
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1.12;
+        letter-spacing: -0.01em;
+        color: #f2f2f1;
+      }
+      .trust-text {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #9c9c9e;
+      }
+      @media (min-width: 1024px) {
+        .trust {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .trust li,
+        .trust li:nth-child(even) {
+          padding: 30px 32px;
+          border-top: 0;
+          border-left: 1px solid rgba(255, 255, 255, 0.075);
+        }
+        .trust li:first-child {
+          padding-left: 0;
+          border-left: 0;
+        }
+        .trust li:last-child {
+          padding-right: 0;
+        }
+      }
+
+      /* Sections stop being opaque bands and become tinted washes instead, so the
+     ambient ground runs the whole length of the page. */
+      .band {
+        background: rgba(14, 14, 16, 0.62);
+      }
+
+      /* ---- Hero devices ---------------------------------------------------
+     The app on the two screens it runs on. The screens are real screenshots;
+     everything around them is drawn here. Every length is a multiple of --u,
+     one percent of the stage's width, so the pair scales as one picture.
+
+     The laptop is deliberately wider than the stage: it runs off the right
+     edge of the page and the hero's overflow:hidden cuts it, the same way
+     the ghosts are cut. The phone is the part that always stays whole, so
+     its right edge is the stage's right edge.
+
+     On a phone the stage is blown up past its column and hung from the
+     right, which keeps the phone a readable size there and lets the laptop
+     run off both sides behind it. On a tablet the page is still one column
+     but wide enough for the whole lid, so the pair is centred instead. */
+      .devices-wrap {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .devices {
+        position: relative;
+        flex: none;
+        width: 135%;
+        max-width: 620px;
+        aspect-ratio: 100 / 83;
+        container-type: inline-size;
+        /* Without container units the pair is drawn once, for a 520px stage. */
+        --u: 5.2px;
+      }
+      @supports (width: 1cqw) {
+        .devices {
+          --u: 1cqw;
+        }
+      }
+      /* Centred on the lid, not on the stage: the lid's middle sits 67% of
+     the way across a 620px stage. */
+      @media (min-width: 640px) and (max-width: 1023px) {
+        .devices-wrap {
+          justify-content: flex-start;
+        }
+        .devices {
+          width: 620px;
+          margin-left: calc(50% - 415.4px);
+        }
+      }
+      @media (min-width: 1024px) {
+        .devices-wrap {
+          justify-content: flex-start;
+        }
+        /* On a wide page the stage grows into the margin beside the content
+       column, stopping short of the viewport edge so the phone keeps air. */
+        .devices {
+          width: calc(100% + clamp(0px, (100vw - 1180px) / 2 - 24px, 120px));
+          max-width: none;
+        }
+      }
+
+      .dev-laptop {
+        position: absolute;
+        top: 0;
+        left: calc(var(--u) * -2.6);
+        width: calc(var(--u) * 139.2);
+      }
+      .dev-lid {
+        position: relative;
+        width: calc(var(--u) * 118);
+        margin: 0 auto;
+        padding: calc(var(--u) * 2.2) calc(var(--u) * 1.5) calc(var(--u) * 1.9);
+        border-radius: calc(var(--u) * 2.6) calc(var(--u) * 2.6) calc(var(--u) * 0.5) calc(var(--u) * 0.5);
+        background: linear-gradient(#2f3135, #232528);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
+      /* Camera. */
+      .dev-lid::before {
+        content: "";
+        position: absolute;
+        top: calc(var(--u) * 0.8);
+        left: 50%;
+        width: calc(var(--u) * 0.6);
+        height: calc(var(--u) * 0.6);
+        margin-left: calc(var(--u) * -0.3);
+        border-radius: 50%;
+        background: #0c0c0d;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
+      }
+      /* Held a step darker than the phone's screen, so the phone in front of
+     it is the one the eye lands on. */
+      .dev-lid img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: calc(var(--u) * 0.4);
+        filter: brightness(0.86);
+      }
+      .dev-base {
+        position: relative;
+        height: calc(var(--u) * 2.9);
+        border-radius: calc(var(--u) * 0.3) calc(var(--u) * 0.3) calc(var(--u) * 2.6) calc(var(--u) * 2.6) /
+          calc(var(--u) * 0.3) calc(var(--u) * 0.3) calc(var(--u) * 2.9) calc(var(--u) * 2.9);
+        background: linear-gradient(#484a4f 0%, #303236 20%, #1c1d20 100%);
+        box-shadow:
+          inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+          0 calc(var(--u) * 5) calc(var(--u) * 9) calc(var(--u) * -3) rgba(0, 0, 0, 0.85);
+      }
+      /* The groove a thumb opens the lid by. */
+      .dev-base::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: calc(var(--u) * 17);
+        height: calc(var(--u) * 0.95);
+        transform: translateX(-50%);
+        border-radius: 0 0 calc(var(--u) * 1.2) calc(var(--u) * 1.2);
+        background: #1b1c1f;
+      }
+
+      .dev-phone {
+        position: absolute;
+        top: calc(var(--u) * 12);
+        right: 0;
+        width: calc(var(--u) * 33.6);
+        padding: calc(var(--u) * 1.05);
+        border-radius: calc(var(--u) * 5);
+        background: #1c1d20;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+          0 0 0 1px rgba(0, 0, 0, 0.7),
+          calc(var(--u) * -2) calc(var(--u) * 3) calc(var(--u) * 7) calc(var(--u) * -1) rgba(0, 0, 0, 0.8);
+      }
+      .dev-phone-screen {
+        position: relative;
+        overflow: hidden;
+        border-radius: calc(var(--u) * 4);
+        background: #0a0a0b;
+      }
+      .dev-phone-screen img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      /* Notch, with the earpiece slit and the camera painted into it. It sits
+     in the gap the screenshot's own status bar leaves between the clock and
+     the signal icons. */
+      .dev-phone-screen::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: calc(var(--u) * 10.6);
+        height: calc(var(--u) * 2.1);
+        transform: translateX(-50%);
+        border-radius: 0 0 calc(var(--u) * 1.3) calc(var(--u) * 1.3);
+        background:
+          radial-gradient(circle at 76% 44%, #08080a 0, #08080a calc(var(--u) * 0.36), transparent calc(var(--u) * 0.4)),
+          linear-gradient(#08080a, #08080a) 42% 44% / calc(var(--u) * 3) calc(var(--u) * 0.36) no-repeat,
+          #1c1d20;
+      }
+
+      /* ---- Photo ghosts ---------------------------------------------------
+     Every source is now a clean cut-out, so there is one treatment rather
+     than three: colour drained out and pulled a few degrees toward the
+     gold, then dropped low enough that the machine reads as ground rather
+     than as subject. Three knobs are set per placement:
+
+       --lift  how hard to raise the subject. A black fork on a near-black
+               page needs about twice the brightness to register at all,
+               where a white frame needs pulling down instead.
+       --gm-a  the angle the mask fades along, set to run opposite the edge
+               the picture leaves by, so a shape dissolves on its way out
+               instead of ending on the clip.
+       --tone  how far into the gold the grey gets pushed.
+
+     The parts are deliberately oversized and hung off the edges: each one
+     is a fragment of something larger continuing past the page. Sections
+     keep overflow:hidden, which is what stops any of this from producing a
+     horizontal scrollbar.
+
+     No z-index anywhere: the ghosts come first in the source and every
+     content wrapper is positioned, which orders them without one. */
+      .ghost {
+        position: absolute;
+        pointer-events: none;
+        --gm-a: 100deg;
+        --lift: 1;
+        --tone: 0.55;
+      }
+      .ghost img {
+        display: block;
+        width: 100%;
+        height: auto;
+        filter: grayscale(1) sepia(var(--tone)) hue-rotate(6deg) saturate(1.45) brightness(var(--lift)) contrast(1.05);
+        -webkit-mask-image:
+          linear-gradient(var(--gm-a), transparent 0%, rgba(0, 0, 0, 0.35) 18%, #000 48%),
+          linear-gradient(transparent 0%, #000 14%, #000 74%, transparent 100%);
+        mask-image:
+          linear-gradient(var(--gm-a), transparent 0%, rgba(0, 0, 0, 0.35) 18%, #000 48%),
+          linear-gradient(transparent 0%, #000 14%, #000 74%, transparent 100%);
+        -webkit-mask-composite: source-in;
+        mask-composite: intersect;
+      }
+
+      /* Hero: the one ghost that has to carry at every width. */
+      .hero-ghost {
+        top: 2%;
+        right: -24%;
+        width: 110%;
+        max-width: 1560px;
+      }
+      .hero-ghost img {
+        opacity: 0.15;
+      }
+      @media (max-width: 1023px) {
+        .hero-ghost {
+          top: 3%;
+          right: -38%;
+          width: 150%;
+        }
+        .hero-ghost img {
+          opacity: 0.13;
+        }
+      }
+
+      /* Three of the fragments carry on a phone as well, so their placement
+     lives here rather than inline: a phone needs a different frame of the
+     same picture, not the desktop one scaled down. Each is pushed further
+     off its edge and blown up well past the viewport, so what lands on a
+     390px screen is still a fragment of something larger and not a small
+     complete object sitting in the middle of the text. Opacity drops too,
+     because the same picture covers far more of the reading area here. The
+     other ghosts stay desktop-only. */
+      .g-cocpit {
+        top: -20%;
+        left: -28%;
+        width: 94%;
+        max-width: 1240px;
+        --gm-a: 262deg;
+        --lift: 1.45;
+      }
+      .g-cocpit img {
+        opacity: 0.16;
+      }
+      .g-drivetrain {
+        top: -4%;
+        left: -30%;
+        width: 100%;
+        max-width: 1320px;
+        --gm-a: 268deg;
+        --lift: 1.45;
+      }
+      .g-drivetrain img {
+        opacity: 0.17;
+      }
+      /* The coil was lg-only and stays that way in the middle: its desktop
+     frame is cut for a wide section, and its phone frame fills the width
+     of a one-column page. In between, where the section goes two-column
+     and neither frame fits, it drops out as before. */
+      .g-coil {
+        display: none;
+      }
+      .g-coil img {
+        opacity: 0.16;
+      }
+      @media (min-width: 1024px) {
+        .g-coil {
+          display: block;
+          top: -32%;
+          right: -18%;
+          width: 58%;
+          max-width: 800px;
+          --gm-a: 88deg;
+          --lift: 1.6;
+          transform: rotate(8deg);
+        }
+      }
+
+      /* Phone frames. Cockpit and drivetrain were md:block, so this picks up
+     exactly where they used to stop; the coil was lg:block, and its phone
+     frame runs to 1023px so there is no width where it vanishes. */
+      @media (max-width: 767px) {
+        .g-cocpit {
+          top: -24px;
+          left: -48%;
+          width: 172%;
+          --lift: 1.5;
+        }
+        .g-cocpit img {
+          opacity: 0.12;
+        }
+        .g-drivetrain {
+          top: 6%;
+          left: -38%;
+          width: 165%;
+          --lift: 1.4;
+        }
+        .g-drivetrain img {
+          opacity: 0.11;
+        }
+      }
+      @media (max-width: 767px) {
+        .g-coil {
+          display: block;
+          top: -3%;
+          right: -34%;
+          width: 96%;
+          --gm-a: 88deg;
+          --lift: 1.6;
+          transform: rotate(8deg);
+        }
+        .g-coil img {
+          opacity: 0.13;
+        }
+      }
+
+      /* ---- App screens ----------------------------------------------------
+     A real screenshot in a drawn phone: the hero's phone again, but one that
+     can stand anywhere. Every length is a multiple of --u, one percent of the
+     frame's own width, so a frame is sized by --phone-w alone. A frame holds
+     one screen or a stack of them; of a stack inside a switcher only the one
+     marked .is-on shows. */
+      .phone {
+        flex: none;
+        width: var(--phone-w, 240px);
+        container-type: inline-size;
+        /* Without container units the frame is drawn once, for 240px. */
+        --u: 2.4px;
+      }
+      @supports (width: 1cqw) {
+        .phone {
+          --u: 1cqw;
+        }
+      }
+      .phone-body {
+        padding: calc(var(--u) * 3.1);
+        border-radius: calc(var(--u) * 14.9);
+        /* Near black, darker than the cards in the app (#1c1c1e), so a card at
+       the edge of the screen does not run into the frame. */
+        background: #070708;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+          0 0 0 1px rgba(0, 0, 0, 0.7),
+          0 calc(var(--u) * 9) calc(var(--u) * 18) calc(var(--u) * -7) rgba(0, 0, 0, 0.85);
+      }
+      .phone-screen {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 640 / 1386;
+        border-radius: calc(var(--u) * 11.9);
+        background: #0a0a0b;
+      }
+      .phone-screen > img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+      }
+      /* A screen that is several screenshots: they lie on top of each other and
+     the switcher's script steps through them while the screen is the one
+     being shown. The frame coming on fades in over the one before it, which
+     only leaves once it is covered, so the screen never dims between two
+     frames. A screen that is switched away goes back to its first frame only
+     once it has faded out, which is what the delay without .is-on is for.
+     isolation keeps a frame's z-index from lifting it over the notch. */
+      .phone-frames {
+        position: absolute;
+        inset: 0;
+        isolation: isolate;
+      }
+      .phone-frames > * {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0s 0.45s;
+      }
+      .phone-frames > img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+      }
+      .phone-frames > .is-on {
+        z-index: 1;
+        opacity: 1;
+      }
+      .phone-frames.is-on > .is-on {
+        transition: opacity 0.45s ease;
+      }
+      /* A frame that scrolls: screenshots of one screen further and further
+     down it, stitched into one tall page. Each step of the script slides the
+     page up to the next of its stops (--y, a share of the page's height), the
+     way a thumb would. What the app keeps in place lies over the page: its
+     header, the system buttons and, where there is one, the tab bar or a
+     button at the foot. The page waits a moment before it moves, so that a
+     frame fading in is there by the time it does; off, it goes back to its
+     top, the same way a frame leaves. */
+      .phone-scroll img {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: auto;
+      }
+      .phone-scroll-page {
+        top: 0;
+        transform: translateY(calc(var(--y, 0%) * -1));
+        transition: transform 0s 0.45s;
+      }
+      .phone-frames.is-on > .is-on .phone-scroll-page {
+        transition: transform 1.4s cubic-bezier(0.45, 0, 0.2, 1) 0.25s;
+      }
+      .phone-scroll-top {
+        top: 0;
+      }
+      .phone-scroll-bottom {
+        bottom: 0;
+      }
+      .phone-scroll-nav {
+        top: 95.96%;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .phone-frames .phone-scroll-page {
+          transition: none;
+        }
+      }
+      /* The hero phone's notch. */
+      .phone-screen::before {
+        content: "";
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        left: 50%;
+        width: calc(var(--u) * 31.5);
+        height: calc(var(--u) * 6.25);
+        transform: translateX(-50%);
+        border-radius: 0 0 calc(var(--u) * 3.9) calc(var(--u) * 3.9);
+        background:
+          radial-gradient(circle at 76% 44%, #1c1d20 0, #1c1d20 calc(var(--u) * 1.07), transparent calc(var(--u) * 1.2)),
+          linear-gradient(#1c1d20, #1c1d20) 42% 44% / calc(var(--u) * 8.9) calc(var(--u) * 1.07) no-repeat,
+          #070708;
+      }
+
+      /* A screen peeking out of the card that talks about it: the frame runs
+     past the foot of the card and fades out before it gets there. */
+      .peek {
+        display: flex;
+        justify-content: center;
+        height: 290px;
+        padding-top: 26px;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(#000 72%, transparent);
+        mask-image: linear-gradient(#000 72%, transparent);
+      }
+      .peek .phone {
+        --phone-w: 190px;
+      }
+
+      /* ---- Switchers ------------------------------------------------------
+     One phone and, around it, the things it can show as switches. Picking a
+     switch puts its screen on the phone; left alone, the block plays through
+     them by itself while it is on screen, and the button under the phone
+     pauses that. Two blocks work this way: the features (.sw-features) and
+     the three steps of "how it works" (.sw-steps).
+
+     Without a script nothing switches, so what only makes sense with one (the
+     chips, the button, the text under the phone) hangs off .js. What is left
+     is a plain list next to a phone showing its first screen.
+
+     The switch whose screen is on the phone is not a solid card but a sheet
+     of glass, the way iOS marks things: the ground shows through it, blurred
+     and with its colour turned up, and what tells the sheet from that ground
+     is the light on its rim, brightest where it comes in at the top left and
+     where it leaves at the bottom right. ::before is the sheet and ::after
+     the rim; both sit under the switch's content and fade in when it is lit.
+
+     Two things the blur depends on:
+     - A switch is dimmed through what is inside it (--dim), never through its
+       own opacity. Anything less than fully opaque cuts the glass inside it
+       off from the page behind, and the blur would have nothing to work on.
+       For the same reason neither block is a .reveal of its own.
+     - The switches are stacked above the halo of light behind the phone, so
+       that a lit one has that light to look through.
+
+     An idle switch is held at 0.8, which keeps its body text above 4.5:1 on
+     this ground. The lit one is told apart by its surface and a gold title,
+     not by everything else going dark. */
+      .sw-item {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        border-radius: 16px;
+        --glass-tint: transparent;
+        --dim: 0.8;
+        transition:
+          color 0.25s ease,
+          border-color 0.25s ease,
+          box-shadow 0.35s ease;
+      }
+      .sw-item > * {
+        opacity: var(--dim);
+        transition: opacity 0.25s ease;
+      }
+      .sw-item:hover,
+      .sw-item.is-on {
+        --dim: 1;
+      }
+      .js .sw-item {
+        cursor: pointer;
+      }
+      .sw-item.is-on h3 {
+        color: #cec053;
+      }
+      .sw-item::before,
+      .sw-item::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        pointer-events: none;
+        opacity: 0;
+        transform: scale(0.965);
+        transition:
+          opacity 0.35s ease,
+          transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      /* The sheet: light pooling in the corner it enters by, a fainter return in
+     the corner it leaves by, and a soft glow just inside the edge, which is
+     what gives the glass its thickness. */
+      .sw-item::before {
+        background:
+          radial-gradient(120% 150% at 0% 0%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.03) 48%, transparent 70%),
+          radial-gradient(90% 130% at 100% 100%, rgba(255, 255, 255, 0.07), transparent 55%),
+          linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)),
+          var(--glass-tint);
+        -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
+        backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
+        box-shadow:
+          inset 0 0 14px 0 rgba(255, 255, 255, 0.06),
+          inset 0 8px 14px -10px rgba(255, 255, 255, 0.09),
+          inset 0 -10px 18px -14px rgba(255, 255, 255, 0.08);
+      }
+      /* The rim is kept low and close to even all the way round: a bright
+     hairline stair-steps on the corners, and it is the sheet that should read
+     as glass, not its outline. */
+      .sw-item::after {
+        padding: 1px;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.2),
+          rgba(255, 255, 255, 0.08) 26%,
+          rgba(255, 255, 255, 0.045) 52%,
+          rgba(255, 255, 255, 0.065) 78%,
+          rgba(255, 255, 255, 0.13)
+        );
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+      }
+      .sw-item.is-on {
+        box-shadow:
+          0 1px 2px 0 rgba(0, 0, 0, 0.35),
+          0 14px 30px -14px rgba(0, 0, 0, 0.8);
+      }
+      .sw-item.is-on::before,
+      .sw-item.is-on::after {
+        opacity: var(--glass, 1);
+        transform: none;
+      }
+      /* The steps do sit in a block that reveals itself by fading in, and a
+     fading block is the same trap as a dimmed switch: until the fade is over,
+     the glass of the lit step would show the chain behind it sharp, and then
+     snap to frosted. So there the glass waits the fade out (the 0.6s of
+     .reveal) and comes in after it. */
+      .js .reveal:not(.in) .sw-steps {
+        --glass: 0;
+      }
+      .js .reveal.in .sw-steps {
+        animation: sw-wait 0.6s;
+      }
+      @keyframes sw-wait {
+        from,
+        to {
+          --glass: 0;
+        }
+      }
+      /* Without a blur the sheet goes back to being the solid card it replaced. */
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .sw-item::before {
+          background-color: #1b1c1e;
+        }
+      }
+
+      /* The phone, with a thin halo of gold close around it, so the middle of
+     the block reads as lit. It keeps still: the screen is what moves. */
+      .sw-phone {
+        position: relative;
+      }
+      .sw-phone::before {
+        content: "";
+        position: absolute;
+        inset: 4% -28%;
+        pointer-events: none;
+        background: radial-gradient(closest-side, rgba(206, 192, 83, 0.18), transparent);
+      }
+      .sw-phone .phone {
+        position: relative;
+        --phone-w: min(250px, 66vw);
+      }
+      .sw .phone-screen > * {
+        opacity: 0;
+        transition: opacity 0.45s ease;
+      }
+      .sw .phone-screen > .is-on {
+        opacity: 1;
+      }
+      /* The pause button, there because the block changes by itself. It names
+     what a press will do: pause while it plays, play while it rests. */
+      .sw-toggle {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #9c9c9e;
+        transition:
+          color 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .js .sw-toggle {
+        display: inline-flex;
+      }
+      .sw-toggle:hover {
+        color: #f2f2f1;
+        border-color: rgba(255, 255, 255, 0.28);
+      }
+      .sw-toggle svg {
+        width: 14px;
+        height: 14px;
+      }
+      .sw.is-auto .sw-when-paused,
+      .sw:not(.is-auto) .sw-when-playing {
+        display: none;
+      }
+
+      /* Features. Below lg the switches shrink to a row of chips over the
+     phone, one short word each, and the title and text of the chosen one move
+     under it. From lg up they sit in two columns beside the phone, three a
+     side, the left column mirrored so both face the phone. */
+      .sw-features {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 26px;
+      }
+      .sw-items {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .sw-features .sw-item {
+        gap: 16px;
+        padding: 20px 22px;
+        border: 1px solid transparent;
+      }
+      /* The glass lies over the switch's own border, which only a chip shows. */
+      .sw-features .sw-item::before,
+      .sw-features .sw-item::after {
+        inset: -1px;
+      }
+      .sw-icon {
+        flex: none;
+      }
+      .sw-short,
+      .sw-desc {
+        display: none;
+      }
+      .sw-desc h3 {
+        margin-bottom: 8px;
+        font-size: 19px;
+        color: #f2f2f1;
+      }
+      .sw-desc p {
+        font-size: 15px;
+      }
+      @media (max-width: 1023px) {
+        .js .sw-items {
+          flex-direction: row;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 8px;
+        }
+        .js .sw-features .sw-item {
+          display: block;
+          padding: 9px 14px;
+          border-color: rgba(255, 255, 255, 0.13);
+          border-radius: 999px;
+          color: #9c9c9e;
+          --dim: 1;
+        }
+        .js .sw-features .sw-icon,
+        .js .sw-features .sw-body {
+          display: none;
+        }
+        .js .sw-short {
+          display: inline;
+          font-size: 13px;
+          font-weight: 600;
+        }
+        /* A lit chip is a capsule of glass, tinted gold. */
+        .js .sw-features .sw-item.is-on {
+          --glass-tint: rgba(206, 192, 83, 0.12);
+          color: #cec053;
+          border-color: transparent;
+        }
+        /* Tall enough for the longest text, so the page below does not move
+       with every screen. */
+        .js .sw-desc {
+          display: block;
+          max-width: 40ch;
+          min-height: 9em;
+          text-align: center;
+        }
+      }
+      @media (min-width: 1024px) {
+        .sw-features {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+          grid-template-rows: repeat(3, auto);
+          align-items: center;
+          column-gap: 44px;
+          row-gap: 10px;
+        }
+        .sw-items {
+          display: contents;
+        }
+        .sw-features .sw-item:nth-child(1) {
+          grid-area: 1 / 1;
+        }
+        .sw-features .sw-item:nth-child(2) {
+          grid-area: 2 / 1;
+        }
+        .sw-features .sw-item:nth-child(3) {
+          grid-area: 3 / 1;
+        }
+        .sw-features .sw-item:nth-child(4) {
+          grid-area: 1 / 3;
+        }
+        .sw-features .sw-item:nth-child(5) {
+          grid-area: 2 / 3;
+        }
+        .sw-features .sw-item:nth-child(6) {
+          grid-area: 3 / 3;
+        }
+        .sw-features .sw-item:nth-child(-n + 3) {
+          flex-direction: row-reverse;
+          text-align: right;
+        }
+        .sw-features .sw-phone {
+          grid-area: 1 / 2 / 4 / 3;
+        }
+        /* Sized by the window's height as well, so that phone and button fit in
+       it under the header: a frame is 2.12 times as tall as it is wide. */
+        .sw-phone .phone {
+          --phone-w: min(300px, calc((100vh - 190px) / 2.12));
+        }
+        .sw-features .sw-toggle {
+          grid-area: 4 / 2;
+          justify-self: center;
+          margin-top: 14px;
+        }
+      }
+
+      /* Steps. Heading, phone, steps in that order on a phone; from lg up the
+     phone takes the right half and the heading and steps share the left. */
+      .sw-steps {
+        display: grid;
+        gap: 34px;
+      }
+      .steps-stage {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      /* Pulled out by a step's own padding, so the text lines up with the
+     heading and the glass of the lit step stands proud of it. */
+      .steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0 -14px;
+      }
+      .sw-steps .sw-item {
+        gap: 20px;
+        padding: 14px;
+      }
+      @media (min-width: 1024px) {
+        .sw-steps {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          grid-template-areas:
+            "head stage"
+            "steps stage";
+          column-gap: 80px;
+          row-gap: 0;
+        }
+        .steps-head {
+          grid-area: head;
+          align-self: end;
+        }
+        .steps-list {
+          grid-area: steps;
+          align-self: start;
+        }
+        .steps-stage {
+          grid-area: stage;
+          align-self: center;
+        }
+      }
+
+      @supports not (backdrop-filter: blur(1px)) {
+        .glass,
+        .glass-deep {
+          background: #17181a;
+        }
+      }
+
+      details > summary {
+        list-style: none;
+        cursor: pointer;
+      }
+      details > summary::-webkit-details-marker {
+        display: none;
+      }
+      details[open] .faq-chev {
+        transform: rotate(180deg);
+        color: #cec053;
+      }
+      .faq-chev {
+        color: #9c9c9e;
+        transition:
+          transform 0.25s ease,
+          color 0.2s ease;
+      }
+      details > summary h3 {
+        transition: color 0.2s ease;
+      }
+      details > summary:hover h3 {
+        color: #e8de93;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .js .reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        .faq-chev {
+          transition: none;
+        }
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
+      /* Language switching: show only the active language's copy */
+      [data-lang="cs"] .lang-en {
+        display: none;
+      }
+      [data-lang="en"] .lang-cs {
+        display: none;
+      }
+    </style>
+
+    <script>
+      // Marks the document as script-enabled before first paint, so the reveal
+      // animation only ever hides content that JS is able to reveal again.
+      document.documentElement.classList.add("js");
+
+      // Language before first paint, so no Czech copy flashes for an English browser.
+      // A saved CS/EN pick wins; otherwise the browser's, cs or en, as the App's detectLanguage().
+      (function () {
+        var lang = null;
+        try {
+          lang = localStorage.getItem("bikecheck-lang");
+        } catch (e) {}
+        if (lang !== "cs" && lang !== "en") {
+          lang = (navigator.language || "").split("-")[0] === "cs" ? "cs" : "en";
+        }
+        document.documentElement.setAttribute("data-lang", lang);
+        document.documentElement.setAttribute("lang", lang);
+      })();
+    </script>
+
+    <!-- Last in <head>, where the Tailwind CDN used to inject it: utilities win over the rules above. -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body class="bg-ink-950 text-paper font-body antialiased">
+    <div class="ambient" aria-hidden="true"></div>
+
+    <!-- Brand mark, defined once and referenced with <use> wherever the logo appears.
+     Source: Design/logo/svg/BikeCheck/onlylogo.svg (duplicate paths removed). -->
+    <svg width="0" height="0" class="absolute" aria-hidden="true" focusable="false">
+      <symbol id="bc-mark" viewBox="0 0 318 318">
+        <path
+          d="M0 19.3902C0 8.68131 8.66844 0 19.3615 0H298.167C308.86 0 317.529 8.68131 317.529 19.3902V298.61C317.529 309.319 308.86 318 298.167 318H19.3615C8.66844 318 0 309.319 0 298.61V19.3902Z"
+          fill="#CEC053"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M255.027 154.366C280.342 154.809 300.517 175.225 300.086 199.968C299.655 224.71 278.781 244.411 253.465 243.969C250.171 243.911 246.963 243.513 243.877 242.814L242.905 242.797L227.849 238.672L208.121 231.571L189.302 226.417L174.213 224.222L143.025 223.677V223.639L138.954 223.569L138.964 223.098L139.121 222.978C139.139 222.96 139.161 222.943 139.185 222.931L141.834 220.947C141.857 220.912 141.887 220.874 141.917 220.842C141.961 220.797 142.01 220.746 142.1 220.664C142.155 220.615 142.209 220.59 142.246 220.574C142.267 220.564 142.274 220.56 142.274 220.56L142.305 220.53C142.322 220.511 142.357 220.474 142.397 220.443C142.448 220.404 142.477 220.372 142.543 220.314L142.679 220.208C142.75 220.145 142.799 220.112 142.849 220.079L142.891 220.053L142.917 220.036L142.934 220.024L142.972 219.988L143 219.96L143.025 219.915L143.036 219.898L143.052 219.873L143.065 219.856L143.084 219.837L143.091 219.818L147.189 216.94L147.584 216.644L147.593 216.656L156.493 210.401L175.63 197.224L193.823 184.029L210.091 172.732L223.474 164.279L224.548 163.863L230.734 160.676C232.135 159.857 233.585 159.111 235.077 158.44L235.662 158.138C235.731 158.103 235.806 158.087 235.879 158.087C241.733 155.587 248.219 154.248 255.027 154.366ZM253.181 178.864C241.699 178.664 232.23 187.791 232.029 199.25C231.83 210.709 240.976 220.162 252.459 220.363C263.942 220.564 273.413 211.437 273.613 199.977C273.813 188.518 264.665 179.064 253.181 178.864Z"
+          fill="#22333B"
+          fill-opacity="0.96"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M256.812 71.5602L255.933 75.3493L247.876 83.1546L247.938 83.2228L245.325 85.6257L241.19 89.6325C235.199 92.3233 230.948 98.5303 230.821 105.828C230.649 115.725 238.125 123.88 247.52 124.045C253.354 124.146 258.554 121.143 261.701 116.483L267.185 112.123L271.635 108.097L280.936 99.4451L283.772 99.3958L284.801 104.096L285.115 122.015L280.62 135.302L274.188 145.792L270.716 150.098L261.8 148.828L261.771 148.824L245.624 148.542L245.577 148.551L238.936 149.85L238.904 149.856L238.876 149.867L232.218 152.107L232.179 152.123L232.143 152.141L223.731 156.745L220.515 158.046L205.559 167.739L188.761 180.295L173.839 191.876L151.42 207.36L138.338 216.078L117.744 227.758L104.629 234.59L85.8425 241.52L81.1325 242.545L78.8107 242.584C75.3868 243.283 71.8265 243.623 68.1751 243.56C65.706 243.517 63.2835 243.289 60.924 242.895L60.3416 242.906L59.0559 242.545C57.1957 242.158 55.3763 241.668 53.6067 241.077C33.6003 235.871 18.9931 217.546 19.3686 196.004C19.8091 170.741 40.689 150.62 66.0045 151.062C70.2779 151.137 74.4041 151.795 78.3096 152.956C88.1932 156.871 99.5721 159.197 111.71 159.409C126.644 159.67 140.541 156.692 151.997 151.407L150.494 154.543L139.334 165.114L121.608 178.631L113.336 183.91C113.274 183.947 113.214 183.985 113.155 184.026L113.136 184.037C111.676 185.04 111.076 186.917 111.795 188.53C112.402 189.889 113.775 190.678 115.223 190.647L114.977 190.697C115.024 190.942 115.069 191.189 115.112 191.435L116.868 190.312L116.577 190.373C116.627 190.353 116.677 190.332 116.726 190.31C116.898 190.234 117.062 190.145 117.216 190.049L117.312 190.03L126.434 184.207L143.231 171.651L152.88 162.585L152.863 162.568L156.181 159.369L156.247 159.159L163.691 152.426L173.856 139.042L181.187 125.705L185.581 106.76L191.053 95.3436L199.376 84.821L208.71 78.0552L219.953 72.2003L227.48 70.1817L249.218 69.8049L256.812 71.5602ZM66.9952 175.61C55.5118 175.41 46.041 184.537 45.8413 195.997C45.6421 207.456 54.7882 216.907 66.2711 217.108C77.7541 217.309 87.2266 208.183 87.4269 196.724C87.6267 185.264 78.4784 175.811 66.9952 175.61Z"
+          fill="#22333B"
+          fill-opacity="0.96"
+        />
+      </symbol>
+
+      <!-- Full lockup: the mark above plus the wordmark, set for dark grounds.
+       Source: Design/logo/svg/BikeCheck/logo_name.svg -->
+      <symbol id="bc-logo" viewBox="0 0 1569 318">
+        <use href="#bc-mark" width="318" height="318" />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M781.636 115.747C790.656 115.747 798.907 117.151 806.388 119.96C813.868 122.769 820.332 126.928 825.778 132.437C831.223 137.945 835.458 144.75 838.484 152.848C841.509 160.89 843.021 170.117 843.021 180.528V190.608H758.534V191.683C758.534 196.861 759.553 201.406 761.588 205.317C763.623 209.172 766.51 212.175 770.249 214.323C773.99 216.471 778.445 217.546 783.615 217.546C787.191 217.546 790.438 217.049 793.353 216.057C796.267 215.066 798.769 213.607 800.859 211.679C802.949 209.751 804.518 207.382 805.563 204.573L842.607 205.646C841.067 213.964 837.685 221.209 832.46 227.379C827.289 233.493 820.496 238.258 812.081 241.674C803.665 245.034 793.93 246.712 782.874 246.712C769.618 246.712 758.177 244.097 748.551 238.864C738.98 233.575 731.609 226.056 726.438 216.305C721.323 206.5 718.766 194.849 718.766 181.354C718.766 168.243 721.351 156.785 726.522 146.98C731.692 137.119 738.981 129.462 748.386 124.009C757.792 118.5 768.875 115.747 781.636 115.747ZM782.462 144.914C777.952 144.914 773.908 145.934 770.333 147.972C766.757 149.955 763.924 152.682 761.834 156.152C759.85 159.394 758.761 163.057 758.561 167.142H805.48C805.425 162.846 804.409 159.016 802.428 155.656C800.448 152.296 797.725 149.68 794.26 147.807C790.85 145.879 786.917 144.914 782.462 144.914Z"
+          fill="#F3F3F3"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M1232.14 115.747C1241.16 115.747 1249.42 117.151 1256.9 119.96C1264.38 122.769 1270.84 126.928 1276.29 132.437C1281.73 137.945 1285.97 144.75 1288.99 152.848C1292.02 160.89 1293.53 170.117 1293.53 180.528V190.608H1209.04V191.683C1209.04 196.861 1210.06 201.406 1212.1 205.317C1214.13 209.173 1217.02 212.175 1220.76 214.323C1224.5 216.471 1228.96 217.546 1234.13 217.546C1237.7 217.546 1240.95 217.049 1243.86 216.057C1246.78 215.066 1249.28 213.607 1251.37 211.679C1253.46 209.751 1255.03 207.382 1256.07 204.573L1293.12 205.646C1291.58 213.964 1288.19 221.209 1282.97 227.379C1277.8 233.493 1271 238.258 1262.59 241.674C1254.17 245.034 1244.44 246.712 1233.38 246.712C1220.13 246.712 1208.69 244.097 1199.06 238.864C1189.49 233.575 1182.12 226.055 1176.95 216.305C1171.83 206.5 1169.27 194.85 1169.27 181.354C1169.27 168.243 1171.86 156.785 1177.03 146.98C1182.2 137.119 1189.49 129.462 1198.9 124.009C1208.3 118.5 1219.38 115.747 1232.14 115.747ZM1232.97 144.914C1228.46 144.914 1224.42 145.934 1220.84 147.972C1217.27 149.955 1214.43 152.682 1212.34 156.152C1210.36 159.394 1209.27 163.057 1209.07 167.142H1255.99C1255.93 162.846 1254.92 159.016 1252.94 155.656C1250.96 152.296 1248.23 149.68 1244.77 147.807C1241.36 145.879 1237.43 144.914 1232.97 144.914Z"
+          fill="#F3F3F3"
+        />
+        <path
+          d="M1368.56 115.747C1380.28 115.747 1390.48 117.868 1399.17 122.109C1407.92 126.351 1414.74 132.356 1419.64 140.123C1424.59 147.835 1427.2 156.896 1427.47 167.307H1389.77C1389 160.807 1386.8 155.711 1383.17 152.02C1379.59 148.33 1374.92 146.486 1369.14 146.485C1364.47 146.485 1360.37 147.807 1356.85 150.451C1353.33 153.04 1350.58 156.896 1348.6 162.018C1346.67 167.086 1345.71 173.366 1345.71 180.858C1345.71 188.349 1346.67 194.685 1348.6 199.863C1350.58 204.986 1353.33 208.869 1356.85 211.513C1360.37 214.102 1364.47 215.396 1369.14 215.396C1372.88 215.396 1376.18 214.598 1379.04 213.001C1381.96 211.404 1384.35 209.062 1386.22 205.978C1388.09 202.838 1389.27 199.037 1389.77 194.575H1427.47C1427.09 205.041 1424.48 214.185 1419.64 222.007C1414.85 229.829 1408.11 235.917 1399.42 240.269C1390.79 244.565 1380.53 246.712 1368.65 246.712C1355.28 246.712 1343.81 243.959 1334.24 238.451C1324.72 232.942 1317.41 225.285 1312.29 215.48C1307.18 205.619 1304.62 194.216 1304.62 181.27C1304.62 168.27 1307.18 156.868 1312.29 147.063C1317.46 137.203 1324.81 129.517 1334.32 124.009C1343.89 118.5 1355.31 115.747 1368.56 115.747Z"
+          fill="#F3F3F3"
+        />
+        <path
+          d="M937.278 72.7797C947.509 72.7797 956.97 74.2118 965.661 77.0762C974.351 79.8856 981.997 84.0163 988.598 89.4697C995.198 94.8681 1000.56 101.507 1004.69 109.384C1008.81 117.262 1011.37 126.268 1012.36 136.404H971.106C970.556 132.162 969.429 128.333 967.724 124.917C966.019 121.503 963.763 118.583 960.958 116.16C958.153 113.736 954.825 111.89 950.975 110.623C947.18 109.301 942.971 108.64 938.35 108.64C930.155 108.64 923.088 110.652 917.147 114.673C911.262 118.694 906.724 124.506 903.534 132.107C900.399 139.709 898.832 148.908 898.831 159.704C898.831 170.942 900.427 180.362 903.617 187.964C906.862 195.511 911.4 201.213 917.231 205.069C923.116 208.869 930.074 210.77 938.105 210.77C942.614 210.77 946.712 210.191 950.397 209.034C954.137 207.877 957.41 206.197 960.215 203.993C963.075 201.735 965.413 199.008 967.228 195.813C969.098 192.563 970.391 188.901 971.106 184.825L1012.36 185.073C1011.64 192.564 1009.47 199.945 1005.84 207.216C1002.27 214.488 997.343 221.127 991.073 227.131C984.802 233.08 977.156 237.817 968.136 241.342C959.17 244.868 948.884 246.631 937.278 246.631C921.987 246.631 908.291 243.27 896.19 236.55C884.144 229.774 874.629 219.913 867.643 206.968C860.658 194.023 857.164 178.268 857.164 159.704C857.165 141.086 860.712 125.304 867.808 112.359C874.903 99.4144 884.502 89.5816 896.602 82.8611C908.703 76.1407 922.262 72.7797 937.278 72.7797Z"
+          fill="#F3F3F3"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M454.99 75.0937C467.641 75.0937 478.229 76.8833 486.755 80.4638C495.335 84.0444 501.771 89.0576 506.061 95.5026C510.406 101.947 512.579 109.411 512.579 117.894C512.579 124.339 511.231 130.096 508.536 135.164C505.841 140.176 502.128 144.335 497.398 147.64C492.668 150.945 487.195 153.26 480.98 154.582V156.235C487.8 156.566 494.098 158.41 499.873 161.77C505.703 165.13 510.378 169.813 513.899 175.817C517.419 181.766 519.179 188.818 519.18 196.97C519.18 206.059 516.87 214.185 512.25 221.346C507.629 228.452 500.946 234.071 492.2 238.203C483.454 242.279 472.838 244.317 460.352 244.317H384.53V75.0937H454.99ZM425.371 211.348H450.616C459.472 211.348 465.99 209.668 470.171 206.307C474.406 202.947 476.524 198.265 476.524 192.261C476.524 187.909 475.507 184.164 473.472 181.024C471.437 177.829 468.549 175.377 464.809 173.67C461.068 171.907 456.585 171.026 451.359 171.026H425.371V211.348ZM425.371 144.668H447.977C452.432 144.668 456.393 143.922 459.858 142.435C463.323 140.948 466.018 138.8 467.943 135.991C469.924 133.182 470.914 129.793 470.914 125.826C470.914 120.153 468.905 115.691 464.89 112.441C460.875 109.191 455.457 107.567 448.637 107.567H425.371V144.668Z"
+          fill="#F3F3F3"
+        />
+        <path d="M574.515 244.317H534.17V117.4H574.515V244.317Z" fill="#F3F3F3" />
+        <path
+          d="M635.895 162.846H637.71L673.353 117.4H719.061L674.06 172.715L720.876 244.317H674.261L644.059 196.315L635.895 206.214V244.317H595.548V75.0937H635.895V162.846Z"
+          fill="#F3F3F3"
+        />
+        <path
+          d="M1070.11 140.7H1071.51C1074.37 132.878 1079.05 126.764 1085.54 122.357C1092.08 117.951 1100.09 115.747 1109.55 115.747C1118.46 115.747 1126.21 117.73 1132.81 121.697C1139.41 125.608 1144.53 131.144 1148.16 138.305C1151.84 145.466 1153.66 153.839 1153.61 163.423V244.317H1113.26V171.356C1113.31 164.305 1111.55 158.796 1107.98 154.83C1104.4 150.864 1099.37 148.881 1092.88 148.881C1088.64 148.881 1084.9 149.818 1081.66 151.691C1078.47 153.509 1075.97 156.124 1074.15 159.54C1072.39 162.955 1071.48 167.087 1071.43 171.935V244.317H1031.08V75.0937H1070.11V140.7Z"
+          fill="#F3F3F3"
+        />
+        <path
+          d="M1483.82 162.846H1485.63L1521.28 117.4H1566.98L1521.98 172.715L1568.8 244.317H1522.18L1491.98 196.317L1483.82 206.216V244.317H1443.47V75.0937H1483.82V162.846Z"
+          fill="#F3F3F3"
+        />
+        <path
+          d="M554.384 64.02C560.104 64.02 564.973 65.9207 568.988 69.7216C573.058 73.4674 575.093 77.9857 575.093 83.2739C575.093 88.6167 573.058 93.1884 568.988 96.9891C564.973 100.735 560.104 102.609 554.384 102.609C548.718 102.609 543.85 100.735 539.779 96.9891C535.71 93.1884 533.674 88.6167 533.674 83.2739C533.674 77.9856 535.709 73.4674 539.779 69.7216C543.85 65.9206 548.718 64.02 554.384 64.02Z"
+          fill="#F3F3F3"
+        />
+      </symbol>
+    </svg>
+
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-gold-500 focus:text-ink-950 focus:px-4 focus:py-2 focus:rounded-lg focus:font-display focus:font-semibold"
+    >
+      <span class="lang-cs">Přejít na obsah</span><span class="lang-en">Skip to content</span>
+    </a>
+
+    <!-- ============================== NAV ============================== -->
+    <header class="sticky top-0 z-40 bg-ink-950/55 backdrop-blur-xl border-b hairline">
+      <nav
+        class="max-w-content mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
+        aria-label="Hlavní navigace"
+      >
+        <a href="#main" class="shrink-0" aria-label="BikeCheck">
+          <svg class="h-7 sm:h-8 w-auto" viewBox="0 0 1569 318" aria-hidden="true"><use href="#bc-logo" /></svg>
+        </a>
+
+        <div class="hidden md:flex items-center gap-7 text-[14px] text-paper-dim">
+          <a href="#features" class="hover:text-paper transition-colors duration-200"
+            ><span class="lang-cs">Funkce</span><span class="lang-en">Features</span></a
+          >
+          <a href="#service" class="hover:text-paper transition-colors duration-200"
+            ><span class="lang-cs">Servis</span><span class="lang-en">Service</span></a
+          >
+          <a href="#reports" class="hover:text-paper transition-colors duration-200"
+            ><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></a
+          >
+          <a href="#faq" class="hover:text-paper transition-colors duration-200">FAQ</a>
+          <a href="#contact" class="hover:text-paper transition-colors duration-200"
+            ><span class="lang-cs">Kontakt</span><span class="lang-en">Contact</span></a
+          >
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div
+            class="flex items-center rounded-lg border hairline p-0.5 font-mono text-[11px]"
+            role="group"
+            aria-label="Jazyk / Language"
+          >
+            <button type="button" data-set-lang="cs" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+              CS
+            </button>
+            <button type="button" data-set-lang="en" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+              EN
+            </button>
+          </div>
+          <a
+            href="#download"
+            class="inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[13px] sm:text-[14px] px-3.5 sm:px-4 py-2.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
+          >
+            <span class="lang-cs">Stáhnout</span><span class="lang-en">Get app</span>
+          </a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- ============================== HERO ============================== -->
+      <section class="relative overflow-hidden">
+        <!-- The whole machine, drained and pushed off the right edge so only part
+       of it is ever on the page. -->
+        <div class="ghost hero-ghost" style="--lift: 0.92; --gm-a: 104deg" aria-hidden="true">
+          <img src="assets/img_ready/rallon.webp" alt="" fetchpriority="low" decoding="async" />
+        </div>
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pt-24 sm:pb-28">
+          <div class="grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-10 items-center">
+            <div>
+              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+                <span class="lang-cs">Pro cyklisty, co chtějí mít přehled</span><span class="lang-en">For riders who like to know where they stand</span>
+              </p>
+
+              <h1 class="font-display font-extrabold tracking-tight text-[clamp(34px,4.6vw,52px)] leading-[1.02] text-balance">
+                <span class="lang-cs"
+                  >Data o&nbsp;tvých kolech na jednom místě, připravená ke sdílení.<br /><span class="text-gold-500"
+                    >To je BikeCheck.</span
+                  ></span
+                >
+                <span class="lang-en"
+                  >Your bike data, in one shareable place.<br /><span class="text-gold-500"
+                    >That's BikeCheck.</span
+                  ></span
+                >
+              </h1>
+
+              <div id="download" class="mt-9 flex flex-wrap items-center gap-3 scroll-mt-24">
+                <!-- The official Google Play badge, used whole and unaltered from
+               assets/icon/google.svg, as Google's brand rules require. Its
+               own plate and lockup replace a button of ours, so it carries no
+               background or label from us - only a height. -->
+                <a
+                  href="PLAY_STORE_URL"
+                  class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
+                >
+                  <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] w-auto" />
+                </a>
+
+                <!-- iOS is not out yet, so this is deliberately our own tile and
+               not Apple's badge: that one may only be used unaltered and only
+               to link to a live store page. It is a <span>, not a link -
+               there is nothing to click until the app ships. -->
+                <span
+                  class="inline-flex items-center gap-3 h-[52px] px-4 rounded-xl border hairline bg-ink-900/60 cursor-default select-none"
+                  aria-disabled="true"
+                >
+                  <svg viewBox="0 0 24 24" class="size-6 shrink-0 text-paper-faint" fill="currentColor" aria-hidden="true">
+                    <path
+                      d="M17.05 12.04c-.03-2.75 2.25-4.07 2.35-4.13-1.28-1.87-3.28-2.13-3.99-2.16-1.7-.17-3.32 1-4.18 1-.86 0-2.19-.98-3.6-.95-1.85.03-3.56 1.08-4.51 2.73-1.92 3.33-.49 8.26 1.38 10.96.91 1.32 2 2.8 3.43 2.75 1.38-.06 1.9-.89 3.57-.89 1.67 0 2.14.89 3.6.86 1.49-.03 2.43-1.35 3.34-2.67 1.05-1.53 1.48-3.01 1.5-3.09-.03-.01-2.88-1.11-2.91-4.4zM14.3 4.1c.76-.92 1.27-2.2 1.13-3.47-1.09.04-2.41.72-3.19 1.64-.7.81-1.31 2.11-1.15 3.36 1.21.09 2.45-.62 3.21-1.53z"
+                    />
+                  </svg>
+                  <span class="flex flex-col text-left leading-none">
+                    <span class="font-mono text-[8px] uppercase tracking-[0.14em] text-gold-600">
+                      <span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span>
+                    </span>
+                    <span class="font-display font-semibold text-[15px] text-paper-dim mt-1.5">App Store</span>
+                  </span>
+                </span>
+              </div>
+
+              <!-- The secondary action sits on a row of its own under the store
+             badges, at every width. -->
+              <div class="mt-3">
+                <a
+                  href="#service"
+                  class="inline-flex items-center gap-2 border hairline-strong hover:bg-ink-850 text-paper font-display font-semibold text-[15px] px-6 py-3.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer"
+                >
+                  <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- The app itself, on both screens it runs on: the desktop Home in a
+           laptop that runs off the right edge of the page, and the phone Home
+           standing in front of it. Both are real screenshots
+           (assets/img_ready/app-home-*.webp); the frames around them are drawn
+           in CSS - see ".devices". The pictures say nothing a reader needs word
+           for word, so they carry no alt and one hidden sentence describes
+           the pair in the active language. -->
+            <div class="devices-wrap">
+              <div class="devices">
+                <p class="sr-only">
+                  <span class="lang-cs"
+                    >Aplikace BikeCheck na notebooku a v telefonu: domovská obrazovka s koly, nájezdem a stavem
+                    servisu.</span
+                  >
+                  <span class="lang-en"
+                    >The BikeCheck app on a laptop and a phone: the home screen with bikes, mileage and service
+                    status.</span
+                  >
+                </p>
+
+                <div class="dev-laptop" aria-hidden="true">
+                  <div class="dev-lid">
+                    <img
+                      src="assets/img_ready/app-home-desktop.webp"
+                      alt=""
+                      width="2008"
+                      height="1262"
+                      decoding="async"
+                    />
+                  </div>
+                  <div class="dev-base"></div>
+                </div>
+
+                <div class="dev-phone" aria-hidden="true">
+                  <div class="dev-phone-screen">
+                    <img src="assets/img_ready/app-home-phone.webp" alt="" width="640" height="1386" decoding="async" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== TRUST BAR ============================== -->
+      <!-- Facts drawn from what the app actually does. No invented download or
+     rating numbers - swap in real figures from Play Console when there are some. -->
+      <section class="border-y hairline band" aria-label="Ve zkratce">
+        <div class="max-w-content mx-auto px-4 sm:px-6 lg:px-8">
+          <ul class="trust">
+            <li>
+              <p class="trust-title">
+                <span class="lang-cs">Servis na pár&nbsp;kliků</span><span class="lang-en">Service in a few&nbsp;taps</span>
+              </p>
+              <p class="trust-text">
+                <span class="lang-cs">Přehledně každý servis nebo výměna i s cenou</span
+                ><span class="lang-en">Every service or swap in one place, with its cost</span>
+              </p>
+            </li>
+
+            <li>
+              <p class="trust-title">
+                <span class="lang-cs">Hlídá za tebe</span><span class="lang-en">It watches for you</span>
+              </p>
+              <p class="trust-text">
+                <span class="lang-cs">Servis odpružení a dalších komponent ti připomene včas</span
+                ><span class="lang-en">Flags suspension and other component service before it is due</span>
+              </p>
+            </li>
+
+            <li>
+              <p class="trust-title">
+                <span class="lang-cs">Sdílej svoje kolo</span><span class="lang-en">Share your bike</span>
+              </p>
+              <p class="trust-text">
+                <span class="lang-cs">Živý odkaz na kolo nebo jen servisní report</span
+                ><span class="lang-en">A live link to the bike, or just a service report</span>
+              </p>
+            </li>
+
+            <li>
+              <!-- "Powered by Strava" is Strava's own lockup wording, so it stays
+               in English in both languages. Their mark and their orange: it is a
+               brand asset, so it is not recoloured like the rest of the page. -->
+              <p class="trust-title text-[#FC5200]">
+                <span class="block mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em]">Powered by</span>
+                <span class="flex items-center gap-2">
+                  <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="#FC5200" aria-hidden="true">
+                    <path
+                      d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
+                    />
+                  </svg>
+                  Strava
+                </span>
+              </p>
+              <p class="trust-text">
+                <span class="lang-cs">Díky propojení se Stravou se opotřebení a kilometry načítají samy</span
+                ><span class="lang-en">Connected to Strava, so wear and distance load on their own</span>
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================== ABOUT ============================== -->
+      <section class="relative overflow-hidden">
+        <!-- Head tube and bars, at close to life size and running off the left.
+       Nearly black glass, so it needs a hard lift to exist at all here. -->
+        <div class="ghost g-cocpit" aria-hidden="true">
+          <img src="assets/img_ready/cocpit-Photoroom.webp" alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 reveal">
+          <div class="grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-20 items-start">
+            <div>
+              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+                <span class="lang-cs">Proč BikeCheck</span><span class="lang-en">Why BikeCheck</span>
+              </p>
+              <h2
+                class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance"
+              >
+                <span class="lang-cs"
+                  >Protože tě baví jezdit,<br />ale chceš mít svá kola <span class="text-gold-500">pod&nbsp;kontrolou</span></span
+                >
+                <span class="lang-en"
+                  >Because you would rather be riding,<br />but you still want your bikes <span class="text-gold-500">under&nbsp;control</span></span
+                >
+              </h2>
+            </div>
+            <div class="space-y-5 text-[16px] leading-relaxed text-paper-dim max-w-[62ch]">
+              <p>
+                <span class="lang-cs"
+                  >Rád o své kolo pečuješ a chceš mít jasný přehled o tom, kdy jsi naposledy měnil řetěz nebo dělal servis
+                  vidlice? Chystáš se prodat svůj vymazlený bike a chceš doložit servisní historii? Nebo chceš svůj dream
+                  build ukázat kamarádům nebo veřejnosti?</span
+                >
+                <span class="lang-en"
+                  >You look after your bike and want a clear picture of when the chain last went on or the fork was last
+                  serviced? You are about to sell a bike you have cared for and want the service history to back it up? Or
+                  you want to show your dream build to your mates, or to everyone?</span
+                >
+              </p>
+              <p>
+                <span class="lang-cs"
+                  >O tom je přesně BikeCheck. Není to jen obyčejný servisní deník nebo kopie Stravy, je to nástroj pouze na
+                  tvoje milovaná kola, který pohlídá údržbu a díky kterému budeš mít všechno o svém kole na jednom místě. Vše
+                  intuitivně a s důrazem na to, abys trávil více času na silnici nebo trailech a méně v aplikaci.</span
+                >
+                <span class="lang-en"
+                  >That is exactly what BikeCheck is for. It is not just another service log or a copy of Strava, it is a tool
+                  made only for the bikes you love, one that keeps an eye on maintenance and holds everything about your bike
+                  in one place. All of it built to be obvious, and built so you spend more time on the road and the trails
+                  and less in the app.</span
+                >
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== FEATURES ============================== -->
+      <section id="features" class="relative overflow-hidden scroll-mt-20 band border-y hairline">
+        <!-- A road bike leaving by the opposite corner to the hero's, tilted a
+       few degrees so the two never read as the same trick twice. -->
+        <div
+          class="ghost hidden lg:block"
+          style="
+            right: -20%;
+            bottom: -24%;
+            width: 82%;
+            max-width: 1180px;
+            --gm-a: 74deg;
+            --lift: 0.95;
+            transform: rotate(-4deg);
+          "
+          aria-hidden="true"
+        >
+          <img src="assets/img_ready/cube.webp" alt="" style="opacity: 0.13" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div class="max-w-[46ch] mb-14 mx-auto text-center reveal">
+            <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+              <span class="lang-cs">Funkce</span><span class="lang-en">Features</span>
+            </p>
+            <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
+              <span class="lang-cs">Tvoje kola jako <span class="text-gold-500">na&nbsp;dlani</span></span>
+              <span class="lang-en">Your bikes, <span class="text-gold-500">at a glance</span></span>
+            </h2>
+          </div>
+
+          <!-- One phone in the middle and the features around it as switches (see
+               "Switchers" in the styles). Picking one changes the screen; left alone,
+               the block plays through them by itself. Not a .reveal: the glass of the
+               lit switch needs an opaque block to blur through. -->
+          <div class="sw sw-features">
+            <div class="sw-items">
+              <div class="sw-item is-on">
+                <span class="sw-short"><span class="lang-cs">Přehled</span><span class="lang-en">Overview</span></span>
+                <div class="sw-icon">
+                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                    <!-- The app's Home tab icon (lucide House). -->
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="size-5 text-gold-500"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+                      <path
+                        d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div class="sw-body">
+                  <h3 class="font-display font-bold text-[17px] mb-1.5">
+                    <span class="lang-cs">Přehled a AI chat</span><span class="lang-en">Overview and AI chat</span>
+                  </h3>
+                  <p class="text-[14px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs"
+                      >Nájezd, poslední jízda a stav kol hned po otevření aplikace. Na podrobnější dotazy bez klikání
+                      ohledně cyklo dat je tu AI pomocník.</span
+                    >
+                    <span class="lang-en"
+                      >Mileage, your last ride and the state of your bikes, the moment you open the app. For more detailed
+                      questions about your cycling data, with no tapping around, there is the AI assistant.</span
+                    >
+                  </p>
+                </div>
+              </div>
+              <div class="sw-item">
+                <span class="sw-short"><span class="lang-cs">Servis</span><span class="lang-en">Service</span></span>
+                <div class="sw-icon">
+                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                    <!-- The BikeCheck mark, which the app uses for service (bikecheck.svg in the app repo). -->
+                    <svg viewBox="0 0 282 175" class="w-[26px] h-auto text-gold-500" fill="currentColor" aria-hidden="true">
+                      <g transform="translate(0 175) scale(0.1 -0.1)">
+                        <path d="M2130 1740 c-107 -7 -152 -23 -260 -95 -116 -77 -191 -197 -231 -367 -37 -162 -118 -283 -306 -461 -146 -137 -359 -290 -385 -276 -28 15 -22 47 13 64 49 26 239 173 302 233 60 60 74 90 35 77 -244 -79 -441 -83 -664 -15 -117 36 -220 40 -313 11 -232 -72 -367 -318 -306 -556 60 -227 273 -368 532 -351 240 16 616 220 1138 616 265 201 393 278 520 316 48 13 83 16 182 11 142 -7 151 -3 203 87 54 96 70 157 70 277 0 116 -4 139 -27 139 -8 0 -72 -51 -142 -114 -141 -126 -175 -144 -245 -125 -51 14 -102 67 -117 122 -18 66 1 122 59 176 121 114 192 184 192 190 -1 17 -20 32 -51 41 -36 10 -46 11 -199 0z m-1582 -1076 c145 -60 175 -244 57 -342 -155 -127 -384 27 -321 216 37 110 161 170 264 126z" />
+                        <path d="M2233 885 c-109 -30 -235 -103 -513 -300 -102 -73 -239 -169 -305 -215 -157 -108 -215 -152 -215 -162 0 -4 48 -8 108 -8 272 -1 439 -29 688 -118 183 -66 273 -85 383 -80 86 3 105 7 174 41 215 101 314 342 233 565 -32 90 -132 199 -221 242 -103 50 -228 63 -332 35z m160 -246 c89 -24 154 -123 145 -219 -10 -106 -114 -189 -221 -177 -220 27 -243 333 -29 397 38 12 61 11 105 -1z" />
+                      </g>
+                    </svg>
+                  </span>
+                </div>
+                <div class="sw-body">
+                  <h3 class="font-display font-bold text-[17px] mb-1.5">
+                    <span class="lang-cs">Servisní historie a útrata</span><span class="lang-en">Service history and spend</span>
+                  </h3>
+                  <p class="text-[14px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs"
+                      >Využij přednastavené servisní úkony a limity, nebo si vytvoř vlastní podle toho, co chceš zaznamenávat.
+                      Servisy seskupené po měsících se součty za útratu, počet zásahů a počet výměn. Při prodeji kola se to
+                      bude hodit.</span
+                    >
+                    <span class="lang-en"
+                      >Use the preset service jobs and limits, or create your own to match what you want to keep track of.
+                      Services grouped by month with totals for spend, visits and replacements. It comes in handy when you sell
+                      the bike.</span
+                    >
+                  </p>
+                </div>
+              </div>
+              <div class="sw-item">
+                <span class="sw-short"><span class="lang-cs">Kola</span><span class="lang-en">Bikes</span></span>
+                <div class="sw-icon">
+                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                    <!-- Same bike as the app's Bikes tab (bike.svg in the app repo). -->
+                    <svg
+                      viewBox="0 0 205 127"
+                      class="w-[26px] h-auto text-gold-500"
+                      fill="currentColor"
+                      stroke="currentColor"
+                      stroke-width="1"
+                      fill-rule="evenodd"
+                      aria-hidden="true"
+                    >
+                      <path d="M40 46.9995C62.0914 46.9995 80 64.9081 80 86.9995C80 109.091 62.0914 127 40 127C17.9086 127 0 109.091 0 86.9995C0 64.9081 17.9086 46.9995 40 46.9995ZM40 54.9995C22.3269 54.9995 8 69.3264 8 86.9995C8 104.673 22.3269 119 40 119C57.6731 119 72 104.673 72 86.9995C72 69.3264 57.6731 54.9995 40 54.9995Z" />
+                      <path d="M39.5 53.9995C58.0015 53.9995 73 68.998 73 87.4995C73 106.001 58.0015 121 39.5 121C20.9985 121 6 106.001 6 87.4995C6 68.998 20.9985 53.9995 39.5 53.9995ZM39.5 60.6997C24.6988 60.6997 12.7002 72.6983 12.7002 87.4995C12.7002 102.301 24.6988 114.299 39.5 114.299C54.3012 114.299 66.2998 102.301 66.2998 87.4995C66.2998 72.6983 54.3012 60.6997 39.5 60.6997Z" />
+                      <path d="M164.5 53.9995C183.002 53.9995 198 68.998 198 87.4995C198 106.001 183.002 121 164.5 121C145.998 121 131 106.001 131 87.4995C131 68.998 145.998 53.9995 164.5 53.9995ZM164.5 60.6997C149.699 60.6997 137.7 72.6983 137.7 87.4995C137.7 102.301 149.699 114.299 164.5 114.299C179.301 114.299 191.3 102.301 191.3 87.4995C191.3 72.6983 179.301 60.6997 164.5 60.6997Z" />
+                      <path d="M165 46.9995C187.091 46.9995 205 64.9081 205 86.9995C205 109.091 187.091 127 165 127C142.909 127 125 109.091 125 86.9995C125 64.9081 142.909 46.9995 165 46.9995ZM165 54.9995C147.327 54.9995 133 69.3264 133 86.9995C133 104.673 147.327 119 165 119C182.673 119 197 104.673 197 86.9995C197 69.3264 182.673 54.9995 165 54.9995Z" />
+                      <path d="M129.273 2.28591C131.673 -0.647419 159.273 -0.780687 166.073 2.01931C177.006 6.55266 179.006 19.7522 170.073 27.8855C166.339 31.3521 164.34 32.1522 161.006 31.8855C157.406 31.6189 156.74 30.9521 156.74 28.1521C156.74 26.0188 157.806 24.2852 160.073 23.2185C163.406 21.6185 166.74 17.8855 166.74 15.8855C166.74 15.3522 165.539 13.6188 164.073 12.1521C161.806 9.88555 159.672 9.48513 150.606 9.48513C138.34 9.48512 138.74 8.41887 145.006 23.4851C146.74 27.8851 149.406 34.5526 150.872 38.2859L152.621 42.7449C149.769 43.7332 147.036 44.9738 144.445 46.4373C144.299 46.0297 144.131 45.5805 143.94 45.0857C143.007 42.2859 141.806 40.2856 141.273 40.4187C140.34 40.8187 133.673 49.0857 115.006 73.0857C100.073 92.2856 100.739 91.7519 87.8061 90.9519C85.9663 90.8437 84.7852 90.8453 83.9867 91.1082C83.9948 90.7397 84.0004 90.3702 84.0004 89.9998C84.0004 86.7953 83.6986 83.6607 83.1225 80.6238C85.0813 82.2738 88.1728 83.2512 89.4057 82.0193C90.2057 81.2193 87.2728 73.3523 81.5395 61.0857C76.4732 50.2865 72.2066 41.087 71.8061 40.8191C71.5394 40.5525 69.806 42.8188 68.0727 46.1521L65.3412 51.0437C62.7823 48.9824 60.0169 47.1677 57.0795 45.6365C58.54 44.3733 60.1751 41.4079 63.4057 35.4851L67.2729 28.1521L64.4731 22.2859C61.8064 16.9526 61.0059 16.2855 56.6059 15.8855C51.2727 15.4854 48.4728 12.5519 49.8061 8.95193C50.4729 7.21876 53.007 6.81912 65.9399 6.81912C82.7392 6.81913 85.4056 7.35219 85.4057 10.6853C85.4057 14.2853 82.6058 16.1521 77.1391 16.1521C71.4061 16.1521 71.54 16.1526 73.6733 20.8191L75.1391 24.1521H105.139C133.139 24.1521 135.006 24.0184 134.073 21.7517C128.473 8.28586 127.54 4.41927 129.273 2.28591ZM106.74 33.4851C92.073 33.4851 80.0727 33.8859 80.0727 34.5525C80.0771 35.4952 98.473 76.2858 99.2729 77.0857C99.5419 77.3492 106.741 68.5499 115.273 57.4851C123.939 46.5519 131.54 37.2191 132.206 36.8191C132.873 36.2858 133.406 35.4853 133.406 34.6853C133.404 34.0188 122.471 33.4851 106.74 33.4851Z" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="sw-body">
+                  <h3 class="font-display font-bold text-[17px] mb-1.5">
+                    <span class="lang-cs">Garáž kol</span><span class="lang-en">Bikes garage</span>
+                  </h3>
+                  <p class="text-[14px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs"
+                      >Každé kolo má fotku, značku, model, komponenty a mnoho dalšího. K tomu vlastní odometr v kilometrech i v čase.</span
+                    >
+                    <span class="lang-en"
+                      >Every bike carries a photo, make, model, components and much more, plus its own odometer in both distance and time.</span
+                    >
+                  </p>
+                </div>
+              </div>
+              <div class="sw-item">
+                <span class="sw-short"><span class="lang-cs">Strava</span><span class="lang-en">Strava</span></span>
+                <div class="sw-icon">
+                  <!-- Strava's mark stays in Strava's orange (brand asset, as in the stats
+                 strip), so this one tile is tinted to match it rather than gold. -->
+                  <span
+                    class="size-10 rounded-xl bg-[#FC5200]/10 border border-[#FC5200]/25 grid place-items-center"
+                  >
+                    <svg viewBox="0 0 24 24" class="size-5" fill="#FC5200" aria-hidden="true">
+                      <path
+                        d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div class="sw-body">
+                  <h3 class="font-display font-bold text-[17px] mb-1.5">
+                    <span class="lang-cs">Chytré propojení se Stravou</span><span class="lang-en">A smarter Strava link</span>
+                  </h3>
+                  <p class="text-[14px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs"
+                      >Tady ukazuje BikeCheck svou hlavní sílu. Hlídá servis podle reálného nájezdu, a to nejen podle kilometrů.
+                      Zohledňuje profil trasy a přesněji tak počítá reálný dopad na tlumení a brzdy.</span
+                    >
+                    <span class="lang-en"
+                      >This is where BikeCheck shows its real strength. It tracks service by actual riding, not by distance
+                      alone. It takes the route profile into account, so the real toll on suspension and brakes adds up more
+                      accurately.</span
+                    >
+                  </p>
+                </div>
+              </div>
+              <div class="sw-item">
+                <span class="sw-short"><span class="lang-cs">Setup</span><span class="lang-en">Setup</span></span>
+                <div class="sw-icon">
+                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="size-5 text-gold-500"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="sw-body">
+                  <h3 class="font-display font-bold text-[17px] mb-1.5">
+                    <span class="lang-cs">Profily nastavení</span><span class="lang-en">Setup profiles</span>
+                  </h3>
+                  <p class="text-[14px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs"
+                      >Rád ladíš svoje kolo? Ulož si svoje oblíbené tlaky v pneu nebo nastavení tlumení přímo do aplikace.</span
+                    >
+                    <span class="lang-en"
+                      >Like dialling your bike in? Save your favourite tyre pressures and damper settings right in the app.</span
+                    >
+                  </p>
+                </div>
+              </div>
+              <div class="sw-item">
+                <span class="sw-short"><span class="lang-cs">Sdílení</span><span class="lang-en">Share</span></span>
+                <div class="sw-icon">
+                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="size-5 text-gold-500"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="sw-body">
+                  <h3 class="font-display font-bold text-[17px] mb-1.5">
+                    <span class="lang-cs">Sdílení</span><span class="lang-en">Sharing</span>
+                  </h3>
+                  <p class="text-[14px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs"
+                      >Pošli živý profil na kolo nebo jen servisní report. Sleduj profil kamarádů nebo svého oblíbeného
+                      jezdce.</span
+                    >
+                    <span class="lang-en"
+                      >Send a live profile of your bike, or just a service report. Follow your mates' profiles or your
+                      favourite rider.</span
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="sw-phone">
+              <div class="phone" aria-hidden="true">
+                <div class="phone-body">
+                  <div class="phone-screen">
+                    <!-- One stack of frames for each switch, in the order of the switches;
+                         the script plays a stack through step by step. A frame is a
+                         screenshot, or a tall page that scrolls from stop to stop. -->
+                    <div class="phone-frames is-on">
+                      <img class="is-on" src="assets/img_ready/screens/features/overview-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <div class="phone-scroll" data-stops="20.859% 48.007% 62.672%">
+                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/home-scroll.webp" alt="" width="640" height="3713" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/home-scroll-top.webp" alt="" width="640" height="161" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-bottom" src="assets/img_ready/screens/features/home-scroll-bottom.webp" alt="" width="640" height="216" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                      </div>
+                      <img src="assets/img_ready/screens/features/overview-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/overview-07.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/overview-08.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="phone-frames">
+                      <img class="is-on" src="assets/img_ready/screens/features/service-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/service-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/service-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/service-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/service-05.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="phone-frames">
+                      <div class="phone-scroll is-on" data-stops="0% 25.975% 50.851%">
+                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/garage-scroll.webp" alt="" width="640" height="2820" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/garage-scroll-top.webp" alt="" width="640" height="160" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                      </div>
+                      <img src="assets/img_ready/screens/features/garage-05.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/garage-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="phone-frames">
+                      <img class="is-on" src="assets/img_ready/screens/features/strava-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/strava-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <!-- Back from the Pending tab: the first frame again. -->
+                      <img src="assets/img_ready/screens/features/strava-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <div class="phone-scroll" data-stops="0% 19.977%">
+                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/strava-scroll-1.webp" alt="" width="640" height="1732" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/strava-scroll-top.webp" alt="" width="640" height="310" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                      </div>
+                      <!-- The same sheet once "Something is off" is picked, scrolling on from where the one before stopped. -->
+                      <div class="phone-scroll" data-stops="23%">
+                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/strava-scroll-2.webp" alt="" width="640" height="1800" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/strava-scroll-top.webp" alt="" width="640" height="310" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                      </div>
+                      <img src="assets/img_ready/screens/features/strava-07.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="phone-frames">
+                      <div class="phone-scroll is-on" data-stops="0% 42.298%">
+                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/setup-scroll-1.webp" alt="" width="640" height="2402" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/setup-scroll-top.webp" alt="" width="640" height="225" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                      </div>
+                      <img src="assets/img_ready/screens/features/setup-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/setup-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <div class="phone-scroll" data-stops="0% 28.971% 49.618%">
+                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/setup-scroll-2.webp" alt="" width="640" height="2751" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/setup-scroll-top.webp" alt="" width="640" height="225" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-bottom" src="assets/img_ready/screens/features/setup-scroll-bottom.webp" alt="" width="640" height="261" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                      </div>
+                      <img src="assets/img_ready/screens/features/setup-08.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="phone-frames">
+                      <img class="is-on" src="assets/img_ready/screens/features/share-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/share-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <!-- The More sheet, the same shot as in the overview. -->
+                      <img src="assets/img_ready/screens/features/overview-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/share-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img src="assets/img_ready/screens/features/share-05.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <div class="phone-scroll" data-stops="0% 40.719%">
+                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/share-scroll.webp" alt="" width="640" height="2338" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/share-scroll-top.webp" alt="" width="640" height="160" loading="lazy" decoding="async" />
+                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="sw-toggle font-mono">
+              <svg class="sw-when-playing" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+              </svg>
+              <svg class="sw-when-paused" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5l11 7-11 7z" />
+              </svg>
+              <span class="sw-when-playing"><span class="lang-cs">Pozastavit</span><span class="lang-en">Pause</span></span>
+              <span class="sw-when-paused"><span class="lang-cs">Přehrát</span><span class="lang-en">Play</span></span>
+            </button>
+            <!-- Filled by the script with the title and text of the chosen switch. -->
+            <div class="sw-desc text-[15px] leading-relaxed text-paper-dim"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== SERVICE ============================== -->
+      <section id="service" class="relative overflow-hidden scroll-mt-20">
+        <!-- Biggest fragment on the page, and the most on-subject: the three
+       steps are about distance turning into wear on a chain, so the chain
+       runs underneath them at full size. -->
+        <div class="ghost g-drivetrain" aria-hidden="true">
+          <img src="assets/img_ready/drivetrain-Photoroom.webp" alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 reveal">
+          <!-- The three steps drive a phone of their own: picking a step shows the
+               screen it happens on, and left alone the block walks through all three
+               (see "Switchers" in the styles). -->
+          <div class="sw sw-steps">
+            <div class="steps-head">
+              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+                <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
+              </p>
+              <h2
+                class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance mb-8"
+              >
+                <span class="lang-cs">Tři kroky a dál už to <span class="text-gold-500">jede samo</span></span>
+                <span class="lang-en">Three steps, then it <span class="text-gold-500">runs itself</span></span>
+              </h2>
+            </div>
+            <div class="steps-stage">
+              <div class="sw-phone">
+                <div class="phone" aria-hidden="true">
+                  <div class="phone-body">
+                    <div class="phone-screen">
+                      <!-- One screen for each step, in the order of the steps: a stack of frames
+                           where the step is several screenshots (see the features phone). -->
+                      <div class="phone-frames is-on">
+                        <img class="is-on" src="assets/img_ready/screens/steps/bike-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img src="assets/img_ready/screens/steps/bike-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img src="assets/img_ready/screens/steps/bike-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img src="assets/img_ready/screens/steps/bike-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <!-- The form of the frame before it, filled in further down. The bar with
+                             the buttons is part of the foot, system buttons included. -->
+                        <div class="phone-scroll" data-stops="32.653%">
+                          <img class="phone-scroll-page" src="assets/img_ready/screens/steps/bike-scroll.webp" alt="" width="640" height="2058" loading="lazy" decoding="async" />
+                          <img class="phone-scroll-top" src="assets/img_ready/screens/steps/bike-scroll-top.webp" alt="" width="640" height="152" loading="lazy" decoding="async" />
+                          <img class="phone-scroll-bottom" src="assets/img_ready/screens/steps/bike-scroll-bottom.webp" alt="" width="640" height="207" loading="lazy" decoding="async" />
+                        </div>
+                        <img src="assets/img_ready/screens/steps/bike-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img src="assets/img_ready/screens/steps/bike-07.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      </div>
+                      <img src="assets/img_ready/screens/steps/strava.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <div class="phone-frames">
+                        <img class="is-on" src="assets/img_ready/screens/steps/service-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img src="assets/img_ready/screens/steps/service-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img src="assets/img_ready/screens/steps/service-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <!-- Back on the Service tab: the same shot as in the features phone. -->
+                        <img src="assets/img_ready/screens/features/service-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="sw-toggle font-mono">
+                <svg class="sw-when-playing" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+                </svg>
+                <svg class="sw-when-paused" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5l11 7-11 7z" />
+                </svg>
+                <span class="sw-when-playing"><span class="lang-cs">Pozastavit</span><span class="lang-en">Pause</span></span>
+                <span class="sw-when-paused"><span class="lang-cs">Přehrát</span><span class="lang-en">Play</span></span>
+              </button>
+            </div>
+            <ol class="steps-list">
+              <li>
+                <div class="sw-item is-on">
+                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0 tabular-nums">01</span>
+                  <div>
+                    <h3 class="font-display font-bold text-[17px] mb-1.5">
+                      <span class="lang-cs">Přidej kolo</span><span class="lang-en">Add your bike</span>
+                    </h3>
+                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
+                      <span class="lang-cs"
+                        >Najdi kolo v chytrém vyhledávači a seznam komponent se načte sám. Projdi ho a přejmenuj, doplň nebo vynechej, co nesedí.</span
+                      ><span class="lang-en"
+                        >Find your bike in the smart search and its component list loads on its own. Go through it and rename, add or skip whatever doesn't match.</span
+                      >
+                    </p>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <div class="sw-item">
+                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0 tabular-nums">02</span>
+                  <div>
+                    <h3 class="font-display font-bold text-[17px] mb-1.5">
+                      <span class="lang-cs">Propoj Stravu</span><span class="lang-en">Connect Strava</span>
+                    </h3>
+                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
+                      <span class="lang-cs"
+                        >Jednou povolíš přístup a jízdy pak chodí průběžně. Více kol není problém, každá jízda se připíše tomu správnému.</span
+                      ><span class="lang-en"
+                        >Grant access once and rides keep arriving. More than one bike is no problem: every ride lands on the right one.</span
+                      >
+                    </p>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <div class="sw-item">
+                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0 tabular-nums">03</span>
+                  <div>
+                    <h3 class="font-display font-bold text-[17px] mb-1.5">
+                      <span class="lang-cs">Jezdi a zapisuj servis</span
+                      ><span class="lang-en">Ride and log your service</span>
+                    </h3>
+                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
+                      <span class="lang-cs"
+                        >BikeCheck začne hlídat přednastavené servisní úkony, které můžeš snadno doladit podle svého.
+                        Vyměnil jsi řetěz, odvzdušnil brzdy nebo si koupil lepší tlumič? Naklikáš to během chvilky a
+                        všechno zůstane v historii kola.</span
+                      ><span class="lang-en"
+                        >BikeCheck starts keeping an eye on the preset service jobs, and you can easily tune them your way.
+                        Swapped the chain, bled the brakes or bought a better shock? Tap it in within moments, and it all
+                        stays in the bike's history.</span
+                      >
+                    </p>
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== REPORTS ============================== -->
+      <section id="reports" class="relative overflow-hidden scroll-mt-20 band border-y hairline">
+        <!-- A bare frame and fork: the machine stripped to what a report is a
+       record of. Tall, and off the right edge and the bottom at once. -->
+        <div
+          class="ghost hidden lg:block"
+          style="top: -14%; right: -10%; width: 46%; max-width: 660px; --gm-a: 68deg; --lift: 0.88"
+          aria-hidden="true"
+        >
+          <img src="assets/img_ready/frame_rallon.webp" alt="" style="opacity: 0.17" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div class="max-w-[62ch] mb-14 reveal">
+            <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+              <span class="lang-cs">Sdílení a reporty</span><span class="lang-en">Sharing and reports</span>
+            </p>
+            <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
+              <span class="lang-cs"
+                >Na čem jedeš závody?<br /><span class="text-gold-500">Koukni na můj&nbsp;BikeCheck.</span></span
+              >
+              <span class="lang-en"
+                >What are you racing on?<br /><span class="text-gold-500">Check out my&nbsp;BikeCheck.</span></span
+              >
+            </h2>
+            <p class="mt-5 text-[16px] leading-relaxed text-paper-dim">
+              <span class="lang-cs"
+                >Sdílej historii i aktuální setup svého kola přesně tak, jak potřebuješ. Od detailního PDF reportu pro
+                kupce či servis až po online profil tvé mašiny pro ostatní.</span
+              >
+              <span class="lang-en"
+                >Share your bike's history and current setup exactly the way you need. From a detailed PDF report for a
+                buyer or the workshop to an online profile of your machine for everyone else.</span
+              >
+            </p>
+          </div>
+
+          <!-- Each sharing card carries the screen it is about, peeking out of its
+               side (its foot on a phone). -->
+          <div class="grid lg:grid-cols-2 gap-4 reveal">
+            <article class="card rounded-2xl overflow-hidden sm:grid sm:grid-cols-[minmax(0,1fr)_210px]">
+              <div class="p-6">
+                <p class="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-gold-500 mb-3">
+                  <!-- The globe the app marks a public BikeCheck with (lucide Globe). -->
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="size-4 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                    <path d="M2 12h20" />
+                  </svg>
+                  Live BikeCheck
+                </p>
+                <h3 class="font-display font-bold text-[18px] mb-2.5">
+                  <span class="lang-cs">Karta stroje</span><span class="lang-en">The bike's card</span>
+                </h3>
+                <p class="text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs"
+                    >Na jakém kole zrovna jezdíš? Jakou máš vidlici? Jaký máš setup a pneumatiky na závod? To vše a více
+                    můžeš sdílet s ostatními, buď v aplikaci, nebo veřejně s kýmkoli, kdo má odkaz.</span
+                  >
+                  <span class="lang-en"
+                    >What are you riding right now? Which fork? What setup and tyres for race day? Share all of it and more
+                    with others, in the app or publicly with anyone who has the link.</span
+                  >
+                </p>
+              </div>
+              <div class="peek">
+                <div class="phone" aria-hidden="true">
+                  <div class="phone-body">
+                    <div class="phone-screen">
+                      <img src="assets/img_ready/screens/rider-bike.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+            <article class="card rounded-2xl overflow-hidden sm:grid sm:grid-cols-[minmax(0,1fr)_210px]">
+              <div class="p-6">
+                <p class="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-gold-500 mb-3">
+                  <!-- The app's report icon, as on its "My reports" tile (lucide FileText). -->
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="size-4 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"
+                    />
+                    <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                    <path d="M10 9H8" />
+                    <path d="M16 13H8" />
+                    <path d="M16 17H8" />
+                  </svg>
+                  Service Report
+                </p>
+                <h3 class="font-display font-bold text-[18px] mb-2.5">
+                  <span class="lang-cs">Jeden servis nebo celé období</span
+                  ><span class="lang-en">One service or a whole period</span>
+                </h3>
+                <p class="text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs"
+                    >Co se dělalo, na jakých dílech, kdy a za kolik, včetně účtenek. Doklad pro dílnu nebo pro
+                    kupce.</span
+                  >
+                  <span class="lang-en"
+                    >What was done, on which parts, when and for how much, receipts included. Proof for the workshop or a
+                    buyer.</span
+                  >
+                </p>
+              </div>
+              <div class="peek">
+                <div class="phone" aria-hidden="true">
+                  <div class="phone-body">
+                    <div class="phone-screen">
+                      <img src="assets/img_ready/screens/service-detail.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== ROADMAP ============================== -->
+      <section class="relative overflow-hidden border-b hairline">
+        <!-- Blown up well past the section it sits in, so the shock is cropped to
+       its spring and body rather than shown whole -- a detail at the scale
+       you would see it at on the bench, not a catalogue thumbnail. -->
+        <div class="ghost g-coil" aria-hidden="true">
+          <img src="assets/img_ready/coil.webp" alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div class="max-w-[46ch] mb-12 reveal">
+            <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
+              <span class="lang-cs">Ve vývoji</span>
+              <span class="lang-en">In progress</span>
+            </h2>
+            <p class="mt-5 text-[15px] leading-relaxed text-paper-dim">
+              <span class="lang-cs">Funkce, na kterých se pracuje.</span>
+              <span class="lang-en">Features in the works.</span>
+            </p>
+          </div>
+
+          <ul class="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-7 reveal">
+            <li class="border-t hairline pt-5">
+              <h3 class="font-display font-bold text-[16px] mb-1.5">
+                <span class="lang-cs">Rozpoznání dílu z fotky</span
+                ><span class="lang-en">Recognise a part from a photo</span>
+              </h3>
+              <p class="text-[14px] leading-relaxed text-paper-dim">
+                <span class="lang-cs">Vyfotíš přehazovačku a appka předvyplní typ, značku a model.</span
+                ><span class="lang-en">Photograph a derailleur and the app pre-fills type, make and model.</span>
+              </p>
+            </li>
+            <li class="border-t hairline pt-5">
+              <h3 class="font-display font-bold text-[16px] mb-1.5">
+                <span class="lang-cs">Režim dílny</span><span class="lang-en">Workshop mode</span>
+              </h3>
+              <p class="text-[14px] leading-relaxed text-paper-dim">
+                <span class="lang-cs">Role a pozvánka pro mechanika, aby servis zapsal rovnou on.</span
+                ><span class="lang-en">Roles and an invite for your mechanic, so they log the service themselves.</span>
+              </p>
+            </li>
+            <li class="border-t hairline pt-5">
+              <h3 class="font-display font-bold text-[16px] mb-1.5">
+                <span class="lang-cs">QR kód na rám</span><span class="lang-en">QR code on the frame</span>
+              </h3>
+              <p class="text-[14px] leading-relaxed text-paper-dim">
+                <span class="lang-cs">Načtení otevře veřejnou kartu stroje se vším namontovaným.</span
+                ><span class="lang-en">A scan opens the public bike card with everything mounted on it.</span>
+              </p>
+            </li>
+            <li class="border-t hairline pt-5">
+              <h3 class="font-display font-bold text-[16px] mb-1.5">
+                <span class="lang-cs">Garmin a Wahoo</span><span class="lang-en">Garmin and Wahoo</span>
+              </h3>
+              <p class="text-[14px] leading-relaxed text-paper-dim">
+                <span class="lang-cs">Další zdroje jízd vedle Stravy.</span
+                ><span class="lang-en">More ride sources alongside Strava.</span>
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================== FAQ ============================== -->
+      <section id="faq" class="scroll-mt-20">
+        <div class="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div class="grid lg:grid-cols-[0.8fr_1.2fr] gap-12 lg:gap-20">
+            <div class="reveal">
+              <h2
+                class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance"
+              >
+                <span class="lang-cs">Časté <span class="text-gold-500">dotazy</span></span
+                ><span class="lang-en">Common <span class="text-gold-500">questions</span></span>
+              </h2>
+              <p class="mt-5 text-[15px] leading-relaxed text-paper-dim max-w-[42ch]">
+                <span class="lang-cs">Nenašel jsi odpověď? Napiš mi.</span>
+                <span class="lang-en">Didn't find your answer? Write to me.</span>
+              </p>
+            </div>
+
+            <div class="divide-y divide-[rgba(255,255,255,0.075)] border-y hairline reveal">
+              <details class="group">
+                <summary class="flex items-start justify-between gap-6 py-5">
+                  <h3 class="font-display font-semibold text-[17px] leading-snug">
+                    <span class="lang-cs">Musím mít Stravu?</span><span class="lang-en">Do I need Strava?</span>
+                  </h3>
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="faq-chev size-5 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <p class="pb-6 pr-10 text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs"
+                    >Nemusíš, ale bez ní si nájezd musíš doplňovat sám. Se Stravou se jízdy načítají průběžně a opotřebení
+                    dílů roste bez tvého zásahu.</span
+                  >
+                  <span class="lang-en"
+                    >No, but without it you top up the mileage yourself. With Strava connected, rides arrive continuously and
+                    component wear grows without you doing anything.</span
+                  >
+                </p>
+              </details>
+
+              <details class="group">
+                <summary class="flex items-start justify-between gap-6 py-5">
+                  <h3 class="font-display font-semibold text-[17px] leading-snug">
+                    <span class="lang-cs">Kde BikeCheck spustím?</span
+                    ><span class="lang-en">Where can I use BikeCheck?</span>
+                  </h3>
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="faq-chev size-5 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <p class="pb-6 pr-10 text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs">Na Androidu a ve webovém prohlížeči. Verze pro iPhone bude brzy.</span>
+                  <span class="lang-en">Android and the web browser. The iPhone version is coming soon.</span>
+                </p>
+              </details>
+
+              <details class="group">
+                <summary class="flex items-start justify-between gap-6 py-5">
+                  <h3 class="font-display font-semibold text-[17px] leading-snug">
+                    <span class="lang-cs">Co se stane, když díl vyměním?</span
+                    ><span class="lang-en">What happens when I replace a part?</span>
+                  </h3>
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="faq-chev size-5 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <p class="pb-6 pr-10 text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs"
+                    >Starý kus se uzavře i s celým svým nájezdem a servisní historií, nový začne od nuly. Nic se nepřepisuje,
+                    takže se vždycky můžeš podívat, jak dlouho ti který řetěz vydržel.</span
+                  >
+                  <span class="lang-en"
+                    >The old one closes with all its mileage and service history intact, and a new one starts at zero.
+                    Nothing is overwritten, so you can always look back at how long each chain lasted.</span
+                  >
+                </p>
+              </details>
+
+              <details class="group">
+                <summary class="flex items-start justify-between gap-6 py-5">
+                  <h3 class="font-display font-semibold text-[17px] leading-snug">
+                    <span class="lang-cs">Podle čeho se počítají servisní intervaly?</span
+                    ><span class="lang-en">How are service intervals measured?</span>
+                  </h3>
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="faq-chev size-5 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <p class="pb-6 pr-10 text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs"
+                    >Vycházejí z dat výrobců a vlastních zkušeností, interval ale můžeš přizpůsobit podle svého. Počítá se
+                    vždy od poslední údržby.</span
+                  >
+                  <span class="lang-en"
+                    >They're based on manufacturer data and our own experience, but you can adjust any interval to suit you.
+                    It always counts from the last service.</span
+                  >
+                </p>
+              </details>
+
+              <details class="group">
+                <summary class="flex items-start justify-between gap-6 py-5">
+                  <h3 class="font-display font-semibold text-[17px] leading-snug">
+                    <span class="lang-cs">Změní se report, když servis dodatečně upravím?</span
+                    ><span class="lang-en">Does a report change if I edit the service later?</span>
+                  </h3>
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="faq-chev size-5 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <p class="pb-6 pr-10 text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs"
+                    >Ne. Report je zmrazený k okamžiku vytvoření. I když původní servis později upravíš nebo smažeš, dokument
+                    zůstane takový, jaký byl.</span
+                  >
+                  <span class="lang-en"
+                    >No. A report is frozen at the moment you create it. Edit or delete the underlying service later and the
+                    document stays as it was.</span
+                  >
+                </p>
+              </details>
+
+              <details class="group">
+                <summary class="flex items-start justify-between gap-6 py-5">
+                  <h3 class="font-display font-semibold text-[17px] leading-snug">
+                    <span class="lang-cs">Kolik kol si můžu přidat?</span
+                    ><span class="lang-en">How many bikes can I add?</span>
+                  </h3>
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="faq-chev size-5 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </summary>
+                <p class="pb-6 pr-10 text-[15px] leading-relaxed text-paper-dim">
+                  <span class="lang-cs"
+                    >Kolik potřebuješ. Každé kolo si vede vlastní odometr, vlastní namontované díly a vlastní historii
+                    servisů.</span
+                  >
+                  <span class="lang-en"
+                    >As many as you need. Each bike keeps its own odometer, its own mounted components and its own service
+                    history.</span
+                  >
+                </p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== CONTACT ============================== -->
+      <section id="contact" class="scroll-mt-20 band border-y hairline">
+        <div class="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start reveal">
+            <div>
+              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+                <span class="lang-cs">Kontakt</span><span class="lang-en">Contact</span>
+              </p>
+              <h2
+                class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance mb-5"
+              >
+                <span class="lang-cs">Chybí ti nějaká <span class="text-gold-500">funkce?</span></span
+                ><span class="lang-en">Missing a <span class="text-gold-500">feature?</span></span>
+              </h2>
+              <p class="text-[16px] leading-relaxed text-paper-dim max-w-[50ch]">
+                <span class="lang-cs"
+                  >Nápady od lidí, kteří skutečně jezdí, jsou nejrychlejší cesta, jak BikeCheck zlepšit. Napiš, co ti
+                  v appce chybí nebo co nefunguje.</span
+                >
+                <span class="lang-en"
+                  >Ideas from people who actually ride are the fastest way to make BikeCheck better. Tell me what's
+                  missing or what's broken.</span
+                >
+              </p>
+
+              <div class="mt-8 space-y-3">
+                <a
+                  href="mailto:support@bikecheck.cloud"
+                  class="flex items-center gap-3 text-[15px] hover:text-gold-400 transition-colors duration-200 w-fit"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    class="size-5 text-gold-500"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                  support@bikecheck.cloud
+                </a>
+              </div>
+            </div>
+
+            <!-- Sent through Web3Forms - see WEB3FORMS_KEY in the script below -->
+            <form class="glass glass-deep rounded-2xl p-6 sm:p-8 space-y-5" novalidate>
+              <!-- Honeypot: people never see it, bots tick it -->
+              <input type="checkbox" name="botcheck" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+              <div>
+                <label for="cf-name" class="block text-[13px] font-medium mb-2">
+                  <span class="lang-cs">Jméno</span><span class="lang-en">Name</span>
+                </label>
+                <input
+                  id="cf-name"
+                  name="name"
+                  type="text"
+                  required
+                  autocomplete="name"
+                  class="w-full bg-ink-950/40 border-0 ring-1 ring-inset ring-[rgba(255,255,255,0.12)] rounded-xl px-4 py-3 text-[15px] text-paper placeholder:text-paper-faint focus:ring-2 focus:ring-gold-500"
+                  placeholder="Honza Novák"
+                />
+                <p class="err mt-2 text-[13px] text-rust hidden" role="alert"></p>
+              </div>
+
+              <div>
+                <label for="cf-email" class="block text-[13px] font-medium mb-2">E-mail</label>
+                <input
+                  id="cf-email"
+                  name="email"
+                  type="email"
+                  required
+                  autocomplete="email"
+                  class="w-full bg-ink-950/40 border-0 ring-1 ring-inset ring-[rgba(255,255,255,0.12)] rounded-xl px-4 py-3 text-[15px] text-paper placeholder:text-paper-faint focus:ring-2 focus:ring-gold-500"
+                  placeholder="honza@email.cz"
+                />
+                <p class="err mt-2 text-[13px] text-rust hidden" role="alert"></p>
+              </div>
+
+              <div>
+                <label for="cf-msg" class="block text-[13px] font-medium mb-2">
+                  <span class="lang-cs">Zpráva</span><span class="lang-en">Message</span>
+                </label>
+                <textarea
+                  id="cf-msg"
+                  name="message"
+                  rows="5"
+                  required
+                  class="w-full bg-ink-950/40 border-0 ring-1 ring-inset ring-[rgba(255,255,255,0.12)] rounded-xl px-4 py-3 text-[15px] text-paper placeholder:text-paper-faint focus:ring-2 focus:ring-gold-500 resize-y"
+                  placeholder="Šlo by přidat sledování opotřebení plášťů?"
+                ></textarea>
+                <p class="err mt-2 text-[13px] text-rust hidden" role="alert"></p>
+              </div>
+
+              <button
+                type="submit"
+                class="w-full bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[15px] px-6 py-3.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer"
+              >
+                <span class="lang-cs">Odeslat zprávu</span><span class="lang-en">Send message</span>
+              </button>
+
+              <p id="cf-status" class="text-[14px] text-sage hidden" role="status"></p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== FINAL CTA ============================== -->
+      <section class="relative overflow-hidden">
+        <div
+          class="pointer-events-none absolute inset-x-0 bottom-0 h-[380px]"
+          aria-hidden="true"
+          style="background: radial-gradient(700px 300px at 50% 120%, rgba(206, 192, 83, 0.12), transparent 70%)"
+        ></div>
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
+          <h2
+            class="font-display font-extrabold tracking-tight text-[clamp(30px,4.4vw,50px)] leading-[1.03] text-balance max-w-[20ch] mx-auto"
+          >
+            <span class="lang-cs">Udělej svému kolu <span class="text-gold-500">BikeCheck</span></span>
+            <span class="lang-en">Give your bike a <span class="text-gold-500">BikeCheck</span></span>
+          </h2>
+          <p class="mt-5 text-[16px] text-paper-dim max-w-[50ch] mx-auto">
+            <span class="lang-cs">Propoj Stravu, postav garáž a nech si hlídat, co se na kole opotřebovává.</span>
+            <span class="lang-en">Connect Strava, build your garage and let the wear watch itself.</span>
+          </p>
+          <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="PLAY_STORE_URL"
+              class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
+            >
+              <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] sm:h-[58px] w-auto" />
+            </a>
+
+            <!-- The hero's "not out yet" tile for iOS. From sm up both badges are
+           a step larger than the hero's; on a phone they keep its size, so
+           the pair still fits on one row. -->
+            <span
+              class="inline-flex items-center gap-3 h-[52px] sm:h-[58px] px-4 sm:px-[18px] rounded-xl border hairline bg-ink-900/60 cursor-default select-none"
+              aria-disabled="true"
+            >
+              <svg viewBox="0 0 24 24" class="size-6 sm:size-[27px] shrink-0 text-paper-faint" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M17.05 12.04c-.03-2.75 2.25-4.07 2.35-4.13-1.28-1.87-3.28-2.13-3.99-2.16-1.7-.17-3.32 1-4.18 1-.86 0-2.19-.98-3.6-.95-1.85.03-3.56 1.08-4.51 2.73-1.92 3.33-.49 8.26 1.38 10.96.91 1.32 2 2.8 3.43 2.75 1.38-.06 1.9-.89 3.57-.89 1.67 0 2.14.89 3.6.86 1.49-.03 2.43-1.35 3.34-2.67 1.05-1.53 1.48-3.01 1.5-3.09-.03-.01-2.88-1.11-2.91-4.4zM14.3 4.1c.76-.92 1.27-2.2 1.13-3.47-1.09.04-2.41.72-3.19 1.64-.7.81-1.31 2.11-1.15 3.36 1.21.09 2.45-.62 3.21-1.53z"
+                />
+              </svg>
+              <span class="flex flex-col text-left leading-none">
+                <span class="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-gold-600">
+                  <span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span>
+                </span>
+                <span class="font-display font-semibold text-[15px] sm:text-[17px] text-paper-dim mt-1.5">App Store</span>
+              </span>
+            </span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================== FOOTER ============================== -->
+    <footer class="border-t hairline band">
+      <div class="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div class="lg:col-span-2">
+            <svg class="h-8 w-auto" viewBox="0 0 1569 318" role="img" aria-label="BikeCheck">
+              <use href="#bc-logo" />
+            </svg>
+          </div>
+
+          <div>
+            <h2 class="font-mono text-[11px] tracking-[0.14em] uppercase text-paper-faint mb-4">
+              <span class="lang-cs">Aplikace</span><span class="lang-en">App</span>
+            </h2>
+            <ul class="space-y-2.5 text-[14px] text-paper-dim">
+              <li>
+                <a href="#features" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Funkce</span><span class="lang-en">Features</span></a
+                >
+              </li>
+              <li>
+                <a href="#service" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span></a
+                >
+              </li>
+              <li>
+                <a href="#reports" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></a
+                >
+              </li>
+              <li><a href="#faq" class="hover:text-paper transition-colors duration-200">FAQ</a></li>
+              <li><a href="PLAY_STORE_URL" class="hover:text-paper transition-colors duration-200">Google Play</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 class="font-mono text-[11px] tracking-[0.14em] uppercase text-paper-faint mb-4">
+              <span class="lang-cs">Ostatní</span><span class="lang-en">More</span>
+            </h2>
+            <ul class="space-y-2.5 text-[14px] text-paper-dim">
+              <li>
+                <a href="#contact" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Kontakt</span><span class="lang-en">Contact</span></a
+                >
+              </li>
+              <li>
+                <a href="privacy.html" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Ochrana soukromí</span><span class="lang-en">Privacy</span></a
+                >
+              </li>
+              <li>
+                <a href="terms.html" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Podmínky</span><span class="lang-en">Terms</span></a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-12 pt-7 border-t hairline flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p class="font-mono text-[12px] text-paper-faint">© <span id="year">2026</span> BikeCheck</p>
+          <p class="font-mono text-[12px] text-paper-faint">
+            <span class="lang-cs">Vyrobeno v Česku</span><span class="lang-en">Made in Czechia</span>
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        "use strict";
+
+        // ---- Language ----------------------------------------------------------
+        var root = document.documentElement;
+        var STORE_KEY = "bikecheck-lang";
+
+        function applyLang(lang) {
+          root.setAttribute("data-lang", lang);
+          root.setAttribute("lang", lang);
+          document.querySelectorAll(".lang-btn").forEach(function (btn) {
+            var on = btn.dataset.setLang === lang;
+            btn.setAttribute("aria-pressed", String(on));
+            btn.classList.toggle("bg-gold-500", on);
+            btn.classList.toggle("text-ink-950", on);
+            btn.classList.toggle("text-paper-dim", !on);
+          });
+        }
+
+        // The <head> script picked the language; only a click is saved, so a detected one keeps following the browser.
+        applyLang(root.getAttribute("data-lang"));
+
+        document.querySelectorAll(".lang-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            applyLang(btn.dataset.setLang);
+            try {
+              localStorage.setItem(STORE_KEY, btn.dataset.setLang);
+            } catch (e) {}
+          });
+        });
+
+        // ---- Year --------------------------------------------------------------
+        document.getElementById("year").textContent = String(new Date().getFullYear());
+
+        // ---- Scroll reveal -----------------------------------------------------
+        var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var revealables = document.querySelectorAll(".reveal");
+
+        if (reduced || !("IntersectionObserver" in window)) {
+          revealables.forEach(function (el) {
+            el.classList.add("in");
+          });
+        } else {
+          var io = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("in");
+                  io.unobserve(entry.target);
+                }
+              });
+            },
+            { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
+          );
+          revealables.forEach(function (el) {
+            io.observe(el);
+          });
+        }
+
+        // ---- Switchers ---------------------------------------------------------
+        // One phone and the switches around it (see "Switchers" in the styles). A
+        // block plays through its screens by itself while it is on screen and no
+        // mouse is resting on a switch or the phone. A screen made of several
+        // frames (.phone-frames) is played through step by step first, and goes
+        // round on its own for as long as a resting mouse keeps the block on it.
+        // A pick jumps to that screen and the play-through carries on from
+        // there; the button stops everything, or starts it again.
+        var SWITCH_MS = 4500;
+        var FRAME_MS = 2200;
+        var FIRST_MS = 1200; // a screen's first frame: it has just come on, so it moves soon
+        var SCROLL_MS = 3000; // a step that scrolls: the slide, then a look at where it ends
+
+        // The steps a screen is played through in: its frames in order, a frame
+        // that scrolls (data-stops) once for each of its stops. It starts from
+        // its top, so a stop of 0% is a step that only shows it.
+        function stepsOf(screen) {
+          var steps = [];
+          if (!screen.classList.contains("phone-frames")) return steps;
+          Array.prototype.forEach.call(screen.children, function (el) {
+            var at = "0%";
+            (el.getAttribute("data-stops") || at).split(" ").forEach(function (y) {
+              steps.push({ el: el, y: y, ms: y === at ? FRAME_MS : SCROLL_MS });
+              at = y;
+            });
+          });
+          if (steps.length > 1) steps[0].ms = FIRST_MS;
+          return steps;
+        }
+
+        function switcher(wrap) {
+          var items = Array.prototype.slice.call(wrap.querySelectorAll(".sw-item"));
+          var phone = wrap.querySelector(".sw-phone");
+          var screens = phone.querySelectorAll(".phone-screen > *");
+          var steps = Array.prototype.map.call(screens, stepsOf);
+          var desc = wrap.querySelector(".sw-desc");
+          var toggle = wrap.querySelector(".sw-toggle");
+          var current = 0;
+          var frames = [];
+          var frame = 0;
+          var timer = null;
+          // moving: the block changes by itself at all; auto: it also moves on
+          // from one switch to the next.
+          var moving = false;
+          var auto = false;
+          // A browser with nothing to watch the block with plays it regardless.
+          var inView = !("IntersectionObserver" in window);
+          var hovered = false;
+
+          function showFrame(index) {
+            var step = frames[index];
+            frame = index;
+            if (!step) return;
+            Array.prototype.forEach.call(screens[current].children, function (el) {
+              el.classList.toggle("is-on", el === step.el);
+              if (el.hasAttribute("data-stops")) el.style.setProperty("--y", el === step.el ? step.y : "0%");
+            });
+          }
+
+          function show(index) {
+            showFrame(0); // the screen being left starts over the next time
+            current = index;
+            frames = steps[index];
+            showFrame(0);
+            items.forEach(function (el, i) {
+              el.classList.toggle("is-on", i === index);
+              el.setAttribute("aria-pressed", String(i === index));
+            });
+            screens.forEach(function (screen, i) {
+              screen.classList.toggle("is-on", i === index);
+            });
+            // Below lg a feature switch is only a chip, so its title and text are
+            // shown under the phone.
+            if (!desc) return;
+            desc.textContent = "";
+            items[index].querySelectorAll("h3, p").forEach(function (node) {
+              desc.appendChild(node.cloneNode(true));
+            });
+          }
+
+          function play() {
+            clearTimeout(timer);
+            var loops = frames.length > 1;
+            var movesOn = auto && !hovered;
+            // .is-auto is what the button goes by: something here is changing.
+            wrap.classList.toggle("is-auto", moving && (auto || loops));
+            if (!moving || !inView || !(loops || movesOn)) return;
+            timer = setTimeout(
+              function () {
+                if (frame < frames.length - 1) showFrame(frame + 1);
+                else if (movesOn) show((current + 1) % items.length);
+                else showFrame(0);
+                play();
+              },
+              loops ? frames[frame].ms : SWITCH_MS,
+            );
+          }
+
+          // A switch only becomes a button here, so that without a script it stays
+          // the plain heading and text it is in the markup.
+          items.forEach(function (el, i) {
+            // A pick also starts a block that was paused. Only where less motion
+            // is asked for does a block that stands still stay that way.
+            function pick() {
+              show(i);
+              moving = auto = moving || !reduced;
+              play();
+            }
+            el.setAttribute("role", "button");
+            el.tabIndex = 0;
+            el.addEventListener("click", pick);
+            el.addEventListener("keydown", function (e) {
+              if (e.key !== "Enter" && e.key !== " ") return;
+              e.preventDefault();
+              pick();
+            });
+          });
+
+          toggle.addEventListener("click", function () {
+            moving = auto = !wrap.classList.contains("is-auto");
+            play();
+          });
+
+          // A mouse resting on a switch or the phone holds the play-through; the
+          // button is left out on purpose, so pressing Play is seen to start it.
+          // Touch is left out too: a finger never leaves, and one tap on the phone
+          // would hold the block for good.
+          items.concat(phone).forEach(function (el) {
+            el.addEventListener("pointerenter", function (e) {
+              if (e.pointerType !== "mouse") return;
+              hovered = true;
+              play();
+            });
+            el.addEventListener("pointerleave", function (e) {
+              if (e.pointerType !== "mouse") return;
+              hovered = false;
+              play();
+            });
+          });
+
+          // It is the phone that is watched, not the block: with the switches
+          // stacked under it the block can be several windows tall, and what
+          // changes is the phone.
+          if ("IntersectionObserver" in window) {
+            new IntersectionObserver(
+              function (entries) {
+                inView = entries[0].isIntersecting;
+                play();
+              },
+              { threshold: 0.35 },
+            ).observe(phone);
+          }
+
+          show(0);
+          moving = auto = !reduced;
+          play();
+        }
+        document.querySelectorAll(".sw").forEach(switcher);
+
+        // ---- Contact form: validation + sending -------------------------------
+        // Access key from web3forms.com - messages land in the inbox the key was
+        // created for. It is meant to be public, so it can live in the page.
+        var WEB3FORMS_KEY = "YOUR_ACCESS_KEY";
+        var WEB3FORMS_URL = "https://api.web3forms.com/submit";
+
+        var form = document.querySelector("#contact form");
+        var status = document.getElementById("cf-status");
+        var FIELDS = "input:not([name=botcheck]), textarea";
+
+        var MESSAGES = {
+          cs: {
+            required: "Vyplň prosím toto pole",
+            email: "Zadej platnou e-mailovou adresu",
+            sent: "Díky, zpráva odešla. Ozvu se co nejdřív.",
+            failed: "Zprávu se nepodařilo odeslat. Zkus to znovu, nebo napiš na support@bikecheck.cloud.",
+          },
+          en: {
+            required: "Fill in this field",
+            email: "Enter a valid email address",
+            sent: "Thanks, your message is on its way. I'll reply soon.",
+            failed: "The message didn't go through. Try again, or write to support@bikecheck.cloud.",
+          },
+        };
+
+        function msg(key) {
+          return MESSAGES[root.getAttribute("data-lang")][key];
+        }
+
+        function showError(field, text) {
+          var box = field.parentElement.querySelector(".err");
+          box.textContent = text;
+          box.classList.remove("hidden");
+          field.setAttribute("aria-invalid", "true");
+          field.classList.add("ring-rust");
+        }
+
+        function clearError(field) {
+          var box = field.parentElement.querySelector(".err");
+          box.textContent = "";
+          box.classList.add("hidden");
+          field.removeAttribute("aria-invalid");
+          field.classList.remove("ring-rust");
+        }
+
+        function showStatus(key, failed) {
+          status.textContent = msg(key);
+          status.classList.toggle("text-sage", !failed);
+          status.classList.toggle("text-rust", !!failed);
+          status.classList.remove("hidden");
+        }
+
+        if (form) {
+          var submitBtn = form.querySelector("button[type=submit]");
+
+          form.querySelectorAll(FIELDS).forEach(function (field) {
+            field.addEventListener("input", function () {
+              clearError(field);
+            });
+          });
+
+          form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            status.classList.add("hidden");
+
+            var fields = Array.prototype.slice.call(form.querySelectorAll(FIELDS));
+            var firstBad = null;
+
+            fields.forEach(function (field) {
+              clearError(field);
+              var value = field.value.trim();
+
+              if (!value) {
+                showError(field, msg("required"));
+                firstBad = firstBad || field;
+              } else if (field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+                showError(field, msg("email"));
+                firstBad = firstBad || field;
+              }
+            });
+
+            if (firstBad) {
+              firstBad.focus();
+              return;
+            }
+
+            // A ticked honeypot is a bot: look successful, send nothing.
+            if (form.elements.botcheck.checked) {
+              showStatus("sent");
+              form.reset();
+              return;
+            }
+
+            var name = form.elements.name.value.trim();
+            submitBtn.disabled = true;
+            submitBtn.classList.add("opacity-60", "cursor-wait");
+
+            fetch(WEB3FORMS_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({
+                access_key: WEB3FORMS_KEY,
+                subject: "BikeCheck web: " + name,
+                name: name,
+                email: form.elements.email.value.trim(),
+                message: form.elements.message.value.trim(),
+              }),
+            })
+              .then(function (res) {
+                return res.json();
+              })
+              .then(function (data) {
+                if (!data.success) throw new Error("rejected");
+                showStatus("sent");
+                form.reset();
+              })
+              .catch(function () {
+                showStatus("failed", true);
+              })
+              .then(function () {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove("opacity-60", "cursor-wait");
+              });
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
