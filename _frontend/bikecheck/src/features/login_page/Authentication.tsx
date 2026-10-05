@@ -444,7 +444,8 @@ export function AuthenticationForm(props: PaperProps) {
         {/* `/` is the public homepage Google's brand check reads: what the app is, and its legal pages. */}
         {type === "login" && (
           <Stack gap="xs" align="center">
-            <Text size="xs" c="background.9" ta="center" maw={FORM_MAX_WIDTH} px="md">
+            {/* Desktop only: Google's check reads the page wide, the phone keeps the bottom quiet. */}
+            <Text size="xs" c="background.9" ta="center" maw={FORM_MAX_WIDTH} px="md" visibleFrom="sm">
               {t("auth.landingTagline")}
             </Text>
             <LegalLinks />
