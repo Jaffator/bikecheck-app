@@ -1,6 +1,6 @@
 // The login screen from the desktop width: the bike panel on the left, the form in a column on the right.
-import type { ReactElement } from "react";
-import { Anchor, Box, Button, Checkbox, Divider, Group, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
+import { Anchor, Box, Button, Checkbox, Divider, Group, PasswordInput, Stack, Text, TextInput, Title, type MantineTheme } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
 import { Lock, Mail, User } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -16,8 +16,18 @@ import type { AuthFormState } from "./useAuthForm";
 const CONTROL_HEIGHT = "3rem";
 const CONTROL_RADIUS = inputStyles.input.borderRadius;
 
-const FIELD_STYLES = { ...inputStyles, input: { ...inputStyles.input, height: CONTROL_HEIGHT } };
-const PASSWORD_STYLES = { ...FIELD_STYLES, visibilityToggle: { color: "var(--mantine-color-text-8)" } };
+const BASE_FIELD_STYLES = { ...inputStyles, input: { ...inputStyles.input, height: CONTROL_HEIGHT } };
+const VISIBILITY_TOGGLE: CSSProperties = { color: "var(--mantine-color-text-8)" };
+
+// The shared input paints its own border over Mantine's, so a field in error asks for the red back.
+function fieldStyles(_theme: MantineTheme, { error }: { error?: ReactNode }): typeof BASE_FIELD_STYLES {
+  if (!error) return BASE_FIELD_STYLES;
+  return { ...BASE_FIELD_STYLES, input: { ...BASE_FIELD_STYLES.input, borderColor: "var(--mantine-color-error)" } };
+}
+
+function passwordStyles(theme: MantineTheme, props: { error?: ReactNode }): typeof BASE_FIELD_STYLES & { visibilityToggle: CSSProperties } {
+  return { ...fieldStyles(theme, props), visibilityToggle: VISIBILITY_TOGGLE };
+}
 
 function Heading({ auth }: { auth: AuthFormState }): ReactElement {
   const { t } = useTranslation();
@@ -69,7 +79,7 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
           label={t("auth.nameLabel")}
           placeholder={t("auth.namePlaceholder")}
           leftSection={<User size={18} />}
-          styles={FIELD_STYLES}
+          styles={fieldStyles}
           {...form.getInputProps("name")}
         />
       )}
@@ -77,14 +87,14 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
         label={t("auth.emailLabel")}
         placeholder={t("auth.emailPlaceholder")}
         leftSection={<Mail size={18} />}
-        styles={FIELD_STYLES}
+        styles={fieldStyles}
         {...form.getInputProps("email")}
       />
       <PasswordInput
         label={t("auth.passwordLabel")}
         placeholder={t("auth.passwordPlaceholder")}
         leftSection={<Lock size={18} />}
-        styles={PASSWORD_STYLES}
+        styles={passwordStyles}
         {...form.getInputProps("password")}
       />
       {type === "register" && (
@@ -92,7 +102,7 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
           label={t("auth.confirmPasswordLabel")}
           placeholder={t("auth.confirmPasswordPlaceholder")}
           leftSection={<Lock size={18} />}
-          styles={PASSWORD_STYLES}
+          styles={passwordStyles}
           {...form.getInputProps("confirmPassword")}
         />
       )}
@@ -154,20 +164,26 @@ function LegalLinks(): ReactElement {
 }
 
 export function DesktopAuth({ auth }: { auth: AuthFormState }): ReactElement {
+  const { inboxEmail } = auth;
   return (
     <Box bg="background.9" className="auth-enter flex min-h-dvh">
       <LoginBikePanel />
-      <div className="flex flex-[0_0_480px] flex-col justify-between gap-12 box-border" style={{ padding: "40px clamp(24px, 5vw, 64px)" }}>
-        <img src={logoName} alt="BikeCheck" className="block h-10 w-auto self-center mt-10" />
-        <Box w="100%" maw={380} mx="auto">
-          {/* Registration and a refused Google sign-in end here until the link is used (ADR 0031). */}
-          {auth.inboxEmail !== null ? (
-            <CheckInbox email={auth.inboxEmail} onBackToLogin={auth.backToLogin} />
-          ) : (
-            <DesktopForm auth={auth} />
-          )}
+      {/* About a third of the screen, so a wide monitor gives the form air on both sides. */}
+      <div className="flex flex-[0_0_clamp(480px,32vw,640px)] box-border" style={{ padding: "40px clamp(24px, 5vw, 64px)" }}>
+        {/* One left edge for logo, form and footer. */}
+        <Box w="100%" maw={380} mx="auto" className="flex flex-col justify-between gap-12">
+          <div className="flex flex-1 flex-col justify-center gap-10">
+            {/* CheckInbox is centred and shared with the phone, so the logo follows it there. */}
+            <img src={logoName} alt="BikeCheck" className={`block h-10 w-auto ${inboxEmail !== null ? "self-center" : "self-start"}`} />
+            {/* Registration and a refused Google sign-in end here until the link is used (ADR 0031). */}
+            {inboxEmail !== null ? (
+              <CheckInbox email={inboxEmail} onBackToLogin={auth.backToLogin} />
+            ) : (
+              <DesktopForm auth={auth} />
+            )}
+          </div>
+          <LegalLinks />
         </Box>
-        <LegalLinks />
       </div>
     </Box>
   );

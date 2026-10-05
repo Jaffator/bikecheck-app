@@ -72,8 +72,8 @@
     "description": "Ověřte připojení k internetu"
   },
   "auth": {
-    "login": "Přihlásit",
-    "register": "Registrovat",
+    "login": "Přihlásit se",
+    "register": "Vytvořit účet",
     "namePlaceholder": "Zadejte jméno",
     "emailPlaceholder": "Zadejte e-mail",
     "passwordPlaceholder": "Zadejte heslo",
@@ -109,8 +109,8 @@
     "continueWithGoogle": "Pokračovat přes Google",
     "haveAccount": "Už máte účet?",
     "noAccount": "Nemáte účet?",
-    "loginTitle": "Přihlášení",
-    "registerTitle": "Registrace",
+    "loginTitle": "Přihlásit se",
+    "registerTitle": "Vytvořit účet",
     "nameLabel": "Jméno",
     "emailLabel": "E-mail",
     "passwordLabel": "Heslo",

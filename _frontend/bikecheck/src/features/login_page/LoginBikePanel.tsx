@@ -12,22 +12,29 @@ const FORK_MODEL = "Fox 38 Factory";
 
 // Percentages of the design's 832×580 stage, so each card stays on its part at any width.
 const STAGE_RATIO = "832 / 580";
+// Bound by the height too, or a short window pushes the bike off the bottom.
+const STAGE_WIDTH = `min(100cqw, calc(100cqh * ${STAGE_RATIO}), 1240px)`;
 const BIKE_POSITION: CSSProperties = { left: "1.92%", top: "17.24%", width: "96.15%" };
 const SERVICE_AT = { left: "40.87%", bottom: "9.66%" };
 const BRAKES_AT = { left: "78.49%", bottom: "14.31%" };
 const FORK_AT = { left: "71.75%", bottom: "59.83%" };
+// Centred on the tyres' contact line, at 92.4 % of the stage's height.
+const TYRE_SHADOW_BAND: CSSProperties = { top: "90.2%", width: "22%", height: "4.4%" };
+const REAR_TYRE_LEFT = "10%";
+const FRONT_TYRE_LEFT = "67.1%";
 
 const CARD_STYLE: CSSProperties = {
   width: "20%",
   gap: "0.45em",
   padding: "0.8em 0.95em",
   borderRadius: "1em",
-  background: "color-mix(in srgb, var(--mantine-color-background-8) 72%, transparent)",
-  backdropFilter: "blur(16px) saturate(1.3)",
+  // Near-solid: a see-through dark over the gold turns olive.
+  background: "color-mix(in srgb, var(--mantine-color-background-9) 94%, transparent)",
+  backdropFilter: "blur(16px)",
   border: "1px solid var(--color-border-strong)",
   color: "var(--mantine-color-text-2)",
   // Sized by the stage, not the page, so the cards shrink with the bike.
-  fontSize: "clamp(10px, 1.42cqw, 14px)",
+  fontSize: "clamp(13px, 1.45cqw, 18px)",
   lineHeight: 1.25,
   fontVariantNumeric: "tabular-nums",
   boxShadow: "0 10px 28px rgba(10, 10, 11, 0.22)",
@@ -47,9 +54,10 @@ function Card({ at, children }: CardProps): ReactElement {
   );
 }
 
+// Capped at 13 px, the top of the label tracking band (design.md §9).
 function Eyebrow({ children }: { children: ReactNode }): ReactElement {
   return (
-    <Text component="span" fz="0.82em" fw={600} lh={1.25} tt="uppercase" lts="var(--tracking-label)" c="text.7" className="flex items-center gap-[0.5em]">
+    <Text component="span" fz="min(0.85em, 13px)" fw={600} lh={1.25} tt="uppercase" lts="var(--tracking-label)" c="text.7" className="flex items-center gap-[0.5em]">
       {children}
     </Text>
   );
@@ -91,16 +99,24 @@ function WearBar({ percent }: { percent: number }): ReactElement {
   );
 }
 
+// A soft contact shadow; a drop-shadow on the whole photo haloes the spokes.
+function TyreShadow({ left }: { left: string }): ReactElement {
+  return (
+    <span
+      aria-hidden
+      className="absolute block"
+      style={{ ...TYRE_SHADOW_BAND, left, background: "radial-gradient(closest-side, rgba(10, 10, 11, 0.38), transparent)" }}
+    />
+  );
+}
+
 function BikeStage(): ReactElement {
   const { t } = useTranslation();
   return (
-    <div className="@container relative w-full max-w-225" style={{ aspectRatio: STAGE_RATIO }}>
-      <img
-        src={bikeImage}
-        alt={t("auth.panelImageAlt")}
-        className="absolute block h-auto"
-        style={{ ...BIKE_POSITION, filter: "drop-shadow(0 28px 28px rgba(34, 51, 59, 0.35))" }}
-      />
+    <div className="@container relative" style={{ width: STAGE_WIDTH, aspectRatio: STAGE_RATIO }}>
+      <TyreShadow left={REAR_TYRE_LEFT} />
+      <TyreShadow left={FRONT_TYRE_LEFT} />
+      <img src={bikeImage} alt={t("auth.panelImageAlt")} className="absolute block h-auto" style={BIKE_POSITION} />
       <Card at={SERVICE_AT}>
         <Eyebrow>
           <Wrench size="1.25em" color="var(--mantine-color-primary-6)" aria-hidden />
@@ -138,25 +154,25 @@ export function LoginBikePanel(): ReactElement {
       className="sticky top-0 flex h-dvh flex-1 min-w-0 flex-col gap-7 overflow-hidden box-border"
       style={{ padding: "clamp(24px, 4.5vw, 64px)" }}
     >
-      <div className="flex flex-1 items-center justify-center">
-        <BikeStage />
-      </div>
       <div className="flex flex-col gap-3">
-        {/* The size crosses 28 px at a 1018 px viewport, where the tracking band changes (design.md §9). */}
         <Title
           order={2}
-          fz="clamp(26px, 2.75vw, 40px)"
+          fz="clamp(32px, 3.2vw, 60px)"
           lh={1.08}
           fw={700}
           c="textDark.5"
-          className="tracking-title min-[1018px]:tracking-display"
+          lts="var(--tracking-display)"
           style={{ whiteSpace: "pre-line" }}
         >
           {t("auth.panelTitle")}
         </Title>
-        <Text fz={17} lh={1.5} c="textDark.5">
+        <Text fz="clamp(16px, 1.3vw, 20px)" lh={1.5} c="textDark.5">
           {t("auth.panelSubtitle")}
         </Text>
+      </div>
+      {/* A size container, so the stage can fit the height left under the title too. */}
+      <div className="flex min-h-0 flex-1 items-center justify-center" style={{ containerType: "size" }}>
+        <BikeStage />
       </div>
     </Box>
   );

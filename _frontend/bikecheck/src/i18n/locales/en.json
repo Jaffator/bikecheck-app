@@ -70,8 +70,8 @@
     "description": "Check your internet connection"
   },
   "auth": {
-    "login": "Login",
-    "register": "Register",
+    "login": "Sign in",
+    "register": "Create account",
     "namePlaceholder": "Enter your name",
     "emailPlaceholder": "Enter your email",
     "passwordPlaceholder": "Enter your password",
@@ -107,8 +107,8 @@
     "continueWithGoogle": "Continue with Google",
     "haveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
-    "loginTitle": "Login",
-    "registerTitle": "Register",
+    "loginTitle": "Sign in",
+    "registerTitle": "Create account",
     "nameLabel": "Name",
     "emailLabel": "Email",
     "passwordLabel": "Password",
