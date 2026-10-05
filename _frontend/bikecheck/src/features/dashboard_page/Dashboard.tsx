@@ -34,7 +34,7 @@ export function Dashboard(): ReactElement {
     return <Loader m="md" />;
   }
 
-  // Show the empty state when no bikes exist. Nothing to share yet, so no sharing card here.
+  // Show the empty state when no b188.245.25.240ikes exist. Nothing to share yet, so no sharing card here.
   if (!bikes || bikes.length === 0) {
     return <EmptyDashboard />;
   }

@@ -126,10 +126,31 @@ services:
       - strava-service
     networks: [internal]
 
+  # Metrics and logs to Grafana Cloud. Host namespaces so it reads the server's own CPU, RAM and network;
+  # privileged + the Docker socket for per-container stats and logs (cAdvisor needs both).
+  alloy:
+    image: grafana/alloy:v1.20.1
+    restart: unless-stopped
+    command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data"]
+    env_file: .env.production
+    pid: host
+    network_mode: host
+    privileged: true
+    volumes:
+      - ./docker/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /run/udev/data:/run/udev/data:ro
+      - alloy_data:/var/lib/alloy/data
+
 networks:
   internal:
 
 volumes:
+  alloy_data:
   pgdata_monolith:
   pgdata_strava_service:
   redis_data:

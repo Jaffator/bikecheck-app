@@ -1,0 +1,84 @@
+// Ships the prod server's metrics and every container's logs to Grafana Cloud.
+// Credentials come from .env.production (GRAFANA_CLOUD_*); see .env.production.example.
+
+// ---------- Metrics: the server (CPU, RAM, disk, network) ----------
+// The container shares the host's PID and network namespaces, so /proc and /sys are the host's.
+prometheus.exporter.unix "host" {
+  rootfs_path = "/rootfs"
+}
+
+prometheus.scrape "host" {
+  targets         = prometheus.exporter.unix.host.targets
+  job_name        = "integrations/unix"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.instance.receiver]
+}
+
+// ---------- Metrics: each container (CPU, RAM) ----------
+prometheus.exporter.cadvisor "containers" {
+  docker_host      = "unix:///var/run/docker.sock"
+  docker_only      = true
+  storage_duration = "5m"
+}
+
+prometheus.scrape "containers" {
+  targets         = prometheus.exporter.cadvisor.containers.targets
+  job_name        = "integrations/docker"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.instance.receiver]
+}
+
+// One stable instance name, so dashboards don't split by the container's hostname.
+prometheus.relabel "instance" {
+  forward_to = [prometheus.remote_write.cloud.receiver]
+
+  rule {
+    target_label = "instance"
+    replacement  = "bikecheck-prod"
+  }
+}
+
+prometheus.remote_write "cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROM_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_PROM_USER")
+      password = sys.env("GRAFANA_CLOUD_TOKEN")
+    }
+  }
+}
+
+// ---------- Logs: stdout of every container ----------
+// The apps log JSON lines (pino), Caddy its access log; `| json` in Grafana parses them.
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "logs" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service_name"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.containers.targets
+  labels        = { instance = "bikecheck-prod" }
+  relabel_rules = discovery.relabel.logs.rules
+  forward_to    = [loki.write.cloud.receiver]
+}
+
+loki.write "cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_USER")
+      password = sys.env("GRAFANA_CLOUD_TOKEN")
+    }
+  }
+}
