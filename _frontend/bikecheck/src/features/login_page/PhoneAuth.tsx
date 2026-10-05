@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import logoName from "../../assets/logo_name.svg";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { GoogleButton } from "./GoogleButton";
+import { MarketingWebsiteLink } from "./MarketingWebsiteLink";
 import { CheckInbox } from "./CheckInbox";
 import { FormFeedback, GoogleFeedback } from "./AuthFeedback";
 import type { AuthFormState } from "./useAuthForm";
@@ -41,19 +42,11 @@ const PASSWORD_STYLES = {
 
 function Logo(): ReactElement {
   return (
-    <Box
-      component="img"
-      src={logoName}
-      alt="BikeCheck Logo"
-      w="100%"
-      maw={200}
-      mx="auto"
-      pos={PINNED}
-      top={LOGO_TOP}
-      left={0}
-      right={0}
-      mt={{ base: 0, sm: "auto" }}
-    />
+    <Box w="100%" maw={200} mx="auto" pos={PINNED} top={LOGO_TOP} left={0} right={0} mt={{ base: 0, sm: "auto" }}>
+      <MarketingWebsiteLink className="block">
+        <img src={logoName} alt="BikeCheck Logo" className="block w-full" />
+      </MarketingWebsiteLink>
+    </Box>
   );
 }
 

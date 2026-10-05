@@ -30,7 +30,7 @@ import { UserProfile } from "@/features/profile_page/UserProfile";
 import { UserProfileBike } from "@/features/profile_page/UserProfileBike";
 import { PublicProfile } from "@/features/profile_page/PublicProfile";
 import { PublicProfileBike } from "@/features/profile_page/PublicProfileBike";
-import { applyLanguage, detectLanguage } from "./i18n";
+import { applyLanguage, visitorLanguage } from "./i18n";
 
 function App(): ReactElement {
   // The App Link listener lives above the auth gate: a Verification Email's link arrives
@@ -86,14 +86,14 @@ function ProtectedApp(): ReactElement {
     wasLoggedIn.current = isLoggedIn;
   }, [isLoggedIn, isUserLoading, navigate]);
 
-  // Applies the account language or persists the detected device language.
+  // A Google sign-up arrives with no language: it keeps the one the visitor saw while signed out.
   useEffect(() => {
     if (userId === undefined) return;
     if (userLanguage) {
       void applyLanguage(userLanguage);
       return;
     }
-    patchUser({ id: userId, data: { language: detectLanguage() } });
+    patchUser({ id: userId, data: { language: visitorLanguage() } });
   }, [userId, userLanguage, patchUser]);
 
   if (isUserLoading) {

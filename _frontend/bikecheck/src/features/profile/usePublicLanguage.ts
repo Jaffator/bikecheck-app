@@ -1,9 +1,9 @@
-// The reader's language on the web page: the browser's on first visit, their last switch
+// The reader's language on the web page: a ?lang= link's, else the browser's on first visit, their last switch
 // after. Kept in localStorage - all a page with no session has - so it survives reload and
 // the walk from garage to bike.
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { applyLanguage, detectLanguage, isSupportedLanguage, type SupportedLanguage } from "@/i18n";
+import { applyLanguage, detectLanguage, isSupportedLanguage, linkLanguage, type SupportedLanguage } from "@/i18n";
 
 const STORAGE_KEY = "pp-lang";
 
@@ -33,9 +33,9 @@ export function usePublicLanguage(): PublicLanguage {
   const { i18n } = useTranslation();
   const language: SupportedLanguage = isSupportedLanguage(i18n.language) ? i18n.language : "en";
 
-  // The app applies the account language inside its shell only; out here the choice is the reader's.
+  // The app applies the account language inside its shell only; out here the choice is the link's or the reader's.
   useEffect(() => {
-    void applyLanguage(storedLanguage() ?? detectLanguage());
+    void applyLanguage(linkLanguage() ?? storedLanguage() ?? detectLanguage());
   }, []);
 
   // i18next and dayjs follow; the query key does not, so nothing refetches.

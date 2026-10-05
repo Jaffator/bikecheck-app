@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
-import { detectLanguage } from "@/i18n";
+import { visitorLanguage } from "@/i18n";
 import { useLogin, useRegistration, useGoogleNative, useResendVerification } from "@/features/users/users.queries";
 import { useResendCooldown } from "@/features/users/useResendCooldown";
 import type { ApiError } from "@/api/client";
@@ -21,6 +21,9 @@ const NAME_TAKEN = "NAME_TAKEN";
 // The address another screen hands the login form, so the rider only types the password -
 // the verified page sends it here.
 export const LOGIN_EMAIL_PARAM = "email";
+
+// The Marketing Website's "Create account" opens the register form (ADR 0041).
+const MODE_PARAM = "mode";
 
 // How the web Google callback refuses (ADR 0031): the browser is mid-redirect, so the
 // refusal comes back here as a query flag. An Unverified Account arrives as its address, for
@@ -66,6 +69,11 @@ export function googleErrorKey(error: ApiError): string {
 
 export type AuthMode = "login" | "register";
 
+// useToggle starts on the first option.
+function authModes(params: URLSearchParams): AuthMode[] {
+  return params.get(MODE_PARAM) === "register" ? ["register", "login"] : ["login", "register"];
+}
+
 export interface AuthFormValues {
   email: string;
   name: string;
@@ -100,8 +108,8 @@ export function useAuthForm(): AuthFormState {
   const googleToken = useGoogleNative();
   const resend = useResendVerification();
   const cooldown = useResendCooldown();
-  const [type, toggle] = useToggle<AuthMode>(["login", "register"]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [type, toggle] = useToggle<AuthMode>(authModes(searchParams));
   // Set by a registration, a refused native Google sign-in, or the web callback's flag.
   const [inboxEmail, setInboxEmail] = useState<string | null>(() => searchParams.get(EMAIL_NOT_VERIFIED_PARAM));
   const webGoogleError = webGoogleErrorKey(searchParams.get(GOOGLE_ERROR_PARAM));
@@ -165,7 +173,7 @@ export function useAuthForm(): AuthFormState {
     }
     // No sign-in afterwards: the form ends on the inbox state.
     registration.mutate(
-      { name: values.name, email: values.email, password: values.password, language: detectLanguage() },
+      { name: values.name, email: values.email, password: values.password, language: visitorLanguage() },
       { onSuccess: (data) => setInboxEmail(data.email) },
     );
   });

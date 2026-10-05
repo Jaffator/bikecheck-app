@@ -10,6 +10,7 @@ import { GoogleButton } from "./GoogleButton";
 import { CheckInbox } from "./CheckInbox";
 import { FormFeedback, GoogleFeedback } from "./AuthFeedback";
 import { LoginBikePanel } from "./LoginBikePanel";
+import { MarketingWebsiteLink } from "./MarketingWebsiteLink";
 import type { AuthFormState } from "./useAuthForm";
 
 // The form's controls stand taller than the app's: this screen is the front door.
@@ -176,7 +177,9 @@ export function DesktopAuth({ auth }: { auth: AuthFormState }): ReactElement {
         {/* One left edge for the form; logo and footer sit centred around it. */}
         <Box w="100%" maw={380} mx="auto" className="flex flex-col justify-between gap-12">
           <div className="flex flex-1 flex-col justify-center gap-10">
-            <img src={logoName} alt="BikeCheck" className="mb-20 block h-[57px] w-auto self-center" />
+            <MarketingWebsiteLink className="mb-20 self-center">
+              <img src={logoName} alt="BikeCheck" className="block h-[57px] w-auto" />
+            </MarketingWebsiteLink>
             {/* Registration and a refused Google sign-in end here until the link is used (ADR 0031). */}
             {inboxEmail !== null ? (
               <CheckInbox email={inboxEmail} onBackToLogin={auth.backToLogin} />
