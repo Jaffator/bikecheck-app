@@ -109,7 +109,29 @@
     "continueWithGoogle": "Pokračovat přes Google",
     "haveAccount": "Už máte účet?",
     "noAccount": "Nemáte účet?",
-    "landingTagline": "Sledujte servis a opotřebení svých kol. Jízdy ze Stravy, komponenty a historie servisu na jednom místě."
+    "loginTitle": "Přihlášení",
+    "registerTitle": "Registrace",
+    "nameLabel": "Jméno",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Heslo",
+    "confirmPasswordLabel": "Potvrzení hesla",
+    "panelTitle": "Jezdi naplno.\nMěj svá kola pod absolutní kontrolou.",
+    "panelSubtitle": "Servisní intervaly, historie každého kusu a reporty ke sdílení.",
+    "panelImageAlt": "Celoodpružené horské kolo z boku se stavem servisu, brzdových destiček a vidlice",
+    "showcase": {
+      "serviceHistory": "Historie servisu",
+      "serviceName": "Velký servis tlumiče",
+      "serviceDate": "1. 10. 2026",
+      "serviceWhere": "v dílně",
+      "brakePads": "Brzdové destičky",
+      "wear": "Opotřebení",
+      "percent": "{{value}} %",
+      "estimate": "Odhad",
+      "brakeEstimate": "≈ 140 km z kopce",
+      "fork": "Vidlice",
+      "serviceIn": "Servis za",
+      "forkServiceIn": "22 h jízdy"
+    }
   },
   "settings": {
     "sectionAccount": "Účet",

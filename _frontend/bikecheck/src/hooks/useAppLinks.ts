@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { useNavigate } from "react-router-dom";
-import { LOGIN_EMAIL_PARAM } from "@/features/login_page/Authentication";
+import { LOGIN_EMAIL_PARAM } from "@/features/login_page/useAuthForm";
 
 // The App Link path registered by the native shell (AndroidManifest.xml).
 const VERIFY_EMAIL_PATH = "/verify-email";

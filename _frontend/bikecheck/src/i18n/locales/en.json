@@ -107,7 +107,29 @@
     "continueWithGoogle": "Continue with Google",
     "haveAccount": "Already have an account?",
     "noAccount": "Don't have an account?",
-    "landingTagline": "Track the service and wear of your bikes. Rides from Strava, components and service history in one place."
+    "loginTitle": "Login",
+    "registerTitle": "Register",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm password",
+    "panelTitle": "Ride hard.\nKeep your bikes under total control.",
+    "panelSubtitle": "Service intervals, the history of every part and reports to share.",
+    "panelImageAlt": "Full-suspension mountain bike from the side, with the state of its service, brake pads and fork",
+    "showcase": {
+      "serviceHistory": "Service history",
+      "serviceName": "Shock full service",
+      "serviceDate": "1 Oct 2026",
+      "serviceWhere": "at the shop",
+      "brakePads": "Brake pads",
+      "wear": "Wear",
+      "percent": "{{value}}%",
+      "estimate": "Estimate",
+      "brakeEstimate": "≈ 140 km downhill",
+      "fork": "Fork",
+      "serviceIn": "Service in",
+      "forkServiceIn": "22 h of riding"
+    }
   },
   "settings": {
     "sectionAccount": "Account",
