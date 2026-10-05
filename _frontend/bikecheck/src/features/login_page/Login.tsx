@@ -2,7 +2,10 @@
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import { Stack } from "@mantine/core";
-import { AuthenticationForm } from "./Authentication";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { PhoneAuth } from "./PhoneAuth";
+import { DesktopAuth } from "./DesktopAuth";
+import { useAuthForm, type AuthFormState } from "./useAuthForm";
 
 // Keep background height stable while the keyboard is open.
 function useStableViewportHeight(): number {
@@ -28,28 +31,32 @@ function useStableViewportHeight(): number {
   return height;
 }
 
-export function Login(): ReactElement {
+function PhoneLogin({ auth }: { auth: AuthFormState }): ReactElement {
   const pageHeight = useStableViewportHeight();
   return (
-    <>
-      <Stack
-        className="bg-background-900 auth-enter relative isolate"
-        align="center"
-        gap="md"
-        py="xl"
-        style={{ minHeight: "100dvh" }}
-      >
-        <AuthenticationForm />
-        {/* Keep the background stable during keyboard resize. */}
-        <div
-          className="w-full absolute top-0 left-0 -z-10"
-          style={{
-            height: pageHeight,
-            background: "linear-gradient(to top, var(--mantine-color-primary-6) 10%, transparent 80%)",
-            animation: "wave 6s ease-in-out infinite",
-          }}
-        ></div>
-      </Stack>
-    </>
+    <Stack
+      className="bg-background-900 auth-enter relative isolate"
+      align="center"
+      gap="md"
+      py="xl"
+      style={{ minHeight: "100dvh" }}
+    >
+      <PhoneAuth auth={auth} />
+      {/* Keep the background stable during keyboard resize. */}
+      <div
+        className="w-full absolute top-0 left-0 -z-10"
+        style={{
+          height: pageHeight,
+          background: "linear-gradient(to top, var(--mantine-color-primary-6) 10%, transparent 80%)",
+          animation: "wave 6s ease-in-out infinite",
+        }}
+      ></div>
+    </Stack>
   );
+}
+
+export function Login(): ReactElement {
+  // Held above both layouts, so resizing across the desktop width keeps what was typed.
+  const auth = useAuthForm();
+  return useIsDesktop() ? <DesktopAuth auth={auth} /> : <PhoneLogin auth={auth} />;
 }

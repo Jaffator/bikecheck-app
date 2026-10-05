@@ -388,3 +388,14 @@ sent the moment the notification is written, one email per notification. Only so
 notification travel this way, and only while the owner keeps it switched on; a Verification Email
 or a Welcome Email is not one, because neither is a notification.
 _Avoid_: Email alert, digest (nothing is batched), mail notification
+
+### Product
+
+**Marketing Website**:
+The public site that introduces BikeCheck to people without an account and leads them into the App.
+Holds no sign-in and no rider's data.
+_Avoid_: Landing page (that is the first screen after login), homepage, web
+
+**App**:
+Where a rider signs in and works with their bikes — in the browser or as the Android app.
+_Avoid_: Web app, dashboard (that is one screen of it)

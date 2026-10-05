@@ -626,7 +626,7 @@ export const MOCK_RIDERS: RiderPlan[] = [
     name: 'Jakub Černý',
     handle: 'jakub-cerny',
     visibility: 'FOLLOWERS',
-    share_components: false,
+    share_components: true,
     share_setup: true,
     share_history: true,
     share_costs: false,

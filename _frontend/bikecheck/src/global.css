@@ -388,6 +388,44 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* The desktop login's three bikes take turns on a 12 s cycle: each holds 3.2 s, then
+   crossfades for 0.8 s. One keyframe, shifted a third of the cycle per bike. */
+@keyframes loginBikeTurn {
+  0%,
+  26.67%,
+  100% {
+    opacity: 1;
+  }
+  33.33%,
+  93.33% {
+    opacity: 0;
+  }
+}
+
+/* Without motion only the first bike shows. */
+.login-bike > * {
+  opacity: 0;
+  animation: loginBikeTurn 12s ease-in-out infinite;
+}
+
+.login-bike:first-child > * {
+  opacity: 1;
+}
+
+.login-bike:nth-child(2) > * {
+  animation-delay: -8s;
+}
+
+.login-bike:nth-child(3) > * {
+  animation-delay: -4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-bike > * {
+    animation: none;
+  }
+}
+
 /* The composer pill's own shadow. It lives here rather than inline so the waiting glow below,
    which hangs off the same element, is read in one place. */
 .chat-composer-pill {

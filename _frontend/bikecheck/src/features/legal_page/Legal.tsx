@@ -10,6 +10,9 @@ import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import { LEGAL_TITLE_KEYS, isLegalDocumentId, legalDocument } from "@/features/legal/legal.documents";
 import { LegalDocument } from "@/features/legal/ui/LegalDocument";
 
+// A reading column: full-width lines on a desktop are too long to follow.
+const READING_WIDTH = 720;
+
 export function Legal(): ReactElement {
   const { document: documentId } = useParams<{ document: string }>();
   const { t, i18n } = useTranslation();
@@ -47,7 +50,7 @@ export function Legal(): ReactElement {
           paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
         }}
       >
-        <Group h="100%" gap="xs" wrap="nowrap">
+        <Group h="100%" maw={READING_WIDTH} mx="auto" gap="xs" wrap="nowrap">
           <ActionIcon variant="transparent" radius="xl" size="lg" aria-label={t("action.back")} onClick={goBack}>
             <ArrowLeft size={25} color="var(--mantine-color-text-6)" />
           </ActionIcon>
@@ -57,7 +60,7 @@ export function Legal(): ReactElement {
         </Group>
       </Box>
 
-      <Stack px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+      <Stack maw={READING_WIDTH} mx="auto" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
         {/* The language follows i18n, so switching it in Settings switches the document. */}
         <LegalDocument blocks={legalDocument(documentId, i18n.language)} />
       </Stack>

@@ -7,7 +7,7 @@ import { Button, Stack, Text } from "@mantine/core";
 import { Capacitor } from "@capacitor/core";
 import { Trans, useTranslation } from "react-i18next";
 import { MailCheck } from "lucide-react";
-import { LOGIN_EMAIL_PARAM } from "@/features/login_page/Authentication";
+import { LOGIN_EMAIL_PARAM } from "@/features/login_page/useAuthForm";
 
 // The custom scheme the native shell registers; opens the app's login with the address.
 const APP_LOGIN_SCHEME = "bikecheck://login";
