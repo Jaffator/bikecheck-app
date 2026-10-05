@@ -39,7 +39,7 @@ function toRoute(url: string): string | null {
     return null;
   }
 
-  // https://bikecheck.cloud/verify-email?token=… - the Verification Email's App Link.
+  // https://app.bikecheck.cloud/verify-email?token=… - the Verification Email's App Link.
   if (parsed.pathname === VERIFY_EMAIL_PATH) return `${VERIFY_EMAIL_PATH}${parsed.search}`;
 
   // bikecheck://login?email=… - the web verify page sending a verified rider to sign in.

@@ -1,5 +1,20 @@
-# Production edge: TLS, the SPA and the two Nest apps on one origin (docs/research/hosting.md §5).
-# Env: PUBLIC_HOST, OPS_USER, OPS_PASSWORD_HASH - see .env.production.example.
+# Production edge: TLS, the Marketing Website on the apex, the App on its own host (ADR 0041).
+# Env: WEBSITE_HOST, PUBLIC_HOST, OPS_USER, OPS_PASSWORD_HASH - see .env.production.example.
+
+# The Marketing Website is static; an unknown path is a 404, never a hop into the App.
+{$WEBSITE_HOST} {
+	log
+	encode gzip
+	root * /srv/website
+	file_server
+}
+
+# Search and shared links should see one address, not two.
+www.{$WEBSITE_HOST} {
+	redir https://{$WEBSITE_HOST}{uri} permanent
+}
+
+# The App: the SPA and the two Nest apps on one origin (docs/research/hosting.md §5).
 {$PUBLIC_HOST} {
 	# Access log to stderr, so `docker logs caddy` has it; the daemon rotates it.
 	log
@@ -52,9 +67,4 @@
 			file_server
 		}
 	}
-}
-
-# One canonical host, so cookies and the Google callback live on the apex only.
-www.{$PUBLIC_HOST} {
-	redir https://{$PUBLIC_HOST}{uri} permanent
 }
