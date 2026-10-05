@@ -23,7 +23,7 @@ Password for all: `mock-rider`
 | Klára  | on         | on    | off     | off   |
 | Marek  | on         | off   | on      | off   |
 | Petra  | on         | on    | on      | on    |
-| Jakub  | off        | on    | on      | off   |
+| Jakub  | on         | on    | on      | off   |
 | Lucie  | on         | on    | off     | off   |
 
 Marek has one bike with `is_shared = false` and one e-bike. Petra reads tyre pressures in psi.

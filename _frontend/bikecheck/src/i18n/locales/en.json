@@ -117,6 +117,7 @@
     "panelSubtitle": "Service intervals, the history of every part and reports to share.",
     "panelImageAlt": "Full-suspension mountain bike from the side, with the state of its service, brake pads and fork",
     "panelRoadImageAlt": "Road bike from the side, with the state of its chain, chainring and tyre pressure",
+    "panelEbikeImageAlt": "E-mountain bike from the side, with the state of its battery, motor and tyres",
     "showcase": {
       "serviceHistory": "Service history",
       "serviceName": "Shock full service",
@@ -139,7 +140,14 @@
       "front": "Front",
       "rear": "Rear",
       "frontPressure": "5.5 bar",
-      "rearPressure": "5.8 bar"
+      "rearPressure": "5.8 bar",
+      "battery": "Battery",
+      "batteryHealth": "Health",
+      "chargeCycles": "Charge cycles",
+      "motor": "Motor",
+      "motorServiceIn": "35 h of riding",
+      "tyres": "Tyres",
+      "ebikeTyreEstimate": "≈ 600 km downhill"
     }
   },
   "settings": {

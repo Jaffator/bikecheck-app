@@ -119,6 +119,7 @@
     "panelSubtitle": "Servisní intervaly, historie každého kusu a reporty ke sdílení.",
     "panelImageAlt": "Celoodpružené horské kolo z boku se stavem servisu, brzdových destiček a vidlice",
     "panelRoadImageAlt": "Silniční kolo z boku se stavem řetězu, převodníku a tlakem v pláštích",
+    "panelEbikeImageAlt": "Elektrokolo z boku se stavem baterie, motoru a plášťů",
     "showcase": {
       "serviceHistory": "Historie servisu",
       "serviceName": "Velký servis tlumiče",
@@ -141,7 +142,14 @@
       "front": "Přední",
       "rear": "Zadní",
       "frontPressure": "5,5 bar",
-      "rearPressure": "5,8 bar"
+      "rearPressure": "5,8 bar",
+      "battery": "Baterie",
+      "batteryHealth": "Kondice",
+      "chargeCycles": "Nabíjecí cykly",
+      "motor": "Motor",
+      "motorServiceIn": "35 h jízdy",
+      "tyres": "Pláště",
+      "ebikeTyreEstimate": "≈ 600 km z kopce"
     }
   },
   "settings": {

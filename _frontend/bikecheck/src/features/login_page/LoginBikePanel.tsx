@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Wrench } from "lucide-react";
 import bikeImage from "@/assets/images/login_bike.webp";
 import roadBikeImage from "@/assets/images/login_road_bike.webp";
+import eBikeImage from "@/assets/images/login_ebike.webp";
 
 // Illustrative state of the bikes in the photos, not anyone's data.
 const BRAKE_WEAR = 62;
@@ -14,6 +15,11 @@ const CHAIN_WEAR = 30;
 const CHAINRING_WEAR = 72;
 const CHAINRING_MODEL = "Shimano Ultegra";
 const TYRE_MODEL = "Continental GP5000";
+const BATTERY_HEALTH = 92;
+const CHARGE_CYCLES = "148";
+const MOTOR_MODEL = "Bosch Performance CX";
+const EBIKE_TYRE_MODEL = "Maxxis Assegai";
+const EBIKE_TYRE_WEAR = 40;
 
 // Percentages of the design's 832×580 stage, so each card stays on its part at any width.
 const STAGE_RATIO = "832 / 580";
@@ -23,7 +29,8 @@ const STAGE_WIDTH = `min(100cqw, calc(100cqh * ${STAGE_RATIO}), 1240px)`;
 const STAGE_LIFT = "translateY(-6.5%)";
 const BIKE_POSITION: CSSProperties = { left: "1.92%", top: "17.24%", width: "96.15%" };
 const ROAD_BIKE_POSITION: CSSProperties = { left: "7.69%", top: "19.48%", width: "84.13%" };
-// Three free spots both bikes leave: above each wheel and between the wheels, under the cranks.
+const EBIKE_POSITION: CSSProperties = { left: "4%", top: "18.7%", width: "92%" };
+// Three free spots every bike leaves: above each wheel and between the wheels, under the cranks.
 const TOP_LEFT: CSSProperties = { left: "0%", top: "22%" };
 const TOP_RIGHT: CSSProperties = { left: "80%", top: "22%" };
 const BOTTOM: CSSProperties = { left: "40%", bottom: "1%" };
@@ -36,6 +43,10 @@ const MTB_TYRES: CSSProperties[] = [
 const ROAD_TYRES: CSSProperties[] = [
   { top: "90.7%", left: "13.5%" },
   { top: "90.7%", left: "63.6%" },
+];
+const EBIKE_TYRES: CSSProperties[] = [
+  { top: "90.4%", left: "9.8%" },
+  { top: "90.4%", left: "67.5%" },
 ];
 
 const CARD_STYLE: CSSProperties = {
@@ -104,6 +115,16 @@ function Meta({ label, value, emphasis = true }: MetaProps): ReactElement {
   );
 }
 
+function PercentRow({ label, percent }: { label: string; percent: number }): ReactElement {
+  const { t } = useTranslation();
+  return (
+    <div className="flex justify-between gap-[0.6em]" style={{ fontSize: "1.1em" }}>
+      <span>{label}</span>
+      <span style={{ fontWeight: 600 }}>{t("auth.showcase.percent", { value: percent })}</span>
+    </div>
+  );
+}
+
 function WearBar({ percent }: { percent: number }): ReactElement {
   return (
     <Progress
@@ -127,7 +148,6 @@ function TyreShadow({ at }: { at: CSSProperties }): ReactElement {
 }
 
 interface BikeLayerProps {
-  className: string;
   image: string;
   alt: string;
   position: CSSProperties;
@@ -137,9 +157,9 @@ interface BikeLayerProps {
 
 // One bike with its shadows and cards. The children fade, not the layer: a fading parent
 // would cut the cards' blur off from the gold behind.
-function BikeLayer({ className, image, alt, position, tyres, children }: BikeLayerProps): ReactElement {
+function BikeLayer({ image, alt, position, tyres, children }: BikeLayerProps): ReactElement {
   return (
-    <div className={`absolute inset-0 ${className}`}>
+    <div className="login-bike absolute inset-0">
       {tyres.map((at) => (
         <TyreShadow key={String(at.left)} at={at} />
       ))}
@@ -152,7 +172,7 @@ function BikeLayer({ className, image, alt, position, tyres, children }: BikeLay
 function MountainBike(): ReactElement {
   const { t } = useTranslation();
   return (
-    <BikeLayer className="login-bike-first" image={bikeImage} alt={t("auth.panelImageAlt")} position={BIKE_POSITION} tyres={MTB_TYRES}>
+    <BikeLayer image={bikeImage} alt={t("auth.panelImageAlt")} position={BIKE_POSITION} tyres={MTB_TYRES}>
       <Card at={BOTTOM}>
         <Eyebrow>
           <Wrench size="1.25em" color="var(--mantine-color-primary-6)" aria-hidden />
@@ -163,10 +183,7 @@ function MountainBike(): ReactElement {
       </Card>
       <Card at={TOP_LEFT}>
         <Eyebrow>{t("auth.showcase.brakePads")}</Eyebrow>
-        <div className="flex justify-between gap-[0.6em]" style={{ fontSize: "1.1em" }}>
-          <span>{t("auth.showcase.wear")}</span>
-          <span style={{ fontWeight: 600 }}>{t("auth.showcase.percent", { value: BRAKE_WEAR })}</span>
-        </div>
+        <PercentRow label={t("auth.showcase.wear")} percent={BRAKE_WEAR} />
         <WearBar percent={BRAKE_WEAR} />
         <Meta label={t("auth.showcase.estimate")} value={t("auth.showcase.brakeEstimate")} />
       </Card>
@@ -183,13 +200,10 @@ function MountainBike(): ReactElement {
 function RoadBike(): ReactElement {
   const { t } = useTranslation();
   return (
-    <BikeLayer className="login-bike-second" image={roadBikeImage} alt={t("auth.panelRoadImageAlt")} position={ROAD_BIKE_POSITION} tyres={ROAD_TYRES}>
+    <BikeLayer image={roadBikeImage} alt={t("auth.panelRoadImageAlt")} position={ROAD_BIKE_POSITION} tyres={ROAD_TYRES}>
       <Card at={TOP_LEFT}>
         <Eyebrow>{t("auth.showcase.chain")}</Eyebrow>
-        <div className="flex justify-between gap-[0.6em]" style={{ fontSize: "1.1em" }}>
-          <span>{t("auth.showcase.wear")}</span>
-          <span style={{ fontWeight: 600 }}>{t("auth.showcase.percent", { value: CHAIN_WEAR })}</span>
-        </div>
+        <PercentRow label={t("auth.showcase.wear")} percent={CHAIN_WEAR} />
         <WearBar percent={CHAIN_WEAR} />
         <Meta label={t("auth.showcase.estimate")} value={t("auth.showcase.chainEstimate")} />
       </Card>
@@ -209,11 +223,38 @@ function RoadBike(): ReactElement {
   );
 }
 
+function EBike(): ReactElement {
+  const { t } = useTranslation();
+  return (
+    <BikeLayer image={eBikeImage} alt={t("auth.panelEbikeImageAlt")} position={EBIKE_POSITION} tyres={EBIKE_TYRES}>
+      <Card at={TOP_LEFT}>
+        <Eyebrow>{t("auth.showcase.battery")}</Eyebrow>
+        <PercentRow label={t("auth.showcase.batteryHealth")} percent={BATTERY_HEALTH} />
+        <WearBar percent={BATTERY_HEALTH} />
+        <Meta label={t("auth.showcase.chargeCycles")} value={CHARGE_CYCLES} />
+      </Card>
+      <Card at={BOTTOM}>
+        <Eyebrow>{t("auth.showcase.motor")}</Eyebrow>
+        <Headline>{MOTOR_MODEL}</Headline>
+        <Meta label={t("auth.showcase.serviceIn")} value={t("auth.showcase.motorServiceIn")} />
+      </Card>
+      <Card at={TOP_RIGHT}>
+        <Eyebrow>{t("auth.showcase.tyres")}</Eyebrow>
+        <Headline>{EBIKE_TYRE_MODEL}</Headline>
+        <WearBar percent={EBIKE_TYRE_WEAR} />
+        <Meta label={t("auth.showcase.estimate")} value={t("auth.showcase.ebikeTyreEstimate")} />
+      </Card>
+    </BikeLayer>
+  );
+}
+
+// The order here is the order the bikes take turns in (global.css).
 function BikeStage(): ReactElement {
   return (
     <div className="@container relative" style={{ width: STAGE_WIDTH, aspectRatio: STAGE_RATIO, transform: STAGE_LIFT }}>
       <MountainBike />
       <RoadBike />
+      <EBike />
     </div>
   );
 }
