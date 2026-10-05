@@ -152,10 +152,13 @@ function DesktopForm({ auth }: { auth: AuthFormState }): ReactElement {
 function LegalLinks(): ReactElement {
   const { t } = useTranslation();
   return (
-    <Group gap="8px 24px">
+    <Group gap="8px 12px" justify="center">
       <Anchor component={Link} to="/legal/privacy" fz={13} c="text.8">
         {t("page.legalPrivacy")}
       </Anchor>
+      <Text fz={13} c="text.8" aria-hidden>
+        ·
+      </Text>
       <Anchor component={Link} to="/legal/terms" fz={13} c="text.8">
         {t("page.legalTerms")}
       </Anchor>
@@ -170,11 +173,10 @@ export function DesktopAuth({ auth }: { auth: AuthFormState }): ReactElement {
       <LoginBikePanel />
       {/* About a third of the screen, so a wide monitor gives the form air on both sides. */}
       <div className="flex flex-[0_0_clamp(480px,32vw,640px)] box-border" style={{ padding: "40px clamp(24px, 5vw, 64px)" }}>
-        {/* One left edge for logo, form and footer. */}
+        {/* One left edge for the form; logo and footer sit centred around it. */}
         <Box w="100%" maw={380} mx="auto" className="flex flex-col justify-between gap-12">
           <div className="flex flex-1 flex-col justify-center gap-10">
-            {/* CheckInbox is centred and shared with the phone, so the logo follows it there. */}
-            <img src={logoName} alt="BikeCheck" className={`block h-10 w-auto ${inboxEmail !== null ? "self-center" : "self-start"}`} />
+            <img src={logoName} alt="BikeCheck" className="mb-20 block h-[57px] w-auto self-center" />
             {/* Registration and a refused Google sign-in end here until the link is used (ADR 0031). */}
             {inboxEmail !== null ? (
               <CheckInbox email={inboxEmail} onBackToLogin={auth.backToLogin} />

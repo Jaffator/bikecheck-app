@@ -118,6 +118,7 @@
     "panelTitle": "Jezdi naplno.\nMěj svá kola pod absolutní kontrolou.",
     "panelSubtitle": "Servisní intervaly, historie každého kusu a reporty ke sdílení.",
     "panelImageAlt": "Celoodpružené horské kolo z boku se stavem servisu, brzdových destiček a vidlice",
+    "panelRoadImageAlt": "Silniční kolo z boku se stavem řetězu, převodníku a tlakem v pláštích",
     "showcase": {
       "serviceHistory": "Historie servisu",
       "serviceName": "Velký servis tlumiče",
@@ -130,7 +131,17 @@
       "brakeEstimate": "≈ 140 km z kopce",
       "fork": "Vidlice",
       "serviceIn": "Servis za",
-      "forkServiceIn": "22 h jízdy"
+      "forkServiceIn": "22 h jízdy",
+      "chain": "Řetěz",
+      "chainEstimate": "≈ 1 000 km do kopce",
+      "chainring": "Převodník",
+      "lastsAnother": "Vydrží ještě",
+      "chainringLasts": "50 h jízdy",
+      "tyrePressure": "Tlak v pláštích",
+      "front": "Přední",
+      "rear": "Zadní",
+      "frontPressure": "5,5 bar",
+      "rearPressure": "5,8 bar"
     }
   },
   "settings": {

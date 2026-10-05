@@ -116,6 +116,7 @@
     "panelTitle": "Ride hard.\nKeep your bikes under total control.",
     "panelSubtitle": "Service intervals, the history of every part and reports to share.",
     "panelImageAlt": "Full-suspension mountain bike from the side, with the state of its service, brake pads and fork",
+    "panelRoadImageAlt": "Road bike from the side, with the state of its chain, chainring and tyre pressure",
     "showcase": {
       "serviceHistory": "Service history",
       "serviceName": "Shock full service",
@@ -128,7 +129,17 @@
       "brakeEstimate": "≈ 140 km downhill",
       "fork": "Fork",
       "serviceIn": "Service in",
-      "forkServiceIn": "22 h of riding"
+      "forkServiceIn": "22 h of riding",
+      "chain": "Chain",
+      "chainEstimate": "≈ 1,000 km uphill",
+      "chainring": "Chainring",
+      "lastsAnother": "Lasts another",
+      "chainringLasts": "50 h of riding",
+      "tyrePressure": "Tyre pressure",
+      "front": "Front",
+      "rear": "Rear",
+      "frontPressure": "5.5 bar",
+      "rearPressure": "5.8 bar"
     }
   },
   "settings": {
