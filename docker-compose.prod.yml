@@ -1,6 +1,5 @@
 # Production stack (docs/research/hosting.md §5): Caddy is the only thing on the host's ports.
-# Build the SPA first (`cd _frontend/bikecheck && npm run build:web`, env from the committed .env.web)
-# and the Marketing Website (`cd _website_landing && npm ci && npm run build`), then:
+# The caddy image builds the SPA (committed .env.web) and the Marketing Website itself; no Node on the host:
 #   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 # .env.production is git-ignored; .env.production.example lists every variable.
 services:
@@ -107,7 +106,9 @@ services:
     networks: [internal]
 
   caddy:
-    image: caddy:2
+    build:
+      context: .
+      dockerfile: docker/caddy.Dockerfile
     restart: unless-stopped
     ports:
       - "80:80"
@@ -120,8 +121,6 @@ services:
       OPS_PASSWORD_HASH: ${OPS_PASSWORD_HASH}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./_website_landing/dist:/srv/website:ro
-      - ./_frontend/bikecheck/dist:/srv/spa:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

@@ -1,0 +1,10 @@
+# Context is the repo root; only the two frontends go in, and no local env or build output.
+*
+!_frontend/bikecheck
+!_website_landing
+**/node_modules
+**/dist
+_frontend/bikecheck/android
+_frontend/bikecheck/.agents
+_frontend/bikecheck/.env
+_frontend/bikecheck/*.local
