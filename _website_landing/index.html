@@ -1241,15 +1241,16 @@
           <a
             href="https://app.bikecheck.cloud/?lang=cs"
             data-app-link
-            class="inline-flex text-[14px] text-paper-dim hover:text-paper transition-colors duration-200 whitespace-nowrap"
+            class="inline-flex items-center border border-ink-600 hover:border-paper-faint rounded-xl px-3.5 sm:px-4 py-2.5 font-display font-semibold text-[13px] sm:text-[14px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
           >
             <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
           </a>
           <a
-            href="#download"
+            href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
+            data-app-link
             class="hidden sm:inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[13px] sm:text-[14px] px-3.5 sm:px-4 py-2.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
           >
-            <span class="lang-cs">Stáhnout</span><span class="lang-en">Get app</span>
+            <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
           </a>
         </div>
       </nav>
@@ -1294,15 +1295,6 @@
                   class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
                 >
                   <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] w-auto" />
-                </a>
-
-                <!-- The way in without installing: the App in the browser, on its register form. -->
-                <a
-                  href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
-                  data-app-link
-                  class="inline-flex items-center h-[52px] px-6 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[15px] rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
-                >
-                  <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
                 </a>
 
                 <!-- iOS is not out yet, so this is deliberately our own tile and
@@ -2500,6 +2492,15 @@
               class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
             >
               <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] sm:h-[58px] w-auto" />
+            </a>
+
+            <!-- The way in without installing: the App in the browser, on its register form. -->
+            <a
+              href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
+              data-app-link
+              class="inline-flex items-center h-[52px] sm:h-[58px] px-6 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[15px] sm:text-[16px] rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
+            >
+              <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
             </a>
 
             <!-- The hero's "not out yet" tile for iOS. From sm up both badges are
