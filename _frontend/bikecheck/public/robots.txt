@@ -1,8 +1,10 @@
-# Link previews depend on crawlers reaching /u/, /r/ and the images under /api/preview/.
-# Never disallow them - X and Facebook drop the card for a blocked URL.
+# Link previews depend on crawlers reaching /u/, /r/ and /api/preview/ - X and Facebook drop the card for a blocked URL.
+# /legal/ renders from /assets/, and Android verifies the App Link through /.well-known/.
 User-agent: *
 Allow: /u/
 Allow: /r/
 Allow: /api/preview/
 Allow: /legal/
+Allow: /assets/
+Allow: /.well-known/
 Disallow: /
