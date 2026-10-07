@@ -644,18 +644,26 @@
       }
 
       /* A screen peeking out of the card that talks about it: the frame runs
-     past the foot of the card and fades out before it gets there. */
+     past the foot of the card, cut by its edge below lg and faded from lg up. */
       .peek {
         display: flex;
         justify-content: center;
-        height: 290px;
-        padding-top: 26px;
+        height: 300px;
         overflow: hidden;
-        -webkit-mask-image: linear-gradient(#000 72%, transparent);
-        mask-image: linear-gradient(#000 72%, transparent);
       }
       .peek .phone {
-        --phone-w: 190px;
+        --phone-w: 240px;
+      }
+      @media (min-width: 1024px) {
+        .peek {
+          height: 290px;
+          padding-top: 26px;
+          -webkit-mask-image: linear-gradient(#000 72%, transparent);
+          mask-image: linear-gradient(#000 72%, transparent);
+        }
+        .peek .phone {
+          --phone-w: 190px;
+        }
       }
 
       /* ---- Switchers ------------------------------------------------------
@@ -666,8 +674,8 @@
      the three steps of "how it works" (.sw-steps).
 
      Without a script nothing switches, so what only makes sense with one (the
-     chips, the button, the text under the phone) hangs off .js. What is left
-     is a plain list next to a phone showing its first screen.
+     button) hangs off .js. What is left is a plain list next to a phone
+     showing its first screen.
 
      The switch whose screen is on the phone is not a solid card but a sheet
      of glass, the way iOS marks things: the ground shows through it, blurred
@@ -855,10 +863,8 @@
         display: none;
       }
 
-      /* Features. Below lg the switches shrink to a row of chips over the
-     phone, one short word each, and the title and text of the chosen one move
-     under it. From lg up they sit in two columns beside the phone, three a
-     side, the left column mirrored so both face the phone. */
+      /* Features. From lg up the switches sit in two columns beside the phone,
+     three a side, the left column mirrored so both face the phone. */
       .sw-features {
         display: flex;
         flex-direction: column;
@@ -875,64 +881,13 @@
         padding: 20px 22px;
         border: 1px solid transparent;
       }
-      /* The glass lies over the switch's own border, which only a chip shows. */
+      /* The glass lies over the switch's own transparent border. */
       .sw-features .sw-item::before,
       .sw-features .sw-item::after {
         inset: -1px;
       }
       .sw-icon {
         flex: none;
-      }
-      .sw-short,
-      .sw-desc {
-        display: none;
-      }
-      .sw-desc h3 {
-        margin-bottom: 8px;
-        font-size: 19px;
-        color: #f2f2f1;
-      }
-      .sw-desc p {
-        font-size: 15px;
-      }
-      @media (max-width: 1023px) {
-        .js .sw-items {
-          flex-direction: row;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 8px;
-        }
-        .js .sw-features .sw-item {
-          display: block;
-          padding: 9px 14px;
-          border-color: rgba(255, 255, 255, 0.13);
-          border-radius: 999px;
-          color: #9c9c9e;
-          --dim: 1;
-        }
-        .js .sw-features .sw-icon,
-        .js .sw-features .sw-body {
-          display: none;
-        }
-        .js .sw-short {
-          display: inline;
-          font-size: 13px;
-          font-weight: 600;
-        }
-        /* A lit chip is a capsule of glass, tinted gold. */
-        .js .sw-features .sw-item.is-on {
-          --glass-tint: rgba(206, 192, 83, 0.12);
-          color: #cec053;
-          border-color: transparent;
-        }
-        /* Tall enough for the longest text, so the page below does not move
-       with every screen. */
-        .js .sw-desc {
-          display: block;
-          max-width: 40ch;
-          min-height: 9em;
-          text-align: center;
-        }
       }
       @media (min-width: 1024px) {
         .sw-features {
@@ -983,8 +938,8 @@
         }
       }
 
-      /* Steps. Heading, phone, steps in that order on a phone; from lg up the
-     phone takes the right half and the heading and steps share the left. */
+      /* Steps. Without a script, heading, phone, steps in that order below lg;
+     from lg up the phone takes the right half and the heading and steps share the left. */
       .sw-steps {
         display: grid;
         gap: 34px;
@@ -1028,6 +983,185 @@
           grid-area: stage;
           align-self: center;
         }
+      }
+
+      /* ---- Below lg -------------------------------------------------------
+     The features as a reel of cards and the steps as a timeline, both copied by the script from the switchers. */
+      .reel,
+      .timeline {
+        display: none;
+      }
+      @media (max-width: 1023px) {
+        .js .sw-features,
+        .js .steps-stage,
+        .js .steps-list {
+          display: none;
+        }
+        .reel {
+          display: block;
+        }
+        .timeline {
+          display: flex;
+          flex-direction: column;
+        }
+      }
+
+      /* Bled to the page edge; the spacer after the last card lets every card snap to the left. */
+      .reel-track {
+        --card-w: min(300px, 100% - 40px);
+        display: flex;
+        gap: 12px;
+        margin: 0 -16px;
+        padding: 4px 16px 18px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: 16px;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+      }
+      .reel-track::-webkit-scrollbar {
+        display: none;
+      }
+      .reel-track::after {
+        content: "";
+        flex: none;
+        width: calc(100% - var(--card-w) - 12px);
+      }
+      @media (min-width: 640px) {
+        .reel-track {
+          margin: 0 -24px;
+          padding-inline: 24px;
+          scroll-padding-inline: 24px;
+        }
+      }
+      .reel-card {
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        width: var(--card-w);
+        padding: 20px;
+        border-radius: 16px;
+        scroll-snap-align: start;
+      }
+      .reel-card p {
+        margin-bottom: 20px;
+      }
+      /* Whole, not cropped: some frames are sheets rising from the bottom. */
+      .reel-card .phone {
+        --phone-w: min(240px, 100%);
+        margin: auto auto 0;
+      }
+      .reel-dots {
+        display: flex;
+        justify-content: center;
+      }
+      .reel-dot {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+      }
+      .reel-dot::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+        transition:
+          width 0.25s ease,
+          background-color 0.25s ease;
+      }
+      .reel-dot[aria-current="true"] {
+        width: 30px;
+      }
+      .reel-dot[aria-current="true"]::before {
+        width: 22px;
+        background: #cec053;
+      }
+
+      .timeline > li {
+        position: relative;
+        display: flex;
+        gap: 16px;
+        padding-bottom: 40px;
+      }
+      .timeline > li:last-child {
+        padding-bottom: 0;
+      }
+      .timeline > li:not(:last-child)::before {
+        content: "";
+        position: absolute;
+        top: 36px;
+        bottom: 8px;
+        left: 13.5px;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.13);
+      }
+      .timeline-num {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1.5px solid #cec053;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 700;
+        color: #cec053;
+      }
+      .timeline-body {
+        flex: 1;
+        min-width: 0;
+        padding-top: 1px;
+      }
+      /* Only the top of the screen, cut with a sharp edge. */
+      .timeline-shot {
+        width: min(100%, 340px);
+        height: 300px;
+        margin-top: 18px;
+        overflow: hidden;
+      }
+      .timeline-shot .phone {
+        --phone-w: 100%;
+      }
+
+      /* Pause/play in the corner of the playing screen: a 44px target round a smaller disc. */
+      .shot {
+        position: relative;
+      }
+      .play-toggle {
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        z-index: 2;
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        color: #f2f2f1;
+      }
+      .play-toggle[hidden] {
+        display: none;
+      }
+      .play-toggle::before {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 50%;
+        background: rgba(10, 10, 11, 0.72);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+      }
+      .play-toggle svg {
+        position: relative;
+        width: 14px;
+        height: 14px;
+      }
+      .autoplay.is-paused .sw-when-playing,
+      .autoplay:not(.is-paused) .sw-when-paused {
+        display: none;
       }
 
       @supports not (backdrop-filter: blur(1px)) {
@@ -1444,7 +1578,7 @@
         </div>
 
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 reveal">
-          <div class="grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-20 items-start">
+          <div class="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-20 items-start">
             <div>
               <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
                 <span class="lang-cs">Proč BikeCheck</span><span class="lang-en">Why BikeCheck</span>
@@ -1460,33 +1594,49 @@
                 >
               </h2>
             </div>
-            <div class="space-y-5 text-[16px] leading-relaxed text-paper-dim max-w-[62ch]">
-              <p>
-                <span class="lang-cs"
-                  >Rád o své kolo pečuješ a chceš mít jasný přehled o tom, kdy jsi naposledy měnil řetěz nebo dělal servis
-                  vidlice? Chystáš se prodat svůj vymazlený bike a chceš doložit servisní historii? Nebo chceš svůj dream
-                  build ukázat kamarádům nebo veřejnosti?</span
-                >
-                <span class="lang-en"
-                  >You look after your bike and want a clear picture of when the chain last went on or the fork was last
-                  serviced? You are about to sell a bike you have cared for and want the service history to back it up? Or
-                  you want to show your dream build to your mates, or to everyone?</span
-                >
-              </p>
-              <p>
-                <span class="lang-cs"
-                  >O tom je přesně BikeCheck. Není to jen obyčejný servisní deník nebo kopie Stravy, je to nástroj pouze na
-                  tvoje milovaná kola, který pohlídá údržbu a díky kterému budeš mít všechno o svém kole na jednom místě. Vše
-                  intuitivně a s důrazem na to, abys trávil více času na silnici nebo trailech a méně v aplikaci.</span
-                >
-                <span class="lang-en"
-                  >That is exactly what BikeCheck is for. It is not just another service log or a copy of Strava, it is a tool
-                  made only for the bikes you love, one that keeps an eye on maintenance and holds everything about your bike
-                  in one place. All of it built to be obvious, and built so you spend more time on the road and the trails
-                  and less in the app.</span
-                >
-              </p>
-            </div>
+            <ol class="space-y-3 max-w-[62ch]">
+              <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">01</span>
+                <div>
+                  <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
+                    <span class="lang-cs">Chceš mít přehled o svém kole a komponentách?</span
+                    ><span class="lang-en">Want a clear picture of your bike and its components?</span>
+                  </h3>
+                  <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs">Kdy jsi měnil řetěz, kdy servis vidlice, na jednom místě.</span
+                    ><span class="lang-en"
+                      >When the chain last went on and the fork was last serviced, in one place.</span
+                    >
+                  </p>
+                </div>
+              </li>
+              <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">02</span>
+                <div>
+                  <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
+                    <span class="lang-cs">Chystáš se prodat svůj vymazlený bike?</span
+                    ><span class="lang-en">About to sell a bike you have cared for?</span>
+                  </h3>
+                  <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs">Servisní historie, která to doloží.</span
+                    ><span class="lang-en">A service history that backs it up.</span>
+                  </p>
+                </div>
+              </li>
+              <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">03</span>
+                <div>
+                  <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
+                    <span class="lang-cs">Chceš svůj dream build ukázat?</span
+                    ><span class="lang-en">Want to show off your dream build?</span>
+                  </h3>
+                  <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
+                    <span class="lang-cs">Kamarádům, nebo veřejně komukoli s odkazem.</span
+                    ><span class="lang-en">To your mates, or publicly to anyone with the link.</span>
+                  </p>
+                </div>
+              </li>
+            </ol>
           </div>
         </div>
       </section>
@@ -1529,7 +1679,6 @@
           <div class="sw sw-features">
             <div class="sw-items">
               <div class="sw-item is-on">
-                <span class="sw-short"><span class="lang-cs">Přehled</span><span class="lang-en">Overview</span></span>
                 <div class="sw-icon">
                   <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
                     <!-- The app's Home tab icon (lucide House). -->
@@ -1556,18 +1705,16 @@
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
-                      >Nájezd, poslední jízda a stav kol hned po otevření aplikace. Na podrobnější dotazy bez klikání
-                      ohledně cyklo dat je tu AI pomocník.</span
+                      >Nájezd, poslední jízda a stav kol hned po otevření. Na zbytek se zeptej AI pomocníka.</span
                     >
                     <span class="lang-en"
-                      >Mileage, your last ride and the state of your bikes, the moment you open the app. For more detailed
-                      questions about your cycling data, with no tapping around, there is the AI assistant.</span
+                      >Mileage, your last ride and the state of your bikes the moment you open the app. Ask the AI
+                      assistant for the rest.</span
                     >
                   </p>
                 </div>
               </div>
               <div class="sw-item">
-                <span class="sw-short"><span class="lang-cs">Servis</span><span class="lang-en">Service</span></span>
                 <div class="sw-icon">
                   <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
                     <!-- The BikeCheck mark, which the app uses for service (bikecheck.svg in the app repo). -->
@@ -1585,20 +1732,15 @@
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
-                      >Využij přednastavené servisní úkony a limity, nebo si vytvoř vlastní podle toho, co chceš zaznamenávat.
-                      Servisy seskupené po měsících se součty za útratu, počet zásahů a počet výměn. Při prodeji kola se to
-                      bude hodit.</span
+                      >Přednastavené i vlastní servisní úkony. Servisy po měsících se součty útraty a výměn.</span
                     >
                     <span class="lang-en"
-                      >Use the preset service jobs and limits, or create your own to match what you want to keep track of.
-                      Services grouped by month with totals for spend, visits and replacements. It comes in handy when you sell
-                      the bike.</span
+                      >Preset or your own service jobs. Services by month, with totals for spend and replacements.</span
                     >
                   </p>
                 </div>
               </div>
               <div class="sw-item">
-                <span class="sw-short"><span class="lang-cs">Kola</span><span class="lang-en">Bikes</span></span>
                 <div class="sw-icon">
                   <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
                     <!-- Same bike as the app's Bikes tab (bike.svg in the app repo). -->
@@ -1625,16 +1767,15 @@
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
-                      >Každé kolo má fotku, značku, model, komponenty a mnoho dalšího. K tomu vlastní odometr v kilometrech i v čase.</span
+                      >Každé kolo s fotkou, komponentami a vlastním odometrem v kilometrech i v čase.</span
                     >
                     <span class="lang-en"
-                      >Every bike carries a photo, make, model, components and much more, plus its own odometer in both distance and time.</span
+                      >Every bike with its photo, components and its own odometer, in distance and in time.</span
                     >
                   </p>
                 </div>
               </div>
               <div class="sw-item">
-                <span class="sw-short"><span class="lang-cs">Strava</span><span class="lang-en">Strava</span></span>
                 <div class="sw-icon">
                   <!-- Strava's mark stays in Strava's orange (brand asset, as in the stats
                  strip), so this one tile is tinted to match it rather than gold. -->
@@ -1654,19 +1795,15 @@
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
-                      >Tady ukazuje BikeCheck svou hlavní sílu. Hlídá servis podle reálného nájezdu, a to nejen podle kilometrů.
-                      Zohledňuje profil trasy a přesněji tak počítá reálný dopad na tlumení a brzdy.</span
+                      >Servis hlídá podle reálného ježdění, ne jen kilometrů. Počítá i s profilem trasy.</span
                     >
                     <span class="lang-en"
-                      >This is where BikeCheck shows its real strength. It tracks service by actual riding, not by distance
-                      alone. It takes the route profile into account, so the real toll on suspension and brakes adds up more
-                      accurately.</span
+                      >Service tracked by real riding, not distance alone. The route profile counts too.</span
                     >
                   </p>
                 </div>
               </div>
               <div class="sw-item">
-                <span class="sw-short"><span class="lang-cs">Setup</span><span class="lang-en">Setup</span></span>
                 <div class="sw-icon">
                   <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
                     <svg
@@ -1689,16 +1826,15 @@
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
-                      >Rád ladíš svoje kolo? Ulož si svoje oblíbené tlaky v pneu nebo nastavení tlumení přímo do aplikace.</span
+                      >Ulož si oblíbené tlaky v pneu a nastavení tlumení přímo do aplikace.</span
                     >
                     <span class="lang-en"
-                      >Like dialling your bike in? Save your favourite tyre pressures and damper settings right in the app.</span
+                      >Save your favourite tyre pressures and damper settings right in the app.</span
                     >
                   </p>
                 </div>
               </div>
               <div class="sw-item">
-                <span class="sw-short"><span class="lang-cs">Sdílení</span><span class="lang-en">Share</span></span>
                 <div class="sw-icon">
                   <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
                     <svg
@@ -1724,12 +1860,11 @@
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
-                      >Pošli živý profil na kolo nebo jen servisní report. Sleduj profil kamarádů nebo svého oblíbeného
-                      jezdce.</span
+                      >Pošli živý profil kola nebo jen servisní report. Sleduj kamarády i oblíbené jezdce.</span
                     >
                     <span class="lang-en"
-                      >Send a live profile of your bike, or just a service report. Follow your mates' profiles or your
-                      favourite rider.</span
+                      >Send a live profile of your bike or just a service report. Follow your mates and favourite
+                      riders.</span
                     >
                   </p>
                 </div>
@@ -1831,8 +1966,6 @@
               <span class="sw-when-playing"><span class="lang-cs">Pozastavit</span><span class="lang-en">Pause</span></span>
               <span class="sw-when-paused"><span class="lang-cs">Přehrát</span><span class="lang-en">Play</span></span>
             </button>
-            <!-- Filled by the script with the title and text of the chosen switch. -->
-            <div class="sw-desc text-[15px] leading-relaxed text-paper-dim"></div>
           </div>
         </div>
       </section>
@@ -1996,20 +2129,19 @@
             </h2>
             <p class="mt-5 text-[16px] leading-relaxed text-paper-dim">
               <span class="lang-cs"
-                >Sdílej historii i aktuální setup svého kola přesně tak, jak potřebuješ. Od detailního PDF reportu pro
-                kupce či servis až po online profil tvé mašiny pro ostatní.</span
+                >Od detailního PDF reportu pro kupce či servis až po online profil tvé mašiny pro ostatní.</span
               >
               <span class="lang-en"
-                >Share your bike's history and current setup exactly the way you need. From a detailed PDF report for a
-                buyer or the workshop to an online profile of your machine for everyone else.</span
+                >From a detailed PDF report for a buyer or the workshop to an online profile of your machine for everyone
+                else.</span
               >
             </p>
           </div>
 
           <!-- Each sharing card carries the screen it is about, peeking out of its
-               side (its foot on a phone). -->
+               side (its foot below lg). -->
           <div class="grid lg:grid-cols-2 gap-4 reveal">
-            <article class="card rounded-2xl overflow-hidden sm:grid sm:grid-cols-[minmax(0,1fr)_210px]">
+            <article class="card rounded-2xl overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_210px]">
               <div class="p-6">
                 <p class="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-gold-500 mb-3">
                   <!-- The globe the app marks a public BikeCheck with (lucide Globe). -->
@@ -2034,12 +2166,12 @@
                 </h3>
                 <p class="text-[15px] leading-relaxed text-paper-dim">
                   <span class="lang-cs"
-                    >Na jakém kole zrovna jezdíš? Jakou máš vidlici? Jaký máš setup a pneumatiky na závod? To vše a více
-                    můžeš sdílet s ostatními, buď v aplikaci, nebo veřejně s kýmkoli, kdo má odkaz.</span
+                    >Jaký máš setup, vidlici a pneumatiky na závod? Sdílej to v aplikaci, nebo veřejně s kýmkoli, kdo má
+                    odkaz.</span
                   >
                   <span class="lang-en"
-                    >What are you riding right now? Which fork? What setup and tyres for race day? Share all of it and more
-                    with others, in the app or publicly with anyone who has the link.</span
+                    >Which setup, fork and tyres for race day? Share it in the app, or publicly with anyone who has the
+                    link.</span
                   >
                 </p>
               </div>
@@ -2053,7 +2185,7 @@
                 </div>
               </div>
             </article>
-            <article class="card rounded-2xl overflow-hidden sm:grid sm:grid-cols-[minmax(0,1fr)_210px]">
+            <article class="card rounded-2xl overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_210px]">
               <div class="p-6">
                 <p class="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-gold-500 mb-3">
                   <!-- The app's report icon, as on its "My reports" tile (lucide FileText). -->
@@ -2486,42 +2618,42 @@
             <span class="lang-cs">Propoj Stravu, postav garáž a nech si hlídat, co se na kole opotřebovává.</span>
             <span class="lang-en">Connect Strava, build your garage and let the wear watch itself.</span>
           </p>
+          <!-- The hero's pair again, so the page ends on the button it starts with. -->
           <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
             <a
               href="PLAY_STORE_URL"
               class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
             >
-              <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] sm:h-[58px] w-auto" />
+              <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] w-auto" />
             </a>
 
-            <!-- The way in without installing: the App in the browser, on its register form. -->
-            <a
-              href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
-              data-app-link
-              class="inline-flex items-center h-[52px] sm:h-[58px] px-6 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[15px] sm:text-[16px] rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
-            >
-              <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
-            </a>
-
-            <!-- The hero's "not out yet" tile for iOS. From sm up both badges are
-           a step larger than the hero's; on a phone they keep its size, so
-           the pair still fits on one row. -->
             <span
-              class="inline-flex items-center gap-3 h-[52px] sm:h-[58px] px-4 sm:px-[18px] rounded-xl border hairline bg-ink-900/60 cursor-default select-none"
+              class="inline-flex items-center gap-3 h-[52px] px-4 rounded-xl border hairline bg-ink-900/60 cursor-default select-none"
               aria-disabled="true"
             >
-              <svg viewBox="0 0 24 24" class="size-6 sm:size-[27px] shrink-0 text-paper-faint" fill="currentColor" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="size-6 shrink-0 text-paper-faint" fill="currentColor" aria-hidden="true">
                 <path
                   d="M17.05 12.04c-.03-2.75 2.25-4.07 2.35-4.13-1.28-1.87-3.28-2.13-3.99-2.16-1.7-.17-3.32 1-4.18 1-.86 0-2.19-.98-3.6-.95-1.85.03-3.56 1.08-4.51 2.73-1.92 3.33-.49 8.26 1.38 10.96.91 1.32 2 2.8 3.43 2.75 1.38-.06 1.9-.89 3.57-.89 1.67 0 2.14.89 3.6.86 1.49-.03 2.43-1.35 3.34-2.67 1.05-1.53 1.48-3.01 1.5-3.09-.03-.01-2.88-1.11-2.91-4.4zM14.3 4.1c.76-.92 1.27-2.2 1.13-3.47-1.09.04-2.41.72-3.19 1.64-.7.81-1.31 2.11-1.15 3.36 1.21.09 2.45-.62 3.21-1.53z"
                 />
               </svg>
               <span class="flex flex-col text-left leading-none">
-                <span class="font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.14em] text-gold-600">
+                <span class="font-mono text-[8px] uppercase tracking-[0.14em] text-gold-600">
                   <span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span>
                 </span>
-                <span class="font-display font-semibold text-[15px] sm:text-[17px] text-paper-dim mt-1.5">App Store</span>
+                <span class="font-display font-semibold text-[15px] text-paper-dim mt-1.5">App Store</span>
               </span>
             </span>
+          </div>
+
+          <!-- The way in without installing: the App in the browser, on its register form. -->
+          <div class="mt-3">
+            <a
+              href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
+              data-app-link
+              class="inline-flex items-center border border-ink-600 hover:border-paper-faint rounded-xl px-6 py-3.5 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
+            >
+              <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
+            </a>
           </div>
         </div>
       </section>
@@ -2530,11 +2662,24 @@
     <!-- ============================== FOOTER ============================== -->
     <footer class="border-t hairline band">
       <div class="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          <div class="lg:col-span-2">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-10">
+          <div class="col-span-2 self-start flex items-center justify-between lg:justify-start gap-6">
             <svg class="h-8 w-auto" viewBox="0 0 1569 318" role="img" aria-label="BikeCheck">
               <use href="#bc-logo" />
             </svg>
+            <!-- The header's switcher again; every .lang-btn follows the same pick. -->
+            <div
+              class="flex items-center rounded-lg border hairline p-0.5 font-mono text-[11px]"
+              role="group"
+              aria-label="Jazyk / Language"
+            >
+              <button type="button" data-set-lang="cs" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+                CS
+              </button>
+              <button type="button" data-set-lang="en" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+                EN
+              </button>
+            </div>
           </div>
 
           <div>
@@ -2691,12 +2836,18 @@
           return steps;
         }
 
+        function setStep(screen, step) {
+          Array.prototype.forEach.call(screen.children, function (el) {
+            el.classList.toggle("is-on", el === step.el);
+            if (el.hasAttribute("data-stops")) el.style.setProperty("--y", el === step.el ? step.y : "0%");
+          });
+        }
+
         function switcher(wrap) {
           var items = Array.prototype.slice.call(wrap.querySelectorAll(".sw-item"));
           var phone = wrap.querySelector(".sw-phone");
           var screens = phone.querySelectorAll(".phone-screen > *");
           var steps = Array.prototype.map.call(screens, stepsOf);
-          var desc = wrap.querySelector(".sw-desc");
           var toggle = wrap.querySelector(".sw-toggle");
           var current = 0;
           var frames = [];
@@ -2711,13 +2862,8 @@
           var hovered = false;
 
           function showFrame(index) {
-            var step = frames[index];
             frame = index;
-            if (!step) return;
-            Array.prototype.forEach.call(screens[current].children, function (el) {
-              el.classList.toggle("is-on", el === step.el);
-              if (el.hasAttribute("data-stops")) el.style.setProperty("--y", el === step.el ? step.y : "0%");
-            });
+            if (frames[index]) setStep(screens[current], frames[index]);
           }
 
           function show(index) {
@@ -2731,13 +2877,6 @@
             });
             screens.forEach(function (screen, i) {
               screen.classList.toggle("is-on", i === index);
-            });
-            // Below lg a feature switch is only a chip, so its title and text are
-            // shown under the phone.
-            if (!desc) return;
-            desc.textContent = "";
-            items[index].querySelectorAll("h3, p").forEach(function (node) {
-              desc.appendChild(node.cloneNode(true));
             });
           }
 
@@ -2818,6 +2957,215 @@
           moving = auto = !reduced;
           play();
         }
+
+        // ---- Below lg ----------------------------------------------------------
+        // The reel and the timeline copy the switchers' markup, so each title, text and screen is written once.
+        function element(tag, className) {
+          var node = document.createElement(tag);
+          if (className) node.className = className;
+          return node;
+        }
+
+        function phoneOf(screen) {
+          var phone = element("div", "phone");
+          var body = element("div", "phone-body");
+          var display = element("div", "phone-screen");
+          var copy = screen.cloneNode(true);
+          copy.classList.add("is-on"); // the only screen in this phone, so always the one shown
+          body.setAttribute("aria-hidden", "true");
+          display.appendChild(copy);
+          body.appendChild(display);
+          phone.appendChild(body);
+          return phone;
+        }
+
+        // Plays one screen through its steps, round and round; paused, it holds its frame.
+        function player(screen) {
+          var steps = stepsOf(screen);
+          var at = 0;
+          var timer = null;
+          function next() {
+            at = (at + 1) % steps.length;
+            setStep(screen, steps[at]);
+            timer = setTimeout(next, steps[at].ms);
+          }
+          function pause() {
+            clearTimeout(timer);
+            timer = null;
+          }
+          return {
+            loops: steps.length > 1,
+            play: function () {
+              if (timer === null && steps.length > 1) timer = setTimeout(next, steps[at].ms);
+            },
+            pause: pause,
+            reset: function () {
+              pause();
+              at = 0;
+              if (steps.length) setStep(screen, steps[0]);
+            },
+          };
+        }
+
+        // Only the active shot of a block plays, and only while the block is on screen.
+        // A pause outlives a change of shot; reduced motion starts paused, as the switchers do.
+        function autoplay(block, shots) {
+          var players = shots.map(function (shot) {
+            return player(shot.querySelector(".phone-screen > *"));
+          });
+          var toggle = element("button", "play-toggle");
+          var active = 0;
+          var paused = reduced;
+          var inView = !("IntersectionObserver" in window);
+
+          function sync() {
+            block.classList.toggle("is-paused", paused);
+            toggle.hidden = !players[active].loops;
+            if (paused || !inView) players[active].pause();
+            else players[active].play();
+          }
+
+          // The switchers' icons and labels; on a round button the labels are for screen readers only.
+          toggle.type = "button";
+          toggle.innerHTML = document.querySelector(".sw-toggle").innerHTML;
+          toggle.querySelectorAll(":scope > span").forEach(function (label) {
+            label.classList.add("sr-only");
+          });
+          toggle.addEventListener("click", function () {
+            paused = !paused;
+            sync();
+          });
+          if ("IntersectionObserver" in window) {
+            new IntersectionObserver(
+              function (entries) {
+                inView = entries[0].isIntersecting;
+                sync();
+              },
+              { rootMargin: "-25% 0px" },
+            ).observe(block);
+          }
+          players.forEach(function (p) {
+            p.reset();
+          });
+          shots[0].appendChild(toggle);
+          sync();
+
+          return function activate(index) {
+            if (index === active) return;
+            players[active].reset();
+            active = index;
+            players[active].reset();
+            shots[active].appendChild(toggle);
+            sync();
+          };
+        }
+
+        function onScroll(target, fn) {
+          var queued = false;
+          target.addEventListener(
+            "scroll",
+            function () {
+              if (queued) return;
+              queued = true;
+              requestAnimationFrame(function () {
+                queued = false;
+                fn();
+              });
+            },
+            { passive: true },
+          );
+        }
+
+        // The features as cards swiped sideways; the card snapped to the left edge is the active one.
+        function reel(wrap) {
+          var screens = wrap.querySelectorAll(".sw-phone .phone-screen > *");
+          var block = element("div", "reel autoplay");
+          var track = element("div", "reel-track");
+          var dots = element("div", "reel-dots");
+          var cards = [];
+          var shots = [];
+
+          wrap.querySelectorAll(".sw-item").forEach(function (item, i) {
+            var card = element("article", "reel-card card");
+            var title = item.querySelector("h3").cloneNode(true);
+            var phone = phoneOf(screens[i]);
+            var dot = element("button", "reel-dot");
+            title.id = "reel-title-" + i;
+            phone.classList.add("shot");
+            card.append(title, item.querySelector(".sw-body p").cloneNode(true), phone);
+            track.appendChild(card);
+            dot.type = "button";
+            dot.setAttribute("aria-labelledby", title.id);
+            dot.addEventListener("click", function () {
+              var left = card.offsetLeft - cards[0].offsetLeft;
+              track.scrollTo({ left: left, behavior: reduced ? "auto" : "smooth" });
+            });
+            dots.appendChild(dot);
+            cards.push(card);
+            shots.push(phone);
+          });
+          block.append(track, dots);
+          wrap.after(block);
+
+          var activate = autoplay(block, shots);
+          function update() {
+            var pitch = cards[1].offsetLeft - cards[0].offsetLeft;
+            var index = Math.min(Math.max(pitch ? Math.round(track.scrollLeft / pitch) : 0, 0), cards.length - 1);
+            Array.prototype.forEach.call(dots.children, function (dot, i) {
+              dot.setAttribute("aria-current", String(i === index));
+            });
+            activate(index);
+          }
+          onScroll(track, update);
+          update();
+        }
+
+        // The steps as a numbered timeline, each screen under its text; the step nearest the window's middle plays.
+        function timeline(wrap) {
+          var screens = wrap.querySelectorAll(".sw-phone .phone-screen > *");
+          var list = element("ol", "timeline autoplay");
+          var rows = [];
+          var shots = [];
+
+          wrap.querySelectorAll(".steps-list .sw-item").forEach(function (item, i) {
+            var row = element("li");
+            var num = element("span", "timeline-num font-mono");
+            var body = element("div", "timeline-body");
+            var shot = element("div", "timeline-shot shot");
+            num.textContent = String(i + 1);
+            shot.appendChild(phoneOf(screens[i]));
+            body.append(item.querySelector("h3").cloneNode(true), item.querySelector("p").cloneNode(true), shot);
+            row.append(num, body);
+            list.appendChild(row);
+            rows.push(row);
+            shots.push(shot);
+          });
+          // Outside the switcher, so its .sw state rules stay off this block's button.
+          wrap.after(list);
+
+          var activate = autoplay(list, shots);
+          function update() {
+            if (!list.offsetParent) return; // hidden from lg up
+            var middle = window.innerHeight / 2;
+            var nearest = 0;
+            var best = Infinity;
+            rows.forEach(function (row, i) {
+              var box = row.getBoundingClientRect();
+              var distance = Math.abs(box.top + box.height / 2 - middle);
+              if (distance < best) {
+                best = distance;
+                nearest = i;
+              }
+            });
+            activate(nearest);
+          }
+          onScroll(window, update);
+          update();
+        }
+
+        // Copied before the switchers start, while their screens still show their first frames.
+        reel(document.querySelector(".sw-features"));
+        timeline(document.querySelector(".sw-steps"));
         document.querySelectorAll(".sw").forEach(switcher);
 
         // ---- Contact form: validation + sending -------------------------------
