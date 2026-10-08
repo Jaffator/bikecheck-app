@@ -1664,8 +1664,8 @@
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">01</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Chceš mít přehled o svém kole a komponentách</span
-                      ><span class="lang-en">Want a clear picture of your bike and its components</span>
+                      <span class="lang-cs">Chceš mít přehled o svém kole a komponentách.</span
+                      ><span class="lang-en">Want a clear picture of your bike and its components.</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
                       <span class="lang-cs"
@@ -1678,11 +1678,11 @@
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">02</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Chystáš se prodat svoje vymezlené kolo</span
-                      ><span class="lang-en">About to sell a bike you have cared for</span>
+                      <span class="lang-cs">Kompletní servisní historie.</span
+                      ><span class="lang-en">About to sell a bike you have cared for.</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
-                      <span class="lang-cs">Servisní historie, která kupci ukáže tvoji péči.</span
+                      <span class="lang-cs">Kompletní servisní historie.</span
                       ><span class="lang-en">A service history that backs it up.</span>
                     </p>
                   </div>
@@ -1691,8 +1691,8 @@
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">03</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Chceš svůj dream build ukázat</span
-                      ><span class="lang-en">Want to show off your dream build</span>
+                      <span class="lang-cs">Chceš svůj dream build ukázat.</span
+                      ><span class="lang-en">Want to show off your dream build.</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
                       <span class="lang-cs">Kamarádům nebo komukoli, komu pošleš odkaz.</span
@@ -3428,11 +3428,12 @@
             rise: 300,
             lead: 0.07,
             curve: 1.35,
+            tower: 0.6,
             floor: 200,
             rider: 0.764,
             step: 12,
             speed: 50,
-            mPerPx: 2,
+            mPerPx: 1.6,
           },
           narrow: {
             lines: 28,
@@ -3440,24 +3441,32 @@
             rise: 100,
             lead: 0,
             curve: 0.8,
+            tower: 0.8,
             floor: 22,
             rider: 0.72,
             step: 8,
             speed: 40,
-            mPerPx: 7,
+            mPerPx: 4,
           },
         };
         var RIDGE_STILL = { km: 12.4, gain: 380, chain: 38, brakes: 21, fork: 12.5 };
         var FORK_SERVICE_H = 50;
+        // The skyline the farther rows hide behind, kept finer than any row's samples.
+        var SKY_STEP = 2;
 
-        function terrainNoise(s) {
-          return (
-            (Math.sin(s * 0.0071 + 0.3) +
-              0.6 * Math.sin(s * 0.0163 + 1.7) +
-              0.35 * Math.sin(s * 0.031 + 4.1) +
-              0.18 * Math.sin(s * 0.057 + 2.2)) /
-            2.13
-          );
+        // A sine folded at its zero crossings: sharp crests, round valleys.
+        function crest(t) {
+          var c = 1 - Math.abs(Math.sin(t));
+          return c * c;
+        }
+
+        // 0..1 at depth d (0 = the trail, 1 = the farthest row); each row a slice of one range, rougher further back.
+        function mountainNoise(s, d) {
+          var massif = crest(s * 0.0042 + d * 1.9 + 0.6);
+          var peaks = crest(s * 0.0111 - d * 2.7 + 2.1);
+          var spurs = crest(s * 0.0263 + d * 4.3 + 0.9);
+          var scree = crest(s * 0.057 - d * 6.1 + 3.3);
+          return (0.6 * massif + 0.4 * peaks + d * (0.22 * spurs + 0.1 * scree)) / (1 + 0.32 * d);
         }
 
         function svgElement(tag, attrs) {
@@ -3483,24 +3492,24 @@
           var state = { offset: 0, time: 0, km: 0, gain: 0, chain: 0, brakes: 0, fork: 0, climbing: true, marks: [] };
           var view = { layout: null, w: 0, h: 0, base: 0, end: 0 };
           var parts = null;
+          var trail = null;
           var raf = 0;
           var prev = 0;
           var inView = !("IntersectionObserver" in window);
 
           if (reduced) Object.assign(state, RIDGE_STILL);
 
-          function height(s, x) {
+          // Farther rows stand taller, so the back of the range rises over the front.
+          function height(s, x, d) {
             var L = view.layout;
             var envelope = Math.pow(Math.max(0, x / view.w - L.lead), L.curve) * L.rise + 12;
-            return envelope * (0.35 + 0.65 * ((terrainNoise(s) + 1) / 2));
+            return envelope * (1 + L.tower * d) * (0.12 + 0.88 * mountainNoise(s, d));
           }
 
           // The shift between neighbouring lines is the angle the range is seen from. It swings back and
-          // forth, as fast as the mock's parallax turns it, but never so far that the lines tangle.
-          function yAt(x, i) {
-            var L = view.layout;
-            var shear = 26 * Math.cos((2 * Math.PI * state.time) / 90);
-            return view.base - i * L.gap - height(state.offset + x + i * shear, x);
+          // forth, as fast as the mock's parallax turns it.
+          function shear() {
+            return 26 * Math.cos((2 * Math.PI * state.time) / 90);
           }
 
           function riderX() {
@@ -3545,10 +3554,53 @@
             svg.appendChild(parts.layer);
           }
 
-          function lineD(i) {
+          // Samples sit on fixed points of the terrain and ride with it; a grid fixed to the screen
+          // would catch every crest at a different spot each frame and make the lines flicker.
+          function row(i, shift) {
+            var L = view.layout;
+            var phase = ((shift % L.step) + L.step) % L.step;
+            var r = { phase: phase, xs: [], ys: [] };
+            for (var x = -phase; x < view.end + L.step; x += L.step) {
+              r.xs.push(x);
+              r.ys.push(view.base - i * L.gap - height(shift + x, x, i / (L.lines - 1)));
+            }
+            return r;
+          }
+
+          function rowY(r, x) {
+            var at = (x + r.phase) / view.layout.step;
+            var k = Math.max(0, Math.min(Math.floor(at), r.ys.length - 2));
+            return r.ys[k] + (at - k) * (r.ys[k + 1] - r.ys[k]);
+          }
+
+          function skyAt(sky, x) {
+            var at = Math.max(0, Math.min(x / SKY_STEP, sky.length - 1));
+            var k = Math.min(Math.floor(at), sky.length - 2);
+            return sky[k] + (at - k) * (sky[k + 1] - sky[k]);
+          }
+
+          function point(x, y) {
+            return x.toFixed(1) + " " + y.toFixed(1);
+          }
+
+          // Only what rises above every row in front is drawn (a floating horizon), cut where it meets the skyline.
+          function visibleD(r, sky) {
             var d = "";
-            for (var x = 0; x <= view.end; x += view.layout.step) d += (x ? "L" : "M") + x + " " + yAt(x, i).toFixed(1);
+            var prev = 0;
+            for (var k = 0; k < r.xs.length; k++) {
+              var cut = skyAt(sky, r.xs[k]) - r.ys[k];
+              if (k && (cut >= 0) !== (prev >= 0)) {
+                var t = prev / (prev - cut);
+                d += (cut >= 0 ? "M" : "L") + point(r.xs[k - 1] + t * view.layout.step, r.ys[k - 1] + t * (r.ys[k] - r.ys[k - 1]));
+              }
+              if (cut >= 0) d += (k ? "L" : "M") + point(r.xs[k], r.ys[k]);
+              prev = cut;
+            }
             return d;
+          }
+
+          function lowerSky(sky, r) {
+            for (var k = 0; k < sky.length; k++) sky[k] = Math.min(sky[k], rowY(r, k * SKY_STEP));
           }
 
           function place(label, x, y) {
@@ -3562,12 +3614,21 @@
             line.setAttribute("y2", y2);
           }
 
+          // Front to back; the skyline starts on the box floor, below every row.
           function drawTerrain() {
-            for (var i = 0; i < view.layout.lines; i++) parts.lines[i].setAttribute("d", lineD(i));
+            var tilt = shear();
+            var sky = new Array(Math.ceil(view.end / SKY_STEP) + 1).fill(view.h);
+            for (var i = 0; i < view.layout.lines; i++) {
+              var r = row(i, state.offset + i * tilt);
+              parts.lines[i].setAttribute("d", visibleD(r, sky));
+              lowerSky(sky, r);
+              if (!i) trail = r;
+            }
+            var edge = view.end + view.layout.step;
             var front = parts.lines[0].getAttribute("d");
-            parts.fill.setAttribute("d", front + "L" + view.end + " " + view.h + "L0 " + view.h + "Z");
+            parts.fill.setAttribute("d", front + "L" + edge + " " + view.h + "L" + -view.layout.step + " " + view.h + "Z");
             var x = riderX();
-            var y = yAt(x, 0);
+            var y = rowY(trail, x);
             parts.rider.setAttribute("cx", x);
             parts.rider.setAttribute("cy", y);
             setLine(parts.stem, x, y, y - 56);
@@ -3599,7 +3660,7 @@
                 m.label.remove();
                 return false;
               }
-              var y = yAt(x, 0);
+              var y = rowY(trail, x);
               m.dot.setAttribute("cx", x);
               m.dot.setAttribute("cy", y);
               setLine(m.stem, x, y, y - 44);
@@ -3641,10 +3702,10 @@
           // The rider moves on by dt seconds; whether the ground under them rose decides what wears.
           function advance(dt) {
             var x = riderX();
-            var before = height(state.offset + x, x);
+            var before = height(state.offset + x, x, 0);
             state.offset += view.layout.speed * dt;
             state.time += dt;
-            var rise = height(state.offset + x, x) - before;
+            var rise = height(state.offset + x, x, 0) - before;
             var rates = rise >= 0 ? WEAR.climb : WEAR.descent;
             state.climbing = rise >= 0;
             state.km += KM_PER_S * dt;
