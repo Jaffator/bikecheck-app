@@ -218,7 +218,7 @@
         color: #9c9c9e;
       }
 
-      /* Chain and brakes in the corner: the one counting most right now is gold. */
+      /* Chain and fork in the corner: the one counting right now is gold. */
       .readout-label {
         font-size: 10px;
         font-weight: 500;
@@ -227,45 +227,31 @@
         color: #85868a;
       }
       .readout-value {
-        font-size: 13px;
+        font-size: 16px;
         font-weight: 500;
         line-height: 1;
         letter-spacing: -0.01em;
         color: #85868a;
         transition: color 0.3s ease;
       }
-      @media (min-width: 1024px) {
-        .readout-value {
-          font-size: 22px;
-        }
-        /* Above the base rule in source, so it needs the extra class to win. */
-        .readout .readout-bar {
-          width: auto;
-        }
-      }
       .readout-cell.is-on .readout-value {
         color: #cec053;
       }
       .readout-bar {
         display: block;
-        width: 37px;
-        height: 3px;
+        height: 1px;
         background: rgba(255, 255, 255, 0.08);
       }
       .readout-bar > span {
         display: block;
-        height: 3px;
+        height: 1px;
         background: #cec053;
       }
-      .readout:not(.is-descent) .phase-descent,
-      .readout.is-descent .phase-climb {
-        display: none;
-      }
-      /* 48px under the headline's cap line (eyebrow 15px + mt-10, Geist cap 0.716em in a 0.98 line),
+      /* 48px under the headline's cap line (eyebrow 16.5px + mt-11, Geist cap 0.716em in a 0.98 line),
      and out into the margin as far as the mock's, 80px off the window edge. */
       @media (min-width: 1024px) {
         .readout {
-          top: calc(51.1px + 0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
+          top: calc(60.5px + 0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
           right: calc(-1 * clamp(0px, (100vw - 1276px) / 2, 82px));
         }
       }
@@ -1482,20 +1468,24 @@
      script): climbs count on the chain, descents mostly on the brake pads. -->
       <section class="hero relative overflow-hidden flex flex-col">
         <div
-          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-8 lg:pb-4"
+          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-[63px] lg:pb-4"
         >
           <div class="relative">
-            <p class="font-mono text-[10px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-              <span class="lang-cs">Platforma pro tvoje kola</span><span class="lang-en">A platform for your bikes</span>
+            <p class="font-mono text-[10px] lg:text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
+              <span class="lang-cs">Servisní kniha pro kolo, napojená na Stravu</span
+              ><span class="lang-en">A service book for your bike, connected to Strava</span>
             </p>
 
             <h1
-              class="mt-3 lg:mt-10 lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em] text-balance"
+              class="mt-3 lg:mt-11 lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em]"
             >
-              <span class="lang-cs">Přehled o kole, jízdách a servisu<br />Na jednom místě</span>
-              <span class="lang-en">Everything about your bike, rides, and maintenance<br />In one place</span>
+              <span class="lang-cs">Každá jízda se počítá.<br />Na každém dílu.</span>
+              <span class="lang-en">Every ride counts.<br />On every part.</span>
             </h1>
-            <div class="readout mt-3 w-full max-w-[240px] lg:mt-0 lg:absolute lg:w-[360px] lg:max-w-none" aria-hidden="true">
+
+            <!-- Plain readings, no card; the script keeps them in step with the rider.
+           Without it they hold the still frame reduced motion gets. -->
+            <div class="readout mt-3 w-[208px] max-w-full lg:mt-0 lg:absolute lg:w-[320px]" aria-hidden="true">
               <div class="grid grid-cols-2 lg:grid-cols-3 gap-5">
                 <div class="readout-cell is-on flex flex-col gap-1.5" data-reading="chain">
                   <span class="readout-label"><span class="lang-cs">Řetěz</span><span class="lang-en">Chain</span></span>
@@ -1515,28 +1505,15 @@
                 </div>
               </div>
             </div>
-            <!-- <p class="mt-2 text-[10px] tracking-[0.1em] uppercase text-paper-faint">
-              <span class="phase-climb"
-                ><span class="lang-cs">stoupání · počítá se řetěz</span
-                ><span class="lang-en">climbing · the chain counts</span></span
-              >
-              <span class="phase-descent"
-                ><span class="lang-cs">sjezd · počítají se hlavně brzdy</span
-                ><span class="lang-en">descending · mostly the brakes</span></span
-              >
-            </p> -->
 
-            <!-- Plain readings, no card; the script keeps them in step with the rider.
-           Without it they hold the still frame reduced motion gets. -->
-
-            <p class="hidden lg:block mt-7 lg:mt-9 max-w-[560px] lg:text-[16px] leading-[1.5] text-paper-dim">
+            <p class="hidden lg:block mt-7 lg:mt-9 max-w-[560px] lg:text-[19px] leading-[1.5] text-paper-dim">
               <span class="lang-cs"
-                >Jízdy ze Stravy se započítají do opotřebení komponent podle profilu trasy. Servis, setup a účtenky na jednom
-                místě, připravené ke sdílení.</span
+                >Jízdy ze Stravy se započítají do opotřebení řetězu, vidlice i brzd podle profilu trasy. Servisy, setup a
+                účtenky na jednom místě, připravené ke sdílení.</span
               >
               <span class="lang-en"
-                >Rides from Strava count toward the components, based on the route profile. Services, setup and receipts in
-                one place, ready to share.</span
+                >Rides from Strava count toward the wear of the chain, fork and brakes, based on the route profile. Services,
+                setup and receipts in one place, ready to share.</span
               >
             </p>
 
@@ -1549,7 +1526,7 @@
                 href="PLAY_STORE_URL"
                 class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
               >
-                <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 w-auto" />
+                <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
               </a>
 
               <!-- iOS is not out yet, so this is deliberately our own tile and
@@ -1573,10 +1550,10 @@
               <a
                 href="https://app.bikecheck.cloud/?lang=cs"
                 data-app-link
-                class="inline-flex items-center gap-2 h-9 sm:h-10 px-3.5 sm:px-2 rounded-md border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
+                class="inline-flex items-center gap-2 lg:gap-2.5 h-9 sm:h-10 lg:h-[52px] px-3.5 sm:px-2 lg:px-5 rounded-md lg:rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] lg:text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
               >
                 <svg
-                  class="size-4 shrink-0"
+                  class="size-4 lg:size-[18px] shrink-0"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -1588,11 +1565,11 @@
                   <rect x="2" y="3" width="20" height="14" rx="2" />
                   <path d="M12 17v4M8 21h8" />
                 </svg>
-                <span class="lang-cs">Otevřít web</span><span class="lang-en">Open in browser</span>
+                <span class="lang-cs">Otevřít ve webu</span><span class="lang-en">Open in browser</span>
               </a>
             </div>
 
-            <div class="mt-5 lg:mt-6">
+            <div class="mt-5 lg:mt-[22px]">
               <a
                 href="#service"
                 class="inline-flex items-center gap-2 pb-[3px] border-b border-paper/35 hover:border-gold-500 font-display font-semibold text-[15px] text-paper hover:text-gold-500 transition-colors duration-200"
@@ -1633,31 +1610,24 @@
         <div class="relative z-10 w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8">
           <dl class="facts">
             <div>
-              <dt><span class="lang-cs">Opotřebení</span><span class="lang-en">Wear</span></dt>
-              <dd><span class="lang-cs">Po každém dílu zvlášť</span><span class="lang-en">Each part on its own</span></dd>
-            </div>
-            <div>
-              <dt><span class="lang-cs">Servis</span><span class="lang-en">Service Intervals</span></dt>
+              <dt><span class="lang-cs">Servis</span><span class="lang-en">Service intervals</span></dt>
               <dd>
-                <span class="lang-cs">Přednastavené servisní akce</span>
-                <span class="lang-en">Predefined service actions</span>
+                <span class="lang-cs">Vše na pár kliků</span>
+                <span class="lang-en">All in a few clicks</span>
               </dd>
             </div>
             <div>
-              <dt><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></dt>
-              <dd><span class="lang-cs">Veřejný odkaz</span><span class="lang-en">Public link</span></dd>
+              <dt><span class="lang-cs">Opotřebení</span><span class="lang-en">Wear</span></dt>
+              <dd><span class="lang-cs">Hlídá za tebe</span><span class="lang-en">Watched for you</span></dd>
             </div>
             <div>
-              <!-- Strava's own lockup wording, so English in both languages; their mark keeps their orange. -->
-              <dt class="facts-strava flex items-center gap-1.5">
-                <svg viewBox="0 0 24 24" class="size-3.5 shrink-0" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
-                  />
-                </svg>
-                Powered by Strava
-              </dt>
-              <dd><span class="lang-cs">Jízdy se načtou samy</span><span class="lang-en">Rides load on their own</span></dd>
+              <!-- Strava's own lockup wording, so English in both languages; their name keeps their orange. -->
+              <dt class="facts-strava">Powered by</dt>
+              <dd class="facts-strava">Strava</dd>
+            </div>
+            <div>
+              <dt><span class="lang-cs">Komunita a reporty</span><span class="lang-en">Community and reports</span></dt>
+              <dd><span class="lang-cs">Veřejný odkaz</span><span class="lang-en">Public link</span></dd>
             </div>
           </dl>
         </div>
@@ -1810,7 +1780,7 @@
               <span class="lang-cs">Funkce</span><span class="lang-en">Features</span>
             </p>
             <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
-              <span class="lang-cs">Tvoje kola jako <span class="text-gold-500">na&nbsp;dlani</span></span>
+              <span class="lang-cs">Appka, která zná tvoje <span class="text-gold-500">kolo</span></span>
               <span class="lang-en">Your bikes, <span class="text-gold-500">at a glance</span></span>
             </h2>
           </div>
@@ -3458,7 +3428,7 @@
             rise: 300,
             lead: 0.07,
             curve: 1.35,
-            floor: 320,
+            floor: 200,
             rider: 0.764,
             step: 12,
             speed: 50,
