@@ -158,8 +158,8 @@
      One window tall under the sticky header (h-16), the facts strip on its
      floor. The terrain behind the copy is drawn by the "Ridge" script. */
       .hero {
-        min-height: calc(100vh - 64px);
-        min-height: calc(100svh - 64px);
+        min-height: calc(100vh - 144px);
+        min-height: calc(100svh - 144px);
       }
 
       /* Behind the copy from lg up, faded out under it and into the facts;
@@ -184,10 +184,10 @@
           inset: 0;
           height: auto;
           -webkit-mask-image:
-            linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08) 36%, #000 62%),
+            linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 22%, #000 50%, rgba(0, 0, 0, 0.45) 100%),
             linear-gradient(#000 calc(100% - 210px), transparent);
           mask-image:
-            linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08) 36%, #000 62%),
+            linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 22%, #000 50%, rgba(0, 0, 0, 0.45) 100%),
             linear-gradient(#000 calc(100% - 210px), transparent);
         }
       }
@@ -236,7 +236,11 @@
       }
       @media (min-width: 1024px) {
         .readout-value {
-          font-size: 16px;
+          font-size: 22px;
+        }
+        /* Above the base rule in source, so it needs the extra class to win. */
+        .readout .readout-bar {
+          width: auto;
         }
       }
       .readout-cell.is-on .readout-value {
@@ -257,11 +261,11 @@
       .readout.is-descent .phase-climb {
         display: none;
       }
-      /* Labels' cap line on the headline's (eyebrow 16.5px + mt-11, Geist cap 0.716em in a 0.98 line),
+      /* 48px under the headline's cap line (eyebrow 15px + mt-10, Geist cap 0.716em in a 0.98 line),
      and out into the margin as far as the mock's, 80px off the window edge. */
       @media (min-width: 1024px) {
         .readout {
-          top: calc(56.6px + 0.1265 * clamp(40px, 6.1vw, 88px));
+          top: calc(51.1px + 0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
           right: calc(-1 * clamp(0px, (100vw - 1276px) / 2, 82px));
         }
       }
@@ -1478,7 +1482,7 @@
      script): climbs count on the chain, descents mostly on the brake pads. -->
       <section class="hero relative overflow-hidden flex flex-col">
         <div
-          class="relative z-10 flex-1 flex flex-col justify-start lg:justify-center w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-16 lg:pb-24"
+          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-8 lg:pb-4"
         >
           <div class="relative">
             <p class="font-mono text-[10px] font-medium tracking-[0.16em] uppercase text-paper-dim">
@@ -1486,13 +1490,13 @@
             </p>
 
             <h1
-              class="mt-3 lg:mt-10 font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em] text-balance"
+              class="mt-3 lg:mt-10 lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em] text-balance"
             >
               <span class="lang-cs">Přehled o kole, jízdách a servisu<br />Na jednom místě</span>
               <span class="lang-en">Everything about your bike, rides, and maintenance<br />In one place</span>
             </h1>
-            <div class="readout mt-3 w-full max-w-[240px] lg:mt-0 lg:absolute lg:w-[208px]" aria-hidden="true">
-              <div class="grid grid-cols-2 gap-5">
+            <div class="readout mt-3 w-full max-w-[240px] lg:mt-0 lg:absolute lg:w-[360px] lg:max-w-none" aria-hidden="true">
+              <div class="grid grid-cols-2 lg:grid-cols-3 gap-5">
                 <div class="readout-cell is-on flex flex-col gap-1.5" data-reading="chain">
                   <span class="readout-label"><span class="lang-cs">Řetěz</span><span class="lang-en">Chain</span></span>
                   <span class="readout-value font-mono" data-value>38 %</span>
@@ -1502,6 +1506,12 @@
                   <span class="readout-label"><span class="lang-cs">Brzdy</span><span class="lang-en">Brakes</span></span>
                   <span class="readout-value font-mono" data-value>21 %</span>
                   <span class="readout-bar"><span data-bar style="width: 21%"></span></span>
+                </div>
+                <!-- Desktop only; hours of descent, as the App counts the fork in hours. -->
+                <div class="readout-cell hidden lg:flex flex-col gap-1.5" data-reading="fork">
+                  <span class="readout-label"><span class="lang-cs">Vidlice</span><span class="lang-en">Fork</span></span>
+                  <span class="readout-value font-mono" data-value>12:30 h</span>
+                  <span class="readout-bar"><span data-bar style="width: 25%"></span></span>
                 </div>
               </div>
             </div>
@@ -1519,7 +1529,7 @@
             <!-- Plain readings, no card; the script keeps them in step with the rider.
            Without it they hold the still frame reduced motion gets. -->
 
-            <p class="hidden lg:block mt-7 lg:mt-9 max-w-[560px] lg:text-[19px] leading-[1.5] text-paper-dim">
+            <p class="hidden lg:block mt-7 lg:mt-9 max-w-[560px] lg:text-[16px] leading-[1.5] text-paper-dim">
               <span class="lang-cs"
                 >Jízdy ze Stravy se započítají do opotřebení komponent podle profilu trasy. Servis, setup a účtenky na jednom
                 místě, připravené ke sdílení.</span
@@ -1627,15 +1637,15 @@
               <dd><span class="lang-cs">Po každém dílu zvlášť</span><span class="lang-en">Each part on its own</span></dd>
             </div>
             <div>
-              <dt><span class="lang-cs">Intervaly</span><span class="lang-en">Intervals</span></dt>
+              <dt><span class="lang-cs">Servis</span><span class="lang-en">Service Intervals</span></dt>
               <dd>
-                <span class="lang-cs">Km, hodiny nebo health index</span
-                ><span class="lang-en">Km, hours or health index</span>
+                <span class="lang-cs">Přednastavené servisní akce</span>
+                <span class="lang-en">Predefined service actions</span>
               </dd>
             </div>
             <div>
               <dt><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></dt>
-              <dd><span class="lang-cs">Veřejný odkaz, A4 PDF</span><span class="lang-en">Public link, A4 PDF</span></dd>
+              <dd><span class="lang-cs">Veřejný odkaz</span><span class="lang-en">Public link</span></dd>
             </div>
             <div>
               <!-- Strava's own lockup wording, so English in both languages; their mark keeps their orange. -->
@@ -1657,7 +1667,7 @@
       <section class="relative overflow-hidden">
         <!-- Head tube and bars, at close to life size and running off the left.
        Nearly black glass, so it needs a hard lift to exist at all here. -->
-        <div class="ghost g-cocpit" aria-hidden="true">
+        <div class="ghost g-cocpit hidden lg:block" aria-hidden="true">
           <img src="assets/img_ready/cocpit-Photoroom.webp" alt="" loading="lazy" decoding="async" />
         </div>
 
@@ -1679,13 +1689,13 @@
                   <span class="text-gold-500">under&nbsp;control</span></span
                 >
               </h2>
-              <ol class="mt-10 space-y-3 max-w-[62ch]">
-                <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+              <ol class="mt-10 space-y-7 max-w-[62ch]">
+                <li class="flex gap-4">
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">01</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Chceš mít přehled o svém kole a komponentách?</span
-                      ><span class="lang-en">Want a clear picture of your bike and its components?</span>
+                      <span class="lang-cs">Chceš mít přehled o svém kole a komponentách</span
+                      ><span class="lang-en">Want a clear picture of your bike and its components</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
                       <span class="lang-cs"
@@ -1694,12 +1704,12 @@
                     </p>
                   </div>
                 </li>
-                <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                <li class="flex gap-4">
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">02</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Chystáš se prodat svoje vymezlené kolo?</span
-                      ><span class="lang-en">About to sell a bike you have cared for?</span>
+                      <span class="lang-cs">Chystáš se prodat svoje vymezlené kolo</span
+                      ><span class="lang-en">About to sell a bike you have cared for</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
                       <span class="lang-cs">Servisní historie, která kupci ukáže tvoji péči.</span
@@ -1707,12 +1717,12 @@
                     </p>
                   </div>
                 </li>
-                <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                <li class="flex gap-4">
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">03</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Chceš svůj dream build ukázat?</span
-                      ><span class="lang-en">Want to show off your dream build?</span>
+                      <span class="lang-cs">Chceš svůj dream build ukázat</span
+                      ><span class="lang-en">Want to show off your dream build</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
                       <span class="lang-cs">Kamarádům nebo komukoli, komu pošleš odkaz.</span
@@ -3432,25 +3442,26 @@
         var SVG_NS = "http://www.w3.org/2000/svg";
         var KM_PER_S = 0.6;
         var WEAR = {
-          climb: { chain: 2.2, brakes: 0 },
-          descent: { chain: 0.3, brakes: 1.6 },
+          climb: { chain: 2.2, brakes: 0, fork: 0 },
+          descent: { chain: 0.3, brakes: 1.6, fork: 0.55 },
         };
         var MARKS = {
           chain: { cs: "Výměna řetězu", en: "Chain swap" },
           brakes: { cs: "Výměna destiček", en: "Pad swap" },
+          fork: { cs: "Servis vidlice", en: "Fork service" },
         };
         // From lg up the terrain fills the hero behind the copy; below it, a band of its own.
         var RIDGE_LAYOUTS = {
           wide: {
-            lines: 22,
+            lines: 28,
             gap: 13,
-            rise: 250,
+            rise: 300,
             lead: 0.07,
             curve: 1.35,
-            floor: 188,
+            floor: 320,
             rider: 0.764,
             step: 12,
-            speed: 60,
+            speed: 50,
             mPerPx: 2,
           },
           narrow: {
@@ -3466,7 +3477,8 @@
             mPerPx: 7,
           },
         };
-        var RIDGE_STILL = { km: 12.4, gain: 380, chain: 38, brakes: 21 };
+        var RIDGE_STILL = { km: 12.4, gain: 380, chain: 38, brakes: 21, fork: 12.5 };
+        var FORK_SERVICE_H = 50;
 
         function terrainNoise(s) {
           return (
@@ -3493,11 +3505,12 @@
           var cells = {
             chain: readout.querySelector('[data-reading="chain"]'),
             brakes: readout.querySelector('[data-reading="brakes"]'),
+            fork: readout.querySelector('[data-reading="fork"]'),
           };
           var riderLabel = box.querySelector(".ridge-rider");
           var title = hero.querySelector("h1");
           var wide = window.matchMedia("(min-width: 1024px)");
-          var state = { offset: 0, time: 0, km: 0, gain: 0, chain: 0, brakes: 0, climbing: true, marks: [] };
+          var state = { offset: 0, time: 0, km: 0, gain: 0, chain: 0, brakes: 0, fork: 0, climbing: true, marks: [] };
           var view = { layout: null, w: 0, h: 0, base: 0, end: 0 };
           var parts = null;
           var raf = 0;
@@ -3641,6 +3654,11 @@
             });
             cells.chain.classList.toggle("is-on", state.climbing);
             cells.brakes.classList.toggle("is-on", !state.climbing);
+            var hours = Math.floor(state.fork);
+            var minutes = Math.floor((state.fork - hours) * 60);
+            cells.fork.querySelector("[data-value]").textContent = hours + ":" + (minutes < 10 ? "0" : "") + minutes + " h";
+            cells.fork.querySelector("[data-bar]").style.width = Math.round((state.fork / FORK_SERVICE_H) * 100) + "%";
+            cells.fork.classList.toggle("is-on", !state.climbing);
             readout.classList.toggle("is-descent", !state.climbing);
           }
 
@@ -3663,6 +3681,7 @@
             state.gain += Math.max(0, rise) * view.layout.mPerPx;
             state.chain += rates.chain * dt;
             state.brakes += rates.brakes * dt;
+            state.fork += rates.fork * dt;
             if (state.chain >= 100) {
               state.chain = 0;
               addMark("chain");
@@ -3670,6 +3689,10 @@
             if (state.brakes >= 100) {
               state.brakes = 0;
               addMark("brakes");
+            }
+            if (state.fork >= FORK_SERVICE_H) {
+              state.fork = 0;
+              addMark("fork");
             }
           }
 
