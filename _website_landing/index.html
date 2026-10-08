@@ -28,10 +28,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&display=swap"
-    />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&display=swap" />
 
     <style>
       :root {
@@ -77,7 +74,6 @@
         opacity: 0.04;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
       }
-
 
       /* Scroll reveal - only hides when JS is running, so content never
      depends on a script to become visible. */
@@ -147,52 +143,146 @@
         box-shadow: var(--elev-panel);
       }
 
-      /* The strip under the hero: four plain statements, white on the band, so
-     the only colour in it is Strava's. Two by two on a phone, one row from lg
-     up, with a hairline between neighbours and none round the outside. */
-      .trust {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      /* ---- Hero ----------------------------------------------------------
+     One window tall under the sticky header (h-16), the facts strip on its
+     floor. The terrain behind the copy is drawn by the "Ridge" script. */
+      .hero {
+        min-height: calc(100vh - 64px);
+        min-height: calc(100svh - 64px);
       }
-      .trust li {
-        padding: 26px 20px 26px 0;
-      }
-      .trust li:nth-child(even) {
-        padding: 26px 0 26px 20px;
-        border-left: 1px solid rgba(255, 255, 255, 0.075);
-      }
-      .trust li:nth-child(n + 3) {
-        border-top: 1px solid rgba(255, 255, 255, 0.075);
-      }
-      .trust-title {
-        font-size: 21px;
-        font-weight: 700;
-        line-height: 1.12;
-        letter-spacing: -0.01em;
-        color: #f2f2f1;
-      }
-      .trust-text {
-        margin-top: 8px;
-        font-size: 13px;
-        line-height: 1.5;
-        color: #9c9c9e;
+
+      /* Behind the copy from lg up, faded out under it and into the facts;
+     below lg a band of its own between the buttons and the facts. */
+      .ridge {
+        position: relative;
+        height: 200px;
+        pointer-events: none;
+        -webkit-mask-image:
+          linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 72%, transparent);
+        mask-image:
+          linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 72%, transparent);
+        -webkit-mask-composite: source-in;
+        mask-composite: intersect;
       }
       @media (min-width: 1024px) {
-        .trust {
+        .ridge {
+          position: absolute;
+          inset: 0;
+          height: auto;
+          -webkit-mask-image:
+            linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08) 36%, #000 62%),
+            linear-gradient(#000 calc(100% - 210px), transparent);
+          mask-image:
+            linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08) 36%, #000 62%),
+            linear-gradient(#000 calc(100% - 210px), transparent);
+        }
+      }
+      .ridge svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .ridge-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        white-space: nowrap;
+      }
+      /* The halo keeps text readable where the terrain runs through it. */
+      .ridge-label,
+      .readout {
+        text-shadow:
+          0 0 4px #0a0a0b,
+          0 0 10px #0a0a0b;
+      }
+      .ridge-mark {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #9c9c9e;
+      }
+
+      /* Chain and brakes in the corner: the one counting most right now is gold. */
+      .readout-label {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #85868a;
+      }
+      .readout-value {
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: -0.01em;
+        color: #85868a;
+        transition: color 0.3s ease;
+      }
+      .readout-cell.is-on .readout-value {
+        color: #cec053;
+      }
+      .readout-bar {
+        display: block;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .readout-bar > span {
+        display: block;
+        height: 1px;
+        background: #cec053;
+      }
+      .readout:not(.is-descent) .phase-descent,
+      .readout.is-descent .phase-climb {
+        display: none;
+      }
+      /* Labels' cap line on the headline's (eyebrow 16.5px + mt-11, Geist cap 0.716em in a 0.98 line),
+     and out into the margin as far as the mock's, 80px off the window edge. */
+      @media (min-width: 1024px) {
+        .readout {
+          top: calc(56.6px + 0.1265 * clamp(40px, 6.1vw, 88px));
+          right: calc(-1 * clamp(0px, (100vw - 1276px) / 2, 82px));
+        }
+      }
+
+      /* The strip on the hero's floor: four plain statements, so the only
+     colour in it is Strava's. Two by two on a phone, one row from lg up. */
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px 20px;
+        margin: 0;
+        padding: 24px 0 32px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .facts dt {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #85868a;
+      }
+      .facts dd {
+        margin: 8px 0 0;
+        font-size: 17px;
+        font-weight: 500;
+        line-height: 1.25;
+        letter-spacing: -0.015em;
+        color: #f2f2f1;
+      }
+      .facts .facts-strava {
+        color: #fc5200;
+      }
+      @media (min-width: 1024px) {
+        .facts {
           grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 32px;
+          padding: 28px 0 40px;
         }
-        .trust li,
-        .trust li:nth-child(even) {
-          padding: 30px 32px;
-          border-top: 0;
-          border-left: 1px solid rgba(255, 255, 255, 0.075);
-        }
-        .trust li:first-child {
-          padding-left: 0;
-          border-left: 0;
-        }
-        .trust li:last-child {
-          padding-right: 0;
+        .facts dd {
+          margin-top: 10px;
+          font-size: 22px;
         }
       }
 
@@ -202,13 +292,13 @@
         background: rgba(14, 14, 16, 0.62);
       }
 
-      /* ---- Hero devices ---------------------------------------------------
+      /* ---- Devices ("Why BikeCheck") ---------------------------------------
      The app on the two screens it runs on. The screens are real screenshots;
      everything around them is drawn here. Every length is a multiple of --u,
      one percent of the stage's width, so the pair scales as one picture.
 
      The laptop is deliberately wider than the stage: it runs off the right
-     edge of the page and the hero's overflow:hidden cuts it, the same way
+     edge of the page and the section's overflow:hidden cuts it, the same way
      the ghosts are cut. The phone is the part that always stays whole, so
      its right edge is the stage's right edge.
 
@@ -403,27 +493,6 @@
         mask-composite: intersect;
       }
 
-      /* Hero: the one ghost that has to carry at every width. */
-      .hero-ghost {
-        top: 2%;
-        right: -24%;
-        width: 110%;
-        max-width: 1560px;
-      }
-      .hero-ghost img {
-        opacity: 0.15;
-      }
-      @media (max-width: 1023px) {
-        .hero-ghost {
-          top: 3%;
-          right: -38%;
-          width: 150%;
-        }
-        .hero-ghost img {
-          opacity: 0.13;
-        }
-      }
-
       /* Three of the fragments carry on a phone as well, so their placement
      lives here rather than inline: a phone needs a different frame of the
      same picture, not the desktop one scaled down. Each is pushed further
@@ -516,7 +585,7 @@
       }
 
       /* ---- App screens ----------------------------------------------------
-     A real screenshot in a drawn phone: the hero's phone again, but one that
+     A real screenshot in a drawn phone: the devices' phone again, but one that
      can stand anywhere. Every length is a multiple of --u, one percent of the
      frame's own width, so a frame is sized by --phone-w alone. A frame holds
      one screen or a stack of them; of a stack inside a switcher only the one
@@ -626,7 +695,7 @@
           transition: none;
         }
       }
-      /* The hero phone's notch. */
+      /* The devices phone's notch. */
       .phone-screen::before {
         content: "";
         position: absolute;
@@ -742,8 +811,7 @@
         background:
           radial-gradient(120% 150% at 0% 0%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.03) 48%, transparent 70%),
           radial-gradient(90% 130% at 100% 100%, rgba(255, 255, 255, 0.07), transparent 55%),
-          linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)),
-          var(--glass-tint);
+          linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)), var(--glass-tint);
         -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
         backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
         box-shadow:
@@ -1012,7 +1080,7 @@
         display: flex;
         gap: 12px;
         margin: 0 -16px;
-        padding: 4px 16px 18px;
+        padding: 4px 16px 12px;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         scroll-padding-inline: 16px;
@@ -1039,17 +1107,23 @@
         display: flex;
         flex-direction: column;
         width: var(--card-w);
-        padding: 20px;
+        padding: 16px;
         border-radius: 16px;
         scroll-snap-align: start;
       }
       .reel-card p {
-        margin-bottom: 20px;
+        margin-bottom: 14px;
       }
-      /* Whole, not cropped: some frames are sheets rising from the bottom. */
+      /* Whole, not cropped: some frames are sheets rising from the bottom.
+     Sized by the screen's height, so card and dots fit under the header (260px of header, text and dots). */
       .reel-card .phone {
-        --phone-w: min(240px, 100%);
+        --phone-w: min(100%, clamp(120px, (100vh - 260px) / 2.09, 240px));
         margin: auto auto 0;
+      }
+      @supports (height: 1svh) {
+        .reel-card .phone {
+          --phone-w: min(100%, clamp(120px, (100svh - 260px) / 2.09, 240px));
+        }
       }
       .reel-dots {
         display: flex;
@@ -1080,29 +1154,20 @@
       }
 
       .timeline > li {
-        position: relative;
         display: flex;
+        align-items: flex-start;
         gap: 16px;
         padding-bottom: 40px;
       }
       .timeline > li:last-child {
         padding-bottom: 0;
       }
-      .timeline > li:not(:last-child)::before {
-        content: "";
-        position: absolute;
-        top: 36px;
-        bottom: 8px;
-        left: 13.5px;
-        width: 1px;
-        background: rgba(255, 255, 255, 0.13);
-      }
       .timeline-num {
-        flex: none;
         display: grid;
         place-items: center;
         width: 28px;
         height: 28px;
+        margin-bottom: 12px;
         border: 1.5px solid #cec053;
         border-radius: 50%;
         font-size: 12px;
@@ -1112,14 +1177,11 @@
       .timeline-body {
         flex: 1;
         min-width: 0;
-        padding-top: 1px;
       }
-      /* Only the top of the screen, cut with a sharp edge. */
+      /* The whole screen, beside the text. */
       .timeline-shot {
-        width: min(100%, 340px);
-        height: 300px;
-        margin-top: 18px;
-        overflow: hidden;
+        flex: none;
+        width: min(40%, 180px);
       }
       .timeline-shot .phone {
         --phone-w: 100%;
@@ -1392,77 +1454,257 @@
 
     <main id="main">
       <!-- ============================== HERO ============================== -->
-      <section class="relative overflow-hidden">
-        <!-- The whole machine, drained and pushed off the right edge so only part
-       of it is ever on the page. -->
-        <div class="ghost hero-ghost" style="--lift: 0.92; --gm-a: 104deg" aria-hidden="true">
-          <img src="assets/img_ready/login_bike.webp" alt="" fetchpriority="low" decoding="async" />
+      <!-- The terrain rolls left under a rider who stays put (see "Ridge" in the
+     script): climbs count on the chain, descents mostly on the brake pads. -->
+      <section class="hero relative overflow-hidden flex flex-col">
+        <div
+          class="relative z-10 flex-1 flex flex-col justify-center w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-2 lg:pt-16 lg:pb-24"
+        >
+          <div class="relative">
+            <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
+              <span class="lang-cs">Servisní kniha pro kolo, napojená na Stravu</span
+              ><span class="lang-en">A service book for your bike, linked to Strava</span>
+            </p>
+
+            <h1
+              class="mt-8 lg:mt-11 font-display font-semibold text-[clamp(40px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em] text-balance"
+            >
+              <span class="lang-cs">Každá jízda se počítá.<br />Na každém dílu.</span>
+              <span class="lang-en">Every ride counts.<br />On every part.</span>
+            </h1>
+
+            <p class="mt-7 lg:mt-9 max-w-[560px] text-[17px] lg:text-[19px] leading-[1.5] text-paper-dim">
+              <span class="lang-cs"
+                >Jízdy ze Stravy se započítají do opotřebení řetězu, vidlice i brzd podle profilu trasy. Servisy, setup
+                a účtenky na jednom místě, připravené ke sdílení.</span
+              >
+              <span class="lang-en"
+                >Rides from Strava count toward the wear on your chain, fork and brakes, based on the route profile.
+                Services, setup and receipts in one place, ready to share.</span
+              >
+            </p>
+
+            <div id="download" class="mt-9 lg:mt-11 flex flex-wrap items-center gap-3 sm:gap-3.5 scroll-mt-24">
+              <!-- The official Google Play badge, used whole and unaltered from
+             assets/icon/google.svg, as Google's brand rules require. Its
+             own plate and lockup replace a button of ours, so it carries no
+             background or label from us - only a height. -->
+              <a
+                href="PLAY_STORE_URL"
+                class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
+              >
+                <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-12 sm:h-[52px] w-auto" />
+              </a>
+
+              <!-- iOS is not out yet, so this is deliberately our own tile and
+             not Apple's badge: that one may only be used unaltered and only
+             to link to a live store page. It is a <span>, not a link -
+             there is nothing to click until the app ships. -->
+              <span class="relative inline-flex items-center rounded-xl cursor-not-allowed" aria-disabled="true">
+                <img
+                  src="assets/icon/apple.svg"
+                  alt="Apple App Store, coming soon"
+                  class="block h-12 sm:h-[52px] w-auto opacity-50 grayscale"
+                />
+                <span
+                  class="absolute -top-3.5 -right-2 rounded-full border hairline bg-ink-800 px-1.5 py-0.5 text-[10px] font-semibold text-paper-dim"
+                >
+                  <span class="lang-cs">Brzy</span><span class="lang-en">Soon</span>
+                </span>
+              </span>
+
+              <!-- The way in without installing: the App in the browser. -->
+              <a
+                href="https://app.bikecheck.cloud/?lang=cs"
+                data-app-link
+                class="inline-flex items-center gap-2.5 h-12 sm:h-[52px] px-5 rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
+              >
+                <svg
+                  class="size-[18px] shrink-0"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="1.5" y="3" width="15" height="10.5" rx="1.5" />
+                  <path d="M5.5 16h7" />
+                </svg>
+                <span class="lang-cs">Otevřít ve webu</span><span class="lang-en">Open in browser</span>
+              </a>
+            </div>
+
+            <div class="mt-5 lg:mt-6">
+              <a
+                href="#service"
+                class="inline-flex items-center gap-2 pb-[3px] border-b border-paper/35 hover:border-gold-500 font-display font-semibold text-[15px] text-paper hover:text-gold-500 transition-colors duration-200"
+              >
+                <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
+                <svg
+                  class="size-3.5 shrink-0"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M2 7h10M8 3l4 4-4 4" />
+                </svg>
+              </a>
+            </div>
+
+            <!-- Plain readings, no card; the script keeps them in step with the rider.
+           Without it they hold the still frame reduced motion gets. -->
+            <div
+              class="readout mt-12 w-full max-w-[280px] lg:mt-0 lg:absolute lg:w-[208px]"
+              aria-hidden="true"
+            >
+              <div class="grid grid-cols-2 gap-5">
+                <div class="readout-cell is-on flex flex-col gap-1.5" data-reading="chain">
+                  <span class="readout-label"><span class="lang-cs">Řetěz</span><span class="lang-en">Chain</span></span>
+                  <span class="readout-value font-mono" data-value>38 %</span>
+                  <span class="readout-bar"><span data-bar style="width: 38%"></span></span>
+                </div>
+                <div class="readout-cell flex flex-col gap-1.5" data-reading="brakes">
+                  <span class="readout-label"><span class="lang-cs">Brzdy</span><span class="lang-en">Brakes</span></span>
+                  <span class="readout-value font-mono" data-value>21 %</span>
+                  <span class="readout-bar"><span data-bar style="width: 21%"></span></span>
+                </div>
+              </div>
+              <p class="mt-2 text-[10px] tracking-[0.1em] uppercase text-paper-faint">
+                <span class="phase-climb"
+                  ><span class="lang-cs">stoupání · počítá se řetěz</span
+                  ><span class="lang-en">climbing · the chain counts</span></span
+                >
+                <span class="phase-descent"
+                  ><span class="lang-cs">sjezd · počítají se hlavně brzdy</span
+                  ><span class="lang-en">descending · mostly the brakes</span></span
+                >
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pt-24 sm:pb-28">
-          <div class="grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-10 items-center">
-            <div>
-              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
-                <span class="lang-cs">Pro cyklisty, co chtějí mít přehled</span><span class="lang-en">For riders who like to know where they stand</span>
-              </p>
+        <div class="ridge" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ridge-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#cec053" stop-opacity="0.16" />
+                <stop offset="1" stop-color="#cec053" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="ridge-label ridge-rider font-mono flex flex-col gap-0.5">
+            <span class="text-[15px] font-medium leading-[1.1] tracking-[-0.01em] text-paper" data-km></span>
+            <span class="text-[13px] font-medium leading-[1.1] text-gold-500" data-gain></span>
+          </span>
+        </div>
 
-              <h1 class="font-display font-extrabold tracking-tight text-[clamp(34px,4.6vw,52px)] leading-[1.02] text-balance">
+        <div class="relative z-10 w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8">
+          <dl class="facts">
+            <div>
+              <dt><span class="lang-cs">Opotřebení</span><span class="lang-en">Wear</span></dt>
+              <dd><span class="lang-cs">Po každém dílu zvlášť</span><span class="lang-en">Each part on its own</span></dd>
+            </div>
+            <div>
+              <dt><span class="lang-cs">Intervaly</span><span class="lang-en">Intervals</span></dt>
+              <dd>
+                <span class="lang-cs">Km, hodiny nebo health index</span
+                ><span class="lang-en">Km, hours or health index</span>
+              </dd>
+            </div>
+            <div>
+              <dt><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></dt>
+              <dd><span class="lang-cs">Veřejný odkaz, A4 PDF</span><span class="lang-en">Public link, A4 PDF</span></dd>
+            </div>
+            <div>
+              <!-- Strava's own lockup wording, so English in both languages; their mark keeps their orange. -->
+              <dt class="facts-strava flex items-center gap-1.5">
+                <svg viewBox="0 0 24 24" class="size-3.5 shrink-0" fill="currentColor" aria-hidden="true">
+                  <path
+                    d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
+                  />
+                </svg>
+                Powered by Strava
+              </dt>
+              <dd><span class="lang-cs">Jízdy se načtou samy</span><span class="lang-en">Rides load on their own</span></dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <!-- ============================== ABOUT ============================== -->
+      <section class="relative overflow-hidden">
+        <!-- Head tube and bars, at close to life size and running off the left.
+       Nearly black glass, so it needs a hard lift to exist at all here. -->
+        <div class="ghost g-cocpit" aria-hidden="true">
+          <img src="assets/img_ready/cocpit-Photoroom.webp" alt="" loading="lazy" decoding="async" />
+        </div>
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 reveal">
+          <div class="grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-10 items-center">
+            <div class="relative z-10">
+              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+                <span class="lang-cs">Proč BikeCheck</span><span class="lang-en">Why BikeCheck</span>
+              </p>
+              <h2
+                class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance"
+              >
                 <span class="lang-cs"
-                  >Data o&nbsp;tvých kolech na jednom místě, připravená ke sdílení.<br /><span class="text-gold-500"
-                    >To je BikeCheck.</span
-                  ></span
+                  >Protože tě baví jezdit,<br />a chceš mít svá kola
+                  <span class="text-gold-500">pod&nbsp;kontrolou</span></span
                 >
                 <span class="lang-en"
-                  >Your bike data, in one shareable place.<br /><span class="text-gold-500"
-                    >That's BikeCheck.</span
-                  ></span
+                  >Because you would rather be riding,<br />but you still want your bikes
+                  <span class="text-gold-500">under&nbsp;control</span></span
                 >
-              </h1>
-
-              <div id="download" class="mt-9 flex flex-wrap items-center gap-3 scroll-mt-24">
-                <!-- The official Google Play badge, used whole and unaltered from
-               assets/icon/google.svg, as Google's brand rules require. Its
-               own plate and lockup replace a button of ours, so it carries no
-               background or label from us - only a height. -->
-                <a
-                  href="PLAY_STORE_URL"
-                  class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
-                >
-                  <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] w-auto" />
-                </a>
-
-                <!-- iOS is not out yet, so this is deliberately our own tile and
-               not Apple's badge: that one may only be used unaltered and only
-               to link to a live store page. It is a <span>, not a link -
-               there is nothing to click until the app ships. -->
-                <span
-                  class="inline-flex items-center gap-3 h-[52px] px-4 rounded-xl border hairline bg-ink-900/60 cursor-default select-none"
-                  aria-disabled="true"
-                >
-                  <svg viewBox="0 0 24 24" class="size-6 shrink-0 text-paper-faint" fill="currentColor" aria-hidden="true">
-                    <path
-                      d="M17.05 12.04c-.03-2.75 2.25-4.07 2.35-4.13-1.28-1.87-3.28-2.13-3.99-2.16-1.7-.17-3.32 1-4.18 1-.86 0-2.19-.98-3.6-.95-1.85.03-3.56 1.08-4.51 2.73-1.92 3.33-.49 8.26 1.38 10.96.91 1.32 2 2.8 3.43 2.75 1.38-.06 1.9-.89 3.57-.89 1.67 0 2.14.89 3.6.86 1.49-.03 2.43-1.35 3.34-2.67 1.05-1.53 1.48-3.01 1.5-3.09-.03-.01-2.88-1.11-2.91-4.4zM14.3 4.1c.76-.92 1.27-2.2 1.13-3.47-1.09.04-2.41.72-3.19 1.64-.7.81-1.31 2.11-1.15 3.36 1.21.09 2.45-.62 3.21-1.53z"
-                    />
-                  </svg>
-                  <span class="flex flex-col text-left leading-none">
-                    <span class="font-mono text-[8px] uppercase tracking-[0.14em] text-gold-600">
-                      <span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span>
-                    </span>
-                    <span class="font-display font-semibold text-[15px] text-paper-dim mt-1.5">App Store</span>
-                  </span>
-                </span>
-              </div>
-
-              <!-- The secondary action sits on a row of its own under the store
-             badges, at every width. -->
-              <div class="mt-3">
-                <a
-                  href="#service"
-                  class="inline-flex items-center gap-2 border hairline-strong hover:bg-ink-850 text-paper font-display font-semibold text-[15px] px-6 py-3.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer"
-                >
-                  <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
-                </a>
-              </div>
+              </h2>
+              <ol class="mt-10 space-y-3 max-w-[62ch]">
+                <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">01</span>
+                  <div>
+                    <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
+                      <span class="lang-cs">Chceš mít přehled o svém kole a komponentách?</span
+                      ><span class="lang-en">Want a clear picture of your bike and its components?</span>
+                    </h3>
+                    <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
+                      <span class="lang-cs"
+                        >Kdy jsi měnil řetěz, kdy je čas na sevis vidlice podle reálného ježdění – všechno pohromadě.</span
+                      ><span class="lang-en">When the chain last went on and the fork was last serviced, in one place.</span>
+                    </p>
+                  </div>
+                </li>
+                <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">02</span>
+                  <div>
+                    <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
+                      <span class="lang-cs">Chystáš se prodat svoje vymezlené kolo?</span
+                      ><span class="lang-en">About to sell a bike you have cared for?</span>
+                    </h3>
+                    <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
+                      <span class="lang-cs">Servisní historie, která kupci ukáže tvoji péči.</span
+                      ><span class="lang-en">A service history that backs it up.</span>
+                    </p>
+                  </div>
+                </li>
+                <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
+                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">03</span>
+                  <div>
+                    <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
+                      <span class="lang-cs">Chceš svůj dream build ukázat?</span
+                      ><span class="lang-en">Want to show off your dream build?</span>
+                    </h3>
+                    <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
+                      <span class="lang-cs">Kamarádům nebo komukoli, komu pošleš odkaz.</span
+                      ><span class="lang-en">To your mates, or publicly to anyone with the link.</span>
+                    </p>
+                  </div>
+                </li>
+              </ol>
             </div>
 
             <!-- The app itself, on both screens it runs on: the desktop Home in a
@@ -1480,163 +1722,24 @@
                     servisu.</span
                   >
                   <span class="lang-en"
-                    >The BikeCheck app on a laptop and a phone: the home screen with bikes, mileage and service
-                    status.</span
+                    >The BikeCheck app on a laptop and a phone: the home screen with bikes, mileage and service status.</span
                   >
                 </p>
 
                 <div class="dev-laptop" aria-hidden="true">
                   <div class="dev-lid">
-                    <img
-                      src="assets/img_ready/app-home-desktop.webp"
-                      alt=""
-                      width="2008"
-                      height="1262"
-                      decoding="async"
-                    />
+                    <img src="assets/img_ready/app-home-desktop.webp" alt="" width="2008" height="1262" loading="lazy" decoding="async" />
                   </div>
                   <div class="dev-base"></div>
                 </div>
 
                 <div class="dev-phone" aria-hidden="true">
                   <div class="dev-phone-screen">
-                    <img src="assets/img_ready/app-home-phone.webp" alt="" width="640" height="1386" decoding="async" />
+                    <img src="assets/img_ready/app-home-phone.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============================== TRUST BAR ============================== -->
-      <!-- Facts drawn from what the app actually does. No invented download or
-     rating numbers - swap in real figures from Play Console when there are some. -->
-      <section class="border-y hairline band" aria-label="Ve zkratce">
-        <div class="max-w-content mx-auto px-4 sm:px-6 lg:px-8">
-          <ul class="trust">
-            <li>
-              <p class="trust-title">
-                <span class="lang-cs">Servis na pár&nbsp;kliků</span><span class="lang-en">Service in a few&nbsp;taps</span>
-              </p>
-              <p class="trust-text">
-                <span class="lang-cs">Přehledně každý servis nebo výměna i s cenou</span
-                ><span class="lang-en">Every service or swap in one place, with its cost</span>
-              </p>
-            </li>
-
-            <li>
-              <p class="trust-title">
-                <span class="lang-cs">Hlídá za tebe</span><span class="lang-en">It watches for you</span>
-              </p>
-              <p class="trust-text">
-                <span class="lang-cs">Servis odpružení a dalších komponent ti připomene včas</span
-                ><span class="lang-en">Flags suspension and other component service before it is due</span>
-              </p>
-            </li>
-
-            <li>
-              <p class="trust-title">
-                <span class="lang-cs">Sdílej svoje kolo</span><span class="lang-en">Share your bike</span>
-              </p>
-              <p class="trust-text">
-                <span class="lang-cs">Živý odkaz na kolo nebo jen servisní report</span
-                ><span class="lang-en">A live link to the bike, or just a service report</span>
-              </p>
-            </li>
-
-            <li>
-              <!-- "Powered by Strava" is Strava's own lockup wording, so it stays
-               in English in both languages. Their mark and their orange: it is a
-               brand asset, so it is not recoloured like the rest of the page. -->
-              <p class="trust-title text-[#FC5200]">
-                <span class="block mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em]">Powered by</span>
-                <span class="flex items-center gap-2">
-                  <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="#FC5200" aria-hidden="true">
-                    <path
-                      d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
-                    />
-                  </svg>
-                  Strava
-                </span>
-              </p>
-              <p class="trust-text">
-                <span class="lang-cs">Díky propojení se Stravou se opotřebení a kilometry načítají samy</span
-                ><span class="lang-en">Connected to Strava, so wear and distance load on their own</span>
-              </p>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- ============================== ABOUT ============================== -->
-      <section class="relative overflow-hidden">
-        <!-- Head tube and bars, at close to life size and running off the left.
-       Nearly black glass, so it needs a hard lift to exist at all here. -->
-        <div class="ghost g-cocpit" aria-hidden="true">
-          <img src="assets/img_ready/cocpit-Photoroom.webp" alt="" loading="lazy" decoding="async" />
-        </div>
-
-        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 reveal">
-          <div class="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-20 items-start">
-            <div>
-              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
-                <span class="lang-cs">Proč BikeCheck</span><span class="lang-en">Why BikeCheck</span>
-              </p>
-              <h2
-                class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance"
-              >
-                <span class="lang-cs"
-                  >Protože tě baví jezdit,<br />ale chceš mít svá kola <span class="text-gold-500">pod&nbsp;kontrolou</span></span
-                >
-                <span class="lang-en"
-                  >Because you would rather be riding,<br />but you still want your bikes <span class="text-gold-500">under&nbsp;control</span></span
-                >
-              </h2>
-            </div>
-            <ol class="space-y-3 max-w-[62ch]">
-              <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
-                <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">01</span>
-                <div>
-                  <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                    <span class="lang-cs">Chceš mít přehled o svém kole a komponentách?</span
-                    ><span class="lang-en">Want a clear picture of your bike and its components?</span>
-                  </h3>
-                  <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
-                    <span class="lang-cs">Kdy jsi měnil řetěz, kdy servis vidlice, na jednom místě.</span
-                    ><span class="lang-en"
-                      >When the chain last went on and the fork was last serviced, in one place.</span
-                    >
-                  </p>
-                </div>
-              </li>
-              <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
-                <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">02</span>
-                <div>
-                  <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                    <span class="lang-cs">Chystáš se prodat svůj vymazlený bike?</span
-                    ><span class="lang-en">About to sell a bike you have cared for?</span>
-                  </h3>
-                  <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
-                    <span class="lang-cs">Servisní historie, která to doloží.</span
-                    ><span class="lang-en">A service history that backs it up.</span>
-                  </p>
-                </div>
-              </li>
-              <li class="card rounded-2xl flex gap-4 p-5 sm:p-6">
-                <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">03</span>
-                <div>
-                  <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                    <span class="lang-cs">Chceš svůj dream build ukázat?</span
-                    ><span class="lang-en">Want to show off your dream build?</span>
-                  </h3>
-                  <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
-                    <span class="lang-cs">Kamarádům, nebo veřejně komukoli s odkazem.</span
-                    ><span class="lang-en">To your mates, or publicly to anyone with the link.</span>
-                  </p>
-                </div>
-              </li>
-            </ol>
           </div>
         </div>
       </section>
@@ -1708,8 +1811,8 @@
                       >Nájezd, poslední jízda a stav kol hned po otevření. Na zbytek se zeptej AI pomocníka.</span
                     >
                     <span class="lang-en"
-                      >Mileage, your last ride and the state of your bikes the moment you open the app. Ask the AI
-                      assistant for the rest.</span
+                      >Mileage, your last ride and the state of your bikes the moment you open the app. Ask the AI assistant
+                      for the rest.</span
                     >
                   </p>
                 </div>
@@ -1720,15 +1823,20 @@
                     <!-- The BikeCheck mark, which the app uses for service (bikecheck.svg in the app repo). -->
                     <svg viewBox="0 0 282 175" class="w-[26px] h-auto text-gold-500" fill="currentColor" aria-hidden="true">
                       <g transform="translate(0 175) scale(0.1 -0.1)">
-                        <path d="M2130 1740 c-107 -7 -152 -23 -260 -95 -116 -77 -191 -197 -231 -367 -37 -162 -118 -283 -306 -461 -146 -137 -359 -290 -385 -276 -28 15 -22 47 13 64 49 26 239 173 302 233 60 60 74 90 35 77 -244 -79 -441 -83 -664 -15 -117 36 -220 40 -313 11 -232 -72 -367 -318 -306 -556 60 -227 273 -368 532 -351 240 16 616 220 1138 616 265 201 393 278 520 316 48 13 83 16 182 11 142 -7 151 -3 203 87 54 96 70 157 70 277 0 116 -4 139 -27 139 -8 0 -72 -51 -142 -114 -141 -126 -175 -144 -245 -125 -51 14 -102 67 -117 122 -18 66 1 122 59 176 121 114 192 184 192 190 -1 17 -20 32 -51 41 -36 10 -46 11 -199 0z m-1582 -1076 c145 -60 175 -244 57 -342 -155 -127 -384 27 -321 216 37 110 161 170 264 126z" />
-                        <path d="M2233 885 c-109 -30 -235 -103 -513 -300 -102 -73 -239 -169 -305 -215 -157 -108 -215 -152 -215 -162 0 -4 48 -8 108 -8 272 -1 439 -29 688 -118 183 -66 273 -85 383 -80 86 3 105 7 174 41 215 101 314 342 233 565 -32 90 -132 199 -221 242 -103 50 -228 63 -332 35z m160 -246 c89 -24 154 -123 145 -219 -10 -106 -114 -189 -221 -177 -220 27 -243 333 -29 397 38 12 61 11 105 -1z" />
+                        <path
+                          d="M2130 1740 c-107 -7 -152 -23 -260 -95 -116 -77 -191 -197 -231 -367 -37 -162 -118 -283 -306 -461 -146 -137 -359 -290 -385 -276 -28 15 -22 47 13 64 49 26 239 173 302 233 60 60 74 90 35 77 -244 -79 -441 -83 -664 -15 -117 36 -220 40 -313 11 -232 -72 -367 -318 -306 -556 60 -227 273 -368 532 -351 240 16 616 220 1138 616 265 201 393 278 520 316 48 13 83 16 182 11 142 -7 151 -3 203 87 54 96 70 157 70 277 0 116 -4 139 -27 139 -8 0 -72 -51 -142 -114 -141 -126 -175 -144 -245 -125 -51 14 -102 67 -117 122 -18 66 1 122 59 176 121 114 192 184 192 190 -1 17 -20 32 -51 41 -36 10 -46 11 -199 0z m-1582 -1076 c145 -60 175 -244 57 -342 -155 -127 -384 27 -321 216 37 110 161 170 264 126z"
+                        />
+                        <path
+                          d="M2233 885 c-109 -30 -235 -103 -513 -300 -102 -73 -239 -169 -305 -215 -157 -108 -215 -152 -215 -162 0 -4 48 -8 108 -8 272 -1 439 -29 688 -118 183 -66 273 -85 383 -80 86 3 105 7 174 41 215 101 314 342 233 565 -32 90 -132 199 -221 242 -103 50 -228 63 -332 35z m160 -246 c89 -24 154 -123 145 -219 -10 -106 -114 -189 -221 -177 -220 27 -243 333 -29 397 38 12 61 11 105 -1z"
+                        />
                       </g>
                     </svg>
                   </span>
                 </div>
                 <div class="sw-body">
                   <h3 class="font-display font-bold text-[17px] mb-1.5">
-                    <span class="lang-cs">Servisní historie a útrata</span><span class="lang-en">Service history and spend</span>
+                    <span class="lang-cs">Servisní historie a útrata</span
+                    ><span class="lang-en">Service history and spend</span>
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
@@ -1753,11 +1861,21 @@
                       fill-rule="evenodd"
                       aria-hidden="true"
                     >
-                      <path d="M40 46.9995C62.0914 46.9995 80 64.9081 80 86.9995C80 109.091 62.0914 127 40 127C17.9086 127 0 109.091 0 86.9995C0 64.9081 17.9086 46.9995 40 46.9995ZM40 54.9995C22.3269 54.9995 8 69.3264 8 86.9995C8 104.673 22.3269 119 40 119C57.6731 119 72 104.673 72 86.9995C72 69.3264 57.6731 54.9995 40 54.9995Z" />
-                      <path d="M39.5 53.9995C58.0015 53.9995 73 68.998 73 87.4995C73 106.001 58.0015 121 39.5 121C20.9985 121 6 106.001 6 87.4995C6 68.998 20.9985 53.9995 39.5 53.9995ZM39.5 60.6997C24.6988 60.6997 12.7002 72.6983 12.7002 87.4995C12.7002 102.301 24.6988 114.299 39.5 114.299C54.3012 114.299 66.2998 102.301 66.2998 87.4995C66.2998 72.6983 54.3012 60.6997 39.5 60.6997Z" />
-                      <path d="M164.5 53.9995C183.002 53.9995 198 68.998 198 87.4995C198 106.001 183.002 121 164.5 121C145.998 121 131 106.001 131 87.4995C131 68.998 145.998 53.9995 164.5 53.9995ZM164.5 60.6997C149.699 60.6997 137.7 72.6983 137.7 87.4995C137.7 102.301 149.699 114.299 164.5 114.299C179.301 114.299 191.3 102.301 191.3 87.4995C191.3 72.6983 179.301 60.6997 164.5 60.6997Z" />
-                      <path d="M165 46.9995C187.091 46.9995 205 64.9081 205 86.9995C205 109.091 187.091 127 165 127C142.909 127 125 109.091 125 86.9995C125 64.9081 142.909 46.9995 165 46.9995ZM165 54.9995C147.327 54.9995 133 69.3264 133 86.9995C133 104.673 147.327 119 165 119C182.673 119 197 104.673 197 86.9995C197 69.3264 182.673 54.9995 165 54.9995Z" />
-                      <path d="M129.273 2.28591C131.673 -0.647419 159.273 -0.780687 166.073 2.01931C177.006 6.55266 179.006 19.7522 170.073 27.8855C166.339 31.3521 164.34 32.1522 161.006 31.8855C157.406 31.6189 156.74 30.9521 156.74 28.1521C156.74 26.0188 157.806 24.2852 160.073 23.2185C163.406 21.6185 166.74 17.8855 166.74 15.8855C166.74 15.3522 165.539 13.6188 164.073 12.1521C161.806 9.88555 159.672 9.48513 150.606 9.48513C138.34 9.48512 138.74 8.41887 145.006 23.4851C146.74 27.8851 149.406 34.5526 150.872 38.2859L152.621 42.7449C149.769 43.7332 147.036 44.9738 144.445 46.4373C144.299 46.0297 144.131 45.5805 143.94 45.0857C143.007 42.2859 141.806 40.2856 141.273 40.4187C140.34 40.8187 133.673 49.0857 115.006 73.0857C100.073 92.2856 100.739 91.7519 87.8061 90.9519C85.9663 90.8437 84.7852 90.8453 83.9867 91.1082C83.9948 90.7397 84.0004 90.3702 84.0004 89.9998C84.0004 86.7953 83.6986 83.6607 83.1225 80.6238C85.0813 82.2738 88.1728 83.2512 89.4057 82.0193C90.2057 81.2193 87.2728 73.3523 81.5395 61.0857C76.4732 50.2865 72.2066 41.087 71.8061 40.8191C71.5394 40.5525 69.806 42.8188 68.0727 46.1521L65.3412 51.0437C62.7823 48.9824 60.0169 47.1677 57.0795 45.6365C58.54 44.3733 60.1751 41.4079 63.4057 35.4851L67.2729 28.1521L64.4731 22.2859C61.8064 16.9526 61.0059 16.2855 56.6059 15.8855C51.2727 15.4854 48.4728 12.5519 49.8061 8.95193C50.4729 7.21876 53.007 6.81912 65.9399 6.81912C82.7392 6.81913 85.4056 7.35219 85.4057 10.6853C85.4057 14.2853 82.6058 16.1521 77.1391 16.1521C71.4061 16.1521 71.54 16.1526 73.6733 20.8191L75.1391 24.1521H105.139C133.139 24.1521 135.006 24.0184 134.073 21.7517C128.473 8.28586 127.54 4.41927 129.273 2.28591ZM106.74 33.4851C92.073 33.4851 80.0727 33.8859 80.0727 34.5525C80.0771 35.4952 98.473 76.2858 99.2729 77.0857C99.5419 77.3492 106.741 68.5499 115.273 57.4851C123.939 46.5519 131.54 37.2191 132.206 36.8191C132.873 36.2858 133.406 35.4853 133.406 34.6853C133.404 34.0188 122.471 33.4851 106.74 33.4851Z" />
+                      <path
+                        d="M40 46.9995C62.0914 46.9995 80 64.9081 80 86.9995C80 109.091 62.0914 127 40 127C17.9086 127 0 109.091 0 86.9995C0 64.9081 17.9086 46.9995 40 46.9995ZM40 54.9995C22.3269 54.9995 8 69.3264 8 86.9995C8 104.673 22.3269 119 40 119C57.6731 119 72 104.673 72 86.9995C72 69.3264 57.6731 54.9995 40 54.9995Z"
+                      />
+                      <path
+                        d="M39.5 53.9995C58.0015 53.9995 73 68.998 73 87.4995C73 106.001 58.0015 121 39.5 121C20.9985 121 6 106.001 6 87.4995C6 68.998 20.9985 53.9995 39.5 53.9995ZM39.5 60.6997C24.6988 60.6997 12.7002 72.6983 12.7002 87.4995C12.7002 102.301 24.6988 114.299 39.5 114.299C54.3012 114.299 66.2998 102.301 66.2998 87.4995C66.2998 72.6983 54.3012 60.6997 39.5 60.6997Z"
+                      />
+                      <path
+                        d="M164.5 53.9995C183.002 53.9995 198 68.998 198 87.4995C198 106.001 183.002 121 164.5 121C145.998 121 131 106.001 131 87.4995C131 68.998 145.998 53.9995 164.5 53.9995ZM164.5 60.6997C149.699 60.6997 137.7 72.6983 137.7 87.4995C137.7 102.301 149.699 114.299 164.5 114.299C179.301 114.299 191.3 102.301 191.3 87.4995C191.3 72.6983 179.301 60.6997 164.5 60.6997Z"
+                      />
+                      <path
+                        d="M165 46.9995C187.091 46.9995 205 64.9081 205 86.9995C205 109.091 187.091 127 165 127C142.909 127 125 109.091 125 86.9995C125 64.9081 142.909 46.9995 165 46.9995ZM165 54.9995C147.327 54.9995 133 69.3264 133 86.9995C133 104.673 147.327 119 165 119C182.673 119 197 104.673 197 86.9995C197 69.3264 182.673 54.9995 165 54.9995Z"
+                      />
+                      <path
+                        d="M129.273 2.28591C131.673 -0.647419 159.273 -0.780687 166.073 2.01931C177.006 6.55266 179.006 19.7522 170.073 27.8855C166.339 31.3521 164.34 32.1522 161.006 31.8855C157.406 31.6189 156.74 30.9521 156.74 28.1521C156.74 26.0188 157.806 24.2852 160.073 23.2185C163.406 21.6185 166.74 17.8855 166.74 15.8855C166.74 15.3522 165.539 13.6188 164.073 12.1521C161.806 9.88555 159.672 9.48513 150.606 9.48513C138.34 9.48512 138.74 8.41887 145.006 23.4851C146.74 27.8851 149.406 34.5526 150.872 38.2859L152.621 42.7449C149.769 43.7332 147.036 44.9738 144.445 46.4373C144.299 46.0297 144.131 45.5805 143.94 45.0857C143.007 42.2859 141.806 40.2856 141.273 40.4187C140.34 40.8187 133.673 49.0857 115.006 73.0857C100.073 92.2856 100.739 91.7519 87.8061 90.9519C85.9663 90.8437 84.7852 90.8453 83.9867 91.1082C83.9948 90.7397 84.0004 90.3702 84.0004 89.9998C84.0004 86.7953 83.6986 83.6607 83.1225 80.6238C85.0813 82.2738 88.1728 83.2512 89.4057 82.0193C90.2057 81.2193 87.2728 73.3523 81.5395 61.0857C76.4732 50.2865 72.2066 41.087 71.8061 40.8191C71.5394 40.5525 69.806 42.8188 68.0727 46.1521L65.3412 51.0437C62.7823 48.9824 60.0169 47.1677 57.0795 45.6365C58.54 44.3733 60.1751 41.4079 63.4057 35.4851L67.2729 28.1521L64.4731 22.2859C61.8064 16.9526 61.0059 16.2855 56.6059 15.8855C51.2727 15.4854 48.4728 12.5519 49.8061 8.95193C50.4729 7.21876 53.007 6.81912 65.9399 6.81912C82.7392 6.81913 85.4056 7.35219 85.4057 10.6853C85.4057 14.2853 82.6058 16.1521 77.1391 16.1521C71.4061 16.1521 71.54 16.1526 73.6733 20.8191L75.1391 24.1521H105.139C133.139 24.1521 135.006 24.0184 134.073 21.7517C128.473 8.28586 127.54 4.41927 129.273 2.28591ZM106.74 33.4851C92.073 33.4851 80.0727 33.8859 80.0727 34.5525C80.0771 35.4952 98.473 76.2858 99.2729 77.0857C99.5419 77.3492 106.741 68.5499 115.273 57.4851C123.939 46.5519 131.54 37.2191 132.206 36.8191C132.873 36.2858 133.406 35.4853 133.406 34.6853C133.404 34.0188 122.471 33.4851 106.74 33.4851Z"
+                      />
                     </svg>
                   </span>
                 </div>
@@ -1779,9 +1897,7 @@
                 <div class="sw-icon">
                   <!-- Strava's mark stays in Strava's orange (brand asset, as in the stats
                  strip), so this one tile is tinted to match it rather than gold. -->
-                  <span
-                    class="size-10 rounded-xl bg-[#FC5200]/10 border border-[#FC5200]/25 grid place-items-center"
-                  >
+                  <span class="size-10 rounded-xl bg-[#FC5200]/10 border border-[#FC5200]/25 grid place-items-center">
                     <svg viewBox="0 0 24 24" class="size-5" fill="#FC5200" aria-hidden="true">
                       <path
                         d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
@@ -1791,7 +1907,8 @@
                 </div>
                 <div class="sw-body">
                   <h3 class="font-display font-bold text-[17px] mb-1.5">
-                    <span class="lang-cs">Chytré propojení se Stravou</span><span class="lang-en">A smarter Strava link</span>
+                    <span class="lang-cs">Chytré propojení se Stravou</span
+                    ><span class="lang-en">A smarter Strava link</span>
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
@@ -1825,12 +1942,8 @@
                     <span class="lang-cs">Profily nastavení</span><span class="lang-en">Setup profiles</span>
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
-                    <span class="lang-cs"
-                      >Ulož si oblíbené tlaky v pneu a nastavení tlumení přímo do aplikace.</span
-                    >
-                    <span class="lang-en"
-                      >Save your favourite tyre pressures and damper settings right in the app.</span
-                    >
+                    <span class="lang-cs">Ulož si oblíbené tlaky v pneu a nastavení tlumení přímo do aplikace.</span>
+                    <span class="lang-en">Save your favourite tyre pressures and damper settings right in the app.</span>
                   </p>
                 </div>
               </div>
@@ -1878,78 +1991,427 @@
                          the script plays a stack through step by step. A frame is a
                          screenshot, or a tall page that scrolls from stop to stop. -->
                     <div class="phone-frames is-on">
-                      <img class="is-on" src="assets/img_ready/screens/features/overview-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        class="is-on"
+                        src="assets/img_ready/screens/features/overview-01.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <div class="phone-scroll" data-stops="20.859% 48.007% 62.672%">
-                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/home-scroll.webp" alt="" width="640" height="3713" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/home-scroll-top.webp" alt="" width="640" height="161" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-bottom" src="assets/img_ready/screens/features/home-scroll-bottom.webp" alt="" width="640" height="216" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                        <img
+                          class="phone-scroll-page"
+                          src="assets/img_ready/screens/features/home-scroll.webp"
+                          alt=""
+                          width="640"
+                          height="3713"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-top"
+                          src="assets/img_ready/screens/features/home-scroll-top.webp"
+                          alt=""
+                          width="640"
+                          height="161"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-bottom"
+                          src="assets/img_ready/screens/features/home-scroll-bottom.webp"
+                          alt=""
+                          width="640"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-nav"
+                          src="assets/img_ready/screens/android-nav.webp"
+                          alt=""
+                          width="640"
+                          height="35"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
-                      <img src="assets/img_ready/screens/features/overview-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/overview-07.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/overview-08.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/features/overview-06.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/overview-07.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/overview-08.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                     <div class="phone-frames">
-                      <img class="is-on" src="assets/img_ready/screens/features/service-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/service-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/service-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/service-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/service-05.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        class="is-on"
+                        src="assets/img_ready/screens/features/service-01.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/service-02.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/service-03.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/service-04.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/service-05.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                     <div class="phone-frames">
                       <div class="phone-scroll is-on" data-stops="0% 25.975% 50.851%">
-                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/garage-scroll.webp" alt="" width="640" height="2820" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/garage-scroll-top.webp" alt="" width="640" height="160" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                        <img
+                          class="phone-scroll-page"
+                          src="assets/img_ready/screens/features/garage-scroll.webp"
+                          alt=""
+                          width="640"
+                          height="2820"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-top"
+                          src="assets/img_ready/screens/features/garage-scroll-top.webp"
+                          alt=""
+                          width="640"
+                          height="160"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-nav"
+                          src="assets/img_ready/screens/android-nav.webp"
+                          alt=""
+                          width="640"
+                          height="35"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
-                      <img src="assets/img_ready/screens/features/garage-05.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/garage-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/features/garage-05.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/garage-06.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                     <div class="phone-frames">
-                      <img class="is-on" src="assets/img_ready/screens/features/strava-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/strava-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        class="is-on"
+                        src="assets/img_ready/screens/features/strava-01.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/strava-02.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <!-- Back from the Pending tab: the first frame again. -->
-                      <img src="assets/img_ready/screens/features/strava-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/features/strava-01.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <div class="phone-scroll" data-stops="0% 19.977%">
-                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/strava-scroll-1.webp" alt="" width="640" height="1732" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/strava-scroll-top.webp" alt="" width="640" height="310" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                        <img
+                          class="phone-scroll-page"
+                          src="assets/img_ready/screens/features/strava-scroll-1.webp"
+                          alt=""
+                          width="640"
+                          height="1732"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-top"
+                          src="assets/img_ready/screens/features/strava-scroll-top.webp"
+                          alt=""
+                          width="640"
+                          height="310"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-nav"
+                          src="assets/img_ready/screens/android-nav.webp"
+                          alt=""
+                          width="640"
+                          height="35"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
                       <!-- The same sheet once "Something is off" is picked, scrolling on from where the one before stopped. -->
                       <div class="phone-scroll" data-stops="23%">
-                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/strava-scroll-2.webp" alt="" width="640" height="1800" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/strava-scroll-top.webp" alt="" width="640" height="310" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                        <img
+                          class="phone-scroll-page"
+                          src="assets/img_ready/screens/features/strava-scroll-2.webp"
+                          alt=""
+                          width="640"
+                          height="1800"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-top"
+                          src="assets/img_ready/screens/features/strava-scroll-top.webp"
+                          alt=""
+                          width="640"
+                          height="310"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-nav"
+                          src="assets/img_ready/screens/android-nav.webp"
+                          alt=""
+                          width="640"
+                          height="35"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
-                      <img src="assets/img_ready/screens/features/strava-07.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/features/strava-07.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                     <div class="phone-frames">
                       <div class="phone-scroll is-on" data-stops="0% 42.298%">
-                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/setup-scroll-1.webp" alt="" width="640" height="2402" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/setup-scroll-top.webp" alt="" width="640" height="225" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                        <img
+                          class="phone-scroll-page"
+                          src="assets/img_ready/screens/features/setup-scroll-1.webp"
+                          alt=""
+                          width="640"
+                          height="2402"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-top"
+                          src="assets/img_ready/screens/features/setup-scroll-top.webp"
+                          alt=""
+                          width="640"
+                          height="225"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-nav"
+                          src="assets/img_ready/screens/android-nav.webp"
+                          alt=""
+                          width="640"
+                          height="35"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
-                      <img src="assets/img_ready/screens/features/setup-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/setup-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/features/setup-03.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/setup-04.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <div class="phone-scroll" data-stops="0% 28.971% 49.618%">
-                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/setup-scroll-2.webp" alt="" width="640" height="2751" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/setup-scroll-top.webp" alt="" width="640" height="225" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-bottom" src="assets/img_ready/screens/features/setup-scroll-bottom.webp" alt="" width="640" height="261" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                        <img
+                          class="phone-scroll-page"
+                          src="assets/img_ready/screens/features/setup-scroll-2.webp"
+                          alt=""
+                          width="640"
+                          height="2751"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-top"
+                          src="assets/img_ready/screens/features/setup-scroll-top.webp"
+                          alt=""
+                          width="640"
+                          height="225"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-bottom"
+                          src="assets/img_ready/screens/features/setup-scroll-bottom.webp"
+                          alt=""
+                          width="640"
+                          height="261"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-nav"
+                          src="assets/img_ready/screens/android-nav.webp"
+                          alt=""
+                          width="640"
+                          height="35"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
-                      <img src="assets/img_ready/screens/features/setup-08.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/features/setup-08.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                     <div class="phone-frames">
-                      <img class="is-on" src="assets/img_ready/screens/features/share-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/share-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        class="is-on"
+                        src="assets/img_ready/screens/features/share-01.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/share-02.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <!-- The More sheet, the same shot as in the overview. -->
-                      <img src="assets/img_ready/screens/features/overview-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/share-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                      <img src="assets/img_ready/screens/features/share-05.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/features/overview-06.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/share-04.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <img
+                        src="assets/img_ready/screens/features/share-05.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <div class="phone-scroll" data-stops="0% 40.719%">
-                        <img class="phone-scroll-page" src="assets/img_ready/screens/features/share-scroll.webp" alt="" width="640" height="2338" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-top" src="assets/img_ready/screens/features/share-scroll-top.webp" alt="" width="640" height="160" loading="lazy" decoding="async" />
-                        <img class="phone-scroll-nav" src="assets/img_ready/screens/android-nav.webp" alt="" width="640" height="35" loading="lazy" decoding="async" />
+                        <img
+                          class="phone-scroll-page"
+                          src="assets/img_ready/screens/features/share-scroll.webp"
+                          alt=""
+                          width="640"
+                          height="2338"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-top"
+                          src="assets/img_ready/screens/features/share-scroll-top.webp"
+                          alt=""
+                          width="640"
+                          height="160"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          class="phone-scroll-nav"
+                          src="assets/img_ready/screens/android-nav.webp"
+                          alt=""
+                          width="640"
+                          height="35"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
                     </div>
                   </div>
@@ -2003,27 +2465,130 @@
                       <!-- One screen for each step, in the order of the steps: a stack of frames
                            where the step is several screenshots (see the features phone). -->
                       <div class="phone-frames is-on">
-                        <img class="is-on" src="assets/img_ready/screens/steps/bike-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                        <img src="assets/img_ready/screens/steps/bike-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                        <img src="assets/img_ready/screens/steps/bike-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                        <img src="assets/img_ready/screens/steps/bike-04.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img
+                          class="is-on"
+                          src="assets/img_ready/screens/steps/bike-01.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          src="assets/img_ready/screens/steps/bike-02.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          src="assets/img_ready/screens/steps/bike-03.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          src="assets/img_ready/screens/steps/bike-04.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
                         <!-- The form of the frame before it, filled in further down. The bar with
                              the buttons is part of the foot, system buttons included. -->
                         <div class="phone-scroll" data-stops="32.653%">
-                          <img class="phone-scroll-page" src="assets/img_ready/screens/steps/bike-scroll.webp" alt="" width="640" height="2058" loading="lazy" decoding="async" />
-                          <img class="phone-scroll-top" src="assets/img_ready/screens/steps/bike-scroll-top.webp" alt="" width="640" height="152" loading="lazy" decoding="async" />
-                          <img class="phone-scroll-bottom" src="assets/img_ready/screens/steps/bike-scroll-bottom.webp" alt="" width="640" height="207" loading="lazy" decoding="async" />
+                          <img
+                            class="phone-scroll-page"
+                            src="assets/img_ready/screens/steps/bike-scroll.webp"
+                            alt=""
+                            width="640"
+                            height="2058"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          <img
+                            class="phone-scroll-top"
+                            src="assets/img_ready/screens/steps/bike-scroll-top.webp"
+                            alt=""
+                            width="640"
+                            height="152"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          <img
+                            class="phone-scroll-bottom"
+                            src="assets/img_ready/screens/steps/bike-scroll-bottom.webp"
+                            alt=""
+                            width="640"
+                            height="207"
+                            loading="lazy"
+                            decoding="async"
+                          />
                         </div>
-                        <img src="assets/img_ready/screens/steps/bike-06.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                        <img src="assets/img_ready/screens/steps/bike-07.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img
+                          src="assets/img_ready/screens/steps/bike-06.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          src="assets/img_ready/screens/steps/bike-07.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
-                      <img src="assets/img_ready/screens/steps/strava.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/steps/strava.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <div class="phone-frames">
-                        <img class="is-on" src="assets/img_ready/screens/steps/service-01.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                        <img src="assets/img_ready/screens/steps/service-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
-                        <img src="assets/img_ready/screens/steps/service-03.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img
+                          class="is-on"
+                          src="assets/img_ready/screens/steps/service-01.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          src="assets/img_ready/screens/steps/service-02.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <img
+                          src="assets/img_ready/screens/steps/service-03.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
                         <!-- Back on the Service tab: the same shot as in the features phone. -->
-                        <img src="assets/img_ready/screens/features/service-02.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                        <img
+                          src="assets/img_ready/screens/features/service-02.webp"
+                          alt=""
+                          width="640"
+                          height="1386"
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </div>
                     </div>
                   </div>
@@ -2036,7 +2601,9 @@
                 <svg class="sw-when-paused" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M8 5l11 7-11 7z" />
                 </svg>
-                <span class="sw-when-playing"><span class="lang-cs">Pozastavit</span><span class="lang-en">Pause</span></span>
+                <span class="sw-when-playing"
+                  ><span class="lang-cs">Pozastavit</span><span class="lang-en">Pause</span></span
+                >
                 <span class="sw-when-paused"><span class="lang-cs">Přehrát</span><span class="lang-en">Play</span></span>
               </button>
             </div>
@@ -2050,9 +2617,11 @@
                     </h3>
                     <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
                       <span class="lang-cs"
-                        >Najdi kolo v chytrém vyhledávači a seznam komponent se načte sám. Projdi ho a přejmenuj, doplň nebo vynechej, co nesedí.</span
+                        >Najdi kolo v chytrém vyhledávači a seznam komponent se načte sám. Projdi ho a přejmenuj, doplň nebo
+                        vynechej, co nesedí.</span
                       ><span class="lang-en"
-                        >Find your bike in the smart search and its component list loads on its own. Go through it and rename, add or skip whatever doesn't match.</span
+                        >Find your bike in the smart search and its component list loads on its own. Go through it and
+                        rename, add or skip whatever doesn't match.</span
                       >
                     </p>
                   </div>
@@ -2067,9 +2636,11 @@
                     </h3>
                     <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
                       <span class="lang-cs"
-                        >Jednou povolíš přístup a jízdy pak chodí průběžně. Více kol není problém, každá jízda se připíše tomu správnému.</span
+                        >Jednou povolíš přístup a jízdy pak chodí průběžně. Více kol není problém, každá jízda se připíše
+                        tomu správnému.</span
                       ><span class="lang-en"
-                        >Grant access once and rides keep arriving. More than one bike is no problem: every ride lands on the right one.</span
+                        >Grant access once and rides keep arriving. More than one bike is no problem: every ride lands on the
+                        right one.</span
                       >
                     </p>
                   </div>
@@ -2085,9 +2656,9 @@
                     </h3>
                     <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
                       <span class="lang-cs"
-                        >BikeCheck začne hlídat přednastavené servisní úkony, které můžeš snadno doladit podle svého.
-                        Vyměnil jsi řetěz, odvzdušnil brzdy nebo si koupil lepší tlumič? Naklikáš to během chvilky a
-                        všechno zůstane v historii kola.</span
+                        >BikeCheck začne hlídat přednastavené servisní úkony, které můžeš snadno doladit podle svého. Vyměnil
+                        jsi řetěz, odvzdušnil brzdy nebo si koupil lepší tlumič? Naklikáš to během chvilky a všechno zůstane
+                        v historii kola.</span
                       ><span class="lang-en"
                         >BikeCheck starts keeping an eye on the preset service jobs, and you can easily tune them your way.
                         Swapped the chain, bled the brakes or bought a better shock? Tap it in within moments, and it all
@@ -2179,7 +2750,14 @@
                 <div class="phone" aria-hidden="true">
                   <div class="phone-body">
                     <div class="phone-screen">
-                      <img src="assets/img_ready/screens/rider-bike.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/rider-bike.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2215,8 +2793,7 @@
                 </h3>
                 <p class="text-[15px] leading-relaxed text-paper-dim">
                   <span class="lang-cs"
-                    >Co se dělalo, na jakých dílech, kdy a za kolik, včetně účtenek. Doklad pro dílnu nebo pro
-                    kupce.</span
+                    >Co se dělalo, na jakých dílech, kdy a za kolik, včetně účtenek. Doklad pro dílnu nebo pro kupce.</span
                   >
                   <span class="lang-en"
                     >What was done, on which parts, when and for how much, receipts included. Proof for the workshop or a
@@ -2228,7 +2805,14 @@
                 <div class="phone" aria-hidden="true">
                   <div class="phone-body">
                     <div class="phone-screen">
-                      <img src="assets/img_ready/screens/service-detail.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                      <img
+                        src="assets/img_ready/screens/service-detail.webp"
+                        alt=""
+                        width="640"
+                        height="1386"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2506,12 +3090,12 @@
               </h2>
               <p class="text-[16px] leading-relaxed text-paper-dim max-w-[50ch]">
                 <span class="lang-cs"
-                  >Nápady od lidí, kteří skutečně jezdí, jsou nejrychlejší cesta, jak BikeCheck zlepšit. Napiš, co ti
-                  v appce chybí nebo co nefunguje.</span
+                  >Nápady od lidí, kteří skutečně jezdí, jsou nejrychlejší cesta, jak BikeCheck zlepšit. Napiš, co ti v appce
+                  chybí nebo co nefunguje.</span
                 >
                 <span class="lang-en"
-                  >Ideas from people who actually ride are the fastest way to make BikeCheck better. Tell me what's
-                  missing or what's broken.</span
+                  >Ideas from people who actually ride are the fastest way to make BikeCheck better. Tell me what's missing
+                  or what's broken.</span
                 >
               </p>
 
@@ -2718,12 +3302,18 @@
                 >
               </li>
               <li>
-                <a href="https://app.bikecheck.cloud/legal/privacy?lang=cs" data-app-link class="hover:text-paper transition-colors duration-200"
+                <a
+                  href="https://app.bikecheck.cloud/legal/privacy?lang=cs"
+                  data-app-link
+                  class="hover:text-paper transition-colors duration-200"
                   ><span class="lang-cs">Ochrana soukromí</span><span class="lang-en">Privacy</span></a
                 >
               </li>
               <li>
-                <a href="https://app.bikecheck.cloud/legal/terms?lang=cs" data-app-link class="hover:text-paper transition-colors duration-200"
+                <a
+                  href="https://app.bikecheck.cloud/legal/terms?lang=cs"
+                  data-app-link
+                  class="hover:text-paper transition-colors duration-200"
                   ><span class="lang-cs">Podmínky</span><span class="lang-en">Terms</span></a
                 >
               </li>
@@ -2805,6 +3395,265 @@
             io.observe(el);
           });
         }
+
+        // ---- Ridge -------------------------------------------------------------
+        // The hero's terrain rolls left under a rider who stays put. Wear builds up roughly as the
+        // App counts it: climbs on the chain, descents mostly on the pads (their index is downhill only).
+        var SVG_NS = "http://www.w3.org/2000/svg";
+        var KM_PER_S = 0.6;
+        var WEAR = {
+          climb: { chain: 2.2, brakes: 0 },
+          descent: { chain: 0.3, brakes: 1.6 },
+        };
+        var MARKS = {
+          chain: { cs: "Výměna řetězu", en: "Chain swap" },
+          brakes: { cs: "Výměna destiček", en: "Pad swap" },
+        };
+        // From lg up the terrain fills the hero behind the copy; below it, a band of its own.
+        var RIDGE_LAYOUTS = {
+          wide: { lines: 22, gap: 13, rise: 250, lead: 0.07, curve: 1.35, floor: 188, rider: 0.764, step: 12, speed: 60, mPerPx: 2 },
+          narrow: { lines: 12, gap: 7, rise: 110, lead: 0, curve: 0.8, floor: 22, rider: 0.68, step: 8, speed: 40, mPerPx: 4.5 },
+        };
+        var RIDGE_STILL = { km: 12.4, gain: 380, chain: 38, brakes: 21 };
+
+        function terrainNoise(s) {
+          return (
+            (Math.sin(s * 0.0071 + 0.3) +
+              0.6 * Math.sin(s * 0.0163 + 1.7) +
+              0.35 * Math.sin(s * 0.031 + 4.1) +
+              0.18 * Math.sin(s * 0.057 + 2.2)) /
+            2.13
+          );
+        }
+
+        function svgElement(tag, attrs) {
+          var node = document.createElementNS(SVG_NS, tag);
+          Object.keys(attrs).forEach(function (key) {
+            node.setAttribute(key, attrs[key]);
+          });
+          return node;
+        }
+
+        function ridge(hero) {
+          var box = hero.querySelector(".ridge");
+          var svg = box.querySelector("svg");
+          var readout = hero.querySelector(".readout");
+          var cells = {
+            chain: readout.querySelector('[data-reading="chain"]'),
+            brakes: readout.querySelector('[data-reading="brakes"]'),
+          };
+          var riderLabel = box.querySelector(".ridge-rider");
+          var wide = window.matchMedia("(min-width: 1024px)");
+          var state = { offset: 0, time: 0, km: 0, gain: 0, chain: 0, brakes: 0, climbing: true, marks: [] };
+          var view = { layout: null, w: 0, h: 0, base: 0, end: 0 };
+          var parts = null;
+          var raf = 0;
+          var prev = 0;
+          var inView = !("IntersectionObserver" in window);
+
+          if (reduced) Object.assign(state, RIDGE_STILL);
+
+          function height(s, x) {
+            var L = view.layout;
+            var envelope = Math.pow(Math.max(0, x / view.w - L.lead), L.curve) * L.rise + 12;
+            return envelope * (0.35 + 0.65 * ((terrainNoise(s) + 1) / 2));
+          }
+
+          // The shift between neighbouring lines is the angle the range is seen from. It swings back and
+          // forth, as fast as the mock's parallax turns it, but never so far that the lines tangle.
+          function yAt(x, i) {
+            var L = view.layout;
+            var shear = 26 * Math.cos((2 * Math.PI * state.time) / 90);
+            return view.base - i * L.gap - height(state.offset + x + i * shear, x);
+          }
+
+          function riderX() {
+            return Math.round(view.w * view.layout.rider);
+          }
+
+          function build() {
+            var L = wide.matches ? RIDGE_LAYOUTS.wide : RIDGE_LAYOUTS.narrow;
+            if (L === view.layout && box.clientWidth === view.w && box.clientHeight === view.h) return;
+            view = { layout: L, w: box.clientWidth, h: box.clientHeight, base: box.clientHeight - L.floor };
+            view.end = Math.ceil(view.w / L.step) * L.step;
+            svg.setAttribute("viewBox", "0 0 " + view.w + " " + view.h);
+            if (parts) parts.layer.remove();
+            parts = { layer: svgElement("g", {}), lines: [] };
+            for (var i = L.lines - 1; i >= 0; i--) {
+              var front = i === 0;
+              parts.lines[i] = svgElement("path", {
+                fill: "none",
+                stroke: front ? "#cec053" : "#f2f2f1",
+                "stroke-opacity": front ? 1 : (0.42 - (i / (L.lines - 1)) * 0.37).toFixed(3),
+                "stroke-width": front ? 1.6 : 1,
+                "stroke-linejoin": "round",
+              });
+              parts.layer.appendChild(parts.lines[i]);
+            }
+            parts.fill = svgElement("path", { fill: "url(#ridge-fill)" });
+            parts.marks = svgElement("g", {});
+            parts.stem = svgElement("line", { stroke: "#cec053", "stroke-opacity": 0.5, "stroke-width": 1 });
+            parts.rider = svgElement("circle", { r: 4.5, fill: "#cec053" });
+            parts.layer.append(parts.fill, parts.marks, parts.stem, parts.rider);
+            state.marks.forEach(function (m) {
+              parts.marks.append(m.stem, m.dot);
+            });
+            svg.appendChild(parts.layer);
+          }
+
+          function lineD(i) {
+            var d = "";
+            for (var x = 0; x <= view.end; x += view.layout.step) d += (x ? "L" : "M") + x + " " + yAt(x, i).toFixed(1);
+            return d;
+          }
+
+          function place(label, x, y) {
+            label.style.transform = "translate(" + x + "px," + y + "px)";
+          }
+
+          function setLine(line, x, y1, y2) {
+            line.setAttribute("x1", x);
+            line.setAttribute("x2", x);
+            line.setAttribute("y1", y1);
+            line.setAttribute("y2", y2);
+          }
+
+          function drawTerrain() {
+            for (var i = 0; i < view.layout.lines; i++) parts.lines[i].setAttribute("d", lineD(i));
+            var front = parts.lines[0].getAttribute("d");
+            parts.fill.setAttribute("d", front + "L" + view.end + " " + view.h + "L0 " + view.h + "Z");
+            var x = riderX();
+            var y = yAt(x, 0);
+            parts.rider.setAttribute("cx", x);
+            parts.rider.setAttribute("cy", y);
+            setLine(parts.stem, x, y, y - 56);
+            place(riderLabel, x + 10, y - 60);
+          }
+
+          // A service done rides off to the left with the terrain, and is dropped once well past the edge.
+          function addMark(kind) {
+            var label = element("span", "ridge-label ridge-mark");
+            label.innerHTML =
+              '<span class="lang-cs">' + MARKS[kind].cs + '</span><span class="lang-en">' + MARKS[kind].en + "</span>";
+            var mark = {
+              s: state.offset + riderX(),
+              dot: svgElement("circle", { r: 3.5, fill: "#0a0a0b", stroke: "#f2f2f1", "stroke-width": 1.5 }),
+              stem: svgElement("line", { stroke: "#f2f2f1", "stroke-opacity": 0.35, "stroke-width": 1 }),
+              label: label,
+            };
+            parts.marks.append(mark.stem, mark.dot);
+            box.appendChild(label);
+            state.marks.push(mark);
+          }
+
+          function drawMarks() {
+            state.marks = state.marks.filter(function (m) {
+              var x = m.s - state.offset;
+              if (x < -320) {
+                m.dot.remove();
+                m.stem.remove();
+                m.label.remove();
+                return false;
+              }
+              var y = yAt(x, 0);
+              m.dot.setAttribute("cx", x);
+              m.dot.setAttribute("cy", y);
+              setLine(m.stem, x, y, y - 44);
+              place(m.label, x + 10, y - 58);
+              return true;
+            });
+          }
+
+          function number(value, digits) {
+            var locale = root.getAttribute("data-lang") === "cs" ? "cs-CZ" : "en-GB";
+            return value.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+          }
+
+          function drawReadings() {
+            var cs = root.getAttribute("data-lang") === "cs";
+            riderLabel.querySelector("[data-km]").textContent = number(state.km, 1) + " km";
+            riderLabel.querySelector("[data-gain]").textContent = "+ " + number(Math.round(state.gain), 0) + " m";
+            ["chain", "brakes"].forEach(function (key) {
+              var value = Math.round(state[key]);
+              cells[key].querySelector("[data-value]").textContent = value + (cs ? " %" : "%");
+              cells[key].querySelector("[data-bar]").style.width = value + "%";
+            });
+            cells.chain.classList.toggle("is-on", state.climbing);
+            cells.brakes.classList.toggle("is-on", !state.climbing);
+            readout.classList.toggle("is-descent", !state.climbing);
+          }
+
+          function draw() {
+            drawTerrain();
+            drawMarks();
+            drawReadings();
+          }
+
+          // The rider moves on by dt seconds; whether the ground under them rose decides what wears.
+          function advance(dt) {
+            var x = riderX();
+            var before = height(state.offset + x, x);
+            state.offset += view.layout.speed * dt;
+            state.time += dt;
+            var rise = height(state.offset + x, x) - before;
+            var rates = rise >= 0 ? WEAR.climb : WEAR.descent;
+            state.climbing = rise >= 0;
+            state.km += KM_PER_S * dt;
+            state.gain += Math.max(0, rise) * view.layout.mPerPx;
+            state.chain += rates.chain * dt;
+            state.brakes += rates.brakes * dt;
+            if (state.chain >= 100) {
+              state.chain = 0;
+              addMark("chain");
+            }
+            if (state.brakes >= 100) {
+              state.brakes = 0;
+              addMark("brakes");
+            }
+          }
+
+          // About 25 frames a second is plenty for terrain this slow.
+          function tick(now) {
+            raf = requestAnimationFrame(tick);
+            if (!prev) prev = now;
+            if (now - prev < 40) return;
+            advance(Math.min((now - prev) / 1000, 0.1));
+            prev = now;
+            draw();
+          }
+
+          function sync() {
+            var run = !reduced && inView && !document.hidden;
+            if (run && !raf) {
+              prev = 0;
+              raf = requestAnimationFrame(tick);
+            } else if (!run && raf) {
+              cancelAnimationFrame(raf);
+              raf = 0;
+            }
+          }
+
+          build();
+          draw();
+
+          if ("ResizeObserver" in window) {
+            new ResizeObserver(function () {
+              build();
+              draw();
+            }).observe(box);
+          }
+          if ("IntersectionObserver" in window) {
+            new IntersectionObserver(function (entries) {
+              inView = entries[0].isIntersecting;
+              sync();
+            }).observe(hero);
+          }
+          document.addEventListener("visibilitychange", sync);
+          new MutationObserver(drawReadings).observe(root, { attributes: true, attributeFilter: ["data-lang"] });
+          sync();
+        }
+
+        ridge(document.querySelector(".hero"));
 
         // ---- Switchers ---------------------------------------------------------
         // One phone and the switches around it (see "Switchers" in the styles). A
@@ -3120,7 +3969,7 @@
           update();
         }
 
-        // The steps as a numbered timeline, each screen under its text; the step nearest the window's middle plays.
+        // The steps as a numbered timeline, each screen beside its text; the step nearest the window's middle plays.
         function timeline(wrap) {
           var screens = wrap.querySelectorAll(".sw-phone .phone-screen > *");
           var list = element("ol", "timeline autoplay");
@@ -3134,8 +3983,8 @@
             var shot = element("div", "timeline-shot shot");
             num.textContent = String(i + 1);
             shot.appendChild(phoneOf(screens[i]));
-            body.append(item.querySelector("h3").cloneNode(true), item.querySelector("p").cloneNode(true), shot);
-            row.append(num, body);
+            body.append(num, item.querySelector("h3").cloneNode(true), item.querySelector("p").cloneNode(true));
+            row.append(body, shot);
             list.appendChild(row);
             rows.push(row);
             shots.push(shot);
