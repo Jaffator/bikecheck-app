@@ -127,6 +127,17 @@
           radial-gradient(920px 640px at 92% 70%, rgba(64, 67, 72, 0.28), transparent 64%),
           radial-gradient(760px 540px at 18% 92%, rgba(206, 192, 83, 0.04), transparent 62%);
       }
+      /* The same pools in proportion to a 1440x900 window: in px they cover a whole phone and grey it. */
+      @media (max-width: 1023px) {
+        .ambient {
+          background:
+            radial-gradient(62.5vw 68.9vh at 78% 4%, rgba(206, 192, 83, 0.055), transparent 62%),
+            radial-gradient(56.9vw 66.7vh at 10% 30%, rgba(64, 67, 72, 0.34), transparent 66%),
+            radial-gradient(48.6vw 57.8vh at 62% 48%, rgba(206, 192, 83, 0.025), transparent 60%),
+            radial-gradient(63.9vw 71.1vh at 92% 70%, rgba(64, 67, 72, 0.28), transparent 64%),
+            radial-gradient(52.8vw 60vh at 18% 92%, rgba(206, 192, 83, 0.04), transparent 62%);
+        }
+      }
 
       /* Cards wear the app's card material (docs/ui/card-surface.md in the app
      repo): a solid cards.6 surface, no border, and the app's elevations - a
@@ -152,15 +163,18 @@
       }
 
       /* Behind the copy from lg up, faded out under it and into the facts;
-     below lg a band of its own between the buttons and the facts. */
+     below lg a band in the gap under the headline, hung there by the script (--ridge-top). */
       .ridge {
-        position: relative;
+        position: absolute;
+        top: var(--ridge-top, 0px);
+        left: 0;
+        right: 0;
         height: 200px;
         pointer-events: none;
         -webkit-mask-image:
-          linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 72%, transparent);
+          linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 82%, transparent);
         mask-image:
-          linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 72%, transparent);
+          linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 82%, transparent);
         -webkit-mask-composite: source-in;
         mask-composite: intersect;
       }
@@ -213,24 +227,30 @@
         color: #85868a;
       }
       .readout-value {
-        font-size: 16px;
+        font-size: 13px;
         font-weight: 500;
         line-height: 1;
         letter-spacing: -0.01em;
         color: #85868a;
         transition: color 0.3s ease;
       }
+      @media (min-width: 1024px) {
+        .readout-value {
+          font-size: 16px;
+        }
+      }
       .readout-cell.is-on .readout-value {
         color: #cec053;
       }
       .readout-bar {
         display: block;
-        height: 1px;
+        width: 37px;
+        height: 3px;
         background: rgba(255, 255, 255, 0.08);
       }
       .readout-bar > span {
         display: block;
-        height: 1px;
+        height: 3px;
         background: #cec053;
       }
       .readout:not(.is-descent) .phase-descent,
@@ -1458,33 +1478,59 @@
      script): climbs count on the chain, descents mostly on the brake pads. -->
       <section class="hero relative overflow-hidden flex flex-col">
         <div
-          class="relative z-10 flex-1 flex flex-col justify-center w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-2 lg:pt-16 lg:pb-24"
+          class="relative z-10 flex-1 flex flex-col justify-start lg:justify-center w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-16 lg:pb-24"
         >
           <div class="relative">
-            <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-              <span class="lang-cs">Servisní kniha pro kolo, napojená na Stravu</span
-              ><span class="lang-en">A service book for your bike, linked to Strava</span>
+            <p class="font-mono text-[10px] font-medium tracking-[0.16em] uppercase text-paper-dim">
+              <span class="lang-cs">Platforma pro tvoje kola</span><span class="lang-en">A platform for your bikes</span>
             </p>
 
             <h1
-              class="mt-8 lg:mt-11 font-display font-semibold text-[clamp(40px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em] text-balance"
+              class="mt-3 lg:mt-10 font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em] text-balance"
             >
-              <span class="lang-cs">Každá jízda se počítá.<br />Na každém dílu.</span>
-              <span class="lang-en">Every ride counts.<br />On every part.</span>
+              <span class="lang-cs">Přehled o kole, jízdách a servisu<br />Na jednom místě</span>
+              <span class="lang-en">Everything about your bike, rides, and maintenance<br />In one place</span>
             </h1>
+            <div class="readout mt-3 w-full max-w-[240px] lg:mt-0 lg:absolute lg:w-[208px]" aria-hidden="true">
+              <div class="grid grid-cols-2 gap-5">
+                <div class="readout-cell is-on flex flex-col gap-1.5" data-reading="chain">
+                  <span class="readout-label"><span class="lang-cs">Řetěz</span><span class="lang-en">Chain</span></span>
+                  <span class="readout-value font-mono" data-value>38 %</span>
+                  <span class="readout-bar"><span data-bar style="width: 38%"></span></span>
+                </div>
+                <div class="readout-cell flex flex-col gap-1.5" data-reading="brakes">
+                  <span class="readout-label"><span class="lang-cs">Brzdy</span><span class="lang-en">Brakes</span></span>
+                  <span class="readout-value font-mono" data-value>21 %</span>
+                  <span class="readout-bar"><span data-bar style="width: 21%"></span></span>
+                </div>
+              </div>
+            </div>
+            <!-- <p class="mt-2 text-[10px] tracking-[0.1em] uppercase text-paper-faint">
+              <span class="phase-climb"
+                ><span class="lang-cs">stoupání · počítá se řetěz</span
+                ><span class="lang-en">climbing · the chain counts</span></span
+              >
+              <span class="phase-descent"
+                ><span class="lang-cs">sjezd · počítají se hlavně brzdy</span
+                ><span class="lang-en">descending · mostly the brakes</span></span
+              >
+            </p> -->
 
-            <p class="mt-7 lg:mt-9 max-w-[560px] text-[17px] lg:text-[19px] leading-[1.5] text-paper-dim">
+            <!-- Plain readings, no card; the script keeps them in step with the rider.
+           Without it they hold the still frame reduced motion gets. -->
+
+            <p class="hidden lg:block mt-7 lg:mt-9 max-w-[560px] lg:text-[19px] leading-[1.5] text-paper-dim">
               <span class="lang-cs"
-                >Jízdy ze Stravy se započítají do opotřebení řetězu, vidlice i brzd podle profilu trasy. Servisy, setup
-                a účtenky na jednom místě, připravené ke sdílení.</span
+                >Jízdy ze Stravy se započítají do opotřebení komponent podle profilu trasy. Servis, setup a účtenky na jednom
+                místě, připravené ke sdílení.</span
               >
               <span class="lang-en"
-                >Rides from Strava count toward the wear on your chain, fork and brakes, based on the route profile.
-                Services, setup and receipts in one place, ready to share.</span
+                >Rides from Strava count toward the components, based on the route profile. Services, setup and receipts in
+                one place, ready to share.</span
               >
             </p>
 
-            <div id="download" class="mt-9 lg:mt-11 flex flex-wrap items-center gap-3 sm:gap-3.5 scroll-mt-24">
+            <div id="download" class="mt-[120px] lg:mt-11 flex flex-wrap items-center gap-3 sm:gap-3.5 scroll-mt-24">
               <!-- The official Google Play badge, used whole and unaltered from
              assets/icon/google.svg, as Google's brand rules require. Its
              own plate and lockup replace a button of ours, so it carries no
@@ -1493,46 +1539,46 @@
                 href="PLAY_STORE_URL"
                 class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
               >
-                <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-12 sm:h-[52px] w-auto" />
+                <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 w-auto" />
               </a>
 
               <!-- iOS is not out yet, so this is deliberately our own tile and
              not Apple's badge: that one may only be used unaltered and only
              to link to a live store page. It is a <span>, not a link -
              there is nothing to click until the app ships. -->
-              <span class="relative inline-flex items-center rounded-xl cursor-not-allowed" aria-disabled="true">
+              <!-- <span class="relative inline-flex items-center rounded-xl cursor-not-allowed" aria-disabled="true">
                 <img
                   src="assets/icon/apple.svg"
                   alt="Apple App Store, coming soon"
-                  class="block h-12 sm:h-[52px] w-auto opacity-50 grayscale"
+                  class="block h-9 sm:h-10 w-auto opacity-50 grayscale"
                 />
                 <span
                   class="absolute -top-3.5 -right-2 rounded-full border hairline bg-ink-800 px-1.5 py-0.5 text-[10px] font-semibold text-paper-dim"
                 >
                   <span class="lang-cs">Brzy</span><span class="lang-en">Soon</span>
                 </span>
-              </span>
+              </span> -->
 
               <!-- The way in without installing: the App in the browser. -->
               <a
                 href="https://app.bikecheck.cloud/?lang=cs"
                 data-app-link
-                class="inline-flex items-center gap-2.5 h-12 sm:h-[52px] px-5 rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
+                class="inline-flex items-center gap-2 h-9 sm:h-10 px-3.5 sm:px-2 rounded-md border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
               >
                 <svg
-                  class="size-[18px] shrink-0"
-                  viewBox="0 0 18 18"
+                  class="size-4 shrink-0"
+                  viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="1.6"
+                  stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   aria-hidden="true"
                 >
-                  <rect x="1.5" y="3" width="15" height="10.5" rx="1.5" />
-                  <path d="M5.5 16h7" />
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M12 17v4M8 21h8" />
                 </svg>
-                <span class="lang-cs">Otevřít ve webu</span><span class="lang-en">Open in browser</span>
+                <span class="lang-cs">Otevřít web</span><span class="lang-en">Open in browser</span>
               </a>
             </div>
 
@@ -1555,36 +1601,6 @@
                   <path d="M2 7h10M8 3l4 4-4 4" />
                 </svg>
               </a>
-            </div>
-
-            <!-- Plain readings, no card; the script keeps them in step with the rider.
-           Without it they hold the still frame reduced motion gets. -->
-            <div
-              class="readout mt-12 w-full max-w-[280px] lg:mt-0 lg:absolute lg:w-[208px]"
-              aria-hidden="true"
-            >
-              <div class="grid grid-cols-2 gap-5">
-                <div class="readout-cell is-on flex flex-col gap-1.5" data-reading="chain">
-                  <span class="readout-label"><span class="lang-cs">Řetěz</span><span class="lang-en">Chain</span></span>
-                  <span class="readout-value font-mono" data-value>38 %</span>
-                  <span class="readout-bar"><span data-bar style="width: 38%"></span></span>
-                </div>
-                <div class="readout-cell flex flex-col gap-1.5" data-reading="brakes">
-                  <span class="readout-label"><span class="lang-cs">Brzdy</span><span class="lang-en">Brakes</span></span>
-                  <span class="readout-value font-mono" data-value>21 %</span>
-                  <span class="readout-bar"><span data-bar style="width: 21%"></span></span>
-                </div>
-              </div>
-              <p class="mt-2 text-[10px] tracking-[0.1em] uppercase text-paper-faint">
-                <span class="phase-climb"
-                  ><span class="lang-cs">stoupání · počítá se řetěz</span
-                  ><span class="lang-en">climbing · the chain counts</span></span
-                >
-                <span class="phase-descent"
-                  ><span class="lang-cs">sjezd · počítají se hlavně brzdy</span
-                  ><span class="lang-en">descending · mostly the brakes</span></span
-                >
-              </p>
             </div>
           </div>
         </div>
@@ -1728,14 +1744,28 @@
 
                 <div class="dev-laptop" aria-hidden="true">
                   <div class="dev-lid">
-                    <img src="assets/img_ready/app-home-desktop.webp" alt="" width="2008" height="1262" loading="lazy" decoding="async" />
+                    <img
+                      src="assets/img_ready/app-home-desktop.webp"
+                      alt=""
+                      width="2008"
+                      height="1262"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <div class="dev-base"></div>
                 </div>
 
                 <div class="dev-phone" aria-hidden="true">
                   <div class="dev-phone-screen">
-                    <img src="assets/img_ready/app-home-phone.webp" alt="" width="640" height="1386" loading="lazy" decoding="async" />
+                    <img
+                      src="assets/img_ready/app-home-phone.webp"
+                      alt=""
+                      width="640"
+                      height="1386"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                 </div>
               </div>
@@ -3411,8 +3441,30 @@
         };
         // From lg up the terrain fills the hero behind the copy; below it, a band of its own.
         var RIDGE_LAYOUTS = {
-          wide: { lines: 22, gap: 13, rise: 250, lead: 0.07, curve: 1.35, floor: 188, rider: 0.764, step: 12, speed: 60, mPerPx: 2 },
-          narrow: { lines: 12, gap: 7, rise: 110, lead: 0, curve: 0.8, floor: 22, rider: 0.68, step: 8, speed: 40, mPerPx: 4.5 },
+          wide: {
+            lines: 22,
+            gap: 13,
+            rise: 250,
+            lead: 0.07,
+            curve: 1.35,
+            floor: 188,
+            rider: 0.764,
+            step: 12,
+            speed: 60,
+            mPerPx: 2,
+          },
+          narrow: {
+            lines: 28,
+            gap: 4,
+            rise: 100,
+            lead: 0,
+            curve: 0.8,
+            floor: 22,
+            rider: 0.72,
+            step: 8,
+            speed: 40,
+            mPerPx: 7,
+          },
         };
         var RIDGE_STILL = { km: 12.4, gain: 380, chain: 38, brakes: 21 };
 
@@ -3443,6 +3495,7 @@
             brakes: readout.querySelector('[data-reading="brakes"]'),
           };
           var riderLabel = box.querySelector(".ridge-rider");
+          var title = hero.querySelector("h1");
           var wide = window.matchMedia("(min-width: 1024px)");
           var state = { offset: 0, time: 0, km: 0, gain: 0, chain: 0, brakes: 0, climbing: true, marks: [] };
           var view = { layout: null, w: 0, h: 0, base: 0, end: 0 };
@@ -3469,6 +3522,14 @@
 
           function riderX() {
             return Math.round(view.w * view.layout.rider);
+          }
+
+          // Below lg the band fills the gap left above the buttons, its floor just over them.
+          function hang() {
+            if (wide.matches) return;
+            var buttonsTop = hero.querySelector("#download").getBoundingClientRect().top - hero.getBoundingClientRect().top;
+            var base = box.clientHeight - RIDGE_LAYOUTS.narrow.floor;
+            box.style.setProperty("--ridge-top", Math.round(buttonsTop - 14 - base) + "px");
           }
 
           function build() {
@@ -3633,14 +3694,19 @@
             }
           }
 
+          hang();
           build();
           draw();
 
           if ("ResizeObserver" in window) {
-            new ResizeObserver(function () {
+            var resized = new ResizeObserver(function () {
+              hang();
               build();
               draw();
-            }).observe(box);
+            });
+            [box, hero, title].forEach(function (el) {
+              resized.observe(el);
+            });
           }
           if ("IntersectionObserver" in window) {
             new IntersectionObserver(function (entries) {
