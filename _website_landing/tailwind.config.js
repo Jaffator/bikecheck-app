@@ -20,7 +20,8 @@ export default {
         body: ["Geist", "system-ui", "sans-serif"],
         mono: ["Geist", "system-ui", "sans-serif"],
       },
-      maxWidth: { content: "1180px" },
+      // 1360px of content inside the lg padding.
+      maxWidth: { content: "1424px" },
     },
   },
   plugins: [forms],

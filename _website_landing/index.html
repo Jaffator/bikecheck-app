@@ -122,9 +122,9 @@
         pointer-events: none;
         background:
           radial-gradient(900px 620px at 78% 4%, rgba(206, 192, 83, 0.055), transparent 62%),
-          radial-gradient(820px 600px at 10% 30%, rgba(64, 67, 72, 0.34), transparent 66%),
+          radial-gradient(820px 600px at 10% 30%, rgba(64, 67, 72, 0.14), transparent 66%),
           radial-gradient(700px 520px at 62% 48%, rgba(206, 192, 83, 0.025), transparent 60%),
-          radial-gradient(920px 640px at 92% 70%, rgba(64, 67, 72, 0.28), transparent 64%),
+          radial-gradient(920px 640px at 92% 70%, rgba(64, 67, 72, 0.12), transparent 64%),
           radial-gradient(760px 540px at 18% 92%, rgba(206, 192, 83, 0.04), transparent 62%);
       }
       /* The same pools in proportion to a 1440x900 window: in px they cover a whole phone and grey it. */
@@ -132,9 +132,9 @@
         .ambient {
           background:
             radial-gradient(62.5vw 68.9vh at 78% 4%, rgba(206, 192, 83, 0.055), transparent 62%),
-            radial-gradient(56.9vw 66.7vh at 10% 30%, rgba(64, 67, 72, 0.34), transparent 66%),
+            radial-gradient(56.9vw 66.7vh at 10% 30%, rgba(64, 67, 72, 0.14), transparent 66%),
             radial-gradient(48.6vw 57.8vh at 62% 48%, rgba(206, 192, 83, 0.025), transparent 60%),
-            radial-gradient(63.9vw 71.1vh at 92% 70%, rgba(64, 67, 72, 0.28), transparent 64%),
+            radial-gradient(63.9vw 71.1vh at 92% 70%, rgba(64, 67, 72, 0.12), transparent 64%),
             radial-gradient(52.8vw 60vh at 18% 92%, rgba(206, 192, 83, 0.04), transparent 62%);
         }
       }
@@ -161,6 +161,12 @@
         min-height: calc(100vh - 144px);
         min-height: calc(100svh - 144px);
       }
+      /* From lg up as tall as its content, so a tall monitor gets no gap above the facts. */
+      @media (min-width: 1024px) {
+        .hero {
+          min-height: 0;
+        }
+      }
 
       /* Behind the copy from lg up, faded out under it and into the facts;
      below lg a band in the gap under the headline, hung there by the script (--ridge-top). */
@@ -185,10 +191,16 @@
           height: auto;
           -webkit-mask-image:
             linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 22%, #000 50%, rgba(0, 0, 0, 0.45) 100%),
-            linear-gradient(#000 calc(100% - 210px), transparent);
+            linear-gradient(
+              #000 var(--ridge-floor, calc(100% - 210px)),
+              transparent calc(var(--ridge-floor, calc(100% - 210px)) + 140px)
+            );
           mask-image:
             linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 22%, #000 50%, rgba(0, 0, 0, 0.45) 100%),
-            linear-gradient(#000 calc(100% - 210px), transparent);
+            linear-gradient(
+              #000 var(--ridge-floor, calc(100% - 210px)),
+              transparent calc(var(--ridge-floor, calc(100% - 210px)) + 140px)
+            );
         }
       }
       .ridge svg {
@@ -239,8 +251,19 @@
       }
       .readout-bar {
         display: block;
+        width: 70%;
         height: 1px;
         background: rgba(255, 255, 255, 0.08);
+      }
+      @media (max-width: 1023px) {
+        .readout-value {
+          font-size: 14px;
+        }
+      }
+      @media (min-width: 1024px) {
+        .readout-bar {
+          width: 100%;
+        }
       }
       .readout-bar > span {
         display: block;
@@ -248,11 +271,11 @@
         background: #cec053;
       }
       /* 48px under the headline's cap line (eyebrow 16.5px + mt-11, Geist cap 0.716em in a 0.98 line),
-     and out into the margin as far as the mock's, 80px off the window edge. */
+     ending on the content edge. */
       @media (min-width: 1024px) {
         .readout {
           top: calc(60.5px + 0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
-          right: calc(-1 * clamp(0px, (100vw - 1276px) / 2, 82px));
+          right: 0;
         }
       }
 
@@ -282,11 +305,24 @@
         color: #f2f2f1;
       }
       .facts .facts-strava {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         color: #fc5200;
       }
+      .facts-strava svg {
+        flex: none;
+        width: 13px;
+        height: 13px;
+      }
+      .facts-strava strong {
+        font-weight: 700;
+      }
+      /* From lg up the first statement starts on the left content edge and the last ends on the right one. */
       @media (min-width: 1024px) {
         .facts {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          display: flex;
+          justify-content: space-between;
           gap: 32px;
           padding: 28px 0 40px;
         }
@@ -307,10 +343,9 @@
      everything around them is drawn here. Every length is a multiple of --u,
      one percent of the stage's width, so the pair scales as one picture.
 
-     The laptop is deliberately wider than the stage: it runs off the right
-     edge of the page and the section's overflow:hidden cuts it, the same way
-     the ghosts are cut. The phone is the part that always stays whole, so
-     its right edge is the stage's right edge.
+     The laptop is wider than the stage, so the phone's right edge is the
+     stage's right edge and the laptop runs on past it. From lg up the stage
+     is pulled left until the laptop ends on the content edge, behind the copy.
 
      On a phone the stage is blown up past its column and hung from the
      right, which keeps the phone a readable size there and lets the laptop
@@ -350,11 +385,11 @@
         .devices-wrap {
           justify-content: flex-start;
         }
-        /* On a wide page the stage grows into the margin beside the content
-       column, stopping short of the viewport edge so the phone keeps air. */
+        /* The laptop's right end (136.6u) lands on the column's right edge: 100% - 0.8 * 136.6%. */
         .devices {
-          width: calc(100% + clamp(0px, (100vw - 1180px) / 2 - 24px, 120px));
+          width: 80%;
           max-width: none;
+          margin-left: -9.3%;
         }
       }
 
@@ -750,7 +785,7 @@
      switch puts its screen on the phone; left alone, the block plays through
      them by itself while it is on screen, and the button under the phone
      pauses that. Two blocks work this way: the features (.sw-features) and
-     the three steps of "how it works" (.sw-steps).
+     the three steps of "how it works" (.sw-steps), where each step has a phone of its own.
 
      Without a script nothing switches, so what only makes sense with one (the
      button) hangs off .js. What is left is a plain list next to a phone
@@ -860,23 +895,6 @@
       .sw-item.is-on::after {
         opacity: var(--glass, 1);
         transform: none;
-      }
-      /* The steps do sit in a block that reveals itself by fading in, and a
-     fading block is the same trap as a dimmed switch: until the fade is over,
-     the glass of the lit step would show the chain behind it sharp, and then
-     snap to frosted. So there the glass waits the fade out (the 0.6s of
-     .reveal) and comes in after it. */
-      .js .reveal:not(.in) .sw-steps {
-        --glass: 0;
-      }
-      .js .reveal.in .sw-steps {
-        animation: sw-wait 0.6s;
-      }
-      @keyframes sw-wait {
-        from,
-        to {
-          --glass: 0;
-        }
       }
       /* Without a blur the sheet goes back to being the solid card it replaced. */
       @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -1016,71 +1034,525 @@
         }
       }
 
-      /* Steps. Without a script, heading, phone, steps in that order below lg;
-     from lg up the phone takes the right half and the heading and steps share the left. */
+      /* Steps. Below lg a vertical timeline: number and line left, text, phone right; from lg up three
+     columns, each over its own phone, the phones on one line at the foot. */
+      /* Below lg the pause button sits under the head; from lg up, icon only, under the middle phone. */
       .sw-steps {
-        display: grid;
-        gap: 34px;
-      }
-      .steps-stage {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 18px;
       }
-      /* Pulled out by a step's own padding, so the text lines up with the
-     heading and the glass of the lit step stands proud of it. */
+      .steps-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+      .sw-steps .sw-toggle {
+        order: 1;
+        align-self: flex-start;
+        margin-bottom: 40px;
+      }
       .steps-list {
+        order: 2;
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        margin: 0 -14px;
+        gap: 40px;
       }
+      /* No glass here: the lit step is told by its gold number and its bright phone. */
       .sw-steps .sw-item {
-        gap: 20px;
-        padding: 14px;
+        --dim: 1;
+        --shot: 1;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
       }
-      @media (min-width: 1024px) {
-        .sw-steps {
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-          grid-template-areas:
-            "head stage"
-            "steps stage";
-          column-gap: 80px;
-          row-gap: 0;
-        }
-        .steps-head {
-          grid-area: head;
-          align-self: end;
+      .sw-steps .sw-item::before,
+      .sw-steps .sw-item::after {
+        content: none;
+      }
+      .sw-steps .sw-item.is-on {
+        box-shadow: none;
+      }
+      .sw-steps .sw-item.is-on h3 {
+        color: inherit;
+      }
+      .steps-mark {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .steps-no {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border: 1.5px solid #cec053;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 700;
+        color: #cec053;
+        transition:
+          color 0.25s ease,
+          border-color 0.25s ease;
+      }
+      .steps-line {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      .sw-steps .sw-phone {
+        margin-top: auto;
+        opacity: var(--shot);
+        transition: opacity 0.35s ease;
+      }
+      .sw-steps .sw-phone::before {
+        content: none;
+      }
+      .sw-steps .sw-phone .phone {
+        --phone-w: min(100%, 280px);
+      }
+      /* Every phone shows its screen; the switcher only picks the one that plays. */
+      .sw-steps .phone-screen > * {
+        opacity: 1;
+      }
+      @media (max-width: 1023px) {
+        .js .sw-steps .sw-item {
+          cursor: auto;
         }
         .steps-list {
-          grid-area: steps;
-          align-self: start;
+          gap: 0;
         }
-        .steps-stage {
-          grid-area: stage;
+        .sw-steps .sw-item {
+          display: grid;
+          grid-template-columns: 28px minmax(0, 1fr) auto;
+          column-gap: 14px;
+          align-items: start;
+          padding-bottom: 36px;
+        }
+        .steps-list > li:last-child .sw-item {
+          padding-bottom: 0;
+        }
+        /* The line runs down through the item's foot and stops 8px short of the next number. */
+        .steps-mark {
+          flex-direction: column;
+          align-self: stretch;
+          gap: 8px;
+          margin-bottom: -28px;
+        }
+        .steps-line {
+          flex: 1;
+          width: 1px;
+        }
+        .sw-steps .sw-phone {
+          margin-top: 0;
+        }
+        .sw-steps .sw-phone .phone {
+          --phone-w: clamp(112px, 34vw, 150px);
+        }
+      }
+      @media (min-width: 1024px) {
+        .steps-head {
+          margin-bottom: 72px;
+        }
+        /* Centred on the middle phone: one column and gap in, then half the 280px phone, less half the button. */
+        .sw-steps .sw-toggle {
+          order: 3;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          margin: 32px 0 0 calc((100% - 80px) / 3 + 40px + 140px - 22px);
+          padding: 0;
+        }
+        .sw-steps .sw-toggle-label {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip-path: inset(50%);
+          white-space: nowrap;
+        }
+        .steps-list {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 40px;
+        }
+        .sw-steps .sw-item {
+          gap: 22px;
+        }
+        .steps-no {
+          width: 44px;
+          height: 44px;
+          font-size: 15px;
+          font-weight: 600;
+        }
+        .steps-line {
+          flex: 1;
+          height: 1px;
+        }
+      }
+      /* Text stays at the switches' 0.8 for contrast; only the idle phone goes further down. */
+      .js .sw-steps .sw-item:not(.is-on, :hover) {
+        --dim: 0.8;
+        --shot: 0.45;
+      }
+      .js .sw-steps .sw-item:not(.is-on) .steps-no {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #85868a;
+      }
+
+      /* Section head shared by Wear and Service: title left, lede right from lg up. */
+      .lede {
+        max-width: 520px;
+        font-size: 17px;
+        line-height: 1.55;
+        color: #9c9c9e;
+      }
+      .lede strong {
+        font-weight: 500;
+        color: #f2f2f1;
+      }
+
+      /* ---- Wear -----------------------------------------------------------
+     One bike's parts as rows; below lg the state sits by the name and the bar runs across. */
+      .wear-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: "part state" "reading interval" "bar bar";
+        gap: 12px 24px;
+        align-items: center;
+        padding: 20px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .wear-row:last-child {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .wear-part {
+        grid-area: part;
+      }
+      .wear-reading {
+        grid-area: reading;
+      }
+      .wear-interval {
+        grid-area: interval;
+      }
+      .wear-name {
+        font-size: 16px;
+        font-weight: 500;
+        color: #f2f2f1;
+      }
+      .wear-sub,
+      .wear-unit {
+        margin-top: 3px;
+        font-size: 13px;
+        color: #85868a;
+      }
+      .wear-value {
+        font-size: 16px;
+        font-weight: 500;
+        color: #f2f2f1;
+      }
+      .wear-bar {
+        grid-area: bar;
+        display: block;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+      .wear-fill {
+        display: block;
+        height: 100%;
+        transform-origin: left;
+      }
+      .wear-state {
+        grid-area: state;
+        align-self: start;
+        font-size: 13px;
+        text-align: right;
+        color: #85868a;
+      }
+      @media (min-width: 1024px) {
+        .wear-row {
+          grid-template-columns: 1.5fr 0.9fr 1.1fr 1.3fr 0.9fr;
+          grid-template-areas: "part reading interval bar state";
+          gap: 24px;
+        }
+        .wear-state {
           align-self: center;
         }
       }
 
+      /* ---- Service log ----------------------------------------------------
+     The season band (drawn by the "Season" script) over a ledger by month. */
+      .season {
+        position: relative;
+        height: 220px;
+      }
+      .season svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      /* A mark hangs by its dot on the terrain; the halo keeps its label readable over the line. */
+      .season-mark {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transform: translate(-50%, -100%);
+        pointer-events: none;
+        white-space: nowrap;
+        text-shadow:
+          0 0 4px #0a0a0b,
+          0 0 10px #0a0a0b;
+      }
+      .season-stem {
+        display: block;
+        width: 1px;
+        height: 34px;
+        margin-top: 6px;
+        background: rgba(242, 242, 241, 0.35);
+      }
+      .season-dot {
+        display: block;
+        box-sizing: border-box;
+        width: 7px;
+        height: 7px;
+        margin-bottom: -4px;
+        border: 1.5px solid #f2f2f1;
+        border-radius: 50%;
+        background: #0a0a0b;
+      }
+      .season-today .season-stem {
+        background: rgba(206, 192, 83, 0.5);
+      }
+      .season-today .season-dot {
+        width: 9px;
+        height: 9px;
+        margin-bottom: -5px;
+        border: 0;
+        background: #cec053;
+      }
+      .season-today-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #cec053;
+      }
+      .season-axis {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.13);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #85868a;
+      }
+      /* Too narrow for the service labels; today's reading hangs left of its stem so it stays on screen. */
+      @media (max-width: 1023px) {
+        .season-mark .ridge-mark {
+          display: none;
+        }
+        .season-today-label {
+          position: absolute;
+          right: 0;
+          bottom: 100%;
+        }
+      }
+
+      .ledger-month {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 24px;
+        padding: 34px 0 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+      }
+      .ledger-month h3 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+      }
+      .ledger-month > span {
+        font-size: 13px;
+        color: #85868a;
+      }
+      .ledger-row {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 8px 16px;
+        align-items: start;
+        padding: 18px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .ledger-row > :not(.ledger-date) {
+        grid-column: 2;
+      }
+      .ledger-date,
+      .ledger-part,
+      .ledger-since {
+        padding-top: 2px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: #9c9c9e;
+      }
+      .ledger-title,
+      .ledger-price {
+        font-size: 16px;
+        font-weight: 500;
+        color: #f2f2f1;
+      }
+      .ledger-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .ledger-chip {
+        padding: 6px 9px;
+        border: 1px solid rgba(206, 192, 83, 0.45);
+        border-radius: 999px;
+        font-size: 12px;
+        line-height: 1;
+        color: #e8de93;
+      }
+      @media (min-width: 1024px) {
+        .ledger-row {
+          grid-template-columns: 72px 1.6fr 1.2fr 1fr 90px;
+          gap: 24px;
+        }
+        .ledger-row > :not(.ledger-date) {
+          grid-column: auto;
+        }
+        .ledger-price {
+          text-align: right;
+        }
+      }
+
+      /* ---- Reports --------------------------------------------------------
+     The two kinds of sharing as a list, their two screens staggered beside it. */
+      .share-kinds {
+        margin-top: 40px;
+      }
+      .share-kind {
+        display: grid;
+        gap: 6px;
+        padding: 18px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .share-kind:last-child {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .share-kind dt {
+        font-size: 16px;
+        font-weight: 500;
+        color: #f2f2f1;
+      }
+      .share-kind dd {
+        font-size: 15px;
+        line-height: 1.5;
+        color: #9c9c9e;
+      }
+      .share-notes {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        max-width: 520px;
+        margin-top: 40px;
+      }
+      .share-note {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        font-size: 15px;
+        line-height: 1.5;
+        color: #9c9c9e;
+      }
+      .share-note svg {
+        flex: none;
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+      }
+      .share-note strong {
+        font-weight: 500;
+        color: #f2f2f1;
+      }
+      .duo {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 8px;
+      }
+      .duo-item {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        width: min(290px, 50%);
+      }
+      .duo .phone {
+        --phone-w: 100%;
+      }
+      /* The front screen overlaps and drops below the back one, so both stay readable. */
+      .duo-front {
+        position: relative;
+        z-index: 1;
+        margin: 56px 0 0 -16px;
+      }
+      .duo-front .phone-body {
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+          0 0 0 1px rgba(0, 0, 0, 0.7),
+          calc(var(--u) * -8) calc(var(--u) * 10) calc(var(--u) * 20) calc(var(--u) * -7) rgba(0, 0, 0, 0.95);
+      }
+      .duo-cap {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding-right: 12px;
+        font-size: 12px;
+        line-height: 1.45;
+        color: #9c9c9e;
+      }
+      .duo-front .duo-cap {
+        padding-left: 24px;
+      }
+      .duo-cap-t {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #f2f2f1;
+      }
+      @media (min-width: 1024px) {
+        .share-kind {
+          grid-template-columns: 150px minmax(0, 1fr);
+          gap: 24px;
+        }
+        .duo-front {
+          margin: 96px 0 0 -28px;
+        }
+        .duo-front .duo-cap {
+          padding-left: 40px;
+        }
+        .duo-cap {
+          font-size: 13px;
+        }
+      }
+
       /* ---- Below lg -------------------------------------------------------
-     The features as a reel of cards and the steps as a timeline, both copied by the script from the switchers. */
-      .reel,
-      .timeline {
+     The features as a reel of cards, copied by the script from the switcher. */
+      .reel {
         display: none;
       }
       @media (max-width: 1023px) {
-        .js .sw-features,
-        .js .steps-stage,
-        .js .steps-list {
+        .js .sw-features {
           display: none;
         }
         .reel {
           display: block;
-        }
-        .timeline {
-          display: flex;
-          flex-direction: column;
         }
       }
 
@@ -1161,40 +1633,6 @@
       .reel-dot[aria-current="true"]::before {
         width: 22px;
         background: #cec053;
-      }
-
-      .timeline > li {
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        padding-bottom: 40px;
-      }
-      .timeline > li:last-child {
-        padding-bottom: 0;
-      }
-      .timeline-num {
-        display: grid;
-        place-items: center;
-        width: 28px;
-        height: 28px;
-        margin-bottom: 12px;
-        border: 1.5px solid #cec053;
-        border-radius: 50%;
-        font-size: 12px;
-        font-weight: 700;
-        color: #cec053;
-      }
-      .timeline-body {
-        flex: 1;
-        min-width: 0;
-      }
-      /* The whole screen, beside the text. */
-      .timeline-shot {
-        flex: none;
-        width: min(40%, 180px);
-      }
-      .timeline-shot .phone {
-        --phone-w: 100%;
       }
 
       /* Pause/play in the corner of the playing screen: a 44px target round a smaller disc. */
@@ -1285,6 +1723,19 @@
           animation-duration: 0.001ms !important;
           transition-duration: 0.001ms !important;
         }
+      }
+
+      /* Phone menu: fades in with a short drop; the script flips .is-open a frame after unhiding. */
+      .mobile-menu {
+        opacity: 0;
+        transform: translateY(-8px);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+      .mobile-menu.is-open {
+        opacity: 1;
+        transform: none;
       }
 
       /* Language switching: show only the active language's copy */
@@ -1410,19 +1861,55 @@
         class="max-w-content mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
         aria-label="Hlavní navigace"
       >
-        <a href="#main" class="shrink-0" aria-label="BikeCheck">
-          <svg class="h-7 sm:h-8 w-auto" viewBox="0 0 1569 318" aria-hidden="true"><use href="#bc-logo" /></svg>
-        </a>
-
-        <div class="hidden md:flex items-center gap-7 text-[14px] text-paper-dim">
-          <a href="#features" class="hover:text-paper transition-colors duration-200"
-            ><span class="lang-cs">Funkce</span><span class="lang-en">Features</span></a
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            id="menu-toggle"
+            class="lg:hidden -ml-2 p-2 rounded-md text-paper"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+            aria-label="Menu"
           >
-          <a href="#service" class="hover:text-paper transition-colors duration-200"
+            <svg
+              data-menu-icon="open"
+              class="w-6 h-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+            <svg
+              data-menu-icon="close"
+              class="w-6 h-6 hidden"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+          <a href="#main" class="shrink-0" aria-label="BikeCheck">
+            <svg class="h-7 sm:h-8 w-auto" viewBox="0 0 1569 318" aria-hidden="true"><use href="#bc-logo" /></svg>
+          </a>
+        </div>
+
+        <div class="hidden lg:flex items-center gap-7 text-[14px] text-paper-dim">
+          <!-- Wear and the service log under one link: it lands on Wear, the log follows right below. -->
+          <a href="#wear" class="hover:text-paper transition-colors duration-200"
             ><span class="lang-cs">Servis</span><span class="lang-en">Service</span></a
           >
           <a href="#reports" class="hover:text-paper transition-colors duration-200"
             ><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></a
+          >
+          <a href="#features" class="hover:text-paper transition-colors duration-200"
+            ><span class="lang-cs">Funkce</span><span class="lang-en">Features</span></a
           >
           <a href="#faq" class="hover:text-paper transition-colors duration-200">FAQ</a>
           <a href="#contact" class="hover:text-paper transition-colors duration-200"
@@ -1430,9 +1917,9 @@
           >
         </div>
 
-        <div class="flex items-center gap-3">
+        <div id="header-actions" class="flex items-center gap-3">
           <div
-            class="flex items-center rounded-lg border hairline p-0.5 font-mono text-[11px]"
+            class="hidden lg:flex items-center rounded-lg border hairline p-0.5 font-mono text-[11px]"
             role="group"
             aria-label="Jazyk / Language"
           >
@@ -1443,11 +1930,11 @@
               EN
             </button>
           </div>
-          <!-- A phone's header holds one of the two: sign-in, since the store badges open the hero anyway. -->
+          <!-- A phone's header holds sign-in only; registration waits in the menu. -->
           <a
             href="https://app.bikecheck.cloud/?lang=cs"
             data-app-link
-            class="inline-flex items-center border border-ink-600 hover:border-paper-faint rounded-xl px-3.5 sm:px-4 py-2.5 font-display font-semibold text-[13px] sm:text-[14px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
+            class="inline-flex items-center px-2 py-2.5 font-display font-semibold text-[13px] sm:text-[14px] text-paper hover:text-gold-400 transition-colors duration-200 active:translate-y-px whitespace-nowrap"
           >
             <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
           </a>
@@ -1462,31 +1949,164 @@
       </nav>
     </header>
 
+    <!-- Outside the header: its backdrop-filter would trap a fixed child inside its 64px. -->
+    <nav
+      id="mobile-menu"
+      class="mobile-menu lg:hidden fixed inset-0 z-30 pt-16 bg-ink-950 overflow-y-auto"
+      aria-label="Menu"
+      hidden
+    >
+      <div class="min-h-full px-4 sm:px-6 pt-4 pb-8 flex flex-col">
+        <ul class="border-t hairline">
+          <li class="border-b hairline">
+            <a
+              href="#wear"
+              data-menu-link
+              class="flex items-center justify-between py-[18px] font-display font-semibold text-[28px] leading-[1.1] tracking-[-0.03em] text-paper"
+            >
+              <span><span class="lang-cs">Servis</span><span class="lang-en">Service</span></span>
+              <svg
+                class="w-5 h-5 text-paper-faint"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          </li>
+          <li class="border-b hairline">
+            <a
+              href="#reports"
+              data-menu-link
+              class="flex items-center justify-between py-[18px] font-display font-semibold text-[28px] leading-[1.1] tracking-[-0.03em] text-paper"
+            >
+              <span><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></span>
+              <svg
+                class="w-5 h-5 text-paper-faint"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          </li>
+          <li class="border-b hairline">
+            <a
+              href="#features"
+              data-menu-link
+              class="flex items-center justify-between py-[18px] font-display font-semibold text-[28px] leading-[1.1] tracking-[-0.03em] text-paper"
+            >
+              <span><span class="lang-cs">Funkce</span><span class="lang-en">Features</span></span>
+              <svg
+                class="w-5 h-5 text-paper-faint"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="mt-10 pt-6 border-t hairline flex flex-col gap-4 text-[15px] text-paper-dim">
+          <li><a href="#faq" data-menu-link class="hover:text-paper transition-colors duration-200">FAQ</a></li>
+          <li>
+            <a href="#contact" data-menu-link class="hover:text-paper transition-colors duration-200"
+              ><span class="lang-cs">Kontakt</span><span class="lang-en">Contact</span></a
+            >
+          </li>
+        </ul>
+
+        <div class="mt-auto pt-10 flex flex-col gap-3">
+          <a
+            href="https://app.bikecheck.cloud/?lang=cs"
+            data-app-link
+            class="flex items-center justify-center h-12 rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px"
+          >
+            <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
+          </a>
+          <a
+            href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
+            data-app-link
+            class="flex items-center justify-center gap-2 h-12 rounded-xl bg-gold-500 hover:bg-gold-400 font-display font-semibold text-[15px] text-ink-950 transition-colors duration-200 active:translate-y-px"
+          >
+            <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
+            <svg
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+        </div>
+
+        <div
+          class="mt-6 self-center flex items-center rounded-lg border hairline p-0.5 font-mono text-[12px]"
+          role="group"
+          aria-label="Jazyk / Language"
+        >
+          <button type="button" data-set-lang="cs" class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200">
+            CS
+          </button>
+          <button type="button" data-set-lang="en" class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200">
+            EN
+          </button>
+        </div>
+      </div>
+    </nav>
+
     <main id="main">
       <!-- ============================== HERO ============================== -->
       <!-- The terrain rolls left under a rider who stays put (see "Ridge" in the
      script): climbs count on the chain, descents mostly on the brake pads. -->
       <section class="hero relative overflow-hidden flex flex-col">
         <div
-          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-[63px] lg:pb-4"
+          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-[63px] lg:pb-[168px]"
         >
           <div class="relative">
             <p class="font-mono text-[10px] lg:text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-              <span class="lang-cs">Servisní kniha pro kolo, napojená na Stravu</span
-              ><span class="lang-en">A service book for your bike, connected to Strava</span>
+              <span class="lang-cs">Platforma pro tvoje kolo</span>
+              <span class="lang-en">Platform for your bike</span>
             </p>
 
             <h1
               class="mt-3 lg:mt-11 lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em]"
             >
-              <span class="lang-cs">Každá jízda se počítá.<br />Na každém dílu.</span>
-              <span class="lang-en">Every ride counts.<br />On every part.</span>
+              <span class="lang-cs"
+                >Všechno o tvém kole<br />
+                Na jednom místě</span
+              >
+              <span class="lang-en"
+                >All about your bike<br />
+                In one place</span
+              >
             </h1>
 
             <!-- Plain readings, no card; the script keeps them in step with the rider.
            Without it they hold the still frame reduced motion gets. -->
-            <div class="readout mt-3 w-[208px] max-w-full lg:mt-0 lg:absolute lg:w-[320px]" aria-hidden="true">
-              <div class="grid grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="readout mt-3 w-[228px] max-w-full lg:mt-0 lg:absolute lg:w-[320px]" aria-hidden="true">
+              <div class="grid grid-cols-3 gap-3 lg:gap-5">
                 <div class="readout-cell is-on flex flex-col gap-1.5" data-reading="chain">
                   <span class="readout-label"><span class="lang-cs">Řetěz</span><span class="lang-en">Chain</span></span>
                   <span class="readout-value font-mono" data-value>38 %</span>
@@ -1497,8 +2117,8 @@
                   <span class="readout-value font-mono" data-value>21 %</span>
                   <span class="readout-bar"><span data-bar style="width: 21%"></span></span>
                 </div>
-                <!-- Desktop only; hours of descent, as the App counts the fork in hours. -->
-                <div class="readout-cell hidden lg:flex flex-col gap-1.5" data-reading="fork">
+                <!-- Hours of descent, as the App counts the fork in hours. -->
+                <div class="readout-cell flex flex-col gap-1.5" data-reading="fork">
                   <span class="readout-label"><span class="lang-cs">Vidlice</span><span class="lang-en">Fork</span></span>
                   <span class="readout-value font-mono" data-value>12:30 h</span>
                   <span class="readout-bar"><span data-bar style="width: 25%"></span></span>
@@ -1507,14 +2127,8 @@
             </div>
 
             <p class="hidden lg:block mt-7 lg:mt-9 max-w-[560px] lg:text-[19px] leading-[1.5] text-paper-dim">
-              <span class="lang-cs"
-                >Jízdy ze Stravy se započítají do opotřebení řetězu, vidlice i brzd podle profilu trasy. Servisy, setup a
-                účtenky na jednom místě, připravené ke sdílení.</span
-              >
-              <span class="lang-en"
-                >Rides from Strava count toward the wear of the chain, fork and brakes, based on the route profile. Services,
-                setup and receipts in one place, ready to share.</span
-              >
+              <span class="lang-cs">Celá historie kola v kapse. Sdílíš ji jedním odkazem</span>
+              <span class="lang-en">The complete history of your bike in your pocket. Share it with a single link.</span>
             </p>
 
             <div id="download" class="mt-[120px] lg:mt-11 flex flex-wrap items-center gap-3 sm:gap-3.5 scroll-mt-24">
@@ -1602,18 +2216,18 @@
             </defs>
           </svg>
           <span class="ridge-label ridge-rider font-mono flex flex-col gap-0.5">
-            <span class="text-[15px] font-medium leading-[1.1] tracking-[-0.01em] text-paper" data-km></span>
-            <span class="text-[13px] font-medium leading-[1.1] text-gold-500" data-gain></span>
+            <span class="text-[14px] lg:text-[15px] font-medium leading-[1.1] tracking-[-0.01em] text-paper" data-km></span>
+            <span class="text-[14px] lg:text-[13px] font-medium leading-[1.1] text-gold-500" data-gain></span>
           </span>
         </div>
 
         <div class="relative z-10 w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8">
           <dl class="facts">
             <div>
-              <dt><span class="lang-cs">Servis</span><span class="lang-en">Service intervals</span></dt>
+              <dt><span class="lang-cs">Servisní intervaly</span><span class="lang-en">Service intervals</span></dt>
               <dd>
-                <span class="lang-cs">Vše na pár kliků</span>
-                <span class="lang-en">All in a few clicks</span>
+                <span class="lang-cs">84 servisních úkonů v základu</span>
+                <span class="lang-en">84 built-in service tasks</span>
               </dd>
             </div>
             <div>
@@ -1622,12 +2236,23 @@
             </div>
             <div>
               <!-- Strava's own lockup wording, so English in both languages; their name keeps their orange. -->
-              <dt class="facts-strava">Powered by</dt>
-              <dd class="facts-strava">Strava</dd>
+              <dt class="facts-strava"></dt>
+              <dt class="facts-strava">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path
+                    d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
+                  />
+                </svg>
+                <span>Powered by <strong>Strava</strong></span>
+              </dt>
+              <dd><span class="lang-cs">Bez ručního zapisování</span><span class="lang-en">Zero manual logging</span></dd>
             </div>
             <div>
               <dt><span class="lang-cs">Komunita a reporty</span><span class="lang-en">Community and reports</span></dt>
-              <dd><span class="lang-cs">Veřejný odkaz</span><span class="lang-en">Public link</span></dd>
+              <dd>
+                <span class="lang-cs">Jeden odkaz, úplná historie kola</span
+                ><span class="lang-en">One link, full bike history</span>
+              </dd>
             </div>
           </dl>
         </div>
@@ -1637,25 +2262,27 @@
       <section class="relative overflow-hidden">
         <!-- Head tube and bars, at close to life size and running off the left.
        Nearly black glass, so it needs a hard lift to exist at all here. -->
+        <!-- Background ghost, off for now; drop this comment wrapper to bring it back.
         <div class="ghost g-cocpit hidden lg:block" aria-hidden="true">
           <img src="assets/img_ready/cocpit-Photoroom.webp" alt="" loading="lazy" decoding="async" />
         </div>
+        ghost off -->
 
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 reveal">
           <div class="grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-10 items-center">
             <div class="relative z-10">
-              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-paper-dim mb-5">
                 <span class="lang-cs">Proč BikeCheck</span><span class="lang-en">Why BikeCheck</span>
               </p>
               <h2
                 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance"
               >
                 <span class="lang-cs"
-                  >Protože tě baví jezdit,<br />a chceš mít svá kola
+                  >Protože tě baví jezdit,<br />a chceš mít svá kola<br />
                   <span class="text-gold-500">pod&nbsp;kontrolou</span></span
                 >
                 <span class="lang-en"
-                  >Because you would rather be riding,<br />but you still want your bikes
+                  >Because you enjoy riding,<br />but you still want your bikes
                   <span class="text-gold-500">under&nbsp;control</span></span
                 >
               </h2>
@@ -1678,12 +2305,11 @@
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">02</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Kompletní servisní historie.</span
-                      ><span class="lang-en">About to sell a bike you have cared for.</span>
+                      <span class="lang-cs">Servisní historie.</span><span class="lang-en">Complete service history.</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
-                      <span class="lang-cs">Kompletní servisní historie.</span
-                      ><span class="lang-en">A service history that backs it up.</span>
+                      <span class="lang-cs">Při prodeji kola máš kompletní přehled.</span
+                      ><span class="lang-en">When selling a bike, you have a complete overview.</span>
                     </p>
                   </div>
                 </li>
@@ -1691,7 +2317,7 @@
                   <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0">03</span>
                   <div>
                     <h3 class="font-display font-bold text-[17px] leading-snug mb-1.5">
-                      <span class="lang-cs">Chceš svůj dream build ukázat.</span
+                      <span class="lang-cs">Chceš svůj dream build sdílet.</span
                       ><span class="lang-en">Want to show off your dream build.</span>
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
@@ -1754,10 +2380,893 @@
         </div>
       </section>
 
+      <!-- ============================== SERVICE ============================== -->
+      <section id="service" class="relative overflow-hidden scroll-mt-20">
+        <!-- Biggest fragment on the page, and the most on-subject: the three
+       steps are about distance turning into wear on a chain, so the chain
+       runs underneath them at full size. -->
+        <!-- Background ghost, off for now; drop this comment wrapper to bring it back.
+        <div class="ghost g-drivetrain" aria-hidden="true">
+          <img src="assets/img_ready/drivetrain-Photoroom.webp" alt="" loading="lazy" decoding="async" />
+        </div>
+        ghost off -->
+
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32 reveal">
+          <!-- Each step over a phone of its own: picking a step plays its screen, and left
+               alone the block walks through all three (see "Switchers" in the styles). -->
+          <div class="sw sw-steps">
+            <div class="steps-head">
+              <div>
+                <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
+                  <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
+                </p>
+                <h2
+                  class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
+                >
+                  <!-- <span class="lang-cs"
+                    >Protože tě baví jezdit,<br />a chceš mít svá kola<br />
+                    <span class="text-gold-500">pod&nbsp;kontrolou</span></span
+                  > -->
+                  <span class="lang-cs">Tři kroky. Pak už jen <span class="text-gold-500">jezdíš.</span></span>
+                  <span class="lang-en">Three steps. Then you just <span class="text-gold-500">ride.</span></span>
+                </h2>
+              </div>
+            </div>
+            <ol class="steps-list">
+              <li>
+                <div class="sw-item is-on">
+                  <span class="steps-mark" aria-hidden="true"
+                    ><span class="steps-no tabular-nums">1</span><span class="steps-line"></span
+                  ></span>
+                  <div>
+                    <h3
+                      class="font-display font-bold lg:font-semibold text-[17px] lg:text-[22px] lg:tracking-[-0.02em] mb-1.5 lg:mb-2.5"
+                    >
+                      <span class="lang-cs">Přidej kolo</span><span class="lang-en">Add your bike</span>
+                    </h3>
+                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
+                      <span class="lang-cs">Najdi kolo v chytrém vyhledávači, seznam komponent se načte sám.</span
+                      ><span class="lang-en"
+                        >Find your bike in the smart search and its component list loads on its own.</span
+                      >
+                    </p>
+                  </div>
+                  <div class="sw-phone">
+                    <div class="phone" aria-hidden="true">
+                      <div class="phone-body">
+                        <div class="phone-screen">
+                          <div class="phone-frames is-on">
+                            <img
+                              class="is-on"
+                              src="assets/img_ready/screens/steps/bike-01.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/bike-02.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/bike-03.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/bike-04.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <!-- The form of the frame before it, filled in further down. The bar with
+                                 the buttons is part of the foot, system buttons included. -->
+                            <div class="phone-scroll" data-stops="32.653%">
+                              <img
+                                class="phone-scroll-page"
+                                src="assets/img_ready/screens/steps/bike-scroll.webp"
+                                alt=""
+                                width="640"
+                                height="2058"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                              <img
+                                class="phone-scroll-top"
+                                src="assets/img_ready/screens/steps/bike-scroll-top.webp"
+                                alt=""
+                                width="640"
+                                height="152"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                              <img
+                                class="phone-scroll-bottom"
+                                src="assets/img_ready/screens/steps/bike-scroll-bottom.webp"
+                                alt=""
+                                width="640"
+                                height="207"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            </div>
+                            <img
+                              src="assets/img_ready/screens/steps/bike-06.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/bike-07.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <div class="sw-item">
+                  <span class="steps-mark" aria-hidden="true"
+                    ><span class="steps-no tabular-nums">2</span><span class="steps-line"></span
+                  ></span>
+                  <div>
+                    <h3
+                      class="font-display font-bold lg:font-semibold text-[17px] lg:text-[22px] lg:tracking-[-0.02em] mb-1.5 lg:mb-2.5"
+                    >
+                      <span class="lang-cs">Propoj Stravu</span><span class="lang-en">Connect Strava</span>
+                    </h3>
+                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
+                      <span class="lang-cs"
+                        >Jednou povolíš přístup a jízdy pak chodí průběžně. Jízdy a opotřebení na kolech se začně automaticky
+                        zapisovat.</span
+                      ><span class="lang-en"
+                        >Grant access once and rides keep arriving. More than one bike is no problem.</span
+                      >
+                    </p>
+                  </div>
+                  <div class="sw-phone">
+                    <div class="phone" aria-hidden="true">
+                      <div class="phone-body">
+                        <div class="phone-screen">
+                          <div class="phone-frames">
+                            <img
+                              class="is-on"
+                              src="assets/img_ready/screens/steps/strava-01.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/strava-02.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/strava-03.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/strava-04.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <div class="sw-item">
+                  <span class="steps-mark" aria-hidden="true"><span class="steps-no tabular-nums">3</span></span>
+                  <div>
+                    <h3
+                      class="font-display font-bold lg:font-semibold text-[17px] lg:text-[22px] lg:tracking-[-0.02em] mb-1.5 lg:mb-2.5"
+                    >
+                      <span class="lang-cs">Jezdi a zapisuj servis</span
+                      ><span class="lang-en">Ride and log your service</span>
+                    </h3>
+                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
+                      <span class="lang-cs">Zapsání servisu nebo výměny je jednoduché a rychlé. Jen pár kliknutí.</span
+                      ><span class="lang-en"
+                        >Logging a service or replacement is as simple and quick as it can be. Just a few clicks.</span
+                      >
+                    </p>
+                  </div>
+                  <div class="sw-phone">
+                    <div class="phone" aria-hidden="true">
+                      <div class="phone-body">
+                        <div class="phone-screen">
+                          <div class="phone-frames">
+                            <img
+                              class="is-on"
+                              src="assets/img_ready/screens/steps/service-01.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/service-02.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/service-03.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <!-- Back on the Service tab: the same shot as in the features phone. -->
+                            <img
+                              src="assets/img_ready/screens/features/service-02.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ol>
+            <!-- After the list so that from lg up it sits under the middle phone; below lg it is ordered up under the head. -->
+            <button type="button" class="sw-toggle font-mono">
+              <svg class="sw-when-playing" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+              </svg>
+              <svg class="sw-when-paused" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5l11 7-11 7z" />
+              </svg>
+              <span class="sw-when-playing sw-toggle-label"
+                ><span class="lang-cs">Pozastavit</span><span class="lang-en">Pause</span></span
+              >
+              <span class="sw-when-paused sw-toggle-label"
+                ><span class="lang-cs">Přehrát</span><span class="lang-en">Play</span></span
+              >
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== WEAR ============================== -->
+      <section id="wear" class="relative overflow-hidden scroll-mt-20 band border-y hairline">
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
+          <div class="grid lg:grid-cols-2 gap-x-24 gap-y-6 items-start mb-12 lg:mb-16 reveal">
+            <div>
+              <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
+                <span class="lang-cs">Opotřebení</span><span class="lang-en">Wear</span>
+              </p>
+              <h2
+                class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
+              >
+                <span class="lang-cs">Co se s kolem děje, BikeCheck <span class="text-gold-500">zapisuje.</span></span>
+                <span class="lang-en">What happens to your bike, BikeCheck <span class="text-gold-500">records.</span></span>
+              </h2>
+            </div>
+            <p class="lede lg:mt-8">
+              <span class="lang-cs"
+                >Interval je v kilometrech, hodinách nebo v health indexu, podle toho, co dílu dává smysl. Servis nebo výměna
+                komponenty počítání ukončí a založí nové, <strong>historie každé komponenty zůstává</strong>.</span
+              >
+              <span class="lang-en"
+                >Intervals run in kilometres, hours or a health index, whichever makes sense for the part. A service or a
+                part swap closes the count and starts a new one,
+                <strong>and every component keeps its history</strong>.</span
+              >
+            </p>
+          </div>
+
+          <!-- A sample bike. Once on screen its bars fill and the readings count up with them (see "Wear" in the script). -->
+          <div class="reveal">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pb-3.5">
+              <span class="text-[16px] font-medium">Orbea Rallon E10</span>
+              <span class="font-mono text-[13px] text-paper-faint">
+                <span class="lang-cs">3&nbsp;480 km · 212:40 h · tato sezóna</span
+                ><span class="lang-en">3,480 km · 212:40 h · this season</span>
+              </span>
+            </div>
+            <!-- Hour readings count in minutes (data-to), so 31:20 h never rounds to 31:19. -->
+            <ul class="wear-list">
+              <li class="wear-row">
+                <div class="wear-part">
+                  <div class="wear-name">
+                    <span class="lang-cs">Výměna řetězu</span><span class="lang-en">Chain swap</span>
+                  </div>
+                  <div class="wear-sub">
+                    Shimano XT CN-M8100 · <span class="lang-cs">od 21. 9.</span><span class="lang-en">since 21 Sep</span>
+                  </div>
+                </div>
+                <div class="wear-reading">
+                  <div class="wear-value font-mono" data-to="410" data-unit="km">410&nbsp;km</div>
+                  <div class="wear-unit"><span class="lang-cs">od výměny</span><span class="lang-en">since swap</span></div>
+                </div>
+                <div class="wear-interval">
+                  <div class="wear-value font-mono">
+                    <span class="lang-cs">3&nbsp;000&nbsp;km</span><span class="lang-en">3,000&nbsp;km</span>
+                  </div>
+                  <div class="wear-unit">interval</div>
+                </div>
+                <span class="wear-bar"><span class="wear-fill bg-sage" style="width: 13.67%"></span></span>
+                <div class="wear-state"><span class="lang-cs">v pořádku</span><span class="lang-en">all good</span></div>
+              </li>
+              <li class="wear-row">
+                <div class="wear-part">
+                  <div class="wear-name">
+                    <span class="lang-cs">Výměna kazety</span><span class="lang-en">Cassette swap</span>
+                  </div>
+                  <div class="wear-sub">
+                    Shimano XT CS-M8100 · <span class="lang-cs">od ledna</span><span class="lang-en">since January</span>
+                  </div>
+                </div>
+                <div class="wear-reading">
+                  <div class="wear-value font-mono" data-to="3390" data-unit="km">3&nbsp;390&nbsp;km</div>
+                  <div class="wear-unit"><span class="lang-cs">od výměny</span><span class="lang-en">since swap</span></div>
+                </div>
+                <div class="wear-interval">
+                  <div class="wear-value font-mono">
+                    <span class="lang-cs">6&nbsp;000&nbsp;km</span><span class="lang-en">6,000&nbsp;km</span>
+                  </div>
+                  <div class="wear-unit">interval</div>
+                </div>
+                <span class="wear-bar"><span class="wear-fill bg-sage" style="width: 56.5%"></span></span>
+                <div class="wear-state"><span class="lang-cs">v pořádku</span><span class="lang-en">all good</span></div>
+              </li>
+              <li class="wear-row">
+                <div class="wear-part">
+                  <div class="wear-name">
+                    <span class="lang-cs">Malý servis vidlice</span><span class="lang-en">Fork lower-leg service</span>
+                  </div>
+                  <div class="wear-sub">
+                    RockShox Zeb Ultimate · <span class="lang-cs">servis 2. 6.</span
+                    ><span class="lang-en">serviced 2 Jun</span>
+                  </div>
+                </div>
+                <div class="wear-reading">
+                  <div class="wear-value font-mono" data-to="1880" data-unit="h">31:20&nbsp;h</div>
+                  <div class="wear-unit">
+                    <span class="lang-cs">od servisu</span><span class="lang-en">since service</span>
+                  </div>
+                </div>
+                <div class="wear-interval">
+                  <div class="wear-value font-mono">50&nbsp;h</div>
+                  <div class="wear-unit">interval</div>
+                </div>
+                <span class="wear-bar"><span class="wear-fill bg-sage" style="width: 62.67%"></span></span>
+                <div class="wear-state"><span class="lang-cs">v pořádku</span><span class="lang-en">all good</span></div>
+              </li>
+              <li class="wear-row">
+                <div class="wear-part">
+                  <div class="wear-name">
+                    <span class="lang-cs">Velký servis tlumiče</span><span class="lang-en">Full shock service</span>
+                  </div>
+                  <div class="wear-sub">
+                    RockShox Super Deluxe ·
+                    <span class="lang-cs">servis loni</span><span class="lang-en">serviced last year</span>
+                  </div>
+                </div>
+                <div class="wear-reading">
+                  <div class="wear-value font-mono" data-to="5560" data-unit="h">92:40&nbsp;h</div>
+                  <div class="wear-unit">
+                    <span class="lang-cs">od servisu</span><span class="lang-en">since service</span>
+                  </div>
+                </div>
+                <div class="wear-interval">
+                  <div class="wear-value font-mono">100&nbsp;h</div>
+                  <div class="wear-unit">interval</div>
+                </div>
+                <span class="wear-bar"><span class="wear-fill bg-gold-500" style="width: 92.67%"></span></span>
+                <div class="wear-state text-gold-500">
+                  <span class="lang-cs">blíží se servis</span><span class="lang-en">service due soon</span>
+                </div>
+              </li>
+              <!-- The index falls as the pads wear, so the bar shows what is gone: 100 - 38. -->
+              <li class="wear-row">
+                <div class="wear-part">
+                  <div class="wear-name">
+                    <span class="lang-cs">Výměna brzdových destiček</span><span class="lang-en">Brake pad swap</span>
+                  </div>
+                  <div class="wear-sub">
+                    Shimano XT · <span class="lang-cs">od 11. 4.</span><span class="lang-en">since 11 Apr</span>
+                  </div>
+                </div>
+                <div class="wear-reading">
+                  <div class="wear-value font-mono" data-to="38" data-unit="%">38&nbsp;%</div>
+                  <div class="wear-unit">health index</div>
+                </div>
+                <div class="wear-interval">
+                  <div class="wear-value font-mono">
+                    <span class="lang-cs">40&nbsp;%</span><span class="lang-en">40%</span>
+                  </div>
+                  <div class="wear-unit"><span class="lang-cs">hranice</span><span class="lang-en">limit</span></div>
+                </div>
+                <span class="wear-bar"><span class="wear-fill bg-rust" style="width: 62%"></span></span>
+                <div class="wear-state text-rust">
+                  <span class="lang-cs">potřebuje pozornost</span><span class="lang-en">needs attention</span>
+                </div>
+              </li>
+              <li class="wear-row">
+                <div class="wear-part">
+                  <div class="wear-name">
+                    <span class="lang-cs">Životnost pláště&nbsp;≈</span><span class="lang-en">Tyre life&nbsp;≈</span>
+                  </div>
+                  <div class="wear-sub">
+                    Schwalbe Magic Mary / Big Betty ·
+                    <span class="lang-cs">od března</span><span class="lang-en">since March</span>
+                  </div>
+                </div>
+                <div class="wear-reading">
+                  <div class="wear-value font-mono" data-to="680" data-unit="km">680&nbsp;km</div>
+                  <div class="wear-unit"><span class="lang-cs">od výměny</span><span class="lang-en">since swap</span></div>
+                </div>
+                <div class="wear-interval">
+                  <div class="wear-value font-mono">
+                    <span class="lang-cs">2&nbsp;500&nbsp;km</span><span class="lang-en">2,500&nbsp;km</span>
+                  </div>
+                  <div class="wear-unit">interval</div>
+                </div>
+                <span class="wear-bar"><span class="wear-fill bg-sage" style="width: 27.2%"></span></span>
+                <div class="wear-state"><span class="lang-cs">v pořádku</span><span class="lang-en">all good</span></div>
+              </li>
+            </ul>
+            <p class="mt-[18px] text-[13px] text-paper-faint">
+              <span class="lang-cs">Ukázková data. Hodnoty i intervaly si nastavíš u každého dílu sám.</span>
+              <span class="lang-en">Sample data. You set the values and intervals for each part yourself.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== SERVICE LOG ============================== -->
+      <section id="service-log" class="relative overflow-hidden scroll-mt-20">
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
+          <div class="grid lg:grid-cols-2 gap-x-24 gap-y-6 items-start mb-14 lg:mb-[72px] reveal">
+            <div>
+              <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
+                <span class="lang-cs">Servis</span><span class="lang-en">Service</span>
+              </p>
+              <h2
+                class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
+              >
+                <span class="lang-cs"
+                  >Žádné vypisování. Vybereš servisní úkon a je <span class="text-gold-500">uloženo.</span></span
+                >
+                <span class="lang-en"
+                  >No paperwork. Pick a service task and it is <span class="text-gold-500">saved.</span></span
+                >
+              </h2>
+            </div>
+            <p class="lede lg:mt-10">
+              <span class="lang-cs"
+                >Vybereš úkon ze seznamu, třeba servis vidlice, a jedním ťuknutím přidáš detaily. Co v seznamu chybí, si
+                založíš sám a příště už to tam máš. Připíšeš cenu, poznámku nebo účtenku. Z jednotlivých servisů se pak
+                <strong>skládá historie po měsících i se součty útraty</strong>.</span
+              >
+              <span class="lang-en"
+                >Pick a task from the list, say a fork service, and add the details with a tap. Anything missing from the
+                list you create yourself, and next time it is there. Add a price, a note or a receipt. Your services then
+                <strong>build a month-by-month history with spending totals</strong>.</span
+              >
+            </p>
+          </div>
+
+          <!-- The hero's terrain, stopped: one season from the first ride to today, every service where on it it
+               happened. Drawn by "Season" in the script, which rolls it in once it is on screen. -->
+          <div aria-hidden="true">
+            <div class="season">
+              <svg viewBox="0 0 1280 220" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="season-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#cec053" stop-opacity="0.14" />
+                    <stop offset="1" stop-color="#cec053" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <path data-season-fill fill="url(#season-fill)" />
+                <path
+                  data-season-line
+                  fill="none"
+                  stroke="#cec053"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                  vector-effect="non-scaling-stroke"
+                />
+              </svg>
+              <div class="season-mark" data-mark-km="620" style="left: 17.22%; top: 57%">
+                <span class="ridge-mark"
+                  ><span class="lang-cs">Výměna destiček</span><span class="lang-en">Pad swap</span></span
+                >
+                <span class="season-stem"></span><span class="season-dot"></span>
+              </div>
+              <div class="season-mark" data-mark-km="1450" style="left: 40.28%; top: 52.54%">
+                <span class="ridge-mark"
+                  ><span class="lang-cs">Servis vidlice</span><span class="lang-en">Fork service</span></span
+                >
+                <span class="season-stem"></span><span class="season-dot"></span>
+              </div>
+              <div class="season-mark" data-mark-km="2310" style="left: 64.17%; top: 25.41%">
+                <span class="ridge-mark"
+                  ><span class="lang-cs">Odvzdušnění brzd</span><span class="lang-en">Brake bleed</span></span
+                >
+                <span class="season-stem"></span><span class="season-dot"></span>
+              </div>
+              <div class="season-mark" data-mark-km="2980" style="left: 82.78%; top: 39.36%">
+                <span class="ridge-mark"
+                  ><span class="lang-cs">Výměna řetězu</span><span class="lang-en">Chain swap</span></span
+                >
+                <span class="season-stem"></span><span class="season-dot"></span>
+              </div>
+              <div class="season-mark season-today" data-today style="left: 96.67%; top: 42.69%">
+                <span class="season-today-label font-mono"
+                  ><span class="lang-cs">dnes</span><span class="lang-en">today</span> ·
+                  <span data-km>3&nbsp;480&nbsp;km</span></span
+                >
+                <span class="season-stem"></span><span class="season-dot"></span>
+              </div>
+            </div>
+            <div class="season-axis font-mono">
+              <span><span class="lang-cs">0 km · 14. 3.</span><span class="lang-en">0 km · 14 Mar</span></span>
+              <span class="hidden sm:inline"
+                ><span class="lang-cs">1&nbsp;000 km</span><span class="lang-en">1,000 km</span></span
+              >
+              <span><span class="lang-cs">2&nbsp;000 km</span><span class="lang-en">2,000 km</span></span>
+              <span class="hidden sm:inline"
+                ><span class="lang-cs">3&nbsp;000 km</span><span class="lang-en">3,000 km</span></span
+              >
+              <span><span class="lang-cs">Dnes</span><span class="lang-en">Today</span></span>
+            </div>
+          </div>
+
+          <div class="mt-6 reveal">
+            <div class="ledger-month">
+              <h3><span class="lang-cs">Září 2026</span><span class="lang-en">September 2026</span></h3>
+              <span class="font-mono"
+                ><span class="lang-cs">1 servis · 1 výměna · 950&nbsp;Kč</span
+                ><span class="lang-en">1 service · 1 swap · €38</span></span
+              >
+            </div>
+            <div class="ledger-row">
+              <div class="ledger-date font-mono"><span class="lang-cs">21. 9.</span><span class="lang-en">21 Sep</span></div>
+              <div>
+                <div class="ledger-title">
+                  <span class="lang-cs">Výměna řetězu</span><span class="lang-en">Chain swap</span>
+                </div>
+                <div class="ledger-chips">
+                  <span class="ledger-chip"><span class="lang-cs">doma</span><span class="lang-en">at home</span></span>
+                </div>
+              </div>
+              <div class="ledger-part">
+                <span class="lang-cs">Řetěz</span><span class="lang-en">Chain</span>: Shimano XT CN-M8100
+              </div>
+              <div class="ledger-since font-mono">
+                <span class="lang-cs">2&nbsp;980 km od poslední výměny</span
+                ><span class="lang-en">2,980 km since the last swap</span>
+              </div>
+              <div class="ledger-price font-mono">
+                <span class="lang-cs">950&nbsp;Kč</span><span class="lang-en">€38</span>
+              </div>
+            </div>
+
+            <!-- <div class="ledger-month">
+              <h3><span class="lang-cs">Srpen 2026</span><span class="lang-en">August 2026</span></h3>
+              <span class="font-mono"
+                ><span class="lang-cs">1 servis · 0 výměn · 0&nbsp;Kč</span
+                ><span class="lang-en">1 service · 0 swaps · €0</span></span
+              >
+            </div> -->
+            <div class="ledger-row">
+              <div class="ledger-date font-mono"><span class="lang-cs">7. 9.</span><span class="lang-en">7 Sep</span></div>
+              <div>
+                <div class="ledger-title">
+                  <span class="lang-cs">Odvzdušnění brzd</span><span class="lang-en">Brake bleed</span>
+                </div>
+                <div class="ledger-chips">
+                  <span class="ledger-chip"><span class="lang-cs">doma</span><span class="lang-en">at home</span></span>
+                  <span class="ledger-chip"
+                    ><span class="lang-cs">zadní brzda</span><span class="lang-en">rear brake</span></span
+                  >
+                  <span class="ledger-chip"
+                    ><span class="lang-cs">minerální olej</span><span class="lang-en">mineral oil</span></span
+                  >
+                </div>
+              </div>
+              <div class="ledger-part">
+                <span class="lang-cs">Brzdový třmen</span><span class="lang-en">Brake caliper</span>: Shimano XT BR-M8120
+              </div>
+              <div class="ledger-since font-mono">
+                <span class="lang-cs">1&nbsp;650 km od posledního servisu</span
+                ><span class="lang-en">1,650 km since the last service</span>
+              </div>
+              <div class="ledger-price font-mono"><span class="lang-cs">0&nbsp;Kč</span><span class="lang-en">€0</span></div>
+            </div>
+
+            <div class="ledger-month">
+              <h3><span class="lang-cs">Červen 2026</span><span class="lang-en">June 2026</span></h3>
+              <span class="font-mono"
+                ><span class="lang-cs">1 servis · 1 výměn · 3&nbsp;450&nbsp;Kč</span
+                ><span class="lang-en">1 service · 1 swaps · 137 €</span></span
+              >
+            </div>
+            <div class="ledger-row">
+              <div class="ledger-date font-mono"><span class="lang-cs">2. 6.</span><span class="lang-en">2 Jun</span></div>
+              <div>
+                <div class="ledger-title">
+                  <span class="lang-cs">Servis vidlice</span><span class="lang-en">Fork service</span>
+                </div>
+                <div class="ledger-chips">
+                  <span class="ledger-chip"><span class="lang-cs">servis</span><span class="lang-en">service</span></span>
+                  <span class="ledger-chip"
+                    ><span class="lang-cs">výměna prachovek</span><span class="lang-en">new dust seals</span></span
+                  >
+                  <span class="ledger-chip"
+                    ><span class="lang-cs">olej v damper</span><span class="lang-en">damper oil</span></span
+                  >
+                  <span class="ledger-chip">token setup</span>
+                </div>
+              </div>
+              <div class="ledger-part">
+                <span class="lang-cs">Vidlice</span><span class="lang-en">Fork</span>: RockShox Zeb Ultimate RC2
+              </div>
+              <div class="ledger-since font-mono">
+                <span class="lang-cs">48:10 h od posledního servisu</span
+                ><span class="lang-en">48:10 h since the last service</span>
+              </div>
+              <div class="ledger-price font-mono">
+                <span class="lang-cs">2&nbsp;400&nbsp;Kč</span><span class="lang-en">€95</span>
+              </div>
+            </div>
+
+            <!-- <div class="ledger-month">
+              <h3><span class="lang-cs">Duben 2026</span><span class="lang-en">April 2026</span></h3>
+              <span class="font-mono"
+                ><span class="lang-cs">1 servis · 1 výměna · 1&nbsp;050&nbsp;Kč</span
+                ><span class="lang-en">1 service · 1 swap · €42</span></span
+              >
+            </div> -->
+            <div class="ledger-row">
+              <div class="ledger-date font-mono"><span class="lang-cs">11. 6.</span><span class="lang-en">11 Jun</span></div>
+              <div>
+                <div class="ledger-title">
+                  <span class="lang-cs">Výměna brzdových destiček</span><span class="lang-en">Brake pad swap</span>
+                </div>
+                <div class="ledger-chips">
+                  <span class="ledger-chip"><span class="lang-cs">doma</span><span class="lang-en">at home</span></span>
+                  <span class="ledger-chip"
+                    ><span class="lang-cs">přední i zadní</span><span class="lang-en">front and rear</span></span
+                  >
+                  <span class="ledger-chip"><span class="lang-cs">kovové</span><span class="lang-en">metallic</span></span>
+                </div>
+              </div>
+              <div class="ledger-part">
+                <span class="lang-cs">Destičky: Shimano XT, 2 páry</span
+                ><span class="lang-en">Pads: Shimano XT, 2 pairs</span>
+              </div>
+              <div class="ledger-since font-mono">
+                <span class="lang-cs">620 km od začátku sezóny</span
+                ><span class="lang-en">620 km since the season began</span>
+              </div>
+              <div class="ledger-price font-mono">
+                <span class="lang-cs">1&nbsp;050&nbsp;Kč</span><span class="lang-en">€42</span>
+              </div>
+            </div>
+
+            <div class="mt-7 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-4">
+              <span class="font-mono text-[15px] text-paper-dim">
+                <span class="lang-cs"
+                  >Sezóna 2026 · 4 servisy · 2 výměny · <span class="font-medium text-paper">4&nbsp;400&nbsp;Kč</span></span
+                >
+                <span class="lang-en"
+                  >Season 2026 · 4 services · 2 swaps · <span class="font-medium text-paper">€175</span></span
+                >
+              </span>
+              <span class="text-[13px] text-paper-faint">
+                <span class="lang-cs">Filtr na jedno kolo nebo všechna a na zvolené období.</span>
+                <span class="lang-en">Filter by one bike or all of them, and by period.</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== REPORTS ============================== -->
+      <section id="reports" class="relative overflow-hidden scroll-mt-20 border-t hairline">
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
+          <div class="grid lg:grid-cols-2 gap-x-24 gap-y-16 items-start reveal">
+            <div>
+              <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
+                <span class="lang-cs">Reporty a sdílení</span><span class="lang-en">Reports and sharing</span>
+              </p>
+              <h2
+                class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
+              >
+                <span class="lang-cs">Co sdílíš, je na <span class="text-gold-500">tobě.</span></span>
+                <span class="lang-en">What you share is <span class="text-gold-500">up to you.</span></span>
+              </h2>
+              <!-- <p class="lede mt-[22px]">
+                <span class="lang-cs">Dva druhy možnosti sdílení.</span>
+                <span class="lang-en">Two ways to share.</span>
+              </p> -->
+              <dl class="share-kinds">
+                <div class="share-kind mt-20">
+                  <dt>Service Report</dt>
+                  <dd>
+                    <span class="lang-cs"
+                      >Servisy jednoho kola za období včetně součtů, volitelně i díly s aktuálním opotřebením.</span
+                    >
+                    <span class="lang-en"
+                      >One bike's services over a period with totals, optionally with its parts and their current wear.</span
+                    >
+                  </dd>
+                </div>
+                <div class="share-kind">
+                  <dt><span class="lang-cs">BikeCheck Profil</span><span class="lang-en">BikeCheck Profile</span></dt>
+                  <dd>
+                    <span class="lang-cs"
+                      >Karta kola se všemi díly, servisy a setupem. Sám vybereš, co na ní bude. Uvidí ji jen tvoji sledující
+                      v aplikaci, nebo kdokoli s odkazem.</span
+                    >
+                    <span class="lang-en"
+                      >The bike's card with all its parts, services and setup. You pick what goes on it. Only your followers
+                      in the app see it, or anyone with the link.</span
+                    >
+                  </dd>
+                </div>
+              </dl>
+
+              <div class="share-notes">
+                <div class="share-note">
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="#cec053"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M8.5 11.5a3 3 0 0 0 4.2 0l2.6-2.6a3 3 0 0 0-4.2-4.2l-1 1" />
+                    <path d="M11.5 8.5a3 3 0 0 0-4.2 0l-2.6 2.6a3 3 0 0 0 4.2 4.2l1-1" />
+                  </svg>
+                  <p>
+                    <span class="lang-cs"
+                      ><strong>Veřejný odkaz existuje od začátku, ale je zavřený,</strong> dokud ho nepublikuješ. Zrušit ho
+                      můžeš kdykoli a zrušený je pryč nadobro.</span
+                    >
+                    <span class="lang-en"
+                      ><strong>The public link exists from the start, but stays closed</strong> until you publish it. You can
+                      revoke it at any time, and once revoked it is gone for good.</span
+                    >
+                  </p>
+                </div>
+                <div class="share-note">
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="#cec053"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 7V3.5h10V7" />
+                    <rect x="3" y="7" width="14" height="7" rx="1.5" />
+                    <path d="M6 12h8v4.5H6z" />
+                  </svg>
+                  <p>
+                    <span class="lang-cs"
+                      ><strong>Tisk do A4 PDF</strong> přímo z veřejné stránky reportu. Vypadá stejně na papíře jako na
+                      obrazovce.</span
+                    >
+                    <span class="lang-en"
+                      ><strong>Print to an A4 PDF</strong> straight from the report's public page. It looks the same on paper
+                      as on screen.</span
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- The report before it is published and the public BikeCheck as others see it. -->
+            <div class="duo">
+              <figure class="duo-item">
+                <div class="phone" aria-hidden="true">
+                  <div class="phone-body">
+                    <div class="phone-screen">
+                      <img
+                        src="assets/img_ready/screens/period-report.webp"
+                        alt=""
+                        width="720"
+                        height="1559"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="duo-cap">
+                  <span class="duo-cap-t">Service Report</span>
+                  <span
+                    ><span class="lang-cs">Vybraný servis nebo období.</span
+                    ><span class="lang-en">A chosen service or period.</span></span
+                  >
+                </figcaption>
+              </figure>
+              <figure class="duo-item duo-front">
+                <div class="phone" aria-hidden="true">
+                  <div class="phone-body">
+                    <div class="phone-screen">
+                      <img
+                        src="assets/img_ready/screens/public-bikecheck.webp"
+                        alt=""
+                        width="720"
+                        height="1559"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <figcaption class="duo-cap">
+                  <span class="duo-cap-t"
+                    ><span class="lang-cs">BikeCheck profil</span><span class="lang-en">BikeCheck profile</span></span
+                  >
+                  <span
+                    ><span class="lang-cs">Sdílený profil jak je vidí ostatní.</span
+                    ><span class="lang-en">The shared profile as others see it.</span></span
+                  >
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ============================== FEATURES ============================== -->
       <section id="features" class="relative overflow-hidden scroll-mt-20 band border-y hairline">
         <!-- A road bike leaving by the opposite corner to the hero's, tilted a
        few degrees so the two never read as the same trick twice. -->
+        <!-- Background ghost, off for now; drop this comment wrapper to bring it back.
         <div
           class="ghost hidden lg:block"
           style="
@@ -1773,15 +3282,16 @@
         >
           <img src="assets/img_ready/cube.webp" alt="" style="opacity: 0.13" loading="lazy" decoding="async" />
         </div>
+        ghost off -->
 
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div class="max-w-[46ch] mb-14 mx-auto text-center reveal">
-            <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
+            <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-paper-dim mb-5">
               <span class="lang-cs">Funkce</span><span class="lang-en">Features</span>
             </p>
             <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
-              <span class="lang-cs">Appka, která zná tvoje <span class="text-gold-500">kolo</span></span>
-              <span class="lang-en">Your bikes, <span class="text-gold-500">at a glance</span></span>
+              <span class="lang-cs">BikeCheck v <span class="text-gold-500">kostce</span></span>
+              <span class="lang-en">BikeCheck at a <span class="text-gold-500">glance</span></span>
             </h2>
           </div>
 
@@ -2442,410 +3952,22 @@
         </div>
       </section>
 
-      <!-- ============================== SERVICE ============================== -->
-      <section id="service" class="relative overflow-hidden scroll-mt-20">
-        <!-- Biggest fragment on the page, and the most on-subject: the three
-       steps are about distance turning into wear on a chain, so the chain
-       runs underneath them at full size. -->
-        <div class="ghost g-drivetrain" aria-hidden="true">
-          <img src="assets/img_ready/drivetrain-Photoroom.webp" alt="" loading="lazy" decoding="async" />
-        </div>
-
-        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 reveal">
-          <!-- The three steps drive a phone of their own: picking a step shows the
-               screen it happens on, and left alone the block walks through all three
-               (see "Switchers" in the styles). -->
-          <div class="sw sw-steps">
-            <div class="steps-head">
-              <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
-                <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
-              </p>
-              <h2
-                class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance mb-8"
-              >
-                <span class="lang-cs">Tři kroky a dál už to <span class="text-gold-500">jede samo</span></span>
-                <span class="lang-en">Three steps, then it <span class="text-gold-500">runs itself</span></span>
-              </h2>
-            </div>
-            <div class="steps-stage">
-              <div class="sw-phone">
-                <div class="phone" aria-hidden="true">
-                  <div class="phone-body">
-                    <div class="phone-screen">
-                      <!-- One screen for each step, in the order of the steps: a stack of frames
-                           where the step is several screenshots (see the features phone). -->
-                      <div class="phone-frames is-on">
-                        <img
-                          class="is-on"
-                          src="assets/img_ready/screens/steps/bike-01.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <img
-                          src="assets/img_ready/screens/steps/bike-02.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <img
-                          src="assets/img_ready/screens/steps/bike-03.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <img
-                          src="assets/img_ready/screens/steps/bike-04.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <!-- The form of the frame before it, filled in further down. The bar with
-                             the buttons is part of the foot, system buttons included. -->
-                        <div class="phone-scroll" data-stops="32.653%">
-                          <img
-                            class="phone-scroll-page"
-                            src="assets/img_ready/screens/steps/bike-scroll.webp"
-                            alt=""
-                            width="640"
-                            height="2058"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                          <img
-                            class="phone-scroll-top"
-                            src="assets/img_ready/screens/steps/bike-scroll-top.webp"
-                            alt=""
-                            width="640"
-                            height="152"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                          <img
-                            class="phone-scroll-bottom"
-                            src="assets/img_ready/screens/steps/bike-scroll-bottom.webp"
-                            alt=""
-                            width="640"
-                            height="207"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        </div>
-                        <img
-                          src="assets/img_ready/screens/steps/bike-06.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <img
-                          src="assets/img_ready/screens/steps/bike-07.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      </div>
-                      <img
-                        src="assets/img_ready/screens/steps/strava.webp"
-                        alt=""
-                        width="640"
-                        height="1386"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div class="phone-frames">
-                        <img
-                          class="is-on"
-                          src="assets/img_ready/screens/steps/service-01.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <img
-                          src="assets/img_ready/screens/steps/service-02.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <img
-                          src="assets/img_ready/screens/steps/service-03.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <!-- Back on the Service tab: the same shot as in the features phone. -->
-                        <img
-                          src="assets/img_ready/screens/features/service-02.webp"
-                          alt=""
-                          width="640"
-                          height="1386"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <button type="button" class="sw-toggle font-mono">
-                <svg class="sw-when-playing" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
-                </svg>
-                <svg class="sw-when-paused" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M8 5l11 7-11 7z" />
-                </svg>
-                <span class="sw-when-playing"
-                  ><span class="lang-cs">Pozastavit</span><span class="lang-en">Pause</span></span
-                >
-                <span class="sw-when-paused"><span class="lang-cs">Přehrát</span><span class="lang-en">Play</span></span>
-              </button>
-            </div>
-            <ol class="steps-list">
-              <li>
-                <div class="sw-item is-on">
-                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0 tabular-nums">01</span>
-                  <div>
-                    <h3 class="font-display font-bold text-[17px] mb-1.5">
-                      <span class="lang-cs">Přidej kolo</span><span class="lang-en">Add your bike</span>
-                    </h3>
-                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
-                      <span class="lang-cs"
-                        >Najdi kolo v chytrém vyhledávači a seznam komponent se načte sám. Projdi ho a přejmenuj, doplň nebo
-                        vynechej, co nesedí.</span
-                      ><span class="lang-en"
-                        >Find your bike in the smart search and its component list loads on its own. Go through it and
-                        rename, add or skip whatever doesn't match.</span
-                      >
-                    </p>
-                  </div>
-                </div>
-              </li>
-              <li>
-                <div class="sw-item">
-                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0 tabular-nums">02</span>
-                  <div>
-                    <h3 class="font-display font-bold text-[17px] mb-1.5">
-                      <span class="lang-cs">Propoj Stravu</span><span class="lang-en">Connect Strava</span>
-                    </h3>
-                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
-                      <span class="lang-cs"
-                        >Jednou povolíš přístup a jízdy pak chodí průběžně. Více kol není problém, každá jízda se připíše
-                        tomu správnému.</span
-                      ><span class="lang-en"
-                        >Grant access once and rides keep arriving. More than one bike is no problem: every ride lands on the
-                        right one.</span
-                      >
-                    </p>
-                  </div>
-                </div>
-              </li>
-              <li>
-                <div class="sw-item">
-                  <span class="font-mono text-[13px] text-gold-500 pt-0.5 shrink-0 tabular-nums">03</span>
-                  <div>
-                    <h3 class="font-display font-bold text-[17px] mb-1.5">
-                      <span class="lang-cs">Jezdi a zapisuj servis</span
-                      ><span class="lang-en">Ride and log your service</span>
-                    </h3>
-                    <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
-                      <span class="lang-cs"
-                        >BikeCheck začne hlídat přednastavené servisní úkony, které můžeš snadno doladit podle svého. Vyměnil
-                        jsi řetěz, odvzdušnil brzdy nebo si koupil lepší tlumič? Naklikáš to během chvilky a všechno zůstane
-                        v historii kola.</span
-                      ><span class="lang-en"
-                        >BikeCheck starts keeping an eye on the preset service jobs, and you can easily tune them your way.
-                        Swapped the chain, bled the brakes or bought a better shock? Tap it in within moments, and it all
-                        stays in the bike's history.</span
-                      >
-                    </p>
-                  </div>
-                </div>
-              </li>
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============================== REPORTS ============================== -->
-      <section id="reports" class="relative overflow-hidden scroll-mt-20 band border-y hairline">
-        <!-- A bare frame and fork: the machine stripped to what a report is a
-       record of. Tall, and off the right edge and the bottom at once. -->
-        <div
-          class="ghost hidden lg:block"
-          style="top: -14%; right: -10%; width: 46%; max-width: 660px; --gm-a: 68deg; --lift: 0.88"
-          aria-hidden="true"
-        >
-          <img src="assets/img_ready/frame_rallon.webp" alt="" style="opacity: 0.17" loading="lazy" decoding="async" />
-        </div>
-
-        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-          <div class="max-w-[62ch] mb-14 reveal">
-            <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-gold-500 mb-5">
-              <span class="lang-cs">Sdílení a reporty</span><span class="lang-en">Sharing and reports</span>
-            </p>
-            <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
-              <span class="lang-cs"
-                >Na čem jedeš závody?<br /><span class="text-gold-500">Koukni na můj&nbsp;BikeCheck.</span></span
-              >
-              <span class="lang-en"
-                >What are you racing on?<br /><span class="text-gold-500">Check out my&nbsp;BikeCheck.</span></span
-              >
-            </h2>
-            <p class="mt-5 text-[16px] leading-relaxed text-paper-dim">
-              <span class="lang-cs"
-                >Od detailního PDF reportu pro kupce či servis až po online profil tvé mašiny pro ostatní.</span
-              >
-              <span class="lang-en"
-                >From a detailed PDF report for a buyer or the workshop to an online profile of your machine for everyone
-                else.</span
-              >
-            </p>
-          </div>
-
-          <!-- Each sharing card carries the screen it is about, peeking out of its
-               side (its foot below lg). -->
-          <div class="grid lg:grid-cols-2 gap-4 reveal">
-            <article class="card rounded-2xl overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_210px]">
-              <div class="p-6">
-                <p class="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-gold-500 mb-3">
-                  <!-- The globe the app marks a public BikeCheck with (lucide Globe). -->
-                  <svg
-                    viewBox="0 0 24 24"
-                    class="size-4 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                    <path d="M2 12h20" />
-                  </svg>
-                  Live BikeCheck
-                </p>
-                <h3 class="font-display font-bold text-[18px] mb-2.5">
-                  <span class="lang-cs">Karta stroje</span><span class="lang-en">The bike's card</span>
-                </h3>
-                <p class="text-[15px] leading-relaxed text-paper-dim">
-                  <span class="lang-cs"
-                    >Jaký máš setup, vidlici a pneumatiky na závod? Sdílej to v aplikaci, nebo veřejně s kýmkoli, kdo má
-                    odkaz.</span
-                  >
-                  <span class="lang-en"
-                    >Which setup, fork and tyres for race day? Share it in the app, or publicly with anyone who has the
-                    link.</span
-                  >
-                </p>
-              </div>
-              <div class="peek">
-                <div class="phone" aria-hidden="true">
-                  <div class="phone-body">
-                    <div class="phone-screen">
-                      <img
-                        src="assets/img_ready/screens/rider-bike.webp"
-                        alt=""
-                        width="640"
-                        height="1386"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </article>
-            <article class="card rounded-2xl overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_210px]">
-              <div class="p-6">
-                <p class="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-gold-500 mb-3">
-                  <!-- The app's report icon, as on its "My reports" tile (lucide FileText). -->
-                  <svg
-                    viewBox="0 0 24 24"
-                    class="size-4 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"
-                    />
-                    <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-                    <path d="M10 9H8" />
-                    <path d="M16 13H8" />
-                    <path d="M16 17H8" />
-                  </svg>
-                  Service Report
-                </p>
-                <h3 class="font-display font-bold text-[18px] mb-2.5">
-                  <span class="lang-cs">Jeden servis nebo celé období</span
-                  ><span class="lang-en">One service or a whole period</span>
-                </h3>
-                <p class="text-[15px] leading-relaxed text-paper-dim">
-                  <span class="lang-cs"
-                    >Co se dělalo, na jakých dílech, kdy a za kolik, včetně účtenek. Doklad pro dílnu nebo pro kupce.</span
-                  >
-                  <span class="lang-en"
-                    >What was done, on which parts, when and for how much, receipts included. Proof for the workshop or a
-                    buyer.</span
-                  >
-                </p>
-              </div>
-              <div class="peek">
-                <div class="phone" aria-hidden="true">
-                  <div class="phone-body">
-                    <div class="phone-screen">
-                      <img
-                        src="assets/img_ready/screens/service-detail.webp"
-                        alt=""
-                        width="640"
-                        height="1386"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
       <!-- ============================== ROADMAP ============================== -->
       <section class="relative overflow-hidden border-b hairline">
         <!-- Blown up well past the section it sits in, so the shock is cropped to
        its spring and body rather than shown whole -- a detail at the scale
        you would see it at on the bench, not a catalogue thumbnail. -->
+        <!-- Background ghost, off for now; drop this comment wrapper to bring it back.
         <div class="ghost g-coil" aria-hidden="true">
           <img src="assets/img_ready/coil.webp" alt="" loading="lazy" decoding="async" />
         </div>
+        ghost off -->
 
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div class="max-w-[46ch] mb-12 reveal">
             <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
-              <span class="lang-cs">Ve vývoji</span>
-              <span class="lang-en">In progress</span>
+              <span class="lang-cs">Ve <span class="text-gold-500">vývoji</span></span>
+              <span class="lang-en">In <span class="text-gold-500">progress</span></span>
             </h2>
             <p class="mt-5 text-[15px] leading-relaxed text-paper-dim">
               <span class="lang-cs">Funkce, na kterých se pracuje.</span>
@@ -3282,18 +4404,28 @@
             </h2>
             <ul class="space-y-2.5 text-[14px] text-paper-dim">
               <li>
-                <a href="#features" class="hover:text-paper transition-colors duration-200"
-                  ><span class="lang-cs">Funkce</span><span class="lang-en">Features</span></a
-                >
-              </li>
-              <li>
                 <a href="#service" class="hover:text-paper transition-colors duration-200"
                   ><span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span></a
                 >
               </li>
               <li>
+                <a href="#wear" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Opotřebení</span><span class="lang-en">Wear</span></a
+                >
+              </li>
+              <li>
+                <a href="#service-log" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Servis</span><span class="lang-en">Service</span></a
+                >
+              </li>
+              <li>
                 <a href="#reports" class="hover:text-paper transition-colors duration-200"
                   ><span class="lang-cs">Reporty</span><span class="lang-en">Reports</span></a
+                >
+              </li>
+              <li>
+                <a href="#features" class="hover:text-paper transition-colors duration-200"
+                  ><span class="lang-cs">Funkce</span><span class="lang-en">Features</span></a
                 >
               </li>
               <li><a href="#faq" class="hover:text-paper transition-colors duration-200">FAQ</a></li>
@@ -3378,6 +4510,65 @@
           });
         });
 
+        // ---- Phone menu --------------------------------------------------------
+        var menu = document.getElementById("mobile-menu");
+        var menuToggle = document.getElementById("menu-toggle");
+        var headerActions = document.getElementById("header-actions");
+        var menuCloseTimer = null;
+
+        function setMenuIcon(open) {
+          menuToggle.querySelector('[data-menu-icon="open"]').classList.toggle("hidden", open);
+          menuToggle.querySelector('[data-menu-icon="close"]').classList.toggle("hidden", !open);
+        }
+
+        function openMenu() {
+          clearTimeout(menuCloseTimer);
+          menu.hidden = false;
+          // A frame after unhiding, or the fade-in has no start state to run from.
+          requestAnimationFrame(function () {
+            menu.classList.add("is-open");
+          });
+          menuToggle.setAttribute("aria-expanded", "true");
+          menuToggle.setAttribute("aria-label", root.lang === "cs" ? "Zavřít menu" : "Close menu");
+          headerActions.classList.add("invisible");
+          root.classList.add("overflow-hidden");
+          setMenuIcon(true);
+        }
+
+        function closeMenu() {
+          menu.classList.remove("is-open");
+          menuCloseTimer = setTimeout(function () {
+            menu.hidden = true;
+          }, 200);
+          menuToggle.setAttribute("aria-expanded", "false");
+          menuToggle.setAttribute("aria-label", "Menu");
+          headerActions.classList.remove("invisible");
+          root.classList.remove("overflow-hidden");
+          setMenuIcon(false);
+        }
+
+        function isMenuOpen() {
+          return menuToggle.getAttribute("aria-expanded") === "true";
+        }
+
+        menuToggle.addEventListener("click", function () {
+          if (isMenuOpen()) closeMenu();
+          else openMenu();
+        });
+        menu.querySelectorAll("[data-menu-link]").forEach(function (link) {
+          link.addEventListener("click", closeMenu);
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && isMenuOpen()) {
+            closeMenu();
+            menuToggle.focus();
+          }
+        });
+        // From lg up the menu is gone, so an open one must not leave the page scroll-locked.
+        window.matchMedia("(min-width: 1024px)").addEventListener("change", function (e) {
+          if (e.matches && isMenuOpen()) closeMenu();
+        });
+
         // ---- Year --------------------------------------------------------------
         document.getElementById("year").textContent = String(new Date().getFullYear());
 
@@ -3412,8 +4603,8 @@
         var SVG_NS = "http://www.w3.org/2000/svg";
         var KM_PER_S = 0.6;
         var WEAR = {
-          climb: { chain: 2.2, brakes: 0, fork: 0 },
-          descent: { chain: 0.3, brakes: 1.6, fork: 0.55 },
+          climb: { chain: 4.8, brakes: 0, fork: 0 },
+          descent: { chain: 0.66, brakes: 5.6, fork: 2.75 },
         };
         var MARKS = {
           chain: { cs: "Výměna řetězu", en: "Chain swap" },
@@ -3429,7 +4620,7 @@
             lead: 0.07,
             curve: 1.35,
             tower: 0.6,
-            floor: 200,
+            drop: 190,
             rider: 0.764,
             step: 12,
             speed: 50,
@@ -3451,21 +4642,26 @@
         };
         var RIDGE_STILL = { km: 12.4, gain: 380, chain: 38, brakes: 21, fork: 12.5 };
         var FORK_SERVICE_H = 50;
+        // Part-worn at the start, each at a different stage, so the first service lands in seconds and the rest take turns.
+        var RIDGE_START = { chain: 85, brakes: 55, fork: 11 };
+        // A part due sooner waits at its limit, so two labels never land on top of each other.
+        var MARK_GAP_S = 6;
         // The skyline the farther rows hide behind, kept finer than any row's samples.
         var SKY_STEP = 2;
 
-        // A sine folded at its zero crossings: sharp crests, round valleys.
-        function crest(t) {
+        // A sine folded at its zero crossings: sharp crests, round valleys. Rounded towards the trail (d = 0) so it rides smooth.
+        function crest(t, d) {
           var c = 1 - Math.abs(Math.sin(t));
-          return c * c;
+          var round = (1 + Math.cos(2 * t)) / 2; // the same wave without the cusp
+          return Math.pow(c + (round - c) * (1 - d), 2);
         }
 
         // 0..1 at depth d (0 = the trail, 1 = the farthest row); each row a slice of one range, rougher further back.
         function mountainNoise(s, d) {
-          var massif = crest(s * 0.0042 + d * 1.9 + 0.6);
-          var peaks = crest(s * 0.0111 - d * 2.7 + 2.1);
-          var spurs = crest(s * 0.0263 + d * 4.3 + 0.9);
-          var scree = crest(s * 0.057 - d * 6.1 + 3.3);
+          var massif = crest(s * 0.0042 + d * 1.9 + 0.6, d);
+          var peaks = crest(s * 0.0111 - d * 2.7 + 2.1, d);
+          var spurs = crest(s * 0.0263 + d * 4.3 + 0.9, d);
+          var scree = crest(s * 0.057 - d * 6.1 + 3.3, d);
           return (0.6 * massif + 0.4 * peaks + d * (0.22 * spurs + 0.1 * scree)) / (1 + 0.32 * d);
         }
 
@@ -3489,7 +4685,8 @@
           var riderLabel = box.querySelector(".ridge-rider");
           var title = hero.querySelector("h1");
           var wide = window.matchMedia("(min-width: 1024px)");
-          var state = { offset: 0, time: 0, km: 0, gain: 0, chain: 0, brakes: 0, fork: 0, climbing: true, marks: [] };
+          var state = { offset: 0, time: 0, km: 0, gain: 0, climbing: true, marks: [], sinceMark: MARK_GAP_S };
+          Object.assign(state, RIDGE_START);
           var view = { layout: null, w: 0, h: 0, base: 0, end: 0 };
           var parts = null;
           var trail = null;
@@ -3524,10 +4721,21 @@
             box.style.setProperty("--ridge-top", Math.round(buttonsTop - 14 - base) + "px");
           }
 
+          // From lg up the floor hangs off the buttons (drop px under their top), so the window's height doesn't move it.
+          function floorY(L) {
+            if (!wide.matches) return box.clientHeight - L.floor;
+            var buttons = hero.querySelector("#download").getBoundingClientRect();
+            return Math.round(buttons.top - box.getBoundingClientRect().top + L.drop);
+          }
+
           function build() {
             var L = wide.matches ? RIDGE_LAYOUTS.wide : RIDGE_LAYOUTS.narrow;
-            if (L === view.layout && box.clientWidth === view.w && box.clientHeight === view.h) return;
-            view = { layout: L, w: box.clientWidth, h: box.clientHeight, base: box.clientHeight - L.floor };
+            var base = floorY(L);
+            var same = box.clientWidth === view.w && box.clientHeight === view.h && base === view.base;
+            if (L === view.layout && same) return;
+            view = { layout: L, w: box.clientWidth, h: box.clientHeight, base: base };
+            // The fade into the facts starts on the terrain's floor, wherever that lands.
+            box.style.setProperty("--ridge-floor", base + "px");
             view.end = Math.ceil(view.w / L.step) * L.step;
             svg.setAttribute("viewBox", "0 0 " + view.w + " " + view.h);
             if (parts) parts.layer.remove();
@@ -3589,9 +4797,11 @@
             var prev = 0;
             for (var k = 0; k < r.xs.length; k++) {
               var cut = skyAt(sky, r.xs[k]) - r.ys[k];
-              if (k && (cut >= 0) !== (prev >= 0)) {
+              if (k && cut >= 0 !== prev >= 0) {
                 var t = prev / (prev - cut);
-                d += (cut >= 0 ? "M" : "L") + point(r.xs[k - 1] + t * view.layout.step, r.ys[k - 1] + t * (r.ys[k] - r.ys[k - 1]));
+                d +=
+                  (cut >= 0 ? "M" : "L") +
+                  point(r.xs[k - 1] + t * view.layout.step, r.ys[k - 1] + t * (r.ys[k] - r.ys[k - 1]));
               }
               if (cut >= 0) d += (k ? "L" : "M") + point(r.xs[k], r.ys[k]);
               prev = cut;
@@ -3710,21 +4920,23 @@
             state.climbing = rise >= 0;
             state.km += KM_PER_S * dt;
             state.gain += Math.max(0, rise) * view.layout.mPerPx;
-            state.chain += rates.chain * dt;
-            state.brakes += rates.brakes * dt;
-            state.fork += rates.fork * dt;
-            if (state.chain >= 100) {
-              state.chain = 0;
-              addMark("chain");
-            }
-            if (state.brakes >= 100) {
-              state.brakes = 0;
-              addMark("brakes");
-            }
-            if (state.fork >= FORK_SERVICE_H) {
-              state.fork = 0;
-              addMark("fork");
-            }
+            state.chain = Math.min(100, state.chain + rates.chain * dt);
+            state.brakes = Math.min(100, state.brakes + rates.brakes * dt);
+            state.fork = Math.min(FORK_SERVICE_H, state.fork + rates.fork * dt);
+            state.sinceMark += dt;
+            if (state.sinceMark >= MARK_GAP_S) serviceDue();
+          }
+
+          // At most one service at a time, the first part found at its limit.
+          function serviceDue() {
+            var limits = { chain: 100, brakes: 100, fork: FORK_SERVICE_H };
+            var due = ["chain", "brakes", "fork"].filter(function (key) {
+              return state[key] >= limits[key];
+            })[0];
+            if (!due) return;
+            state[due] = 0;
+            state.sinceMark = 0;
+            addMark(due);
           }
 
           // About 25 frames a second is plenty for terrain this slow.
@@ -3775,6 +4987,162 @@
 
         ridge(document.querySelector(".hero"));
 
+        // ---- Wear --------------------------------------------------------------
+        // Once on screen the bars fill top-down, each reading counting up with its bar. Played once.
+        var WEAR_MS = 900;
+        var WEAR_STAGGER_MS = 80;
+
+        function easeOut(t) {
+          return 1 - Math.pow(1 - t, 1.8);
+        }
+
+        // Hours arrive as minutes, so a reading always lands on the minute it shows.
+        function formatReading(value, unit) {
+          var cs = root.getAttribute("data-lang") === "cs";
+          var n = Math.round(value);
+          if (unit === "h") return Math.floor(n / 60) + ":" + (n % 60 < 10 ? "0" : "") + (n % 60) + " h";
+          if (unit === "%") return n + (cs ? " %" : "%");
+          return n.toLocaleString(cs ? "cs-CZ" : "en-GB") + " " + unit;
+        }
+
+        // Starts fn the first time el is well into the window; without the observer, or with reduced motion, never.
+        function onceInView(el, threshold, fn) {
+          if (reduced || !("IntersectionObserver" in window)) return false;
+          var io = new IntersectionObserver(
+            function (entries) {
+              if (!entries[0].isIntersecting) return;
+              io.disconnect();
+              fn();
+            },
+            { rootMargin: "0px 0px -12% 0px", threshold: threshold },
+          );
+          io.observe(el);
+          return true;
+        }
+
+        function wear(list) {
+          var rows = Array.prototype.map.call(list.querySelectorAll(".wear-row"), function (row) {
+            var reading = row.querySelector("[data-to]");
+            return {
+              fill: row.querySelector(".wear-fill"),
+              reading: reading,
+              to: Number(reading.getAttribute("data-to")),
+              unit: reading.getAttribute("data-unit"),
+              p: 1,
+            };
+          });
+
+          function draw() {
+            rows.forEach(function (r) {
+              r.fill.style.transform = "scaleX(" + r.p + ")";
+              r.reading.textContent = formatReading(r.to * r.p, r.unit);
+            });
+          }
+
+          function play() {
+            var start = 0;
+            function tick(now) {
+              if (!start) start = now;
+              var done = true;
+              rows.forEach(function (r, i) {
+                var t = Math.min(1, Math.max(0, (now - start - i * WEAR_STAGGER_MS) / WEAR_MS));
+                r.p = easeOut(t);
+                if (t < 1) done = false;
+              });
+              draw();
+              if (!done) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+          }
+
+          if (onceInView(list, 0.25, play)) {
+            rows.forEach(function (r) {
+              r.p = 0;
+            });
+          }
+          draw();
+          new MutationObserver(draw).observe(root, { attributes: true, attributeFilter: ["data-lang"] });
+        }
+
+        wear(document.querySelector(".wear-list"));
+
+        // ---- Season ------------------------------------------------------------
+        // The service log's season profile, in viewBox units. Once on screen the terrain rolls in from
+        // the right under "today" and comes to rest; the services ride on it, pinned to their km.
+        var SEASON = { w: 1280, h: 220, km: 3600, today: 3480, step: 10, ms: 2000 };
+
+        function seasonY(s) {
+          var n =
+            (Math.sin(s * 0.0062 + 2.1) +
+              0.6 * Math.sin(s * 0.0151 + 0.4) +
+              0.35 * Math.sin(s * 0.029 + 3.3) +
+              0.18 * Math.sin(s * 0.061 + 1.1)) /
+            2.13;
+          return 214 - (34 + 75 * (n + 1));
+        }
+
+        function season(band) {
+          var line = band.querySelector("[data-season-line]");
+          var fill = band.querySelector("[data-season-fill]");
+          var today = band.querySelector("[data-today]");
+          var todayKm = today.querySelector("[data-km]");
+          var todayX = (SEASON.today / SEASON.km) * SEASON.w;
+          var marks = Array.prototype.map.call(band.querySelectorAll("[data-mark-km]"), function (el) {
+            return { el: el, s: (Number(el.getAttribute("data-mark-km")) / SEASON.km) * SEASON.w };
+          });
+          var shift = 0; // how far right of its resting place the terrain still is
+
+          function place(el, x, y) {
+            el.style.left = ((x / SEASON.w) * 100).toFixed(2) + "%";
+            el.style.top = ((y / SEASON.h) * 100).toFixed(2) + "%";
+          }
+
+          // Samples sit on fixed points of the terrain, as in the hero, so the moving line doesn't shimmer.
+          function draw() {
+            var first = Math.floor(-shift / SEASON.step) * SEASON.step;
+            var last = first;
+            var d = "";
+            for (var s = first; s + shift <= SEASON.w + SEASON.step; s += SEASON.step) {
+              d += (s === first ? "M" : "L") + (s + shift).toFixed(1) + " " + seasonY(s).toFixed(1);
+              last = s;
+            }
+            line.setAttribute("d", d);
+            fill.setAttribute(
+              "d",
+              d + "L" + (last + shift).toFixed(1) + " " + SEASON.h + "L" + (first + shift).toFixed(1) + " " + SEASON.h + "Z",
+            );
+            // A mark fades in over the last 60 units as it comes in past the right edge.
+            marks.forEach(function (m) {
+              var x = m.s + shift;
+              place(m.el, x, seasonY(m.s));
+              m.el.style.opacity = Math.max(0, Math.min(1, (SEASON.w - x) / 60));
+            });
+            place(today, todayX, seasonY(todayX - shift));
+            todayKm.textContent = formatReading(((todayX - shift) / SEASON.w) * SEASON.km, "km");
+          }
+
+          function play() {
+            var start = 0;
+            function tick(now) {
+              if (!start) start = now;
+              var t = Math.min(1, (now - start) / SEASON.ms);
+              // Ease in and out: the terrain starts rolling gently instead of jumping off.
+              var e = (1 - Math.cos(Math.PI * t)) / 2;
+              shift = todayX * (1 - e);
+              draw();
+              if (t < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+          }
+
+          // It starts with the season's first km under "today".
+          if (onceInView(band, 0.6, play)) shift = todayX;
+          draw();
+          new MutationObserver(draw).observe(root, { attributes: true, attributeFilter: ["data-lang"] });
+        }
+
+        season(document.querySelector(".season"));
+
         // ---- Switchers ---------------------------------------------------------
         // One phone and the switches around it (see "Switchers" in the styles). A
         // block plays through its screens by itself while it is on screen and no
@@ -3814,8 +5182,8 @@
 
         function switcher(wrap) {
           var items = Array.prototype.slice.call(wrap.querySelectorAll(".sw-item"));
-          var phone = wrap.querySelector(".sw-phone");
-          var screens = phone.querySelectorAll(".phone-screen > *");
+          var phones = Array.prototype.slice.call(wrap.querySelectorAll(".sw-phone"));
+          var screens = wrap.querySelectorAll(".sw-phone .phone-screen > *");
           var steps = Array.prototype.map.call(screens, stepsOf);
           var toggle = wrap.querySelector(".sw-toggle");
           var current = 0;
@@ -3895,8 +5263,11 @@
           // A mouse resting on a switch or the phone holds the play-through; the
           // button is left out on purpose, so pressing Play is seen to start it.
           // Touch is left out too: a finger never leaves, and one tap on the phone
-          // would hold the block for good.
-          items.concat(phone).forEach(function (el) {
+          // would hold the block for good. A phone inside its switch is covered by the switch.
+          var held = phones.filter(function (phone) {
+            return !phone.closest(".sw-item");
+          });
+          items.concat(held).forEach(function (el) {
             el.addEventListener("pointerenter", function (e) {
               if (e.pointerType !== "mouse") return;
               hovered = true;
@@ -3909,17 +5280,25 @@
             });
           });
 
-          // It is the phone that is watched, not the block: with the switches
+          // It is the phones that are watched, not the block: with the switches
           // stacked under it the block can be several windows tall, and what
-          // changes is the phone.
+          // changes is a phone. Below lg the steps' phones stack, so any one in view counts.
           if ("IntersectionObserver" in window) {
-            new IntersectionObserver(
+            var seen = new Set();
+            var io = new IntersectionObserver(
               function (entries) {
-                inView = entries[0].isIntersecting;
+                entries.forEach(function (entry) {
+                  if (entry.isIntersecting) seen.add(entry.target);
+                  else seen.delete(entry.target);
+                });
+                inView = seen.size > 0;
                 play();
               },
               { threshold: 0.35 },
-            ).observe(phone);
+            );
+            phones.forEach(function (phone) {
+              io.observe(phone);
+            });
           }
 
           show(0);
@@ -3928,7 +5307,7 @@
         }
 
         // ---- Below lg ----------------------------------------------------------
-        // The reel and the timeline copy the switchers' markup, so each title, text and screen is written once.
+        // The reel copies the features switcher's markup, so each title, text and screen is written once.
         function element(tag, className) {
           var node = document.createElement(tag);
           if (className) node.className = className;
@@ -4089,63 +5468,22 @@
           update();
         }
 
-        // The steps as a numbered timeline, each screen beside its text; the step nearest the window's middle plays.
-        function timeline(wrap) {
-          var screens = wrap.querySelectorAll(".sw-phone .phone-screen > *");
-          var list = element("ol", "timeline autoplay");
-          var rows = [];
-          var shots = [];
-
-          wrap.querySelectorAll(".steps-list .sw-item").forEach(function (item, i) {
-            var row = element("li");
-            var num = element("span", "timeline-num font-mono");
-            var body = element("div", "timeline-body");
-            var shot = element("div", "timeline-shot shot");
-            num.textContent = String(i + 1);
-            shot.appendChild(phoneOf(screens[i]));
-            body.append(num, item.querySelector("h3").cloneNode(true), item.querySelector("p").cloneNode(true));
-            row.append(body, shot);
-            list.appendChild(row);
-            rows.push(row);
-            shots.push(shot);
-          });
-          // Outside the switcher, so its .sw state rules stay off this block's button.
-          wrap.after(list);
-
-          var activate = autoplay(list, shots);
-          function update() {
-            if (!list.offsetParent) return; // hidden from lg up
-            var middle = window.innerHeight / 2;
-            var nearest = 0;
-            var best = Infinity;
-            rows.forEach(function (row, i) {
-              var box = row.getBoundingClientRect();
-              var distance = Math.abs(box.top + box.height / 2 - middle);
-              if (distance < best) {
-                best = distance;
-                nearest = i;
-              }
-            });
-            activate(nearest);
-          }
-          onScroll(window, update);
-          update();
-        }
-
         // Copied before the switchers start, while their screens still show their first frames.
         reel(document.querySelector(".sw-features"));
-        timeline(document.querySelector(".sw-steps"));
         document.querySelectorAll(".sw").forEach(switcher);
 
         // ---- Contact form: validation + sending -------------------------------
         // Access key from web3forms.com - messages land in the inbox the key was
         // created for. It is meant to be public, so it can live in the page.
-        var WEB3FORMS_KEY = "YOUR_ACCESS_KEY";
+        var WEB3FORMS_KEY = "2038db51-5adb-4d5b-b30e-ec435a3f4f81";
         var WEB3FORMS_URL = "https://api.web3forms.com/submit";
 
         var form = document.querySelector("#contact form");
         var status = document.getElementById("cf-status");
         var FIELDS = "input:not([name=botcheck]), textarea";
+        // One message a minute per browser, so a held Enter or a refill doesn't flood the inbox.
+        var SENT_KEY = "bikecheck-contact-sent";
+        var COOLDOWN_MS = 60000;
 
         var MESSAGES = {
           cs: {
@@ -4153,12 +5491,14 @@
             email: "Zadej platnou e-mailovou adresu",
             sent: "Díky, zpráva odešla. Ozvu se co nejdřív.",
             failed: "Zprávu se nepodařilo odeslat. Zkus to znovu, nebo napiš na support@bikecheck.cloud.",
+            cooldown: "Zpráva už odešla. Další můžeš poslat za minutu.",
           },
           en: {
             required: "Fill in this field",
             email: "Enter a valid email address",
             sent: "Thanks, your message is on its way. I'll reply soon.",
             failed: "The message didn't go through. Try again, or write to support@bikecheck.cloud.",
+            cooldown: "Your message is already on its way. You can send another in a minute.",
           },
         };
 
@@ -4180,6 +5520,20 @@
           box.classList.add("hidden");
           field.removeAttribute("aria-invalid");
           field.classList.remove("ring-rust");
+        }
+
+        function inCooldown() {
+          try {
+            return Date.now() - Number(localStorage.getItem(SENT_KEY) || 0) < COOLDOWN_MS;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function markSent() {
+          try {
+            localStorage.setItem(SENT_KEY, String(Date.now()));
+          } catch (e) {}
         }
 
         function showStatus(key, failed) {
@@ -4230,6 +5584,11 @@
               return;
             }
 
+            if (inCooldown()) {
+              showStatus("cooldown", true);
+              return;
+            }
+
             var name = form.elements.name.value.trim();
             submitBtn.disabled = true;
             submitBtn.classList.add("opacity-60", "cursor-wait");
@@ -4250,6 +5609,7 @@
               })
               .then(function (data) {
                 if (!data.success) throw new Error("rejected");
+                markSent();
                 showStatus("sent");
                 form.reset();
               })
