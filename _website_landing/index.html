@@ -1350,9 +1350,16 @@
         text-transform: uppercase;
         color: #85868a;
       }
-      /* Too narrow for the service labels; today's reading hangs left of its stem so it stays on screen. */
+      /* Too narrow for one-line labels: a word per line keeps them apart, and the last service gives way to today's reading. */
       @media (max-width: 1023px) {
         .season-mark .ridge-mark {
+          width: min-content;
+          font-size: 10px;
+          line-height: 1.25;
+          text-align: center;
+          white-space: normal;
+        }
+        .season-lg-only {
           display: none;
         }
         .season-today-label {
@@ -1895,7 +1902,7 @@
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
-          <a href="#main" class="shrink-0" aria-label="BikeCheck">
+          <a href="#top" class="shrink-0" aria-label="BikeCheck">
             <svg class="h-7 sm:h-8 w-auto" viewBox="0 0 1569 318" aria-hidden="true"><use href="#bc-logo" /></svg>
           </a>
         </div>
@@ -2023,7 +2030,7 @@
           </li>
         </ul>
 
-        <ul class="mt-10 pt-6 border-t hairline flex flex-col gap-4 text-[15px] text-paper-dim">
+        <ul class="mt-10 pt-6 flex flex-col gap-4 text-[15px] text-paper-dim">
           <li><a href="#faq" data-menu-link class="hover:text-paper transition-colors duration-200">FAQ</a></li>
           <li>
             <a href="#contact" data-menu-link class="hover:text-paper transition-colors duration-200"
@@ -2032,18 +2039,18 @@
           </li>
         </ul>
 
-        <div class="mt-auto pt-10 flex flex-col gap-3">
+        <div class="mt-auto pt-10 px-4 flex flex-col gap-3">
           <a
             href="https://app.bikecheck.cloud/?lang=cs"
             data-app-link
-            class="flex items-center justify-center h-12 rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px"
+            class="flex items-center justify-center h-12 rounded-2xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px"
           >
             <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
           </a>
           <a
             href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
             data-app-link
-            class="flex items-center justify-center gap-2 h-12 rounded-xl bg-gold-500 hover:bg-gold-400 font-display font-semibold text-[15px] text-ink-950 transition-colors duration-200 active:translate-y-px"
+            class="flex items-center justify-center gap-2 h-12 rounded-2xl bg-gold-500 hover:bg-gold-400 font-display font-semibold text-[15px] text-ink-950 transition-colors duration-200 active:translate-y-px"
           >
             <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
             <svg
@@ -2131,7 +2138,7 @@
               <span class="lang-en">The complete history of your bike in your pocket. Share it with a single link.</span>
             </p>
 
-            <div id="download" class="mt-[120px] lg:mt-11 flex flex-wrap items-center gap-3 sm:gap-3.5 scroll-mt-24">
+            <div id="download" class="mt-[170px] lg:mt-11 flex flex-wrap items-center gap-3 sm:gap-3.5 scroll-mt-24">
               <!-- The official Google Play badge, used whole and unaltered from
              assets/icon/google.svg, as Google's brand rules require. Its
              own plate and lockup replace a button of ours, so it carries no
@@ -2179,7 +2186,7 @@
                   <rect x="2" y="3" width="20" height="14" rx="2" />
                   <path d="M12 17v4M8 21h8" />
                 </svg>
-                <span class="lang-cs">Otevřít ve webu</span><span class="lang-en">Open in browser</span>
+                <span class="lang-cs">Otevřít web</span><span class="lang-en">Open in browser</span>
               </a>
             </div>
 
@@ -2954,7 +2961,7 @@
                 >
                 <span class="season-stem"></span><span class="season-dot"></span>
               </div>
-              <div class="season-mark" data-mark-km="2980" style="left: 82.78%; top: 39.36%">
+              <div class="season-mark season-lg-only" data-mark-km="2980" style="left: 82.78%; top: 39.36%">
                 <span class="ridge-mark"
                   ><span class="lang-cs">Výměna řetězu</span><span class="lang-en">Chain swap</span></span
                 >
@@ -4353,45 +4360,35 @@
             <span class="lang-cs">Udělej svému kolu <span class="text-gold-500">BikeCheck</span></span>
             <span class="lang-en">Give your bike a <span class="text-gold-500">BikeCheck</span></span>
           </h2>
-          <p class="mt-5 text-[16px] text-paper-dim max-w-[50ch] mx-auto">
-            <span class="lang-cs">Propoj Stravu, postav garáž a nech si hlídat, co se na kole opotřebovává.</span>
-            <span class="lang-en">Connect Strava, build your garage and let the wear watch itself.</span>
-          </p>
-          <!-- The hero's pair again, so the page ends on the button it starts with. -->
-          <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
+
+          <!-- The hero's pair again, so the page ends on the buttons it starts with. -->
+          <div class="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-3.5">
             <a
               href="PLAY_STORE_URL"
               class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
             >
-              <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-[52px] w-auto" />
+              <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
             </a>
 
-            <span
-              class="inline-flex items-center gap-3 h-[52px] px-4 rounded-xl border hairline bg-ink-900/60 cursor-default select-none"
-              aria-disabled="true"
-            >
-              <svg viewBox="0 0 24 24" class="size-6 shrink-0 text-paper-faint" fill="currentColor" aria-hidden="true">
-                <path
-                  d="M17.05 12.04c-.03-2.75 2.25-4.07 2.35-4.13-1.28-1.87-3.28-2.13-3.99-2.16-1.7-.17-3.32 1-4.18 1-.86 0-2.19-.98-3.6-.95-1.85.03-3.56 1.08-4.51 2.73-1.92 3.33-.49 8.26 1.38 10.96.91 1.32 2 2.8 3.43 2.75 1.38-.06 1.9-.89 3.57-.89 1.67 0 2.14.89 3.6.86 1.49-.03 2.43-1.35 3.34-2.67 1.05-1.53 1.48-3.01 1.5-3.09-.03-.01-2.88-1.11-2.91-4.4zM14.3 4.1c.76-.92 1.27-2.2 1.13-3.47-1.09.04-2.41.72-3.19 1.64-.7.81-1.31 2.11-1.15 3.36 1.21.09 2.45-.62 3.21-1.53z"
-                />
-              </svg>
-              <span class="flex flex-col text-left leading-none">
-                <span class="font-mono text-[8px] uppercase tracking-[0.14em] text-gold-600">
-                  <span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span>
-                </span>
-                <span class="font-display font-semibold text-[15px] text-paper-dim mt-1.5">App Store</span>
-              </span>
-            </span>
-          </div>
-
-          <!-- The way in without installing: the App in the browser, on its register form. -->
-          <div class="mt-3">
             <a
-              href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
+              href="https://app.bikecheck.cloud/?lang=cs"
               data-app-link
-              class="inline-flex items-center border border-ink-600 hover:border-paper-faint rounded-xl px-6 py-3.5 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
+              class="inline-flex items-center gap-2 lg:gap-2.5 h-9 sm:h-10 lg:h-[52px] px-3.5 sm:px-2 lg:px-5 rounded-md lg:rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] lg:text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
             >
-              <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
+              <svg
+                class="size-4 lg:size-[18px] shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <path d="M12 17v4M8 21h8" />
+              </svg>
+              <span class="lang-cs">Otevřít web</span><span class="lang-en">Open in browser</span>
             </a>
           </div>
         </div>
@@ -4741,7 +4738,7 @@
             if (wide.matches) return;
             var buttonsTop = hero.querySelector("#download").getBoundingClientRect().top - hero.getBoundingClientRect().top;
             var base = box.clientHeight - RIDGE_LAYOUTS.narrow.floor;
-            box.style.setProperty("--ridge-top", Math.round(buttonsTop - 14 - base) + "px");
+            box.style.setProperty("--ridge-top", Math.round(buttonsTop - 88 - base) + "px");
           }
 
           // From lg up the floor hangs off the buttons (drop px under their top), so the window's height doesn't move it.
