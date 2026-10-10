@@ -76,17 +76,32 @@
       }
 
       /* Scroll reveal - only hides when JS is running, so content never
-     depends on a script to become visible. */
+     depends on a script to become visible. Below lg a block instead waits
+     greyed out and lights up to its own colours as it scrolls into view. */
       .js .reveal {
-        opacity: 0;
-        transform: translateY(18px);
+        opacity: 0.3;
+        filter: saturate(0);
         transition:
-          opacity 0.6s ease,
-          transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+          opacity 0.8s ease,
+          filter 0.8s ease;
       }
       .js .reveal.in {
         opacity: 1;
-        transform: none;
+        filter: none;
+      }
+      @media (min-width: 1024px) {
+        .js .reveal {
+          opacity: 0;
+          filter: none;
+          transform: translateY(18px);
+          transition:
+            opacity 0.6s ease,
+            transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        .js .reveal.in {
+          opacity: 1;
+          transform: none;
+        }
       }
 
       /* Frosted panels. Surfaces are translucent and let the ground behind them
@@ -4624,6 +4639,9 @@
             el.classList.add("in");
           });
         } else {
+          // Below lg a block stays grey while it only peeks in at the bottom, and lights up
+          // once its top has climbed past the lower third of the screen.
+          var revealMargin = window.matchMedia("(min-width: 1024px)").matches ? "-12%" : "-32%";
           var io = new IntersectionObserver(
             function (entries) {
               entries.forEach(function (entry) {
@@ -4633,7 +4651,7 @@
                 }
               });
             },
-            { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
+            { rootMargin: "0px 0px " + revealMargin + " 0px", threshold: 0.04 },
           );
           revealables.forEach(function (el) {
             io.observe(el);
