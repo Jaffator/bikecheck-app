@@ -25,13 +25,12 @@ jobs:
           cache: npm
           cache-dependency-path: _backend/package-lock.json
       - run: npm ci
-      # The scraper test drives a real Chromium against the bike provider.
-      - run: npx playwright install --with-deps chromium
       - run: npx prisma generate --config apps/monolith/prisma.config.ts
       # The root tsconfig does not cover apps/, so each app is checked through its own.
       - run: npx tsc --noEmit -p apps/monolith/tsconfig.app.json
       - run: npx tsc --noEmit -p apps/strava-service/tsconfig.app.json
-      - run: npx jest --selectProjects=UNIT
+      # The scraper test hits 99spokes, which blocks datacenter IPs (#246); it runs locally only.
+      - run: npx jest --selectProjects=UNIT --testPathIgnorePatterns=bike-data-scraper
 
   frontend:
     runs-on: ubuntu-latest
