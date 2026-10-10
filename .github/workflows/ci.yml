@@ -1,0 +1,48 @@
+# Checks every change to main; deploy.yml calls the same jobs before a release (docs/deploy.md).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: _backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --config apps/monolith/prisma.config.ts
+      # The root tsconfig does not cover apps/, so each app is checked through its own.
+      - run: npx tsc --noEmit -p apps/monolith/tsconfig.app.json
+      - run: npx tsc --noEmit -p apps/strava-service/tsconfig.app.json
+      - run: npx jest --selectProjects=UNIT
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: _frontend/bikecheck
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _frontend/bikecheck/package-lock.json
+      - run: npm ci
+      # tsconfig.json is a solution file: plain `tsc --noEmit` checks nothing.
+      - run: npx tsc -b
