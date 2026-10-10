@@ -34,12 +34,14 @@ Rules:
 - Keep functions small and focused
 - never ever delete node_modules, package-lock.json, or yarn.lock
 - if you bump to a big problem, better stop and ask
-- after every implementation, give me very clear review what was done a nd what will be the next step and IF there is a problem described in label problem - be very concise and short
+- after every implementation, give me very clear review what was done - be very concise and short
 
 Code style:
 
 - Explicit types
-- Small functions
+- Functions
+  - rather small, focused, single responsibility
+  - no more than 3 parameters
 - No overengineering
 - Every code in English, comments too
 - Comments: one line, two at most. Say why, not what; no essays, no prose, no restating the code
