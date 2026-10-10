@@ -2609,7 +2609,7 @@
                     <div class="phone" aria-hidden="true">
                       <div class="phone-body">
                         <div class="phone-screen">
-                          <div class="phone-frames">
+                          <div class="phone-frames" data-frame-ms="1400">
                             <img
                               class="is-on"
                               src="assets/img_ready/screens/steps/service-01.webp"
@@ -2635,9 +2635,32 @@
                               loading="lazy"
                               decoding="async"
                             />
-                            <!-- Back on the Service tab: the same shot as in the features phone. -->
                             <img
-                              src="assets/img_ready/screens/features/service-02.webp"
+                              src="assets/img_ready/screens/steps/service-04.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/service-05.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/service-06.webp"
+                              alt=""
+                              width="640"
+                              height="1386"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <img
+                              src="assets/img_ready/screens/steps/service-07.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -5162,10 +5185,12 @@
         function stepsOf(screen) {
           var steps = [];
           if (!screen.classList.contains("phone-frames")) return steps;
+          // A long stack of shots may set its own, quicker pace.
+          var frameMs = Number(screen.getAttribute("data-frame-ms")) || FRAME_MS;
           Array.prototype.forEach.call(screen.children, function (el) {
             var at = "0%";
             (el.getAttribute("data-stops") || at).split(" ").forEach(function (y) {
-              steps.push({ el: el, y: y, ms: y === at ? FRAME_MS : SCROLL_MS });
+              steps.push({ el: el, y: y, ms: y === at ? frameMs : SCROLL_MS });
               at = y;
             });
           });
