@@ -203,6 +203,21 @@
             );
         }
       }
+      /* The closing section's copy: the same terrain as a band on the section floor, under the buttons. */
+      .ridge.ridge-band {
+        top: auto;
+        bottom: 0;
+        height: 190px;
+        -webkit-mask-image:
+          linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(transparent, #000 25%);
+        mask-image:
+          linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(transparent, #000 25%);
+      }
+      @media (min-width: 1024px) {
+        .ridge.ridge-band {
+          height: 280px;
+        }
+      }
       .ridge svg {
         position: absolute;
         inset: 0;
@@ -4353,7 +4368,15 @@
           aria-hidden="true"
           style="background: radial-gradient(700px 300px at 50% 120%, rgba(206, 192, 83, 0.12), transparent 70%)"
         ></div>
-        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
+        <!-- The hero's ride once more; the gradient it fills with lives in the hero's SVG. -->
+        <div class="ridge ridge-band" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg"></svg>
+          <span class="ridge-label ridge-rider font-mono flex flex-col gap-0.5">
+            <span class="text-[14px] lg:text-[15px] font-medium leading-[1.1] tracking-[-0.01em] text-paper" data-km></span>
+            <span class="text-[14px] lg:text-[13px] font-medium leading-[1.1] text-gold-500" data-gain></span>
+          </span>
+        </div>
+        <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-[210px] lg:pb-[300px] text-center">
           <h2
             class="font-display font-extrabold tracking-tight text-[clamp(30px,4.4vw,50px)] leading-[1.03] text-balance max-w-[20ch] mx-auto"
           >
@@ -4659,6 +4682,20 @@
             speed: 40,
             mPerPx: 4,
           },
+          // The closing band from lg up: the narrow shape, wider and taller.
+          band: {
+            lines: 28,
+            gap: 5,
+            rise: 120,
+            lead: 0,
+            curve: 1,
+            tower: 0.7,
+            floor: 30,
+            rider: 0.72,
+            step: 10,
+            speed: 45,
+            mPerPx: 3,
+          },
         };
         var RIDGE_STILL = { km: 12.4, gain: 380, chain: 38, brakes: 21, fork: 12.5 };
         var FORK_SERVICE_H = 50;
@@ -4693,17 +4730,19 @@
           return node;
         }
 
-        function ridge(hero) {
-          var box = hero.querySelector(".ridge");
+        function ridge(section) {
+          var box = section.querySelector(".ridge");
+          // The closing band rests on its section floor: no readout and no buttons to hang from.
+          var band = box.classList.contains("ridge-band");
           var svg = box.querySelector("svg");
-          var readout = hero.querySelector(".readout");
-          var cells = {
+          var readout = section.querySelector(".readout");
+          var cells = readout && {
             chain: readout.querySelector('[data-reading="chain"]'),
             brakes: readout.querySelector('[data-reading="brakes"]'),
             fork: readout.querySelector('[data-reading="fork"]'),
           };
           var riderLabel = box.querySelector(".ridge-rider");
-          var title = hero.querySelector("h1");
+          var title = section.querySelector("h1, h2");
           var wide = window.matchMedia("(min-width: 1024px)");
           var state = { offset: 0, time: 0, km: 0, gain: 0, climbing: true, marks: [], sinceMark: MARK_GAP_S };
           Object.assign(state, RIDGE_START);
@@ -4735,21 +4774,27 @@
 
           // Below lg the band fills the gap left above the buttons, its floor just over them.
           function hang() {
-            if (wide.matches) return;
-            var buttonsTop = hero.querySelector("#download").getBoundingClientRect().top - hero.getBoundingClientRect().top;
+            if (band || wide.matches) return;
+            var buttonsTop =
+              section.querySelector("#download").getBoundingClientRect().top - section.getBoundingClientRect().top;
             var base = box.clientHeight - RIDGE_LAYOUTS.narrow.floor;
-            box.style.setProperty("--ridge-top", Math.round(buttonsTop - 88 - base) + "px");
+            box.style.setProperty("--ridge-top", Math.round(buttonsTop - 32 - base) + "px");
           }
 
           // From lg up the floor hangs off the buttons (drop px under their top), so the window's height doesn't move it.
           function floorY(L) {
-            if (!wide.matches) return box.clientHeight - L.floor;
-            var buttons = hero.querySelector("#download").getBoundingClientRect();
+            if (band || !wide.matches) return box.clientHeight - L.floor;
+            var buttons = section.querySelector("#download").getBoundingClientRect();
             return Math.round(buttons.top - box.getBoundingClientRect().top + L.drop);
           }
 
+          function layout() {
+            if (!wide.matches) return RIDGE_LAYOUTS.narrow;
+            return band ? RIDGE_LAYOUTS.band : RIDGE_LAYOUTS.wide;
+          }
+
           function build() {
-            var L = wide.matches ? RIDGE_LAYOUTS.wide : RIDGE_LAYOUTS.narrow;
+            var L = layout();
             var base = floorY(L);
             var same = box.clientWidth === view.w && box.clientHeight === view.h && base === view.base;
             if (L === view.layout && same) return;
@@ -4908,6 +4953,7 @@
             var cs = root.getAttribute("data-lang") === "cs";
             riderLabel.querySelector("[data-km]").textContent = number(state.km, 1) + " km";
             riderLabel.querySelector("[data-gain]").textContent = "+ " + number(Math.round(state.gain), 0) + " m";
+            if (!readout) return;
             ["chain", "brakes"].forEach(function (key) {
               var value = Math.round(state[key]);
               cells[key].querySelector("[data-value]").textContent = value + (cs ? " %" : "%");
@@ -4990,7 +5036,7 @@
               build();
               draw();
             });
-            [box, hero, title].forEach(function (el) {
+            [box, section, title].filter(Boolean).forEach(function (el) {
               resized.observe(el);
             });
           }
@@ -4998,14 +5044,17 @@
             new IntersectionObserver(function (entries) {
               inView = entries[0].isIntersecting;
               sync();
-            }).observe(hero);
+            }).observe(section);
           }
           document.addEventListener("visibilitychange", sync);
           new MutationObserver(drawReadings).observe(root, { attributes: true, attributeFilter: ["data-lang"] });
           sync();
         }
 
-        ridge(document.querySelector(".hero"));
+        // The hero and the closing section ride the same terrain, each paused while off screen.
+        document.querySelectorAll(".ridge").forEach(function (box) {
+          ridge(box.closest("section"));
+        });
 
         // ---- Wear --------------------------------------------------------------
         // Once on screen the bars fill top-down, each reading counting up with its bar. Played once.
