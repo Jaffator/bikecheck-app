@@ -25,6 +25,8 @@ jobs:
           cache: npm
           cache-dependency-path: _backend/package-lock.json
       - run: npm ci
+      # The scraper test drives a real Chromium against the bike provider.
+      - run: npx playwright install --with-deps chromium
       - run: npx prisma generate --config apps/monolith/prisma.config.ts
       # The root tsconfig does not cover apps/, so each app is checked through its own.
       - run: npx tsc --noEmit -p apps/monolith/tsconfig.app.json
