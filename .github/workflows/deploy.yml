@@ -81,8 +81,14 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
-          # Dockerfile.prod builds one app per image; the caddy Dockerfile ignores it.
-          build-args: APP=${{ matrix.name }}
+          # Dockerfile.prod builds one app per image and ignores the rest; caddy bakes Umami into both
+          # static builds from repo variables, an unset ID ships that build without the tracker.
+          build-args: |
+            APP=${{ matrix.name }}
+            STATS_HOST=${{ vars.STATS_HOST }}
+            TRACKER_SCRIPT_NAME=${{ vars.TRACKER_SCRIPT_NAME }}
+            UMAMI_WEBSITE_ID_WEB=${{ vars.UMAMI_WEBSITE_ID_WEB }}
+            UMAMI_WEBSITE_ID_APP=${{ vars.UMAMI_WEBSITE_ID_APP }}
           push: true
           tags: ghcr.io/jaffator/bikecheck-${{ matrix.name }}:${{ needs.release.outputs.tag }}
           cache-from: type=gha,scope=${{ matrix.name }}

@@ -14,7 +14,7 @@ www.{$WEBSITE_HOST} {
 	redir https://{$WEBSITE_HOST}{uri} permanent
 }
 
-# Umami: its dashboard (own login) and the tracker script the Marketing Website loads.
+# Umami: its dashboard (own login), the tracker script and the collect endpoint.
 {$STATS_HOST} {
 	log
 	encode gzip

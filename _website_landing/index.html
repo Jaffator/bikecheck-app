@@ -1875,10 +1875,22 @@
             role="group"
             aria-label="Jazyk / Language"
           >
-            <button type="button" data-set-lang="cs" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+            <button
+              type="button"
+              data-set-lang="cs"
+              data-umami-event="lang-switch"
+              data-umami-event-to="cs"
+              class="lang-btn px-2 py-1 rounded-md transition-colors duration-200"
+            >
               CS
             </button>
-            <button type="button" data-set-lang="en" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+            <button
+              type="button"
+              data-set-lang="en"
+              data-umami-event="lang-switch"
+              data-umami-event-to="en"
+              class="lang-btn px-2 py-1 rounded-md transition-colors duration-200"
+            >
               EN
             </button>
           </div>
@@ -1895,6 +1907,7 @@
             href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
             data-app-link
             data-umami-event="create-account"
+            data-umami-event-place="header"
             class="hidden sm:inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[13px] sm:text-[14px] px-3.5 sm:px-4 py-2.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
           >
             <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
@@ -1999,6 +2012,7 @@
             href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
             data-app-link
             data-umami-event="create-account"
+            data-umami-event-place="menu"
             class="flex items-center justify-center gap-2 h-12 rounded-xl bg-gold-500 hover:bg-gold-400 font-display font-semibold text-[15px] text-ink-950 transition-colors duration-200 active:translate-y-px"
           >
             <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
@@ -2022,10 +2036,10 @@
           role="group"
           aria-label="Jazyk / Language"
         >
-          <button type="button" data-set-lang="cs" class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200">
+          <button type="button" data-set-lang="cs" data-umami-event="lang-switch" data-umami-event-to="cs" class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200">
             CS
           </button>
-          <button type="button" data-set-lang="en" class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200">
+          <button type="button" data-set-lang="en" data-umami-event="lang-switch" data-umami-event-to="en" class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200">
             EN
           </button>
         </div>
@@ -4333,10 +4347,10 @@
               role="group"
               aria-label="Jazyk / Language"
             >
-              <button type="button" data-set-lang="cs" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+              <button type="button" data-set-lang="cs" data-umami-event="lang-switch" data-umami-event-to="cs" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
                 CS
               </button>
-              <button type="button" data-set-lang="en" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
+              <button type="button" data-set-lang="en" data-umami-event="lang-switch" data-umami-event-to="en" class="lang-btn px-2 py-1 rounded-md transition-colors duration-200">
                 EN
               </button>
             </div>

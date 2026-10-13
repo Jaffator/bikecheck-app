@@ -103,13 +103,29 @@ ssh-keyscan -t ed25519 <server IP> | gh secret set DEPLOY_KNOWN_HOSTS
 
 Then delete `bikecheck_deploy` locally; GitHub holds the only copy it needs.
 
-### Umami (visitor stats for the Marketing Website)
+### Umami (cookieless stats for the Marketing Website and the App)
 
-1. A DNS A record `stats.bikecheck.cloud` → the server IP, like the other two hosts.
-2. In `.env.production`: `STATS_HOST=stats.bikecheck.cloud` and `UMAMI_APP_SECRET=$(openssl rand -hex 32)`.
+`umami` + `db-umami` run behind Caddy on `STATS_HOST`. The tracker is served as `TRACKER_SCRIPT_NAME` and posts to `COLLECT_API_ENDPOINT`, so ad blockers that match `script.js` and `/api/send` let it through.
+
+1. DNS: nothing to add, the `*.bikecheck.cloud` wildcard already points `stats` at the server.
+2. `.env.production`: `STATS_HOST`, `UMAMI_APP_SECRET=$(openssl rand -hex 32)`, `TRACKER_SCRIPT_NAME`, `COLLECT_API_ENDPOINT` (see `.env.production.example`).
 3. Deploy. The first deploy after this change skips the Umami dump, as the script it runs predates it.
-4. Log in at `https://stats.bikecheck.cloud` as `admin` / `umami` and change the password at once.
-5. Settings → Websites → Add `bikecheck.cloud`. Its website ID goes into the tracker `<script>` in `_website_landing/index.html`; the next release carries it.
+4. Log in at `https://stats.bikecheck.cloud` as `admin` / `umami` and change the password at once: Settings → Profile → Change password.
+5. Settings → Websites → Add:
+   - **Web**, domain `bikecheck.cloud`;
+   - **App**, domain `app.bikecheck.cloud`. The Android shell reports to it too, with hostname `localhost`.
+6. The CI caddy build bakes the tracker into both static builds from repo variables; an unset ID ships that build without it. `TRACKER_SCRIPT_NAME` must match `.env.production`:
+
+   ```sh
+   gh variable set STATS_HOST --body stats.bikecheck.cloud
+   gh variable set TRACKER_SCRIPT_NAME --body bc.js
+   gh variable set UMAMI_WEBSITE_ID_WEB --body <Web ID>
+   gh variable set UMAMI_WEBSITE_ID_APP --body <App ID>
+   ```
+
+   Then tag a release; a redeploy of an old tag reuses its images and keeps the old IDs.
+
+The APK is built locally (`npm run build`, mode production), so it tracks only when `_frontend/bikecheck/.env.production.local` (git-ignored) holds `VITE_UMAMI_WEBSITE_ID=<App ID>` and `VITE_UMAMI_SCRIPT_URL=https://stats.bikecheck.cloud/<TRACKER_SCRIPT_NAME>`. `npm run dev` never reads that file.
 
 ### First tag deploy (leaving the `production` branch)
 

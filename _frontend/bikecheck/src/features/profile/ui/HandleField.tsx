@@ -7,6 +7,7 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { copyLink } from "@/utils/shareLink";
+import { trackEvent } from "@/utils/analytics";
 import { HANDLE_ERROR_KEY, normalizeHandle, profileUrl } from "../handle";
 import type { HandleErrorCode } from "../profile.types";
 
@@ -57,6 +58,7 @@ export function HandleField({ handle, onChange, onCommit, error, origin, savedUr
     try {
       await copyLink(savedUrl);
       setCopied(true);
+      trackEvent("share-profile");
     } catch {
       setCopied(false);
     }

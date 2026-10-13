@@ -51,14 +51,23 @@ services:
       retries: 10
     networks: [internal]
 
-  # Cookieless visitor stats for the Marketing Website, behind Caddy on STATS_HOST.
+  # Cookieless visitor stats for the Marketing Website and the App, behind Caddy on STATS_HOST.
   umami:
     image: ghcr.io/umami-software/umami:3.4.0
     restart: unless-stopped
+    init: true
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-umami:5432/umami
       APP_SECRET: ${UMAMI_APP_SECRET}
+      # Neutral names, so ad blockers that match script.js and /api/send let them through.
+      TRACKER_SCRIPT_NAME: ${TRACKER_SCRIPT_NAME}
+      COLLECT_API_ENDPOINT: ${COLLECT_API_ENDPOINT}
       DISABLE_TELEMETRY: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     depends_on:
       db-umami:
         condition: service_healthy

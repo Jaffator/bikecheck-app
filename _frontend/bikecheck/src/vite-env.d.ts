@@ -7,6 +7,9 @@ interface ImportMetaEnv {
   readonly VITE_STRAVA_MICROSERVICE_URL: string;
   // Without it CARTO serves "API key required" tiles.
   readonly VITE_CARTO_KEY: string;
+  // Umami; either one empty and the tracker never loads.
+  readonly VITE_UMAMI_WEBSITE_ID?: string;
+  readonly VITE_UMAMI_SCRIPT_URL?: string;
 }
 
 interface ImportMeta {
