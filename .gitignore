@@ -16,6 +16,9 @@ Thumbs.db
 .vscode/
 # Database dumps hold real users' data
 db_dump*
+/backups/
+# Written by scripts/deploy.sh on the server
+/.env.tag
 # Firebase service account key
 bikecheck-firebase-adminsdk.json
 # Local MCP server config (may contain API tokens)

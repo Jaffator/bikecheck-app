@@ -426,7 +426,8 @@ describe('ComponentService', () => {
             component_desc: null,
             position: null,
             note: null,
-            mounted_at: undefined,
+            // Undated parts join the bike today.
+            mounted_at: expect.any(Date),
             total_km: undefined,
             total_time_min: undefined,
           },

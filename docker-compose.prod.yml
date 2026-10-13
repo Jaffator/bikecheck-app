@@ -1,6 +1,6 @@
 # Production stack (docs/research/hosting.md §5): Caddy is the only thing on the host's ports.
-# The caddy image builds the SPA (committed .env.web) and the Marketing Website itself; no Node on the host:
-#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+# CI builds the app images into GHCR, one tag per release; the server only pulls them (docs/deploy.md).
+# scripts/deploy.sh runs it; by hand, add `--env-file .env.tag` for the running release's TAG.
 # .env.production is git-ignored; .env.production.example lists every variable.
 services:
   db-monolith:
@@ -79,11 +79,7 @@ services:
     networks: [internal]
 
   monolith:
-    build:
-      context: ./_backend
-      dockerfile: Dockerfile.prod
-      args:
-        APP: monolith
+    image: ghcr.io/jaffator/bikecheck-monolith:${TAG:?TAG must name a release, see docs/deploy.md}
     restart: unless-stopped
     # Playwright: Chromium runs out of memory without the host IPC namespace; init reaps its zombies.
     ipc: host
@@ -111,11 +107,7 @@ services:
     networks: [internal]
 
   strava-service:
-    build:
-      context: ./_backend
-      dockerfile: Dockerfile.prod
-      args:
-        APP: strava-service
+    image: ghcr.io/jaffator/bikecheck-strava-service:${TAG:?TAG must name a release, see docs/deploy.md}
     restart: unless-stopped
     # A real PID 1 that forwards SIGTERM and reaps zombies, as on the monolith.
     init: true
@@ -135,12 +127,7 @@ services:
     networks: [internal]
 
   caddy:
-    build:
-      context: .
-      dockerfile: docker/caddy.Dockerfile
-      args:
-        UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
-        STATS_HOST: ${STATS_HOST:-}
+    image: ghcr.io/jaffator/bikecheck-caddy:${TAG:?TAG must name a release, see docs/deploy.md}
     restart: unless-stopped
     ports:
       - "80:80"
