@@ -1,0 +1,79 @@
+/* Section head shared by Wear and Service: title left, lede right from lg up. */
+.lede {
+  max-width: 520px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: #9c9c9e;
+}
+.lede strong {
+  font-weight: 500;
+  color: #f2f2f1;
+}
+
+/* One bike's parts as rows; below lg the state sits by the name and the bar runs across. */
+.wear-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: "part state" "reading interval" "bar bar";
+  gap: 12px 24px;
+  align-items: center;
+  padding: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.075);
+}
+.wear-row:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+}
+.wear-part {
+  grid-area: part;
+}
+.wear-reading {
+  grid-area: reading;
+}
+.wear-interval {
+  grid-area: interval;
+}
+.wear-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #f2f2f1;
+}
+.wear-sub,
+.wear-unit {
+  margin-top: 3px;
+  font-size: 13px;
+  color: #85868a;
+}
+.wear-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #f2f2f1;
+}
+.wear-bar {
+  grid-area: bar;
+  display: block;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.wear-fill {
+  display: block;
+  height: 100%;
+  transform-origin: left;
+}
+.wear-state {
+  grid-area: state;
+  align-self: start;
+  font-size: 13px;
+  text-align: right;
+  color: #85868a;
+}
+@media (min-width: 1024px) {
+  .wear-row {
+    grid-template-columns: 1.5fr 0.9fr 1.1fr 1.3fr 0.9fr;
+    grid-template-areas: "part reading interval bar state";
+    gap: 24px;
+  }
+  .wear-state {
+    align-self: center;
+  }
+}

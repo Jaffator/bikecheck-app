@@ -1,0 +1,346 @@
+/* One phone and, around it, the things it can show as switches. Picking a
+   switch puts its screen on the phone; left alone, the block plays through
+   them by itself while it is on screen, and the button under the phone
+   pauses that. Two blocks work this way: the features (.sw-features) and
+   the three steps of "how it works" (.sw-steps), where each step has a phone of its own.
+
+   Without a script nothing switches, so what only makes sense with one (the
+   button) hangs off .js. What is left is a plain list next to a phone
+   showing its first screen.
+
+   The switch whose screen is on the phone stands on the app's card
+   material (see .card): ::before is that card, under the switch's content,
+   and it fades in when the switch is lit.
+
+   An idle switch is held at 0.8 through what is inside it (--dim), which
+   keeps its body text above 4.5:1 on this ground. The lit one is told apart
+   by its card and a gold title, not by everything else going dark. */
+.sw-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  border-radius: 16px;
+  --dim: 0.8;
+}
+.sw-item > * {
+  opacity: var(--dim);
+  transition: opacity 0.25s ease;
+}
+.sw-item:hover,
+.sw-item.is-on {
+  --dim: 1;
+}
+.js .sw-item {
+  cursor: pointer;
+}
+.sw-item.is-on h3 {
+  color: #cec053;
+}
+.sw-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background-color: #1b1c1e;
+  box-shadow: var(--elev-panel);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.sw-item.is-on::before {
+  opacity: 1;
+}
+
+/* The phone, with a thin halo of gold close around it, so the middle of
+   the block reads as lit. It keeps still: the screen is what moves. */
+.sw-phone {
+  position: relative;
+}
+.sw-phone::before {
+  content: "";
+  position: absolute;
+  inset: 4% -28%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(206, 192, 83, 0.18), transparent);
+}
+.sw-phone .phone {
+  position: relative;
+  --phone-w: min(250px, 66vw);
+}
+.sw .phone-screen > * {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.sw .phone-screen > .is-on {
+  opacity: 1;
+}
+/* The pause button, there because the block changes by itself. It names
+   what a press will do: pause while it plays, play while it rests. */
+.sw-toggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9c9c9e;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+.js .sw-toggle {
+  display: inline-flex;
+}
+.sw-toggle:hover {
+  color: #f2f2f1;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.sw-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+.sw.is-auto .sw-when-paused,
+.sw:not(.is-auto) .sw-when-playing {
+  display: none;
+}
+
+/* Features. From lg up the switches sit in two columns beside the phone,
+   three a side, the left column mirrored so both face the phone. */
+.sw-features {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+}
+.sw-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sw-features .sw-item {
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid transparent;
+}
+/* The card covers the switch's own transparent border. */
+.sw-features .sw-item::before {
+  inset: -1px;
+}
+.sw-icon {
+  flex: none;
+}
+@media (min-width: 1024px) {
+  .sw-features {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: repeat(3, auto);
+    align-items: center;
+    column-gap: 44px;
+    row-gap: 10px;
+  }
+  .sw-items {
+    display: contents;
+  }
+  .sw-features .sw-item:nth-child(1) {
+    grid-area: 1 / 1;
+  }
+  .sw-features .sw-item:nth-child(2) {
+    grid-area: 2 / 1;
+  }
+  .sw-features .sw-item:nth-child(3) {
+    grid-area: 3 / 1;
+  }
+  .sw-features .sw-item:nth-child(4) {
+    grid-area: 1 / 3;
+  }
+  .sw-features .sw-item:nth-child(5) {
+    grid-area: 2 / 3;
+  }
+  .sw-features .sw-item:nth-child(6) {
+    grid-area: 3 / 3;
+  }
+  .sw-features .sw-item:nth-child(-n + 3) {
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+  .sw-features .sw-phone {
+    grid-area: 1 / 2 / 4 / 3;
+  }
+  /* Sized by the window's height as well, so that phone and button fit in
+     it under the header: a frame is 2.12 times as tall as it is wide. */
+  .sw-phone .phone {
+    --phone-w: min(300px, calc((100vh - 190px) / 2.12));
+  }
+  .sw-features .sw-toggle {
+    grid-area: 4 / 2;
+    justify-self: center;
+    margin-top: 14px;
+  }
+}
+
+/* Steps. Below lg a vertical timeline: number and line left, text, phone right; from lg up three
+   columns, each over its own phone, the phones on one line at the foot. */
+/* Below lg the pause button sits under the head; from lg up, icon only, under the middle phone. */
+.sw-steps {
+  display: flex;
+  flex-direction: column;
+}
+.steps-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.sw-steps .sw-toggle {
+  order: 1;
+  align-self: flex-start;
+  margin-bottom: 40px;
+}
+.steps-list {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+/* No card here: the lit step is told by its gold number and its bright phone. */
+.sw-steps .sw-item {
+  --dim: 1;
+  --shot: 1;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+.sw-steps .sw-item::before {
+  content: none;
+}
+.sw-steps .sw-item.is-on h3 {
+  color: inherit;
+}
+.steps-mark {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.steps-no {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid #cec053;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cec053;
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+.steps-line {
+  background: rgba(255, 255, 255, 0.14);
+}
+.sw-steps .sw-phone {
+  margin-top: auto;
+  opacity: var(--shot);
+  transition: opacity 0.35s ease;
+}
+.sw-steps .sw-phone::before {
+  content: none;
+}
+.sw-steps .sw-phone .phone {
+  --phone-w: min(100%, 280px);
+}
+/* Every phone shows its screen; the switcher only picks the one that plays. */
+.sw-steps .phone-screen > * {
+  opacity: 1;
+}
+@media (max-width: 1023px) {
+  .js .sw-steps .sw-item {
+    cursor: auto;
+  }
+  .steps-list {
+    gap: 0;
+  }
+  .sw-steps .sw-item {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    column-gap: 14px;
+    align-items: start;
+    padding-bottom: 36px;
+  }
+  .steps-list > li:last-child .sw-item {
+    padding-bottom: 0;
+  }
+  /* The line runs down through the item's foot and stops 8px short of the next number. */
+  .steps-mark {
+    flex-direction: column;
+    align-self: stretch;
+    gap: 8px;
+    margin-bottom: -28px;
+  }
+  .steps-line {
+    flex: 1;
+    width: 1px;
+  }
+  .sw-steps .sw-phone {
+    margin-top: 0;
+  }
+  .sw-steps .sw-phone .phone {
+    --phone-w: clamp(112px, 34vw, 150px);
+  }
+}
+@media (min-width: 1024px) {
+  .steps-head {
+    margin-bottom: 72px;
+  }
+  /* Centred on the middle phone: one column and gap in, then half the 280px phone, less half the button. */
+  .sw-steps .sw-toggle {
+    order: 3;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 32px 0 0 calc((100% - 80px) / 3 + 40px + 140px - 22px);
+    padding: 0;
+  }
+  .sw-steps .sw-toggle-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .steps-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px;
+  }
+  .sw-steps .sw-item {
+    gap: 22px;
+  }
+  .steps-no {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .steps-line {
+    flex: 1;
+    height: 1px;
+  }
+}
+/* Text stays at the switches' 0.8 for contrast; only the idle phone goes further down. */
+.js .sw-steps .sw-item:not(.is-on, :hover) {
+  --dim: 0.8;
+  --shot: 0.45;
+}
+.js .sw-steps .sw-item:not(.is-on) .steps-no {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #85868a;
+}

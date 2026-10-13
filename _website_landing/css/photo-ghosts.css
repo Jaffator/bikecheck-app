@@ -1,0 +1,132 @@
+/* Every source is now a clean cut-out, so there is one treatment rather
+   than three: colour drained out and pulled a few degrees toward the
+   gold, then dropped low enough that the machine reads as ground rather
+   than as subject. Three knobs are set per placement:
+
+     --lift  how hard to raise the subject. A black fork on a near-black
+             page needs about twice the brightness to register at all,
+             where a white frame needs pulling down instead.
+     --gm-a  the angle the mask fades along, set to run opposite the edge
+             the picture leaves by, so a shape dissolves on its way out
+             instead of ending on the clip.
+     --tone  how far into the gold the grey gets pushed.
+
+   The parts are deliberately oversized and hung off the edges: each one
+   is a fragment of something larger continuing past the page. Sections
+   keep overflow:hidden, which is what stops any of this from producing a
+   horizontal scrollbar.
+
+   No z-index anywhere: the ghosts come first in the source and every
+   content wrapper is positioned, which orders them without one. */
+.ghost {
+  position: absolute;
+  pointer-events: none;
+  --gm-a: 100deg;
+  --lift: 1;
+  --tone: 0.55;
+}
+.ghost img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: grayscale(1) sepia(var(--tone)) hue-rotate(6deg) saturate(1.45) brightness(var(--lift)) contrast(1.05);
+  -webkit-mask-image:
+    linear-gradient(var(--gm-a), transparent 0%, rgba(0, 0, 0, 0.35) 18%, #000 48%),
+    linear-gradient(transparent 0%, #000 14%, #000 74%, transparent 100%);
+  mask-image:
+    linear-gradient(var(--gm-a), transparent 0%, rgba(0, 0, 0, 0.35) 18%, #000 48%),
+    linear-gradient(transparent 0%, #000 14%, #000 74%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* Three of the fragments carry on a phone as well, so their placement
+   lives here rather than inline: a phone needs a different frame of the
+   same picture, not the desktop one scaled down. Each is pushed further
+   off its edge and blown up well past the viewport, so what lands on a
+   390px screen is still a fragment of something larger and not a small
+   complete object sitting in the middle of the text. Opacity drops too,
+   because the same picture covers far more of the reading area here. The
+   other ghosts stay desktop-only. */
+.g-cocpit {
+  top: -20%;
+  left: -28%;
+  width: 94%;
+  max-width: 1240px;
+  --gm-a: 262deg;
+  --lift: 1.45;
+}
+.g-cocpit img {
+  opacity: 0.16;
+}
+.g-drivetrain {
+  top: -4%;
+  left: -30%;
+  width: 100%;
+  max-width: 1320px;
+  --gm-a: 268deg;
+  --lift: 1.45;
+}
+.g-drivetrain img {
+  opacity: 0.17;
+}
+/* The coil was lg-only and stays that way in the middle: its desktop
+   frame is cut for a wide section, and its phone frame fills the width
+   of a one-column page. In between, where the section goes two-column
+   and neither frame fits, it drops out as before. */
+.g-coil {
+  display: none;
+}
+.g-coil img {
+  opacity: 0.16;
+}
+@media (min-width: 1024px) {
+  .g-coil {
+    display: block;
+    top: -32%;
+    right: -18%;
+    width: 58%;
+    max-width: 800px;
+    --gm-a: 88deg;
+    --lift: 1.6;
+    transform: rotate(8deg);
+  }
+}
+
+/* Phone frames. Cockpit and drivetrain were md:block, so this picks up
+   exactly where they used to stop; the coil was lg:block, and its phone
+   frame runs to 1023px so there is no width where it vanishes. */
+@media (max-width: 767px) {
+  .g-cocpit {
+    top: -24px;
+    left: -48%;
+    width: 172%;
+    --lift: 1.5;
+  }
+  .g-cocpit img {
+    opacity: 0.12;
+  }
+  .g-drivetrain {
+    top: 6%;
+    left: -38%;
+    width: 165%;
+    --lift: 1.4;
+  }
+  .g-drivetrain img {
+    opacity: 0.11;
+  }
+}
+@media (max-width: 767px) {
+  .g-coil {
+    display: block;
+    top: -3%;
+    right: -34%;
+    width: 96%;
+    --gm-a: 88deg;
+    --lift: 1.6;
+    transform: rotate(8deg);
+  }
+  .g-coil img {
+    opacity: 0.13;
+  }
+}

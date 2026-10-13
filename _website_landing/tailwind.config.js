@@ -2,8 +2,8 @@ import forms from "@tailwindcss/forms";
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  // The page's script toggles classes too; they are scanned as strings in the same file.
-  content: ["./index.html"],
+  // The scripts toggle classes too, so they are scanned as well.
+  content: ["./index.html", "./js/**/*.js"],
   theme: {
     extend: {
       colors: {

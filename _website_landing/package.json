@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs && tailwindcss -i styles.css -o dist/styles.css --minify",
-    "watch": "nodemon --watch index.html --watch styles.css --watch tailwind.config.js --watch public --ext html,css,js,svg,webp,jpg,png --exec \"npm run build\""
+    "watch": "nodemon --watch index.html --watch styles.css --watch css --watch js --watch tailwind.config.js --watch public --ext html,css,js,svg,webp,jpg,png --exec \"npm run build\""
   },
   "devDependencies": {
     "@tailwindcss/forms": "0.5.7",

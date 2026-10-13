@@ -1,0 +1,195 @@
+/* The features as a reel of cards, copied by the script from the switcher. */
+.reel {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .js .sw-features {
+    display: none;
+  }
+  .reel {
+    display: block;
+  }
+}
+
+/* Bled to the page edge; the spacer after the last card lets every card snap to the left. */
+.reel-track {
+  --card-w: min(300px, 100% - 40px);
+  display: flex;
+  gap: 12px;
+  margin: 0 -16px;
+  padding: 4px 16px 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 16px;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.reel-track::-webkit-scrollbar {
+  display: none;
+}
+.reel-track::after {
+  content: "";
+  flex: none;
+  width: calc(100% - var(--card-w) - 12px);
+}
+@media (min-width: 640px) {
+  .reel-track {
+    margin: 0 -24px;
+    padding-inline: 24px;
+    scroll-padding-inline: 24px;
+  }
+}
+.reel-card {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: var(--card-w);
+  padding: 16px;
+  border-radius: 16px;
+  scroll-snap-align: start;
+}
+.reel-card p {
+  margin-bottom: 14px;
+}
+/* Whole, not cropped: some frames are sheets rising from the bottom.
+   Sized by the screen's height, so card and dots fit under the header (260px of header, text and dots). */
+.reel-card .phone {
+  --phone-w: min(100%, clamp(120px, (100vh - 260px) / 2.09, 240px));
+  margin: auto auto 0;
+}
+@supports (height: 1svh) {
+  .reel-card .phone {
+    --phone-w: min(100%, clamp(120px, (100svh - 260px) / 2.09, 240px));
+  }
+}
+.reel-dots {
+  display: flex;
+  justify-content: center;
+}
+.reel-dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+.reel-dot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  transition:
+    width 0.25s ease,
+    background-color 0.25s ease;
+}
+.reel-dot[aria-current="true"] {
+  width: 30px;
+}
+.reel-dot[aria-current="true"]::before {
+  width: 22px;
+  background: #cec053;
+}
+
+/* Pause/play in the corner of the playing screen: a 44px target round a smaller disc. */
+.shot {
+  position: relative;
+}
+.play-toggle {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #f2f2f1;
+}
+.play-toggle[hidden] {
+  display: none;
+}
+.play-toggle::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: rgba(10, 10, 11, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.play-toggle svg {
+  position: relative;
+  width: 14px;
+  height: 14px;
+}
+.autoplay.is-paused .sw-when-playing,
+.autoplay:not(.is-paused) .sw-when-paused {
+  display: none;
+}
+
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .faq-chev {
+  transform: rotate(180deg);
+  color: #cec053;
+}
+.faq-chev {
+  color: #9c9c9e;
+  transition:
+    transform 0.25s ease,
+    color 0.2s ease;
+}
+details > summary h3 {
+  transition: color 0.2s ease;
+}
+details > summary:hover h3 {
+  color: #e8de93;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .faq-chev {
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Phone menu: fades in with a short drop; the script flips .is-open a frame after unhiding. */
+.mobile-menu {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.mobile-menu.is-open {
+  opacity: 1;
+  transform: none;
+}
+
+/* Language switching: show only the active language's copy */
+[data-lang="cs"] .lang-en {
+  display: none;
+}
+[data-lang="en"] .lang-cs {
+  display: none;
+}

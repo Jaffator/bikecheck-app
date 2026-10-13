@@ -1,3 +1,15 @@
+/* The page's own rules come first, so Tailwind's utilities after them win. */
+@import "./css/base.css";
+@import "./css/hero.css";
+@import "./css/devices.css";
+@import "./css/photo-ghosts.css";
+@import "./css/app-screens.css";
+@import "./css/switchers.css";
+@import "./css/wear.css";
+@import "./css/service-log.css";
+@import "./css/reports.css";
+@import "./css/below-lg.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

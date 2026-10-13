@@ -15,11 +15,31 @@ const tracker =
 // The release script bumps package.json, so the footer names the deployed tag.
 const { version } = JSON.parse(readFileSync("package.json", "utf8"));
 
+// In page order. The files use each other's names (root, reduced, element(), helpers), so they share one IIFE.
+const SCRIPTS = ["lang", "menu", "nav", "year", "reveal", "ridge", "wear", "season", "switchers", "below-lg", "contact-form"];
+
+// Caddy sends no cache headers, so new HTML must not meet an old script or stylesheet.
+const CACHE_BUSTED = ["styles.css", "head.js", "main.js"];
+
+function bundle() {
+  const body = SCRIPTS.map((name) => readFileSync(`js/${name}.js`, "utf8")).join("\n");
+  return `(function () {\n"use strict";\n\n${body}})();\n`;
+}
+
+function withVersion(html) {
+  return CACHE_BUSTED.reduce((page, file) => {
+    if (!page.includes(`="${file}"`)) throw new Error(`build: no ="${file}" in index.html to version`);
+    return page.replace(`="${file}"`, `="${file}?v=${version}"`);
+  }, html);
+}
+
 rmSync("dist", { recursive: true, force: true });
 cpSync("public", "dist", { recursive: true });
+cpSync("js/head.js", "dist/head.js");
+writeFileSync("dist/main.js", bundle());
 writeFileSync(
   "dist/index.html",
-  readFileSync("index.html", "utf8")
+  withVersion(readFileSync("index.html", "utf8"))
     .replaceAll(DEFAULT_APP_URL, appUrl)
     .replace("</head>", tracker)
     .replace("<!-- version -->", ` · v${version}`),

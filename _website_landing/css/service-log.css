@@ -1,0 +1,154 @@
+/* The season band (drawn by the "Season" script) over a ledger by month. */
+.season {
+  position: relative;
+  height: 220px;
+}
+.season svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* A mark hangs by its dot on the terrain; the halo keeps its label readable over the line. */
+.season-mark {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow:
+    0 0 4px #0a0a0b,
+    0 0 10px #0a0a0b;
+}
+.season-stem {
+  display: block;
+  width: 1px;
+  height: 34px;
+  margin-top: 6px;
+  background: rgba(242, 242, 241, 0.35);
+}
+.season-dot {
+  display: block;
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
+  margin-bottom: -4px;
+  border: 1.5px solid #f2f2f1;
+  border-radius: 50%;
+  background: #0a0a0b;
+}
+.season-today .season-stem {
+  background: rgba(206, 192, 83, 0.5);
+}
+.season-today .season-dot {
+  width: 9px;
+  height: 9px;
+  margin-bottom: -5px;
+  border: 0;
+  background: #cec053;
+}
+.season-today-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #cec053;
+}
+.season-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #85868a;
+}
+/* Too narrow for one-line labels: a word per line keeps them apart, and the last service gives way to today's reading. */
+@media (max-width: 1023px) {
+  .season-mark .ridge-mark {
+    width: min-content;
+    font-size: 10px;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+  }
+  .season-lg-only {
+    display: none;
+  }
+  .season-today-label {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+  }
+}
+
+.ledger-month {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 34px 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+}
+.ledger-month h3 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.ledger-month > span {
+  font-size: 13px;
+  color: #85868a;
+}
+.ledger-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: start;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+}
+.ledger-row > :not(.ledger-date) {
+  grid-column: 2;
+}
+.ledger-date,
+.ledger-part,
+.ledger-since {
+  padding-top: 2px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #9c9c9e;
+}
+.ledger-title,
+.ledger-price {
+  font-size: 16px;
+  font-weight: 500;
+  color: #f2f2f1;
+}
+.ledger-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ledger-chip {
+  padding: 6px 9px;
+  border: 1px solid rgba(206, 192, 83, 0.45);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  color: #e8de93;
+}
+@media (min-width: 1024px) {
+  .ledger-row {
+    grid-template-columns: 72px 1.6fr 1.2fr 1fr 90px;
+    gap: 24px;
+  }
+  .ledger-row > :not(.ledger-date) {
+    grid-column: auto;
+  }
+  .ledger-price {
+    text-align: right;
+  }
+}

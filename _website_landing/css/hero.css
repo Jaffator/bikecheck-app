@@ -1,0 +1,196 @@
+/* One window tall under the sticky header (h-16), the facts strip on its
+   floor. The terrain behind the copy is drawn by the "Ridge" script. */
+.hero {
+  min-height: calc(100vh - 144px);
+  min-height: calc(100svh - 144px);
+}
+/* From lg up as tall as its content, so a tall monitor gets no gap above the facts. */
+@media (min-width: 1024px) {
+  .hero {
+    min-height: 0;
+  }
+}
+
+/* Behind the copy from lg up, faded out under it and into the facts;
+   below lg a band in the gap under the headline, hung there by the script (--ridge-top). */
+.ridge {
+  position: absolute;
+  top: var(--ridge-top, 0px);
+  left: 0;
+  right: 0;
+  height: 200px;
+  pointer-events: none;
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 82%, transparent);
+  mask-image:
+    linear-gradient(90deg, transparent, #000 22%), linear-gradient(transparent, #000 12%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+@media (min-width: 1024px) {
+  .ridge {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 22%, #000 50%, rgba(0, 0, 0, 0.45) 100%),
+      linear-gradient(
+        #000 var(--ridge-floor, calc(100% - 210px)),
+        transparent calc(var(--ridge-floor, calc(100% - 210px)) + 140px)
+      );
+    mask-image:
+      linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15) 22%, #000 50%, rgba(0, 0, 0, 0.45) 100%),
+      linear-gradient(
+        #000 var(--ridge-floor, calc(100% - 210px)),
+        transparent calc(var(--ridge-floor, calc(100% - 210px)) + 140px)
+      );
+  }
+}
+/* The closing section's copy: the same terrain as a band on the section floor, under the buttons. */
+.ridge.ridge-band {
+  top: auto;
+  bottom: 0;
+  height: 190px;
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(transparent, #000 25%);
+  mask-image:
+    linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent), linear-gradient(transparent, #000 25%);
+}
+@media (min-width: 1024px) {
+  .ridge.ridge-band {
+    height: 280px;
+  }
+}
+.ridge svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.ridge-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+}
+/* The halo keeps text readable where the terrain runs through it. */
+.ridge-label,
+.readout {
+  text-shadow:
+    0 0 4px #0a0a0b,
+    0 0 10px #0a0a0b;
+}
+.ridge-mark {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9c9c9e;
+}
+
+/* Chain and fork in the corner: the one counting right now is gold. */
+.readout-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #85868a;
+}
+.readout-value {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #85868a;
+  transition: color 0.3s ease;
+}
+.readout-cell.is-on .readout-value {
+  color: #cec053;
+}
+.readout-bar {
+  display: block;
+  width: 70%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+@media (max-width: 1023px) {
+  .readout-value {
+    font-size: 14px;
+  }
+}
+@media (min-width: 1024px) {
+  .readout-bar {
+    width: 100%;
+  }
+}
+.readout-bar > span {
+  display: block;
+  height: 1px;
+  background: #cec053;
+}
+/* 48px under the headline's cap line (Geist cap 0.716em in a 0.98 line), ending on the content edge. */
+@media (min-width: 1024px) {
+  .readout {
+    top: calc(0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
+    right: 0;
+  }
+}
+
+/* The strip on the hero's floor: four plain statements, so the only
+   colour in it is Strava's. Two by two on a phone, one row from lg up. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 20px;
+  margin: 0;
+  padding: 12px 0 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.facts dt {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #85868a;
+}
+.facts dd {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: #f2f2f1;
+}
+.facts .facts-strava {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fc5200;
+}
+.facts-strava svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+.facts-strava strong {
+  font-weight: 700;
+}
+/* From lg up the first statement starts on the left content edge and the last ends on the right one. */
+@media (min-width: 1024px) {
+  .facts {
+    display: flex;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 28px 0 40px;
+  }
+  .facts dd {
+    margin-top: 10px;
+    font-size: 22px;
+  }
+}
+
+/* Sections stop being opaque bands and become tinted washes instead, so the
+   ambient ground runs the whole length of the page. */
+.band {
+  background: rgba(14, 14, 16, 0.62);
+}

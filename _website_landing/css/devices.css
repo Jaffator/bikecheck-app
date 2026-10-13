@@ -1,0 +1,155 @@
+/* The app on the two screens it runs on. The screens are real screenshots;
+   everything around them is drawn here. Every length is a multiple of --u,
+   one percent of the stage's width, so the pair scales as one picture.
+
+   The laptop is wider than the stage, so the phone's right edge is the
+   stage's right edge and the laptop runs on past it. From lg up the stage
+   is pulled left until the laptop ends on the content edge, behind the copy.
+
+   On a phone the stage is blown up past its column and hung from the
+   right, which keeps the phone a readable size there and lets the laptop
+   run off both sides behind it. On a tablet the page is still one column
+   but wide enough for the whole lid, so the pair is centred instead. */
+.devices-wrap {
+  display: flex;
+  justify-content: flex-end;
+}
+.devices {
+  position: relative;
+  flex: none;
+  width: 135%;
+  max-width: 620px;
+  aspect-ratio: 100 / 83;
+  container-type: inline-size;
+  /* Without container units the pair is drawn once, for a 520px stage. */
+  --u: 5.2px;
+}
+@supports (width: 1cqw) {
+  .devices {
+    --u: 1cqw;
+  }
+}
+/* Centred on the lid, not on the stage: the lid's middle sits 67% of
+   the way across a 620px stage. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .devices-wrap {
+    justify-content: flex-start;
+  }
+  .devices {
+    width: 620px;
+    margin-left: calc(50% - 415.4px);
+  }
+}
+@media (min-width: 1024px) {
+  .devices-wrap {
+    justify-content: flex-start;
+  }
+  /* The laptop's right end (136.6u) lands on the column's right edge: 100% - 0.8 * 136.6%. */
+  .devices {
+    width: 80%;
+    max-width: none;
+    margin-left: -9.3%;
+  }
+}
+
+.dev-laptop {
+  position: absolute;
+  top: 0;
+  left: calc(var(--u) * -2.6);
+  width: calc(var(--u) * 139.2);
+}
+.dev-lid {
+  position: relative;
+  width: calc(var(--u) * 118);
+  margin: 0 auto;
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 1.5) calc(var(--u) * 1.9);
+  border-radius: calc(var(--u) * 2.6) calc(var(--u) * 2.6) calc(var(--u) * 0.5) calc(var(--u) * 0.5);
+  background: linear-gradient(#2f3135, #232528);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+/* Camera. */
+.dev-lid::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--u) * 0.8);
+  left: 50%;
+  width: calc(var(--u) * 0.6);
+  height: calc(var(--u) * 0.6);
+  margin-left: calc(var(--u) * -0.3);
+  border-radius: 50%;
+  background: #0c0c0d;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+/* Held a step darker than the phone's screen, so the phone in front of
+   it is the one the eye lands on. */
+.dev-lid img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: calc(var(--u) * 0.4);
+  filter: brightness(0.86);
+}
+.dev-base {
+  position: relative;
+  height: calc(var(--u) * 2.9);
+  border-radius: calc(var(--u) * 0.3) calc(var(--u) * 0.3) calc(var(--u) * 2.6) calc(var(--u) * 2.6) /
+    calc(var(--u) * 0.3) calc(var(--u) * 0.3) calc(var(--u) * 2.9) calc(var(--u) * 2.9);
+  background: linear-gradient(#484a4f 0%, #303236 20%, #1c1d20 100%);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+    0 calc(var(--u) * 5) calc(var(--u) * 9) calc(var(--u) * -3) rgba(0, 0, 0, 0.85);
+}
+/* The groove a thumb opens the lid by. */
+.dev-base::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--u) * 17);
+  height: calc(var(--u) * 0.95);
+  transform: translateX(-50%);
+  border-radius: 0 0 calc(var(--u) * 1.2) calc(var(--u) * 1.2);
+  background: #1b1c1f;
+}
+
+.dev-phone {
+  position: absolute;
+  top: calc(var(--u) * 12);
+  right: 0;
+  width: calc(var(--u) * 33.6);
+  padding: calc(var(--u) * 1.05);
+  border-radius: calc(var(--u) * 5);
+  background: #1c1d20;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 0 0 1px rgba(0, 0, 0, 0.7),
+    calc(var(--u) * -2) calc(var(--u) * 3) calc(var(--u) * 7) calc(var(--u) * -1) rgba(0, 0, 0, 0.8);
+}
+.dev-phone-screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(var(--u) * 4);
+  background: #0a0a0b;
+}
+.dev-phone-screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Notch, with the earpiece slit and the camera painted into it. It sits
+   in the gap the screenshot's own status bar leaves between the clock and
+   the signal icons. */
+.dev-phone-screen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--u) * 10.6);
+  height: calc(var(--u) * 2.1);
+  transform: translateX(-50%);
+  border-radius: 0 0 calc(var(--u) * 1.3) calc(var(--u) * 1.3);
+  background:
+    radial-gradient(circle at 76% 44%, #08080a 0, #08080a calc(var(--u) * 0.36), transparent calc(var(--u) * 0.4)),
+    linear-gradient(#08080a, #08080a) 42% 44% / calc(var(--u) * 3) calc(var(--u) * 0.36) no-repeat,
+    #1c1d20;
+}

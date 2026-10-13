@@ -1,0 +1,149 @@
+/* A real screenshot in a drawn phone: the devices' phone again, but one that
+   can stand anywhere. Every length is a multiple of --u, one percent of the
+   frame's own width, so a frame is sized by --phone-w alone. A frame holds
+   one screen or a stack of them; of a stack inside a switcher only the one
+   marked .is-on shows. */
+.phone {
+  flex: none;
+  width: var(--phone-w, 240px);
+  container-type: inline-size;
+  /* Without container units the frame is drawn once, for 240px. */
+  --u: 2.4px;
+}
+@supports (width: 1cqw) {
+  .phone {
+    --u: 1cqw;
+  }
+}
+.phone-body {
+  padding: calc(var(--u) * 3.1);
+  border-radius: calc(var(--u) * 14.9);
+  /* Near black, darker than the cards in the app (#1c1c1e), so a card at
+     the edge of the screen does not run into the frame. */
+  background: #070708;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 0 0 1px rgba(0, 0, 0, 0.7),
+    0 calc(var(--u) * 9) calc(var(--u) * 18) calc(var(--u) * -7) rgba(0, 0, 0, 0.85);
+}
+.phone-screen {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 640 / 1386;
+  border-radius: calc(var(--u) * 11.9);
+  background: #0a0a0b;
+}
+.phone-screen > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+/* A screen that is several screenshots: they lie on top of each other and
+   the switcher's script steps through them while the screen is the one
+   being shown. The frame coming on fades in over the one before it, which
+   only leaves once it is covered, so the screen never dims between two
+   frames. A screen that is switched away goes back to its first frame only
+   once it has faded out, which is what the delay without .is-on is for.
+   isolation keeps a frame's z-index from lifting it over the notch. */
+.phone-frames {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+}
+.phone-frames > * {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0s 0.45s;
+}
+.phone-frames > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+.phone-frames > .is-on {
+  z-index: 1;
+  opacity: 1;
+}
+.phone-frames.is-on > .is-on {
+  transition: opacity 0.45s ease;
+}
+/* A frame that scrolls: screenshots of one screen further and further
+   down it, stitched into one tall page. Each step of the script slides the
+   page up to the next of its stops (--y, a share of the page's height), the
+   way a thumb would. What the app keeps in place lies over the page: its
+   header, the system buttons and, where there is one, the tab bar or a
+   button at the foot. The page waits a moment before it moves, so that a
+   frame fading in is there by the time it does; off, it goes back to its
+   top, the same way a frame leaves. */
+.phone-scroll img {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: auto;
+}
+.phone-scroll-page {
+  top: 0;
+  transform: translateY(calc(var(--y, 0%) * -1));
+  transition: transform 0s 0.45s;
+}
+.phone-frames.is-on > .is-on .phone-scroll-page {
+  transition: transform 1.4s cubic-bezier(0.45, 0, 0.2, 1) 0.25s;
+}
+.phone-scroll-top {
+  top: 0;
+}
+.phone-scroll-bottom {
+  bottom: 0;
+}
+.phone-scroll-nav {
+  top: 95.96%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone-frames .phone-scroll-page {
+    transition: none;
+  }
+}
+/* The devices phone's notch. */
+.phone-screen::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 50%;
+  width: calc(var(--u) * 31.5);
+  height: calc(var(--u) * 6.25);
+  transform: translateX(-50%);
+  border-radius: 0 0 calc(var(--u) * 3.9) calc(var(--u) * 3.9);
+  background:
+    radial-gradient(circle at 76% 44%, #1c1d20 0, #1c1d20 calc(var(--u) * 1.07), transparent calc(var(--u) * 1.2)),
+    linear-gradient(#1c1d20, #1c1d20) 42% 44% / calc(var(--u) * 8.9) calc(var(--u) * 1.07) no-repeat,
+    #070708;
+}
+
+/* A screen peeking out of the card that talks about it: the frame runs
+   past the foot of the card, cut by its edge below lg and faded from lg up. */
+.peek {
+  display: flex;
+  justify-content: center;
+  height: 300px;
+  overflow: hidden;
+}
+.peek .phone {
+  --phone-w: 240px;
+}
+@media (min-width: 1024px) {
+  .peek {
+    height: 290px;
+    padding-top: 26px;
+    -webkit-mask-image: linear-gradient(#000 72%, transparent);
+    mask-image: linear-gradient(#000 72%, transparent);
+  }
+  .peek .phone {
+    --phone-w: 190px;
+  }
+}
