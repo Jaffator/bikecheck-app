@@ -2,6 +2,7 @@
   "name": "bikecheck",
   "private": true,
   "scripts": {
+    "version:bump": "node scripts/bump-version.mjs",
     "deploy:production": "node scripts/release.mjs",
     "test:scripts": "node --test scripts/release.test.mjs"
   }

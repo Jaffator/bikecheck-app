@@ -8,6 +8,7 @@ import {
   menuKey,
   progressBar,
   versionMismatches,
+  withVersion,
 } from "./release.mjs";
 
 const step = (name, status, conclusion = null) => ({ name, status, conclusion });
@@ -83,6 +84,25 @@ describe("versionMismatches", () => {
   it("catches a lock whose root package still has the old version", () => {
     const files = [{ file: "package-lock.json", text: lock("1.4.0", "1.3.1") }];
     assert.deepEqual(versionMismatches(files, "1.4.0"), [{ file: "package-lock.json", found: "1.3.1" }]);
+  });
+});
+
+describe("withVersion", () => {
+  it("sets version in package.json, keeping indent and the final newline", () => {
+    const text = '{\n  "name": "x",\n  "version": "1.0.0"\n}\n';
+    assert.equal(withVersion(text, "1.4.0"), '{\n  "name": "x",\n  "version": "1.4.0"\n}\n');
+  });
+
+  it("sets both versions in a package-lock.json", () => {
+    const lock = { name: "x", version: "1.0.0", packages: { "": { name: "x", version: "1.0.0" }, "node_modules/a": { version: "9.9.9" } } };
+    const out = JSON.parse(withVersion(JSON.stringify(lock, null, 2), "1.4.0"));
+    assert.equal(out.version, "1.4.0");
+    assert.equal(out.packages[""].version, "1.4.0");
+    assert.equal(out.packages["node_modules/a"].version, "9.9.9");
+  });
+
+  it("keeps CRLF line endings", () => {
+    assert.equal(withVersion('{\r\n  "version": "1.0.0"\r\n}\r\n', "2.0.0"), '{\r\n  "version": "2.0.0"\r\n}\r\n');
   });
 });
 

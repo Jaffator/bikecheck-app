@@ -6,10 +6,11 @@ CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.
 ## Shipping a release
 
 - **Every push / PR to `main`** runs [ci.yml](../.github/workflows/ci.yml): typecheck of monolith, strava-service and frontend, plus the backend `UNIT` tests. It deploys nothing.
-- **`npm run deploy:production`** from the repo root cuts a release with [scripts/release.mjs](../scripts/release.mjs):
+- **`npm run version:bump`** on your branch, with [scripts/bump-version.mjs](../scripts/bump-version.mjs): the same bug fix / new feature / major menu, then writes that version into the App's and the Marketing Website's `package.json` (+ locks) and commits `chore(release): vX.Y.Z`. It does not push; the bump reaches `main` with your PR.
+- **`npm run deploy:production`** from the repo root, once that PR is merged, cuts a release with [scripts/release.mjs](../scripts/release.mjs):
   1. Stops unless you are on a clean `main` that fast-forwards to `origin` and has nothing unpushed.
   2. Offers bug fix / new feature / major from the highest `vX.Y.Z` tag (↑/↓ + Enter, or a number; Esc or Ctrl+C cancels), then asks to confirm (default No). Cancel changes nothing.
-  3. Stops unless the App's and the Marketing Website's `package.json` (+ locks) already carry that version. You bump, commit and push them first; the script never commits. The App shows it in Settings → About, the Website in its footer and its `?v=` cache-busting.
+  3. Stops unless the App's and the Marketing Website's `package.json` (+ locks) already carry that version (`npm run version:bump`); this script never commits. The App shows it in Settings → About, the Website in its footer and its `?v=` cache-busting.
   4. Tags and pushes `vX.Y.Z`, creates a GitHub Release with generated notes.
   5. Follows the Deploy run with a progress bar until ✅ or ❌ (failed step + run URL). Ctrl+C stops watching only.
 

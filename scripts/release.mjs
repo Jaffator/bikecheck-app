@@ -7,8 +7,8 @@ import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { promisify, styleText } from "node:util";
 
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const VERSION_FILES = [
+export const ROOT = fileURLToPath(new URL("..", import.meta.url));
+export const VERSION_FILES = [
   "_frontend/bikecheck/package.json",
   "_frontend/bikecheck/package-lock.json",
   "_website_landing/package.json",
@@ -25,7 +25,7 @@ const FIND_RUN_TIMEOUT_MS = 30_000;
 const FIND_RUN_POLL_MS = 3_000;
 const POLL_MS = 5_000;
 const BAR_CELLS = 20;
-const CANCELLED = "Cancelled; nothing changed.";
+export const CANCELLED = "Cancelled; nothing changed.";
 
 const execFileAsync = promisify(execFile);
 
@@ -67,6 +67,15 @@ export function versionMismatches(files, version) {
   });
 }
 
+// Keeps the file's line endings; a lock repeats the version on its root package.
+export function withVersion(text, version) {
+  const eol = text.includes("\r\n") ? "\r\n" : "\n";
+  const json = JSON.parse(text);
+  json.version = version;
+  if (json.packages?.[""]) json.packages[""].version = version;
+  return JSON.stringify(json, null, 2).replaceAll("\n", eol) + eol;
+}
+
 // Matrix jobs are named after every matrix value; the first one is enough to tell them apart.
 function shortJobName(name) {
   return name.replace(/\(([^,)]*)[^)]*\)/, "($1)");
@@ -103,7 +112,7 @@ export function progressBar(percent) {
   return `[${"█".repeat(filled)}${"░".repeat(BAR_CELLS - filled)}]`;
 }
 
-async function run(cmd, args) {
+export async function run(cmd, args) {
   const { stdout } = await execFileAsync(cmd, args, { cwd: ROOT, maxBuffer: 16 * 1024 * 1024 });
   return stdout.trim();
 }
@@ -112,7 +121,7 @@ async function ghJson(args) {
   return JSON.parse(await run("gh", args));
 }
 
-async function gitOk(args) {
+export async function gitOk(args) {
   try {
     await run("git", args);
     return true;
@@ -122,11 +131,11 @@ async function gitOk(args) {
 }
 
 // styleText drops the colours when the stream is not a terminal or NO_COLOR is set.
-function paint(format, text, stream = process.stdout) {
+export function paint(format, text, stream = process.stdout) {
   return styleText(format, text, { stream });
 }
 
-function stop(reason) {
+export function stop(reason) {
   console.error(paint("red", `✖ ${reason}`, process.stderr));
   process.exit(1);
 }
@@ -176,7 +185,7 @@ function select(items) {
   });
 }
 
-async function pickVersion(lastTag) {
+export async function pickVersion(lastTag) {
   const base = lastTag ?? "v0.0.0";
   const versions = KINDS.map(({ kind }) => bumpVersion(base, kind));
   console.log(`\nLast version: ${lastTag ?? "none"}  ${paint("dim", "(↑/↓ + Enter, or a number)")}`);
@@ -200,14 +209,16 @@ async function confirm(version, lastTag) {
   return answer === "y" || answer === "yes";
 }
 
+export async function readVersionFiles() {
+  return Promise.all(VERSION_FILES.map(async (file) => ({ file, text: await readFile(resolve(ROOT, file), "utf8") })));
+}
+
 // The App's About and the Website's footer and ?v= read these, so a tag must not outrun them.
 async function checkVersionFiles(version) {
-  const files = await Promise.all(
-    VERSION_FILES.map(async (file) => ({ file, text: await readFile(resolve(ROOT, file), "utf8") })),
-  );
-  const stale = versionMismatches(files, version.slice(1));
+  const stale = versionMismatches(await readVersionFiles(), version.slice(1));
   if (stale.length === 0) return;
-  stop(`Not on ${version} yet: ${stale.map((s) => `${s.file} (${s.found})`).join(", ")}. Bump, commit and push first.`);
+  const found = stale.map((s) => `${s.file} (${s.found})`).join(", ");
+  stop(`Not on ${version} yet: ${found}. Run npm run version:bump, merge it to main, then rerun.`);
 }
 
 async function tagAndRelease(version) {
