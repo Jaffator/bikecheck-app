@@ -2,6 +2,7 @@
 import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { emitKeypressEvents } from "node:readline";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { promisify, styleText } from "node:util";
@@ -43,6 +44,17 @@ export function bumpVersion(tag, kind) {
   if (kind === "major") return `v${major + 1}.0.0`;
   if (kind === "minor") return `v${major}.${minor + 1}.0`;
   return `v${major}.${minor}.${patch + 1}`;
+}
+
+// Arrows move (wrapping), Enter picks, a number picks at once; Esc and Ctrl+C cancel.
+export function menuKey(index, count, key) {
+  if (key.name === "up") return { index: (index + count - 1) % count };
+  if (key.name === "down") return { index: (index + 1) % count };
+  if (key.name === "return" || key.name === "enter") return { index, picked: true };
+  if (key.name === "escape" || (key.ctrl && key.name === "c")) return { index, cancelled: true };
+  const number = Number(key.sequence);
+  if (Number.isInteger(number) && number >= 1 && number <= count) return { index: number - 1, picked: true };
+  return { index };
 }
 
 export function versionMismatches(files, version) {
@@ -136,21 +148,55 @@ async function checkPreconditions() {
   }
 }
 
-async function pickVersion(rl, lastTag) {
-  const base = lastTag ?? "v0.0.0";
-  console.log(`\nLast version: ${lastTag ?? "none"}`);
-  KINDS.forEach(({ kind, label }, i) => console.log(`  ${i + 1}) ${label.padEnd(13)} → ${bumpVersion(base, kind)}`));
-  console.log(`  ${KINDS.length + 1}) cancel`);
-  const answer = Number((await rl.question("\nChoice: ")).trim());
-  const picked = KINDS[answer - 1];
-  return picked ? bumpVersion(base, picked.kind) : null;
+function menuLines(items, index) {
+  return items.map((item, i) => (i === index ? paint("cyan", `❯ ${i + 1}) ${item}`) : `  ${i + 1}) ${item}`));
 }
 
-async function confirm(rl, version, lastTag) {
+// Raw keys, so the arrows work; resolves the picked index, or null when cancelled.
+function select(items) {
+  const { stdin } = process;
+  if (!stdin.isTTY) stop("Run it in a terminal; the version is picked with the keyboard.");
+  emitKeypressEvents(stdin);
+  stdin.setRawMode(true);
+  stdin.resume();
+  let index = 0;
+  draw(menuLines(items, index), 0);
+  return new Promise((done) => {
+    function onKey(_, key) {
+      const step = menuKey(index, items.length, key ?? {});
+      index = step.index;
+      draw(menuLines(items, index), items.length);
+      if (!step.picked && !step.cancelled) return;
+      stdin.off("keypress", onKey);
+      stdin.setRawMode(false);
+      stdin.pause();
+      done(step.picked ? index : null);
+    }
+    stdin.on("keypress", onKey);
+  });
+}
+
+async function pickVersion(lastTag) {
+  const base = lastTag ?? "v0.0.0";
+  const versions = KINDS.map(({ kind }) => bumpVersion(base, kind));
+  console.log(`\nLast version: ${lastTag ?? "none"}  ${paint("dim", "(↑/↓ + Enter, or a number)")}`);
+  const items = [...KINDS.map(({ label }, i) => `${label.padEnd(13)} → ${versions[i]}`), "cancel"];
+  const picked = await select(items);
+  // The last item is "cancel", which has no version.
+  return picked === null ? null : (versions[picked] ?? null);
+}
+
+async function confirm(version, lastTag) {
   const head = await run("git", ["log", "-1", "--format=%h %s"]);
   const count = lastTag ? await run("git", ["rev-list", "--count", `${lastTag}..HEAD`]) : "all";
   console.log(`\nRelease ${version}\n  main: ${head}\n  ${count} commit(s) since ${lastTag ?? "the start"}`);
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  rl.on("SIGINT", () => {
+    console.log(`\n${CANCELLED}`);
+    process.exit(0);
+  });
   const answer = (await rl.question("Continue? [y/N] ")).trim().toLowerCase();
+  rl.close();
   return answer === "y" || answer === "yes";
 }
 
@@ -241,15 +287,9 @@ function report(version, { conclusion, jobs, url }) {
 async function main() {
   await checkPreconditions();
   const lastTag = highestTag((await run("git", ["tag", "--list", "v*"])).split(/\r?\n/));
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  rl.on("SIGINT", () => {
-    console.log(`\n${CANCELLED}`);
-    process.exit(0);
-  });
-  const version = await pickVersion(rl, lastTag);
+  const version = await pickVersion(lastTag);
   if (version !== null) await checkVersionFiles(version);
-  const go = version !== null && (await confirm(rl, version, lastTag));
-  rl.close();
+  const go = version !== null && (await confirm(version, lastTag));
   if (!go) {
     console.log(CANCELLED);
     return;

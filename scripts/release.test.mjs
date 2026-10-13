@@ -5,6 +5,7 @@ import {
   deployProgress,
   failedStep,
   highestTag,
+  menuKey,
   progressBar,
   versionMismatches,
 } from "./release.mjs";
@@ -37,6 +38,29 @@ describe("bumpVersion", () => {
 
   it("bumps the major and resets the rest", () => {
     assert.equal(bumpVersion("v1.3.1", "major"), "v2.0.0");
+  });
+});
+
+describe("menuKey", () => {
+  const key = (name, extra = {}) => ({ name, sequence: name, ...extra });
+
+  it("moves down and wraps from the top up to the last item", () => {
+    assert.deepEqual(menuKey(0, 4, key("down")), { index: 1 });
+    assert.deepEqual(menuKey(0, 4, key("up")), { index: 3 });
+  });
+
+  it("picks the highlighted item on Enter", () => {
+    assert.deepEqual(menuKey(2, 4, key("return")), { index: 2, picked: true });
+  });
+
+  it("picks a numbered item at once and ignores numbers out of range", () => {
+    assert.deepEqual(menuKey(0, 4, key("2")), { index: 1, picked: true });
+    assert.deepEqual(menuKey(0, 4, key("9")), { index: 0 });
+  });
+
+  it("cancels on Esc and Ctrl+C", () => {
+    assert.deepEqual(menuKey(1, 4, key("escape")), { index: 1, cancelled: true });
+    assert.deepEqual(menuKey(1, 4, key("c", { ctrl: true, sequence: "\x03" })), { index: 1, cancelled: true });
   });
 });
 
