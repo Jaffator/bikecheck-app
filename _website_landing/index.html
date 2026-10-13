@@ -25,12 +25,32 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="BikeCheck" />
     <meta name="twitter:card" content="summary_large_image" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&display=swap" />
+    <!-- Latin carries all the English and most of the Czech; preloaded so the headline doesn't swap fonts late. -->
+    <link rel="preload" href="assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin />
 
     <style>
+      /* Geist self-hosted (OFL), so no visitor IP goes to Google. Variable weight, split as Google Fonts serves it. */
+      @font-face {
+        font-family: "Geist";
+        font-style: normal;
+        font-weight: 400 800;
+        font-display: swap;
+        src: url("assets/fonts/geist-latin-ext.woff2") format("woff2");
+        unicode-range:
+          U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+          U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      @font-face {
+        font-family: "Geist";
+        font-style: normal;
+        font-weight: 400 800;
+        font-display: swap;
+        src: url("assets/fonts/geist-latin.woff2") format("woff2");
+        unicode-range:
+          U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+          U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+
       :root {
         color-scheme: dark;
       }
@@ -104,32 +124,7 @@
         }
       }
 
-      /* Frosted panels. Surfaces are translucent and let the ground behind them
-     show through, so depth comes from layering rather than from a lighter fill.
-     The bright top edge is what sells the glass. */
-      .glass {
-        position: relative;
-        background: linear-gradient(
-          155deg,
-          rgba(255, 255, 255, 0.055),
-          rgba(255, 255, 255, 0.018) 45%,
-          rgba(255, 255, 255, 0.008)
-        );
-        backdrop-filter: blur(18px) saturate(118%);
-        -webkit-backdrop-filter: blur(18px) saturate(118%);
-        border: 1px solid rgba(255, 255, 255, 0.075);
-        box-shadow:
-          inset 0 1px 0 0 rgba(255, 255, 255, 0.085),
-          0 24px 60px -30px rgba(0, 0, 0, 0.95);
-      }
-      .glass-deep {
-        background: linear-gradient(155deg, rgba(255, 255, 255, 0.032), rgba(10, 10, 11, 0.66) 60%);
-        backdrop-filter: blur(26px) saturate(120%);
-        -webkit-backdrop-filter: blur(26px) saturate(120%);
-      }
-
-      /* Ambient ground the glass has something to blur: soft pools of gold and
-     slate, fixed so panels pick up different light as the page moves. */
+      /* Ambient ground: soft pools of gold and slate, fixed so the page picks up different light as it moves. */
       .ambient {
         position: fixed;
         inset: 0;
@@ -160,6 +155,7 @@
      cast one. Opaque like the app's, so the ghosts stop at the card edge. No
      hover: none of these is a button, and in the app only a card that is one
      reacts. */
+      /* Corners: buttons and inputs 12px, cards 16px, tags and small toggles a pill. */
       :root {
         --elev-panel:
           inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.38), 0 8px 16px -6px rgba(0, 0, 0, 0.5);
@@ -300,11 +296,10 @@
         height: 1px;
         background: #cec053;
       }
-      /* 48px under the headline's cap line (eyebrow 16.5px + mt-11, Geist cap 0.716em in a 0.98 line),
-     ending on the content edge. */
+      /* 48px under the headline's cap line (Geist cap 0.716em in a 0.98 line), ending on the content edge. */
       @media (min-width: 1024px) {
         .readout {
-          top: calc(60.5px + 0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
+          top: calc(0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
           right: 0;
         }
       }
@@ -316,7 +311,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 24px 20px;
         margin: 0;
-        padding: 24px 0 32px;
+        padding: 12px 0 32px;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
       }
       .facts dt {
@@ -328,7 +323,7 @@
       }
       .facts dd {
         margin: 8px 0 0;
-        font-size: 17px;
+        font-size: 15px;
         font-weight: 500;
         line-height: 1.25;
         letter-spacing: -0.015em;
@@ -821,35 +816,19 @@
      button) hangs off .js. What is left is a plain list next to a phone
      showing its first screen.
 
-     The switch whose screen is on the phone is not a solid card but a sheet
-     of glass, the way iOS marks things: the ground shows through it, blurred
-     and with its colour turned up, and what tells the sheet from that ground
-     is the light on its rim, brightest where it comes in at the top left and
-     where it leaves at the bottom right. ::before is the sheet and ::after
-     the rim; both sit under the switch's content and fade in when it is lit.
+     The switch whose screen is on the phone stands on the app's card
+     material (see .card): ::before is that card, under the switch's content,
+     and it fades in when the switch is lit.
 
-     Two things the blur depends on:
-     - A switch is dimmed through what is inside it (--dim), never through its
-       own opacity. Anything less than fully opaque cuts the glass inside it
-       off from the page behind, and the blur would have nothing to work on.
-       For the same reason neither block is a .reveal of its own.
-     - The switches are stacked above the halo of light behind the phone, so
-       that a lit one has that light to look through.
-
-     An idle switch is held at 0.8, which keeps its body text above 4.5:1 on
-     this ground. The lit one is told apart by its surface and a gold title,
-     not by everything else going dark. */
+     An idle switch is held at 0.8 through what is inside it (--dim), which
+     keeps its body text above 4.5:1 on this ground. The lit one is told apart
+     by its card and a gold title, not by everything else going dark. */
       .sw-item {
         position: relative;
         z-index: 1;
         display: flex;
         border-radius: 16px;
-        --glass-tint: transparent;
         --dim: 0.8;
-        transition:
-          color 0.25s ease,
-          border-color 0.25s ease,
-          box-shadow 0.35s ease;
       }
       .sw-item > * {
         opacity: var(--dim);
@@ -865,72 +844,20 @@
       .sw-item.is-on h3 {
         color: #cec053;
       }
-      .sw-item::before,
-      .sw-item::after {
+      .sw-item::before {
         content: "";
         position: absolute;
         inset: 0;
         z-index: -1;
         border-radius: inherit;
         pointer-events: none;
+        background-color: #1b1c1e;
+        box-shadow: var(--elev-panel);
         opacity: 0;
-        transform: scale(0.965);
-        transition:
-          opacity 0.35s ease,
-          transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transition: opacity 0.3s ease;
       }
-      /* The sheet: light pooling in the corner it enters by, a fainter return in
-     the corner it leaves by, and a soft glow just inside the edge, which is
-     what gives the glass its thickness. */
-      .sw-item::before {
-        background:
-          radial-gradient(120% 150% at 0% 0%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.03) 48%, transparent 70%),
-          radial-gradient(90% 130% at 100% 100%, rgba(255, 255, 255, 0.07), transparent 55%),
-          linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)), var(--glass-tint);
-        -webkit-backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
-        backdrop-filter: blur(18px) saturate(1.8) brightness(1.1);
-        box-shadow:
-          inset 0 0 14px 0 rgba(255, 255, 255, 0.06),
-          inset 0 8px 14px -10px rgba(255, 255, 255, 0.09),
-          inset 0 -10px 18px -14px rgba(255, 255, 255, 0.08);
-      }
-      /* The rim is kept low and close to even all the way round: a bright
-     hairline stair-steps on the corners, and it is the sheet that should read
-     as glass, not its outline. */
-      .sw-item::after {
-        padding: 1px;
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.2),
-          rgba(255, 255, 255, 0.08) 26%,
-          rgba(255, 255, 255, 0.045) 52%,
-          rgba(255, 255, 255, 0.065) 78%,
-          rgba(255, 255, 255, 0.13)
-        );
-        -webkit-mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-        mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
-      }
-      .sw-item.is-on {
-        box-shadow:
-          0 1px 2px 0 rgba(0, 0, 0, 0.35),
-          0 14px 30px -14px rgba(0, 0, 0, 0.8);
-      }
-      .sw-item.is-on::before,
-      .sw-item.is-on::after {
-        opacity: var(--glass, 1);
-        transform: none;
-      }
-      /* Without a blur the sheet goes back to being the solid card it replaced. */
-      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-        .sw-item::before {
-          background-color: #1b1c1e;
-        }
+      .sw-item.is-on::before {
+        opacity: 1;
       }
 
       /* The phone, with a thin halo of gold close around it, so the middle of
@@ -1007,9 +934,8 @@
         padding: 20px 22px;
         border: 1px solid transparent;
       }
-      /* The glass lies over the switch's own transparent border. */
-      .sw-features .sw-item::before,
-      .sw-features .sw-item::after {
+      /* The card covers the switch's own transparent border. */
+      .sw-features .sw-item::before {
         inset: -1px;
       }
       .sw-icon {
@@ -1090,7 +1016,7 @@
         flex-direction: column;
         gap: 40px;
       }
-      /* No glass here: the lit step is told by its gold number and its bright phone. */
+      /* No card here: the lit step is told by its gold number and its bright phone. */
       .sw-steps .sw-item {
         --dim: 1;
         --shot: 1;
@@ -1098,12 +1024,8 @@
         gap: 12px;
         height: 100%;
       }
-      .sw-steps .sw-item::before,
-      .sw-steps .sw-item::after {
+      .sw-steps .sw-item::before {
         content: none;
-      }
-      .sw-steps .sw-item.is-on {
-        box-shadow: none;
       }
       .sw-steps .sw-item.is-on h3 {
         color: inherit;
@@ -1711,13 +1633,6 @@
         display: none;
       }
 
-      @supports not (backdrop-filter: blur(1px)) {
-        .glass,
-        .glass-deep {
-          background: #17181a;
-        }
-      }
-
       details > summary {
         list-style: none;
         cursor: pointer;
@@ -1887,7 +1802,7 @@
 
     <a
       href="#main"
-      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-gold-500 focus:text-ink-950 focus:px-4 focus:py-2 focus:rounded-lg focus:font-display focus:font-semibold"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-gold-500 focus:text-ink-950 focus:px-4 focus:py-2 focus:rounded-xl focus:font-display focus:font-semibold"
     >
       <span class="lang-cs">Přejít na obsah</span><span class="lang-en">Skip to content</span>
     </a>
@@ -1971,6 +1886,7 @@
           <a
             href="https://app.bikecheck.cloud/?lang=cs"
             data-app-link
+            data-umami-event="sign-in"
             class="inline-flex items-center px-2 py-2.5 font-display font-semibold text-[13px] sm:text-[14px] text-paper hover:text-gold-400 transition-colors duration-200 active:translate-y-px whitespace-nowrap"
           >
             <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
@@ -1978,6 +1894,7 @@
           <a
             href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
             data-app-link
+            data-umami-event="create-account"
             class="hidden sm:inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[13px] sm:text-[14px] px-3.5 sm:px-4 py-2.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
           >
             <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
@@ -2073,14 +1990,16 @@
           <a
             href="https://app.bikecheck.cloud/?lang=cs"
             data-app-link
-            class="flex items-center justify-center h-12 rounded-2xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px"
+            data-umami-event="sign-in"
+            class="flex items-center justify-center h-12 rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px"
           >
             <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
           </a>
           <a
             href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
             data-app-link
-            class="flex items-center justify-center gap-2 h-12 rounded-2xl bg-gold-500 hover:bg-gold-400 font-display font-semibold text-[15px] text-ink-950 transition-colors duration-200 active:translate-y-px"
+            data-umami-event="create-account"
+            class="flex items-center justify-center gap-2 h-12 rounded-xl bg-gold-500 hover:bg-gold-400 font-display font-semibold text-[15px] text-ink-950 transition-colors duration-200 active:translate-y-px"
           >
             <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
             <svg
@@ -2119,24 +2038,19 @@
      script): climbs count on the chain, descents mostly on the brake pads. -->
       <section class="hero relative overflow-hidden flex flex-col">
         <div
-          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-[63px] lg:pb-[168px]"
+          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 lg:pt-[63px] lg:pb-[168px]"
         >
           <div class="relative">
-            <p class="font-mono text-[10px] lg:text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-              <span class="lang-cs">Platforma pro tvoje kolo</span>
-              <span class="lang-en">Platform for your bike</span>
-            </p>
-
             <h1
-              class="mt-3 lg:mt-11 lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em]"
+              class="lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em]"
             >
               <span class="lang-cs"
                 >Všechno o tvém kole<br />
-                Na jednom místě</span
+                na jednom místě</span
               >
               <span class="lang-en"
                 >All about your bike<br />
-                In one place</span
+                in one place</span
               >
             </h1>
 
@@ -2164,7 +2078,7 @@
             </div>
 
             <p class="hidden lg:block mt-7 lg:mt-9 max-w-[560px] lg:text-[19px] leading-[1.5] text-paper-dim">
-              <span class="lang-cs">Celá historie kola v kapse. Sdílíš ji jedním odkazem</span>
+              <span class="lang-cs">Celá historie kola v kapse. Sdílíš ji jedním odkazem.</span>
               <span class="lang-en">The complete history of your bike in your pocket. Share it with a single link.</span>
             </p>
 
@@ -2175,6 +2089,8 @@
              background or label from us - only a height. -->
               <a
                 href="PLAY_STORE_URL"
+                data-umami-event="google-play"
+                data-umami-event-place="hero"
                 class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
               >
                 <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
@@ -2201,6 +2117,8 @@
               <a
                 href="https://app.bikecheck.cloud/?lang=cs"
                 data-app-link
+                data-umami-event="open-web"
+                data-umami-event-place="hero"
                 class="inline-flex items-center gap-2 lg:gap-2.5 h-9 sm:h-10 lg:h-[52px] px-3.5 sm:px-2 lg:px-5 rounded-md lg:rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] lg:text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
               >
                 <svg
@@ -2273,7 +2191,6 @@
             </div>
             <div>
               <!-- Strava's own lockup wording, so English in both languages; their name keeps their orange. -->
-              <dt class="facts-strava"></dt>
               <dt class="facts-strava">
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path
@@ -2315,7 +2232,7 @@
                 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance"
               >
                 <span class="lang-cs"
-                  >Protože tě baví jezdit,<br />a chceš mít svá kola<br />
+                  >Protože tě baví jezdit<br />a chceš mít svá kola<br />
                   <span class="text-gold-500">pod&nbsp;kontrolou</span></span
                 >
                 <span class="lang-en"
@@ -2333,7 +2250,7 @@
                     </h3>
                     <p class="text-[14px] sm:text-[15px] leading-relaxed text-paper-dim">
                       <span class="lang-cs"
-                        >Kdy jsi měnil řetěz, kdy je čas na sevis vidlice podle reálného ježdění – všechno pohromadě.</span
+                        >Kdy jsi měnil řetěz, kdy je čas na servis vidlice podle reálného ježdění. Všechno pohromadě.</span
                       ><span class="lang-en">When the chain last went on and the fork was last serviced, in one place.</span>
                     </p>
                   </div>
@@ -2434,14 +2351,11 @@
           <div class="sw sw-steps">
             <div class="steps-head">
               <div>
-                <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-                  <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
-                </p>
                 <h2
-                  class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
+                  class="font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
                 >
                   <!-- <span class="lang-cs"
-                    >Protože tě baví jezdit,<br />a chceš mít svá kola<br />
+                    >Protože tě baví jezdit<br />a chceš mít svá kola<br />
                     <span class="text-gold-500">pod&nbsp;kontrolou</span></span
                   > -->
                   <span class="lang-cs">Tři kroky. Pak už jen <span class="text-gold-500">jezdíš.</span></span>
@@ -2573,8 +2487,8 @@
                     </h3>
                     <p class="text-[15px] leading-relaxed text-paper-dim max-w-[52ch]">
                       <span class="lang-cs"
-                        >Jednou povolíš přístup a jízdy pak chodí průběžně. Jízdy a opotřebení na kolech se začně automaticky
-                        zapisovat.</span
+                        >Jednou povolíš přístup a jízdy pak chodí průběžně. Opotřebení na kolech se začne zapisovat
+                        samo.</span
                       ><span class="lang-en"
                         >Grant access once and rides keep arriving. More than one bike is no problem.</span
                       >
@@ -2734,19 +2648,12 @@
       <!-- ============================== WEAR ============================== -->
       <section id="wear" class="relative overflow-hidden scroll-mt-20 band border-y hairline">
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
-          <div class="grid lg:grid-cols-2 gap-x-24 gap-y-6 items-start mb-12 lg:mb-16 reveal">
-            <div>
-              <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-                <span class="lang-cs">Opotřebení</span><span class="lang-en">Wear</span>
-              </p>
-              <h2
-                class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
-              >
-                <span class="lang-cs">Co se s kolem děje, BikeCheck <span class="text-gold-500">zapisuje.</span></span>
-                <span class="lang-en">What happens to your bike, BikeCheck <span class="text-gold-500">records.</span></span>
-              </h2>
-            </div>
-            <p class="lede lg:mt-8">
+          <div class="max-w-[62ch] mb-12 lg:mb-16 reveal">
+            <h2 class="font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance">
+              <span class="lang-cs">Co se s kolem děje, BikeCheck zapisuje.</span>
+              <span class="lang-en">What happens to your bike, BikeCheck records.</span>
+            </h2>
+            <p class="lede mt-5 lg:mt-6">
               <span class="lang-cs"
                 >Interval je v kilometrech, hodinách nebo v health indexu, podle toho, co dílu dává smysl. Servis nebo výměna
                 komponenty počítání ukončí a založí nové, <strong>historie každé komponenty zůstává</strong>.</span
@@ -2764,8 +2671,8 @@
             <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pb-3.5">
               <span class="text-[16px] font-medium">Orbea Rallon E10</span>
               <span class="font-mono text-[13px] text-paper-faint">
-                <span class="lang-cs">3&nbsp;480 km · 212:40 h · tato sezóna</span
-                ><span class="lang-en">3,480 km · 212:40 h · this season</span>
+                <span class="lang-cs">Tato sezóna: 3&nbsp;480 km, 212:40 h</span
+                ><span class="lang-en">This season: 3,480 km, 212:40 h</span>
               </span>
             </div>
             <!-- Hour readings count in minutes (data-to), so 31:20 h never rounds to 31:19. -->
@@ -2780,7 +2687,7 @@
                   </div>
                 </div>
                 <div class="wear-reading">
-                  <div class="wear-value font-mono" data-to="410" data-unit="km">410&nbsp;km</div>
+                  <div class="wear-value font-mono" data-to="500" data-unit="km">500&nbsp;km</div>
                   <div class="wear-unit"><span class="lang-cs">od výměny</span><span class="lang-en">since swap</span></div>
                 </div>
                 <div class="wear-interval">
@@ -2789,7 +2696,7 @@
                   </div>
                   <div class="wear-unit">interval</div>
                 </div>
-                <span class="wear-bar"><span class="wear-fill bg-sage" style="width: 13.67%"></span></span>
+                <span class="wear-bar"><span class="wear-fill bg-sage" style="width: 16.67%"></span></span>
                 <div class="wear-state"><span class="lang-cs">v pořádku</span><span class="lang-en">all good</span></div>
               </li>
               <li class="wear-row">
@@ -2922,23 +2829,12 @@
       <!-- ============================== SERVICE LOG ============================== -->
       <section id="service-log" class="relative overflow-hidden scroll-mt-20">
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
-          <div class="grid lg:grid-cols-2 gap-x-24 gap-y-6 items-start mb-14 lg:mb-[72px] reveal">
-            <div>
-              <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-                <span class="lang-cs">Servis</span><span class="lang-en">Service</span>
-              </p>
-              <h2
-                class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
-              >
-                <span class="lang-cs"
-                  >Žádné vypisování. Vybereš servisní úkon a je <span class="text-gold-500">uloženo.</span></span
-                >
-                <span class="lang-en"
-                  >No paperwork. Pick a service task and it is <span class="text-gold-500">saved.</span></span
-                >
-              </h2>
-            </div>
-            <p class="lede lg:mt-10">
+          <div class="max-w-[62ch] mb-14 lg:mb-[72px] reveal">
+            <h2 class="font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance">
+              <span class="lang-cs">Žádné vypisování. Vybereš servisní úkon a je uloženo.</span>
+              <span class="lang-en">No paperwork. Pick a service task and it is saved.</span>
+            </h2>
+            <p class="lede mt-5 lg:mt-6">
               <span class="lang-cs"
                 >Vybereš úkon ze seznamu, třeba servis vidlice, a jedním ťuknutím přidáš detaily. Co v seznamu chybí, si
                 založíš sám a příště už to tam máš. Připíšeš cenu, poznámku nebo účtenku. Z jednotlivých servisů se pak
@@ -3022,8 +2918,8 @@
             <div class="ledger-month">
               <h3><span class="lang-cs">Září 2026</span><span class="lang-en">September 2026</span></h3>
               <span class="font-mono"
-                ><span class="lang-cs">1 servis · 1 výměna · 950&nbsp;Kč</span
-                ><span class="lang-en">1 service · 1 swap · €38</span></span
+                ><span class="lang-cs">1 servis, 1 výměna · 950&nbsp;Kč</span
+                ><span class="lang-en">1 service, 1 swap · €38</span></span
               >
             </div>
             <div class="ledger-row">
@@ -3051,8 +2947,8 @@
             <!-- <div class="ledger-month">
               <h3><span class="lang-cs">Srpen 2026</span><span class="lang-en">August 2026</span></h3>
               <span class="font-mono"
-                ><span class="lang-cs">1 servis · 0 výměn · 0&nbsp;Kč</span
-                ><span class="lang-en">1 service · 0 swaps · €0</span></span
+                ><span class="lang-cs">1 servis, 0 výměn · 0&nbsp;Kč</span
+                ><span class="lang-en">1 service, 0 swaps · €0</span></span
               >
             </div> -->
             <div class="ledger-row">
@@ -3084,8 +2980,7 @@
             <div class="ledger-month">
               <h3><span class="lang-cs">Červen 2026</span><span class="lang-en">June 2026</span></h3>
               <span class="font-mono"
-                ><span class="lang-cs">1 servis · 1 výměn · 3&nbsp;450&nbsp;Kč</span
-                ><span class="lang-en">1 service · 1 swaps · 137 €</span></span
+                ><span class="lang-cs">1 servis · 2&nbsp;400&nbsp;Kč</span><span class="lang-en">1 service · €95</span></span
               >
             </div>
             <div class="ledger-row">
@@ -3100,7 +2995,7 @@
                     ><span class="lang-cs">výměna prachovek</span><span class="lang-en">new dust seals</span></span
                   >
                   <span class="ledger-chip"
-                    ><span class="lang-cs">olej v damper</span><span class="lang-en">damper oil</span></span
+                    ><span class="lang-cs">olej v damperu</span><span class="lang-en">damper oil</span></span
                   >
                   <span class="ledger-chip">token setup</span>
                 </div>
@@ -3117,15 +3012,14 @@
               </div>
             </div>
 
-            <!-- <div class="ledger-month">
+            <div class="ledger-month">
               <h3><span class="lang-cs">Duben 2026</span><span class="lang-en">April 2026</span></h3>
               <span class="font-mono"
-                ><span class="lang-cs">1 servis · 1 výměna · 1&nbsp;050&nbsp;Kč</span
-                ><span class="lang-en">1 service · 1 swap · €42</span></span
+                ><span class="lang-cs">1 výměna · 1&nbsp;050&nbsp;Kč</span><span class="lang-en">1 swap · €42</span></span
               >
-            </div> -->
+            </div>
             <div class="ledger-row">
-              <div class="ledger-date font-mono"><span class="lang-cs">11. 6.</span><span class="lang-en">11 Jun</span></div>
+              <div class="ledger-date font-mono"><span class="lang-cs">11. 4.</span><span class="lang-en">11 Apr</span></div>
               <div>
                 <div class="ledger-title">
                   <span class="lang-cs">Výměna brzdových destiček</span><span class="lang-en">Brake pad swap</span>
@@ -3154,10 +3048,10 @@
             <div class="mt-7 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-4">
               <span class="font-mono text-[15px] text-paper-dim">
                 <span class="lang-cs"
-                  >Sezóna 2026 · 4 servisy · 2 výměny · <span class="font-medium text-paper">4&nbsp;400&nbsp;Kč</span></span
+                  >Sezóna 2026: 2 servisy, 2 výměny · <span class="font-medium text-paper">4&nbsp;400&nbsp;Kč</span></span
                 >
                 <span class="lang-en"
-                  >Season 2026 · 4 services · 2 swaps · <span class="font-medium text-paper">€175</span></span
+                  >Season 2026: 2 services, 2 swaps · <span class="font-medium text-paper">€175</span></span
                 >
               </span>
               <span class="text-[13px] text-paper-faint">
@@ -3180,91 +3074,42 @@
               <h2
                 class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
               >
-                <span class="lang-cs">Co sdílíš, je na <span class="text-gold-500">tobě.</span></span>
-                <span class="lang-en">What you share is <span class="text-gold-500">up to you.</span></span>
+                <span class="lang-cs">Co sdílíš, je na tobě.</span>
+                <span class="lang-en">What you share is up to you.</span>
               </h2>
               <!-- <p class="lede mt-[22px]">
                 <span class="lang-cs">Dva druhy možnosti sdílení.</span>
                 <span class="lang-en">Two ways to share.</span>
               </p> -->
               <dl class="share-kinds">
-                <div class="share-kind mt-20">
-                  <dt>Service Report</dt>
+                <div class="share-kind">
+                  <dt><span class="lang-cs">BikeCheck profil</span><span class="lang-en">BikeCheck profile</span></dt>
                   <dd>
                     <span class="lang-cs"
-                      >Servisy jednoho kola za období včetně součtů, volitelně i díly s aktuálním opotřebením.</span
+                      >Živý profil kola se všemi díly, servisy a setupem. Sám vybereš, co na něm bude a kdo ho uvidí. Tvoji
+                      sledující v aplikaci nebo kdokoli s odkazem.</span
                     >
                     <span class="lang-en"
-                      >One bike's services over a period with totals, optionally with its parts and their current wear.</span
+                      >The live bike profile with all its parts, services and setup. You pick what goes on it and who sees
+                      it: your followers in the app, or anyone with the link.</span
                     >
                   </dd>
                 </div>
-                <div class="share-kind">
-                  <dt><span class="lang-cs">BikeCheck Profil</span><span class="lang-en">BikeCheck Profile</span></dt>
+                <div class="share-kind mt-20">
+                  <dt><span class="lang-cs">Service Report</span><span class="lang-en">Service Report</span></dt>
                   <dd>
                     <span class="lang-cs"
-                      >Karta kola se všemi díly, servisy a setupem. Sám vybereš, co na ní bude. Uvidí ji jen tvoji sledující
-                      v aplikaci, nebo kdokoli s odkazem.</span
+                      >Servisy kola za zvolené období včetně součtů, volitelně i díly s aktuálním opotřebením. Odkaz
+                      zachycuje stav v okamžiku vytvoření, pozdější změny se v něm neprojeví.</span
                     >
                     <span class="lang-en"
-                      >The bike's card with all its parts, services and setup. You pick what goes on it. Only your followers
-                      in the app see it, or anyone with the link.</span
+                      >Services for this bike over a selected period, including totals, and optionally parts with their
+                      current wear. The link captures the data at the moment it's created, so later changes won't appear in
+                      it.</span
                     >
                   </dd>
                 </div>
               </dl>
-
-              <div class="share-notes">
-                <div class="share-note">
-                  <svg
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    stroke="#cec053"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M8.5 11.5a3 3 0 0 0 4.2 0l2.6-2.6a3 3 0 0 0-4.2-4.2l-1 1" />
-                    <path d="M11.5 8.5a3 3 0 0 0-4.2 0l-2.6 2.6a3 3 0 0 0 4.2 4.2l1-1" />
-                  </svg>
-                  <p>
-                    <span class="lang-cs"
-                      ><strong>Veřejný odkaz existuje od začátku, ale je zavřený,</strong> dokud ho nepublikuješ. Zrušit ho
-                      můžeš kdykoli a zrušený je pryč nadobro.</span
-                    >
-                    <span class="lang-en"
-                      ><strong>The public link exists from the start, but stays closed</strong> until you publish it. You can
-                      revoke it at any time, and once revoked it is gone for good.</span
-                    >
-                  </p>
-                </div>
-                <div class="share-note">
-                  <svg
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    stroke="#cec053"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M5 7V3.5h10V7" />
-                    <rect x="3" y="7" width="14" height="7" rx="1.5" />
-                    <path d="M6 12h8v4.5H6z" />
-                  </svg>
-                  <p>
-                    <span class="lang-cs"
-                      ><strong>Tisk do A4 PDF</strong> přímo z veřejné stránky reportu. Vypadá stejně na papíře jako na
-                      obrazovce.</span
-                    >
-                    <span class="lang-en"
-                      ><strong>Print to an A4 PDF</strong> straight from the report's public page. It looks the same on paper
-                      as on screen.</span
-                    >
-                  </p>
-                </div>
-              </div>
             </div>
 
             <!-- The report before it is published and the public BikeCheck as others see it. -->
@@ -3312,7 +3157,7 @@
                     ><span class="lang-cs">BikeCheck profil</span><span class="lang-en">BikeCheck profile</span></span
                   >
                   <span
-                    ><span class="lang-cs">Sdílený profil jak je vidí ostatní.</span
+                    ><span class="lang-cs">Sdílený profil, jak ho vidí ostatní.</span
                     ><span class="lang-en">The shared profile as others see it.</span></span
                   >
                 </figcaption>
@@ -3346,24 +3191,20 @@
 
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div class="max-w-[46ch] mb-14 mx-auto text-center reveal">
-            <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-paper-dim mb-5">
-              <span class="lang-cs">Funkce</span><span class="lang-en">Features</span>
-            </p>
             <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
-              <span class="lang-cs">BikeCheck v <span class="text-gold-500">kostce</span></span>
-              <span class="lang-en">BikeCheck at a <span class="text-gold-500">glance</span></span>
+              <span class="lang-cs">BikeCheck v kostce</span>
+              <span class="lang-en">BikeCheck at a glance</span>
             </h2>
           </div>
 
           <!-- One phone in the middle and the features around it as switches (see
                "Switchers" in the styles). Picking one changes the screen; left alone,
-               the block plays through them by itself. Not a .reveal: the glass of the
-               lit switch needs an opaque block to blur through. -->
+               the block plays through them by itself. -->
           <div class="sw sw-features">
             <div class="sw-items">
               <div class="sw-item is-on">
                 <div class="sw-icon">
-                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                  <span class="size-10 grid place-items-center">
                     <!-- The app's Home tab icon (lucide House). -->
                     <svg
                       viewBox="0 0 24 24"
@@ -3399,7 +3240,7 @@
               </div>
               <div class="sw-item">
                 <div class="sw-icon">
-                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                  <span class="size-10 grid place-items-center">
                     <!-- The BikeCheck mark, which the app uses for service (bikecheck.svg in the app repo). -->
                     <svg viewBox="0 0 282 175" class="w-[26px] h-auto text-gold-500" fill="currentColor" aria-hidden="true">
                       <g transform="translate(0 175) scale(0.1 -0.1)">
@@ -3430,7 +3271,7 @@
               </div>
               <div class="sw-item">
                 <div class="sw-icon">
-                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                  <span class="size-10 grid place-items-center">
                     <!-- Same bike as the app's Bikes tab (bike.svg in the app repo). -->
                     <svg
                       viewBox="0 0 205 127"
@@ -3475,9 +3316,8 @@
               </div>
               <div class="sw-item">
                 <div class="sw-icon">
-                  <!-- Strava's mark stays in Strava's orange (brand asset, as in the stats
-                 strip), so this one tile is tinted to match it rather than gold. -->
-                  <span class="size-10 rounded-xl bg-[#FC5200]/10 border border-[#FC5200]/25 grid place-items-center">
+                  <!-- Strava's mark stays in Strava's orange (brand asset, as in the stats strip). -->
+                  <span class="size-10 grid place-items-center">
                     <svg viewBox="0 0 24 24" class="size-5" fill="#FC5200" aria-hidden="true">
                       <path
                         d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.827h4.169"
@@ -3488,21 +3328,21 @@
                 <div class="sw-body">
                   <h3 class="font-display font-bold text-[17px] mb-1.5">
                     <span class="lang-cs">Chytré propojení se Stravou</span
-                    ><span class="lang-en">A smarter Strava link</span>
+                    ><span class="lang-en">A smarter Strava connection</span>
                   </h3>
                   <p class="text-[14px] leading-relaxed text-paper-dim">
                     <span class="lang-cs"
-                      >Servis hlídá podle reálného ježdění, ne jen kilometrů. Počítá i s profilem trasy.</span
+                      >Servis hlídá podle reálného ježdění. Nejen podle kilometrů, ale i podle profilu trasy.</span
                     >
                     <span class="lang-en"
-                      >Service tracked by real riding, not distance alone. The route profile counts too.</span
+                      >Tracks service based on real riding. Not just distance, but also the route profile.</span
                     >
                   </p>
                 </div>
               </div>
               <div class="sw-item">
                 <div class="sw-icon">
-                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                  <span class="size-10 grid place-items-center">
                     <svg
                       viewBox="0 0 24 24"
                       class="size-5 text-gold-500"
@@ -3529,7 +3369,7 @@
               </div>
               <div class="sw-item">
                 <div class="sw-icon">
-                  <span class="size-10 rounded-xl bg-gold-500/10 border border-gold-500/25 grid place-items-center">
+                  <span class="size-10 grid place-items-center">
                     <svg
                       viewBox="0 0 24 24"
                       class="size-5 text-gold-500"
@@ -4026,8 +3866,8 @@
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div class="max-w-[46ch] mb-12 reveal">
             <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
-              <span class="lang-cs">Ve <span class="text-gold-500">vývoji</span></span>
-              <span class="lang-en">In <span class="text-gold-500">progress</span></span>
+              <span class="lang-cs">Ve vývoji</span>
+              <span class="lang-en">In progress</span>
             </h2>
             <p class="mt-5 text-[15px] leading-relaxed text-paper-dim">
               <span class="lang-cs">Funkce, na kterých se pracuje.</span>
@@ -4085,11 +3925,10 @@
               <h2
                 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance"
               >
-                <span class="lang-cs">Časté <span class="text-gold-500">dotazy</span></span
-                ><span class="lang-en">Common <span class="text-gold-500">questions</span></span>
+                <span class="lang-cs">Časté dotazy</span><span class="lang-en">Common questions</span>
               </h2>
               <p class="mt-5 text-[15px] leading-relaxed text-paper-dim max-w-[42ch]">
-                <span class="lang-cs">Nenašel jsi odpověď? Napiš mi.</span>
+                <span class="lang-cs">Chybí ti odpověď? Napiš mi.</span>
                 <span class="lang-en">Didn't find your answer? Write to me.</span>
               </p>
             </div>
@@ -4198,7 +4037,7 @@
                     vždy od poslední údržby.</span
                   >
                   <span class="lang-en"
-                    >They're based on manufacturer data and our own experience, but you can adjust any interval to suit you.
+                    >They're based on manufacturer data and my own experience, but you can adjust any interval to suit you.
                     It always counts from the last service.</span
                   >
                 </p>
@@ -4251,13 +4090,9 @@
                   </svg>
                 </summary>
                 <p class="pb-6 pr-10 text-[15px] leading-relaxed text-paper-dim">
-                  <span class="lang-cs"
-                    >Kolik potřebuješ. Každé kolo si vede vlastní odometr, vlastní namontované díly a vlastní historii
-                    servisů.</span
-                  >
+                  <span class="lang-cs">Kolik potřebuješ. Každé kolo má vlastní namontované díly a vlastní historii.</span>
                   <span class="lang-en"
-                    >As many as you need. Each bike keeps its own odometer, its own mounted components and its own service
-                    history.</span
+                    >As many as you need. Each bike keeps its own mounted components and its own service history.</span
                   >
                 </p>
               </details>
@@ -4277,8 +4112,7 @@
               <h2
                 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance mb-5"
               >
-                <span class="lang-cs">Chybí ti nějaká <span class="text-gold-500">funkce?</span></span
-                ><span class="lang-en">Missing a <span class="text-gold-500">feature?</span></span>
+                <span class="lang-cs">Chybí ti nějaká funkce?</span><span class="lang-en">Missing a feature?</span>
               </h2>
               <p class="text-[16px] leading-relaxed text-paper-dim max-w-[50ch]">
                 <span class="lang-cs"
@@ -4290,32 +4124,74 @@
                   or what's broken.</span
                 >
               </p>
-
-              <div class="mt-8 space-y-3">
-                <a
-                  href="mailto:support@bikecheck.cloud"
-                  class="flex items-center gap-3 text-[15px] hover:text-gold-400 transition-colors duration-200 w-fit"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    class="size-5 text-gold-500"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
+              <div class="flex flex-col gap-3 mt-8">
+                <div class="space-y-3">
+                  <a
+                    href="mailto:support@bikecheck.cloud"
+                    class="flex items-center gap-3 text-[15px] hover:text-gold-400 transition-colors duration-200 w-fit"
                   >
-                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                  </svg>
-                  support@bikecheck.cloud
-                </a>
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="size-5 text-gold-500"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    support@bikecheck.cloud
+                  </a>
+                </div>
+                <div class="space-y-3">
+                  <a
+                    href="https://discord.gg/t44P9fZwW"
+                    target="_blank"
+                    rel="noopener"
+                    class="flex items-center gap-3 text-[15px] hover:text-gold-400 transition-colors duration-200 w-fit"
+                  >
+                    <svg viewBox="0 0 24 24" class="size-5 text-gold-500" fill="currentColor" aria-hidden="true">
+                      <path
+                        d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.8a13.7 13.7 0 0 0-.63 1.3 18.3 18.3 0 0 0-5.53 0 13.7 13.7 0 0 0-.64-1.3 19.8 19.8 0 0 0-4.92 1.57C.55 9.05-.3 13.6.13 18.07a19.9 19.9 0 0 0 6.04 3.06c.49-.67.92-1.38 1.3-2.12a12.9 12.9 0 0 1-2.06-1c.17-.13.34-.26.5-.4a14.2 14.2 0 0 0 12.18 0c.17.14.33.27.5.4-.65.4-1.34.73-2.06 1 .37.74.8 1.45 1.3 2.12a19.9 19.9 0 0 0 6.04-3.06c.5-5.18-.84-9.68-3.55-13.7ZM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.95-2.43 2.16-2.43 2.18 1.1 2.16 2.43c0 1.33-.95 2.42-2.16 2.42Zm7.96 0c-1.18 0-2.16-1.09-2.16-2.42s.95-2.43 2.16-2.43 2.18 1.1 2.16 2.43c0 1.33-.95 2.42-2.16 2.42Z"
+                      />
+                    </svg>
+                    Discord
+                  </a>
+                </div>
               </div>
+
+              <!-- Who answers: one person, not a company.
+              <div class="flex items-start gap-4 mt-10 pt-8 border-t hairline">
+                <img
+                  src="assets/img_ready/jarda_onbike.jpg"
+                  alt="Jarda"
+                  width="1159"
+                  height="773"
+                  loading="lazy"
+                  class="w-[104px] sm:w-[120px] aspect-[3/2] object-cover object-[48%_30%] rounded-xl ring-1 ring-inset ring-[rgba(255,255,255,0.12)] shrink-0"
+                />
+                <div class="min-w-0">
+                  <p class="text-[14px] font-medium text-paper">
+                    <span class="lang-cs">Jarda, autor BikeCheck</span><span class="lang-en">Jarda, who makes BikeCheck</span>
+                  </p>
+                  <p class="mt-1.5 text-[14px] leading-relaxed text-paper-dim max-w-[44ch]">
+                    <span class="lang-cs"
+                      >Kolo je moje vášeň. BikeCheck vznikl, protože jsem pořád zapomínal, kdy jsem naposledy měnil
+                      řetěz.</span
+                    >
+                    <span class="lang-en"
+                      >Riding is my passion. BikeCheck exists because I kept forgetting when I last changed my chain.</span
+                    >
+                  </p>
+                </div>
+              </div> -->
             </div>
 
             <!-- Sent through Web3Forms - see WEB3FORMS_KEY in the script below -->
-            <form class="glass glass-deep rounded-2xl p-6 sm:p-8 space-y-5" novalidate>
+            <form class="card rounded-2xl p-6 sm:p-8 space-y-5" novalidate>
               <!-- Honeypot: people never see it, bots tick it -->
               <input type="checkbox" name="botcheck" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
               <div>
@@ -4329,7 +4205,9 @@
                   required
                   autocomplete="name"
                   class="w-full bg-ink-950/40 border-0 ring-1 ring-inset ring-[rgba(255,255,255,0.12)] rounded-xl px-4 py-3 text-[15px] text-paper placeholder:text-paper-faint focus:ring-2 focus:ring-gold-500"
-                  placeholder="Honza Novák"
+                  placeholder="Tomáš Krejčí"
+                  data-placeholder-cs="Tomáš Krejčí"
+                  data-placeholder-en="Sam Riley"
                 />
                 <p class="err mt-2 text-[13px] text-rust hidden" role="alert"></p>
               </div>
@@ -4343,7 +4221,9 @@
                   required
                   autocomplete="email"
                   class="w-full bg-ink-950/40 border-0 ring-1 ring-inset ring-[rgba(255,255,255,0.12)] rounded-xl px-4 py-3 text-[15px] text-paper placeholder:text-paper-faint focus:ring-2 focus:ring-gold-500"
-                  placeholder="honza@email.cz"
+                  placeholder="tomas@email.cz"
+                  data-placeholder-cs="tomas@email.cz"
+                  data-placeholder-en="sam@email.com"
                 />
                 <p class="err mt-2 text-[13px] text-rust hidden" role="alert"></p>
               </div>
@@ -4358,7 +4238,9 @@
                   rows="5"
                   required
                   class="w-full bg-ink-950/40 border-0 ring-1 ring-inset ring-[rgba(255,255,255,0.12)] rounded-xl px-4 py-3 text-[15px] text-paper placeholder:text-paper-faint focus:ring-2 focus:ring-gold-500 resize-y"
-                  placeholder="Šlo by přidat sledování opotřebení plášťů?"
+                  placeholder="Napiš svoje nápady, připomínky nebo co ti v appce chybí."
+                  data-placeholder-cs="Napiš svoje nápady, připomínky nebo co ti v appce chybí."
+                  data-placeholder-en="Write your ideas, feedback or what's missing in the app."
                 ></textarea>
                 <p class="err mt-2 text-[13px] text-rust hidden" role="alert"></p>
               </div>
@@ -4403,6 +4285,8 @@
           <div class="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-3.5">
             <a
               href="PLAY_STORE_URL"
+              data-umami-event="google-play"
+              data-umami-event-place="closing"
               class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
             >
               <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
@@ -4411,6 +4295,8 @@
             <a
               href="https://app.bikecheck.cloud/?lang=cs"
               data-app-link
+              data-umami-event="open-web"
+              data-umami-event-place="closing"
               class="inline-flex items-center gap-2 lg:gap-2.5 h-9 sm:h-10 lg:h-[52px] px-3.5 sm:px-2 lg:px-5 rounded-md lg:rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] lg:text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
             >
               <svg
@@ -4487,7 +4373,7 @@
                 >
               </li>
               <li><a href="#faq" class="hover:text-paper transition-colors duration-200">FAQ</a></li>
-              <li><a href="PLAY_STORE_URL" class="hover:text-paper transition-colors duration-200">Google Play</a></li>
+              <li><a href="PLAY_STORE_URL" data-umami-event="google-play" data-umami-event-place="footer" class="hover:text-paper transition-colors duration-200">Google Play</a></li>
             </ul>
           </div>
 
@@ -4547,6 +4433,10 @@
             btn.classList.toggle("bg-gold-500", on);
             btn.classList.toggle("text-ink-950", on);
             btn.classList.toggle("text-paper-dim", !on);
+          });
+          // A placeholder is an attribute, so the .lang-* spans can't switch it.
+          document.querySelectorAll("[data-placeholder-cs]").forEach(function (field) {
+            field.placeholder = lang === "cs" ? field.dataset.placeholderCs : field.dataset.placeholderEn;
           });
           // Links into the App hand the language over, so it opens in the one shown (ADR 0041).
           document.querySelectorAll("a[data-app-link]").forEach(function (link) {
@@ -4627,6 +4517,38 @@
           if (e.matches && isMenuOpen()) closeMenu();
         });
 
+        // ---- Nav: where you are ------------------------------------------------
+        // The section crossing a thin band 40% down the window lights its header link; the log sits under Service.
+        var navLinks = document.querySelectorAll('header a[href^="#"]');
+        var NAV_FOR = { "service-log": "wear" };
+
+        function markNav(id) {
+          navLinks.forEach(function (link) {
+            var on = link.getAttribute("href") === "#" + id;
+            link.classList.toggle("text-paper", on);
+            if (on) link.setAttribute("aria-current", "location");
+            else link.removeAttribute("aria-current");
+          });
+        }
+
+        if ("IntersectionObserver" in window) {
+          var navSeen = new Set();
+          var navIo = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) navSeen.add(entry.target.id);
+                else navSeen.delete(entry.target.id);
+              });
+              var id = Array.from(navSeen)[0];
+              markNav(id ? NAV_FOR[id] || id : null);
+            },
+            { rootMargin: "-40% 0px -59% 0px" },
+          );
+          document.querySelectorAll("main section[id]").forEach(function (section) {
+            navIo.observe(section);
+          });
+        }
+
         // ---- Year --------------------------------------------------------------
         document.getElementById("year").textContent = String(new Date().getFullYear());
 
@@ -4688,7 +4610,7 @@
             mPerPx: 1.6,
           },
           narrow: {
-            lines: 28,
+            lines: 22,
             gap: 4,
             rise: 100,
             lead: 0,
@@ -5698,6 +5620,8 @@
               })
               .then(function (data) {
                 if (!data.success) throw new Error("rejected");
+                // Counted once delivered, not on click: a rejected send is no contact.
+                if (window.umami) window.umami.track("contact-sent");
                 markSent();
                 showStatus("sent");
                 form.reset();
