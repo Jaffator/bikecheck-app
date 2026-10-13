@@ -1,6 +1,6 @@
-// `npm run deploy:production`: bumps the version, tags main, and follows the Deploy run (docs/deploy.md).
+// `npm run deploy:production`: tags main once its version is committed, and follows the Deploy run (docs/deploy.md).
 import { execFile } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
@@ -45,13 +45,14 @@ export function bumpVersion(tag, kind) {
   return `v${major}.${minor}.${patch + 1}`;
 }
 
-export function withVersion(text, version) {
-  const eol = text.includes("\r\n") ? "\r\n" : "\n";
-  const json = JSON.parse(text);
-  json.version = version;
-  // A lock repeats the version on its root package.
-  if (json.packages?.[""]) json.packages[""].version = version;
-  return JSON.stringify(json, null, 2).replaceAll("\n", eol) + eol;
+export function versionMismatches(files, version) {
+  return files.flatMap(({ file, text }) => {
+    const json = JSON.parse(text);
+    // A lock repeats the version on its root package.
+    const versions = json.packages?.[""] ? [json.version, json.packages[""].version] : [json.version];
+    const stale = versions.filter((found) => found !== version);
+    return stale.length ? [{ file, found: stale[0] }] : [];
+  });
 }
 
 // Matrix jobs are named after every matrix value; the first one is enough to tell them apart.
@@ -126,6 +127,8 @@ async function checkPreconditions() {
   if (await run("git", ["status", "--porcelain"])) stop("Working tree is not clean; commit or stash first.");
   if (!(await gitOk(["pull", "--ff-only"]))) stop("git pull --ff-only failed; main has diverged from origin.");
   if (!(await gitOk(["fetch", "--tags"]))) stop("git fetch --tags failed.");
+  // Deploy refuses a tag that is not on origin's main.
+  if ((await run("git", ["rev-list", "--count", "origin/main..HEAD"])) !== "0") stop("main has unpushed commits; push first.");
   try {
     await run("gh", ["auth", "status"]);
   } catch {
@@ -151,16 +154,14 @@ async function confirm(rl, version, lastTag) {
   return answer === "y" || answer === "yes";
 }
 
-async function commitVersion(version) {
-  const plain = version.slice(1);
-  for (const file of VERSION_FILES) {
-    const path = resolve(ROOT, file);
-    await writeFile(path, withVersion(await readFile(path, "utf8"), plain));
-  }
-  await run("git", ["add", ...VERSION_FILES]);
-  await run("git", ["commit", "-m", `chore(release): ${version}`]);
-  await run("git", ["push", "origin", "main"]);
-  console.log(paint("green", `✔ chore(release): ${version} pushed to main`));
+// The App's About and the Website's footer and ?v= read these, so a tag must not outrun them.
+async function checkVersionFiles(version) {
+  const files = await Promise.all(
+    VERSION_FILES.map(async (file) => ({ file, text: await readFile(resolve(ROOT, file), "utf8") })),
+  );
+  const stale = versionMismatches(files, version.slice(1));
+  if (stale.length === 0) return;
+  stop(`Not on ${version} yet: ${stale.map((s) => `${s.file} (${s.found})`).join(", ")}. Bump, commit and push first.`);
 }
 
 async function tagAndRelease(version) {
@@ -246,16 +247,16 @@ async function main() {
     process.exit(0);
   });
   const version = await pickVersion(rl, lastTag);
+  if (version !== null) await checkVersionFiles(version);
   const go = version !== null && (await confirm(rl, version, lastTag));
   rl.close();
   if (!go) {
     console.log(CANCELLED);
     return;
   }
-  await commitVersion(version);
-  // main already carries the version commit, so say how to finish instead of rerunning.
+  // A tag may already be out, so a rerun would trip over it; say how to finish instead.
   await tagAndRelease(version).catch((error) =>
-    stop(`${error.stderr?.trim() || error.message}\n  main has chore(release): ${version}; finish with docs/deploy.md "Shipping a release" by hand.`),
+    stop(`${error.stderr?.trim() || error.message}\n  finish ${version} with docs/deploy.md "Shipping a release" by hand.`),
   );
   await followRun(version);
 }
