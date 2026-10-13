@@ -8,6 +8,10 @@ COPY _frontend/bikecheck ./
 RUN npm run build:web
 
 FROM node:22-bookworm-slim AS website
+# Both empty: the website is built without the Umami tracker.
+ARG UMAMI_WEBSITE_ID=""
+ARG STATS_HOST=""
+ENV UMAMI_WEBSITE_ID=$UMAMI_WEBSITE_ID STATS_HOST=$STATS_HOST
 WORKDIR /app
 COPY _website_landing/package.json _website_landing/package-lock.json ./
 RUN npm ci

@@ -1886,6 +1886,7 @@
           <a
             href="https://app.bikecheck.cloud/?lang=cs"
             data-app-link
+            data-umami-event="sign-in"
             class="inline-flex items-center px-2 py-2.5 font-display font-semibold text-[13px] sm:text-[14px] text-paper hover:text-gold-400 transition-colors duration-200 active:translate-y-px whitespace-nowrap"
           >
             <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
@@ -1893,6 +1894,7 @@
           <a
             href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
             data-app-link
+            data-umami-event="create-account"
             class="hidden sm:inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-ink-950 font-display font-semibold text-[13px] sm:text-[14px] px-3.5 sm:px-4 py-2.5 rounded-xl transition-colors duration-200 active:translate-y-px cursor-pointer whitespace-nowrap"
           >
             <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
@@ -1988,6 +1990,7 @@
           <a
             href="https://app.bikecheck.cloud/?lang=cs"
             data-app-link
+            data-umami-event="sign-in"
             class="flex items-center justify-center h-12 rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[15px] text-paper transition-colors duration-200 active:translate-y-px"
           >
             <span class="lang-cs">Přihlásit se</span><span class="lang-en">Sign in</span>
@@ -1995,6 +1998,7 @@
           <a
             href="https://app.bikecheck.cloud/?mode=register&amp;lang=cs"
             data-app-link
+            data-umami-event="create-account"
             class="flex items-center justify-center gap-2 h-12 rounded-xl bg-gold-500 hover:bg-gold-400 font-display font-semibold text-[15px] text-ink-950 transition-colors duration-200 active:translate-y-px"
           >
             <span class="lang-cs">Založit účet</span><span class="lang-en">Create account</span>
@@ -2085,6 +2089,8 @@
              background or label from us - only a height. -->
               <a
                 href="PLAY_STORE_URL"
+                data-umami-event="google-play"
+                data-umami-event-place="hero"
                 class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
               >
                 <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
@@ -2111,6 +2117,8 @@
               <a
                 href="https://app.bikecheck.cloud/?lang=cs"
                 data-app-link
+                data-umami-event="open-web"
+                data-umami-event-place="hero"
                 class="inline-flex items-center gap-2 lg:gap-2.5 h-9 sm:h-10 lg:h-[52px] px-3.5 sm:px-2 lg:px-5 rounded-md lg:rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] lg:text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
               >
                 <svg
@@ -4277,6 +4285,8 @@
           <div class="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-3.5">
             <a
               href="PLAY_STORE_URL"
+              data-umami-event="google-play"
+              data-umami-event-place="closing"
               class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
             >
               <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
@@ -4285,6 +4295,8 @@
             <a
               href="https://app.bikecheck.cloud/?lang=cs"
               data-app-link
+              data-umami-event="open-web"
+              data-umami-event-place="closing"
               class="inline-flex items-center gap-2 lg:gap-2.5 h-9 sm:h-10 lg:h-[52px] px-3.5 sm:px-2 lg:px-5 rounded-md lg:rounded-xl border hairline-strong hover:bg-ink-850 font-display font-semibold text-[13px] sm:text-[12px] lg:text-[15px] text-paper transition-colors duration-200 active:translate-y-px whitespace-nowrap"
             >
               <svg
@@ -4361,7 +4373,7 @@
                 >
               </li>
               <li><a href="#faq" class="hover:text-paper transition-colors duration-200">FAQ</a></li>
-              <li><a href="PLAY_STORE_URL" class="hover:text-paper transition-colors duration-200">Google Play</a></li>
+              <li><a href="PLAY_STORE_URL" data-umami-event="google-play" data-umami-event-place="footer" class="hover:text-paper transition-colors duration-200">Google Play</a></li>
             </ul>
           </div>
 
@@ -5608,6 +5620,8 @@
               })
               .then(function (data) {
                 if (!data.success) throw new Error("rejected");
+                // Counted once delivered, not on click: a rejected send is no contact.
+                if (window.umami) window.umami.track("contact-sent");
                 markSent();
                 showStatus("sent");
                 form.reset();
