@@ -4,7 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import { promisify, styleText } from "node:util";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const VERSION_FILES = [
@@ -108,8 +108,13 @@ async function gitOk(args) {
   }
 }
 
+// styleText drops the colours when the stream is not a terminal or NO_COLOR is set.
+function paint(format, text, stream = process.stdout) {
+  return styleText(format, text, { stream });
+}
+
 function stop(reason) {
-  console.error(`✖ ${reason}`);
+  console.error(paint("red", `✖ ${reason}`, process.stderr));
   process.exit(1);
 }
 
@@ -155,15 +160,15 @@ async function commitVersion(version) {
   await run("git", ["add", ...VERSION_FILES]);
   await run("git", ["commit", "-m", `chore(release): ${version}`]);
   await run("git", ["push", "origin", "main"]);
-  console.log(`✔ chore(release): ${version} pushed to main`);
+  console.log(paint("green", `✔ chore(release): ${version} pushed to main`));
 }
 
 async function tagAndRelease(version) {
   await run("git", ["tag", version]);
   await run("git", ["push", "origin", version]);
-  console.log(`✔ ${version} tagged and pushed`);
+  console.log(paint("green", `✔ ${version} tagged and pushed`));
   await run("gh", ["release", "create", version, "--verify-tag", "--generate-notes"]);
-  console.log(`✔ GitHub Release ${version} created`);
+  console.log(paint("green", `✔ GitHub Release ${version} created`));
 }
 
 // The last good push run tells how many jobs a deploy has before they are all created.
@@ -186,15 +191,18 @@ async function findRun(version) {
 
 function draw(lines, previousCount) {
   if (process.stdout.isTTY && previousCount > 0) process.stdout.write(`\x1b[${previousCount}A\x1b[0J`);
-  // A wrapped line would leave a stale copy, as the cursor moves up by lines written.
-  const width = process.stdout.columns ? process.stdout.columns - 1 : Infinity;
-  process.stdout.write(`${lines.map((line) => line.slice(0, width)).join("\n")}\n`);
+  process.stdout.write(`${lines.join("\n")}\n`);
+}
+
+// A wrapped line would leave a stale copy, as draw moves the cursor up by lines written.
+function fit(line) {
+  return process.stdout.columns ? line.slice(0, process.stdout.columns - 1) : line;
 }
 
 async function followRun(version) {
   const found = await findRun(version);
   if (!found) {
-    console.warn(`⚠ No Deploy run for ${version} after ${FIND_RUN_TIMEOUT_MS / 1000} s; follow it in ${ACTIONS_URL}`);
+    console.warn(paint("yellow", `⚠ No Deploy run for ${version} after ${FIND_RUN_TIMEOUT_MS / 1000} s; follow it in ${ACTIONS_URL}`, process.stderr));
     return;
   }
   process.once("SIGINT", () => {
@@ -210,8 +218,8 @@ async function followRun(version) {
     const progress = deployProgress(jobs, expected);
     // A run longer than the last one must not reach 100 % before it ends.
     shown = status === "completed" ? 100 : Math.min(99, Math.max(shown, progress.percent));
-    const lines = [`Deploy ${version}  ${progressBar(shown)}  ${String(shown).padStart(3)} %`];
-    if (status !== "completed") lines.push(`  ▸ ${progress.current || "waiting for a runner"}`);
+    const lines = [fit(`Deploy ${version}  ${progressBar(shown)}  ${String(shown).padStart(3)} %`)];
+    if (status !== "completed") lines.push(paint("dim", fit(`  ▸ ${progress.current || "waiting for a runner"}`)));
     draw(lines, drawn);
     drawn = lines.length;
     if (status === "completed") return report(version, deployRun);
@@ -221,11 +229,11 @@ async function followRun(version) {
 
 function report(version, { conclusion, jobs, url }) {
   if (conclusion === "success") {
-    console.log(`✅ ${version} is live`);
+    console.log(paint("green", `✅ ${version} is live`));
     return;
   }
   const failed = failedStep(jobs);
-  console.log(`❌ Deploy ${version} ${conclusion}${failed ? ` at ${failed}` : ""}\n   ${url}`);
+  console.log(`${paint("red", `❌ Deploy ${version} ${conclusion}${failed ? ` at ${failed}` : ""}`)}\n   ${url}`);
   process.exitCode = 1;
 }
 
