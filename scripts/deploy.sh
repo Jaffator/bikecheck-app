@@ -13,13 +13,14 @@ compose() {
 backup() {
   local dir
   dir="backups/$(date -u +%Y%m%d-%H%M%S)-$1"
-  compose up -d --wait db-monolith db-strava-service
+  compose up -d --wait db-monolith db-strava-service db-umami
   # `set -e` is off inside a `( ) ||` group, hence the explicit && chain.
   (
     umask 077
     mkdir -p "$dir" &&
       compose exec -T db-monolith sh -c 'pg_dump -U "$POSTGRES_USER" -Fc monolith' > "$dir/monolith.dump" &&
-      compose exec -T db-strava-service sh -c 'pg_dump -U "$POSTGRES_USER" -Fc strava_service' > "$dir/strava_service.dump"
+      compose exec -T db-strava-service sh -c 'pg_dump -U "$POSTGRES_USER" -Fc strava_service' > "$dir/strava_service.dump" &&
+      compose exec -T db-umami sh -c 'pg_dump -U "$POSTGRES_USER" -Fc umami' > "$dir/umami.dump"
   ) || { rm -rf "$dir"; echo "backup failed, nothing deployed" >&2; exit 1; }
   ls -1d backups/*/ | head -n -"$KEEP_BACKUPS" | xargs -r rm -rf
   echo "backup: $dir"

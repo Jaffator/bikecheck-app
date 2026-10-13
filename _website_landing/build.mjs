@@ -5,16 +5,6 @@ import { cpSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 const DEFAULT_APP_URL = "https://app.bikecheck.cloud";
 const appUrl = (process.env.APP_URL ?? DEFAULT_APP_URL).replace(/\/+$/, "");
 
-// Only a build given both gets the Umami tracker, so local builds never count a visit.
-const { UMAMI_WEBSITE_ID, STATS_HOST } = process.env;
-const tracker =
-  UMAMI_WEBSITE_ID && STATS_HOST
-    ? `<script defer src="https://${STATS_HOST}/script.js" data-website-id="${UMAMI_WEBSITE_ID}"></script>\n  </head>`
-    : "</head>";
-
 rmSync("dist", { recursive: true, force: true });
 cpSync("public", "dist", { recursive: true });
-writeFileSync(
-  "dist/index.html",
-  readFileSync("index.html", "utf8").replaceAll(DEFAULT_APP_URL, appUrl).replace("</head>", tracker),
-);
+writeFileSync("dist/index.html", readFileSync("index.html", "utf8").replaceAll(DEFAULT_APP_URL, appUrl));

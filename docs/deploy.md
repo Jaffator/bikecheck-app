@@ -17,7 +17,7 @@ CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.
   2. Runs the CI checks.
   3. Builds `bikecheck-monolith`, `bikecheck-strava-service` and `bikecheck-caddy` (SPA + Marketing Website) into `ghcr.io/jaffator/…:v1.4.0`.
   4. SSHes to the server, whose key may only run [scripts/deploy.sh](../scripts/deploy.sh):
-     - dumps both DBs to `backups/<utc-time>-<tag>/`, keeps the last 5, and stops if a dump fails;
+     - dumps all three DBs (monolith, strava-service, Umami) to `backups/<utc-time>-<tag>/`, keeps the last 5, and stops if a dump fails;
      - `git checkout <tag>` for the compose file, Caddyfile and Alloy config;
      - `compose pull` + `up -d`; migrations run as each container starts;
      - copies the SPA `index.html` out of the caddy image for the monolith's `/u/` and `/r/` shells.
@@ -102,6 +102,14 @@ ssh-keyscan -t ed25519 <server IP> | gh secret set DEPLOY_KNOWN_HOSTS
 ```
 
 Then delete `bikecheck_deploy` locally; GitHub holds the only copy it needs.
+
+### Umami (visitor stats for the Marketing Website)
+
+1. A DNS A record `stats.bikecheck.cloud` → the server IP, like the other two hosts.
+2. In `.env.production`: `STATS_HOST=stats.bikecheck.cloud` and `UMAMI_APP_SECRET=$(openssl rand -hex 32)`.
+3. Deploy. The first deploy after this change skips the Umami dump, as the script it runs predates it.
+4. Log in at `https://stats.bikecheck.cloud` as `admin` / `umami` and change the password at once.
+5. Settings → Websites → Add `bikecheck.cloud`. Its website ID goes into the tracker `<script>` in `_website_landing/index.html`; the next release carries it.
 
 ### First tag deploy (leaving the `production` branch)
 
