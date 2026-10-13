@@ -240,10 +240,21 @@
   color: #cec053;
   transition:
     color 0.25s ease,
-    border-color 0.25s ease;
+    border-color 0.25s ease,
+    background-color 0.25s ease;
 }
 .steps-line {
+  position: relative;
   background: rgba(255, 255, 255, 0.14);
+}
+/* Grown by the script over the lit step's screens; drawn only below lg. */
+.steps-fill {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #cec053;
+  transform: scaleY(0);
+  transform-origin: top;
 }
 .sw-steps .sw-phone {
   margin-top: auto;
@@ -287,6 +298,21 @@
   .steps-line {
     flex: 1;
     width: 1px;
+  }
+  /* The last line ends on its own step's foot. */
+  .steps-list > li:last-child .steps-mark {
+    margin-bottom: 0;
+  }
+  .steps-fill {
+    display: block;
+  }
+  /* The scroll picks the step here, so the lit one gets told apart harder. */
+  .js .sw-steps .sw-item.is-on .steps-no {
+    background: #cec053;
+    color: #0a0a0b;
+  }
+  .js .sw-steps .sw-item.is-on h3 {
+    color: #cec053;
   }
   .sw-steps .sw-phone {
     margin-top: 0;
@@ -333,6 +359,9 @@
   .steps-line {
     flex: 1;
     height: 1px;
+  }
+  .steps-list > li:last-child .steps-line {
+    display: none;
   }
 }
 /* Text stays at the switches' 0.8 for contrast; only the idle phone goes further down. */

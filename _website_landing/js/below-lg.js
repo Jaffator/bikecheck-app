@@ -159,6 +159,35 @@ function reel(wrap) {
   update();
 }
 
+// The step crossing a line 40% down the screen is the lit one. Only a different step
+// taking the line moves it on, so a tapped step holds until then.
+function followScroll(wrap, sw) {
+  var items = wrap.querySelectorAll(".sw-item");
+  var belowLg = window.matchMedia("(max-width: 1023px)");
+  var at = -1;
+  function update() {
+    if (!belowLg.matches) return;
+    var line = window.innerHeight * 0.4;
+    var index = 0;
+    items.forEach(function (el, i) {
+      if (el.getBoundingClientRect().top <= line) index = i;
+    });
+    if (index === at) return;
+    at = index;
+    sw.follow(index);
+  }
+  belowLg.addEventListener("change", function () {
+    at = -1;
+    if (belowLg.matches) update();
+    else sw.release();
+  });
+  onScroll(window, update);
+  update();
+}
+
 // Copied before the switchers start, while their screens still show their first frames.
 reel(document.querySelector(".sw-features"));
-document.querySelectorAll(".sw").forEach(switcher);
+document.querySelectorAll(".sw").forEach(function (wrap) {
+  var sw = switcher(wrap);
+  if (wrap.classList.contains("sw-steps")) followScroll(wrap, sw);
+});

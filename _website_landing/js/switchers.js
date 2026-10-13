@@ -36,11 +36,34 @@ function setStep(screen, step) {
   });
 }
 
+// Where in a screen's play-through its step begins, in ms.
+function startOf(steps, index) {
+  return steps.slice(0, index).reduce(function (sum, step) {
+    return sum + step.ms;
+  }, 0);
+}
+
+// A switch's fill (.steps-fill) grows over its screen's whole play-through, from empty.
+function fillOf(item, steps) {
+  var el = item.querySelector(".steps-fill");
+  if (!el || !el.animate || steps.length < 2) return null;
+  var anim = el.animate([{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }], {
+    duration: startOf(steps, steps.length),
+    iterations: Infinity,
+  });
+  anim.pause();
+  anim.currentTime = 0;
+  return anim;
+}
+
 function switcher(wrap) {
   var items = Array.prototype.slice.call(wrap.querySelectorAll(".sw-item"));
   var phones = Array.prototype.slice.call(wrap.querySelectorAll(".sw-phone"));
   var screens = wrap.querySelectorAll(".sw-phone .phone-screen > *");
   var steps = Array.prototype.map.call(screens, stepsOf);
+  var fills = items.map(function (el, i) {
+    return fillOf(el, steps[i]);
+  });
   var toggle = wrap.querySelector(".sw-toggle");
   var current = 0;
   var frames = [];
@@ -50,6 +73,8 @@ function switcher(wrap) {
   // from one switch to the next.
   var moving = false;
   var auto = false;
+  // The scroll picks the switch instead, so the clock only plays its frames.
+  var followsScroll = false;
   // A browser with nothing to watch the block with plays it regardless.
   var inView = !("IntersectionObserver" in window);
   var hovered = false;
@@ -73,13 +98,29 @@ function switcher(wrap) {
     });
   }
 
+  // Only the playing switch's fill runs, re-synced to its frame; a held one stops where it is.
+  function syncFills(running) {
+    fills.forEach(function (anim, i) {
+      if (!anim) return;
+      if (i === current && running) {
+        anim.currentTime = startOf(frames, frame);
+        anim.play();
+        return;
+      }
+      anim.pause();
+      if (i !== current) anim.currentTime = 0;
+    });
+  }
+
   function play() {
     clearTimeout(timer);
     var loops = frames.length > 1;
-    var movesOn = auto && !hovered;
+    var movesOn = auto && !hovered && !followsScroll;
+    var running = moving && inView && (loops || movesOn);
     // .is-auto is what the button goes by: something here is changing.
     wrap.classList.toggle("is-auto", moving && (auto || loops));
-    if (!moving || !inView || !(loops || movesOn)) return;
+    syncFills(running);
+    if (!running) return;
     timer = setTimeout(
       function () {
         if (frame < frames.length - 1) showFrame(frame + 1);
@@ -160,4 +201,17 @@ function switcher(wrap) {
   show(0);
   moving = auto = !reduced;
   play();
+
+  // For below-lg.js: a switch the scroll picks starts over, but a paused block stays paused.
+  return {
+    follow: function (index) {
+      followsScroll = true;
+      if (index !== current) show(index);
+      play();
+    },
+    release: function () {
+      followsScroll = false;
+      play();
+    },
+  };
 }

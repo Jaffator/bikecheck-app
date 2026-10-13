@@ -175,30 +175,6 @@
 .facts-strava strong {
   font-weight: 700;
 }
-/* Below lg the strip peeks in under the buttons: faded toward the screen edge so the headline
-   and terrain are seen first, lit once scrolled up (the reveal script adds .in). */
-@property --facts-lit {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 1;
-}
-@media (max-width: 1023px) {
-  .js .facts {
-    --facts-lit: 0;
-    -webkit-mask-image: linear-gradient(
-      rgba(0, 0, 0, calc(0.45 + 0.55 * var(--facts-lit))),
-      rgba(0, 0, 0, calc(0.06 + 0.94 * var(--facts-lit)))
-    );
-    mask-image: linear-gradient(
-      rgba(0, 0, 0, calc(0.45 + 0.55 * var(--facts-lit))),
-      rgba(0, 0, 0, calc(0.06 + 0.94 * var(--facts-lit)))
-    );
-    transition: --facts-lit 0.8s ease;
-  }
-  .js .facts.in {
-    --facts-lit: 1;
-  }
-}
 /* From lg up the first statement starts on the left content edge and the last ends on the right one. */
 @media (min-width: 1024px) {
   .facts {

@@ -672,7 +672,8 @@
 
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32 reveal">
           <!-- Each step over a phone of its own: picking a step plays its screen, and left
-               alone the block walks through all three (see "Switchers" in the styles). -->
+               alone the block walks through all three (see "Switchers" in the styles).
+               Below lg the scroll picks the step instead. -->
           <div class="sw sw-steps">
             <div class="steps-head">
               <div>
@@ -692,7 +693,7 @@
               <li>
                 <div class="sw-item is-on">
                   <span class="steps-mark" aria-hidden="true"
-                    ><span class="steps-no tabular-nums">1</span><span class="steps-line"></span
+                    ><span class="steps-no tabular-nums">1</span><span class="steps-line"><span class="steps-fill"></span></span
                   ></span>
                   <div>
                     <h3
@@ -802,7 +803,7 @@
               <li>
                 <div class="sw-item">
                   <span class="steps-mark" aria-hidden="true"
-                    ><span class="steps-no tabular-nums">2</span><span class="steps-line"></span
+                    ><span class="steps-no tabular-nums">2</span><span class="steps-line"><span class="steps-fill"></span></span
                   ></span>
                   <div>
                     <h3
@@ -866,7 +867,10 @@
               </li>
               <li>
                 <div class="sw-item">
-                  <span class="steps-mark" aria-hidden="true"><span class="steps-no tabular-nums">3</span></span>
+                  <span class="steps-mark" aria-hidden="true"
+                    ><span class="steps-no tabular-nums">3</span
+                    ><span class="steps-line"><span class="steps-fill"></span></span
+                  ></span>
                   <div>
                     <h3
                       class="font-display font-bold lg:font-semibold text-[17px] lg:text-[22px] lg:tracking-[-0.02em] mb-1.5 lg:mb-2.5"
