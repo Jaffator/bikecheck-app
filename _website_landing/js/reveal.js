@@ -1,5 +1,6 @@
 var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-var revealables = document.querySelectorAll(".reveal");
+// The hero's facts strip lights up the same way, but only below lg (see .facts in the styles).
+var revealables = document.querySelectorAll(".reveal, .facts");
 
 if (reduced || !("IntersectionObserver" in window)) {
   revealables.forEach(function (el) {

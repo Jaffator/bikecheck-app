@@ -135,7 +135,7 @@ function ridge(section) {
     var buttonsTop =
       section.querySelector("#download").getBoundingClientRect().top - section.getBoundingClientRect().top;
     var base = box.clientHeight - RIDGE_LAYOUTS.narrow.floor;
-    box.style.setProperty("--ridge-top", Math.round(buttonsTop - 32 - base) + "px");
+    box.style.setProperty("--ridge-top", Math.round(buttonsTop - 56 - base) + "px");
   }
 
   // From lg up the floor hangs off the buttons (drop px under their top), so the window's height doesn't move it.
