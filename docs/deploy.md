@@ -6,7 +6,15 @@ CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.
 ## Shipping a release
 
 - **Every push / PR to `main`** runs [ci.yml](../.github/workflows/ci.yml): typecheck of monolith, strava-service and frontend, plus the backend `UNIT` tests. It deploys nothing.
-- **A tag** runs [deploy.yml](../.github/workflows/deploy.yml):
+- **`npm run deploy:production`** from the repo root cuts a release with [scripts/release.mjs](../scripts/release.mjs):
+  1. Stops unless you are on a clean `main` that fast-forwards to `origin`.
+  2. Offers bug fix / new feature / major from the highest `vX.Y.Z` tag, then asks to confirm (default No). Cancel changes nothing.
+  3. Writes the version to the App's and the Marketing Website's `package.json` (+ locks), commits `chore(release): vX.Y.Z` and pushes `main`. The App shows it in Settings → About, the Website in its footer.
+  4. Tags and pushes `vX.Y.Z`, creates a GitHub Release with generated notes.
+  5. Follows the Deploy run with a progress bar until ✅ or ❌ (failed step + run URL). Ctrl+C stops watching only.
+
+  Needs `gh` logged in. Semver: a fix bumps the patch, a feature the minor.
+- **A tag** runs [deploy.yml](../.github/workflows/deploy.yml). By hand, without the script:
 
   ```sh
   git switch main && git pull
@@ -23,7 +31,7 @@ CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.
      - copies the SPA `index.html` out of the caddy image for the monolith's `/u/` and `/r/` shells.
   5. Smoke-checks `app.bikecheck.cloud/api/auth/test`, `app.bikecheck.cloud/` and `bikecheck.cloud/` for up to 2 minutes. A failure turns the run red; there is no automatic rollback.
 
-  Expect 10–30 s of 502s while containers swap. Semver: a fix bumps the patch, a feature the minor.
+  Expect 10–30 s of 502s while containers swap.
 
 ## Rollback and redeploy
 

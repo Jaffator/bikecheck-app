@@ -12,9 +12,15 @@ const tracker =
     ? `<script defer src="https://${STATS_HOST}/${TRACKER_SCRIPT_NAME}" data-website-id="${UMAMI_WEBSITE_ID}" data-host-url="https://${STATS_HOST}"></script>\n  </head>`
     : "</head>";
 
+// The release script bumps package.json, so the footer names the deployed tag.
+const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+
 rmSync("dist", { recursive: true, force: true });
 cpSync("public", "dist", { recursive: true });
 writeFileSync(
   "dist/index.html",
-  readFileSync("index.html", "utf8").replaceAll(DEFAULT_APP_URL, appUrl).replace("</head>", tracker),
+  readFileSync("index.html", "utf8")
+    .replaceAll(DEFAULT_APP_URL, appUrl)
+    .replace("</head>", tracker)
+    .replace("<!-- version -->", ` · v${version}`),
 );
