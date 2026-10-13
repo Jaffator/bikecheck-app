@@ -301,11 +301,10 @@
         height: 1px;
         background: #cec053;
       }
-      /* 48px under the headline's cap line (eyebrow 16.5px + mt-11, Geist cap 0.716em in a 0.98 line),
-     ending on the content edge. */
+      /* 48px under the headline's cap line (Geist cap 0.716em in a 0.98 line), ending on the content edge. */
       @media (min-width: 1024px) {
         .readout {
-          top: calc(60.5px + 0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
+          top: calc(0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
           right: 0;
         }
       }
@@ -2120,16 +2119,11 @@
      script): climbs count on the chain, descents mostly on the brake pads. -->
       <section class="hero relative overflow-hidden flex flex-col">
         <div
-          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10 lg:pt-[63px] lg:pb-[168px]"
+          class="relative z-10 flex-1 flex flex-col justify-start w-full max-w-content mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 lg:pt-[63px] lg:pb-[168px]"
         >
           <div class="relative">
-            <p class="font-mono text-[10px] lg:text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-              <span class="lang-cs">Platforma pro tvoje kolo</span>
-              <span class="lang-en">Platform for your bike</span>
-            </p>
-
             <h1
-              class="mt-3 lg:mt-11 lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em]"
+              class="lg:max-w-[calc(100%-400px)] font-display font-semibold text-[clamp(38px,6.1vw,88px)] leading-[0.98] tracking-[-0.035em]"
             >
               <span class="lang-cs"
                 >Všechno o tvém kole<br />
@@ -2435,11 +2429,8 @@
           <div class="sw sw-steps">
             <div class="steps-head">
               <div>
-                <p class="font-mono text-[11px] font-medium tracking-[0.16em] uppercase text-paper-dim">
-                  <span class="lang-cs">Jak to funguje</span><span class="lang-en">How it works</span>
-                </p>
                 <h2
-                  class="mt-[18px] font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
+                  class="font-display font-semibold text-[36px] lg:text-[48px] leading-[1.02] tracking-[-0.03em] text-balance"
                 >
                   <!-- <span class="lang-cs"
                     >Protože tě baví jezdit<br />a chceš mít svá kola<br />
@@ -3288,9 +3279,6 @@
 
         <div class="relative max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div class="max-w-[46ch] mb-14 mx-auto text-center reveal">
-            <p class="font-mono text-[11px] tracking-[0.16em] uppercase text-paper-dim mb-5">
-              <span class="lang-cs">Funkce</span><span class="lang-en">Features</span>
-            </p>
             <h2 class="font-display font-extrabold tracking-tight text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-balance">
               <span class="lang-cs">BikeCheck v kostce</span>
               <span class="lang-en">BikeCheck at a glance</span>
@@ -4606,6 +4594,38 @@
         window.matchMedia("(min-width: 1024px)").addEventListener("change", function (e) {
           if (e.matches && isMenuOpen()) closeMenu();
         });
+
+        // ---- Nav: where you are ------------------------------------------------
+        // The section crossing a thin band 40% down the window lights its header link; the log sits under Service.
+        var navLinks = document.querySelectorAll('header a[href^="#"]');
+        var NAV_FOR = { "service-log": "wear" };
+
+        function markNav(id) {
+          navLinks.forEach(function (link) {
+            var on = link.getAttribute("href") === "#" + id;
+            link.classList.toggle("text-paper", on);
+            if (on) link.setAttribute("aria-current", "location");
+            else link.removeAttribute("aria-current");
+          });
+        }
+
+        if ("IntersectionObserver" in window) {
+          var navSeen = new Set();
+          var navIo = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) navSeen.add(entry.target.id);
+                else navSeen.delete(entry.target.id);
+              });
+              var id = Array.from(navSeen)[0];
+              markNav(id ? NAV_FOR[id] || id : null);
+            },
+            { rootMargin: "-40% 0px -59% 0px" },
+          );
+          document.querySelectorAll("main section[id]").forEach(function (section) {
+            navIo.observe(section);
+          });
+        }
 
         // ---- Year --------------------------------------------------------------
         document.getElementById("year").textContent = String(new Date().getFullYear());
