@@ -866,6 +866,8 @@ Tags: **[code]** repo change, **[console]** web consoles, **[server]** shell on 
 
 #### Phase G: CI/CD (can follow the first manual deploy)
 
+> **Built, and it differs from this outline:** deploys run from a `vX.Y.Z` tag on `main`, with a pre-deploy dump and a smoke check, not from every push. The `production` branch is retired. See [docs/deploy.md](../deploy.md) (#244).
+
 30. **[code]** `.github/workflows/deploy.yml`. Actions are *"free for public repositories that use standard GitHub-hosted runners"* ([billing](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions)). Outline (pin actions to SHAs as GitHub's own examples do; versions below are **[reasoning]**):
 
 ```yaml

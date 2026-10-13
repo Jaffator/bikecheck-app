@@ -1,31 +1,135 @@
 # Deploy
 
-## Umami (cookieless stats for the Marketing Website and the App)
+Production is one Hetzner box running `docker-compose.prod.yml` from a git clone in `/opt/bikecheck`.
+CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.Z` tag on `main`.
 
-Umami runs as `umami` + `db-umami` in `docker-compose.prod.yml`, behind Caddy on `STATS_HOST`.
-The tracker is served as `TRACKER_SCRIPT_NAME` and posts to `COLLECT_API_ENDPOINT`, so ad blockers
-that match `script.js` and `/api/send` let it through.
+## Shipping a release
 
-1. DNS: an A record `stats.bikecheck.cloud` → the server IP, like the other two hosts.
-2. `.env.production`: `STATS_HOST`, `UMAMI_APP_SECRET=$(openssl rand -hex 32)`, `TRACKER_SCRIPT_NAME`,
-   `COLLECT_API_ENDPOINT` (see `.env.production.example`). Leave both `UMAMI_WEBSITE_ID_*` empty for now.
-3. Deploy. Caddy fetches the certificate for the new host on first request.
-4. Log in at `https://stats.bikecheck.cloud` as `admin` / `umami` and change the password at once:
-   Settings → Profile → Change password.
+- **Every push / PR to `main`** runs [ci.yml](../.github/workflows/ci.yml): typecheck of monolith, strava-service and frontend, plus the backend `UNIT` tests. It deploys nothing.
+- **A tag** runs [deploy.yml](../.github/workflows/deploy.yml):
+
+  ```sh
+  git switch main && git pull
+  git tag v1.4.0 && git push origin v1.4.0     # or GitHub → Releases → Draft a new release
+  ```
+
+  1. Refuses a tag that is not on `main`.
+  2. Runs the CI checks.
+  3. Builds `bikecheck-monolith`, `bikecheck-strava-service` and `bikecheck-caddy` (SPA + Marketing Website) into `ghcr.io/jaffator/…:v1.4.0`.
+  4. SSHes to the server, whose key may only run [scripts/deploy.sh](../scripts/deploy.sh):
+     - dumps all three DBs (monolith, strava-service, Umami) to `backups/<utc-time>-<tag>/`, keeps the last 5, and stops if a dump fails;
+     - `git checkout <tag>` for the compose file, Caddyfile and Alloy config;
+     - `compose pull` + `up -d`; migrations run as each container starts;
+     - copies the SPA `index.html` out of the caddy image for the monolith's `/u/` and `/r/` shells.
+  5. Smoke-checks `app.bikecheck.cloud/api/auth/test`, `app.bikecheck.cloud/` and `bikecheck.cloud/` for up to 2 minutes. A failure turns the run red; there is no automatic rollback.
+
+  Expect 10–30 s of 502s while containers swap. Semver: a fix bumps the patch, a feature the minor.
+
+## Rollback and redeploy
+
+**Actions → Deploy → Run workflow → tag `v1.3.0`.** It skips checks and build, reuses that tag's images, and still dumps first. The same button redeploys the current tag after an `.env.production` change.
+
+Without GitHub: `sudo -iu deploy /opt/bikecheck/scripts/deploy.sh v1.3.0`.
+
+A rollback returns code, not data. If a migration damaged data, restore the dump taken just before the bad release. A dump named `…-v1.4.0` predates v1.4.0, so it matches the release before it:
+
+```sh
+cd /opt/bikecheck
+dc stop monolith strava-service
+dc exec -T db-monolith sh -c 'pg_restore -U "$POSTGRES_USER" -d monolith --clean --if-exists' < backups/<dir>/monolith.dump
+dc exec -T db-strava-service sh -c 'pg_restore -U "$POSTGRES_USER" -d strava_service --clean --if-exists' < backups/<dir>/strava_service.dump
+```
+
+Then redeploy the older tag.
+
+## Working on the server
+
+Run git and compose as `deploy` (`sudo -iu deploy`); git refuses a repo owned by another user. Compose needs the running release's tag, which `deploy.sh` writes to `.env.tag`. Add to `/home/deploy/.bashrc`:
+
+```sh
+alias dc='docker compose --env-file .env.production --env-file .env.tag -f docker-compose.prod.yml'
+```
+
+Then `cd /opt/bikecheck && dc logs -f monolith`.
+
+## One-time setup
+
+### Server (as root)
+
+1. A `deploy` user that owns the clone. Membership in `docker` is root-equivalent, so the SSH key below is restricted instead.
+
+   ```sh
+   adduser --disabled-password --gecos "" deploy
+   usermod -aG docker deploy
+   chown -R deploy:deploy /opt/bikecheck
+   ```
+
+2. Read access to GitHub for `git fetch`: the existing read-only deploy key, the `Host github.com` entry that picks it, and GitHub's host key.
+
+   ```sh
+   install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+   install -m 600 -o deploy -g deploy /root/.ssh/github_deploy /home/deploy/.ssh/github_deploy
+   install -m 644 -o deploy -g deploy /root/.ssh/config /home/deploy/.ssh/config
+   install -m 644 -o deploy -g deploy /root/.ssh/known_hosts /home/deploy/.ssh/known_hosts
+   ```
+
+   Check it: `sudo -iu deploy ssh -T git@github.com`, then `sudo -iu deploy git -C /opt/bikecheck fetch --tags`.
+
+3. Registry login. The password is a **classic** PAT with only `read:packages`:
+
+   ```sh
+   sudo -iu deploy docker login ghcr.io -u Jaffator
+   ```
+
+4. The Actions key. Generate it on your own machine:
+
+   ```sh
+   ssh-keygen -t ed25519 -N "" -C github-actions-deploy -f bikecheck_deploy
+   ```
+
+   Then append one line to `/home/deploy/.ssh/authorized_keys` (owned by `deploy`, mode 600), with the contents of `bikecheck_deploy.pub` after `restrict`:
+
+   ```
+   command="/opt/bikecheck/scripts/deploy.sh",restrict ssh-ed25519 AAAA… github-actions-deploy
+   ```
+
+### GitHub secrets (from your machine)
+
+```sh
+gh secret set DEPLOY_HOST --body "<server IP>"
+gh secret set DEPLOY_SSH_KEY < bikecheck_deploy
+ssh-keyscan -t ed25519 <server IP> | gh secret set DEPLOY_KNOWN_HOSTS
+```
+
+Then delete `bikecheck_deploy` locally; GitHub holds the only copy it needs.
+
+### Umami (cookieless stats for the Marketing Website and the App)
+
+`umami` + `db-umami` run behind Caddy on `STATS_HOST`. The tracker is served as `TRACKER_SCRIPT_NAME` and posts to `COLLECT_API_ENDPOINT`, so ad blockers that match `script.js` and `/api/send` let it through.
+
+1. DNS: nothing to add, the `*.bikecheck.cloud` wildcard already points `stats` at the server.
+2. `.env.production`: `STATS_HOST`, `UMAMI_APP_SECRET=$(openssl rand -hex 32)`, `TRACKER_SCRIPT_NAME`, `COLLECT_API_ENDPOINT` (see `.env.production.example`).
+3. Deploy. The first deploy after this change skips the Umami dump, as the script it runs predates it.
+4. Log in at `https://stats.bikecheck.cloud` as `admin` / `umami` and change the password at once: Settings → Profile → Change password.
 5. Settings → Websites → Add:
-   - **Web**, domain `bikecheck.cloud` → its ID into `UMAMI_WEBSITE_ID_WEB`;
-   - **App**, domain `app.bikecheck.cloud` → its ID into `UMAMI_WEBSITE_ID_APP`. The Android shell
-     reports to the same website with hostname `localhost`.
-6. Rebuild caddy: both IDs are baked into the static builds, an empty one ships that build without the tracker.
+   - **Web**, domain `bikecheck.cloud`;
+   - **App**, domain `app.bikecheck.cloud`. The Android shell reports to it too, with hostname `localhost`.
+6. The CI caddy build bakes the tracker into both static builds from repo variables; an unset ID ships that build without it. `TRACKER_SCRIPT_NAME` must match `.env.production`:
 
-### Android APK
+   ```sh
+   gh variable set STATS_HOST --body stats.bikecheck.cloud
+   gh variable set TRACKER_SCRIPT_NAME --body bc.js
+   gh variable set UMAMI_WEBSITE_ID_WEB --body <Web ID>
+   gh variable set UMAMI_WEBSITE_ID_APP --body <App ID>
+   ```
 
-The APK is built locally (`npm run build`, mode production), so it tracks only when
-`_frontend/bikecheck/.env.production.local` (git-ignored) holds:
+   Then tag a release; a redeploy of an old tag reuses its images and keeps the old IDs.
 
-```
-VITE_UMAMI_WEBSITE_ID=<the App ID>
-VITE_UMAMI_SCRIPT_URL=https://stats.bikecheck.cloud/<TRACKER_SCRIPT_NAME>
-```
+The APK is built locally (`npm run build`, mode production), so it tracks only when `_frontend/bikecheck/.env.production.local` (git-ignored) holds `VITE_UMAMI_WEBSITE_ID=<App ID>` and `VITE_UMAMI_SCRIPT_URL=https://stats.bikecheck.cloud/<TRACKER_SCRIPT_NAME>`. `npm run dev` never reads that file.
 
-`npm run dev` never reads that file, so development never counts.
+### First tag deploy (leaving the `production` branch)
+
+1. Merge the CI/CD change into `main`.
+2. Put `deploy.sh` on the server: `sudo -iu deploy git -C /opt/bikecheck fetch origin && sudo -iu deploy git -C /opt/bikecheck checkout --detach origin/main`.
+3. Tag and push, e.g. `v1.0.0`, and watch the run in Actions.
+4. Once it is green: `git push origin --delete production`, and `git branch -D production` locally and on the server.
