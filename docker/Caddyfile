@@ -1,5 +1,5 @@
 # Production edge: TLS, the Marketing Website on the apex, the App on its own host (ADR 0041).
-# Env: WEBSITE_HOST, PUBLIC_HOST, OPS_USER, OPS_PASSWORD_HASH - see .env.production.example.
+# Env: WEBSITE_HOST, PUBLIC_HOST, STATS_HOST, OPS_USER, OPS_PASSWORD_HASH - see .env.production.example.
 
 # The Marketing Website is static; an unknown path is a 404, never a hop into the App.
 {$WEBSITE_HOST} {
@@ -12,6 +12,13 @@
 # Search and shared links should see one address, not two.
 www.{$WEBSITE_HOST} {
 	redir https://{$WEBSITE_HOST}{uri} permanent
+}
+
+# Umami: its dashboard (own login), the tracker script and the collect endpoint.
+{$STATS_HOST} {
+	log
+	encode gzip
+	reverse_proxy umami:3000
 }
 
 # The App: the SPA and the two Nest apps on one origin (docs/research/hosting.md §5).

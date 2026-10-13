@@ -20,6 +20,9 @@ import { queryClient } from "@/api/queryClient";
 import { AppRouter } from "./AppRouter";
 import App from "./App.tsx";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
+import { loadAnalytics } from "@/utils/analytics";
+
+loadAnalytics();
 
 const initialize = async () => {
   await GoogleSignIn.initialize({

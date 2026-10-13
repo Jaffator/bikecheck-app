@@ -35,6 +35,44 @@ services:
       retries: 10
     networks: [internal]
 
+  db-umami:
+    image: postgres:18.1-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: umami
+    volumes:
+      - pgdata_umami:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d umami"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  # Cookieless visitor stats for the Marketing Website and the App, behind Caddy on STATS_HOST.
+  umami:
+    image: ghcr.io/umami-software/umami:3.4.0
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-umami:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}
+      # Neutral names, so ad blockers that match script.js and /api/send let them through.
+      TRACKER_SCRIPT_NAME: ${TRACKER_SCRIPT_NAME}
+      COLLECT_API_ENDPOINT: ${COLLECT_API_ENDPOINT}
+      DISABLE_TELEMETRY: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      db-umami:
+        condition: service_healthy
+    networks: [internal]
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -109,6 +147,12 @@ services:
     build:
       context: .
       dockerfile: docker/caddy.Dockerfile
+      # The tracker is baked into both static builds; an empty ID builds that one without it.
+      args:
+        STATS_HOST: ${STATS_HOST:-}
+        TRACKER_SCRIPT_NAME: ${TRACKER_SCRIPT_NAME:-}
+        UMAMI_WEBSITE_ID_WEB: ${UMAMI_WEBSITE_ID_WEB:-}
+        UMAMI_WEBSITE_ID_APP: ${UMAMI_WEBSITE_ID_APP:-}
     restart: unless-stopped
     ports:
       - "80:80"
@@ -117,6 +161,7 @@ services:
     environment:
       WEBSITE_HOST: ${WEBSITE_HOST}
       PUBLIC_HOST: ${PUBLIC_HOST}
+      STATS_HOST: ${STATS_HOST}
       OPS_USER: ${OPS_USER}
       OPS_PASSWORD_HASH: ${OPS_PASSWORD_HASH}
     volumes:
@@ -126,6 +171,7 @@ services:
     depends_on:
       - monolith
       - strava-service
+      - umami
     networks: [internal]
 
   # Metrics and logs to Grafana Cloud. Host namespaces so it reads the server's own CPU, RAM and network;
@@ -155,6 +201,7 @@ volumes:
   alloy_data:
   pgdata_monolith:
   pgdata_strava_service:
+  pgdata_umami:
   redis_data:
   caddy_data:
   caddy_config:

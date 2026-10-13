@@ -1,6 +1,6 @@
 // What the login screen does, whichever layout draws it: the form, its requests and the
 // inbox state they can end in.
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useForm, type UseFormReturnType } from "@mantine/form";
 import { useToggle } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ import { visitorLanguage } from "@/i18n";
 import { useLogin, useRegistration, useGoogleNative, useResendVerification } from "@/features/users/users.queries";
 import { useResendCooldown } from "@/features/users/useResendCooldown";
 import type { ApiError } from "@/api/client";
+import { trackEvent } from "@/utils/analytics";
 
 // The backend's error code for the right password on an account whose address is not yet
 // verified (ADR 0031); it arrives in the response message.
@@ -132,6 +133,11 @@ export function useAuthForm(): AuthFormState {
     },
   });
 
+  // Counts the form shown: on open and on every switch between login and register.
+  useEffect(() => {
+    trackEvent("auth-open", { mode: type });
+  }, [type]);
+
   // The web callback's flags are read once; leaving the form must not carry them along.
   function clearGoogleFlags(): void {
     if (!searchParams.has(EMAIL_NOT_VERIFIED_PARAM) && !searchParams.has(GOOGLE_ERROR_PARAM)) return;
@@ -182,6 +188,8 @@ export function useAuthForm(): AuthFormState {
   // query flag. The native app posts the token and gets a session or a refusal; a 403 is an
   // Unverified Account, and the address the sign-in carried goes to the inbox state.
   async function signInWithGoogle(): Promise<void> {
+    // A keepalive request, so the web redirect below does not cancel it.
+    trackEvent("auth-google");
     if (Capacitor.getPlatform() === "web") {
       window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
     } else if (Capacitor.getPlatform() === "android") {
