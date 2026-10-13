@@ -1,0 +1,14 @@
+{
+  "folders": [
+	{
+		"path": "."
+	},
+	{
+		"path": "../BikeCheck-ci-deploy"
+	}
+],
+  "settings": {
+    "typescript.reportStyleChecksAsWarnings": true,
+    "liveServer.settings.multiRootWorkspaceName": "BikeCheck"
+  }
+}
