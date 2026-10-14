@@ -11,8 +11,7 @@ import { errors as playwrightErrors } from 'playwright';
 
 chromium.use(stealthPlugin());
 
-// The only site this service scrapes. Every URL it opens is checked against it,
-// because the ones reaching the drill-in endpoints come from the client.
+// Only scraped site; drill-in URLs come from the client, so each is checked against it.
 const PROVIDER_HOST = '99spokes.com';
 
 @Injectable()
@@ -26,45 +25,26 @@ export class BikeDataScrapeService {
     private readonly logger: PinoLogger,
   ) {}
 
-  /**
-   * Searches the provider for bikes matching a name and year.
-   * @param bikeTitle The brand and model to search for
-   * @param year The model year to limit the search to
-   * @returns The cards the search page rendered, bikes and collections alike
-   */
+  /** Returns bike and collection cards alike. */
   async searchBikeList(bikeTitle: string, year: string): Promise<SearchBikeExternalResponseDto[]> {
     return await this.fetchBikeCards(this.buildSearchUrl(bikeTitle, year));
   }
 
-  /**
-   * Opens a collection card and reads the bikes filed under it. The URL is the
-   * one the provider put on the card - it carries the original query, so there
-   * is nothing to rebuild here.
-   * @param url The collection URL returned by a previous search
-   * @returns The cards the collection page rendered
-   */
+  /** Collection URL comes from the provider's card and carries the original query - nothing to rebuild. */
   async searchFamilyList(url: string): Promise<SearchBikeExternalResponseDto[]> {
     this.assertProviderUrl(url);
 
     return await this.fetchBikeCards(url);
   }
 
-  /**
-   * Reads every result card off one provider listing page. Both entry points
-   * land on the same markup, so they share this.
-   * @param url The listing page to read
-   * @returns One entry per card, each marked as a bike or a collection
-   */
+  /** Search and collection pages share the same markup, so both read cards here. */
   private async fetchBikeCards(url: string): Promise<SearchBikeExternalResponseDto[]> {
     const startedAt = Date.now();
 
     try {
       const bikes = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
-        // A listing answers with bike cards, with collection cards, or with
-        // neither - a search with no hits renders no cards at all, so the
-        // selector never appears. That is an empty result, not a failure:
-        // swallow the timeout and let the evaluate below return an empty array.
+        // No hits render no cards, so the timeout means an empty result, not a failure.
         await page.waitForSelector('a[href*="/bikes/"], a[href*="family="]', { timeout: 4000 }).catch(() => null);
 
         return page.evaluate(() => {
@@ -79,10 +59,8 @@ export class BikeDataScrapeService {
 
           for (const card of cards) {
             const anchor = card as HTMLAnchorElement;
-            // A bike sits at /bikes/<brand>/<year>/<model>; a collection is the
-            // search page narrowed to one family. Both render as the same card,
-            // so the URL is the only thing telling them apart - and anything
-            // matching neither shape is site navigation, not a result.
+            // Bikes and collections share the card markup, only the URL tells them apart.
+            // Links matching neither shape are site navigation.
             const family = new URL(anchor.href).searchParams.get('family');
             const isModel = /\/bikes\/[^/?]+\/[^/?]+\/[^/?]+/.test(anchor.pathname);
             if (!family && !isModel) continue;
@@ -122,11 +100,7 @@ export class BikeDataScrapeService {
     }
   }
 
-  /**
-   * Fetches the components of a bike from an external provider based on the bike URL.
-   * @param url The URL of the bike for fetching components.
-   * @returns Array of {id: number, component: string, desc: string}
-   */
+  /** Every active component type is returned, unmatched ones with an empty description. */
   async externalGetBikeComponents(url: string): Promise<AssembleBikeComponentsDto[]> {
     this.assertProviderUrl(url);
 
@@ -278,12 +252,7 @@ export class BikeDataScrapeService {
     return `https://${PROVIDER_HOST}/en-EU/bikes?frameset=0&q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(year ?? '')}`;
   }
 
-  /**
-   * Refuses any URL that does not belong to the provider. The scraper drives a
-   * real browser, so a URL arriving from the client is followed only when it
-   * points where we expect - never at an address of the caller's choosing.
-   * @param url The URL a client asked the scraper to open
-   */
+  /** Scraper drives a real browser, so a client URL is followed only to the provider host. */
   private assertProviderUrl(url: string): void {
     let parsed: URL;
 
