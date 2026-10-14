@@ -34,16 +34,12 @@ import { AssembleBikeComponentsDto } from '../component/dto/response-components'
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 // import { NewBikeFormData } from './types/bike.types';
 
-// How a bike photo is accepted, on create and on update alike - one definition, so the
-// two routes cannot drift apart on what they let through.
+// Shared by create and update so the two routes cannot drift apart on what they accept.
 const BIKE_IMAGE_UPLOAD: MulterOptions = {
   storage: memoryStorage(),
-  // Only guards the transfer: the image is resized before it is stored, so
-  // this caps what a phone may upload rather than what is kept.
+  // Caps the upload only; the image is resized before it is stored.
   limits: { fileSize: 15 * 1024 * 1024 },
-  // Phones send HEIC/HEIF and, through Capacitor, often no usable mime type
-  // at all - a blob read back from a webPath arrives as octet-stream. So the
-  // extension decides whenever the mime type is not an image one.
+  // Capacitor blobs often arrive as octet-stream, so the extension decides when the mime type isn't an image.
   fileFilter: (_req, file, callback) => {
     const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.gif', '.avif'];
     const extension = path.extname(file.originalname).toLowerCase();
@@ -56,9 +52,7 @@ const BIKE_IMAGE_UPLOAD: MulterOptions = {
   },
 };
 
-// The create body is declared as a raw multipart schema, so these DTOs are no
-// longer reachable from any decorator - listed here so the generated OpenAPI
-// schema (and the frontend types built from it) still contains them.
+// Raw multipart schema hides these DTOs from decorators; listed so OpenAPI and frontend types keep them.
 @ApiExtraModels(CreateBikeWithComponentsDto, CreateBikeDto)
 @Controller('bike')
 export class BikeController {
@@ -149,9 +143,7 @@ export class BikeController {
   }
 
   // ---------- UPDATE bike by ID ----------
-  // Multipart, the same shape as create: "data" holds the JSON DTO as a string, "image" is
-  // the optional replacement photo. One request, so a saved photo can never outlive an
-  // unsaved form.
+  // Multipart like create; one request, so a saved photo can never outlive an unsaved form.
   @Patch(':id')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -201,13 +193,11 @@ export class BikeController {
   }
 
   // Multipart fields arrive as strings, so the global ValidationPipe is bypassed here.
-  // Both the create and the update body come through this.
   private async parseDto<T extends object>(
     type: new () => T,
     data: string,
     what: string,
-    // An update DTO is all-optional, so a request naming no field at all would otherwise
-    // pass validation and write nothing. Only the update asks for this.
+    // Update DTO is all-optional; an empty request would otherwise pass and write nothing.
     forbidEmpty = false,
   ): Promise<T> {
     if (!data) {
@@ -225,8 +215,7 @@ export class BikeController {
     const errors = await validate(dto);
 
     if (errors.length > 0) {
-      // Raw ValidationError objects are deeply nested and unreadable on the
-      // client, so they are flattened to "field: reason" lines instead.
+      // Nested ValidationErrors are unreadable on the client, so flatten to "field: reason".
       const messages = flattenValidationErrors(errors);
       this.logger.warn(`Rejected ${what}: ${messages.join('; ')}`);
       throw new BadRequestException({ message: messages, error: 'Validation failed' });
@@ -240,8 +229,7 @@ export class BikeController {
   }
 }
 
-// "bike.total_km: total_km must not be less than 0" - the path says which field,
-// including the index of the offending component.
+// "bike.total_km: must not be less than 0"-style lines; the path includes the component index.
 function flattenValidationErrors(errors: ValidationError[], parentPath = ''): string[] {
   return errors.flatMap((error) => {
     const path = parentPath ? `${parentPath}.${error.property}` : error.property;

@@ -8,12 +8,16 @@ import { SearchBikeExternalResponseDto } from '../dto/response-bike.dto';
 import { AssembleBikeComponentsDto } from '../../component/dto/response-components';
 import type { component_types as ComponentType } from '@prisma/client';
 import { errors as playwrightErrors } from 'playwright';
+import axios from 'axios';
 
 chromium.use(stealthPlugin());
 
-// The only site this service scrapes. Every URL it opens is checked against it,
-// because the ones reaching the drill-in endpoints come from the client.
+// Only scraped site; drill-in URLs come from the client, so each is checked against it.
 const PROVIDER_HOST = '99spokes.com';
+const CARD_SELECTOR = 'a[href*="/bikes/"], a[href*="family="]';
+const SCRAPFLY_SCRAPE_URL = 'https://api.scrapfly.io/scrape';
+// Results arrive by XHR after load; Scrapfly's wait_for_selector rejects our card selector, so wait a fixed time.
+const RESULTS_RENDER_WAIT_MS = 8000;
 
 @Injectable()
 export class BikeDataScrapeService {
@@ -26,46 +30,27 @@ export class BikeDataScrapeService {
     private readonly logger: PinoLogger,
   ) {}
 
-  /**
-   * Searches the provider for bikes matching a name and year.
-   * @param bikeTitle The brand and model to search for
-   * @param year The model year to limit the search to
-   * @returns The cards the search page rendered, bikes and collections alike
-   */
+  /** Returns bike and collection cards alike. */
   async searchBikeList(bikeTitle: string, year: string): Promise<SearchBikeExternalResponseDto[]> {
     return await this.fetchBikeCards(this.buildSearchUrl(bikeTitle, year));
   }
 
-  /**
-   * Opens a collection card and reads the bikes filed under it. The URL is the
-   * one the provider put on the card - it carries the original query, so there
-   * is nothing to rebuild here.
-   * @param url The collection URL returned by a previous search
-   * @returns The cards the collection page rendered
-   */
+  /** Collection URL comes from the provider's card and carries the original query - nothing to rebuild. */
   async searchFamilyList(url: string): Promise<SearchBikeExternalResponseDto[]> {
     this.assertProviderUrl(url);
 
     return await this.fetchBikeCards(url);
   }
 
-  /**
-   * Reads every result card off one provider listing page. Both entry points
-   * land on the same markup, so they share this.
-   * @param url The listing page to read
-   * @returns One entry per card, each marked as a bike or a collection
-   */
+  /** Search and collection pages share the same markup, so both read cards here. */
   private async fetchBikeCards(url: string): Promise<SearchBikeExternalResponseDto[]> {
     const startedAt = Date.now();
 
     try {
       const bikes = await this.withPage(async (page) => {
-        await page.goto(url, { waitUntil: 'load' });
-        // A listing answers with bike cards, with collection cards, or with
-        // neither - a search with no hits renders no cards at all, so the
-        // selector never appears. That is an empty result, not a failure:
-        // swallow the timeout and let the evaluate below return an empty array.
-        await page.waitForSelector('a[href*="/bikes/"], a[href*="family="]', { timeout: 4000 }).catch(() => null);
+        await this.openProviderPage(page, url, true);
+        // No hits render no cards, so the timeout means an empty result, not a failure.
+        await page.waitForSelector(CARD_SELECTOR, { timeout: 4000 }).catch(() => null);
 
         return page.evaluate(() => {
           const cards = Array.from(document.querySelectorAll('a[href*="/bikes"]'));
@@ -79,10 +64,8 @@ export class BikeDataScrapeService {
 
           for (const card of cards) {
             const anchor = card as HTMLAnchorElement;
-            // A bike sits at /bikes/<brand>/<year>/<model>; a collection is the
-            // search page narrowed to one family. Both render as the same card,
-            // so the URL is the only thing telling them apart - and anything
-            // matching neither shape is site navigation, not a result.
+            // Bikes and collections share the card markup, only the URL tells them apart.
+            // Links matching neither shape are site navigation.
             const family = new URL(anchor.href).searchParams.get('family');
             const isModel = /\/bikes\/[^/?]+\/[^/?]+\/[^/?]+/.test(anchor.pathname);
             if (!family && !isModel) continue;
@@ -122,17 +105,14 @@ export class BikeDataScrapeService {
     }
   }
 
-  /**
-   * Fetches the components of a bike from an external provider based on the bike URL.
-   * @param url The URL of the bike for fetching components.
-   * @returns Array of {id: number, component: string, desc: string}
-   */
+  /** Every active component type is returned, unmatched ones with an empty description. */
   async externalGetBikeComponents(url: string): Promise<AssembleBikeComponentsDto[]> {
     this.assertProviderUrl(url);
 
     try {
       const bikeComponents = await this.withPage(async (page) => {
-        await page.goto(url, { waitUntil: 'load' });
+        // The spec tables are server-rendered, so no JS rendering is paid for here.
+        await this.openProviderPage(page, url, false);
         await page.waitForSelector('table', { timeout: 6000 });
 
         return page.evaluate(() => {
@@ -278,12 +258,7 @@ export class BikeDataScrapeService {
     return `https://${PROVIDER_HOST}/en-EU/bikes?frameset=0&q=${encodeURIComponent(searchQuery)}&year=${encodeURIComponent(year ?? '')}`;
   }
 
-  /**
-   * Refuses any URL that does not belong to the provider. The scraper drives a
-   * real browser, so a URL arriving from the client is followed only when it
-   * points where we expect - never at an address of the caller's choosing.
-   * @param url The URL a client asked the scraper to open
-   */
+  /** Scraper drives a real browser, so a client URL is followed only to the provider host. */
   private assertProviderUrl(url: string): void {
     let parsed: URL;
 
@@ -296,6 +271,40 @@ export class BikeDataScrapeService {
     if (parsed.protocol !== 'https:' || parsed.hostname !== PROVIDER_HOST) {
       throw new BadRequestException('Unsupported bike provider URL');
     }
+  }
+
+  /** Cloudflare blocks the prod datacenter IP (#246), so with a Scrapfly key the page is fetched there. */
+  private async openProviderPage(page: Page, url: string, renderJs: boolean): Promise<void> {
+    if (!process.env.SCRAPFLY_API_KEY) {
+      await page.goto(url, { waitUntil: 'load' });
+      return;
+    }
+
+    const html = await this.fetchViaScrapfly(url, renderJs);
+    // Serve only the page itself: its scripts would refetch from here, hit the 403 and clear the cards.
+    await page.route('**/*', (route) =>
+      route.request().isNavigationRequest() && route.request().frame() === page.mainFrame()
+        ? route.fulfill({ body: html, contentType: 'text/html' })
+        : route.abort(),
+    );
+    await page.goto(url, { waitUntil: 'load' });
+  }
+
+  private async fetchViaScrapfly(url: string, renderJs: boolean): Promise<string> {
+    const response = await axios.get<{ result: { content: string } }>(SCRAPFLY_SCRAPE_URL, {
+      params: {
+        key: process.env.SCRAPFLY_API_KEY,
+        url,
+        asp: true,
+        // Otherwise the proxy's country picks the locale and component labels stop matching the DB.
+        lang: 'en',
+        ...(renderJs && { render_js: true, rendering_wait: RESULTS_RENDER_WAIT_MS }),
+      },
+      // ASP may retry through several proxies before it gets past Cloudflare.
+      timeout: 160_000,
+    });
+
+    return response.data.result.content;
   }
 
   private async withPage<T>(callback: (page: Page) => Promise<T>): Promise<T> {
