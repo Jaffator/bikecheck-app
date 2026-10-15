@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactElement } from "react";
-import { Box, Group, Loader, Paper, Stack, Text, Textarea, UnstyledButton } from "@mantine/core";
+import { Box, Group, Paper, Stack, Text, Textarea, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Ban, ChevronUp, Merge, Pencil, Plus, SearchX, Split, Wrench, CircleCheckBig } from "lucide-react";
 import { IoCloudOffline } from "react-icons/io5";
@@ -8,6 +8,8 @@ import { groupIcon } from "@/assets/icons/svg_icons/groups";
 import { componentIcon } from "@/assets/icons/svg_icons/components";
 import type { AssembleBikeComponent, ComponentGroup } from "@/features/components/components.types";
 import { autosizeInputStyles } from "./formStyles";
+import { LookupProgress } from "./LookupProgress";
+import type { LookupPhase } from "./useLookupPhase";
 import {
   componentTypeId,
   countConfigured,
@@ -34,7 +36,7 @@ interface BikeComponentListProps {
   onToggleDisabled: (componentTypeId: number) => void;
   openGroupId: number | null;
   onToggleGroup: (groupId: number) => void;
-  isLoading: boolean;
+  lookupPhase: LookupPhase;
   isError: boolean;
 }
 
@@ -157,7 +159,7 @@ export function BikeComponentList({
   onToggleDisabled,
   openGroupId,
   onToggleGroup,
-  isLoading,
+  lookupPhase,
   isError,
 }: BikeComponentListProps): ReactElement {
   const { t } = useTranslation();
@@ -177,8 +179,8 @@ export function BikeComponentList({
     return () => window.cancelAnimationFrame(frame);
   }, [openGroupId]);
 
-  if (isLoading) {
-    return <StatusPanel mark={<Loader color="primary.6" />} body={t("addBike.componentsLoading")} />;
+  if (lookupPhase !== "idle") {
+    return <LookupProgress kind="components" phase={lookupPhase} />;
   }
 
   if (isError) {

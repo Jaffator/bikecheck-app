@@ -4,6 +4,7 @@ import {
   Combobox,
   Drawer,
   Pagination,
+  Progress,
   SegmentedControl,
   createTheme,
   type MantineColorsTuple,
@@ -252,6 +253,11 @@ export const theme = createTheme({
           "--mantine-color-text": "var(--mantine-color-text-6)",
         } as React.CSSProperties,
       },
+    }),
+    // The light scheme's track is near-white gray-2; cards-5 reads on a cards.6 card, where decor-sunk barely shows.
+    Progress: Progress.extend({
+      defaultProps: { color: "primary.6" },
+      styles: { root: { backgroundColor: "var(--mantine-color-cards-5)" } },
     }),
   },
 });

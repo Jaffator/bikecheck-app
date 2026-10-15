@@ -19,7 +19,6 @@ interface BikeIdentityFormProps {
   // Limit models to the selected brand.
   brandModels: string[];
   canSearch: boolean;
-  isSearching: boolean;
   onSubmit: (values: AddBikeIdentityValues) => void;
 }
 
@@ -37,7 +36,6 @@ export function BikeIdentityForm({
   brandNames,
   brandModels,
   canSearch,
-  isSearching,
   onSubmit,
 }: BikeIdentityFormProps): ReactElement {
   const { t } = useTranslation();
@@ -98,7 +96,6 @@ export function BikeIdentityForm({
           <Button
             type="submit"
             leftSection={<Search size={18} />}
-            loading={isSearching}
             disabled={!canSearch}
             fullWidth
             radius="sm"
