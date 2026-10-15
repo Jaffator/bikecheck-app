@@ -5,6 +5,13 @@ CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.
 
 ## Shipping a release
 
+- **`npm run ship`** does the whole way below in one go, with [scripts/ship.mjs](../scripts/ship.mjs). Commit your work first; it never commits it for you.
+  1. Stops on uncommitted changes, and when nothing is ahead of `origin/main`.
+  2. Picks the version (the same menu), or keeps the one your package files already carry ahead of the last tag, so a rerun skips the bump. Shows branch, version and commits, asks to confirm.
+  3. On `main` it moves your commits to a new `release/vX.Y.Z` and resets `main` to `origin`; on a branch it stays there.
+  4. Commits the bump, pushes, opens the PR (or reuses the open one), and lets GitHub merge `main` into the branch when it is behind.
+  5. Watches the required checks. A failure prints the failed check, its link and the last 40 lines of its log, and stops with the PR open: fix, commit, rerun.
+  6. Merges (merge commit), deletes the branch, switches to an up-to-date `main`, then asks whether to deploy, which is step 4 onward of `deploy:production`.
 - **Every push / PR to `main`** runs [ci.yml](../.github/workflows/ci.yml): typecheck of monolith, strava-service and frontend, plus the backend `UNIT` tests. It deploys nothing.
 - **`npm run version:bump`** on your branch, with [scripts/bump-version.mjs](../scripts/bump-version.mjs): the same bug fix / new feature / major menu, then writes that version into the App's and the Marketing Website's `package.json` (+ locks) and commits `chore(release): vX.Y.Z`. It does not push; the bump reaches `main` with your PR.
 - **`npm run deploy:production`** from the repo root, once that PR is merged, cuts a release with [scripts/release.mjs](../scripts/release.mjs):

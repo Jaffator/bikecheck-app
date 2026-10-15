@@ -1,6 +1,6 @@
 // `npm run deploy:production`: tags main once its version is committed, and follows the Deploy run (docs/deploy.md).
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { emitKeypressEvents } from "node:readline";
 import { createInterface } from "node:readline/promises";
@@ -117,7 +117,7 @@ export async function run(cmd, args) {
   return stdout.trim();
 }
 
-async function ghJson(args) {
+export async function ghJson(args) {
   return JSON.parse(await run("gh", args));
 }
 
@@ -195,22 +195,36 @@ export async function pickVersion(lastTag) {
   return picked === null ? null : (versions[picked] ?? null);
 }
 
-async function confirm(version, lastTag) {
-  const head = await run("git", ["log", "-1", "--format=%h %s"]);
-  const count = lastTag ? await run("git", ["rev-list", "--count", `${lastTag}..HEAD`]) : "all";
-  console.log(`\nRelease ${version}\n  main: ${head}\n  ${count} commit(s) since ${lastTag ?? "the start"}`);
+// Defaults to No; Ctrl+C cancels.
+export async function ask(question) {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   rl.on("SIGINT", () => {
     console.log(`\n${CANCELLED}`);
     process.exit(0);
   });
-  const answer = (await rl.question("Continue? [y/N] ")).trim().toLowerCase();
+  const answer = (await rl.question(question)).trim().toLowerCase();
   rl.close();
   return answer === "y" || answer === "yes";
 }
 
+async function confirm(version, lastTag) {
+  const head = await run("git", ["log", "-1", "--format=%h %s"]);
+  const count = lastTag ? await run("git", ["rev-list", "--count", `${lastTag}..HEAD`]) : "all";
+  console.log(`\nRelease ${version}\n  main: ${head}\n  ${count} commit(s) since ${lastTag ?? "the start"}`);
+  return ask("Continue? [y/N] ");
+}
+
 export async function readVersionFiles() {
   return Promise.all(VERSION_FILES.map(async (file) => ({ file, text: await readFile(resolve(ROOT, file), "utf8") })));
+}
+
+// Rewrites only the files not on the version yet; resolves how many it wrote.
+export async function writeVersion(version) {
+  const files = await readVersionFiles();
+  const stale = new Set(versionMismatches(files, version).map((s) => s.file));
+  const writes = files.filter(({ file }) => stale.has(file));
+  await Promise.all(writes.map(({ file, text }) => writeFile(resolve(ROOT, file), withVersion(text, version))));
+  return writes.length;
 }
 
 // The App's About and the Website's footer and ?v= read these, so a tag must not outrun them.
@@ -295,6 +309,16 @@ function report(version, { conclusion, jobs, url }) {
   process.exitCode = 1;
 }
 
+// Tags main's HEAD; it must already carry the version on origin.
+export async function releaseVersion(version) {
+  await checkVersionFiles(version);
+  // A tag may already be out, so a rerun would trip over it; say how to finish instead.
+  await tagAndRelease(version).catch((error) =>
+    stop(`${error.stderr?.trim() || error.message}\n  finish ${version} with docs/deploy.md "Shipping a release" by hand.`),
+  );
+  await followRun(version);
+}
+
 async function main() {
   await checkPreconditions();
   const lastTag = highestTag((await run("git", ["tag", "--list", "v*"])).split(/\r?\n/));
@@ -305,15 +329,14 @@ async function main() {
     console.log(CANCELLED);
     return;
   }
-  // A tag may already be out, so a rerun would trip over it; say how to finish instead.
-  await tagAndRelease(version).catch((error) =>
-    stop(`${error.stderr?.trim() || error.message}\n  finish ${version} with docs/deploy.md "Shipping a release" by hand.`),
-  );
-  await followRun(version);
+  await releaseVersion(version);
 }
 
 // Windows hands the drive letter in either case.
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase();
-if (invokedDirectly) {
+export function isEntryPoint(moduleUrl) {
+  return Boolean(process.argv[1]) && resolve(process.argv[1]).toLowerCase() === fileURLToPath(moduleUrl).toLowerCase();
+}
+
+if (isEntryPoint(import.meta.url)) {
   main().catch((error) => stop(error.stderr?.trim() || error.message));
 }

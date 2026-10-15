@@ -4,6 +4,7 @@
   "scripts": {
     "version:bump": "node scripts/bump-version.mjs",
     "deploy:production": "node scripts/release.mjs",
-    "test:scripts": "node --test scripts/release.test.mjs"
+    "ship": "node scripts/ship.mjs",
+    "test:scripts": "node --test scripts/release.test.mjs scripts/ship.test.mjs"
   }
 }
