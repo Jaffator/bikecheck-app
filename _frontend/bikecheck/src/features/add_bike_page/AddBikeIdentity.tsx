@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, type ReactElement } from "react";
-import { Button, Loader, Stack, Stepper, Text } from "@mantine/core";
+import { Button, Stack, Stepper, Text } from "@mantine/core";
 import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -10,6 +10,7 @@ import { BikeSearchResults } from "./BikeSearchResults";
 import { BikeSpecification } from "./BikeSpecification";
 import { BikeComponentList } from "./BikeComponentList";
 import { BikeIdentityForm } from "./BikeIdentityForm";
+import { LookupProgress } from "./LookupProgress";
 import { AddBikeFooter } from "./AddBikeFooter";
 import { AddBikeSummaryModal } from "./AddBikeSummaryModal";
 import { PhotoCropModal } from "./PhotoCropModal";
@@ -174,15 +175,19 @@ function AddBikeWizardFrame(): ReactElement {
       </Stack>
 
       {/* Hide identity fields after receiving lookup results. */}
-      {active === 0 && !searchReplacedForm && (
+      {active === 0 && !searchReplacedForm && wizard.searchPhase === "idle" && (
         <BikeIdentityForm
           form={wizard.form}
           brandNames={wizard.brandNames}
           brandModels={wizard.brandModels}
           canSearch={wizard.canSearch}
-          isSearching={wizard.isSearching}
           onSubmit={wizard.submitSearch}
         />
+      )}
+
+      {/* The search takes the form's place until its results are in. */}
+      {active === 0 && wizard.searchPhase !== "idle" && (
+        <LookupProgress kind="search" name={wizard.searchedName} phase={wizard.searchPhase} />
       )}
 
       {/* Replace identity fields with selectable results. */}
@@ -216,8 +221,13 @@ function AddBikeWizardFrame(): ReactElement {
             {wizard.openCollection.name}
           </Text>
 
-          {wizard.collectionLoading ? (
-            <Loader size="sm" color="primary.6" />
+          {wizard.collectionPhase !== "idle" ? (
+            <LookupProgress
+              key={wizard.openCollection.bikeUrl}
+              kind="collection"
+              name={wizard.openCollection.name}
+              phase={wizard.collectionPhase}
+            />
           ) : (
             <Text size="sm" c="text.7">
               {wizard.collectionFailed
@@ -264,7 +274,7 @@ function AddBikeWizardFrame(): ReactElement {
           onToggleDisabled={wizard.toggleComponentDisabled}
           openGroupId={wizard.openGroupId}
           onToggleGroup={wizard.toggleGroup}
-          isLoading={wizard.componentsLoading}
+          lookupPhase={wizard.componentsPhase}
           isError={wizard.componentsError}
         />
       )}

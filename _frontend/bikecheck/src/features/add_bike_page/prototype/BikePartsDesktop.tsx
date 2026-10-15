@@ -1,6 +1,6 @@
 // PROTOTYPE (proto/desktop-wizards): step 3 on desktop - groups on the left, the open group's parts as rows.
 import { useState, type ReactElement } from "react";
-import { Box, Button, Group, Loader, Paper, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { Box, Button, Group, Paper, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { AssembleBikeComponent } from "@/features/components/components.types";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
@@ -15,6 +15,7 @@ import {
   type ComponentPosition,
 } from "../bikeComponents.types";
 import { inputStyles } from "../formStyles";
+import { LookupProgress } from "../LookupProgress";
 import type { AddBikeWizard } from "../useAddBikeWizard";
 import { COPY, cardSurface } from "./bikeProto";
 
@@ -59,14 +60,11 @@ export function BikePartsDesktop({ wizard }: { wizard: AddBikeWizard }): ReactEl
   const [chosenGroupId, setChosenGroupId] = useState<number | null>(null);
   const { componentEntries: entries, splitComponents: split, disabledComponents: disabled } = wizard;
 
-  if (wizard.componentsLoading) {
+  if (wizard.componentsPhase !== "idle") {
     return (
-      <Group gap="sm" p="xl" justify="center">
-        <Loader size="sm" color="primary.6" />
-        <Text fz={14} c="text.7">
-          {t("addBike.componentsLoading")}
-        </Text>
-      </Group>
+      <Box maw={440}>
+        <LookupProgress kind="components" phase={wizard.componentsPhase} />
+      </Box>
     );
   }
 

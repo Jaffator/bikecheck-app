@@ -7,7 +7,6 @@ import {
   Button,
   Group,
   Image,
-  Loader,
   Paper,
   Select,
   Stack,
@@ -19,6 +18,7 @@ import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import type { BikeSearchResult } from "@/features/bikes/bikes.types";
 import { BikeSearchFallback } from "../BikeSearchFallback";
 import { FieldLabel } from "../BikeSpecification";
+import { LookupProgress } from "../LookupProgress";
 import { disabledButtonStyles, dropdownProps, inputStyles } from "../formStyles";
 import type { AddBikeWizard } from "../useAddBikeWizard";
 import { cardSurface, imageSrc } from "./bikeProto";
@@ -78,8 +78,7 @@ export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactE
               variant="outline"
               radius="md"
               leftSection={<Search size={16} color="var(--mantine-color-primary-5)" />}
-              loading={wizard.isSearching}
-              disabled={!wizard.canSearch}
+              disabled={!wizard.canSubmitSearch}
               styles={disabledButtonStyles}
               style={{ height: "2.4rem" }}
             >
@@ -88,6 +87,12 @@ export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactE
           </Group>
         </form>
       </Paper>
+
+      {wizard.searchPhase !== "idle" && (
+        <Box maw={440}>
+          <LookupProgress kind="search" name={wizard.searchedName} phase={wizard.searchPhase} />
+        </Box>
+      )}
 
       {openCollection !== null && (
         <Stack gap={4} align="flex-start">
@@ -115,8 +120,15 @@ export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactE
       {/* A collection with nothing to show keeps the results it was picked from. */}
       {openCollection !== null && searchResults === null && (
         <>
-          {wizard.collectionLoading ? (
-            <Loader size="sm" color="primary.6" />
+          {wizard.collectionPhase !== "idle" ? (
+            <Box maw={440}>
+              <LookupProgress
+                key={openCollection.bikeUrl}
+                kind="collection"
+                name={openCollection.name}
+                phase={wizard.collectionPhase}
+              />
+            </Box>
           ) : (
             <Text fz={14} c="text.7">
               {wizard.collectionFailed

@@ -28,6 +28,7 @@ import {
   type DisabledComponents,
   type SplitComponents,
 } from "./bikeComponents.types";
+import { useLookupPhase, type LookupPhase } from "./useLookupPhase";
 
 export const TOTAL_STEPS = 3;
 
@@ -49,7 +50,9 @@ export interface AddBikeWizard {
   brandModels: string[];
   categories: string[];
   canSearch: boolean;
-  isSearching: boolean;
+  canSubmitSearch: boolean;
+  searchPhase: LookupPhase;
+  searchedName: string;
   searchResults: BikeSearchResult[] | null;
   searchFailed: boolean;
   showsFallback: boolean;
@@ -58,7 +61,7 @@ export interface AddBikeWizard {
   selectedBikeUrl: string | null;
   selectBike: (bikeUrl: string | null) => void;
   openCollection: BikeSearchResult | null;
-  collectionLoading: boolean;
+  collectionPhase: LookupPhase;
   collectionFailed: boolean;
   enterCollection: (collection: BikeSearchResult) => void;
   leaveCollection: () => void;
@@ -89,7 +92,7 @@ export interface AddBikeWizard {
   toggleComponentDisabled: (componentTypeId: number) => void;
   openGroupId: number | null;
   toggleGroup: (groupId: number) => void;
-  componentsLoading: boolean;
+  componentsPhase: LookupPhase;
   componentsError: boolean;
 
   summaryOpen: boolean;
@@ -288,15 +291,23 @@ export function useAddBikeWizard(): AddBikeWizard {
 
   const canSearch = form.values.brand.trim().length > 0 && form.values.model.trim().length > 0;
 
+  const searchPhase = useLookupPhase({ id: "search", pending: searchBike.isPending, succeeded: searchBike.isSuccess });
+  const collectionPhase = useLookupPhase({
+    id: openCollection?.bikeUrl ?? null,
+    pending: collectionBikes.isPending,
+    succeeded: collectionBikes.isSuccess,
+  });
+  // A bar that is finishing holds its results back, so they never show under it.
+  const lookupSettled = searchPhase === "idle" && collectionPhase === "idle";
+
   const searchFailed = searchBike.isError;
-  const searchEmpty = searchBike.isSuccess && searchBike.data.length === 0;
+  const searchEmpty = lookupSettled && searchBike.isSuccess && searchBike.data.length === 0;
   const collectionFailed = openCollection !== null && collectionBikes.isError;
-  const collectionLoading = openCollection !== null && collectionBikes.isPending;
 
   // Whatever the list is showing right now: the contents of the open
   // collection, or the search results it was picked from.
   const shownResults = openCollection !== null ? collectionBikes.data : searchBike.data;
-  const searchResults = shownResults !== undefined && shownResults.length > 0 ? shownResults : null;
+  const searchResults = lookupSettled && shownResults !== undefined && shownResults.length > 0 ? shownResults : null;
 
   // A failed collection is reported on its own, so the code says which of the
   // two lookups gave up.
@@ -314,6 +325,13 @@ export function useAddBikeWizard(): AddBikeWizard {
   const componentsQuery = useExternalBikeComponents(confirmedBike?.bikeUrl ?? null);
   const groupsQuery = useComponentGroups();
   const defaultComponentsQuery = useDefaultComponents(specification.ebike);
+  const componentsError = groupsQuery.isError || defaultComponentsQuery.isError;
+  const componentsPhase = useLookupPhase({
+    id: "components",
+    pending:
+      groupsQuery.isPending || defaultComponentsQuery.isPending || (confirmedBike !== null && componentsQuery.isPending),
+    succeeded: !componentsError,
+  });
 
   const componentEntries: ComponentEntries = {
     ...buildInitialEntries(componentsQuery.data ?? []),
@@ -475,7 +493,11 @@ export function useAddBikeWizard(): AddBikeWizard {
     brandModels,
     categories: bikeFormOptions?.bikeTypes ?? [],
     canSearch,
-    isSearching: searchBike.isPending,
+    // A search already out is not sent twice; the form stays editable meanwhile on desktop.
+    canSubmitSearch: canSearch && searchPhase === "idle",
+    searchPhase,
+    // The search as sent, so editing the form meanwhile does not rename the panel.
+    searchedName: [searchBike.variables?.bikeName, searchBike.variables?.year].filter(Boolean).join(" "),
     searchResults,
     searchFailed,
     showsFallback,
@@ -484,7 +506,7 @@ export function useAddBikeWizard(): AddBikeWizard {
     selectedBikeUrl,
     selectBike: setSelectedBikeUrl,
     openCollection,
-    collectionLoading,
+    collectionPhase,
     collectionFailed,
     enterCollection,
     leaveCollection,
@@ -517,9 +539,8 @@ export function useAddBikeWizard(): AddBikeWizard {
     toggleComponentDisabled,
     openGroupId,
     toggleGroup,
-    componentsLoading:
-      groupsQuery.isPending || defaultComponentsQuery.isPending || (confirmedBike !== null && componentsQuery.isPending),
-    componentsError: groupsQuery.isError || defaultComponentsQuery.isError,
+    componentsPhase,
+    componentsError,
 
     summaryOpen,
     openSummary,
