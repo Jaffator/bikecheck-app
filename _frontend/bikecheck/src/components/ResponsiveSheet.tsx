@@ -57,6 +57,8 @@ interface ResponsiveSheetProps {
   withCloseButton?: boolean;
   // False for a sheet that must be answered: no outside click, Esc, swipe or back button.
   dismissible?: boolean;
+  // False keeps Esc and ✕ but ignores a click outside: a running lookup is only left on purpose.
+  closeOnClickOutside?: boolean;
   zIndex?: number;
   styles?: SheetStyles;
   onExited?: () => void;
@@ -71,6 +73,7 @@ export function ResponsiveSheet({
   title,
   withCloseButton = true,
   dismissible = true,
+  closeOnClickOutside = true,
   zIndex,
   styles,
   onExited,
@@ -90,7 +93,7 @@ export function ResponsiveSheet({
     zIndex,
     // A sheet under a confirmation stays put when Esc dismisses the confirmation.
     closeOnEscape: dismissible && onTop,
-    closeOnClickOutside: dismissible,
+    closeOnClickOutside: dismissible && closeOnClickOutside,
     onExitTransitionEnd: onExited,
   };
 

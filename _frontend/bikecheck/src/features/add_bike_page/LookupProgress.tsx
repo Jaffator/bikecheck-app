@@ -18,7 +18,8 @@ const LOOKUPS: Record<LookupKind, { titleKey: string; stages: LookupStage[] }> =
     stages: [
       { fromMs: 0, labelKey: "addBike.lookupSearchConnecting" },
       { fromMs: 5_000, labelKey: "addBike.lookupSearchCatalogue" },
-      { fromMs: 10_000, labelKey: "addBike.lookupSearchModels" },
+      { fromMs: 10_000, labelKey: "addBike.lookupSearchMatching" },
+      { fromMs: 14_000, labelKey: "addBike.lookupSearchMore" },
       { fromMs: 18_000, labelKey: "addBike.lookupSearchSlow" },
     ],
   },
@@ -76,13 +77,7 @@ interface LookupProgressProps {
   phase: LookupPhase;
 }
 
-export function LookupProgress({ kind, name, phase }: LookupProgressProps): ReactElement {
-  const { t } = useTranslation();
-  const { titleKey, stages } = LOOKUPS[kind];
-  // The data is in: the bar runs to the end before the results take its place.
-  const finished = phase === "finished";
-  const elapsedMs = useElapsedMs(!finished);
-
+export function LookupProgress(props: LookupProgressProps): ReactElement {
   return (
     <Paper
       radius="lg"
@@ -93,20 +88,33 @@ export function LookupProgress({ kind, name, phase }: LookupProgressProps): Reac
         boxShadow: "var(--elev-panel)",
       }}
     >
-      <Stack gap="sm">
-        <Text fz={16} fw={600} c="text.6" ta="center">
-          {t(titleKey, { name })}
-        </Text>
-        <Progress
-          value={finished ? 100 : estimatedPercent(elapsedMs)}
-          size="sm"
-          radius="xl"
-          transitionDuration={TICK_MS}
-        />
-        <Text fz={13} c="text.7" ta="center" aria-live="polite">
-          {t(stageLabelKey(stages, elapsedMs))}
-        </Text>
-      </Stack>
+      <LookupProgressContent {...props} />
     </Paper>
+  );
+}
+
+// Without the card, for a surface that already is one (the desktop modal).
+export function LookupProgressContent({ kind, name, phase }: LookupProgressProps): ReactElement {
+  const { t } = useTranslation();
+  const { titleKey, stages } = LOOKUPS[kind];
+  // The data is in: the bar runs to the end before the results take its place.
+  const finished = phase === "finished";
+  const elapsedMs = useElapsedMs(!finished);
+
+  return (
+    <Stack gap="sm">
+      <Text fz={16} fw={600} c="text.6" ta="center">
+        {t(titleKey, { name })}
+      </Text>
+      <Progress
+        value={finished ? 100 : estimatedPercent(elapsedMs)}
+        size="sm"
+        radius="xl"
+        transitionDuration={TICK_MS}
+      />
+      <Text fz={13} c="text.7" ta="center" aria-live="polite">
+        {t(stageLabelKey(stages, elapsedMs))}
+      </Text>
+    </Stack>
   );
 }

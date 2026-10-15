@@ -104,7 +104,8 @@ On desktop nothing here applies: a panel or modal keeps Mantine's header and ✕
 - **Modal**: a centred `Modal` with Mantine's own entrance, the one `ConfirmModal` makes, over
   the same overlay.
 - No grabber and no drag. Closed by ✕, Esc and — the modal — a click outside, unless
-  `dismissible={false}`.
+  `dismissible={false}`. `closeOnClickOutside={false}` keeps ✕ and Esc but ignores the click:
+  only the desktop bike lookup, so a running search is left on purpose.
 - The content's `height`, `maxHeight` and `marginBottom` are dropped: a panel is as tall as the
   window, a modal as its content.
 - Esc closes the top layer only. A panel under a confirmation, or a modal under another, stays.

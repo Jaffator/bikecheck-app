@@ -16,12 +16,11 @@ import {
 import { useTranslation } from "react-i18next";
 import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import type { BikeSearchResult } from "@/features/bikes/bikes.types";
-import { BikeSearchFallback } from "../BikeSearchFallback";
 import { FieldLabel } from "../BikeSpecification";
-import { LookupProgress } from "../LookupProgress";
 import { disabledButtonStyles, dropdownProps, inputStyles } from "../formStyles";
 import type { AddBikeWizard } from "../useAddBikeWizard";
 import { cardSurface, imageSrc } from "./bikeProto";
+import { CollectionLookupModal, SearchLookupModal } from "./LookupModalDesktop";
 
 // Three rows of four on a laptop.
 const PAGE_SIZE = 12;
@@ -31,7 +30,10 @@ const YEAR_OPTIONS = Array.from({ length: 20 }, (_, index) => String(CURRENT_YEA
 
 export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactElement {
   const { t } = useTranslation();
-  const { form, openCollection, searchResults } = wizard;
+  const { form, openCollection, searchResults, pickedFrom } = wizard;
+  // Until a collection's own list is in, the list it was picked from stays under its modal.
+  const listCollection = pickedFrom !== null ? pickedFrom.collection : openCollection;
+  const listResults = pickedFrom !== null ? pickedFrom.results : searchResults;
 
   return (
     <Stack gap="lg">
@@ -88,13 +90,7 @@ export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactE
         </form>
       </Paper>
 
-      {wizard.searchPhase !== "idle" && (
-        <Box maw={440}>
-          <LookupProgress kind="search" name={wizard.searchedName} phase={wizard.searchPhase} />
-        </Box>
-      )}
-
-      {openCollection !== null && (
+      {listCollection !== null && (
         <Stack gap={4} align="flex-start">
           <Button
             variant="subtle"
@@ -107,9 +103,9 @@ export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactE
             {t("addBike.backToResults")}
           </Button>
           <Text fw={700} fz={15} c="text.6">
-            {openCollection.name}
+            {listCollection.name}
           </Text>
-          {searchResults !== null && (
+          {listResults !== null && (
             <Text fz={13} c="var(--color-text-dim)">
               {t("addBike.collectionBody")}
             </Text>
@@ -117,32 +113,10 @@ export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactE
         </Stack>
       )}
 
-      {/* A collection with nothing to show keeps the results it was picked from. */}
-      {openCollection !== null && searchResults === null && (
-        <>
-          {wizard.collectionPhase !== "idle" ? (
-            <Box maw={440}>
-              <LookupProgress
-                key={openCollection.bikeUrl}
-                kind="collection"
-                name={openCollection.name}
-                phase={wizard.collectionPhase}
-              />
-            </Box>
-          ) : (
-            <Text fz={14} c="text.7">
-              {wizard.collectionFailed
-                ? t("addBike.collectionFailed", { code: wizard.diagnosticCode })
-                : t("addBike.collectionEmpty")}
-            </Text>
-          )}
-        </>
-      )}
-
-      {openCollection === null && searchResults !== null && (
+      {listCollection === null && listResults !== null && (
         <Group gap="4px 12px" align="baseline">
           <Text fw={700} fz={15} c="text.6">
-            {t("addBike.resultsFound", { count: searchResults.length })}
+            {t("addBike.resultsFound", { count: listResults.length })}
           </Text>
           <Text fz={13} c="var(--color-text-dim)">
             {t("addBike.selectModelBody")}
@@ -150,28 +124,19 @@ export function BikeSearchDesktop({ wizard }: { wizard: AddBikeWizard }): ReactE
         </Group>
       )}
 
-      {searchResults !== null && (
+      {listResults !== null && (
         <ResultsGrid
           // A new list starts from its first page again.
-          key={`${openCollection?.bikeUrl ?? "search"}:${String(searchResults.length)}`}
-          results={searchResults}
+          key={`${listCollection?.bikeUrl ?? "search"}:${String(listResults.length)}`}
+          results={listResults}
           selectedBikeUrl={wizard.selectedBikeUrl}
           onSelect={wizard.selectBike}
           onOpenCollection={wizard.enterCollection}
         />
       )}
 
-      {wizard.showsFallback && (
-        <Box maw={440}>
-          <BikeSearchFallback
-            variant={wizard.searchFailed ? "failed" : "empty"}
-            diagnosticCode={wizard.searchFailed ? wizard.diagnosticCode : undefined}
-            onRetry={wizard.retrySearch}
-            onEnterManually={wizard.enterManually}
-            onSkip={wizard.skipStep}
-          />
-        </Box>
-      )}
+      <SearchLookupModal wizard={wizard} />
+      <CollectionLookupModal wizard={wizard} />
     </Stack>
   );
 }

@@ -1,5 +1,5 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { type ReactElement } from "react";
+import { type ReactElement, type ReactNode } from "react";
 import { Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { RefreshCw, SearchX, SquarePen, Terminal } from "lucide-react";
@@ -25,46 +25,9 @@ export function BikeSearchFallback({
 }: BikeSearchFallbackProps): ReactElement {
   const { t } = useTranslation();
 
-  const isFailure = variant === "failed";
-  const Icon = isFailure ? IoCloudOffline : SearchX;
-  const titleKey = isFailure ? "addBike.searchFailedTitle" : "addBike.searchEmptyTitle";
-  const bodyKey = isFailure ? "addBike.searchFailedBody" : "addBike.searchEmptyBody";
-
   return (
     <Paper bg="cards.6" p="xl" radius="md" my={20} py={40} style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}>
-      <Stack gap="md" align="center">
-        <Group>
-          <Icon size={35} color="var(--mantine-color-red-4)" />
-        </Group>
-
-        <Text fw={700} size="lg" c="red.4" ta="center">
-          {t(titleKey)}
-        </Text>
-
-        <Text size="sm" c="text.7" ta="center">
-          {t(bodyKey)}
-        </Text>
-
-        {diagnosticCode && (
-          <Paper
-            w="100%"
-            p="sm"
-            radius="sm"
-            bg="transparent"
-            style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}
-          >
-            <Group gap="xs" mb={4}>
-              <Terminal size={14} color="var(--mantine-color-text-8)" />
-              <Text size="xs" c="text.8" tt="uppercase" lts="var(--tracking-label)">
-                {t("addBike.diagnosticCode")}
-              </Text>
-            </Group>
-            <Text size="sm" c="text.6" className="tabular-nums">
-              {diagnosticCode}
-            </Text>
-          </Paper>
-        )}
-
+      <LookupOutcome variant={variant} diagnosticCode={diagnosticCode}>
         <Stack gap="md" w="100%">
           <Button leftSection={<RefreshCw size={16} />} onClick={onRetry} fullWidth radius="sm" style={{ height: "3rem" }}>
             {t("addBike.retrySearch")}
@@ -80,7 +43,64 @@ export function BikeSearchFallback({
             {t("addBike.enterManually")}
           </Button>
         </Stack>
-      </Stack>
+      </LookupOutcome>
     </Paper>
+  );
+}
+
+interface LookupOutcomeProps {
+  variant: BikeSearchFallbackVariant;
+  // Left out, the search's own wording; a collection says its own.
+  body?: string;
+  diagnosticCode?: string;
+  // The buttons: the phone card and the desktop modal offer different ones.
+  children: ReactNode;
+}
+
+// Without the card, so the desktop modal can show it on its own surface.
+export function LookupOutcome({ variant, body, diagnosticCode, children }: LookupOutcomeProps): ReactElement {
+  const { t } = useTranslation();
+
+  const isFailure = variant === "failed";
+  const Icon = isFailure ? IoCloudOffline : SearchX;
+  const titleKey = isFailure ? "addBike.searchFailedTitle" : "addBike.searchEmptyTitle";
+  const bodyKey = isFailure ? "addBike.searchFailedBody" : "addBike.searchEmptyBody";
+
+  return (
+    <Stack gap="md" align="center">
+      <Group>
+        <Icon size={35} color="var(--mantine-color-red-4)" />
+      </Group>
+
+      <Text fw={700} size="lg" c="red.4" ta="center">
+        {t(titleKey)}
+      </Text>
+
+      <Text size="sm" c="text.7" ta="center">
+        {body ?? t(bodyKey)}
+      </Text>
+
+      {diagnosticCode && (
+        <Paper
+          w="100%"
+          p="sm"
+          radius="sm"
+          bg="transparent"
+          style={{ border: "1px solid var(--mantine-color-other-borderSubtle)" }}
+        >
+          <Group gap="xs" mb={4}>
+            <Terminal size={14} color="var(--mantine-color-text-8)" />
+            <Text size="xs" c="text.8" tt="uppercase" lts="var(--tracking-label)">
+              {t("addBike.diagnosticCode")}
+            </Text>
+          </Group>
+          <Text size="sm" c="text.6" className="tabular-nums">
+            {diagnosticCode}
+          </Text>
+        </Paper>
+      )}
+
+      {children}
+    </Stack>
   );
 }

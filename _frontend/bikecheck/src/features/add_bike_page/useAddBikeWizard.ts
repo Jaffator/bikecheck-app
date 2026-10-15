@@ -63,10 +63,15 @@ export interface AddBikeWizard {
   openCollection: BikeSearchResult | null;
   collectionPhase: LookupPhase;
   collectionFailed: boolean;
+  retryCollection: () => Promise<void>;
+  // Set while an open collection's own list is not in: the list it was picked from.
+  pickedFrom: { collection: BikeSearchResult | null; results: BikeSearchResult[] } | null;
   enterCollection: (collection: BikeSearchResult) => void;
   leaveCollection: () => void;
   submitSearch: (values: AddBikeIdentityValues) => void;
   retrySearch: () => void;
+  cancelSearch: () => void;
+  resendSearch: () => void;
   confirmSelection: () => void;
   enterManually: () => void;
   skipStep: () => void;
@@ -129,6 +134,9 @@ export function useAddBikeWizard(): AddBikeWizard {
   const [collectionStack, setCollectionStack] = useState<BikeSearchResult[]>([]);
   const openCollection = collectionStack.length > 0 ? collectionStack[collectionStack.length - 1] : null;
   const collectionBikes = useFamilyBikes(openCollection?.bikeUrl ?? null);
+  const parentCollection = collectionStack.length > 1 ? collectionStack[collectionStack.length - 2] : null;
+  // From cache: a parent was loaded before its child could be picked from it.
+  const parentBikes = useFamilyBikes(parentCollection?.bikeUrl ?? null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
@@ -200,10 +208,21 @@ export function useAddBikeWizard(): AddBikeWizard {
     });
   }
 
-  function retrySearch(): void {
+  // A reset mutation ignores the request still out, so its answer never lands.
+  function cancelSearch(): void {
     setSelectedBikeUrl(null);
     setCollectionStack([]);
     searchBike.reset();
+  }
+
+  // The search as it went out, whatever the form holds now.
+  function resendSearch(): void {
+    if (searchBike.variables === undefined) return;
+    searchBike.mutate(searchBike.variables);
+  }
+
+  async function retryCollection(): Promise<void> {
+    await collectionBikes.refetch();
   }
 
   // Opening a collection swaps the list for its contents, one level deeper.
@@ -308,6 +327,10 @@ export function useAddBikeWizard(): AddBikeWizard {
   // collection, or the search results it was picked from.
   const shownResults = openCollection !== null ? collectionBikes.data : searchBike.data;
   const searchResults = lookupSettled && shownResults !== undefined && shownResults.length > 0 ? shownResults : null;
+  const pickedFrom =
+    openCollection !== null && searchResults === null
+      ? { collection: parentCollection, results: (parentCollection !== null ? parentBikes.data : searchBike.data) ?? [] }
+      : null;
 
   // A failed collection is reported on its own, so the code says which of the
   // two lookups gave up.
@@ -508,10 +531,15 @@ export function useAddBikeWizard(): AddBikeWizard {
     openCollection,
     collectionPhase,
     collectionFailed,
+    retryCollection,
+    pickedFrom,
     enterCollection,
     leaveCollection,
     submitSearch,
-    retrySearch,
+    // On a phone a retry goes back to the filled form.
+    retrySearch: cancelSearch,
+    cancelSearch,
+    resendSearch,
     confirmSelection,
     enterManually,
     skipStep,
