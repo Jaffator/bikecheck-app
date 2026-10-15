@@ -48,7 +48,8 @@ export class BikeDataScrapeService {
       const bikes = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
         // No hits render no cards, so the timeout means an empty result, not a failure.
-        await page.waitForSelector(CARD_SELECTOR, { timeout: 4000 }).catch(() => null);
+        // Results arrive by XHR through the home proxy, which sometimes takes over 4 s.
+        await page.waitForSelector(CARD_SELECTOR, { timeout: 10_000 }).catch(() => null);
 
         return page.evaluate(() => {
           const cards = Array.from(document.querySelectorAll('a[href*="/bikes"]'));
@@ -110,7 +111,7 @@ export class BikeDataScrapeService {
     try {
       const bikeComponents = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
-        await page.waitForSelector('table', { timeout: 6000 });
+        await page.waitForSelector('table', { timeout: 15_000 });
 
         return page.evaluate(() => {
           const tables = Array.from(document.querySelectorAll('table'));
