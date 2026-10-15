@@ -2,22 +2,20 @@ import { BadGatewayException, BadRequestException, GatewayTimeoutException, Inje
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { chromium } from 'playwright-extra';
-import type { Browser, BrowserContext, Page } from 'playwright';
+import type { Browser, BrowserContext, LaunchOptions, Page } from 'playwright';
 import stealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { SearchBikeExternalResponseDto } from '../dto/response-bike.dto';
 import { AssembleBikeComponentsDto } from '../../component/dto/response-components';
 import type { component_types as ComponentType } from '@prisma/client';
 import { errors as playwrightErrors } from 'playwright';
-import axios from 'axios';
 
 chromium.use(stealthPlugin());
 
 // Only scraped site; drill-in URLs come from the client, so each is checked against it.
 const PROVIDER_HOST = '99spokes.com';
 const CARD_SELECTOR = 'a[href*="/bikes/"], a[href*="family="]';
-const SCRAPFLY_SCRAPE_URL = 'https://api.scrapfly.io/scrape';
-// Results arrive by XHR after load; Scrapfly's wait_for_selector rejects our card selector, so wait a fixed time.
-const RESULTS_RENDER_WAIT_MS = 8000;
+// Cards read only the image URL, so the files would just eat the proxy's home uplink.
+const BLOCKED_RESOURCES = new Set(['image', 'font', 'media']);
 
 @Injectable()
 export class BikeDataScrapeService {
@@ -48,7 +46,7 @@ export class BikeDataScrapeService {
 
     try {
       const bikes = await this.withPage(async (page) => {
-        await this.openProviderPage(page, url, true);
+        await page.goto(url, { waitUntil: 'load' });
         // No hits render no cards, so the timeout means an empty result, not a failure.
         await page.waitForSelector(CARD_SELECTOR, { timeout: 4000 }).catch(() => null);
 
@@ -111,8 +109,7 @@ export class BikeDataScrapeService {
 
     try {
       const bikeComponents = await this.withPage(async (page) => {
-        // The spec tables are server-rendered, so no JS rendering is paid for here.
-        await this.openProviderPage(page, url, false);
+        await page.goto(url, { waitUntil: 'load' });
         await page.waitForSelector('table', { timeout: 6000 });
 
         return page.evaluate(() => {
@@ -273,45 +270,27 @@ export class BikeDataScrapeService {
     }
   }
 
-  /** Cloudflare blocks the prod datacenter IP (#246), so with a Scrapfly key the page is fetched there. */
-  private async openProviderPage(page: Page, url: string, renderJs: boolean): Promise<void> {
-    if (!process.env.SCRAPFLY_API_KEY) {
-      await page.goto(url, { waitUntil: 'load' });
-      return;
-    }
+  /** Cloudflare blocks the prod datacenter IP (#246), so prod goes out through a proxy on a home IP. */
+  private proxyFromEnv(): LaunchOptions['proxy'] {
+    const raw = process.env.SCRAPER_PROXY_URL;
+    if (!raw) return undefined;
 
-    const html = await this.fetchViaScrapfly(url, renderJs);
-    // Serve only the page itself: its scripts would refetch from here, hit the 403 and clear the cards.
-    await page.route('**/*', (route) =>
-      route.request().isNavigationRequest() && route.request().frame() === page.mainFrame()
-        ? route.fulfill({ body: html, contentType: 'text/html' })
-        : route.abort(),
-    );
-    await page.goto(url, { waitUntil: 'load' });
-  }
-
-  private async fetchViaScrapfly(url: string, renderJs: boolean): Promise<string> {
-    const response = await axios.get<{ result: { content: string } }>(SCRAPFLY_SCRAPE_URL, {
-      params: {
-        key: process.env.SCRAPFLY_API_KEY,
-        url,
-        asp: true,
-        // Otherwise the proxy's country picks the locale and component labels stop matching the DB.
-        lang: 'en',
-        ...(renderJs && { render_js: true, rendering_wait: RESULTS_RENDER_WAIT_MS }),
-      },
-      // ASP may retry through several proxies before it gets past Cloudflare.
-      timeout: 160_000,
-    });
-
-    return response.data.result.content;
+    const url = new URL(raw);
+    return {
+      server: `${url.protocol}//${url.host}`,
+      username: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+    };
   }
 
   private async withPage<T>(callback: (page: Page) => Promise<T>): Promise<T> {
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ headless: true, proxy: this.proxyFromEnv() });
     const context = await this.createContext(browser);
     const page = await context.newPage();
     try {
+      await page.route('**/*', (route) =>
+        BLOCKED_RESOURCES.has(route.request().resourceType()) ? route.abort() : route.continue(),
+      );
       return await callback(page);
     } finally {
       await browser.close();
