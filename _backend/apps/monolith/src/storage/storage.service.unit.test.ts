@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'stream';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { StorageService } from './storage.service';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
@@ -127,6 +127,49 @@ describe('StorageService', () => {
       delete process.env.CLOUDFLARE_PUBLIC_URL;
 
       expect(service.storageKeyFromUrl(`https://files.bikecheck.cloud/${KEY}`)).toBe(KEY);
+    });
+  });
+
+  // Account deletion takes the files with the rows (#272).
+  describe('deleteFilesR2CloudFare', () => {
+    const ORIGIN = 'https://files.bikecheck.cloud';
+
+    beforeEach(() => {
+      process.env.CLOUDFLARE_PUBLIC_URL = ORIGIN;
+    });
+
+    it('deletes each file this bucket serves, by its key', async () => {
+      send.mockResolvedValue({});
+
+      await service.deleteFilesR2CloudFare([`${ORIGIN}/${KEY}`, `${ORIGIN}/bikes/a.webp`]);
+
+      const keys = send.mock.calls.map(([command]) => (command as DeleteObjectCommand).input.Key);
+      expect(keys).toEqual([KEY, 'bikes/a.webp']);
+      expect(send.mock.calls[0][0]).toBeInstanceOf(DeleteObjectCommand);
+    });
+
+    // A URL a client typed in, or a Google avatar, was never ours to remove.
+    it('leaves an address on any other origin alone', async () => {
+      await service.deleteFilesR2CloudFare([`https://cdn.example.com/${KEY}`]);
+
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it('deletes nothing when it cannot tell its own origin', async () => {
+      delete process.env.CLOUDFLARE_PUBLIC_URL;
+
+      await service.deleteFilesR2CloudFare([`${ORIGIN}/${KEY}`]);
+
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it('still deletes the rest when one file fails, then says so', async () => {
+      send.mockRejectedValueOnce(new Error('R2 down')).mockResolvedValueOnce({});
+
+      await expect(service.deleteFilesR2CloudFare([`${ORIGIN}/${KEY}`, `${ORIGIN}/bikes/a.webp`])).rejects.toThrow(
+        InternalServerErrorException,
+      );
+      expect(send).toHaveBeenCalledTimes(2);
     });
   });
 

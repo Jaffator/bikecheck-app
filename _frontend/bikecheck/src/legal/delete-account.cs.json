@@ -1,0 +1,42 @@
+[
+  {
+    "heading": "SMAZÁNÍ ÚČTU BIKECHECK",
+    "paragraphs": [
+      "Naposledy aktualizováno 16. října 2026",
+      "Tato stránka popisuje, jak smazat účet v BikeCheck, aplikaci pro údržbu kol od Jaroslava Lufinky, a co se při tom stane s vašimi údaji. Účet můžete smazat kdykoli, s nainstalovanou aplikací i bez ní."
+    ]
+  },
+  {
+    "heading": "JAK ÚČET SMAZAT",
+    "paragraphs": [
+      "• V aplikaci BikeCheck: otevřete Nastavení → Smazat účet, zkontrolujte, co se smaže, pro potvrzení napište svůj e-mail a klepněte na Smazat účet natrvalo.",
+      "• Na webu: přihlaste se na app.bikecheck.cloud, otevřete Nastavení → Smazat účet a potvrďte stejně.",
+      "• E-mailem: pokud se už nemůžete přihlásit, napište na support@bikecheck.cloud z e-mailové adresy svého účtu a požádejte o jeho smazání. Smažeme ho stejně, jako to dělá aplikace."
+    ]
+  },
+  {
+    "heading": "CO SE SMAŽE",
+    "paragraphs": [
+      "Smazání je okamžité a trvalé. Účet nemá archiv ani lhůtu na rozmyšlenou a smazání nelze vzít zpět. Spolu s účtem smažeme:",
+      "• váš profil: jméno, e-mailovou adresu, heslo, profilovou fotku, hmotnost a nastavení jazyka a měny;",
+      "• všechna vaše kola včetně archivovaných, s jejich komponenty, setupy, servisními záznamy, náklady a poznámkami a s fotkami a soubory, které jste k nim nahráli;",
+      "• všechny vaše jízdy a jejich check-iny, oznámení, konverzaci s asistentem v aplikaci, koho sledujete a kdo sleduje vás, vaše přihlášení a tokeny zařízení pro push oznámení;",
+      "• reporty, které jste sdíleli: jejich veřejné odkazy přestanou fungovat každému, komu jste je poslali;",
+      "• propojení se Stravou: zrušíme přístup BikeCheck k vašemu účtu Strava a smažeme kopie vašich aktivit ze Stravy, které jsme obdrželi. Vašich aktivit přímo na Stravě se to nedotkne."
+    ]
+  },
+  {
+    "heading": "CO ZŮSTANE",
+    "paragraphs": [
+      "• Anonymní záznam o tom, že byl smazán účet, a kolik dní byl starý. Neobsahuje jméno, e-mail ani jiný identifikátor, takže ho nelze spojit s vámi.",
+      "• Kopie mohou po krátkou dobu zůstat v zálohách, které se pravidelně rotují a přepisují.",
+      "• Technické logy, které mohou obsahovat IP adresu, uchováváme po omezenou dobu pro účely bezpečnosti a diagnostiky a poté je mažeme."
+    ]
+  },
+  {
+    "heading": "OTÁZKY",
+    "paragraphs": [
+      "Jak s vašimi údaji nakládáme, podrobně popisují naše Zásady ochrany osobních údajů na app.bikecheck.cloud/legal/privacy. S čímkoli dalším ke smazání účtu se obraťte na support@bikecheck.cloud."
+    ]
+  }
+]

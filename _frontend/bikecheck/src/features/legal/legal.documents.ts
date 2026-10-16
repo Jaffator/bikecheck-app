@@ -4,18 +4,22 @@ import termsCs from "@/legal/terms.cs.json";
 import termsEn from "@/legal/terms.en.json";
 import privacyCs from "@/legal/privacy.cs.json";
 import privacyEn from "@/legal/privacy.en.json";
+import deleteAccountCs from "@/legal/delete-account.cs.json";
+import deleteAccountEn from "@/legal/delete-account.en.json";
 import { isSupportedLanguage, type SupportedLanguage } from "@/i18n";
 import { LEGAL_DOCUMENTS, type LegalBlock, type LegalDocumentId } from "./legal.types";
 
 const DOCUMENTS: Record<LegalDocumentId, Record<SupportedLanguage, LegalBlock[]>> = {
   terms: { cs: termsCs, en: termsEn },
   privacy: { cs: privacyCs, en: privacyEn },
+  "delete-account": { cs: deleteAccountCs, en: deleteAccountEn },
 };
 
 // Header titles live in the translation files; the bodies do not.
 export const LEGAL_TITLE_KEYS: Record<LegalDocumentId, string> = {
   terms: "page.legalTerms",
   privacy: "page.legalPrivacy",
+  "delete-account": "page.legalDeleteAccount",
 };
 
 // Guards the route parameter, which is whatever the address bar holds.

@@ -54,7 +54,7 @@ General:
 - Reuse existing types and utilities
 - Ask before large structural changes
 - Use concise answers by default
-- after every implementation, give me 3 clear areas, what was done, what is the biggest problem, and what is the next step. Be very concise.
+- after every implementation, give me 3 clear areas, what was done, if there were any issues, and what is the next step. Be very concise.
 
 ## Project conventions
 

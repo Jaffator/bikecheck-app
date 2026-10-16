@@ -1,7 +1,10 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountEventsService } from '../account-events/account-events.service';
 import { NotificationService } from '../notification/notification.service';
+import { StorageService } from '../storage/storage.service';
+import { unlinkStravaAthlete } from '../strava/unlink-strava-athlete';
 import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
 import { Prisma, users as UserFull } from '@prisma/client';
@@ -24,12 +27,26 @@ function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
+// Every file the account's rows point at: archived bikes and deleted services included, as the delete takes them too.
+async function storedFiles(tx: Prisma.TransactionClient, userId: number): Promise<string[]> {
+  const bikes = await tx.bikes.findMany({
+    where: { user_id: userId },
+    select: { image_url: true, events_bikes: { select: { bike_event_attachments: { select: { url: true } } } } },
+  });
+  return bikes.flatMap((bike) => [
+    ...(bike.image_url ? [bike.image_url] : []),
+    ...bike.events_bikes.flatMap((service) => service.bike_event_attachments.map((file) => file.url)),
+  ]);
+}
+
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accountEvents: AccountEventsService,
     private readonly notificationService: NotificationService,
+    private readonly storage: StorageService,
+    @InjectPinoLogger(UserService.name) private readonly logger: PinoLogger,
   ) {}
 
   // Returns null when not found — every caller does its own null handling
@@ -212,24 +229,65 @@ export class UserService {
   // cascade would ever reach it. It is cleared here rather than left as the rider's data
   // outliving the rider.
   async deleteAccount(userId: number): Promise<void> {
-    const owners = await this.prisma.$transaction(async (tx) => {
+    const { owners, files, athleteId } = await this.prisma.$transaction(async (tx) => {
       // The one thing kept: that a rider left, and after how long. Read before the row goes.
-      const user = await tx.users.findUnique({ where: { id: userId }, select: { email_verified_at: true } });
+      const user = await tx.users.findUnique({
+        where: { id: userId },
+        select: { email_verified_at: true, strava_athlete_id: true },
+      });
       // The cascade takes my requests, but each owner's `follow_request` badge is theirs and
       // would stay lit for an account that is gone. Read here, while the rows still exist.
       const waiting = await tx.follows.findMany({
         where: { follower_id: userId, status: 'PENDING' },
         select: { followed_id: true },
       });
+      const stored = await storedFiles(tx, userId);
       await tx.strava_pending_activities.deleteMany({ where: { user_id: userId } });
       await tx.bikes.deleteMany({ where: { user_id: userId } });
       await tx.users.delete({ where: { id: userId } });
       if (user?.email_verified_at) await this.accountEvents.recordDeleted(user.email_verified_at, tx);
-      return waiting.map((row) => row.followed_id);
+      return {
+        owners: waiting.map((row) => row.followed_id),
+        files: stored,
+        athleteId: user?.strava_athlete_id ?? null,
+      };
     });
     // Only once the delete committed: a badge dropped for a delete that rolled back would lie.
     for (const ownerId of owners) {
       await this.notificationService.resolveByDedupKey(ownerId, `follow_request:${String(userId)}`);
+    }
+    // Outside this database, best effort (ADR 0028, revised): an outage must not keep a deleted account alive.
+    await this.eraseFiles(files);
+    await this.unlinkStrava(athleteId);
+  }
+
+  // The URLs are logged on failure: with the rows gone, nothing else can find the files.
+  private async eraseFiles(urls: string[]): Promise<void> {
+    if (urls.length === 0) return;
+    try {
+      const shared = await this.stillReferenced(urls);
+      await this.storage.deleteFilesR2CloudFare(urls.filter((url) => !shared.has(url)));
+    } catch (error) {
+      this.logger.error({ err: error, files: urls }, 'Deleted account left files in storage');
+    }
+  }
+
+  // A client can attach an address it did not upload, so another account may still show it.
+  private async stillReferenced(urls: string[]): Promise<Set<string>> {
+    const [bikes, attachments] = await Promise.all([
+      this.prisma.bikes.findMany({ where: { image_url: { in: urls } }, select: { image_url: true } }),
+      this.prisma.bike_event_attachments.findMany({ where: { url: { in: urls } }, select: { url: true } }),
+    ]);
+    return new Set([...bikes.flatMap((bike) => bike.image_url ?? []), ...attachments.map((file) => file.url)]);
+  }
+
+  // The athlete id is logged on failure: it is what a retry of POST /strava/disconnect needs.
+  private async unlinkStrava(athleteId: string | null): Promise<void> {
+    if (athleteId === null) return;
+    try {
+      await unlinkStravaAthlete(Number(athleteId));
+    } catch (error) {
+      this.logger.error({ err: error, athleteId }, 'Deleted account left its Strava link in strava-service');
     }
   }
 

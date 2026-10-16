@@ -195,6 +195,39 @@ describe('AppController (e2e)', () => {
     userId = user.id;
     expect(access_token).toBeDefined();
     expect(refresh_token).toBeDefined();
+    // The web is same-origin, so it stays on Lax.
+    expect(setCookieArray.map((cookie) => cookie.sameSite)).toEqual(['Lax', 'Lax']);
+  });
+
+  // The Android WebView calls cross-site from https://localhost, where only a None cookie survives.
+  it('should ok /auth/login from the Android App with SameSite=None cookies (POST)', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .set('Origin', 'https://localhost')
+      .send({ email: testexample, password: 'abcd1234' })
+      .expect(200);
+
+    const cookies = setCookie.parse(res.header['set-cookie']);
+    expect(cookies.map(({ name, sameSite, secure }) => ({ name, sameSite, secure }))).toEqual([
+      { name: 'access_token', sameSite: 'None', secure: true },
+      { name: 'refresh_token', sameSite: 'None', secure: true },
+    ]);
+
+    // Cleared with the same options, or the WebView keeps them.
+    const accessToken = cookies.find((cookie) => cookie.name === 'access_token')?.value;
+    const refreshToken = cookies.find((cookie) => cookie.name === 'refresh_token')?.value;
+    const logout = await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Origin', 'https://localhost')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .set('Cookie', [`refresh_token=${refreshToken}`])
+      .expect(200);
+
+    const cleared = setCookie.parse(logout.header['set-cookie']);
+    expect(cleared.map(({ name, value, sameSite, secure }) => ({ name, value, sameSite, secure }))).toEqual([
+      { name: 'access_token', value: '', sameSite: 'None', secure: true },
+      { name: 'refresh_token', value: '', sameSite: 'None', secure: true },
+    ]);
   });
 
   it('should ok /users/:id (GET)', async () => {

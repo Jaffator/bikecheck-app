@@ -12,6 +12,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Req,
   Res,
   NotFoundException,
   ForbiddenException,
@@ -21,7 +22,8 @@ import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto, UserResponseDt
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { users as UserFull } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import type { Response } from 'express';
+import { clearAuthCookies } from '../auth/auth-cookies';
+import type { Request, Response } from 'express';
 
 @Controller('users')
 export class UserController {
@@ -45,12 +47,13 @@ export class UserController {
   @Delete('me')
   async deleteMe(
     @CurrentUser('userId') userId: string,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
     await this.userService.deleteAccount(Number(userId));
     // The access token is stateless and would still verify against a user that no longer
     // exists, so the session has to be dropped in the same response that destroys it.
-    this.clearAuthCookies(res);
+    clearAuthCookies(res, req.headers.origin);
     // A body rather than a 204: the shared client parses every response as JSON.
     return { message: 'Account deleted' };
   }
@@ -90,19 +93,6 @@ export class UserController {
     this.ensureSelf(userId, id);
     const user = await this.userService.updateUserProfile(Number(id), data);
     return this.mapToResponse(user);
-  }
-
-  // Same names, flags and path the auth controller sets them with - a cookie cleared with
-  // anything else is left behind by the browser.
-  private clearAuthCookies(res: Response): void {
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      path: '/',
-    };
-    res.clearCookie('access_token', options);
-    res.clearCookie('refresh_token', options);
   }
 
   // A user may only read or modify their own profile.

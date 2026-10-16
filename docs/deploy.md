@@ -58,6 +58,28 @@ dc exec -T db-strava-service sh -c 'pg_restore -U "$POSTGRES_USER" -d strava_ser
 
 Then redeploy the older tag.
 
+## Android release
+
+The App is a signed AAB built on your machine from the same version as the web release, against production, and uploaded to Play Console by hand. Play App Signing holds the app key; you keep only the upload key.
+
+**Once:** create the upload keystore outside the repo and back up the `.jks` and both passwords in a password manager. A lost upload key can be reset from Play Console, but not instantly.
+
+```sh
+keytool -genkey -v -keystore D:/keys/bikecheck-upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Copy `_frontend/bikecheck/android/keystore.properties.example` to `keystore.properties` (git-ignored) and fill it in. Without it a debug build still works and a release build stops at once, naming the file.
+
+**Per release:**
+
+1. `npm run deploy:production` from the repo root, as above. It leaves the new version in `_frontend/bikecheck/package.json`, which the build reads: `versionName` is that version, `versionCode` is `major*10000 + minor*100 + patch` (`1.4.6` → `10406`). Minor or patch at 100 stops the build.
+2. `npm run android:release` in `_frontend/bikecheck`: `tsc -b`, `vite build --mode android` (the committed `.env.android`, so the API is `https://app.bikecheck.cloud/api`), `cap sync android`, `gradlew bundleRelease`. It prints the AAB path, `android/app/build/outputs/bundle/release/app-release.aab`.
+3. Play Console → the testing track or Production → Create new release → upload the AAB.
+
+To check a build: `keytool -printcert -jarfile android/app/build/outputs/bundle/release/app-release.aab` shows the upload certificate.
+
+**Live reload on a device:** `npm run dev` in your own terminal, then `npm run android:dev` (or `android:dev:target` for the usual phone). The Capacitor CLI points the WebView at the dev server and allows cleartext in the generated files only, and reverts both on Ctrl+C; `capacitor.config.ts` has no `server` block. It syncs first, so `dist/` must exist (any build).
+
 ## Working on the server
 
 Run git and compose as `deploy` (`sudo -iu deploy`); git refuses a repo owned by another user. Compose needs the running release's tag, which `deploy.sh` writes to `.env.tag`. Add to `/home/deploy/.bashrc`:
@@ -141,7 +163,7 @@ Then delete `bikecheck_deploy` locally; GitHub holds the only copy it needs.
 
    Then tag a release; a redeploy of an old tag reuses its images and keeps the old IDs.
 
-The APK is built locally (`npm run build`, mode production), so it tracks only when `_frontend/bikecheck/.env.production.local` (git-ignored) holds `VITE_UMAMI_WEBSITE_ID=<App ID>` and `VITE_UMAMI_SCRIPT_URL=https://stats.bikecheck.cloud/<TRACKER_SCRIPT_NAME>`. `npm run dev` never reads that file.
+The Android App is built locally (`npm run android:release`, mode `android`), so its tracker comes from the committed `_frontend/bikecheck/.env.android`: `VITE_UMAMI_WEBSITE_ID=<App ID>` and `VITE_UMAMI_SCRIPT_URL=https://stats.bikecheck.cloud/<TRACKER_SCRIPT_NAME>`. Change it there when either repo variable changes. `npm run dev` never reads that file.
 
 ### First tag deploy (leaving the `production` branch)
 

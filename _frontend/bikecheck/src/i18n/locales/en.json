@@ -63,7 +63,8 @@
     "follows": "Riders",
     "chat": "Chat",
     "legalTerms": "Terms of use",
-    "legalPrivacy": "Privacy policy"
+    "legalPrivacy": "Privacy policy",
+    "legalDeleteAccount": "Delete your account"
   },
   "offline": {
     "title": "You are offline",
@@ -186,7 +187,7 @@
     "logout": "Log out",
     "deleteAccount": "Delete account",
     "deleteAccountTitle": "Delete account",
-    "deleteAccountBody": "Your account and everything belonging to it is deleted for good. This cannot be undone and nothing is kept anywhere - an account has no archive.",
+    "deleteAccountBody": "Your account and everything belonging to it is deleted for good. This cannot be undone - an account has no archive.",
     "deleteAccountBikes": "Bikes",
     "deleteAccountRides": "Rides",
     "deleteAccountServices": "Services",

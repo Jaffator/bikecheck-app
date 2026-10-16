@@ -110,3 +110,15 @@ when an email is verified, one when an account is deleted, with the account's ag
 nothing else. No user id, no email; nothing to link back. Grafana reads it, the app never does.
 Every account verified before this shipped is backfilled as one `verified` event.
 
+
+## Revised 2026-10-16: the files and the Strava link go too
+
+Google Play needs a public page saying what deletion removes (#261), and "orphaned until the queue is
+built" is not something it can say. So an account deletion no longer waits for ADR 0025: once the
+transaction commits, the R2 files its rows named are deleted (unless another row still names the
+same URL), and strava-service revokes the grant and drops the tokens and the raw activities (#272).
+
+Both are best effort and inline, after the commit, the shape ADR 0025 rejected for bikes. The rows
+are already gone, so a failure cannot half-delete anything; it is logged with the URLs or the
+athlete id, which is all a manual retry needs. A bike deletion still orphans its files until the
+queue exists.
