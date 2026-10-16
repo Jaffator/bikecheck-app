@@ -418,14 +418,19 @@
              assets/icon/google.svg, as Google's brand rules require. Its
              own plate and lockup replace a button of ours, so it carries no
              background or label from us - only a height. -->
-              <a
-                href="PLAY_STORE_URL"
-                data-umami-event="google-play"
-                data-umami-event-place="hero"
-                class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
-              >
-                <img src="/assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
-              </a>
+              <!-- No store listing yet (closed test), so a span with nothing to click; back to a link once it is live. -->
+              <span class="relative inline-flex items-center rounded-xl cursor-not-allowed" aria-disabled="true">
+                <img
+                  src="/assets/icon/google.svg"
+                  alt="Google Play, in progress"
+                  class="block h-9 sm:h-10 lg:h-[52px] w-auto opacity-50 grayscale"
+                />
+                <span
+                  class="absolute -top-3.5 -right-2 rounded-full border hairline bg-ink-800 px-1.5 py-0.5 text-[10px] font-semibold text-paper-dim whitespace-nowrap"
+                >
+                  <span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span>
+                </span>
+              </span>
 
               <!-- iOS is not out yet, so this is deliberately our own tile and
              not Apple's badge: that one may only be used unaltered and only
@@ -2620,14 +2625,18 @@
 
           <!-- The hero's pair again, so the page ends on the buttons it starts with. -->
           <div class="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-3.5">
-            <a
-              href="PLAY_STORE_URL"
-              data-umami-event="google-play"
-              data-umami-event-place="closing"
-              class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
-            >
-              <img src="/assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
-            </a>
+            <span class="relative inline-flex items-center rounded-xl cursor-not-allowed" aria-disabled="true">
+              <img
+                src="/assets/icon/google.svg"
+                alt="Google Play, in progress"
+                class="block h-9 sm:h-10 lg:h-[52px] w-auto opacity-50 grayscale"
+              />
+              <span
+                class="absolute -top-3.5 -right-2 rounded-full border hairline bg-ink-800 px-1.5 py-0.5 text-[10px] font-semibold text-paper-dim whitespace-nowrap"
+              >
+                <span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span>
+              </span>
+            </span>
 
             <a
               href="https://app.bikecheck.cloud/?lang=cs"
@@ -2725,12 +2734,11 @@
               </li>
               <li><a href="#faq" class="hover:text-paper transition-colors duration-200">FAQ</a></li>
               <li>
-                <a
-                  href="PLAY_STORE_URL"
-                  data-umami-event="google-play"
-                  data-umami-event-place="footer"
-                  class="hover:text-paper transition-colors duration-200"
-                  >Google Play</a
+                <span class="text-paper-faint cursor-not-allowed" aria-disabled="true"
+                  >Google Play
+                  <span class="ml-1 rounded-full border hairline px-1.5 py-0.5 text-[10px] font-semibold"
+                    ><span class="lang-cs">Připravujeme</span><span class="lang-en">In progress</span></span
+                  ></span
                 >
               </li>
             </ul>
