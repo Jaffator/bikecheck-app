@@ -1,0 +1,42 @@
+[
+  {
+    "heading": "DELETE YOUR BIKECHECK ACCOUNT",
+    "paragraphs": [
+      "Last updated October 16, 2026",
+      "This page explains how to delete your account in BikeCheck, the bike maintenance app by Jaroslav Lufinka, and what happens to your data when you do. You can delete your account at any time, with or without the app installed."
+    ]
+  },
+  {
+    "heading": "HOW TO DELETE YOUR ACCOUNT",
+    "paragraphs": [
+      "• In the BikeCheck app: open Settings → Delete account, check what is about to be deleted, type your email address to confirm, and tap Delete account for good.",
+      "• On the web: sign in at app.bikecheck.cloud, open Settings → Delete account and confirm the same way.",
+      "• By email: if you can no longer sign in, write to support@bikecheck.cloud from the email address of your account and ask us to delete it. We delete it the same way the app does, within one month, and confirm by reply."
+    ]
+  },
+  {
+    "heading": "WHAT IS DELETED",
+    "paragraphs": [
+      "Deletion is immediate and permanent. There is no archive and no grace period, and it cannot be undone. Together with your account we delete:",
+      "• your profile: name, email address, password, profile photo, body weight, and your language and currency settings;",
+      "• all your bikes, archived ones included, with their components, setups, service records, costs and notes, and the photos and files you uploaded to them;",
+      "• all your rides and their check-ins, your notifications, your conversation with the in-app assistant, who you follow and who follows you, your sign-in sessions, and the device tokens used for push notifications;",
+      "• the reports you shared: their public links stop working for anyone you sent them to;",
+      "• your Strava connection: we revoke BikeCheck's access to your Strava account and delete the copies of your Strava activities we received. Your activities on Strava itself are not affected."
+    ]
+  },
+  {
+    "heading": "WHAT IS KEPT",
+    "paragraphs": [
+      "• An anonymous record that an account was deleted and how many days old it was. It holds no name, email address or other identifier, so it cannot be linked back to you.",
+      "• Copies may remain for a short time in backups, which are rotated and overwritten on a regular schedule.",
+      "• Technical logs that may contain an IP address are kept for a limited period for security and diagnostic purposes and are then deleted."
+    ]
+  },
+  {
+    "heading": "QUESTIONS",
+    "paragraphs": [
+      "How we handle your data is described in full in our Privacy Notice at app.bikecheck.cloud/legal/privacy. For anything else about deleting your account, contact us at support@bikecheck.cloud."
+    ]
+  }
+]

@@ -65,7 +65,8 @@
     "follows": "Jezdci",
     "chat": "Chat",
     "legalTerms": "Podmínky použití",
-    "legalPrivacy": "Ochrana osobních údajů"
+    "legalPrivacy": "Ochrana osobních údajů",
+    "legalDeleteAccount": "Smazání účtu"
   },
   "offline": {
     "title": "Jste offline",

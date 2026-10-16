@@ -63,7 +63,8 @@
     "follows": "Riders",
     "chat": "Chat",
     "legalTerms": "Terms of use",
-    "legalPrivacy": "Privacy policy"
+    "legalPrivacy": "Privacy policy",
+    "legalDeleteAccount": "Delete your account"
   },
   "offline": {
     "title": "You are offline",
