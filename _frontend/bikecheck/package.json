@@ -4,8 +4,9 @@
   "version": "1.4.6",
   "type": "module",
   "scripts": {
-    "androidBuild_withTarget": "npm run build && npx cap sync android && npx cap run android --target MRH6V4DUFMF6PBRG",
-    "androidBuild": "npm run build && npx cap sync android && npx cap run android",
+    "android:dev": "npx cap run android -l --port 5173",
+    "android:dev:target": "npx cap run android -l --port 5173 --target MRH6V4DUFMF6PBRG",
+    "android:release": "tsc -b && vite build --mode android && npx cap sync android && node scripts/android-bundle.mjs",
     "dev": "vite",
     "gen:api": "openapi-typescript http://localhost:3000/api-json -o src/api/schema.d.ts",
     "build": "tsc -b && vite build",

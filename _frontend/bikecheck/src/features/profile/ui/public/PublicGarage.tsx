@@ -13,6 +13,9 @@ import { Chips, Icon, PhotoBox, PublicAvatar, Reading } from "./PublicPieces";
 
 dayjs.extend(relativeTime);
 
+// Where the profile lives for everyone; in the Android App window.location.host is only "localhost".
+const PUBLIC_APP_HOST = "app.bikecheck.cloud";
+
 interface GarageHeroProps {
   owner: ProfileOwner;
   garage: ProfileGarage;
@@ -39,7 +42,7 @@ function GarageHero({ owner, garage }: GarageHeroProps): ReactElement {
               {owner.name ?? owner.handle}
             </h1>
             <p className="tabular-nums mt-1 text-[12px] text-[var(--pp-paper-dim)]">
-              {window.location.host}/u/{owner.handle}
+              {PUBLIC_APP_HOST}/u/{owner.handle}
             </p>
           </div>
         </div>
