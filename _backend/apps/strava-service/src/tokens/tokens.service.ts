@@ -156,6 +156,13 @@ export class TokenService {
     this.logger.info({ custom: true, athlete_id: athleteID }, 'Strava tokens removed');
   }
 
+  // A deleted BikeCheck account (#272): the same unlink, and the webhook copies of its activities too.
+  async forget(athleteID: number): Promise<void> {
+    await this.disconnect(athleteID);
+    await this.databaseService.query('DELETE FROM strava_activities_raw WHERE athlete_id = $1', [athleteID]);
+    this.logger.info({ custom: true, athlete_id: athleteID }, 'Strava raw activities removed');
+  }
+
   private async _getNewAccessToken(athleteID: number): Promise<string> {
     const refreshToken = await this.databaseService.query<{ refresh_token: string }>(
       'SELECT refresh_token FROM refresh_tokens WHERE athlete_id = $1',

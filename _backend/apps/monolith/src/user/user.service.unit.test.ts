@@ -9,6 +9,11 @@ import { validate } from 'class-validator';
 import { UpdateUserDto } from './dto/user.dtos';
 import { AccountEventsService } from '../account-events/account-events.service';
 import { NotificationService } from '../notification/notification.service';
+import { StorageService } from '../storage/storage.service';
+import { getLoggerToken } from 'nestjs-pino';
+import { forgetStravaAthlete } from '../strava/forget-strava-athlete';
+
+jest.mock('../strava/forget-strava-athlete', () => ({ forgetStravaAthlete: jest.fn() }));
 
 const USER_ID = 7;
 
@@ -16,6 +21,9 @@ const USER_ID = 7;
 const mockAccountEvents = { recordVerified: jest.fn(), recordDeleted: jest.fn() };
 // The one call deletion makes outside its transaction; asserted, never stored.
 const mockNotifications = { resolveByDedupKey: jest.fn() };
+// What deletion erases outside the database after the commit (#272); asserted, never stored.
+const mockStorage = { deleteFilesR2CloudFare: jest.fn() };
+const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
 // What Prisma throws when a conditional `update` finds no row to update (P2025).
 function recordNotFound(): Prisma.PrismaClientKnownRequestError {
@@ -31,7 +39,7 @@ describe('UserService account deletion', () => {
   const VERIFIED_AT = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
   const tx = {
     strava_pending_activities: { deleteMany: jest.fn() },
-    bikes: { deleteMany: jest.fn() },
+    bikes: { deleteMany: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
     users: { delete: jest.fn(), findUnique: jest.fn().mockResolvedValue({ email_verified_at: VERIFIED_AT }) },
     follows: { findMany: jest.fn().mockResolvedValue([]) },
   };
@@ -40,7 +48,8 @@ describe('UserService account deletion', () => {
   const committed = jest.fn();
 
   const mockPrisma = {
-    bikes: { count: jest.fn() },
+    bikes: { count: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
+    bike_event_attachments: { findMany: jest.fn().mockResolvedValue([]) },
     rides: { count: jest.fn() },
     events_bikes: { count: jest.fn() },
     reports: { count: jest.fn() },
@@ -59,6 +68,8 @@ describe('UserService account deletion', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: StorageService, useValue: mockStorage },
+        { provide: getLoggerToken(UserService.name), useValue: mockLogger },
       ],
     }).compile();
 
@@ -220,6 +231,74 @@ describe('UserService account deletion', () => {
         expect(mockNotifications.resolveByDedupKey).not.toHaveBeenCalled();
       });
     });
+
+    // The rows go in the transaction; their files and the Strava link would outlive it (#272).
+    describe('what lives outside the database', () => {
+      const PHOTO = 'https://files.bikecheck.cloud/bikes/a.webp';
+      const RECEIPT = 'https://files.bikecheck.cloud/service-attachments/b.pdf';
+      const afterCommit = (calls: number[]): void => {
+        expect(calls[0]).toBeGreaterThan(committed.mock.invocationCallOrder[0]);
+      };
+
+      beforeEach(() => {
+        tx.bikes.findMany.mockResolvedValueOnce([
+          { image_url: PHOTO, events_bikes: [{ bike_event_attachments: [{ url: RECEIPT }] }] },
+          { image_url: null, events_bikes: [] },
+        ]);
+      });
+
+      it('erases the files of every bike and service, after the commit', async () => {
+        await service.deleteAccount(USER_ID);
+
+        expect(tx.bikes.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { user_id: USER_ID } }));
+        expect(mockStorage.deleteFilesR2CloudFare).toHaveBeenCalledWith([PHOTO, RECEIPT]);
+        afterCommit(mockStorage.deleteFilesR2CloudFare.mock.invocationCallOrder);
+      });
+
+      // A client can attach an address it did not upload, so another account may still show it.
+      it('keeps a file another row still names', async () => {
+        mockPrisma.bike_event_attachments.findMany.mockResolvedValueOnce([{ url: RECEIPT }]);
+
+        await service.deleteAccount(USER_ID);
+
+        expect(mockStorage.deleteFilesR2CloudFare).toHaveBeenCalledWith([PHOTO]);
+      });
+
+      it('forgets the linked Strava athlete, after the commit', async () => {
+        tx.users.findUnique.mockResolvedValueOnce({ email_verified_at: VERIFIED_AT, strava_athlete_id: '4242' });
+
+        await service.deleteAccount(USER_ID);
+
+        expect(forgetStravaAthlete).toHaveBeenCalledWith(4242);
+        afterCommit(jest.mocked(forgetStravaAthlete).mock.invocationCallOrder);
+      });
+
+      it('calls nobody about Strava when none was linked', async () => {
+        await service.deleteAccount(USER_ID);
+
+        expect(forgetStravaAthlete).not.toHaveBeenCalled();
+      });
+
+      // The rows are already gone: an outage must not report a deleted account as still there.
+      it('still answers when storage and strava-service fail, and logs both', async () => {
+        tx.users.findUnique.mockResolvedValueOnce({ email_verified_at: VERIFIED_AT, strava_athlete_id: '4242' });
+        mockStorage.deleteFilesR2CloudFare.mockRejectedValueOnce(new Error('R2 down'));
+        jest.mocked(forgetStravaAthlete).mockRejectedValueOnce(new Error('strava-service down'));
+
+        await expect(service.deleteAccount(USER_ID)).resolves.toBeUndefined();
+        expect(mockLogger.error).toHaveBeenCalledTimes(2);
+      });
+
+      it('erases nothing when the delete throws', async () => {
+        tx.users.findUnique.mockResolvedValueOnce({ email_verified_at: VERIFIED_AT, strava_athlete_id: '4242' });
+        tx.users.delete.mockRejectedValueOnce(new Error('connection lost'));
+
+        await expect(service.deleteAccount(USER_ID)).rejects.toThrow('connection lost');
+
+        expect(mockStorage.deleteFilesR2CloudFare).not.toHaveBeenCalled();
+        expect(forgetStravaAthlete).not.toHaveBeenCalled();
+      });
+    });
   });
 });
 
@@ -244,6 +323,8 @@ describe('UserService registration', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: StorageService, useValue: mockStorage },
+        { provide: getLoggerToken(UserService.name), useValue: mockLogger },
       ],
     }).compile();
 
@@ -394,6 +475,8 @@ describe('UserService createUserLocal', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: StorageService, useValue: mockStorage },
+        { provide: getLoggerToken(UserService.name), useValue: mockLogger },
       ],
     }).compile();
 
@@ -458,6 +541,8 @@ describe('UserService Google sign-in', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: StorageService, useValue: mockStorage },
+        { provide: getLoggerToken(UserService.name), useValue: mockLogger },
       ],
     }).compile();
 
@@ -608,6 +693,8 @@ describe('UserService email verification', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: StorageService, useValue: mockStorage },
+        { provide: getLoggerToken(UserService.name), useValue: mockLogger },
       ],
     }).compile();
 
@@ -656,6 +743,8 @@ describe('UserService profile update', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountEventsService, useValue: mockAccountEvents },
         { provide: NotificationService, useValue: mockNotifications },
+        { provide: StorageService, useValue: mockStorage },
+        { provide: getLoggerToken(UserService.name), useValue: mockLogger },
       ],
     }).compile();
 

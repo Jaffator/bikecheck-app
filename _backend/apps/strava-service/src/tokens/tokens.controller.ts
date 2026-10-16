@@ -36,6 +36,16 @@ export class TokenController {
   }
 
   // ----------------------------------------------------------
+  // ---------- Forget the athlete (called by monolith) -------
+  // ----------------------------------------------------------
+  // On account deletion; the athlete id was read before the user row went.
+  @UseGuards(InternalAuthGuard)
+  @Post('forget')
+  async forget(@Body(new ValidationPipe({ whitelist: true })) body: DisconnectAthleteDto): Promise<void> {
+    await this.tokenService.forget(body.athleteId);
+  }
+
+  // ----------------------------------------------------------
   // ---------- OAuth callback (called by Strava) -------------
   // ----------------------------------------------------------
   // Public by necessity — Strava redirects the user's browser here. The state is

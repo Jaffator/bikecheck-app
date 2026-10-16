@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import sharp, { type ResizeOptions } from 'sharp';
 import { Readable } from 'stream';
@@ -164,6 +164,30 @@ export class StorageService {
     }
 
     return { body, contentLength: contentLength ?? null };
+  }
+
+  /**
+   * Delete stored files by the addresses they were recorded under. One request per file, so
+   * a failure leaves the rest deleted; the caller hears about it afterwards.
+   * @param urls - Public URLs as recorded at upload; any other origin is skipped
+   */
+  async deleteFilesR2CloudFare(urls: string[]): Promise<void> {
+    const keys = urls.flatMap((url) => this.ownedKey(url) ?? []);
+    const results = await Promise.allSettled(
+      keys.map((key) => this.s3Client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: key }))),
+    );
+
+    const failed = results.filter((result) => result.status === 'rejected').length;
+    if (failed > 0) {
+      throw new InternalServerErrorException(`Storage delete failed for ${failed} of ${keys.length} files`);
+    }
+  }
+
+  // Unlike storageKeyFromUrl, no path fallback: a foreign address or an unknown origin is never deleted.
+  private ownedKey(url: string): string | null {
+    const origin = process.env.CLOUDFLARE_PUBLIC_URL?.replace(/\/+$/, '');
+    if (!origin || !url.startsWith(`${origin}/`)) return null;
+    return url.slice(origin.length).replace(/^\/+/, '');
   }
 
   /**
