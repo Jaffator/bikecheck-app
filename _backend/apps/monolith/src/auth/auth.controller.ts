@@ -23,6 +23,7 @@ import { AuthService } from './auth.service';
 import { GoogleAuthService, GoogleUserType } from './googleAuth.service';
 import { TokenService } from './token.service';
 import { AUTH_CONFIG } from './auth.config';
+import { authCookieOptions } from './auth-cookies';
 import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -132,7 +133,7 @@ export class AuthController {
       throw new UnauthorizedException('Session expired');
     }
     const { refreshToken, accessToken } = await this.tokenService.refreshToken(currentRefreshToken, deviceInfo, ip);
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, { accessToken, refreshToken }, req.headers.origin);
     return res.status(200).json({ message: 'Refresh token done' });
   }
 
@@ -143,7 +144,7 @@ export class AuthController {
     console.log('Logging out user...');
     const token = req.cookies['refresh_token'];
     await this.authService.logout(token);
-    this.deleteAuthCookies(res);
+    this.deleteAuthCookies(res, req.headers.origin);
     return res.status(200).json({ message: 'User successfully logged out' });
   }
 
@@ -185,7 +186,7 @@ export class AuthController {
       ip,
     );
     console.log(deviceInfo);
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, { accessToken, refreshToken }, req.headers.origin);
     return this.mapToResponse(req.user);
   }
 
@@ -225,7 +226,7 @@ export class AuthController {
     const deviceInfo = this.getDeviceInfo(req);
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
     res.status(isNewUser ? HttpStatus.CREATED : HttpStatus.OK);
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, { accessToken, refreshToken }, req.headers.origin);
     return this.mapToResponse(user);
   }
 
@@ -258,7 +259,7 @@ export class AuthController {
     const { refreshToken, accessToken } = await this.tokenService.createRefreshAndAccessTokens(user, deviceInfo, ip);
     const statusCode = isNewUser ? HttpStatus.CREATED : HttpStatus.ACCEPTED;
     res.status(statusCode);
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, { accessToken, refreshToken }, req.headers.origin);
     console.log(`Redirecting ------------ ${process.env.FRONTEND_URL}`);
     return res.redirect(`${process.env.FRONTEND_URL}`);
   }
@@ -282,38 +283,27 @@ export class AuthController {
     throw error;
   }
 
-  private deleteAuthCookies(res: Response): void {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Musí být stejné jako při vytváření
-      sameSite: 'lax', // Musí být stejné jako při vytváření
-      path: '/', // Velmi důležité – musí sedět cesta!
-    });
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Musí být stejné jako při vytváření
-      sameSite: 'lax', // Musí být stejné jako při vytváření
-      path: '/', // Velmi důležité – musí sedět cesta!
-    });
+  private deleteAuthCookies(res: Response, origin: string | undefined): void {
+    const options = authCookieOptions(origin);
+    res.clearCookie('access_token', options);
+    res.clearCookie('refresh_token', options);
   }
 
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+  private setAuthCookies(
+    res: Response,
+    tokens: { accessToken: string; refreshToken: string },
+    origin: string | undefined,
+  ): void {
+    const options = authCookieOptions(origin);
     // maxAge mirrors the JWT lifetime. Without it this is a session cookie, so
     // closing the browser or killing the app process drops it and the user
     // lands back on the login screen despite having a valid session.
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: AUTH_CONFIG.JWT_EXPIRATION * 1000,
-    });
+    res.cookie('access_token', tokens.accessToken, { ...options, maxAge: AUTH_CONFIG.JWT_EXPIRATION * 1000 });
 
     // Mirrors the DB expiry. Hardcoding a shorter value would drop the cookie
     // while the token is still valid, logging the user out for no reason.
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+    res.cookie('refresh_token', tokens.refreshToken, {
+      ...options,
       maxAge: AUTH_CONFIG.REFRESH_TOKEN_EXPIRATION_DAYS * 24 * 60 * 60 * 1000,
     });
   }
