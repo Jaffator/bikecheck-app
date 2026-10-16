@@ -11,9 +11,9 @@ import { AccountEventsService } from '../account-events/account-events.service';
 import { NotificationService } from '../notification/notification.service';
 import { StorageService } from '../storage/storage.service';
 import { getLoggerToken } from 'nestjs-pino';
-import { forgetStravaAthlete } from '../strava/forget-strava-athlete';
+import { unlinkStravaAthlete } from '../strava/unlink-strava-athlete';
 
-jest.mock('../strava/forget-strava-athlete', () => ({ forgetStravaAthlete: jest.fn() }));
+jest.mock('../strava/unlink-strava-athlete', () => ({ unlinkStravaAthlete: jest.fn() }));
 
 const USER_ID = 7;
 
@@ -264,26 +264,26 @@ describe('UserService account deletion', () => {
         expect(mockStorage.deleteFilesR2CloudFare).toHaveBeenCalledWith([PHOTO]);
       });
 
-      it('forgets the linked Strava athlete, after the commit', async () => {
+      it('unlinks the linked Strava athlete, after the commit', async () => {
         tx.users.findUnique.mockResolvedValueOnce({ email_verified_at: VERIFIED_AT, strava_athlete_id: '4242' });
 
         await service.deleteAccount(USER_ID);
 
-        expect(forgetStravaAthlete).toHaveBeenCalledWith(4242);
-        afterCommit(jest.mocked(forgetStravaAthlete).mock.invocationCallOrder);
+        expect(unlinkStravaAthlete).toHaveBeenCalledWith(4242);
+        afterCommit(jest.mocked(unlinkStravaAthlete).mock.invocationCallOrder);
       });
 
       it('calls nobody about Strava when none was linked', async () => {
         await service.deleteAccount(USER_ID);
 
-        expect(forgetStravaAthlete).not.toHaveBeenCalled();
+        expect(unlinkStravaAthlete).not.toHaveBeenCalled();
       });
 
       // The rows are already gone: an outage must not report a deleted account as still there.
       it('still answers when storage and strava-service fail, and logs both', async () => {
         tx.users.findUnique.mockResolvedValueOnce({ email_verified_at: VERIFIED_AT, strava_athlete_id: '4242' });
         mockStorage.deleteFilesR2CloudFare.mockRejectedValueOnce(new Error('R2 down'));
-        jest.mocked(forgetStravaAthlete).mockRejectedValueOnce(new Error('strava-service down'));
+        jest.mocked(unlinkStravaAthlete).mockRejectedValueOnce(new Error('strava-service down'));
 
         await expect(service.deleteAccount(USER_ID)).resolves.toBeUndefined();
         expect(mockLogger.error).toHaveBeenCalledTimes(2);
@@ -296,7 +296,7 @@ describe('UserService account deletion', () => {
         await expect(service.deleteAccount(USER_ID)).rejects.toThrow('connection lost');
 
         expect(mockStorage.deleteFilesR2CloudFare).not.toHaveBeenCalled();
-        expect(forgetStravaAthlete).not.toHaveBeenCalled();
+        expect(unlinkStravaAthlete).not.toHaveBeenCalled();
       });
     });
   });

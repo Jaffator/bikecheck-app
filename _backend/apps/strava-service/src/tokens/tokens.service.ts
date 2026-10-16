@@ -151,16 +151,11 @@ export class TokenService {
     await this.databaseService.transaction(async (client) => {
       await client.query('DELETE FROM access_tokens WHERE athlete_id = $1', [athleteID]);
       await client.query('DELETE FROM refresh_tokens WHERE athlete_id = $1', [athleteID]);
+      // The webhook copies go too: unlinking, or a deleted account, leaves nothing taken from Strava (#272).
+      await client.query('DELETE FROM strava_activities_raw WHERE athlete_id = $1', [athleteID]);
     });
 
-    this.logger.info({ custom: true, athlete_id: athleteID }, 'Strava tokens removed');
-  }
-
-  // A deleted BikeCheck account (#272): the same unlink, and the webhook copies of its activities too.
-  async forget(athleteID: number): Promise<void> {
-    await this.disconnect(athleteID);
-    await this.databaseService.query('DELETE FROM strava_activities_raw WHERE athlete_id = $1', [athleteID]);
-    this.logger.info({ custom: true, athlete_id: athleteID }, 'Strava raw activities removed');
+    this.logger.info({ custom: true, athlete_id: athleteID }, 'Strava tokens and raw activities removed');
   }
 
   private async _getNewAccessToken(athleteID: number): Promise<string> {

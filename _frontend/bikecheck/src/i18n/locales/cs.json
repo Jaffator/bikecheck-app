@@ -189,7 +189,7 @@
     "logout": "Odhlásit se",
     "deleteAccount": "Smazat účet",
     "deleteAccountTitle": "Smazat účet",
-    "deleteAccountBody": "Účet i všechno, co k němu patří, se smaže natrvalo. Nejde to vrátit a nic se nikam neuloží - archiv pro účet neexistuje.",
+    "deleteAccountBody": "Účet i všechno, co k němu patří, se smaže natrvalo. Nejde to vrátit - archiv pro účet neexistuje.",
     "deleteAccountBikes": "Kola",
     "deleteAccountRides": "Jízdy",
     "deleteAccountServices": "Servisy",

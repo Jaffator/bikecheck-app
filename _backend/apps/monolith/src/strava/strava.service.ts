@@ -22,6 +22,7 @@ import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import { toPendingDto } from './pending-activity';
+import { unlinkStravaAthlete } from './unlink-strava-athlete';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
 import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
@@ -116,8 +117,8 @@ export class StravaEventsService {
   }
 
   /**
-   * Unlinks the user's Strava account. strava-service owns the tokens and the
-   * revoke call, so it does that half; the user row here is what the frontend
+   * Unlinks the user's Strava account. strava-service owns the tokens, the raw
+   * activities and the revoke call, so it does that half; the user row here is what the frontend
    * reads to know whether an account is linked, so it is cleared afterwards.
    * Bikes keep their strava gear ids — reconnecting the same account then finds
    * them still linked instead of asking the user to pair everything again.
@@ -133,14 +134,7 @@ export class StravaEventsService {
     }
 
     try {
-      await axios.post(
-        `${process.env.STRAVA_SERVICE_URL}/strava/disconnect`,
-        { athleteId: Number(user.strava_athlete_id) },
-        {
-          headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
-          timeout: 5000,
-        },
-      );
+      await unlinkStravaAthlete(Number(user.strava_athlete_id));
     } catch (error) {
       throw new Error(`Failed to disconnect Strava: ${(error as Error).message}`);
     }

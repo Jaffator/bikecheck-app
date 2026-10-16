@@ -166,11 +166,7 @@ export class StorageService {
     return { body, contentLength: contentLength ?? null };
   }
 
-  /**
-   * Delete stored files by the addresses they were recorded under. One request per file, so
-   * a failure leaves the rest deleted; the caller hears about it afterwards.
-   * @param urls - Public URLs as recorded at upload; any other origin is skipped
-   */
+  // One request per file, so a failure leaves the rest deleted and is reported afterwards.
   async deleteFilesR2CloudFare(urls: string[]): Promise<void> {
     const keys = urls.flatMap((url) => this.ownedKey(url) ?? []);
     const results = await Promise.allSettled(

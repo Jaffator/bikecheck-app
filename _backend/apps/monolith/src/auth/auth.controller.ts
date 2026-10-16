@@ -23,7 +23,7 @@ import { AuthService } from './auth.service';
 import { GoogleAuthService, GoogleUserType } from './googleAuth.service';
 import { TokenService } from './token.service';
 import { AUTH_CONFIG } from './auth.config';
-import { authCookieOptions } from './auth-cookies';
+import { authCookieOptions, clearAuthCookies } from './auth-cookies';
 import { UserService } from '../user/user.service';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -144,7 +144,7 @@ export class AuthController {
     console.log('Logging out user...');
     const token = req.cookies['refresh_token'];
     await this.authService.logout(token);
-    this.deleteAuthCookies(res, req.headers.origin);
+    clearAuthCookies(res, req.headers.origin);
     return res.status(200).json({ message: 'User successfully logged out' });
   }
 
@@ -281,12 +281,6 @@ export class AuthController {
       return url.toString();
     }
     throw error;
-  }
-
-  private deleteAuthCookies(res: Response, origin: string | undefined): void {
-    const options = authCookieOptions(origin);
-    res.clearCookie('access_token', options);
-    res.clearCookie('refresh_token', options);
   }
 
   private setAuthCookies(

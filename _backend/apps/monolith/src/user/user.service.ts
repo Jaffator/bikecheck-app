@@ -4,7 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AccountEventsService } from '../account-events/account-events.service';
 import { NotificationService } from '../notification/notification.service';
 import { StorageService } from '../storage/storage.service';
-import { forgetStravaAthlete } from '../strava/forget-strava-athlete';
+import { unlinkStravaAthlete } from '../strava/unlink-strava-athlete';
 import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
 import { Prisma, users as UserFull } from '@prisma/client';
@@ -228,9 +228,6 @@ export class UserService {
   // `strava_pending_activities` carries a user_id with no foreign key behind it, so no
   // cascade would ever reach it. It is cleared here rather than left as the rider's data
   // outliving the rider.
-  //
-  // Uploaded files and the Strava link live outside this database, so they go after the
-  // commit (#272), best effort: an outage there must not keep a deleted account alive.
   async deleteAccount(userId: number): Promise<void> {
     const { owners, files, athleteId } = await this.prisma.$transaction(async (tx) => {
       // The one thing kept: that a rider left, and after how long. Read before the row goes.
@@ -259,17 +256,19 @@ export class UserService {
     for (const ownerId of owners) {
       await this.notificationService.resolveByDedupKey(ownerId, `follow_request:${String(userId)}`);
     }
+    // Outside this database, best effort (ADR 0028, revised): an outage must not keep a deleted account alive.
     await this.eraseFiles(files);
-    await this.forgetStrava(athleteId);
+    await this.unlinkStrava(athleteId);
   }
 
+  // The URLs are logged on failure: with the rows gone, nothing else can find the files.
   private async eraseFiles(urls: string[]): Promise<void> {
     if (urls.length === 0) return;
     try {
       const shared = await this.stillReferenced(urls);
       await this.storage.deleteFilesR2CloudFare(urls.filter((url) => !shared.has(url)));
     } catch (error) {
-      this.logger.error({ err: error, files: urls.length }, 'Deleted account left files in storage');
+      this.logger.error({ err: error, files: urls }, 'Deleted account left files in storage');
     }
   }
 
@@ -282,11 +281,11 @@ export class UserService {
     return new Set([...bikes.flatMap((bike) => bike.image_url ?? []), ...attachments.map((file) => file.url)]);
   }
 
-  // The athlete id is logged on failure: it is what a retry of POST /strava/forget needs.
-  private async forgetStrava(athleteId: string | null): Promise<void> {
+  // The athlete id is logged on failure: it is what a retry of POST /strava/disconnect needs.
+  private async unlinkStrava(athleteId: string | null): Promise<void> {
     if (athleteId === null) return;
     try {
-      await forgetStravaAthlete(Number(athleteId));
+      await unlinkStravaAthlete(Number(athleteId));
     } catch (error) {
       this.logger.error({ err: error, athleteId }, 'Deleted account left its Strava link in strava-service');
     }

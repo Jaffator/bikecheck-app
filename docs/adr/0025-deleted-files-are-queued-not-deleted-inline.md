@@ -32,3 +32,8 @@ running locally at all.
   30-day bin for bikes (ADR 0024); that objection no longer holds, though the decision stands.
 - Until this is built, deleting a bike leaves its files in R2. Recorded debt, not a defect: the
   objects are unreachable without their URL and cost nothing worth acting on.
+
+## Revised 2026-10-16: account deletion does not wait
+
+An account deletion deletes its files inline, after the commit, with no retry (ADR 0028, revised).
+This decision still stands for a bike deletion.

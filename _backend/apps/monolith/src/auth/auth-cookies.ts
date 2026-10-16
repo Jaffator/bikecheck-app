@@ -1,4 +1,4 @@
-import type { CookieOptions } from 'express';
+import type { CookieOptions, Response } from 'express';
 
 // The Android App's WebView origin: Capacitor's default androidScheme https and hostname localhost.
 const NATIVE_APP_ORIGIN = 'https://localhost';
@@ -10,4 +10,11 @@ export function authCookieOptions(origin: string | undefined): CookieOptions {
     return { httpOnly: true, secure: true, sameSite: 'none', path: '/' };
   }
   return { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' };
+}
+
+// Logout and account deletion both end the session this way.
+export function clearAuthCookies(res: Response, origin: string | undefined): void {
+  const options = authCookieOptions(origin);
+  res.clearCookie('access_token', options);
+  res.clearCookie('refresh_token', options);
 }
