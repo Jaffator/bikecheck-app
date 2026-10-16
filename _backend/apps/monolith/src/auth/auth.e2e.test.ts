@@ -17,6 +17,8 @@ describe('AppController (e2e)', () => {
   const testexample = 'example@example.com';
   let access_token: string | undefined;
   let refresh_token: string | undefined;
+  // Ids depend on which suite registered first, so the profile is asked for by the one login returned.
+  let userId: number;
   // The link the mailer would carry, minted the same way once the row exists.
   let verificationToken: string;
 
@@ -45,7 +47,7 @@ describe('AppController (e2e)', () => {
   });
 
   it('should ok /auth/test (GET)', () => {
-    return request(app.getHttpServer()).get('/api/auth/test').expect(200).expect({ message: 'Refresh token done' });
+    return request(app.getHttpServer()).get('/api/auth/test').expect(200).expect({ message: 'Test endpoint working' });
   });
 
   // Registration ends on "check your inbox" (ADR 0031): the address comes back, no
@@ -190,6 +192,7 @@ describe('AppController (e2e)', () => {
     expect(user.name).toBe('Jarda');
     expect(user.email).toBe(testexample);
     expect(user.id).toBeGreaterThan(0);
+    userId = user.id;
     expect(access_token).toBeDefined();
     expect(refresh_token).toBeDefined();
   });
@@ -197,7 +200,7 @@ describe('AppController (e2e)', () => {
   it('should ok /users/:id (GET)', async () => {
     // ACT
     const res = await request(app.getHttpServer())
-      .get('/api/users/2')
+      .get(`/api/users/${userId}`)
       .set('Authorization', `Bearer ${access_token}`)
       .set('Cookie', [`refresh_token=${refresh_token}`])
       .expect(200);
@@ -205,6 +208,6 @@ describe('AppController (e2e)', () => {
     const user: UserResponseDto = res.body;
     expect(user.name).toBe('Jarda');
     expect(user.email).toBe(testexample);
-    expect(user.id).toBe(2);
+    expect(user.id).toBe(userId);
   });
 });

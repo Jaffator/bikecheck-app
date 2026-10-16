@@ -1,49 +1,27 @@
 import { execSync } from 'child_process';
-import { runSeed } from '../apps/monolith/scripts/seedData/main_tests';
 import dotenv from 'dotenv';
 import teardown from './teardown';
 
+// Runs once before the INTEGRATION / E2E projects: a fresh Postgres, migrated the way prod is.
 export default async (): Promise<void> => {
-  // Načtení testovacích env proměnných
   dotenv.config({ path: '.env.test' });
 
-  // --- 1. Spuštění Dockeru ---
-  console.log('🐳 1: Starting Docker containers ...');
+  // Recreated with fresh volumes: a run killed before teardown must not hand its rows to the next one.
+  console.log('🐳 1: Starting the test database ...');
+  await runOrTeardown('docker compose -f tests/docker-compose.test.yml up -d --wait --force-recreate --renew-anon-volumes');
+
+  // The migration chain, not `db push`: it is what prod runs, and it seeds the catalogue (ADR 0019).
+  console.log('🔄 2: Applying migrations ...');
+  await runOrTeardown('npx prisma migrate deploy --config apps/monolith/prisma.config.ts');
+
+  console.log('✅ Test database is ready.\n');
+};
+
+async function runOrTeardown(command: string): Promise<void> {
   try {
-    execSync('docker-compose -f tests/docker-compose.test.yml up -d', { stdio: 'ignore' });
+    execSync(command, { stdio: 'inherit' });
   } catch (error) {
-    if (error instanceof Error) {
-      console.log('🛑 Error when starting Docker.\n', error);
-      await teardown();
-    }
-  }
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // --- 2. Čekání na DB a Prisma push ---
-  console.log('🔄 2: Pushing database schema ...');
-
-  try {
-    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.log('🛑 Error when pushing schema into db.\n', error);
-    }
     await teardown();
-  }
-  console.log('✅ Docker test DB is ready.\n');
-
-  // --- 3. Seeding dat do DB ---
-  console.log('🔄 3: Seeding data into database ...\n');
-  try {
-    await runSeed();
-    console.log('✅ --- Seed data completed, DB is ready ---\n');
-  } catch (error) {
-    if (error instanceof Error) {
-      console.log('🛑 Error when seeding db.\n', error.message);
-      await teardown();
-      throw new Error(`Seeding failed: ${error.message}`);
-    }
     throw error;
   }
-  console.log('🔄 4: Running tests ...\n');
-};
+}

@@ -32,6 +32,23 @@ jobs:
       # The scraper test hits 99spokes, which blocks datacenter IPs (#246); it runs locally only.
       - run: npx jest --selectProjects=UNIT --testPathIgnorePatterns=bike-data-scraper
 
+  # The HTTP seam on a real Postgres; tests/setup.ts starts it (and Redis) with docker compose and migrates it.
+  backend-e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: _backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --config apps/monolith/prisma.config.ts
+      - run: npx jest --selectProjects=E2E
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

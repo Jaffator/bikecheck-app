@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: 'apps/monolith/.env' });
+// Tests run on .env.test alone: the dev .env would hand them real keys (a real Resend send).
+if (process.env.NODE_ENV !== 'test') dotenv.config({ path: 'apps/monolith/.env' });
 
 export const AUTH_CONFIG = {
   JWT_EXPIRATION: Number(

@@ -52,14 +52,15 @@ const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http:/
       name: 'strava-webhook-queue',
       adapter: BullMQAdapter,
     }),
-    ConfigModule.forRoot({ envFilePath: 'apps/monolith/.env', isGlobal: true }),
+    // Tests run on .env.test alone: the dev .env would hand them real keys (a real Resend send).
+    ConfigModule.forRoot({ envFilePath: 'apps/monolith/.env', ignoreEnvFile: isTestEnv, isGlobal: true }),
     // Global rate limit: 100 requests / 60s, per user where there is one and per IP otherwise
     // (UserThrottlerGuard). Stricter limits set per-route (e.g. auth).
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST ?? 'localhost',
-        port: 6379,
+        port: Number(process.env.REDIS_PORT ?? 6379),
       },
     }),
     BullModule.registerQueue({ name: 'strava-webhook-queue' }),
