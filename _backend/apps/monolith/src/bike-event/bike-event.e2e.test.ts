@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { AppModule } from '../app.module';
+import { PrismaService } from '../../prisma/prisma.service';
 import request from 'supertest';
 import setCookie from 'set-cookie-parser';
 
@@ -12,6 +13,8 @@ describe('BikeEventController (e2e)', () => {
   // The owner's bike, and a service recorded on it.
   let bikeId: number;
   let bikeEventId: number;
+  // Logged in once each: login is throttled to 5 a minute.
+  let ownerToken: string | undefined;
   // The user who owns neither.
   let strangerToken: string | undefined;
 
@@ -28,6 +31,14 @@ describe('BikeEventController (e2e)', () => {
     return cookies.find((cookie) => cookie.name === 'access_token')?.value;
   };
 
+  // Login is closed until the address is verified (ADR 0031); auth.e2e covers the link itself.
+  const registerVerified = async (credentials: typeof owner): Promise<void> => {
+    await request(app.getHttpServer()).post('/api/auth/register').send(credentials).expect(201);
+    await app
+      .get(PrismaService)
+      .users.update({ where: { email: credentials.email }, data: { email_verified_at: new Date() } });
+  };
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -40,8 +51,8 @@ describe('BikeEventController (e2e)', () => {
     await app.init();
 
     // ARRANGE: the owner registers, adds a bike and records one service on it.
-    await request(app.getHttpServer()).post('/api/auth/register').send(owner).expect(201);
-    const ownerToken = await login(owner);
+    await registerVerified(owner);
+    ownerToken = await login(owner);
 
     const bikeResponse = await request(app.getHttpServer())
       .post('/api/bike/create')
@@ -78,7 +89,7 @@ describe('BikeEventController (e2e)', () => {
     bikeEventId = eventResponse.body.id;
 
     // The stranger registers and gets nothing but their own account.
-    await request(app.getHttpServer()).post('/api/auth/register').send(stranger).expect(201);
+    await registerVerified(stranger);
     strangerToken = await login(stranger);
   });
 
@@ -87,8 +98,6 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('records the service date separately from the creation date', async () => {
-    const ownerToken = await login(owner);
-
     const response = await request(app.getHttpServer())
       .get(`/api/bike-events/${bikeEventId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
@@ -99,8 +108,6 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('names the bike on the detail, so the view need not fetch it separately', async () => {
-    const ownerToken = await login(owner);
-
     const response = await request(app.getHttpServer())
       .get(`/api/bike-events/${bikeEventId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
@@ -112,8 +119,6 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('records a service that cost nothing and carries no note', async () => {
-    const ownerToken = await login(owner);
-
     // ACT: an evening in the garage - no receipt, no figure, nothing to write down.
     const response = await request(app.getHttpServer())
       .post('/api/bike-events/create')
@@ -125,8 +130,6 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('lists the history newest work first, with a total', async () => {
-    const ownerToken = await login(owner);
-
     const response = await request(app.getHttpServer())
       .get('/api/bike-events/history?limit=3&offset=0')
       .set('Authorization', `Bearer ${ownerToken}`)
@@ -139,8 +142,6 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('offers no categories on a bike with no parts mounted', async () => {
-    const ownerToken = await login(owner);
-
     const response = await request(app.getHttpServer())
       .get(`/api/bike-events/categories?bikeId=${bikeId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
@@ -165,8 +166,6 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('changes the note, the total and the service date of a saved service', async () => {
-    const ownerToken = await login(owner);
-
     // ARRANGE: a service of its own, so the edits cannot disturb the other tests.
     const created = await request(app.getHttpServer())
       .post('/api/bike-events/create')
@@ -198,12 +197,16 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('adds and removes an attachment on a saved service', async () => {
-    const ownerToken = await login(owner);
-
     const created = await request(app.getHttpServer())
       .post('/api/bike-events/create')
       .set('Authorization', `Bearer ${ownerToken}`)
-      .send({ bike_id: bikeId, total_cost: 100, note: 'With receipt', actions_done: [] })
+      .send({
+        bike_id: bikeId,
+        total_cost: 100,
+        note: 'With receipt',
+        service_date: '2026-07-01T00:00:00.000Z',
+        actions_done: [],
+      })
       .expect(201);
 
     // ACT: the receipt turns up after the service was recorded.
@@ -231,8 +234,6 @@ describe('BikeEventController (e2e)', () => {
   });
 
   it('refuses an action that belongs to another service', async () => {
-    const ownerToken = await login(owner);
-
     await request(app.getHttpServer())
       .patch(`/api/bike-events/${bikeEventId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
@@ -252,7 +253,13 @@ describe('BikeEventController (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/bike-events/create')
       .set('Authorization', `Bearer ${strangerToken}`)
-      .send({ bike_id: bikeId, total_cost: 10, note: 'Not mine', actions_done: [] })
+      .send({
+        bike_id: bikeId,
+        total_cost: 10,
+        note: 'Not mine',
+        service_date: '2026-07-01T00:00:00.000Z',
+        actions_done: [],
+      })
       .expect(403);
   });
 

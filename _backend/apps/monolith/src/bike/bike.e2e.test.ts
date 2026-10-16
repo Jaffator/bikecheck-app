@@ -1,19 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import type { ResponseBikeDto } from './dto/response-bike.dto';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { AppModule } from '../app.module';
+import { PrismaService } from '../../prisma/prisma.service';
 import request from 'supertest';
 import setCookie from 'set-cookie-parser';
 
 describe('BikeController (e2e)', () => {
   let app: INestApplication;
-  let access_token: string | undefined;
-  let refresh_token: string | undefined;
-  const testexample = 'example@example.com';
+  let accessToken: string | undefined;
+  const rider = { name: 'test', email: `getbiketest-${Date.now()}@bikecheck.test`, password: 'abcd1234' };
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -28,56 +27,49 @@ describe('BikeController (e2e)', () => {
         transform: true,
       }),
     );
-
     await app.init();
+
+    // Login is closed until the address is verified (ADR 0031); auth.e2e covers the link itself.
+    await request(app.getHttpServer()).post('/api/auth/register').send(rider).expect(201);
+    await app.get(PrismaService).users.update({ where: { email: rider.email }, data: { email_verified_at: new Date() } });
+    const resLogin = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: rider.email, password: rider.password })
+      .expect(200);
+    accessToken = setCookie.parse(resLogin.header['set-cookie']).find((item) => item.name === 'access_token')?.value;
   });
+
   afterAll(async () => {
     await app.close();
   });
 
-  it('get bike', async () => {
-    // ARRANGE
-    // first login test user and get access token
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({ name: 'test', email: 'getbiketest@getbiketest.com', password: 'abcd1234' })
-      .expect(201);
-
-    const resLogin = await request(app.getHttpServer())
-      .post('/api/auth/login')
-      .send({ email: 'getbiketest@getbiketest.com', password: 'abcd1234' })
-      .expect(200);
-
-    const setCookieArray = setCookie.parse(resLogin.header['set-cookie']);
-    refresh_token = setCookieArray.find((item) => item.name === 'refresh_token')?.value;
-    access_token = setCookieArray.find((item) => item.name === 'access_token')?.value;
-
-    // ACT
+  it('lists no bikes for a new rider', async () => {
     const resBike = await request(app.getHttpServer())
-      .get('/api/bike/all')
-      .set('Authorization', `Bearer ${access_token}`)
-      .set('Cookie', [`refresh_token=${refresh_token}`])
+      .get('/api/bike')
+      .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
     const bikes: ResponseBikeDto[] = resBike.body;
-    // ASSERT
-    expect(bikes).toBeDefined();
+    expect(bikes).toEqual([]);
   });
 
-  it('GET /default-components - ebike=false', async () => {
-    const response = await request(app.getHttpServer()).get('/api/bike/default-components?ebike=false').expect(200);
-
-    console.log('Components count:', response.body.length);
-    console.log('Components:', JSON.stringify(response.body, null, 2));
+  // The catalogue comes from the seed migration, so an empty database still offers parts.
+  it('GET /components/default-components - ebike=false', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/components/default-components?ebike=false')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
 
     expect(Array.isArray(response.body)).toBe(true);
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  it('GET /default-components - ebike=true', async () => {
-    const response = await request(app.getHttpServer()).get('/api/bike/default-components?ebike=true').expect(200);
+  it('GET /components/default-components - ebike=true', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/components/default-components?ebike=true')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
 
-    console.log('All components count:', response.body.length);
     expect(response.body.length).toBeGreaterThan(0);
   });
 });

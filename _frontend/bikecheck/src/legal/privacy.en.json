@@ -99,9 +99,10 @@
   {
     "heading": "4. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?",
     "paragraphs": [
-      "In Short: We use cookies and similar technologies only to keep you signed in and to remember your settings.",
+      "In Short: We use cookies and similar technologies only to keep you signed in and to remember your settings, and for anonymous visit statistics.",
       "We use cookies and similar technologies (such as the local storage of your device or browser) to keep you signed in, to hold the tokens that authenticate your session, and to remember preferences such as your chosen language. Without them the Services cannot work.",
       "We do not use advertising cookies, tracking pixels, or third-party analytics that profile you across other websites or applications.",
+      "For anonymous visit statistics (number of visits, referrer, device type) we use Umami on our own server. It sets no cookies and stores no IP addresses or anything else that could identify you.",
       "You may remove the stored data at any time by signing out, or by clearing the storage of the app or browser. Doing so will end your session."
     ]
   },

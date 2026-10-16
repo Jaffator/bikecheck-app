@@ -1,10 +1,26 @@
-# version: '3.8' # Verze formátu
+# Throwaway Postgres and Redis for the INTEGRATION and E2E projects, on ports the dev stack does not hold.
 services:
-  db-test: # Název služby (můžeš si vybrat)
-    image: postgres:15 # Oficiální "šablona" s Postgresem verze 15
+  db-test:
+    image: postgres:18.1-alpine
     environment:
       POSTGRES_USER: test_user
       POSTGRES_PASSWORD: test_password
       POSTGRES_DB: test_db
     ports:
-      - '5433:5432' # "Propoj port 5433 mého PC s portem 5432 uvnitř kontejneru"
+      - '5434:5432'
+    # `up --wait` returns only once this passes, so the migrations never race the init.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U test_user -d test_db']
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  # BullMQ queues connect at boot; without Redis they retry forever and keep jest from exiting.
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - '6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 1s
+      timeout: 3s
+      retries: 30

@@ -18,7 +18,7 @@ export default async () => {
 
   console.log('🛑 Stopping Docker containers...');
   try {
-    execSync('docker-compose -f tests/docker-compose.test.yml down', { stdio: 'ignore' });
+    execSync('docker compose -f tests/docker-compose.test.yml down', { stdio: 'ignore' });
   } catch (error) {
     console.log(error.message);
   }

@@ -3,35 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>BikeCheck: servisní deník pro tvoje kolo</title>
-    <meta
-      name="description"
-      content="Servisní deník pro cyklisty. Propoj Stravu a nájezd z každé jízdy se sám rozpustí do opotřebení řetězu, brzd i odpružení."
-    />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="canonical" href="https://bikecheck.cloud/" />
-
-    <!-- Crawlers need absolute addresses: a relative og:image gives no card. -->
-    <meta property="og:site_name" content="BikeCheck" />
-    <meta property="og:title" content="BikeCheck: servisní deník pro tvoje kolo" />
-    <meta
-      property="og:description"
-      content="Strava počítá tvoje kilometry, BikeCheck ty na dílech. Servisní intervaly, historie každého kusu a reporty ke sdílení."
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://bikecheck.cloud/" />
-    <meta property="og:image" content="https://bikecheck.cloud/og-image.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="BikeCheck" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <!-- meta: title, description, canonical, hreflang and og:* per language, written by build.mjs -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- Latin carries all the English and most of the Czech; preloaded so the headline doesn't swap fonts late. -->
-    <link rel="preload" href="assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/assets/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin />
 
-    <!-- Blocking, not deferred: data-lang and the js class are set before first paint. -->
-    <script src="head.js"></script>
+    <!-- Blocking, not deferred: the js class is set before first paint. -->
+    <script src="/head.js"></script>
 
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
 
   <body class="bg-ink-950 text-paper font-body antialiased">
@@ -181,29 +161,41 @@
         </div>
 
         <div id="header-actions" class="flex items-center gap-3">
+          <a
+            href="/en/"
+            hreflang="en"
+            lang="en"
+            data-prefer-en
+            data-umami-event="prefer-english"
+            class="font-mono text-[11px] text-paper-dim hover:text-gold-400 transition-colors duration-200 whitespace-nowrap"
+            hidden
+            >Prefer English? →</a
+          >
           <div
             class="hidden lg:flex items-center rounded-lg border hairline p-0.5 font-mono text-[11px]"
             role="group"
             aria-label="Jazyk / Language"
           >
-            <button
-              type="button"
+            <a
+              href="/"
+              hreflang="cs"
               data-set-lang="cs"
               data-umami-event="lang-switch"
               data-umami-event-to="cs"
               class="lang-btn px-2 py-1 rounded-md transition-colors duration-200"
             >
               CS
-            </button>
-            <button
-              type="button"
+            </a>
+            <a
+              href="/en/"
+              hreflang="en"
               data-set-lang="en"
               data-umami-event="lang-switch"
               data-umami-event-to="en"
               class="lang-btn px-2 py-1 rounded-md transition-colors duration-200"
             >
               EN
-            </button>
+            </a>
           </div>
           <!-- A phone's header holds sign-in only; registration waits in the menu. -->
           <a
@@ -347,24 +339,26 @@
           role="group"
           aria-label="Jazyk / Language"
         >
-          <button
-            type="button"
+          <a
+            href="/"
+            hreflang="cs"
             data-set-lang="cs"
             data-umami-event="lang-switch"
             data-umami-event-to="cs"
             class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200"
           >
             CS
-          </button>
-          <button
-            type="button"
+          </a>
+          <a
+            href="/en/"
+            hreflang="en"
             data-set-lang="en"
             data-umami-event="lang-switch"
             data-umami-event-to="en"
             class="lang-btn px-3 py-1.5 rounded-md transition-colors duration-200"
           >
             EN
-          </button>
+          </a>
         </div>
       </div>
     </nav>
@@ -430,7 +424,7 @@
                 data-umami-event-place="hero"
                 class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
               >
-                <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
+                <img src="/assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
               </a>
 
               <!-- iOS is not out yet, so this is deliberately our own tile and
@@ -439,7 +433,7 @@
              there is nothing to click until the app ships. -->
               <!-- <span class="relative inline-flex items-center rounded-xl cursor-not-allowed" aria-disabled="true">
                 <img
-                  src="assets/icon/apple.svg"
+                  src="/assets/icon/apple.svg"
                   alt="Apple App Store, coming soon"
                   class="block h-9 sm:h-10 w-auto opacity-50 grayscale"
                 />
@@ -555,7 +549,7 @@
        Nearly black glass, so it needs a hard lift to exist at all here. -->
         <!-- Background ghost, off for now; drop this comment wrapper to bring it back.
         <div class="ghost g-cocpit hidden lg:block" aria-hidden="true">
-          <img src="assets/img_ready/cocpit-Photoroom.webp" alt="" loading="lazy" decoding="async" />
+          <img src="/assets/img_ready/cocpit-Photoroom.webp" alt="" loading="lazy" decoding="async" />
         </div>
         ghost off -->
 
@@ -642,7 +636,7 @@
                 <div class="dev-laptop" aria-hidden="true">
                   <div class="dev-lid">
                     <img
-                      src="assets/img_ready/app-home-desktop.webp"
+                      src="/assets/img_ready/app-home-desktop.webp"
                       alt=""
                       width="2008"
                       height="1262"
@@ -656,7 +650,7 @@
                 <div class="dev-phone" aria-hidden="true">
                   <div class="dev-phone-screen">
                     <img
-                      src="assets/img_ready/app-home-phone.webp"
+                      src="/assets/img_ready/app-home-phone.webp"
                       alt=""
                       width="640"
                       height="1386"
@@ -678,7 +672,7 @@
        runs underneath them at full size. -->
         <!-- Background ghost, off for now; drop this comment wrapper to bring it back.
         <div class="ghost g-drivetrain" aria-hidden="true">
-          <img src="assets/img_ready/drivetrain-Photoroom.webp" alt="" loading="lazy" decoding="async" />
+          <img src="/assets/img_ready/drivetrain-Photoroom.webp" alt="" loading="lazy" decoding="async" />
         </div>
         ghost off -->
 
@@ -728,7 +722,7 @@
                           <div class="phone-frames is-on">
                             <img
                               class="is-on"
-                              src="assets/img_ready/screens/steps/bike-01.webp"
+                              src="/assets/img_ready/screens/steps/bike-01.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -736,7 +730,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/bike-02.webp"
+                              src="/assets/img_ready/screens/steps/bike-02.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -744,7 +738,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/bike-03.webp"
+                              src="/assets/img_ready/screens/steps/bike-03.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -752,7 +746,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/bike-04.webp"
+                              src="/assets/img_ready/screens/steps/bike-04.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -764,7 +758,7 @@
                             <div class="phone-scroll" data-stops="32.653%">
                               <img
                                 class="phone-scroll-page"
-                                src="assets/img_ready/screens/steps/bike-scroll.webp"
+                                src="/assets/img_ready/screens/steps/bike-scroll.webp"
                                 alt=""
                                 width="640"
                                 height="2058"
@@ -773,7 +767,7 @@
                               />
                               <img
                                 class="phone-scroll-top"
-                                src="assets/img_ready/screens/steps/bike-scroll-top.webp"
+                                src="/assets/img_ready/screens/steps/bike-scroll-top.webp"
                                 alt=""
                                 width="640"
                                 height="152"
@@ -782,7 +776,7 @@
                               />
                               <img
                                 class="phone-scroll-bottom"
-                                src="assets/img_ready/screens/steps/bike-scroll-bottom.webp"
+                                src="/assets/img_ready/screens/steps/bike-scroll-bottom.webp"
                                 alt=""
                                 width="640"
                                 height="207"
@@ -791,7 +785,7 @@
                               />
                             </div>
                             <img
-                              src="assets/img_ready/screens/steps/bike-06.webp"
+                              src="/assets/img_ready/screens/steps/bike-06.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -799,7 +793,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/bike-07.webp"
+                              src="/assets/img_ready/screens/steps/bike-07.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -841,7 +835,7 @@
                           <div class="phone-frames">
                             <img
                               class="is-on"
-                              src="assets/img_ready/screens/steps/strava-01.webp"
+                              src="/assets/img_ready/screens/steps/strava-01.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -849,7 +843,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/strava-02.webp"
+                              src="/assets/img_ready/screens/steps/strava-02.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -857,7 +851,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/strava-03.webp"
+                              src="/assets/img_ready/screens/steps/strava-03.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -865,7 +859,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/strava-04.webp"
+                              src="/assets/img_ready/screens/steps/strava-04.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -906,7 +900,7 @@
                           <div class="phone-frames" data-frame-ms="1400">
                             <img
                               class="is-on"
-                              src="assets/img_ready/screens/steps/service-01.webp"
+                              src="/assets/img_ready/screens/steps/service-01.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -914,7 +908,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/service-02.webp"
+                              src="/assets/img_ready/screens/steps/service-02.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -922,7 +916,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/service-03.webp"
+                              src="/assets/img_ready/screens/steps/service-03.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -930,7 +924,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/service-04.webp"
+                              src="/assets/img_ready/screens/steps/service-04.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -938,7 +932,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/service-05.webp"
+                              src="/assets/img_ready/screens/steps/service-05.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -946,7 +940,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/service-06.webp"
+                              src="/assets/img_ready/screens/steps/service-06.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -954,7 +948,7 @@
                               decoding="async"
                             />
                             <img
-                              src="assets/img_ready/screens/steps/service-07.webp"
+                              src="/assets/img_ready/screens/steps/service-07.webp"
                               alt=""
                               width="640"
                               height="1386"
@@ -1462,7 +1456,7 @@
                   <div class="phone-body">
                     <div class="phone-screen">
                       <img
-                        src="assets/img_ready/screens/period-report.webp"
+                        src="/assets/img_ready/screens/period-report.webp"
                         alt=""
                         width="720"
                         height="1559"
@@ -1485,7 +1479,7 @@
                   <div class="phone-body">
                     <div class="phone-screen">
                       <img
-                        src="assets/img_ready/screens/public-bikecheck.webp"
+                        src="/assets/img_ready/screens/public-bikecheck.webp"
                         alt=""
                         width="720"
                         height="1559"
@@ -1528,7 +1522,7 @@
           "
           aria-hidden="true"
         >
-          <img src="assets/img_ready/cube.webp" alt="" style="opacity: 0.13" loading="lazy" decoding="async" />
+          <img src="/assets/img_ready/cube.webp" alt="" style="opacity: 0.13" loading="lazy" decoding="async" />
         </div>
         ghost off -->
 
@@ -1756,7 +1750,7 @@
                     <div class="phone-frames is-on">
                       <img
                         class="is-on"
-                        src="assets/img_ready/screens/features/overview-01.webp"
+                        src="/assets/img_ready/screens/features/overview-01.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1766,7 +1760,7 @@
                       <div class="phone-scroll" data-stops="20.859% 48.007% 62.672%">
                         <img
                           class="phone-scroll-page"
-                          src="assets/img_ready/screens/features/home-scroll.webp"
+                          src="/assets/img_ready/screens/features/home-scroll.webp"
                           alt=""
                           width="640"
                           height="3713"
@@ -1775,7 +1769,7 @@
                         />
                         <img
                           class="phone-scroll-top"
-                          src="assets/img_ready/screens/features/home-scroll-top.webp"
+                          src="/assets/img_ready/screens/features/home-scroll-top.webp"
                           alt=""
                           width="640"
                           height="161"
@@ -1784,7 +1778,7 @@
                         />
                         <img
                           class="phone-scroll-bottom"
-                          src="assets/img_ready/screens/features/home-scroll-bottom.webp"
+                          src="/assets/img_ready/screens/features/home-scroll-bottom.webp"
                           alt=""
                           width="640"
                           height="216"
@@ -1793,7 +1787,7 @@
                         />
                         <img
                           class="phone-scroll-nav"
-                          src="assets/img_ready/screens/android-nav.webp"
+                          src="/assets/img_ready/screens/android-nav.webp"
                           alt=""
                           width="640"
                           height="35"
@@ -1802,7 +1796,7 @@
                         />
                       </div>
                       <img
-                        src="assets/img_ready/screens/features/overview-06.webp"
+                        src="/assets/img_ready/screens/features/overview-06.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1810,7 +1804,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/overview-07.webp"
+                        src="/assets/img_ready/screens/features/overview-07.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1818,7 +1812,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/overview-08.webp"
+                        src="/assets/img_ready/screens/features/overview-08.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1829,7 +1823,7 @@
                     <div class="phone-frames">
                       <img
                         class="is-on"
-                        src="assets/img_ready/screens/features/service-01.webp"
+                        src="/assets/img_ready/screens/features/service-01.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1837,7 +1831,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/service-02.webp"
+                        src="/assets/img_ready/screens/features/service-02.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1845,7 +1839,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/service-03.webp"
+                        src="/assets/img_ready/screens/features/service-03.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1853,7 +1847,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/service-04.webp"
+                        src="/assets/img_ready/screens/features/service-04.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1861,7 +1855,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/service-05.webp"
+                        src="/assets/img_ready/screens/features/service-05.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1873,7 +1867,7 @@
                       <div class="phone-scroll is-on" data-stops="0% 25.975% 50.851%">
                         <img
                           class="phone-scroll-page"
-                          src="assets/img_ready/screens/features/garage-scroll.webp"
+                          src="/assets/img_ready/screens/features/garage-scroll.webp"
                           alt=""
                           width="640"
                           height="2820"
@@ -1882,7 +1876,7 @@
                         />
                         <img
                           class="phone-scroll-top"
-                          src="assets/img_ready/screens/features/garage-scroll-top.webp"
+                          src="/assets/img_ready/screens/features/garage-scroll-top.webp"
                           alt=""
                           width="640"
                           height="160"
@@ -1891,7 +1885,7 @@
                         />
                         <img
                           class="phone-scroll-nav"
-                          src="assets/img_ready/screens/android-nav.webp"
+                          src="/assets/img_ready/screens/android-nav.webp"
                           alt=""
                           width="640"
                           height="35"
@@ -1900,7 +1894,7 @@
                         />
                       </div>
                       <img
-                        src="assets/img_ready/screens/features/garage-05.webp"
+                        src="/assets/img_ready/screens/features/garage-05.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1908,7 +1902,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/garage-06.webp"
+                        src="/assets/img_ready/screens/features/garage-06.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1919,7 +1913,7 @@
                     <div class="phone-frames">
                       <img
                         class="is-on"
-                        src="assets/img_ready/screens/features/strava-01.webp"
+                        src="/assets/img_ready/screens/features/strava-01.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1927,7 +1921,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/strava-02.webp"
+                        src="/assets/img_ready/screens/features/strava-02.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1936,7 +1930,7 @@
                       />
                       <!-- Back from the Pending tab: the first frame again. -->
                       <img
-                        src="assets/img_ready/screens/features/strava-01.webp"
+                        src="/assets/img_ready/screens/features/strava-01.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -1946,7 +1940,7 @@
                       <div class="phone-scroll" data-stops="0% 19.977%">
                         <img
                           class="phone-scroll-page"
-                          src="assets/img_ready/screens/features/strava-scroll-1.webp"
+                          src="/assets/img_ready/screens/features/strava-scroll-1.webp"
                           alt=""
                           width="640"
                           height="1732"
@@ -1955,7 +1949,7 @@
                         />
                         <img
                           class="phone-scroll-top"
-                          src="assets/img_ready/screens/features/strava-scroll-top.webp"
+                          src="/assets/img_ready/screens/features/strava-scroll-top.webp"
                           alt=""
                           width="640"
                           height="310"
@@ -1964,7 +1958,7 @@
                         />
                         <img
                           class="phone-scroll-nav"
-                          src="assets/img_ready/screens/android-nav.webp"
+                          src="/assets/img_ready/screens/android-nav.webp"
                           alt=""
                           width="640"
                           height="35"
@@ -1976,7 +1970,7 @@
                       <div class="phone-scroll" data-stops="23%">
                         <img
                           class="phone-scroll-page"
-                          src="assets/img_ready/screens/features/strava-scroll-2.webp"
+                          src="/assets/img_ready/screens/features/strava-scroll-2.webp"
                           alt=""
                           width="640"
                           height="1800"
@@ -1985,7 +1979,7 @@
                         />
                         <img
                           class="phone-scroll-top"
-                          src="assets/img_ready/screens/features/strava-scroll-top.webp"
+                          src="/assets/img_ready/screens/features/strava-scroll-top.webp"
                           alt=""
                           width="640"
                           height="310"
@@ -1994,7 +1988,7 @@
                         />
                         <img
                           class="phone-scroll-nav"
-                          src="assets/img_ready/screens/android-nav.webp"
+                          src="/assets/img_ready/screens/android-nav.webp"
                           alt=""
                           width="640"
                           height="35"
@@ -2003,7 +1997,7 @@
                         />
                       </div>
                       <img
-                        src="assets/img_ready/screens/features/strava-07.webp"
+                        src="/assets/img_ready/screens/features/strava-07.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2015,7 +2009,7 @@
                       <div class="phone-scroll is-on" data-stops="0% 42.298%">
                         <img
                           class="phone-scroll-page"
-                          src="assets/img_ready/screens/features/setup-scroll-1.webp"
+                          src="/assets/img_ready/screens/features/setup-scroll-1.webp"
                           alt=""
                           width="640"
                           height="2402"
@@ -2024,7 +2018,7 @@
                         />
                         <img
                           class="phone-scroll-top"
-                          src="assets/img_ready/screens/features/setup-scroll-top.webp"
+                          src="/assets/img_ready/screens/features/setup-scroll-top.webp"
                           alt=""
                           width="640"
                           height="225"
@@ -2033,7 +2027,7 @@
                         />
                         <img
                           class="phone-scroll-nav"
-                          src="assets/img_ready/screens/android-nav.webp"
+                          src="/assets/img_ready/screens/android-nav.webp"
                           alt=""
                           width="640"
                           height="35"
@@ -2042,7 +2036,7 @@
                         />
                       </div>
                       <img
-                        src="assets/img_ready/screens/features/setup-03.webp"
+                        src="/assets/img_ready/screens/features/setup-03.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2050,7 +2044,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/setup-04.webp"
+                        src="/assets/img_ready/screens/features/setup-04.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2060,7 +2054,7 @@
                       <div class="phone-scroll" data-stops="0% 28.971% 49.618%">
                         <img
                           class="phone-scroll-page"
-                          src="assets/img_ready/screens/features/setup-scroll-2.webp"
+                          src="/assets/img_ready/screens/features/setup-scroll-2.webp"
                           alt=""
                           width="640"
                           height="2751"
@@ -2069,7 +2063,7 @@
                         />
                         <img
                           class="phone-scroll-top"
-                          src="assets/img_ready/screens/features/setup-scroll-top.webp"
+                          src="/assets/img_ready/screens/features/setup-scroll-top.webp"
                           alt=""
                           width="640"
                           height="225"
@@ -2078,7 +2072,7 @@
                         />
                         <img
                           class="phone-scroll-bottom"
-                          src="assets/img_ready/screens/features/setup-scroll-bottom.webp"
+                          src="/assets/img_ready/screens/features/setup-scroll-bottom.webp"
                           alt=""
                           width="640"
                           height="261"
@@ -2087,7 +2081,7 @@
                         />
                         <img
                           class="phone-scroll-nav"
-                          src="assets/img_ready/screens/android-nav.webp"
+                          src="/assets/img_ready/screens/android-nav.webp"
                           alt=""
                           width="640"
                           height="35"
@@ -2096,7 +2090,7 @@
                         />
                       </div>
                       <img
-                        src="assets/img_ready/screens/features/setup-08.webp"
+                        src="/assets/img_ready/screens/features/setup-08.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2107,7 +2101,7 @@
                     <div class="phone-frames">
                       <img
                         class="is-on"
-                        src="assets/img_ready/screens/features/share-01.webp"
+                        src="/assets/img_ready/screens/features/share-01.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2115,7 +2109,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/share-02.webp"
+                        src="/assets/img_ready/screens/features/share-02.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2124,7 +2118,7 @@
                       />
                       <!-- The More sheet, the same shot as in the overview. -->
                       <img
-                        src="assets/img_ready/screens/features/overview-06.webp"
+                        src="/assets/img_ready/screens/features/overview-06.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2132,7 +2126,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/share-04.webp"
+                        src="/assets/img_ready/screens/features/share-04.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2140,7 +2134,7 @@
                         decoding="async"
                       />
                       <img
-                        src="assets/img_ready/screens/features/share-05.webp"
+                        src="/assets/img_ready/screens/features/share-05.webp"
                         alt=""
                         width="640"
                         height="1386"
@@ -2150,7 +2144,7 @@
                       <div class="phone-scroll" data-stops="0% 40.719%">
                         <img
                           class="phone-scroll-page"
-                          src="assets/img_ready/screens/features/share-scroll.webp"
+                          src="/assets/img_ready/screens/features/share-scroll.webp"
                           alt=""
                           width="640"
                           height="2338"
@@ -2159,7 +2153,7 @@
                         />
                         <img
                           class="phone-scroll-top"
-                          src="assets/img_ready/screens/features/share-scroll-top.webp"
+                          src="/assets/img_ready/screens/features/share-scroll-top.webp"
                           alt=""
                           width="640"
                           height="160"
@@ -2168,7 +2162,7 @@
                         />
                         <img
                           class="phone-scroll-nav"
-                          src="assets/img_ready/screens/android-nav.webp"
+                          src="/assets/img_ready/screens/android-nav.webp"
                           alt=""
                           width="640"
                           height="35"
@@ -2202,7 +2196,7 @@
        you would see it at on the bench, not a catalogue thumbnail. -->
         <!-- Background ghost, off for now; drop this comment wrapper to bring it back.
         <div class="ghost g-coil" aria-hidden="true">
-          <img src="assets/img_ready/coil.webp" alt="" loading="lazy" decoding="async" />
+          <img src="/assets/img_ready/coil.webp" alt="" loading="lazy" decoding="async" />
         </div>
         ghost off -->
 
@@ -2509,7 +2503,7 @@
               <!-- Who answers: one person, not a company.
               <div class="flex items-start gap-4 mt-10 pt-8 border-t hairline">
                 <img
-                  src="assets/img_ready/jarda_onbike.jpg"
+                  src="/assets/img_ready/jarda_onbike.jpg"
                   alt="Jarda"
                   width="1159"
                   height="773"
@@ -2632,7 +2626,7 @@
               data-umami-event-place="closing"
               class="inline-flex items-center rounded-xl transition-opacity duration-200 hover:opacity-85 cursor-pointer"
             >
-              <img src="assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
+              <img src="/assets/icon/google.svg" alt="Get it on Google Play" class="block h-9 sm:h-10 lg:h-[52px] w-auto" />
             </a>
 
             <a
@@ -2670,30 +2664,32 @@
             <svg class="h-8 w-auto" viewBox="0 0 1569 318" role="img" aria-label="BikeCheck">
               <use href="#bc-logo" />
             </svg>
-            <!-- The header's switcher again; every .lang-btn follows the same pick. -->
+            <!-- The header's switcher again. -->
             <div
               class="flex items-center rounded-lg border hairline p-0.5 font-mono text-[11px]"
               role="group"
               aria-label="Jazyk / Language"
             >
-              <button
-                type="button"
+              <a
+                href="/"
+                hreflang="cs"
                 data-set-lang="cs"
                 data-umami-event="lang-switch"
                 data-umami-event-to="cs"
                 class="lang-btn px-2 py-1 rounded-md transition-colors duration-200"
               >
                 CS
-              </button>
-              <button
-                type="button"
+              </a>
+              <a
+                href="/en/"
+                hreflang="en"
                 data-set-lang="en"
                 data-umami-event="lang-switch"
                 data-umami-event-to="en"
                 class="lang-btn px-2 py-1 rounded-md transition-colors duration-200"
               >
                 EN
-              </button>
+              </a>
             </div>
           </div>
 
@@ -2779,6 +2775,6 @@
       </div>
     </footer>
 
-    <script src="main.js" defer></script>
+    <script src="/main.js" defer></script>
   </body>
 </html>
