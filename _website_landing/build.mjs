@@ -26,7 +26,7 @@ const PAGES = [
     file: "dist/index.html",
     url: `${SITE_URL}/`,
     locale: "cs_CZ",
-    title: "BikeCheck: servisní deník pro tvoje kolo",
+    title: "BikeCheck: Vše o tvém kole na jednom místě",
     description:
       "Servisní deník pro cyklisty. Propoj Stravu a nájezd z každé jízdy se sám rozpustí do opotřebení řetězu, brzd i odpružení.",
     ogDescription:
@@ -37,7 +37,7 @@ const PAGES = [
     file: "dist/en/index.html",
     url: `${SITE_URL}/en/`,
     locale: "en_US",
-    title: "BikeCheck: the service log for your bike",
+    title: "BikeCheck: Everything about your bike in one place",
     description:
       "A service log for cyclists. Connect Strava and the distance of every ride turns into wear on your chain, brakes and suspension.",
     ogDescription:
