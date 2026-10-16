@@ -6,6 +6,9 @@
     {
       "path": "../JS testing/codeWars",
     },
+    {
+      "path": "../rag-demo",
+    },
   ],
   "settings": {
     "typescript.reportStyleChecksAsWarnings": true,

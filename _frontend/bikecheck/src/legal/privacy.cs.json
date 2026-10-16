@@ -99,9 +99,10 @@
   {
     "heading": "4. POUŽÍVÁME COOKIES A DALŠÍ SLEDOVACÍ TECHNOLOGIE?",
     "paragraphs": [
-      "Ve zkratce: Cookies a podobné technologie používáme jen k tomu, abyste zůstali přihlášeni a aby si aplikace pamatovala vaše nastavení.",
+      "Ve zkratce: Cookies a podobné technologie používáme jen k tomu, abyste zůstali přihlášeni a aby si aplikace pamatovala vaše nastavení, a k anonymním statistikám návštěvnosti.",
       "Cookies a podobné technologie (například místní úložiště vašeho zařízení nebo prohlížeče) používáme k tomu, abyste zůstali přihlášeni, k uchování tokenů, které ověřují vaši relaci, a k zapamatování předvoleb, jako je zvolený jazyk. Bez nich Služby fungovat nemohou.",
       "Nepoužíváme reklamní cookies, sledovací pixely ani analytiku třetích stran, která by vás profilovala napříč jinými weby nebo aplikacemi.",
+      "Pro anonymní statistiky návštěvnosti (počty návštěv, zdroj, typ zařízení) používáme nástroj Umami na našem vlastním serveru. Nepoužívá cookies a neukládá IP adresy ani nic, co by vás identifikovalo.",
       "Uložené údaje můžete kdykoli odstranit odhlášením nebo vymazáním úložiště aplikace či prohlížeče. Tím se vaše relace ukončí."
     ]
   },
