@@ -9,7 +9,7 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import { useStravaDeepLink } from "@/hooks/useStravaDeepLink";
 import { useResumeRefresh } from "@/hooks/useResumeRefresh";
-import { OfflinePage } from "@/features/offline_page/OfflinePage";
+import { OfflineModal } from "@/components/OfflineModal";
 import { useOfflineWhenCallApiStore, useHeaderStore, useOverlayStore } from "@/store/store";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
@@ -112,12 +112,6 @@ function getPageTitleKey(pathname: string): string | null {
   const match = Object.keys(PAGE_TITLE_KEYS).find((path) => pathname.startsWith(path));
   return match ? PAGE_TITLE_KEYS[match] : null;
 }
-
-// TEMPORARY: swapping the routed subtree for the offline page unmounts whatever the user
-// was in the middle of - the add-service wizard loses every step and lands back on the bike
-// choice. Off while we work out whether that swap is what resets the wizard during an
-// attachment upload. Flip back to true to restore the offline screen.
-const OFFLINE_PAGE_ENABLED = false;
 
 export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
@@ -360,15 +354,16 @@ export function AppLayout(): ReactElement {
 
       {/* --------- MAIN CONTENT --------- */}
       <AppShell.Main style={{ position: "relative" }}>
-        {OFFLINE_PAGE_ENABLED && (renderOfflinePage || isOffline) ? (
-          <OfflinePage />
-        ) : (
-          // Remounts each route to replay its entry animation. The column is the page's
-          // width in a browser; on a phone it is the phone.
-          <Box key={location.pathname} maw={contentWidth} mx="auto" style={{ animation: "pageEnter 350ms ease-out" }}>
-            {outlet}
-          </Box>
-        )}
+        {/* Remounts each route to replay its entry animation. The column is the page's
+            width in a browser; on a phone it is the phone. */}
+        <Box key={location.pathname} maw={contentWidth} mx="auto" style={{ animation: "pageEnter 350ms ease-out" }}>
+          {outlet}
+        </Box>
+        {/* A tab pressed offline only holds until the network listener reports it back. */}
+        <OfflineModal
+          opened={isOffline || (renderOfflinePage && !isOnline)}
+          onReconnected={() => setRenderOfflinePage(false)}
+        />
         {/* Dims page content without covering shared chrome. */}
         <Box
           onClick={() => setFabMenuOpened(false)}

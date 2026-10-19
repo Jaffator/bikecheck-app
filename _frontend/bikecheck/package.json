@@ -1,7 +1,7 @@
 {
   "name": "bikecheck",
   "private": true,
-  "version": "1.4.9",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "android:dev": "npx cap run android -l --port 5173",

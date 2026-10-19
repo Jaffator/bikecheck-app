@@ -338,14 +338,10 @@ textarea,
   }
 }
 
-@keyframes wave {
-  0%,
-  100% {
-    border-radius: 50% 50% 0 0 / 60px 60px 0 0;
-  }
-  50% {
-    border-radius: 50% 50% 0 0 / 90px 40px 0 0;
-  }
+/* The phone login's fields ring in gold on focus; Mantine's inline styles cannot reach :focus. */
+.auth-field:focus,
+.auth-field:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mantine-color-primary-6) 22%, transparent);
 }
 
 /* The field draws its own calendar in the right section, so the browser's built-in one

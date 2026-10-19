@@ -2,45 +2,57 @@
 import type { ReactElement, ReactNode } from "react";
 import { Anchor, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { googleErrorKey, isEmailNotVerified, loginErrorKey, registrationErrorKey, type AuthFormState } from "./useAuthForm";
+import { CircleAlert } from "lucide-react";
+import {
+  googleErrorKey,
+  isEmailNotVerified,
+  isInvalidCredentials,
+  loginErrorKey,
+  registrationErrorKey,
+  type AuthFormState,
+} from "./useAuthForm";
+import { ERROR_TEXT_COLOR } from "./authErrorStyles";
 
-// Whatever red the screen set as --mantine-color-error, so messages match the field borders.
+// Spans only: Mantine wraps a field's error in a <p>.
+export function ErrorLine({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <span className="flex items-start gap-2 text-left">
+      <CircleAlert size={16} className="mt-px shrink-0" aria-hidden />
+      <span>{children}</span>
+    </span>
+  );
+}
+
 function ErrorText({ children }: { children: ReactNode }): ReactElement {
   return (
-    <Text size="sm" c="var(--mantine-color-error)" ta="center">
-      {children}
+    <Text fz={13} lh={1.4} c={ERROR_TEXT_COLOR}>
+      <ErrorLine>{children}</ErrorLine>
     </Text>
   );
 }
 
-interface FormFeedbackProps {
-  auth: AuthFormState;
-  // The resend link and its countdown: dark on the phone's gradient, the accent on desktop.
-  accent: string;
-}
-
-export function FormFeedback({ auth, accent }: FormFeedbackProps): ReactElement {
+export function FormFeedback({ auth }: { auth: AuthFormState }): ReactElement {
   const { t } = useTranslation();
   const { login, resend, registration, cooldown, form } = auth;
 
   return (
     <>
-      {login.isError && <ErrorText>{t(loginErrorKey(login.error))}</ErrorText>}
+      {login.isError && !isInvalidCredentials(login.error) && <ErrorText>{t(loginErrorKey(login.error))}</ErrorText>}
       {/* The way out of the 403: a fresh Verification Email, then a minute's rest. */}
       {login.isError &&
         isEmailNotVerified(login.error) &&
         (cooldown.secondsLeft > 0 ? (
-          <Text size="sm" c={accent} fw={600} ta="center">
+          <Text size="sm" c="primary.6" fw={600}>
             {t("auth.resendSent", { seconds: cooldown.secondsLeft })}
           </Text>
         ) : (
           <Anchor
             component="button"
             type="button"
-            c={accent}
+            c="primary.6"
             fw={600}
             size="sm"
-            ta="center"
+            ta="left"
             disabled={resend.isPending}
             onClick={auth.sendAgain}
           >

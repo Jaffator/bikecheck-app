@@ -8,7 +8,8 @@ import logoName from "../../assets/logo_name.svg";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { GoogleButton } from "./GoogleButton";
 import { CheckInbox } from "./CheckInbox";
-import { FormFeedback, GoogleFeedback } from "./AuthFeedback";
+import { ErrorLine, FormFeedback, GoogleFeedback } from "./AuthFeedback";
+import { AUTH_ERROR_STYLE, ERROR_TEXT_COLOR, FIELD_ERROR_STYLE } from "./authErrorStyles";
 import { LoginBikePanel } from "./LoginBikePanel";
 import { MarketingWebsiteLink } from "./MarketingWebsiteLink";
 import type { AuthFormState } from "./useAuthForm";
@@ -17,13 +18,17 @@ import type { AuthFormState } from "./useAuthForm";
 const CONTROL_HEIGHT = "3rem";
 const CONTROL_RADIUS = inputStyles.input.borderRadius;
 
-const BASE_FIELD_STYLES = { ...inputStyles, input: { ...inputStyles.input, height: CONTROL_HEIGHT } };
+const BASE_FIELD_STYLES = { ...inputStyles, input: { ...inputStyles.input, height: CONTROL_HEIGHT }, error: FIELD_ERROR_STYLE };
 const VISIBILITY_TOGGLE: CSSProperties = { color: "var(--mantine-color-text-8)" };
 
 // The shared input paints its own border over Mantine's, so a field in error asks for the red back.
 function fieldStyles(_theme: MantineTheme, { error }: { error?: ReactNode }): typeof BASE_FIELD_STYLES {
   if (!error) return BASE_FIELD_STYLES;
-  return { ...BASE_FIELD_STYLES, input: { ...BASE_FIELD_STYLES.input, borderColor: "var(--mantine-color-error)" } };
+  return {
+    ...BASE_FIELD_STYLES,
+    wrapper: { ...BASE_FIELD_STYLES.wrapper, "--input-section-color": ERROR_TEXT_COLOR } as CSSProperties,
+    input: { ...BASE_FIELD_STYLES.input, borderColor: "var(--mantine-color-error)" },
+  };
 }
 
 function passwordStyles(theme: MantineTheme, props: { error?: ReactNode }): typeof BASE_FIELD_STYLES & { visibilityToggle: CSSProperties } {
@@ -72,7 +77,7 @@ function TermsCheckbox({ auth }: { auth: AuthFormState }): ReactElement {
 
 function Fields({ auth }: { auth: AuthFormState }): ReactElement {
   const { t } = useTranslation();
-  const { form, type } = auth;
+  const { form, type, passwordError } = auth;
   return (
     <Stack gap={16}>
       {type === "register" && (
@@ -82,6 +87,7 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
           leftSection={<User size={18} />}
           styles={fieldStyles}
           {...form.getInputProps("name")}
+          error={form.errors.name && <ErrorLine>{form.errors.name}</ErrorLine>}
         />
       )}
       <TextInput
@@ -90,13 +96,15 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
         leftSection={<Mail size={18} />}
         styles={fieldStyles}
         {...form.getInputProps("email")}
+        error={form.errors.email && <ErrorLine>{form.errors.email}</ErrorLine>}
       />
       <PasswordInput
         label={t("auth.passwordLabel")}
-        placeholder={t("auth.passwordPlaceholder")}
+        placeholder={type === "login" ? t("auth.passwordPlaceholder") : t("auth.newPasswordPlaceholder")}
         leftSection={<Lock size={18} />}
         styles={passwordStyles}
         {...form.getInputProps("password")}
+        error={passwordError && <ErrorLine>{passwordError}</ErrorLine>}
       />
       {type === "register" && (
         <PasswordInput
@@ -105,6 +113,7 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
           leftSection={<Lock size={18} />}
           styles={passwordStyles}
           {...form.getInputProps("confirmPassword")}
+          error={form.errors.confirmPassword && <ErrorLine>{form.errors.confirmPassword}</ErrorLine>}
         />
       )}
       {type === "register" && <TermsCheckbox auth={auth} />}
@@ -122,7 +131,7 @@ function DesktopForm({ auth }: { auth: AuthFormState }): ReactElement {
         <form onSubmit={auth.submit}>
           <Stack gap={20}>
             <Fields auth={auth} />
-            <FormFeedback auth={auth} accent="primary.6" />
+            <FormFeedback auth={auth} />
             <Button
               type="submit"
               h={CONTROL_HEIGHT}
@@ -170,7 +179,7 @@ function LegalLinks(): ReactElement {
 export function DesktopAuth({ auth }: { auth: AuthFormState }): ReactElement {
   const { inboxEmail } = auth;
   return (
-    <Box bg="background.9" className="auth-enter flex min-h-dvh">
+    <Box bg="background.9" className="auth-enter flex min-h-dvh" style={AUTH_ERROR_STYLE}>
       <LoginBikePanel />
       {/* About a third of the screen, so a wide monitor gives the form air on both sides. */}
       <div className="flex flex-[0_0_clamp(480px,32vw,640px)] box-border" style={{ padding: "40px clamp(24px, 5vw, 64px)" }}>

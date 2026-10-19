@@ -1,6 +1,6 @@
-// The login screen below the desktop width: the form over the gradient, pinned against the keyboard.
-import type { CSSProperties, ReactElement } from "react";
-import { Anchor, Box, Button, Checkbox, Divider, Group, Paper, PasswordInput, Stack, Text, TextInput } from "@mantine/core";
+// The login screen below the desktop width: the form on black, pinned against the keyboard.
+import type { CSSProperties, ReactElement, ReactNode } from "react";
+import { Anchor, Box, Button, Checkbox, Divider, Group, PasswordInput, Stack, Text, TextInput, type MantineTheme } from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
 import { Mail, Lock, User } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
@@ -10,39 +10,66 @@ import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { GoogleButton } from "./GoogleButton";
 import { MarketingWebsiteLink } from "./MarketingWebsiteLink";
 import { CheckInbox } from "./CheckInbox";
-import { FormFeedback, GoogleFeedback } from "./AuthFeedback";
+import { ErrorLine, FormFeedback, GoogleFeedback } from "./AuthFeedback";
+import { AUTH_ERROR_STYLE, ERROR_TEXT_COLOR, FIELD_ERROR_STYLE } from "./authErrorStyles";
 import type { AuthFormState } from "./useAuthForm";
 
 // The native app sits under a status bar the web page does not, so the block starts lower.
 const NATIVE_SHIFT_PX = Capacitor.isNativePlatform() ? 50 : 0;
-const LOGO_TOP = `calc(10rem + ${String(NATIVE_SHIFT_PX)}px)`;
-const FORM_TOP = `calc(180px + ${String(NATIVE_SHIFT_PX)}px)`;
-// A phone pins the logo and the switch link to the screen so the form stays put under the
-// keyboard; from sm up the three flow as one block, centred by the auto margins.
+const LOGO_TOP = `calc(16px + ${String(NATIVE_SHIFT_PX)}px)`;
+const REGISTER_FORM_TOP = `calc(40px + ${String(NATIVE_SHIFT_PX)}px)`;
+// Registration is too long to centre, so a phone pins its logo to the top; the footer is pinned
+// to the bottom in both. From sm up everything flows as one block, centred by the auto margins.
 const PINNED = { base: "absolute", sm: "static" } as const;
+// Room for the pinned footer above the system nav bar, so a long form scrolls instead of running under it.
+const FOOTER_RESERVE = "calc(5.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+// The auto bottom margin pairs with the logo's top one to centre the block on a phone.
+const CENTRED_FORM_MARGINS = { mt: { base: "1rem", sm: 0 }, mb: { base: "auto", sm: 0 } };
+const REGISTER_FORM_MARGINS = { mt: { base: REGISTER_FORM_TOP, sm: 0 }, mb: { base: FOOTER_RESERVE, sm: 0 } };
 // The form's width on a wide screen: a single column of inputs, not the whole page.
 const FORM_MAX_WIDTH = "26rem";
 
-// Every error on the login screen - field messages, input borders - in the darker red.
-const ERROR_COLOR_STYLE = { "--mantine-color-error": "var(--mantine-color-red-8)" } as CSSProperties;
+const FIELD_HEIGHT = 44;
+const CONTROL_HEIGHT = 48;
+const CONTROL_RADIUS = 12;
+const PASSWORD_ID = "auth-password";
+const ERROR_RING = "0 0 0 3px color-mix(in srgb, var(--mantine-color-red-8) 18%, transparent)";
 
-const FIELD_STYLES = {
-  input: {
-    backgroundColor: "color-mix(in srgb, var(--mantine-color-inputs-8) 60%, transparent)",
-    border: "none",
-    height: "2.5rem",
-    color: "var(--mantine-color-text-6)",
-  },
-};
+// Mantine's styles are inline, so the frame goes through its vars and :focus can still swap it.
+const FIELD_VARS = {
+  "--input-bg": "var(--mantine-color-inputs-6)",
+  "--input-color": "var(--mantine-color-text-6)",
+  "--input-placeholder-color": "var(--mantine-color-text-9)",
+} as CSSProperties;
+const FIELD_FRAME = { "--input-bd": "var(--color-border-strong)", "--input-section-color": "var(--mantine-color-text-8)" } as CSSProperties;
+// The border is left to Mantine's red.
+const ERROR_FRAME = { "--input-section-color": ERROR_TEXT_COLOR } as CSSProperties;
 
-const PASSWORD_STYLES = {
-  ...FIELD_STYLES,
-  visibilityToggle: { color: "var(--mantine-color-text-8)" },
-};
+function fieldStyles(_theme: MantineTheme, { error }: { error?: ReactNode }): Record<string, CSSProperties> {
+  return {
+    wrapper: { ...FIELD_VARS, ...(error ? ERROR_FRAME : FIELD_FRAME) },
+    label: { fontSize: 13, fontWeight: 500, color: "var(--mantine-color-text-7)", marginBottom: 4 },
+    input: { height: FIELD_HEIGHT, borderRadius: CONTROL_RADIUS, fontSize: 16, boxShadow: error ? ERROR_RING : undefined },
+    error: FIELD_ERROR_STYLE,
+    visibilityToggle: { color: "var(--mantine-color-text-8)" },
+  };
+}
 
-function Logo(): ReactElement {
+const FIELD_PROPS = { leftSectionWidth: 44, styles: fieldStyles, classNames: { input: "auth-field" } };
+
+// Centred, the logo flows above the form and its auto margin takes half the free space.
+function Logo({ centred }: { centred: boolean }): ReactElement {
   return (
-    <Box w="100%" maw={200} mx="auto" pos={PINNED} top={LOGO_TOP} left={0} right={0} mt={{ base: 0, sm: "auto" }}>
+    <Box
+      w="100%"
+      maw={200}
+      mx="auto"
+      pos={centred ? "static" : PINNED}
+      top={LOGO_TOP}
+      left={0}
+      right={0}
+      mt={centred ? "auto" : { base: 0, sm: "auto" }}
+    >
       <MarketingWebsiteLink className="block">
         <img src={logoName} alt="BikeCheck Logo" className="block w-full" />
       </MarketingWebsiteLink>
@@ -50,9 +77,133 @@ function Logo(): ReactElement {
   );
 }
 
+function PasswordField({ auth }: { auth: AuthFormState }): ReactElement {
+  const { t } = useTranslation();
+  const { passwordError } = auth;
+  const isLogin = auth.type === "login";
+  const field = (
+    <PasswordInput
+      id={PASSWORD_ID}
+      label={isLogin ? undefined : t("auth.passwordLabel")}
+      placeholder={isLogin ? t("auth.passwordPlaceholder") : t("auth.newPasswordPlaceholder")}
+      leftSection={<Lock size={18} />}
+      {...FIELD_PROPS}
+      {...auth.form.getInputProps("password")}
+      error={passwordError && <ErrorLine>{passwordError}</ErrorLine>}
+    />
+  );
+  if (!isLogin) return field;
+
+  // The label stands apart so the link beside it is not part of the <label>.
+  return (
+    <Stack gap={4}>
+      <Group justify="space-between">
+        <Text component="label" htmlFor={PASSWORD_ID} fz={13} fw={500} c="text.7">
+          {t("auth.passwordLabel")}
+        </Text>
+        {/* No password reset yet: the link only holds its place. The negative margin keeps its tap padding off the row. */}
+        <Anchor component="button" type="button" fz={13} fw={500} c="primary.6" py={6} my={-6}>
+          {t("auth.forgotPassword")}
+        </Anchor>
+      </Group>
+      {field}
+    </Stack>
+  );
+}
+
+function TermsCheckbox({ auth }: { auth: AuthFormState }): ReactElement {
+  const { form } = auth;
+  return (
+    <Checkbox
+      size="md"
+      c="text.7"
+      styles={{
+        body: { alignItems: "center", minHeight: 44 },
+        label: { fontSize: 14, lineHeight: 1.4 },
+        // Only the unticked box is painted, so the theme's fill still draws a ticked one.
+        input: form.values.terms ? undefined : { backgroundColor: "var(--mantine-color-inputs-6)", borderColor: "var(--color-border-strong)" },
+      }}
+      // The document the box is agreeing to, one tap away and open to a visitor with no account yet.
+      label={
+        <Trans
+          i18nKey="auth.acceptTerms"
+          components={{ 1: <Anchor component={Link} to="/legal/terms" fz="inherit" c="primary.6" td="underline" /> }}
+        />
+      }
+      checked={form.values.terms}
+      onChange={(event) => form.setFieldValue("terms", event.currentTarget.checked)}
+    />
+  );
+}
+
+function Fields({ auth }: { auth: AuthFormState }): ReactElement {
+  const { t } = useTranslation();
+  const { form, type } = auth;
+  return (
+    <Stack gap={12}>
+      {type === "register" && (
+        <TextInput
+          label={t("auth.nameLabel")}
+          placeholder={t("auth.namePlaceholder")}
+          leftSection={<User size={18} />}
+          {...FIELD_PROPS}
+          {...form.getInputProps("name")}
+          error={form.errors.name && <ErrorLine>{form.errors.name}</ErrorLine>}
+        />
+      )}
+      <TextInput
+        label={t("auth.emailLabel")}
+        placeholder={t("auth.emailPlaceholder")}
+        leftSection={<Mail size={18} />}
+        {...FIELD_PROPS}
+        {...form.getInputProps("email")}
+        error={form.errors.email && <ErrorLine>{form.errors.email}</ErrorLine>}
+      />
+      <PasswordField auth={auth} />
+      {type === "register" && (
+        <PasswordInput
+          label={t("auth.confirmPasswordLabel")}
+          placeholder={t("auth.confirmPasswordPlaceholder")}
+          leftSection={<Lock size={18} />}
+          {...FIELD_PROPS}
+          {...form.getInputProps("confirmPassword")}
+          error={form.errors.confirmPassword && <ErrorLine>{form.errors.confirmPassword}</ErrorLine>}
+        />
+      )}
+      {type === "register" && <TermsCheckbox auth={auth} />}
+    </Stack>
+  );
+}
+
+function Footer({ auth }: { auth: AuthFormState }): ReactElement {
+  const { t } = useTranslation();
+  const isLogin = auth.type === "login";
+  return (
+    <Stack
+      align="center"
+      gap={14}
+      pos={PINNED}
+      bottom="0.75rem"
+      left={0}
+      right={0}
+      mb={{ base: "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", sm: "auto" }}
+    >
+      <Group align="center" justify="center" gap={6}>
+        <Text fz={14} c="text.7">
+          {isLogin ? t("auth.noAccount") : t("auth.haveAccount")}
+        </Text>
+        <Anchor component="button" type="button" fz={14} fw={600} c="primary.6" py={10} onClick={auth.switchType}>
+          {isLogin ? t("auth.register") : t("auth.login")}
+        </Anchor>
+      </Group>
+      <LegalLinks />
+    </Stack>
+  );
+}
+
 export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
   const { t } = useTranslation();
-  const { type, form, login, registration } = auth;
+  const { type, login, registration } = auth;
   // Keep focused fields above the keyboard.
   const formRef = useScrollIntoViewOnFocus<HTMLDivElement>();
 
@@ -61,99 +212,41 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
   if (auth.inboxEmail !== null) {
     return (
       <>
-        <Logo />
-        <Paper w="90%" maw={FORM_MAX_WIDTH} radius="md" p="lg" mt={{ base: FORM_TOP, sm: 0 }} mb={{ base: 0, sm: "auto" }} bg="transparent">
+        <Logo centred />
+        <Box w="100%" maw={FORM_MAX_WIDTH} px={24} mt={{ base: "1rem", sm: 0 }} mb="auto">
           <CheckInbox email={auth.inboxEmail} onBackToLogin={auth.backToLogin} />
-        </Paper>
-        {/* Covers the login gradient: this screen sits on plain background.9. */}
-        <div className="w-full h-full absolute top-0 left-0 bg-background-900" style={{ zIndex: -5 }} />
+        </Box>
       </>
     );
   }
 
+  const centred = type === "login";
   return (
     <>
-      <Logo />
-      <Paper
-        w="90%"
+      <Logo centred={centred} />
+      <Box
+        w="100%"
         maw={FORM_MAX_WIDTH}
-        radius="md"
-        p="lg"
-        mt={{ base: FORM_TOP, sm: 0 }}
-        bg="transparent"
+        px={24}
+        {...(centred ? CENTRED_FORM_MARGINS : REGISTER_FORM_MARGINS)}
         ref={formRef}
-        style={ERROR_COLOR_STYLE}
+        style={AUTH_ERROR_STYLE}
       >
         <form onSubmit={auth.submit}>
-          <Stack gap="sm">
-            {type === "register" && (
-              <TextInput
-                placeholder={t("auth.namePlaceholder")}
-                leftSection={<User size={18} />}
-                value={form.values.name}
-                onChange={(event) => form.setFieldValue("name", event.currentTarget.value)}
-                error={form.errors.name}
-                radius="lg"
-                styles={FIELD_STYLES}
-              />
-            )}
-
-            <TextInput
-              placeholder={t("auth.emailPlaceholder")}
-              leftSection={<Mail size={18} />}
-              value={form.values.email}
-              onChange={(event) => form.setFieldValue("email", event.currentTarget.value)}
-              error={form.errors.email}
-              radius="lg"
-              styles={FIELD_STYLES}
-            />
-
-            <PasswordInput
-              placeholder={t("auth.passwordPlaceholder")}
-              leftSection={<Lock size={18} />}
-              value={form.values.password}
-              onChange={(event) => form.setFieldValue("password", event.currentTarget.value)}
-              error={form.errors.password}
-              radius="lg"
-              styles={PASSWORD_STYLES}
-            />
-
-            {type === "register" && (
-              <PasswordInput
-                placeholder={t("auth.confirmPasswordPlaceholder")}
-                leftSection={<Lock size={18} />}
-                value={form.values.confirmPassword}
-                onChange={(event) => form.setFieldValue("confirmPassword", event.currentTarget.value)}
-                error={form.errors.confirmPassword}
-                radius="lg"
-                styles={PASSWORD_STYLES}
-              />
-            )}
-
-            {type === "register" && (
-              <Checkbox
-                ml="2px"
-                c="background.9"
-                styles={{ body: { alignItems: "center" }, labelWrapper: { paddingInlineStart: 0 } }}
-                // The document the box is agreeing to, one tap away and open to a visitor
-                // with no account yet.
-                label={
-                  <Trans
-                    i18nKey="auth.acceptTerms"
-                    components={{
-                      1: <Anchor component={Link} to="/legal/terms" c="background.9" fw={600} td="underline" />,
-                    }}
-                  />
-                }
-                checked={form.values.terms}
-                onChange={(event) => form.setFieldValue("terms", event.currentTarget.checked)}
-              />
-            )}
-          </Stack>
-
-          <Stack justify="space-between" mt="lg">
-            <FormFeedback auth={auth} accent="background.9" />
-            <Button type="submit" radius="lg" size="md" fz="sm" loading={login.isPending || registration.isPending}>
+          <Stack gap={12}>
+            <Fields auth={auth} />
+            <FormFeedback auth={auth} />
+            <Button
+              type="submit"
+              mt={8}
+              h={CONTROL_HEIGHT}
+              radius={CONTROL_RADIUS}
+              fz={16}
+              fw={600}
+              lts="var(--tracking-title)"
+              c="textDark.6"
+              loading={login.isPending || registration.isPending}
+            >
               {type === "login" ? t("auth.login") : t("auth.register")}
             </Button>
           </Stack>
@@ -161,47 +254,25 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
         <Divider
           label={t("auth.or")}
           labelPosition="center"
-          my="sm"
-          w="100%"
-          mx="auto"
-          color="background.9"
-          styles={{ label: { color: "var(--mantine-color-background-9)" } }}
+          my={12}
+          color="var(--color-border-strong)"
+          styles={{ label: { color: "var(--mantine-color-text-8)", fontSize: 12, letterSpacing: "var(--tracking-label)" } }}
         />
-
-        <Stack mb="md">
+        <Stack gap={12}>
           <GoogleButton
+            variant="outline"
+            h={CONTROL_HEIGHT}
+            radius={CONTROL_RADIUS}
+            fz={15}
+            fw={600}
             onClick={() => auth.signInWithGoogle()}
-            variant="filled"
-            bg="background.9"
-            c="text.6"
-            fz="sm"
-            radius="lg"
-            size="md"
           >
             {t("auth.continueWithGoogle")}
           </GoogleButton>
           <GoogleFeedback auth={auth} />
         </Stack>
-      </Paper>
-      <Stack
-        align="center"
-        gap="xl"
-        pos={PINNED}
-        bottom="1.5rem"
-        left={0}
-        right={0}
-        mb={{ base: "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", sm: "auto" }}
-      >
-        <Group align="center" justify="center" gap={4}>
-          <Text size="sm" lh={1} c="background.9">
-            {type === "register" ? t("auth.haveAccount") : t("auth.noAccount")}
-          </Text>
-          <Anchor component="button" type="button" lh={1} c="background.9" fw={600} size="md" onClick={auth.switchType}>
-            {type === "register" ? t("auth.login") : t("auth.register")}
-          </Anchor>
-        </Group>
-        {type === "login" && <LegalLinks />}
-      </Stack>
+      </Box>
+      <Footer auth={auth} />
     </>
   );
 }
@@ -209,14 +280,14 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
 function LegalLinks(): ReactElement {
   const { t } = useTranslation();
   return (
-    <Group gap="xs" justify="center">
-      <Anchor component={Link} to="/legal/privacy" size="xs" c="background.9" td="underline">
+    <Group gap={10} justify="center">
+      <Anchor component={Link} to="/legal/privacy" fz={12} c="text.8" td="underline" py={8}>
         {t("page.legalPrivacy")}
       </Anchor>
-      <Text size="xs" c="background.9" aria-hidden>
+      <Text fz={12} c="text.8" aria-hidden>
         ·
       </Text>
-      <Anchor component={Link} to="/legal/terms" size="xs" c="background.9" td="underline">
+      <Anchor component={Link} to="/legal/terms" fz={12} c="text.8" td="underline" py={8}>
         {t("page.legalTerms")}
       </Anchor>
     </Group>

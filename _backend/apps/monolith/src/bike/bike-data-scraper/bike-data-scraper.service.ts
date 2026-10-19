@@ -45,13 +45,13 @@ export class BikeDataScrapeService {
     const startedAt = Date.now();
 
     try {
-      const bikes = await this.withPage(async (page) => {
+      const { bikes, pageTitle, cardsTimedOut } = await this.withPage(async (page) => {
         await page.goto(url, { waitUntil: 'load' });
         // No hits render no cards, so the timeout means an empty result, not a failure.
-        // Results arrive by XHR through the home proxy, which sometimes takes over 4 s.
-        await page.waitForSelector(CARD_SELECTOR, { timeout: 10_000 }).catch(() => null);
+        // Results arrive by XHR through the home proxy, which sometimes takes over 10 s.
+        const card = await page.waitForSelector(CARD_SELECTOR, { timeout: 15_000 }).catch(() => null);
 
-        return page.evaluate(() => {
+        const cards = await page.evaluate(() => {
           const cards = Array.from(document.querySelectorAll('a[href*="/bikes"]'));
           const results: {
             name: string;
@@ -88,9 +88,15 @@ export class BikeDataScrapeService {
 
           return results;
         });
+
+        // An empty list is either no hits or a page that never drew cards (a Cloudflare challenge); the title tells which.
+        return { bikes: cards, pageTitle: await page.title(), cardsTimedOut: card === null };
       });
 
-      this.logger.info({ url, resultCount: bikes.length, durationMs: Date.now() - startedAt }, 'Bike list fetched');
+      this.logger.info(
+        { url, resultCount: bikes.length, durationMs: Date.now() - startedAt, pageTitle, cardsTimedOut },
+        'Bike list fetched',
+      );
 
       return bikes;
     } catch (error) {
