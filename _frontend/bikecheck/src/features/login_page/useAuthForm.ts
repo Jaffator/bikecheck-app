@@ -1,6 +1,6 @@
 // What the login screen does, whichever layout draws it: the form, its requests and the
 // inbox state they can end in.
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useForm, type UseFormReturnType } from "@mantine/form";
 import { useToggle } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
@@ -48,9 +48,14 @@ export function isEmailNotVerified(error: ApiError): boolean {
   return error.status === 403 && error.details.includes(EMAIL_NOT_VERIFIED);
 }
 
+// A wrong email or password: the one refusal that points at the fields.
+export function isInvalidCredentials(error: ApiError): boolean {
+  return error.status === 401;
+}
+
 // What to tell the rider under the form when login fails.
 export function loginErrorKey(error: ApiError): string {
-  if (error.status === 401) return "auth.invalidCredentials";
+  if (isInvalidCredentials(error)) return "auth.invalidCredentials";
   if (isEmailNotVerified(error)) return "auth.emailNotVerified";
   return "auth.genericError";
 }
@@ -95,6 +100,8 @@ export interface AuthFormState {
   inboxEmail: string | null;
   // The message for the web callback's code; the native answer lives on the mutation.
   webGoogleError: string | null;
+  // The field's own check, else a wrong email or password, which is drawn under it.
+  passwordError: ReactNode;
   submit: (event?: FormEvent<HTMLFormElement>) => void;
   switchType: () => void;
   backToLogin: () => void;
@@ -132,6 +139,9 @@ export function useAuthForm(): AuthFormState {
       terms: (val) => (type === "register" && !val ? t("auth.termsRequired") : null),
     },
   });
+
+  const passwordError: ReactNode =
+    form.errors.password ?? (login.isError && isInvalidCredentials(login.error) ? t("auth.invalidCredentials") : null);
 
   // Counts the form shown: on open and on every switch between login and register.
   useEffect(() => {
@@ -216,6 +226,7 @@ export function useAuthForm(): AuthFormState {
     cooldown,
     inboxEmail,
     webGoogleError,
+    passwordError,
     submit,
     switchType,
     backToLogin,
