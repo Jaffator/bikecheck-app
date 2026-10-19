@@ -13,6 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Capacitor switches to this theme on start; without it DayNight paints grey bars until the WebView draws. -->
+        <item name="android:windowBackground">@color/app_background</item>
     </style>
 
 
@@ -24,6 +26,9 @@
              background drawn OVER windowBackground, so it kept the strip white.
              Android 12+ uses the SplashScreen API, not that drawable.) -->
         <item name="android:windowBackground">@color/app_background</item>
+        <item name="windowSplashScreenBackground">@color/app_background</item>
+        <!-- The web logo, small and without the launcher's circle backdrop. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
         <!-- statusBarColor/navigationBarColor are deprecated no-ops on
              targetSdk 35+ (edge-to-edge), so bar *background* is handled by the
              web layout drawing behind the bars (safe-area insets in AppLayout).

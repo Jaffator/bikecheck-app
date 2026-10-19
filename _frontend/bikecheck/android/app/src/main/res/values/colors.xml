@@ -2,7 +2,7 @@
 <resources>
     <!-- Accent color applied to the push notification small icon (Mantine "primary.6") -->
     <color name="notification_color">#CEC053</color>
-    <!-- App background (Mantine "inputs.6"). Shows behind the WebView in the
-         gesture nav bar strip, which the web layout can't reach. -->
-    <color name="app_background">#141414</color>
+    <!-- Launch background (Mantine "background.9"), the web loading screen's colour,
+         so splash -> WebView -> logo shows no seam. -->
+    <color name="app_background">#0A0A0B</color>
 </resources>
