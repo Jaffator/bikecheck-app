@@ -1,6 +1,19 @@
 // The login screen below the desktop width: the form on black, pinned against the keyboard.
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { Anchor, Box, Button, Checkbox, Divider, Group, PasswordInput, Stack, Text, TextInput, type MantineTheme } from "@mantine/core";
+import {
+  Anchor,
+  Box,
+  Button,
+  Checkbox,
+  Divider,
+  Group,
+  PasswordInput,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+  type MantineTheme,
+} from "@mantine/core";
 import { Trans, useTranslation } from "react-i18next";
 import { Mail, Lock, User } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
@@ -16,21 +29,26 @@ import type { AuthFormState } from "./useAuthForm";
 
 // The native app sits under a status bar the web page does not, so the block starts lower.
 const NATIVE_SHIFT_PX = Capacitor.isNativePlatform() ? 50 : 0;
-const LOGO_TOP = `calc(24px + ${String(NATIVE_SHIFT_PX)}px)`;
-const REGISTER_FORM_TOP = `calc(72px + ${String(NATIVE_SHIFT_PX)}px)`;
+const LOGO_TOP = `calc(16px + ${String(NATIVE_SHIFT_PX)}px)`;
+const REGISTER_FORM_TOP = `calc(32px + ${String(NATIVE_SHIFT_PX)}px)`;
 // Registration is too long to centre, so a phone pins its logo to the top; the footer is pinned
 // to the bottom in both. From sm up everything flows as one block, centred by the auto margins.
 const PINNED = { base: "absolute", sm: "static" } as const;
 // Room for the pinned footer above the system nav bar, so a long form scrolls instead of running under it.
-const FOOTER_RESERVE = "calc(5.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
-// The auto bottom margin pairs with the logo's top one to centre the block on a phone.
-const CENTRED_FORM_MARGINS = { mt: { base: "1rem", sm: 0 }, mb: { base: "auto", sm: 0 } };
+const FOOTER_RESERVE = "calc(4.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
+// The auto bottom margin pairs with the logo's top one to centre the block on a phone; the
+// padding keeps the pinned footer out of that space, so it centres in what is left above it.
+const CENTRED_FORM_MARGINS = {
+  mt: { base: "2rem", sm: 0 },
+  mb: { base: "auto", sm: 0 },
+  pb: { base: FOOTER_RESERVE, sm: 0 },
+};
 const REGISTER_FORM_MARGINS = { mt: { base: REGISTER_FORM_TOP, sm: 0 }, mb: { base: FOOTER_RESERVE, sm: 0 } };
 // The form's width on a wide screen: a single column of inputs, not the whole page.
 const FORM_MAX_WIDTH = "26rem";
 
-const FIELD_HEIGHT = 50;
-const CONTROL_HEIGHT = 52;
+const FIELD_HEIGHT = 40;
+const CONTROL_HEIGHT = 44;
 const CONTROL_RADIUS = 12;
 const PASSWORD_ID = "auth-password";
 const ERROR_RING = "0 0 0 3px color-mix(in srgb, var(--mantine-color-red-8) 18%, transparent)";
@@ -41,14 +59,17 @@ const FIELD_VARS = {
   "--input-color": "var(--mantine-color-text-6)",
   "--input-placeholder-color": "var(--mantine-color-text-9)",
 } as CSSProperties;
-const FIELD_FRAME = { "--input-bd": "var(--color-border-strong)", "--input-section-color": "var(--mantine-color-text-8)" } as CSSProperties;
+const FIELD_FRAME = {
+  "--input-bd": "var(--color-border-strong)",
+  "--input-section-color": "var(--mantine-color-text-8)",
+} as CSSProperties;
 // The border is left to Mantine's red.
 const ERROR_FRAME = { "--input-section-color": ERROR_TEXT_COLOR } as CSSProperties;
 
 function fieldStyles(_theme: MantineTheme, { error }: { error?: ReactNode }): Record<string, CSSProperties> {
   return {
     wrapper: { ...FIELD_VARS, ...(error ? ERROR_FRAME : FIELD_FRAME) },
-    label: { fontSize: 13, fontWeight: 500, color: "var(--mantine-color-text-7)", marginBottom: 8 },
+    label: { fontSize: 12, fontWeight: 500, color: "var(--mantine-color-text-7)", marginBottom: 2 },
     input: { height: FIELD_HEIGHT, borderRadius: CONTROL_RADIUS, fontSize: 16, boxShadow: error ? ERROR_RING : undefined },
     error: FIELD_ERROR_STYLE,
     visibilityToggle: { color: "var(--mantine-color-text-8)" },
@@ -58,16 +79,16 @@ function fieldStyles(_theme: MantineTheme, { error }: { error?: ReactNode }): Re
 const FIELD_PROPS = { leftSectionWidth: 44, styles: fieldStyles, classNames: { input: "auth-field" } };
 
 // Centred, the logo flows above the form and its auto margin takes half the free space.
+// Pinned, it shrinks into the top-left corner and the form's own title leads instead.
 function Logo({ centred }: { centred: boolean }): ReactElement {
   return (
     <Box
       w="100%"
-      maw={200}
-      mx="auto"
+      maw={centred ? 160 : { base: 96, sm: 160 }}
+      mx={centred ? "auto" : { base: 0, sm: "auto" }}
       pos={centred ? "static" : PINNED}
       top={LOGO_TOP}
-      left={0}
-      right={0}
+      left={centred ? 0 : 24}
       mt={centred ? "auto" : { base: 0, sm: "auto" }}
     >
       <MarketingWebsiteLink className="block">
@@ -101,10 +122,10 @@ function PasswordField({ auth }: { auth: AuthFormState }): ReactElement {
         <Text component="label" htmlFor={PASSWORD_ID} fz={13} fw={500} c="text.7">
           {t("auth.passwordLabel")}
         </Text>
-        {/* No password reset yet: the link only holds its place. The negative margin keeps its tap padding off the row. */}
+        {/* Hidden until password reset exists. The negative margin keeps its tap padding off the row.
         <Anchor component="button" type="button" fz={13} fw={500} c="primary.6" py={6} my={-6}>
           {t("auth.forgotPassword")}
-        </Anchor>
+        </Anchor> */}
       </Group>
       {field}
     </Stack>
@@ -118,10 +139,12 @@ function TermsCheckbox({ auth }: { auth: AuthFormState }): ReactElement {
       size="md"
       c="text.7"
       styles={{
-        body: { alignItems: "center", minHeight: 44 },
+        body: { alignItems: "center", minHeight: 36 },
         label: { fontSize: 14, lineHeight: 1.4 },
         // Only the unticked box is painted, so the theme's fill still draws a ticked one.
-        input: form.values.terms ? undefined : { backgroundColor: "var(--mantine-color-inputs-6)", borderColor: "var(--color-border-strong)" },
+        input: form.values.terms
+          ? undefined
+          : { backgroundColor: "var(--mantine-color-inputs-6)", borderColor: "var(--color-border-strong)" },
       }}
       // The document the box is agreeing to, one tap away and open to a visitor with no account yet.
       label={
@@ -140,7 +163,7 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
   const { t } = useTranslation();
   const { form, type } = auth;
   return (
-    <Stack gap={16}>
+    <Stack gap={type === "register" ? 4 : 8}>
       {type === "register" && (
         <TextInput
           label={t("auth.nameLabel")}
@@ -181,18 +204,18 @@ function Footer({ auth }: { auth: AuthFormState }): ReactElement {
   return (
     <Stack
       align="center"
-      gap={14}
+      gap={4}
       pos={PINNED}
-      bottom="0.75rem"
+      bottom={0}
       left={0}
       right={0}
-      mb={{ base: "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", sm: "auto" }}
+      mb={{ base: "calc(0.25rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", sm: "auto" }}
     >
       <Group align="center" justify="center" gap={6}>
         <Text fz={14} c="text.7">
           {isLogin ? t("auth.noAccount") : t("auth.haveAccount")}
         </Text>
-        <Anchor component="button" type="button" fz={14} fw={600} c="primary.6" py={10} onClick={auth.switchType}>
+        <Anchor component="button" type="button" fz={14} fw={600} c="primary.6" py={8} onClick={auth.switchType}>
           {isLogin ? t("auth.register") : t("auth.login")}
         </Anchor>
       </Group>
@@ -232,13 +255,16 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
         ref={formRef}
         style={AUTH_ERROR_STYLE}
       >
+        <Title order={1} fz={20} fw={700} lts="var(--tracking-title)" c="text.6" mb={6}>
+          {centred ? t("auth.loginTitle") : t("auth.registerTitle")}
+        </Title>
         <form onSubmit={auth.submit}>
-          <Stack gap={16}>
+          <Stack gap={8}>
             <Fields auth={auth} />
             <FormFeedback auth={auth} />
             <Button
               type="submit"
-              mt={4}
+              mt={centred ? 15 : 12}
               h={CONTROL_HEIGHT}
               radius={CONTROL_RADIUS}
               fz={16}
@@ -254,7 +280,7 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
         <Divider
           label={t("auth.or")}
           labelPosition="center"
-          my={20}
+          my={10}
           color="var(--color-border-strong)"
           styles={{ label: { color: "var(--mantine-color-text-8)", fontSize: 12, letterSpacing: "var(--tracking-label)" } }}
         />
