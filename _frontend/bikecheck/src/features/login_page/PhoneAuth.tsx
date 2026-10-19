@@ -16,8 +16,8 @@ import type { AuthFormState } from "./useAuthForm";
 
 // The native app sits under a status bar the web page does not, so the block starts lower.
 const NATIVE_SHIFT_PX = Capacitor.isNativePlatform() ? 50 : 0;
-const LOGO_TOP = `calc(16px + ${String(NATIVE_SHIFT_PX)}px)`;
-const REGISTER_FORM_TOP = `calc(40px + ${String(NATIVE_SHIFT_PX)}px)`;
+const LOGO_TOP = `calc(24px + ${String(NATIVE_SHIFT_PX)}px)`;
+const REGISTER_FORM_TOP = `calc(72px + ${String(NATIVE_SHIFT_PX)}px)`;
 // Registration is too long to centre, so a phone pins its logo to the top; the footer is pinned
 // to the bottom in both. From sm up everything flows as one block, centred by the auto margins.
 const PINNED = { base: "absolute", sm: "static" } as const;
@@ -29,8 +29,8 @@ const REGISTER_FORM_MARGINS = { mt: { base: REGISTER_FORM_TOP, sm: 0 }, mb: { ba
 // The form's width on a wide screen: a single column of inputs, not the whole page.
 const FORM_MAX_WIDTH = "26rem";
 
-const FIELD_HEIGHT = 44;
-const CONTROL_HEIGHT = 48;
+const FIELD_HEIGHT = 50;
+const CONTROL_HEIGHT = 52;
 const CONTROL_RADIUS = 12;
 const PASSWORD_ID = "auth-password";
 const ERROR_RING = "0 0 0 3px color-mix(in srgb, var(--mantine-color-red-8) 18%, transparent)";
@@ -48,7 +48,7 @@ const ERROR_FRAME = { "--input-section-color": ERROR_TEXT_COLOR } as CSSProperti
 function fieldStyles(_theme: MantineTheme, { error }: { error?: ReactNode }): Record<string, CSSProperties> {
   return {
     wrapper: { ...FIELD_VARS, ...(error ? ERROR_FRAME : FIELD_FRAME) },
-    label: { fontSize: 13, fontWeight: 500, color: "var(--mantine-color-text-7)", marginBottom: 4 },
+    label: { fontSize: 13, fontWeight: 500, color: "var(--mantine-color-text-7)", marginBottom: 8 },
     input: { height: FIELD_HEIGHT, borderRadius: CONTROL_RADIUS, fontSize: 16, boxShadow: error ? ERROR_RING : undefined },
     error: FIELD_ERROR_STYLE,
     visibilityToggle: { color: "var(--mantine-color-text-8)" },
@@ -140,7 +140,7 @@ function Fields({ auth }: { auth: AuthFormState }): ReactElement {
   const { t } = useTranslation();
   const { form, type } = auth;
   return (
-    <Stack gap={12}>
+    <Stack gap={16}>
       {type === "register" && (
         <TextInput
           label={t("auth.nameLabel")}
@@ -233,12 +233,12 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
         style={AUTH_ERROR_STYLE}
       >
         <form onSubmit={auth.submit}>
-          <Stack gap={12}>
+          <Stack gap={16}>
             <Fields auth={auth} />
             <FormFeedback auth={auth} />
             <Button
               type="submit"
-              mt={8}
+              mt={4}
               h={CONTROL_HEIGHT}
               radius={CONTROL_RADIUS}
               fz={16}
@@ -254,7 +254,7 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
         <Divider
           label={t("auth.or")}
           labelPosition="center"
-          my={12}
+          my={20}
           color="var(--color-border-strong)"
           styles={{ label: { color: "var(--mantine-color-text-8)", fontSize: 12, letterSpacing: "var(--tracking-label)" } }}
         />
