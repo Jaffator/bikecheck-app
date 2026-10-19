@@ -18,8 +18,13 @@
       rel="stylesheet"
     />
   </head>
-  <body style="background-color: #0e0e0f">
-    <div id="root"></div>
+  <body style="background-color: #0e0e0f; margin: 0">
+    <!-- The same logo as App's loading screen, shown before the JS loads; React replaces it on mount. -->
+    <div id="root">
+      <div style="min-height: 100dvh; display: flex; align-items: center; justify-content: center; background: #0a0a0b">
+        <img src="/src/assets/logo_only.svg" alt="BikeCheck" width="128" height="128" />
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

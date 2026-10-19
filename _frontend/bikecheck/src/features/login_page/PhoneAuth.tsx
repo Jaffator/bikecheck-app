@@ -280,7 +280,7 @@ export function PhoneAuth({ auth }: { auth: AuthFormState }): ReactElement {
         <Divider
           label={t("auth.or")}
           labelPosition="center"
-          my={10}
+          my={9}
           color="var(--color-border-strong)"
           styles={{ label: { color: "var(--mantine-color-text-8)", fontSize: 12, letterSpacing: "var(--tracking-label)" } }}
         />

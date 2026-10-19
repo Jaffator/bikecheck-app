@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type ReactElement } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { Center, Loader } from "@mantine/core";
+import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { Center } from "@mantine/core";
+import logoOnly from "@/assets/logo_only.svg";
 import { Dashboard } from "@/features/dashboard_page/Dashboard";
 import { AppLayout } from "@/layout/AppLayout";
 import { Bikes } from "@/features/bikes_page/Bikes";
@@ -20,6 +21,7 @@ import { StravaConnected } from "@/features/strava_connected_page/StravaConnecte
 import { InAppNotification } from "@/components/InAppNotification";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAppLinks } from "@/hooks/useAppLinks";
+import { useHideLaunchSplash } from "@/hooks/useHideLaunchSplash";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
@@ -39,27 +41,37 @@ function App(): ReactElement {
 
   return (
     <Routes>
-      {/* Public routes remain outside the authentication gate. A share link opens the
-          report and nothing else: no nav, no tab bar, no session fetch. */}
-      <Route path="/r/:token" element={<PublicReport />} />
-      {/* Somebody's garage the way a link in a chat opens it: no session, no shell, the
-          design's own look. Every open counts a view, so the page is read once per load. */}
-      <Route path="/u/:handle" element={<PublicProfile />} />
-      <Route path="/u/:handle/:bikeId" element={<PublicProfileBike />} />
-      {/* The registration checkbox links to the terms, so they have to open without a
-          session. Logged in, the same route serves the Settings rows. */}
-      <Route path="/legal/:document" element={<Legal />} />
-      {/* The link in a Verification Email lands here while nobody is signed in (ADR 0031):
-          no session fetch, no nav, one button. */}
-      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route element={<PublicRoutes />}>
+        {/* Public routes remain outside the authentication gate. A share link opens the
+            report and nothing else: no nav, no tab bar, no session fetch. */}
+        <Route path="/r/:token" element={<PublicReport />} />
+        {/* Somebody's garage the way a link in a chat opens it: no session, no shell, the
+            design's own look. Every open counts a view, so the page is read once per load. */}
+        <Route path="/u/:handle" element={<PublicProfile />} />
+        <Route path="/u/:handle/:bikeId" element={<PublicProfileBike />} />
+        {/* The registration checkbox links to the terms, so they have to open without a
+            session. Logged in, the same route serves the Settings rows. */}
+        <Route path="/legal/:document" element={<Legal />} />
+        {/* The link in a Verification Email lands here while nobody is signed in (ADR 0031):
+            no session fetch, no nav, one button. */}
+        <Route path="/verify-email" element={<VerifyEmail />} />
+      </Route>
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>
   );
 }
 
+// Public pages wait for no session, so the launch splash goes as soon as one mounts.
+function PublicRoutes(): ReactElement {
+  useHideLaunchSplash(true);
+  return <Outlet />;
+}
+
 // Renders routes that require an authenticated user.
 function ProtectedApp(): ReactElement {
   const { data: user, isLoading: isUserLoading, isError: isUserError } = useCurrentUser();
+  // Holds the launch splash over the session check, so it fades straight into the first screen.
+  useHideLaunchSplash(!isUserLoading);
   const { mutate: patchUser } = useUpdateUser();
   const navigate = useNavigate();
 
@@ -99,7 +111,7 @@ function ProtectedApp(): ReactElement {
   if (isUserLoading) {
     return (
       <Center style={{ minHeight: "100dvh" }} bg="background.9">
-        <Loader type="oval" color="primary.6" size="lg" />
+        <img src={logoOnly} alt="BikeCheck" className="w-32" />
       </Center>
     );
   }
