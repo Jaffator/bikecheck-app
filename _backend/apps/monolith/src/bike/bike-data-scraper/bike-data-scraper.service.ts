@@ -19,9 +19,6 @@ const BLOCKED_RESOURCES = new Set(['image', 'font', 'media']);
 
 @Injectable()
 export class BikeDataScrapeService {
-  private readonly userAgent =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
-
   constructor(
     private readonly prisma: PrismaService,
     @InjectPinoLogger(BikeDataScrapeService.name)
@@ -304,9 +301,7 @@ export class BikeDataScrapeService {
     }
   }
   private async createContext(browser: Browser): Promise<BrowserContext> {
-    return browser.newContext({
-      userAgent: this.userAgent,
-      viewport: { width: 1280, height: 720 },
-    });
+    // Chromium's own UA: a Windows UA on prod's Linux Chromium gets a Cloudflare challenge (#282).
+    return browser.newContext({ viewport: { width: 1280, height: 720 } });
   }
 }

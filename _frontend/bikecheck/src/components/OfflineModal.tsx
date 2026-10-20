@@ -1,7 +1,7 @@
 // Stands over the page while the network is gone, so whatever the user was in the middle of
 // stays mounted underneath - a wizard keeps its steps.
 import { useState, type ReactElement } from "react";
-import { Box, Button, Loader, Modal, Stack, Text, Title } from "@mantine/core";
+import { Button, Loader, Modal, Stack, Text, Title } from "@mantine/core";
 import { RefreshCw, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Network } from "@/api/network";
@@ -47,38 +47,27 @@ export function OfflineModal({ opened, onReconnected }: OfflineModalProps): Reac
       closeOnClickOutside={false}
       closeOnEscape={false}
       centered
-      radius="xl"
+      radius="lg"
       padding="lg"
       zIndex={OFFLINE_Z_INDEX}
       overlayProps={{ backgroundOpacity: 0.64, blur: 6 }}
       styles={{ content: { backgroundColor: "var(--mantine-color-cards-6)" } }}
     >
-      <Stack gap="lg">
-        <Stack gap="sm" align="flex-start">
-          <Box
-            w={56}
-            h={56}
-            style={{
-              borderRadius: 18,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
-            }}
-          >
-            <Icon
-              size={26}
-              strokeWidth={2.2}
-              color="var(--mantine-color-primary-6)"
-              className={retrying ? "animate-spin" : undefined}
-              aria-hidden
-            />
-          </Box>
+      <Stack gap="lg" align="center" justify="center" className="text-center">
+        <Stack gap="lg" align="center" className="p-3">
+          <Icon
+            size={32}
+            strokeWidth={2.2}
+            color="var(--mantine-color-primary-6)"
+            className={retrying ? "animate-spin" : undefined}
+            aria-hidden
+          />
+
           <Stack gap={6}>
-            <Title order={2} fz={22} fw={700} lts="var(--tracking-title)" c="text.6">
+            <Title order={2} fz={20} fw={700} lts="var(--tracking-title)" c="text.6">
               {retrying ? t("offline.reconnectingTitle") : t("offline.title")}
             </Title>
-            <Text fz={15} c="var(--color-text-dim)" style={{ lineHeight: 1.5 }}>
+            <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.5 }}>
               {retrying ? t("offline.reconnectingDescription") : t("offline.description")}
             </Text>
           </Stack>
@@ -87,8 +76,8 @@ export function OfflineModal({ opened, onReconnected }: OfflineModalProps): Reac
         {/* Dimmed rather than disabled: Mantine's disabled grey would drop the accent. */}
         <Button
           fullWidth
-          size="lg"
-          radius="xl"
+          size="md"
+          radius="lg"
           color="primary.6"
           c="textDark.6"
           leftSection={retrying ? <Loader size={18} color="textDark.6" /> : null}

@@ -19,6 +19,8 @@ import { Settings } from "@/features/settings_page/Settings";
 import { Notifications } from "@/features/notification_page/Notifications";
 import { StravaConnected } from "@/features/strava_connected_page/StravaConnected";
 import { InAppNotification } from "@/components/InAppNotification";
+import { OfflineModal } from "@/components/OfflineModal";
+import { NetworkError } from "@/api/client";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAppLinks } from "@/hooks/useAppLinks";
 import { useHideLaunchSplash } from "@/hooks/useHideLaunchSplash";
@@ -69,7 +71,13 @@ function PublicRoutes(): ReactElement {
 
 // Renders routes that require an authenticated user.
 function ProtectedApp(): ReactElement {
-  const { data: user, isLoading: isUserLoading, isError: isUserError } = useCurrentUser();
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isError: isUserError,
+    error: userError,
+    refetch: refetchUser,
+  } = useCurrentUser();
   // Holds the launch splash over the session check, so it fades straight into the first screen.
   useHideLaunchSplash(!isUserLoading);
   const { mutate: patchUser } = useUpdateUser();
@@ -108,10 +116,14 @@ function ProtectedApp(): ReactElement {
     patchUser({ id: userId, data: { language: visitorLanguage() } });
   }, [userId, userLanguage, patchUser]);
 
-  if (isUserLoading) {
+  // Offline at launch says nothing about the session, so it must not fall through to Login.
+  const isOfflineAtLaunch = userError instanceof NetworkError;
+
+  if (isUserLoading || isOfflineAtLaunch) {
     return (
       <Center style={{ minHeight: "100dvh" }} bg="background.9">
         <img src={logoOnly} alt="BikeCheck" className="w-32" />
+        <OfflineModal opened={isOfflineAtLaunch} onReconnected={() => void refetchUser()} />
       </Center>
     );
   }
