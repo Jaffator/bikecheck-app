@@ -1,9 +1,8 @@
-# Checks every change to main; deploy.yml calls the same jobs before a release (docs/deploy.md).
+# Checks every PR to main; deploy.yml calls the same jobs before a release (docs/deploy.md).
+# No run on push to main: it would repeat the PR's checks on the same code.
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_call:
