@@ -1,7 +1,7 @@
 // Stands over the page while the network is gone, so whatever the user was in the middle of
 // stays mounted underneath - a wizard keeps its steps.
 import { useState, type ReactElement } from "react";
-import { Box, Button, Loader, Modal, Stack, Text, Title } from "@mantine/core";
+import { Button, Loader, Modal, Stack, Text, Title } from "@mantine/core";
 import { RefreshCw, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Network } from "@/api/network";
