@@ -392,13 +392,13 @@ export class StravaEventsService {
     const bike = saved
       ? { id: saved.bike_id }
       : data.gearid
-      ? await this.prisma.bikes.findFirst({
-          // An Archived Bike collects nothing. Archiving clears the gear id anyway, so
-          // this only guards a row archived by some other route (ADR 0024).
-          where: { strava_gear_id: data.gearid, user_id: user.id, is_deleted: { not: true } },
-          select: { id: true },
-        })
-      : null;
+        ? await this.prisma.bikes.findFirst({
+            // An Archived Bike collects nothing. Archiving clears the gear id anyway, so
+            // this only guards a row archived by some other route (ADR 0024).
+            where: { strava_gear_id: data.gearid, user_id: user.id, is_deleted: { not: true } },
+            select: { id: true },
+          })
+        : null;
 
     const bikeId = bike ? Number(bike.id) : null;
     console.log('Resolved bikeId:', bikeId, 'for gearId:', data.gearid); // --- IGNORE ---
