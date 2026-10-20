@@ -148,17 +148,6 @@ export class WebhookController {
 //   -F callback_url=https://syrup-latch-certainty.ngrok-free.dev/strava/webhook \
 //   -F verify_token=STRAVA
 
- curl -X POST \
-  https://www.strava.com/api/v3/push_subscriptions \
-  -F client_id=235898 \
-  -F client_secret=3c70e23b491afd63f6a5add7a724858ace130b90 \
-  -F callback_url=https://syrup-latch-certainty.ngrok-free.dev/strava/webhook \
-  -F verify_token=STRAVA
-
-curl.exe -X POST https://www.strava.com/api/v3/push_subscriptions -F client_id=235898 -F client_secret=7b9b617396065211ca92debe50ff42a0f5c9b2be -F callback_url=https://app.bikecheck.cloud/strava/webhook -F verify_token=STRAVA
-
-
-
 // ---------------------------------------------
 // 1. Authorize url:
 // ---------------------------------------------
