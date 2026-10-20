@@ -12,7 +12,7 @@ CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.
   4. Commits the bump, pushes, opens the PR (or reuses the open one), and lets GitHub merge `main` into the branch when it is behind.
   5. Watches the required checks. A failure prints the failed check, its link and the last 40 lines of its log, and stops with the PR open: fix, commit, rerun.
   6. Merges (merge commit), deletes the branch, switches to an up-to-date `main`, then asks whether to deploy, which is step 4 onward of `deploy:production`.
-- **Every push / PR to `main`** runs [ci.yml](../.github/workflows/ci.yml): typecheck of monolith, strava-service and frontend, plus the backend `UNIT` and `E2E` tests. It deploys nothing.
+- **Every PR to `main`** runs [ci.yml](../.github/workflows/ci.yml): typecheck of monolith, strava-service and frontend, plus the backend `UNIT` and `E2E` tests. It deploys nothing. A push to `main` runs nothing; the tag's deploy reruns the checks.
 - **`npm run version:bump`** on your branch, with [scripts/bump-version.mjs](../scripts/bump-version.mjs): the same bug fix / new feature / major menu, then writes that version into the App's and the Marketing Website's `package.json` (+ locks) and commits `chore(release): vX.Y.Z`. It does not push; the bump reaches `main` with your PR.
 - **`npm run deploy:production`** from the repo root, once that PR is merged, cuts a release with [scripts/release.mjs](../scripts/release.mjs):
   1. Stops unless you are on a clean `main` that fast-forwards to `origin` and has nothing unpushed.
