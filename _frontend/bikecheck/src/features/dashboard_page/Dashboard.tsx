@@ -1,6 +1,6 @@
 // Dashboard page.
 import type { ReactElement } from "react";
-import { Loader, Stack } from "@mantine/core";
+import { Group, Loader, Stack } from "@mantine/core";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
@@ -49,11 +49,13 @@ export function Dashboard(): ReactElement {
   return (
     // Clears the floating create button, so the last card can be scrolled out from under
     // it; desktop has no FAB, so no room. No `p` here: its inline padding beats the responsive `pb` class.
-    <Stack gap="md" px="md" pt="md" pb={FAB_CLEARANCE}>
+    <Stack gap="sm" px="md" pt="md" pb={FAB_CLEARANCE}>
       <ContextLine withDate={false} />
       {!stravaConnected && <StravaStatusCard />}
       <DashboardBannerPhone />
-      <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
+      <Group justify="flex-end">
+        <HomePeriodSwitcher value={period} onChange={setPeriod} />
+      </Group>
       <DashboardFigures period={period} />
       <LastRidePanel />
       <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />

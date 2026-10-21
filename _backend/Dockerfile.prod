@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Production image for one app of the monorepo: --build-arg APP=monolith|strava-service.
+# Production image for one app of the monorepo: --build-arg APP=monolith|strava-service|scraper.
 # The dev Dockerfile next to it is untouched; docker-compose.prod.yml builds this one.
 ARG APP=monolith
 
@@ -18,6 +18,8 @@ COPY apps/monolith/src ./apps/monolith/src
 COPY apps/strava-service/tsconfig.json apps/strava-service/tsconfig.app.json ./apps/strava-service/
 COPY apps/strava-service/src ./apps/strava-service/src
 COPY apps/strava-service/migrations ./apps/strava-service/migrations
+COPY apps/scraper/tsconfig.json apps/scraper/tsconfig.app.json ./apps/scraper/
+COPY apps/scraper/src ./apps/scraper/src
 ARG APP
 RUN npx prisma generate --config apps/monolith/prisma.config.ts && npx nest build ${APP}
 
@@ -34,8 +36,8 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/apps/monolith/prisma ./apps/monolith/prisma
 COPY --from=build /app/apps/monolith/prisma.config.ts ./apps/monolith/prisma.config.ts
 COPY --from=build /app/apps/strava-service/migrations ./apps/strava-service/migrations
-# Only the monolith prints PDFs and scrapes; Alpine cannot run Playwright's Chromium, Debian can.
-RUN if [ "$APP" = "monolith" ]; then npx playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*; fi
-EXPOSE 3000 3002
+# The monolith prints PDFs, the scraper reads 99spokes; Alpine cannot run Playwright's Chromium, Debian can.
+RUN if [ "$APP" = "monolith" ] || [ "$APP" = "scraper" ]; then npx playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*; fi
+EXPOSE 3000 3002 3003
 # docker-compose.prod.yml overrides this per service (migrations first, then the app).
 CMD ["node", "dist/apps/monolith/src/main.js"]
