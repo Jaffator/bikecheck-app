@@ -31,7 +31,7 @@ CI builds the images; the server only pulls them. Nothing ships without a `vX.Y.
 
   1. Refuses a tag that is not on `main`.
   2. Runs the CI checks.
-  3. Builds `bikecheck-monolith`, `bikecheck-strava-service` and `bikecheck-caddy` (SPA + Marketing Website) into `ghcr.io/jaffator/…:v1.4.0`.
+  3. Builds `bikecheck-monolith`, `bikecheck-strava-service` and `bikecheck-caddy` (SPA + Marketing Website) into `ghcr.io/jaffator/…:v1.4.0`, and `bikecheck-scraper` for `linux/arm64` on an ARM runner. The scraper does not reach the Pi by itself; see [Bike scraper on the Pi](#bike-scraper-on-the-pi).
   4. SSHes to the server, whose key may only run [scripts/deploy.sh](../scripts/deploy.sh):
      - dumps all three DBs (monolith, strava-service, Umami) to `backups/<utc-time>-<tag>/`, keeps the last 5, and stops if a dump fails;
      - `git checkout <tag>` for the compose file, Caddyfile and Alloy config;
@@ -89,6 +89,29 @@ alias dc='docker compose --env-file .env.production --env-file .env.tag -f docke
 ```
 
 Then `cd /opt/bikecheck && dc logs -f monolith`.
+
+## Bike scraper on the Pi
+
+Bike search runs its browser on the Raspberry Pi at home ([ADR 0042](adr/0042-the-bike-scraper-runs-at-home.md)). The monolith calls `SCRAPER_SERVICE_URL` (the Pi's Tailscale IP, port 3003) with `SCRAPER_API_SECRET`. The Pi runs 32-bit Raspbian on a 64-bit kernel, hence `seccomp:unconfined` in [docker-compose.pi.yml](../docker-compose.pi.yml).
+
+**Updating** after a release that changed `apps/scraper` or its contract. On the Pi, as root:
+
+```sh
+cd /opt/bikecheck-scraper && git pull
+sed -i 's/^TAG=.*/TAG=v1.6.0/' .env.pi
+docker compose --env-file .env.pi -f docker-compose.pi.yml pull
+docker compose --env-file .env.pi -f docker-compose.pi.yml up -d
+```
+
+**Checking** from the server: `curl -s -X POST http://<pi-tailscale-ip>:3003/bike-cards -H "x-internal-secret: <secret>" -H "Content-Type: application/json" -d '{"url":"https://99spokes.com/en-EU/bikes?q=canyon"}'` prints cards. Logs on the Pi: `docker compose --env-file .env.pi -f docker-compose.pi.yml logs -f scraper`.
+
+**One-time setup** on the Pi, as root:
+
+1. Docker: `curl -fsSL https://get.docker.com | sh`. Check that it runs arm64 images: `docker run --rm --platform linux/arm64 --security-opt seccomp=unconfined debian:bookworm-slim uname -m` prints `aarch64`.
+2. Registry login with a classic PAT that has only `read:packages`: `docker login ghcr.io -u Jaffator`.
+3. The compose file: `git clone https://github.com/Jaffator/bikecheck-app.git /opt/bikecheck-scraper`.
+4. `cp .env.pi.example .env.pi`, set `TAG` and `SCRAPER_API_SECRET`, then `pull` and `up -d` as above.
+5. On the server, `SCRAPER_SERVICE_URL` and the same `SCRAPER_API_SECRET` in `.env.production`, then redeploy the current tag.
 
 ## One-time setup
 

@@ -30,6 +30,16 @@
         "webpack": false,
         "tsConfigPath": "apps/strava-service/tsconfig.app.json"
       }
+    },
+    "scraper": {
+      "type": "application",
+      "root": "apps/scraper",
+      "entryFile": "main",
+      "sourceRoot": "apps/scraper/src",
+      "compilerOptions": {
+        "webpack": false,
+        "tsConfigPath": "apps/scraper/tsconfig.app.json"
+      }
     }
   }
 }

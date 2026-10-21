@@ -1,0 +1,21 @@
+# The bike scraper on the home Raspberry Pi (ADR 0042); the monolith on Hetzner calls it over Tailscale.
+# On the Pi: docker compose --env-file .env.pi -f docker-compose.pi.yml up -d  (see docs/deploy.md)
+services:
+  scraper:
+    image: ghcr.io/jaffator/bikecheck-scraper:${TAG:?TAG must name a release, see docs/deploy.md}
+    platform: linux/arm64
+    restart: unless-stopped
+    command: ["node", "dist/apps/scraper/main.js"]
+    environment:
+      NODE_ENV: production
+      PORT: "3003"
+      SCRAPER_API_SECRET: ${SCRAPER_API_SECRET:?the shared secret, also in the server's .env.production}
+    # The Pi runs 32-bit Raspbian, whose armhf seccomp profile kills the syscalls of this arm64 image.
+    security_opt: [seccomp:unconfined]
+    # Playwright: Chromium runs out of memory without the host IPC namespace; init reaps its zombies.
+    ipc: host
+    init: true
+    # All interfaces, not the Tailscale IP: Docker can start before tailscaled has it and then fail
+    # to bind. The router forwards nothing here and every call needs the secret.
+    ports:
+      - "3003:3003"

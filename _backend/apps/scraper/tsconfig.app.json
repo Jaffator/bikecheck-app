@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    // Kept out of outDir so a cleaned dist does not take the incremental cache with it.
+    "tsBuildInfoFile": "../../node_modules/.cache/tsc/scraper.tsbuildinfo",
+    "outDir": "../../dist/apps/scraper"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+}

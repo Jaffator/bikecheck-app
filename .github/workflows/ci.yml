@@ -28,8 +28,9 @@ jobs:
       # The root tsconfig does not cover apps/, so each app is checked through its own.
       - run: npx tsc --noEmit -p apps/monolith/tsconfig.app.json
       - run: npx tsc --noEmit -p apps/strava-service/tsconfig.app.json
-      # The scraper test hits 99spokes, which blocks datacenter IPs (#246); it runs locally only.
-      - run: npx jest --selectProjects=UNIT --testPathIgnorePatterns=bike-data-scraper
+      - run: npx tsc --noEmit -p apps/scraper/tsconfig.app.json
+      # The scraper app's test hits 99spokes, which blocks datacenter IPs (#246); it runs locally only.
+      - run: npx jest --selectProjects=UNIT --testPathIgnorePatterns=bike-page
 
   # The HTTP seam on a real Postgres; tests/setup.ts starts it (and Redis) with docker compose and migrates it.
   backend-e2e:

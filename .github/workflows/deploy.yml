@@ -53,7 +53,7 @@ jobs:
 
   images:
     needs: [release, checks]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
@@ -63,12 +63,24 @@ jobs:
           - name: monolith
             context: _backend
             file: _backend/Dockerfile.prod
+            runner: ubuntu-latest
+            platform: linux/amd64
           - name: strava-service
             context: _backend
             file: _backend/Dockerfile.prod
+            runner: ubuntu-latest
+            platform: linux/amd64
           - name: caddy
             context: .
             file: docker/caddy.Dockerfile
+            runner: ubuntu-latest
+            platform: linux/amd64
+          # Runs on the home Raspberry Pi (ADR 0042), so it is built natively on an ARM runner.
+          - name: scraper
+            context: _backend
+            file: _backend/Dockerfile.prod
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -81,6 +93,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
+          platforms: ${{ matrix.platform }}
           # Dockerfile.prod builds one app per image and ignores the rest; caddy bakes Umami into both
           # static builds from repo variables, an unset ID ships that build without the tracker.
           build-args: |
