@@ -14,6 +14,8 @@ chromium.use(stealthPlugin());
 // Only scraped site; drill-in URLs come from the client, so each is checked against it.
 const PROVIDER_HOST = '99spokes.com';
 const CARD_SELECTOR = 'a[href*="/bikes/"], a[href*="family="]';
+// The XHR that brings the cards; its statuses tell a Cloudflare 403 from a slow answer (#282).
+const RESULTS_API_PATH = '/api/trpc/bikes.listBikes';
 // Cards read only the image URL, so the files would just eat the proxy's home uplink.
 const BLOCKED_RESOURCES = new Set(['image', 'font', 'media']);
 
@@ -42,7 +44,19 @@ export class BikeDataScrapeService {
     const startedAt = Date.now();
 
     try {
+      const resultsApiResponses: { status: number; atMs: number }[] = [];
       const { bikes, pageTitle, cardsTimedOut } = await this.withPage(async (page) => {
+        // Status 0 marks a request that never got an answer.
+        page.on('response', (response) => {
+          if (response.url().includes(RESULTS_API_PATH)) {
+            resultsApiResponses.push({ status: response.status(), atMs: Date.now() - startedAt });
+          }
+        });
+        page.on('requestfailed', (request) => {
+          if (request.url().includes(RESULTS_API_PATH)) {
+            resultsApiResponses.push({ status: 0, atMs: Date.now() - startedAt });
+          }
+        });
         await page.goto(url, { waitUntil: 'load' });
         // No hits render no cards, so the timeout means an empty result, not a failure.
         // Results arrive by XHR through the home proxy, which sometimes takes over 10 s.
@@ -91,7 +105,14 @@ export class BikeDataScrapeService {
       });
 
       this.logger.info(
-        { url, resultCount: bikes.length, durationMs: Date.now() - startedAt, pageTitle, cardsTimedOut },
+        {
+          url,
+          resultCount: bikes.length,
+          durationMs: Date.now() - startedAt,
+          pageTitle,
+          cardsTimedOut,
+          resultsApiResponses,
+        },
         'Bike list fetched',
       );
 
