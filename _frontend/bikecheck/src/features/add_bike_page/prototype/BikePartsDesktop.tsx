@@ -1,7 +1,8 @@
 // PROTOTYPE (proto/desktop-wizards): step 3 on desktop - groups on the left, the open group's parts as rows.
-import { useState, type ReactElement } from "react";
-import { Box, Button, Group, Paper, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { useState, type CSSProperties, type ReactElement } from "react";
+import { Box, Group, Paper, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { Ban, CircleCheckBig, Merge, Split } from "lucide-react";
 import type { AssembleBikeComponent } from "@/features/components/components.types";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import {
@@ -19,39 +20,66 @@ import { LookupProgress } from "../LookupProgress";
 import type { AddBikeWizard } from "../useAddBikeWizard";
 import { COPY, cardSurface } from "./bikeProto";
 
-// Room for "Rozdělit" and "Nemám" side by side.
-const TOGGLES_WIDTH = "10.75rem";
+// Room for "Rear/front" and "Have it" side by side, icons included.
+const TOGGLES_WIDTH = "13rem";
 
 // Sits beside a 14px label in a nav row.
 const NAV_ICON_SIZE = 20;
+
+const TOGGLE_ICON_SIZE = 14;
 
 function translatedName(i18nKey: string | null, fallback: string, translate: (key: string) => string): string {
   return i18nKey ? translate(i18nKey) : fallback;
 }
 
-// A quiet toggle that lights up while it is on.
-function RowToggle({ label, pressed, onToggle }: { label: string; pressed: boolean; onToggle: () => void }): ReactElement {
+// Desktop-sized twin of the mobile row chips, so both platforms read the same.
+function toggleStyle(background: string, color: string): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 0,
+    height: "2.4rem",
+    padding: "0 0.75rem",
+    borderRadius: "var(--mantine-radius-md)",
+    fontSize: 13,
+    fontWeight: 600,
+    backgroundColor: background,
+    color,
+  };
+}
+
+function SplitToggle({ split, label, onToggle }: { split: boolean; label: string; onToggle: () => void }): ReactElement {
   return (
-    <Button
-      variant="default"
-      radius="md"
-      aria-pressed={pressed}
+    <UnstyledButton
+      aria-pressed={split}
       onClick={onToggle}
-      styles={{
-        root: {
-          height: "2.4rem",
-          padding: "0 0.75rem",
-          fontSize: 13,
-          backgroundColor: pressed
-            ? "color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)"
-            : "var(--mantine-color-cards-7)",
-          border: pressed ? "1px solid var(--mantine-color-primary-7)" : "1px solid var(--mantine-color-inputs-5)",
-          color: pressed ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
-        },
-      }}
+      style={
+        split
+          ? toggleStyle("color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)", "var(--mantine-color-primary-6)")
+          : toggleStyle("var(--mantine-color-cards-5)", "var(--mantine-color-text-8)")
+      }
     >
+      {split ? <Merge size={TOGGLE_ICON_SIZE} /> : <Split size={TOGGLE_ICON_SIZE} />}
       {label}
-    </Button>
+    </UnstyledButton>
+  );
+}
+
+function AbsentToggle({ absent, label, onToggle }: { absent: boolean; label: string; onToggle: () => void }): ReactElement {
+  return (
+    <UnstyledButton
+      aria-pressed={absent}
+      onClick={onToggle}
+      style={
+        absent
+          ? toggleStyle("color-mix(in srgb, var(--mantine-color-red-4) 15%, transparent)", "var(--mantine-color-red-4)")
+          : toggleStyle("color-mix(in srgb, var(--mantine-color-green-8) 15%, transparent)", "var(--mantine-color-green-9)")
+      }
+    >
+      {absent ? <Ban size={TOGGLE_ICON_SIZE} /> : <CircleCheckBig size={TOGGLE_ICON_SIZE} />}
+      {label}
+    </UnstyledButton>
   );
 }
 
@@ -120,7 +148,7 @@ export function BikePartsDesktop({ wizard }: { wizard: AddBikeWizard }): ReactEl
           borderTop: "1px solid var(--color-border-subtle)",
         }}
       >
-        <Text fz={14} fw={600} c={absent ? "text.9" : "text.6"}>
+        <Text fz={14} fw={600} c={absent ? "text.9" : "text.6"} td={absent ? "line-through" : undefined}>
           {translatedName(component.component_i18n_key, component.component_name, t)}
         </Text>
         <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -145,15 +173,15 @@ export function BikePartsDesktop({ wizard }: { wizard: AddBikeWizard }): ReactEl
         </Group>
         <Group gap={8} wrap="nowrap" justify="flex-end">
           {component.has_position && !absent && (
-            <RowToggle
+            <SplitToggle
+              split={isSplit(component, split)}
               label={isSplit(component, split) ? t("addBike.mergeSides") : t("addBike.splitSides")}
-              pressed={isSplit(component, split)}
               onToggle={() => wizard.toggleComponentSplit(typeId)}
             />
           )}
-          <RowToggle
-            label={t("addBike.partAbsent")}
-            pressed={absent}
+          <AbsentToggle
+            absent={absent}
+            label={absent ? t("addBike.partAbsentUndo") : t("addBike.partAbsent")}
             onToggle={() => wizard.toggleComponentDisabled(typeId)}
           />
         </Group>
