@@ -20,6 +20,7 @@ import {
 import { ExplanationModal } from "@/components/ExplanationModal";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
 import { useIsDesktop } from "@/layout/breakpoints";
+import { formatNumber } from "@/utils/number";
 
 // Half the screen, fixed rather than content-sized, so the sheet does not jump in height
 // between parts and the build it was opened from stays visible behind it.
@@ -311,10 +312,10 @@ function Reading({ label, value, wrap = false }: { label: string; value: ReactNo
   );
 }
 
-// A tile is read at a glance, so its thousands are grouped the way the owner's language
-// writes them. A reading with nothing on record yet is a zero, not a gap.
+// A tile is read at a glance, so its thousands are grouped. A reading with nothing on record
+// yet is a zero, not a gap.
 function figure(value: number | null, language: string): string {
-  return new Intl.NumberFormat(language).format(value ?? 0);
+  return formatNumber(value ?? 0, language);
 }
 
 // The two units the app writes everywhere else, the report included.

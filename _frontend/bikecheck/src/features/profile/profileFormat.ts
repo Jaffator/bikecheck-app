@@ -1,10 +1,11 @@
 // How the numbers on somebody's pages read: the distance with its unit, the metadata line
 // under a bike - distance, then parts and Services only while they are shared - and what a
 // month of Services adds up to.
+import { formatNumber } from "@/utils/number";
 import type { ProfileBikeCard, ProfileMoney, ProfileService } from "./profile.types";
 
 export function formatKm(km: number, language: string): string {
-  return `${new Intl.NumberFormat(language).format(km)} km`;
+  return `${formatNumber(km, language)} km`;
 }
 
 // "4 187 km · 32 dílů · 26 servisů"; a count that is null is a section the owner keeps in.

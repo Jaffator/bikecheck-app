@@ -11,6 +11,7 @@ import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useIsDesktop } from "@/layout/breakpoints";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
+import { formatNumber } from "@/utils/number";
 
 // The same layer the service sheet stands on, so overlays never fight the FAB.
 const SHEET_Z_INDEX = 300;
@@ -88,9 +89,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
                   ? unknown
                   : t("bikes.kilograms", {
                       // The language writes its own decimal mark - 7,25 kg, not 7.25 kg.
-                      weight: new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 }).format(
-                        bike.bike_weight_kg,
-                      ),
+                      weight: formatNumber(bike.bike_weight_kg, i18n.language, { maximumFractionDigits: 2 }),
                     })
               }
             />

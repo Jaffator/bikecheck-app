@@ -2,6 +2,7 @@
 // stays in metres; a value is rounded only where it is printed, so the buckets add up to exactly the total.
 import type { TFunction } from "i18next";
 import { formatKm } from "@/features/profile/profileFormat";
+import { formatNumber } from "@/utils/number";
 import type { DistanceBucket } from "./homePeriod";
 import type { Distance, DistanceBike, HomePeriod } from "./stats.types";
 
@@ -20,7 +21,7 @@ export const RIDDEN: DailySeries = {
 
 export const CLIMBED: DailySeries = {
   daily: (bike) => bike.daily_elevation_m,
-  format: (meters, language) => `${new Intl.NumberFormat(language).format(meters)} m`,
+  format: (meters, language) => `${formatNumber(meters, language)} m`,
 };
 
 // The UTC day `index` days after `from`.

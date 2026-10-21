@@ -1,13 +1,11 @@
 // The check-in's bike: the one the ride goes on and where it came from.
 import type { ReactElement } from "react";
 import { Group, Stack, Text } from "@mantine/core";
-import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { MISSING_BIKE_COLOR } from "@/features/rides/checkIn";
 import type { BikePick } from "@/features/rides/checkInSave";
-import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
 import { BikePicker } from "./BikePicker";
 
 // Where the picked bike came from: the ride's own, a pick in this drawer, or none yet.
@@ -60,22 +58,15 @@ export function CheckInBikeField({
   );
 }
 
-function SourceTag({ source }: { source: BikeSource }): ReactElement {
+function SourceTag({ source }: { source: BikeSource }): ReactElement | null {
   const { t } = useTranslation();
   if (source === "missing") return <RequiredTag />;
-
-  const label = (
-    <Text fz={13} c="var(--color-text-dim)" style={{ whiteSpace: "nowrap" }}>
-      {t(source === "byHand" ? "checkIn.bikePickedByHand" : "checkIn.bikeFromStrava")}
-    </Text>
-  );
-  if (source === "byHand") return label;
+  if (source === "strava") return null;
 
   return (
-    <Group gap={5} wrap="nowrap">
-      <Check size={12} strokeWidth={3} color={QUIET_COLOR} />
-      {label}
-    </Group>
+    <Text fz={13} c="var(--color-text-dim)" style={{ whiteSpace: "nowrap" }}>
+      {t("checkIn.bikePickedByHand")}
+    </Text>
   );
 }
 

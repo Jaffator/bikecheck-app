@@ -14,6 +14,7 @@ import { homePeriodLabel } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { HomePeriod } from "@/features/stats/stats.types";
 import { useIsDesktop } from "@/layout/breakpoints";
+import { formatNumber } from "@/utils/number";
 
 // Worst first, and only the levels the app speaks at.
 const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
@@ -22,13 +23,16 @@ const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
   { level: "warning", key: "dashboard.warningCount" },
 ];
 
+const PHONE_GAP = 8;
+
 // Due looks at now, so only the Period's readings take it. The phone leaves it to the attention card
 // and fits three across; the switcher above names the Period, so the titles drop it.
 export function DashboardFigures({ period }: { period: HomePeriod }): ReactElement {
   const compact = !useIsDesktop();
 
   return (
-    <SimpleGrid cols={compact ? 3 : { base: 2, lg: 4 }} spacing={compact ? "sm" : "md"}>
+    // Phone gaps stay narrow, so each third keeps the width for its figure.
+    <SimpleGrid cols={compact ? 3 : { base: 2, lg: 4 }} spacing={compact ? PHONE_GAP : "md"}>
       <MetersFigure
         period={period}
         compact={compact}
@@ -81,7 +85,7 @@ function TimeFigure({ period, compact }: PeriodFigureProps): ReactElement {
 
   const rides = (distance?.bikes ?? []).reduce((sum, bike) => sum + bike.ride_count, 0);
   const minutes = (distance?.bikes ?? []).reduce((sum, bike) => sum + bike.time_min, 0);
-  const hours = new Intl.NumberFormat(i18n.language).format(Math.round(minutes / 60));
+  const hours = formatNumber(Math.round(minutes / 60), i18n.language);
   const average = rides === 0 ? "—" : formatDuration(minutes / rides);
 
   return (
@@ -105,7 +109,7 @@ function DueFigure(): ReactElement {
   return (
     <Figure
       title={t("dashboard.dueTitle")}
-      value={due === undefined ? null : new Intl.NumberFormat(i18n.language).format(due.length)}
+      value={due === undefined ? null : formatNumber(due.length, i18n.language)}
       detail={due === undefined ? "" : <DueLevels due={due} />}
       // The counts are figures; "All good" is words.
       detailFigure={due !== undefined && due.length > 0}

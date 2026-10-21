@@ -9,6 +9,7 @@ import {
   otherUnitReading,
 } from "@/features/setup/pressure";
 import type { TirePressureUnit } from "@/features/users/users.types";
+import { formatNumber } from "@/utils/number";
 import type { SeededRowName } from "@/i18n/useSeededName";
 import type { ProfileLeg, ProfileMountedPart, ProfileSetupProfile } from "./profile.types";
 
@@ -37,7 +38,7 @@ export interface GaugeReading {
 type Translate = (key: string) => string;
 
 function formatFigure(value: number, decimals: number, language: string): string {
-  return new Intl.NumberFormat(language, { maximumFractionDigits: decimals }).format(value);
+  return formatNumber(value, language, { maximumFractionDigits: decimals });
 }
 
 // The tyre under the pressure: what the owner called it, else what kind of part it is.

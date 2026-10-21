@@ -20,7 +20,7 @@ export function HomePeriodSwitcher({ value, onChange, fullWidth = false }: HomeP
       value={value}
       onChange={(next) => onChange(parseHomePeriod(next))}
       fullWidth={fullWidth}
-      radius="md"
+      radius="lg"
       withItemsBorders={false}
       // Darker than the theme's dim, so the bright chosen Period stands out.
       classNames={{

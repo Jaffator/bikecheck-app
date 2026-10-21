@@ -6,10 +6,9 @@ interface NamedBike {
   year: number | null;
 }
 
-// "Santa Cruz Hightower 2022" — everything but the brand is optional, so the
-// parts are joined rather than templated.
+// "Santa Cruz Hightower", no year; the model is optional, so the parts are joined.
 export function bikeTitle(bike: NamedBike): string {
-  return [bike.bike_brand, bike.bike_model, bike.year].filter(Boolean).join(" ");
+  return [bike.bike_brand, bike.bike_model].filter(Boolean).join(" ");
 }
 
 // "Enduro · 2022", the line under a name that leaves the year out.

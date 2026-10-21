@@ -15,6 +15,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useDismissPendingRide, usePendingRides, useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
+import { formatNumber } from "@/utils/number";
 import { GearLinkingSheet } from "./GearLinkingSheet";
 
 const PENDING_COLUMNS = "48px minmax(0, 1fr) 88px 80px 88px 128px";
@@ -121,7 +122,7 @@ function PendingSummary({ rides }: { rides: PendingRide[] }): ReactElement {
   const { t, i18n } = useTranslation();
   const km = rides.reduce((total, ride) => total + ride.distance_km, 0);
   const minutes = rides.reduce((total, ride) => total + ride.duration_min, 0);
-  const kmLabel = new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(km);
+  const kmLabel = formatNumber(km, i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   return (
     <Group gap={8} wrap="nowrap" fz={13} c="var(--color-text-dim)" className="tabular-nums">

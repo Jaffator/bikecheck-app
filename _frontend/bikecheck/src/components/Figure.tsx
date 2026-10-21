@@ -40,7 +40,7 @@ export function Figure({
   const valueLine = compact ? COMPACT_VALUE_LINE : VALUE_LINE;
   const padding = compact ? "sm" : "md";
   const body = (
-    <Stack gap={4}>
+    <Stack gap={5}>
       <Eyebrow>{title}</Eyebrow>
       {value === null ? (
         <Skeleton h={valueLine} w="50%" radius="sm" />
@@ -48,7 +48,7 @@ export function Figure({
         <Text
           className={valueFigure ? "tabular-nums" : undefined}
           // Compact sized so a five-digit total with its unit fits a third of a phone.
-          fz={compact ? 15 : 22}
+          fz={compact ? 13 : 22}
           fw={600}
           lh={`${String(valueLine)}px`}
           lts="var(--tracking-title)"
