@@ -1,8 +1,10 @@
 // Home's forecast card; the pace, the date and the curve are decided in StatsService.
 import { useState, type ReactElement, type ReactNode } from "react";
-import { Box, Group, Paper, Select, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Box, Group, Paper, Select, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
+import { ExplanationModal } from "@/components/ExplanationModal";
+import { dropdownProps, inputStyles, lightFieldLabel } from "@/features/add_bike_page/formStyles";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
@@ -12,7 +14,6 @@ import { attentionColor } from "@/features/service_tracking/attentionLevel";
 import { remainingLabel } from "@/features/service_tracking/intervalFigures";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
-import { useIsDesktop } from "@/layout/breakpoints";
 import { useWearForecast } from "../stats.queries";
 import type { WearForecastItem } from "../stats.types";
 import { forecastBikes, forecastFigure, forecastNote, forecastSelection, hasRides } from "../wearForecast";
@@ -92,18 +93,32 @@ export function WearForecastCard(): ReactElement {
   );
 }
 
+// How the date is reached sits behind the icon, so the title stands alone.
 function ForecastTitle(): ReactElement {
   const { t } = useTranslation();
+  const [explained, setExplained] = useState(false);
+  const title = t("stats.forecastTitle");
 
   return (
-    <Stack gap={2} style={{ minWidth: 0 }}>
+    <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
       <Text fz={16} fw={600} c="text.6" lineClamp={1}>
-        {t("stats.forecastTitle")}
+        {title}
       </Text>
-      <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
-        {t("stats.forecastSubtitle")}
-      </Text>
-    </Stack>
+      <ActionIcon
+        variant="transparent"
+        color="gray"
+        size="sm"
+        aria-label={t("stats.forecastInfo")}
+        onClick={() => setExplained(true)}
+        style={{ flexShrink: 0 }}
+      >
+        <Info size={14} color="var(--color-text-dim)" />
+      </ActionIcon>
+      <ExplanationModal
+        explained={explained ? { title, body: t("stats.forecastSubtitle") } : null}
+        onClose={() => setExplained(false)}
+      />
+    </Group>
   );
 }
 
@@ -126,9 +141,9 @@ function ForecastBikeSelect({ bikes, bikeId, onPick }: ForecastBikeSelectProps):
       }}
       data={bikes.map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
       allowDeselect={false}
-      aria-label={t("stats.forecastPickBike")}
+      label={t("stats.forecastBikeLabel")}
       leftSection={<BikeColorDot colorIndex={colorIndex} size={7} />}
-      styles={inputStyles}
+      styles={{ ...inputStyles, label: lightFieldLabel }}
       comboboxProps={{
         ...dropdownProps,
         withinPortal: false,
@@ -145,8 +160,6 @@ function ForecastHeader({ item, onOpen }: { item: WearForecastItem; onOpen: () =
   const color = attentionColor(item.percentage);
   const percentage = t("tracking.percentage", { value: item.percentage });
   const figure = forecastFigure(item, t, (date) => formatServiceDate(date, i18n.language));
-  // The phone sets the figure in the card title's type, so it does not outweigh it.
-  const compact = !useIsDesktop();
 
   return (
     <UnstyledButton
@@ -155,27 +168,20 @@ function ForecastHeader({ item, onOpen }: { item: WearForecastItem; onOpen: () =
       style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
     >
       <Stack gap={6}>
-        <Group gap={10} wrap="nowrap">
-          <Text
-            className="tabular-nums"
-            fz={compact ? 16 : 22}
-            fw={compact ? 600 : 700}
-            lh={compact ? "22px" : "28px"}
-            lts={compact ? undefined : "var(--tracking-title)"}
-            c="text.6"
-            style={{ flexShrink: 0 }}
-          >
+        <Group gap={10} wrap="nowrap" justify="space-between">
+          {/* Set in the card title's type on every screen, so it does not outweigh it. */}
+          <Text className="tabular-nums" fz={16} fw={600} lh="22px" c="text.6" style={{ flexShrink: 0 }}>
             {figure}
           </Text>
           <ForecastTag color={color} label={forecastNote(item, t, { brief: false })} />
         </Group>
-        <Text className="tabular-nums" fz={12} lh="16px" c="var(--color-text-dim)" lineClamp={1}>
-          {`${t("stats.forecastWear")} `}
-          <Text span inherit fw={600} c="text.6">
-            {percentage}
+        {/* Kept apart by space, not a separator dot. */}
+        <Group gap={12} wrap="nowrap" className="tabular-nums" fz={12} lh="16px" c="var(--color-text-dim)">
+          <Text span inherit style={{ flexShrink: 0 }}>{`${t("stats.forecastWear")} ${percentage}`}</Text>
+          <Text span inherit lineClamp={1}>
+            {remainingLabel(item, i18n.language, t)}
           </Text>
-          {` · ${remainingLabel(item, i18n.language, t)}`}
-        </Text>
+        </Group>
       </Stack>
     </UnstyledButton>
   );

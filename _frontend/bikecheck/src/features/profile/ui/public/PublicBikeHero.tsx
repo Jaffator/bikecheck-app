@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useSeededName } from "@/i18n/useSeededName";
+import { formatNumber } from "@/utils/number";
 import type { ProfileBike, ProfileBikeResponse, ProfileOwner } from "../../profile.types";
 import { publicGaragePath } from "../../publicProfile";
 import { Chips, Icon, PhotoBox, PublicAvatar, Reading } from "./PublicPieces";
@@ -84,7 +85,6 @@ export function PublicBikeHero({ handle, page, children }: PublicBikeHeroProps):
     .filter((chip): chip is string => chip !== null && chip !== "");
   const partsCount = bike.components === null ? null : bike.components.reduce((sum, group) => sum + group.parts.length, 0);
   const ctas = heroCtas(bike, t);
-  const format = new Intl.NumberFormat(i18n.language);
 
   return (
     <section className="pp-hairline relative overflow-hidden border-b">
@@ -105,10 +105,10 @@ export function PublicBikeHero({ handle, page, children }: PublicBikeHeroProps):
               {t("publicProfile.bikeIntro")}
             </p>
             <dl className="mt-7 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
-              <Reading label={t("publicProfile.figureBikeDistance")} value={format.format(bike.distance_km)} unit="km" />
+              <Reading label={t("publicProfile.figureBikeDistance")} value={formatNumber(bike.distance_km, i18n.language)} unit="km" />
               <Reading
                 label={t("publicProfile.figureRideTime")}
-                value={format.format(Math.round(bike.time_min / MINUTES_PER_HOUR))}
+                value={formatNumber(Math.round(bike.time_min / MINUTES_PER_HOUR), i18n.language)}
                 unit="h"
               />
               {partsCount !== null && <Reading label={t("publicProfile.figureComponents")} value={partsCount} />}

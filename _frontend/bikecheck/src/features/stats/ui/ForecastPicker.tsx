@@ -1,8 +1,9 @@
 // Picks the part the forecast draws, among one bike's; the list opens over the chart, so the card keeps its height.
-import type { CSSProperties, ReactElement } from "react";
-import { Combobox, Stack, Text, UnstyledButton, useCombobox } from "@mantine/core";
+import { useId, type CSSProperties, type ReactElement } from "react";
+import { Combobox, Input, Stack, Text, UnstyledButton, useCombobox } from "@mantine/core";
 import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { lightFieldLabel } from "@/features/add_bike_page/formStyles";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { trackedActionKey, trackedPartLabel } from "@/features/service_tracking/attentionLevel";
@@ -23,6 +24,7 @@ interface ForecastPickerProps {
 
 export function ForecastPicker({ options, selected, onPick }: ForecastPickerProps): ReactElement {
   const { t } = useTranslation();
+  const fieldId = useId();
   const combobox = useCombobox({
     onDropdownOpen: () => combobox.updateSelectedOptionIndex("active"),
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -36,59 +38,56 @@ export function ForecastPicker({ options, selected, onPick }: ForecastPickerProp
   }
 
   return (
-    // In place, not portalled: a portalled dropdown flickers in the Capacitor webview. Never flipped
-    // above the field, where the card would clip it.
-    <Combobox
-      store={combobox}
-      onOptionSubmit={submit}
-      withinPortal={false}
-      position="bottom"
-      middlewares={{ flip: false, shift: false }}
-      offset={6}
-      width="target"
-      radius={14}
-      dropdownPadding={0}
-      styles={{ dropdown: { overflow: "hidden" } }}
-    >
-      <Combobox.Target targetType="button">
-        <UnstyledButton
-          onClick={() => combobox.toggleDropdown()}
-          aria-label={t("stats.forecastPickPart")}
-          style={triggerStyle(combobox.dropdownOpened)}
-        >
-          <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-            <Text fz={15} fw={600} c="text.6" lineClamp={1}>
-              {trackedPartLabel(selected, t)}
-            </Text>
-            <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
+    <Input.Wrapper label={t("stats.forecastServiceLabel")} labelProps={{ htmlFor: fieldId }} styles={{ label: lightFieldLabel }}>
+      {/* In place, not portalled: a portalled dropdown flickers in the Capacitor webview. Never flipped
+          above the field, where the card would clip it. */}
+      <Combobox
+        store={combobox}
+        onOptionSubmit={submit}
+        withinPortal={false}
+        position="bottom"
+        middlewares={{ flip: false, shift: false }}
+        offset={6}
+        width="target"
+        radius={14}
+        dropdownPadding={0}
+        styles={{ dropdown: { overflow: "hidden" } }}
+      >
+        <Combobox.Target targetType="button">
+          <UnstyledButton
+            id={fieldId}
+            onClick={() => combobox.toggleDropdown()}
+            style={triggerStyle(combobox.dropdownOpened)}
+          >
+            <Text fz={14} fw={400} c="text.6" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
               {catalogueLabel(selected.action_i18n_key, selected.action_name, t)}
             </Text>
-          </Stack>
-          <Text className="tabular-nums" fz={11} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
-            {`${String(position)} / ${String(options.length)}`}
-          </Text>
-          <ChevronDown
-            size={16}
-            strokeWidth={2.4}
-            color={ACCENT}
-            style={{ flexShrink: 0, transform: combobox.dropdownOpened ? "rotate(180deg)" : undefined }}
-          />
-        </UnstyledButton>
-      </Combobox.Target>
-
-      <Combobox.Dropdown>
-        <Combobox.Options mah={ROW_HEIGHT * VISIBLE_ROWS} style={{ overflowY: "auto" }}>
-          {options.map((item, index) => (
-            <ForecastOption
-              key={trackedActionKey(item)}
-              item={item}
-              active={trackedActionKey(item) === selectedKey}
-              separated={index > 0}
+            <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
+              {`${String(position)} / ${String(options.length)}`}
+            </Text>
+            <ChevronDown
+              size={16}
+              strokeWidth={2.4}
+              color={ACCENT}
+              style={{ flexShrink: 0, transform: combobox.dropdownOpened ? "rotate(180deg)" : undefined }}
             />
-          ))}
-        </Combobox.Options>
-      </Combobox.Dropdown>
-    </Combobox>
+          </UnstyledButton>
+        </Combobox.Target>
+  
+        <Combobox.Dropdown>
+          <Combobox.Options mah={ROW_HEIGHT * VISIBLE_ROWS} style={{ overflowY: "auto" }}>
+            {options.map((item, index) => (
+              <ForecastOption
+                key={trackedActionKey(item)}
+                item={item}
+                active={trackedActionKey(item) === selectedKey}
+                separated={index > 0}
+              />
+            ))}
+          </Combobox.Options>
+        </Combobox.Dropdown>
+      </Combobox>
+    </Input.Wrapper>
   );
 }
 
@@ -97,9 +96,10 @@ const TRIGGER_STYLE: CSSProperties = {
   alignItems: "center",
   gap: 12,
   width: "100%",
-  height: 56,
-  padding: "0 14px",
-  borderRadius: 12,
+  // Matches the bike select above it.
+  height: "2.4rem",
+  padding: "0 12px",
+  borderRadius: "0.6rem",
   border: "1px solid var(--mantine-color-inputs-5)",
   backgroundColor: "var(--mantine-color-cards-7)",
 };
@@ -137,10 +137,10 @@ function ForecastOption({ item, active, separated }: ForecastOptionProps): React
       <WearArc percentage={item.percentage} />
       <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
         <Text fz={14} fw={600} c="text.6" lineClamp={1}>
-          {trackedPartLabel(item, t)}
+          {catalogueLabel(item.action_i18n_key, item.action_name, t)}
         </Text>
         <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
-          {catalogueLabel(item.action_i18n_key, item.action_name, t)}
+          {trackedPartLabel(item, t)}
         </Text>
       </Stack>
       <Stack gap={2} align="flex-end" style={{ flexShrink: 0 }}>

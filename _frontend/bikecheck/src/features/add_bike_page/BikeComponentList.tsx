@@ -108,14 +108,12 @@ function SplitToggle({ split, label, onToggle }: { split: boolean; label: string
         flexShrink: 0,
         padding: "0.25rem 0.5rem",
         borderRadius: "var(--mantine-radius-sm)",
-        backgroundColor: split
-          ? "color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)"
-          : "var(--mantine-color-cards-5)",
-        color: split ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-8)",
+        backgroundColor: "var(--mantine-color-cards-5)",
+        color: "var(--mantine-color-text-8)",
         fontSize: "0.7rem",
       }}
     >
-      {split ? <Merge size={12} /> : <Split size={12} />}
+      {split ? <Split size={12} /> : <Merge size={12} />}
       {label}
     </UnstyledButton>
   );
@@ -339,7 +337,7 @@ export function BikeComponentList({
                           {component.has_position && !disabled && (
                             <SplitToggle
                               split={split}
-                              label={split ? t("addBike.mergeSides") : t("addBike.splitSides")}
+                              label={split ? t("addBike.splitSides") : t("addBike.mergeSides")}
                               onToggle={() => onToggleSplit(typeId)}
                             />
                           )}

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useSeededName } from "@/i18n/useSeededName";
+import { formatNumber } from "@/utils/number";
 import { bikeStatsLine } from "../../profileFormat";
 import { publicBikePath } from "../../publicProfile";
 import type { ProfileBikeCard, ProfileGarage, ProfileOwner, PublicProfileGarageResponse } from "../../profile.types";
@@ -53,7 +54,7 @@ function GarageHero({ owner, garage }: GarageHeroProps): ReactElement {
           <Reading label={t("publicProfile.figureBikes")} value={totals.bikes} />
           <Reading
             label={t("publicProfile.figureDistance")}
-            value={new Intl.NumberFormat(i18n.language).format(totals.distance_km)}
+            value={formatNumber(totals.distance_km, i18n.language)}
             unit="km"
           />
           {totals.components !== null && <Reading label={t("publicProfile.figureComponents")} value={totals.components} />}

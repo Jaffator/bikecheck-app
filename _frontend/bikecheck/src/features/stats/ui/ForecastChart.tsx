@@ -141,7 +141,7 @@ function TodayDot({ cx, cy, color, label, anchor }: TodayDotProps): ReactElement
         y={cy - 9}
         textAnchor={anchor}
         fontSize={11}
-        fontWeight={600}
+        fontWeight={400}
         fill="var(--mantine-color-text-6)"
         style={{ fontVariantNumeric: "tabular-nums" }}
       >
@@ -173,7 +173,7 @@ function EdgeTick({ language, emphasizeLast, x, y, index, payload }: EdgeTickPro
       dy={14}
       textAnchor={index === 0 ? "start" : "end"}
       fontSize={11}
-      fontWeight={emphasized ? 600 : 400}
+      fontWeight={400}
       fill={emphasized ? "var(--mantine-color-text-6)" : "currentColor"}
       // The date is uppercase, so it takes the label tracking.
       style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "var(--tracking-label)" }}
@@ -201,7 +201,7 @@ function LegendItem({ label, swatch }: { label: string; swatch: { borderTop: str
   return (
     <Group gap={6} wrap="nowrap">
       <Box w={14} style={swatch} />
-      <Text fz={11} lh="14px" c="var(--color-text-dim)">
+      <Text fz={12} lh="16px" c="var(--color-text-dim)">
         {label}
       </Text>
     </Group>

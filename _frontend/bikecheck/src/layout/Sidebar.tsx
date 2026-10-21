@@ -4,7 +4,7 @@ import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { AppShell, Avatar, Box, Button, Divider, Menu, Stack, Text } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Bell, ChevronDown, MessageCircleMore, Plus, Users } from "lucide-react";
+import { Bell, MessageCircleMore, Plus, Users } from "lucide-react";
 import Logo from "@/assets/icons/bikecheck/Logo_white.svg?react";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
@@ -13,8 +13,8 @@ import { useMyProfile } from "@/features/profile/profile.queries";
 import { HeaderCountBadge } from "./HeaderCountBadge";
 import { ADD_BIKE, ADD_SERVICE, NAV_ITEMS, TAB_STROKE, TAB_STROKE_ACTIVE, isActivePath } from "./navItems";
 
-// The same mark the mobile header wears on Home, at the same size.
-const LOGO_HEIGHT = 20;
+// Larger than the mobile header's 20: the column has room for it.
+const LOGO_HEIGHT = 26;
 const ICON_SIZE = 20;
 
 const SAFE_TOP = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
@@ -58,14 +58,7 @@ function NewMenu(): ReactElement {
   return (
     <Menu position="bottom-start" width="target" radius="md" offset={6}>
       <Menu.Target>
-        <Button
-          fullWidth
-          color="primary.6"
-          c="textDark.6"
-          radius="md"
-          leftSection={<Plus size={18} />}
-          rightSection={<ChevronDown size={16} />}
-        >
+        <Button fullWidth color="primary.6" c="textDark.6" radius="md" leftSection={<Plus size={18} />}>
           {t("nav.new")}
         </Button>
       </Menu.Target>
@@ -111,10 +104,13 @@ export function Sidebar(): ReactElement {
     >
       <AppShell.Section>
         {/* The header's height, so the mark sits level with the page title beside it. */}
-        <Box h="3rem" px="xs" className="flex items-center">
+        <Box h="3rem" px="xs" mb="sm" className="flex items-center">
           <Logo style={{ height: LOGO_HEIGHT, width: "auto" }} />
         </Box>
-        <NewMenu />
+        {/* Inset to the logo's edge, so the button reads narrower than the rows. */}
+        <Box px="xs">
+          <NewMenu />
+        </Box>
       </AppShell.Section>
 
       <AppShell.Section grow mt="md" style={{ overflowY: "auto" }}>

@@ -1,5 +1,6 @@
 // The numbers behind a reading, in the unit it is taken in. One place, because the figure on
 // screen and the figure the interval field is typed in have to speak the same unit.
+import { formatNumber } from "@/utils/number";
 import type { TrackedAction, WearAxis } from "./tracking.types";
 
 // The unit one axis is read and typed in. Minutes read as hours, the unit the rest of the
@@ -20,10 +21,10 @@ export function fromAxisUnit(axis: WearAxis, value: number): number {
   return axis === "min" ? value * 60 : value;
 }
 
-// One figure written out, with its thousands grouped the way the owner's language groups
-// them. Without the unit, so a pair of figures can share one.
+// One figure written out, with its thousands space-grouped. Without the unit, so a pair of
+// figures can share one.
 export function axisValue(axis: WearAxis, value: number, language: string): string {
-  return new Intl.NumberFormat(language).format(inAxisUnit(axis, value));
+  return formatNumber(inAxisUnit(axis, value), language);
 }
 
 // The Service Interval in force before any Extension: the owner's own where they set one.

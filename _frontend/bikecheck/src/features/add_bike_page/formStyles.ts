@@ -12,6 +12,14 @@ export const fieldLabel = {
   fontFamily: "var(--font-sans)",
 } as React.CSSProperties;
 
+// A quieter label, for a field whose value should carry the card.
+export const lightFieldLabel = {
+  ...fieldLabel,
+  color: "var(--color-text-dim)",
+  fontSize: 12,
+  fontWeight: 400,
+} as React.CSSProperties;
+
 // Shared by every field in the add-bike wizard so the steps look like one form.
 export const inputStyles = {
   label: fieldLabel,

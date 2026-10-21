@@ -28,6 +28,25 @@ prometheus.scrape "containers" {
   forward_to      = [prometheus.relabel.instance.receiver]
 }
 
+// ---------- Uptime: the bike scraper on the home Pi (ADR 0042) ----------
+// Probed from here, so a 0 covers the Pi, its Tailscale link and the container alike.
+prometheus.exporter.blackbox "scraper" {
+  config = "{ modules: { http_2xx: { prober: http, timeout: 10s } } }"
+
+  target {
+    name    = "scraper"
+    address = sys.env("SCRAPER_SERVICE_URL") + "/health"
+    module  = "http_2xx"
+  }
+}
+
+prometheus.scrape "scraper" {
+  targets         = prometheus.exporter.blackbox.scraper.targets
+  job_name        = "integrations/blackbox"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.instance.receiver]
+}
+
 // One stable instance name, so dashboards don't split by the container's hostname.
 prometheus.relabel "instance" {
   forward_to = [prometheus.remote_write.cloud.receiver]

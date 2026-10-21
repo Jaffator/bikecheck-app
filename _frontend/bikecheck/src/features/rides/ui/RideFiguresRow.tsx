@@ -9,6 +9,7 @@ import { formatDuration } from "@/features/rides/rideDuration";
 import type { RideFigures } from "@/features/rides/rides.types";
 import { distanceChange, periodLabel, previousMonthNumber } from "@/features/rides/ridesTable";
 import type { HomePeriod } from "@/features/stats/stats.types";
+import { formatNumber } from "@/utils/number";
 
 interface RideFiguresRowProps {
   // Undefined while the first page loads.
@@ -18,7 +19,7 @@ interface RideFiguresRowProps {
 
 export function RideFiguresRow({ figures, period }: RideFiguresRowProps): ReactElement {
   const { t, i18n } = useTranslation();
-  const number = (value: number): string => new Intl.NumberFormat(i18n.language).format(value);
+  const number = (value: number): string => formatNumber(value, i18n.language);
   const label = periodLabel(period, i18n.language);
   const distanceTitle = label === null ? t("rides.statDistance") : `${label} · ${t("rides.statDistance")}`;
 

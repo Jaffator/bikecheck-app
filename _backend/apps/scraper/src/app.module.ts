@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import pino from 'pino';
 import { BikePageModule } from './bike-page/bike-page.module';
+import { HealthController } from './health/health.controller';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
 const isProductionEnv = process.env.NODE_ENV === 'production';
@@ -56,5 +57,6 @@ const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http:/
     }),
     BikePageModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

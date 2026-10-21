@@ -12,6 +12,7 @@ import { homePeriodLabel, homePeriodServices } from "@/features/stats/homePeriod
 import type { HomePeriod } from "@/features/stats/stats.types";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { formatCost } from "@/utils/money";
+import { formatNumber } from "@/utils/number";
 
 interface ServiceFiguresRowProps {
   // Null is every bike.
@@ -24,7 +25,7 @@ export function ServiceFiguresRow({ bikeId, period }: ServiceFiguresRowProps): R
   const { data: user } = useCurrentUser();
   const { data: totals } = useHistoryTotals(bikeId ?? undefined, homePeriodServices(period));
   const periodName = homePeriodLabel(period, i18n.language, t);
-  const number = (value: number): string => new Intl.NumberFormat(i18n.language).format(value);
+  const number = (value: number): string => formatNumber(value, i18n.language);
   const cost = (value: number): string => formatCost(value, user?.currency ?? null, i18n.language);
 
   return (

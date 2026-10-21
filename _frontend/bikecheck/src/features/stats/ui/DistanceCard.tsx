@@ -11,6 +11,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
 import { useIsDesktop } from "@/layout/breakpoints";
+import { formatNumber } from "@/utils/number";
 import { runningDistance, servedYear, type DistanceStep, type RunningDistance } from "../distanceDays";
 import { homePeriodLabel } from "../homePeriod";
 import { useDistance } from "../stats.queries";
@@ -80,7 +81,6 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
 function DistanceChart({ distance, period }: { distance: Distance; period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const isDesktop = useIsDesktop();
-  const kmFormat = new Intl.NumberFormat(i18n.language);
   const line = runningDistance(distance, period);
   const lastIndex = line.starts.length - 1;
 
@@ -115,12 +115,12 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
       yAxisProps={{
         width: "auto",
         tick: { fontSize: 12, fill: "currentColor" },
-        tickFormatter: (km: number) => kmFormat.format(km),
+        tickFormatter: (km: number) => formatNumber(km, i18n.language),
       }}
       // Room on the right for each line's total; all time runs to six digits.
       lineChartProps={{ margin: { top: 8, right: 60 } }}
       lineProps={(item) => ({
-        label: <EndLabel lastIndex={lastIndex} lineColor={item.color ?? ""} kmFormat={kmFormat} />,
+        label: <EndLabel lastIndex={lastIndex} lineColor={item.color ?? ""} language={i18n.language} />,
       })}
       tooltipProps={{
         labelFormatter: (start: ReactNode) => pointLabel(line.step, String(start), i18n.language, t),
@@ -169,19 +169,19 @@ function monthTicks(year: number, weeks: string[]): string[] {
 interface EndLabelProps {
   lastIndex: number;
   lineColor: string;
-  kmFormat: Intl.NumberFormat;
+  language: string;
   x?: number | string;
   y?: number | string;
   value?: number | string;
   index?: number;
 }
 
-function EndLabel({ lastIndex, lineColor, kmFormat, x, y, value, index }: EndLabelProps): ReactElement | null {
+function EndLabel({ lastIndex, lineColor, language, x, y, value, index }: EndLabelProps): ReactElement | null {
   if (index !== lastIndex || value === undefined) return null;
 
   return (
     <text x={Number(x) + 6} y={Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
-      {kmFormat.format(Number(value))}
+      {formatNumber(Number(value), language)}
     </text>
   );
 }
@@ -189,7 +189,6 @@ function EndLabel({ lastIndex, lineColor, kmFormat, x, y, value, index }: EndLab
 // Desktop prints each total again: line ends that finish close together overlap.
 function Legend({ bikes, withTotals }: { bikes: DistanceBike[]; withTotals: boolean }): ReactElement {
   const { i18n } = useTranslation();
-  const kmFormat = new Intl.NumberFormat(i18n.language);
 
   return (
     <Group gap={withTotals ? "md" : "sm"} style={{ rowGap: 4 }}>
@@ -201,7 +200,7 @@ function Legend({ bikes, withTotals }: { bikes: DistanceBike[]; withTotals: bool
           </Text>
           {withTotals && (
             <Text className="tabular-nums" fz={13} c="text.6">
-              {kmFormat.format(bike.total_km)}
+              {formatNumber(bike.total_km, i18n.language)}
             </Text>
           )}
         </Group>

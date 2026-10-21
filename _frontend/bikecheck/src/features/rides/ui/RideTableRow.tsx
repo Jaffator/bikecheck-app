@@ -12,6 +12,7 @@ import { CHECK_IN_COLOR, symptomKey } from "@/features/rides/checkIn";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { Ride, RideCheckIn } from "@/features/rides/rides.types";
 import { woreOffSummary } from "@/features/rides/woreOff";
+import { formatNumber } from "@/utils/number";
 
 export const RIDE_TABLE_COLUMNS = "minmax(0, 2fr) minmax(0, 1.1fr) 56px 64px 64px minmax(0, 1.4fr) 104px";
 // The table draws the route at 52 px, about the phone card's size.
@@ -29,10 +30,7 @@ interface RideTableRowProps {
 export function RideTableRow({ ride, colorIndex, onOpen }: RideTableRowProps): ReactElement {
   const { t, i18n } = useTranslation();
   const figure = (value: number, digits = 0): string =>
-    new Intl.NumberFormat(i18n.language, {
-      minimumFractionDigits: digits,
-      maximumFractionDigits: digits,
-    }).format(value);
+    formatNumber(value, i18n.language, { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
   return (
     <Box

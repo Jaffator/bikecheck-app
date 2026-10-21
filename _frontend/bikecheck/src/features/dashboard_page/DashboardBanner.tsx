@@ -114,7 +114,6 @@ export function DashboardBannerPhone(): ReactElement {
                 key="pair"
                 icon={Link2Off}
                 title={t("strava.unpairedBikes", { count: problem.bikes.length })}
-                body={t("dashboard.bannerNotCountedShort")}
                 onOpen={() => setPairing(true)}
               />
             );
@@ -172,7 +171,8 @@ function Banner({ icon: Icon, title, body, action, onAction, loading = false }: 
 interface PhoneBannerProps {
   icon: LucideIcon;
   title: string;
-  body: string;
+  // Left out, the banner is its title alone.
+  body?: string;
   onOpen: () => void;
 }
 
@@ -190,9 +190,11 @@ function PhoneBanner({ icon: Icon, title, body, onOpen }: PhoneBannerProps): Rea
           <Text fz={14} fw={600} c="text.6" className="tabular-nums" lineClamp={1}>
             {title}
           </Text>
-          <Text fz={12} c="text.7" lineClamp={1}>
-            {body}
-          </Text>
+          {body !== undefined && (
+            <Text fz={12} c="text.7" lineClamp={1}>
+              {body}
+            </Text>
+          )}
         </Stack>
         <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
       </Group>

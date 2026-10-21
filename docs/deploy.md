@@ -103,6 +103,8 @@ docker compose --env-file .env.pi -f docker-compose.pi.yml pull
 docker compose --env-file .env.pi -f docker-compose.pi.yml up -d
 ```
 
+**Uptime**: the server's Alloy probes `SCRAPER_SERVICE_URL/health` every minute. In Grafana, `probe_success{job="integrations/blackbox"}` is 1 while the Pi, its Tailscale link and the container are up, and 0 otherwise.
+
 **Checking** from the server: `curl -s -X POST http://<pi-tailscale-ip>:3003/bike-cards -H "x-internal-secret: <secret>" -H "Content-Type: application/json" -d '{"url":"https://99spokes.com/en-EU/bikes?q=canyon"}'` prints cards. Logs on the Pi: `docker compose --env-file .env.pi -f docker-compose.pi.yml logs -f scraper`.
 
 **One-time setup** on the Pi, as root:

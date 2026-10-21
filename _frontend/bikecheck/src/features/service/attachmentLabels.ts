@@ -1,4 +1,5 @@
 // How an attachment names itself before it is opened.
+import { formatNumber } from "@/utils/number";
 import type { ServiceAttachment } from "./service.types";
 
 const PDF_TYPE = "application/pdf";
@@ -18,10 +19,10 @@ export function attachmentTypeLabel(attachment: ServiceAttachment, translate: (k
 export function formatFileSize(bytes: number, language: string): string {
   if (bytes < BYTES_PER_MB) {
     const kilobytes = Math.max(1, Math.round(bytes / BYTES_PER_KB));
-    return `${new Intl.NumberFormat(language).format(kilobytes)} kB`;
+    return `${formatNumber(kilobytes, language)} kB`;
   }
   const megabytes = bytes / BYTES_PER_MB;
-  return `${new Intl.NumberFormat(language, { maximumFractionDigits: 1 }).format(megabytes)} MB`;
+  return `${formatNumber(megabytes, language, { maximumFractionDigits: 1 })} MB`;
 }
 
 // The line under the file name. Attachments stored before the size was recorded carry

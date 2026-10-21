@@ -23,6 +23,7 @@ import { SetupShortcut } from "@/features/setup/ui/SetupShortcut";
 import { homePeriodLabel } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { DistanceBike, HomePeriod } from "@/features/stats/stats.types";
+import { formatNumber } from "@/utils/number";
 import { BikeThumb } from "./BikeThumb";
 
 const BIKE_COLUMNS = "56px minmax(0, 1.6fr) 112px 88px minmax(0, 1.4fr) 96px 34px 16px";
@@ -42,7 +43,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
   const rows = [...(bikes ?? [])].sort(
     (left, right) => (worstOf(right)?.percentage ?? 0) - (worstOf(left)?.percentage ?? 0),
   );
-  const number = (value: number): string => new Intl.NumberFormat(i18n.language).format(Math.round(value));
+  const number = (value: number): string => formatNumber(Math.round(value), i18n.language);
   // A bike with no ride in the Period is not listed, so it reads 0 km and 0 h.
   const ridden = (bike: Bike): DistanceBike | undefined => distance?.bikes.find((row) => row.bike_id === bike.id);
 

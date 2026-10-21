@@ -1,6 +1,7 @@
 // How a Report writes its own figures. A document is read in the language and currency it
 // was frozen in, never the reader's — so nothing here takes the app's locale.
 import { formatCost } from "@/utils/money";
+import { formatNumber } from "@/utils/number";
 import type { ReportBike, ReportComponent, ReportPeriod, ReportService } from "./report.types";
 import type { ReportHeadings } from "./reportHeadings";
 
@@ -27,9 +28,9 @@ export function reportCost(amount: number, snapshot: { currency: string; languag
   return formatCost(amount, snapshot.currency, snapshot.language);
 }
 
-// A distance the document's language writes with its own grouping.
+// A distance with the document's decimal mark and the app's space-grouped thousands.
 export function reportNumber(value: number, language: string): string {
-  return new Intl.NumberFormat(language).format(value);
+  return formatNumber(value, language);
 }
 
 // Ride time as the document reports it: whole hours, which is the resolution a reader of a

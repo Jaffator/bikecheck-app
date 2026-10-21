@@ -1,3 +1,5 @@
+import { formatNumber } from "./number";
+
 // The currency a user has not chosen one for. Most of the app's users are Czech.
 export const FALLBACK_CURRENCY = "CZK";
 
@@ -8,11 +10,11 @@ export const SUPPORTED_CURRENCIES = ["CZK", "EUR"];
 // Renders a cost in the user's own currency, in the format their language writes it.
 // Whole units only: a service costs 2 400, not 2 400.00.
 export function formatCost(amount: number, currency: string | null, language: string): string {
-  return new Intl.NumberFormat(language, {
+  return formatNumber(amount, language, {
     style: "currency",
     currency: currency ?? FALLBACK_CURRENCY,
     maximumFractionDigits: 0,
-  }).format(amount);
+  });
 }
 
 // Just the currency mark a price is written with - "Kč", "€" - taken from the same

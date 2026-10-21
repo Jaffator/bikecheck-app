@@ -81,7 +81,7 @@ export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProp
                   const description = readEntry(componentEntries, typeId, position).description.trim();
                   const side =
                     position === "none" ? "" : ` (${t(`addBike.position${position === "front" ? "Front" : "Rear"}`)})`;
-                  const value = absent ? t("addBike.partAbsent") : description || notSpecified;
+                  const value = absent ? t("addBike.partAbsentUndo") : description || notSpecified;
                   return (
                     <Group key={`${String(typeId)}:${position}`} gap={12} wrap="nowrap" align="flex-start" py={4}>
                       <Text fz={13} c="var(--color-text-dim)" style={{ flex: "0 0 9rem" }}>
