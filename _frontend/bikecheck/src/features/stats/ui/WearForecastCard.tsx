@@ -1,10 +1,12 @@
 // Home's forecast card; the pace, the date and the curve are decided in StatsService.
 import { useState, type ReactElement, type ReactNode } from "react";
-import { Box, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, Paper, Select, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles";
 import { useBikes } from "@/features/bikes/bikes.queries";
+import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeFilterChip } from "@/features/bikes/ui/BikeFilterChip";
+import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { formatServiceDate } from "@/features/service/serviceDates";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
 import { remainingLabel } from "@/features/service_tracking/intervalFigures";
@@ -37,7 +39,6 @@ export function WearForecastCard(): ReactElement {
   const { items } = forecast;
   const selection = forecastSelection(items, chosenBikeId, chosenKey);
   const bikes = forecastBikes(garage ?? [], items);
-  const bikeId = selection?.selected.bike_id;
 
   return (
     <>
@@ -52,21 +53,14 @@ export function WearForecastCard(): ReactElement {
           <>
             {/* One bike is not a choice worth offering. */}
             {bikes.length > 1 && (
-              <Group gap={8} wrap="wrap">
-                {bikes.map((bike) => (
-                  <BikeFilterChip
-                    key={bike.id}
-                    label={bikeTitle(bike)}
-                    colorIndex={bike.color_index}
-                    active={bike.id === bikeId}
-                    onClick={() => {
-                      if (bike.id === bikeId) return;
-                      setChosenBikeId(bike.id);
-                      setChosenKey(null);
-                    }}
-                  />
-                ))}
-              </Group>
+              <ForecastBikeSelect
+                bikes={bikes}
+                bikeId={selection.selected.bike_id}
+                onPick={(id) => {
+                  setChosenBikeId(id);
+                  setChosenKey(null);
+                }}
+              />
             )}
             <ForecastPicker
               options={selection.options}
@@ -102,14 +96,46 @@ function ForecastTitle(): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
+    <Stack gap={2} style={{ minWidth: 0 }}>
       <Text fz={16} fw={600} c="text.6" lineClamp={1}>
         {t("stats.forecastTitle")}
       </Text>
-      <Text fz={11} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
+      <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
         {t("stats.forecastSubtitle")}
       </Text>
-    </Group>
+    </Stack>
+  );
+}
+
+interface ForecastBikeSelectProps {
+  bikes: ListedBike[];
+  bikeId: number;
+  onPick: (bikeId: number) => void;
+}
+
+// In place like the part picker: a portalled list flickers in the Capacitor webview.
+function ForecastBikeSelect({ bikes, bikeId, onPick }: ForecastBikeSelectProps): ReactElement {
+  const { t } = useTranslation();
+  const colorIndex = bikes.find((bike) => bike.id === bikeId)?.color_index ?? null;
+
+  return (
+    <Select
+      value={String(bikeId)}
+      onChange={(next) => {
+        if (next !== null) onPick(Number(next));
+      }}
+      data={bikes.map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
+      allowDeselect={false}
+      aria-label={t("stats.forecastPickBike")}
+      leftSection={<BikeColorDot colorIndex={colorIndex} size={7} />}
+      styles={inputStyles}
+      comboboxProps={{
+        ...dropdownProps,
+        withinPortal: false,
+        position: "bottom",
+        middlewares: { flip: false, shift: false },
+      }}
+    />
   );
 }
 

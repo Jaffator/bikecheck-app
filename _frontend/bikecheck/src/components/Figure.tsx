@@ -47,7 +47,8 @@ export function Figure({
       ) : (
         <Text
           className={valueFigure ? "tabular-nums" : undefined}
-          fz={compact ? 18 : 22}
+          // Compact sized so a five-digit total with its unit fits a third of a phone.
+          fz={compact ? 15 : 22}
           fw={600}
           lh={`${String(valueLine)}px`}
           lts="var(--tracking-title)"
