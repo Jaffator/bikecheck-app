@@ -1,7 +1,7 @@
 // The garage at a glance under the work the dashboard leads with: one narrow row per bike,
-// its condition on the right, and a tap into the bike. A component only talks to hooks.
+// worst-off first, and a tap into the bike. A component only talks to hooks.
 import type { ReactElement } from "react";
-import { Box, Group, Image, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { Box, Group, Image, Paper, Stack, Text } from "@mantine/core";
 import { ChevronRight, Gauge } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { onPanelRowKey } from "@/components/panelRows";
@@ -11,7 +11,6 @@ import { worstAction } from "@/features/service_tracking/attentionLevel";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 import type { Bike } from "@/features/bikes/bikes.types";
-import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
 import { SetupShortcut } from "@/features/setup/ui/SetupShortcut";
 
 // Everything the garage tracks, quiet readings included - one request for the whole list,
@@ -22,20 +21,14 @@ const EVERY_READING = 0;
 const THUMB_WIDTH = 72;
 const THUMB_HEIGHT = 36;
 
-// How wide the badge's placeholder runs while the readings are in flight. Near enough to
-// the pill it stands in for that the row does not shift when it arrives.
-const BADGE_PLACEHOLDER_WIDTH = 68;
-
 interface BikeRowProps {
   bike: Bike;
-  // Null while the readings are still loading - an empty list would read "very good".
-  actions: GarageTrackedAction[] | null;
   // Every row but the first wears the hairline above it.
   divided: boolean;
   onOpen: () => void;
 }
 
-function BikeRow({ bike, actions, divided, onOpen }: BikeRowProps): ReactElement {
+function BikeRow({ bike, divided, onOpen }: BikeRowProps): ReactElement {
   const title = bikeTitle(bike);
 
   return (
@@ -79,11 +72,6 @@ function BikeRow({ bike, actions, divided, onOpen }: BikeRowProps): ReactElement
           )}
         </Stack>
 
-        {actions === null ? (
-          <Skeleton h={18} w={BADGE_PLACEHOLDER_WIDTH} radius="xl" style={{ flexShrink: 0 }} />
-        ) : (
-          <HealthBadge actions={actions} compact />
-        )}
         <SetupShortcut bikeId={bike.id} />
         <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
       </Group>
@@ -91,7 +79,7 @@ function BikeRow({ bike, actions, divided, onOpen }: BikeRowProps): ReactElement
   );
 }
 
-// The garage read once and split per bike, so each row reads its own condition.
+// The garage read once and split per bike, so the rows can sort by condition.
 function groupByBike(actions: GarageTrackedAction[]): Map<number, GarageTrackedAction[]> {
   const groups = new Map<number, GarageTrackedAction[]>();
   for (const action of actions) {
@@ -131,7 +119,6 @@ export function BikeHealthList(): ReactElement | null {
         <BikeRow
           key={bike.id}
           bike={bike}
-          actions={groups ? (groups.get(bike.id) ?? []) : null}
           divided={index > 0}
           onOpen={() => navigate(`/bikes/${String(bike.id)}`)}
         />

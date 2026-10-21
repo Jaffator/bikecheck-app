@@ -114,7 +114,7 @@ interface ForecastOptionProps {
   separated: boolean;
 }
 
-// The bike is left out: the chip above already says it.
+// The bike is left out: the bike select above already says it.
 function ForecastOption({ item, active, separated }: ForecastOptionProps): ReactElement {
   const { t, i18n } = useTranslation();
   const figure = forecastFigure(item, t, (date) => formatServiceDateShort(date, i18n.language));

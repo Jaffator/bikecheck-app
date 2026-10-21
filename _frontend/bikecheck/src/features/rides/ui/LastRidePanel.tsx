@@ -17,6 +17,7 @@ import { CHECK_IN_COLOR } from "@/features/rides/checkIn";
 import { useRides, useSaveRideCheckIn } from "@/features/rides/rides.queries";
 import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { pattern } from "@/features/service/serviceDates";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { CheckInMark } from "./CheckInMark";
 import { RideDetailSheet } from "./RideDetailSheet";
@@ -26,6 +27,10 @@ const THUMBNAIL_SIZE = 96;
 const THUMBNAIL_STYLE: CSSProperties = { flexShrink: 0, overflow: "hidden", borderRadius: "var(--mantine-radius-md)" };
 // A finger needs about 44 px.
 const ANSWER_HEIGHT = 44;
+const RIDE_DAY_BY_LANGUAGE: Record<string, string> = {
+  cs: "dddd D. M. HH:mm",
+  en: "dddd D MMM HH:mm",
+};
 
 export function LastRidePanel(): ReactElement {
   const { t } = useTranslation();
@@ -91,7 +96,7 @@ function FullRide({ ride, colorIndex }: RideBodyProps): ReactElement {
       {/* A picture, so the click goes to the card and opens the ride. */}
       <RideMap polyline={ride.summary_polyline} height={150} interactive={false} />
       <RideHeading ride={ride} colorIndex={colorIndex} dateFormat="D. M. YYYY · HH:mm" />
-      <RideMetrics ride={ride} short={false} />
+      <RideMetrics ride={ride} compact={false} />
       <WoreOff lines={ride.wore_off} />
     </Stack>
   );
@@ -108,8 +113,8 @@ function CompactRide({ ride, colorIndex }: RideBodyProps): ReactElement {
           <RideMap polyline={ride.summary_polyline} height={THUMBNAIL_SIZE} interactive={false} thumbnail />
         </Box>
         <Stack justify="space-between" gap="xs" style={{ flex: 1, minWidth: 0 }}>
-          <RideHeading ride={ride} colorIndex={colorIndex} dateFormat="D. M. · HH:mm" />
-          <RideMetrics ride={ride} short />
+          <CompactRideHeading ride={ride} colorIndex={colorIndex} />
+          <RideMetrics ride={ride} compact />
         </Stack>
       </Group>
       {/* A quiet pointer only; no count, since wore_off carries at most three lines. */}
@@ -149,20 +154,52 @@ function RideHeading({ ride, colorIndex, dateFormat }: RideBodyProps & { dateFor
   );
 }
 
-// Beside the phone's thumbnail a column is about 70 px, so the long labels go short.
-function RideMetrics({ ride, short }: { ride: Ride; short: boolean }): ReactElement {
-  const { t } = useTranslation();
+// The phone's heading: the name may take two lines, the day and the bike a quiet line each.
+function CompactRideHeading({ ride, colorIndex }: RideBodyProps): ReactElement {
+  const { t, i18n } = useTranslation();
 
   return (
-    <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: short ? 6 : 8 }}>
+    <Stack gap={2}>
+      <Text fz={15} fw={600} lh={1.3} c="text.6" lineClamp={2}>
+        {ride.name}
+      </Text>
+      {ride.started_at !== null && (
+        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
+          {dayjs(ride.started_at).format(pattern(RIDE_DAY_BY_LANGUAGE, i18n.language))}
+        </Text>
+      )}
+      <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+        <BikeColorDot colorIndex={colorIndex} size={6} />
+        <Text fz={12} c="var(--color-text-dim)" truncate style={{ minWidth: 0 }}>
+          {ride.bike_name ?? t("rides.unknownBike")}
+        </Text>
+        <CheckInMark checkIn={ride.check_in} size={12} />
+      </Group>
+    </Stack>
+  );
+}
+
+// Beside the phone's thumbnail a column is about 70 px: no room for labels, and the units tell the figures apart.
+function RideMetrics({ ride, compact }: { ride: Ride; compact: boolean }): ReactElement {
+  const { t } = useTranslation();
+  const size = compact ? 14 : 16;
+
+  return (
+    <Box style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: compact ? 6 : 8 }}>
       <Metric
-        label={t(short ? "rides.statDistanceShort" : "rides.statDistance")}
+        label={compact ? null : t("rides.statDistance")}
         value={t("pendingRides.distance", { count: Math.round((ride.distance_m ?? 0) / 1000) })}
+        size={size}
       />
-      <Metric label={t("rides.statDuration")} value={formatDuration(ride.duration_min ?? 0)} />
       <Metric
-        label={t(short ? "rides.statElevationShort" : "rides.statElevation")}
+        label={compact ? null : t("rides.statDuration")}
+        value={formatDuration(ride.duration_min ?? 0)}
+        size={size}
+      />
+      <Metric
+        label={compact ? null : t("rides.statElevation")}
         value={t("pendingRides.elevation", { count: ride.elevation_up_m ?? 0 })}
+        size={size}
       />
     </Box>
   );
@@ -239,14 +276,14 @@ function CheckInQuestion({ ride, onIssue, stacked }: CheckInQuestionProps): Reac
   );
 }
 
-// A figure over the word naming it, so nobody guesses which number is which.
-function Metric({ label, value }: { label: string; value: string }): ReactElement {
+// A figure over the word naming it; null leaves the unit to name it.
+function Metric({ label, value, size }: { label: string | null; value: string; size: number }): ReactElement {
   return (
     <Stack gap={0} style={{ minWidth: 0 }}>
-      <Text className="tabular-nums" fz={16} fw={600} c="text.6" lineClamp={1}>
+      <Text className="tabular-nums" fz={size} fw={600} c="text.6" lineClamp={1}>
         {value}
       </Text>
-      <Eyebrow>{label}</Eyebrow>
+      {label !== null && <Eyebrow>{label}</Eyebrow>}
     </Stack>
   );
 }
