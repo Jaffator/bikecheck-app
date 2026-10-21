@@ -18,6 +18,18 @@ const CARD_SELECTOR = 'a[href*="/bikes/"], a[href*="family="]';
 const RESULTS_API_PATH = '/api/trpc/bikes.listBikes';
 // Cards read only the image URL, so the files would just eat the proxy's home uplink.
 const BLOCKED_RESOURCES = new Set(['image', 'font', 'media']);
+// Cloudflare's challenge ("Just a moment...") and its block page ("Attention Required! | Cloudflare").
+const CLOUDFLARE_PAGE_TITLE = /^Just a moment\.\.\.$|\| Cloudflare$/;
+// Measured at about 2 in 3 attempts passing through the proxy, so 3 attempts land roughly 95 %.
+const MAX_SCRAPE_ATTEMPTS = 3;
+
+type ResultsApiResponse = { status: number; atMs: number };
+type BikeCardsAttempt = {
+  bikes: SearchBikeExternalResponseDto[];
+  pageTitle: string;
+  cardsTimedOut: boolean;
+  resultsApiResponses: ResultsApiResponse[];
+};
 
 @Injectable()
 export class BikeDataScrapeService {
@@ -44,79 +56,18 @@ export class BikeDataScrapeService {
     const startedAt = Date.now();
 
     try {
-      const resultsApiResponses: { status: number; atMs: number }[] = [];
-      const { bikes, pageTitle, cardsTimedOut } = await this.withPage(async (page) => {
-        // Status 0 marks a request that never got an answer.
-        page.on('response', (response) => {
-          if (response.url().includes(RESULTS_API_PATH)) {
-            resultsApiResponses.push({ status: response.status(), atMs: Date.now() - startedAt });
-          }
-        });
-        page.on('requestfailed', (request) => {
-          if (request.url().includes(RESULTS_API_PATH)) {
-            resultsApiResponses.push({ status: 0, atMs: Date.now() - startedAt });
-          }
-        });
-        await page.goto(url, { waitUntil: 'load' });
-        // No hits render no cards, so the timeout means an empty result, not a failure.
-        // Results arrive by XHR through the home proxy, which sometimes takes over 10 s.
-        const card = await page.waitForSelector(CARD_SELECTOR, { timeout: 15_000 }).catch(() => null);
+      // Without HTTP/3 behind the proxy, Cloudflare blocks some attempts at random; a fresh browser often passes (#282).
+      for (let attempt = 1; ; attempt++) {
+        const result = await this.scrapeBikeCards(url);
+        const blocked = this.isBlockedByCloudflare(result);
+        const { bikes, ...diagnostics } = result;
+        this.logger.info(
+          { url, attempt, blocked, resultCount: bikes.length, durationMs: Date.now() - startedAt, ...diagnostics },
+          'Bike list fetched',
+        );
 
-        const cards = await page.evaluate(() => {
-          const cards = Array.from(document.querySelectorAll('a[href*="/bikes"]'));
-          const results: {
-            name: string;
-            bikeBrand: string;
-            imageUrl: string | null;
-            bikeUrl: string;
-            kind: 'model' | 'family';
-          }[] = [];
-
-          for (const card of cards) {
-            const anchor = card as HTMLAnchorElement;
-            // Bikes and collections share the card markup, only the URL tells them apart.
-            // Links matching neither shape are site navigation.
-            const family = new URL(anchor.href).searchParams.get('family');
-            const isModel = /\/bikes\/[^/?]+\/[^/?]+\/[^/?]+/.test(anchor.pathname);
-            if (!family && !isModel) continue;
-
-            const imageElement = anchor.querySelector('img');
-            const imageUrl = imageElement ? imageElement.getAttribute('src') : null;
-            // A card drawn with the placeholder image has no photo to offer.
-            if (!imageUrl || imageUrl.includes('placeholder')) continue;
-
-            const bikeBrand = anchor.querySelector('p');
-            const nameElement = anchor.querySelector('span');
-
-            results.push({
-              name: nameElement ? nameElement.innerText.trim() : 'Unknown name',
-              bikeBrand: bikeBrand ? bikeBrand.innerText.trim() : 'Unknown brand',
-              imageUrl,
-              bikeUrl: anchor.href.toString(),
-              kind: family ? 'family' : 'model',
-            });
-          }
-
-          return results;
-        });
-
-        // An empty list is either no hits or a page that never drew cards (a Cloudflare challenge); the title tells which.
-        return { bikes: cards, pageTitle: await page.title(), cardsTimedOut: card === null };
-      });
-
-      this.logger.info(
-        {
-          url,
-          resultCount: bikes.length,
-          durationMs: Date.now() - startedAt,
-          pageTitle,
-          cardsTimedOut,
-          resultsApiResponses,
-        },
-        'Bike list fetched',
-      );
-
-      return bikes;
+        if (!blocked || attempt === MAX_SCRAPE_ATTEMPTS) return bikes;
+      }
     } catch (error) {
       this.logger.error({ err: error, url, durationMs: Date.now() - startedAt }, 'Failed to fetch bike list');
 
@@ -126,6 +77,81 @@ export class BikeDataScrapeService {
 
       throw new BadGatewayException('Failed to fetch bike list from external provider');
     }
+  }
+
+  /** One browser, one page load; the diagnostics tell a real empty result from a blocked one. */
+  private async scrapeBikeCards(url: string): Promise<BikeCardsAttempt> {
+    const startedAt = Date.now();
+    const resultsApiResponses: ResultsApiResponse[] = [];
+
+    return await this.withPage(async (page) => {
+      // Status 0 marks a request that never got an answer.
+      page.on('response', (response) => {
+        if (response.url().includes(RESULTS_API_PATH)) {
+          resultsApiResponses.push({ status: response.status(), atMs: Date.now() - startedAt });
+        }
+      });
+      page.on('requestfailed', (request) => {
+        if (request.url().includes(RESULTS_API_PATH)) {
+          resultsApiResponses.push({ status: 0, atMs: Date.now() - startedAt });
+        }
+      });
+      await page.goto(url, { waitUntil: 'load' });
+      const pageTitle = await page.title();
+      // A Cloudflare page never draws cards, so waiting for them would only delay the retry.
+      // No hits render no cards either, so the timeout means an empty result, not a failure.
+      const card = CLOUDFLARE_PAGE_TITLE.test(pageTitle)
+        ? null
+        : await page.waitForSelector(CARD_SELECTOR, { timeout: 15_000 }).catch(() => null);
+
+      const bikes = await page.evaluate(() => {
+        const cards = Array.from(document.querySelectorAll('a[href*="/bikes"]'));
+        const results: {
+          name: string;
+          bikeBrand: string;
+          imageUrl: string | null;
+          bikeUrl: string;
+          kind: 'model' | 'family';
+        }[] = [];
+
+        for (const card of cards) {
+          const anchor = card as HTMLAnchorElement;
+          // Bikes and collections share the card markup, only the URL tells them apart.
+          // Links matching neither shape are site navigation.
+          const family = new URL(anchor.href).searchParams.get('family');
+          const isModel = /\/bikes\/[^/?]+\/[^/?]+\/[^/?]+/.test(anchor.pathname);
+          if (!family && !isModel) continue;
+
+          const imageElement = anchor.querySelector('img');
+          const imageUrl = imageElement ? imageElement.getAttribute('src') : null;
+          // A card drawn with the placeholder image has no photo to offer.
+          if (!imageUrl || imageUrl.includes('placeholder')) continue;
+
+          const bikeBrand = anchor.querySelector('p');
+          const nameElement = anchor.querySelector('span');
+
+          results.push({
+            name: nameElement ? nameElement.innerText.trim() : 'Unknown name',
+            bikeBrand: bikeBrand ? bikeBrand.innerText.trim() : 'Unknown brand',
+            imageUrl,
+            bikeUrl: anchor.href.toString(),
+            kind: family ? 'family' : 'model',
+          });
+        }
+
+        return results;
+      });
+
+      return { bikes, pageTitle, cardsTimedOut: card === null, resultsApiResponses };
+    });
+  }
+
+  /** The page gives up after a row of 403s; a single 200 means an empty list is the real answer. */
+  private isBlockedByCloudflare(attempt: BikeCardsAttempt): boolean {
+    if (CLOUDFLARE_PAGE_TITLE.test(attempt.pageTitle)) return true;
+    const { cardsTimedOut, resultsApiResponses } = attempt;
+
+    return cardsTimedOut && resultsApiResponses.length > 0 && resultsApiResponses.every((r) => r.status !== 200);
   }
 
   /** Every active component type is returned, unmatched ones with an empty description. */
