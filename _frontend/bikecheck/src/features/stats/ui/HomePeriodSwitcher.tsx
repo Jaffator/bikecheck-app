@@ -22,8 +22,11 @@ export function HomePeriodSwitcher({ value, onChange, fullWidth = false }: HomeP
       fullWidth={fullWidth}
       radius="md"
       withItemsBorders={false}
-      // The theme dims every label; the chosen Period reads bright.
-      classNames={{ label: "data-[active]:!text-[var(--mantine-color-text-6)] data-[active]:font-bold" }}
+      // Darker than the theme's dim, so the bright chosen Period stands out.
+      classNames={{
+        label:
+          "!text-[var(--mantine-color-text-8)] data-[active]:!text-[var(--mantine-color-text-6)] data-[active]:font-bold",
+      }}
       aria-label={t("stats.period")}
       data={[
         { value: "month", label: t("stats.periodMonth") },
