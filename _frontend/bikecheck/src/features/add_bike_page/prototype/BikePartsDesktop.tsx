@@ -20,7 +20,7 @@ import { LookupProgress } from "../LookupProgress";
 import type { AddBikeWizard } from "../useAddBikeWizard";
 import { COPY, cardSurface } from "./bikeProto";
 
-// Room for "Rear/front" and "Have it" side by side, icons included.
+// Room for "Přední/zadní" and "Mám" side by side, icons included.
 const TOGGLES_WIDTH = "13rem";
 
 // Sits beside a 14px label in a nav row.
@@ -54,13 +54,9 @@ function SplitToggle({ split, label, onToggle }: { split: boolean; label: string
     <UnstyledButton
       aria-pressed={split}
       onClick={onToggle}
-      style={
-        split
-          ? toggleStyle("color-mix(in srgb, var(--mantine-color-primary-6) 15%, transparent)", "var(--mantine-color-primary-6)")
-          : toggleStyle("var(--mantine-color-cards-5)", "var(--mantine-color-text-8)")
-      }
+      style={toggleStyle("var(--mantine-color-cards-5)", "var(--mantine-color-text-8)")}
     >
-      {split ? <Merge size={TOGGLE_ICON_SIZE} /> : <Split size={TOGGLE_ICON_SIZE} />}
+      {split ? <Split size={TOGGLE_ICON_SIZE} /> : <Merge size={TOGGLE_ICON_SIZE} />}
       {label}
     </UnstyledButton>
   );
@@ -175,7 +171,7 @@ export function BikePartsDesktop({ wizard }: { wizard: AddBikeWizard }): ReactEl
           {component.has_position && !absent && (
             <SplitToggle
               split={isSplit(component, split)}
-              label={isSplit(component, split) ? t("addBike.mergeSides") : t("addBike.splitSides")}
+              label={isSplit(component, split) ? t("addBike.splitSides") : t("addBike.mergeSides")}
               onToggle={() => wizard.toggleComponentSplit(typeId)}
             />
           )}

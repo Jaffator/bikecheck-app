@@ -775,7 +775,7 @@
     "positionFront": "Front",
     "positionRear": "Rear",
     "splitSides": "Rear/front",
-    "mergeSides": "Merge",
+    "mergeSides": "Merged",
     "partAbsent": "Have it",
     "partAbsentUndo": "Don't have it",
     "saveBike": "Save the bike",
