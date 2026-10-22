@@ -105,7 +105,9 @@ docker compose --env-file .env.pi -f docker-compose.pi.yml up -d
 
 **Uptime**: the server's Alloy probes `SCRAPER_SERVICE_URL/health` every minute. In Grafana, `probe_success{instance="bikecheck-prod", job=~"integrations/blackbox.*"}` is 1 while the Pi, its Tailscale link and the container are up, and 0 otherwise.
 
-**Pi in Grafana**: the Pi runs its own Alloy ([docker/alloy/config.pi.alloy](../docker/alloy/config.pi.alloy)) with `instance="bikecheck-pi"`. It ships the Pi's CPU, RAM, SD card and temperature, the scraper's logs (`{instance="bikecheck-pi", service_name="scraper"}`), and probes prod from outside every minute: `probe_success{instance="bikecheck-pi", job=~"integrations/blackbox.*"}`, one series per target (the target name ends the `job` label): `prod-site` (Caddy + TLS) and `prod-api` (`/api/health`, monolith + Postgres). Alert by hand in Grafana Cloud → Alerting: `probe_success{instance="bikecheck-pi"} == 0` for 3 min. Deploy the release with `/api/health` to the server before enabling it, or `prod-api` reads 0.
+**Pi in Grafana**: the Pi runs its own Alloy ([docker/alloy/config.pi.alloy](../docker/alloy/config.pi.alloy)) with `instance="bikecheck-pi"`. It ships the Pi's CPU, RAM, SD card and temperature, and the scraper's logs (`{instance="bikecheck-pi", service_name="scraper"}`).
+
+**Prod uptime** is watched from outside by Grafana Cloud → Testing & synthetics → Synthetics, not by the server itself: HTTP checks `prod-site` (`https://app.bikecheck.cloud/`, Caddy + TLS) and `prod-api` (`https://app.bikecheck.cloud/api/health`, monolith + Postgres), every minute from EU probes. In Grafana, `probe_success{job=~"prod-.*"}`; alert on it in Alerting.
 
 **Checking** from the server: `curl -s -X POST http://<pi-tailscale-ip>:3003/bike-cards -H "x-internal-secret: <secret>" -H "Content-Type: application/json" -d '{"url":"https://99spokes.com/en-EU/bikes?q=canyon"}'` prints cards. Logs on the Pi: `docker compose --env-file .env.pi -f docker-compose.pi.yml logs -f scraper`.
 
