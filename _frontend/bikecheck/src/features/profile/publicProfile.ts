@@ -1,7 +1,7 @@
 // The web page's addresses, and where it sends a reader who has no app.
 
 // The listing, not a custom scheme: Play shows Open with the app installed, Install without.
-export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.bikecheck.app";
+export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=bikecheck.app";
 
 // Both keep the handle as the reader typed it, so garage and bike share one query cache.
 export function publicGaragePath(handle: string): string {

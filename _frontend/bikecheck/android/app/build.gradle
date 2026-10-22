@@ -23,7 +23,7 @@ android {
     namespace = "com.bikecheck.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.bikecheck.app"
+        applicationId "bikecheck.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode = major * 10000 + minor * 100 + patch
