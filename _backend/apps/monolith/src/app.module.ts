@@ -26,6 +26,7 @@ import { ProfileModule } from './profile/profile.module';
 import { FollowModule } from './follow/follow.module';
 import { PreviewModule } from './preview/preview.module';
 import { StatsModule } from './stats/stats.module';
+import { HealthModule } from './health/health.module';
 import { BullModule } from '@nestjs/bullmq';
 import { LoggerModule } from 'nestjs-pino';
 import { BullBoardModule } from '@bull-board/nestjs';
@@ -124,6 +125,7 @@ const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http:/
     FollowModule,
     PreviewModule,
     StatsModule,
+    HealthModule,
   ],
   providers: [
     {
