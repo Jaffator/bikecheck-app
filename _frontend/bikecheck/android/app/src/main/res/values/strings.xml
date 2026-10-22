@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">BikeCheck</string>
     <string name="title_activity_main">BikeCheck</string>
-    <string name="package_name">com.bikecheck.app</string>
-    <string name="custom_url_scheme">com.bikecheck.app</string>
+    <string name="package_name">bikecheck.app</string>
+    <string name="custom_url_scheme">bikecheck.app</string>
 </resources>

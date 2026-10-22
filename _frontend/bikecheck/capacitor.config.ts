@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.bikecheck.app",
+  appId: "bikecheck.app",
   appName: "BikeCheck",
   webDir: "dist",
   // The WebView's colour before its first paint: the loading screen's background.9.

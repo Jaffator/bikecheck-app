@@ -3,9 +3,10 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.bikecheck.app",
+      "package_name": "bikecheck.app",
       "sha256_cert_fingerprints": [
-        "DF:D7:C7:A0:68:78:DF:FC:B1:DE:BC:46:4B:CA:B1:85:8E:FC:D3:04:DA:9E:FE:D9:23:10:FE:5E:79:B4:C3:F6"
+        "DF:D7:C7:A0:68:78:DF:FC:B1:DE:BC:46:4B:CA:B1:85:8E:FC:D3:04:DA:9E:FE:D9:23:10:FE:5E:79:B4:C3:F6",
+        "9F:F2:E1:C7:23:7C:C6:EE:53:98:42:D0:5D:DA:87:01:15:DB:53:53:0F:D1:9D:A1:4D:1D:71:80:A2:A2:76:C5"
       ]
     }
   }
