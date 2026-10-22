@@ -103,7 +103,9 @@ docker compose --env-file .env.pi -f docker-compose.pi.yml pull
 docker compose --env-file .env.pi -f docker-compose.pi.yml up -d
 ```
 
-**Uptime**: the server's Alloy probes `SCRAPER_SERVICE_URL/health` every minute. In Grafana, `probe_success{job="integrations/blackbox"}` is 1 while the Pi, its Tailscale link and the container are up, and 0 otherwise.
+**Uptime**: the server's Alloy probes `SCRAPER_SERVICE_URL/health` every minute. In Grafana, `probe_success{instance="bikecheck-prod", job=~"integrations/blackbox.*"}` is 1 while the Pi, its Tailscale link and the container are up, and 0 otherwise.
+
+**Pi in Grafana**: the Pi runs its own Alloy ([docker/alloy/config.pi.alloy](../docker/alloy/config.pi.alloy)) with `instance="bikecheck-pi"`. It ships the Pi's CPU, RAM, SD card and temperature, the scraper's logs (`{instance="bikecheck-pi", service_name="scraper"}`), and probes prod from outside every minute: `probe_success{instance="bikecheck-pi", job=~"integrations/blackbox.*"}`, one series per target (the target name ends the `job` label): `prod-site` (Caddy + TLS) and `prod-api` (`/api/health`, monolith + Postgres). Alert by hand in Grafana Cloud → Alerting: `probe_success{instance="bikecheck-pi"} == 0` for 3 min. Deploy the release with `/api/health` to the server before enabling it, or `prod-api` reads 0.
 
 **Checking** from the server: `curl -s -X POST http://<pi-tailscale-ip>:3003/bike-cards -H "x-internal-secret: <secret>" -H "Content-Type: application/json" -d '{"url":"https://99spokes.com/en-EU/bikes?q=canyon"}'` prints cards. Logs on the Pi: `docker compose --env-file .env.pi -f docker-compose.pi.yml logs -f scraper`.
 
@@ -112,7 +114,7 @@ docker compose --env-file .env.pi -f docker-compose.pi.yml up -d
 1. Docker: `curl -fsSL https://get.docker.com | sh`. Check that it runs arm64 images: `docker run --rm --platform linux/arm64 --security-opt seccomp=unconfined debian:bookworm-slim uname -m` prints `aarch64`.
 2. Registry login with a classic PAT that has only `read:packages`: `docker login ghcr.io -u Jaffator`.
 3. The compose file: `git clone https://github.com/Jaffator/bikecheck-app.git /opt/bikecheck-scraper`.
-4. `cp .env.pi.example .env.pi`, set `TAG` and `SCRAPER_API_SECRET`, then `pull` and `up -d` as above.
+4. `cp .env.pi.example .env.pi`, set `TAG`, `SCRAPER_API_SECRET` and the `GRAFANA_CLOUD_*` values from the server's `.env.production`, then `pull` and `up -d` as above. Alloy on 32-bit Raspbian is untested; first check that it starts: `docker run --rm --platform linux/arm64 --security-opt seccomp=unconfined grafana/alloy:v1.20.1 --version`. After `up -d`, `docker compose --env-file .env.pi -f docker-compose.pi.yml logs alloy` should show no errors; if cAdvisor fails there, remove the two `containers` blocks from `config.pi.alloy`.
 5. On the server, `SCRAPER_SERVICE_URL` and the same `SCRAPER_API_SECRET` in `.env.production`, then redeploy the current tag.
 
 ## One-time setup

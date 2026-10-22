@@ -19,3 +19,28 @@ services:
     # to bind. The router forwards nothing here and every call needs the secret.
     ports:
       - "3003:3003"
+
+  # Pi metrics, container logs and the outside probe of prod, to Grafana Cloud (docker/alloy/config.pi.alloy).
+  # Host namespaces, privileged and the Docker socket as on the server; seccomp as for the scraper.
+  alloy:
+    image: grafana/alloy:v1.20.1
+    platform: linux/arm64
+    restart: unless-stopped
+    command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data"]
+    env_file: .env.pi
+    security_opt: [seccomp:unconfined]
+    pid: host
+    network_mode: host
+    privileged: true
+    volumes:
+      - ./docker/alloy/config.pi.alloy:/etc/alloy/config.alloy:ro
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /run/udev/data:/run/udev/data:ro
+      - alloy_data:/var/lib/alloy/data
+
+volumes:
+  alloy_data:
