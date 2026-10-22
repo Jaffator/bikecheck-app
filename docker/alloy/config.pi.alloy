@@ -1,5 +1,5 @@
-// Ships the home Pi's metrics and the scraper's logs to Grafana Cloud, and probes prod from outside.
-// Credentials and targets come from .env.pi (GRAFANA_CLOUD_*, PROD_*); see .env.pi.example.
+// Ships the home Pi's metrics and the scraper's logs to Grafana Cloud.
+// Credentials come from .env.pi (GRAFANA_CLOUD_*); see .env.pi.example.
 
 // ---------- Metrics: the Pi (CPU, RAM, SD card, network, temperature) ----------
 // Host PID and network namespaces, so /proc and /sys are the Pi's; hwmon/thermal_zone give the SoC temperature.
@@ -24,31 +24,6 @@ prometheus.exporter.cadvisor "containers" {
 prometheus.scrape "containers" {
   targets         = prometheus.exporter.cadvisor.containers.targets
   job_name        = "integrations/docker"
-  scrape_interval = "60s"
-  forward_to      = [prometheus.relabel.instance.receiver]
-}
-
-// ---------- Uptime: prod, seen from outside ----------
-// The server can't report its own outage; the site covers Caddy + TLS, the API also Postgres.
-prometheus.exporter.blackbox "prod" {
-  config = "{ modules: { http_2xx: { prober: http, timeout: 10s } } }"
-
-  target {
-    name    = "prod-site"
-    address = sys.env("PROD_SITE_URL")
-    module  = "http_2xx"
-  }
-
-  target {
-    name    = "prod-api"
-    address = sys.env("PROD_API_HEALTH_URL")
-    module  = "http_2xx"
-  }
-}
-
-prometheus.scrape "prod" {
-  targets         = prometheus.exporter.blackbox.prod.targets
-  job_name        = "integrations/blackbox"
   scrape_interval = "60s"
   forward_to      = [prometheus.relabel.instance.receiver]
 }

@@ -173,6 +173,8 @@ services:
       - /:/rootfs:ro
       - /sys:/sys:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Docker 29+: cAdvisor reads containers through containerd, without it only the host's `id="/"` shows.
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
       - /run/udev/data:/run/udev/data:ro

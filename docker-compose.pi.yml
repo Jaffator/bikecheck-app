@@ -20,7 +20,7 @@ services:
     ports:
       - "3003:3003"
 
-  # Pi metrics, container logs and the outside probe of prod, to Grafana Cloud (docker/alloy/config.pi.alloy).
+  # Pi metrics and container logs to Grafana Cloud (docker/alloy/config.pi.alloy).
   # Host namespaces, privileged and the Docker socket as on the server; seccomp as for the scraper.
   alloy:
     image: grafana/alloy:v1.20.1
@@ -37,6 +37,8 @@ services:
       - /:/rootfs:ro
       - /sys:/sys:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Docker 29+: cAdvisor reads containers through containerd, without it only the host's `id="/"` shows.
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
       - /run/udev/data:/run/udev/data:ro
