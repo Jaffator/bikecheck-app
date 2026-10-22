@@ -2,6 +2,7 @@
   "name": "bikecheck",
   "private": true,
   "scripts": {
+    "version:latest": "git describe --tags --abbrev=0",
     "version:bump": "node scripts/bump-version.mjs",
     "deploy:production": "node scripts/release.mjs",
     "ship": "node scripts/ship.mjs",
