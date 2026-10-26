@@ -129,7 +129,7 @@
   --color-border-raised: #333333;
   --color-surface-well: #121212;
 
-  --font-sans: "Geist", sans-serif;
+  --font-sans: "Roboto", sans-serif;
 
   /* Letter-spacing by role, default 0 - see docs/design.md §9 Typography. */
   --tracking-label: 0.08em;

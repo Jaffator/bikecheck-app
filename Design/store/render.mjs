@@ -47,7 +47,7 @@ ws.onmessage = (e) => {
 const send = (method, params = {}) =>
   new Promise((res) => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
 
-const READY = "document.fonts.status === 'loaded' && document.fonts.check('700 70px Geist') && [...document.images].filter((i) => i.src).every((i) => i.complete && i.naturalWidth > 0)";
+const READY = "document.fonts.status === 'loaded' && document.fonts.check('700 70px Roboto') && [...document.images].filter((i) => i.src).every((i) => i.complete && i.naturalWidth > 0)";
 // two frames after ready, so heavy filters are composited before the capture
 const PAINTED = "new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))";
 

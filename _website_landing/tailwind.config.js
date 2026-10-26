@@ -14,11 +14,11 @@ export default {
         sage: "#7FB069",
         rust: "#D08248",
       },
-      // One face, as in the App (ADR 0039); "mono" is only a role name, figures align via tabular-nums.
+      // One face, as in the App (ADR 0043); "mono" is only a role name, figures align via tabular-nums.
       fontFamily: {
-        display: ["Geist", "system-ui", "sans-serif"],
-        body: ["Geist", "system-ui", "sans-serif"],
-        mono: ["Geist", "system-ui", "sans-serif"],
+        display: ["Roboto", "system-ui", "sans-serif"],
+        body: ["Roboto", "system-ui", "sans-serif"],
+        mono: ["Roboto", "system-ui", "sans-serif"],
       },
       // 1360px of content inside the lg padding.
       maxWidth: { content: "1424px" },
