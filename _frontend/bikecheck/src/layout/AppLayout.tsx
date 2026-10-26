@@ -412,7 +412,7 @@ export function AppLayout(): ReactElement {
             w={BAR_WIDTH}
             grow
             px="xs"
-            className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
+            className="rounded-3xl border border-neutral-700 bg-cards-600/30 backdrop-blur-xl"
             style={{
               boxShadow: "0 6px 20px color-mix(in srgb, var(--mantine-color-text-6) 15%, transparent)",
             }}
