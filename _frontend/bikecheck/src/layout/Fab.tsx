@@ -79,7 +79,7 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
 
   function go(path: string): void {
     tapFeedback();
-    onMenuOpenedChange(false);
+    // Closing here first would commit before the deferred route and flash the old page.
     navigate(path);
   }
 

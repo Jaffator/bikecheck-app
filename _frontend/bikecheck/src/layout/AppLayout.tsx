@@ -116,9 +116,12 @@ function getPageTitleKey(pathname: string): string | null {
 export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
   const [renderOfflinePage, setRenderOfflinePage] = useState(false);
-  const [fabMenuOpened, setFabMenuOpened] = useState(false);
+  const [fabMenuPath, setFabMenuPath] = useState<string | null>(null);
   const [moreOpened, setMoreOpened] = useState(false);
   const location = useLocation();
+  // The dial belongs to the page it opened on, so a FAB navigation closes it in the same commit.
+  const fabMenuOpened = fabMenuPath === location.pathname;
+  const setFabMenuOpened = (opened: boolean): void => setFabMenuPath(opened ? location.pathname : null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isOnline } = useNetworkStatus();
@@ -365,7 +368,9 @@ export function AppLayout(): ReactElement {
           onReconnected={() => setRenderOfflinePage(false)}
         />
         {/* Dims the whole screen under the open speed dial, the tab bar included; only the dial stays lit. */}
+        {/* Remounts per route so leaving the page drops the dim at once instead of fading it. */}
         <Box
+          key={location.pathname}
           onClick={() => setFabMenuOpened(false)}
           style={{
             position: "fixed",
