@@ -12,6 +12,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere, OwnedBikeOptions } from './owned-bike.where';
 import { colorIndexes } from './color-index';
 import { StorageService } from '../storage/storage.service';
+import { downloadPublicImage } from './safe-image-download';
 import 'dotenv/config';
 import { Prisma, bikes } from '@prisma/client';
 
@@ -293,18 +294,22 @@ export class BikeService {
       return undefined; // Return undefined to indicate failure
     }
   }
-  // Uploads a photo received as an EXTERNAL URL to cloud storage.
+  // Uploads a photo received as an EXTERNAL URL to cloud storage. The URL is attacker-chosen,
+  // so the download refuses internal addresses (SSRF) - see safe-image-download.
   private async storeFileFromUrl(url: string): Promise<string | undefined> {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      this.logger.error({ custom: true }, `Failed to download file: ${response.statusText}`);
-      return undefined; // Return undefined to indicate failure
+    let file: Buffer;
+    try {
+      file = await downloadPublicImage(url);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Unreachable, too big or pointing inside our network all mean no image; the bike
+      // still saves, as it does for a failed upload.
+      this.logger.warn({ custom: true }, `Rejected external image URL: ${message}`);
+      return undefined;
     }
     try {
-      const file = await response.arrayBuffer();
       // Nothing cropped this one to the frame the garage draws, so it is padded into it.
-      return await this.storageService.uploadImageR2CloudFare(Buffer.from(file), 'bikes', true);
+      return await this.storageService.uploadImageR2CloudFare(file, 'bikes', true);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Failed to upload image to cloud: ${message}`);

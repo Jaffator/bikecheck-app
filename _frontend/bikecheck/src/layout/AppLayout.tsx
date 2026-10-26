@@ -370,7 +370,7 @@ export function AppLayout(): ReactElement {
         {/* Dims the whole screen under the open speed dial, the tab bar included; only the dial stays lit. */}
         {/* Remounts per route so leaving the page drops the dim at once instead of fading it. */}
         <Box
-          key={location.pathname}
+          key={`dim-${location.pathname}`}
           onClick={() => setFabMenuOpened(false)}
           style={{
             position: "fixed",
