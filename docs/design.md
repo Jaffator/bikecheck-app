@@ -187,9 +187,9 @@ Profile → connect Strava → unmatched gear notification
 
 ### Typography
 
-The single source of truth for type. ADR 0039 records why.
+The single source of truth for type. ADR 0039 records why one face; ADR 0043 why Roboto.
 
-**One typeface: Geist**, everywhere — app, public profile, print reports and setup dials. Loaded
+**One typeface: Roboto**, everywhere — app, public profile, print reports and setup dials. Loaded
 once from Google Fonts in `index.html`; `theme.ts` and `--font-sans` point at it. There is no mono
 face and no display face.
 

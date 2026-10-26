@@ -1,10 +1,10 @@
 // Dashboard page.
 import type { ReactElement } from "react";
-import { Group, Loader, Stack } from "@mantine/core";
+import { Loader, Stack } from "@mantine/core";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { EmptyDashboard } from "./EmptyDashboard";
-import { ContextLine } from "./ContextLine";
+import { StatusRow } from "./StatusRow";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { AttentionCard } from "@/features/service_tracking/ui/AttentionCard";
 import { AllGoodCard } from "@/features/service_tracking/ui/AllGoodCard";
@@ -50,13 +50,14 @@ export function Dashboard(): ReactElement {
     // Clears the floating create button, so the last card can be scrolled out from under
     // it; desktop has no FAB, so no room. No `p` here: its inline padding beats the responsive `pb` class.
     <Stack gap="sm" px="md" pt="md" pb={FAB_CLEARANCE}>
-      <ContextLine withDate={false} />
+      <StatusRow />
       {!stravaConnected && <StravaStatusCard />}
       <DashboardBannerPhone />
-      <Group justify="flex-end">
-        <HomePeriodSwitcher value={period} onChange={setPeriod} />
-      </Group>
-      <DashboardFigures period={period} />
+      {/* The Period and its figures read as one block: the switcher sits closer to them than to the banner. */}
+      <Stack gap={10}>
+        <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
+        <DashboardFigures period={period} />
+      </Stack>
       <LastRidePanel />
       <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
       {/* Under the work: how the garage stands, and the way into any one bike. */}

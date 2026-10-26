@@ -17,11 +17,12 @@ function switchStyles(checked: boolean, disabled: boolean): Record<string, React
     };
   }
   return {
+    // Off is a neutral grey a step above the raised card, not a warm one.
     track: {
-      backgroundColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
-      borderColor: "var(--mantine-color-other-borderSolid)",
+      backgroundColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-5)",
+      borderColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-inputs-4)",
     },
-    thumb: { backgroundColor: checked ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)" },
+    thumb: { backgroundColor: checked ? "var(--mantine-color-black)" : "var(--mantine-color-text-7)" },
   };
 }
 

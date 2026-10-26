@@ -325,6 +325,11 @@
     "syncedHours": "sync {{count}}h ago",
     "syncedDays": "sync {{count}}d ago",
     "garageVisibility": "Garage: {{visibility}}",
+    "garageChip": "Garage",
+    "agoJustNow": "just now",
+    "agoMinutes": "{{count}}m ago",
+    "agoHours": "{{count}}h ago",
+    "agoDays": "{{count}}d ago",
     "bannerStravaBody": "without it no ride is counted, so distance and part wear stay at zero.",
     "bannerUnpairedBody": "{{names}}",
     "bannerPairAction": "Pair bikes",
@@ -1079,6 +1084,9 @@
     "connectLink": "Connect →",
     "sync": "Sync",
     "syncCooldown": "Again in {{minutes}} min",
+    "syncTitle": "Strava sync",
+    "lastSync": "Last sync",
+    "neverSynced": "no sync yet",
     "syncQueued_one": "Fetching {{count}} new ride from Strava…",
     "syncQueued_other": "Fetching {{count}} new rides from Strava…",
     "syncNothing": "No new rides",
@@ -1492,6 +1500,7 @@
     "period": "Period",
     "periodMonth": "This month",
     "periodAll": "All",
+    "periodAllLong": "All time",
     "periodAllTime": "all time"
   }
 }

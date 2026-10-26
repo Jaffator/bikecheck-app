@@ -181,10 +181,10 @@ export const theme = createTheme({
     text,
     textDark,
   },
-  fontFamily: "Geist, sans-serif",
-  // One typeface everywhere; figures differ by tabular-nums, not a face (ADR 0039).
+  fontFamily: "Roboto, sans-serif",
+  // One typeface everywhere; figures differ by tabular-nums, not a face (ADR 0043).
   headings: {
-    fontFamily: "Geist, sans-serif",
+    fontFamily: "Roboto, sans-serif",
   },
   other: otherColor,
   // Below Mantine's 62em, so a phone's "Desktop site" (a 980px viewport) gets the desktop shell (ADR 0035).

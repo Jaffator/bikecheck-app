@@ -128,10 +128,10 @@
   height: 1px;
   background: #cec053;
 }
-/* 48px under the headline's cap line (Geist cap 0.716em in a 0.98 line), ending on the content edge. */
+/* 48px under the headline's cap line (Roboto cap 0.719em in a 0.98 line), ending on the content edge. */
 @media (min-width: 1024px) {
   .readout {
-    top: calc(0.1265 * clamp(38px, 6.1vw, 88px) + 48px);
+    top: calc(0.1212 * clamp(38px, 6.1vw, 88px) + 48px);
     right: 0;
   }
 }

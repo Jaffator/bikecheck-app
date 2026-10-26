@@ -123,8 +123,13 @@
   /* The same groove, sunk only half a step below cards.6 - for a track on a row card,
      which carries less light than the hero and would read as a hole at the deep shade. */
   --color-decor-sunk: #201b1b;
+  /* Design canvas "Dark surface ladder": a card on a sheet is one step lighter than the sheet,
+     a control track one step darker (a well). The sheet itself is cards.6. */
+  --color-surface-raised: #262626;
+  --color-border-raised: #333333;
+  --color-surface-well: #121212;
 
-  --font-sans: "Geist", sans-serif;
+  --font-sans: "Roboto", sans-serif;
 
   /* Letter-spacing by role, default 0 - see docs/design.md §9 Typography. */
   --tracking-label: 0.08em;

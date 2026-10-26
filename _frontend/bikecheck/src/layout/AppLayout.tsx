@@ -116,9 +116,12 @@ function getPageTitleKey(pathname: string): string | null {
 export function AppLayout(): ReactElement {
   const isOffline = useOfflineWhenCallApiStore((state) => state.isOfflineWhenCallApi);
   const [renderOfflinePage, setRenderOfflinePage] = useState(false);
-  const [fabMenuOpened, setFabMenuOpened] = useState(false);
+  const [fabMenuPath, setFabMenuPath] = useState<string | null>(null);
   const [moreOpened, setMoreOpened] = useState(false);
   const location = useLocation();
+  // The dial belongs to the page it opened on, so a FAB navigation closes it in the same commit.
+  const fabMenuOpened = fabMenuPath === location.pathname;
+  const setFabMenuOpened = (opened: boolean): void => setFabMenuPath(opened ? location.pathname : null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isOnline } = useNetworkStatus();
@@ -364,14 +367,16 @@ export function AppLayout(): ReactElement {
           opened={isOffline || (renderOfflinePage && !isOnline)}
           onReconnected={() => setRenderOfflinePage(false)}
         />
-        {/* Dims page content without covering shared chrome. */}
+        {/* Dims the whole screen under the open speed dial, the tab bar included; only the dial stays lit. */}
+        {/* Remounts per route so leaving the page drops the dim at once instead of fading it. */}
         <Box
+          key={location.pathname}
           onClick={() => setFabMenuOpened(false)}
           style={{
-            position: "absolute",
+            position: "fixed",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.45)",
-            backdropFilter: "blur(1px)",
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
             opacity: fabMenuOpened ? 1 : 0,
             pointerEvents: fabMenuOpened ? "auto" : "none",
             transition: "opacity 0.2s ease",
@@ -412,7 +417,7 @@ export function AppLayout(): ReactElement {
             w={BAR_WIDTH}
             grow
             px="xs"
-            className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
+            className="rounded-3xl border border-neutral-700 bg-cards-600/30 backdrop-blur-xl"
             style={{
               boxShadow: "0 6px 20px color-mix(in srgb, var(--mantine-color-text-6) 15%, transparent)",
             }}

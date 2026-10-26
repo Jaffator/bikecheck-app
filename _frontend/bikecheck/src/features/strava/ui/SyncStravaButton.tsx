@@ -1,4 +1,4 @@
-// Desktop's on-demand Strava sync: fetches the rides a missed webhook never delivered.
+// The on-demand Strava sync: fetches the rides a missed webhook never delivered.
 import { useEffect, useState, type ReactElement } from "react";
 import { Button } from "@mantine/core";
 import { RefreshCw } from "lucide-react";
@@ -11,7 +11,12 @@ import { useCurrentUser } from "@/features/users/users.queries";
 // The label counts whole minutes, so a tick well under one keeps it honest.
 const COOLDOWN_TICK_MS = 15 * 1000;
 
-export function SyncStravaButton(): ReactElement | null {
+interface SyncStravaButtonProps {
+  // The sync sheet runs it across; the desktop header keeps it to its label.
+  fullWidth?: boolean;
+}
+
+export function SyncStravaButton({ fullWidth = false }: SyncStravaButtonProps): ReactElement | null {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
   const sync = useRunStravaSync();
@@ -24,6 +29,7 @@ export function SyncStravaButton(): ReactElement | null {
     <Button
       variant="outline"
       radius="md"
+      fullWidth={fullWidth}
       className="tabular-nums"
       leftSection={<RefreshCw size={16} color="var(--mantine-color-primary-6)" />}
       loading={sync.isPending}

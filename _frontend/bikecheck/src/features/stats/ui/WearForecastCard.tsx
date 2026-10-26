@@ -169,8 +169,8 @@ function ForecastHeader({ item, onOpen }: { item: WearForecastItem; onOpen: () =
     >
       <Stack gap={6}>
         <Group gap={10} wrap="nowrap" justify="space-between">
-          {/* Set in the card title's type on every screen, so it does not outweigh it. */}
-          <Text className="tabular-nums" fz={16} fw={600} lh="22px" c="text.6" style={{ flexShrink: 0 }}>
+          {/* A step under the card title, so the title keeps the lead and the tag reads beside it. */}
+          <Text className="tabular-nums" fz={14} fw={600} lh="20px" c="text.6" style={{ flexShrink: 0 }}>
             {figure}
           </Text>
           <ForecastTag color={color} label={forecastNote(item, t, { brief: false })} />
