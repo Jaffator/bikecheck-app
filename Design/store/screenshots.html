@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<title>BikeCheck store screenshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* the app's own background ramp, so the listing looks like the app */
+    --bg: #141416;
+    --bg-deep: #050506;
+    --yellow: #cec053;
+    --text: #ffffff;
+    /* source screenshots are 1280×2772, shown whole so the bottom nav never gets clipped */
+    --screen-w: 1280;
+    --screen-h: 2772;
+  }
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 1080px; height: 1920px; overflow: hidden;
+    background: var(--bg);
+    font-family: "Geist", sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage {
+    position: relative; width: 1080px; height: 1920px;
+    /* black at the top so logo and headline sit on pure dark, lifting slightly towards the floor */
+    background:
+      radial-gradient(1000px 700px at 50% 100%, #2e2f34 0%, rgba(46,47,52,0) 70%),
+      linear-gradient(180deg, #0c0c0e 0%, #0c0c0e 30%, #1c1c1f 100%);
+    display: flex; flex-direction: column; align-items: center;
+  }
+  /* tile + text like the app header; logo_name.svg spells "Bikecheck", the headline says BikeCheck */
+  .logo { margin-top: 84px; height: 60px; display: flex; align-items: center; gap: 16px; }
+  .logo img { height: 56px; width: 56px; }
+  .logo span { font-size: 46px; font-weight: 700; letter-spacing: -0.02em; }
+  .headline {
+    margin: 28px 72px 0;
+    height: 190px;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; text-wrap: balance;
+    font-size: 70px; font-weight: 700; line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .headline b { color: var(--yellow); font-weight: 700; }
+  /* brand mention: Strava orange with its mark inlined from the app's strava.svg */
+  .headline .strava { color: #fc4c02; white-space: nowrap; }
+  .headline .strava svg { height: 1.05em; width: auto; vertical-align: -0.16em; margin-right: 0.02em; }
+  /* titanium band, black inner body, screen: a light frame so the near-black screens stand off the background */
+  .phone {
+    margin-top: 52px;
+    height: 1400px;
+    aspect-ratio: calc(var(--screen-w) + 44) / calc(var(--screen-h) + 44);
+    padding: 22px;
+    border-radius: 124px;
+    background: linear-gradient(165deg, #9ba0a7 0%, #6a6f76 28%, #45494f 55%, #5c6168 80%, #868b92 100%);
+    box-shadow:
+      inset 0 0 0 1.5px rgba(255,255,255,0.45),
+      inset 0 0 0 4px rgba(0,0,0,0.25),
+      0 50px 100px rgba(0,0,0,0.7),
+      0 14px 30px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .phone::before {
+    content: ""; position: absolute; inset: 9px; border-radius: 115px;
+    background: #050607;
+  }
+  .screen {
+    position: relative;
+    width: 100%; height: 100%;
+    border-radius: 96px; overflow: hidden;
+    background: #0a0a0b;
+  }
+  .screen img { width: 100%; display: block; }
+  /* the Android button bar sits in the bottom 5 % of every capture; fade it into the app's black */
+  .screen::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5%;
+    background: linear-gradient(180deg, transparent, #050505 45%);
+  }
+  /* front camera pill, centred in the status bar between the clock and the icons */
+  .phone::after {
+    content: ""; position: absolute; top: 36px; left: 50%; width: 200px; height: 58px;
+    margin-left: -100px; border-radius: 29px; background: #000;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  /* side keys: mute, volume up/down on the left, power on the right */
+  .key {
+    position: absolute; width: 7px; border-radius: 3px;
+    background: linear-gradient(90deg, #4a4e54, #7a7f86 50%, #4a4e54);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
+  }
+  .key.mute   { left: -7px; top: 250px; height: 58px; }
+  .key.up     { left: -7px; top: 360px; height: 118px; }
+  .key.down   { left: -7px; top: 500px; height: 118px; }
+  .key.power  { right: -7px; top: 410px; height: 190px; }
+
+  /* closing slide: the phone-and-bike composite fills the space the phone frame takes on the other slides */
+  .hero { display: none; position: relative; width: 1080px; flex: 1; margin-top: 52px; overflow: hidden; }
+  body.closing .hero { display: block; }
+  body.closing .phone { display: none; }
+  /* edges fade into the stage so the composite's own backdrop never shows a hard seam */
+  .hero img {
+    position: absolute; left: 50%; top: 0; width: 1000px; transform: translateX(-50%);
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent, #000 90px, #000 calc(100% - 90px), transparent),
+      linear-gradient(180deg, transparent, #000 14%, #000 70%, transparent 97%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(90deg, transparent, #000 90px, #000 calc(100% - 90px), transparent),
+      linear-gradient(180deg, transparent, #000 14%, #000 70%, transparent 97%);
+    mask-composite: intersect;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="logo"><img src="../../_frontend/bikecheck/src/assets/logo_only.svg" alt="" /><span>BikeCheck</span></div>
+  <div class="headline"><span></span></div>
+  <div class="phone">
+    <div class="key mute"></div><div class="key up"></div><div class="key down"></div><div class="key power"></div>
+    <div class="screen"><img alt="" /></div>
+  </div>
+  <div class="hero"><img src="screens/08-closing.jpg" alt="" /></div>
+</div>
+<script>
+  const STRAVA = '<span class="strava"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M 8.6935,9.972 7.649,7.914 l -1.5325,0 2.577,5.086 2.575,-5.086 -1.533,0 m -3.504,-2.7995 1.418,2.799 2.086,0 L 6.2315,1 l -3.5,6.914 2.0845,0"/></svg>Strava</span>';
+  const SLIDES = [
+    { file: "01-home.jpg",    cs: "Stav kol na první pohled",           en: "Your bikes' health at a glance" },
+    { file: "02-bike.jpg",    cs: "Každé kolo má svůj profil",          en: "Every bike has its profile" },
+    { file: "03-service.jpg", cs: "Zadání servisu na pár kliků",       en: "Log a service in a few taps" },
+    { file: "04-rides.jpg",   cs: STRAVA + " data pro chytrou údržbu kola", en: STRAVA + " data for smart bike care" },
+    { file: "05-setup.jpg",   cs: "Setup na trail i bikepark",          en: "Setup for trail and bike park" },
+    { file: "06-share.jpg",   cs: "Ukaž kolo kamarádům",                en: "Show your bike to friends" },
+    { file: "07-chat.jpg",    cs: "Zeptej se svého kola",               en: "Ask your bike anything" },
+    { hero: true,             cs: "Udělej svému kolu <b>BikeCheck</b>", en: "Give your bike a <b>BikeCheck</b>" },
+  ];
+  const q = new URLSearchParams(location.search);
+  const lang = q.get("lang") || "cs";
+  const slide = SLIDES[Number(q.get("slide") || 1) - 1];
+  document.documentElement.lang = lang;
+  const headline = document.querySelector(".headline");
+  const text = headline.querySelector("span");
+  text.innerHTML = slide[lang];
+  // a long headline shrinks until it fits the two-line band instead of spilling into the logo
+  document.fonts.ready.then(() => {
+    for (let size = 70; size > 52 && text.offsetHeight > headline.clientHeight; size -= 2) headline.style.fontSize = size + "px";
+  });
+  if (slide.hero) document.body.classList.add("closing");
+  else document.querySelector(".screen img").src = "screens/" + slide.file;
+</script>
+</body>
+</html>

@@ -12,6 +12,8 @@ import type { WearForecastItem } from "../stats.types";
 
 export const CHART_HEIGHT = 160;
 const DUE = 100;
+// Room under 0 % for today's label when the reading itself sits on the floor.
+const FLOOR = -18;
 const Y_TICKS = [0, 50, DUE];
 const PROJECTION_DASH = "3 5";
 const LIMIT_DASH = "4 4";
@@ -72,7 +74,7 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
         yAxisProps={{
           width: "auto",
           ticks: Y_TICKS,
-          domain: [0, (max: number) => Math.max(DUE, max)],
+          domain: [FLOOR, (max: number) => Math.max(DUE, max)],
           tick: { fontSize: 11, fill: "currentColor", style: { fontVariantNumeric: "tabular-nums" } },
           tickFormatter: (percentage: number) => t("tracking.percentage", { value: percentage }),
         }}
@@ -90,7 +92,7 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
               cy={Number(dot.cy)}
               color={color}
               label={todayLabel}
-              anchor={labelAnchor(today.at, first, last)}
+              side={labelSide(today.at, first, last)}
             />
           )}
         />
@@ -119,9 +121,12 @@ function todayPoint(item: WearForecastItem): TodayPoint {
   return { at: dayjs(today.date).valueOf(), wear: today.percentage };
 }
 
-// The label leans away from the nearer edge, so it is never clipped.
-function labelAnchor(at: number, first: number, last: number): "start" | "end" {
-  return last > first && (at - first) / (last - first) > 0.5 ? "end" : "start";
+// Both lines climb to the right, so the free corners are under the projection and over the curve.
+// The label takes the one away from the nearer edge, where it is never clipped.
+type LabelSide = "below-right" | "above-left";
+
+function labelSide(at: number, first: number, last: number): LabelSide {
+  return last > first && (at - first) / (last - first) > 0.5 ? "above-left" : "below-right";
 }
 
 interface TodayDotProps {
@@ -129,17 +134,19 @@ interface TodayDotProps {
   cy: number;
   color: string;
   label: string;
-  anchor: "start" | "end";
+  side: LabelSide;
 }
 
-function TodayDot({ cx, cy, color, label, anchor }: TodayDotProps): ReactElement<SVGElement> {
+function TodayDot({ cx, cy, color, label, side }: TodayDotProps): ReactElement<SVGElement> {
+  const aboveLeft = side === "above-left";
+
   return (
     <g>
       <circle cx={cx} cy={cy} r={5} fill={color} stroke={CARD_COLOR} strokeWidth={2} />
       <text
-        x={anchor === "end" ? cx - 8 : cx + 8}
-        y={cy - 9}
-        textAnchor={anchor}
+        x={aboveLeft ? cx - 8 : cx + 8}
+        y={aboveLeft ? cy - 9 : cy + 14}
+        textAnchor={aboveLeft ? "end" : "start"}
         fontSize={11}
         fontWeight={400}
         fill="var(--mantine-color-text-6)"

@@ -364,14 +364,14 @@ export function AppLayout(): ReactElement {
           opened={isOffline || (renderOfflinePage && !isOnline)}
           onReconnected={() => setRenderOfflinePage(false)}
         />
-        {/* Dims page content without covering shared chrome. */}
+        {/* Dims the whole screen under the open speed dial, the tab bar included; only the dial stays lit. */}
         <Box
           onClick={() => setFabMenuOpened(false)}
           style={{
-            position: "absolute",
+            position: "fixed",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.45)",
-            backdropFilter: "blur(1px)",
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
             opacity: fabMenuOpened ? 1 : 0,
             pointerEvents: fabMenuOpened ? "auto" : "none",
             transition: "opacity 0.2s ease",

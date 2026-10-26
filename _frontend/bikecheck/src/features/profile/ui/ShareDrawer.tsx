@@ -29,13 +29,20 @@ import { ShareSwitchRow } from "./ShareSwitchRow";
 const DRAWER_Z_INDEX = 320;
 const THUMB_SIZE = 40;
 
-// docs/ui/card-surface.md: a panel, as the bike detail draws its cards - no hairline.
+// A card one step lighter than the sheet it sits on, so it has an edge of its own and not
+// only a hairline (design canvas "Profile sharing · tonal fix").
 const PANEL: CSSProperties = {
-  backgroundColor: "var(--mantine-color-cards-6)",
-  backgroundImage: "var(--card-glow)",
-  border: "none",
-  boxShadow: "var(--elev-panel)",
-  borderRadius: "1rem",
+  backgroundColor: "var(--color-surface-raised)",
+  border: "1px solid var(--color-border-raised)",
+  borderRadius: 20,
+};
+
+// The one control that decides everything: a well sunk into the sheet, the chosen state in the accent.
+const VISIBILITY_LABEL_LINE = 30;
+const VISIBILITY_STYLES = {
+  root: { backgroundColor: "var(--color-surface-well)", border: "1px solid var(--color-border-strong)" },
+  indicator: { backgroundColor: "var(--mantine-color-primary-6)", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)" },
+  label: { lineHeight: `${String(VISIBILITY_LABEL_LINE)}px`, color: "var(--mantine-color-text-7)" },
 };
 
 interface SectionProps {
@@ -219,17 +226,17 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
   return (
     <Stack gap="lg">
       <Stack gap={8}>
-        {/* The one control that decides everything wears the accent. The theme paints every
-            label dim, so the active one is forced dark by class. */}
+        {/* The theme paints every label dim, so the active one is forced dark by class. */}
         <SegmentedControl
           fullWidth
           withItemsBorders={false}
+          radius="xl"
           color="primary.6"
           value={visibility}
           onChange={(value) => changeVisibility(value as ProfileVisibility)}
           data={PROFILE_VISIBILITIES.map((value) => ({ value, label: t(VISIBILITY_LABEL_KEY[value]) }))}
-          classNames={{ label: "data-[active]:!text-black data-[active]:font-semibold" }}
-          styles={{ indicator: { backgroundColor: "var(--mantine-color-primary-6)" } }}
+          classNames={{ label: "data-[active]:!text-black data-[active]:font-bold" }}
+          styles={VISIBILITY_STYLES}
         />
         <Text fz={13} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
           {t(VISIBILITY_HINT_KEY[visibility])}

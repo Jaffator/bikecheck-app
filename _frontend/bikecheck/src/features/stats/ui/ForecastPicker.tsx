@@ -144,7 +144,7 @@ function ForecastOption({ item, active, separated }: ForecastOptionProps): React
         </Text>
       </Stack>
       <Stack gap={2} align="flex-end" style={{ flexShrink: 0 }}>
-        <Text className="tabular-nums" fz={13} fw={600} lts="var(--tracking-label)" c="text.6">
+        <Text className="tabular-nums" fz={12} fw={600} lts="var(--tracking-label)" c="text.6">
           {figure}
         </Text>
         <Text className="tabular-nums" fz={11} c="var(--color-text-dim)">

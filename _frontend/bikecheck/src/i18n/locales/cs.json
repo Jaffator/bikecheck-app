@@ -343,6 +343,11 @@
     "syncedHours": "sync před {{count}} h",
     "syncedDays": "sync před {{count}} d",
     "garageVisibility": "Garáž: {{visibility}}",
+    "garageChip": "Garáž",
+    "agoJustNow": "právě teď",
+    "agoMinutes": "před {{count}} min",
+    "agoHours": "před {{count}} h",
+    "agoDays": "před {{count}} d",
     "bannerStravaBody": "bez ní se žádná jízda nezapočítá, takže nájezd i opotřebení dílů zůstávají na nule.",
     "bannerUnpairedBody": "{{names}}",
     "bannerPairAction": "Propojit kola",
@@ -1135,6 +1140,9 @@
     "connectLink": "Připojit →",
     "sync": "Synchronizovat",
     "syncCooldown": "Znovu za {{minutes}} min",
+    "syncTitle": "Synchronizace Strava",
+    "lastSync": "Poslední sync",
+    "neverSynced": "zatím bez syncu",
     "syncQueued_one": "Stahuji {{count}} novou jízdu ze Stravy…",
     "syncQueued_few": "Stahuji {{count}} nové jízdy ze Stravy…",
     "syncQueued_other": "Stahuji {{count}} nových jízd ze Stravy…",
@@ -1575,6 +1583,7 @@
     "period": "Období",
     "periodMonth": "Tento měsíc",
     "periodAll": "Vše",
+    "periodAllLong": "Celkem",
     "periodAllTime": "celkem"
   }
 }

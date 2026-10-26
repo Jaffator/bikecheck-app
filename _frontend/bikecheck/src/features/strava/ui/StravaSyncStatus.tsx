@@ -3,12 +3,9 @@ import type { ReactElement } from "react";
 import { Anchor, Box, Group } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import dayjs from "dayjs";
-import { useRides } from "@/features/rides/rides.queries";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
-import { useConnectStrava, usePendingRides } from "@/features/strava/strava.queries";
-import type { PendingRide } from "@/features/strava/strava.types";
-import { useCurrentUser } from "@/features/users/users.queries";
+import { useConnectStrava } from "@/features/strava/strava.queries";
+import { SYNCED_AGO_KEYS, syncedAgo, useStravaLastSync } from "@/features/strava/stravaLastSync";
 
 interface StravaSyncStatusProps {
   // Offers the OAuth flow right in the line while Strava is not connected.
@@ -17,15 +14,10 @@ interface StravaSyncStatusProps {
 
 export function StravaSyncStatus({ withConnect = false }: StravaSyncStatusProps): ReactElement {
   const { t } = useTranslation();
-  const { data: user } = useCurrentUser();
-  const { data: rides } = useRides();
-  const { data: pending } = usePendingRides();
+  const { connected, lastSync } = useStravaLastSync();
   const connect = useConnectStrava();
 
-  const connected = Boolean(user?.strava_athlete_id);
-  const lastSync =
-    user?.strava_last_sync_at ?? latestRideStart(rides?.pages[0]?.items[0]?.started_at ?? null, pending ?? []);
-  const offerConnect = withConnect && user !== undefined && !connected;
+  const offerConnect = withConnect && connected === false;
 
   return (
     <Group gap={6} wrap="nowrap">
@@ -49,7 +41,7 @@ export function StravaSyncStatus({ withConnect = false }: StravaSyncStatusProps)
           </Anchor>
         </>
       ) : (
-        <span>{stravaStatus(connected, lastSync, t)}</span>
+        <span>{stravaStatus(Boolean(connected), lastSync, t)}</span>
       )}
     </Group>
   );
@@ -57,28 +49,9 @@ export function StravaSyncStatus({ withConnect = false }: StravaSyncStatusProps)
 
 const STRAVA_COLOR = "var(--mantine-color-strava-6)";
 
-// Before the first manual sync, the newest ride Strava delivered stands in for one.
-function latestRideStart(lastRideStart: string | null, pending: PendingRide[]): string | null {
-  const starts = [lastRideStart, ...pending.map((ride) => ride.started_at)].filter(
-    (start): start is string => start !== null,
-  );
-  if (starts.length === 0) return null;
-  return starts.reduce((latest, start) => (dayjs(start).isAfter(latest) ? start : latest));
-}
-
 function stravaStatus(connected: boolean, lastSync: string | null, t: TFunction): string {
   const strava = t("strava.statusTitle");
   if (!connected) return `${strava} · ${t("dashboard.notConnected")}`;
   if (lastSync === null) return strava;
-  return `${strava} · ${syncedAgo(lastSync, t)}`;
-}
-
-// The line has no room for "3 hours ago", so a letter carries the unit.
-function syncedAgo(lastSync: string, t: TFunction): string {
-  const minutes = dayjs().diff(lastSync, "minute");
-  if (minutes < 1) return t("dashboard.syncedJustNow");
-  if (minutes < 60) return t("dashboard.syncedMinutes", { count: minutes });
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return t("dashboard.syncedHours", { count: hours });
-  return t("dashboard.syncedDays", { count: Math.floor(hours / 24) });
+  return `${strava} · ${syncedAgo(lastSync, t, SYNCED_AGO_KEYS)}`;
 }
