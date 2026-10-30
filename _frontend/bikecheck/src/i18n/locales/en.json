@@ -1475,6 +1475,7 @@
     "spendEmpty": "no prices yet · add a price to a service",
     "other": "Other",
     "unassigned": "Unassigned",
+    "distance": "Distance",
     "distanceTitle": "Distance · {{period}}",
     "distanceEmptyPeriod": "no rides in this period",
     "distanceWeek": "Week of {{date}}",

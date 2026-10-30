@@ -1554,6 +1554,7 @@
     "spendEmpty": "zatím bez cen · doplň cenu k servisu",
     "other": "Ostatní",
     "unassigned": "Nepřiřazeno",
+    "distance": "Najeto",
     "distanceTitle": "Najeto · {{period}}",
     "distanceEmptyPeriod": "v tomto období žádné jízdy",
     "distanceWeek": "Týden od {{date}}",
