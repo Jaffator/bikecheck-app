@@ -154,12 +154,13 @@ _Avoid_: Sub-service, service part
 
 **Draft Block**:
 The Category Block being worked on, which reaches the Service only when the user confirms it. Either
-a category being added or one the Summary sent the user back to correct (ADR 0006).
+a category being added or one the Summary sent the user back to correct (ADR 0006). Phone only: on
+desktop a ticked Action is in the Service at once (ADR 0035).
 
 **Summary**:
 The step where a Service is assembled and saved — its date, note, total cost, attachments and the
 list of Category Blocks. The wizard's hub: the only way on, and the place another Action is added
-from (ADR 0006).
+from (ADR 0006). On desktop it is a panel beside the actions rather than a step (ADR 0035).
 _Avoid_: Review (it is where work is added, not only checked)
 
 **Month Group**:

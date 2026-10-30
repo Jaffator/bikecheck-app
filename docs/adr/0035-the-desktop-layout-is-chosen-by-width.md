@@ -71,3 +71,17 @@ whose detail is already a layer over them: see ADR 0036.
 - `key={pathname}` on the main area stays: nothing here needs a page to survive a route change.
 - `global.css` turns text selection and the tap highlight back on only above the breakpoint.
 - The frontend has no tests, so the mobile layout is checked by hand at each step.
+
+## Revised 2026-10-30: the two create wizards are wide
+
+Add bike (`/bikes/new`) and Add service (`/service/new`) run `wide` on desktop, not `narrow`. A
+wizard that asks one thing per screen wastes the width and hides what has already been picked; on
+one screen the user sees what they are adding to while they add it.
+
+- **Add service is one screen in three columns:** the bike's categories, the chosen category's
+  actions, and a panel holding the Service itself — bike, what was done, date, place, note,
+  receipts, the total and Save. A tick is in the Service at once, so there is no Draft Block on
+  desktop (ADR 0006 is the phone's flow).
+- **Add bike keeps its three steps** with a "Your bike" panel beside them, showing the bike as it
+  stands so far and the step's way on.
+- Below 60em both stay the phone wizards, unchanged. Every other form stays `narrow`.
