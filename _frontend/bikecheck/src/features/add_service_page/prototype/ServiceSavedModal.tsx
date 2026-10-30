@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
-import { COPY } from "./serviceCopy";
 import type { SavedSummary } from "./useServiceDesktopPrototype";
 
 interface ServiceSavedModalProps {
@@ -17,7 +16,7 @@ interface ServiceSavedModalProps {
 }
 
 export function ServiceSavedModal({ opened, summary, onAnother, onDone }: ServiceSavedModalProps): ReactElement {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
   const currency = currencySymbol(user?.currency ?? null, i18n.language);
 
@@ -47,19 +46,19 @@ export function ServiceSavedModal({ opened, summary, onAnother, onDone }: Servic
           <Check size={24} strokeWidth={2.5} />
         </Box>
         <Text component="h2" fw={700} fz={20} c="text.6" lts="var(--tracking-title)" m={0} mt={6}>
-          {COPY.savedTitle}
+          {t("addService.savedTitle")}
         </Text>
         {summary !== null && (
           <Text fz={14} c="var(--color-text-dim)" ta="center" className="tabular-nums">
-            {COPY.savedCount}: {summary.actionCount} · {COPY.savedTotal} {summary.totalCost} {currency}
+            {t("addService.savedSummary", { count: summary.actionCount, total: `${String(summary.totalCost)} ${currency}` })}
           </Text>
         )}
         <Group gap={10} grow w="100%" mt="md">
           <Button variant="outline" radius="md" onClick={onAnother} style={{ height: "2.6rem" }}>
-            {COPY.another}
+            {t("addService.recordAnother")}
           </Button>
           <Button color="primary.6" c="textDark.6" radius="md" onClick={onDone} style={{ height: "2.6rem" }}>
-            {COPY.done}
+            {t("addService.savedDone")}
           </Button>
         </Group>
       </Stack>

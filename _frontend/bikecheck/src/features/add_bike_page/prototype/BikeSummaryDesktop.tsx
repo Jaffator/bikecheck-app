@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { Check, TriangleAlert } from "lucide-react";
 import { componentTypeId, groupComponents, positionsOf, readEntry } from "../bikeComponents.types";
 import type { AddBikeWizard } from "../useAddBikeWizard";
-import { COPY } from "./bikeProto";
 
 function translatedName(i18nKey: string | null, fallback: string, translate: (key: string) => string): string {
   return i18nKey ? translate(i18nKey) : fallback;
@@ -28,8 +27,8 @@ export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProp
     [brand, model].filter((part) => part.trim() !== "").join(" "),
     year,
     specification.category,
-    frame === "" ? null : `${COPY.frame.toLowerCase()} ${frame}`,
-    specification.wheelSize === null ? null : `${COPY.wheels.toLowerCase()} ${specification.wheelSize}`,
+    frame === "" ? null : `${t("addBike.frame").toLowerCase()} ${frame}`,
+    specification.wheelSize === null ? null : `${t("addBike.wheels").toLowerCase()} ${specification.wheelSize}`,
   ]
     .filter((part) => part !== null && part !== "")
     .join(" · ");

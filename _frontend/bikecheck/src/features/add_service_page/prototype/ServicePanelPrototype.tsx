@@ -43,7 +43,6 @@ import {
   inputStyles,
 } from "@/features/add_bike_page/formStyles";
 import { MAX_ATTACHMENTS, today, type CategoryBlock, type PickedAction } from "../serviceWizard.types";
-import { COPY } from "./serviceCopy";
 import type { ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype";
 
 // Clears the 3rem header plus a rem of air once the page scrolls the panel up to it.
@@ -109,7 +108,7 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
     <Paper
       ref={panelRef}
       component="aside"
-      aria-label={COPY.panelTitle}
+      aria-label={t("addService.panelTitle")}
       radius="lg"
       style={{
         position: "sticky",
@@ -123,7 +122,7 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
       }}
     >
       <Text fw={700} fz={16} c="text.6" px="lg" pt="lg" pb="sm">
-        {COPY.panelTitle}
+        {t("addService.panelTitle")}
       </Text>
 
       {/* Everything but the total and Save scrolls inside the panel. */}
@@ -208,11 +207,12 @@ function BikeSelect({
   bikeId: number | null;
   onRequestBike: (bikeId: number) => void;
 }): ReactElement {
+  const { t } = useTranslation();
   const picked = bikes.find((bike) => bike.id === bikeId);
 
   return (
     <Select
-      label={COPY.bike}
+      label={t("addService.panelBike")}
       data={bikes.map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
       value={bikeId === null ? null : String(bikeId)}
       allowDeselect={false}
@@ -258,7 +258,7 @@ function DoneList({ proto, currency }: { proto: ServiceDesktopPrototypeState; cu
       <Text style={panelLabel}>{t("addService.stepActions")}</Text>
       {ordered.length === 0 && (
         <Text fz={13} c="var(--color-text-dim)" ta="center" px="sm" py="md" style={dashedSlot}>
-          {COPY.nothingDone}
+          {t("addService.nothingDone")}
         </Text>
       )}
       {ordered.map((block) => (
@@ -312,7 +312,7 @@ function DoneRow({
           {label}
         </Text>
         <Text fz={13} c={missingPart ? "orange.5" : "var(--color-text-dim)"} lineClamp={2}>
-          {missingPart ? COPY.pickPart : sub}
+          {missingPart ? t("addService.pickPart") : sub}
         </Text>
       </UnstyledButton>
       {action.partialCost !== null && (
@@ -320,7 +320,7 @@ function DoneRow({
           {action.partialCost} {currency}
         </Text>
       )}
-      <ActionIcon variant="transparent" aria-label={`${COPY.remove} ${label}`} onClick={onRemove}>
+      <ActionIcon variant="transparent" aria-label={t("addService.removeAction", { name: label })} onClick={onRemove}>
         <X size={15} color="var(--color-text-dim)" />
       </ActionIcon>
     </Group>
@@ -438,7 +438,7 @@ function AttachmentsField({
               </Text>
             </Group>
             <Text fz={13} c="var(--color-text-dim)">
-              {COPY.dropHint}
+              {t("addService.dropHint")}
             </Text>
           </UnstyledButton>
         )}
@@ -507,7 +507,7 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
 
       {proto.unattributed && (
         <Text fz={13} c="orange.5">
-          {COPY.missingPart}
+          {t("addService.missingPart")}
         </Text>
       )}
 

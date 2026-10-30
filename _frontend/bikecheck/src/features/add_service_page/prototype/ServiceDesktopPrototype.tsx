@@ -12,7 +12,6 @@ import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { useHeaderStore } from "@/store/store";
 import { ActionRow } from "../ServiceActionsStep";
 import type { PickedAction } from "../serviceWizard.types";
-import { COPY } from "./serviceCopy";
 import { ServicePanelPrototype } from "./ServicePanelPrototype";
 import { ServiceSavedModal } from "./ServiceSavedModal";
 import { useServiceDesktopPrototype, type ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype";
@@ -87,7 +86,7 @@ export function ServiceDesktopPrototype(): ReactElement {
   if (proto.bikes.length === 0) {
     return (
       <Text fz={14} c="var(--color-text-dim)" p="md">
-        {COPY.noBikes}
+        {t("addService.noBikes")}
       </Text>
     );
   }
@@ -122,8 +121,8 @@ export function ServiceDesktopPrototype(): ReactElement {
           if (pendingBikeId !== null) proto.changeBike(pendingBikeId);
           setPendingBikeId(null);
         }}
-        title={COPY.changeBikeTitle}
-        body={COPY.changeBikeBody}
+        title={t("addService.changeBikeTitle")}
+        body={t("addService.changeBikeBody")}
         cancelLabel={t("addService.keep")}
         confirmLabel={t("addService.discard")}
       />
@@ -281,7 +280,7 @@ function ActionsHeading({ proto }: { proto: ServiceDesktopPrototypeState }): Rea
         {catalogue === undefined ? "" : catalogueLabel(catalogue.group_i18n_key, catalogue.group_name, t)}
       </Text>
       <Text fz={14} c="var(--color-text-dim)" mt={6}>
-        {COPY.actionsHint}
+        {t("addService.actionsHint")}
       </Text>
       {firstSection !== undefined && <SectionTitle mt={22}>{firstSection.title}</SectionTitle>}
     </Box>

@@ -18,7 +18,7 @@ import {
 import { inputStyles } from "../formStyles";
 import { LookupProgress } from "../LookupProgress";
 import type { AddBikeWizard } from "../useAddBikeWizard";
-import { COPY, cardSurface } from "./bikeProto";
+import { cardSurface } from "./bikeProto";
 
 // Room for "Přední/zadní" and "Mám" side by side, icons included.
 const TOGGLES_WIDTH = "13rem";
@@ -154,7 +154,7 @@ export function BikePartsDesktop({ wizard }: { wizard: AddBikeWizard }): ReactEl
               aria-label={`${component.component_name} ${positionLabels[position]}`.trim()}
               placeholder={
                 absent
-                  ? COPY.absentPlaceholder
+                  ? t("addBike.absentPlaceholder")
                   : position === "none"
                     ? t("addBike.componentPlaceholder")
                     : positionLabels[position]
@@ -223,7 +223,7 @@ export function BikePartsDesktop({ wizard }: { wizard: AddBikeWizard }): ReactEl
                 c={fields > 0 && filled === fields ? "primary.6" : "var(--color-text-dim)"}
                 style={{ whiteSpace: "nowrap" }}
               >
-                {filled} {COPY.of} {fields}
+                {t("addBike.filledOf", { filled, total: fields })}
               </Text>
             </UnstyledButton>
           );

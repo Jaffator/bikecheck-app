@@ -3,24 +3,25 @@
 import { useEffect, type ReactElement } from "react";
 import { Box, Button, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
+import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import { PhotoCropModal } from "../PhotoCropModal";
+import { StravaConnectScreen } from "../StravaConnectScreen";
 import { useAddBikeWizard } from "../useAddBikeWizard";
 import { BikeAsidePrototype } from "./BikeAsidePrototype";
 import { BikePartsDesktop } from "./BikePartsDesktop";
 import { BikeSearchDesktop } from "./BikeSearchDesktop";
 import { BikeSpecDesktop } from "./BikeSpecDesktop";
 import { BikeSummaryDesktop } from "./BikeSummaryDesktop";
-import { COPY, cardSurface } from "./bikeProto";
+import { cardSurface } from "./bikeProto";
 
-const STEP_TITLES = [COPY.searchTitle, COPY.specTitle, COPY.partsTitle];
+const STEP_TITLE_KEYS = ["addBike.searchTitle", "addBike.specTitle", "addBike.partsTitle"];
+const STEP_LABEL_KEYS = ["addBike.stepFind", "addBike.stepDetails", "addBike.stepParts"];
 const STEP_BODY_KEYS = ["addBike.identityBody_step1", "addBike.identityBody_step2", "addBike.componentsBody"];
 
 export function AddBikeDesktopPrototype(): ReactElement {
   const wizard = useAddBikeWizard();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { active } = wizard;
 
   // Reset scroll position when changing wizard steps.
@@ -28,8 +29,30 @@ export function AddBikeDesktopPrototype(): ReactElement {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [active]);
 
+  // After a save, the same way on as the phone: pair with Strava gear, or offer to connect Strava.
+  if (wizard.offeringStrava) {
+    // The phone screen as is, held to a phone-wide column so its rows don't stretch across the desktop.
+    return (
+      <Box maw={480} mx="auto">
+        <StravaConnectScreen
+          onConnect={wizard.connectStrava}
+          onSkip={wizard.leaveAfterSave}
+          connecting={wizard.connectingStrava}
+        />
+      </Box>
+    );
+  }
   if (wizard.savedBike) {
-    return <BikeAddedCard bikeName={wizard.savedBikeName} onContinue={() => navigate("/bikes")} />;
+    return (
+      <>
+        <BikeAddedCard bikeName={wizard.savedBikeName} onContinue={wizard.leaveAfterSave} />
+        <GearLinkingSheet
+          opened={wizard.pairingGear}
+          onClose={wizard.closeGearPairing}
+          bikeIds={wizard.savedBikeId === null ? [] : [wizard.savedBikeId]}
+        />
+      </>
+    );
   }
 
   return (
@@ -40,7 +63,7 @@ export function AddBikeDesktopPrototype(): ReactElement {
         {/* Above both columns, so the step's card and "Tvoje kolo" start on one edge. */}
         <Box>
           <Text component="h2" fw={700} fz={22} c="text.6" lts="var(--tracking-title)" m={0}>
-            {STEP_TITLES[active]}
+            {t(STEP_TITLE_KEYS[active])}
           </Text>
           <Text fz={14} c="var(--color-text-dim)" mt={6}>
             {t(STEP_BODY_KEYS[active])}
@@ -75,17 +98,19 @@ export function AddBikeDesktopPrototype(): ReactElement {
 
 // Numbered steps joined by a line; a finished one can be walked back to.
 function StepIndicator({ active, onStepClick }: { active: number; onStepClick: (step: number) => void }): ReactElement {
+  const { t } = useTranslation();
+
   return (
     <Group component="ol" gap={12} wrap="nowrap" m={0} p={0} style={{ listStyle: "none" }}>
-      {COPY.steps.map((label, index) => {
+      {STEP_LABEL_KEYS.map((labelKey, index) => {
         const done = index < active;
         const current = index === active;
-        const last = index === COPY.steps.length - 1;
+        const last = index === STEP_LABEL_KEYS.length - 1;
         const reached = done || current;
 
         return (
           <Group
-            key={label}
+            key={labelKey}
             component="li"
             aria-current={current ? "step" : undefined}
             gap={10}
@@ -121,7 +146,7 @@ function StepIndicator({ active, onStepClick }: { active: number; onStepClick: (
                 {done ? <Check size={14} strokeWidth={3} /> : index + 1}
               </Box>
               <Text fz={14} fw={600} c={reached ? "text.6" : "text.9"} style={{ whiteSpace: "nowrap" }}>
-                {label}
+                {t(labelKey)}
               </Text>
             </UnstyledButton>
             {!last && (
