@@ -1,9 +1,6 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
-import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
-import { Queue } from 'bullmq';
-import { GeminiRideSummaryJob } from '../gemini/gemini.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import { RideService } from '../ride/ride.service';
@@ -88,7 +85,6 @@ function getKslopeUP(slopePercent: number): number {
 export class StravaEventsService {
   constructor(
     @InjectPinoLogger(StravaEventsService.name) private readonly logger: PinoLogger,
-    @InjectQueue('gemini-queue') private readonly geminiQueue: Queue,
     private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
     private readonly serviceTracking: ServiceTrackingService,
@@ -733,6 +729,8 @@ export class StravaEventsService {
       update: {
         started_at: new Date(analyzedData.started_at),
         json_data: JSON.stringify(analyzedData.rawJson),
+        // The figures may have changed, so the next open writes the review again (ADR 0044).
+        summary: null,
         health_index_brake_pad: analyzedData.health_index_brake_pad,
         descent_min: analyzedData.descent_min ?? null,
         distance_m: analyzedData.distance_km * 1000,
@@ -797,13 +795,9 @@ export class StravaEventsService {
       data: { total_elevation_m: { increment: Math.round(diff.elevation_up_m) } },
     });
 
-    await this.geminiQueue.add('generate-ride-summary', {
-      data: analyzedData,
-      rideId: ride.id,
-    } satisfies GeminiRideSummaryJob);
     // Callers announce a first-time ride and stay quiet about a re-sync, so the
     // upsert has to say which of the two it just did.
-    return { message: 'Ride saved and summary generation queued', isNew: existingRide === null, rideId: ride.id };
+    return { message: 'Ride saved', isNew: existingRide === null, rideId: ride.id };
   }
 
   private async wornPartIds(bikeId: number, ride: Pick<WearRide, 'started_at'>): Promise<number[]> {

@@ -24,7 +24,12 @@ export function pattern(table: Record<string, string>, language: string): string
 
 // The date on a standalone card: the year is there because nothing above the card says it.
 export function formatServiceDate(date: string, language: string): string {
-  return dayjs(date).format(pattern(LONG_DATE_BY_LANGUAGE, language)).toUpperCase();
+  return formatLongDate(date, language).toUpperCase();
+}
+
+// The same date in sentence case, for a chart that reads as prose rather than a label.
+export function formatLongDate(date: string, language: string): string {
+  return dayjs(date).format(pattern(LONG_DATE_BY_LANGUAGE, language));
 }
 
 // The date on a row inside a Month Group, where the header already carries the year.

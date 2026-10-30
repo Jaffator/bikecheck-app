@@ -41,11 +41,7 @@ export function SetupProfileMenu({
       </Menu.Target>
 
       {/* Wears the same surface as the part row menu, so the app has one dropdown. */}
-      <Menu.Dropdown
-        bg="cards.6"
-        p={8}
-        style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
-      >
+      <Menu.Dropdown>
         <Menu.Item color="text" py={12} fw={600} leftSection={<Plus size={ICON_SIZE} />} onClick={onCreate}>
           {t("setup.newProfile")}
         </Menu.Item>

@@ -62,7 +62,7 @@ export function RidesDesktop(): ReactElement {
     // No top padding: the status line belongs to the header's title just above it.
     <Stack gap="md" p="xl" pt={0}>
       <Group fz={13} c="var(--color-text-dim)" className="tabular-nums">
-        <StravaSyncStatus withConnect />
+        <StravaSyncStatus />
       </Group>
 
       <Tabs

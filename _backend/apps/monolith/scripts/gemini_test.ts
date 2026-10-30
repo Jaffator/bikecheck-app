@@ -1,42 +1,36 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+// Writes the ride review for a sample ride with the real API, in both languages.
 import { config } from 'dotenv';
 import { join } from 'path';
 config({ path: join(__dirname, '../.env') });
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import type { PinoLogger } from 'nestjs-pino';
+import { GeminiService, type RideSummaryInput } from '../src/gemini/gemini.service';
 import activityData from './simplified_strava_data.json';
 
-const genAI = new GoogleGenerativeAI(process.env['GEMINI_API_KEY']!);
-console.log(process.env['GEMINI_API_KEY']!);
-async function run() {
-  // const model = gen
-  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+// The service logs through Nest; the console is enough here.
+const logger = { info: console.log, error: console.error } as unknown as PinoLogger;
 
-  const rideMetrics = {
-    name: activityData.name,
-    sport_type: activityData.sport_type,
-    distance_km: (activityData.distance / 1000).toFixed(1),
-    moving_time_min: Math.round(activityData.moving_time / 60),
-    elevation_gain_m: activityData.total_elevation_gain,
-    avg_speed_kmh: (activityData.average_speed * 3.6).toFixed(1),
-    max_speed_kmh: (activityData.max_speed * 3.6).toFixed(1),
-    avg_heartrate: activityData.average_heartrate,
-    max_heartrate: activityData.max_heartrate,
-    avg_temp_c: activityData.average_temp,
-  };
+const ride: RideSummaryInput = {
+  name: activityData.name,
+  sport_type: activityData.sport_type,
+  started_at: activityData.start_date,
+  bike: 'Orbea Rallon 2024',
+  distance_km: Math.round(activityData.distance / 100) / 10,
+  duration_min: Math.round(activityData.moving_time / 60),
+  elevation_up_m: Math.round(activityData.total_elevation_gain),
+  // Strava's payload carries no descent; the sample is a loop, which drops what it climbs.
+  elevation_down_m: Math.round(activityData.total_elevation_gain),
+  speed_avg_kmh: Math.round(activityData.average_speed * 3.6),
+  max_speed_kmh: Math.round(activityData.max_speed * 3.6),
+  average_watts: null,
+  max_watts: null,
+  weighted_average_watts: null,
+};
 
-  const prompt = `Make a summary about this ride in english (2-3 sentences):
-${JSON.stringify(rideMetrics, null, 2)}`;
-
-  const result = await withMeasure('gemini prompt', () => model.generateContent(prompt));
-  console.log(result.response.text());
+async function run(): Promise<void> {
+  const gemini = new GeminiService(logger);
+  for (const language of ['en', 'cs']) {
+    console.log(`${language}: ${await gemini.rideSummary(ride, language)}`);
+  }
 }
 
 run().catch(console.error);
-
-async function withMeasure(name: string, fn: () => Promise<any>) {
-  const start = performance.now();
-  const result = await fn();
-  const end = performance.now();
-  console.log(`${name} took ${end - start} ms`);
-  return result;
-}

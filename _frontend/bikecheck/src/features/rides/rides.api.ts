@@ -1,6 +1,6 @@
 // Ride API calls use the shared client.
 import { apiFetch } from "@/api/client";
-import type { CheckInPrompt, RideCheckIn, RidePage } from "./rides.types";
+import type { CheckInPrompt, RideAiSummary, RideCheckIn, RidePage } from "./rides.types";
 import type { RideFilter } from "./ridesTable";
 
 // What the check-in walks; both lists empty unless a ride arrived since it last opened.
@@ -49,6 +49,11 @@ export async function changeRideBike(rideId: number, bikeId: number): Promise<{ 
     method: "PATCH",
     body: JSON.stringify({ bikeId }),
   });
+}
+
+// The ride's AI review; the first request waits while Gemini writes it.
+export async function getRideAiSummary(rideId: number): Promise<RideAiSummary> {
+  return apiFetch<RideAiSummary>(`/rides/${rideId}/summary`);
 }
 
 // Removes a ride ridden on none of the rider's bikes; its wear comes off and Strava never sends it back.

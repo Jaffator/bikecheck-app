@@ -1,8 +1,9 @@
 // Home's distance card; which rides count is decided in StatsService.
 import { useState, type ReactElement, type ReactNode } from "react";
-import { Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
-import { LineChart, type LineChartProps } from "@mantine/charts";
+import { Box, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { AreaChart, type AreaChartProps } from "@mantine/charts";
 import dayjs from "dayjs";
+import { useYAxisScale } from "recharts";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { bikeColor } from "@/features/bikes/bikeColors";
@@ -12,15 +13,36 @@ import { formatKm } from "@/features/profile/profileFormat";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { formatNumber } from "@/utils/number";
-import { runningDistance, servedYear, type DistanceStep, type RunningDistance } from "../distanceDays";
-import { homePeriodLabel } from "../homePeriod";
+import {
+  RIDDEN,
+  runningDistance,
+  servedYear,
+  totalMeters,
+  type DistanceStep,
+  type RunningDistance,
+} from "../distanceDays";
 import { useDistance } from "../stats.queries";
 import type { Distance, DistanceBike, HomePeriod } from "../stats.types";
+import { HOME_FIGURE_SIZE, HomeCardHeader, HomeFigure } from "./HomeCardHeader";
 
-const CHART_HEIGHT = 180;
+const CHART_HEIGHT = 160;
+const TICK_SIZE = 11;
+// One bike's line gets a soft fill; several would only muddy each other.
+const SINGLE_FILL = 0.1;
+const END_DOT_RADIUS = 4.5;
+// One bike's label sits above its dot, room the top needs; several print right of their ends.
+const SINGLE_MARGIN = { top: 16, right: 8 };
+// All time runs to six digits.
+const MULTI_MARGIN = { top: 8, right: 60 };
+// Line ends closer than one 13px label line are pushed apart.
+const END_LABEL_GAP = 15;
+const TICK_STYLE = { fontVariantNumeric: "tabular-nums" };
+const X_TICK = { transform: "translate(0, 10)", fontSize: TICK_SIZE, fill: "currentColor", style: TICK_STYLE };
+// Steps of the three-tick axis, times a power of ten, so it reads 0 · 40 · 80, never 0 · 55 · 110.
+const NICE_STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
 
 // Mantine draws its tooltip for a light page; this one sits on the dark card.
-const TOOLTIP_STYLES: LineChartProps["styles"] = {
+const TOOLTIP_STYLES: AreaChartProps["styles"] = {
   tooltip: {
     backgroundColor: "var(--mantine-color-cards-7)",
     border: "1px solid var(--color-border-strong)",
@@ -37,9 +59,9 @@ const TOOLTIP_STYLES: LineChartProps["styles"] = {
   },
 };
 
-// Each bike's running km over the Period.
+// Each bike's running km over the Period, under what they add up to.
 export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { data: distance, isPlaceholderData } = useDistance(period);
   const isDesktop = useIsDesktop();
   // The last Period's data stands in while the next loads, so it is drawn as that Period until replaced.
@@ -50,6 +72,7 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
     return (
       <DistancePaper>
         <Skeleton h={14} w="60%" />
+        <Skeleton h={HOME_FIGURE_SIZE} w="35%" />
         <Skeleton h={CHART_HEIGHT} />
       </DistancePaper>
     );
@@ -57,12 +80,14 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
 
   // The phone keeps drawing only bikes that covered a km, as before rides without distance were served.
   const drawn = isDesktop ? distance : { ...distance, bikes: distance.bikes.filter((bike) => bike.total_km > 0) };
+  const single = drawn.bikes.length === 1 ? drawn.bikes[0] : null;
 
   return (
     <DistancePaper>
-      <Text fz={16} fw={600} c="text.6">
-        {t("stats.distanceTitle", { period: homePeriodLabel(shown, i18n.language, t) })}
-      </Text>
+      <Stack gap={10}>
+        <HomeCardHeader title={t("stats.distance")} period={shown} />
+        {drawn.bikes.length > 0 && <DistanceTotal distance={drawn} single={single} />}
+      </Stack>
 
       {drawn.bikes.length === 0 ? (
         <Text fz={13} c="var(--color-text-dim)">
@@ -71,10 +96,32 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
       ) : (
         <>
           <DistanceChart distance={drawn} period={shown} />
-          <Legend bikes={drawn.bikes} withTotals={isDesktop} />
+          {single === null && <Legend bikes={drawn.bikes} withTotals={isDesktop} />}
         </>
       )}
     </DistancePaper>
+  );
+}
+
+// Summed in metres and rounded once, as every distance figure on Home is.
+function DistanceTotal({ distance, single }: { distance: Distance; single: DistanceBike | null }): ReactElement {
+  const { i18n } = useTranslation();
+
+  return (
+    <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
+      <HomeFigure>{RIDDEN.format(totalMeters(distance, RIDDEN), i18n.language)}</HomeFigure>
+      {single !== null && (
+        // The name carries the baseline; the dot only centres on it.
+        <Group gap={7} wrap="nowrap" align="baseline" style={{ minWidth: 0 }}>
+          <Box style={{ alignSelf: "center" }}>
+            <BikeColorDot colorIndex={single.color_index} size={7} />
+          </Box>
+          <Text fz={13} c="text.7" truncate>
+            {bikeTitle(single)}
+          </Text>
+        </Group>
+      )}
+    </Group>
   );
 }
 
@@ -83,6 +130,8 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
   const isDesktop = useIsDesktop();
   const line = runningDistance(distance, period);
   const lastIndex = line.starts.length - 1;
+  const single = distance.bikes.length === 1;
+  const ticks = yTicks(Math.max(...distance.bikes.map((bike) => bike.total_km)));
 
   // Rounded here, where the line prints them: the running metres end at the bike's total.
   const data = line.starts.map((start, index) => ({
@@ -96,32 +145,40 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
     label: bikeTitle(bike),
     color: bikeColor(bike.color_index),
   }));
+  const ends = distance.bikes.map((_, row) => Math.round(line.meters[row][lastIndex] / 1000));
 
   return (
-    <LineChart
+    <AreaChart
       h={CHART_HEIGHT}
       // The phone reads the totals off the line ends; a tap would only focus the surface and ring it.
       style={isDesktop ? undefined : { pointerEvents: "none" }}
       data={data}
       dataKey="start"
       series={series}
+      curveType="linear"
       withDots={false}
+      withGradient={false}
+      fillOpacity={single ? SINGLE_FILL : 0}
+      strokeDasharray="none"
       tickLine="none"
       textColor="text.8"
       gridColor="var(--color-border-subtle)"
       valueFormatter={(km) => formatKm(km, i18n.language)}
-      xAxisProps={xAxisOf(line, servedYear(distance))}
+      xAxisProps={{ tick: X_TICK, ...xAxisOf(line, servedYear(distance)) }}
       // Sized to its longest label; Mantine's 10px tick shift is dropped, auto width cannot see it.
       yAxisProps={{
         width: "auto",
-        tick: { fontSize: 12, fill: "currentColor" },
+        ticks,
+        domain: [0, ticks[ticks.length - 1]],
+        tick: { fontSize: TICK_SIZE, fill: "currentColor", style: TICK_STYLE },
         tickFormatter: (km: number) => formatNumber(km, i18n.language),
       }}
-      // Room on the right for each line's total; all time runs to six digits.
-      lineChartProps={{ margin: { top: 8, right: 60 } }}
-      lineProps={(item) => ({
-        label: <EndLabel lastIndex={lastIndex} lineColor={item.color ?? ""} language={i18n.language} />,
-      })}
+      areaChartProps={{ margin: single ? SINGLE_MARGIN : MULTI_MARGIN }}
+      areaProps={(item) => {
+        const labelProps = { lastIndex, lineColor: item.color, language: i18n.language };
+        const row = series.findIndex((line) => line.name === item.name);
+        return { label: single ? <EndMarker {...labelProps} /> : <EndLabel {...labelProps} ends={ends} row={row} /> };
+      }}
       tooltipProps={{
         labelFormatter: (start: ReactNode) => pointLabel(line.step, String(start), i18n.language, t),
       }}
@@ -130,16 +187,29 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
   );
 }
 
-// The year names a month under each month's first week; a month and all time leave the spacing to the chart.
-function xAxisOf(line: RunningDistance, year: number): LineChartProps["xAxisProps"] {
+// The top tick sits at or just above the longest line's end; a whole step, so no tick reads 1.5 km.
+function yTicks(topKm: number): number[] {
+  const rough = Math.max(topKm / 2, 1);
+  const power = 10 ** Math.floor(Math.log10(rough));
+  const step = Math.ceil((NICE_STEPS.find((nice) => nice * power >= rough) ?? 10) * power);
+  return [0, step, step * 2];
+}
+
+// The year names each month under its first week, a month ticks weekly from the 1st, all time is the chart's.
+function xAxisOf(line: RunningDistance, year: number): AreaChartProps["xAxisProps"] {
   if (line.step === "week") {
     return {
       ticks: monthTicks(year, line.starts),
       tickFormatter: (week: string) => weekMonth(year, line.starts, week).format("MMM"),
     };
   }
-  const format = line.step === "day" ? "D" : "MMM YY";
-  return { tickFormatter: (start: string) => dayjs(start).format(format) };
+  if (line.step === "day") {
+    return {
+      ticks: line.starts.filter((_, index) => index % 7 === 0),
+      tickFormatter: (start: string) => dayjs(start).format("D"),
+    };
+  }
+  return { tickFormatter: (start: string) => dayjs(start).format("MMM YY") };
 }
 
 // dayjs, not Intl: Mantine also asks for a label while the tooltip is hidden, and Intl throws on it.
@@ -165,7 +235,7 @@ function monthTicks(year: number, weeks: string[]): string[] {
   );
 }
 
-// Recharts clones this onto every point of a line; only the last one prints the Period's total.
+// Recharts clones these onto every point of a line; only the last one prints the Period's total.
 interface EndLabelProps {
   lastIndex: number;
   lineColor: string;
@@ -176,13 +246,64 @@ interface EndLabelProps {
   index?: number;
 }
 
-function EndLabel({ lastIndex, lineColor, language, x, y, value, index }: EndLabelProps): ReactElement | null {
+// Every line's end km and this line's row in them, so each label knows where the others sit.
+interface SpreadProps {
+  ends: number[];
+  row: number;
+}
+
+function EndLabel(props: EndLabelProps & SpreadProps): ReactElement | null {
+  const { lastIndex, lineColor, language, x, y, value, index, ends, row } = props;
+  const yScale = useYAxisScale();
+  if (index !== lastIndex || value === undefined) return null;
+
+  const spread = yScale === undefined ? undefined : spreadEnds(ends.map((km) => yScale(km) ?? 0), yScale(0) ?? 0);
+  return (
+    <text x={Number(x) + 6} y={spread?.[row] ?? Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
+      {formatNumber(Number(value), language)}
+    </text>
+  );
+}
+
+// Pushes the end labels a gap apart downwards, then back up so none drops under the zero line.
+function spreadEnds(ys: number[], bottom: number): number[] {
+  const order = ys.map((_, row) => row).sort((a, b) => ys[a] - ys[b]);
+  const placed = [...ys];
+  for (let rank = 1; rank < order.length; rank++) {
+    placed[order[rank]] = Math.max(placed[order[rank]], placed[order[rank - 1]] + END_LABEL_GAP);
+  }
+  for (let rank = order.length - 1; rank >= 0; rank--) {
+    const limit = rank === order.length - 1 ? bottom : placed[order[rank + 1]] - END_LABEL_GAP;
+    placed[order[rank]] = Math.min(placed[order[rank]], limit);
+  }
+  return placed;
+}
+
+// Raised above-left of its dot: a running line that ends flat would run through a label level with it.
+function EndMarker({ lastIndex, lineColor, language, x, y, value, index }: EndLabelProps): ReactElement | null {
   if (index !== lastIndex || value === undefined) return null;
 
   return (
-    <text x={Number(x) + 6} y={Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
-      {formatNumber(Number(value), language)}
-    </text>
+    <g>
+      <circle
+        cx={Number(x)}
+        cy={Number(y)}
+        r={END_DOT_RADIUS}
+        fill={lineColor}
+        strokeWidth={2}
+        style={{ stroke: "var(--mantine-color-cards-6)" }}
+      />
+      <text
+        x={Number(x) - 8}
+        y={Number(y) - 6}
+        textAnchor="end"
+        fontSize={TICK_SIZE}
+        className="tabular-nums"
+        style={{ fill: "var(--mantine-color-text-6)" }}
+      >
+        {formatKm(Number(value), language)}
+      </text>
+    </g>
   );
 }
 
@@ -222,7 +343,7 @@ function DistancePaper({ children }: { children: ReactNode }): ReactElement {
         boxShadow: "var(--elev-panel)",
       }}
     >
-      <Stack gap="md">{children}</Stack>
+      <Stack gap={14}>{children}</Stack>
     </Paper>
   );
 }

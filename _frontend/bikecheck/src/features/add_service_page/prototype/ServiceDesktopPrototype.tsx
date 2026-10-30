@@ -5,13 +5,13 @@ import { Box, Button, Group, Loader, Stack, Text, UnstyledButton } from "@mantin
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { GroupedList } from "@/components/GroupedList";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { BikeCategory, CatalogueAction, CategoryActions } from "@/features/service/service.types";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { useHeaderStore } from "@/store/store";
 import { ActionRow } from "../ServiceActionsStep";
 import type { PickedAction } from "../serviceWizard.types";
-import { COPY } from "./serviceCopy";
 import { ServicePanelPrototype } from "./ServicePanelPrototype";
 import { ServiceSavedModal } from "./ServiceSavedModal";
 import { useServiceDesktopPrototype, type ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype";
@@ -86,7 +86,7 @@ export function ServiceDesktopPrototype(): ReactElement {
   if (proto.bikes.length === 0) {
     return (
       <Text fz={14} c="var(--color-text-dim)" p="md">
-        {COPY.noBikes}
+        {t("addService.noBikes")}
       </Text>
     );
   }
@@ -121,8 +121,8 @@ export function ServiceDesktopPrototype(): ReactElement {
           if (pendingBikeId !== null) proto.changeBike(pendingBikeId);
           setPendingBikeId(null);
         }}
-        title={COPY.changeBikeTitle}
-        body={COPY.changeBikeBody}
+        title={t("addService.changeBikeTitle")}
+        body={t("addService.changeBikeBody")}
         cancelLabel={t("addService.keep")}
         confirmLabel={t("addService.discard")}
       />
@@ -280,7 +280,7 @@ function ActionsHeading({ proto }: { proto: ServiceDesktopPrototypeState }): Rea
         {catalogue === undefined ? "" : catalogueLabel(catalogue.group_i18n_key, catalogue.group_name, t)}
       </Text>
       <Text fz={14} c="var(--color-text-dim)" mt={6}>
-        {COPY.actionsHint}
+        {t("addService.actionsHint")}
       </Text>
       {firstSection !== undefined && <SectionTitle mt={22}>{firstSection.title}</SectionTitle>}
     </Box>
@@ -331,7 +331,6 @@ function ActionsList({ proto }: { proto: ServiceDesktopPrototypeState }): ReactE
         }}
         onUpdate={(patch) => proto.updateAction(action.id, patch)}
         onToggleTag={(tagName) => proto.toggleActionTag(action.id, tagName)}
-        priceBeside={{ placeholder: COPY.pricePlaceholder }}
       />
     );
   }
@@ -361,9 +360,9 @@ function ActionsList({ proto }: { proto: ServiceDesktopPrototypeState }): ReactE
 
       {actionSections(catalogue, t).map((section, index) => (
         <Fragment key={section.title}>
-          {/* The first run is named in the heading above, so its cards start this row. */}
+          {/* The first run is named in the heading above, so its card starts this row. */}
           {index > 0 && <SectionTitle mt={12}>{section.title}</SectionTitle>}
-          {section.actions.map(renderAction)}
+          <GroupedList>{section.actions.map(renderAction)}</GroupedList>
         </Fragment>
       ))}
     </Stack>

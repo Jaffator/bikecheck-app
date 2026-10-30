@@ -10,6 +10,8 @@ import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 // Home's charts lay out their tooltip from it.
 import "@mantine/charts/styles.css";
+// Kept with the package, though nothing draws a carousel right now.
+import "@mantine/carousel/styles.css";
 // Toasts, such as the Strava sync result.
 import "@mantine/notifications/styles.css";
 import "./global.css";

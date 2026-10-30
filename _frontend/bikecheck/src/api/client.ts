@@ -65,16 +65,16 @@ async function refreshSession(): Promise<boolean> {
   return refreshPromise;
 }
 
+// Probes only after a failed request: before every call, one slow probe raised the modal while online.
+async function flagIfOffline(): Promise<void> {
+  const { connected } = await Network.getStatus();
+  if (!connected) useOfflineWhenCallApiStore.getState().setOfflineWhenCallApi(true);
+}
+
 // One request, with the session and the refresh-once dance around it. Callers pick what
 // to do with the body: JSON for the API, bytes for a file the browser has to be handed.
 async function apiRequest(path: string, options?: RequestInit, retried = false): Promise<Response> {
-  const { connected } = await Network.getStatus();
   let response: Response;
-
-  if (!connected) {
-    useOfflineWhenCallApiStore.getState().setOfflineWhenCallApi(true);
-    throw new NetworkError();
-  }
 
   // FormData requires the browser-generated multipart Content-Type.
   const isFormData = options?.body instanceof FormData;
@@ -89,6 +89,7 @@ async function apiRequest(path: string, options?: RequestInit, retried = false):
       },
     });
   } catch {
+    await flagIfOffline();
     throw new NetworkError();
   }
 

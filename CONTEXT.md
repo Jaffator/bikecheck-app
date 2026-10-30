@@ -33,6 +33,13 @@ none. Counts toward no odometer and wears no part until the owner gives it a Bik
 Pairing a Bike gives it that gear's Unassigned Rides on its own. Survives disconnecting Strava.
 _Avoid_: Pending ride
 
+**AI Review**:
+A few casual sentences with a 1–5 star rating that Gemini writes about one ride, from its figures
+and its Bike's name, the first time its owner opens it. Kept on the ride, as its `summary`, until
+the ride changes: a Strava re-sync or a move to another Bike clears it, and the next open writes it
+again (ADR 0044).
+_Avoid_: AI mechanic
+
 **Archived Bike**:
 A Bike its owner has taken out of use. It leaves the garage, the dashboard and every list and
 total, keeps its whole history, and is reached only through the archive. Reversible, and nothing
@@ -154,12 +161,13 @@ _Avoid_: Sub-service, service part
 
 **Draft Block**:
 The Category Block being worked on, which reaches the Service only when the user confirms it. Either
-a category being added or one the Summary sent the user back to correct (ADR 0006).
+a category being added or one the Summary sent the user back to correct (ADR 0006). Phone only: on
+desktop a ticked Action is in the Service at once (ADR 0035).
 
 **Summary**:
 The step where a Service is assembled and saved — its date, note, total cost, attachments and the
 list of Category Blocks. The wizard's hub: the only way on, and the place another Action is added
-from (ADR 0006).
+from (ADR 0006). On desktop it is a panel beside the actions rather than a step (ADR 0035).
 _Avoid_: Review (it is where work is added, not only checked)
 
 **Month Group**:

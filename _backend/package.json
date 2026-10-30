@@ -38,7 +38,7 @@
     "@bull-board/api": "^7.2.1",
     "@bull-board/express": "^7.2.1",
     "@bull-board/nestjs": "^7.2.1",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^2.32.0",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",

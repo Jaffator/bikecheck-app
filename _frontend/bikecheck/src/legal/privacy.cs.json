@@ -2,7 +2,7 @@
   {
     "heading": "ZÁSADY OCHRANY OSOBNÍCH ÚDAJŮ",
     "paragraphs": [
-      "Naposledy aktualizováno 11. září 2026",
+      "Naposledy aktualizováno 30. října 2026",
       "Tyto Zásady ochrany osobních údajů Jaroslava Lufinky („my“, „nás“ nebo „naše“) popisují, jak a proč můžeme přistupovat k vašim osobním údajům, shromažďovat je, ukládat, používat a/nebo sdílet („zpracovávat“), když využíváte našich služeb („Služby“), včetně případů, kdy:",
       "• si stáhnete a používáte naši mobilní aplikaci BikeCheck nebo jakoukoli jinou naši aplikaci, která na tyto Zásady odkazuje;",
       "• navštívíte náš web bikecheck.cloud nebo jakýkoli jiný náš web, který na tyto Zásady odkazuje;",
@@ -87,7 +87,7 @@
       "• Náš poskytovatel hostingu, který provozuje servery a databázi, kde je uložen váš účet a vaše záznamy, v Německu.",
       "• Cloudflare R2, které ukládá fotky a soubory, jež nahrajete, například obrázky kol a přílohy servisních záznamů.",
       "• OpenAI, které vytváří odpovědi asistenta v aplikaci. Váš dotaz a údaje o vašich vlastních kolech potřebné k odpovědi se za tímto účelem odesílají do OpenAI. Podle podmínek, které se na naše používání jeho API vztahují, OpenAI tento obsah nepoužívá k trénování svých modelů.",
-      "• Google, který poskytuje přihlášení, jež si můžete zvolit, a model Gemini používaný k psaní krátkých shrnutí vašich jízd.",
+      "• Google, který poskytuje přihlášení, jež si můžete zvolit, a model Gemini používaný k psaní krátkých shrnutí vašich jízd. Za tímto účelem se do Gemini odesílají údaje o jízdě, její název a název kola. Podle podmínek, které se na naše používání jeho placeného API vztahují, Google tento obsah nepoužívá ke zlepšování svých produktů.",
       "• Firebase Cloud Messaging (Google), které doručuje push oznámení do vašeho zařízení.",
       "• Náš poskytovatel logování a monitoringu, který uchovává technické logy sloužící k nalezení a opravě chyb.",
       "Vaše osobní údaje můžeme rovněž sdílet v těchto situacích:",

@@ -51,13 +51,11 @@ export function Dashboard(): ReactElement {
     // it; desktop has no FAB, so no room. No `p` here: its inline padding beats the responsive `pb` class.
     <Stack gap="sm" px="md" pt="md" pb={FAB_CLEARANCE}>
       <StatusRow />
+      {/* Right under the chips, so the switcher keeps its place whichever pitch or banner shows. */}
+      <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
       {!stravaConnected && <StravaStatusCard />}
       <DashboardBannerPhone />
-      {/* The Period and its figures read as one block: the switcher sits closer to them than to the banner. */}
-      <Stack gap={10}>
-        <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
-        <DashboardFigures period={period} />
-      </Stack>
+      <DashboardFigures period={period} />
       <LastRidePanel />
       <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />
       {/* Under the work: how the garage stands, and the way into any one bike. */}

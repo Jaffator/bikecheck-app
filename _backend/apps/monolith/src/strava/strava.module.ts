@@ -11,7 +11,6 @@ import { RideModule } from '../ride/ride.module';
 @Module({
   imports: [
     BullModule.registerQueue({ name: 'strava-monolith-queue' }),
-    BullModule.registerQueue({ name: 'gemini-queue' }),
     PrismaModule,
     NotificationModule,
     ServiceTrackingModule,

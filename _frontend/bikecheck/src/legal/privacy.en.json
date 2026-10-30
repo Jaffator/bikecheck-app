@@ -2,7 +2,7 @@
   {
     "heading": "PRIVACY NOTICE",
     "paragraphs": [
-      "Last updated September 11, 2026",
+      "Last updated October 30, 2026",
       "This Privacy Notice for Jaroslav Lufinka ('we', 'us', or 'our'), describes how and why we might access, collect, store, use, and/or share ('process') your personal information when you use our services ('Services'), including when you:",
       "• Download and use our mobile application BikeCheck, or any other application of ours that links to this Privacy Notice;",
       "• Visit our website at bikecheck.cloud, or any website of ours that links to this Privacy Notice;",
@@ -87,7 +87,7 @@
       "• Our hosting provider, which runs the servers and the database on which your account and your records are stored, in Germany.",
       "• Cloudflare R2, which stores the photos and files you upload, such as bike pictures and attachments to service records.",
       "• OpenAI, which produces the answers of the in-app assistant. Your question and the information about your own bikes needed to answer it are sent to OpenAI for that purpose. Under the terms that apply to our use of its API, OpenAI does not use this content to train its models.",
-      "• Google, which provides the sign-in you may choose to use, and the Gemini model used to write short summaries of your rides.",
+      "• Google, which provides the sign-in you may choose to use, and the Gemini model used to write short summaries of your rides. The ride's figures, its name and the name of its bike are sent to Gemini for that purpose. Under the terms that apply to our use of its paid API, Google does not use this content to improve its products.",
       "• Firebase Cloud Messaging (Google), which delivers push notifications to your device.",
       "• Our logging and monitoring provider, which stores the technical logs used to find and fix errors.",
       "We also may need to share your personal information in the following situations:",

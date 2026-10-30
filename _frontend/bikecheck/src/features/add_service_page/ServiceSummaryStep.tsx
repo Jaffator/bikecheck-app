@@ -1,5 +1,5 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { useState, type ReactElement } from "react";
+import { useId, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import {
   ActionIcon,
   Autocomplete,
@@ -8,73 +8,60 @@ import {
   FileButton,
   Group,
   Loader,
-  NumberInput,
-  Paper,
   SegmentedControl,
   Stack,
   Text,
-  Textarea,
-  TextInput,
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Banknote, Calendar, Check, NotepadText, Paperclip, Pencil, Plus, Store, X } from "lucide-react";
+import { Check, Paperclip, Plus, X } from "lucide-react";
+import dayjs from "dayjs";
+import { Eyebrow } from "@/components/Eyebrow";
+import { GroupedList, ListRow } from "@/components/GroupedList";
+import { LIST_ROW_HEIGHT, LIST_SUB_ROW_HEIGHT, listRowInputStyles } from "@/components/groupedListStyles";
+import { NoteRow } from "@/components/NoteRow";
+import { PriceRow } from "@/components/PriceRow";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { PINNED_BAR_LEFT, PINNED_BAR_WIDTH } from "@/layout/contentWidth";
 import { useShopNames, useUploadServiceAttachment } from "@/features/service/service.queries";
-import { useCurrentUser } from "@/features/users/users.queries";
-import { currencySymbol } from "@/utils/money";
 import type { ServicePlace, UploadedAttachment } from "@/features/service/service.types";
-import {
-  autosizeInputStyles,
-  disabledButtonStyles,
-  dropdownProps,
-  inputStyles,
-} from "@/features/add_bike_page/formStyles";
+import { disabledButtonStyles, dropdownProps } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
+import { pattern } from "@/features/service/serviceDates";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
-import { actionNote, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
-// import { bikecheckIconType } from "@/assets/icons/bikecheck";
-// import { RefreshCcw } from "lucide-react";
-// const BikecheckIcon = bikecheckIconType("Bikecheck")!;
-
-// A receipt, an invoice and a few photos of the work is as many as one visit needs.
-const MAX_ATTACHMENTS = 10;
+import {
+  actionNote,
+  MAX_ATTACHMENTS,
+  NOTE_MAX_LENGTH,
+  today,
+  type CategoryBlock,
+  type PickedAction,
+} from "./serviceWizard.types";
 
 // The backend's events_bikes.shop_name width.
 const SHOP_NAME_MAX_LENGTH = 100;
 
-const CARD_ICON_SIZE = 20;
+const CATEGORY_ICON_SIZE = 14;
 
-// What names a field rather than a card: the size the add-bike wizard already gives an
-// icon sitting inside an input.
-const ICON_SIZE = 18;
-
-// A section is centred over the whole input by default. An autosize textarea is only as
-// tall as what it holds, so the icon has to be pinned to the first line instead; the
-// padding matches the input's own top padding.
-const FIELD_ICON_TOP: React.CSSProperties = {
-  alignItems: "flex-start",
-  paddingTop: "0.45rem",
+// The row spells the month out; Czech puts the day first.
+const ROW_DATE_BY_LANGUAGE: Record<string, string> = {
+  cs: "D. MMM YYYY",
+  en: "MMM D, YYYY",
 };
 
-// The Summary reads as a recap rather than a form, so its labels sit quieter and smaller
-// than the shared field label. Local on purpose: `fieldLabel` names controls everywhere
-// else and is not this step's to change.
-const summaryLabel = {
-  ...inputStyles.label,
-  color: "var(--color-text-dim)",
-  fontSize: 13,
-} as React.CSSProperties;
-
-const summaryInputStyles = { ...inputStyles, label: summaryLabel };
-const summaryAutosizeInputStyles = {
-  ...autosizeInputStyles,
-  label: summaryLabel,
+// Kept rendered but out of sight: showPicker opens the native picker from the row's tap.
+const HIDDEN_DATE_INPUT: CSSProperties = {
+  position: "absolute",
+  right: 0,
+  bottom: 0,
+  width: 1,
+  height: 1,
+  opacity: 0,
+  pointerEvents: "none",
 };
 
-// The pinned bar floats over the page, so the last field needs room to scroll clear of it.
+// The pinned bar floats over the page, so the last row needs room to scroll clear of it.
 // Adds to the bottom padding the page itself already carries in AddService.
 const BAR_CLEARANCE = "5rem";
 
@@ -127,10 +114,7 @@ export function ServiceSummaryStep({
   saving,
   saveFailed,
 }: ServiceSummaryStepProps): ReactElement {
-  const { t, i18n } = useTranslation();
-  const { data: user } = useCurrentUser();
-  const upload = useUploadServiceAttachment();
-  const keyboardOffset = useKeyboardOffset();
+  const { t } = useTranslation();
   // Keep focused fields above the pinned bar and keyboard.
   const formRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
   // What the user has typed into the total, while they are typing it. Null the rest of the
@@ -138,6 +122,7 @@ export function ServiceSummaryStep({
   // again", but that only takes effect on blur - otherwise clearing a field to retype it
   // would flash the sum in the middle of the edit.
   const [typedTotal, setTypedTotal] = useState<string | number | null>(null);
+  const upload = useUploadServiceAttachment();
 
   function pickFile(file: File | null): void {
     if (file === null) return;
@@ -164,357 +149,88 @@ export function ServiceSummaryStep({
     setTypedTotal(null);
   }
 
-  // The total field grows with what is typed into it. `ch` is the width of a zero in the
-  // element's own font, so the measurement has to be made on the input, which is bold and
-  // larger than the root the width prop would land on. The extra half leaves the caret a
-  // place to sit past the last digit.
-  const totalWidth = `${Math.max(String(typedTotal ?? totalCost).length, 1) + 0.2}ch`;
-
   return (
     <>
-      <Stack gap="md" pb={BAR_CLEARANCE} ref={formRef}>
-        {/* The date the work happened, which may be months before it was written down. */}
-        {/* ---------- Service actions ---------- */}
-        {blocks.map((block, index) => (
-          <UnstyledButton
-            key={block.categoryId}
-            onClick={() => {
-              onEditBlock(index);
-            }}
-            style={{ display: "block", width: "100%", textAlign: "left" }}
-          >
-            <Paper
-              radius="lg"
-              p="md"
-              style={{
-                // Colour, glow and inner edge all live in this one object: `bg` would emit the
-                // `background` shorthand and wipe the gradient - see docs/ui/card-surface.md.
-                backgroundColor: "var(--mantine-color-cards-6)",
-                backgroundImage: "var(--card-glow)",
-                border: "1px solid var(--mantine-color-cards-6)",
-                boxShadow: "var(--elev-panel)",
-              }}
-              className="active:scale-[0.985]"
-            >
-              <Group justify="space-between" wrap="nowrap" align="flex-start">
-                <Stack gap={6} style={{ minWidth: 0 }}>
-                  <Group gap={8} align="center" wrap="nowrap">
-                    {categoryIcon(block.categoryName, CARD_ICON_SIZE)}
-                    <Text fw={700} fz={18} c="text.6" lineClamp={1}>
-                      {catalogueLabel(block.categoryI18nKey, block.categoryName, t)}
-                    </Text>
-                  </Group>
-                  {block.actions.map((action) => (
-                    <ActionSummary key={action.actionId} action={action} />
-                  ))}
-                </Stack>
-                {/* A correction should not cost the rest of the wizard. */}
-                <Pencil size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
-              </Group>
-            </Paper>
-          </UnstyledButton>
-        ))}
-        {/* ---------- Add another service action ---------- */}
-        {/* The next card in the stack, still empty: the shape of the blocks above, drawn as
-            an outline waiting to be filled rather than a surface that already holds
-            something. */}
-        <UnstyledButton
-          onClick={() => {
-            onAnotherCategory();
-          }}
-          style={{ display: "block", width: "100%" }}
-        >
-          <Paper
-            radius="lg"
-            p="sm"
-            style={{
-              // Half the cards' own surface, so it sits on the same material without
-              // claiming to hold anything yet.
-              backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-6) 75%, transparent)",
-              border: "1px solid var(--mantine-color-cards-5)",
-            }}
-            className="active:scale-[0.985]"
-          >
-            <Group gap={8} justify="center" wrap="nowrap" c="var(--color-text-dim)">
-              <Plus size={18} />
-              <Text fw={600} fz={15}>
-                {t("addService.anotherServiceAction")}
-              </Text>
-            </Group>
-          </Paper>
-        </UnstyledButton>
-        {/* ---------- Service date ---------- */}
-        <TextInput
-          type="date"
-          label={t("addService.serviceDate")}
-          value={serviceDate}
-          // Work cannot have been done later than today.
-          max={today()}
-          styles={summaryInputStyles}
-          // Decoration only. global.css hides the browser's own calendar indicator, so this
-          // is the one calendar in the field; the picker still opens on a tap anywhere in it.
-          rightSection={<Calendar size={ICON_SIZE} color="var(--color-text-dim)" />}
-          onChange={(event) => onServiceDateChange(event.currentTarget.value)}
-        />
-        {/* ---------- Place ---------- */}
-        <PlaceField
-          place={place}
-          onPlaceChange={onPlaceChange}
-          shopName={shopName}
-          onShopNameChange={onShopNameChange}
-        />
-        {/* ---------- Note ---------- */}
-        <Textarea
-          label={t("addService.note")}
-          placeholder={t("addService.notePlaceholder")}
-          value={note}
-          autosize
-          minRows={2}
-          maxLength={500}
-          styles={summaryAutosizeInputStyles}
-          rightSection={<NotepadText size={ICON_SIZE} color="var(--color-text-dim)" />}
-          // The field grows as it is filled, and a centred section would drift down with it.
-          // Pinned to the top so the icon keeps sitting beside the first line.
-          rightSectionProps={{ style: FIELD_ICON_TOP }}
-          onChange={(event) => onNoteChange(event.currentTarget.value)}
-        />
-
-        {/* The total is not here: it is edited in the pinned bar below, where it stays in
-          sight while the rest of the page scrolls. */}
-        {/* ---------- Attachments ---------- */}
-        <Stack gap="xs">
-          <Text fz={13} c="text.7" fw={400}>
-            {t("addService.attachments")}
-          </Text>
-
-          {attachments.map((attachment) => (
-            <Group key={attachment.url} justify="space-between" wrap="nowrap">
-              <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                <Paperclip size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
-                <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
-                  {attachment.name}
-                </Text>
-              </Group>
-              <ActionIcon
-                variant="subtle"
-                color="red.5"
-                aria-label={t("addService.removeAttachment")}
-                onClick={() => {
-                  onAttachmentRemoved(attachment.url);
-                }}
-              >
-                <X size={16} />
-              </ActionIcon>
-            </Group>
+      <Stack gap="lg" pb={BAR_CLEARANCE} ref={formRef}>
+        <GroupedList title={t("addService.sectionActions")}>
+          {blocks.map((block, index) => (
+            <BlockRow key={block.categoryId} block={block} onEdit={() => onEditBlock(index)} />
           ))}
+          <AnotherActionRow onClick={onAnotherCategory} />
+        </GroupedList>
 
+        <GroupedList title={t("addService.sectionDetails")}>
+          <DateRow value={serviceDate} onChange={onServiceDateChange} />
+          <PlaceRow place={place} onPlaceChange={onPlaceChange} />
+          {place === "SHOP" && <ShopRow shopName={shopName} onShopNameChange={onShopNameChange} />}
+          {/* Sum of the action prices until typed over (ADR 0009). */}
+          <PriceRow
+            label={t("addService.totalCost")}
+            value={typedTotal ?? totalCost}
+            onChange={changeTotal}
+            onBlur={blurTotal}
+          />
+          <NoteRow
+            label={t("addService.note")}
+            value={note}
+            onChange={onNoteChange}
+            emptyLabel={t("addService.addNote")}
+            placeholder={t("addService.notePlaceholder")}
+            maxLength={NOTE_MAX_LENGTH}
+          />
+          <ReceiptsRow disabled={attachments.length >= MAX_ATTACHMENTS || upload.isPending} onPick={pickFile} />
+          {attachments.map((attachment) => (
+            <AttachmentRow
+              key={attachment.url}
+              attachment={attachment}
+              onRemove={() => onAttachmentRemoved(attachment.url)}
+            />
+          ))}
           {/* Uploaded the moment it is picked, so Save is not a long silent wait. */}
           {upload.isPending && (
-            <Group gap="xs">
+            <Group gap="xs" mih={LIST_SUB_ROW_HEIGHT} wrap="nowrap">
               <Loader size="xs" />
               <Text fz={13} c="var(--color-text-dim)">
                 {t("addService.uploading")}
               </Text>
             </Group>
           )}
-
           {upload.isError && (
-            <Text fz={13} c="red.5">
-              {t("addService.uploadFailed")}
-            </Text>
+            <Group mih={LIST_SUB_ROW_HEIGHT}>
+              <Text fz={13} c="red.5">
+                {t("addService.uploadFailed")}
+              </Text>
+            </Group>
           )}
-
-          {/* The same empty-card shape as "add another category" above: both are a slot
-              waiting to be filled, so they read as one kind of thing. */}
-          <FileButton onChange={pickFile} accept="image/*,application/pdf">
-            {(props) => {
-              const full = attachments.length >= MAX_ATTACHMENTS || upload.isPending;
-              return (
-                <UnstyledButton {...props} disabled={full} style={{ display: "block", width: "100%" }}>
-                  <Paper
-                    radius="lg"
-                    p="sm"
-                    style={{
-                      // Half the cards' own surface, so it sits on the same material without
-                      // claiming to hold anything yet.
-                      backgroundColor: "color-mix(in srgb, var(--mantine-color-cards-6) 80%, transparent)",
-                      border: "1px solid var(--mantine-color-cards-5)",
-                      opacity: full ? 0.5 : 1,
-                    }}
-                    className="active:scale-[0.985]"
-                  >
-                    <Group gap={8} justify="center" wrap="nowrap" c="var(--color-text-dim)">
-                      <Paperclip size={18} />
-                      <Text fw={600} fz={15}>
-                        {t("addService.addAttachment")}
-                      </Text>
-                    </Group>
-                  </Paper>
-                </UnstyledButton>
-              );
-            }}
-          </FileButton>
-        </Stack>
+        </GroupedList>
       </Stack>
 
-      {/* ---------- Pinned total and save ---------- */}
-      {/* What the visit cost and the button that records it never scroll away: the total is
-        the number the user is watching as they add work, and Save is the only way out of
-        the hub (ADR 0006, ADR 0009). */}
-      <Box
-        data-fixed-footer
-        left={PINNED_BAR_LEFT}
-        style={{
-          position: "fixed",
-          right: 0,
-          bottom: 0,
-          // Rides above the software keyboard, which the webview does not resize for.
-          transform: `translateY(-${keyboardOffset}px)`,
-          display: "flex",
-          justifyContent: "center",
-          paddingBottom: "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
-          zIndex: 100,
-          // Only the bar itself takes taps; the rest of this strip is page underneath.
-          pointerEvents: "none",
-        }}
-      >
-        {/* Fades page content out under the bar instead of cutting it off. */}
-        <Box
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: "8rem",
-            background: "linear-gradient(to top, rgba(0, 0, 0, 0.90), transparent)",
-            pointerEvents: "none",
-            zIndex: -1,
-          }}
-        />
-        <Stack
-          gap={6}
-          w={PINNED_BAR_WIDTH}
-          px="md"
-          py="sm"
-          className="rounded-3xl border border-gray-720 bg-cards-600/30 backdrop-blur-md"
-          style={{
-            pointerEvents: "auto",
-            boxShadow: "0 6px 20px color-mix(in srgb, var(--mantine-color-text-6) 15%, transparent)",
-          }}
-        >
-          {/* The failure belongs beside the button that failed. */}
-          {saveFailed && (
-            <Text fz={13} c="red.5">
-              {t("addService.saveFailed")}
-            </Text>
-          )}
-          <Group justify="space-between" wrap="nowrap" gap="sm">
-            <Group gap={10} wrap="nowrap" style={{ minWidth: 0 }}>
-              <Banknote size={28} color="var(--mantine-color-primary-5)" style={{ flexShrink: 0 }} />
-              <Stack gap={0} style={{ minWidth: 0 }}>
-                <Text fz={12} c="text.8" lh={1.3}>
-                  {t("addService.totalCost")}:
-                </Text>
-                <Group gap={4} wrap="nowrap" align="center">
-                  {/* The total reads as the number it is, and is typed over in place. Sized
-                      to the digits it holds rather than a fixed width, so the currency stays
-                      against the number the way the actions bar writes it. */}
-                  <NumberInput
-                    variant="unstyled"
-                    aria-label={t("addService.totalCost")}
-                    value={typedTotal ?? totalCost}
-                    min={0}
-                    hideControls
-                    styles={{
-                      root: { width: "fit-content", flexShrink: 0 },
-                      input: {
-                        width: totalWidth,
-                        padding: 0,
-                        height: "auto",
-                        minHeight: 0,
-                        borderRadius: 0,
-                        fontWeight: 700,
-                        fontSize: "1.125rem",
-                        lineHeight: 1.1,
-                        color: "var(--mantine-color-text-6)",
-                      },
-                    }}
-                    onChange={changeTotal}
-                    onBlur={blurTotal}
-                  />
-                  <Text fw={700} fz={18} c="text.6" lh={1.2}>
-                    {currencySymbol(user?.currency ?? null, i18n.language)}
-                  </Text>
-                </Group>
-              </Stack>
-            </Group>
-            <Button
-              color="primary.6"
-              radius="xl"
-              leftSection={<Check size={18} />}
-              loading={saving}
-              disabled={!canSave}
-              styles={disabledButtonStyles}
-              onClick={() => {
-                onSave();
-              }}
-              style={{ height: "2.75rem", flexShrink: 0 }}
-            >
-              {t("addService.save")}
-            </Button>
-          </Group>
-        </Stack>
-      </Box>
+      <SaveBar canSave={canSave} onSave={onSave} saving={saving} saveFailed={saveFailed} />
     </>
   );
 }
 
-// Where the work was done, set once for the whole occasion like its date (ADR 0002, ADR 0037).
-function PlaceField({
-  place,
-  onPlaceChange,
-  shopName,
-  onShopNameChange,
-}: {
-  place: ServicePlace;
-  onPlaceChange: (place: ServicePlace) => void;
-  shopName: string;
-  onShopNameChange: (name: string) => void;
-}): ReactElement {
+// One Category Block: its category, then each Action with its note. The whole row opens it again.
+function BlockRow({ block, onEdit }: { block: CategoryBlock; onEdit: () => void }): ReactElement {
   const { t } = useTranslation();
-  const { data: shopNames } = useShopNames();
 
   return (
-    <Stack gap="xs">
-      <Stack gap={4}>
-        <Text style={summaryLabel}>{t("addService.place")}</Text>
-        <SegmentedControl
-          fullWidth
-          aria-label={t("addService.place")}
-          value={place}
-          onChange={(value) => onPlaceChange(value === "SHOP" ? "SHOP" : "HOME")}
-          data={[
-            { value: "HOME", label: t("addService.placeHome") },
-            { value: "SHOP", label: t("addService.placeShop") },
-          ]}
-        />
-      </Stack>
-      {/* Suggests the names typed on earlier Services, so a usual shop is typed once. */}
-      {place === "SHOP" && (
-        <Autocomplete
-          label={t("addService.shopName")}
-          placeholder={t("addService.shopNamePlaceholder")}
-          data={shopNames ?? []}
-          limit={8}
-          maxLength={SHOP_NAME_MAX_LENGTH}
-          value={shopName}
-          onChange={onShopNameChange}
-          styles={summaryInputStyles}
-          comboboxProps={dropdownProps}
-          rightSection={<Store size={ICON_SIZE} color="var(--color-text-dim)" />}
-        />
-      )}
-    </Stack>
+    <UnstyledButton onClick={onEdit} py={14} style={{ display: "block", width: "100%", textAlign: "left" }}>
+      <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
+        <Stack gap={10} style={{ minWidth: 0 }}>
+          <Group gap={6} wrap="nowrap">
+            {categoryIcon(block.categoryName, CATEGORY_ICON_SIZE)}
+            <Eyebrow>{catalogueLabel(block.categoryI18nKey, block.categoryName, t)}</Eyebrow>
+          </Group>
+          {block.actions.map((action) => (
+            <ActionSummary key={action.actionId} action={action} />
+          ))}
+        </Stack>
+        <Text fz={13} fw={500} c="primary.6" style={{ flexShrink: 0 }}>
+          {t("addService.editBlock")}
+        </Text>
+      </Group>
+    </UnstyledButton>
   );
 }
 
@@ -526,14 +242,234 @@ function ActionSummary({ action }: { action: PickedAction }): ReactElement {
 
   return (
     <Stack gap={2}>
-      <Text fz={14} fw={500} c="text.6" lineClamp={1}>
+      <Text fz={15} fw={600} c="text.6">
         {catalogueLabel(action.actionI18nKey, action.actionName, t)}
       </Text>
       {note !== "" && (
-        <Text fz={12} c="text.8">
+        <Text fz={13} c="var(--color-text-dim)" lh={1.4}>
           {note}
         </Text>
       )}
     </Stack>
+  );
+}
+
+function AnotherActionRow({ onClick }: { onClick: () => void }): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <UnstyledButton onClick={onClick} style={{ display: "flex", alignItems: "center", width: "100%", minHeight: LIST_SUB_ROW_HEIGHT }}>
+      <Group gap={8} wrap="nowrap" c="primary.6">
+        <Plus size={16} />
+        <Text fz={14} fw={500}>
+          {t("addService.anotherServiceAction")}
+        </Text>
+      </Group>
+    </UnstyledButton>
+  );
+}
+
+// The date the work happened, which may be months before it was written down.
+function DateRow({ value, onChange }: { value: string; onChange: (day: string) => void }): ReactElement {
+  const { t, i18n } = useTranslation();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function openPicker(): void {
+    const input = inputRef.current;
+    if (input === null) return;
+    try {
+      input.showPicker();
+    } catch {
+      // No showPicker in this webview: focusing the field is the next best thing.
+      input.focus();
+    }
+  }
+
+  return (
+    <Box pos="relative">
+      <ListRow label={t("addService.serviceDate")} onClick={openPicker}>
+        <Text fz={14} c="text.6" className="tabular-nums">
+          {dayjs(value).format(pattern(ROW_DATE_BY_LANGUAGE, i18n.language))}
+        </Text>
+      </ListRow>
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        // Work cannot have been done later than today.
+        max={today()}
+        tabIndex={-1}
+        aria-hidden
+        style={HIDDEN_DATE_INPUT}
+        // The picker's Clear would leave a Service with no date to save.
+        onChange={(event) => {
+          if (event.currentTarget.value !== "") onChange(event.currentTarget.value);
+        }}
+      />
+    </Box>
+  );
+}
+
+// Where the work was done, set once for the whole occasion like its date (ADR 0002, ADR 0037).
+function PlaceRow({
+  place,
+  onPlaceChange,
+}: {
+  place: ServicePlace;
+  onPlaceChange: (place: ServicePlace) => void;
+}): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <ListRow label={t("addService.place")}>
+      <SegmentedControl
+        size="xs"
+        radius="md"
+        aria-label={t("addService.place")}
+        value={place}
+        onChange={(value) => onPlaceChange(value === "SHOP" ? "SHOP" : "HOME")}
+        data={[
+          { value: "HOME", label: t("addService.placeHome") },
+          { value: "SHOP", label: t("addService.placeShop") },
+        ]}
+      />
+    </ListRow>
+  );
+}
+
+// Suggests the names typed on earlier Services, so a usual shop is typed once.
+function ShopRow({
+  shopName,
+  onShopNameChange,
+}: {
+  shopName: string;
+  onShopNameChange: (name: string) => void;
+}): ReactElement {
+  const { t } = useTranslation();
+  const { data: shopNames } = useShopNames();
+  const id = useId();
+
+  return (
+    <ListRow label={t("addService.placeShop")} labelFor={id}>
+      <Autocomplete
+        id={id}
+        variant="unstyled"
+        placeholder={t("addService.shopNamePlaceholder")}
+        data={shopNames ?? []}
+        limit={8}
+        maxLength={SHOP_NAME_MAX_LENGTH}
+        value={shopName}
+        onChange={onShopNameChange}
+        styles={listRowInputStyles}
+        comboboxProps={dropdownProps}
+      />
+    </ListRow>
+  );
+}
+
+// Picking opens the file picker straight away; the card lists what was picked under it.
+function ReceiptsRow({ disabled, onPick }: { disabled: boolean; onPick: (file: File | null) => void }): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <FileButton onChange={onPick} accept="image/*,application/pdf" disabled={disabled}>
+      {(props) => (
+        <ListRow label={t("addService.attachments")} onClick={props.onClick} disabled={disabled}>
+          <Text fz={14} c="text.8">
+            {t("addService.attachmentAdd")}
+          </Text>
+        </ListRow>
+      )}
+    </FileButton>
+  );
+}
+
+function AttachmentRow({ attachment, onRemove }: { attachment: UploadedAttachment; onRemove: () => void }): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Group justify="space-between" wrap="nowrap" gap="sm" mih={LIST_SUB_ROW_HEIGHT}>
+      <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
+        <Paperclip size={14} color="var(--mantine-color-text-8)" style={{ flexShrink: 0 }} />
+        <Text fz={13} c="var(--color-text-dim)" truncate>
+          {attachment.name}
+        </Text>
+      </Group>
+      <ActionIcon variant="subtle" color="red.5" aria-label={t("addService.removeAttachment")} onClick={onRemove}>
+        <X size={16} />
+      </ActionIcon>
+    </Group>
+  );
+}
+
+// Save is the only way out of the hub, so it never scrolls away (ADR 0006, ADR 0009).
+function SaveBar({
+  canSave,
+  onSave,
+  saving,
+  saveFailed,
+}: {
+  canSave: boolean;
+  onSave: () => void;
+  saving: boolean;
+  saveFailed: boolean;
+}): ReactElement {
+  const { t } = useTranslation();
+  const keyboardOffset = useKeyboardOffset();
+
+  return (
+    <Box
+      data-fixed-footer
+      left={PINNED_BAR_LEFT}
+      style={{
+        position: "fixed",
+        right: 0,
+        bottom: 0,
+        // Rides above the software keyboard, which the webview does not resize for.
+        transform: `translateY(-${keyboardOffset}px)`,
+        display: "flex",
+        justifyContent: "center",
+        paddingBottom: "calc(0.75rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))",
+        zIndex: 100,
+        // Only the bar itself takes taps; the rest of this strip is page underneath.
+        pointerEvents: "none",
+      }}
+    >
+      {/* Fades page content out under the bar instead of cutting it off. */}
+      <Box
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: "8rem",
+          background: "linear-gradient(to top, rgba(0, 0, 0, 0.90), transparent)",
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+      />
+      <Stack gap={6} w={PINNED_BAR_WIDTH} style={{ pointerEvents: "auto" }}>
+        {/* The failure belongs beside the button that failed. */}
+        {saveFailed && (
+          <Text fz={13} c="red.5" ta="center">
+            {t("addService.saveFailed")}
+          </Text>
+        )}
+        <Button
+          fullWidth
+          color="primary.6"
+          c="textDark.6"
+          radius="md"
+          leftSection={<Check size={18} />}
+          loading={saving}
+          disabled={!canSave}
+          styles={disabledButtonStyles}
+          onClick={onSave}
+          style={{ height: LIST_ROW_HEIGHT }}
+        >
+          {t("addService.save")}
+        </Button>
+      </Stack>
+    </Box>
   );
 }

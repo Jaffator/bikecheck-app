@@ -165,3 +165,9 @@ export class ResponseCheckInPromptDto {
   @ApiProperty({ type: [ResponseCheckInPendingDto] })
   pending!: ResponseCheckInPendingDto[];
 }
+
+// The ride's AI review, written on its first open (ADR 0044).
+export class ResponseRideSummaryDto {
+  @ApiProperty({ example: 'A proper Enduro sufferfest, 4/5 stars. Wipe those stanchions. Catch ya in the dirt!' })
+  summary!: string;
+}

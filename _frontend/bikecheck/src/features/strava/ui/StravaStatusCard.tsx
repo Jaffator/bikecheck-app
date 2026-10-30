@@ -9,6 +9,7 @@ import { stravaDisplayName } from "@/features/strava/strava.types";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import mapBackground from "@/assets/icons/svg_icons/mapbg.svg";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
+import { StravaConnectButton } from "./StravaConnectButton";
 
 interface StravaStatusCardProps {
   // Settings renders only for connected accounts; the dashboard owns the pitch.
@@ -74,23 +75,6 @@ export function StravaStatusCard({
         />
 
         <Stack gap="lg" align="center" p="lg" style={{ position: "relative" }}>
-          {/* The glow stays inside the disc: it lights the mark, it does not spill onto the card. */}
-          <Box
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "4.5rem",
-              height: "4.5rem",
-              borderRadius: "9999px",
-              backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 35%, transparent)",
-              boxShadow: "inset 0 0 24px 0 color-mix(in srgb, var(--mantine-color-strava-6) 28%, transparent)",
-            }}
-          >
-            <StravaMark width={40} height={40} color="var(--mantine-color-strava-6)" />
-          </Box>
-
           <Stack gap={8} align="center">
             <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25 }} lts="var(--tracking-title)">
               {t("strava.pitchTitle")}
@@ -100,32 +84,7 @@ export function StravaStatusCard({
             </Text>
           </Stack>
 
-          <Button
-            fullWidth
-            radius="md"
-            color="strava.6"
-            c="#1A1A1A"
-            loading={connect.isPending}
-            onClick={() => {
-              connect.mutate();
-            }}
-            className="active:scale-[0.985]"
-            styles={{
-              root: {
-                height: "2.75rem",
-                transition: "transform 0.12s ease",
-                boxShadow: "0 6px 20px -6px color-mix(in srgb, var(--mantine-color-strava-6) 60%, transparent)",
-              },
-              label: {
-                fontWeight: 700,
-                fontSize: "0.8125rem",
-                letterSpacing: "var(--tracking-label)",
-                textTransform: "uppercase",
-              },
-            }}
-          >
-            {t("strava.connect")}
-          </Button>
+          <StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} />
 
           {connect.isError && (
             <Text size="xs" c="red.5" ta="center">

@@ -6,7 +6,7 @@ import { Camera, Check, ChevronRight } from "lucide-react";
 import { countConfigured, countFields, groupComponents } from "../bikeComponents.types";
 import { disabledButtonStyles } from "../formStyles";
 import type { AddBikeWizard } from "../useAddBikeWizard";
-import { COPY, cardSurface, imageSrc } from "./bikeProto";
+import { cardSurface, imageSrc } from "./bikeProto";
 
 // Clears the 3rem header plus a rem of air.
 const ASIDE_TOP = "4rem";
@@ -30,14 +30,14 @@ export function BikeAsidePrototype({ wizard }: { wizard: AddBikeWizard }): React
   return (
     <Paper
       component="aside"
-      aria-label={COPY.yourBike}
+      aria-label={t("addBike.yourBike")}
       radius="lg"
       p="lg"
       style={{ ...cardSurface, position: "sticky", top: ASIDE_TOP }}
     >
       <Stack gap="md">
         <Text fz={11} fw={600} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)">
-          {COPY.yourBike}
+          {t("addBike.yourBike")}
         </Text>
 
         {!hasBike && (
@@ -48,10 +48,10 @@ export function BikeAsidePrototype({ wizard }: { wizard: AddBikeWizard }): React
             style={{ border: "1px dashed var(--mantine-color-cards-4)", borderRadius: "0.75rem" }}
           >
             <Text fw={600} fz={14} c="text.6">
-              {COPY.nothingPicked}
+              {t("addBike.nothingPicked")}
             </Text>
             <Text fz={13} c="var(--color-text-dim)" mt={6}>
-              {COPY.nothingPickedBody}
+              {t("addBike.nothingPickedBody")}
             </Text>
           </Box>
         )}
@@ -88,7 +88,7 @@ export function BikeAsidePrototype({ wizard }: { wizard: AddBikeWizard }): React
               {t("addBike.confirmSelection")}
             </Button>
             <Button variant="transparent" c="text.6" td="underline" onClick={wizard.enterManually}>
-              {COPY.notListed}
+              {t("addBike.notListed")}
             </Button>
           </Stack>
         )}
@@ -147,12 +147,12 @@ function SpecSummary({ wizard, hasPhoto }: { wizard: AddBikeWizard; hasPhoto: bo
     none: "addBike.suspensionNone",
   };
   const rows: [string, string][] = [
-    [t("addBike.bikeName"), values.bikeName.trim() || COPY.unnamed],
-    [COPY.mileage, values.currentMileage ? `${values.currentMileage} km` : COPY.notEntered],
+    [t("addBike.bikeName"), values.bikeName.trim() || t("addBike.unnamed")],
+    [t("addBike.mileage"), values.currentMileage ? `${values.currentMileage} km` : t("addBike.notEntered")],
     [t("addBike.category"), values.category ?? notSpecified],
     [t("addBike.suspension"), values.suspension ? t(suspensionKey[values.suspension]) : notSpecified],
-    [COPY.frame, frame || notSpecified],
-    [COPY.wheels, values.wheelSize ?? notSpecified],
+    [t("addBike.frame"), frame || notSpecified],
+    [t("addBike.wheels"), values.wheelSize ?? notSpecified],
   ];
 
   return (
@@ -186,6 +186,7 @@ function SpecSummary({ wizard, hasPhoto }: { wizard: AddBikeWizard; hasPhoto: bo
 }
 
 function PartsProgress({ wizard }: { wizard: AddBikeWizard }): ReactElement {
+  const { t } = useTranslation();
   const grouped = groupComponents(wizard.componentGroups ?? [], wizard.defaultComponents ?? []);
   const all = grouped.flatMap((entry) => entry.components);
   const filled = countConfigured(wizard.componentEntries, all, wizard.splitComponents, wizard.disabledComponents);
@@ -196,17 +197,17 @@ function PartsProgress({ wizard }: { wizard: AddBikeWizard }): ReactElement {
     <Stack gap={8}>
       <Group justify="space-between" gap={12}>
         <Text fz={13} c="var(--color-text-dim)">
-          {COPY.filledParts}
+          {t("addBike.filledParts")}
         </Text>
         <Text fz={13} fw={600} c="text.6" className="tabular-nums">
-          {filled} {COPY.of} {fields}
+          {t("addBike.filledOf", { filled, total: fields })}
         </Text>
       </Group>
       <Box h={6} bg="cards.8" style={{ borderRadius: 3 }}>
         <Box h={6} w={`${String(percent)}%`} bg="primary.6" style={{ borderRadius: 3 }} />
       </Box>
       <Text fz={13} c="var(--color-text-dim)">
-        {COPY.fillLater}
+        {t("addBike.fillLater")}
       </Text>
     </Stack>
   );

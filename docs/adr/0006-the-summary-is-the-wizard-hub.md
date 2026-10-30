@@ -29,3 +29,9 @@ block removed.
 - The date moved from the actions step to the Summary. It belongs to the occasion, not to a block
   (ADR 0002), and asking for it once at the hub removed the read-only-but-openable field the old
   second block needed.
+
+## Revised 2026-10-30: this is the phone's flow
+
+From 60em the Service is entered on one screen instead (ADR 0035): a ticked action is in the Service
+at once and is removed by unticking it, so there is no Draft Block and no Summary step to come back
+to. Everything above still holds below 60em.

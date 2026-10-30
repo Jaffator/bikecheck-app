@@ -68,8 +68,8 @@ Check the text against the mark, not the fill: `textDark.6` over the blended sha
 at 12% opacity, and 4.53:1 at 20%, which is where this technique runs out.
 ## Type scale
 
-Four roles carry every card. Anything else is drift. Face, weights and tracking follow
-`docs/design.md` §9 Typography.
+Four roles carry every card, and Home's dashboard cards add three of their own after their
+mocks. Anything else is drift. Face, weights and tracking follow `docs/design.md` §9 Typography.
 
 | role          | style                                                                                          |
 | ------------- | ---------------------------------------------------------------------------------------------- |
@@ -77,6 +77,12 @@ Four roles carry every card. Anything else is drift. Face, weights and tracking 
 | title         | `fz={16} fw={600} c="text.6"`                                                                  |
 | body and data | `fz={13}` — `tabular-nums` on numbers and dates — `c="text.7"` or `var(--color-text-dim)`      |
 | hero number   | `fz={32} fw={700}` `tabular-nums` (`HistoryTotalsCard` only)                                   |
+| Home title    | `fz={17} fw={600} c="text.6"`                                                                  |
+| Home figure   | `fz={28} fw={600} lh={1.1}` `tabular-nums`, `lts="var(--tracking-display)"` — the card's total |
+| Home row      | `fz={14}`, its count or footnote `fz={12}`; a forecast slide's action name `fz={15}`           |
+
+The Home roles belong to `DistanceCard`, `SpendCard` and `WearForecastCard` / `ForecastCarousel`
+alone. `HomeCardHeader.tsx` holds the title and the figure, so the two Period cards cannot drift apart.
 
 Never `c="cards.3"` for text: it is a surface shade and lands at 4.15:1 on `cards.6`, under
 the 4.5:1 floor.

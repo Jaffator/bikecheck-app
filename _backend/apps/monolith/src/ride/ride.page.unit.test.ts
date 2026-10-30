@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RideService } from './ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { GeminiService } from '../gemini/gemini.service';
 
 const PRAGUE = 'Europe/Prague';
 const SEPTEMBER = { from: '2026-09-01', to: '2026-09-30', tz: PRAGUE };
@@ -81,6 +82,7 @@ describe('RideService page of rides', () => {
         RideService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
+        { provide: GeminiService, useValue: { rideSummary: jest.fn() } },
       ],
     }).compile();
 

@@ -147,11 +147,7 @@ function RowMenu({
       </Menu.Target>
 
       {/* Wears the same surface as the bike's own menu, so the app has one dropdown. */}
-      <Menu.Dropdown
-        bg="cards.6"
-        p={8}
-        style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
-      >
+      <Menu.Dropdown>
         {/* Replacing leads, because it is the one that records real work. Every Component
             Type is covered by a Replacement (ADR 0018), so the only reason it is not yet
             actionable is the category's catalogue still being on its way. */}

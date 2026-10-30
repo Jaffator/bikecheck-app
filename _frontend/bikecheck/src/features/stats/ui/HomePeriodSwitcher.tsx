@@ -8,6 +8,8 @@ import type { HomePeriod } from "../stats.types";
 // The phone's pill track: as wide as the figures under it, one segment each. The height is the
 // label's line: a height set on the track itself squeezes the indicator off centre.
 const PILL_LABEL_LINE = 26;
+// Desktop's track matches the 38px status chips beside it: 24 + 2×3 label + 2×4 track padding.
+const HEADER_LABEL_LINE = 24;
 
 interface HomePeriodSwitcherProps {
   value: HomePeriod;
@@ -38,7 +40,7 @@ export function HomePeriodSwitcher({ value, onChange, fullWidth = false }: HomeP
               indicator: { boxShadow: "0 1px 2px rgba(0, 0, 0, 0.4)" },
               label: { lineHeight: `${String(PILL_LABEL_LINE)}px` },
             }
-          : undefined
+          : { label: { lineHeight: `${String(HEADER_LABEL_LINE)}px` } }
       }
       aria-label={t("stats.period")}
       data={[

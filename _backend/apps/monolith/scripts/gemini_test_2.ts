@@ -1,20 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { config } from 'dotenv';
 import { join } from 'path';
 config({ path: join(__dirname, '../.env') });
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import activityData from './simplified_strava_data.json';
+import { GoogleGenAI } from '@google/genai';
 
-const genAI = new GoogleGenerativeAI(process.env['GEMINI_API_KEY']!);
-console.log(process.env['GEMINI_API_KEY']!);
+const ai = new GoogleGenAI({ apiKey: process.env['GEMINI_API_KEY'] });
 async function run() {
-  // const model = gen
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
-
   const prompt = `Give me bike type and suspension type, based on bike name, answer in JSON format with key: type: Road, Enduro, XC, Gravel, Downhill, suspension: hardtail, full, none. Bike name: Canyon Spectral`;
 
-  const result = await withMeasure('gemini prompt', () => model.generateContent(prompt));
-  console.log(result.response.text());
+  const result = await withMeasure('gemini prompt', () =>
+    ai.models.generateContent({ model: 'gemini-2.5-flash-lite', contents: prompt }),
+  );
+  console.log(result.text);
 }
 
 run().catch(console.error);

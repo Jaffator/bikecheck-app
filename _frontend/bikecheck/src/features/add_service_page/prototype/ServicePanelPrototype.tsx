@@ -15,6 +15,7 @@ import {
   Button,
   FileButton,
   Group,
+  Loader,
   NumberInput,
   Paper,
   SegmentedControl,
@@ -30,8 +31,9 @@ import { Calendar, Check, Paperclip, Store, X } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
-import { useShopNames } from "@/features/service/service.queries";
+import { useShopNames, useUploadServiceAttachment } from "@/features/service/service.queries";
 import { catalogueLabel, componentTypeLabel } from "@/features/service/serviceLabels";
+import type { UploadedAttachment } from "@/features/service/service.types";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
 import {
@@ -40,8 +42,7 @@ import {
   dropdownProps,
   inputStyles,
 } from "@/features/add_bike_page/formStyles";
-import { today, type CategoryBlock, type PickedAction } from "../serviceWizard.types";
-import { COPY } from "./serviceCopy";
+import { MAX_ATTACHMENTS, today, type CategoryBlock, type PickedAction } from "../serviceWizard.types";
 import type { ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype";
 
 // Clears the 3rem header plus a rem of air once the page scrolls the panel up to it.
@@ -107,7 +108,7 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
     <Paper
       ref={panelRef}
       component="aside"
-      aria-label={COPY.panelTitle}
+      aria-label={t("addService.panelTitle")}
       radius="lg"
       style={{
         position: "sticky",
@@ -121,7 +122,7 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
       }}
     >
       <Text fw={700} fz={16} c="text.6" px="lg" pt="lg" pb="sm">
-        {COPY.panelTitle}
+        {t("addService.panelTitle")}
       </Text>
 
       {/* Everything but the total and Save scrolls inside the panel. */}
@@ -184,7 +185,11 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
           onChange={(event) => proto.setNote(event.currentTarget.value)}
         />
 
-        <AttachmentsField files={proto.files} onAdd={proto.addFiles} onRemove={proto.removeFile} />
+        <AttachmentsField
+          attachments={proto.attachments}
+          onAdd={proto.addAttachment}
+          onRemove={proto.removeAttachment}
+        />
       </Stack>
 
       <PanelFooter proto={proto} currency={currency} />
@@ -202,11 +207,12 @@ function BikeSelect({
   bikeId: number | null;
   onRequestBike: (bikeId: number) => void;
 }): ReactElement {
+  const { t } = useTranslation();
   const picked = bikes.find((bike) => bike.id === bikeId);
 
   return (
     <Select
-      label={COPY.bike}
+      label={t("addService.panelBike")}
       data={bikes.map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
       value={bikeId === null ? null : String(bikeId)}
       allowDeselect={false}
@@ -252,7 +258,7 @@ function DoneList({ proto, currency }: { proto: ServiceDesktopPrototypeState; cu
       <Text style={panelLabel}>{t("addService.stepActions")}</Text>
       {ordered.length === 0 && (
         <Text fz={13} c="var(--color-text-dim)" ta="center" px="sm" py="md" style={dashedSlot}>
-          {COPY.nothingDone}
+          {t("addService.nothingDone")}
         </Text>
       )}
       {ordered.map((block) => (
@@ -306,7 +312,7 @@ function DoneRow({
           {label}
         </Text>
         <Text fz={13} c={missingPart ? "orange.5" : "var(--color-text-dim)"} lineClamp={2}>
-          {missingPart ? COPY.pickPart : sub}
+          {missingPart ? t("addService.pickPart") : sub}
         </Text>
       </UnstyledButton>
       {action.partialCost !== null && (
@@ -314,7 +320,7 @@ function DoneRow({
           {action.partialCost} {currency}
         </Text>
       )}
-      <ActionIcon variant="transparent" aria-label={`${COPY.remove} ${label}`} onClick={onRemove}>
+      <ActionIcon variant="transparent" aria-label={t("addService.removeAction", { name: label })} onClick={onRemove}>
         <X size={15} color="var(--color-text-dim)" />
       </ActionIcon>
     </Group>
@@ -347,50 +353,82 @@ function ShopNameField({
   );
 }
 
-// Held in memory only: the stubbed Save would leave a real upload orphaned.
+// Uploaded the moment they are picked, as on the phone, so Save is not a long silent wait.
 function AttachmentsField({
-  files,
+  attachments,
   onAdd,
   onRemove,
 }: {
-  files: File[];
-  onAdd: (files: File[]) => void;
-  onRemove: (index: number) => void;
+  attachments: UploadedAttachment[];
+  onAdd: (attachment: UploadedAttachment) => void;
+  onRemove: (url: string) => void;
 }): ReactElement {
   const { t } = useTranslation();
+  const upload = useUploadServiceAttachment();
+  const full = attachments.length >= MAX_ATTACHMENTS;
+
+  // One at a time, so the list keeps the order the files were picked in.
+  async function uploadFiles(files: File[]): Promise<void> {
+    for (const file of files.slice(0, MAX_ATTACHMENTS - attachments.length)) {
+      try {
+        onAdd(await upload.mutateAsync(file));
+      } catch {
+        // The failure stays on the mutation and is shown below; the rest are not tried.
+        return;
+      }
+    }
+  }
+
+  function addFiles(files: File[]): void {
+    if (upload.isPending || full) return;
+    void uploadFiles(files);
+  }
 
   return (
     <Stack gap={6}>
       <Text style={panelLabel}>{t("addService.attachments")}</Text>
-      {files.map((file, index) => (
-        <Group key={`${file.name}:${String(index)}`} justify="space-between" wrap="nowrap">
+      {attachments.map((attachment) => (
+        <Group key={attachment.url} justify="space-between" wrap="nowrap">
           <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
             <Paperclip size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
             <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
-              {file.name}
+              {attachment.name}
             </Text>
           </Group>
           <ActionIcon
             variant="subtle"
             color="red.5"
             aria-label={t("addService.removeAttachment")}
-            onClick={() => onRemove(index)}
+            onClick={() => onRemove(attachment.url)}
           >
             <X size={15} />
           </ActionIcon>
         </Group>
       ))}
-      <FileButton multiple onChange={onAdd} accept="image/*,application/pdf">
+      {upload.isPending && (
+        <Group gap={6} wrap="nowrap">
+          <Loader size={14} />
+          <Text fz={13} c="var(--color-text-dim)">
+            {t("addService.uploading")}
+          </Text>
+        </Group>
+      )}
+      {upload.isError && (
+        <Text fz={13} c="red.5">
+          {t("addService.uploadFailed")}
+        </Text>
+      )}
+      <FileButton multiple onChange={addFiles} accept="image/*,application/pdf" disabled={upload.isPending || full}>
         {(props) => (
           <UnstyledButton
             {...props}
             className="hover-veil"
             p="sm"
-            style={{ ...dashedSlot, textAlign: "center" }}
+            style={{ ...dashedSlot, textAlign: "center", opacity: upload.isPending || full ? 0.5 : 1 }}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault();
-              onAdd(Array.from(event.dataTransfer.files));
+              addFiles(Array.from(event.dataTransfer.files));
             }}
           >
             <Group gap={8} justify="center" wrap="nowrap">
@@ -400,7 +438,7 @@ function AttachmentsField({
               </Text>
             </Group>
             <Text fz={13} c="var(--color-text-dim)">
-              {COPY.dropHint}
+              {t("addService.dropHint")}
             </Text>
           </UnstyledButton>
         )}
@@ -469,7 +507,7 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
 
       {proto.unattributed && (
         <Text fz={13} c="orange.5">
-          {COPY.missingPart}
+          {t("addService.missingPart")}
         </Text>
       )}
 
@@ -480,15 +518,18 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
         radius="md"
         leftSection={<Check size={16} />}
         disabled={!proto.canSave}
+        loading={proto.saving}
         styles={disabledButtonStyles}
         style={{ height: "2.75rem" }}
         onClick={proto.save}
       >
         {t("addService.save")}
       </Button>
-      <Text fz={12} c="text.9" ta="center">
-        {COPY.stub}
-      </Text>
+      {proto.saveFailed && (
+        <Text fz={13} c="red.5" ta="center">
+          {t("addService.saveFailed")}
+        </Text>
+      )}
     </Stack>
   );
 }

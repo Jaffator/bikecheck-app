@@ -1,5 +1,5 @@
 // Home's banners: everything keeping rides out of the numbers, each with its fix.
-import { useState, type CSSProperties, type ReactElement } from "react";
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { Button, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,7 @@ import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { useConnectStrava, usePendingRides } from "@/features/strava/strava.queries";
 import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
+import { StravaConnectButton } from "@/features/strava/ui/StravaConnectButton";
 import { useCurrentUser } from "@/features/users/users.queries";
 
 type Problem = { kind: "connect" } | { kind: "pair"; bikes: ListedBike[] } | { kind: "assign"; count: number };
@@ -60,9 +61,7 @@ export function DashboardBanner(): ReactElement {
                 icon={Unplug}
                 title={t("strava.notConnectedTitle")}
                 body={connect.isError ? t("strava.connectFailed") : t("dashboard.bannerStravaBody")}
-                action={t("strava.connect")}
-                loading={connect.isPending}
-                onAction={() => connect.mutate()}
+                action={<StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} height={40} />}
               />
             );
           case "pair":
@@ -72,8 +71,7 @@ export function DashboardBanner(): ReactElement {
                 icon={Link2Off}
                 title={t("strava.unpairedBikes", { count: problem.bikes.length })}
                 body={t("dashboard.bannerUnpairedBody", { names: problem.bikes.map(bikeTitle).join(", ") })}
-                action={t("dashboard.bannerPairAction")}
-                onAction={() => setPairing(true)}
+                action={<BannerButton label={t("dashboard.bannerPairAction")} onClick={() => setPairing(true)} />}
               />
             );
           case "assign":
@@ -83,8 +81,7 @@ export function DashboardBanner(): ReactElement {
                 icon={CalendarClock}
                 title={t("pendingRides.tileDetail", { count: problem.count })}
                 body={t("dashboard.bannerPendingBody")}
-                action={t("pendingRides.cardAction")}
-                onAction={() => navigate("/rides?tab=pending")}
+                action={<BannerButton label={t("pendingRides.cardAction")} onClick={() => navigate("/rides?tab=pending")} />}
               />
             );
         }
@@ -139,12 +136,11 @@ interface BannerProps {
   icon: LucideIcon;
   title: string;
   body: string;
-  action: string;
-  onAction: () => void;
-  loading?: boolean;
+  // The fix: our own button, or Strava's artwork where the fix is their OAuth.
+  action: ReactNode;
 }
 
-function Banner({ icon: Icon, title, body, action, onAction, loading = false }: BannerProps): ReactElement {
+function Banner({ icon: Icon, title, body, action }: BannerProps): ReactElement {
   return (
     <Group wrap="nowrap" gap="md" py={10} pr={10} pl="md" style={BANNER_SURFACE}>
       <Icon size={20} color="var(--mantine-color-primary-6)" style={{ flexShrink: 0 }} />
@@ -154,17 +150,16 @@ function Banner({ icon: Icon, title, body, action, onAction, loading = false }: 
         </Text>{" "}
         — {body}
       </Text>
-      <Button
-        color="primary.6"
-        c="textDark.6"
-        radius="md"
-        loading={loading}
-        onClick={onAction}
-        style={{ flexShrink: 0 }}
-      >
-        {action}
-      </Button>
+      {action}
     </Group>
+  );
+}
+
+function BannerButton({ label, onClick }: { label: string; onClick: () => void }): ReactElement {
+  return (
+    <Button color="primary.6" c="textDark.6" radius="md" onClick={onClick} style={{ flexShrink: 0 }}>
+      {label}
+    </Button>
   );
 }
 

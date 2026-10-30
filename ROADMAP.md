@@ -21,7 +21,7 @@ placeholder cards.
 | Backend domain | Missing in UI |
 | -------------- | ------------- |
 | `report` | ~~Shipped~~ — export, publish, share, print and revoke the three Report kinds (PRD #38) |
-| `gemini` | No AI entry point anywhere in the app |
+| `gemini` | ~~Shipped~~ — the AI review in the ride detail, written on the first open (ADR 0044) |
 | `storage` | Bike and component photos, attachments on service events |
 | `organization` | Bike shop / mechanic mode, roles, inviting a mechanic |
 | `bike-event` | Logging a completed action, browsing service history |
@@ -59,7 +59,7 @@ Expected in a modern mobile app, verified absent from `_frontend/bikecheck/src`.
 Ordered by how much they differentiate the app, not by effort.
 
 - **AI component recognition** — photograph a derailleur, get type / brand / model pre-filled.
-  The `gemini` backend module already exists and has no consumer; this is its obvious use.
+  The `gemini` backend module already exists and writes the ride's AI review (ADR 0044); this is its next use.
 - **Predictive service intervals** — derive wear from ride weather and terrain instead of a flat
   "3000 km per chain". The `rides` data needed for this is already stored.
 - **Cost / total cost of ownership** — spend per season, cost per kilometer. Derivable from
