@@ -4,7 +4,7 @@ import { LineChart } from "@mantine/charts";
 import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
 import { ReferenceDot } from "recharts";
-import { formatServiceDate } from "@/features/service/serviceDates";
+import { formatLongDate } from "@/features/service/serviceDates";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
 import type { WearForecastItem } from "../stats.types";
 
@@ -50,7 +50,7 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
   return (
     <LineChart
       h={CHART_HEIGHT}
-      // The slide around it is the button; a touch here would only focus the surface and ring it.
+      // The reading around it is the button; a touch here would only focus the surface and ring it.
       style={{ pointerEvents: "none" }}
       data={rows}
       dataKey="at"
@@ -232,10 +232,9 @@ function EdgeTick({ language, emphasizeLast, x, y, index, payload }: EdgeTickPro
       fontSize={11}
       fontWeight={400}
       fill={emphasized ? "var(--mantine-color-text-6)" : "currentColor"}
-      // The date is uppercase, so it takes the label tracking.
-      style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "var(--tracking-label)" }}
+      style={{ fontVariantNumeric: "tabular-nums" }}
     >
-      {formatServiceDate(dayjs(payload.value).format("YYYY-MM-DD"), language)}
+      {formatLongDate(dayjs(payload.value).format("YYYY-MM-DD"), language)}
     </text>
   );
 }

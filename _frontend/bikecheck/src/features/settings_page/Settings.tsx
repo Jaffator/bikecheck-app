@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useMyProfile } from "@/features/profile/profile.queries";
 import { SettingsShareRow } from "@/features/profile/ui/SettingsShareRow";
 import { VisibilityBadge } from "@/features/profile/ui/VisibilityBadge";
+import { PoweredByStrava } from "@/features/strava/ui/PoweredByStrava";
 import { StravaStatusCard } from "@/features/strava/ui/StravaStatusCard";
 import { useCurrentUser, useLogout, useUpdateUser } from "@/features/users/users.queries";
 import { TIRE_PRESSURE_UNITS, type TirePressureUnit } from "@/features/users/users.types";
@@ -35,6 +36,8 @@ const SEGMENTED_CONTROL_STYLES = {
   indicator: { backgroundColor: "var(--mantine-color-cards-5)" },
   label: { color: "var(--color-text-dim)" },
 } as const;
+
+const PAGE_END_MARGIN = "calc(1.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
 
 export function Settings(): ReactElement | null {
   const { t, i18n } = useTranslation();
@@ -173,11 +176,13 @@ export function Settings(): ReactElement | null {
         )}
       </Card>
 
-      {/* The linked account lives with the identity it belongs to, connected or not - pulled
-          up under the account card so the two read as one group. */}
-      <div className="mx-3 mb-3 mt-0">
-        <StravaStatusCard allowDisconnect />
-      </div>
+      {/* The linked account lives with the identity it belongs to, pulled up under the account
+          card. Not connected, it is absent: connecting goes through Strava's button on Home. */}
+      {Boolean(user.strava_athlete_id) && (
+        <div className="mx-3 mb-3 mt-0">
+          <StravaStatusCard allowDisconnect connectedOnly />
+        </div>
+      )}
       <SettingsShareRow />
 
       <Text className="tabular-nums" fz={11} fw={400} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" px="md">
@@ -292,7 +297,6 @@ export function Settings(): ReactElement | null {
           leaving is not why anyone opened it. */}
       <Card
         className="m-3"
-        mb="calc(1.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
         px={0}
         py={ROW_GAP_HALF}
         radius="lg"
@@ -321,6 +325,11 @@ export function Settings(): ReactElement | null {
           </UnstyledButton>
         </Stack>
       </Card>
+
+      {/* Strava's attribution: the app shows it here only, at the page's foot. */}
+      <Group justify="center" mt="xs" mb={PAGE_END_MARGIN}>
+        <PoweredByStrava height={9} />
+      </Group>
 
       <ProfileEditDrawer user={user} opened={editing} onClose={() => setEditing(false)} />
 

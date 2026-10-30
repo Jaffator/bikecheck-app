@@ -1,4 +1,4 @@
-// What the forecast card shows: which bikes get a chip, which bike it opens on and its slides.
+// What the forecast card shows: which bikes get a chip, which bike it opens on and its Tracked Actions.
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { weeksUntil } from "./nextReplacement";
 import type { WearForecastItem } from "./stats.types";
@@ -13,14 +13,19 @@ export function hasRides(item: WearForecastItem): boolean {
   return item.pace_per_week !== null || item.points.some((point) => point.percentage !== item.percentage);
 }
 
-// How far off the date is, or why there is none.
+// How far off the date is, or that there is none.
 export function forecastNote(
   item: WearForecastItem,
   translate: (key: string, options?: { count: number }) => string,
 ): string {
   if (item.level === "overdue") return translate("bikes.health.overdue");
-  if (item.projected_date === null) return translate("stats.forecastNoRides");
+  if (item.projected_date === null) return translate("stats.forecastNoEstimate");
   return translate("stats.forecastInWeeks", { count: weeksUntil(item.projected_date) });
+}
+
+// No pace, so no date: the headline says so and the reason sits under it.
+export function missingEstimate(item: WearForecastItem): boolean {
+  return item.level !== "overdue" && item.projected_date === null;
 }
 
 // In garage order; a bike with nothing tracked is no choice.
@@ -33,8 +38,8 @@ function bikeOptions(items: WearForecastItem[], bikeId: number): WearForecastIte
   return items.filter((item) => item.bike_id === bikeId);
 }
 
-// One slide per Tracked Action of the chosen bike; no choice, or one that left the forecast, opens on the garage's pick.
-export function forecastSlides(items: WearForecastItem[], chosenBikeId: number | null): WearForecastItem[] {
+// The chosen bike's Tracked Actions; no choice, or one that left the forecast, opens on the garage's pick.
+export function chosenBikeActions(items: WearForecastItem[], chosenBikeId: number | null): WearForecastItem[] {
   const chosen = chosenBikeId === null ? [] : bikeOptions(items, chosenBikeId);
   if (chosen.length > 0) return chosen;
 

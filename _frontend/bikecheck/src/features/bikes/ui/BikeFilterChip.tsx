@@ -1,17 +1,19 @@
-// A bike filter chip: every bike or one, in its colour. Rides, Service and the wear forecast share it.
+// A filter chip: every bike or one in its colour, or a forecast's Tracked Action with its warning dot.
 import type { ReactElement } from "react";
-import { UnstyledButton } from "@mantine/core";
+import { Box, UnstyledButton } from "@mantine/core";
 import { BikeColorDot } from "./BikeColorDot";
 
 interface BikeFilterChipProps {
   label: string;
   colorIndex?: number;
+  // A dot in any colour, for a chip that names something other than a bike.
+  dotColor?: string;
   active: boolean;
   onClick: () => void;
 }
 
 // Single choice, so the chosen chip wears the accent and the rest stay quiet.
-export function BikeFilterChip({ label, colorIndex, active, onClick }: BikeFilterChipProps): ReactElement {
+export function BikeFilterChip({ label, colorIndex, dotColor, active, onClick }: BikeFilterChipProps): ReactElement {
   return (
     <UnstyledButton
       onClick={onClick}
@@ -33,6 +35,19 @@ export function BikeFilterChip({ label, colorIndex, active, onClick }: BikeFilte
       }}
     >
       {colorIndex !== undefined && <BikeColorDot colorIndex={colorIndex} size={7} />}
+      {dotColor !== undefined && (
+        <Box
+          w={7}
+          h={7}
+          // A dark ring on the chosen chip, so a yellow warning dot does not melt into the yellow accent.
+          style={{
+            borderRadius: "50%",
+            backgroundColor: dotColor,
+            flexShrink: 0,
+            boxShadow: active ? "0 0 0 2px var(--mantine-color-cards-6)" : undefined,
+          }}
+        />
+      )}
       {label}
     </UnstyledButton>
   );

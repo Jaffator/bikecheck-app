@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { useElementSize } from "@mantine/hooks";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Bell, ArrowLeft } from "lucide-react";
@@ -149,6 +150,7 @@ export function AppLayout(): ReactElement {
   // A page leading with an image runs its content up under the header - see the store.
   const headerTransparent = useHeaderStore((state) => state.headerTransparent);
   const isDesktop = useIsDesktop();
+  const { ref: actionsRef, height: actionsHeight } = useElementSize();
   const fullScreen = isFullScreenRoute(location.pathname);
   // Hides chrome when the route or page state requires it. On desktop that is the header
   // alone: the sidebar leaves only with a full-screen route.
@@ -160,8 +162,10 @@ export function AppLayout(): ReactElement {
   // Both widths are the phone's column below the breakpoint.
   const contentWidth = isDesktop && isWideRoute(location.pathname) ? WIDE_CONTENT_MAX_WIDTH : CONTENT_MAX_WIDTH;
   const desktopOverview = isDesktop && !subPage;
+  // A slot that wraps (Home's chips on a narrow window) takes the header down with it.
+  const desktopRow = Math.max(DESKTOP_HEADER_ROW, Math.ceil(actionsHeight));
   const headerBase = desktopOverview
-    ? `${String(DESKTOP_HEADER_PAD_TOP + DESKTOP_HEADER_ROW + DESKTOP_HEADER_PAD_BOTTOM)}px`
+    ? `${String(DESKTOP_HEADER_PAD_TOP + desktopRow + DESKTOP_HEADER_PAD_BOTTOM)}px`
     : "3rem";
 
   // The FAB menu and the More sheet have no trigger on desktop, so crossing into it shuts them.
@@ -264,6 +268,8 @@ export function AppLayout(): ReactElement {
             mx="auto"
             // Padding inside the column, like the pages', so the title lines up with their edge.
             px={desktopOverview ? "xl" : "md"}
+            // A wrapped slot grows downward; the title stays level with its first line.
+            align={desktopOverview ? "flex-start" : "center"}
             style={{ pointerEvents: "auto" }}
           >
             {subPage ? (
@@ -303,7 +309,7 @@ export function AppLayout(): ReactElement {
                   // Home has no title of its own, so the app's mark stands where one would be.
                   <Logo style={{ height: LOGO_HEIGHT, width: "auto", marginLeft: LOGO_INSET }} />
                 ) : (
-                  <Group gap="xs" c="cards.1">
+                  <Group gap="xs" c="cards.1" h={desktopOverview ? DESKTOP_HEADER_ROW : undefined}>
                     {/* Decorative icon beside the title; on desktop the sidebar row already shows it. */}
                     {!isDesktop && headerIcon()}
                     <Text fw={isDesktop ? 700 : 600} size="lg" fz={isDesktop ? DESKTOP_TITLE_SIZE : undefined}>
@@ -313,7 +319,14 @@ export function AppLayout(): ReactElement {
                 )}
                 {/* Least used furthest from the thumb: the bell, then the rider in the corner
                     the thumb owns. People moved to the More tab (#158). */}
-                <Group gap="sm">
+                <Group
+                  ref={actionsRef}
+                  gap="sm"
+                  justify="flex-end"
+                  mih={desktopOverview ? DESKTOP_HEADER_ROW : undefined}
+                  // Takes the room the title leaves, so a long slot wraps in place rather than under the title.
+                  style={desktopOverview ? { flex: 1, minWidth: 0 } : undefined}
+                >
                   {/* Whatever the tab hung here, before the icons; nothing renders when it hung nothing. */}
                   {actionSlot}
                   {/* On desktop both live at the sidebar's foot. */}

@@ -6,6 +6,7 @@ import { useHeaderStore } from "@/store/store";
 import trailIllustration from "@/assets/images/rides.png";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
+import { StravaConnectButton } from "@/features/strava/ui/StravaConnectButton";
 
 interface StravaConnectScreenProps {
   onConnect: () => void;
@@ -142,28 +143,9 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
       </Box>
 
       <Stack gap="sm" style={{ position: "relative", flexShrink: 0 }}>
-        <Button
-          fullWidth
-          radius="lg"
-          color="strava.6"
-          c="#1A1A1A"
-          rightSection={<StravaMark width={14} height={14} />}
-          loading={connecting}
-          onClick={() => {
-            onConnect();
-          }}
-          styles={{
-            root: { height: "3.25rem" },
-            label: {
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "var(--tracking-label)",
-              textTransform: "uppercase",
-            },
-          }}
-        >
-          {t("addBike.stravaConnect")}
-        </Button>
+        <Group justify="center">
+          <StravaConnectButton onClick={onConnect} pending={connecting} />
+        </Group>
 
         <Button
           fullWidth

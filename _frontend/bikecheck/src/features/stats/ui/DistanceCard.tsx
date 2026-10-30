@@ -3,6 +3,7 @@ import { useState, type ReactElement, type ReactNode } from "react";
 import { Box, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { AreaChart, type AreaChartProps } from "@mantine/charts";
 import dayjs from "dayjs";
+import { useYAxisScale } from "recharts";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { bikeColor } from "@/features/bikes/bikeColors";
@@ -33,6 +34,8 @@ const END_DOT_RADIUS = 4.5;
 const SINGLE_MARGIN = { top: 16, right: 8 };
 // All time runs to six digits.
 const MULTI_MARGIN = { top: 8, right: 60 };
+// Line ends closer than one 13px label line are pushed apart.
+const END_LABEL_GAP = 15;
 const TICK_STYLE = { fontVariantNumeric: "tabular-nums" };
 const X_TICK = { transform: "translate(0, 10)", fontSize: TICK_SIZE, fill: "currentColor", style: TICK_STYLE };
 // Steps of the three-tick axis, times a power of ten, so it reads 0 · 40 · 80, never 0 · 55 · 110.
@@ -142,6 +145,7 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
     label: bikeTitle(bike),
     color: bikeColor(bike.color_index),
   }));
+  const ends = distance.bikes.map((_, row) => Math.round(line.meters[row][lastIndex] / 1000));
 
   return (
     <AreaChart
@@ -172,7 +176,8 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
       areaChartProps={{ margin: single ? SINGLE_MARGIN : MULTI_MARGIN }}
       areaProps={(item) => {
         const labelProps = { lastIndex, lineColor: item.color, language: i18n.language };
-        return { label: single ? <EndMarker {...labelProps} /> : <EndLabel {...labelProps} /> };
+        const row = series.findIndex((line) => line.name === item.name);
+        return { label: single ? <EndMarker {...labelProps} /> : <EndLabel {...labelProps} ends={ends} row={row} /> };
       }}
       tooltipProps={{
         labelFormatter: (start: ReactNode) => pointLabel(line.step, String(start), i18n.language, t),
@@ -241,14 +246,37 @@ interface EndLabelProps {
   index?: number;
 }
 
-function EndLabel({ lastIndex, lineColor, language, x, y, value, index }: EndLabelProps): ReactElement | null {
+// Every line's end km and this line's row in them, so each label knows where the others sit.
+interface SpreadProps {
+  ends: number[];
+  row: number;
+}
+
+function EndLabel(props: EndLabelProps & SpreadProps): ReactElement | null {
+  const { lastIndex, lineColor, language, x, y, value, index, ends, row } = props;
+  const yScale = useYAxisScale();
   if (index !== lastIndex || value === undefined) return null;
 
+  const spread = yScale === undefined ? undefined : spreadEnds(ends.map((km) => yScale(km) ?? 0), yScale(0) ?? 0);
   return (
-    <text x={Number(x) + 6} y={Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
+    <text x={Number(x) + 6} y={spread?.[row] ?? Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
       {formatNumber(Number(value), language)}
     </text>
   );
+}
+
+// Pushes the end labels a gap apart downwards, then back up so none drops under the zero line.
+function spreadEnds(ys: number[], bottom: number): number[] {
+  const order = ys.map((_, row) => row).sort((a, b) => ys[a] - ys[b]);
+  const placed = [...ys];
+  for (let rank = 1; rank < order.length; rank++) {
+    placed[order[rank]] = Math.max(placed[order[rank]], placed[order[rank - 1]] + END_LABEL_GAP);
+  }
+  for (let rank = order.length - 1; rank >= 0; rank--) {
+    const limit = rank === order.length - 1 ? bottom : placed[order[rank + 1]] - END_LABEL_GAP;
+    placed[order[rank]] = Math.min(placed[order[rank]], limit);
+  }
+  return placed;
 }
 
 // Raised above-left of its dot: a running line that ends flat would run through a label level with it.

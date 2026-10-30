@@ -279,6 +279,7 @@ function Leftovers({ bike, archived, paired, onPairGear }: BikeDetailDesktopProp
       onConnectAccount={() => connect.mutate()}
       onPairGear={onPairGear}
       connectFailed={connect.isError}
+      connecting={connect.isPending}
     />
   );
 }

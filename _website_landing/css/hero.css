@@ -136,8 +136,8 @@
   }
 }
 
-/* The strip on the hero's floor: four plain statements, so the only
-   colour in it is Strava's. Two by two on a phone, one row from lg up. */
+/* The strip on the hero's floor: four plain statements, one of them Strava's
+   own lockup. Two by two on a phone, one row from lg up. */
 .facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -161,19 +161,15 @@
   letter-spacing: -0.015em;
   color: #f2f2f1;
 }
+/* The artwork sized to the other labels' cap line; its colours are Strava's own. */
 .facts .facts-strava {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #fc5200;
 }
-.facts-strava svg {
-  flex: none;
-  width: 13px;
-  height: 13px;
-}
-.facts-strava strong {
-  font-weight: 700;
+.facts-strava img {
+  display: block;
+  height: 12px;
+  width: auto;
 }
 /* From lg up the first statement starts on the left content edge and the last ends on the right one. */
 @media (min-width: 1024px) {

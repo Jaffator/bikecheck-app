@@ -13,9 +13,9 @@ import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
 import { useWearForecast } from "../stats.queries";
 import type { WearForecastItem } from "../stats.types";
-import { forecastBikes, forecastSlides, hasRides } from "../wearForecast";
+import { forecastBikes, chosenBikeActions, hasRides } from "../wearForecast";
+import { ForecastActions } from "./ForecastActions";
 import { CHART_HEIGHT } from "./ForecastChart";
-import { ForecastCarousel } from "./ForecastCarousel";
 
 const CHIP_STYLE: CSSProperties = {
   display: "inline-flex",
@@ -45,9 +45,9 @@ export function WearForecastCard(): ReactElement {
   }
 
   const { items } = forecast;
-  const slides = forecastSlides(items, chosenBikeId);
+  const actions = chosenBikeActions(items, chosenBikeId);
 
-  if (slides.length === 0 || !items.some(hasRides)) {
+  if (actions.length === 0 || !items.some(hasRides)) {
     return (
       <ForecastPaper>
         <ForecastTitle />
@@ -58,21 +58,19 @@ export function WearForecastCard(): ReactElement {
     );
   }
 
-  const bikeId = slides[0].bike_id;
+  const bikeId = actions[0].bike_id;
   // Held once shown, so a refetch that moves the garage's pick never swaps the bike being read.
   if (chosenBikeId !== bikeId) setChosenBikeId(bikeId);
 
   return (
     <>
-      <ForecastCarousel
-        key={bikeId}
-        slides={slides}
-        title={<ForecastTitle />}
-        bikeChip={
-          <ForecastBikeChip item={slides[0]} bikes={forecastBikes(garage ?? [], items)} onPick={setChosenBikeId} />
-        }
-        onOpen={setOpened}
-      />
+      <ForecastPaper>
+        <Group justify="space-between" wrap="nowrap" gap={8}>
+          <ForecastTitle />
+          <ForecastBikeChip item={actions[0]} bikes={forecastBikes(garage ?? [], items)} onPick={setChosenBikeId} />
+        </Group>
+        <ForecastActions key={bikeId} items={actions} onOpen={setOpened} />
+      </ForecastPaper>
 
       <TrackedActionDrawer
         action={opened}

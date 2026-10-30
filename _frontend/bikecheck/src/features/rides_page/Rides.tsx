@@ -95,7 +95,7 @@ export function Rides(): ReactElement {
   return (
     <>
       <Group px="md" pt="xs" pb={4} fz={13} c="var(--color-text-dim)" className="tabular-nums">
-        <StravaSyncStatus withConnect />
+        <StravaSyncStatus />
       </Group>
       <Tabs
         value={activeTab}

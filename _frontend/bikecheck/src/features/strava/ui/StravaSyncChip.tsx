@@ -1,12 +1,11 @@
 // Home's Strava chip: a dot for the connection and when rides last came in. Connected, it
-// opens the sync sheet; not yet, it starts the connection.
+// opens the sync sheet; not yet, it only reports - Strava's button below is the way in.
 import { useState, type ReactElement } from "react";
 import { Box, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { StatusChip } from "@/components/StatusChip";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
-import { useConnectStrava } from "@/features/strava/strava.queries";
 import { AGO_KEYS, syncedAgo, useStravaLastSync } from "@/features/strava/stravaLastSync";
 import { StravaSyncSheet } from "./StravaSyncSheet";
 
@@ -15,7 +14,6 @@ const STRAVA_COLOR = "var(--mantine-color-strava-6)";
 export function StravaSyncChip(): ReactElement {
   const { t } = useTranslation();
   const { connected, lastSync } = useStravaLastSync();
-  const connect = useConnectStrava();
   const [syncOpened, setSyncOpened] = useState(false);
 
   // Not connected, the chip is the dot and the name: the pitch card under it says the rest.
@@ -25,7 +23,6 @@ export function StravaSyncChip(): ReactElement {
 
   function open(): void {
     if (connected) setSyncOpened(true);
-    else if (connected === false) connect.mutate();
   }
 
   return (

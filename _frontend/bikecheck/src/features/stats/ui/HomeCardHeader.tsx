@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { homePeriodLabel } from "../homePeriod";
 import type { HomePeriod } from "../stats.types";
 
-export const HOME_FIGURE_SIZE = 28;
+export const HOME_FIGURE_SIZE = 22;
 const FIGURE_LINE = 1.1;
 
 export function HomeCardHeader({ title, period }: { title: string; period: HomePeriod }): ReactElement {

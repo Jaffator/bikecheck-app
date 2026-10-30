@@ -1,6 +1,6 @@
 // Desktop Service's line under the title: when the last service was, and on which bike.
 import type { ReactElement } from "react";
-import { Text } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import dayjs from "dayjs";
@@ -18,22 +18,23 @@ interface ServiceContextLineProps {
 export function ServiceContextLine({ bikeId }: ServiceContextLineProps): ReactElement {
   const { t } = useTranslation();
   const { data } = useRecentServices(bikeId ?? undefined);
+  const latest = data?.items[0];
+  const bikeName = bikeId === null ? latest?.bike_name : null;
 
   return (
-    <Text fz={13} c="var(--color-text-dim)" className="tabular-nums">
+    <Group gap={16} wrap="wrap" fz={13} c="var(--color-text-dim)" className="tabular-nums">
       {/* A blank line while loading, so the filters below do not jump when it lands. */}
-      {data === undefined ? " " : lastServiceLine(data.items[0], bikeId === null, t)}
-    </Text>
+      <span>{data === undefined ? " " : lastServiceLine(latest, t)}</span>
+      {bikeName && <span>{bikeName}</span>}
+    </Group>
   );
 }
 
-function lastServiceLine(latest: ServiceHistoryItem | undefined, withBike: boolean, t: TFunction): string {
+function lastServiceLine(latest: ServiceHistoryItem | undefined, t: TFunction): string {
   if (latest === undefined) return t("service.noServiceYet");
-  const line =
-    latest.service_date === null
-      ? t("service.lastServiceUndated")
-      : t("service.lastService", { when: serviceDayAgo(latest.service_date, t) });
-  return withBike && latest.bike_name !== null ? `${line} · ${latest.bike_name}` : line;
+  return latest.service_date === null
+    ? t("service.lastServiceUndated")
+    : t("service.lastService", { when: serviceDayAgo(latest.service_date, t) });
 }
 
 // The date has no time of day, so today and yesterday are named rather than counted in hours.

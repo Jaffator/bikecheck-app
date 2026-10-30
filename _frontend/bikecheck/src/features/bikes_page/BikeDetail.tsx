@@ -291,6 +291,7 @@ export function BikeDetail(): ReactElement {
           onConnectAccount={() => connect.mutate()}
           onPairGear={() => setPairingGear(true)}
           connectFailed={connect.isError}
+          connecting={connect.isPending}
         />
       )}
 

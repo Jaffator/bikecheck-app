@@ -129,22 +129,6 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
       // Tailwind's active: variant handles the pressed state without tracking it.
       className="bike-card hover-veil active:scale-[0.985]"
     >
-      {/* Its own layer rather than a background on the card: the photo and the content sit
-          on their own opaque backgrounds and would paint over a card-level gradient,
-          leaving only a sliver of it visible. The card's own glow is lit from the top-left
-          corner, which the photo covers, so this one comes up from under the data line. */}
-      <Box
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          zIndex: 1,
-          background:
-            "radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--mantine-color-primary-6) 8%, transparent) 0%, transparent 50%)",
-        }}
-      />
-
       {/* The photo carries the name: the gradient that evens the photos out is already
           there, and the card below it is left to the numbers. */}
       <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={20}>

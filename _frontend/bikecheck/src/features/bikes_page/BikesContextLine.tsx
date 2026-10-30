@@ -12,18 +12,9 @@ export function BikesContextLine(): ReactElement {
   const yearKm = distance?.bikes.reduce((total, bike) => total + bike.total_km, 0);
 
   return (
-    <Group gap={8} wrap="wrap" fz={13} c="var(--color-text-dim)" className="tabular-nums">
+    <Group gap={16} wrap="wrap" fz={13} c="var(--color-text-dim)" className="tabular-nums">
       <StravaSyncStatus />
-      {yearKm !== undefined && (
-        <>
-          <Separator />
-          <span>{t("bikes.distanceThisYear", { km: formatKm(yearKm, i18n.language) })}</span>
-        </>
-      )}
+      {yearKm !== undefined && <span>{t("bikes.distanceThisYear", { km: formatKm(yearKm, i18n.language) })}</span>}
     </Group>
   );
-}
-
-function Separator(): ReactElement {
-  return <span aria-hidden>·</span>;
 }
