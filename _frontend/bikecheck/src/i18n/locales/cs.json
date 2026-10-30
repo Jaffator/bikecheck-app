@@ -812,6 +812,7 @@
     "sizeLength": "Velikost / délka",
     "sizeLengthPlaceholder": "např. 450",
     "wheelSize": "Velikost kol",
+    "setupGroup": "Konfigurace",
     "power": "Pohon",
     "ebike": "E-Bike",
     "componentsBody": "Tyhle díly jsme u tvého kola našli. Budeme u nich hlídat servis a opotřebení.",
@@ -1322,12 +1323,16 @@
     "frameMaterialPlaceholder": "např. karbon, hliník",
     "weight": "Hmotnost (kg)",
     "weightPlaceholder": "např. 7,25",
-    "description": "Popis",
+    "detailsGroup": "Podrobnosti",
+    "notes": "Poznámky",
     "descriptionPlaceholder": "Cokoli, co si chceš o kole pamatovat",
     "brandRequired": "Kolo musí mít značku.",
-    "save": "Uložit",
-    "cancel": "Zrušit",
-    "saveFailed": "Kolo se nepodařilo uložit. Zkus to znovu."
+    "done": "Hotovo",
+    "saveFailed": "Kolo se nepodařilo uložit. Zkus to znovu.",
+    "discardTitle": "Zahodit změny?",
+    "discardBody": "Změny tohoto kola se ztratí.",
+    "discard": "Zahodit",
+    "keepEditing": "Zpět k úpravám"
   },
   "setup": {
     "title": "Setup",

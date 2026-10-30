@@ -21,3 +21,9 @@ export const listRowInputStyles = {
     "--input-placeholder-color": "var(--mantine-color-text-8)",
   } as CSSProperties,
 };
+
+// The same field holding a figure, so its digits line up with the rows above and below.
+export const listRowFigureInputStyles = {
+  ...listRowInputStyles,
+  input: { ...listRowInputStyles.input, fontVariantNumeric: "tabular-nums" } as CSSProperties,
+};

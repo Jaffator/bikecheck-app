@@ -12,6 +12,9 @@ const CARD_STYLE: CSSProperties = {
   boxShadow: "var(--elev-panel)",
 };
 
+// Clips the hero to the card's corners; only then, so a card without one never clips a row.
+const HERO_CARD_STYLE: CSSProperties = { ...CARD_STYLE, overflow: "hidden" };
+
 function rowStyle(compact: boolean | undefined, disabled: boolean | undefined): CSSProperties {
   return {
     minHeight: compact === true ? LIST_SUB_ROW_HEIGHT : LIST_ROW_HEIGHT,
@@ -23,10 +26,12 @@ function rowStyle(compact: boolean | undefined, disabled: boolean | undefined): 
 interface GroupedListProps {
   // Left out where the page names the card itself.
   title?: string;
+  // Edge to edge above the rows - the bike's photo on Edit bike (mock L).
+  hero?: ReactNode;
   children: ReactNode;
 }
 
-export function GroupedList({ title, children }: GroupedListProps): ReactElement {
+export function GroupedList({ title, hero, children }: GroupedListProps): ReactElement {
   // A wrapper per row draws the hairline, so a row never needs to know whether it is first.
   const rows = Children.toArray(children);
 
@@ -37,7 +42,8 @@ export function GroupedList({ title, children }: GroupedListProps): ReactElement
           <Eyebrow>{title}</Eyebrow>
         </Box>
       )}
-      <Paper radius="lg" px="md" style={CARD_STYLE}>
+      <Paper radius="lg" px="md" style={hero === undefined ? CARD_STYLE : HERO_CARD_STYLE}>
+        {hero !== undefined && <Box mx="calc(var(--mantine-spacing-md) * -1)">{hero}</Box>}
         {rows.map((row, index) => (
           <Box
             key={isValidElement(row) && row.key !== null ? row.key : index}

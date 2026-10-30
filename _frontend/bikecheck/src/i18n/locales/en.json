@@ -763,6 +763,7 @@
     "sizeLength": "Size / Length",
     "sizeLengthPlaceholder": "e.g. 450",
     "wheelSize": "Wheel size",
+    "setupGroup": "Setup",
     "power": "Power",
     "ebike": "E-Bike",
     "componentsBody": "These parts were found for your bike. They will be tracked for service and wear.",
@@ -1251,12 +1252,16 @@
     "frameMaterialPlaceholder": "e.g. Carbon, Aluminium",
     "weight": "Weight (kg)",
     "weightPlaceholder": "e.g. 7.25",
-    "description": "Description",
+    "detailsGroup": "Details",
+    "notes": "Notes",
     "descriptionPlaceholder": "Anything you want to remember about this bike",
     "brandRequired": "A bike needs a brand.",
-    "save": "Save",
-    "cancel": "Cancel",
-    "saveFailed": "Could not save the bike. Try again."
+    "done": "Done",
+    "saveFailed": "Could not save the bike. Try again.",
+    "discardTitle": "Discard changes?",
+    "discardBody": "Your changes to this bike are lost.",
+    "discard": "Discard",
+    "keepEditing": "Keep editing"
   },
   "setup": {
     "title": "Setup",

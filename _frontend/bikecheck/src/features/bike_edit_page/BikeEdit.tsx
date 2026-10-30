@@ -1,19 +1,28 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { useEffect, useState, type ReactElement } from "react";
-import { Button, Group, NumberInput, Skeleton, Stack, Text, TextInput, Textarea } from "@mantine/core";
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { Button, NumberInput, Skeleton, Stack, Text, type NumberInputProps } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBike, useBikeFormOptions, useUpdateBike } from "@/features/bikes/bikes.queries";
-import { BikeSpecification, FieldLabel } from "@/features/add_bike_page/BikeSpecification";
+import { BikeSpecification, TextRow } from "@/features/add_bike_page/BikeSpecification";
 import { PhotoCropModal } from "@/features/add_bike_page/PhotoCropModal";
 import {
   SUSPENSION_FLAGS,
   toSpecificationValues,
   type BikeSpecificationValues,
 } from "@/features/add_bike_page/bikeSpecification.types";
-import { autosizeInputStyles, disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import { PHOTO_ASPECT } from "@/features/add_bike_page/photoCrop";
+import { ConfirmModal } from "@/components/ConfirmModal";
+import { GroupedList, ListRow } from "@/components/GroupedList";
+import { listRowFigureInputStyles } from "@/components/groupedListStyles";
+import { NoteRow } from "@/features/service/ui/NoteRow";
+import { useHeaderStore } from "@/store/store";
 import type { Bike, UpdateBikePayload } from "@/features/bikes/bikes.types";
+
+// A text button in the header; disabled it fades rather than turning into a grey block.
+const DONE_STYLES = {
+  root: { "--mantine-color-disabled": "transparent", fontSize: 15, fontWeight: 600 } as CSSProperties,
+};
 
 // What the form holds while it is being edited: the wizard's step-two values, and the
 // identity the wizard took from the lookup. Everything is a string or null, so a cleared
@@ -68,59 +77,116 @@ function toPayload(values: FormValues): UpdateBikePayload {
   };
 }
 
-// Corrects a bike that was described once in the wizard and frozen ever since. The wizard's
-// own step two, with brand and model above it: nothing here scrapes
-// or assembles components.
-export function BikeEdit(): ReactElement {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { data: bike, isLoading, isError } = useBike(Number(id));
-  const { data: formOptions } = useBikeFormOptions();
-  const save = useUpdateBike();
+// An edit typed back to what the bike says is no edit, so leaving then asks nothing.
+function hasEdits(original: FormValues, edits: Partial<FormValues>): boolean {
+  return (Object.keys(edits) as (keyof FormValues)[]).some((key) => edits[key] !== original[key]);
+}
 
-  // Only what the owner has changed. The rest is read off the bike, so the form is filled
-  // in on its first render rather than one render later.
-  const [edits, setEdits] = useState<Partial<FormValues>>({});
+interface PhotoCrop {
   // The photo waiting to be framed, and the framed one that will be sent.
-  const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
-  const [photoToCropUrl, setPhotoToCropUrl] = useState<string | null>(null);
+  toCrop: File | null;
+  toCropUrl: string | null;
+  photo: File | null;
+  photoUrl: string | null;
+  pick: (file: File | null) => void;
+  confirm: (cropped: File) => void;
+  cancel: () => void;
+}
+
+function usePhotoCrop(): PhotoCrop {
+  const [toCrop, setToCrop] = useState<File | null>(null);
+  const [toCropUrl, setToCropUrl] = useState<string | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   // Object URLs are the caller's to free, and there are two of them here.
   useEffect(() => {
     return () => {
-      if (photoToCropUrl) URL.revokeObjectURL(photoToCropUrl);
+      if (toCropUrl) URL.revokeObjectURL(toCropUrl);
       if (photoUrl) URL.revokeObjectURL(photoUrl);
     };
-  }, [photoToCropUrl, photoUrl]);
+  }, [toCropUrl, photoUrl]);
 
-  function pickPhoto(file: File | null): void {
+  function pick(file: File | null): void {
     if (!file) return;
-    setPhotoToCrop(file);
-    setPhotoToCropUrl((current) => {
+    setToCrop(file);
+    setToCropUrl((current) => {
       if (current) URL.revokeObjectURL(current);
       return URL.createObjectURL(file);
     });
   }
 
-  function confirmCrop(cropped: File): void {
+  function confirm(cropped: File): void {
     setPhoto(cropped);
     setPhotoUrl((current) => {
       if (current) URL.revokeObjectURL(current);
       return URL.createObjectURL(cropped);
     });
-    cancelCrop();
+    cancel();
   }
 
-  function cancelCrop(): void {
-    setPhotoToCropUrl((current) => {
+  function cancel(): void {
+    setToCropUrl((current) => {
       if (current) URL.revokeObjectURL(current);
       return null;
     });
-    setPhotoToCrop(null);
+    setToCrop(null);
   }
+
+  return { toCrop, toCropUrl, photo, photoUrl, pick, confirm, cancel };
+}
+
+interface NumberRowProps extends Pick<NumberInputProps, "placeholder" | "min" | "max" | "step" | "decimalScale"> {
+  label: string;
+  value: number | null;
+  onChange: (value: number | null) => void;
+}
+
+function NumberRow({ label, value, onChange, ...limits }: NumberRowProps): ReactElement {
+  const id = useId();
+
+  return (
+    <ListRow label={label} labelFor={id}>
+      <NumberInput
+        id={id}
+        variant="unstyled"
+        hideControls
+        value={value ?? ""}
+        styles={listRowFigureInputStyles}
+        onChange={(next) => onChange(next === "" ? null : Number(next))}
+        {...limits}
+      />
+    </ListRow>
+  );
+}
+
+function DoneButton({ disabled, loading, onClick }: { disabled: boolean; loading: boolean; onClick: () => void }): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Button
+      variant="subtle"
+      color="primary.6"
+      radius="md"
+      px="sm"
+      disabled={disabled}
+      loading={loading}
+      onClick={onClick}
+      styles={DONE_STYLES}
+    >
+      {t("bikeEdit.done")}
+    </Button>
+  );
+}
+
+// Corrects a bike that was described once in the wizard and frozen ever since. The wizard's
+// own step two, with brand and model above it: nothing here scrapes
+// or assembles components.
+export function BikeEdit(): ReactElement {
+  const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
+  const { data: bike, isLoading, isError } = useBike(Number(id));
+  const { data: formOptions } = useBikeFormOptions();
 
   if (isLoading) {
     return (
@@ -141,52 +207,95 @@ export function BikeEdit(): ReactElement {
     );
   }
 
+  return <BikeEditForm bike={bike} categories={formOptions?.bikeTypes ?? []} />;
+}
+
+function BikeEditForm({ bike, categories }: { bike: Bike; categories: string[] }): ReactElement {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
+  const save = useUpdateBike();
+  const crop = usePhotoCrop();
+  const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
+  const setActionSlot = useHeaderStore((state) => state.setActionSlot);
+
+  // Only what the owner has changed. The rest is read off the bike, so the form is filled
+  // in on its first render rather than one render later.
+  const [edits, setEdits] = useState<Partial<FormValues>>({});
+  const [discarding, setDiscarding] = useState(false);
+
   // What the bike says, with whatever the owner has typed over the top of it.
-  const values: FormValues = { ...toForm(bike), ...edits };
+  const original = toForm(bike);
+  const values: FormValues = { ...original, ...edits };
+  const canSave = values.bike_brand.trim() !== "";
+  const dirty = crop.photo !== null || hasEdits(original, edits);
+
+  function leave(): void {
+    if (location.key === "default") navigate(`/bikes/${String(bike.id)}`);
+    else navigate(-1);
+  }
 
   // One save: the fields and the photo go together, so a stored photo can never outlive an
   // unsaved form.
-  const submit = (): void => {
+  function submit(): void {
     save.mutate(
-      { id: bike.id, bike: toPayload(values), image: photo },
+      { id: bike.id, bike: toPayload(values), image: crop.photo },
       { onSuccess: () => navigate(`/bikes/${String(bike.id)}`) },
     );
-  };
+  }
 
-  const set = <K extends keyof FormValues>(key: K, value: FormValues[K]): void => {
+  function set<K extends keyof FormValues>(key: K, value: FormValues[K]): void {
     setEdits((current) => ({ ...current, [key]: value }));
-  };
+  }
 
-  // The header of step two names the bike as the lookup did; here it follows the brand and
-  // model typed above it.
-  const displayName = `${values.bike_brand} ${values.bike_model}`.trim();
+  // Keep the registered handlers current without repeated registration.
+  const backRef = useRef<() => void>(() => {});
+  const submitRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    backRef.current = (): void => {
+      if (dirty) setDiscarding(true);
+      else leave();
+    };
+    submitRef.current = submit;
+  });
 
-  const identity = (
-    <>
-      <Stack gap={4}>
-        <FieldLabel>{t("addBike.brand")}</FieldLabel>
-        <TextInput
-          placeholder={t("addBike.brandPlaceholder")}
-          radius="sm"
-          styles={inputStyles}
-          value={values.bike_brand}
-          onChange={(event) => set("bike_brand", event.currentTarget.value)}
-          error={values.bike_brand.trim() === "" ? t("bikeEdit.brandRequired") : undefined}
-        />
-      </Stack>
+  // Back asks before it throws edits away, for the header arrow and the Android button alike.
+  useEffect(() => {
+    setHeaderOnBack(() => backRef.current());
+    return () => setHeaderOnBack(null);
+  }, [setHeaderOnBack]);
 
-      <Stack gap={4}>
-        <FieldLabel>{t("addBike.model")}</FieldLabel>
-        <TextInput
-          placeholder={t("addBike.modelPlaceholder")}
-          radius="sm"
-          styles={inputStyles}
-          value={values.bike_model}
-          onChange={(event) => set("bike_model", event.currentTarget.value)}
-        />
-      </Stack>
-    </>
-  );
+  useEffect(() => {
+    setActionSlot(<DoneButton disabled={!canSave} loading={save.isPending} onClick={() => submitRef.current()} />);
+    return () => setActionSlot(null);
+  }, [setActionSlot, canSave, save.isPending]);
+
+  const identity = [
+    <TextRow
+      key="brand"
+      label={t("addBike.brand")}
+      placeholder={t("bikeEdit.brandRequired")}
+      invalid={!canSave}
+      value={values.bike_brand}
+      onChange={(text) => set("bike_brand", text)}
+    />,
+    <TextRow
+      key="model"
+      label={t("addBike.model")}
+      placeholder={t("addBike.modelPlaceholder")}
+      value={values.bike_model}
+      onChange={(text) => set("bike_model", text)}
+    />,
+    <NumberRow
+      key="year"
+      label={t("addBike.year")}
+      placeholder={t("addBike.yearPlaceholder")}
+      min={1900}
+      max={new Date().getFullYear() + 1}
+      value={values.year}
+      onChange={(year) => set("year", year)}
+    />,
+  ];
 
   return (
     <Stack
@@ -199,70 +308,42 @@ export function BikeEdit(): ReactElement {
     >
       <BikeSpecification
         bike={null}
-        fallbackName={displayName}
+        fallbackName={`${values.bike_brand} ${values.bike_model}`.trim()}
         year={values.year === null ? null : String(values.year)}
-        categories={formOptions?.bikeTypes ?? []}
+        categories={categories}
         values={values}
         onChange={(field, value) => setEdits((current) => ({ ...current, [field]: value }))}
-        photoUrl={photoUrl ?? bike.image_url}
-        onPickPhoto={pickPhoto}
+        photoUrl={crop.photoUrl ?? bike.image_url}
+        onPickPhoto={crop.pick}
         mileageLabel={t("bikeEdit.startingMileage")}
         identity={identity}
       />
 
-      <Stack gap={4}>
-        <FieldLabel>{t("addBike.year")}</FieldLabel>
-        <NumberInput
-          placeholder={t("addBike.yearPlaceholder")}
-          radius="sm"
-          styles={inputStyles}
-          value={values.year ?? ""}
-          min={1900}
-          max={new Date().getFullYear() + 1}
-          onChange={(value) => set("year", value === "" ? null : Number(value))}
-        />
-      </Stack>
-
-      <Stack gap={4}>
-        <FieldLabel>{t("bikeEdit.frameMaterial")}</FieldLabel>
-        <TextInput
+      <GroupedList title={t("bikeEdit.detailsGroup")}>
+        <TextRow
+          label={t("bikeEdit.frameMaterial")}
           placeholder={t("bikeEdit.frameMaterialPlaceholder")}
-          radius="sm"
-          styles={inputStyles}
           value={values.frame_material}
-          onChange={(event) => set("frame_material", event.currentTarget.value)}
+          onChange={(text) => set("frame_material", text)}
         />
-      </Stack>
-
-      {/* A tenth of a kilogram is exactly what an owner quotes about a road bike. */}
-      <Stack gap={4}>
-        <FieldLabel>{t("bikeEdit.weight")}</FieldLabel>
-        <NumberInput
+        {/* A tenth of a kilogram is exactly what an owner quotes about a road bike. */}
+        <NumberRow
+          label={t("bikeEdit.weight")}
           placeholder={t("bikeEdit.weightPlaceholder")}
-          radius="sm"
-          styles={inputStyles}
-          value={values.bike_weight_kg ?? ""}
           min={0}
           max={999}
           step={0.1}
           decimalScale={2}
-          onChange={(value) => set("bike_weight_kg", value === "" ? null : Number(value))}
+          value={values.bike_weight_kg}
+          onChange={(weight) => set("bike_weight_kg", weight)}
         />
-      </Stack>
-
-      <Stack gap={4}>
-        <FieldLabel>{t("bikeEdit.description")}</FieldLabel>
-        <Textarea
+        <NoteRow
+          label={t("bikeEdit.notes")}
           placeholder={t("bikeEdit.descriptionPlaceholder")}
-          radius="sm"
-          styles={autosizeInputStyles}
-          autosize
-          minRows={2}
-          maxRows={5}
           value={values.description}
-          onChange={(event) => set("description", event.currentTarget.value)}
+          onChange={(note) => set("description", note)}
         />
-      </Stack>
+      </GroupedList>
 
       {save.isError && (
         <Text fz={13} c="red.5">
@@ -270,29 +351,20 @@ export function BikeEdit(): ReactElement {
         </Text>
       )}
 
-      <Group gap="sm" wrap="nowrap" mt="xs">
-        <Button
-          variant="outline"
-          radius="md"
-          onClick={() => navigate(-1)}
-          style={{ flex: 1 }}
-        >
-          {t("bikeEdit.cancel")}
-        </Button>
-        <Button
-          color="primary.6"
-          radius="md"
-          styles={disabledButtonStyles}
-          loading={save.isPending}
-          disabled={values.bike_brand.trim() === ""}
-          onClick={submit}
-          style={{ flex: 1 }}
-        >
-          {t("bikeEdit.save")}
-        </Button>
-      </Group>
+      <PhotoCropModal file={crop.toCrop} fileUrl={crop.toCropUrl} onCancel={crop.cancel} onConfirm={crop.confirm} />
 
-      <PhotoCropModal file={photoToCrop} fileUrl={photoToCropUrl} onCancel={cancelCrop} onConfirm={confirmCrop} />
+      <ConfirmModal
+        opened={discarding}
+        onCancel={() => setDiscarding(false)}
+        onConfirm={() => {
+          setDiscarding(false);
+          leave();
+        }}
+        title={t("bikeEdit.discardTitle")}
+        body={t("bikeEdit.discardBody")}
+        cancelLabel={t("bikeEdit.keepEditing")}
+        confirmLabel={t("bikeEdit.discard")}
+      />
     </Stack>
   );
 }
