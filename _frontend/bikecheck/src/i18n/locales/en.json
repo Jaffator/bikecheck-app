@@ -1471,7 +1471,7 @@
     "categoriesNav": "Component categories"
   },
   "stats": {
-    "spendTitle": "Spending overview · {{period}}",
+    "spend": "Spending",
     "spendEmpty": "no prices yet · add a price to a service",
     "other": "Other",
     "unassigned": "Unassigned",
@@ -1479,6 +1479,7 @@
     "distanceTitle": "Distance · {{period}}",
     "distanceEmptyPeriod": "no rides in this period",
     "distanceWeek": "Week of {{date}}",
+    "byBike": "By bike",
     "byGroup": "By group",
     "forecastTitle": "Service forecast",
     "forecastEmpty": "no tracked part has rides yet",
