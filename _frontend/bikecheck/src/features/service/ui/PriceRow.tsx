@@ -3,13 +3,19 @@ import { useId, type ReactElement } from "react";
 import { NumberInput, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ListRow } from "@/components/GroupedList";
-import { listRowInputStyles } from "@/components/groupedListStyles";
+import { LIST_SUB_ROW_HEIGHT, listRowInputStyles } from "@/components/groupedListStyles";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
 
 const PRICE_INPUT_STYLES = {
   ...listRowInputStyles,
-  input: { ...listRowInputStyles.input, fontVariantNumeric: "tabular-nums" },
+  // The row dims as a whole when disabled; the input's own dimming would double it.
+  input: { ...listRowInputStyles.input, fontVariantNumeric: "tabular-nums", opacity: 1 },
+};
+
+const COMPACT_PRICE_INPUT_STYLES = {
+  ...PRICE_INPUT_STYLES,
+  input: { ...PRICE_INPUT_STYLES.input, height: LIST_SUB_ROW_HEIGHT, minHeight: LIST_SUB_ROW_HEIGHT },
 };
 
 interface PriceRowProps {
@@ -20,15 +26,24 @@ interface PriceRowProps {
   onBlur?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  compact?: boolean;
 }
 
-export function PriceRow({ label, value, onChange, onBlur, placeholder, disabled }: PriceRowProps): ReactElement {
+export function PriceRow({
+  label,
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  disabled,
+  compact,
+}: PriceRowProps): ReactElement {
   const { i18n } = useTranslation();
   const { data: user } = useCurrentUser();
   const id = useId();
 
   return (
-    <ListRow label={label} labelFor={id}>
+    <ListRow label={label} labelFor={id} disabled={disabled} compact={compact}>
       <NumberInput
         id={id}
         variant="unstyled"
@@ -37,7 +52,7 @@ export function PriceRow({ label, value, onChange, onBlur, placeholder, disabled
         min={0}
         hideControls
         disabled={disabled}
-        styles={PRICE_INPUT_STYLES}
+        styles={compact === true ? COMPACT_PRICE_INPUT_STYLES : PRICE_INPUT_STYLES}
         onChange={onChange}
         onBlur={onBlur}
       />

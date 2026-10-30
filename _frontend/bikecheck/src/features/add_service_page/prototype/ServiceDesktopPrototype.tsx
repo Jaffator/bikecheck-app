@@ -5,6 +5,7 @@ import { Box, Button, Group, Loader, Stack, Text, UnstyledButton } from "@mantin
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { GroupedList } from "@/components/GroupedList";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { BikeCategory, CatalogueAction, CategoryActions } from "@/features/service/service.types";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
@@ -331,7 +332,6 @@ function ActionsList({ proto }: { proto: ServiceDesktopPrototypeState }): ReactE
         }}
         onUpdate={(patch) => proto.updateAction(action.id, patch)}
         onToggleTag={(tagName) => proto.toggleActionTag(action.id, tagName)}
-        priceBeside={{ placeholder: COPY.pricePlaceholder }}
       />
     );
   }
@@ -361,9 +361,9 @@ function ActionsList({ proto }: { proto: ServiceDesktopPrototypeState }): ReactE
 
       {actionSections(catalogue, t).map((section, index) => (
         <Fragment key={section.title}>
-          {/* The first run is named in the heading above, so its cards start this row. */}
+          {/* The first run is named in the heading above, so its card starts this row. */}
           {index > 0 && <SectionTitle mt={12}>{section.title}</SectionTitle>}
-          {section.actions.map(renderAction)}
+          <GroupedList>{section.actions.map(renderAction)}</GroupedList>
         </Fragment>
       ))}
     </Stack>

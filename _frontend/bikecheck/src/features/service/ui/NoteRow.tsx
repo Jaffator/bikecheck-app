@@ -16,16 +16,25 @@ interface NoteRowProps {
   placeholder?: string;
   maxLength?: number;
   disabled?: boolean;
+  compact?: boolean;
 }
 
-export function NoteRow({ label, value, onChange, placeholder, maxLength, disabled }: NoteRowProps): ReactElement {
+export function NoteRow({
+  label,
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+  disabled,
+  compact,
+}: NoteRowProps): ReactElement {
   const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   const firstLine = value.split("\n").find((line) => line.trim() !== "") ?? "";
 
   return (
     <>
-      <ListRow label={label} onClick={() => setOpened(true)} disabled={disabled}>
+      <ListRow label={label} onClick={() => setOpened(true)} disabled={disabled} compact={compact}>
         <Text fz={14} c={firstLine === "" ? "text.8" : "text.7"} truncate>
           {firstLine === "" ? t("addService.addNote") : firstLine}
         </Text>

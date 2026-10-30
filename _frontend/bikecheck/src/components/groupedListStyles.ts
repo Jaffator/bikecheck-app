@@ -4,6 +4,9 @@ import type { CSSProperties } from "react";
 // One tap target tall, whatever the row holds.
 export const LIST_ROW_HEIGHT = 50;
 
+// A row inside an expanded one, a notch shorter so it reads as part of it.
+export const LIST_SUB_ROW_HEIGHT = 44;
+
 // A field typed straight into a row: no box of its own, as tall as the row so the whole of it takes the tap.
 export const listRowInputStyles = {
   root: { flex: 1, minWidth: 0 },
