@@ -103,7 +103,7 @@ export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProp
             <Stack gap={4}>
               <Text size="sm">{t("addBike.saveFailed")}</Text>
               {wizard.saveErrorDetails.map((detail) => (
-                <Text key={detail} size="xs" c="dimmed">
+                <Text key={detail} size="xs" c="var(--color-text-dim)">
                   {detail}
                 </Text>
               ))}

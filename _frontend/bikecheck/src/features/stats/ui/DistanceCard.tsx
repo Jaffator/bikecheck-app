@@ -33,7 +33,8 @@ const END_DOT_RADIUS = 4.5;
 const SINGLE_MARGIN = { top: 16, right: 8 };
 // All time runs to six digits.
 const MULTI_MARGIN = { top: 8, right: 60 };
-const X_TICK = { transform: "translate(0, 10)", fontSize: TICK_SIZE, fill: "currentColor" };
+const TICK_STYLE = { fontVariantNumeric: "tabular-nums" };
+const X_TICK = { transform: "translate(0, 10)", fontSize: TICK_SIZE, fill: "currentColor", style: TICK_STYLE };
 // Steps of the three-tick axis, times a power of ten, so it reads 0 · 40 · 80, never 0 · 55 · 110.
 const NICE_STEPS = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
 
@@ -165,7 +166,7 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
         width: "auto",
         ticks,
         domain: [0, ticks[ticks.length - 1]],
-        tick: { fontSize: TICK_SIZE, fill: "currentColor" },
+        tick: { fontSize: TICK_SIZE, fill: "currentColor", style: TICK_STYLE },
         tickFormatter: (km: number) => formatNumber(km, i18n.language),
       }}
       areaChartProps={{ margin: single ? SINGLE_MARGIN : MULTI_MARGIN }}
