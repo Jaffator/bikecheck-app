@@ -212,7 +212,7 @@ export class RideService {
     return this.prisma.rides.findMany({ where, select: summedRideSelect });
   }
 
-  // The ride's AI review (ADR 0044).
+  // Asked of Gemini once and kept, so a second open costs nothing (ADR 0044).
   async findSummary(userId: number, rideId: number): Promise<ResponseRideSummaryDto> {
     const ride = await this.prisma.rides.findFirst({
       where: { id: rideId, ...listedRidesWhere(userId) },

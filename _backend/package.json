@@ -17,7 +17,7 @@
     "chat:eval:seed": "ts-node apps/monolith/scripts/chatEval/seed_eval.ts",
     "db:evalaccount": "ts-node apps/monolith/scripts/eval/main_eval_account.ts",
     "db:mockriders": "ts-node apps/monolith/scripts/mockRiders/main_mock_riders.ts",
-    "eval:chat": "ts-node apps/monolith/scripts/eval/main_eval_chat.ts",
+    "eval:chat":"ts-node apps/monolith/scripts/eval/main_eval_chat.ts",
     "start:debug": "nest start --debug --watch",
     "prisma:studio": "prisma studio",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",

@@ -10,22 +10,23 @@ const SKELETON_WIDTHS = ["100%", "100%", "60%"];
 
 export function RideAiSummary({ rideId }: { rideId: number }): ReactElement | null {
   const { t } = useTranslation();
-  const { data, isPending, isError } = useRideAiSummary(rideId);
-  if (isError) return null;
+  const { data, isError } = useRideAiSummary(rideId);
+  // A failed refetch keeps the text already shown; only a review never had is left out.
+  if (!data && isError) return null;
 
   return (
     <Stack gap={6}>
       <Eyebrow>{t("rides.aiReview")}</Eyebrow>
-      {isPending ? (
+      {data ? (
+        <Text fz={13} c="text.7">
+          {data.summary}
+        </Text>
+      ) : (
         <Stack gap={8} py={4}>
           {SKELETON_WIDTHS.map((width, index) => (
             <Skeleton key={index} h={12} w={width} radius="sm" />
           ))}
         </Stack>
-      ) : (
-        <Text fz={14} lh={1.5} c="text.6">
-          {data.summary}
-        </Text>
       )}
     </Stack>
   );

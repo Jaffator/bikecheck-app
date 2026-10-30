@@ -87,7 +87,7 @@
       "• Náš poskytovatel hostingu, který provozuje servery a databázi, kde je uložen váš účet a vaše záznamy, v Německu.",
       "• Cloudflare R2, které ukládá fotky a soubory, jež nahrajete, například obrázky kol a přílohy servisních záznamů.",
       "• OpenAI, které vytváří odpovědi asistenta v aplikaci. Váš dotaz a údaje o vašich vlastních kolech potřebné k odpovědi se za tímto účelem odesílají do OpenAI. Podle podmínek, které se na naše používání jeho API vztahují, OpenAI tento obsah nepoužívá k trénování svých modelů.",
-      "• Google, který poskytuje přihlášení, jež si můžete zvolit, a model Gemini používaný k psaní krátkých shrnutí vašich jízd. Podle podmínek, které se na naše používání jeho placeného API vztahují, Google tento obsah nepoužívá ke zlepšování svých produktů.",
+      "• Google, který poskytuje přihlášení, jež si můžete zvolit, a model Gemini používaný k psaní krátkých shrnutí vašich jízd. Za tímto účelem se do Gemini odesílají údaje o jízdě, její název a název kola. Podle podmínek, které se na naše používání jeho placeného API vztahují, Google tento obsah nepoužívá ke zlepšování svých produktů.",
       "• Firebase Cloud Messaging (Google), které doručuje push oznámení do vašeho zařízení.",
       "• Náš poskytovatel logování a monitoringu, který uchovává technické logy sloužící k nalezení a opravě chyb.",
       "Vaše osobní údaje můžeme rovněž sdílet v těchto situacích:",

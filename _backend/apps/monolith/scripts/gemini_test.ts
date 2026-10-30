@@ -17,6 +17,7 @@ const ride: RideSummaryInput = {
   distance_km: Math.round(activityData.distance / 100) / 10,
   duration_min: Math.round(activityData.moving_time / 60),
   elevation_up_m: Math.round(activityData.total_elevation_gain),
+  // Strava's payload carries no descent; the sample is a loop, which drops what it climbs.
   elevation_down_m: Math.round(activityData.total_elevation_gain),
   speed_avg_kmh: Math.round(activityData.average_speed * 3.6),
   max_speed_kmh: Math.round(activityData.max_speed * 3.6),
