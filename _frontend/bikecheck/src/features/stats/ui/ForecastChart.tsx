@@ -1,24 +1,26 @@
-// One part's wear: solid as ridden, dotted to the projected date, dashed at the service limit.
+// One part's wear: solid as ridden, dotted to the projected date, dashed at the service limit, each named on the chart.
 import type { ReactElement } from "react";
-import { Box, Group, Stack, Text } from "@mantine/core";
 import { LineChart } from "@mantine/charts";
 import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
 import { ReferenceDot } from "recharts";
 import { formatServiceDate } from "@/features/service/serviceDates";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
-import { useIsDesktop } from "@/layout/breakpoints";
 import type { WearForecastItem } from "../stats.types";
 
 export const CHART_HEIGHT = 160;
 const DUE = 100;
 // Room under 0 % for today's label when the reading itself sits on the floor.
 const FLOOR = -18;
-const Y_TICKS = [0, 50, DUE];
+// The limit and the floor only; the inline labels say the rest.
+const Y_TICKS = [0, DUE];
 const PROJECTION_DASH = "3 5";
 const LIMIT_DASH = "4 4";
 const LIMIT_COLOR = "var(--mantine-color-text-8)";
 const CARD_COLOR = "var(--mantine-color-cards-6)";
+const LABEL_SIZE = 11;
+// Keeps a label clear of the line or the dot it names.
+const LABEL_GAP = 9;
 
 // One chart row: a curve point, the projection's far end, or today carrying both.
 interface ChartRow {
@@ -40,65 +42,93 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
   const first = rows[0].at;
   const last = rows[rows.length - 1].at;
   const todayLabel = t("stats.forecastToday", { value: t("tracking.percentage", { value: item.percentage }) });
-  const isDesktop = useIsDesktop();
+  const side = labelSide(today.at, first, last);
+  // Today in the left half leaves the projection long enough to name and the right end free.
+  const roomy = side === "below-right";
+  const projected = item.projected_date !== null;
 
   return (
-    <Stack gap={10}>
-      <LineChart
-        h={CHART_HEIGHT}
-        // Nothing here answers a touch; a tap would only focus the surface and ring it.
-        style={isDesktop ? undefined : { pointerEvents: "none" }}
-        data={rows}
-        dataKey="at"
-        series={[
-          { name: "wear", color },
-          { name: "projection", color, strokeDasharray: PROJECTION_DASH },
-        ]}
-        curveType="linear"
-        withDots={false}
-        withTooltip={false}
-        tickLine="none"
-        strokeDasharray="0"
-        textColor="text.8"
-        gridColor="var(--color-border-subtle)"
-        lineProps={{ strokeLinecap: "round" }}
-        referenceLines={[{ y: DUE, color: LIMIT_COLOR, strokeDasharray: LIMIT_DASH }]}
-        // Time-scaled, so the projection is as long as the weeks it spans.
-        xAxisProps={{
-          type: "number",
-          scale: "time",
-          domain: ["dataMin", "dataMax"],
-          ticks: [first, last],
-          tick: <EdgeTick language={i18n.language} emphasizeLast={item.projected_date !== null} />,
-        }}
-        yAxisProps={{
-          width: "auto",
-          ticks: Y_TICKS,
-          domain: [FLOOR, (max: number) => Math.max(DUE, max)],
-          tick: { fontSize: 11, fill: "currentColor", style: { fontVariantNumeric: "tabular-nums" } },
-          tickFormatter: (percentage: number) => t("tracking.percentage", { value: percentage }),
-        }}
-        lineChartProps={{ margin: { top: 18, right: 8 } }}
-      >
-        {item.projected_date !== null && (
-          <ReferenceDot x={last} y={DUE} r={4} fill={CARD_COLOR} stroke={color} strokeWidth={2} />
+    <LineChart
+      h={CHART_HEIGHT}
+      // The slide around it is the button; a touch here would only focus the surface and ring it.
+      style={{ pointerEvents: "none" }}
+      data={rows}
+      dataKey="at"
+      series={[
+        { name: "wear", color },
+        { name: "projection", color, strokeDasharray: PROJECTION_DASH },
+      ]}
+      curveType="linear"
+      withDots={false}
+      withTooltip={false}
+      tickLine="none"
+      strokeDasharray="0"
+      textColor="text.8"
+      gridColor="var(--color-border-subtle)"
+      lineProps={{ strokeLinecap: "round" }}
+      referenceLines={[{ y: DUE, color: LIMIT_COLOR, strokeDasharray: LIMIT_DASH }]}
+      // Time-scaled, so the projection is as long as the weeks it spans.
+      xAxisProps={{
+        type: "number",
+        scale: "time",
+        domain: ["dataMin", "dataMax"],
+        ticks: [first, last],
+        // Recharts would shift both dates inwards again, as if centred; EdgeTick already anchors them.
+        interval: 0,
+        tick: <EdgeTick language={i18n.language} emphasizeLast={projected} />,
+      }}
+      yAxisProps={{
+        width: "auto",
+        ticks: Y_TICKS,
+        domain: [FLOOR, (max: number) => Math.max(DUE, max)],
+        tick: { fontSize: LABEL_SIZE, fill: "currentColor", style: { fontVariantNumeric: "tabular-nums" } },
+        tickFormatter: (percentage: number) => t("tracking.percentage", { value: percentage }),
+      }}
+      lineChartProps={{ margin: { top: 18, right: 8 } }}
+    >
+      {/* Over the end dot, or at the left when today's label takes the right. */}
+      <ReferenceDot
+        x={roomy ? last : first}
+        y={DUE}
+        shape={(dot) => (
+          <InlineLabel
+            x={Number(dot.cx)}
+            y={Number(dot.cy) - LABEL_GAP}
+            anchor={roomy ? "end" : "start"}
+            label={t("stats.forecastLimit")}
+          />
         )}
+      />
+      {projected && roomy && (
+        // Under the projection's midpoint, where neither line nor today's label runs.
         <ReferenceDot
-          x={today.at}
-          y={today.wear}
+          x={(today.at + last) / 2}
+          y={(today.wear + DUE) / 2}
           shape={(dot) => (
-            <TodayDot
-              cx={Number(dot.cx)}
-              cy={Number(dot.cy)}
-              color={color}
-              label={todayLabel}
-              side={labelSide(today.at, first, last)}
+            <InlineLabel
+              x={Number(dot.cx) + LABEL_GAP}
+              y={Number(dot.cy) + LABEL_GAP + LABEL_SIZE / 2}
+              anchor="start"
+              label={t("stats.forecastProjection")}
             />
           )}
         />
-      </LineChart>
-      <ForecastLegend color={color} withProjection={item.projected_date !== null} />
-    </Stack>
+      )}
+      {projected && <ReferenceDot x={last} y={DUE} r={4} fill={CARD_COLOR} stroke={color} strokeWidth={2} />}
+      <ReferenceDot
+        x={today.at}
+        y={today.wear}
+        shape={(dot) => (
+          <TodayDot
+            cx={Number(dot.cx)}
+            cy={Number(dot.cy)}
+            color={color}
+            label={todayLabel}
+            side={side}
+          />
+        )}
+      />
+    </LineChart>
   );
 }
 
@@ -150,11 +180,31 @@ function TodayDot({ cx, cy, color, label, side }: TodayDotProps): ReactElement<S
         fontSize={11}
         fontWeight={400}
         fill="var(--mantine-color-text-6)"
-        style={{ fontVariantNumeric: "tabular-nums" }}
+        // A halo in the card's colour, so the limit line never runs through the figure.
+        stroke={CARD_COLOR}
+        strokeWidth={4}
+        strokeLinejoin="round"
+        style={{ fontVariantNumeric: "tabular-nums", paintOrder: "stroke" }}
       >
         {label}
       </text>
     </g>
+  );
+}
+
+interface InlineLabelProps {
+  x: number;
+  y: number;
+  anchor: "start" | "end";
+  label: string;
+}
+
+// Names a line in place of a legend, as quiet as the axis.
+function InlineLabel({ x, y, anchor, label }: InlineLabelProps): ReactElement<SVGElement> {
+  return (
+    <text x={x} y={y} textAnchor={anchor} fontSize={LABEL_SIZE} fontWeight={400} fill={LIMIT_COLOR}>
+      {label}
+    </text>
   );
 }
 
@@ -187,30 +237,5 @@ function EdgeTick({ language, emphasizeLast, x, y, index, payload }: EdgeTickPro
     >
       {formatServiceDate(dayjs(payload.value).format("YYYY-MM-DD"), language)}
     </text>
-  );
-}
-
-function ForecastLegend({ color, withProjection }: { color: string; withProjection: boolean }): ReactElement {
-  const { t } = useTranslation();
-
-  return (
-    <Group gap={14} wrap="wrap">
-      <LegendItem label={t("stats.forecastActual")} swatch={{ borderTop: `2px solid ${color}` }} />
-      {withProjection && (
-        <LegendItem label={t("stats.forecastProjection")} swatch={{ borderTop: `2px dotted ${color}` }} />
-      )}
-      <LegendItem label={t("stats.forecastLimit")} swatch={{ borderTop: `1px dashed ${LIMIT_COLOR}` }} />
-    </Group>
-  );
-}
-
-function LegendItem({ label, swatch }: { label: string; swatch: { borderTop: string } }): ReactElement {
-  return (
-    <Group gap={6} wrap="nowrap">
-      <Box w={14} style={swatch} />
-      <Text fz={12} lh="16px" c="var(--color-text-dim)">
-        {label}
-      </Text>
-    </Group>
   );
 }

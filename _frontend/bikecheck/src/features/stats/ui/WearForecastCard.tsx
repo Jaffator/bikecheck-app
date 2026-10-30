@@ -1,31 +1,38 @@
 // Home's forecast card; the pace, the date and the curve are decided in StatsService.
-import { useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Group, Paper, Select, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
-import { Info } from "lucide-react";
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { ActionIcon, Box, Group, Menu, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Check, ChevronDown, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ExplanationModal } from "@/components/ExplanationModal";
-import { dropdownProps, inputStyles, lightFieldLabel } from "@/features/add_bike_page/formStyles";
+import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
-import { formatServiceDate } from "@/features/service/serviceDates";
-import { attentionColor } from "@/features/service_tracking/attentionLevel";
-import { remainingLabel } from "@/features/service_tracking/intervalFigures";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
 import { useWearForecast } from "../stats.queries";
 import type { WearForecastItem } from "../stats.types";
-import { forecastBikes, forecastFigure, forecastNote, forecastSelection, hasRides } from "../wearForecast";
-import { CHART_HEIGHT, ForecastChart } from "./ForecastChart";
-import { ForecastPicker } from "./ForecastPicker";
+import { forecastBikes, forecastSlides, hasRides } from "../wearForecast";
+import { CHART_HEIGHT } from "./ForecastChart";
+import { ForecastCarousel } from "./ForecastCarousel";
+
+const CHIP_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 7,
+  height: 32,
+  padding: "0 10px",
+  minWidth: 0,
+  borderRadius: 9999,
+  backgroundColor: "var(--color-surface-raised)",
+};
 
 export function WearForecastCard(): ReactElement {
   const { t } = useTranslation();
   const { data: forecast } = useWearForecast();
   const { data: garage } = useBikes();
   const [chosenBikeId, setChosenBikeId] = useState<number | null>(null);
-  const [chosenKey, setChosenKey] = useState<string | null>(null);
   const [opened, setOpened] = useState<TrackedAction | null>(null);
 
   if (forecast === undefined) {
@@ -38,50 +45,34 @@ export function WearForecastCard(): ReactElement {
   }
 
   const { items } = forecast;
-  const selection = forecastSelection(items, chosenBikeId, chosenKey);
-  const bikes = forecastBikes(garage ?? [], items);
+  const slides = forecastSlides(items, chosenBikeId);
+
+  if (slides.length === 0 || !items.some(hasRides)) {
+    return (
+      <ForecastPaper>
+        <ForecastTitle />
+        <Text fz={13} c="var(--color-text-dim)">
+          {t("stats.forecastEmpty")}
+        </Text>
+      </ForecastPaper>
+    );
+  }
+
+  const bikeId = slides[0].bike_id;
+  // Held once shown, so a refetch that moves the garage's pick never swaps the bike being read.
+  if (chosenBikeId !== bikeId) setChosenBikeId(bikeId);
 
   return (
     <>
-      <ForecastPaper>
-        <ForecastTitle />
-
-        {selection === null || !items.some(hasRides) ? (
-          <Text fz={13} c="var(--color-text-dim)">
-            {t("stats.forecastEmpty")}
-          </Text>
-        ) : (
-          <>
-            {/* One bike is not a choice worth offering. */}
-            {bikes.length > 1 && (
-              <ForecastBikeSelect
-                bikes={bikes}
-                bikeId={selection.selected.bike_id}
-                onPick={(id) => {
-                  setChosenBikeId(id);
-                  setChosenKey(null);
-                }}
-              />
-            )}
-            <ForecastPicker
-              options={selection.options}
-              selected={selection.selected}
-              // The bike goes with the pick, so a refetch that moves the opening bike keeps it.
-              onPick={(key) => {
-                setChosenBikeId(selection.selected.bike_id);
-                setChosenKey(key);
-              }}
-            />
-            <ForecastHeader
-              item={selection.selected}
-              onOpen={() => {
-                setOpened(selection.selected);
-              }}
-            />
-            <ForecastChart item={selection.selected} />
-          </>
-        )}
-      </ForecastPaper>
+      <ForecastCarousel
+        key={bikeId}
+        slides={slides}
+        title={<ForecastTitle />}
+        bikeChip={
+          <ForecastBikeChip item={slides[0]} bikes={forecastBikes(garage ?? [], items)} onPick={setChosenBikeId} />
+        }
+        onOpen={setOpened}
+      />
 
       <TrackedActionDrawer
         action={opened}
@@ -100,8 +91,8 @@ function ForecastTitle(): ReactElement {
   const title = t("stats.forecastTitle");
 
   return (
-    <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
-      <Text fz={16} fw={600} c="text.6" lineClamp={1}>
+    <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
+      <Text fz={17} fw={600} c="text.6">
         {title}
       </Text>
       <ActionIcon
@@ -122,100 +113,57 @@ function ForecastTitle(): ReactElement {
   );
 }
 
-interface ForecastBikeSelectProps {
+interface ForecastBikeChipProps {
+  // Names the bike shown; the garage list only adds its colour and the others.
+  item: WearForecastItem;
   bikes: ListedBike[];
-  bikeId: number;
   onPick: (bikeId: number) => void;
 }
 
-// In place like the part picker: a portalled list flickers in the Capacitor webview.
-function ForecastBikeSelect({ bikes, bikeId, onPick }: ForecastBikeSelectProps): ReactElement {
-  const { t } = useTranslation();
-  const colorIndex = bikes.find((bike) => bike.id === bikeId)?.color_index ?? null;
+// One bike is not a choice worth offering, so its chip opens nothing.
+function ForecastBikeChip({ item, bikes, onPick }: ForecastBikeChipProps): ReactElement {
+  const label = <ChipLabel item={item} colorIndex={colorIndexOf(bikes, item.bike_id)} />;
+  if (bikes.length < 2) return <Box style={CHIP_STYLE}>{label}</Box>;
 
+  // In place, not portalled: a portalled list flickers in the Capacitor webview.
   return (
-    <Select
-      value={String(bikeId)}
-      onChange={(next) => {
-        if (next !== null) onPick(Number(next));
-      }}
-      data={bikes.map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
-      allowDeselect={false}
-      label={t("stats.forecastBikeLabel")}
-      leftSection={<BikeColorDot colorIndex={colorIndex} size={7} />}
-      styles={{ ...inputStyles, label: lightFieldLabel }}
-      comboboxProps={{
-        ...dropdownProps,
-        withinPortal: false,
-        position: "bottom",
-        middlewares: { flip: false, shift: false },
-      }}
-    />
-  );
-}
-
-// Opens the same drawer the Attention card does. Without a date the figure is the percentage.
-function ForecastHeader({ item, onOpen }: { item: WearForecastItem; onOpen: () => void }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const color = attentionColor(item.percentage);
-  const percentage = t("tracking.percentage", { value: item.percentage });
-  const figure = forecastFigure(item, t, (date) => formatServiceDate(date, i18n.language));
-
-  return (
-    <UnstyledButton
-      onClick={onOpen}
-      className="hover-veil active:scale-[0.985]"
-      style={{ display: "block", width: "100%", transition: "transform 0.12s ease" }}
-    >
-      <Stack gap={6}>
-        <Group gap={10} wrap="nowrap" justify="space-between">
-          {/* A step under the card title, so the title keeps the lead and the tag reads beside it. */}
-          <Text className="tabular-nums" fz={14} fw={600} lh="20px" c="text.6" style={{ flexShrink: 0 }}>
-            {figure}
-          </Text>
-          <ForecastTag color={color} label={forecastNote(item, t, { brief: false })} />
-        </Group>
-        {/* Kept apart by space, not a separator dot. */}
-        <Group gap={12} wrap="nowrap" className="tabular-nums" fz={12} lh="16px" c="var(--color-text-dim)">
-          <Text span inherit style={{ flexShrink: 0 }}>{`${t("stats.forecastWear")} ${percentage}`}</Text>
-          <Text span inherit lineClamp={1}>
-            {remainingLabel(item, i18n.language, t)}
-          </Text>
-        </Group>
-      </Stack>
-    </UnstyledButton>
-  );
-}
-
-// The state is carried by this tag and the curve's colour, never by the date's.
-function ForecastTag({ color, label }: { color: string; label: string }): ReactElement {
-  return (
-    <Group
-      gap={6}
-      wrap="nowrap"
-      px={9}
-      py={4}
-      style={{
-        minWidth: 0,
-        borderRadius: 9999,
-        backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
-      }}
-    >
-      <Box w={6} h={6} style={{ flexShrink: 0, borderRadius: 9999, backgroundColor: color }} />
-      <Text
-        className="tabular-nums"
-        fz={10}
-        fw={600}
-        lh="12px"
-        tt="uppercase"
-        lts="var(--tracking-label)"
-        c={color}
-        lineClamp={1}
-        style={{ minWidth: 0 }}
+    <Menu position="bottom-end" radius="md" shadow="md" withinPortal={false}>
+      <Menu.Target>
+        <UnstyledButton className="hover-veil" style={CHIP_STYLE}>
+          {label}
+          <ChevronDown size={12} strokeWidth={2.4} color="var(--mantine-color-text-6)" style={{ flexShrink: 0 }} />
+        </UnstyledButton>
+      </Menu.Target>
+      <Menu.Dropdown
+        bg="cards.6"
+        p={8}
+        style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
       >
-        {label}
+        {bikes.map((bike) => (
+          <Menu.Item
+            key={bike.id}
+            color="text"
+            fw={600}
+            leftSection={<BikeColorDot colorIndex={bike.color_index} />}
+            rightSection={bike.id === item.bike_id ? <Check size={14} /> : undefined}
+            onClick={() => onPick(bike.id)}
+          >
+            {bikeTitle(bike)}
+          </Menu.Item>
+        ))}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
+
+function ChipLabel({ item, colorIndex }: { item: WearForecastItem; colorIndex: number | null }): ReactElement {
+  return (
+    <>
+      <BikeColorDot colorIndex={colorIndex} size={7} />
+      <Text fz={13} fw={500} c="text.6" truncate>
+        {bikeTitle(item)}
       </Text>
-    </Group>
+    </>
   );
 }
 

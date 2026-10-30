@@ -10,6 +10,8 @@ import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 // Home's charts lay out their tooltip from it.
 import "@mantine/charts/styles.css";
+// Home's service forecast slides lay out from it.
+import "@mantine/carousel/styles.css";
 // Toasts, such as the Strava sync result.
 import "@mantine/notifications/styles.css";
 import "./global.css";
