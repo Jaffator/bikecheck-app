@@ -134,11 +134,7 @@ function ForecastBikeChip({ item, bikes, onPick }: ForecastBikeChipProps): React
           <ChevronDown size={12} strokeWidth={2.4} color="var(--mantine-color-text-6)" style={{ flexShrink: 0 }} />
         </UnstyledButton>
       </Menu.Target>
-      <Menu.Dropdown
-        bg="cards.6"
-        p={8}
-        style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
-      >
+      <Menu.Dropdown>
         {bikes.map((bike) => (
           <Menu.Item
             key={bike.id}

@@ -44,11 +44,7 @@ export function ChatActionsMenu({ canClear, disabled }: ChatActionsMenuProps): R
         </Menu.Target>
 
         {/* Wears the app's one dropdown surface - see the part row menu. */}
-        <Menu.Dropdown
-          bg="cards.6"
-          p={8}
-          style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
-        >
+        <Menu.Dropdown>
           <Menu.Item
             color="red.5"
             py={12}

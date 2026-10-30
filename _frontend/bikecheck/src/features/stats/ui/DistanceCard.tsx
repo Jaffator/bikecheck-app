@@ -20,13 +20,11 @@ import {
   type DistanceStep,
   type RunningDistance,
 } from "../distanceDays";
-import { homePeriodLabel } from "../homePeriod";
 import { useDistance } from "../stats.queries";
 import type { Distance, DistanceBike, HomePeriod } from "../stats.types";
+import { HOME_FIGURE_SIZE, HomeCardHeader, HomeFigure } from "./HomeCardHeader";
 
 const CHART_HEIGHT = 160;
-const FIGURE_SIZE = 28;
-const FIGURE_LINE = 1.1;
 const TICK_SIZE = 11;
 // One bike's line gets a soft fill; several would only muddy each other.
 const SINGLE_FILL = 0.1;
@@ -70,7 +68,7 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
     return (
       <DistancePaper>
         <Skeleton h={14} w="60%" />
-        <Skeleton h={FIGURE_SIZE} w="35%" />
+        <Skeleton h={HOME_FIGURE_SIZE} w="35%" />
         <Skeleton h={CHART_HEIGHT} />
       </DistancePaper>
     );
@@ -83,7 +81,7 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
   return (
     <DistancePaper>
       <Stack gap={10}>
-        <DistanceHeader period={shown} />
+        <HomeCardHeader title={t("stats.distance")} period={shown} />
         {drawn.bikes.length > 0 && <DistanceTotal distance={drawn} single={single} />}
       </Stack>
 
@@ -101,40 +99,13 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
   );
 }
 
-function DistanceHeader({ period }: { period: HomePeriod }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const label = homePeriodLabel(period, i18n.language, t);
-
-  return (
-    <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
-      <Text fz={17} fw={600} c="text.6">
-        {t("stats.distance")}
-      </Text>
-      {/* Capitalised because it stands alone, though Czech writes months small. */}
-      <Text fz={13} c="text.7" style={{ flexShrink: 0 }}>
-        {label.charAt(0).toUpperCase() + label.slice(1)}
-      </Text>
-    </Group>
-  );
-}
-
 // Summed in metres and rounded once, as every distance figure on Home is.
 function DistanceTotal({ distance, single }: { distance: Distance; single: DistanceBike | null }): ReactElement {
   const { i18n } = useTranslation();
 
   return (
     <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
-      <Text
-        className="tabular-nums"
-        fz={FIGURE_SIZE}
-        fw={600}
-        lh={FIGURE_LINE}
-        lts="var(--tracking-display)"
-        c="text.6"
-        style={{ flexShrink: 0 }}
-      >
-        {RIDDEN.format(totalMeters(distance, RIDDEN), i18n.language)}
-      </Text>
+      <HomeFigure>{RIDDEN.format(totalMeters(distance, RIDDEN), i18n.language)}</HomeFigure>
       {single !== null && (
         // The name carries the baseline; the dot only centres on it.
         <Group gap={7} wrap="nowrap" align="baseline" style={{ minWidth: 0 }}>

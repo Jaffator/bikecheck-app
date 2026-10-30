@@ -21,13 +21,12 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { periodSearch } from "@/features/service/servicePeriod";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { formatCost } from "@/utils/money";
-import { DEFAULT_HOME_PERIOD, homePeriodLabel } from "../homePeriod";
+import { DEFAULT_HOME_PERIOD } from "../homePeriod";
 import { categoryLabel } from "../spendCategories";
 import { useSpend } from "../stats.queries";
 import type { HomePeriod, Spend, SpendBike, SpendCategory } from "../stats.types";
+import { HomeCardHeader, HomeFigure } from "./HomeCardHeader";
 
-const FIGURE_SIZE = 28;
-const FIGURE_LINE = 1.1;
 const CATEGORY_BAR_HEIGHT = 4;
 const NAME_LINE_HEIGHT = 20;
 // Pads a one-line bike row to 40px, its tap height.
@@ -46,8 +45,7 @@ export function SpendCard({ period }: { period: HomePeriod }): ReactElement {
     return (
       <SpendPaper>
         <Skeleton h={14} w="60%" />
-        <Skeleton h={FIGURE_SIZE} w="35%" />
-        <Skeleton h={NAME_LINE_HEIGHT} />
+        <Skeleton h={8} />
       </SpendPaper>
     );
   }
@@ -55,8 +53,8 @@ export function SpendCard({ period }: { period: HomePeriod }): ReactElement {
   return (
     <SpendPaper>
       <Stack gap={10}>
-        <SpendHeader period={period} />
-        {spend.bikes.length > 0 && <SpendTotal spend={spend} />}
+        <HomeCardHeader title={t("stats.spend")} period={period} />
+        <SpendTotal spend={spend} />
       </Stack>
 
       {spend.bikes.length === 0 ? (
@@ -73,38 +71,10 @@ export function SpendCard({ period }: { period: HomePeriod }): ReactElement {
   );
 }
 
-function SpendHeader({ period }: { period: HomePeriod }): ReactElement {
-  const { t, i18n } = useTranslation();
-  const label = homePeriodLabel(period, i18n.language, t);
-
-  return (
-    <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
-      <Text fz={17} fw={600} c="text.6">
-        {t("stats.spend")}
-      </Text>
-      {/* Capitalised because it stands alone, though Czech writes months small. */}
-      <Text fz={13} c="text.7" style={{ flexShrink: 0 }}>
-        {label.charAt(0).toUpperCase() + label.slice(1)}
-      </Text>
-    </Group>
-  );
-}
-
 function SpendTotal({ spend }: { spend: Spend }): ReactElement {
   const { i18n } = useTranslation();
 
-  return (
-    <Text
-      className="tabular-nums"
-      fz={FIGURE_SIZE}
-      fw={600}
-      lh={FIGURE_LINE}
-      lts="var(--tracking-display)"
-      c="text.6"
-    >
-      {formatCost(spend.total, spend.currency, i18n.language)}
-    </Text>
-  );
+  return <HomeFigure>{formatCost(spend.total, spend.currency, i18n.language)}</HomeFigure>;
 }
 
 // Highest spend first, as StatsService orders them.

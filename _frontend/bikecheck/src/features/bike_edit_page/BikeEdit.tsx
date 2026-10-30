@@ -1,10 +1,10 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
-import { useEffect, useId, useRef, useState, type CSSProperties, type ReactElement } from "react";
-import { Button, NumberInput, Skeleton, Stack, Text, type NumberInputProps } from "@mantine/core";
+import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { Button, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBike, useBikeFormOptions, useUpdateBike } from "@/features/bikes/bikes.queries";
-import { BikeSpecification, TextRow } from "@/features/add_bike_page/BikeSpecification";
+import { BikeSpecification } from "@/features/add_bike_page/BikeSpecification";
 import { PhotoCropModal } from "@/features/add_bike_page/PhotoCropModal";
 import {
   SUSPENSION_FLAGS,
@@ -13,9 +13,10 @@ import {
 } from "@/features/add_bike_page/bikeSpecification.types";
 import { PHOTO_ASPECT } from "@/features/add_bike_page/photoCrop";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { GroupedList, ListRow } from "@/components/GroupedList";
-import { listRowFigureInputStyles } from "@/components/groupedListStyles";
-import { NoteRow } from "@/features/service/ui/NoteRow";
+import { GroupedList } from "@/components/GroupedList";
+import { NoteRow } from "@/components/NoteRow";
+import { NumberRow } from "@/components/NumberRow";
+import { TextRow } from "@/components/TextRow";
 import { useHeaderStore } from "@/store/store";
 import type { Bike, UpdateBikePayload } from "@/features/bikes/bikes.types";
 
@@ -136,30 +137,6 @@ function usePhotoCrop(): PhotoCrop {
   return { toCrop, toCropUrl, photo, photoUrl, pick, confirm, cancel };
 }
 
-interface NumberRowProps extends Pick<NumberInputProps, "placeholder" | "min" | "max" | "step" | "decimalScale"> {
-  label: string;
-  value: number | null;
-  onChange: (value: number | null) => void;
-}
-
-function NumberRow({ label, value, onChange, ...limits }: NumberRowProps): ReactElement {
-  const id = useId();
-
-  return (
-    <ListRow label={label} labelFor={id}>
-      <NumberInput
-        id={id}
-        variant="unstyled"
-        hideControls
-        value={value ?? ""}
-        styles={listRowFigureInputStyles}
-        onChange={(next) => onChange(next === "" ? null : Number(next))}
-        {...limits}
-      />
-    </ListRow>
-  );
-}
-
 function DoneButton({ disabled, loading, onClick }: { disabled: boolean; loading: boolean; onClick: () => void }): ReactElement {
   const { t } = useTranslation();
 
@@ -179,9 +156,8 @@ function DoneButton({ disabled, loading, onClick }: { disabled: boolean; loading
   );
 }
 
-// Corrects a bike that was described once in the wizard and frozen ever since. The wizard's
-// own step two, with brand and model above it: nothing here scrapes
-// or assembles components.
+// The wizard's step two with brand and model above it, for a bike frozen since the wizard;
+// nothing here scrapes or assembles components.
 export function BikeEdit(): ReactElement {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
@@ -339,6 +315,7 @@ function BikeEditForm({ bike, categories }: { bike: Bike; categories: string[] }
         />
         <NoteRow
           label={t("bikeEdit.notes")}
+          emptyLabel={t("bikeEdit.addNotes")}
           placeholder={t("bikeEdit.descriptionPlaceholder")}
           value={values.description}
           onChange={(note) => set("description", note)}

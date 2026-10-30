@@ -33,15 +33,7 @@ export function BikeActionsMenu({
         </ActionIcon>
       </Menu.Target>
 
-      {/* Wears the same surface as the Reports menu, so the app has one dropdown. */}
-      <Menu.Dropdown
-        bg="cards.6"
-        p={8}
-        style={{
-          border: "1px solid var(--mantine-color-cards-6)",
-          boxShadow: "var(--elev-panel)",
-        }}
-      >
+      <Menu.Dropdown>
         {onEdit !== undefined && (
           <Menu.Item color="text" py={12} fw={600} leftSection={<Pencil size={18} />} onClick={onEdit}>
             {t("bikes.edit")}

@@ -24,12 +24,13 @@ const ACTIVE_DOT = 16;
 const SHADOW_ROOM = 18;
 // Home's phone gutter: the row runs to the screen edge, so the peeking slide is cut there.
 const PHONE_GUTTER = "var(--mantine-spacing-md)";
-// A step under the chip, so the bike name keeps the room in a desktop column.
+// Desktop only, so sized for a pointer rather than a thumb.
 const ARROW_SIZE = 28;
+// The no-pace reason wraps rather than squeezing the action's name.
+const NOTE_MAX_WIDTH = "45%";
 
 const SLIDE_STYLE: CSSProperties = {
   backgroundColor: "var(--mantine-color-cards-6)",
-  backgroundImage: "var(--card-glow)",
   border: "none",
   boxShadow: "var(--elev-panel)",
 };
@@ -49,15 +50,13 @@ export function ForecastCarousel({ slides, title, bikeChip, onOpen }: ForecastCa
   const several = slides.length > 1;
   // A refetch can drop a slide from under the one shown.
   const current = Math.min(selected, slides.length - 1);
+  const indicator = <SlideIndicator slides={slides} current={current} onPick={(index) => embla?.scrollTo(index)} />;
 
   return (
     <Stack gap={10}>
       <Group justify="space-between" wrap="nowrap" gap={8} px={6}>
         {title}
-        <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-          {isDesktop && several && <SlideArrows embla={embla} />}
-          {bikeChip}
-        </Group>
+        {bikeChip}
       </Group>
 
       <Carousel
@@ -84,7 +83,7 @@ export function ForecastCarousel({ slides, title, bikeChip, onOpen }: ForecastCa
         ))}
       </Carousel>
 
-      {several && <SlideIndicator slides={slides} current={current} onPick={(index) => embla?.scrollTo(index)} />}
+      {several && (isDesktop ? <SlideStepper embla={embla}>{indicator}</SlideStepper> : indicator)}
     </Stack>
   );
 }
@@ -112,7 +111,15 @@ function ForecastSlide({ item, onOpen }: { item: WearForecastItem; onOpen: () =>
           <Text fz={15} fw={600} c="text.6" lineClamp={2}>
             {catalogueLabel(item.action_i18n_key, item.action_name, t)}
           </Text>
-          <Text className="tabular-nums" fz={14} fw={500} c={spoken} style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
+          <Text
+            className="tabular-nums"
+            fz={14}
+            fw={500}
+            c={spoken}
+            ta="right"
+            maw={NOTE_MAX_WIDTH}
+            style={{ flexShrink: 0 }}
+          >
             {forecastNote(item, t)}
           </Text>
         </Group>
@@ -132,12 +139,12 @@ function ForecastSlide({ item, onOpen }: { item: WearForecastItem; onOpen: () =>
   );
 }
 
-// Desktop has no swipe, so the header carries a step either way.
-function SlideArrows({ embla }: { embla: EmblaCarouselType | null }): ReactElement {
+// Desktop has no swipe, so the indicator carries a step either way.
+function SlideStepper({ embla, children }: { embla: EmblaCarouselType | null; children: ReactNode }): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <Group gap={2} wrap="nowrap" style={{ flexShrink: 0 }}>
+    <Group justify="center" gap={10} wrap="nowrap">
       <ActionIcon
         variant="outline"
         size={ARROW_SIZE}
@@ -148,6 +155,7 @@ function SlideArrows({ embla }: { embla: EmblaCarouselType | null }): ReactEleme
       >
         <ChevronLeft size={16} />
       </ActionIcon>
+      {children}
       <ActionIcon
         variant="outline"
         size={ARROW_SIZE}

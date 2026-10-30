@@ -19,7 +19,7 @@ export function forecastNote(
   translate: (key: string, options?: { count: number }) => string,
 ): string {
   if (item.level === "overdue") return translate("bikes.health.overdue");
-  if (item.projected_date === null) return translate("stats.forecastNoRidesShort");
+  if (item.projected_date === null) return translate("stats.forecastNoRides");
   return translate("stats.forecastInWeeks", { count: weeksUntil(item.projected_date) });
 }
 

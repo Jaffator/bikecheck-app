@@ -2,8 +2,8 @@
 import { useState, type ReactElement } from "react";
 import { Button, Stack, Text, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ListRow } from "@/components/GroupedList";
-import { ResponsiveSheet } from "@/components/ResponsiveSheet";
+import { ListRow } from "./GroupedList";
+import { ResponsiveSheet } from "./ResponsiveSheet";
 import { autosizeInputStyles, disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useOpeningCount } from "@/hooks/useOpeningCount";
@@ -12,6 +12,8 @@ interface NoteRowProps {
   label: string;
   value: string;
   onChange: (note: string) => void;
+  // What an empty row reads; each screen words it for what the note is about.
+  emptyLabel: string;
   // What the empty field suggests writing.
   placeholder?: string;
   maxLength?: number;
@@ -23,12 +25,12 @@ export function NoteRow({
   label,
   value,
   onChange,
+  emptyLabel,
   placeholder,
   maxLength,
   disabled,
   compact,
 }: NoteRowProps): ReactElement {
-  const { t } = useTranslation();
   const [opened, setOpened] = useState(false);
   const firstLine = value.split("\n").find((line) => line.trim() !== "") ?? "";
 
@@ -36,7 +38,7 @@ export function NoteRow({
     <>
       <ListRow label={label} onClick={() => setOpened(true)} disabled={disabled} compact={compact}>
         <Text fz={14} c={firstLine === "" ? "text.8" : "text.7"} truncate>
-          {firstLine === "" ? t("addService.addNote") : firstLine}
+          {firstLine === "" ? emptyLabel : firstLine}
         </Text>
       </ListRow>
       <NoteSheet

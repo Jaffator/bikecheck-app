@@ -3,6 +3,7 @@ import {
   Button,
   Combobox,
   Drawer,
+  Menu,
   Pagination,
   Progress,
   SegmentedControl,
@@ -235,6 +236,19 @@ export const theme = createTheme({
         root: { backgroundColor: "var(--mantine-color-inputs-6)" },
         indicator: { backgroundColor: "var(--mantine-color-cards-5)" },
         label: { color: "var(--color-text-dim)" },
+        // The light scheme's gray-3 dividers read near-white on the sunk track.
+        control: { "--separator-color": "var(--color-border-strong)" } as React.CSSProperties,
+      },
+    }),
+    // The light scheme drops a white menu; every dropdown sits on the card surface instead.
+    Menu: Menu.extend({
+      styles: {
+        dropdown: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          border: "1px solid var(--mantine-color-cards-6)",
+          boxShadow: "var(--elev-panel)",
+          padding: 8,
+        },
       },
     }),
     // Mantine's light-scheme controls read white/gray-4/gray-0 directly, so those are remapped to the quiet outline.

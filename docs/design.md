@@ -291,15 +291,12 @@ Reference: `features/add_service_page/ServiceActionsStep.tsx`.
 
 ### Menus (pattern)
 
-Every `Menu.Dropdown` is dark. Mantine's default dropdown is white, so the styling must never be
-left off:
+Every `Menu.Dropdown` is dark. Mantine's default dropdown is white, so the `Menu` override in
+`theme.ts` draws it on `cards.6` with `p` 8 and `--elev-panel`; a dropdown carries no styling of
+its own:
 
 ```tsx
-<Menu.Dropdown
-  bg="cards.6"
-  p={8}
-  style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
->
+<Menu.Dropdown>
   <Menu.Item color="text" fw={600} leftSection={<Icon size={18} />}>…</Menu.Item>
 </Menu.Dropdown>
 ```

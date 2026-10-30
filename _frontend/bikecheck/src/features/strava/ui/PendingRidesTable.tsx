@@ -188,11 +188,7 @@ function PendingRow({ ride, bikes, highlighted, assigning, onAssign, onDismiss }
               {t("pendingRides.assignMenu")}
             </Button>
           </Menu.Target>
-          <Menu.Dropdown
-            bg="cards.6"
-            p={8}
-            style={{ border: "1px solid var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" }}
-          >
+          <Menu.Dropdown>
             {bikes.map((bike) => (
               <Menu.Item
                 key={bike.id}

@@ -7,6 +7,10 @@ any long page whose primary action would otherwise scroll away.
 Same material as the tab bar, not the flat edge-to-edge footer `AddBikeFooter` uses:
 a pill inset from both edges, blurred, with the page fading out beneath it.
 
+The pill is for a bar that carries a figure beside its action. A bar that is only the
+committing button keeps the strip and the fade but drops the pill: the plain full-width
+button stands in its place, as the Add-service Summary's `SaveBar` does.
+
 ```tsx
 <Box
   // Past the sidebar on desktop, the window's edge below it.
@@ -89,10 +93,11 @@ differ per screen — the action, and whatever the action is about.
 Two screens of the Add Service wizard carry one, and they are the illustration of why the
 contents are not shared:
 
-- **Summary** — `ServiceSummaryStep.tsx`. The visit's total as an in-place-editable
-  `NumberInput`, and Save service (ADR 0009).
-- **Actions** — `ServiceActionsStep.tsx`. The category's cost as a read-only tally, written the
-  same way as the Summary's total, and Save action. Marked `data-fixed-footer`, because the step's own price
+- **Summary** — `ServiceSummaryStep.tsx` `SaveBar`. Save service alone, so no pill: a
+  full-width button, `PINNED_BAR_WIDTH` wide. The visit's total is a row in the Details list
+  (ADR 0009), not a figure in the bar.
+- **Actions** — `ServiceActionsStep.tsx`. The category's cost as a read-only tally, and Save
+  action, in the pill. Marked `data-fixed-footer`, because the step's own price
   and note fields need `useScrollIntoViewOnFocus` to clear it.
 
 Same shape, different contents. Extract a shared component only once a screen wants the same

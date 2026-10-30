@@ -18,7 +18,9 @@ import { Check, Paperclip, Plus, X } from "lucide-react";
 import dayjs from "dayjs";
 import { Eyebrow } from "@/components/Eyebrow";
 import { GroupedList, ListRow } from "@/components/GroupedList";
-import { LIST_ROW_HEIGHT, listRowInputStyles } from "@/components/groupedListStyles";
+import { LIST_ROW_HEIGHT, LIST_SUB_ROW_HEIGHT, listRowInputStyles } from "@/components/groupedListStyles";
+import { NoteRow } from "@/components/NoteRow";
+import { PriceRow } from "@/components/PriceRow";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { PINNED_BAR_LEFT, PINNED_BAR_WIDTH } from "@/layout/contentWidth";
@@ -28,19 +30,19 @@ import { disabledButtonStyles, dropdownProps } from "@/features/add_bike_page/fo
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { pattern } from "@/features/service/serviceDates";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
-import { NoteRow } from "@/features/service/ui/NoteRow";
-import { PriceRow } from "@/features/service/ui/PriceRow";
-import { actionNote, MAX_ATTACHMENTS, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
+import {
+  actionNote,
+  MAX_ATTACHMENTS,
+  NOTE_MAX_LENGTH,
+  today,
+  type CategoryBlock,
+  type PickedAction,
+} from "./serviceWizard.types";
 
 // The backend's events_bikes.shop_name width.
 const SHOP_NAME_MAX_LENGTH = 100;
 
-const NOTE_MAX_LENGTH = 500;
-
 const CATEGORY_ICON_SIZE = 14;
-
-// A row that hangs off the one above it - a picked file, "another action" - a notch shorter.
-const SUB_ROW_HEIGHT = 44;
 
 // The row spells the month out; Czech puts the day first.
 const ROW_DATE_BY_LANGUAGE: Record<string, string> = {
@@ -172,6 +174,7 @@ export function ServiceSummaryStep({
             label={t("addService.note")}
             value={note}
             onChange={onNoteChange}
+            emptyLabel={t("addService.addNote")}
             placeholder={t("addService.notePlaceholder")}
             maxLength={NOTE_MAX_LENGTH}
           />
@@ -185,7 +188,7 @@ export function ServiceSummaryStep({
           ))}
           {/* Uploaded the moment it is picked, so Save is not a long silent wait. */}
           {upload.isPending && (
-            <Group gap="xs" mih={SUB_ROW_HEIGHT} wrap="nowrap">
+            <Group gap="xs" mih={LIST_SUB_ROW_HEIGHT} wrap="nowrap">
               <Loader size="xs" />
               <Text fz={13} c="var(--color-text-dim)">
                 {t("addService.uploading")}
@@ -193,7 +196,7 @@ export function ServiceSummaryStep({
             </Group>
           )}
           {upload.isError && (
-            <Group mih={SUB_ROW_HEIGHT}>
+            <Group mih={LIST_SUB_ROW_HEIGHT}>
               <Text fz={13} c="red.5">
                 {t("addService.uploadFailed")}
               </Text>
@@ -255,7 +258,7 @@ function AnotherActionRow({ onClick }: { onClick: () => void }): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <UnstyledButton onClick={onClick} style={{ display: "flex", alignItems: "center", width: "100%", minHeight: SUB_ROW_HEIGHT }}>
+    <UnstyledButton onClick={onClick} style={{ display: "flex", alignItems: "center", width: "100%", minHeight: LIST_SUB_ROW_HEIGHT }}>
       <Group gap={8} wrap="nowrap" c="primary.6">
         <Plus size={16} />
         <Text fz={14} fw={500}>
@@ -385,7 +388,7 @@ function AttachmentRow({ attachment, onRemove }: { attachment: UploadedAttachmen
   const { t } = useTranslation();
 
   return (
-    <Group justify="space-between" wrap="nowrap" gap="sm" mih={SUB_ROW_HEIGHT}>
+    <Group justify="space-between" wrap="nowrap" gap="sm" mih={LIST_SUB_ROW_HEIGHT}>
       <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
         <Paperclip size={14} color="var(--mantine-color-text-8)" style={{ flexShrink: 0 }} />
         <Text fz={13} c="var(--color-text-dim)" truncate>

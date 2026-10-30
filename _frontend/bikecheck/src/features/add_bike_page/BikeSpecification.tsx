@@ -1,13 +1,14 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useId, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Box, FileButton, Group, Image, SegmentedControl, Stack, Switch, Text, TextInput, UnstyledButton } from "@mantine/core";
+import { Box, FileButton, Group, Image, SegmentedControl, Stack, Switch, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Camera, ImagePlus } from "lucide-react";
 import type { BikeSearchResult } from "@/features/bikes/bikes.types";
 import { BikeCategoryRow } from "@/features/bikes/ui/BikeCategoryRow";
 import { GroupedList, ListRow } from "@/components/GroupedList";
-import { LIST_ROW_HEIGHT, listRowFigureInputStyles, listRowInputStyles } from "@/components/groupedListStyles";
+import { LIST_ROW_HEIGHT } from "@/components/groupedListStyles";
 import { PANEL_HAIRLINE } from "@/components/panelRows";
+import { TextRow } from "@/components/TextRow";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { FRAME_SIZES, WHEEL_SIZES } from "./bikeSpecification.types";
 import type { BikeSpecificationValues, FrameSize, SuspensionLayout } from "./bikeSpecification.types";
@@ -41,12 +42,6 @@ const CHANGE_PHOTO_STYLE: CSSProperties = {
   fontWeight: 500,
 };
 
-// An empty field that must be filled says so in its own placeholder.
-const INVALID_INPUT_STYLES = {
-  ...listRowInputStyles,
-  input: { ...listRowInputStyles.input, "--input-placeholder-color": "var(--mantine-color-red-5)" } as CSSProperties,
-};
-
 interface BikeSpecificationProps {
   // Selected lookup result, if available.
   bike: BikeSearchResult | null;
@@ -71,44 +66,6 @@ export function FieldLabel({ children, dimmed = false }: { children: string; dim
     <Text size="xs" fw={600} c={dimmed ? "text.9" : "text.7"} tt="uppercase" lts="var(--tracking-label)">
       {children}
     </Text>
-  );
-}
-
-interface TextRowProps {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  // A figure on the numeric keyboard, with its unit beside the field.
-  numeric?: boolean;
-  suffix?: string;
-  invalid?: boolean;
-}
-
-// A field typed straight into a grouped-list row, right-aligned against its label.
-export function TextRow({ label, value, onChange, placeholder, numeric, suffix, invalid }: TextRowProps): ReactElement {
-  const id = useId();
-  const styles = invalid === true ? INVALID_INPUT_STYLES : numeric === true ? listRowFigureInputStyles : listRowInputStyles;
-
-  return (
-    <ListRow label={label} labelFor={id}>
-      <TextInput
-        id={id}
-        variant="unstyled"
-        value={value}
-        placeholder={placeholder}
-        inputMode={numeric === true ? "numeric" : undefined}
-        aria-invalid={invalid}
-        styles={styles}
-        onChange={(event) => onChange(event.currentTarget.value)}
-      />
-      {/* Beside the field rather than inside it, so an emptied field stays empty. */}
-      {suffix !== undefined && (
-        <Text fz={14} c="text.8" style={{ flexShrink: 0 }}>
-          {suffix}
-        </Text>
-      )}
-    </ListRow>
   );
 }
 
@@ -184,8 +141,6 @@ function SuspensionRow({
       <SegmentedControl<SuspensionLayout | "">
         size="xs"
         radius="md"
-        // The light scheme draws the dividers near-white on the dark track.
-        withItemsBorders={false}
         aria-label={t("addBike.suspension")}
         value={value ?? ""}
         onChange={(layout) => {

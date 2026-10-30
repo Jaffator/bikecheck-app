@@ -2,8 +2,8 @@
 import { useId, type ReactElement } from "react";
 import { NumberInput, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ListRow } from "@/components/GroupedList";
-import { LIST_SUB_ROW_HEIGHT, listRowInputStyles } from "@/components/groupedListStyles";
+import { ListRow } from "./GroupedList";
+import { LIST_SUB_ROW_HEIGHT, listRowInputStyles } from "./groupedListStyles";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
 

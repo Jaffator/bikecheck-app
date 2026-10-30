@@ -9,6 +9,8 @@ import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { PINNED_BAR_LEFT, PINNED_BAR_WIDTH } from "@/layout/contentWidth";
 import { GroupedList } from "@/components/GroupedList";
 import { LIST_ROW_HEIGHT } from "@/components/groupedListStyles";
+import { NoteRow } from "@/components/NoteRow";
+import { PriceRow } from "@/components/PriceRow";
 import { PANEL_HAIRLINE } from "@/components/panelRows";
 import { useCategoryActions } from "@/features/service/service.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
@@ -23,10 +25,8 @@ import {
 import { catalogueLabel, componentTypeLabel, shortComponentLabel } from "@/features/service/serviceLabels";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { componentTypeIcon } from "@/features/service/ui/componentIcon";
-import { NoteRow } from "@/features/service/ui/NoteRow";
-import { PriceRow } from "@/features/service/ui/PriceRow";
 import { CustomTagDrawer } from "./CustomTagDrawer";
-import type { DraftBlock, PickedAction } from "./serviceWizard.types";
+import { NOTE_MAX_LENGTH, type DraftBlock, type PickedAction } from "./serviceWizard.types";
 
 const HEADING_ICON_SIZE = 22;
 
@@ -250,8 +250,6 @@ const CHEVRON_PULL = -12;
 
 const CHIP_HEIGHT = 32;
 
-const NOTE_MAX_LENGTH = 500;
-
 // Clear the fixed header the row would otherwise scroll underneath.
 const SCROLL_MARGIN_TOP = "calc(4.5rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))";
 
@@ -279,10 +277,8 @@ function pickerChipStyles(checked: boolean): ReturnType<typeof chipStyles> {
   };
 }
 
-// One candidate is no choice at all: ticking the Action already picked it
-// (useAddServiceWizard.toggleAction). Since ADR 0022 gave every Component Type its own
-// Replacement that is the ordinary case, and only a part the bike carries at both ends
-// still needs choosing between.
+// A sole candidate is already picked by the tick (useAddServiceWizard.toggleAction); since
+// ADR 0022 that is the usual case, and only a part carried at both ends needs a choice.
 function soleReplacementTarget(action: CatalogueAction): MountedComponent | null {
   return action.replace_action && action.components.length === 1 ? action.components[0] : null;
 }
@@ -375,6 +371,7 @@ export function ActionRow({
                 label={t("addService.note")}
                 value={picked?.customNote ?? ""}
                 onChange={(note) => onUpdate({ customNote: note })}
+                emptyLabel={t("addService.addNote")}
                 placeholder={t("addService.customNotePlaceholder")}
                 maxLength={NOTE_MAX_LENGTH}
                 disabled={picked === undefined}
