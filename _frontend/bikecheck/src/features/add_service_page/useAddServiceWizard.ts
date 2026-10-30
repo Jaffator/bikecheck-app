@@ -381,15 +381,7 @@ export function useAddServiceWizard(): AddServiceWizard {
   const save = useCallback((): void => {
     if (bikeId === null) return;
     create.mutate(
-      {
-        bike_id: bikeId,
-        service_date: toIsoDate(serviceDate),
-        ...placeInput(place, shopName),
-        total_cost: totalCost,
-        note: note.trim() === "" ? undefined : note.trim(),
-        attachment: attachments.length > 0 ? attachments : undefined,
-        ...splitActions(blocks, t),
-      },
+      buildServiceInput({ bikeId, serviceDate, place, shopName, totalCost, note, attachments }, blocks, t),
       // Back where the work was started from: the bike whose build has just changed when
       // the wizard was entered from one, otherwise the list the new service tops.
       {
@@ -436,6 +428,35 @@ export function useAddServiceWizard(): AddServiceWizard {
     save,
     saving: create.isPending,
     saveFailed: create.isError,
+  };
+}
+
+// What one Service records beside its actions.
+export interface ServiceOccasion {
+  bikeId: number;
+  serviceDate: string;
+  place: ServicePlace;
+  shopName: string;
+  totalCost: number;
+  note: string;
+  attachments: UploadedAttachment[];
+}
+
+// One payload for the phone wizard and the desktop screen, so the two can't save differently.
+export function buildServiceInput(
+  occasion: ServiceOccasion,
+  blocks: CategoryBlock[],
+  translate: (key: string) => string,
+): CreateServiceInput {
+  const note = occasion.note.trim();
+  return {
+    bike_id: occasion.bikeId,
+    service_date: toIsoDate(occasion.serviceDate),
+    ...placeInput(occasion.place, occasion.shopName),
+    total_cost: occasion.totalCost,
+    note: note === "" ? undefined : note,
+    attachment: occasion.attachments.length > 0 ? occasion.attachments : undefined,
+    ...splitActions(blocks, translate),
   };
 }
 

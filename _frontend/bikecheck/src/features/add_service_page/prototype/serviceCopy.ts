@@ -15,6 +15,5 @@ export const COPY = {
   another: "Zapsat další servis",
   done: "Hotovo",
   remove: "Odebrat",
-  stub: "Prototyp: nic se neuloží.",
   noBikes: "V garáži zatím není žádné kolo.",
 };

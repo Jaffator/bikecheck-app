@@ -30,10 +30,7 @@ import { pattern } from "@/features/service/serviceDates";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { NoteRow } from "@/features/service/ui/NoteRow";
 import { PriceRow } from "@/features/service/ui/PriceRow";
-import { actionNote, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
-
-// A receipt, an invoice and a few photos of the work is as many as one visit needs.
-const MAX_ATTACHMENTS = 10;
+import { actionNote, MAX_ATTACHMENTS, today, type CategoryBlock, type PickedAction } from "./serviceWizard.types";
 
 // The backend's events_bikes.shop_name width.
 const SHOP_NAME_MAX_LENGTH = 100;

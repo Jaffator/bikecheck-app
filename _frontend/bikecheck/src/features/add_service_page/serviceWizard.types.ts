@@ -141,6 +141,9 @@ function sameAction(left: PickedAction, right: PickedAction): boolean {
 // The baseline for a block the user has only just opened, which has nothing in it yet.
 export const NO_ACTIONS: PickedAction[] = [];
 
+// A receipt, an invoice and a few photos of the work is as many as one visit needs.
+export const MAX_ATTACHMENTS = 10;
+
 // Whether a block still holds what it held when the user opened it. Back asks before it
 // throws work away, and this is what decides there is work to throw: an untouched block
 // costs nothing to leave, however many times it was passed through.

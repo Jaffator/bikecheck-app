@@ -1,13 +1,19 @@
 // PROTOTYPE (proto/desktop-wizards): desktop service state with no Draft Block - a tick is in the Service at once.
-// Save is a stub: nothing is sent, so a Replacement clicked through here ends no real part.
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
-import { useBikeCategories, useCategoryActions } from "@/features/service/service.queries";
-import type { BikeCategory, CatalogueAction, CategoryActions, ServicePlace } from "@/features/service/service.types";
+import { useBikeCategories, useCategoryActions, useCreateService } from "@/features/service/service.queries";
+import type {
+  BikeCategory,
+  CatalogueAction,
+  CategoryActions,
+  ServicePlace,
+  UploadedAttachment,
+} from "@/features/service/service.types";
 import { actionsCost, today, type CategoryBlock, type PickedAction } from "../serviceWizard.types";
-import { pickAction, withPrefilledDescriptions } from "../useAddServiceWizard";
+import { buildServiceInput, pickAction, withPrefilledDescriptions } from "../useAddServiceWizard";
 
 const NO_BLOCKS: CategoryBlock[] = [];
 
@@ -65,9 +71,9 @@ export interface ServiceDesktopPrototypeState {
   setShopName: (name: string) => void;
   note: string;
   setNote: (note: string) => void;
-  files: File[];
-  addFiles: (files: File[]) => void;
-  removeFile: (index: number) => void;
+  attachments: UploadedAttachment[];
+  addAttachment: (attachment: UploadedAttachment) => void;
+  removeAttachment: (url: string) => void;
   totalCost: number;
   // Null hands the total back to the sum (ADR 0009).
   setTotalCost: (value: number | null) => void;
@@ -75,6 +81,8 @@ export interface ServiceDesktopPrototypeState {
   // An action ticked with no part chosen holds Save until one is.
   unattributed: boolean;
   canSave: boolean;
+  saving: boolean;
+  saveFailed: boolean;
   saved: boolean;
   // What the last Save recorded, kept past a reset so its confirmation can still read it.
   lastSaved: SavedSummary | null;
@@ -91,7 +99,9 @@ export interface SavedSummary {
 
 export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const { data: bikes } = useBikes();
+  const create = useCreateService();
 
   const bikeFromUrl = parseId(searchParams.get("bike"));
   const categoryFromUrl = parseId(searchParams.get("category"));
@@ -109,7 +119,7 @@ export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
   const [place, setPlace] = useState<ServicePlace>("HOME");
   const [shopName, setShopName] = useState("");
   const [note, setNote] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<UploadedAttachment[]>([]);
   const [totalCostOverride, setTotalCostOverride] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
   const [lastSaved, setLastSaved] = useState<SavedSummary | null>(null);
@@ -236,12 +246,12 @@ export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
     [writeBlocks],
   );
 
-  const addFiles = useCallback((added: File[]): void => {
-    setFiles((current) => [...current, ...added]);
+  const addAttachment = useCallback((attachment: UploadedAttachment): void => {
+    setAttachments((current) => [...current, attachment]);
   }, []);
 
-  const removeFile = useCallback((index: number): void => {
-    setFiles((current) => current.filter((_, position) => position !== index));
+  const removeAttachment = useCallback((url: string): void => {
+    setAttachments((current) => current.filter((attachment) => attachment.url !== url));
   }, []);
 
   const picked = blocks.flatMap((block) => block.actions);
@@ -249,22 +259,32 @@ export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
   const suggestedTotal = blocks.reduce((total, block) => total + actionsCost(block.actions), 0);
   const totalCost = totalCostOverride ?? suggestedTotal;
 
-  // The stub: nothing is sent, the Service is only counted for its confirmation.
   function save(): void {
-    setLastSaved({ actionCount: picked.length, totalCost });
-    setSaved(true);
+    if (bikeId === null) return;
+    const summary: SavedSummary = { actionCount: picked.length, totalCost };
+    create.mutate(
+      buildServiceInput({ bikeId, serviceDate, place, shopName, totalCost, note, attachments }, blocks, t),
+      {
+        onSuccess: () => {
+          setLastSaved(summary);
+          setSaved(true);
+        },
+      },
+    );
   }
 
+  const { reset: resetCreate } = create;
   const reset = useCallback((): void => {
+    resetCreate();
     setSaved(false);
     setLinkSpent(true);
     setOwnBlocks([]);
     setOwnOpenActionId(null);
     setNote("");
-    setFiles([]);
+    setAttachments([]);
     setTotalCostOverride(null);
     setServiceDate(today());
-  }, []);
+  }, [resetCreate]);
 
   return {
     bikes,
@@ -294,14 +314,16 @@ export function useServiceDesktopPrototype(): ServiceDesktopPrototypeState {
     setShopName,
     note,
     setNote,
-    files,
-    addFiles,
-    removeFile,
+    attachments,
+    addAttachment,
+    removeAttachment,
     totalCost,
     setTotalCost: setTotalCostOverride,
     pickedCount: picked.length,
     unattributed,
-    canSave: picked.length > 0 && !unattributed,
+    canSave: picked.length > 0 && !unattributed && !create.isPending,
+    saving: create.isPending,
+    saveFailed: create.isError,
     saved,
     lastSaved,
     save,

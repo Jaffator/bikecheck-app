@@ -1,8 +1,8 @@
 // PROTOTYPE (proto/desktop-wizards): the summary before saving, wide and in two columns - every part, filled or not.
 import { type ReactElement } from "react";
-import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { Alert, Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Check } from "lucide-react";
+import { Check, TriangleAlert } from "lucide-react";
 import { componentTypeId, groupComponents, positionsOf, readEntry } from "../bikeComponents.types";
 import type { AddBikeWizard } from "../useAddBikeWizard";
 import { COPY } from "./bikeProto";
@@ -99,8 +99,27 @@ export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProp
           ))}
         </Box>
 
+        {wizard.saveFailed && (
+          <Alert color="red" variant="light" icon={<TriangleAlert size={16} />}>
+            <Stack gap={4}>
+              <Text size="sm">{t("addBike.saveFailed")}</Text>
+              {wizard.saveErrorDetails.map((detail) => (
+                <Text key={detail} size="xs" c="dimmed">
+                  {detail}
+                </Text>
+              ))}
+            </Stack>
+          </Alert>
+        )}
+
         <Group justify="flex-end" gap={10} pt="md" style={{ borderTop: "1px solid var(--color-border-subtle)" }}>
-          <Button variant="outline" radius="md" onClick={wizard.closeSummary} style={{ height: "2.6rem" }}>
+          <Button
+            variant="outline"
+            radius="md"
+            onClick={wizard.closeSummary}
+            disabled={wizard.isSaving}
+            style={{ height: "2.6rem" }}
+          >
             {t("addBike.summaryEdit")}
           </Button>
           <Button
@@ -109,6 +128,7 @@ export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProp
             radius="md"
             leftSection={<Check size={16} />}
             onClick={onConfirm}
+            loading={wizard.isSaving}
             style={{ height: "2.6rem" }}
           >
             {t("addBike.summaryConfirm")}

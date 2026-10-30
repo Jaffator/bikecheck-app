@@ -62,9 +62,6 @@ export function ServiceSavedModal({ opened, summary, onAnother, onDone }: Servic
             {COPY.done}
           </Button>
         </Group>
-        <Text fz={12} c="text.9" ta="center">
-          {COPY.stub}
-        </Text>
       </Stack>
     </Modal>
   );

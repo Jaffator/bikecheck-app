@@ -1,6 +1,6 @@
 // PROTOTYPE (proto/desktop-wizards): the add-bike wizard on desktop - steps on the left, "Tvoje kolo" on the right.
-// Design: "BikeCheck desktop redesign" canvas. Save is a stub: no bike is created.
-import { useEffect, useState, type ReactElement } from "react";
+// Design: "BikeCheck desktop redesign" canvas.
+import { useEffect, type ReactElement } from "react";
 import { Box, Button, Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -21,8 +21,6 @@ export function AddBikeDesktopPrototype(): ReactElement {
   const wizard = useAddBikeWizard();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  // Stands in for the real save, so clicking through leaves no bike behind.
-  const [saved, setSaved] = useState(false);
   const { active } = wizard;
 
   // Reset scroll position when changing wizard steps.
@@ -30,7 +28,7 @@ export function AddBikeDesktopPrototype(): ReactElement {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [active]);
 
-  if (saved) {
+  if (wizard.savedBike) {
     return <BikeAddedCard bikeName={wizard.savedBikeName} onContinue={() => navigate("/bikes")} />;
   }
 
@@ -70,13 +68,7 @@ export function AddBikeDesktopPrototype(): ReactElement {
         onConfirm={wizard.confirmCrop}
       />
 
-      <BikeSummaryDesktop
-        wizard={wizard}
-        onConfirm={() => {
-          wizard.closeSummary();
-          setSaved(true);
-        }}
-      />
+      <BikeSummaryDesktop wizard={wizard} onConfirm={wizard.saveBike} />
     </Stack>
   );
 }
@@ -193,9 +185,6 @@ function BikeAddedCard({ bikeName, onContinue }: { bikeName: string; onContinue:
           >
             {t("addBike.addedContinue")}
           </Button>
-          <Text fz={12} c="text.9">
-            {COPY.stub}
-          </Text>
         </Stack>
       </Paper>
     </Group>

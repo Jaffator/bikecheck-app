@@ -20,7 +20,6 @@ export const COPY = {
   mileage: "Nájezd",
   frame: "Rám",
   wheels: "Kola",
-  stub: "Prototyp: nic se neuloží.",
 };
 
 export const cardSurface: CSSProperties = {
