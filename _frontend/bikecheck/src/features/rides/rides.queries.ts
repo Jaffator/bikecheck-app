@@ -18,11 +18,12 @@ import {
   dismissRide,
   getCheckInPrompt,
   getFilteredRides,
+  getRideAiSummary,
   getRides,
   markCheckInPromptSeen,
   saveRideCheckIn,
 } from "./rides.api";
-import type { CheckInPrompt, RideCheckIn, RidePage } from "./rides.types";
+import type { CheckInPrompt, RideAiSummary, RideCheckIn, RidePage } from "./rides.types";
 import { TABLE_PAGE_SIZE, type RideFilter } from "./ridesTable";
 
 // Limits each request payload.
@@ -86,6 +87,16 @@ export function useBikeRideCount(bikeId: number | null): UseQueryResult<number> 
     queryKey: ["rides", "count", bikeId],
     queryFn: async () => (await getRides(1, 0, bikeId ?? 0)).total,
     enabled: bikeId !== null,
+  });
+}
+
+// Under "rides", so a bike change, which clears the review on the server, asks for it again.
+export function useRideAiSummary(rideId: number): UseQueryResult<RideAiSummary, ApiError> {
+  return useQuery({
+    queryKey: ["rides", rideId, "ai-summary"],
+    queryFn: () => getRideAiSummary(rideId),
+    // A failure stays hidden until the next open; a retry would only ask Gemini again.
+    retry: false,
   });
 }
 

@@ -17,6 +17,7 @@ import { useIsDesktop } from "@/layout/breakpoints";
 import { BAR_BUTTON_HEIGHT } from "./actionBar";
 import { CheckInBikeField } from "./CheckInBikeField";
 import { DeleteRideButton } from "./DeleteRideButton";
+import { RideAiSummary } from "./RideAiSummary";
 import { RideCheckInFields } from "./RideCheckInFields";
 import { WoreOff } from "./WoreOff";
 
@@ -134,6 +135,8 @@ export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailS
               </Group>
 
               <WoreOff lines={ride.wore_off} />
+
+              <RideAiSummary rideId={ride.id} />
             </Stack>
 
             <Divider color="var(--color-border-subtle)" />

@@ -3,6 +3,7 @@ import { check_in_status, Prisma, type strava_pending_activities } from '@prisma
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere } from '../bike/owned-bike.where';
 import { ServiceTrackingService, type WearPreview } from '../service-tracking/service-tracking.service';
+import { GeminiService, type RideSummaryInput } from '../gemini/gemini.service';
 import {
   BRAKE_PAD_PART,
   carried,
@@ -23,6 +24,7 @@ import {
   ResponseRideCheckInDto,
   ResponseRideDto,
   ResponseRidePageDto,
+  ResponseRideSummaryDto,
 } from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
 import { isDay, isTimeZone, localDay, previousRange, startedWithin, type DayRange } from './ride-period';
@@ -67,6 +69,7 @@ export class RideService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serviceTracking: ServiceTrackingService,
+    private readonly gemini: GeminiService,
   ) {}
 
   /**
@@ -209,6 +212,20 @@ export class RideService {
     return this.prisma.rides.findMany({ where, select: summedRideSelect });
   }
 
+  // The ride's AI review (ADR 0044).
+  async findSummary(userId: number, rideId: number): Promise<ResponseRideSummaryDto> {
+    const ride = await this.prisma.rides.findFirst({
+      where: { id: rideId, ...listedRidesWhere(userId) },
+      select: summaryRideSelect,
+    });
+    if (!ride) throw new NotFoundException('Ride not found');
+    if (ride.summary) return { summary: ride.summary };
+
+    const summary = await this.gemini.rideSummary(summaryInputOf(ride), ride.users.language);
+    await this.prisma.rides.update({ where: { id: ride.id }, data: { summary } });
+    return { summary };
+  }
+
   /**
    * Moves a ride to another of the user's bikes, taking its wear off the parts that carried it
    * and putting it on the parts the new bike had mounted at the time.
@@ -227,7 +244,7 @@ export class RideService {
     await this.prisma.$transaction(async (tx) => {
       await shiftWear(tx, ride.bike_id, ride, -1);
       await shiftWear(tx, bikeId, ride, 1);
-      await tx.rides.update({ where: { id: ride.id }, data: { bike_id: bikeId } });
+      await tx.rides.update({ where: { id: ride.id }, data: { bike_id: bikeId, summary: null } });
     });
 
     // One bike's readings dropped and the other's grew, so both may cross a band.
@@ -387,6 +404,49 @@ function pendingAnalysisOf(ride: DismissedRide): PendingAnalysis {
   };
 }
 
+const summaryRideSelect = {
+  id: true,
+  summary: true,
+  started_at: true,
+  distance_m: true,
+  duration_min: true,
+  elevation_up_m: true,
+  elevation_down_m: true,
+  speed_avg: true,
+  max_speed_kmh: true,
+  json_data: true,
+  bikes: { select: BIKE_SELECT },
+  users: { select: { language: true } },
+} satisfies Prisma.ridesSelect;
+type SummaryRide = Prisma.ridesGetPayload<{ select: typeof summaryRideSelect }>;
+
+// The allowlist: no position, route, notes, heart rate or athlete reaches Gemini (ADR 0044).
+function summaryInputOf(ride: SummaryRide): RideSummaryInput {
+  const activity = asActivity(ride.json_data);
+  const facts = activityFacts(activity);
+
+  return {
+    name: facts.name,
+    sport_type: facts.sport_type,
+    started_at: ride.started_at?.toISOString() ?? null,
+    bike: bikeName(ride.bikes),
+    distance_km: Math.round((ride.distance_m ?? 0) / 100) / 10,
+    duration_min: ride.duration_min ?? 0,
+    elevation_up_m: ride.elevation_up_m ?? 0,
+    elevation_down_m: ride.elevation_down_m ?? 0,
+    speed_avg_kmh: ride.speed_avg ?? 0,
+    max_speed_kmh: ride.max_speed_kmh ?? 0,
+    average_watts: watts(activity?.average_watts),
+    max_watts: watts(activity?.max_watts),
+    weighted_average_watts: watts(activity?.weighted_average_watts),
+  };
+}
+
+// Strava sends power only for a ride that recorded or estimated it.
+function watts(value: unknown): number | null {
+  return typeof value === 'number' ? Math.round(value) : null;
+}
+
 // The user's rides the lists show: not deleted, and not on an Archived Bike (ADR 0024).
 function listedRidesWhere(userId: number): Prisma.ridesWhereInput {
   return { user_id: userId, is_deleted: { not: true }, bikes: { is_deleted: { not: true } } };
@@ -458,6 +518,9 @@ interface StravaActivity {
   name?: unknown;
   map?: { summary_polyline?: unknown } | null;
   sport_type?: unknown;
+  average_watts?: unknown;
+  max_watts?: unknown;
+  weighted_average_watts?: unknown;
 }
 
 // The title, the route and the sport type, read out of the stored payload. It is written with

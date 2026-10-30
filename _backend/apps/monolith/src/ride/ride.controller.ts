@@ -13,9 +13,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RideService } from './ride.service';
-import { ResponseCheckInPromptDto, ResponseRideCheckInDto, ResponseRidePageDto } from './dto/response-ride.dto';
+import {
+  ResponseCheckInPromptDto,
+  ResponseRideCheckInDto,
+  ResponseRidePageDto,
+  ResponseRideSummaryDto,
+} from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
 import { ChangeRideBikeDto } from './dto/change-ride-bike.dto';
 
@@ -108,6 +114,19 @@ export class RideController {
       Number.isNaN(bike) ? undefined : bike,
       { from: from || undefined, to: to || undefined, tz: tz || undefined },
     );
+  }
+
+  // ---------- GET a ride's AI review ----------
+  // A first open asks Gemini, so this route is held well below the global limit.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: "The ride's AI review, written on the first request and kept until the ride changes" })
+  @ApiResponse({ status: 200, type: ResponseRideSummaryDto })
+  @Get(':id/summary')
+  findSummary(
+    @CurrentUser('userId') userId: string,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ResponseRideSummaryDto> {
+    return this.rideService.findSummary(Number(userId), id);
   }
 
   // ---------- PATCH move a ride to another bike ----------

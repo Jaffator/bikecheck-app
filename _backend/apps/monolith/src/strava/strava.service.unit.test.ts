@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getLoggerToken } from 'nestjs-pino';
-import { getQueueToken } from '@nestjs/bullmq';
 import axios from 'axios';
 import { StravaEventsService } from './strava.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -37,7 +36,6 @@ describe('StravaEventsService', () => {
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
   const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn() };
   const mockRides = { removeStravaRide: jest.fn() };
-  const mockQueue = { add: jest.fn() };
   const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 
   // What strava-service hands the monolith once a ride has been analysed.
@@ -59,7 +57,6 @@ describe('StravaEventsService', () => {
         { provide: NotificationService, useValue: mockNotifications },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
         { provide: RideService, useValue: mockRides },
-        { provide: getQueueToken('gemini-queue'), useValue: mockQueue },
         { provide: getLoggerToken(StravaEventsService.name), useValue: mockLogger },
       ],
     }).compile();

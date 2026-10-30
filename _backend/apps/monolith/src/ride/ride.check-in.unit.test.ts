@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RideService } from './ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
+import { GeminiService } from '../gemini/gemini.service';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 
 const NOW = new Date('2026-09-29T12:00:00.000Z');
@@ -79,6 +80,7 @@ describe('RideService check-in', () => {
         RideService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
+        { provide: GeminiService, useValue: { rideSummary: jest.fn() } },
       ],
     }).compile();
 

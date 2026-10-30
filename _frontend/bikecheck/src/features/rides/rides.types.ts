@@ -114,3 +114,8 @@ export interface RidePage {
   weeks: RideWeek[];
   figures: RideFigures;
 }
+
+// The ride's AI review; not the ride card's RideSummary.
+export interface RideAiSummary {
+  summary: string;
+}
