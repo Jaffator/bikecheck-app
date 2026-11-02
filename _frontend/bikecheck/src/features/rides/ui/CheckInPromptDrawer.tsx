@@ -31,7 +31,7 @@ import type { CheckInPrompt, WoreOffLine } from "@/features/rides/rides.types";
 import { QUIET_COLOR } from "@/features/service_tracking/attentionLevel";
 import { useDismissPendingRide, useResolvePendingRide } from "@/features/strava/strava.queries";
 import { useIsDesktop } from "@/layout/breakpoints";
-import { CheckInBikeField, type BikeSource } from "./CheckInBikeField";
+import { CheckInBikeField } from "./CheckInBikeField";
 import { CheckInForm } from "./CheckInForm";
 import { RideSummaryCard } from "./RideSummaryCard";
 import { WoreOffLedger } from "./WoreOffLedger";
@@ -200,6 +200,9 @@ export function CheckInPromptDrawer(): ReactElement {
   );
 }
 
+// Where the picked bike came from: the ride's own, a pick in this drawer, or none yet.
+type BikeSource = "strava" | "byHand" | "missing";
+
 type RideSave = Extract<CheckInSave, { kind: "save" }>;
 type PendingSave = Extract<CheckInSave, { kind: "resolve" }>;
 
@@ -335,7 +338,7 @@ function BikeField({ step }: { step: PromptStep }): ReactElement {
       bikes={step.bikes}
       picked={step.pickedBike}
       notMine={step.notMine}
-      source={step.source}
+      missing={step.source === "missing"}
       fallbackName={step.fallbackName}
       onPick={step.onPick}
       pickerOpened={step.pickerOpened}

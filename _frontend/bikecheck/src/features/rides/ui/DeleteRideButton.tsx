@@ -8,7 +8,7 @@ import { ConfirmModal } from "@/components/ConfirmModal";
 import { lastRideDate } from "@/features/bikes/lastRideDate";
 import { useDismissRide } from "@/features/rides/rides.queries";
 import type { Ride } from "@/features/rides/rides.types";
-import { BAR_BUTTON_HEIGHT } from "./actionBar";
+import { QUIET_RED_BUTTON } from "./actionBar";
 
 interface DeleteRideButtonProps {
   ride: Ride;
@@ -18,14 +18,6 @@ interface DeleteRideButtonProps {
   inBar?: boolean;
 }
 
-const BAR_LOOK = {
-  variant: "subtle",
-  color: "red.5",
-  size: "sm",
-  h: BAR_BUTTON_HEIGHT,
-  // Mantine's left padding with a section: pulled back, the icon lines up with the content edge.
-  style: { marginInlineStart: "calc(var(--button-padding-x) / -1.5)" },
-} as const;
 const STACK_LOOK = { variant: "outline", size: "xs", style: { alignSelf: "flex-start" } } as const;
 
 export function DeleteRideButton({ ride, onDeleted, inBar = false }: DeleteRideButtonProps): ReactElement {
@@ -52,7 +44,7 @@ export function DeleteRideButton({ ride, onDeleted, inBar = false }: DeleteRideB
   return (
     <>
       <Button
-        {...(inBar ? BAR_LOOK : STACK_LOOK)}
+        {...(inBar ? QUIET_RED_BUTTON : STACK_LOOK)}
         radius="md"
         leftSection={<Trash2 size={14} color="var(--mantine-color-red-5)" />}
         onClick={() => setConfirming(true)}

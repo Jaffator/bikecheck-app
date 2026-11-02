@@ -1,9 +1,10 @@
 // The two answers, the symptoms under "something's off" and the note: one form for the drawer and the detail.
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { Box, Chip, Group, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
 import { CircleCheck, TriangleAlert, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
+import { PRESS_TRANSITION } from "@/components/panelRows";
 import { chipStyles, inputStyles } from "@/features/add_bike_page/formStyles";
 import {
   CHECK_IN_COLOR,
@@ -88,18 +89,18 @@ interface StatusButtonProps {
   label: string;
   selected: boolean;
   onPick: () => void;
-  // The ride detail's low button, icon beside word, instead of the tall tile.
-  low?: boolean;
+  // One half of the ride detail's flat track instead of the tall tile.
+  segment?: boolean;
 }
 
 // Tinted in its own colour once picked.
-export function StatusButton({ status, label, selected, onPick, low = false }: StatusButtonProps): ReactElement {
+export function StatusButton({ status, label, selected, onPick, segment = false }: StatusButtonProps): ReactElement {
   const Icon = STATUS_ICON[status];
   const color = CHECK_IN_COLOR[status];
   const content = (
     <>
-      <Icon size={low ? 16 : 22} color={selected ? color : "var(--mantine-color-text-7)"} />
-      <Text fz={low ? 14 : 13} fw={selected ? 700 : 600} c={selected ? "text.6" : "text.7"}>
+      <Icon size={segment ? 15 : 22} color={selected ? color : "var(--mantine-color-text-7)"} />
+      <Text fz={segment ? 14 : 13} fw={selected ? 700 : 600} c={selected ? "text.6" : "text.7"}>
         {label}
       </Text>
     </>
@@ -110,16 +111,9 @@ export function StatusButton({ status, label, selected, onPick, low = false }: S
       onClick={onPick}
       aria-pressed={selected}
       className="active:scale-[0.985]"
-      style={{
-        minHeight: low ? 44 : 66,
-        borderRadius: low ? 10 : 14,
-        padding: "8px 4px",
-        border: `1px solid ${selected ? color : "var(--mantine-color-inputs-5)"}`,
-        backgroundColor: selected ? `color-mix(in srgb, ${color} 14%, transparent)` : "var(--mantine-color-cards-7)",
-        transition: "transform 0.12s ease",
-      }}
+      style={segment ? segmentStyle(selected, color) : tileStyle(selected, color)}
     >
-      {low ? (
+      {segment ? (
         <Group gap={8} justify="center" wrap="nowrap">
           {content}
         </Group>
@@ -130,4 +124,26 @@ export function StatusButton({ status, label, selected, onPick, low = false }: S
       )}
     </UnstyledButton>
   );
+}
+
+function tileStyle(selected: boolean, color: string): CSSProperties {
+  return {
+    minHeight: 66,
+    borderRadius: 14,
+    padding: "8px 4px",
+    border: `1px solid ${selected ? color : "var(--mantine-color-inputs-5)"}`,
+    backgroundColor: selected ? `color-mix(in srgb, ${color} 14%, transparent)` : "var(--mantine-color-cards-7)",
+    transition: PRESS_TRANSITION,
+  };
+}
+
+// No frame: the track draws the edge, a picked segment only its tint.
+function segmentStyle(selected: boolean, color: string): CSSProperties {
+  return {
+    minHeight: 38,
+    borderRadius: 8,
+    padding: "6px 4px",
+    backgroundColor: selected ? `color-mix(in srgb, ${color} 18%, transparent)` : "transparent",
+    transition: `${PRESS_TRANSITION}, background-color 150ms ease`,
+  };
 }

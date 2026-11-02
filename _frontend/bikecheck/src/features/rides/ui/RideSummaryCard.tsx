@@ -1,4 +1,4 @@
-// One card for the check-in and the pending sheet, so a ride reads the same in both.
+// The check-in's ride card, compact on the phone and detailed on desktop.
 import type { ReactElement, ReactNode } from "react";
 import { Box, Group, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";

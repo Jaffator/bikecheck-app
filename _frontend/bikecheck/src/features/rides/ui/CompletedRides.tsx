@@ -10,6 +10,7 @@ import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { PullFrame } from "@/components/PullFrame";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
+import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides } from "@/features/rides/rides.queries";
 import { CheckInMark } from "./CheckInMark";
 import { RideDetailSheet } from "./RideDetailSheet";
@@ -165,7 +166,7 @@ export const CompletedRides = memo(function CompletedRides({
         </Stack>
       </PullFrame>
 
-      <RideDetailSheet ride={shownRide} onClose={closeSheet} />
+      <RideDetailSheet item={rideItemOf(shownRide)} onClose={closeSheet} />
     </>
   );
 });

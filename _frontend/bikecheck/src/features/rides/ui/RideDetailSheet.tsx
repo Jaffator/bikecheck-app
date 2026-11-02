@@ -1,253 +1,171 @@
-// UI component using feature hooks.
-import { useState, type ReactElement } from "react";
-import { Box, Button, Divider, Group, Stack, Text } from "@mantine/core";
+// The one ride drawer: a ride or an Unassigned Ride, a bottom sheet on the phone, two columns on desktop.
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { Box, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Clock, Gauge, Route, TrendingDown, TrendingUp, Zap, type LucideIcon } from "lucide-react";
-import dayjs from "dayjs";
-import { Eyebrow } from "@/components/Eyebrow";
+import { PANEL_HAIRLINE } from "@/components/panelRows";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { RideMap } from "@/components/RideMap";
-import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
-import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
-import { formatDuration } from "@/features/rides/rideDuration";
+import { rideFiguresOf, rideItemKey, type RideItem } from "@/features/rides/rideDetail";
+import type { CheckInStatus } from "@/features/rides/rides.types";
 import { useRideCheckIn, type RideCheckInState } from "@/features/rides/useRideCheckIn";
 import { useIsDesktop } from "@/layout/breakpoints";
-import { BAR_BUTTON_HEIGHT } from "./actionBar";
 import { CheckInBikeField } from "./CheckInBikeField";
-import { DeleteRideButton } from "./DeleteRideButton";
 import { RideAiSummary } from "./RideAiSummary";
 import { RideCheckInFields } from "./RideCheckInFields";
-import { WoreOff } from "./WoreOff";
-
-// Nearly full height: the map, both rows of figures and the check-in all want room.
-const SHEET_HEIGHT = "92dvh";
+import { RideDetailActions } from "./RideDetailActions";
+import { RideDetailHeader } from "./RideDetailHeader";
+import { RideFigureGrid } from "./RideFigureGrid";
+import { WoreOffCard } from "./WoreOffCard";
 
 // Same layer as every other sheet: Mantine gives the FAB's Affix and a drawer one z-index.
 const SHEET_Z_INDEX = 300;
 
-const MAP_HEIGHT_DESKTOP = 480;
+const MAP_HEIGHT_PHONE = 230;
+const MAP_HEIGHT_DESKTOP = 340;
 // Mantine keeps a smaller window's modal inside its margins.
 const MODAL_WIDTH = 960;
-const MAP_HEIGHT_PHONE = 200;
-// Between Mantine's lg (20px) and xl (32px), which read too tight and too loose.
-const MODAL_PADDING = "1.5rem";
-const SAVE_MIN_WIDTH = 120;
+const MODAL_PADDING = 24;
+const SECTION_GAP = 20;
+
+// Nearly full height: the map, the figures and the check-in all want room.
+const PHONE_STYLES: Record<string, CSSProperties> = {
+  content: { height: "92dvh", display: "flex", flexDirection: "column" },
+  body: { flex: 1, display: "flex", flexDirection: "column" },
+  // On top of Mantine's 16px header padding, the same gap as between the sections.
+  header: { marginBottom: SECTION_GAP - 16 },
+  title: { flex: 1, minWidth: 0 },
+};
+
+// The columns and the footer's hairline run to the modal's edges.
+const DESKTOP_STYLES: Record<string, CSSProperties> = {
+  header: { padding: MODAL_PADDING, paddingBottom: 16 },
+  body: { padding: 0 },
+  title: { flex: 1, minWidth: 0 },
+};
+
+const COLUMNS_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  alignItems: "start",
+  gap: MODAL_PADDING,
+};
 
 interface RideDetailSheetProps {
   // Null closes the sheet.
-  ride: Ride | null;
+  item: RideItem | null;
   onClose: () => void;
-  // Opens the check-in form with this answer picked.
+  // Opens the check-in with this answer picked.
   checkInStartWith?: CheckInStatus;
 }
 
-// Displays one ride statistic.
-function Stat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }): ReactElement {
-  return (
-    <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-      <Group gap={6} wrap="nowrap">
-        <Icon size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
-        <Text fz={12} c="text.7" tt="uppercase" lts="var(--tracking-label)" lineClamp={1}>
-          {label}
-        </Text>
-      </Group>
-      <Text className="tabular-nums" fw={600} fz={16} c="text.6">
-        {value}
-      </Text>
-    </Stack>
-  );
-}
-
-// Same name-then-meta pair as the Last ride card, so both read alike.
-function RideTitle({ ride }: { ride: Ride }): ReactElement {
-  const { t } = useTranslation();
-  const { data: bikes } = useBikes();
-
-  return (
-    <Stack gap={2} style={{ minWidth: 0 }}>
-      <Text fw={700} fz={20} c="text.6" lineClamp={1}>
-        {ride.name}
-      </Text>
-      <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        <BikeColorDot colorIndex={colorIndexOf(bikes, ride.bike_id)} size={6} />
-        <Eyebrow>
-          {[
-            ride.started_at === null ? null : dayjs(ride.started_at).format("D. M. YYYY · HH:mm"),
-            ride.bike_name ?? t("rides.unknownBike"),
-          ]
-            .filter((part) => part !== null)
-            .join(" · ")}
-        </Eyebrow>
-      </Group>
-    </Stack>
-  );
-}
-
-// Displays data already loaded with the ride.
-export function RideDetailSheet({ ride, onClose, checkInStartWith }: RideDetailSheetProps): ReactElement {
-  const { t } = useTranslation();
+export function RideDetailSheet({ item, onClose, checkInStartWith }: RideDetailSheetProps): ReactElement {
   const isDesktop = useIsDesktop();
 
   return (
     <ResponsiveSheet
-      opened={ride !== null}
+      opened={item !== null}
       onClose={onClose}
       desktop="modal"
       modalSize={MODAL_WIDTH}
       zIndex={SHEET_Z_INDEX}
-      title={ride === null ? undefined : <RideTitle ride={ride} />}
-      styles={{
-        content: {
-          height: SHEET_HEIGHT,
-          display: "flex",
-          flexDirection: "column",
-        },
-        body: { flex: 1, display: "flex", flexDirection: "column", ...(isDesktop ? { padding: MODAL_PADDING } : {}) },
-        // The phone sheet keeps its own header padding: the grabber sits in it.
-        header: { marginBottom: "1rem", ...(isDesktop ? { padding: MODAL_PADDING, paddingBottom: 0 } : {}) },
-        title: { flex: 1, minWidth: 0 },
-      }}
+      title={item === null ? undefined : <RideDetailHeader item={item} />}
+      styles={isDesktop ? DESKTOP_STYLES : PHONE_STYLES}
     >
-      {ride !== null && (
-        // A bottom sheet's foot is the wrapper's.
-        <Stack gap={20} pb={isDesktop ? "1rem" : undefined}>
-          {/* Static on the phone, so a drag on it never fights the sheet's own. */}
-          <RideMap
-            polyline={ride.summary_polyline}
-            height={isDesktop ? MAP_HEIGHT_DESKTOP : MAP_HEIGHT_PHONE}
-            interactive={isDesktop}
-          />
-
-          <Stack gap="lg">
-            <Stack gap="md">
-              <Group gap="md" wrap="nowrap">
-                <Stat icon={Route} label={t("rides.statDistance")} value={`${toKm(ride.distance_m)} km`} />
-                <Stat icon={Clock} label={t("rides.statDuration")} value={formatDuration(ride.duration_min ?? 0)} />
-                <Stat icon={TrendingUp} label={t("rides.statElevation")} value={`${ride.elevation_up_m ?? 0} m`} />
-              </Group>
-
-              <Group gap="md" wrap="nowrap">
-                <Stat icon={TrendingDown} label={t("rides.statDescent")} value={`${ride.elevation_down_m ?? 0} m`} />
-                <Stat icon={Gauge} label={t("rides.statAvgSpeed")} value={`${ride.speed_avg ?? 0} km/h`} />
-                <Stat icon={Zap} label={t("rides.statMaxSpeed")} value={`${ride.max_speed_kmh ?? 0} km/h`} />
-              </Group>
-
-              <WoreOff lines={ride.wore_off} />
-
-              <RideAiSummary rideId={ride.id} />
-            </Stack>
-
-            <Divider color="var(--color-border-subtle)" />
-
-            <RideDetailFoot key={ride.id} ride={ride} startWith={checkInStartWith} onClose={onClose} />
-          </Stack>
-        </Stack>
+      {item !== null && (
+        <RideDetailBody key={rideItemKey(item)} item={item} startWith={checkInStartWith} onClose={onClose} />
       )}
     </ResponsiveSheet>
   );
 }
 
-interface RideDetailFootProps {
-  ride: Ride;
+interface RideDetailBodyProps {
+  item: RideItem;
   startWith?: CheckInStatus;
   onClose: () => void;
 }
 
-// Each action beside what it changes: the bike in its row, the check-in inline, one Uložit for both.
-function RideDetailFoot({ ride, startWith, onClose }: RideDetailFootProps): ReactElement {
-  const { t } = useTranslation();
-  const { data: bikes } = useBikes();
-  const checkIn = useRideCheckIn(ride, onClose, startWith);
-  const [pickerOpened, setPickerOpened] = useState(false);
+// Keyed per ride, so an answer half given on one never carries over to the next.
+function RideDetailBody({ item, startWith, onClose }: RideDetailBodyProps): ReactElement {
+  const isDesktop = useIsDesktop();
+  const checkIn = useRideCheckIn(item, onClose, startWith);
+  const overview = <RideOverview item={item} mapHeight={isDesktop ? MAP_HEIGHT_DESKTOP : MAP_HEIGHT_PHONE} />;
+  const answers = <RideAnswers item={item} checkIn={checkIn} />;
+  const actions = <RideDetailActions item={item} checkIn={checkIn} onClose={onClose} />;
 
-  const pickedId = checkIn.pick.kind === "bike" ? checkIn.pick.bikeId : null;
-  const notMine = checkIn.pick.kind === "notMine";
+  return isDesktop ? (
+    <DesktopLayout overview={overview} answers={answers} actions={actions} />
+  ) : (
+    <Stack gap={SECTION_GAP}>
+      {overview}
+      {answers}
+      {actions}
+    </Stack>
+  );
+}
 
+interface LayoutProps {
+  overview: ReactNode;
+  answers: ReactNode;
+  actions: ReactNode;
+}
+
+function DesktopLayout({ overview, answers, actions }: LayoutProps): ReactElement {
   return (
     <>
+      <Box px={MODAL_PADDING} pb={MODAL_PADDING} style={COLUMNS_STYLE}>
+        {overview}
+        {answers}
+      </Box>
+      <Box px={MODAL_PADDING} py={14} style={{ borderTop: PANEL_HAIRLINE }}>
+        {actions}
+      </Box>
+    </>
+  );
+}
+
+function RideOverview({ item, mapHeight }: { item: RideItem; mapHeight: number }): ReactElement {
+  const isDesktop = useIsDesktop();
+
+  return (
+    <Stack gap={SECTION_GAP}>
+      {/* Static on the phone, so a drag on it never fights the sheet's own. */}
+      <RideMap polyline={item.ride.summary_polyline} height={mapHeight} interactive={isDesktop} />
+      <RideFigureGrid figures={rideFiguresOf(item)} />
+    </Stack>
+  );
+}
+
+// The bike, how it rode, what it wore off and the AI review, which an Unassigned Ride has none of yet.
+function RideAnswers({ item, checkIn }: { item: RideItem; checkIn: RideCheckInState }): ReactElement {
+  const { t } = useTranslation();
+  const { data: bikes } = useBikes();
+  const [pickerOpened, setPickerOpened] = useState(false);
+  const pickedId = checkIn.pick?.kind === "bike" ? checkIn.pick.bikeId : null;
+  const notMine = checkIn.pick?.kind === "notMine";
+
+  return (
+    <Stack gap={SECTION_GAP}>
       <CheckInBikeField
         bikes={bikes ?? []}
         picked={bikes?.find((bike) => bike.id === pickedId) ?? null}
         notMine={notMine}
-        source={checkIn.moved ? "byHand" : "strava"}
-        fallbackName={ride.bike_name ?? t("rides.unknownBike")}
+        missing={checkIn.pick === null}
+        fallbackName={item.kind === "ride" ? (item.ride.bike_name ?? t("rides.unknownBike")) : ""}
         onPick={checkIn.setPick}
         pickerOpened={pickerOpened}
         onPickerOpenedChange={setPickerOpened}
       />
 
-      {/* A ride that was not the rider's leaves, so it has nothing to rate. */}
+      {/* A ride that was not the rider's leaves, so it has nothing to rate. Out of reach under the bike list. */}
       {!notMine && (
-        <>
-          <Divider color="var(--color-border-subtle)" />
-          {/* Out of reach while the bike list lies over it. */}
-          <Box inert={pickerOpened} style={{ opacity: pickerOpened ? 0.4 : 1, transition: "opacity 150ms ease" }}>
-            <RideCheckInFields draft={checkIn.draft} onChange={checkIn.setDraft} />
-          </Box>
-        </>
+        <Box inert={pickerOpened} style={{ opacity: pickerOpened ? 0.4 : 1, transition: "opacity 150ms ease" }}>
+          <RideCheckInFields draft={checkIn.draft} onChange={checkIn.setDraft} />
+        </Box>
       )}
 
-      <Divider color="var(--color-border-subtle)" />
-
-      <RideDetailActions ride={ride} checkIn={checkIn} onClose={onClose} />
-    </>
+      {item.kind === "ride" && <WoreOffCard lines={item.ride.wore_off} />}
+      {item.kind === "ride" && <RideAiSummary rideId={item.ride.id} />}
+    </Stack>
   );
-}
-
-interface RideDetailActionsProps {
-  ride: Ride;
-  checkIn: RideCheckInState;
-  onClose: () => void;
-}
-
-// Fixed places: delete quiet on the left, Uložit only once there is something to save.
-function RideDetailActions({ ride, checkIn, onClose }: RideDetailActionsProps): ReactElement {
-  const { t } = useTranslation();
-  const isDesktop = useIsDesktop();
-
-  const save = checkIn.dirty && (
-    <Button
-      color="primary.6"
-      c="textDark.6"
-      radius="md"
-      size="sm"
-      h={BAR_BUTTON_HEIGHT}
-      miw={SAVE_MIN_WIDTH}
-      loading={checkIn.saving}
-      onClick={() => void checkIn.submit()}
-    >
-      {t("checkIn.save")}
-    </Button>
-  );
-
-  // The phone sheet closes by its ✕ or a swipe, so delete just goes last.
-  if (!isDesktop) {
-    return (
-      <Stack gap="xs">
-        {save}
-        <Group>
-          <DeleteRideButton ride={ride} onDeleted={onClose} inBar />
-        </Group>
-      </Stack>
-    );
-  }
-
-  return (
-    <Group justify="space-between" wrap="nowrap">
-      <DeleteRideButton ride={ride} onDeleted={onClose} inBar />
-      <Group gap="xs" wrap="nowrap">
-        <Button variant="outline" radius="md" size="sm" h={BAR_BUTTON_HEIGHT} onClick={onClose}>
-          {t("action.close")}
-        </Button>
-        {save}
-      </Group>
-    </Group>
-  );
-}
-
-// Convert stored metres to displayed kilometres.
-function toKm(metres: number | null): number {
-  return metres === null ? 0 : Math.round(metres / 1000);
 }

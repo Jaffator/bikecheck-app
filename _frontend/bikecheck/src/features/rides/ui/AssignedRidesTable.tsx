@@ -6,6 +6,7 @@ import { Panel, PanelPageFooter, PanelSkeletonRows, PanelTableHead } from "@/com
 import { PANEL_HAIRLINE } from "@/components/panelRows";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
+import { rideItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useFilteredRides } from "@/features/rides/rides.queries";
 import type { Ride, RideWeek } from "@/features/rides/rides.types";
@@ -94,7 +95,7 @@ export function AssignedRidesTable({ openActivityId, onOpenedActivityHandled }: 
         )}
       </Panel>
 
-      <RideDetailSheet ride={shownRide} onClose={closeSheet} />
+      <RideDetailSheet item={rideItemOf(shownRide)} onClose={closeSheet} />
     </Stack>
   );
 }

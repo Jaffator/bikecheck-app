@@ -19,9 +19,19 @@ interface TextRowProps {
   numeric?: boolean;
   suffix?: string;
   invalid?: boolean;
+  maxLength?: number;
 }
 
-export function TextRow({ label, value, onChange, placeholder, numeric, suffix, invalid }: TextRowProps): ReactElement {
+export function TextRow({
+  label,
+  value,
+  onChange,
+  placeholder,
+  numeric,
+  suffix,
+  invalid,
+  maxLength,
+}: TextRowProps): ReactElement {
   const id = useId();
   const styles = invalid === true ? INVALID_INPUT_STYLES : numeric === true ? listRowFigureInputStyles : listRowInputStyles;
 
@@ -32,6 +42,7 @@ export function TextRow({ label, value, onChange, placeholder, numeric, suffix, 
         variant="unstyled"
         value={value}
         placeholder={placeholder}
+        maxLength={maxLength}
         inputMode={numeric === true ? "numeric" : undefined}
         aria-invalid={invalid}
         styles={styles}

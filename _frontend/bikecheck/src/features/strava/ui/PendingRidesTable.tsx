@@ -1,4 +1,4 @@
-// Desktop's Nepřiřazené tab: one row per pending ride, assigned or dismissed inline from its menu.
+// Desktop's Nepřiřazené tab: one row per pending ride, opened by a click, assigned or dismissed from its menu.
 import { useState, type ReactElement } from "react";
 import { Anchor, Box, Button, Group, Menu, Stack, Text } from "@mantine/core";
 import { Ban, Check, ChevronDown, Info } from "lucide-react";
@@ -6,13 +6,15 @@ import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { Panel, PanelSkeletonRows, PanelTableHead } from "@/components/Panel";
-import { PANEL_HAIRLINE, PANEL_ROW_PADDING } from "@/components/panelRows";
+import { PANEL_HAIRLINE, PANEL_ROW_PADDING, onPanelRowKey } from "@/components/panelRows";
 import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { pendingItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { RideDetailSheet } from "@/features/rides/ui/RideDetailSheet";
 import { useDismissPendingRide, usePendingRides, useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
 import { formatNumber } from "@/utils/number";
@@ -37,6 +39,7 @@ export function PendingRidesTable({ highlightedActivityId }: PendingRidesTablePr
   const dismiss = useDismissPendingRide();
   const [dismissing, setDismissing] = useState<PendingRide | null>(null);
   const [pairing, setPairing] = useState(false);
+  const [opened, setOpened] = useState<PendingRide | null>(null);
   const rides = data ?? [];
 
   if (isError) {
@@ -82,6 +85,7 @@ export function PendingRidesTable({ highlightedActivityId }: PendingRidesTablePr
                 assigning={assigningId === ride.activity_id}
                 onAssign={(bikeId) => resolve.mutate({ activityId: ride.activity_id, bikeId })}
                 onDismiss={() => setDismissing(ride)}
+                onOpen={() => setOpened(ride)}
               />
             ))}
             <PendingFooter onPair={() => setPairing(true)} />
@@ -113,6 +117,8 @@ export function PendingRidesTable({ highlightedActivityId }: PendingRidesTablePr
       </ConfirmModal>
 
       <GearLinkingSheet opened={pairing} onClose={() => setPairing(false)} />
+
+      <RideDetailSheet item={pendingItemOf(opened)} onClose={() => setOpened(null)} />
     </Stack>
   );
 }
@@ -145,14 +151,28 @@ interface PendingRowProps {
   assigning: boolean;
   onAssign: (bikeId: number) => void;
   onDismiss: () => void;
+  onOpen: () => void;
 }
 
-// Not clickable: the only action is the menu, so a stray click assigns nothing.
-function PendingRow({ ride, bikes, highlighted, assigning, onAssign, onDismiss }: PendingRowProps): ReactElement {
+// A click opens the ride; its menu assigns or dismisses it in place.
+function PendingRow({
+  ride,
+  bikes,
+  highlighted,
+  assigning,
+  onAssign,
+  onDismiss,
+  onOpen,
+}: PendingRowProps): ReactElement {
   const { t } = useTranslation();
 
   return (
     <Box
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => onPanelRowKey(event, onOpen)}
+      className="hover-veil"
       style={{
         display: "grid",
         gridTemplateColumns: PENDING_COLUMNS,
@@ -181,7 +201,8 @@ function PendingRow({ ride, bikes, highlighted, assigning, onAssign, onDismiss }
       <Text className="tabular-nums" fz={13} c="text.7" ta="right">
         {`↑ ${t("pendingRides.elevation", { count: ride.elevation_up_m })}`}
       </Text>
-      <Group justify="flex-end">
+      {/* The portalled menu still bubbles through React, so its clicks stop here rather than open the ride. */}
+      <Group justify="flex-end" onClick={(event) => event.stopPropagation()}>
         <Menu position="bottom-end" radius="md" shadow="md">
           <Menu.Target>
             <Button variant="outline" radius="md" size="xs" loading={assigning} rightSection={<ChevronDown size={14} />}>
