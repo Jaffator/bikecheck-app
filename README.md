@@ -6,6 +6,10 @@ down, so BikeCheck tells you when it needs attention.
 **[bikecheck.cloud](https://bikecheck.cloud)** · **[Open the app](https://app.bikecheck.cloud)** ·
 Android app in testing on Google Play
 
+## Screenshots
+
+### Mobile
+
 <p align="center">
   <img src="docs/screenshots/phone-home.png" width="19%" alt="Home" />
   <img src="docs/screenshots/phone-bike.png" width="19%" alt="Bike detail" />
@@ -14,12 +18,13 @@ Android app in testing on Google Play
   <img src="docs/screenshots/phone-ride-review.png" width="19%" alt="Ride wear and AI review" />
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/desktop-home.png" width="49%" alt="Home on desktop" />
-  <img src="docs/screenshots/desktop-bike.png" width="49%" alt="Bike detail on desktop" />
-  <img src="docs/screenshots/desktop-setup.png" width="49%" alt="Suspension setup on desktop" />
-  <img src="docs/screenshots/desktop-login.png" width="49%" alt="Sign in on desktop" />
-</p>
+### Desktop
+
+| Home | Bike detail |
+|---|---|
+| <img src="docs/screenshots/desktop-home.png" alt="Home on desktop" /> | <img src="docs/screenshots/desktop-bike.png" alt="Bike detail on desktop" /> |
+| **Suspension setup** | **Sign in** |
+| <img src="docs/screenshots/desktop-setup.png" alt="Suspension setup on desktop" /> | <img src="docs/screenshots/desktop-login.png" alt="Sign in on desktop" /> |
 
 ## Features
 
