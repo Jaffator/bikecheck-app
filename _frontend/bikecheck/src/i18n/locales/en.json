@@ -377,7 +377,6 @@
       "HEADSET_PLAY": "Headset play",
       "OTHER": "Other…"
     },
-    "noteLabel": "Note · optional",
     "note": "Note",
     "notePlaceholder": "E.g. skips on the 3rd cog",
     "save": "Save",
@@ -390,22 +389,16 @@
     "cancel": "Cancel",
     "saveFailed": "Couldn't save the check-in",
     "deleteFailed": "Couldn't delete the check-in",
-    "newRide": "New ride",
-    "fromStrava": "From Strava",
+    "newFromStrava": "New ride from Strava",
     "bike": "Bike",
     "chooseBike": "Choose a bike",
     "woreOff": "Wear from this ride",
-    "woreOffDueSoon": "{{name}} at {{value}} % · due soon",
-    "woreOffOverdue": "{{name}} at {{value}} % · overdue",
     "optional": "optional",
-    "optionalHint": "The rating is optional. Without it, the ride is just assigned to the bike.",
     "notMyBike": "Not my bike",
     "notMyBikeHint": "rental, test, someone else's",
     "noBikeRide": "Ride without a bike",
     "notMyBikeInfo": "The ride is removed from BikeCheck and doesn't count toward wear.",
-    "saveWithoutBike": "Save without a bike",
-    "missingBikeInfo": "This ride has no bike. Until you pick one, it doesn't count toward part wear.",
-    "pickBikeFirst": "Pick a bike first"
+    "missingBikeInfo": "This ride has no bike. Until you pick one, it doesn't count toward part wear."
   },
   "ridesTable": {
     "allBikes": "All bikes",

@@ -58,7 +58,6 @@ export function RideCheckInFields({ draft, onChange }: RideCheckInFieldsProps): 
             label={t(status === "OK" ? "checkIn.ok" : "checkIn.issue")}
             selected={draft.status === status}
             onPick={() => pick(status)}
-            segment
           />
         ))}
       </Box>

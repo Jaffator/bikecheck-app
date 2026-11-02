@@ -12,6 +12,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
 import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides } from "@/features/rides/rides.queries";
+import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
 import { CheckInMark } from "./CheckInMark";
 import { RideDetailSheet } from "./RideDetailSheet";
 import type { Ride } from "@/features/rides/rides.types";
@@ -94,6 +95,7 @@ export const CompletedRides = memo(function CompletedRides({
   const { t } = useTranslation();
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } = useRides();
   const [openedRide, setOpenedRide] = useState<Ride | null>(null);
+  const linkedId = useReleasedRideLink(openActivityId);
 
   // Load the next page when the sentinel is visible.
   const sentinel = useInfiniteScrollSentinel(hasNextPage, () => void fetchNextPage());
@@ -106,7 +108,7 @@ export const CompletedRides = memo(function CompletedRides({
   // enough to sit past the loaded pages simply opens nothing, and the list stands as it
   // is - the notification is always about the newest ride, which is the first row.
   const requested =
-    openActivityId === undefined ? null : (rides.find((ride) => ride.activity_strava_id === openActivityId) ?? null);
+    linkedId === undefined ? null : (rides.find((ride) => ride.activity_strava_id === linkedId) ?? null);
   // A tap wins over the URL, so closing the requested sheet and opening another works.
   const shownRide = openedRide ?? requested;
 

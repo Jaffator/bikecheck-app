@@ -1,4 +1,5 @@
-// The ride drawer's actions: Save once there is something to save, delete or discard quiet in red.
+// The ride drawer's actions: Save once there is something to save, delete or discard quiet in red;
+// on the walk through new rides, Save and a quiet Skip.
 import type { ReactElement } from "react";
 import { Button, Group, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -13,6 +14,8 @@ import { DiscardRideButton } from "./DiscardRideButton";
 const SAVE_MIN_WIDTH = 120;
 // A thumb's full-width button on the phone.
 const PHONE_SAVE_HEIGHT = 48;
+// The quiet Skip under it keeps a full touch target.
+const PHONE_SKIP_HEIGHT = 44;
 
 interface RideDetailActionsProps {
   item: RideItem;
@@ -47,6 +50,43 @@ export function RideDetailActions({ item, checkIn, onClose }: RideDetailActionsP
         {save}
       </Group>
     </Group>
+  );
+}
+
+// The walk answers every ride, so Save stands from the start; Skip moves on and writes nothing.
+export function RideWalkActions({ checkIn, onSkip }: { checkIn: RideCheckInState; onSkip: () => void }): ReactElement {
+  const isDesktop = useIsDesktop();
+  const save = <SaveButton checkIn={checkIn} height={isDesktop ? BAR_BUTTON_HEIGHT : PHONE_SAVE_HEIGHT} />;
+  const skipHeight = isDesktop ? BAR_BUTTON_HEIGHT : PHONE_SKIP_HEIGHT;
+  const skip = <SkipButton disabled={checkIn.saving} height={skipHeight} onSkip={onSkip} />;
+
+  return isDesktop ? (
+    <Group justify="flex-end" gap="xs" wrap="nowrap">
+      {skip}
+      {save}
+    </Group>
+  ) : (
+    <Stack gap={4}>
+      {save}
+      {skip}
+    </Stack>
+  );
+}
+
+interface SkipButtonProps {
+  // Held while a save runs, whose success moves on by itself.
+  disabled: boolean;
+  height: number;
+  onSkip: () => void;
+}
+
+function SkipButton({ disabled, height, onSkip }: SkipButtonProps): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Button variant="subtle" color="text.7" radius="md" size="sm" h={height} disabled={disabled} onClick={onSkip}>
+      {t("checkIn.skip")}
+    </Button>
   );
 }
 

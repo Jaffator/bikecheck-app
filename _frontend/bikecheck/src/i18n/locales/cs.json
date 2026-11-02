@@ -393,7 +393,6 @@
       "HEADSET_PLAY": "Vůle v hlavovém složení",
       "OTHER": "Jiné…"
     },
-    "noteLabel": "Poznámka · nepovinné",
     "note": "Poznámka",
     "notePlaceholder": "Např. přeskakuje na 3. pastorku",
     "save": "Uložit",
@@ -406,22 +405,16 @@
     "cancel": "Zrušit",
     "saveFailed": "Check-in se nepodařilo uložit",
     "deleteFailed": "Check-in se nepodařilo smazat",
-    "newRide": "Nová jízda",
-    "fromStrava": "Ze Stravy",
+    "newFromStrava": "Nová jízda ze Stravy",
     "bike": "Kolo",
     "chooseBike": "Vyber kolo",
     "woreOff": "Opotřebení z jízdy",
-    "woreOffDueSoon": "{{name}} na {{value}} % · brzy na řadě",
-    "woreOffOverdue": "{{name}} na {{value}} % · po termínu",
     "optional": "nepovinné",
-    "optionalHint": "Hodnocení je nepovinné. Bez něj se jízda jen přiřadí ke kolu.",
     "notMyBike": "Nebylo to moje kolo",
     "notMyBikeHint": "půjčené, testovací, cizí",
     "noBikeRide": "Jízda bez kola",
     "notMyBikeInfo": "Jízda se z BikeChecku odebere a do opotřebení se nepočítá.",
-    "saveWithoutBike": "Uložit bez kola",
-    "missingBikeInfo": "Tahle jízda nemá kolo. Dokud ho nevybereš, nepočítá se do opotřebení dílů.",
-    "pickBikeFirst": "Nejdřív vyber kolo"
+    "missingBikeInfo": "Tahle jízda nemá kolo. Dokud ho nevybereš, nepočítá se do opotřebení dílů."
   },
   "ridesTable": {
     "allBikes": "Všechna kola",

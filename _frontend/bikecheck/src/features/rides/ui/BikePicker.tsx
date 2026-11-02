@@ -8,7 +8,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { MISSING_BIKE_COLOR } from "@/features/rides/checkIn";
-import type { BikePick } from "@/features/rides/checkInSave";
+import type { BikePick } from "@/features/rides/rideDetail";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { RIDE_CARD_STYLE } from "./rideCard";
 

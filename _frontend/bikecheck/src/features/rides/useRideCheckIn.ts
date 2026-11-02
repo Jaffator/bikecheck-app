@@ -3,8 +3,14 @@ import { useState } from "react";
 import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 import { checkInOf, draftOf, sameCheckIn, type CheckInDraft } from "@/features/rides/checkIn";
-import type { BikePick } from "@/features/rides/checkInSave";
-import { initialPickOf, movedTo, saveStateOf, type RideItem, type SaveState } from "@/features/rides/rideDetail";
+import {
+  initialPickOf,
+  movedTo,
+  saveStateOf,
+  type BikePick,
+  type RideItem,
+  type SaveState,
+} from "@/features/rides/rideDetail";
 import {
   useChangeRideBike,
   useDeleteRideCheckIn,

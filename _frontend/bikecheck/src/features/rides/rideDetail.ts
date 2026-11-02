@@ -1,11 +1,23 @@
 // What the ride drawer opens and derives: a ride on a bike or an Unassigned Ride, read alike.
 import type { PendingRide } from "@/features/strava/strava.types";
 import { checkInOf, isHalfFilled, sameCheckIn, type CheckInDraft } from "./checkIn";
-import type { BikePick } from "./checkInSave";
-import type { Ride } from "./rides.types";
+import { woreOffOn } from "./checkInQueue";
+import type { BikeWoreOff, Ride, WoreOffLine } from "./rides.types";
 
 // Same kinds as CheckInItem, so a check-in queue item opens the drawer as it is.
 export type RideItem = { kind: "ride"; ride: Ride } | { kind: "pending"; ride: PendingRide };
+
+// What the ride was ridden on: one of the rider's bikes, or none of them.
+export type BikePick = { kind: "bike"; bikeId: number } | { kind: "notMine" };
+
+// The drawer locked on the walk through new rides: Save and Skip move on instead of closing it.
+export interface RideWalk {
+  position: number;
+  total: number;
+  // A queue ride carries its wear on every bike, so the picked one's shows before it is saved.
+  woreOffByBike: BikeWoreOff[];
+  onNext: () => void;
+}
 
 // Null where the ride arrived without the figure.
 export interface RideDetailFigures {
@@ -60,6 +72,12 @@ export function saveStateOf(item: RideItem, pick: BikePick | null, draft: CheckI
   if (isHalfFilled(draft)) return "disabled";
   const changed = movedTo(item.ride, pick) !== null || !sameCheckIn(checkInOf(draft), item.ride.check_in);
   return changed ? "ready" : "hidden";
+}
+
+// The walk previews the picked bike's wear; a ride opened from a list shows what it wore where it is.
+export function woreOffShown(item: RideItem, pick: BikePick | null, walk: RideWalk | undefined): WoreOffLine[] {
+  if (walk !== undefined) return woreOffOn(walk.woreOffByBike, pick?.kind === "bike" ? pick.bikeId : null);
+  return item.kind === "ride" ? item.ride.wore_off : [];
 }
 
 // The bike a ride moves to on save; null leaves it where it is.

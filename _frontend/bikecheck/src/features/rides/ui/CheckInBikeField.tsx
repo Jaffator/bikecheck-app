@@ -4,7 +4,7 @@ import { Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import type { ListedBike } from "@/features/bikes/bikes.types";
-import type { BikePick } from "@/features/rides/checkInSave";
+import type { BikePick } from "@/features/rides/rideDetail";
 import { BikePicker } from "./BikePicker";
 
 interface CheckInBikeFieldProps {
