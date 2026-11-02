@@ -1,11 +1,12 @@
 // The drawer's bike and check-in, held until "Uložit" writes both and closes it.
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 import { checkInOf, draftOf, sameCheckIn, type CheckInDraft } from "@/features/rides/checkIn";
 import {
   initialPickOf,
   movedTo,
+  rideItemKey,
   saveStateOf,
   type BikePick,
   type RideItem,
@@ -21,6 +22,26 @@ import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { useDismissPendingRide, useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
 
+// The picked bike, held above the drawer's keyed body so its header follows the picker.
+export interface RidePickState {
+  // Null for an Unassigned Ride until a bike is picked.
+  pick: BikePick | null;
+  setPick: (pick: BikePick) => void;
+}
+
+interface HeldPick {
+  key: string | null;
+  pick: BikePick | null;
+}
+
+interface RideCheckInArgs {
+  item: RideItem;
+  picked: RidePickState;
+  onSaved: () => void;
+  // Opens the check-in with this answer picked.
+  startWith?: CheckInStatus;
+}
+
 export interface RideCheckInState {
   // Null for an Unassigned Ride until a bike is picked.
   pick: BikePick | null;
@@ -32,7 +53,21 @@ export interface RideCheckInState {
   submit: () => Promise<void>;
 }
 
-export function useRideCheckIn(item: RideItem, onSaved: () => void, startWith?: CheckInStatus): RideCheckInState {
+// Each ride, and each opening of one, starts from its own bike; null (closed) forgets the last pick.
+export function useRidePick(item: RideItem | null): RidePickState {
+  const key = item === null ? null : rideItemKey(item);
+  const [held, setHeld] = useState<HeldPick>({ key, pick: initialPickFor(item) });
+  if (held.key !== key) setHeld({ key, pick: initialPickFor(item) });
+  const setPick = useCallback((pick: BikePick): void => setHeld({ key, pick }), [key]);
+
+  return { pick: held.key === key ? held.pick : initialPickFor(item), setPick };
+}
+
+function initialPickFor(item: RideItem | null): BikePick | null {
+  return item === null ? null : initialPickOf(item);
+}
+
+export function useRideCheckIn({ item, picked, onSaved, startWith }: RideCheckInArgs): RideCheckInState {
   const { t } = useTranslation();
   const changeBike = useChangeRideBike();
   const saveCheckIn = useSaveRideCheckIn();
@@ -40,7 +75,7 @@ export function useRideCheckIn(item: RideItem, onSaved: () => void, startWith?: 
   const dismiss = useDismissRide();
   const resolve = useResolvePendingRide();
   const dismissPending = useDismissPendingRide();
-  const [pick, setPick] = useState<BikePick | null>(initialPickOf(item));
+  const { pick, setPick } = picked;
   const [draft, setDraft] = useState<CheckInDraft>(
     draftOf(item.kind === "ride" ? item.ride.check_in : null, startWith),
   );

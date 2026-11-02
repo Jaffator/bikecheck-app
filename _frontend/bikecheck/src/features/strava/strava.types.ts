@@ -1,4 +1,5 @@
 // Mirrors the backend gear-linking DTOs (monolith strava/dto/*).
+import type { BikeWoreOff } from "@/features/rides/rides.types";
 
 // A bike as Strava knows it. The id is the gear id ("b1234567").
 export interface StravaBike {
@@ -52,6 +53,8 @@ export interface PendingRide {
   speed_avg: number | null;
   max_speed_kmh: number | null;
   created_at: string;
+  // What it would wear off each active bike, so the drawer previews the picked one before saving.
+  wore_off_by_bike: BikeWoreOff[];
 }
 
 // Mirrors ResponseResolvePendingActivityDto: the ride the pending one became.

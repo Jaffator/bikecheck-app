@@ -19,9 +19,11 @@ export function useReleasedRideLink(activityId: string | undefined): string | un
     if (activityId === undefined) return;
     let current = true;
     // A cached prompt may predate the ride: an app resumed from a notification still holds the old one.
-    void refetch().then(({ data }) => {
-      if (current && !promptHolds(data, activityId)) setReleased(activityId);
-    });
+    async function release(linked: string): Promise<void> {
+      const { data } = await refetch();
+      if (current && !promptHolds(data, linked)) setReleased(linked);
+    }
+    void release(activityId);
     return () => {
       current = false;
     };

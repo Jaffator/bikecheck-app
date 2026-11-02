@@ -1,4 +1,4 @@
-// Desktop's Nepřiřazené tab: one row per pending ride, opened by a click, assigned or dismissed from its menu.
+// Desktop's Nepřiřazené tab: one row per Unassigned Ride, opened by a click, assigned or dismissed from its menu.
 import { useState, type ReactElement } from "react";
 import { Anchor, Box, Button, Group, Menu, Stack, Text } from "@mantine/core";
 import { Ban, Check, ChevronDown, Info } from "lucide-react";
@@ -14,6 +14,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { pendingItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
 import { RideDetailSheet } from "@/features/rides/ui/RideDetailSheet";
 import { useDismissPendingRide, usePendingRides, useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
@@ -27,11 +28,12 @@ const STRAVA_ORANGE = "var(--mantine-color-strava-6)";
 const ROW_SIMPLIFY = 1;
 
 interface PendingRidesTableProps {
-  // The ride a notification pointed at (`?pending=`).
-  highlightedActivityId?: string;
+  // The ride a notification pointed at (`?pending=`): highlighted, and opened once the walk lets it through.
+  openActivityId?: string;
+  onOpenedActivityHandled?: () => void;
 }
 
-export function PendingRidesTable({ highlightedActivityId }: PendingRidesTableProps): ReactElement {
+export function PendingRidesTable({ openActivityId, onOpenedActivityHandled }: PendingRidesTableProps): ReactElement {
   const { t } = useTranslation();
   const { data, isLoading, isError } = usePendingRides();
   const { data: bikes } = useBikes();
@@ -40,7 +42,14 @@ export function PendingRidesTable({ highlightedActivityId }: PendingRidesTablePr
   const [dismissing, setDismissing] = useState<PendingRide | null>(null);
   const [pairing, setPairing] = useState(false);
   const [opened, setOpened] = useState<PendingRide | null>(null);
+  const linkedId = useReleasedRideLink(openActivityId);
   const rides = data ?? [];
+  const requested = linkedId === undefined ? null : (rides.find((ride) => ride.activity_id === linkedId) ?? null);
+
+  function closeSheet(): void {
+    setOpened(null);
+    onOpenedActivityHandled?.();
+  }
 
   if (isError) {
     return <Text c="red.5">{t("pendingRides.loadFailed")}</Text>;
@@ -81,7 +90,7 @@ export function PendingRidesTable({ highlightedActivityId }: PendingRidesTablePr
                 key={ride.activity_id}
                 ride={ride}
                 bikes={bikes ?? []}
-                highlighted={ride.activity_id === highlightedActivityId}
+                highlighted={ride.activity_id === openActivityId}
                 assigning={assigningId === ride.activity_id}
                 onAssign={(bikeId) => resolve.mutate({ activityId: ride.activity_id, bikeId })}
                 onDismiss={() => setDismissing(ride)}
@@ -118,7 +127,7 @@ export function PendingRidesTable({ highlightedActivityId }: PendingRidesTablePr
 
       <GearLinkingSheet opened={pairing} onClose={() => setPairing(false)} />
 
-      <RideDetailSheet item={pendingItemOf(opened)} onClose={() => setOpened(null)} />
+      <RideDetailSheet item={pendingItemOf(opened ?? requested)} onClose={closeSheet} />
     </Stack>
   );
 }

@@ -392,11 +392,11 @@
     "newFromStrava": "New ride from Strava",
     "bike": "Bike",
     "chooseBike": "Choose a bike",
+    "pickBike": "Pick a bike",
     "woreOff": "Wear from this ride",
     "optional": "optional",
     "notMyBike": "Not my bike",
     "notMyBikeHint": "rental, test, someone else's",
-    "noBikeRide": "Ride without a bike",
     "notMyBikeInfo": "The ride is removed from BikeCheck and doesn't count toward wear.",
     "missingBikeInfo": "This ride has no bike. Until you pick one, it doesn't count toward part wear."
   },

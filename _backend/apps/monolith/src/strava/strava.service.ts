@@ -18,7 +18,8 @@ import type { PendingActivities } from '../notification/notification-types.confi
 import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
-import { toPendingDto } from './pending-activity';
+import { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
+import { toCheckInPendingDto, toPendingDto } from './pending-activity';
 import { unlinkStravaAthlete } from './unlink-strava-athlete';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
@@ -483,9 +484,9 @@ export class StravaEventsService {
   }
 
   /**
-   * The user's unresolved pending activities, newest first.
+   * The user's unresolved pending activities, newest first, each with its wear on every bike.
    */
-  async listPendingActivities(userId: number): Promise<ResponsePendingStravaDto[]> {
+  async listPendingActivities(userId: number): Promise<ResponseCheckInPendingDto[]> {
     const pending = await this.prisma.strava_pending_activities.findMany({
       // Every unresolved ride, with or without a gear id: a gear that matches no
       // bike here leaves the user the same job as no gear at all, and the sheet
@@ -493,7 +494,10 @@ export class StravaEventsService {
       where: { user_id: userId, resolved_at: null },
       orderBy: { created_at: 'desc' },
     });
-    return pending.map(toPendingDto);
+    // The list polls, so an empty one skips the garage read.
+    if (pending.length === 0) return [];
+    const preview = await this.serviceTracking.getWearPreview(userId);
+    return pending.map((row) => toCheckInPendingDto(row, preview));
   }
 
   /**

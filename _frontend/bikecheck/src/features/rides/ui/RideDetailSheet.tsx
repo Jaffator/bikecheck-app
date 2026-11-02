@@ -9,7 +9,12 @@ import { RideMap } from "@/components/RideMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { rideFiguresOf, rideItemKey, woreOffShown, type RideItem, type RideWalk } from "@/features/rides/rideDetail";
 import type { CheckInStatus } from "@/features/rides/rides.types";
-import { useRideCheckIn, type RideCheckInState } from "@/features/rides/useRideCheckIn";
+import {
+  useRideCheckIn,
+  useRidePick,
+  type RideCheckInState,
+  type RidePickState,
+} from "@/features/rides/useRideCheckIn";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { CheckInBikeField } from "./CheckInBikeField";
 import { RideAiSummary } from "./RideAiSummary";
@@ -69,6 +74,7 @@ interface RideDetailSheetProps {
 export function RideDetailSheet({ item, onClose, checkInStartWith, walk }: RideDetailSheetProps): ReactElement {
   const isDesktop = useIsDesktop();
   const locked = walk !== undefined;
+  const picked = useRidePick(item);
   // The first ride arrives with the sheet; each next one slides in.
   const enter = walk !== undefined && walk.position > 0 ? NEXT_RIDE_CLASS : undefined;
 
@@ -84,7 +90,7 @@ export function RideDetailSheet({ item, onClose, checkInStartWith, walk }: RideD
       title={
         item === null ? undefined : (
           <Box key={rideItemKey(item)} className={enter}>
-            <RideDetailHeader item={item} walk={walk} />
+            <RideDetailHeader item={item} pick={picked.pick} walk={walk} />
           </Box>
         )
       }
@@ -92,7 +98,7 @@ export function RideDetailSheet({ item, onClose, checkInStartWith, walk }: RideD
     >
       {item !== null && (
         <Box key={rideItemKey(item)} className={enter}>
-          <RideDetailBody item={item} startWith={checkInStartWith} onClose={onClose} walk={walk} />
+          <RideDetailBody item={item} picked={picked} startWith={checkInStartWith} onClose={onClose} walk={walk} />
         </Box>
       )}
     </ResponsiveSheet>
@@ -101,16 +107,17 @@ export function RideDetailSheet({ item, onClose, checkInStartWith, walk }: RideD
 
 interface RideDetailBodyProps {
   item: RideItem;
+  picked: RidePickState;
   startWith?: CheckInStatus;
   onClose: () => void;
   walk?: RideWalk;
 }
 
 // Keyed per ride, so an answer half given on one never carries over to the next.
-function RideDetailBody({ item, startWith, onClose, walk }: RideDetailBodyProps): ReactElement {
+function RideDetailBody({ item, picked, startWith, onClose, walk }: RideDetailBodyProps): ReactElement {
   const isDesktop = useIsDesktop();
   const top = useScrolledToTop();
-  const checkIn = useRideCheckIn(item, walk?.onNext ?? onClose, startWith);
+  const checkIn = useRideCheckIn({ item, picked, onSaved: walk?.onNext ?? onClose, startWith });
   const overview = <RideOverview item={item} mapHeight={isDesktop ? MAP_HEIGHT_DESKTOP : MAP_HEIGHT_PHONE} />;
   const answers = <RideAnswers item={item} checkIn={checkIn} walk={walk} />;
   const actions =

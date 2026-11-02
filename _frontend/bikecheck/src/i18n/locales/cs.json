@@ -408,11 +408,11 @@
     "newFromStrava": "Nová jízda ze Stravy",
     "bike": "Kolo",
     "chooseBike": "Vyber kolo",
+    "pickBike": "Vyber kolo",
     "woreOff": "Opotřebení z jízdy",
     "optional": "nepovinné",
     "notMyBike": "Nebylo to moje kolo",
     "notMyBikeHint": "půjčené, testovací, cizí",
-    "noBikeRide": "Jízda bez kola",
     "notMyBikeInfo": "Jízda se z BikeChecku odebere a do opotřebení se nepočítá.",
     "missingBikeInfo": "Tahle jízda nemá kolo. Dokud ho nevybereš, nepočítá se do opotřebení dílů."
   },

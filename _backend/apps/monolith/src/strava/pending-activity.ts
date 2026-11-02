@@ -1,6 +1,8 @@
 // A pending Strava activity as the client reads it; shared by the Pending list and the check-in prompt.
 import type { strava_pending_activities } from '@prisma/client';
+import type { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
 import type { RideWear } from '../service-tracking/ride-wear';
+import type { WearPreview } from '../service-tracking/service-tracking.service';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import type { StravaActivityData } from './strava.service';
 
@@ -29,6 +31,11 @@ export function toPendingDto(activity: strava_pending_activities): ResponsePendi
     max_speed_kmh: roundedOrNull(analyzed.max_speed_kmh),
     created_at: activity.created_at,
   };
+}
+
+// With its wear on every bike, so the drawer previews the picked one before the ride is saved.
+export function toCheckInPendingDto(row: strava_pending_activities, preview: WearPreview): ResponseCheckInPendingDto {
+  return { ...toPendingDto(row), wore_off_by_bike: preview(pendingWear(row)) };
 }
 
 // Older stored analyses may lack the figure; null reads as unknown, not zero.

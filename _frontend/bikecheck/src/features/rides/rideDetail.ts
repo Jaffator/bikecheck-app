@@ -74,10 +74,11 @@ export function saveStateOf(item: RideItem, pick: BikePick | null, draft: CheckI
   return changed ? "ready" : "hidden";
 }
 
-// The walk previews the picked bike's wear; a ride opened from a list shows what it wore where it is.
+// The walk and an Unassigned Ride preview the picked bike's wear; a listed ride shows what it wore where it is.
 export function woreOffShown(item: RideItem, pick: BikePick | null, walk: RideWalk | undefined): WoreOffLine[] {
-  if (walk !== undefined) return woreOffOn(walk.woreOffByBike, pick?.kind === "bike" ? pick.bikeId : null);
-  return item.kind === "ride" ? item.ride.wore_off : [];
+  const pickedId = pick?.kind === "bike" ? pick.bikeId : null;
+  if (walk !== undefined) return woreOffOn(walk.woreOffByBike, pickedId);
+  return item.kind === "ride" ? item.ride.wore_off : woreOffOn(item.ride.wore_off_by_bike, pickedId);
 }
 
 // The bike a ride moves to on save; null leaves it where it is.

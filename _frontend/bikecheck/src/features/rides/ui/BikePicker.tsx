@@ -175,7 +175,7 @@ function MissingBikeLabel(): ReactElement {
     <>
       <TriangleAlert size={16} strokeWidth={2} color={MISSING_BIKE_COLOR} style={{ flexShrink: 0 }} />
       <Text fz={15} fw={500} c={MISSING_BIKE_COLOR} style={{ flex: 1 }}>
-        {t("checkIn.chooseBike")}
+        {t("checkIn.pickBike")}
       </Text>
       <ChevronDown size={16} strokeWidth={2.4} color={MISSING_BIKE_COLOR} style={{ flexShrink: 0 }} />
     </>

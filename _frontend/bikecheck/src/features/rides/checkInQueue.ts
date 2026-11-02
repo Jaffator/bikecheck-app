@@ -48,9 +48,9 @@ function withLinkedAt(walk: QueueWalk, activityId: string | null): QueueWalk {
   return { ...walk, queue };
 }
 
-// The walk takes over a link to the ride on screen or one still ahead, so no second drawer opens it.
+// The walk takes over a link to any of its rides, so no second drawer opens under it; a passed one is just dropped.
 export function walkHolds(walk: QueueWalk, activityId: string | null): boolean {
-  return !walk.done && indexOf(walk.queue, activityId) >= walk.position;
+  return !walk.done && indexOf(walk.queue, activityId) >= 0;
 }
 
 export function nextOf(walk: QueueWalk): QueueWalk {

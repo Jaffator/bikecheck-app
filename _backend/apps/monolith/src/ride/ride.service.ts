@@ -16,9 +16,8 @@ import {
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 import type { Response_BikeWoreOffDto } from '../service-tracking/dto/response-bike-wore-off';
 import type { StravaActivityData } from '../strava/strava.service';
-import { analysisOf, pendingWear, toPendingDto } from '../strava/pending-activity';
+import { analysisOf, toCheckInPendingDto } from '../strava/pending-activity';
 import {
-  ResponseCheckInPendingDto,
   ResponseCheckInPromptDto,
   ResponseCheckInRideDto,
   ResponseRideCheckInDto,
@@ -570,10 +569,6 @@ function toCheckInRideDto(
   preview: WearPreview,
 ): ResponseCheckInRideDto {
   return { ...toRideDto(row, woreOff), wore_off_by_bike: woreOffByBike(row, woreOff, preview) };
-}
-
-function toCheckInPendingDto(row: strava_pending_activities, preview: WearPreview): ResponseCheckInPendingDto {
-  return { ...toPendingDto(row), wore_off_by_bike: preview(pendingWear(row)) };
 }
 
 // The ride is already in its own bike's reading, so that bike keeps its wore_off; every other bike gets the preview.

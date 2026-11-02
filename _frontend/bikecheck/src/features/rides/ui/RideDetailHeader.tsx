@@ -1,26 +1,37 @@
-// The ride drawer's heading: the ride's name over `● bike · date · time`; on the walk, where it came from.
+// The ride drawer's heading: the ride's name over `● picked bike · date · time`; on the walk, where it came from.
 import type { ReactElement } from "react";
 import { Box, Group, Stack, Text } from "@mantine/core";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Eyebrow } from "@/components/Eyebrow";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
+import type { ListedBike } from "@/features/bikes/bikes.types";
+import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
-import type { RideItem, RideWalk } from "@/features/rides/rideDetail";
+import type { BikePick, RideItem, RideWalk } from "@/features/rides/rideDetail";
 
 dayjs.extend(relativeTime);
 
 const START_FORMAT = "D. M. YYYY · HH:mm";
 
-export function RideDetailHeader({ item, walk }: { item: RideItem; walk?: RideWalk }): ReactElement {
+interface RideDetailHeaderProps {
+  item: RideItem;
+  // The bike in the picker, saved or not.
+  pick: BikePick | null;
+  walk?: RideWalk;
+}
+
+export function RideDetailHeader({ item, pick, walk }: RideDetailHeaderProps): ReactElement {
   const { t } = useTranslation();
   const { data: bikes } = useBikes();
   const { ride } = item;
   const started = ride.started_at === null ? null : dayjs(ride.started_at).format(START_FORMAT);
-  const bikeName = item.kind === "ride" ? (item.ride.bike_name ?? t("rides.unknownBike")) : t("rides.bikeNotPicked");
-  const colorIndex = item.kind === "ride" ? colorIndexOf(bikes, item.ride.bike_id) : null;
+  const pickedId = pick?.kind === "bike" ? pick.bikeId : null;
+  const bikeName = pickedId === null ? t("rides.bikeNotPicked") : pickedBikeName(item, pickedId, { bikes, t });
+  const colorIndex = pickedId === null ? null : colorIndexOf(bikes, pickedId);
 
   return (
     <Stack gap={4} style={{ minWidth: 0 }}>
@@ -37,6 +48,18 @@ export function RideDetailHeader({ item, walk }: { item: RideItem; walk?: RideWa
       </Group>
     </Stack>
   );
+}
+
+interface BikeNames {
+  bikes: ListedBike[] | undefined;
+  t: TFunction;
+}
+
+// The ride's own bike keeps the name it was saved under; another reads as the picker shows it.
+function pickedBikeName(item: RideItem, bikeId: number, { bikes, t }: BikeNames): string {
+  if (item.kind === "ride" && item.ride.bike_id === bikeId) return item.ride.bike_name ?? t("rides.unknownBike");
+  const bike = bikes?.find((one) => one.id === bikeId);
+  return bike === undefined ? t("rides.unknownBike") : bikeTitle(bike);
 }
 
 // "New ride from Strava · 4 min ago" and `1 / 3`: when it arrived, which is what woke the walk.
