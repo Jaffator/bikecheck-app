@@ -268,10 +268,9 @@ function pickerChipStyles(checked: boolean): ReturnType<typeof chipStyles> {
       minHeight: CHIP_HEIGHT,
       paddingLeft: 12,
       paddingRight: 12,
-      borderColor: "transparent",
-      backgroundColor: checked
-        ? "color-mix(in srgb, var(--mantine-color-primary-6) 15%, var(--mantine-color-cards-6))"
-        : "var(--color-surface-raised)",
+      ...(checked && {
+        backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 15%, var(--mantine-color-cards-6))",
+      }),
       color: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
     } as CSSProperties,
   };
