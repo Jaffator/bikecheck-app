@@ -20,7 +20,6 @@ export function GarageVisibilityChip(): ReactElement | null {
   return (
     <>
       <StatusChip
-        tone="control"
         label={t("dashboard.garageVisibility", { visibility })}
         onClick={() => setSharing(true)}
         hasPopup

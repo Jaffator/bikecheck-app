@@ -1,7 +1,7 @@
 // Tab Sledující: the requests waiting on me, each answered from its row, over the people who
 // follow me, each removable. All of it is mine whatever the profile's switch says.
 import { useState, type ReactElement } from "react";
-import { ActionIcon, Button, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Stack, Text } from "@mantine/core";
 import type { TFunction } from "i18next";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +19,14 @@ const ACTION_SIZE = 32;
 const ICON_SIZE = 16;
 
 export function FollowersPanels(): ReactElement {
+  return (
+    <Box px="md" pt="md" pb={PAGE_BOTTOM}>
+      <FollowersList />
+    </Box>
+  );
+}
+
+export function FollowersList(): ReactElement {
   const { t } = useTranslation();
   const { data: profile } = useMyProfile();
   const { data: rows, isError } = useFollowers();
@@ -35,7 +43,7 @@ export function FollowersPanels(): ReactElement {
   }
 
   return (
-    <Stack gap="md" px="md" pt="md" pb={PAGE_BOTTOM}>
+    <Stack gap="md">
       {/* Requests only exist while approval does: a Public profile has no panel for them. Not
           drawn before the profile is in, or a Public owner would see it mount and vanish. */}
       {profile !== undefined && profile.visibility !== "PUBLIC" && showPanel(requests, isError) && (

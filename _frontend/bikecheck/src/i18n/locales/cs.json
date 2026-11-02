@@ -375,7 +375,13 @@
     "clearConfirmAction": "Smazat",
     "clearFailed": "Historii se nepodařilo smazat.",
     "emptyTitle": "Prostě se zeptej",
-    "emptyBody": "Napiš vlastními slovy, co chceš vědět o svých kolech, dílech, servisech nebo jízdách."
+    "emptyBody": "Napiš vlastními slovy, co chceš vědět o svých kolech, dílech, servisech nebo jízdách.",
+    "suggestionsTitle": "Zkus se zeptat",
+    "suggestionService": "Co bude brzy potřebovat servis?",
+    "suggestionChain": "Který řetěz je nejblíž limitu?",
+    "suggestionSpend": "Kolik jsem letos utratil za servis?",
+    "suggestionDistance": "Kolik jsem najel tento měsíc?",
+    "disclaimer": "Odpovědi vychází z tvých dat v BikeChecku. Důležité věci si před akcí ověř."
   },
   "checkIn": {
     "question": "Jak kolo jelo?",
@@ -1398,6 +1404,7 @@
     "stepMore": "{{field}}: o krok víc",
     "newProfile": "Nový profil",
     "profileMenu": "Akce profilu",
+    "profiles": "Profily",
     "rename": "Přejmenovat",
     "duplicate": "Duplikovat",
     "delete": "Smazat",
@@ -1506,7 +1513,18 @@
     "lsr": "LSR",
     "hsr": "HSR",
     "lsc": "LSC",
-    "hsc": "HSC"
+    "hsc": "HSC",
+    "profileCardTitle": "Tvůj profil",
+    "profileCardEdit": "Upravit",
+    "profileCardVisibility": "Viditelnost",
+    "profileCardBikes_one": "{{count}} kolo",
+    "profileCardBikes_few": "{{count}} kola",
+    "profileCardBikes_many": "{{count}} kola",
+    "profileCardBikes_other": "{{count}} kol",
+    "profileCardFollowers_one": "{{count}} sledující",
+    "profileCardFollowers_few": "{{count}} sledující",
+    "profileCardFollowers_many": "{{count}} sledujícího",
+    "profileCardFollowers_other": "{{count}} sledujících"
   },
   "follow": {
     "follow": "Sledovat",
@@ -1545,7 +1563,8 @@
     "removeTitle": "Odebrat ze sledujících?",
     "removeBody": "Garáž mu zmizí. Nedozví se to a může tě sledovat znovu.",
     "removeConfirm": "Odebrat",
-    "unnamed": "Bez jména"
+    "unnamed": "Bez jména",
+    "noFollowing": "Zatím nikoho nesleduješ. Najdi jezdce podle jména nebo @adresy nahoře."
   },
   "publicProfile": {
     "title": "Veřejný profil",

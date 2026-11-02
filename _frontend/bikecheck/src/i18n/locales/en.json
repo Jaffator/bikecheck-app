@@ -359,7 +359,13 @@
     "clearConfirmAction": "Delete",
     "clearFailed": "The history could not be deleted.",
     "emptyTitle": "Just ask",
-    "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides."
+    "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides.",
+    "suggestionsTitle": "Try asking",
+    "suggestionService": "What needs service soon?",
+    "suggestionChain": "Which chain is closest to its limit?",
+    "suggestionSpend": "How much did I spend on service this year?",
+    "suggestionDistance": "How far did I ride this month?",
+    "disclaimer": "Answers come from your BikeCheck data. Check important things before you act on them."
   },
   "checkIn": {
     "question": "How did the bike ride?",
@@ -1327,6 +1333,7 @@
     "stepMore": "{{field}}: one step more",
     "newProfile": "New profile",
     "profileMenu": "Profile actions",
+    "profiles": "Profiles",
     "rename": "Rename",
     "duplicate": "Duplicate",
     "delete": "Delete",
@@ -1431,7 +1438,14 @@
     "lsr": "LSR",
     "hsr": "HSR",
     "lsc": "LSC",
-    "hsc": "HSC"
+    "hsc": "HSC",
+    "profileCardTitle": "Your profile",
+    "profileCardEdit": "Edit",
+    "profileCardVisibility": "Visibility",
+    "profileCardBikes_one": "{{count}} bike",
+    "profileCardBikes_other": "{{count}} bikes",
+    "profileCardFollowers_one": "{{count}} follower",
+    "profileCardFollowers_other": "{{count}} followers"
   },
   "follow": {
     "follow": "Follow",
@@ -1470,7 +1484,8 @@
     "removeTitle": "Remove from followers?",
     "removeBody": "They lose the garage. They won't know and can follow you again.",
     "removeConfirm": "Remove",
-    "unnamed": "No name"
+    "unnamed": "No name",
+    "noFollowing": "You're not following anyone yet. Find riders by name or @address above."
   },
   "publicProfile": {
     "title": "Public profile",

@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
-import { Group, Skeleton, Stack, Text } from "@mantine/core";
+import { Box, Group, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBike } from "@/features/bikes/bikes.queries";
@@ -25,13 +25,24 @@ import {
   type SetupSuspension,
 } from "@/features/setup/setupForm";
 import { SetupProfileChips } from "@/features/setup/ui/SetupProfileChips";
-import { SetupProfileForm } from "@/features/setup/ui/SetupProfileForm";
+import { SetupDesktopLayout } from "@/features/setup/ui/SetupDesktopLayout";
+import { SetupHeaderSave } from "@/features/setup/ui/SetupHeaderSave";
+import {
+  SetupNote,
+  SetupProfileForm,
+  SetupSuspensionCards,
+  SetupTyres,
+  type SetupProfileFormProps,
+} from "@/features/setup/ui/SetupProfileForm";
+import { SetupProfileList } from "@/features/setup/ui/SetupProfileList";
 import { SetupProfileMenu } from "@/features/setup/ui/SetupProfileMenu";
 import { SetupProfileNameDrawer } from "@/features/setup/ui/SetupProfileNameDrawer";
 import { SetupSaveBar } from "@/features/setup/ui/SetupSaveBar";
+import { SetupSection } from "@/features/setup/ui/SetupSection";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useHeaderStore } from "@/store/store";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
+import { useIsDesktop } from "@/layout/breakpoints";
 
 // The pinned bar floats over the page, so the last field needs room to scroll clear of it.
 const BAR_CLEARANCE = "5rem";
@@ -59,6 +70,8 @@ export function Setup(): ReactElement {
   const updateComponent = useUpdateBikeComponent();
   const setTitleSlot = useHeaderStore((state) => state.setTitleSlot);
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
+  const setActionSlot = useHeaderStore((state) => state.setActionSlot);
+  const isDesktop = useIsDesktop();
   // Keep focused fields above the pinned bar and keyboard.
   const formRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
 
@@ -138,6 +151,26 @@ export function Setup(): ReactElement {
     setHeaderOnBack(() => backRef.current());
     return () => setHeaderOnBack(null);
   }, [setHeaderOnBack]);
+
+  // The header holds on to the button, so it calls whatever submit reads the latest numbers.
+  const submitRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    submitRef.current = submit;
+  });
+
+  // Desktop hangs Save in the header, and only while there is something to save.
+  useEffect(() => {
+    if (!isDesktop || !dirty) return;
+    setActionSlot(
+      <SetupHeaderSave
+        saving={save.isPending}
+        saveFailed={save.isError}
+        onDiscard={() => setEdits({})}
+        onSave={() => submitRef.current()}
+      />,
+    );
+    return () => setActionSlot(null);
+  }, [isDesktop, dirty, save.isPending, save.isError, setActionSlot]);
 
   function set<K extends keyof SetupFormValues>(key: K, value: SetupFormValues[K]): void {
     setEdits((current) => ({ ...current, [key]: value }));
@@ -225,60 +258,78 @@ export function Setup(): ReactElement {
     );
   }
 
+  // Everything done to profiles lives here - beginning one included.
+  const profileMenu = !archived && (
+    <SetupProfileMenu
+      onCreate={() => openCreate(false)}
+      hasProfile={profile !== null}
+      onRename={() => profile !== null && setNameSheet({ mode: "rename", profile })}
+      onDuplicate={() => openCreate(true)}
+      onDelete={() => setDeleting(profile)}
+    />
+  );
+  const formProps: SetupProfileFormProps = {
+    values,
+    onChange: set,
+    unit,
+    hasFork: bike.has_front_suspension,
+    hasShock: bike.has_rear_suspension,
+    fork,
+    shock,
+    onDualChange: setDual,
+    readOnly: archived,
+  };
+
   return (
     <>
-      <Stack
-        gap="md"
-        px="md"
-        pt="md"
-        pb={`calc(${BAR_CLEARANCE} + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
-        ref={formRef}
-      >
-        {/* Which profile this sheet is, and the others it can be switched to. It holds at the
-            top of the screen while the sheet scrolls, so a profile is a tap away from anywhere
-            on it. The offset is the app header's height - see AppLayout. */}
-        <Group
-          gap={4}
-          wrap="nowrap"
-          align="center"
-          py={6}
-          mt={-6}
-          style={{
-            position: "sticky",
-            top: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
-            zIndex: 2,
-            backgroundColor: "var(--mantine-color-background-9)",
-          }}
+      {isDesktop ? (
+        <Box p="md" ref={formRef}>
+          <SetupDesktopLayout
+            profiles={
+              <SetupSection title={t("setup.profiles")} action={profileMenu}>
+                <SetupProfileList profiles={profiles} selectedId={profile?.id ?? null} onSelect={select} />
+              </SetupSection>
+            }
+            tyres={<SetupTyres {...formProps} />}
+            note={<SetupNote {...formProps} />}
+            suspension={<SetupSuspensionCards {...formProps} />}
+          />
+        </Box>
+      ) : (
+        <Stack
+          gap="md"
+          px="md"
+          pt="md"
+          pb={`calc(${BAR_CLEARANCE} + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
+          ref={formRef}
         >
-          <SetupProfileChips profiles={profiles} selectedId={profile?.id ?? null} onSelect={select} />
-          {/* Everything done to profiles lives here - beginning one included. */}
-          {!archived && (
-            <SetupProfileMenu
-              onCreate={() => openCreate(false)}
-              hasProfile={profile !== null}
-              onRename={() => profile !== null && setNameSheet({ mode: "rename", profile })}
-              onDuplicate={() => openCreate(true)}
-              onDelete={() => setDeleting(profile)}
-            />
-          )}
-        </Group>
+          {/* Which profile this sheet is, and the others it can be switched to. It holds at the
+              top of the screen while the sheet scrolls, so a profile is a tap away from anywhere
+              on it. The offset is the app header's height - see AppLayout. */}
+          <Group
+            gap={4}
+            wrap="nowrap"
+            align="center"
+            py={6}
+            mt={-6}
+            style={{
+              position: "sticky",
+              top: "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))",
+              zIndex: 2,
+              backgroundColor: "var(--mantine-color-background-9)",
+            }}
+          >
+            <SetupProfileChips profiles={profiles} selectedId={profile?.id ?? null} onSelect={select} />
+            {profileMenu}
+          </Group>
 
-        <SetupProfileForm
-          values={values}
-          onChange={set}
-          unit={unit}
-          hasFork={bike.has_front_suspension}
-          hasShock={bike.has_rear_suspension}
-          fork={fork}
-          shock={shock}
-          onDualChange={setDual}
-          readOnly={archived}
-        />
-      </Stack>
+          <SetupProfileForm {...formProps} />
+        </Stack>
+      )}
 
       {/* Present only while there is something to save, so the page is clear the rest of the
           time. An Archived Bike takes no new numbers at all. */}
-      {!archived && (
+      {!archived && !isDesktop && (
         <SetupSaveBar visible={dirty} saving={save.isPending} saveFailed={save.isError} onSave={submit} />
       )}
 
