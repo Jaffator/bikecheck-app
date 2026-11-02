@@ -24,8 +24,16 @@ export function toPendingDto(activity: strava_pending_activities): ResponsePendi
     distance_km: Math.round(analyzed.distance_km),
     duration_min: Math.round(analyzed.duration_min),
     elevation_up_m: Math.round(analyzed.elevation_up_m),
+    elevation_down_m: roundedOrNull(analyzed.elevation_down_m),
+    speed_avg: roundedOrNull(analyzed.speed_avg),
+    max_speed_kmh: roundedOrNull(analyzed.max_speed_kmh),
     created_at: activity.created_at,
   };
+}
+
+// Older stored analyses may lack the figure; null reads as unknown, not zero.
+function roundedOrNull(value: number | undefined): number | null {
+  return typeof value === 'number' ? Math.round(value) : null;
 }
 
 // In the columns saveRide stores it under, so a ride with no bike yet previews like a saved one.

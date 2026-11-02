@@ -40,6 +40,16 @@ export class ResponsePendingStravaDto {
   @ApiProperty({ example: 612 })
   elevation_up_m!: number;
 
+  // Null for rows parked before the import kept the figure.
+  @ApiProperty({ type: Number, example: 598, nullable: true })
+  elevation_down_m!: number | null;
+
+  @ApiProperty({ type: Number, example: 26, nullable: true })
+  speed_avg!: number | null;
+
+  @ApiProperty({ type: Number, example: 54, nullable: true })
+  max_speed_kmh!: number | null;
+
   @ApiProperty({ example: '2026-08-19T06:40:00.000Z' })
   created_at!: Date;
 }

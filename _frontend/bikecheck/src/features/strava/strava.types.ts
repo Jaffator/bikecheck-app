@@ -47,6 +47,10 @@ export interface PendingRide {
   distance_km: number;
   duration_min: number;
   elevation_up_m: number;
+  // Null for rows parked before the import kept the figure.
+  elevation_down_m: number | null;
+  speed_avg: number | null;
+  max_speed_kmh: number | null;
   created_at: string;
 }
 
