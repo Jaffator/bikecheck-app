@@ -68,6 +68,7 @@ export function BikeFilterChips({
               size="sm"
               color="primary.6"
               rootRef={selected === null ? selectedRef : undefined}
+              icon={false}
               style={{ scrollMarginInline: SCROLL_MARGIN_PX }}
               styles={chipStyles(selected === null, { wrap: false, opaque })}
             >
@@ -82,6 +83,7 @@ export function BikeFilterChips({
               size="sm"
               color="primary.6"
               rootRef={selected === bike.id ? selectedRef : undefined}
+              icon={false}
               style={{ scrollMarginInline: SCROLL_MARGIN_PX }}
               styles={chipStyles(selected === bike.id, { wrap: false, opaque })}
             >

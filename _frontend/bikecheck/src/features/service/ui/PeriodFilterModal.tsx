@@ -122,6 +122,7 @@ function PeriodFilterModalBody({ opened, onClose, period, onApply }: PeriodFilte
                   radius="xl"
                   size="sm"
                   color="primary.6"
+                  icon={false}
                   // The same chip the bike filter above the list wears, so two filters on
                   // one screen do not read as two different controls.
                   styles={chipStyles(preset.id === selectedPreset, {
