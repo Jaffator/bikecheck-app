@@ -73,7 +73,7 @@ export class RideService {
 
   /**
    * What the check-in drawer walks: rides arrived since it last opened and still without a check-in,
-   * and recent rides waiting for a bike. Nothing at all until one of either has arrived.
+   * and Unassigned Rides arrived since then. Nothing at all until one of either has arrived.
    */
   async findCheckInPrompt(userId: number, now: Date = new Date()): Promise<ResponseCheckInPromptDto> {
     const since = promptSince(now);
@@ -89,14 +89,15 @@ export class RideService {
       where: { user_id: userId, created_at: { gte: since } },
       orderBy: { created_at: 'desc' },
     });
-    const waiting = waitingForBike(pendingRows, since);
+    const promptedAt = user?.check_in_prompted_at ?? null;
+    // A skipped ride never comes back; the Unassigned tab still holds it.
+    const waiting = waitingForBike(pendingRows, since).filter((row) => arrivedAfterPrompt(row.created_at, promptedAt));
 
     const recent = rows.filter((row) => row.started_at !== null && row.started_at >= since);
-    const promptedAt = user?.check_in_prompted_at ?? null;
     const arrivals = [...recent.map((row) => arrivedAt(row, pendingRows)), ...waiting.map((row) => row.created_at)];
     if (!arrivals.some((arrived) => arrivedAfterPrompt(arrived, promptedAt))) return { rides: [], pending: [] };
 
-    // The check-in is optional, so a ride with a bike is offered once; only a missing bike comes back.
+    // The check-in is optional, so a ride is offered once.
     const offered = recent.filter(
       (row) => row.check_in === null && arrivedAfterPrompt(arrivedAt(row, pendingRows), promptedAt),
     );

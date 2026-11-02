@@ -190,8 +190,8 @@ describe('RideService check-in', () => {
       expect(prompt.pending.map((one) => one.activity_id)).toEqual(['900']);
     });
 
-    // A missing bike is the one answer the drawer needs, so a skipped Unassigned Ride comes back.
-    it('brings a skipped ride back with the next arrival only while it has no bike', async () => {
+    // A skipped ride never locks the app again; the Unassigned tab still holds it.
+    it('does not bring a skipped Unassigned Ride back with the next arrival', async () => {
       mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: daysAgo(2) });
       mockPrisma.rides.findMany.mockResolvedValue([
         ride(3, 1, 1),
@@ -203,7 +203,7 @@ describe('RideService check-in', () => {
       const prompt = await service.findCheckInPrompt(1, NOW);
 
       expect(prompt.rides.map((one) => one.id)).toEqual([3]);
-      expect(prompt.pending.map((one) => one.activity_id)).toEqual(['900']);
+      expect(prompt.pending).toEqual([]);
     });
 
     it('offers neither list when nothing has arrived since the drawer last opened', async () => {
