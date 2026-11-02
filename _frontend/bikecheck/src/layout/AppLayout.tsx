@@ -99,7 +99,7 @@ function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | 
 }
 
 // A sidebar row on desktop, so the page gets the top-level title and no back arrow.
-const DESKTOP_TOP_LEVEL_ROUTES: string[] = ["/notifications"];
+const DESKTOP_TOP_LEVEL_ROUTES: string[] = ["/notifications", "/follows", "/chat"];
 
 function isSubPage(pathname: string, isDesktop: boolean): boolean {
   if (isDesktop && DESKTOP_TOP_LEVEL_ROUTES.includes(pathname)) return false;

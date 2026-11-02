@@ -1,15 +1,15 @@
 // The search field and, once it has asked, the "Výsledky" panel under it. Owns the typed
-// text; the list below it never learns what was typed.
-import { useState, type ReactElement } from "react";
+// text; the list below it never learns what was typed. Desktop splits the two: the field in
+// the header, the results in the card.
+import { useState, type CSSProperties, type ReactElement } from "react";
 import { CloseButton, Loader, Text, TextInput } from "@mantine/core";
-import { useDebouncedValue } from "@mantine/hooks";
 import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { inputStyles } from "@/features/add_bike_page/formStyles";
-import { useFollowSearch } from "../follow.queries";
-import { normalizeQuery, SEARCH_DEBOUNCE_MS, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from "../followSearch";
+import { SEARCH_MAX_LENGTH } from "../followSearch";
 import type { FollowSearchResponse } from "../follow.types";
+import { useTypedFollowSearch } from "../useTypedFollowSearch";
 import { FollowButton } from "./FollowButton";
 import { FollowPanel } from "./FollowPanel";
 import { PersonRow } from "./PersonRow";
@@ -17,41 +17,61 @@ import { PersonRow } from "./PersonRow";
 const ICON_SIZE = 16;
 
 export function FollowSearch(): ReactElement {
-  const { t } = useTranslation();
   const [typed, setTyped] = useState("");
-  const query = normalizeQuery(typed);
-  const askable = query.length >= SEARCH_MIN_LENGTH;
-  const [settled] = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
-  const search = useFollowSearch(settled);
-  // Busy from the first keystroke past the minimum until the answer to the last one lands.
-  const searching = askable && (settled !== query || search.isFetching);
+  const { askable, searching, search } = useTypedFollowSearch(typed);
 
   return (
     <>
-      <TextInput
-        value={typed}
-        onChange={(event) => setTyped(event.currentTarget.value)}
-        placeholder={t("follow.searchPlaceholder")}
-        maxLength={SEARCH_MAX_LENGTH}
-        autoCapitalize="none"
-        autoCorrect="off"
-        leftSection={<Search size={ICON_SIZE} color="var(--color-text-dim)" />}
-        rightSection={
-          searching ? (
-            <Loader size={14} color="var(--color-text-dim)" />
-          ) : typed.length > 0 ? (
-            <CloseButton size="sm" c="var(--color-text-dim)" aria-label={t("follow.searchClear")} onClick={() => setTyped("")} />
-          ) : null
-        }
-        styles={inputStyles}
-      />
-
-      {askable && (
-        <FollowPanel title={resultsTitle(t, search.data)} empty={emptyText(t, search.data, search.isError)}>
-          {resultRows(t, search.data)}
-        </FollowPanel>
-      )}
+      <FollowSearchField value={typed} onChange={setTyped} searching={searching} />
+      {askable && <FollowSearchResults answer={search.data} failed={search.isError} />}
     </>
+  );
+}
+
+interface FollowSearchFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  searching: boolean;
+  style?: CSSProperties;
+}
+
+export function FollowSearchField({ value, onChange, searching, style }: FollowSearchFieldProps): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <TextInput
+      value={value}
+      onChange={(event) => onChange(event.currentTarget.value)}
+      placeholder={t("follow.searchPlaceholder")}
+      maxLength={SEARCH_MAX_LENGTH}
+      autoCapitalize="none"
+      autoCorrect="off"
+      leftSection={<Search size={ICON_SIZE} color="var(--color-text-dim)" />}
+      rightSection={
+        searching ? (
+          <Loader size={14} color="var(--color-text-dim)" />
+        ) : value.length > 0 ? (
+          <CloseButton size="sm" c="var(--color-text-dim)" aria-label={t("follow.searchClear")} onClick={() => onChange("")} />
+        ) : null
+      }
+      styles={inputStyles}
+      style={style}
+    />
+  );
+}
+
+interface FollowSearchResultsProps {
+  answer: FollowSearchResponse | undefined;
+  failed: boolean;
+}
+
+export function FollowSearchResults({ answer, failed }: FollowSearchResultsProps): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <FollowPanel title={resultsTitle(t, answer)} empty={emptyText(t, answer, failed)}>
+      {resultRows(t, answer)}
+    </FollowPanel>
   );
 }
 

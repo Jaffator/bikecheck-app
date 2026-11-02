@@ -62,7 +62,7 @@ function barHint(psi: number): string {
   return `(${fromPsi(psi, "bar")} bar)`;
 }
 
-interface SetupProfileFormProps {
+export interface SetupProfileFormProps {
   values: SetupFormValues;
   onChange: <K extends keyof SetupFormValues>(key: K, value: SetupFormValues[K]) => void;
   unit: TirePressureUnit;
@@ -77,10 +77,56 @@ interface SetupProfileFormProps {
   readOnly?: boolean;
 }
 
-export function SetupProfileForm({
+// The phone reads the sheet top to bottom; desktop lays the same parts out in columns.
+export function SetupProfileForm(props: SetupProfileFormProps): ReactElement {
+  return (
+    <Stack gap="md">
+      <SetupTyres {...props} />
+      <SetupSuspensionCards {...props} />
+      <SetupNote {...props} />
+    </Stack>
+  );
+}
+
+export function SetupTyres({ values, onChange, unit, readOnly = false }: SetupProfileFormProps): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <SetupSection title={t("setup.tyres")}>
+      {/* The same two columns as the suspension cards, so the steppers line up down the sheet. */}
+      <SimpleGrid cols={2} spacing={GAUGE_GRID_SPACING}>
+        <SetupGauge
+          label={t("setup.front")}
+          value={values.front_tire}
+          onChange={(value) => onChange("front_tire", value)}
+          unit={unit}
+          decimals={PRESSURE_DECIMALS[unit]}
+          max={TYRE_PRESSURE_MAX[unit]}
+          step={TYRE_PRESSURE_STEP[unit]}
+          start={TYRE_PRESSURE_START[unit]}
+          hint={(value) => otherUnitReading(value, unit)}
+          readOnly={readOnly}
+        />
+        <SetupGauge
+          label={t("setup.rear")}
+          value={values.rear_tire}
+          onChange={(value) => onChange("rear_tire", value)}
+          unit={unit}
+          decimals={PRESSURE_DECIMALS[unit]}
+          max={TYRE_PRESSURE_MAX[unit]}
+          step={TYRE_PRESSURE_STEP[unit]}
+          start={TYRE_PRESSURE_START[unit]}
+          hint={(value) => otherUnitReading(value, unit)}
+          readOnly={readOnly}
+        />
+      </SimpleGrid>
+    </SetupSection>
+  );
+}
+
+export function SetupSuspensionCards({
   values,
   onChange,
-  unit,
   hasFork,
   hasShock,
   fork,
@@ -90,39 +136,9 @@ export function SetupProfileForm({
 }: SetupProfileFormProps): ReactElement {
   const { t } = useTranslation();
 
+  // Desktop sets the two suspension cards side by side; a bike with one keeps it full width.
   return (
-    <Stack gap="md">
-      {/* ---------- Tyres ---------- */}
-      <SetupSection title={t("setup.tyres")}>
-        {/* The same two columns as the suspension cards, so the steppers line up down the sheet. */}
-        <SimpleGrid cols={2} spacing={GAUGE_GRID_SPACING}>
-          <SetupGauge
-            label={t("setup.front")}
-            value={values.front_tire}
-            onChange={(value) => onChange("front_tire", value)}
-            unit={unit}
-            decimals={PRESSURE_DECIMALS[unit]}
-            max={TYRE_PRESSURE_MAX[unit]}
-            step={TYRE_PRESSURE_STEP[unit]}
-            start={TYRE_PRESSURE_START[unit]}
-            hint={(value) => otherUnitReading(value, unit)}
-            readOnly={readOnly}
-          />
-          <SetupGauge
-            label={t("setup.rear")}
-            value={values.rear_tire}
-            onChange={(value) => onChange("rear_tire", value)}
-            unit={unit}
-            decimals={PRESSURE_DECIMALS[unit]}
-            max={TYRE_PRESSURE_MAX[unit]}
-            step={TYRE_PRESSURE_STEP[unit]}
-            start={TYRE_PRESSURE_START[unit]}
-            hint={(value) => otherUnitReading(value, unit)}
-            readOnly={readOnly}
-          />
-        </SimpleGrid>
-      </SetupSection>
-
+    <SimpleGrid cols={{ base: 1, md: hasFork && hasShock ? 2 : 1 }} spacing="md">
       {/* ---------- Fork ---------- */}
       {hasFork && (
         <SetupSection title={t("setup.fork")}>
@@ -216,19 +232,24 @@ export function SetupProfileForm({
           />
         </SetupSection>
       )}
+    </SimpleGrid>
+  );
+}
 
-      {/* ---------- Note ---------- */}
-      <Textarea
-        label={t("setup.note")}
-        placeholder={readOnly ? undefined : t("setup.notePlaceholder")}
-        styles={autosizeInputStyles}
-        autosize
-        minRows={2}
-        maxRows={5}
-        value={values.note}
-        readOnly={readOnly}
-        onChange={(event) => onChange("note", event.currentTarget.value)}
-      />
-    </Stack>
+export function SetupNote({ values, onChange, readOnly = false }: SetupProfileFormProps): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Textarea
+      label={t("setup.note")}
+      placeholder={readOnly ? undefined : t("setup.notePlaceholder")}
+      styles={autosizeInputStyles}
+      autosize
+      minRows={2}
+      maxRows={5}
+      value={values.note}
+      readOnly={readOnly}
+      onChange={(event) => onChange("note", event.currentTarget.value)}
+    />
   );
 }

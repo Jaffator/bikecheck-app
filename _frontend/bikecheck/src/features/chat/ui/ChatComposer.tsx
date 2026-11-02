@@ -1,7 +1,7 @@
 // Where the question is typed. Pinned to the bottom edge (docs/ui/pinned-action-bar.md); chat
 // is a sub-page, so no tab bar stands under it.
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { ActionIcon, Box, Group, Stack, Text, Textarea } from "@mantine/core";
+import { ActionIcon, Box, Group, Stack, Text, Textarea, type BoxProps } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Send } from "lucide-react";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -45,19 +45,8 @@ interface ChatComposerProps {
   chips?: ReactNode;
 }
 
-export function ChatComposer({
-  value,
-  onChange,
-  onSend,
-  running,
-  failed,
-  actions,
-  chips,
-}: ChatComposerProps): ReactElement {
-  const { t, i18n } = useTranslation();
+export function ChatComposer(props: ChatComposerProps): ReactElement {
   const keyboardOffset = useKeyboardOffset();
-  const empty = value.trim().length === 0;
-  const disabled = empty || running;
 
   return (
     <Box
@@ -90,15 +79,41 @@ export function ChatComposer({
           zIndex: -1,
         }}
       />
+      <ComposerBar {...props} width={PINNED_BAR_WIDTH} />
+    </Box>
+  );
+}
+
+// Desktop: the bar stands at the foot of the chat column, which scrolls the thread above it.
+export function ChatComposerInline(props: ChatComposerProps): ReactElement {
+  return <ComposerBar {...props} width="100%" />;
+}
+
+function ComposerBar({
+  value,
+  onChange,
+  onSend,
+  running,
+  failed,
+  actions,
+  chips,
+  width,
+}: ChatComposerProps & { width: BoxProps["w"] }): ReactElement {
+  const { t, i18n } = useTranslation();
+  const empty = value.trim().length === 0;
+  const disabled = empty || running;
+
+  return (
+    <>
       {chips !== undefined && (
         // The same width as the pill, so the two read as one bar.
-        <Box w={PINNED_BAR_WIDTH} style={{ pointerEvents: "auto" }}>
+        <Box w={width} style={{ pointerEvents: "auto" }}>
           {chips}
         </Box>
       )}
       <Stack
         gap={6}
-        w={PINNED_BAR_WIDTH}
+        w={width}
         pl="md"
         // The send button sits nearer the edge than the plus does, so the row reads as
         // running into it rather than ending short of the pill.
@@ -154,7 +169,7 @@ export function ChatComposer({
           </ActionIcon>
         </Group>
       </Stack>
-    </Box>
+    </>
   );
 }
 

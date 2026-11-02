@@ -71,7 +71,8 @@ export function SetupGauge({
       <Text style={fieldLabel}>{label}</Text>
       <div style={{ position: "relative", width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-          <path d={arc} fill="none" stroke="var(--color-decor-sunk)" strokeWidth={stroke} strokeLinecap="round" />
+          {/* Darker than the card, which decor-sunk nearly matches. */}
+          <path d={arc} fill="none" stroke="var(--color-surface-well)" strokeWidth={stroke} strokeLinecap="round" />
           <path
             d={arc}
             fill="none"

@@ -432,11 +432,11 @@ function ActionRowHeader({
       : "";
 
   return (
-    <Group gap={4} wrap="nowrap">
+    <Group gap={4} wrap="nowrap" align="stretch">
+      {/* Only as wide as its text, so a tap past the name opens the details instead of ticking. */}
       <Box
         component="label"
         style={{
-          flex: 1,
           minWidth: 0,
           minHeight: LIST_ROW_HEIGHT,
           // Air for a ticked row whose parts add a second line.
@@ -486,13 +486,13 @@ function ActionRowHeader({
         aria-expanded={opened}
         aria-label={opened ? t("addService.hideActionDetails") : t("addService.showActionDetails")}
         onClick={onToggleOpen}
-        w={CHEVRON_TARGET}
-        h={CHEVRON_TARGET}
         mr={CHEVRON_PULL}
         c="text.8"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+        style={{ flex: 1, minWidth: CHEVRON_TARGET, display: "flex", alignItems: "center", justifyContent: "flex-end" }}
       >
-        {opened ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        <Box w={CHEVRON_TARGET} h={CHEVRON_TARGET} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {opened ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </Box>
       </UnstyledButton>
     </Group>
   );
