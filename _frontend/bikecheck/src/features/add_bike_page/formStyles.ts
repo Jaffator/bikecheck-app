@@ -108,7 +108,7 @@ export function chipStyles(
       ...(checked
         ? {
             "--chip-color": "var(--mantine-color-primary-6)",
-            backgroundColor: `color-mix(in srgb, var(--mantine-color-primary-6) 15%, ${opaque ? "var(--mantine-color-background-9)" : "transparent"})`,
+            backgroundColor: `color-mix(in srgb, var(--mantine-color-primary-6) 20%, ${opaque ? "var(--mantine-color-background-9)" : "transparent"})`,
             color: "var(--mantine-color-primary-6)",
           }
         : {

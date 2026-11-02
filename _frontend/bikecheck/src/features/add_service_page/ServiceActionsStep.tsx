@@ -269,7 +269,7 @@ function pickerChipStyles(checked: boolean): ReturnType<typeof chipStyles> {
       paddingLeft: 12,
       paddingRight: 12,
       ...(checked && {
-        backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 15%, var(--mantine-color-cards-6))",
+        backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 20%, var(--mantine-color-cards-6))",
       }),
       color: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
     } as CSSProperties,
