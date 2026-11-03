@@ -80,7 +80,7 @@ export class ResponseRideDto {
   @ApiProperty({ type: String, example: '2026-08-19T08:40:00.000Z', nullable: true })
   created_at!: string | null;
 
-  // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
+  // Every Tracked Action the ride wore, closest to due first; empty where it wore off nothing.
   @ApiProperty({ type: [Response_WoreOffLineDto] })
   wore_off!: Response_WoreOffLineDto[];
 

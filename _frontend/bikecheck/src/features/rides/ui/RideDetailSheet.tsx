@@ -57,9 +57,13 @@ const DESKTOP_STYLES: Record<string, CSSProperties> = {
 const COLUMNS_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  alignItems: "start",
+  // Both columns as tall as the taller, so their last cards end on one line.
+  alignItems: "stretch",
   gap: MODAL_PADDING,
 };
+
+// The rest stays put at the top; only a column's last card drops to its bottom.
+const PUSHED_DOWN: CSSProperties = { marginTop: "auto" };
 
 interface RideDetailSheetProps {
   // Null closes the sheet.
@@ -118,8 +122,14 @@ function RideDetailBody({ item, picked, startWith, onClose, walk }: RideDetailBo
   const isDesktop = useIsDesktop();
   const top = useScrolledToTop();
   const checkIn = useRideCheckIn({ item, picked, onSaved: walk?.onNext ?? onClose, startWith });
-  const overview = <RideOverview item={item} mapHeight={isDesktop ? MAP_HEIGHT_DESKTOP : MAP_HEIGHT_PHONE} />;
-  const answers = <RideAnswers item={item} checkIn={checkIn} walk={walk} />;
+  const woreOff = <WoreOffCard lines={woreOffShown(item, checkIn.pick, walk)} />;
+  // Desktop has the room for the wear under the figures, beside the check-in.
+  const overview = (
+    <RideOverview item={item} mapHeight={isDesktop ? MAP_HEIGHT_DESKTOP : MAP_HEIGHT_PHONE}>
+      {isDesktop && <Box style={PUSHED_DOWN}>{woreOff}</Box>}
+    </RideOverview>
+  );
+  const answers = <RideAnswers item={item} checkIn={checkIn} woreOff={isDesktop ? null : woreOff} />;
   const actions =
     walk === undefined ? (
       <RideDetailActions item={item} checkIn={checkIn} onClose={onClose} />
@@ -178,7 +188,13 @@ function DesktopLayout({ overview, answers, actions }: LayoutProps): ReactElemen
   );
 }
 
-function RideOverview({ item, mapHeight }: { item: RideItem; mapHeight: number }): ReactElement {
+interface RideOverviewProps {
+  item: RideItem;
+  mapHeight: number;
+  children?: ReactNode;
+}
+
+function RideOverview({ item, mapHeight, children }: RideOverviewProps): ReactElement {
   const isDesktop = useIsDesktop();
 
   return (
@@ -186,6 +202,7 @@ function RideOverview({ item, mapHeight }: { item: RideItem; mapHeight: number }
       {/* Static on the phone, so a drag on it never fights the sheet's own. */}
       <RideMap polyline={item.ride.summary_polyline} height={mapHeight} interactive={isDesktop} />
       <RideFigureGrid figures={rideFiguresOf(item)} />
+      {children}
     </Stack>
   );
 }
@@ -193,12 +210,13 @@ function RideOverview({ item, mapHeight }: { item: RideItem; mapHeight: number }
 interface RideAnswersProps {
   item: RideItem;
   checkIn: RideCheckInState;
-  walk?: RideWalk;
+  woreOff: ReactNode;
 }
 
 // The bike, how it rode, what it wore off and the AI review, which an Unassigned Ride has none of yet.
-function RideAnswers({ item, checkIn, walk }: RideAnswersProps): ReactElement {
+function RideAnswers({ item, checkIn, woreOff }: RideAnswersProps): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
   const { data: bikes } = useBikes();
   const [pickerOpened, setPickerOpened] = useState(false);
   const pickedId = checkIn.pick?.kind === "bike" ? checkIn.pick.bikeId : null;
@@ -224,8 +242,12 @@ function RideAnswers({ item, checkIn, walk }: RideAnswersProps): ReactElement {
         </Box>
       )}
 
-      <WoreOffCard lines={woreOffShown(item, checkIn.pick, walk)} />
-      {item.kind === "ride" && <RideAiSummary rideId={item.ride.id} />}
+      {woreOff}
+      {item.kind === "ride" && (
+        <Box style={isDesktop ? PUSHED_DOWN : undefined}>
+          <RideAiSummary rideId={item.ride.id} />
+        </Box>
+      )}
     </Stack>
   );
 }

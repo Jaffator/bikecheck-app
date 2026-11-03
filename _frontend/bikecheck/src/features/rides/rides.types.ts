@@ -66,7 +66,7 @@ export interface Ride {
   sport_type: string | null;
   // When the ride reached BikeCheck, not when it was ridden.
   created_at: string | null;
-  // The Tracked Actions the ride pushed closest to due, at most three; empty where it wore off nothing.
+  // Every Tracked Action the ride wore, closest to due first; empty where it wore off nothing.
   wore_off: WoreOffLine[];
   // Null until the rider says how the bike rode.
   check_in: RideCheckIn | null;

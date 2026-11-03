@@ -2530,7 +2530,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // What the ride pushed toward service leads; a Tracked Action it added nothing to is not listed at all.
-    it('keeps the three closest to due after the ride, then the biggest gain, and drops what it did not wear', async () => {
+    it('lists every line closest to due after the ride, then the biggest gain, and drops what it did not wear', async () => {
       fleet(
         [bikeRow(BIKE_ID, 'Santa Cruz')],
         [
@@ -2557,11 +2557,12 @@ describe('ServiceTrackingService', () => {
         rideRow(1, '2026-09-20T09:00:00.000Z', { distanceM: 50000, drivetrainM: 40000, suspensionMin: 100 }),
       ]);
 
-      // Rear tyre 85 → 90, fork 70 → 80 ahead of front tyre 75 → 80 by its gain; the chain is fourth, the pads wore nothing.
+      // Rear tyre 85 → 90, fork 70 → 80 ahead of front tyre 75 → 80 by its gain, then the chain; the pads wore nothing.
       expect(figures(lines.get(1))).toEqual([
         [61, TYRE_REPLACEMENT, 50, 85, 90],
         [56, FORK_SERVICE, 100, 70, 80],
         [52, TYRE_REPLACEMENT, 50, 75, 80],
+        [55, CHAIN_REPLACEMENT, 40, 49, 50],
       ]);
     });
 
@@ -2744,7 +2745,7 @@ describe('ServiceTrackingService', () => {
     });
 
     // Ranked like the ride's own line: closest to due after it, then the biggest gain, nothing it did not wear.
-    it('keeps the three closest to due after the ride and drops what it did not wear', async () => {
+    it('lists every line closest to due after the ride and drops what it did not wear', async () => {
       fleet(
         [bikeRow(OTHER_BIKE_ID, 'Trek')],
         [
@@ -2788,11 +2789,12 @@ describe('ServiceTrackingService', () => {
 
       const ride = { ...ridden({ distanceM: 50000, drivetrainM: 40000 }), suspension_min: 100 };
 
-      // Rear tyre 85 → 90, fork 70 → 80 ahead of front tyre 75 → 80 by its gain; the chain is fourth, the pads wore nothing.
+      // Rear tyre 85 → 90, fork 70 → 80 ahead of front tyre 75 → 80 by its gain, then the chain; the pads wore nothing.
       expect(await figuresOn(OTHER_BIKE_ID, ride)).toEqual([
         [61, TYRE_REPLACEMENT, 50, 85, 90],
         [56, FORK_SERVICE, 100, 70, 80],
         [52, TYRE_REPLACEMENT, 50, 75, 80],
+        [55, CHAIN_REPLACEMENT, 40, 50, 51],
       ]);
     });
   });

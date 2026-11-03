@@ -1,10 +1,8 @@
 // The ride detail's check-in, always open: a second tap clears an answer, the rest waits for one.
 import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { Box, Group, Stack, Text } from "@mantine/core";
+import { Box, Group, Stack, Text, Textarea } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
-import { PANEL_HAIRLINE } from "@/components/panelRows";
-import { TextRow } from "@/components/TextRow";
 import { CHECK_IN_NOTE_MAX_LENGTH, type CheckInDraft } from "@/features/rides/checkIn";
 import type { CheckInStatus } from "@/features/rides/rides.types";
 import { useIsDesktop } from "@/layout/breakpoints";
@@ -26,6 +24,14 @@ const TRACK_STYLE: CSSProperties = {
   gap: 3,
   padding: 3,
   borderRadius: 10,
+};
+
+// The card is the field, so the unstyled input only needs the dark ink.
+const NOTE_STYLES = {
+  input: {
+    color: "var(--mantine-color-text-6)",
+    "--input-placeholder-color": "var(--mantine-color-text-9)",
+  } as CSSProperties,
 };
 
 interface RideCheckInFieldsProps {
@@ -68,15 +74,23 @@ export function RideCheckInFields({ draft, onChange }: RideCheckInFieldsProps): 
         </Field>
       )}
 
-      <Box style={{ borderBottom: PANEL_HAIRLINE }}>
-        <TextRow
-          label={t("checkIn.note")}
-          value={draft.note}
-          placeholder={t("checkIn.notePlaceholder")}
-          maxLength={CHECK_IN_NOTE_MAX_LENGTH}
-          onChange={(note) => onChange({ ...draft, note })}
-        />
-      </Box>
+      <Stack gap={8} mt="xs">
+        <Eyebrow>{t("checkIn.note")}</Eyebrow>
+        <Box px="md" py={6} style={RIDE_CARD_STYLE}>
+          <Textarea
+            variant="unstyled"
+            aria-label={t("checkIn.note")}
+            value={draft.note}
+            placeholder={t("checkIn.notePlaceholder")}
+            maxLength={CHECK_IN_NOTE_MAX_LENGTH}
+            autosize
+            minRows={3}
+            maxRows={6}
+            styles={NOTE_STYLES}
+            onChange={(event) => onChange({ ...draft, note: event.currentTarget.value })}
+          />
+        </Box>
+      </Stack>
     </Stack>
   );
 }

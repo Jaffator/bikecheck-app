@@ -118,7 +118,7 @@ function CompactRide({ ride, colorIndex }: RideBodyProps): ReactElement {
           <RideMetrics ride={ride} compact />
         </Stack>
       </Group>
-      {/* A quiet pointer only; no count, since wore_off carries at most three lines. */}
+      {/* A quiet pointer only; the detail lists what the ride wore off. */}
       {ride.wore_off.length > 0 && (
         <Group gap={4} wrap="nowrap">
           <Text fz={13} c="var(--color-text-dim)">
