@@ -1,31 +1,56 @@
 // Buckets and weeks read from a bike's metres per UTC day, index 0 = the served `from`. Every sum
 // stays in metres; a value is rounded only where it is printed, so the buckets add up to exactly the total.
-import dayjs from "dayjs";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatNumber } from "@/utils/number";
-import type { ComparedPeriod } from "./figureReadings";
 import type { DistanceBucket } from "./homePeriod";
-import type { Distance, DistanceBike, DistancePrevious, HomePeriod } from "./stats.types";
+import type {
+  ComparedDistance,
+  ComparedPeriod,
+  Distance,
+  DistanceBike,
+  DistancePrevious,
+  HomePeriod,
+} from "./stats.types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Distance and climb share one span; only the days summed, the previous total and the unit differ.
+// Distance, climb and time share one span; only the days summed and how they are printed differ.
 export interface DailySeries {
   daily: (bike: DistanceBike) => number[];
   previous: (previous: DistancePrevious) => number;
-  format: (meters: number, language: string) => string;
+  previousDaily: (previous: DistancePrevious) => number[];
+  // The figure's number without its unit, for a tile that prints the two apart.
+  figure: (value: number, language: string) => string;
+  unit: string;
+  format: (value: number, language: string) => string;
 }
 
 export const RIDDEN: DailySeries = {
   daily: (bike) => bike.daily_m,
   previous: (previous) => previous.meters,
+  previousDaily: (previous) => previous.daily_m,
+  figure: (meters, language) => formatNumber(Math.round(meters / 1000), language),
+  unit: "km",
   format: (meters, language) => formatKm(Math.round(meters / 1000), language),
 };
 
 export const CLIMBED: DailySeries = {
   daily: (bike) => bike.daily_elevation_m,
   previous: (previous) => previous.elevation_m,
+  previousDaily: (previous) => previous.daily_elevation_m,
+  figure: (meters, language) => formatNumber(meters, language),
+  unit: "m",
   format: (meters, language) => `${formatNumber(meters, language)} m`,
+};
+
+// Minutes, printed as whole hours.
+export const SADDLE_TIME: DailySeries = {
+  daily: (bike) => bike.daily_time_min,
+  previous: (previous) => previous.time_min,
+  previousDaily: (previous) => previous.daily_time_min,
+  figure: (minutes, language) => formatNumber(Math.round(minutes / 60), language),
+  unit: "h",
+  format: (minutes, language) => `${formatNumber(Math.round(minutes / 60), language)} h`,
 };
 
 // The UTC day `index` days after `from`.
@@ -82,29 +107,64 @@ function metersSince(distance: Distance, since: Date, series: DailySeries): numb
   return days.reduce((sum, meters) => sum + meters, 0);
 }
 
-export type BarState = "past" | "current" | "future";
-
-export interface PeriodBar {
-  meters: number;
-  state: BarState;
+// What a Home figure's graphic draws, bucket by bucket, against the whole of the Period before.
+export interface PeriodSeries {
+  current: number[];
+  previous: number[];
+  // The bucket holding the last served day; later ones are still to come.
+  today: number;
 }
 
-// Every bucket of the Period, whether served yet or not: a year's 12 months, a month's days.
-export function periodBars(distance: Distance, period: ComparedPeriod, series: DailySeries): PeriodBar[] {
-  const bucket = period === "year" ? "month" : "day";
-  const count = period === "year" ? 12 : dayjs(distance.from).daysInMonth();
-  const served = bucketMeters(garageDaily(distance, series), distance, bucket);
+// A year's 12 months; a month's blocks of 7 days from its 1st, the last one short. Both rows run to
+// the longer one, so January's 5th block still shadows a February with 4.
+export function periodSeries(distance: ComparedDistance, period: ComparedPeriod, series: DailySeries): PeriodSeries {
+  const daily = garageDaily(distance, series);
+  const current = figureBuckets(daily, distance.from, period);
+  const earlier = figureBuckets(series.previousDaily(distance.previous), distance.previous.from, period);
+  const count = Math.max(current.length, earlier.length);
+  const padded = (values: number[]): number[] => Array.from({ length: count }, (_, index) => values[index] ?? 0);
+  return {
+    current: padded(current),
+    previous: padded(earlier),
+    today: figureBucketOf(distance.from, daily.length - 1, period),
+  };
+}
 
-  return Array.from({ length: count }, (_, index) => {
-    if (index >= served.length) return { meters: 0, state: "future" };
-    return { meters: served[index], state: index === served.length - 1 ? "current" : "past" };
+// The time cells: a year's months, a month's days with the ones still to come at 0.
+export function cellSeries(distance: ComparedDistance, period: ComparedPeriod, series: DailySeries): PeriodSeries {
+  if (period === "year") return periodSeries(distance, period, series);
+  const daily = garageDaily(distance, series);
+  return {
+    current: Array.from({ length: daysInMonth(distance.from) }, (_, day) => daily[day] ?? 0),
+    previous: series.previousDaily(distance.previous),
+    today: daily.length - 1,
+  };
+}
+
+function figureBuckets(daily: number[], from: string, period: ComparedPeriod): number[] {
+  const count = period === "year" ? 12 : Math.ceil(daysInMonth(from) / 7);
+  const buckets = new Array<number>(count).fill(0);
+  daily.forEach((value, day) => {
+    buckets[figureBucketOf(from, day, period)] += value;
   });
+  return buckets;
 }
 
+function figureBucketOf(from: string, day: number, period: ComparedPeriod): number {
+  return period === "month" ? Math.floor(day / 7) : bucketIndex(dayOf(from, 0), dayOf(from, day), "month");
+}
+
+function daysInMonth(from: string): number {
+  const first = dayOf(from, 0);
+  return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+}
+
+// Every bike's values added up day by day; a garage with no ride is a row of 0s, never empty.
 function garageDaily(distance: Distance, series: DailySeries): number[] {
+  const served = bucketIndex(dayOf(distance.from, 0), dayOf(distance.to, 0), "day") + 1;
   return distance.bikes.reduce<number[]>(
-    (sum, bike) => series.daily(bike).map((meters, day) => meters + (sum[day] ?? 0)),
-    [],
+    (sum, bike) => sum.map((value, day) => value + (series.daily(bike)[day] ?? 0)),
+    new Array<number>(served).fill(0),
   );
 }
 

@@ -1,20 +1,28 @@
-// A figure as one section of a figures card: an eyebrow, one value, and a detail line with a
-// small graphic at its end; pressable when it does something.
+// A figure as one section of a figures card: an icon and eyebrow, a value with its unit apart, a share
+// chip with its words, and a graphic along the bottom; pressable when it does something.
 import type { ReactElement, ReactNode } from "react";
-import { Box, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Center, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { Eyebrow } from "./Eyebrow";
 import { PRESS_TRANSITION } from "./panelRows";
+import { Pill } from "./Pill";
 
 // The skeleton holds the value's line, so nothing jumps when it loads.
-const VALUE_LINE = 28;
-// As tall as the tallest graphic, so the sections' detail lines sit level.
-const DETAIL_LINE = 24;
+const VALUE_LINE = 32;
+const ICON_BOX = 26;
+// The chip's height, held even without one, so the graphic sits at the same place in every section.
+const CHIP_HEIGHT = 22;
+// Every section keeps the slot, so the four bottoms sit level whether or not one draws anything.
+export const GRAPHIC_HEIGHT = 56;
 
 export interface FigureSectionProps {
+  // Drawn at 15 px in the accent, in a raised square.
+  icon: ReactNode;
   title: string;
   // Null while it loads.
-  value: ReactNode | null;
-  chip?: ReactNode;
+  value: string | null;
+  unit: string;
+  // The share, as a pill; none when there is nothing to set the figure against.
+  chip?: string;
   detail?: ReactNode;
   // Numbers get tabular numerals so they line up; words do not.
   detailFigure?: boolean;
@@ -23,8 +31,10 @@ export interface FigureSectionProps {
 }
 
 export function FigureSection({
+  icon,
   title,
   value,
+  unit,
   chip,
   detail,
   detailFigure = false,
@@ -32,39 +42,53 @@ export function FigureSection({
   onOpen,
 }: FigureSectionProps): ReactElement {
   const body = (
-    <Stack gap={5}>
-      <Eyebrow>{title}</Eyebrow>
+    <Stack gap={6} h="100%">
+      <Group gap={8} wrap="nowrap">
+        <Center
+          w={ICON_BOX}
+          h={ICON_BOX}
+          c="primary.6"
+          style={{ flexShrink: 0, borderRadius: 8, backgroundColor: "var(--color-surface-raised)" }}
+        >
+          {icon}
+        </Center>
+        <Eyebrow>{title}</Eyebrow>
+      </Group>
       {value === null ? (
         <Skeleton h={VALUE_LINE} w="50%" radius="sm" />
       ) : (
-        <Text
-          className="tabular-nums"
-          fz={22}
-          fw={600}
-          lh={`${String(VALUE_LINE)}px`}
-          lts="var(--tracking-title)"
-          c="text.6"
-          lineClamp={1}
-        >
-          {value}
-        </Text>
-      )}
-      <Group gap={8} wrap="nowrap" justify="space-between" mih={DETAIL_LINE}>
-        <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-          {chip}
+        <Group gap={6} align="baseline" wrap="nowrap">
           <Text
-            className={detailFigure ? "tabular-nums" : undefined}
-            // A step under the phone tile's 13, as it shares the line with a chip and a graphic.
-            fz={12}
-            c="var(--color-text-dim)"
+            className="tabular-nums"
+            fz={28}
+            fw={700}
+            lh={`${String(VALUE_LINE)}px`}
+            lts="var(--tracking-display)"
+            c="text.6"
             truncate
-            style={{ minWidth: 0 }}
           >
-            {detail}
+            {value}
+          </Text>
+          <Text fz={14} fw={600} c="var(--color-text-dim)">
+            {unit}
           </Text>
         </Group>
-        {graphic}
+      )}
+      <Group gap={8} wrap="nowrap" mih={CHIP_HEIGHT}>
+        {chip !== undefined && <Pill>{chip}</Pill>}
+        <Text
+          className={detailFigure ? "tabular-nums" : undefined}
+          fz={12}
+          c="var(--color-text-dim)"
+          truncate
+          style={{ minWidth: 0 }}
+        >
+          {detail}
+        </Text>
       </Group>
+      <Box mt="auto" h={GRAPHIC_HEIGHT} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        {graphic}
+      </Box>
     </Stack>
   );
 

@@ -39,8 +39,9 @@ export interface DistanceBike {
   color_index: number;
   // Metres per UTC day, index 0 = the served `from`, one entry per day through `to`.
   daily_m: number[];
-  // Metres climbed per UTC day, indexed like daily_m.
+  // Metres climbed and minutes ridden per UTC day, indexed like daily_m.
   daily_elevation_m: number[];
+  daily_time_min: number[];
   // Whole km of the sum of daily_m.
   total_km: number;
   // The rides started in the window and the sum of their minutes.
@@ -48,11 +49,16 @@ export interface DistanceBike {
   time_min: number;
 }
 
-// The garage's previous Period of the same kind, up to the same day.
+// The garage's previous Period of the same kind: totals up to the same day, days over the whole of it.
 export interface DistancePrevious {
+  // Its first UTC day, index 0 of the days.
+  from: string;
   meters: number;
   elevation_m: number;
   time_min: number;
+  daily_m: number[];
+  daily_elevation_m: number[];
+  daily_time_min: number[];
 }
 
 export interface Distance {
@@ -67,6 +73,11 @@ export interface Distance {
 
 // The span desktop Home reads its figures and charts over; no Period is the phone's year.
 export type HomePeriod = "month" | "year" | "all";
+
+// A Period with one before it to compare with.
+export type ComparedPeriod = Exclude<HomePeriod, "all">;
+
+export type ComparedDistance = Distance & { previous: DistancePrevious };
 
 export interface WearPoint {
   // ISO date, UTC.

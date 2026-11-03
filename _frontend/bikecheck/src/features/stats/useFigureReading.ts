@@ -2,15 +2,16 @@
 import { useState } from "react";
 import type { FigureReading } from "./figureReadings";
 
-export type ReadFigure = "distance" | "climb";
+// The figures that flip between the two readings.
+export type ReadingFigure = "distance" | "climb";
 
 const DEFAULT_READING: FigureReading = "comparison";
 
-function storageKey(figure: ReadFigure): string {
+function storageKey(figure: ReadingFigure): string {
   return `home-reading-${figure}`;
 }
 
-function storedReading(figure: ReadFigure): FigureReading {
+function storedReading(figure: ReadingFigure): FigureReading {
   try {
     const value = localStorage.getItem(storageKey(figure));
     return value === "equivalent" || value === "comparison" ? value : DEFAULT_READING;
@@ -19,7 +20,7 @@ function storedReading(figure: ReadFigure): FigureReading {
   }
 }
 
-function storeReading(figure: ReadFigure, reading: FigureReading): void {
+function storeReading(figure: ReadingFigure, reading: FigureReading): void {
   try {
     localStorage.setItem(storageKey(figure), reading);
   } catch {
@@ -32,7 +33,7 @@ export interface FigureReadingControls {
   flip: () => void;
 }
 
-export function useFigureReading(figure: ReadFigure): FigureReadingControls {
+export function useFigureReading(figure: ReadingFigure): FigureReadingControls {
   const [reading, setReading] = useState<FigureReading>(() => storedReading(figure));
 
   const flip = (): void => {

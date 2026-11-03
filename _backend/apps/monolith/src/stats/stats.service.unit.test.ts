@@ -531,6 +531,7 @@ describe('StatsService', () => {
             color_index: 0,
             daily_m: days(28, { 0: 12400, 10: 38200 }),
             daily_elevation_m: days(28, {}),
+            daily_time_min: days(28, { 0: 45, 10: 125 }),
             total_km: 51,
             ride_count: 3,
             time_min: 170,
@@ -694,13 +695,22 @@ describe('StatsService', () => {
             color_index: 0,
             daily_m: days(25, { 0: 20000, 24: 15000 }),
             daily_elevation_m: days(25, {}),
+            daily_time_min: days(25, { 0: 60, 24: 50 }),
             total_km: 35,
             ride_count: 2,
             time_min: 110,
           },
         ],
-        // 31 August is past 25 August, so the month before has nothing up to today.
-        previous: { meters: 0, elevation_m: 0, time_min: 0 },
+        // 31 August is past 25 August: in the month before's days, not in its totals.
+        previous: {
+          from: '2026-08-01',
+          meters: 0,
+          elevation_m: 0,
+          time_min: 0,
+          daily_m: days(31, { 30: 40000 }),
+          daily_elevation_m: days(31, {}),
+          daily_time_min: days(31, { 30: 120 }),
+        },
       });
     });
 
@@ -724,12 +734,20 @@ describe('StatsService', () => {
       // ACT
       const result = await stats.getDistance(OWNER_ID, 'year');
 
-      // ASSERT
+      // ASSERT: 10 June is day 160 of 2025.
       expect(result).toEqual({
         from: '2026-01-01',
         to: '2026-01-28',
         bikes: [],
-        previous: { meters: 0, elevation_m: 0, time_min: 0 },
+        previous: {
+          from: '2025-01-01',
+          meters: 0,
+          elevation_m: 0,
+          time_min: 0,
+          daily_m: days(365, { 160: 40000 }),
+          daily_elevation_m: days(365, {}),
+          daily_time_min: days(365, {}),
+        },
       });
     });
 
@@ -861,8 +879,17 @@ describe('StatsService', () => {
       // ACT
       const result = await stats.getDistance(OWNER_ID, 'month');
 
-      // ASSERT: 1-3 October only, without the deleted ride or the archived bike's.
-      expect(result.previous).toEqual({ meters: 35000, elevation_m: 450, time_min: 125 });
+      // ASSERT: the totals stop at 3 October, the days run through the whole of it; neither counts
+      // the deleted ride or the archived bike's.
+      expect(result.previous).toEqual({
+        from: '2026-10-01',
+        meters: 35000,
+        elevation_m: 450,
+        time_min: 125,
+        daily_m: days(31, { 0: 20000, 2: 15000, 3: 70000 }),
+        daily_elevation_m: days(31, { 0: 400, 1: 50, 3: 1500 }),
+        daily_time_min: days(31, { 0: 60, 1: 20, 2: 45, 3: 200 }),
+      });
     });
 
     it('reads the whole of a shorter month before when today is past its last day', async () => {
@@ -877,7 +904,15 @@ describe('StatsService', () => {
       const result = await stats.getDistance(OWNER_ID, 'month');
 
       // ASSERT
-      expect(result.previous).toEqual({ meters: 12000, elevation_m: 150, time_min: 40 });
+      expect(result.previous).toEqual({
+        from: '2026-02-01',
+        meters: 12000,
+        elevation_m: 150,
+        time_min: 40,
+        daily_m: days(28, { 27: 12000 }),
+        daily_elevation_m: days(28, { 27: 150 }),
+        daily_time_min: days(28, { 27: 40 }),
+      });
     });
 
     it('compares the year with last year up to the same day', async () => {
@@ -894,8 +929,16 @@ describe('StatsService', () => {
       // ACT
       const result = await stats.getDistance(OWNER_ID, 'year');
 
-      // ASSERT
-      expect(result.previous).toEqual({ meters: 30000, elevation_m: 500, time_min: 90 });
+      // ASSERT: 3 November is day 306 of 2025; the ride on the 4th is in the days, not the totals.
+      expect(result.previous).toEqual({
+        from: '2025-01-01',
+        meters: 30000,
+        elevation_m: 500,
+        time_min: 90,
+        daily_m: days(365, { 0: 20000, 306: 10000, 307: 70000 }),
+        daily_elevation_m: days(365, { 0: 400, 306: 100, 307: 1500 }),
+        daily_time_min: days(365, { 0: 60, 306: 30, 307: 200 }),
+      });
     });
 
     it('cuts last year at 28 February when today is 29 February', async () => {
@@ -909,8 +952,16 @@ describe('StatsService', () => {
       // ACT
       const result = await stats.getDistance(OWNER_ID, 'year');
 
-      // ASSERT
-      expect(result.previous).toEqual({ meters: 12000, elevation_m: 0, time_min: 40 });
+      // ASSERT: 28 February is day 58 of 2027.
+      expect(result.previous).toEqual({
+        from: '2027-01-01',
+        meters: 12000,
+        elevation_m: 0,
+        time_min: 40,
+        daily_m: days(365, { 58: 12000, 59: 5000 }),
+        daily_elevation_m: days(365, {}),
+        daily_time_min: days(365, { 58: 40, 59: 20 }),
+      });
     });
 
     it.each([

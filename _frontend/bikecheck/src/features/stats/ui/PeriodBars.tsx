@@ -1,55 +1,44 @@
-// The Period's buckets as bars: today's bucket in the accent, those still to come as a dot.
+// The Period's buckets as bars, each against the same bucket of the Period before as a grey shadow.
 import type { ReactElement } from "react";
-import type { PeriodBar } from "@/features/stats/distanceDays";
+import { Box } from "@mantine/core";
+import { GRAPHIC_HEIGHT } from "@/components/FigureSection";
+import type { PeriodSeries } from "@/features/stats/distanceDays";
+import { CURRENT_COLOR, FUTURE_COLOR, SHADOW_COLOR } from "./periodColors";
 
-const WIDTH = 64;
-const HEIGHT = 24;
-// Of each bucket's slot; the rest is the gap.
-const BAR_SHARE = 0.7;
-// Small enough that a month's days still read as dots, not a line.
-const DOT_RADIUS = 0.6;
-// A short ride still shows beside a long one.
+// A bucket ridden a little still shows, and so does the one today falls in.
 const MIN_BAR = 2;
 
-const PAST = "var(--mantine-color-cards-4)";
-const CURRENT = "var(--mantine-color-primary-6)";
-const FUTURE = "var(--color-border-strong)";
-
-export function PeriodBars({ bars, label }: { bars: PeriodBar[]; label: string }): ReactElement {
-  const slot = WIDTH / bars.length;
-  const width = slot * BAR_SHARE;
-  const top = Math.max(0, ...bars.map((bar) => bar.meters));
+export function PeriodBars({ series, label }: { series: PeriodSeries; label: string }): ReactElement {
+  const top = Math.max(1, ...series.current, ...series.previous);
+  const height = (value: number): number => Math.max(MIN_BAR, (value / top) * GRAPHIC_HEIGHT);
 
   return (
-    <svg
+    <Box
       role="img"
       aria-label={label}
-      width={WIDTH}
-      height={HEIGHT}
-      viewBox={`0 0 ${String(WIDTH)} ${String(HEIGHT)}`}
-      style={{ display: "block", flexShrink: 0 }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: `repeat(${String(series.current.length)}, minmax(0, 1fr))`,
+        gap: series.current.length > 6 ? 4 : 6,
+      }}
     >
-      {bars.map((bar, index) => {
-        const center = index * slot + slot / 2;
-        // An empty bucket so far is a dot too, but only today's is lit.
-        if (bar.meters === 0) {
-          if (bar.state === "past") return null;
-          const fill = bar.state === "current" ? CURRENT : FUTURE;
-          return <circle key={index} cx={center} cy={HEIGHT - DOT_RADIUS} r={DOT_RADIUS} fill={fill} />;
-        }
-        const height = Math.max(MIN_BAR, (bar.meters / top) * HEIGHT);
+      {series.current.map((value, index) => {
+        const previous = series.previous[index];
+        // A bucket still to come shows its shadow, or a faint line where there is none; today's shows at least a line.
+        const drawn = index < series.today ? value > 0 : index === series.today;
+        const future = index > series.today && previous === 0;
         return (
-          <rect
-            key={index}
-            x={center - width / 2}
-            y={HEIGHT - height}
-            width={width}
-            height={height}
-            rx={Math.min(1, width / 2)}
-            fill={bar.state === "current" ? CURRENT : PAST}
-          />
+          <Box key={index} pos="relative" h={GRAPHIC_HEIGHT}>
+            {previous > 0 && <Bar height={height(previous)} color={SHADOW_COLOR} />}
+            {drawn && <Bar height={height(value)} color={CURRENT_COLOR} />}
+            {future && <Bar height={MIN_BAR} color={FUTURE_COLOR} />}
+          </Box>
         );
       })}
-    </svg>
+    </Box>
   );
+}
+
+function Bar({ height, color }: { height: number; color: string }): ReactElement {
+  return <Box pos="absolute" left={0} right={0} bottom={0} h={height} style={{ borderRadius: 2, backgroundColor: color }} />;
 }

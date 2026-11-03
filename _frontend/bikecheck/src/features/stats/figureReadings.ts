@@ -3,24 +3,27 @@ import dayjs from "dayjs";
 import type { TFunction } from "i18next";
 import { distanceChange } from "@/features/rides/ridesTable";
 import { formatNumber } from "@/utils/number";
-import type { HomePeriod } from "./stats.types";
+import { totalMeters, type DailySeries } from "./distanceDays";
+import type { ComparedDistance, ComparedPeriod, Distance, HomePeriod } from "./stats.types";
 
 export type FigureReading = "comparison" | "equivalent";
 
 // The same for every rider, since the app does not know where they ride.
 export interface Yardstick {
   meters: number;
-  graphic: "ring" | "mountain";
-  // "17 % obvodu Země" while short of it, "11× obvod Země" once covered.
+  graphic: "line" | "mountain";
+  // "17 % obvodu Země" while short of it, "11× obvod Země" once covered; "obvod Země · 40 075 km" under the graphic.
   shareKey: string;
   timesKey: string;
+  labelKey: string;
 }
 
 export const EARTH: Yardstick = {
   meters: 40_075_000,
-  graphic: "ring",
+  graphic: "line",
   shareKey: "dashboard.equivalentEarthShare",
   timesKey: "dashboard.equivalentEarthTimes",
+  labelKey: "dashboard.yardstickEarth",
 };
 
 export const EVEREST: Yardstick = {
@@ -28,6 +31,7 @@ export const EVEREST: Yardstick = {
   graphic: "mountain",
   shareKey: "dashboard.equivalentEverestShare",
   timesKey: "dashboard.equivalentEverestTimes",
+  labelKey: "dashboard.yardstickEverest",
 };
 
 export interface Equivalent {
@@ -52,13 +56,6 @@ export function equivalentLabel(equivalent: Equivalent, language: string, t: TFu
   return t("tracking.percentage", { value: formatNumber(value, language, { maximumFractionDigits: 1 }) });
 }
 
-export type Trend = "up" | "down" | "flat";
-
-export function trendOf(change: number): Trend {
-  if (change > 0) return "up";
-  return change < 0 ? "down" : "flat";
-}
-
 // "+1 %", "−100 %" with a true minus, "0 %".
 export function changeLabel(change: number, language: string, t: TFunction): string {
   const sign = change > 0 ? "+" : change < 0 ? "−" : "";
@@ -74,7 +71,26 @@ export interface ComparedFigure {
   to: string;
 }
 
-export type ComparedPeriod = Exclude<HomePeriod, "all">;
+// A Period's distance with the one before it to read against.
+export interface Compared {
+  distance: ComparedDistance;
+  period: ComparedPeriod;
+}
+
+// Null for all time, which has no Period before it.
+export function compared(distance: Distance, period: HomePeriod): Compared | null {
+  if (period === "all" || distance.previous === null) return null;
+  return { distance: { ...distance, previous: distance.previous }, period };
+}
+
+export function comparedFigure({ distance, period }: Compared, series: DailySeries): ComparedFigure {
+  return {
+    current: totalMeters(distance, series),
+    previous: series.previous(distance.previous),
+    period,
+    to: distance.to,
+  };
+}
 
 export interface Comparison {
   // Null when the previous Period had nothing, so there is no share to show.
@@ -103,4 +119,11 @@ function emptyText({ period, to }: ComparedFigure, t: TFunction): string {
   if (period === "year") return t("dashboard.comparisonEmptyYear", { year: today.year() - 1 });
   const before = today.subtract(1, "month");
   return t(`dashboard.comparisonEmptyMonth.${String(before.month() + 1)}`, { day: before.date() });
+}
+
+// What a row of time cells is called: "říj" for a month, "2025" for a year.
+export function periodName(from: string, period: ComparedPeriod, language: string): string {
+  const first = dayjs(from);
+  if (period === "year") return String(first.year());
+  return new Intl.DateTimeFormat(language, { month: "short" }).format(first.toDate());
 }

@@ -172,6 +172,7 @@ describe('StatsController (e2e)', () => {
     const [bike] = response.body.bikes;
     expect(sum(bike.daily_m)).toBe(40400);
     expect(sum(bike.daily_elevation_m)).toBe(900);
+    expect(sum(bike.daily_time_min)).toBe(120);
   });
 
   it("charts none of another user's distance", async () => {
@@ -212,8 +213,14 @@ describe('StatsController (e2e)', () => {
     // Out again, so the other figures stay on the one ride.
     await prisma.rides.delete({ where: { id: earlier.id } });
 
-    expect(owned.body.previous).toEqual({ meters: 25000, elevation_m: 600, time_min: 75 });
-    expect(foreign.body.previous).toEqual({ meters: 0, elevation_m: 0, time_min: 0 });
+    expect(owned.body.previous).toEqual(
+      expect.objectContaining({ from: isoDay(lastNewYear.getTime()), meters: 25000, elevation_m: 600, time_min: 75 }),
+    );
+    expect(sum(owned.body.previous.daily_m)).toBe(25000);
+    expect(sum(owned.body.previous.daily_elevation_m)).toBe(600);
+    expect(sum(owned.body.previous.daily_time_min)).toBe(75);
+    expect(foreign.body.previous).toEqual(expect.objectContaining({ meters: 0, elevation_m: 0, time_min: 0 }));
+    expect(sum(foreign.body.previous.daily_m)).toBe(0);
     expect(allTime.body.previous).toBeNull();
   });
 

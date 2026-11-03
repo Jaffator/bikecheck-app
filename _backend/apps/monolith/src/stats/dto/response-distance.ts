@@ -33,6 +33,13 @@ export class Response_DistanceBikeDto {
   })
   daily_elevation_m!: number[];
 
+  @ApiProperty({
+    type: [Number],
+    example: [0, 45, 0, 125],
+    description: 'Minutes ridden per UTC day, indexed like daily_m; a ride without duration_min rides 0',
+  })
+  daily_time_min!: number[];
+
   @ApiProperty({ example: 51, description: 'Whole km of the sum of daily_m' })
   total_km!: number;
 
@@ -43,15 +50,32 @@ export class Response_DistanceBikeDto {
   time_min!: number;
 }
 
+// The totals stop at the same day of the previous Period; the days run through the whole of it.
 export class Response_DistancePreviousDto {
-  @ApiProperty({ example: 48200, description: 'Metres ridden' })
+  @ApiProperty({ example: '2026-10-01', description: 'First UTC day of the previous Period, index 0 of the days' })
+  from!: string;
+
+  @ApiProperty({ example: 48200, description: 'Metres ridden up to the same day' })
   meters!: number;
 
-  @ApiProperty({ example: 1240, description: 'Metres climbed' })
+  @ApiProperty({ example: 1240, description: 'Metres climbed up to the same day' })
   elevation_m!: number;
 
-  @ApiProperty({ example: 260, description: 'Minutes ridden' })
+  @ApiProperty({ example: 260, description: 'Minutes ridden up to the same day' })
   time_min!: number;
+
+  @ApiProperty({
+    type: [Number],
+    example: [20000, 0, 15000, 70000],
+    description: "The garage's metres per UTC day over the whole previous Period",
+  })
+  daily_m!: number[];
+
+  @ApiProperty({ type: [Number], example: [400, 50, 0, 1500], description: 'Metres climbed per day, indexed like daily_m' })
+  daily_elevation_m!: number[];
+
+  @ApiProperty({ type: [Number], example: [60, 20, 45, 200], description: 'Minutes ridden per day, indexed like daily_m' })
+  daily_time_min!: number[];
 }
 
 export class Response_DistanceDto {
@@ -71,7 +95,7 @@ export class Response_DistanceDto {
     type: Response_DistancePreviousDto,
     nullable: true,
     description:
-      "The garage's previous Period of the same kind up to the same day, under the same ride rules; null for all time and for no period",
+      "The garage's previous Period of the same kind, under the same ride rules; null for all time and for no period",
   })
   previous!: Response_DistancePreviousDto | null;
 }

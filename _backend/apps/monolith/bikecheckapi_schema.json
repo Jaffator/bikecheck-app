@@ -9727,6 +9727,19 @@
               "type": "number"
             }
           },
+          "daily_time_min": {
+            "example": [
+              0,
+              45,
+              0,
+              125
+            ],
+            "description": "Minutes ridden per UTC day, indexed like daily_m; a ride without duration_min rides 0",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
           "total_km": {
             "type": "number",
             "example": 51,
@@ -9751,6 +9764,7 @@
           "color_index",
           "daily_m",
           "daily_elevation_m",
+          "daily_time_min",
           "total_km",
           "ride_count",
           "time_min"
@@ -9778,7 +9792,7 @@
           },
           "previous": {
             "nullable": true,
-            "description": "The garage's previous Period of the same kind up to the same day, under the same ride rules; null for all time and for no period",
+            "description": "The garage's previous Period of the same kind, under the same ride rules; null for all time and for no period",
             "allOf": [
               {
                 "$ref": "#/components/schemas/Response_DistancePreviousDto"
@@ -9796,26 +9810,74 @@
       "Response_DistancePreviousDto": {
         "type": "object",
         "properties": {
+          "from": {
+            "type": "string",
+            "example": "2026-10-01",
+            "description": "First UTC day of the previous Period, index 0 of the days"
+          },
           "meters": {
             "type": "number",
             "example": 48200,
-            "description": "Metres ridden"
+            "description": "Metres ridden up to the same day"
           },
           "elevation_m": {
             "type": "number",
             "example": 1240,
-            "description": "Metres climbed"
+            "description": "Metres climbed up to the same day"
           },
           "time_min": {
             "type": "number",
             "example": 260,
-            "description": "Minutes ridden"
+            "description": "Minutes ridden up to the same day"
+          },
+          "daily_m": {
+            "example": [
+              20000,
+              0,
+              15000,
+              70000
+            ],
+            "description": "The garage's metres per UTC day over the whole previous Period",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "daily_elevation_m": {
+            "example": [
+              400,
+              50,
+              0,
+              1500
+            ],
+            "description": "Metres climbed per day, indexed like daily_m",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "daily_time_min": {
+            "example": [
+              60,
+              20,
+              45,
+              200
+            ],
+            "description": "Minutes ridden per day, indexed like daily_m",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
           }
         },
         "required": [
+          "from",
           "meters",
           "elevation_m",
-          "time_min"
+          "time_min",
+          "daily_m",
+          "daily_elevation_m",
+          "daily_time_min"
         ]
       },
       "Response_WearPointDto": {

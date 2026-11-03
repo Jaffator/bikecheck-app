@@ -76,8 +76,14 @@ interface DayWindow {
 interface BikeRides {
   daily_m: number[];
   daily_elevation_m: number[];
+  daily_time_min: number[];
   ride_count: number;
   time_min: number;
+}
+
+// The whole Period before; the totals stop at `sameDay`, a day the shorter month lacks reading as its last.
+interface PreviousWindow extends DayWindow {
+  sameDay: Date;
 }
 
 // The Periods Home reads its figures over.
@@ -156,7 +162,7 @@ export class StatsService {
       this.ridesSince(userId, from),
       this.ridesSince(userId, before.from, new Date(before.to.getTime() + DAY_MS)),
     ]);
-    return { ...distanceOf({ from, to: today }, rides, garage), previous: previousOf(earlier) };
+    return { ...distanceOf({ from, to: today }, rides, garage), previous: previousOf(earlier, before) };
   }
 
   // The phone's card asks for no Period: last year while this one draws nothing, so it is not blank all January.
@@ -426,24 +432,45 @@ function distanceOf(window: DayWindow, rides: DistanceRide[], garage: ColoredBik
   };
 }
 
-// The Period before, up to the same day of it; a day the shorter month lacks reads as its last.
-function previousWindow(period: Exclude<Period, 'all'>, today: Date): DayWindow {
+function previousWindow(period: Exclude<Period, 'all'>, today: Date): PreviousWindow {
   const year = today.getUTCFullYear();
   const month = today.getUTCMonth() - (period === 'month' ? 1 : 12);
   const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  return {
-    from: period === 'month' ? new Date(Date.UTC(year, month, 1)) : yearStart(year - 1),
-    to: new Date(Date.UTC(year, month, Math.min(today.getUTCDate(), lastDay))),
-  };
+  const sameDay = new Date(Date.UTC(year, month, Math.min(today.getUTCDate(), lastDay)));
+  if (period === 'month') {
+    return { from: new Date(Date.UTC(year, month, 1)), to: new Date(Date.UTC(year, month, lastDay)), sameDay };
+  }
+  return { from: yearStart(year - 1), to: new Date(Date.UTC(year - 1, 11, 31)), sameDay };
 }
 
 // A ride missing a figure adds 0 to it, as it does to the current Period's bikes.
-function previousOf(rides: DistanceRide[]): Response_DistancePreviousDto {
+function previousOf(rides: DistanceRide[], window: PreviousWindow): Response_DistancePreviousDto {
+  const cutoff = window.sameDay.getTime() + DAY_MS;
+  const counted = rides.filter((ride) => ride.started_at !== null && ride.started_at.getTime() < cutoff);
   return {
-    meters: sum(rides.map((ride) => ride.distance_m ?? 0)),
-    elevation_m: sum(rides.map((ride) => ride.elevation_up_m ?? 0)),
-    time_min: sum(rides.map((ride) => ride.duration_min ?? 0)),
+    from: isoDay(window.from),
+    meters: sum(counted.map((ride) => ride.distance_m ?? 0)),
+    elevation_m: sum(counted.map((ride) => ride.elevation_up_m ?? 0)),
+    time_min: sum(counted.map((ride) => ride.duration_min ?? 0)),
+    ...garageDays(ridesByBike(rides, window), windowDays(window)),
   };
+}
+
+type DailyColumn = 'daily_m' | 'daily_elevation_m' | 'daily_time_min';
+
+// Every bike's days added up, so the client draws the garage without knowing the bikes; a day no
+// bike rode is a 0, never a gap.
+function garageDays(ridden: Map<number, BikeRides>, days: number): Pick<BikeRides, DailyColumn> {
+  const summed = (column: DailyColumn): number[] =>
+    [...ridden.values()].reduce(
+      (total, bike) => total.map((value, day) => value + bike[column][day]),
+      new Array<number>(days).fill(0),
+    );
+  return { daily_m: summed('daily_m'), daily_elevation_m: summed('daily_elevation_m'), daily_time_min: summed('daily_time_min') };
+}
+
+function windowDays(window: DayWindow): number {
+  return (window.to.getTime() - window.from.getTime()) / DAY_MS + 1;
 }
 
 // Today at the latest, so a ride stamped ahead still leaves a window of one day.
@@ -463,7 +490,7 @@ function drawn(distance: Response_DistanceDto): boolean {
 // Each bike's rides per UTC day of the window. A ride stamped after its last day lands on that
 // day, so the days still add up to every metre ridden.
 function ridesByBike(rides: DistanceRide[], window: DayWindow): Map<number, BikeRides> {
-  const days = (window.to.getTime() - window.from.getTime()) / DAY_MS + 1;
+  const days = windowDays(window);
   const byBike = new Map<number, BikeRides>();
 
   for (const ride of rides) {
@@ -472,6 +499,7 @@ function ridesByBike(rides: DistanceRide[], window: DayWindow): Map<number, Bike
     const entry = byBike.get(ride.bike_id) ?? noRides(days);
     entry.daily_m[day] += ride.distance_m ?? 0;
     entry.daily_elevation_m[day] += ride.elevation_up_m ?? 0;
+    entry.daily_time_min[day] += ride.duration_min ?? 0;
     entry.ride_count += 1;
     entry.time_min += ride.duration_min ?? 0;
     byBike.set(ride.bike_id, entry);
@@ -483,6 +511,7 @@ function noRides(days: number): BikeRides {
   return {
     daily_m: new Array<number>(days).fill(0),
     daily_elevation_m: new Array<number>(days).fill(0),
+    daily_time_min: new Array<number>(days).fill(0),
     ride_count: 0,
     time_min: 0,
   };

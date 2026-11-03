@@ -4295,6 +4295,16 @@ export interface components {
              */
             daily_elevation_m: number[];
             /**
+             * @description Minutes ridden per UTC day, indexed like daily_m; a ride without duration_min rides 0
+             * @example [
+             *       0,
+             *       45,
+             *       0,
+             *       125
+             *     ]
+             */
+            daily_time_min: number[];
+            /**
              * @description Whole km of the sum of daily_m
              * @example 51
              */
@@ -4323,25 +4333,60 @@ export interface components {
             to: string;
             /** @description Bikes with at least one ride in the window, highest total first */
             bikes: components["schemas"]["Response_DistanceBikeDto"][];
-            /** @description The garage's previous Period of the same kind up to the same day, under the same ride rules; null for all time and for no period */
+            /** @description The garage's previous Period of the same kind, under the same ride rules; null for all time and for no period */
             previous: components["schemas"]["Response_DistancePreviousDto"] | null;
         };
         Response_DistancePreviousDto: {
             /**
-             * @description Metres ridden
+             * @description First UTC day of the previous Period, index 0 of the days
+             * @example 2026-10-01
+             */
+            from: string;
+            /**
+             * @description Metres ridden up to the same day
              * @example 48200
              */
             meters: number;
             /**
-             * @description Metres climbed
+             * @description Metres climbed up to the same day
              * @example 1240
              */
             elevation_m: number;
             /**
-             * @description Minutes ridden
+             * @description Minutes ridden up to the same day
              * @example 260
              */
             time_min: number;
+            /**
+             * @description The garage's metres per UTC day over the whole previous Period
+             * @example [
+             *       20000,
+             *       0,
+             *       15000,
+             *       70000
+             *     ]
+             */
+            daily_m: number[];
+            /**
+             * @description Metres climbed per day, indexed like daily_m
+             * @example [
+             *       400,
+             *       50,
+             *       0,
+             *       1500
+             *     ]
+             */
+            daily_elevation_m: number[];
+            /**
+             * @description Minutes ridden per day, indexed like daily_m
+             * @example [
+             *       60,
+             *       20,
+             *       45,
+             *       200
+             *     ]
+             */
+            daily_time_min: number[];
         };
         Response_WearPointDto: {
             /**
