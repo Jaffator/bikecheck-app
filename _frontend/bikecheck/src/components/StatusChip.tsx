@@ -1,20 +1,11 @@
-// A pill in a status row. A quiet one tells a state; a bordered one is a control.
-import type { CSSProperties, ReactElement, ReactNode } from "react";
+// A pill in a status row, drawn as a card: same surface and shadow, no border.
+import type { ReactElement, ReactNode } from "react";
 import { Group, UnstyledButton } from "@mantine/core";
 import { PRESS_TRANSITION } from "./panelRows";
 
 const CHIP_HEIGHT = 38;
 
-const TONE: Record<"quiet" | "control", CSSProperties> = {
-  quiet: { border: "1px solid var(--color-border-subtle)" },
-  control: {
-    border: "1px solid var(--mantine-color-cards-5)",
-    boxShadow: "0 1px 0 rgba(255, 255, 255, 0.04) inset",
-  },
-};
-
 interface StatusChipProps {
-  tone: "quiet" | "control";
   label: string;
   onClick: () => void;
   // Set for a chip that opens a menu or sheet of choices.
@@ -25,7 +16,6 @@ interface StatusChipProps {
 }
 
 export function StatusChip({
-  tone,
   label,
   onClick,
   hasPopup = false,
@@ -44,9 +34,9 @@ export function StatusChip({
       fw={600}
       c="text.6"
       style={{
-        ...TONE[tone],
         borderRadius: 999,
         backgroundColor: "var(--mantine-color-cards-6)",
+        boxShadow: "var(--elev-panel)",
         flexShrink: shrink ? 1 : 0,
         minWidth: shrink ? 0 : undefined,
         transition: PRESS_TRANSITION,

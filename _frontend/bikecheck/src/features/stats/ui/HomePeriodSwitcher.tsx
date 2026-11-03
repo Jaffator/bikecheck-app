@@ -36,7 +36,8 @@ export function HomePeriodSwitcher({ value, onChange, fullWidth = false }: HomeP
       styles={
         fullWidth
           ? {
-              root: { border: "1px solid var(--color-border-subtle)" },
+              // Drawn as a card, like the figures under it.
+              root: { backgroundColor: "var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" },
               indicator: { boxShadow: "0 1px 2px rgba(0, 0, 0, 0.4)" },
               label: { lineHeight: `${String(PILL_LABEL_LINE)}px` },
             }

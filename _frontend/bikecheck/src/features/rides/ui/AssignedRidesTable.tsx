@@ -6,10 +6,12 @@ import { Panel, PanelPageFooter, PanelSkeletonRows, PanelTableHead } from "@/com
 import { PANEL_HAIRLINE } from "@/components/panelRows";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
+import { rideItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useFilteredRides } from "@/features/rides/rides.queries";
 import type { Ride, RideWeek } from "@/features/rides/rides.types";
 import { TABLE_PAGE_SIZE, filterOf, groupByWeek, periodLabel, weekLabel } from "@/features/rides/ridesTable";
+import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
 import { useRideTableParams } from "@/features/rides/useRideTableParams";
 import { RideDetailSheet } from "./RideDetailSheet";
 import { RideFiguresRow } from "./RideFiguresRow";
@@ -27,10 +29,11 @@ export function AssignedRidesTable({ openActivityId, onOpenedActivityHandled }: 
   const { data, isLoading, isError } = useFilteredRides(filterOf(params), params.page);
   const { data: bikes } = useBikes();
   const [opened, setOpened] = useState<Ride | null>(null);
+  const linkedId = useReleasedRideLink(openActivityId);
 
   const items = data?.items ?? [];
   const requested =
-    openActivityId === undefined ? null : (items.find((ride) => ride.activity_strava_id === openActivityId) ?? null);
+    linkedId === undefined ? null : (items.find((ride) => ride.activity_strava_id === linkedId) ?? null);
   // The fresh copy after a check-in refetch; the held one if the ride has left the filter since.
   const shownRide = (opened === null ? null : (items.find((ride) => ride.id === opened.id) ?? opened)) ?? requested;
 
@@ -94,7 +97,7 @@ export function AssignedRidesTable({ openActivityId, onOpenedActivityHandled }: 
         )}
       </Panel>
 
-      <RideDetailSheet ride={shownRide} onClose={closeSheet} />
+      <RideDetailSheet item={rideItemOf(shownRide)} onClose={closeSheet} />
     </Stack>
   );
 }

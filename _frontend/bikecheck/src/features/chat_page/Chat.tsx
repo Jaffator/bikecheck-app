@@ -1,18 +1,14 @@
 // Chat page. One thread per user, a question typed at the bottom, and one muted line while the
 // answer is worked out. The bike bar rides on the composer and says what a question is about
 // before it is sent.
-import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { Box, Skeleton, Stack, Text } from "@mantine/core";
-import { useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { useBikes } from "@/features/bikes/bikes.queries";
-import { BikeFilterChips } from "@/features/service/ui/BikeFilterChips";
-import { useChatThread } from "@/features/chat/chat.queries";
-import { useChatTurn } from "@/features/chat/useChatTurn";
-import { ChatThread } from "@/features/chat/ui/ChatThread";
+import { useEffect, type ReactElement } from "react";
+import { Box } from "@mantine/core";
 import { ChatComposer } from "@/features/chat/ui/ChatComposer";
 import { ChatActionsMenu } from "@/features/chat/ui/ChatActionsMenu";
-import { EmptyChat } from "./EmptyChat";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { ChatBikeChips, ChatBody } from "./ChatBody";
+import { ChatDesktop } from "./ChatDesktop";
+import { useChatPage } from "./useChatPage";
 
 // Room for the composer, which floats and so keeps nothing clear of itself. The bike bar
 // rides on it, so its row is part of the gap.
@@ -25,39 +21,14 @@ const HEADER_OFFSET = "calc(3rem + var(--safe-area-inset-top, env(safe-area-inse
 // space between the header and the composer.
 const EMPTY_PAGE_HEIGHT = `calc(100dvh - ${HEADER_OFFSET} - ${COMPOSER_ROOM})`;
 
-// A bike id the user cannot have typed by hand reads as no selection, the same as in the
-// service history, so junk in the URL never reaches the API as a bike.
-function parseBikeId(raw: string | null): number | null {
-  if (raw === null) return null;
-  const parsed = Number(raw);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+export function Chat(): ReactElement {
+  const isDesktop = useIsDesktop();
+  return isDesktop ? <ChatDesktop /> : <ChatPhone />;
 }
 
-export function Chat(): ReactElement {
-  const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { data: bikes } = useBikes();
-  const { data: messages, isLoading, isError } = useChatThread();
-  const [draft, setDraft] = useState("");
-  // A turn that produced nothing puts its question back where it was typed.
-  const restoreQuestion = useCallback((question: string): void => setDraft(question), []);
-  const { pending, failed, ask } = useChatTurn(restoreQuestion);
-
-  const garage = bikes ?? [];
-  // The selection lives in the URL alone, as it does in the history: /chat?bike=12 is the way
-  // in from a bike, and the More sheet opens the bare path, which drops it.
-  const fromUrl = parseBikeId(searchParams.get("bike"));
-  // An id no bike of theirs answers to reads as all bikes. A garage of one has nothing to
-  // widen to, so its single bike is the selection whether the URL says so or not.
-  const selectedBikeId = garage.some((bike) => bike.id === fromUrl)
-    ? fromUrl
-    : garage.length === 1
-      ? garage[0].id
-      : null;
-
-  // What is actually stored, which is the only thing deleting the thread can reach.
-  const storedCount = messages?.length ?? 0;
-  const turnCount = storedCount + (pending === null ? 0 : 1);
+function ChatPhone(): ReactElement {
+  const page = useChatPage();
+  const { isLoading, isError, turnCount, pending } = page;
   // A page with no turns on it takes its height from the viewport rather than its content.
   const empty = !isLoading && !isError && turnCount === 0;
 
@@ -66,25 +37,6 @@ export function Chat(): ReactElement {
     if (turnCount === 0) return;
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   }, [turnCount, pending?.answer]);
-
-  // A chip changes what the next question is about and nothing else: nothing is written until
-  // the question is sent.
-  function selectBike(next: number | null): void {
-    const params = new URLSearchParams(searchParams);
-    if (next === null) {
-      params.delete("bike");
-    } else {
-      params.set("bike", String(next));
-    }
-    setSearchParams(params, { replace: true });
-  }
-
-  function send(): void {
-    const question = draft.trim();
-    if (question.length === 0) return;
-    setDraft("");
-    ask(question, selectedBikeId);
-  }
 
   return (
     <Box
@@ -105,38 +57,16 @@ export function Chat(): ReactElement {
         pt={empty ? 0 : "md"}
         pb={empty ? 0 : COMPOSER_ROOM}
       >
-        {isLoading && (
-          <Stack gap="md">
-            {[0, 1].map((row) => (
-              <Skeleton key={row} h={72} radius="md" />
-            ))}
-          </Stack>
-        )}
-        {isError && <Text c="red">{t("chat.loadFailed")}</Text>}
-        {empty && <EmptyChat />}
-        {!isLoading && !isError && turnCount > 0 && (
-          <ChatThread messages={messages ?? []} bikes={garage} pending={pending} />
-        )}
+        <ChatBody page={page} />
       </Box>
       <ChatComposer
-        value={draft}
-        onChange={setDraft}
-        onSend={send}
+        value={page.draft}
+        onChange={page.setDraft}
+        onSend={page.send}
         running={pending !== null}
-        failed={failed}
-        actions={<ChatActionsMenu canClear={storedCount > 0} disabled={pending !== null} />}
-        chips={
-          garage.length === 0 ? undefined : (
-            // A garage of one has no all-bikes chip: there is nothing else to ask about.
-            <BikeFilterChips
-              bikes={garage}
-              selected={selectedBikeId}
-              onSelect={selectBike}
-              withAllBikes={garage.length > 1}
-              opaque
-            />
-          )
-        }
+        failed={page.failed}
+        actions={<ChatActionsMenu canClear={page.storedCount > 0} disabled={pending !== null} />}
+        chips={page.garage.length === 0 ? undefined : <ChatBikeChips page={page} />}
       />
     </Box>
   );

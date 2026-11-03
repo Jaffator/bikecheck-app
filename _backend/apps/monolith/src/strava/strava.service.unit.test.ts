@@ -34,7 +34,7 @@ describe('StravaEventsService', () => {
   };
 
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
-  const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn() };
+  const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn(), getWearPreview: jest.fn() };
   const mockRides = { removeStravaRide: jest.fn() };
   const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 
@@ -243,6 +243,38 @@ describe('StravaEventsService', () => {
       });
 
       expect(rideId).toBe(55);
+    });
+  });
+
+  describe('listing pending rides', () => {
+    // The drawer previews the picked bike's wear before the ride is saved, as the check-in walk does.
+    it('carries the wear of each ride on every bike', async () => {
+      const byBike = [{ bike_id: BIKE_ID, wore_off: [] }];
+      const preview = jest.fn().mockReturnValue(byBike);
+      mockServiceTracking.getWearPreview.mockResolvedValue(preview);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([
+        {
+          id: 3,
+          activity_id: 98765n,
+          gear_id: null,
+          analyzed_data: { distance_km: 42, drivetrain_km: 30, started_at: '2026-09-20T08:00:00.000Z' },
+          created_at: new Date('2026-09-20T08:40:00.000Z'),
+        },
+      ]);
+
+      const [listed] = await service.listPendingActivities(OWNER_ID);
+
+      expect(mockServiceTracking.getWearPreview).toHaveBeenCalledWith(OWNER_ID);
+      expect(preview).toHaveBeenCalledWith(expect.objectContaining({ distance_m: 42000, drivetrain_meters: 30000 }));
+      expect(listed.wore_off_by_bike).toBe(byBike);
+    });
+
+    // The list polls, so an empty one costs no garage read.
+    it('skips the wear preview when nothing is pending', async () => {
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([]);
+
+      await expect(service.listPendingActivities(OWNER_ID)).resolves.toEqual([]);
+      expect(mockServiceTracking.getWearPreview).not.toHaveBeenCalled();
     });
   });
 

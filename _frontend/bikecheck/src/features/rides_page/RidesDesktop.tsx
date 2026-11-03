@@ -52,6 +52,11 @@ export function RidesDesktop(): ReactElement {
     if (requestedRideId !== undefined) selectTab("completed");
   }, [requestedRideId, selectTab]);
 
+  // Drops `?pending=` once its drawer closes, so it does not open again; the rider stays on the tab.
+  const clearRequestedActivity = useCallback((): void => {
+    if (requestedActivityId !== undefined) setSearchParams({ tab: "pending" }, { replace: true });
+  }, [requestedActivityId, setSearchParams]);
+
   // The sync hangs in the header beside the title - see the header store.
   useEffect(() => {
     setActionSlot(<SyncStravaButton />);
@@ -101,7 +106,10 @@ export function RidesDesktop(): ReactElement {
               <AssignedRidesTable openActivityId={requestedRideId} onOpenedActivityHandled={clearRequestedRide} />
             </Stack>
           ) : (
-            <PendingRidesTable highlightedActivityId={requestedActivityId} />
+            <PendingRidesTable
+              openActivityId={requestedActivityId}
+              onOpenedActivityHandled={clearRequestedActivity}
+            />
           )}
         </Box>
       </Tabs>

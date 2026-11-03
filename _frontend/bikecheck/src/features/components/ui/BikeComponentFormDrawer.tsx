@@ -392,6 +392,7 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
                         radius="xl"
                         size="sm"
                         disabled={!editing && takenSides.has(side)}
+                        icon={false}
                         styles={chipStyles(position === side, { wrap: false })}
                       >
                         {side === "front" ? t("addBike.positionFront") : t("addBike.positionRear")}

@@ -85,3 +85,11 @@ one screen the user sees what they are adding to while they add it.
 - **Add bike keeps its three steps** with a "Your bike" panel beside them, showing the bike as it
   stands so far and the step's way on.
 - Below 60em both stay the phone wizards, unchanged. Every other form stays `narrow`.
+
+## Revised 2026-11-02: Riders and Chat are wide
+
+Riders (`/follows`) and Chat (`/chat`) run `wide` on desktop and are top-level pages there, like
+Notifications: the large title, no back arrow. Both are sidebar rows, so there is nothing to go
+back to. Each lays out in Home's 8/4 grid, with the main card on the left and a side card on the
+right: my profile beside Riders, questions to ask beside Chat. Chat's thread still runs at most
+760px inside its card, so a line stays readable. On the phone neither page changes.

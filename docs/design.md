@@ -329,7 +329,7 @@ import { dropdownProps, inputStyles } from "@/features/add_bike_page/formStyles"
   highlight to `cards.5`, as for menu items. Don't override it per select.
 - No `size` prop: `inputStyles` fixes the height, so a select lines up with the other fields.
 
-Reference: `features/bikes_page/BikesDesktop.tsx`, `features/strava/ui/PendingRideSheet.tsx`.
+Reference: `features/bikes_page/BikesDesktop.tsx`, `features/strava/ui/GearLinkingSheet.tsx`.
 
 ### Drawers (pattern)
 

@@ -17,15 +17,18 @@ export const SIDEBAR_WIDTH = 240;
 export const PINNED_BAR_LEFT = { base: 0, md: SIDEBAR_WIDTH };
 export const PINNED_BAR_WIDTH = { base: "92%", md: BAR_WIDTH };
 
-// Home, the garage, one bike, Service, Rides and Notifications - matched whole, so their forms stay narrow.
+// Home, the garage, one bike and its Setup, Service, Rides, Notifications, Riders and Chat - matched whole, so their forms stay narrow.
 // PROTOTYPE (proto/desktop-wizards): the two wizards run wide too, for their side panel.
 const WIDE_ROUTES: RegExp[] = [
   /^\/$/,
   /^\/bikes$/,
   /^\/bikes\/\d+$/,
+  /^\/bikes\/\d+\/setup$/,
   /^\/service$/,
   /^\/rides$/,
   /^\/notifications$/,
+  /^\/follows$/,
+  /^\/chat$/,
   /^\/bikes\/new$/,
   /^\/service\/new$/,
 ];

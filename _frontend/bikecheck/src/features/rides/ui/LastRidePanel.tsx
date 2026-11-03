@@ -14,6 +14,7 @@ import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { CHECK_IN_COLOR } from "@/features/rides/checkIn";
+import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides, useSaveRideCheckIn } from "@/features/rides/rides.queries";
 import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
@@ -76,7 +77,7 @@ export function LastRidePanel(): ReactElement {
         />
       )}
       <RideDetailSheet
-        ride={opened?.ride ?? null}
+        item={rideItemOf(opened?.ride ?? null)}
         checkInStartWith={opened?.checkInStartWith}
         onClose={() => setOpened(null)}
       />

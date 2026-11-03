@@ -82,7 +82,7 @@ export function chipStyles(
   return {
     root: {
       "--chip-bg": "var(--mantine-color-primary-6)",
-      "--chip-bd": "1px solid var(--mantine-color-primary-6)",
+      "--chip-bd": "1px solid transparent",
       "--mantine-color-disabled": "var(--mantine-color-cards-5)",
       "--mantine-color-disabled-color": "var(--mantine-color-text-9)",
     } as React.CSSProperties,
@@ -108,15 +108,16 @@ export function chipStyles(
       ...(checked
         ? {
             "--chip-color": "var(--mantine-color-primary-6)",
-            backgroundColor: `color-mix(in srgb, var(--mantine-color-primary-6) 15%, ${opaque ? "var(--mantine-color-background-9)" : "transparent"})`,
-            borderColor: "var(--mantine-color-primary-7)",
+            backgroundColor: `color-mix(in srgb, var(--mantine-color-primary-6) 20%, ${opaque ? "var(--mantine-color-background-9)" : "transparent"})`,
             color: "var(--mantine-color-primary-6)",
           }
         : {
-            backgroundColor: "var(--mantine-color-cards-7)",
-            borderColor: "var(--mantine-color-inputs-5)",
+            // No frame, so the fill alone has to lift the chip off a cards-6 sheet.
+            backgroundColor: "var(--color-surface-raised)",
             color: "var(--mantine-color-text-7)",
           }),
+      // Transparent, not removed, so a chip keeps its size.
+      borderColor: "transparent",
     } as React.CSSProperties,
   };
 }

@@ -359,7 +359,13 @@
     "clearConfirmAction": "Delete",
     "clearFailed": "The history could not be deleted.",
     "emptyTitle": "Just ask",
-    "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides."
+    "emptyBody": "Write in your own words what you want to know about your bikes, parts, services or rides.",
+    "suggestionsTitle": "Try asking",
+    "suggestionService": "What needs service soon?",
+    "suggestionChain": "Which chain is closest to its limit?",
+    "suggestionSpend": "How much did I spend on service this year?",
+    "suggestionDistance": "How far did I ride this month?",
+    "disclaimer": "Answers come from your BikeCheck data. Check important things before you act on them."
   },
   "checkIn": {
     "question": "How did the bike ride?",
@@ -377,7 +383,6 @@
       "HEADSET_PLAY": "Headset play",
       "OTHER": "Other…"
     },
-    "noteLabel": "Note · optional",
     "note": "Note",
     "notePlaceholder": "E.g. skips on the 3rd cog",
     "save": "Save",
@@ -390,24 +395,16 @@
     "cancel": "Cancel",
     "saveFailed": "Couldn't save the check-in",
     "deleteFailed": "Couldn't delete the check-in",
-    "newRide": "New ride",
-    "fromStrava": "From Strava",
+    "newFromStrava": "New ride from Strava",
     "bike": "Bike",
-    "bikePickedByHand": "picked by hand",
     "chooseBike": "Choose a bike",
+    "pickBike": "Pick a bike",
     "woreOff": "Wear from this ride",
-    "woreOffDueSoon": "{{name}} at {{value}} % · due soon",
-    "woreOffOverdue": "{{name}} at {{value}} % · overdue",
     "optional": "optional",
-    "optionalHint": "The rating is optional. Without it, the ride is just assigned to the bike.",
     "notMyBike": "Not my bike",
     "notMyBikeHint": "rental, test, someone else's",
-    "noBikeRide": "Ride without a bike",
     "notMyBikeInfo": "The ride is removed from BikeCheck and doesn't count toward wear.",
-    "saveWithoutBike": "Save without a bike",
-    "required": "Required",
-    "missingBikeInfo": "This ride has no bike. Until you pick one, it doesn't count toward part wear.",
-    "pickBikeFirst": "Pick a bike first"
+    "missingBikeInfo": "This ride has no bike. Until you pick one, it doesn't count toward part wear."
   },
   "ridesTable": {
     "allBikes": "All bikes",
@@ -446,6 +443,7 @@
     "tabPending": "Pending",
     "tabAssigned": "Assigned",
     "unknownBike": "Unknown bike",
+    "bikeNotPicked": "Bike not picked",
     "loadFailed": "Could not load rides",
     "statDistance": "Distance",
     "statDuration": "Time",
@@ -1172,9 +1170,6 @@
     "empty": "No unassigned rides",
     "emptyBody": "Every Strava ride has a bike assigned.",
     "loadFailed": "Rides could not be loaded",
-    "chooseBike": "Choose your bike",
-    "chooseBikeTitle": "Select a bike for this ride",
-    "assign": "Assign to bike",
     "assignFailed": "Could not assign the ride",
     "distance": "{{count}} km",
     "elevation": "{{count}} m",
@@ -1184,6 +1179,7 @@
     "columnRide": "Ride",
     "assignMenu": "Assign",
     "dismiss": "Don't assign (someone else's bike)",
+    "discard": "Discard ride",
     "dismissTitle": "Don't assign this ride?",
     "dismissBody": "The ride leaves the unassigned list and never counts on any bike. This can't be undone.",
     "dismissCancel": "Keep it",
@@ -1337,6 +1333,7 @@
     "stepMore": "{{field}}: one step more",
     "newProfile": "New profile",
     "profileMenu": "Profile actions",
+    "profiles": "Profiles",
     "rename": "Rename",
     "duplicate": "Duplicate",
     "delete": "Delete",
@@ -1441,7 +1438,14 @@
     "lsr": "LSR",
     "hsr": "HSR",
     "lsc": "LSC",
-    "hsc": "HSC"
+    "hsc": "HSC",
+    "profileCardTitle": "Your profile",
+    "profileCardEdit": "Edit",
+    "profileCardVisibility": "Visibility",
+    "profileCardBikes_one": "{{count}} bike",
+    "profileCardBikes_other": "{{count}} bikes",
+    "profileCardFollowers_one": "{{count}} follower",
+    "profileCardFollowers_other": "{{count}} followers"
   },
   "follow": {
     "follow": "Follow",
@@ -1480,7 +1484,8 @@
     "removeTitle": "Remove from followers?",
     "removeBody": "They lose the garage. They won't know and can follow you again.",
     "removeConfirm": "Remove",
-    "unnamed": "No name"
+    "unnamed": "No name",
+    "noFollowing": "You're not following anyone yet. Find riders by name or @address above."
   },
   "publicProfile": {
     "title": "Public profile",

@@ -16,9 +16,8 @@ function rowChipStyles(checked: boolean): ReturnType<typeof chipStyles> {
     label: {
       ...base.label,
       backgroundColor: checked
-        ? "color-mix(in srgb, var(--mantine-color-primary-6) 18%, var(--mantine-color-cards-6))"
-        : "var(--mantine-color-cards-6)",
-      borderColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-inputs-5)",
+        ? "color-mix(in srgb, var(--mantine-color-primary-6) 20%, var(--mantine-color-cards-6))"
+        : "var(--color-surface-raised)",
       color: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-7)",
       boxShadow: "var(--elev-row)",
     } as ReactCSSProperties,

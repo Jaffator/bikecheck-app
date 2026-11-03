@@ -1,15 +1,11 @@
-// The check-in's bike: the one the ride goes on and where it came from.
+// The check-in's bike: the one the ride goes on, or a note on why it has none.
 import type { ReactElement } from "react";
-import { Group, Stack, Text } from "@mantine/core";
+import { Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
 import type { ListedBike } from "@/features/bikes/bikes.types";
-import { MISSING_BIKE_COLOR } from "@/features/rides/checkIn";
-import type { BikePick } from "@/features/rides/checkInSave";
+import type { BikePick } from "@/features/rides/rideDetail";
 import { BikePicker } from "./BikePicker";
-
-// Where the picked bike came from: the ride's own, a pick in this drawer, or none yet.
-export type BikeSource = "strava" | "byHand" | "missing";
 
 interface CheckInBikeFieldProps {
   bikes: ListedBike[];
@@ -17,7 +13,8 @@ interface CheckInBikeFieldProps {
   picked: ListedBike | null;
   // The rider picked none of their bikes.
   notMine: boolean;
-  source: BikeSource;
+  // An Unassigned Ride with no bike picked yet.
+  missing: boolean;
   fallbackName: string;
   onPick: (pick: BikePick) => void;
   pickerOpened: boolean;
@@ -28,7 +25,7 @@ export function CheckInBikeField({
   bikes,
   picked,
   notMine,
-  source,
+  missing,
   fallbackName,
   onPick,
   pickerOpened,
@@ -38,58 +35,20 @@ export function CheckInBikeField({
 
   return (
     <Stack gap={8}>
-      <Group justify="space-between" gap="sm" wrap="nowrap">
-        <Eyebrow>{t("checkIn.bike")}</Eyebrow>
-        <SourceTag source={source} />
-      </Group>
+      <Eyebrow>{t("checkIn.bike")}</Eyebrow>
       <BikePicker
         bikes={bikes}
         picked={picked}
         notMine={notMine}
-        missing={source === "missing"}
+        missing={missing}
         fallbackName={fallbackName}
         onPick={onPick}
         opened={pickerOpened}
         onOpenedChange={onPickerOpenedChange}
       />
-      {source === "missing" && <FieldNote text={t("checkIn.missingBikeInfo")} color="text.7" />}
+      {missing && <FieldNote text={t("checkIn.missingBikeInfo")} color="text.7" />}
       {notMine && <FieldNote text={t("checkIn.notMyBikeInfo")} color="var(--color-text-dim)" />}
     </Stack>
-  );
-}
-
-function SourceTag({ source }: { source: BikeSource }): ReactElement | null {
-  const { t } = useTranslation();
-  if (source === "missing") return <RequiredTag />;
-  if (source === "strava") return null;
-
-  return (
-    <Text fz={13} c="var(--color-text-dim)" style={{ whiteSpace: "nowrap" }}>
-      {t("checkIn.bikePickedByHand")}
-    </Text>
-  );
-}
-
-function RequiredTag(): ReactElement {
-  const { t } = useTranslation();
-  return (
-    <Text
-      fz={10}
-      fw={700}
-      lh="14px"
-      tt="uppercase"
-      lts="var(--tracking-label)"
-      c={MISSING_BIKE_COLOR}
-      px={7}
-      py={1}
-      style={{
-        borderRadius: 9999,
-        whiteSpace: "nowrap",
-        backgroundColor: `color-mix(in srgb, ${MISSING_BIKE_COLOR} 16%, transparent)`,
-      }}
-    >
-      {t("checkIn.required")}
-    </Text>
   );
 }
 

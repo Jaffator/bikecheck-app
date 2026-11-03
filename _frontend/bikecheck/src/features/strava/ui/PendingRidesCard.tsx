@@ -12,9 +12,11 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { RIDES_TAB_TOP_SPACE } from "@/features/rides_page/EmptyRides";
 import trailIllustration from "@/assets/images/rides.png";
 import { usePendingRides } from "@/features/strava/strava.queries";
-import { PendingRideSheet } from "./PendingRideSheet";
 import type { PendingRide } from "@/features/strava/strava.types";
+import { pendingItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
+import { RideDetailSheet } from "@/features/rides/ui/RideDetailSheet";
 
 // How far a point may stray before the thumbnail drops it, in viewBox units. Matches the
 // completed list: the same route drawn at the same fifty pixels.
@@ -56,13 +58,13 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled, onRefres
   const { t } = useTranslation();
   const { data, isLoading, isError, refetch } = usePendingRides();
   const [openedRide, setOpenedRide] = useState<PendingRide | null>(null);
+  const linkedId = useReleasedRideLink(openActivityId);
   const pull = usePullToRefresh(onRefresh ?? refetch);
 
   const rides = data ?? [];
 
   // Resolves the notification-requested ride once list data arrives.
-  const requested =
-    openActivityId === undefined ? null : (rides.find((ride) => ride.activity_id === openActivityId) ?? null);
+  const requested = linkedId === undefined ? null : (rides.find((ride) => ride.activity_id === linkedId) ?? null);
   const shownRide = openedRide ?? requested;
 
   function closeSheet(): void {
@@ -119,7 +121,7 @@ export function PendingRides({ openActivityId, onOpenedActivityHandled, onRefres
         </Stack>
       </PullFrame>
 
-      <PendingRideSheet ride={shownRide} onClose={closeSheet} />
+      <RideDetailSheet item={pendingItemOf(shownRide)} onClose={closeSheet} />
     </>
   );
 }

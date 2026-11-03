@@ -26,7 +26,8 @@ draws its own header passes `withCloseButton={false}` and no `title`; on a phone
 the wrapper's (see [Spacing and the ✕](#spacing-and-the--on-a-phone)).
 
 A sheet that must be answered passes `dismissible={false}`: no outside click, Esc, swipe or back
-button closes it, and it closes itself once answered. Only `CheckInPromptDrawer` does.
+button closes it, and it closes itself once answered. Only `RideDetailSheet` on the walk through
+new rides (`NewRideQueue`) does.
 
 The wrapper brings the rest: the transition, the radius, the overlay, the card surface, the
 grabber, and the entry on the overlay stack that Android's back gesture closes.
@@ -34,8 +35,7 @@ grabber, and the entry on the overlay stack that Android's back gesture closes.
 ## Panel or modal
 
 - **`desktop="panel"`** for a sheet that shows one thing out of a list the user is still
-  reading: `ServiceDetailSheet`, `PendingRideSheet`, `BikeComponentDetailSheet`,
-  `BikeSpecsDrawer`.
+  reading: `ServiceDetailSheet`, `BikeComponentDetailSheet`, `BikeSpecsDrawer`.
 - **`desktop="modal"`** for a sheet that asks for something and closes: every form and
   confirmation. Also `RideDetailSheet`, which opens from Home with no list beside it (ADR 0036).
 
@@ -84,7 +84,8 @@ no sheet overrides them. Tokens in `global.css`, never a literal:
   whatever the title does: a 44px target 4px from the top and right edge,
   `aria-label={t("action.close")}`. A sheet with its own header draws no ✕ of its own on a phone.
 - **Title.** It keeps 24px clear on the right, so a long one wraps before it reaches the ✕.
-- **No ✕** on a sheet with `dismissible={false}` (`CheckInPromptDrawer`): it must be answered.
+- **No ✕** on a sheet with `dismissible={false}` (the ride drawer on the new-ride walk): it must
+  be answered.
 - **Scroll.** Only the body scrolls, so the grabber, a `title` and the ✕ stay where they are while
   a long sheet is read.
 - `MoreDrawer` builds its own `Drawer` but takes the same tokens and `SHEET_TRANSITION`.

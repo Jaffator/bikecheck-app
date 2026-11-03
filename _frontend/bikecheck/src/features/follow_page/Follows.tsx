@@ -1,13 +1,16 @@
 // The Follows sub-page at /follows, two tabs swiped the way /rides does. The tab lives in the
 // URL: ?tab=followers is what the dashboard figures and the owner-side notifications point at.
 import { useCallback, type ReactElement, type ReactNode } from "react";
-import { Box, Tabs, Text } from "@mantine/core";
+import { Box, Tabs } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useFollowers, useFollowing } from "@/features/follow/follow.queries";
 import { FollowersPanels } from "@/features/follow/ui/FollowersPanels";
 import { FollowingPanels } from "@/features/follow/ui/FollowingPanels";
+import { FollowsTabLabel } from "@/features/follow/ui/FollowsTabLabel";
 import { SETTLE_MS, useSwipePanels } from "@/hooks/useSwipePanels";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { FollowsDesktop } from "./FollowsDesktop";
 
 type FollowsTab = "following" | "followers";
 
@@ -17,20 +20,6 @@ const TAB_ORDER: FollowsTab[] = ["following", "followers"];
 // The app header's height - see AppLayout. The page fills what is left below it, so a swipe
 // lands on the blank space under a short tab as well as on its cards.
 const HEADER_OFFSET = "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))";
-
-// A tab's label with its count once the list is in; the label alone while it loads or failed.
-function TabLabel({ label, count }: { label: string; count: number | undefined }): ReactElement {
-  return (
-    <>
-      {label}
-      {count !== undefined && (
-        <Text component="span" className="tabular-nums" fz={12} c="text.8" ml={6}>
-          {count}
-        </Text>
-      )}
-    </>
-  );
-}
 
 function readTab(value: string | null): FollowsTab {
   return value === "followers" ? "followers" : "following";
@@ -47,6 +36,11 @@ function SwipePanel({ current, moving, children }: { current: boolean; moving: b
 }
 
 export function Follows(): ReactElement {
+  const isDesktop = useIsDesktop();
+  return isDesktop ? <FollowsDesktop /> : <FollowsPhone />;
+}
+
+function FollowsPhone(): ReactElement {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const tab = readTab(params.get("tab"));
@@ -88,10 +82,10 @@ export function Follows(): ReactElement {
     >
       <Tabs.List grow>
         <Tabs.Tab value="following" c={tab === "following" ? "text.6" : "text.8"}>
-          <TabLabel label={t("follow.tabFollowing")} count={followingCount} />
+          <FollowsTabLabel label={t("follow.tabFollowing")} count={followingCount} />
         </Tabs.Tab>
         <Tabs.Tab value="followers" c={tab === "followers" ? "text.6" : "text.8"}>
-          <TabLabel label={t("follow.tabFollowers")} count={followersCount} />
+          <FollowsTabLabel label={t("follow.tabFollowers")} count={followersCount} />
         </Tabs.Tab>
       </Tabs.List>
 

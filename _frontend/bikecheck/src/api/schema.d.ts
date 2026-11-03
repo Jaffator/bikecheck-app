@@ -3287,6 +3287,12 @@ export interface components {
             duration_min: number;
             /** @example 612 */
             elevation_up_m: number;
+            /** @example 598 */
+            elevation_down_m: number | null;
+            /** @example 26 */
+            speed_avg: number | null;
+            /** @example 54 */
+            max_speed_kmh: number | null;
             /**
              * Format: date-time
              * @example 2026-08-19T06:40:00.000Z
@@ -3411,6 +3417,12 @@ export interface components {
             duration_min: number;
             /** @example 612 */
             elevation_up_m: number;
+            /** @example 598 */
+            elevation_down_m: number | null;
+            /** @example 26 */
+            speed_avg: number | null;
+            /** @example 54 */
+            max_speed_kmh: number | null;
             /**
              * Format: date-time
              * @example 2026-08-19T06:40:00.000Z
@@ -6125,7 +6137,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ResponsePendingStravaDto"][];
+                    "application/json": components["schemas"]["ResponseCheckInPendingDto"][];
                 };
             };
         };

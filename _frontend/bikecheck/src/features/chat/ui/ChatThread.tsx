@@ -1,14 +1,17 @@
 // The thread itself: alternating turns, and one muted line while a turn is still being worked
 // out. No cards and no tables - an answer is prose, so it is drawn as prose.
-import { Fragment, type ReactElement } from "react";
+import { Fragment, type ReactElement, type ReactNode } from "react";
 import { Box, Divider, Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
+import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { toolStepKey } from "../toolStepLabels";
 import type { ChatMessage } from "../chat.types";
 import type { PendingTurn } from "../useChatTurn";
+
+const MARK_SIZE = 24;
 
 interface ChatThreadProps {
   messages: ChatMessage[];
@@ -78,10 +81,10 @@ function SubjectDivider({ label }: { label: string }): ReactElement {
   );
 }
 
-// The user's turn sits right, tinted with the send button's blue so the two speakers are told apart.
+// The user's turn sits right on a raised grey; the app's mark tells the other speaker apart.
 function Question({ text }: { text: string }): ReactElement {
   return (
-    <Box className="self-end max-w-[85%] rounded-2xl rounded-br-sm bg-[var(--mantine-color-blue-6)]/60 px-4 py-2">
+    <Box className="self-end max-w-[85%] rounded-2xl rounded-br-sm bg-surface-raised px-4 py-2">
       <Text size="sm" c="text.6" style={{ whiteSpace: "pre-wrap" }}>
         {text}
       </Text>
@@ -92,9 +95,31 @@ function Question({ text }: { text: string }): ReactElement {
 // Bare text, so a long answer reads as one continuous sentence rather than a document.
 function Answer({ text }: { text: string }): ReactElement {
   return (
-    <Text size="sm" c="text.6" className="leading-relaxed" style={{ whiteSpace: "pre-wrap" }}>
-      {text}
-    </Text>
+    <AssistantTurn>
+      <Text size="sm" c="text.6" className="leading-relaxed" style={{ whiteSpace: "pre-wrap" }}>
+        {text}
+      </Text>
+    </AssistantTurn>
+  );
+}
+
+// The app's mark leads every turn of its own, the progress line included.
+function AssistantTurn({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <Group gap={12} wrap="nowrap" align="flex-start">
+      <Box
+        w={MARK_SIZE}
+        h={MARK_SIZE}
+        bg="primary.6"
+        c="textDark.6"
+        style={{ flexShrink: 0, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Bikecheck width={16} height={10} />
+      </Box>
+      <Box pt={2} style={{ minWidth: 0 }}>
+        {children}
+      </Box>
+    </Group>
   );
 }
 
@@ -105,11 +130,13 @@ function ProgressLine({ tool, recovering }: { tool: string | null; recovering: b
   const { t } = useTranslation();
 
   return (
-    <Group gap={8} wrap="nowrap">
-      <Loader size={12} color="var(--color-text-dim)" />
-      <Text size="xs" c="var(--color-text-dim)">
-        {recovering ? t("chat.reconnecting") : t(toolStepKey(tool))}
-      </Text>
-    </Group>
+    <AssistantTurn>
+      <Group gap={8} wrap="nowrap">
+        <Loader size={12} color="var(--color-text-dim)" />
+        <Text size="xs" c="var(--color-text-dim)">
+          {recovering ? t("chat.reconnecting") : t(toolStepKey(tool))}
+        </Text>
+      </Group>
+    </AssistantTurn>
   );
 }

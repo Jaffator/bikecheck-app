@@ -15,7 +15,7 @@ import { useOfflineWhenCallApiStore, useHeaderStore, useOverlayStore } from "@/s
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { useMyProfile } from "@/features/profile/profile.queries";
-import { CheckInPromptDrawer } from "@/features/rides/ui/CheckInPromptDrawer";
+import { NewRideQueue } from "@/features/rides/ui/NewRideQueue";
 import { tapFeedback } from "@/utils/haptics";
 import { Fab } from "./Fab";
 import { MoreDrawer } from "./MoreDrawer";
@@ -99,7 +99,7 @@ function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | 
 }
 
 // A sidebar row on desktop, so the page gets the top-level title and no back arrow.
-const DESKTOP_TOP_LEVEL_ROUTES: string[] = ["/notifications"];
+const DESKTOP_TOP_LEVEL_ROUTES: string[] = ["/notifications", "/follows", "/chat"];
 
 function isSubPage(pathname: string, isDesktop: boolean): boolean {
   if (isDesktop && DESKTOP_TOP_LEVEL_ROUTES.includes(pathname)) return false;
@@ -402,8 +402,8 @@ export function AppLayout(): ReactElement {
           the sidebar holds all three on desktop. */}
       {!subPage && !isDesktop && <Fab menuOpened={fabMenuOpened} onMenuOpenedChange={setFabMenuOpened} />}
       {!isDesktop && <MoreDrawer opened={moreOpened} onClose={() => setMoreOpened(false)} />}
-      {/* A drawer on the phone, a modal on desktop: a ride on the wrong bike is caught on either. */}
-      <CheckInPromptDrawer />
+      {/* New rides walked in the locked ride drawer, a sheet on the phone and a modal on desktop. */}
+      <NewRideQueue />
       {/* --------- FOOTER --------- */}
       {!subPage && !isDesktop && (
         <AppShell.Footer

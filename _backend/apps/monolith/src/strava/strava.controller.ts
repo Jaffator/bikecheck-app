@@ -6,6 +6,7 @@ import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { LinkStravaGearDto } from './dto/link-strava-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
+import { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
 import { ResolvePendingActivityDto } from './dto/resolve-pending-activity.dto';
 import { ResponseResolvePendingActivityDto } from './dto/response-resolve-pending-activity.dto';
 import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
@@ -73,9 +74,9 @@ export class StravaController {
 
   // ---------- GET rides waiting to be assigned to a bike ----------
   @ApiOperation({ summary: 'List rides that arrived without a bike the app could resolve' })
-  @ApiResponse({ status: 200, type: ResponsePendingStravaDto, isArray: true })
+  @ApiResponse({ status: 200, type: ResponseCheckInPendingDto, isArray: true })
   @Get('pending-activities')
-  listPendingActivities(@CurrentUser('userId') userId: string): Promise<ResponsePendingStravaDto[]> {
+  listPendingActivities(@CurrentUser('userId') userId: string): Promise<ResponseCheckInPendingDto[]> {
     return this.stravaEventService.listPendingActivities(Number(userId));
   }
 
