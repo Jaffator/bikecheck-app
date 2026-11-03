@@ -25,6 +25,7 @@ describe('StatsController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let bikeId: number;
+  let ownerId: number;
   // When the one ride started: three days ago, inside the four weeks the wear pace reads.
   let rideStartedAt: Date;
   // Logged in once each: login is throttled to 5 a minute.
@@ -80,7 +81,7 @@ describe('StatsController (e2e)', () => {
     await app.init();
 
     // ARRANGE: an Enduro whose chain has driven 480 km, one ride and two services on it.
-    const ownerId = await registerVerified(owner);
+    ownerId = await registerVerified(owner);
     ownerToken = await login(owner);
 
     const bikeResponse = await request(app.getHttpServer())
@@ -180,6 +181,40 @@ describe('StatsController (e2e)', () => {
       .expect(200);
 
     expect(response.body.bikes).toEqual([]);
+  });
+
+  it("compares the year with last year up to the same day, the owner's rides only", async () => {
+    // ARRANGE: 1 January last year always falls inside last year up to today; the ride three days ago never does.
+    const lastNewYear = new Date(Date.UTC(new Date().getUTCFullYear() - 1, 0, 1, 12));
+    const earlier = await prisma.rides.create({
+      data: {
+        user_id: ownerId,
+        bike_id: bikeId,
+        started_at: lastNewYear,
+        distance_m: 25000,
+        duration_min: 75,
+        elevation_up_m: 600,
+      },
+    });
+
+    const owned = await request(app.getHttpServer())
+      .get('/api/stats/distance?period=year')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+    const foreign = await request(app.getHttpServer())
+      .get('/api/stats/distance?period=year')
+      .set('Authorization', `Bearer ${strangerToken}`)
+      .expect(200);
+    const allTime = await request(app.getHttpServer())
+      .get('/api/stats/distance?period=all')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+    // Out again, so the other figures stay on the one ride.
+    await prisma.rides.delete({ where: { id: earlier.id } });
+
+    expect(owned.body.previous).toEqual({ meters: 25000, elevation_m: 600, time_min: 75 });
+    expect(foreign.body.previous).toEqual({ meters: 0, elevation_m: 0, time_min: 0 });
+    expect(allTime.body.previous).toBeNull();
   });
 
   it('forecasts the chain jobs soonest first, at the pace of the last four weeks', async () => {

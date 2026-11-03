@@ -1,26 +1,30 @@
 // Buckets and weeks read from a bike's metres per UTC day, index 0 = the served `from`. Every sum
 // stays in metres; a value is rounded only where it is printed, so the buckets add up to exactly the total.
-import type { TFunction } from "i18next";
+import dayjs from "dayjs";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatNumber } from "@/utils/number";
+import type { ComparedPeriod } from "./figureReadings";
 import type { DistanceBucket } from "./homePeriod";
-import type { Distance, DistanceBike, HomePeriod } from "./stats.types";
+import type { Distance, DistanceBike, DistancePrevious, HomePeriod } from "./stats.types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Distance and climb share one span and one detail rule; only the days summed and the unit differ.
+// Distance and climb share one span; only the days summed, the previous total and the unit differ.
 export interface DailySeries {
   daily: (bike: DistanceBike) => number[];
+  previous: (previous: DistancePrevious) => number;
   format: (meters: number, language: string) => string;
 }
 
 export const RIDDEN: DailySeries = {
   daily: (bike) => bike.daily_m,
+  previous: (previous) => previous.meters,
   format: (meters, language) => formatKm(Math.round(meters / 1000), language),
 };
 
 export const CLIMBED: DailySeries = {
   daily: (bike) => bike.daily_elevation_m,
+  previous: (previous) => previous.elevation_m,
   format: (meters, language) => `${formatNumber(meters, language)} m`,
 };
 
@@ -78,32 +82,30 @@ function metersSince(distance: Distance, since: Date, series: DailySeries): numb
   return days.reduce((sum, meters) => sum + meters, 0);
 }
 
-// getUTCDay counts from Sunday.
-function mondayOf(day: Date): Date {
-  return new Date(day.getTime() - ((day.getUTCDay() + 6) % 7) * DAY_MS);
+export type BarState = "past" | "current" | "future";
+
+export interface PeriodBar {
+  meters: number;
+  state: BarState;
 }
 
-// The current bucket one level down: this month of the year, this week of the month, this year of all time.
-export function periodGain(
-  distance: Distance,
-  period: HomePeriod,
-  series: DailySeries,
-  language: string,
-  t: TFunction,
-): string {
-  const today = dayOf(distance.to, 0);
-  const amount = (since: Date): string => series.format(metersSince(distance, since, series), language);
+// Every bucket of the Period, whether served yet or not: a year's 12 months, a month's days.
+export function periodBars(distance: Distance, period: ComparedPeriod, series: DailySeries): PeriodBar[] {
+  const bucket = period === "year" ? "month" : "day";
+  const count = period === "year" ? 12 : dayjs(distance.from).daysInMonth();
+  const served = bucketMeters(garageDaily(distance, series), distance, bucket);
 
-  if (period === "month") return t("dashboard.gainWeek", { amount: amount(mondayOf(today)) });
-  if (period === "all") {
-    const year = today.getUTCFullYear();
-    return t("dashboard.gainYear", { amount: amount(new Date(Date.UTC(year, 0, 1))), year });
-  }
-  const month = new Intl.DateTimeFormat(language, { month: "long", timeZone: "UTC" }).format(today);
-  return t("dashboard.gainMonth", {
-    amount: amount(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))),
-    month,
+  return Array.from({ length: count }, (_, index) => {
+    if (index >= served.length) return { meters: 0, state: "future" };
+    return { meters: served[index], state: index === served.length - 1 ? "current" : "past" };
   });
+}
+
+function garageDaily(distance: Distance, series: DailySeries): number[] {
+  return distance.bikes.reduce<number[]>(
+    (sum, bike) => series.daily(bike).map((meters, day) => meters + (sum[day] ?? 0)),
+    [],
+  );
 }
 
 // Days between the Monday of 1 January's ISO week and 1 January itself; getUTCDay counts from Sunday.

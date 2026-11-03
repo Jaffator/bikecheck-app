@@ -4323,6 +4323,25 @@ export interface components {
             to: string;
             /** @description Bikes with at least one ride in the window, highest total first */
             bikes: components["schemas"]["Response_DistanceBikeDto"][];
+            /** @description The garage's previous Period of the same kind up to the same day, under the same ride rules; null for all time and for no period */
+            previous: components["schemas"]["Response_DistancePreviousDto"] | null;
+        };
+        Response_DistancePreviousDto: {
+            /**
+             * @description Metres ridden
+             * @example 48200
+             */
+            meters: number;
+            /**
+             * @description Metres climbed
+             * @example 1240
+             */
+            elevation_m: number;
+            /**
+             * @description Minutes ridden
+             * @example 260
+             */
+            time_min: number;
         };
         Response_WearPointDto: {
             /**

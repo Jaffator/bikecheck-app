@@ -536,6 +536,7 @@ describe('StatsService', () => {
             time_min: 170,
           },
         ],
+        previous: null,
       });
     });
 
@@ -651,7 +652,7 @@ describe('StatsService', () => {
       const result = await stats.getDistance(OWNER_ID);
 
       // ASSERT: an empty card for the current year, not an empty one for last year.
-      expect(result).toEqual({ from: '2026-01-01', to: '2026-01-28', bikes: [] });
+      expect(result).toEqual({ from: '2026-01-01', to: '2026-01-28', bikes: [], previous: null });
     });
 
     it('counts no deleted ride', async () => {
@@ -698,6 +699,8 @@ describe('StatsService', () => {
             time_min: 110,
           },
         ],
+        // 31 August is past 25 August, so the month before has nothing up to today.
+        previous: { meters: 0, elevation_m: 0, time_min: 0 },
       });
     });
 
@@ -722,7 +725,12 @@ describe('StatsService', () => {
       const result = await stats.getDistance(OWNER_ID, 'year');
 
       // ASSERT
-      expect(result).toEqual({ from: '2026-01-01', to: '2026-01-28', bikes: [] });
+      expect(result).toEqual({
+        from: '2026-01-01',
+        to: '2026-01-28',
+        bikes: [],
+        previous: { meters: 0, elevation_m: 0, time_min: 0 },
+      });
     });
 
     it("serves all time from the day of the garage's earliest dated ride to today", async () => {
@@ -753,7 +761,7 @@ describe('StatsService', () => {
       const result = await stats.getDistance(OWNER_ID, 'all');
 
       // ASSERT
-      expect(result).toEqual({ from: '2026-01-28', to: '2026-01-28', bikes: [] });
+      expect(result).toEqual({ from: '2026-01-28', to: '2026-01-28', bikes: [], previous: null });
     });
 
     it("lists a bike ridden for time but no distance, and counts only the window's rides of garage bikes", async () => {
@@ -830,6 +838,93 @@ describe('StatsService', () => {
     it('rejects a period Home does not know', async () => {
       // ACT + ASSERT
       await expect(stats.getDistance(OWNER_ID, 'week')).rejects.toThrow(BadRequestException);
+    });
+
+    it('compares this month with the month before up to the same day, under the same ride rules', async () => {
+      // ARRANGE: Tuesday 3 November; the Stumpy is archived.
+      jest.setSystemTime(new Date('2026-11-03T10:00:00.000Z'));
+      garage = [
+        { ...RALLON, is_deleted: false },
+        { ...STUMPY, is_deleted: true },
+      ];
+      rides = [
+        ride(RALLON, '2026-09-30T23:00:00.000Z', 90000, { duration_min: 300, elevation_up_m: 2000 }),
+        ride(RALLON, '2026-10-01T00:00:00.000Z', 20000, { duration_min: 60, elevation_up_m: 400 }),
+        ride(RALLON, '2026-10-03T23:59:00.000Z', 15000, { duration_min: 45, elevation_up_m: null }),
+        ride(RALLON, '2026-10-02T09:00:00.000Z', null, { duration_min: 20, elevation_up_m: 50 }),
+        ride(RALLON, '2026-10-04T00:00:00.000Z', 70000, { duration_min: 200, elevation_up_m: 1500 }),
+        { ...ride(RALLON, '2026-10-02T09:00:00.000Z', 50000, { duration_min: 100 }), is_deleted: true },
+        ride(STUMPY, '2026-10-02T09:00:00.000Z', 40000, { duration_min: 90 }),
+        ride(RALLON, '2026-11-02T09:00:00.000Z', 30000, { duration_min: 80 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'month');
+
+      // ASSERT: 1-3 October only, without the deleted ride or the archived bike's.
+      expect(result.previous).toEqual({ meters: 35000, elevation_m: 450, time_min: 125 });
+    });
+
+    it('reads the whole of a shorter month before when today is past its last day', async () => {
+      // ARRANGE: 31 March; February 2026 has 28 days.
+      jest.setSystemTime(new Date('2026-03-31T10:00:00.000Z'));
+      rides = [
+        ride(RALLON, '2026-02-28T20:00:00.000Z', 12000, { duration_min: 40, elevation_up_m: 150 }),
+        ride(RALLON, '2026-03-01T08:00:00.000Z', 5000, { duration_min: 20, elevation_up_m: 10 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'month');
+
+      // ASSERT
+      expect(result.previous).toEqual({ meters: 12000, elevation_m: 150, time_min: 40 });
+    });
+
+    it('compares the year with last year up to the same day', async () => {
+      // ARRANGE: 3 November.
+      jest.setSystemTime(new Date('2026-11-03T10:00:00.000Z'));
+      rides = [
+        ride(RALLON, '2024-12-31T23:00:00.000Z', 90000, { duration_min: 300 }),
+        ride(RALLON, '2025-01-01T00:00:00.000Z', 20000, { duration_min: 60, elevation_up_m: 400 }),
+        ride(RALLON, '2025-11-03T23:00:00.000Z', 10000, { duration_min: 30, elevation_up_m: 100 }),
+        ride(RALLON, '2025-11-04T00:00:00.000Z', 70000, { duration_min: 200, elevation_up_m: 1500 }),
+        ride(RALLON, '2026-02-01T09:00:00.000Z', 30000, { duration_min: 80 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'year');
+
+      // ASSERT
+      expect(result.previous).toEqual({ meters: 30000, elevation_m: 500, time_min: 90 });
+    });
+
+    it('cuts last year at 28 February when today is 29 February', async () => {
+      // ARRANGE
+      jest.setSystemTime(new Date('2028-02-29T10:00:00.000Z'));
+      rides = [
+        ride(RALLON, '2027-02-28T20:00:00.000Z', 12000, { duration_min: 40 }),
+        ride(RALLON, '2027-03-01T00:00:00.000Z', 5000, { duration_min: 20 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'year');
+
+      // ASSERT
+      expect(result.previous).toEqual({ meters: 12000, elevation_m: 0, time_min: 40 });
+    });
+
+    it.each([
+      ['all time', 'all'],
+      ['no period', undefined],
+    ])('serves no previous Period for %s', async (_label, period) => {
+      // ARRANGE
+      rides = [ride(RALLON, '2025-01-10T09:00:00.000Z', 20000)];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, period);
+
+      // ASSERT
+      expect(result.previous).toBeNull();
     });
   });
 

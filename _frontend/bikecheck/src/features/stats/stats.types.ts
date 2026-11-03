@@ -48,12 +48,21 @@ export interface DistanceBike {
   time_min: number;
 }
 
+// The garage's previous Period of the same kind, up to the same day.
+export interface DistancePrevious {
+  meters: number;
+  elevation_m: number;
+  time_min: number;
+}
+
 export interface Distance {
   // UTC days daily_m covers, inclusive YYYY-MM-DD.
   from: string;
   to: string;
   // Every bike ridden in the window, highest total first.
   bikes: DistanceBike[];
+  // Null for all time, which has no Period before it.
+  previous: DistancePrevious | null;
 }
 
 // The span desktop Home reads its figures and charts over; no Period is the phone's year.

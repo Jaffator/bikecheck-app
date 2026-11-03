@@ -6,7 +6,7 @@ import { colorIndexes } from '../bike/color-index';
 import { serviceDateInPeriod } from '../bike-event/bike-event.service';
 import { isoDay } from '../ai-chat/tools/tool-dates';
 import { Response_SpendBikeDto, Response_SpendCategoryDto, Response_SpendDto } from './dto/response-spend';
-import { Response_DistanceBikeDto, Response_DistanceDto } from './dto/response-distance';
+import { Response_DistanceBikeDto, Response_DistanceDto, Response_DistancePreviousDto } from './dto/response-distance';
 import {
   Response_WearForecastDto,
   Response_WearForecastItemDto,
@@ -151,7 +151,12 @@ export class StatsService {
       return distanceOf({ from: earliestDay(rides, today), to: today }, rides, garage);
     }
     const from = period === 'month' ? monthStart(today) : yearStart(today.getUTCFullYear());
-    return distanceOf({ from, to: today }, await this.ridesSince(userId, from), garage);
+    const before = previousWindow(period, today);
+    const [rides, earlier] = await Promise.all([
+      this.ridesSince(userId, from),
+      this.ridesSince(userId, before.from, new Date(before.to.getTime() + DAY_MS)),
+    ]);
+    return { ...distanceOf({ from, to: today }, rides, garage), previous: previousOf(earlier) };
   }
 
   // The phone's card asks for no Period: last year while this one draws nothing, so it is not blank all January.
@@ -411,8 +416,34 @@ function mondayOf(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - sinceMonday));
 }
 
+// No previous Period: only a month or a year asked for has one to compare with.
 function distanceOf(window: DayWindow, rides: DistanceRide[], garage: ColoredBike[]): Response_DistanceDto {
-  return { from: isoDay(window.from), to: isoDay(window.to), bikes: distanceRows(garage, ridesByBike(rides, window)) };
+  return {
+    from: isoDay(window.from),
+    to: isoDay(window.to),
+    bikes: distanceRows(garage, ridesByBike(rides, window)),
+    previous: null,
+  };
+}
+
+// The Period before, up to the same day of it; a day the shorter month lacks reads as its last.
+function previousWindow(period: Exclude<Period, 'all'>, today: Date): DayWindow {
+  const year = today.getUTCFullYear();
+  const month = today.getUTCMonth() - (period === 'month' ? 1 : 12);
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return {
+    from: period === 'month' ? new Date(Date.UTC(year, month, 1)) : yearStart(year - 1),
+    to: new Date(Date.UTC(year, month, Math.min(today.getUTCDate(), lastDay))),
+  };
+}
+
+// A ride missing a figure adds 0 to it, as it does to the current Period's bikes.
+function previousOf(rides: DistanceRide[]): Response_DistancePreviousDto {
+  return {
+    meters: sum(rides.map((ride) => ride.distance_m ?? 0)),
+    elevation_m: sum(rides.map((ride) => ride.elevation_up_m ?? 0)),
+    time_min: sum(rides.map((ride) => ride.duration_min ?? 0)),
+  };
 }
 
 // Today at the latest, so a ride stamped ahead still leaves a window of one day.

@@ -43,6 +43,17 @@ export class Response_DistanceBikeDto {
   time_min!: number;
 }
 
+export class Response_DistancePreviousDto {
+  @ApiProperty({ example: 48200, description: 'Metres ridden' })
+  meters!: number;
+
+  @ApiProperty({ example: 1240, description: 'Metres climbed' })
+  elevation_m!: number;
+
+  @ApiProperty({ example: 260, description: 'Minutes ridden' })
+  time_min!: number;
+}
+
 export class Response_DistanceDto {
   @ApiProperty({ example: '2026-01-01', description: 'First UTC day daily_m covers, inclusive' })
   from!: string;
@@ -55,4 +66,12 @@ export class Response_DistanceDto {
     description: 'Bikes with at least one ride in the window, highest total first',
   })
   bikes!: Response_DistanceBikeDto[];
+
+  @ApiProperty({
+    type: Response_DistancePreviousDto,
+    nullable: true,
+    description:
+      "The garage's previous Period of the same kind up to the same day, under the same ride rules; null for all time and for no period",
+  })
+  previous!: Response_DistancePreviousDto | null;
 }

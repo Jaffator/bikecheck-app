@@ -9775,12 +9775,47 @@
             "items": {
               "$ref": "#/components/schemas/Response_DistanceBikeDto"
             }
+          },
+          "previous": {
+            "nullable": true,
+            "description": "The garage's previous Period of the same kind up to the same day, under the same ride rules; null for all time and for no period",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Response_DistancePreviousDto"
+              }
+            ]
           }
         },
         "required": [
           "from",
           "to",
-          "bikes"
+          "bikes",
+          "previous"
+        ]
+      },
+      "Response_DistancePreviousDto": {
+        "type": "object",
+        "properties": {
+          "meters": {
+            "type": "number",
+            "example": 48200,
+            "description": "Metres ridden"
+          },
+          "elevation_m": {
+            "type": "number",
+            "example": 1240,
+            "description": "Metres climbed"
+          },
+          "time_min": {
+            "type": "number",
+            "example": 260,
+            "description": "Minutes ridden"
+          }
+        },
+        "required": [
+          "meters",
+          "elevation_m",
+          "time_min"
         ]
       },
       "Response_WearPointDto": {
