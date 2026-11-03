@@ -101,6 +101,9 @@ function detailRoute(pathname: string): { pattern: RegExp; titleKey: string } | 
 // A sidebar row on desktop, so the page gets the top-level title and no back arrow.
 const DESKTOP_TOP_LEVEL_ROUTES: string[] = ["/notifications", "/follows", "/chat"];
 
+// Sub-pages that keep the overviews' header row on desktop, so their buttons stand where the list's do.
+const DESKTOP_TALL_HEADER_ROUTES: RegExp[] = [/^\/bikes\/\d+$/];
+
 function isSubPage(pathname: string, isDesktop: boolean): boolean {
   if (isDesktop && DESKTOP_TOP_LEVEL_ROUTES.includes(pathname)) return false;
   if (detailRoute(pathname)) return true;
@@ -162,9 +165,11 @@ export function AppLayout(): ReactElement {
   // Both widths are the phone's column below the breakpoint.
   const contentWidth = isDesktop && isWideRoute(location.pathname) ? WIDE_CONTENT_MAX_WIDTH : CONTENT_MAX_WIDTH;
   const desktopOverview = isDesktop && !subPage;
+  const desktopTallHeader =
+    desktopOverview || (isDesktop && DESKTOP_TALL_HEADER_ROUTES.some((route) => route.test(location.pathname)));
   // A slot that wraps (Home's chips on a narrow window) takes the header down with it.
   const desktopRow = Math.max(DESKTOP_HEADER_ROW, Math.ceil(actionsHeight));
-  const headerBase = desktopOverview
+  const headerBase = desktopTallHeader
     ? `${String(DESKTOP_HEADER_PAD_TOP + desktopRow + DESKTOP_HEADER_PAD_BOTTOM)}px`
     : "3rem";
 
@@ -246,8 +251,8 @@ export function AppLayout(): ReactElement {
         <Box
           h="100%"
           style={{
-            paddingTop: `calc(${String(desktopOverview ? DESKTOP_HEADER_PAD_TOP : 0)}px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))`,
-            paddingBottom: desktopOverview ? DESKTOP_HEADER_PAD_BOTTOM : undefined,
+            paddingTop: `calc(${String(desktopTallHeader ? DESKTOP_HEADER_PAD_TOP : 0)}px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))`,
+            paddingBottom: desktopTallHeader ? DESKTOP_HEADER_PAD_BOTTOM : undefined,
             // Nothing sits behind the controls now, so they are given their own shade to
             // stand on - enough to read a dark arrow against a bright photo.
             backgroundImage: headerTransparent
@@ -267,7 +272,7 @@ export function AppLayout(): ReactElement {
             maw={contentWidth}
             mx="auto"
             // Padding inside the column, like the pages', so the title lines up with their edge.
-            px={desktopOverview ? "xl" : "md"}
+            px={desktopTallHeader ? "xl" : "md"}
             // A wrapped slot grows downward; the title stays level with its first line.
             align={desktopOverview ? "flex-start" : "center"}
             style={{ pointerEvents: "auto" }}

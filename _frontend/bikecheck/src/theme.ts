@@ -232,6 +232,8 @@ export const theme = createTheme({
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk
     // track, raised pill, dim labels.
     SegmentedControl: SegmentedControl.extend({
+      // Rounded as Home's Period switcher is.
+      defaultProps: { radius: "lg" },
       styles: {
         root: { backgroundColor: "var(--mantine-color-inputs-6)" },
         indicator: { backgroundColor: "var(--mantine-color-cards-5)" },

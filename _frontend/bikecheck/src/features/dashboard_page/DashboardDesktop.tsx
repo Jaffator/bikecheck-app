@@ -41,20 +41,20 @@ export function DashboardDesktop(): ReactElement {
       <DashboardBanner />
       <DashboardFigures period={period} />
       {/* Each column stacks its own cards, so a short card never leaves a gap under it.
-          The last ride and the last services sit together on the right. */}
+          The last ride leads the right column. */}
       <Grid gap="md" align="flex-start">
         <Grid.Col span={{ base: 12, lg: 8 }}>
           <Stack gap="md">
             <JobsPanel />
             <GaragePanel period={period} />
             <DistanceCard period={period} />
+            <RecentServicesPanel />
           </Stack>
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 4 }}>
           <Stack gap="md">
-            <WearForecastCard />
             <LastRidePanel />
-            <RecentServicesPanel />
+            <WearForecastCard />
             <SpendCard period={period} />
           </Stack>
         </Grid.Col>

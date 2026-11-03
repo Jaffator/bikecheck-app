@@ -92,7 +92,6 @@ export function BikesDesktop(): ReactElement {
         <SegmentedControl
           value={tab}
           onChange={(next) => setParam("tab", parseBikesTab(next) === "archived" ? "archived" : null)}
-          radius="md"
           withItemsBorders={false}
           // The theme dims every label; the chosen tab reads bright.
           classNames={{ label: "tabular-nums data-[active]:!text-[var(--mantine-color-text-6)] data-[active]:font-bold" }}

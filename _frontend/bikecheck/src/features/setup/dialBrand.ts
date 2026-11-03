@@ -27,6 +27,8 @@ export interface MountedSuspension {
   brand: DialBrand;
   dualRebound: boolean;
   dualCompression: boolean;
+  // What the owner called the part, for the card's header; null when left blank.
+  name: string | null;
 }
 
 export function mountedSuspension(
@@ -40,5 +42,6 @@ export function mountedSuspension(
     brand: dialBrandFor(mounted.component_desc),
     dualRebound: mounted.dual_rebound,
     dualCompression: mounted.dual_compression,
+    name: mounted.component_desc?.trim() || null,
   };
 }

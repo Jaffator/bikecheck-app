@@ -315,7 +315,8 @@ export function BikeDetail(): ReactElement {
   return (
     <Stack
       gap="md"
-      px="md"
+      // Desktop lines up with the header's xl inset, like the garage.
+      px={isDesktop ? "xl" : "md"}
       // Clears the transparent header, which no longer holds a place open for the page.
       pt={isDesktop ? "md" : "calc(3rem + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 0.4rem)"}
       pb={isDesktop ? 96 : "calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"}

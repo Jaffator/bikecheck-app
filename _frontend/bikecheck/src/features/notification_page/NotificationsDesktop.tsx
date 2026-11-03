@@ -48,7 +48,6 @@ export function NotificationsDesktop(): ReactElement {
       <SegmentedControl
         value={filter}
         onChange={(next) => setFilter(next === "unread" ? "unread" : "all")}
-        radius="md"
         withItemsBorders={false}
         w={240}
         classNames={{ label: "data-[active]:!text-[var(--mantine-color-text-6)] data-[active]:font-bold" }}

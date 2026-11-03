@@ -106,7 +106,7 @@ export function toSetupPayload(values: SetupFormValues, unit: TirePressureUnit):
   };
 }
 
-// Whether anything differs from what the profile says.
-export function isSetupDirty(values: SetupFormValues, baseline: SetupFormValues): boolean {
-  return (Object.keys(baseline) as (keyof SetupFormValues)[]).some((key) => values[key] !== baseline[key]);
+// How many fields differ from what the profile says; none means nothing to save.
+export function countSetupChanges(values: SetupFormValues, baseline: SetupFormValues): number {
+  return (Object.keys(baseline) as (keyof SetupFormValues)[]).filter((key) => values[key] !== baseline[key]).length;
 }
