@@ -130,17 +130,6 @@ export function periodSeries(distance: ComparedDistance, period: ComparedPeriod,
   };
 }
 
-// The time cells: a year's months, a month's days with the ones still to come at 0.
-export function cellSeries(distance: ComparedDistance, period: ComparedPeriod, series: DailySeries): PeriodSeries {
-  if (period === "year") return periodSeries(distance, period, series);
-  const daily = garageDaily(distance, series);
-  return {
-    current: Array.from({ length: daysInMonth(distance.from) }, (_, day) => daily[day] ?? 0),
-    previous: series.previousDaily(distance.previous),
-    today: daily.length - 1,
-  };
-}
-
 function figureBuckets(daily: number[], from: string, period: ComparedPeriod): number[] {
   const count = period === "year" ? 12 : Math.ceil(daysInMonth(from) / 7);
   const buckets = new Array<number>(count).fill(0);

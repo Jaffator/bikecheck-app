@@ -2,7 +2,6 @@
 // due now. Distance and climb read as a Comparison or an Equivalent, flipped by a press; terms in CONTEXT.md.
 import { Fragment, type ReactElement, type ReactNode } from "react";
 import { Box, SimpleGrid, Text, useMatches } from "@mantine/core";
-import { Bike, Clock, Mountain, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { FigureSection, type FigureSectionProps } from "@/components/FigureSection";
@@ -14,7 +13,6 @@ import {
   CLIMBED,
   RIDDEN,
   SADDLE_TIME,
-  cellSeries,
   periodSeries,
   totalMeters,
   type DailySeries,
@@ -41,8 +39,8 @@ import type { HomePeriod } from "@/features/stats/stats.types";
 import { PeriodArea } from "@/features/stats/ui/PeriodArea";
 import { PeriodBars } from "@/features/stats/ui/PeriodBars";
 import { PeriodCells } from "@/features/stats/ui/PeriodCells";
-import { YardstickLine } from "@/features/stats/ui/YardstickLine";
 import { YardstickMountain } from "@/features/stats/ui/YardstickMountain";
+import { YardstickRing } from "@/features/stats/ui/YardstickRing";
 import { useFigureReading, type ReadingFigure } from "@/features/stats/useFigureReading";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { formatNumber } from "@/utils/number";
@@ -54,7 +52,6 @@ const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
   { level: "warning", key: "dashboard.warningCount" },
 ];
 
-const ICON_SIZE = 15;
 // The phone stacks the sections; desktop puts four across once there is room.
 const COLS = { base: 1, md: 2, lg: 4 };
 const HAIRLINE = "1px solid var(--color-border)";
@@ -66,7 +63,6 @@ const FLIPPED: Record<
     series: DailySeries;
     yardstick: Yardstick;
     titleKey: string;
-    icon: ReactNode;
     comparison: (series: PeriodSeries, label: string) => ReactNode;
   }
 > = {
@@ -74,14 +70,12 @@ const FLIPPED: Record<
     series: RIDDEN,
     yardstick: EARTH,
     titleKey: "stats.distanceTitle",
-    icon: <Bike size={ICON_SIZE} />,
     comparison: (series, label) => <PeriodBars series={series} label={label} />,
   },
   climb: {
     series: CLIMBED,
     yardstick: EVEREST,
     titleKey: "dashboard.climbTitle",
-    icon: <Mountain size={ICON_SIZE} />,
     comparison: (series, label) => <PeriodArea series={series} label={label} />,
   },
 };
@@ -126,12 +120,12 @@ export function DashboardFigures({ period }: { period: HomePeriod }): ReactEleme
   );
 }
 
-// What a figure says under its value and draws along the bottom.
+// What a figure says under its value and draws beside it.
 type Readout = Pick<FigureSectionProps, "chip" | "detail" | "graphic">;
 
 interface Readouts {
   comparison: (figure: ComparedFigure) => Readout;
-  equivalent: (meters: number, series: DailySeries, yardstick: Yardstick) => Readout;
+  equivalent: (meters: number, yardstick: Yardstick) => Readout;
 }
 
 function useReadouts(): Readouts {
@@ -143,22 +137,16 @@ function useReadouts(): Readouts {
       const { change, text } = comparisonOf(figure, i18n.language, t);
       return { chip: change === null ? undefined : changeLabel(change, i18n.language, t), detail: text };
     },
-    equivalent: (meters, series, yardstick) => {
+    equivalent: (meters, yardstick) => {
       const equivalent = equivalentOf(meters, yardstick);
       const chip = equivalentLabel(equivalent, i18n.language, t);
       const detail = t(equivalent.times > 0 ? yardstick.timesKey : yardstick.shareKey);
-      const name = t(yardstick.labelKey, { value: series.format(yardstick.meters, i18n.language) });
       const label = `${chip} ${detail}`;
       const graphic =
-        yardstick.graphic === "line" ? (
-          <YardstickLine
-            equivalent={equivalent}
-            start={equivalent.times > 0 ? `×${formatNumber(equivalent.times, i18n.language)}` : `0 ${series.unit}`}
-            end={name}
-            label={label}
-          />
+        yardstick.graphic === "ring" ? (
+          <YardstickRing equivalent={equivalent} label={label} />
         ) : (
-          <YardstickMountain equivalent={equivalent} name={name} label={label} />
+          <YardstickMountain equivalent={equivalent} label={label} />
         );
       return { chip, detail, graphic };
     },
@@ -175,9 +163,9 @@ function FlippedFigure({ period, figure }: FlippedFigureProps): ReactElement {
   const { data: distance, isPlaceholderData } = useDistance(period);
   const { reading, flip } = useFigureReading(figure);
   const readouts = useReadouts();
-  const { series, yardstick, titleKey, icon, comparison } = FLIPPED[figure];
+  const { series, yardstick, titleKey, comparison } = FLIPPED[figure];
   const title = t(titleKey, { period: homePeriodLabel(period, i18n.language, t) });
-  const head = { icon, title, unit: series.unit };
+  const head = { title, unit: series.unit };
 
   if (distance === undefined) return <FigureSection {...head} value={null} />;
   const meters = totalMeters(distance, series);
@@ -188,7 +176,7 @@ function FlippedFigure({ period, figure }: FlippedFigureProps): ReactElement {
   // All time has no Period before it, so it reads only as the Equivalent and ignores a press.
   const against = compared(distance, period);
   if (against === null || reading === "equivalent") {
-    const readout = readouts.equivalent(meters, series, yardstick);
+    const readout = readouts.equivalent(meters, yardstick);
     return <FigureSection {...head} value={value} {...readout} onOpen={against === null ? undefined : flip} />;
   }
   const readout = readouts.comparison(comparedFigure(against, series));
@@ -210,7 +198,6 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
   const { data: distance, isPlaceholderData } = useDistance(period);
   const readouts = useReadouts();
   const head = {
-    icon: <Clock size={ICON_SIZE} />,
     title: t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) }),
     unit: SADDLE_TIME.unit,
   };
@@ -244,12 +231,13 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
   );
 }
 
+// The same buckets as the bars, since a month's days would not fit the slot beside the figure.
 function TimeCells({ against, label }: { against: Compared; label: string }): ReactElement {
   const { i18n } = useTranslation();
   const { distance, period } = against;
   return (
     <PeriodCells
-      series={cellSeries(distance, period, SADDLE_TIME)}
+      series={periodSeries(distance, period, SADDLE_TIME)}
       labels={[
         periodName(distance.previous.from, period, i18n.language),
         periodName(distance.from, period, i18n.language),
@@ -266,7 +254,6 @@ function DueFigure(): ReactElement {
 
   return (
     <FigureSection
-      icon={<Wrench size={ICON_SIZE} />}
       title={t("dashboard.dueTitle")}
       value={due === undefined ? null : formatNumber(due.length, i18n.language)}
       unit={t("dashboard.partsUnit", { count: due?.length ?? 0 })}

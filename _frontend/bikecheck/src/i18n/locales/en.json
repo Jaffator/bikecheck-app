@@ -42,7 +42,9 @@
     "service": "Service",
     "rides": "Rides",
     "more": "More",
-    "new": "New"
+    "new": "New",
+    "community": "Community",
+    "personalGarage": "Personal garage"
   },
   "more": {
     "chatDetail": "Ask about your bike",
@@ -325,8 +327,6 @@
     "equivalentEarthTimes": "Earth's circumference",
     "equivalentEverestShare": "of Everest",
     "equivalentEverestTimes": "Everest",
-    "yardstickEarth": "Earth's circumference · {{value}}",
-    "yardstickEverest": "Everest · {{value}}",
     "partsUnit_one": "part",
     "partsUnit_other": "parts",
     "dueAllGood": "All good",

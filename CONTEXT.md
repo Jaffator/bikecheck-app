@@ -191,6 +191,18 @@ no bounded Period. Home offers three: this month, the year, and all time, which 
 on the day of the garage's earliest ride.
 _Avoid_: Range, timeframe
 
+**Equivalent**:
+A Period's distance or climb read against one fixed yardstick known the world over — the Earth's
+circumference for distance, Everest for climb — the same for every rider wherever they ride. Read
+as a share until the yardstick is reached, then as how many whole times it has been covered.
+_Avoid_: Benchmark, comparison (that is the previous Period's reading)
+
+**Comparison**:
+A Period's reading set against the previous Period of the same kind, counted up to the same day —
+the 1st to the 3rd of November against the 1st to the 3rd of October. All time has no previous
+Period and so no Comparison; a previous Period with nothing in it gives no share either.
+_Avoid_: Delta, trend, growth
+
 **Wear Baseline**:
 A component's accumulators frozen at the moment of a service, so "how far since this was last
 done" can be measured per action. Accumulators keep growing; the baseline is what they are

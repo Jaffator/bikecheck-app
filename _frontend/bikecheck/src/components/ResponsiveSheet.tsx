@@ -84,6 +84,7 @@ export function ResponsiveSheet({
   const visible = useOpenedOnNextFrame(opened);
   const shownTitle = useShownWhileOpen(opened, title);
   const shownChildren = useShownWhileOpen(opened, children);
+  const shownModalSize = useShownWhileOpen(opened, modalSize);
 
   const shared = {
     opened: visible,
@@ -163,7 +164,7 @@ export function ResponsiveSheet({
     <Modal
       {...shared}
       centered
-      size={modalSize}
+      size={shownModalSize}
       radius="md"
       overlayProps={OVERLAY}
       styles={{

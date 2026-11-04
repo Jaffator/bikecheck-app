@@ -11,19 +11,17 @@ export type FigureReading = "comparison" | "equivalent";
 // The same for every rider, since the app does not know where they ride.
 export interface Yardstick {
   meters: number;
-  graphic: "line" | "mountain";
-  // "17 % obvodu Země" while short of it, "11× obvod Země" once covered; "obvod Země · 40 075 km" under the graphic.
+  graphic: "ring" | "mountain";
+  // "17 % obvodu Země" while short of it, "11× obvod Země" once covered.
   shareKey: string;
   timesKey: string;
-  labelKey: string;
 }
 
 export const EARTH: Yardstick = {
   meters: 40_075_000,
-  graphic: "line",
+  graphic: "ring",
   shareKey: "dashboard.equivalentEarthShare",
   timesKey: "dashboard.equivalentEarthTimes",
-  labelKey: "dashboard.yardstickEarth",
 };
 
 export const EVEREST: Yardstick = {
@@ -31,7 +29,6 @@ export const EVEREST: Yardstick = {
   graphic: "mountain",
   shareKey: "dashboard.equivalentEverestShare",
   timesKey: "dashboard.equivalentEverestTimes",
-  labelKey: "dashboard.yardstickEverest",
 };
 
 export interface Equivalent {

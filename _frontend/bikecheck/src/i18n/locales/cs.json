@@ -44,7 +44,9 @@
     "service": "Servis",
     "rides": "Jízdy",
     "more": "Více",
-    "new": "Přidat"
+    "new": "Přidat",
+    "community": "Komunita",
+    "personalGarage": "Osobní garáž"
   },
   "more": {
     "chatDetail": "Zeptej se na svoje kolo",
@@ -333,8 +335,6 @@
     "equivalentEarthTimes": "obvod Země",
     "equivalentEverestShare": "Everestu",
     "equivalentEverestTimes": "Everest",
-    "yardstickEarth": "obvod Země · {{value}}",
-    "yardstickEverest": "Everest · {{value}}",
     "partsUnit_one": "díl",
     "partsUnit_few": "díly",
     "partsUnit_many": "dílu",

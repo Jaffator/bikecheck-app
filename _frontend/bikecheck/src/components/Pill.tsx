@@ -1,4 +1,5 @@
-// A small raised pill for a figure beside words: a share, a ×N badge.
+// A small raised pill for a figure beside words: a share, a ×N badge. Dim like the words, so only the
+// main value is bright.
 import type { ReactElement, ReactNode } from "react";
 import { Box } from "@mantine/core";
 
@@ -14,7 +15,7 @@ export function Pill({ children, small = false }: { children: ReactNode; small?:
       px={small ? 6 : 8}
       fz={small ? 10 : 11}
       fw={600}
-      c="text.6"
+      c="var(--color-text-dim)"
       style={{
         display: "inline-flex",
         alignItems: "center",

@@ -1,11 +1,12 @@
-// Two rows of cells, the Period before over this one, each cell shaded by how much was ridden in it.
+// Two rows of cells, the Period before over this one, one cell a bucket shaded by how much was ridden in it.
 import type { ReactElement } from "react";
 import { Box, Group, Stack, Text } from "@mantine/core";
 import type { PeriodSeries } from "@/features/stats/distanceDays";
 import { CURRENT_COLOR, EMPTY_COLOR, SHADOW_CELL_COLOR } from "./periodColors";
 
 const CELL_HEIGHT = 12;
-const LABEL_WIDTH = 28;
+// "2025" or "říj", at 10 px.
+const LABEL_WIDTH = 24;
 // A ridden cell never fades below this, so one short ride still reads against the empty ones.
 const MIN_SHADE = 0.4;
 
