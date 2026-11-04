@@ -191,10 +191,17 @@ no bounded Period. Home offers three: this month, the year, and all time, which 
 on the day of the garage's earliest ride.
 _Avoid_: Range, timeframe
 
+**Energy**:
+The kcal a Period's rides burnt, as Strava estimates them per ride; a ride Strava sent no estimate
+for burns 0. Read on Home the way distance and climb are read, with the average per ride under
+it. Never handed to the ride review (ADR 0044).
+_Avoid_: Calories (the column's name, not the figure's), kJ (Strava sends it only with a power meter)
+
 **Equivalent**:
-A Period's distance or climb read against one fixed yardstick known the world over — the Earth's
-circumference for distance, Everest for climb — the same for every rider wherever they ride. Read
-as a share until the yardstick is reached, then as how many whole times it has been covered.
+A Period's distance, climb or Energy read against one fixed yardstick known the world over — the
+Earth's circumference for distance, Everest for climb, a marathon's worth (2 600 kcal) for Energy —
+the same for every rider wherever they ride. Read as a share until the yardstick is reached, then
+as how many whole times it has been covered.
 _Avoid_: Benchmark, comparison (that is the previous Period's reading)
 
 **Comparison**:

@@ -1,3 +1,5 @@
+import fs from 'fs/promises';
+import path from 'path';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
@@ -117,6 +119,7 @@ describe('StatsController (e2e)', () => {
         drivetrain_meters: 40000,
         duration_min: 120,
         elevation_up_m: 900,
+        calories: 1742,
       },
     });
 
@@ -167,12 +170,44 @@ describe('StatsController (e2e)', () => {
 
     expect(response.body.from).toBe(isoDay(rideStartedAt.getTime()));
     expect(response.body.bikes).toEqual([
-      expect.objectContaining({ bike_id: bikeId, total_km: 40, ride_count: 1, time_min: 120 }),
+      expect.objectContaining({ bike_id: bikeId, total_km: 40, ride_count: 1, time_min: 120, calories: 1742 }),
     ]);
     const [bike] = response.body.bikes;
     expect(sum(bike.daily_m)).toBe(40400);
     expect(sum(bike.daily_elevation_m)).toBe(900);
     expect(sum(bike.daily_time_min)).toBe(120);
+    expect(sum(bike.daily_calories)).toBe(1742);
+  });
+
+  it('fills calories from the stored Strava activity the way the migration backfilled the old rides', async () => {
+    // ARRANGE: a ride imported before the column existed: kcal only in json_data, stored as a JSON string.
+    const legacy = await prisma.rides.create({
+      data: {
+        user_id: ownerId,
+        bike_id: bikeId,
+        started_at: new Date(Date.now() - 400 * DAY_MS),
+        json_data: JSON.stringify({ id: 1, calories: 1234.6 }),
+      },
+    });
+    const migration = await fs.readFile(
+      path.join(__dirname, '../../prisma/migrations/20261104120000_ride_calories/migration.sql'),
+      'utf8',
+    );
+    // Comments off, so a statement is read by its first keyword.
+    const backfill = migration
+      .replace(/^\s*--.*$/gm, '')
+      .split(';')
+      .map((statement) => statement.trim())
+      .filter((statement) => statement.startsWith('UPDATE'));
+    expect(backfill).toHaveLength(1);
+
+    // ACT
+    await prisma.$executeRawUnsafe(backfill[0]);
+    const filled = await prisma.rides.findUnique({ where: { id: legacy.id }, select: { calories: true } });
+    await prisma.rides.delete({ where: { id: legacy.id } });
+
+    // ASSERT: rounded, the way the import writes it.
+    expect(filled?.calories).toBe(1235);
   });
 
   it("charts none of another user's distance", async () => {
@@ -195,6 +230,7 @@ describe('StatsController (e2e)', () => {
         distance_m: 25000,
         duration_min: 75,
         elevation_up_m: 600,
+        calories: 980,
       },
     });
 
@@ -214,12 +250,21 @@ describe('StatsController (e2e)', () => {
     await prisma.rides.delete({ where: { id: earlier.id } });
 
     expect(owned.body.previous).toEqual(
-      expect.objectContaining({ from: isoDay(lastNewYear.getTime()), meters: 25000, elevation_m: 600, time_min: 75 }),
+      expect.objectContaining({
+        from: isoDay(lastNewYear.getTime()),
+        meters: 25000,
+        elevation_m: 600,
+        time_min: 75,
+        calories: 980,
+      }),
     );
     expect(sum(owned.body.previous.daily_m)).toBe(25000);
     expect(sum(owned.body.previous.daily_elevation_m)).toBe(600);
     expect(sum(owned.body.previous.daily_time_min)).toBe(75);
-    expect(foreign.body.previous).toEqual(expect.objectContaining({ meters: 0, elevation_m: 0, time_min: 0 }));
+    expect(sum(owned.body.previous.daily_calories)).toBe(980);
+    expect(foreign.body.previous).toEqual(
+      expect.objectContaining({ meters: 0, elevation_m: 0, time_min: 0, calories: 0 }),
+    );
     expect(sum(foreign.body.previous.daily_m)).toBe(0);
     expect(allTime.body.previous).toBeNull();
   });
