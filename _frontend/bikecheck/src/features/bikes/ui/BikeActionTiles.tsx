@@ -7,13 +7,16 @@ import { ChevronRight, FileText, History, SlidersHorizontal } from "lucide-react
 import { Bikecheck } from "@/assets/icons/bikecheck";
 
 interface BikeActionTilesProps {
-  // Absent on an Archived Bike, which takes no new work, and on desktop, where the header carries it.
+  // Absent on an Archived Bike, which takes no new work.
   onAddService?: () => void;
-  // Absent on desktop, where the header carries Reports.
-  onOpenReports?: () => void;
+  onOpenReports: () => void;
   onOpenHistory: () => void;
   // The Setup screen: the numbers the bike is ridden at (ADR 0029).
   onOpenSetup: () => void;
+  // Desktop's three in a row have no width left for a chevron.
+  cols?: 2 | 3;
+  // Desktop's last cell, while Strava still has something to ask of this bike.
+  stravaTile?: ReactNode;
 }
 
 export function BikeActionTiles({
@@ -21,11 +24,14 @@ export function BikeActionTiles({
   onOpenReports,
   onOpenHistory,
   onOpenSetup,
+  cols = 2,
+  stravaTile,
 }: BikeActionTilesProps): ReactElement {
   const { t } = useTranslation();
+  const chevron = cols === 2;
 
   return (
-    <SimpleGrid cols={2} spacing="sm">
+    <SimpleGrid cols={cols} spacing="sm">
       {onAddService !== undefined && (
         <Tile
           // Servicing is the app's own act, so the tile wears the app's own mark.
@@ -37,18 +43,17 @@ export function BikeActionTiles({
           textColor="var(--mantine-color-black)"
         />
       )}
-      <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} chevron />
-      <Tile icon={<SlidersHorizontal size={20} />} label={t("setup.tile")} onClick={onOpenSetup} chevron />
-      {onOpenReports !== undefined && (
-        <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron />
-      )}
+      <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} chevron={chevron} />
+      <Tile icon={<SlidersHorizontal size={20} />} label={t("setup.tile")} onClick={onOpenSetup} chevron={chevron} />
+      <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron={chevron} />
+      {stravaTile}
     </SimpleGrid>
   );
 }
 
 // One tile. Filled when it is branded, outlined otherwise; the chevron sits against the
 // right edge, centred on the tile rather than on the label.
-function Tile({
+export function Tile({
   icon,
   label,
   onClick,

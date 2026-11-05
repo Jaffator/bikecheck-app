@@ -21,7 +21,6 @@ import {
   ArrowUpRight,
   ChevronRight,
   Clock,
-  FileText,
   Gauge,
   Info,
   Pencil,
@@ -40,7 +39,7 @@ import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
 import { TrackedActionsSection } from "@/features/service_tracking/ui/TrackedActionsSection";
 import { useConnectStrava } from "@/features/strava/strava.queries";
-import { BikeStravaCard } from "@/features/strava/ui/BikeStravaCard";
+import { StravaActionTile } from "@/features/strava/ui/StravaActionTile";
 import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
 import { useCurrentUser } from "@/features/users/users.queries";
 
@@ -73,8 +72,8 @@ export function BikeDetailDesktop(props: BikeDetailDesktopProps): ReactElement {
       <Grid.Col span={{ base: 12, lg: 4 }}>
         <Stack gap="md">
           <HeroCard {...props} />
-          <Leftovers {...props} />
-          <Tiles bikeId={bike.id} />
+          {archived && <ArchivedNote />}
+          <Tiles {...props} />
           <RecentHistory bikeId={bike.id} />
         </Stack>
       </Grid.Col>
@@ -110,22 +109,12 @@ interface BikeDetailHeaderActionsProps {
   menu: ReactNode;
 }
 
-export function BikeDetailHeaderActions({ bikeId, archived, menu }: BikeDetailHeaderActionsProps): ReactElement {
+export function BikeDetailHeaderActions({ bikeId, archived, menu }: BikeDetailHeaderActionsProps): ReactElement | null {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const id = String(bikeId);
-  const reportButton = (
-    <Button
-      variant="outline"
-      radius="md"
-      leftSection={<FileText size={16} color="var(--mantine-color-primary-5)" />}
-      onClick={() => navigate(`/reports?bike=${id}`)}
-    >
-      {t("bikes.headerReport")}
-    </Button>
-  );
 
-  if (archived) return reportButton;
+  if (archived) return null;
 
   return (
     <Group gap="sm" wrap="nowrap">
@@ -137,7 +126,6 @@ export function BikeDetailHeaderActions({ bikeId, archived, menu }: BikeDetailHe
       >
         {t("bikes.headerEdit")}
       </Button>
-      {reportButton}
       <Button
         color="primary.6"
         c="textDark.6"
@@ -247,52 +235,51 @@ function AllSpecsLink({ onOpenSpecs }: { onOpenSpecs: () => void }): ReactElemen
   );
 }
 
-// The archived note and the Strava pitch - each only when it applies.
-function Leftovers({ bike, archived, paired, onPairGear }: BikeDetailDesktopProps): ReactElement | null {
+function ArchivedNote(): ReactElement {
   const { t } = useTranslation();
-  const { data: user } = useCurrentUser();
-  const connect = useConnectStrava();
-
-  if (archived) {
-    return (
-      <Paper radius="lg" p="md" style={{ ...CARD, boxShadow: "var(--elev-row)" }}>
-        <Group gap={8} wrap="nowrap" align="flex-start">
-          <Archive size={16} color="var(--color-text-dim)" style={{ flexShrink: 0, marginTop: 2 }} />
-          <Stack gap={2}>
-            <Text fz={13} fw={600} c="text.6">
-              {t("bikes.archivedTitle")}
-            </Text>
-            <Text fz={12} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
-              {t("bikes.archivedBody")}
-            </Text>
-          </Stack>
-        </Group>
-      </Paper>
-    );
-  }
-  if (paired) return null;
 
   return (
-    <BikeStravaCard
-      key={bike.id}
-      accountConnected={user?.strava_athlete_id != null}
-      onConnectAccount={() => connect.mutate()}
-      onPairGear={onPairGear}
-      connectFailed={connect.isError}
-      connecting={connect.isPending}
-    />
+    <Paper radius="lg" p="md" style={{ ...CARD, boxShadow: "var(--elev-row)" }}>
+      <Group gap={8} wrap="nowrap" align="flex-start">
+        <Archive size={16} color="var(--color-text-dim)" style={{ flexShrink: 0, marginTop: 2 }} />
+        <Stack gap={2}>
+          <Text fz={13} fw={600} c="text.6">
+            {t("bikes.archivedTitle")}
+          </Text>
+          <Text fz={12} c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
+            {t("bikes.archivedBody")}
+          </Text>
+        </Stack>
+      </Group>
+    </Paper>
   );
 }
 
-// Add service and Reports live in the header here, so only the two places to go remain.
-function Tiles({ bikeId }: { bikeId: number }): ReactElement {
+// Add service lives in the header here. Three in a row, unless Strava still has a question.
+function Tiles({ bike, archived, paired, onPairGear }: BikeDetailDesktopProps): ReactElement {
   const navigate = useNavigate();
-  const id = String(bikeId);
+  const { data: user } = useCurrentUser();
+  const connect = useConnectStrava();
+  const id = String(bike.id);
+  const stravaAsks = !paired && !archived;
 
   return (
     <BikeActionTiles
+      cols={stravaAsks ? 2 : 3}
+      onOpenReports={() => navigate(`/reports?bike=${id}`)}
       onOpenHistory={() => navigate(`/service?bike=${id}`)}
       onOpenSetup={() => navigate(`/bikes/${id}/setup`)}
+      stravaTile={
+        stravaAsks && (
+          <StravaActionTile
+            accountConnected={user?.strava_athlete_id != null}
+            onConnectAccount={() => connect.mutate()}
+            onPairGear={onPairGear}
+            connectFailed={connect.isError}
+            connecting={connect.isPending}
+          />
+        )
+      }
     />
   );
 }
