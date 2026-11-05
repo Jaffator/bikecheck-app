@@ -1246,7 +1246,8 @@
     "actionAssignBike": "Přiřadit kolo",
     "actionViewRide": "Zobrazit jízdu",
     "actionView": "Zobrazit",
-    "actionOpenGarage": "Otevřít garáž"
+    "actionOpenGarage": "Otevřít garáž",
+    "waitingForBike": "Čeká na kolo"
   },
   "pendingRides": {
     "cardAction": "Vyřešit",

@@ -112,7 +112,6 @@ export class AuthController {
   async getMe(@CurrentUser('userId') userId: string): Promise<UserResponseDto> {
     console.log('Current userId:---------');
     const user = await this.userService.getUserbyId(Number(userId));
-    console.log('Current user:', user);
     if (!user) {
       throw new NotFoundException('User not found');
     }

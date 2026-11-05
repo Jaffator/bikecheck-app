@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, type ReactElement } from "react";
-import { OnboardingPrototype } from "@/features/onboarding/prototype/OnboardingPrototype";
 import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 import { Center } from "@mantine/core";
 import logoOnly from "@/assets/logo_only.svg";
@@ -61,8 +60,6 @@ function App(): ReactElement {
         {/* The link in a Verification Email lands here while nobody is signed in (ADR 0031):
             no session fetch, no nav, one button. */}
         <Route path="/verify-email" element={<VerifyEmail />} />
-        {/* PROTOTYPE for #337, never merged. */}
-        <Route path="/prototype/onboarding" element={<OnboardingPrototype />} />
       </Route>
       <Route path="/*" element={<ProtectedApp />} />
     </Routes>

@@ -46,6 +46,17 @@ total, keeps its whole history, and is reached only through the archive. Reversi
 expires it. Read-only while archived, and unpaired from Strava (ADR 0024).
 _Avoid_: Deleted bike, retired bike, bin
 
+**Pro**:
+The paid plan: any number of Bikes in use and AI chat with no monthly limit. Belongs to the account,
+not the device. Without it an account is on **Free**: its first Bike and 100 AI questions a month.
+_Avoid_: Premium, subscription
+
+**Locked Bike**:
+A Bike beyond the first on an account without Pro. It stays in the garage, greyed out, and does
+nothing until unlocked: no wear, no notifications, no place in lists or totals. Rides on it while
+locked are lost, not kept for later. Unlike an Archived Bike, it is not the owner's act.
+_Avoid_: Inactive bike, disabled bike
+
 **Deleting a Bike**:
 Destroying a Bike and everything belonging to it — its Rides, Services, parts and setups. Reachable
 only from the archive and only after the owner types the bike's name, so the irreversible act is
