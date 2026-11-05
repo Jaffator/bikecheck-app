@@ -1580,5 +1580,58 @@
     "periodAll": "All",
     "periodAllLong": "All time",
     "periodAllTime": "all time"
+  },
+  "onboarding": {
+    "welcome": {
+      "skip": "Skip",
+      "next": "Next",
+      "back": "Back",
+      "start": "Start",
+      "addFirstBike": "Add your first bike",
+      "step": "Step {{current}} of {{total}}",
+      "intro": {
+        "title": "Welcome to BikeCheck",
+        "body": "Your best tool for managing your bikes."
+      },
+      "rides": {
+        "title": "Strava rides wear your parts",
+        "body": "Every ride takes its toll on the chain, brakes and fork."
+      },
+      "service": {
+        "title": "Know when service is due",
+        "body": "The app watches the intervals and tells you in time."
+      },
+      "garage": {
+        "title": "Your garage and setup in one place",
+        "body": "Pressures, clicks, sag and service history."
+      },
+      "sharing": {
+        "title": "Share your profile or create a service report",
+        "body": "Show your garage to other riders, or send a PDF when you sell the bike."
+      },
+      "sample": {
+        "rideName": "Afternoon loop",
+        "distance": "Distance",
+        "time": "Time",
+        "elevation": "Elevation",
+        "chain": "Chain",
+        "fork": "Fork",
+        "pads": "Brake pads",
+        "alertTitle": "Chain is at 94 %",
+        "alertBody": "Orbea Rallon: time for a new one.",
+        "frontTyre": "Front",
+        "frontPressure": "1.7 bar",
+        "sag": "Sag",
+        "reportTitle": "Service report",
+        "reportSubtitle": "Orbea Rallon · full history",
+        "chainSwap": "Chain replacement",
+        "padsSwap": "Brake pad replacement",
+        "forkService": "Fork service",
+        "visibility": "Who can see your profile",
+        "nobody": "Nobody",
+        "followers": "Followers",
+        "everyone": "Public"
+      }
+    }
   }
 }

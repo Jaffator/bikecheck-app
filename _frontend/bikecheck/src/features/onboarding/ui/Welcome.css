@@ -1,0 +1,260 @@
+/* The logo mark assembles from the wrench and the brake disc, as drawn on boards A0 and D0. */
+.welcome-mark {
+  --welcome-fly: 156px;
+}
+
+@media (min-width: 60em) {
+  .welcome-mark {
+    --welcome-fly: 330px;
+  }
+
+  .welcome-dialog {
+    animation: welcome-dialog 260ms ease-out both;
+  }
+}
+
+.welcome-mark__wrench {
+  transform-origin: 20.9% 61.8%;
+  animation: welcome-wrench 720ms cubic-bezier(0.6, 0, 0.85, 0.4) 120ms both;
+}
+
+.welcome-mark__plate {
+  transform-origin: 79.6% 62.8%;
+  animation: welcome-plate 720ms cubic-bezier(0.6, 0, 0.85, 0.4) 120ms both;
+}
+
+.welcome-mark__pulse {
+  animation: welcome-pulse 420ms cubic-bezier(0.33, 1, 0.68, 1) 840ms both;
+}
+
+.welcome-mark__logo {
+  animation: welcome-wipe 440ms cubic-bezier(0.33, 1, 0.68, 1) 840ms both;
+}
+
+.welcome-mark__ring {
+  opacity: 0;
+  animation: welcome-ring 760ms cubic-bezier(0.16, 1, 0.3, 1) 840ms forwards;
+}
+
+.welcome-rise {
+  animation: welcome-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) var(--welcome-delay, 0ms) both;
+}
+
+@keyframes welcome-dialog {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes welcome-wrench {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--welcome-fly) * -1), -30px) rotate(-84deg) scale(1.6);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes welcome-plate {
+  0% {
+    opacity: 0;
+    transform: translate(var(--welcome-fly), 34px) rotate(64deg) scale(1.6);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes welcome-pulse {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.07);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes welcome-wipe {
+  from {
+    clip-path: circle(0px at 50% 60%);
+  }
+  to {
+    clip-path: circle(90px at 50% 60%);
+  }
+}
+
+@keyframes welcome-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.62);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes welcome-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Between slides the panel stays put: only the picture moves and the words cross-fade. */
+.welcome-graphic {
+  view-transition-name: welcome-graphic;
+}
+
+.welcome-panel {
+  view-transition-name: welcome-panel;
+}
+
+.welcome-title {
+  view-transition-name: welcome-title;
+}
+
+.welcome-body {
+  view-transition-name: welcome-body;
+}
+
+:root {
+  --welcome-shift: 32px;
+  --welcome-panel-enter: 0, 32px;
+  --welcome-graphic-radius: 0;
+}
+
+:root[data-welcome-direction="back"] {
+  --welcome-shift: -32px;
+}
+
+@media (min-width: 60em) {
+  :root {
+    --welcome-panel-enter: 32px, 0;
+    --welcome-graphic-radius: 20px 0 0 20px;
+  }
+}
+
+:root[data-welcome-direction]::view-transition-group(*) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+:root[data-welcome-direction]::view-transition-old(root),
+:root[data-welcome-direction]::view-transition-new(root) {
+  animation-duration: 320ms;
+}
+
+/* The pair clips the sliding picture to its own box, as the dialog does outside the transition. */
+::view-transition-image-pair(welcome-graphic) {
+  overflow: hidden;
+  border-radius: var(--welcome-graphic-radius);
+}
+
+::view-transition-old(welcome-graphic) {
+  animation: welcome-graphic-out 420ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+::view-transition-new(welcome-graphic) {
+  animation: welcome-graphic-in 420ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+::view-transition-old(welcome-title),
+::view-transition-old(welcome-body) {
+  animation: welcome-text-out 160ms ease-out both;
+}
+
+::view-transition-new(welcome-title),
+::view-transition-new(welcome-body) {
+  animation: welcome-text-in 320ms cubic-bezier(0.2, 0, 0, 1) 100ms both;
+}
+
+/* Coming from the intro the panel has nothing to cross-fade with, so it arrives. */
+::view-transition-new(welcome-panel):only-child {
+  animation: welcome-panel-in 420ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* Leaving, everything fades together so the app comes through as one calm dissolve. */
+:root[data-welcome-direction="out"]::view-transition-group(*) {
+  animation-duration: 320ms;
+}
+
+:root[data-welcome-direction="out"]::view-transition-old(welcome-graphic),
+:root[data-welcome-direction="out"]::view-transition-old(welcome-panel),
+:root[data-welcome-direction="out"]::view-transition-old(welcome-title),
+:root[data-welcome-direction="out"]::view-transition-old(welcome-body) {
+  animation: welcome-leave 280ms ease-out both;
+}
+
+@keyframes welcome-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes welcome-graphic-out {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--welcome-shift) * -1));
+  }
+}
+
+@keyframes welcome-graphic-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--welcome-shift));
+  }
+}
+
+@keyframes welcome-text-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes welcome-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes welcome-panel-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--welcome-panel-enter));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-dialog,
+  .welcome-mark__wrench,
+  .welcome-mark__plate,
+  .welcome-mark__pulse,
+  .welcome-mark__logo,
+  .welcome-mark__ring,
+  .welcome-rise {
+    animation: none;
+  }
+}

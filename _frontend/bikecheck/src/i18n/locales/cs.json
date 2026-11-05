@@ -1669,5 +1669,58 @@
     "periodAll": "Vše",
     "periodAllLong": "Celkem",
     "periodAllTime": "celkem"
+  },
+  "onboarding": {
+    "welcome": {
+      "skip": "Přeskočit",
+      "next": "Další",
+      "back": "Zpět",
+      "start": "Začít",
+      "addFirstBike": "Přidat první kolo",
+      "step": "Krok {{current}} ze {{total}}",
+      "intro": {
+        "title": "Vítej v BikeCheck",
+        "body": "Tvůj nejlepší nástroj na správu kol."
+      },
+      "rides": {
+        "title": "Jízdy ze Stravy opotřebovávají díly",
+        "body": "Každá jízda ubere řetězu, brzdám i vidlici."
+      },
+      "service": {
+        "title": "Víš, kdy je čas na servis",
+        "body": "Appka hlídá intervaly a včas tě upozorní."
+      },
+      "garage": {
+        "title": "Tvoje garáž a setup na jednom místě",
+        "body": "Tlaky, kliky, sag a servisní historie."
+      },
+      "sharing": {
+        "title": "Sdílej svůj profil, nebo vytvoř servisní report",
+        "body": "Ukaž garáž ostatním jezdcům, nebo pošli PDF při prodeji kola."
+      },
+      "sample": {
+        "rideName": "Odpolední okruh",
+        "distance": "Vzdálenost",
+        "time": "Čas",
+        "elevation": "Převýšení",
+        "chain": "Řetěz",
+        "fork": "Vidlice",
+        "pads": "Destičky",
+        "alertTitle": "Řetěz je na 94 %",
+        "alertBody": "Orbea Rallon: je čas na výměnu.",
+        "frontTyre": "Přední",
+        "frontPressure": "1,7 bar",
+        "sag": "Sag",
+        "reportTitle": "Servisní report",
+        "reportSubtitle": "Orbea Rallon · celá historie",
+        "chainSwap": "Výměna řetězu",
+        "padsSwap": "Výměna destiček",
+        "forkService": "Servis vidlice",
+        "visibility": "Kdo uvidí tvůj profil",
+        "nobody": "Nikdo",
+        "followers": "Sledující",
+        "everyone": "Veřejně"
+      }
+    }
   }
 }
