@@ -531,11 +531,15 @@ describe('StatsService', () => {
             color_index: 0,
             daily_m: days(28, { 0: 12400, 10: 38200 }),
             daily_elevation_m: days(28, {}),
+            daily_time_min: days(28, { 0: 45, 10: 125 }),
+            daily_calories: days(28, {}),
             total_km: 51,
             ride_count: 3,
             time_min: 170,
+            calories: 0,
           },
         ],
+        previous: null,
       });
     });
 
@@ -566,6 +570,23 @@ describe('StatsService', () => {
 
       // ASSERT: the ride stamped after today climbs on today, like its metres.
       expect(result.bikes[0].daily_elevation_m).toEqual(days(28, { 0: 310, 10: 845, 27: 120 }));
+    });
+
+    it('serves kcal per UTC day on the same days as the metres ridden, no calories as 0, and their sum', async () => {
+      // ARRANGE
+      rides = [
+        ride(RALLON, '2026-01-01T09:00:00.000Z', 12400, { calories: 820 }),
+        ride(RALLON, '2026-01-11T06:00:00.000Z', 8000, { calories: null }),
+        ride(RALLON, '2026-01-11T23:30:00.000Z', 30200, { calories: 2410 }),
+        ride(RALLON, '2026-02-03T09:00:00.000Z', 5000, { calories: 300 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'year');
+
+      // ASSERT: the ride stamped after today burns on today, like its metres.
+      expect(result.bikes[0].daily_calories).toEqual(days(28, { 0: 820, 10: 2410, 27: 300 }));
+      expect(result.bikes[0].calories).toBe(3530);
     });
 
     it('puts a ride stamped after today on today', async () => {
@@ -651,7 +672,7 @@ describe('StatsService', () => {
       const result = await stats.getDistance(OWNER_ID);
 
       // ASSERT: an empty card for the current year, not an empty one for last year.
-      expect(result).toEqual({ from: '2026-01-01', to: '2026-01-28', bikes: [] });
+      expect(result).toEqual({ from: '2026-01-01', to: '2026-01-28', bikes: [], previous: null });
     });
 
     it('counts no deleted ride', async () => {
@@ -672,9 +693,9 @@ describe('StatsService', () => {
       // ARRANGE: Friday 25 September.
       jest.setSystemTime(TODAY);
       rides = [
-        ride(RALLON, '2026-08-31T22:00:00.000Z', 40000, { duration_min: 120 }),
-        ride(RALLON, '2026-09-01T07:00:00.000Z', 20000, { duration_min: 60 }),
-        ride(RALLON, '2026-09-25T06:00:00.000Z', 15000, { duration_min: 50 }),
+        ride(RALLON, '2026-08-31T22:00:00.000Z', 40000, { duration_min: 120, calories: 1500 }),
+        ride(RALLON, '2026-09-01T07:00:00.000Z', 20000, { duration_min: 60, calories: 800 }),
+        ride(RALLON, '2026-09-25T06:00:00.000Z', 15000, { duration_min: 50, calories: 600 }),
       ];
 
       // ACT
@@ -693,11 +714,26 @@ describe('StatsService', () => {
             color_index: 0,
             daily_m: days(25, { 0: 20000, 24: 15000 }),
             daily_elevation_m: days(25, {}),
+            daily_time_min: days(25, { 0: 60, 24: 50 }),
+            daily_calories: days(25, { 0: 800, 24: 600 }),
             total_km: 35,
             ride_count: 2,
             time_min: 110,
+            calories: 1400,
           },
         ],
+        // 31 August is past 25 August: in the month before's days, not in its totals.
+        previous: {
+          from: '2026-08-01',
+          meters: 0,
+          elevation_m: 0,
+          time_min: 0,
+          calories: 0,
+          daily_m: days(31, { 30: 40000 }),
+          daily_elevation_m: days(31, {}),
+          daily_time_min: days(31, { 30: 120 }),
+          daily_calories: days(31, { 30: 1500 }),
+        },
       });
     });
 
@@ -721,8 +757,23 @@ describe('StatsService', () => {
       // ACT
       const result = await stats.getDistance(OWNER_ID, 'year');
 
-      // ASSERT
-      expect(result).toEqual({ from: '2026-01-01', to: '2026-01-28', bikes: [] });
+      // ASSERT: 10 June is day 160 of 2025.
+      expect(result).toEqual({
+        from: '2026-01-01',
+        to: '2026-01-28',
+        bikes: [],
+        previous: {
+          from: '2025-01-01',
+          meters: 0,
+          elevation_m: 0,
+          time_min: 0,
+          calories: 0,
+          daily_m: days(365, { 160: 40000 }),
+          daily_elevation_m: days(365, {}),
+          daily_time_min: days(365, {}),
+          daily_calories: days(365, {}),
+        },
+      });
     });
 
     it("serves all time from the day of the garage's earliest dated ride to today", async () => {
@@ -753,7 +804,7 @@ describe('StatsService', () => {
       const result = await stats.getDistance(OWNER_ID, 'all');
 
       // ASSERT
-      expect(result).toEqual({ from: '2026-01-28', to: '2026-01-28', bikes: [] });
+      expect(result).toEqual({ from: '2026-01-28', to: '2026-01-28', bikes: [], previous: null });
     });
 
     it("lists a bike ridden for time but no distance, and counts only the window's rides of garage bikes", async () => {
@@ -830,6 +881,134 @@ describe('StatsService', () => {
     it('rejects a period Home does not know', async () => {
       // ACT + ASSERT
       await expect(stats.getDistance(OWNER_ID, 'week')).rejects.toThrow(BadRequestException);
+    });
+
+    it('compares this month with the month before up to the same day, under the same ride rules', async () => {
+      // ARRANGE: Tuesday 3 November; the Stumpy is archived.
+      jest.setSystemTime(new Date('2026-11-03T10:00:00.000Z'));
+      garage = [
+        { ...RALLON, is_deleted: false },
+        { ...STUMPY, is_deleted: true },
+      ];
+      rides = [
+        ride(RALLON, '2026-09-30T23:00:00.000Z', 90000, { duration_min: 300, elevation_up_m: 2000 }),
+        ride(RALLON, '2026-10-01T00:00:00.000Z', 20000, { duration_min: 60, elevation_up_m: 400, calories: 700 }),
+        ride(RALLON, '2026-10-03T23:59:00.000Z', 15000, { duration_min: 45, elevation_up_m: null, calories: 500 }),
+        ride(RALLON, '2026-10-02T09:00:00.000Z', null, { duration_min: 20, elevation_up_m: 50, calories: null }),
+        ride(RALLON, '2026-10-04T00:00:00.000Z', 70000, { duration_min: 200, elevation_up_m: 1500, calories: 2000 }),
+        { ...ride(RALLON, '2026-10-02T09:00:00.000Z', 50000, { duration_min: 100 }), is_deleted: true },
+        ride(STUMPY, '2026-10-02T09:00:00.000Z', 40000, { duration_min: 90 }),
+        ride(RALLON, '2026-11-02T09:00:00.000Z', 30000, { duration_min: 80 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'month');
+
+      // ASSERT: the totals stop at 3 October, the days run through the whole of it; neither counts
+      // the deleted ride or the archived bike's.
+      expect(result.previous).toEqual({
+        from: '2026-10-01',
+        meters: 35000,
+        elevation_m: 450,
+        time_min: 125,
+        calories: 1200,
+        daily_m: days(31, { 0: 20000, 2: 15000, 3: 70000 }),
+        daily_elevation_m: days(31, { 0: 400, 1: 50, 3: 1500 }),
+        daily_time_min: days(31, { 0: 60, 1: 20, 2: 45, 3: 200 }),
+        daily_calories: days(31, { 0: 700, 2: 500, 3: 2000 }),
+      });
+    });
+
+    it('reads the whole of a shorter month before when today is past its last day', async () => {
+      // ARRANGE: 31 March; February 2026 has 28 days.
+      jest.setSystemTime(new Date('2026-03-31T10:00:00.000Z'));
+      rides = [
+        ride(RALLON, '2026-02-28T20:00:00.000Z', 12000, { duration_min: 40, elevation_up_m: 150 }),
+        ride(RALLON, '2026-03-01T08:00:00.000Z', 5000, { duration_min: 20, elevation_up_m: 10 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'month');
+
+      // ASSERT
+      expect(result.previous).toEqual({
+        from: '2026-02-01',
+        meters: 12000,
+        elevation_m: 150,
+        time_min: 40,
+        calories: 0,
+        daily_m: days(28, { 27: 12000 }),
+        daily_elevation_m: days(28, { 27: 150 }),
+        daily_time_min: days(28, { 27: 40 }),
+        daily_calories: days(28, {}),
+      });
+    });
+
+    it('compares the year with last year up to the same day', async () => {
+      // ARRANGE: 3 November.
+      jest.setSystemTime(new Date('2026-11-03T10:00:00.000Z'));
+      rides = [
+        ride(RALLON, '2024-12-31T23:00:00.000Z', 90000, { duration_min: 300 }),
+        ride(RALLON, '2025-01-01T00:00:00.000Z', 20000, { duration_min: 60, elevation_up_m: 400 }),
+        ride(RALLON, '2025-11-03T23:00:00.000Z', 10000, { duration_min: 30, elevation_up_m: 100 }),
+        ride(RALLON, '2025-11-04T00:00:00.000Z', 70000, { duration_min: 200, elevation_up_m: 1500 }),
+        ride(RALLON, '2026-02-01T09:00:00.000Z', 30000, { duration_min: 80 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'year');
+
+      // ASSERT: 3 November is day 306 of 2025; the ride on the 4th is in the days, not the totals.
+      expect(result.previous).toEqual({
+        from: '2025-01-01',
+        meters: 30000,
+        elevation_m: 500,
+        time_min: 90,
+        calories: 0,
+        daily_m: days(365, { 0: 20000, 306: 10000, 307: 70000 }),
+        daily_elevation_m: days(365, { 0: 400, 306: 100, 307: 1500 }),
+        daily_time_min: days(365, { 0: 60, 306: 30, 307: 200 }),
+        daily_calories: days(365, {}),
+      });
+    });
+
+    it('cuts last year at 28 February when today is 29 February', async () => {
+      // ARRANGE
+      jest.setSystemTime(new Date('2028-02-29T10:00:00.000Z'));
+      rides = [
+        ride(RALLON, '2027-02-28T20:00:00.000Z', 12000, { duration_min: 40 }),
+        ride(RALLON, '2027-03-01T00:00:00.000Z', 5000, { duration_min: 20 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, 'year');
+
+      // ASSERT: 28 February is day 58 of 2027.
+      expect(result.previous).toEqual({
+        from: '2027-01-01',
+        meters: 12000,
+        elevation_m: 0,
+        time_min: 40,
+        calories: 0,
+        daily_m: days(365, { 58: 12000, 59: 5000 }),
+        daily_elevation_m: days(365, {}),
+        daily_time_min: days(365, { 58: 40, 59: 20 }),
+        daily_calories: days(365, {}),
+      });
+    });
+
+    it.each([
+      ['all time', 'all'],
+      ['no period', undefined],
+    ])('serves no previous Period for %s', async (_label, period) => {
+      // ARRANGE
+      rides = [ride(RALLON, '2025-01-10T09:00:00.000Z', 20000)];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, period);
+
+      // ASSERT
+      expect(result.previous).toBeNull();
     });
   });
 

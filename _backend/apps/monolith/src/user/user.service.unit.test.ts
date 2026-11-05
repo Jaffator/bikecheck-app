@@ -6,7 +6,7 @@ import { Prisma, tire_pressure_unit } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { UpdateUserDto } from './dto/user.dtos';
+import { HINT_KEYS, HintKeyParamDto, UpdateUserDto } from './dto/user.dtos';
 import { AccountEventsService } from '../account-events/account-events.service';
 import { NotificationService } from '../notification/notification.service';
 import { StorageService } from '../storage/storage.service';
@@ -826,5 +826,91 @@ describe('UpdateUserDto tyre pressure unit', () => {
 
   it('accepts a body that does not name the unit', async () => {
     expect(await violations({ currency: 'czk' })).toEqual([]);
+  });
+});
+
+describe('UserService onboarding state', () => {
+  let service: UserService;
+
+  const mockPrisma = {
+    users: { findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
+    $queryRaw: jest.fn().mockResolvedValue([]),
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockPrisma.users.findUnique.mockResolvedValue({ id: USER_ID });
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AccountEventsService, useValue: mockAccountEvents },
+        { provide: NotificationService, useValue: mockNotifications },
+        { provide: StorageService, useValue: mockStorage },
+        { provide: getLoggerToken(UserService.name), useValue: mockLogger },
+      ],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+  });
+
+  it('stamps the Welcome only while it is null, so a second call keeps the first stamp', async () => {
+    const user = await service.markWelcomeSeen(USER_ID);
+
+    expect(mockPrisma.users.updateMany).toHaveBeenCalledWith({
+      where: { id: USER_ID, welcome_seen_at: null },
+      data: { welcome_seen_at: expect.any(Date), updated_at: expect.any(Date) },
+    });
+    expect(user).toEqual({ id: USER_ID });
+  });
+
+  // The condition and the push are one statement: two devices cannot add a key twice.
+  it('adds a Hint only when the key is missing', async () => {
+    const user = await service.markHintSeen(USER_ID, 'reports');
+
+    expect(mockPrisma.users.updateMany).toHaveBeenCalledWith({
+      where: { id: USER_ID, NOT: { hints_seen: { has: 'reports' } } },
+      data: { hints_seen: { push: 'reports' }, updated_at: expect.any(Date) },
+    });
+    expect(user).toEqual({ id: USER_ID });
+  });
+
+  it('answers 404 when the row is gone', async () => {
+    mockPrisma.users.findUnique.mockResolvedValue(null);
+
+    await expect(service.markWelcomeSeen(USER_ID)).rejects.toThrow(NotFoundException);
+    await expect(service.markHintSeen(USER_ID, 'setup')).rejects.toThrow(NotFoundException);
+  });
+
+  it('switches Hints through the profile update', async () => {
+    mockPrisma.users.update.mockResolvedValue({ id: USER_ID, hints_enabled: false });
+
+    await service.updateUserProfile(USER_ID, { hints_enabled: false });
+
+    expect(mockPrisma.users.update).toHaveBeenCalledWith({
+      where: { id: USER_ID },
+      data: { hints_enabled: false, updated_at: expect.any(Date) },
+    });
+  });
+});
+
+describe('Onboarding DTOs', () => {
+  it.each([true, false])('UpdateUserDto accepts hints_enabled %p', async (value) => {
+    expect(await validate(plainToInstance(UpdateUserDto, { hints_enabled: value }))).toEqual([]);
+  });
+
+  // The column is never null, so null is refused like any other non-boolean.
+  it.each(['yes', 1, null])('UpdateUserDto rejects hints_enabled %p', async (value) => {
+    const errors = await validate(plainToInstance(UpdateUserDto, { hints_enabled: value }));
+    expect(errors.map((error) => error.property)).toEqual(['hints_enabled']);
+  });
+
+  it.each(HINT_KEYS)('HintKeyParamDto accepts %s', async (key) => {
+    expect(await validate(plainToInstance(HintKeyParamDto, { key }))).toEqual([]);
+  });
+
+  it.each(['unknown', '', 'Reports'])('HintKeyParamDto rejects %p', async (key) => {
+    const errors = await validate(plainToInstance(HintKeyParamDto, { key }));
+    expect(errors.map((error) => error.property)).toEqual(['key']);
   });
 });

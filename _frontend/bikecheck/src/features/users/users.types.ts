@@ -60,6 +60,7 @@ export interface UpdateUserPayload {
   avatar_url?: string;
   notifications_enabled?: boolean;
   tire_pressure_unit?: TirePressureUnit;
+  hints_enabled?: boolean;
 }
 
 // Mirrors UserResponseDto with JSON dates represented as ISO strings.
@@ -87,6 +88,10 @@ export interface User {
   strava_avatar_url: string | null;
   // Moved by an on-demand sync only, never by the webhook. Null until the first one.
   strava_last_sync_at: string | null;
+  // Null shows the Welcome.
+  welcome_seen_at: string | null;
+  hints_seen: string[];
+  hints_enabled: boolean;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;

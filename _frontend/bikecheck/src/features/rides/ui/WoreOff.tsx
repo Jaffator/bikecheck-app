@@ -8,6 +8,9 @@ import { trackedActionKey } from "@/features/service_tracking/attentionLevel";
 import type { WoreOffLine } from "@/features/rides/rides.types";
 import { woreOffAmount, woreOffColor, woreOffLabel } from "@/features/rides/woreOff";
 
+// A summary: the lines closest to due. The ride drawer lists them all.
+const SHOWN_LINES = 3;
+
 export function WoreOff({ lines }: { lines: WoreOffLine[] }): ReactElement | null {
   const { t } = useTranslation();
 
@@ -17,7 +20,7 @@ export function WoreOff({ lines }: { lines: WoreOffLine[] }): ReactElement | nul
   return (
     <Stack gap={6} pt="sm" style={{ borderTop: PANEL_HAIRLINE }}>
       <Eyebrow>{t("rides.woreOff")}</Eyebrow>
-      {lines.map((line) => {
+      {lines.slice(0, SHOWN_LINES).map((line) => {
         const amount = woreOffAmount(line, t);
         return (
           <Group key={trackedActionKey(line)} gap="sm" wrap="nowrap" justify="space-between">

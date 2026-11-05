@@ -18,7 +18,13 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto, UserResponseDto } from './dto/user.dtos';
+import {
+  AccountDeletionSummaryDto,
+  CreateUserDto,
+  HintKeyParamDto,
+  UpdateUserDto,
+  UserResponseDto,
+} from './dto/user.dtos';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { users as UserFull } from '@prisma/client';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -56,6 +62,29 @@ export class UserController {
     clearAuthCookies(res, req.headers.origin);
     // A body rather than a 204: the shared client parses every response as JSON.
     return { message: 'Account deleted' };
+  }
+
+  // POST users/me/welcome-seen
+  @ApiOperation({ summary: 'Mark the Welcome as seen; a repeat call keeps the first stamp' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @HttpCode(HttpStatus.OK)
+  @Post('me/welcome-seen')
+  async markWelcomeSeen(@CurrentUser('userId') userId: string): Promise<UserResponseDto> {
+    const user = await this.userService.markWelcomeSeen(Number(userId));
+    return this.mapToResponse(user);
+  }
+
+  // POST users/me/hints/:key
+  @ApiOperation({ summary: 'Mark a Hint as dismissed; a repeat call changes nothing' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @HttpCode(HttpStatus.OK)
+  @Post('me/hints/:key')
+  async markHintSeen(
+    @CurrentUser('userId') userId: string,
+    @Param() params: HintKeyParamDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.userService.markHintSeen(Number(userId), params.key);
+    return this.mapToResponse(user);
   }
 
   // GET user/:id
@@ -121,6 +150,9 @@ export class UserController {
       strava_username: user.strava_username ?? null,
       strava_avatar_url: user.strava_avatar_url ?? null,
       strava_last_sync_at: user.strava_last_sync_at ?? null,
+      welcome_seen_at: user.welcome_seen_at,
+      hints_seen: user.hints_seen,
+      hints_enabled: user.hints_enabled,
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
       created_at: user.created_at || new Date(),

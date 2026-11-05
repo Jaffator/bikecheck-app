@@ -52,17 +52,17 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
             <Text className="tabular-nums" fz={13} fw={600} c={color} style={{ whiteSpace: "nowrap" }}>
               {t("tracking.percentage", { value: action.percentage })}
             </Text>
-            <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+            <ChevronRight size={14} color="var(--mantine-color-text-8)" style={{ flexShrink: 0 }} />
           </Group>
 
           <Group gap="sm" wrap="nowrap" align="center">
             <Group gap={6} wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
               <BikeColorDot colorIndex={colorIndexOf(bikes, action.bike_id)} size={6} />
-              <Text fz={12} c="var(--color-text-dim)" lineClamp={1} style={{ minWidth: 0 }}>
+              <Text fz={12} c="text.8" lineClamp={1} style={{ minWidth: 0 }}>
                 {bikeTitle(action)}
               </Text>
             </Group>
-            <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" style={{ whiteSpace: "nowrap" }}>
+            <Text className="tabular-nums" fz={12} c="text.8" style={{ whiteSpace: "nowrap" }}>
               {remainingLabel(action, i18n.language, t)}
             </Text>
           </Group>

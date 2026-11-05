@@ -82,6 +82,12 @@ function getKslopeUP(slopePercent: number): number {
   return 0;
 }
 
+// Strava's kcal estimate, whole; read from the activity itself so rides parked as pending earlier carry it too.
+function caloriesOf(rawJson: unknown): number | null {
+  const calories = (rawJson as { calories?: unknown } | null | undefined)?.calories;
+  return typeof calories === 'number' && Number.isFinite(calories) ? Math.round(calories) : null;
+}
+
 @Injectable()
 export class StravaEventsService {
   constructor(
@@ -718,6 +724,7 @@ export class StravaEventsService {
         user_id: userId,
         started_at: new Date(analyzedData.started_at),
         json_data: JSON.stringify(analyzedData.rawJson),
+        calories: caloriesOf(analyzedData.rawJson),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
         descent_min: analyzedData.descent_min ?? null,
         activity_strava_id: BigInt(activityId),
@@ -733,6 +740,7 @@ export class StravaEventsService {
       update: {
         started_at: new Date(analyzedData.started_at),
         json_data: JSON.stringify(analyzedData.rawJson),
+        calories: caloriesOf(analyzedData.rawJson),
         // The figures may have changed, so the next open writes the review again (ADR 0044).
         summary: null,
         health_index_brake_pad: analyzedData.health_index_brake_pad,

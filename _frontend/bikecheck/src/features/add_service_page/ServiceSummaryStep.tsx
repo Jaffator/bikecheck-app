@@ -324,7 +324,6 @@ function PlaceRow({
     <ListRow label={t("addService.place")}>
       <SegmentedControl
         size="xs"
-        radius="md"
         aria-label={t("addService.place")}
         value={place}
         onChange={(value) => onPlaceChange(value === "SHOP" ? "SHOP" : "HOME")}

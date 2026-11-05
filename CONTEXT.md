@@ -46,6 +46,17 @@ total, keeps its whole history, and is reached only through the archive. Reversi
 expires it. Read-only while archived, and unpaired from Strava (ADR 0024).
 _Avoid_: Deleted bike, retired bike, bin
 
+**Pro**:
+The paid plan: any number of Bikes in use and AI chat with no monthly limit. Belongs to the account,
+not the device. Without it an account is on **Free**: its first Bike and 100 AI questions a month.
+_Avoid_: Premium, subscription
+
+**Locked Bike**:
+A Bike beyond the first on an account without Pro. It stays in the garage, greyed out, and does
+nothing until unlocked: no wear, no notifications, no place in lists or totals. Rides on it while
+locked are lost, not kept for later. Unlike an Archived Bike, it is not the owner's act.
+_Avoid_: Inactive bike, disabled bike
+
 **Deleting a Bike**:
 Destroying a Bike and everything belonging to it — its Rides, Services, parts and setups. Reachable
 only from the archive and only after the owner types the bike's name, so the irreversible act is
@@ -190,6 +201,25 @@ which is the only Period that counts a Service carrying no Service Date — such
 no bounded Period. Home offers three: this month, the year, and all time, which for rides begins
 on the day of the garage's earliest ride.
 _Avoid_: Range, timeframe
+
+**Energy**:
+The kcal a Period's rides burnt, as Strava estimates them per ride; a ride Strava sent no estimate
+for burns 0. Read on Home the way distance and climb are read, with the average per ride under
+it. Never handed to the ride review (ADR 0044).
+_Avoid_: Calories (the column's name, not the figure's), kJ (Strava sends it only with a power meter)
+
+**Equivalent**:
+A Period's distance, climb or Energy read against one fixed yardstick known the world over — the
+Earth's circumference for distance, Everest for climb, a marathon's worth (2 600 kcal) for Energy —
+the same for every rider wherever they ride. Read as a share until the yardstick is reached, then
+as how many whole times it has been covered.
+_Avoid_: Benchmark, comparison (that is the previous Period's reading)
+
+**Comparison**:
+A Period's reading set against the previous Period of the same kind, counted up to the same day —
+the 1st to the 3rd of November against the 1st to the 3rd of October. All time has no previous
+Period and so no Comparison; a previous Period with nothing in it gives no share either.
+_Avoid_: Delta, trend, growth
 
 **Wear Baseline**:
 A component's accumulators frozen at the moment of a service, so "how far since this was last
@@ -389,6 +419,14 @@ _Avoid_: Confirmation email, activation email
 The email an account receives the moment it becomes usable: at creation when it is born verified,
 on verification otherwise. Never sent to an Unverified Account.
 _Avoid_: Onboarding email, signup email
+
+**Welcome**:
+The slides explaining what the App is for, shown once.
+_Avoid_: Walkthrough, tutorial, tour
+
+**Hint**:
+A one-time bubble explaining one thing on one screen.
+_Avoid_: Tooltip, coach mark
 
 **Notification Email**:
 A notification carried to the inbox as well as to the lock screen and the bell — the same words,

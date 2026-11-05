@@ -8,7 +8,6 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { bikeColor } from "@/features/bikes/bikeColors";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
 import { useIsDesktop } from "@/layout/breakpoints";
@@ -26,14 +25,21 @@ import type { Distance, DistanceBike, HomePeriod } from "../stats.types";
 import { HOME_FIGURE_SIZE, HomeCardHeader, HomeFigure } from "./HomeCardHeader";
 
 const CHART_HEIGHT = 160;
+const DESKTOP_CHART_HEIGHT = 250;
 const TICK_SIZE = 11;
-// One bike's line gets a soft fill; several would only muddy each other.
-const SINGLE_FILL = 0.1;
+const LINE_WIDTH = 2.2;
+// Peak of the fill under each line; it fades out towards the zero line, so several lines stay readable.
+const FILL_OPACITY = 0.16;
 const END_DOT_RADIUS = 4.5;
+const CARD_COLOR = "var(--mantine-color-cards-6)";
 // One bike's label sits above its dot, room the top needs; several print right of their ends.
 const SINGLE_MARGIN = { top: 16, right: 8 };
-// All time runs to six digits.
-const MULTI_MARGIN = { top: 8, right: 60 };
+const MULTI_TOP = 8;
+// Into the card's padding, so the plot takes the width the axis and the end labels leave.
+const CHART_BLEED = 8;
+const END_LABEL_OFFSET = 6;
+// One tabular digit of the 13px end label, rounded up.
+const END_LABEL_CHAR = 8;
 // Line ends closer than one 13px label line are pushed apart.
 const END_LABEL_GAP = 15;
 const TICK_STYLE = { fontVariantNumeric: "tabular-nums" };
@@ -73,54 +79,41 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
       <DistancePaper>
         <Skeleton h={14} w="60%" />
         <Skeleton h={HOME_FIGURE_SIZE} w="35%" />
-        <Skeleton h={CHART_HEIGHT} />
+        <Skeleton h={isDesktop ? DESKTOP_CHART_HEIGHT : CHART_HEIGHT} />
       </DistancePaper>
     );
   }
 
   // The phone keeps drawing only bikes that covered a km, as before rides without distance were served.
   const drawn = isDesktop ? distance : { ...distance, bikes: distance.bikes.filter((bike) => bike.total_km > 0) };
-  const single = drawn.bikes.length === 1 ? drawn.bikes[0] : null;
 
   return (
     <DistancePaper>
       <Stack gap={10}>
         <HomeCardHeader title={t("stats.distance")} period={shown} />
-        {drawn.bikes.length > 0 && <DistanceTotal distance={drawn} single={single} />}
+        {drawn.bikes.length > 0 && <DistanceTotal distance={drawn} withTotals={isDesktop} />}
       </Stack>
 
       {drawn.bikes.length === 0 ? (
-        <Text fz={13} c="var(--color-text-dim)">
+        <Text fz={13} c="text.8">
           {t("stats.distanceEmptyPeriod")}
         </Text>
       ) : (
-        <>
-          <DistanceChart distance={drawn} period={shown} />
-          {single === null && <Legend bikes={drawn.bikes} withTotals={isDesktop} />}
-        </>
+        <DistanceChart distance={drawn} period={shown} />
       )}
     </DistancePaper>
   );
 }
 
 // Summed in metres and rounded once, as every distance figure on Home is.
-function DistanceTotal({ distance, single }: { distance: Distance; single: DistanceBike | null }): ReactElement {
+function DistanceTotal({ distance, withTotals }: { distance: Distance; withTotals: boolean }): ReactElement {
   const { i18n } = useTranslation();
 
   return (
-    <Group justify="space-between" align="baseline" wrap="nowrap" gap="sm">
+    <Group justify="space-between" align="flex-end" gap="md" style={{ rowGap: 10 }}>
       <HomeFigure>{RIDDEN.format(totalMeters(distance, RIDDEN), i18n.language)}</HomeFigure>
-      {single !== null && (
-        // The name carries the baseline; the dot only centres on it.
-        <Group gap={7} wrap="nowrap" align="baseline" style={{ minWidth: 0 }}>
-          <Box style={{ alignSelf: "center" }}>
-            <BikeColorDot colorIndex={single.color_index} size={7} />
-          </Box>
-          <Text fz={13} c="text.7" truncate>
-            {bikeTitle(single)}
-          </Text>
-        </Group>
-      )}
+      {/* One bike's total is the figure beside it. */}
+      <Legend bikes={distance.bikes} withTotals={withTotals && distance.bikes.length > 1} />
     </Group>
   );
 }
@@ -148,43 +141,59 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
   const ends = distance.bikes.map((_, row) => Math.round(line.meters[row][lastIndex] / 1000));
 
   return (
-    <AreaChart
-      h={CHART_HEIGHT}
-      // The phone reads the totals off the line ends; a tap would only focus the surface and ring it.
-      style={isDesktop ? undefined : { pointerEvents: "none" }}
-      data={data}
-      dataKey="start"
-      series={series}
-      curveType="linear"
-      withDots={false}
-      withGradient={false}
-      fillOpacity={single ? SINGLE_FILL : 0}
-      strokeDasharray="none"
-      tickLine="none"
-      textColor="text.8"
-      gridColor="var(--color-border-subtle)"
-      valueFormatter={(km) => formatKm(km, i18n.language)}
-      xAxisProps={{ tick: X_TICK, ...xAxisOf(line, servedYear(distance)) }}
-      // Sized to its longest label; Mantine's 10px tick shift is dropped, auto width cannot see it.
-      yAxisProps={{
-        width: "auto",
-        ticks,
-        domain: [0, ticks[ticks.length - 1]],
-        tick: { fontSize: TICK_SIZE, fill: "currentColor", style: TICK_STYLE },
-        tickFormatter: (km: number) => formatNumber(km, i18n.language),
-      }}
-      areaChartProps={{ margin: single ? SINGLE_MARGIN : MULTI_MARGIN }}
-      areaProps={(item) => {
-        const labelProps = { lastIndex, lineColor: item.color, language: i18n.language };
-        const row = series.findIndex((line) => line.name === item.name);
-        return { label: single ? <EndMarker {...labelProps} /> : <EndLabel {...labelProps} ends={ends} row={row} /> };
-      }}
-      tooltipProps={{
-        labelFormatter: (start: ReactNode) => pointLabel(line.step, String(start), i18n.language, t),
-      }}
-      styles={TOOLTIP_STYLES}
-    />
+    <Box mx={-CHART_BLEED}>
+      <AreaChart
+        h={isDesktop ? DESKTOP_CHART_HEIGHT : CHART_HEIGHT}
+        // The phone reads the totals off the line ends; a tap would only focus the surface and ring it.
+        style={isDesktop ? undefined : { pointerEvents: "none" }}
+        data={data}
+        dataKey="start"
+        series={series}
+        curveType="monotone"
+        withDots={false}
+        withGradient
+        fillOpacity={FILL_OPACITY}
+        strokeWidth={LINE_WIDTH}
+        strokeDasharray="none"
+        referenceLines={[{ y: 0, color: "var(--color-border-strong)" }]}
+        tickLine="none"
+        textColor="text.8"
+        gridColor="var(--color-border-subtle)"
+        valueFormatter={(km) => formatKm(km, i18n.language)}
+        xAxisProps={{ tick: X_TICK, ...xAxisOf(line, servedYear(distance)) }}
+        // Sized to its longest label; Mantine's 10px tick shift is dropped, auto width cannot see it.
+        yAxisProps={{
+          width: "auto",
+          ticks,
+          domain: [0, ticks[ticks.length - 1]],
+          tick: { fontSize: TICK_SIZE, fill: "currentColor", style: TICK_STYLE },
+          tickFormatter: (km: number) => formatNumber(km, i18n.language),
+        }}
+        areaChartProps={{
+          margin: single ? SINGLE_MARGIN : { top: MULTI_TOP, right: endLabelRoom(ends, i18n.language) },
+        }}
+        areaProps={(item) => {
+          const labelProps = { lastIndex, lineColor: item.color, language: i18n.language };
+          const row = series.findIndex((line) => line.name === item.name);
+          return {
+            // Set here: Mantine's activeDotProps only work with withDots, which marks every point.
+            activeDot: { r: END_DOT_RADIUS, fill: CARD_COLOR, stroke: item.color, strokeWidth: LINE_WIDTH },
+            label: single ? <EndMarker {...labelProps} /> : <EndLabel {...labelProps} ends={ends} row={row} />,
+          };
+        }}
+        tooltipProps={{
+          labelFormatter: (start: ReactNode) => pointLabel(line.step, String(start), i18n.language, t),
+        }}
+        styles={TOOLTIP_STYLES}
+      />
+    </Box>
   );
+}
+
+// As wide as the longest total printed, so a month's short labels do not hold all time's six digits of room.
+function endLabelRoom(ends: number[], language: string): number {
+  const longest = Math.max(...ends.map((km) => formatNumber(km, language).length));
+  return END_LABEL_OFFSET + longest * END_LABEL_CHAR;
 }
 
 // The top tick sits at or just above the longest line's end; a whole step, so no tick reads 1.5 km.
@@ -259,7 +268,7 @@ function EndLabel(props: EndLabelProps & SpreadProps): ReactElement | null {
 
   const spread = yScale === undefined ? undefined : spreadEnds(ends.map((km) => yScale(km) ?? 0), yScale(0) ?? 0);
   return (
-    <text x={Number(x) + 6} y={spread?.[row] ?? Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
+    <text x={Number(x) + END_LABEL_OFFSET} y={spread?.[row] ?? Number(y)} dy={4} fill={lineColor} fontSize={13} className="tabular-nums">
       {formatNumber(Number(value), language)}
     </text>
   );
@@ -291,7 +300,7 @@ function EndMarker({ lastIndex, lineColor, language, x, y, value, index }: EndLa
         r={END_DOT_RADIUS}
         fill={lineColor}
         strokeWidth={2}
-        style={{ stroke: "var(--mantine-color-cards-6)" }}
+        style={{ stroke: CARD_COLOR }}
       />
       <text
         x={Number(x) - 8}
@@ -312,15 +321,28 @@ function Legend({ bikes, withTotals }: { bikes: DistanceBike[]; withTotals: bool
   const { i18n } = useTranslation();
 
   return (
-    <Group gap={withTotals ? "md" : "sm"} style={{ rowGap: 4 }}>
+    <Group gap={6}>
       {bikes.map((bike) => (
-        <Group key={bike.bike_id} gap={6} wrap="nowrap">
-          <BikeColorDot colorIndex={bike.color_index} />
-          <Text fz={13} c="text.7">
+        <Group
+          key={bike.bike_id}
+          h={28}
+          pl={9}
+          pr={10}
+          gap={8}
+          wrap="nowrap"
+          maw="100%"
+          style={{ borderRadius: 8, border: "1px solid var(--color-border-subtle)" }}
+        >
+          <Box
+            w={14}
+            h={2.5}
+            style={{ flexShrink: 0, borderRadius: 2, backgroundColor: bikeColor(bike.color_index) }}
+          />
+          <Text fz={13} c="text.7" truncate style={{ minWidth: 0 }}>
             {bikeTitle(bike)}
           </Text>
           {withTotals && (
-            <Text className="tabular-nums" fz={13} c="text.6">
+            <Text className="tabular-nums" fz={13} fw={600} c="text.6">
               {formatNumber(bike.total_km, i18n.language)}
             </Text>
           )}

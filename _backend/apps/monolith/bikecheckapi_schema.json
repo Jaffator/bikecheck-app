@@ -38,6 +38,69 @@
         ]
       }
     },
+    "/api/users/me/welcome-seen": {
+      "post": {
+        "operationId": "User markWelcomeSeen",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Mark the Welcome as seen; a repeat call keeps the first stamp",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/api/users/me/hints/{key}": {
+      "post": {
+        "operationId": "User markHintSeen",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "tracked_actions",
+              "type": "string",
+              "enum": [
+                "tracked_actions",
+                "tracked_action_detail",
+                "unassigned_ride",
+                "check_in",
+                "setup",
+                "reports",
+                "sharing"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Mark a Hint as dismissed; a repeat call changes nothing",
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/api/users/{id}": {
       "get": {
         "operationId": "User getUser",
@@ -2164,7 +2227,21 @@
     "/api/strava/connect": {
       "get": {
         "operationId": "Strava connectStrava",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "platform",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "native",
+              "type": "string",
+              "enum": [
+                "web",
+                "native"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -2278,7 +2355,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ResponsePendingStravaDto"
+                    "$ref": "#/components/schemas/ResponseCheckInPendingDto"
                   }
                 }
               }
@@ -2591,6 +2668,37 @@
           }
         },
         "summary": "List the current user's rides, newest first",
+        "tags": [
+          "Ride"
+        ]
+      }
+    },
+    "/api/rides/{id}/summary": {
+      "get": {
+        "operationId": "Ride findSummary",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseRideSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The ride's AI review, written on the first request and kept until the ride changes",
         "tags": [
           "Ride"
         ]
@@ -4046,6 +4154,20 @@
           "Stats"
         ]
       }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "Health check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
     }
   },
   "info": {
@@ -4170,6 +4292,24 @@
             "example": "2026-09-29T10:00:00Z",
             "nullable": true
           },
+          "welcome_seen_at": {
+            "type": "object",
+            "example": "2026-11-05T10:00:00Z",
+            "nullable": true
+          },
+          "hints_seen": {
+            "example": [
+              "tracked_actions"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hints_enabled": {
+            "type": "boolean",
+            "example": true
+          },
           "last_login_at": {
             "type": "object",
             "example": "2024-01-01T12:00:00Z"
@@ -4203,6 +4343,9 @@
           "strava_username",
           "strava_avatar_url",
           "strava_last_sync_at",
+          "welcome_seen_at",
+          "hints_seen",
+          "hints_enabled",
           "last_login_at",
           "created_at",
           "updated_at"
@@ -4269,6 +4412,10 @@
               "psi"
             ],
             "example": "bar"
+          },
+          "hints_enabled": {
+            "type": "boolean",
+            "example": true
           }
         },
         "required": [
@@ -4278,7 +4425,8 @@
           "weight_kg",
           "avatar_url",
           "notifications_enabled",
-          "tire_pressure_unit"
+          "tire_pressure_unit",
+          "hints_enabled"
         ]
       },
       "DeviceTokenDto": {
@@ -7229,96 +7377,6 @@
           "links"
         ]
       },
-      "ResponsePendingStravaDto": {
-        "type": "object",
-        "properties": {
-          "activity_id": {
-            "type": "string",
-            "example": "13579246810"
-          },
-          "gear_id": {
-            "type": "object",
-            "example": "b12345",
-            "nullable": true
-          },
-          "started_at": {
-            "type": "string",
-            "example": "2026-08-19T06:12:00.000Z"
-          },
-          "name": {
-            "type": "string",
-            "example": "Morning Ride"
-          },
-          "summary_polyline": {
-            "type": "object",
-            "example": "snttH{s`|A[VJrD",
-            "nullable": true
-          },
-          "sport_type": {
-            "type": "string",
-            "example": "MountainBikeRide",
-            "nullable": true
-          },
-          "distance_km": {
-            "type": "number",
-            "example": 42
-          },
-          "duration_min": {
-            "type": "number",
-            "example": 96
-          },
-          "elevation_up_m": {
-            "type": "number",
-            "example": 612
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-08-19T06:40:00.000Z"
-          }
-        },
-        "required": [
-          "activity_id",
-          "gear_id",
-          "started_at",
-          "name",
-          "summary_polyline",
-          "sport_type",
-          "distance_km",
-          "duration_min",
-          "elevation_up_m",
-          "created_at"
-        ]
-      },
-      "ResolvePendingActivityDto": {
-        "type": "object",
-        "properties": {
-          "bikeId": {
-            "type": "number",
-            "example": 1
-          }
-        },
-        "required": [
-          "bikeId"
-        ]
-      },
-      "ResponseResolvePendingActivityDto": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          },
-          "rideId": {
-            "type": "number",
-            "example": 42
-          }
-        },
-        "required": [
-          "success",
-          "rideId"
-        ]
-      },
       "Response_WoreOffLineDto": {
         "type": "object",
         "properties": {
@@ -7401,6 +7459,219 @@
           "after"
         ]
       },
+      "Response_BikeWoreOffDto": {
+        "type": "object",
+        "properties": {
+          "bike_id": {
+            "type": "number",
+            "example": 7
+          },
+          "wore_off": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_WoreOffLineDto"
+            }
+          }
+        },
+        "required": [
+          "bike_id",
+          "wore_off"
+        ]
+      },
+      "ResponseCheckInPendingDto": {
+        "type": "object",
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "example": "13579246810"
+          },
+          "gear_id": {
+            "type": "object",
+            "example": "b12345",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "string",
+            "example": "2026-08-19T06:12:00.000Z"
+          },
+          "name": {
+            "type": "string",
+            "example": "Morning Ride"
+          },
+          "summary_polyline": {
+            "type": "object",
+            "example": "snttH{s`|A[VJrD",
+            "nullable": true
+          },
+          "sport_type": {
+            "type": "string",
+            "example": "MountainBikeRide",
+            "nullable": true
+          },
+          "distance_km": {
+            "type": "number",
+            "example": 42
+          },
+          "duration_min": {
+            "type": "number",
+            "example": 96
+          },
+          "elevation_up_m": {
+            "type": "number",
+            "example": 612
+          },
+          "elevation_down_m": {
+            "type": "number",
+            "example": 598,
+            "nullable": true
+          },
+          "speed_avg": {
+            "type": "number",
+            "example": 26,
+            "nullable": true
+          },
+          "max_speed_kmh": {
+            "type": "number",
+            "example": 54,
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-19T06:40:00.000Z"
+          },
+          "wore_off_by_bike": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Response_BikeWoreOffDto"
+            }
+          }
+        },
+        "required": [
+          "activity_id",
+          "gear_id",
+          "started_at",
+          "name",
+          "summary_polyline",
+          "sport_type",
+          "distance_km",
+          "duration_min",
+          "elevation_up_m",
+          "elevation_down_m",
+          "speed_avg",
+          "max_speed_kmh",
+          "created_at",
+          "wore_off_by_bike"
+        ]
+      },
+      "ResponsePendingStravaDto": {
+        "type": "object",
+        "properties": {
+          "activity_id": {
+            "type": "string",
+            "example": "13579246810"
+          },
+          "gear_id": {
+            "type": "object",
+            "example": "b12345",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "string",
+            "example": "2026-08-19T06:12:00.000Z"
+          },
+          "name": {
+            "type": "string",
+            "example": "Morning Ride"
+          },
+          "summary_polyline": {
+            "type": "object",
+            "example": "snttH{s`|A[VJrD",
+            "nullable": true
+          },
+          "sport_type": {
+            "type": "string",
+            "example": "MountainBikeRide",
+            "nullable": true
+          },
+          "distance_km": {
+            "type": "number",
+            "example": 42
+          },
+          "duration_min": {
+            "type": "number",
+            "example": 96
+          },
+          "elevation_up_m": {
+            "type": "number",
+            "example": 612
+          },
+          "elevation_down_m": {
+            "type": "number",
+            "example": 598,
+            "nullable": true
+          },
+          "speed_avg": {
+            "type": "number",
+            "example": 26,
+            "nullable": true
+          },
+          "max_speed_kmh": {
+            "type": "number",
+            "example": 54,
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-08-19T06:40:00.000Z"
+          }
+        },
+        "required": [
+          "activity_id",
+          "gear_id",
+          "started_at",
+          "name",
+          "summary_polyline",
+          "sport_type",
+          "distance_km",
+          "duration_min",
+          "elevation_up_m",
+          "elevation_down_m",
+          "speed_avg",
+          "max_speed_kmh",
+          "created_at"
+        ]
+      },
+      "ResolvePendingActivityDto": {
+        "type": "object",
+        "properties": {
+          "bikeId": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "bikeId"
+        ]
+      },
+      "ResponseResolvePendingActivityDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "rideId": {
+            "type": "number",
+            "example": 42
+          }
+        },
+        "required": [
+          "success",
+          "rideId"
+        ]
+      },
       "ResponseRideCheckInDto": {
         "type": "object",
         "properties": {
@@ -7437,25 +7708,6 @@
           "status",
           "symptoms",
           "note"
-        ]
-      },
-      "Response_BikeWoreOffDto": {
-        "type": "object",
-        "properties": {
-          "bike_id": {
-            "type": "number",
-            "example": 7
-          },
-          "wore_off": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Response_WoreOffLineDto"
-            }
-          }
-        },
-        "required": [
-          "bike_id",
-          "wore_off"
         ]
       },
       "ResponseCheckInRideDto": {
@@ -7573,74 +7825,6 @@
           "created_at",
           "wore_off",
           "check_in",
-          "wore_off_by_bike"
-        ]
-      },
-      "ResponseCheckInPendingDto": {
-        "type": "object",
-        "properties": {
-          "activity_id": {
-            "type": "string",
-            "example": "13579246810"
-          },
-          "gear_id": {
-            "type": "object",
-            "example": "b12345",
-            "nullable": true
-          },
-          "started_at": {
-            "type": "string",
-            "example": "2026-08-19T06:12:00.000Z"
-          },
-          "name": {
-            "type": "string",
-            "example": "Morning Ride"
-          },
-          "summary_polyline": {
-            "type": "object",
-            "example": "snttH{s`|A[VJrD",
-            "nullable": true
-          },
-          "sport_type": {
-            "type": "string",
-            "example": "MountainBikeRide",
-            "nullable": true
-          },
-          "distance_km": {
-            "type": "number",
-            "example": 42
-          },
-          "duration_min": {
-            "type": "number",
-            "example": 96
-          },
-          "elevation_up_m": {
-            "type": "number",
-            "example": 612
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2026-08-19T06:40:00.000Z"
-          },
-          "wore_off_by_bike": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Response_BikeWoreOffDto"
-            }
-          }
-        },
-        "required": [
-          "activity_id",
-          "gear_id",
-          "started_at",
-          "name",
-          "summary_polyline",
-          "sport_type",
-          "distance_km",
-          "duration_min",
-          "elevation_up_m",
-          "created_at",
           "wore_off_by_bike"
         ]
       },
@@ -7904,6 +8088,18 @@
           "total",
           "weeks",
           "figures"
+        ]
+      },
+      "ResponseRideSummaryDto": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "example": "A proper Enduro sufferfest, 4/5 stars. Wipe those stanchions. Catch ya in the dirt!"
+          }
+        },
+        "required": [
+          "summary"
         ]
       },
       "ChangeRideBikeDto": {
@@ -9727,6 +9923,32 @@
               "type": "number"
             }
           },
+          "daily_time_min": {
+            "example": [
+              0,
+              45,
+              0,
+              125
+            ],
+            "description": "Minutes ridden per UTC day, indexed like daily_m; a ride without duration_min rides 0",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "daily_calories": {
+            "example": [
+              0,
+              820,
+              0,
+              2410
+            ],
+            "description": "kcal per UTC day, indexed like daily_m; a ride without calories burns 0",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
           "total_km": {
             "type": "number",
             "example": 51,
@@ -9741,6 +9963,11 @@
             "type": "number",
             "example": 312,
             "description": "The sum of those rides' duration_min"
+          },
+          "calories": {
+            "type": "number",
+            "example": 3230,
+            "description": "The sum of those rides' calories"
           }
         },
         "required": [
@@ -9751,9 +9978,105 @@
           "color_index",
           "daily_m",
           "daily_elevation_m",
+          "daily_time_min",
+          "daily_calories",
           "total_km",
           "ride_count",
-          "time_min"
+          "time_min",
+          "calories"
+        ]
+      },
+      "Response_DistancePreviousDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "example": "2026-10-01",
+            "description": "First UTC day of the previous Period, index 0 of the days"
+          },
+          "meters": {
+            "type": "number",
+            "example": 48200,
+            "description": "Metres ridden up to the same day"
+          },
+          "elevation_m": {
+            "type": "number",
+            "example": 1240,
+            "description": "Metres climbed up to the same day"
+          },
+          "time_min": {
+            "type": "number",
+            "example": 260,
+            "description": "Minutes ridden up to the same day"
+          },
+          "calories": {
+            "type": "number",
+            "example": 4120,
+            "description": "kcal burnt up to the same day"
+          },
+          "daily_m": {
+            "example": [
+              20000,
+              0,
+              15000,
+              70000
+            ],
+            "description": "The garage's metres per UTC day over the whole previous Period",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "daily_elevation_m": {
+            "example": [
+              400,
+              50,
+              0,
+              1500
+            ],
+            "description": "Metres climbed per day, indexed like daily_m",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "daily_time_min": {
+            "example": [
+              60,
+              20,
+              45,
+              200
+            ],
+            "description": "Minutes ridden per day, indexed like daily_m",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "daily_calories": {
+            "example": [
+              700,
+              0,
+              500,
+              2000
+            ],
+            "description": "kcal per day, indexed like daily_m",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "meters",
+          "elevation_m",
+          "time_min",
+          "calories",
+          "daily_m",
+          "daily_elevation_m",
+          "daily_time_min",
+          "daily_calories"
         ]
       },
       "Response_DistanceDto": {
@@ -9775,12 +10098,23 @@
             "items": {
               "$ref": "#/components/schemas/Response_DistanceBikeDto"
             }
+          },
+          "previous": {
+            "nullable": true,
+            "description": "The garage's previous Period of the same kind, under the same ride rules; null for all time and for no period",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Response_DistancePreviousDto"
+              }
+            ]
           }
         },
         "required": [
           "from",
           "to",
-          "bikes"
+          "bikes",
+          "previous"
         ]
       },
       "Response_WearPointDto": {

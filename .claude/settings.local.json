@@ -9,5 +9,6 @@
   "enabledMcpjsonServers": [
     "mantine",
     "figma"
-  ]
+  ],
+  "outputStyle": "default"
 }

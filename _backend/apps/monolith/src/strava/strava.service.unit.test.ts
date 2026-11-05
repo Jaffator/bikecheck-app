@@ -213,6 +213,33 @@ describe('StravaEventsService', () => {
     });
   });
 
+  describe('energy', () => {
+    // What saveRide writes for a ride whose Strava activity reads like this, new and re-synced alike.
+    async function savedCalories(rawJson: Record<string, unknown>): Promise<unknown[]> {
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrisma.rides.findUnique.mockResolvedValue(null);
+      mockPrisma.rides.upsert.mockResolvedValue({ id: 1 });
+
+      await service.saveAnalyzedData({
+        ...activity(),
+        analyzedData: { distance_km: 42, started_at: '2026-09-20T08:00:00.000Z', rawJson },
+      } as unknown as Parameters<StravaEventsService['saveAnalyzedData']>[0]);
+
+      const [{ create, update }] = mockPrisma.rides.upsert.mock.calls[0] as [
+        { create: Record<string, unknown>; update: Record<string, unknown> },
+      ];
+      return [create.calories, update.calories];
+    }
+
+    it('writes whole kcal from the activity on import and on re-sync', async () => {
+      expect(await savedCalories({ calories: 1742.4 })).toEqual([1742, 1742]);
+    });
+
+    it('writes null when Strava sent no calories', async () => {
+      expect(await savedCalories({ name: 'Morning ride' })).toEqual([null, null]);
+    });
+  });
+
   describe('the unmatched gear listing', () => {
     it('offers no archived bike to pair a gear with', async () => {
       (axios.get as jest.Mock).mockResolvedValue({ data: { athlete_id: ATHLETE_ID, bikes: [] } });

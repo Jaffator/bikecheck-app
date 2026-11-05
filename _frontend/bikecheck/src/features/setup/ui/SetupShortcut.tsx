@@ -22,7 +22,7 @@ export function SetupShortcut({ bikeId }: { bikeId: number }): ReactElement {
     <UnstyledButton aria-label={t("setup.title")} onClick={open} style={TAP_AREA}>
       {/* A span: the frame is drawn inside the real button, which carries the larger tap area. */}
       <ActionIcon component="span" variant="outline" radius="md" size="lg">
-        <SlidersHorizontal size={16} color="var(--mantine-color-primary-6)" />
+        <SlidersHorizontal size={16} color="var(--mantine-color-text-8)" />
       </ActionIcon>
     </UnstyledButton>
   );

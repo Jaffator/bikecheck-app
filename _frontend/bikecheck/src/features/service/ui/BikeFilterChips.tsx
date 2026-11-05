@@ -60,7 +60,7 @@ export function BikeFilterChips({
           onSelect(value === ALL_BIKES ? null : Number(value));
         }}
       >
-        <Group gap="xs" wrap="nowrap" px="md" py="xs">
+        <Group gap="xs" wrap="nowrap" px="var(--page-inset)" py="xs">
           {withAllBikes && (
             <Chip
               value={ALL_BIKES}

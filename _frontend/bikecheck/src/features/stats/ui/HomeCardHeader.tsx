@@ -18,7 +18,7 @@ export function HomeCardHeader({ title, period }: { title: string; period: HomeP
         {title}
       </Text>
       {/* Capitalised because it stands alone, though Czech writes months small. */}
-      <Text fz={13} c="text.7" style={{ flexShrink: 0 }}>
+      <Text fz={13} c="text.8" style={{ flexShrink: 0 }}>
         {label.charAt(0).toUpperCase() + label.slice(1)}
       </Text>
     </Group>

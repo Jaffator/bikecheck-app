@@ -16,6 +16,8 @@ import { canShareLink, shareLink } from "@/utils/shareLink";
 // The sheet stands over what it was opened from, the same way the service detail does.
 const SHEET_HEIGHT = "90%";
 const SHEET_Z_INDEX = 320;
+// The paper's own max-w-3xl plus the modal's gutters and scrollbar, so no dark edge is left.
+const DOCUMENT_MODAL_WIDTH = 820;
 
 // What the server answers with when the period it was handed covers no services.
 const EMPTY_PERIOD_STATUS = 400;
@@ -118,11 +120,14 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   }
 
   const isPublished = shareUrl !== null;
+  // Only the document reads wide; the question before it and the link after it stay a dialog.
+  const showsDocument = made.isPending || (report !== null && !isPublished);
 
   return (
     <Sheet
       opened={opened}
       onClose={close}
+      wide={showsDocument}
       title={
         isPublished ? (
           // Once the link exists, the sheet says so where its name was.
@@ -351,11 +356,13 @@ function wasDismissed(error: unknown): boolean {
 function Sheet({
   opened,
   onClose,
+  wide,
   title,
   children,
 }: {
   opened: boolean;
   onClose: () => void;
+  wide: boolean;
   title: ReactNode;
   children: ReactNode;
 }): ReactElement {
@@ -367,6 +374,7 @@ function Sheet({
       opened={opened}
       onClose={onClose}
       desktop="modal"
+      modalSize={wide ? DOCUMENT_MODAL_WIDTH : undefined}
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
       styles={{
@@ -422,7 +430,8 @@ function Footer({ children }: { children: ReactNode }): ReactElement {
   return (
     <Group
       gap="sm"
-      grow
+      grow={!isDesktop}
+      justify="flex-end"
       px={isDesktop ? "md" : undefined}
       pt="sm"
       pb={isDesktop ? "0.75rem" : undefined}

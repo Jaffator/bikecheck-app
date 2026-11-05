@@ -58,7 +58,7 @@ export function SpendCard({ period }: { period: HomePeriod }): ReactElement {
       </Stack>
 
       {spend.bikes.length === 0 ? (
-        <Text fz={13} c="var(--color-text-dim)">
+        <Text fz={13} c="text.8">
           {t("stats.spendEmpty")}
         </Text>
       ) : (

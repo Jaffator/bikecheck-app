@@ -57,8 +57,8 @@ const cards: MantineColorsTuple = [
   "#a7a7a7",
   "#848484",
   "#6b6764",
-  "#313131",
-  "#1B1C1E",
+  "#21201e",
+  "#1a1918",
   "#1a1612",
   "#14100b",
   "#0f0c08",
@@ -109,8 +109,8 @@ const text: MantineColorsTuple = [
   "#eaeaea",
   "#e5e5e5",
   "#e0e0e0",
-  "#b7b7b7",
-  "#8e8e8e",
+  "#b8b4ad",
+  "#8d887f",
   "#656565",
 ];
 const textDark: MantineColorsTuple = [
@@ -182,10 +182,10 @@ export const theme = createTheme({
     text,
     textDark,
   },
-  fontFamily: "Roboto, sans-serif",
-  // One typeface everywhere; figures differ by tabular-nums, not a face (ADR 0043).
+  fontFamily: "Geist, sans-serif",
+  // One typeface everywhere; figures differ by tabular-nums, not a face (ADR 0039).
   headings: {
-    fontFamily: "Roboto, sans-serif",
+    fontFamily: "Geist, sans-serif",
   },
   other: otherColor,
   // Below Mantine's 62em, so a phone's "Desktop site" (a 980px viewport) gets the desktop shell (ADR 0035).
@@ -232,6 +232,8 @@ export const theme = createTheme({
     // Every switch between a few words - Settings, the setup sheet - is drawn the same: sunk
     // track, raised pill, dim labels.
     SegmentedControl: SegmentedControl.extend({
+      // Rounded as Home's Period switcher is.
+      defaultProps: { radius: "lg" },
       styles: {
         root: { backgroundColor: "var(--mantine-color-inputs-6)" },
         indicator: { backgroundColor: "var(--mantine-color-cards-5)" },

@@ -41,7 +41,7 @@ export function StravaSyncChip(): ReactElement {
         />
         <span>{t("strava.statusTitle")}</span>
         {detail !== "" && (
-          <Text span inherit fw={500} c="var(--color-text-dim)" className="tabular-nums">
+          <Text span inherit fw={500} c="text.8" className="tabular-nums">
             {detail}
           </Text>
         )}

@@ -115,7 +115,7 @@ function AddBikeWizardFrame(): ReactElement {
     // Reserve space for the fixed footer and safe area.
     <Stack
       gap="lg"
-      px="md"
+      px="var(--page-inset)"
       pt="md"
       pb={`calc(6rem + ${keyboardOffset}px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
     >

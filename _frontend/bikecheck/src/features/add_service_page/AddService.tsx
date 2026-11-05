@@ -94,7 +94,7 @@ function AddServiceWizard(): ReactElement {
   }, [wizard.step]);
 
   return (
-    <Stack gap="lg" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+    <Stack gap="lg" px="var(--page-inset)" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
       {/* The linked job is being looked up; nothing to pick from until it is (ADR 0030). */}
       {wizard.seeding && (
         <Group justify="center" p="xl">

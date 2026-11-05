@@ -39,3 +39,10 @@ export function notificationTime(createdAt: string, day: NotificationDay): strin
   if (day === "yesterday") return created.format("HH:mm");
   return created.format("ddd D. M.");
 }
+
+// A phone row has no room for "před 16 hodinami", so today shrinks to minutes, then hours.
+export function notificationShortTime(createdAt: string, day: NotificationDay, now: Date = new Date()): string {
+  if (day !== "today") return notificationTime(createdAt, day);
+  const minutes = dayjs(now).diff(createdAt, "minute");
+  return minutes < 60 ? `${Math.max(minutes, 1)} min` : `${Math.floor(minutes / 60)} h`;
+}

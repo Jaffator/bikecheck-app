@@ -25,8 +25,11 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAppLinks } from "@/hooks/useAppLinks";
 import { useHideLaunchSplash } from "@/hooks/useHideLaunchSplash";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
+import { useWelcomeStore } from "@/store/store";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
+import { FirstWelcome } from "@/features/onboarding/ui/FirstWelcome";
+import { WelcomeReplay } from "@/features/onboarding_page/WelcomeReplay";
 import { Follows } from "@/features/follow_page/Follows";
 import { Legal } from "@/features/legal_page/Legal";
 import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";
@@ -81,6 +84,7 @@ function ProtectedApp(): ReactElement {
   // Holds the launch splash over the session check, so it fades straight into the first screen.
   useHideLaunchSplash(!isUserLoading);
   const { mutate: patchUser } = useUpdateUser();
+  const welcomeLeftBy = useWelcomeStore((state) => state.leftBy);
   const navigate = useNavigate();
 
   // Memoizes the notification handler to avoid resubscribing native listeners.
@@ -138,6 +142,8 @@ function ProtectedApp(): ReactElement {
       {/* Shows foreground pushes that receive no system tray notification. */}
       {foregroundNotification && <InAppNotification notification={foregroundNotification} onDismiss={dismissNotification} />}
 
+      {user.welcome_seen_at === null && welcomeLeftBy !== user.id && <FirstWelcome userId={user.id} />}
+
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
@@ -165,6 +171,7 @@ function ProtectedApp(): ReactElement {
           <Route path="/users/:handle/:bikeId" element={<UserProfileBike />} />
           {/* Handles the completed Strava OAuth deep link. */}
           <Route path="/strava-connected" element={<StravaConnected />} />
+          <Route path="/welcome" element={<WelcomeReplay />} />
         </Route>
       </Routes>
     </>

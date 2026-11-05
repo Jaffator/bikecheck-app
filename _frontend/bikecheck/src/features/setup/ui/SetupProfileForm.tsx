@@ -56,6 +56,8 @@ const gaugeRow: CSSProperties = {
   alignItems: "start",
   columnGap: GAUGE_ROW_GAP,
 };
+// Each card keeps its own height rather than stretching to its neighbour's.
+const cardGrid: CSSProperties = { alignItems: "start" };
 
 // The same pressure as a shock pump in bar would show it, under the psi figure.
 function barHint(psi: number): string {
@@ -72,27 +74,32 @@ export interface SetupProfileFormProps {
   // adjusters it carries. Null when none is mounted; the generic single knob then stands in.
   fork: MountedSuspension | null;
   shock: MountedSuspension | null;
+  // The mounted tyres as named in the Tyres card's header.
+  tyreNames: string | null;
   onDualChange: (section: SetupSuspension, kind: DialKind, dual: boolean) => void;
   // An Archived Bike is a frozen record: every field is read, none is typed into.
   readOnly?: boolean;
 }
 
-// The phone reads the sheet top to bottom; desktop lays the same parts out in columns.
+// The note on top, a plain field apart from the cards; then suspension and tyres. The phone reads
+// one column; a wide window pairs the cards.
 export function SetupProfileForm(props: SetupProfileFormProps): ReactElement {
   return (
     <Stack gap="md">
-      <SetupTyres {...props} />
-      <SetupSuspensionCards {...props} />
       <SetupNote {...props} />
+      <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md" style={cardGrid}>
+        <SetupSuspensionCards {...props} />
+        <SetupTyres {...props} />
+      </SimpleGrid>
     </Stack>
   );
 }
 
-export function SetupTyres({ values, onChange, unit, readOnly = false }: SetupProfileFormProps): ReactElement {
+function SetupTyres({ values, onChange, unit, tyreNames, readOnly = false }: SetupProfileFormProps): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <SetupSection title={t("setup.tyres")}>
+    <SetupSection title={t("setup.tyres")} subtitle={tyreNames}>
       {/* The same two columns as the suspension cards, so the steppers line up down the sheet. */}
       <SimpleGrid cols={2} spacing={GAUGE_GRID_SPACING}>
         <SetupGauge
@@ -124,7 +131,8 @@ export function SetupTyres({ values, onChange, unit, readOnly = false }: SetupPr
   );
 }
 
-export function SetupSuspensionCards({
+// A fragment, so each card is a cell of the sheet's grid.
+function SetupSuspensionCards({
   values,
   onChange,
   hasFork,
@@ -136,12 +144,11 @@ export function SetupSuspensionCards({
 }: SetupProfileFormProps): ReactElement {
   const { t } = useTranslation();
 
-  // Desktop sets the two suspension cards side by side; a bike with one keeps it full width.
   return (
-    <SimpleGrid cols={{ base: 1, md: hasFork && hasShock ? 2 : 1 }} spacing="md">
+    <>
       {/* ---------- Fork ---------- */}
       {hasFork && (
-        <SetupSection title={t("setup.fork")}>
+        <SetupSection title={t("setup.fork")} subtitle={fork?.name}>
           {/* The two gauges at the sides with the token count between them. */}
           <div style={gaugeRow}>
             <SetupGauge
@@ -188,7 +195,7 @@ export function SetupSuspensionCards({
 
       {/* ---------- Shock ---------- */}
       {hasShock && (
-        <SetupSection title={t("setup.shock")}>
+        <SetupSection title={t("setup.shock")} subtitle={shock?.name}>
           {/* The two gauges at the sides with the token count between them. */}
           <div style={gaugeRow}>
             <SetupGauge
@@ -232,11 +239,11 @@ export function SetupSuspensionCards({
           />
         </SetupSection>
       )}
-    </SimpleGrid>
+    </>
   );
 }
 
-export function SetupNote({ values, onChange, readOnly = false }: SetupProfileFormProps): ReactElement {
+function SetupNote({ values, onChange, readOnly = false }: SetupProfileFormProps): ReactElement {
   const { t } = useTranslation();
 
   return (
@@ -245,7 +252,7 @@ export function SetupNote({ values, onChange, readOnly = false }: SetupProfileFo
       placeholder={readOnly ? undefined : t("setup.notePlaceholder")}
       styles={autosizeInputStyles}
       autosize
-      minRows={2}
+      minRows={1}
       maxRows={5}
       value={values.note}
       readOnly={readOnly}

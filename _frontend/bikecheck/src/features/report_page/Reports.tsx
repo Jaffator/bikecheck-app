@@ -113,7 +113,7 @@ export function Reports(): ReactElement {
 
   if (isLoading) {
     return (
-      <Stack gap="sm" px="md" pt="md">
+      <Stack gap="sm" px="var(--page-inset)" pt="md">
         {Array.from({ length: SKELETON_ROWS }, (_, index) => (
           <Skeleton key={index} h={132} radius="lg" />
         ))}
@@ -136,7 +136,7 @@ export function Reports(): ReactElement {
   }
 
   return (
-    <Stack gap="sm" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+    <Stack gap="sm" px="var(--page-inset)" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
       {reports.map((report) => (
         <ReportCard
           key={report.id}

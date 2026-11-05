@@ -109,7 +109,7 @@ function JobRow({
         {/* The part is the drawer's to name; the row says only which bike. */}
         <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
           <BikeColorDot colorIndex={colorIndexOf(bikes, action.bike_id)} size={6} />
-          <Text fz={13} c="var(--color-text-dim)" lineClamp={1} style={{ minWidth: 0 }}>
+          <Text fz={13} c="text.8" lineClamp={1} style={{ minWidth: 0 }}>
             {bikeTitle(action)}
           </Text>
         </Group>
@@ -121,11 +121,11 @@ function JobRow({
             {t("tracking.percentage", { value: action.percentage })}
           </Text>
         </Group>
-        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
+        <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
           {readingFigure(action, i18n.language)}
         </Text>
       </Stack>
-      <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" ta="right" lineClamp={1}>
+      <Text className="tabular-nums" fz={13} c="text.8" ta="right" lineClamp={1}>
         {remainingLabel(action, i18n.language, t)}
       </Text>
       {/* Stacked rather than side by side: a second column would squeeze the Action's name to nothing at lg. */}
@@ -209,7 +209,7 @@ function NextReplacementLine({ next, onOpen }: { next: NextReplacementView; onOp
     >
       <Group gap={8} wrap="nowrap">
         <Eyebrow>{t("stats.nextReplacement")}</Eyebrow>
-        <Text fz={13} c="text.7" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+        <Text fz={13} c="text.8" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
           <Text span inherit c={attentionColor(next.item.percentage)}>
             {`${next.part} · `}
             <Text span inherit className="tabular-nums">

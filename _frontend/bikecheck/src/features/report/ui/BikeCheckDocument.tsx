@@ -17,43 +17,53 @@ export function BikeCheckDocument({ snapshot }: BikeCheckDocumentProps): ReactEl
   // The document prints in the language it was frozen in, never the reader's.
   const heading = reportHeadings(language);
   const bikeName = reportBikeName(bike);
+  const hasImage = bike.imageUrl !== null;
 
   return (
     <ScreenSheet>
       <DocumentHeader title={heading.bikeCheckDocument} />
 
-      {bike.imageUrl !== null && (
-        <img
-          src={bike.imageUrl}
-          alt={bikeName ?? heading.bike}
-          className="w-full rounded-sm object-cover"
-          style={{ aspectRatio: 2 }}
-        />
-      )}
+      {/* A phone stacks them; a desktop page has the width to stand the photo beside the facts. */}
+      <div
+        className={`flex flex-col gap-7 ${hasImage ? "desktop:grid desktop:grid-cols-[3fr_2fr] desktop:items-center desktop:gap-10" : ""}`}
+      >
+        {bike.imageUrl !== null && (
+          <img
+            src={bike.imageUrl}
+            alt={bikeName ?? heading.bike}
+            className="w-full rounded-sm object-cover aspect-[2/1] desktop:object-contain desktop:aspect-[3/2]"
+          />
+        )}
 
-      <h2 className="text-xl font-semibold leading-tight" style={{ color: bikeName === null ? REPORT_PAPER.inkMuted : REPORT_PAPER.ink }}>
-        {bikeName ?? heading.noBike}
-      </h2>
+        <div className="flex flex-col gap-7 min-w-0 desktop:gap-5">
+          <h2
+            className="text-xl font-semibold leading-tight"
+            style={{ color: bikeName === null ? REPORT_PAPER.inkMuted : REPORT_PAPER.ink }}
+          >
+            {bikeName ?? heading.noBike}
+          </h2>
 
-      {/* What the machine is, field by field, so the card reads as a description of it. */}
-      <section className="grid grid-cols-2 gap-x-6 gap-y-4">
-        <Field label={heading.brand} value={bike.brand === "" ? "—" : bike.brand} />
-        <Field label={heading.model} value={bike.model ?? "—"} />
-        <Field label={heading.year} value={bike.year === null ? "—" : String(bike.year)} figure />
-        <Field label={heading.frameMaterial} value={bike.frameMaterial ?? "—"} />
-        <Field label={heading.bikeType} value={bike.type ?? "—"} />
-        <Field label={heading.ebike} value={bike.ebike ? heading.yes : "—"} />
-        <Field
-          label={heading.odometer}
-          value={bike.totalKm === null ? "—" : `${reportNumber(bike.totalKm, language)} km`}
-          figure
-        />
-        <Field
-          label={heading.rideTime}
-          value={bike.totalTimeMin === null ? "—" : reportRideTime(bike.totalTimeMin, language)}
-          figure
-        />
-      </section>
+          {/* What the machine is, field by field, so the card reads as a description of it. */}
+          <section className={`grid grid-cols-2 gap-x-6 gap-y-4 ${hasImage ? "" : "desktop:grid-cols-4"}`}>
+            <Field label={heading.brand} value={bike.brand === "" ? "—" : bike.brand} />
+            <Field label={heading.model} value={bike.model ?? "—"} />
+            <Field label={heading.year} value={bike.year === null ? "—" : String(bike.year)} figure />
+            <Field label={heading.frameMaterial} value={bike.frameMaterial ?? "—"} />
+            <Field label={heading.bikeType} value={bike.type ?? "—"} />
+            <Field label={heading.ebike} value={bike.ebike ? heading.yes : "—"} />
+            <Field
+              label={heading.odometer}
+              value={bike.totalKm === null ? "—" : `${reportNumber(bike.totalKm, language)} km`}
+              figure
+            />
+            <Field
+              label={heading.rideTime}
+              value={bike.totalTimeMin === null ? "—" : reportRideTime(bike.totalTimeMin, language)}
+              figure
+            />
+          </section>
+        </div>
+      </div>
 
       <Section icon={<Cog size={16} />} title={heading.build}>
         {components.length === 0 ? (

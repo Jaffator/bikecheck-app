@@ -1,6 +1,7 @@
 // A filter chip: every bike or one in its colour, or a forecast's Tracked Action with its warning dot.
 import type { ReactElement } from "react";
-import { Box, UnstyledButton } from "@mantine/core";
+import { Box, Chip } from "@mantine/core";
+import { chipStyles } from "@/features/add_bike_page/formStyles";
 import { BikeColorDot } from "./BikeColorDot";
 
 interface BikeFilterChipProps {
@@ -12,43 +13,37 @@ interface BikeFilterChipProps {
   onClick: () => void;
 }
 
-// Single choice, so the chosen chip wears the accent and the rest stay quiet.
+// Drawn like every other chip in the app; only the dot is its own.
 export function BikeFilterChip({ label, colorIndex, dotColor, active, onClick }: BikeFilterChipProps): ReactElement {
   return (
-    <UnstyledButton
-      onClick={onClick}
-      aria-pressed={active}
-      className="hover-veil"
-      h={30}
-      px={12}
-      fz={12}
-      fw={active ? 700 : 600}
-      c={active ? "primary.6" : "text.6"}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        borderRadius: 9999,
-        whiteSpace: "nowrap",
-        border: `1px solid ${active ? "var(--mantine-color-primary-6)" : "var(--color-border-subtle)"}`,
-        backgroundColor: active ? "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)" : undefined,
-      }}
+    <Chip
+      checked={active}
+      onChange={onClick}
+      radius="xl"
+      size="sm"
+      color="primary.6"
+      icon={false}
+      styles={chipStyles(active, { wrap: false })}
     >
-      {colorIndex !== undefined && <BikeColorDot colorIndex={colorIndex} size={7} />}
-      {dotColor !== undefined && (
-        <Box
-          w={7}
-          h={7}
-          // A dark ring on the chosen chip, so a yellow warning dot does not melt into the yellow accent.
-          style={{
-            borderRadius: "50%",
-            backgroundColor: dotColor,
-            flexShrink: 0,
-            boxShadow: active ? "0 0 0 2px var(--mantine-color-cards-6)" : undefined,
-          }}
-        />
-      )}
-      {label}
-    </UnstyledButton>
+      {/* Chip wraps children in a plain span: the dot would stack above the name, and a
+          baseline-aligned row would make the chip taller than its dotless neighbours. */}
+      <Box component="span" style={{ display: "inline-flex", alignItems: "center", gap: 6, verticalAlign: "top" }}>
+        {colorIndex !== undefined && <BikeColorDot colorIndex={colorIndex} size={7} />}
+        {dotColor !== undefined && (
+          <Box
+            w={7}
+            h={7}
+            // A dark ring on the chosen chip, so a yellow warning dot does not melt into the yellow accent.
+            style={{
+              borderRadius: "50%",
+              backgroundColor: dotColor,
+              flexShrink: 0,
+              boxShadow: active ? "0 0 0 2px var(--mantine-color-cards-6)" : undefined,
+            }}
+          />
+        )}
+        {label}
+      </Box>
+    </Chip>
   );
 }

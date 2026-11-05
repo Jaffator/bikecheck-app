@@ -1205,6 +1205,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/rides/{id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The ride's AI review, written on the first request and kept until the ride changes */
+        get: operations["Ride findSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rides/{id}/bike": {
         parameters: {
             query?: never;
@@ -1872,6 +1889,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["Stats getWearForecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Health check"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3268,47 +3301,6 @@ export interface components {
         LinkStravaGearDto: {
             links: components["schemas"]["GearLinkDto"][];
         };
-        ResponsePendingStravaDto: {
-            /** @example 13579246810 */
-            activity_id: string;
-            /** @example b12345 */
-            gear_id: Record<string, never> | null;
-            /** @example 2026-08-19T06:12:00.000Z */
-            started_at: string;
-            /** @example Morning Ride */
-            name: string;
-            /** @example snttH{s`|A[VJrD */
-            summary_polyline: Record<string, never> | null;
-            /** @example MountainBikeRide */
-            sport_type: string | null;
-            /** @example 42 */
-            distance_km: number;
-            /** @example 96 */
-            duration_min: number;
-            /** @example 612 */
-            elevation_up_m: number;
-            /** @example 598 */
-            elevation_down_m: number | null;
-            /** @example 26 */
-            speed_avg: number | null;
-            /** @example 54 */
-            max_speed_kmh: number | null;
-            /**
-             * Format: date-time
-             * @example 2026-08-19T06:40:00.000Z
-             */
-            created_at: string;
-        };
-        ResolvePendingActivityDto: {
-            /** @example 1 */
-            bikeId: number;
-        };
-        ResponseResolvePendingActivityDto: {
-            /** @example true */
-            success: boolean;
-            /** @example 42 */
-            rideId: number;
-        };
         Response_WoreOffLineDto: {
             /** @example 55 */
             component_mounted_id: number;
@@ -3351,17 +3343,90 @@ export interface components {
              */
             after: number;
         };
+        Response_BikeWoreOffDto: {
+            /** @example 7 */
+            bike_id: number;
+            wore_off: components["schemas"]["Response_WoreOffLineDto"][];
+        };
+        ResponseCheckInPendingDto: {
+            /** @example 13579246810 */
+            activity_id: string;
+            /** @example b12345 */
+            gear_id: Record<string, never> | null;
+            /** @example 2026-08-19T06:12:00.000Z */
+            started_at: string;
+            /** @example Morning Ride */
+            name: string;
+            /** @example snttH{s`|A[VJrD */
+            summary_polyline: Record<string, never> | null;
+            /** @example MountainBikeRide */
+            sport_type: string | null;
+            /** @example 42 */
+            distance_km: number;
+            /** @example 96 */
+            duration_min: number;
+            /** @example 612 */
+            elevation_up_m: number;
+            /** @example 598 */
+            elevation_down_m: number | null;
+            /** @example 26 */
+            speed_avg: number | null;
+            /** @example 54 */
+            max_speed_kmh: number | null;
+            /**
+             * Format: date-time
+             * @example 2026-08-19T06:40:00.000Z
+             */
+            created_at: string;
+            wore_off_by_bike: components["schemas"]["Response_BikeWoreOffDto"][];
+        };
+        ResponsePendingStravaDto: {
+            /** @example 13579246810 */
+            activity_id: string;
+            /** @example b12345 */
+            gear_id: Record<string, never> | null;
+            /** @example 2026-08-19T06:12:00.000Z */
+            started_at: string;
+            /** @example Morning Ride */
+            name: string;
+            /** @example snttH{s`|A[VJrD */
+            summary_polyline: Record<string, never> | null;
+            /** @example MountainBikeRide */
+            sport_type: string | null;
+            /** @example 42 */
+            distance_km: number;
+            /** @example 96 */
+            duration_min: number;
+            /** @example 612 */
+            elevation_up_m: number;
+            /** @example 598 */
+            elevation_down_m: number | null;
+            /** @example 26 */
+            speed_avg: number | null;
+            /** @example 54 */
+            max_speed_kmh: number | null;
+            /**
+             * Format: date-time
+             * @example 2026-08-19T06:40:00.000Z
+             */
+            created_at: string;
+        };
+        ResolvePendingActivityDto: {
+            /** @example 1 */
+            bikeId: number;
+        };
+        ResponseResolvePendingActivityDto: {
+            /** @example true */
+            success: boolean;
+            /** @example 42 */
+            rideId: number;
+        };
         ResponseRideCheckInDto: {
             /** @enum {string} */
             status: "OK" | "ISSUE";
             symptoms: ("CREAK" | "SHIFTING_SKIPS" | "SOFT_BRAKE" | "FORK_SETUP" | "SHOCK_SETUP" | "TIRE_LOSES_AIR" | "HEADSET_PLAY" | "OTHER")[];
             /** @example Skips on the 3rd cog */
             note: Record<string, never> | null;
-        };
-        Response_BikeWoreOffDto: {
-            /** @example 7 */
-            bike_id: number;
-            wore_off: components["schemas"]["Response_WoreOffLineDto"][];
         };
         ResponseCheckInRideDto: {
             /** @example 42 */
@@ -3396,38 +3461,6 @@ export interface components {
             created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
             check_in: components["schemas"]["ResponseRideCheckInDto"] | null;
-            wore_off_by_bike: components["schemas"]["Response_BikeWoreOffDto"][];
-        };
-        ResponseCheckInPendingDto: {
-            /** @example 13579246810 */
-            activity_id: string;
-            /** @example b12345 */
-            gear_id: Record<string, never> | null;
-            /** @example 2026-08-19T06:12:00.000Z */
-            started_at: string;
-            /** @example Morning Ride */
-            name: string;
-            /** @example snttH{s`|A[VJrD */
-            summary_polyline: Record<string, never> | null;
-            /** @example MountainBikeRide */
-            sport_type: string | null;
-            /** @example 42 */
-            distance_km: number;
-            /** @example 96 */
-            duration_min: number;
-            /** @example 612 */
-            elevation_up_m: number;
-            /** @example 598 */
-            elevation_down_m: number | null;
-            /** @example 26 */
-            speed_avg: number | null;
-            /** @example 54 */
-            max_speed_kmh: number | null;
-            /**
-             * Format: date-time
-             * @example 2026-08-19T06:40:00.000Z
-             */
-            created_at: string;
             wore_off_by_bike: components["schemas"]["Response_BikeWoreOffDto"][];
         };
         ResponseCheckInPromptDto: {
@@ -3505,6 +3538,10 @@ export interface components {
             total: number;
             weeks: components["schemas"]["ResponseRideWeekDto"][];
             figures: components["schemas"]["ResponseRideFiguresDto"];
+        };
+        ResponseRideSummaryDto: {
+            /** @example A proper Enduro sufferfest, 4/5 stars. Wipe those stanchions. Catch ya in the dirt! */
+            summary: string;
         };
         ChangeRideBikeDto: {
             /** @example 2 */
@@ -4295,6 +4332,26 @@ export interface components {
              */
             daily_elevation_m: number[];
             /**
+             * @description Minutes ridden per UTC day, indexed like daily_m; a ride without duration_min rides 0
+             * @example [
+             *       0,
+             *       45,
+             *       0,
+             *       125
+             *     ]
+             */
+            daily_time_min: number[];
+            /**
+             * @description kcal per UTC day, indexed like daily_m; a ride without calories burns 0
+             * @example [
+             *       0,
+             *       820,
+             *       0,
+             *       2410
+             *     ]
+             */
+            daily_calories: number[];
+            /**
              * @description Whole km of the sum of daily_m
              * @example 51
              */
@@ -4309,6 +4366,78 @@ export interface components {
              * @example 312
              */
             time_min: number;
+            /**
+             * @description The sum of those rides' calories
+             * @example 3230
+             */
+            calories: number;
+        };
+        Response_DistancePreviousDto: {
+            /**
+             * @description First UTC day of the previous Period, index 0 of the days
+             * @example 2026-10-01
+             */
+            from: string;
+            /**
+             * @description Metres ridden up to the same day
+             * @example 48200
+             */
+            meters: number;
+            /**
+             * @description Metres climbed up to the same day
+             * @example 1240
+             */
+            elevation_m: number;
+            /**
+             * @description Minutes ridden up to the same day
+             * @example 260
+             */
+            time_min: number;
+            /**
+             * @description kcal burnt up to the same day
+             * @example 4120
+             */
+            calories: number;
+            /**
+             * @description The garage's metres per UTC day over the whole previous Period
+             * @example [
+             *       20000,
+             *       0,
+             *       15000,
+             *       70000
+             *     ]
+             */
+            daily_m: number[];
+            /**
+             * @description Metres climbed per day, indexed like daily_m
+             * @example [
+             *       400,
+             *       50,
+             *       0,
+             *       1500
+             *     ]
+             */
+            daily_elevation_m: number[];
+            /**
+             * @description Minutes ridden per day, indexed like daily_m
+             * @example [
+             *       60,
+             *       20,
+             *       45,
+             *       200
+             *     ]
+             */
+            daily_time_min: number[];
+            /**
+             * @description kcal per day, indexed like daily_m
+             * @example [
+             *       700,
+             *       0,
+             *       500,
+             *       2000
+             *     ]
+             */
+            daily_calories: number[];
         };
         Response_DistanceDto: {
             /**
@@ -4323,6 +4452,8 @@ export interface components {
             to: string;
             /** @description Bikes with at least one ride in the window, highest total first */
             bikes: components["schemas"]["Response_DistanceBikeDto"][];
+            /** @description The garage's previous Period of the same kind, under the same ride rules; null for all time and for no period */
+            previous: components["schemas"]["Response_DistancePreviousDto"] | null;
         };
         Response_WearPointDto: {
             /**
@@ -6023,7 +6154,9 @@ export interface operations {
     };
     "Strava connectStrava": {
         parameters: {
-            query?: never;
+            query?: {
+                platform?: "web" | "native";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6334,6 +6467,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResponseRidePageDto"];
+                };
+            };
+        };
+    };
+    "Ride findSummary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseRideSummaryDto"];
                 };
             };
         };
@@ -7440,6 +7594,23 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Response_WearForecastDto"];
                 };
+            };
+        };
+    };
+    "Health check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

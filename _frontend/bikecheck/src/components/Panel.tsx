@@ -35,7 +35,7 @@ export function Panel({ title, count, badge, link, children }: PanelProps): Reac
           </Text>
           {badge}
           {badge === undefined && count !== undefined && (
-            <Text className="tabular-nums" fz={13} c="var(--color-text-dim)">
+            <Text className="tabular-nums" fz={13} c="text.8">
               {count}
             </Text>
           )}
@@ -50,7 +50,7 @@ export function Panel({ title, count, badge, link, children }: PanelProps): Reac
           >
             <Group gap={6} wrap="nowrap">
               <Eyebrow>{link.label}</Eyebrow>
-              <ArrowRight size={12} color="var(--color-text-dim)" />
+              <ArrowRight size={12} color="var(--mantine-color-text-8)" />
             </Group>
           </UnstyledButton>
         )}
@@ -64,13 +64,16 @@ export function PanelTableHead({
   columns,
   cells,
   rightAligned = [],
+  gap = 16,
 }: {
   columns: string;
   cells: string[];
   rightAligned?: number[];
+  // Must match the rows' gap, or the head drifts off its columns.
+  gap?: number;
 }): ReactElement {
   return (
-    <Box style={{ display: "grid", gridTemplateColumns: columns, gap: 16, padding: "0 16px 8px" }}>
+    <Box style={{ display: "grid", gridTemplateColumns: columns, gap, padding: "0 16px 8px" }}>
       {cells.map((cell, index) => (
         <Eyebrow key={`${cell}-${String(index)}`} align={rightAligned.includes(index) ? "right" : undefined}>
           {cell}
@@ -109,7 +112,7 @@ export function PanelPageFooter({
 
   return (
     <Group justify="space-between" wrap="nowrap" px="md" py="sm" style={{ borderTop: PANEL_HAIRLINE }}>
-      <Text className="tabular-nums" fz={12} c="var(--color-text-dim)">
+      <Text className="tabular-nums" fz={12} c="text.8">
         {t("common.pageRange", { first, last, total })}
       </Text>
       {pages > 1 && (

@@ -26,7 +26,7 @@ export function GarageVisibilityChip(): ReactElement | null {
         shrink
       >
         <VisibilityIcon size={16} color={VISIBILITY_COLOR[profile.visibility]} style={{ flexShrink: 0 }} />
-        <Text span inherit fw={500} c="var(--color-text-dim)">
+        <Text span inherit fw={500} c="text.8">
           {t("dashboard.garageChip")}
         </Text>
         <Text span inherit truncate>

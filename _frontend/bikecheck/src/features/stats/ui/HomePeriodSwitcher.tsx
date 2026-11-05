@@ -10,6 +10,9 @@ import type { HomePeriod } from "../stats.types";
 const PILL_LABEL_LINE = 26;
 // Desktop's track matches the 38px status chips beside it: 24 + 2×3 label + 2×4 track padding.
 const HEADER_LABEL_LINE = 24;
+// A step lighter than the cards, so the switcher reads as a control beside them.
+const TRACK_BG = "var(--mantine-color-cards-5)";
+const INDICATOR_BG = "var(--mantine-color-cards2-6)";
 
 interface HomePeriodSwitcherProps {
   value: HomePeriod;
@@ -37,11 +40,15 @@ export function HomePeriodSwitcher({ value, onChange, fullWidth = false }: HomeP
         fullWidth
           ? {
               // Drawn as a card, like the figures under it.
-              root: { backgroundColor: "var(--mantine-color-cards-6)", boxShadow: "var(--elev-panel)" },
-              indicator: { boxShadow: "0 1px 2px rgba(0, 0, 0, 0.4)" },
+              root: { backgroundColor: TRACK_BG, boxShadow: "var(--elev-panel)" },
+              indicator: { backgroundColor: INDICATOR_BG, boxShadow: "0 1px 2px rgba(0, 0, 0, 0.4)" },
               label: { lineHeight: `${String(PILL_LABEL_LINE)}px` },
             }
-          : { label: { lineHeight: `${String(HEADER_LABEL_LINE)}px` } }
+          : {
+              root: { backgroundColor: TRACK_BG },
+              indicator: { backgroundColor: INDICATOR_BG },
+              label: { lineHeight: `${String(HEADER_LABEL_LINE)}px` },
+            }
       }
       aria-label={t("stats.period")}
       data={[

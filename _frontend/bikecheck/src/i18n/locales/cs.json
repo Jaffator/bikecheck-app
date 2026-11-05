@@ -44,7 +44,9 @@
     "service": "Servis",
     "rides": "Jízdy",
     "more": "Více",
-    "new": "Přidat"
+    "new": "Přidat",
+    "community": "Komunita",
+    "personalGarage": "Osobní garáž"
   },
   "more": {
     "chatDetail": "Zeptej se na svoje kolo",
@@ -299,24 +301,49 @@
     "addService": "Přidat servis"
   },
   "dashboard": {
+    "contextBikes_one": "<1>{{count}} kolo</1> v garáži",
+    "contextBikes_few": "<1>{{count}} kola</1> v garáži",
+    "contextBikes_many": "<1>{{count}} kola</1> v garáži",
+    "contextBikes_other": "<1>{{count}} kol</1> v garáži",
+    "contextLastRide": "poslední jízda {{when}}",
     "greeting": "Vítej, {{name}}! 🤟",
     "getStarted": "Začni přidáním svého prvního kola",
     "noActiveData": "ŽÁDNÁ AKTIVNÍ DATA",
     "addBike": "Přidat kolo",
     "proTipBody": "Přidáním kola a komponentů umožníš aplikaci <1>BikeCheck</1> předpovídat údržbu na základě reálného nájezdu a sdílet svuj setup s ostatními! ",
-    "dueTitle": "K servisu",
     "timeTitle": "Čas v sedle · {{period}}",
     "climbTitle": "Převýšení · {{period}}",
-    "riddenShort": "Najeto",
-    "timeShort": "Čas",
-    "climbShort": "Převýšení",
+    "energyTitle": "Energie · {{period}}",
     "ridesCount_one": "{{count}} jízda",
     "ridesCount_few": "{{count}} jízdy",
     "ridesCount_many": "{{count}} jízdy",
     "ridesCount_other": "{{count}} jízd",
-    "gainMonth": "+{{amount}} za {{month}}",
-    "gainWeek": "+{{amount}} tento týden",
-    "gainYear": "+{{amount}} v roce {{year}}",
+    "comparisonMonth": "vs. {{month}} ke stejnému dni",
+    "comparisonYear": "vs. {{year}} ke stejnému dni",
+    "comparisonEmptyYear": "v roce {{year}} žádná jízda",
+    "comparisonNothingYet": "zatím nic",
+    "comparisonEmptyMonth": {
+      "1": "v lednu do {{day}}. dne nic",
+      "2": "v únoru do {{day}}. dne nic",
+      "3": "v březnu do {{day}}. dne nic",
+      "4": "v dubnu do {{day}}. dne nic",
+      "5": "v květnu do {{day}}. dne nic",
+      "6": "v červnu do {{day}}. dne nic",
+      "7": "v červenci do {{day}}. dne nic",
+      "8": "v srpnu do {{day}}. dne nic",
+      "9": "v září do {{day}}. dne nic",
+      "10": "v říjnu do {{day}}. dne nic",
+      "11": "v listopadu do {{day}}. dne nic",
+      "12": "v prosinci do {{day}}. dne nic"
+    },
+    "equivalentEarthShare": "obvodu Země",
+    "equivalentEarthTimes": "obvod Země",
+    "equivalentEverestShare": "Everestu",
+    "equivalentEverestTimes": "Everest",
+    "yardstickEverestName": "{{times}}× Mount Everest",
+    "equivalentMarathonShare": "maratonu",
+    "equivalentMarathonTimes": "maraton",
+    "perRide": "ø {{value}} / jízda",
     "overdueCount_one": "{{count}} po termínu",
     "overdueCount_few": "{{count}} po termínu",
     "overdueCount_many": "{{count}} po termínu",
@@ -643,8 +670,8 @@
     "archivedBikes_many": "Archivovaná kola ({{count}})",
     "archivedBikes_other": "Archivovaná kola ({{count}})",
     "columnBike": "Kolo",
-    "columnDistancePeriod": "Najeto · {{period}}",
-    "columnTimePeriod": "Čas · {{period}}",
+    "columnDistancePeriod": "Najeto {{period}}",
+    "columnTimePeriod": "Čas {{period}}",
     "columnWorstPart": "Nejhorší díl",
     "columnStatus": "Stav",
     "myParts": "Moje díly",
@@ -1219,7 +1246,8 @@
     "actionAssignBike": "Přiřadit kolo",
     "actionViewRide": "Zobrazit jízdu",
     "actionView": "Zobrazit",
-    "actionOpenGarage": "Otevřít garáž"
+    "actionOpenGarage": "Otevřít garáž",
+    "waitingForBike": "Čeká na kolo"
   },
   "pendingRides": {
     "cardAction": "Vyřešit",
@@ -1373,6 +1401,12 @@
     "sag": "Sag",
     "note": "Poznámka",
     "notePlaceholder": "Podmínky na trailu, co jsi změnil a proč",
+    "riderWeight": "Jezdec {{weight}} kg",
+    "lastEdited": "upraveno {{date}}",
+    "unsavedChanges_one": "{{count}} neuložená změna",
+    "unsavedChanges_few": "{{count}} neuložené změny",
+    "unsavedChanges_many": "{{count}} neuložené změny",
+    "unsavedChanges_other": "{{count}} neuložených změn",
     "save": "Uložit",
     "saveFailed": "Setup se nepodařilo uložit. Zkus to znovu.",
     "loadFailed": "Setup se nepodařilo načíst. Zkus to znovu.",
@@ -1622,9 +1656,9 @@
     "forecastInWeeks_other": "za {{count}} týdnů",
     "forecastSubtitle": "Odhad podle tempa tvých jízd.",
     "forecastInfo": "Jak předpověď funguje",
-    "forecastWear": "Opotřebení",
+    "forecastPreviousAction": "Předchozí úkon",
+    "forecastNextAction": "Další úkon",
     "forecastToday": "dnes {{value}}",
-    "forecastProjection": "odhad",
     "forecastLimit": "limit servisu",
     "nextReplacement": "Nejbližší výměna",
     "aboutWeeks_one": "≈ {{count}} týden",
@@ -1636,5 +1670,54 @@
     "periodAll": "Vše",
     "periodAllLong": "Celkem",
     "periodAllTime": "celkem"
+  },
+  "onboarding": {
+    "welcome": {
+      "skip": "Přeskočit",
+      "next": "Další",
+      "back": "Zpět",
+      "start": "Začít",
+      "addFirstBike": "Přidat první kolo",
+      "step": "Krok {{current}} ze {{total}}",
+      "intro": {
+        "title": "Vítej v BikeCheck",
+        "body": "Tvůj nejlepší nástroj na správu kol."
+      },
+      "rides": {
+        "title": "Jízdy ze Stravy opotřebovávají díly",
+        "body": "Každá jízda ubere řetězu, brzdám i vidlici."
+      },
+      "service": {
+        "title": "Víš, kdy je čas na servis",
+        "body": "Appka hlídá intervaly a včas tě upozorní."
+      },
+      "garage": {
+        "title": "Tvoje garáž a setup na jednom místě",
+        "body": "Tlaky, kliky, sag a servisní historie."
+      },
+      "sharing": {
+        "title": "Sdílej svůj profil, nebo vytvoř servisní report",
+        "body": "Ukaž garáž ostatním jezdcům, nebo pošli PDF při prodeji kola."
+      },
+      "sample": {
+        "rideName": "Odpolední okruh",
+        "distance": "Vzdálenost",
+        "time": "Čas",
+        "elevation": "Převýšení",
+        "chain": "Řetěz",
+        "fork": "Vidlice",
+        "pads": "Destičky",
+        "alertTitle": "Řetěz je na 94 %",
+        "alertBody": "Orbea Rallon: je čas na výměnu.",
+        "frontTyre": "Přední",
+        "frontPressure": "1,7 bar",
+        "sag": "Sag",
+        "reportSubtitle": "Orbea Rallon · celá historie",
+        "chainReplacement": "Výměna řetězu",
+        "padsReplacement": "Výměna destiček",
+        "forkService": "Servis vidlice",
+        "visibility": "Kdo uvidí tvůj profil"
+      }
+    }
   }
 }

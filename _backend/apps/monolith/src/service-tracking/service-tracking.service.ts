@@ -539,9 +539,6 @@ export class ServiceTrackingService {
   }
 }
 
-// How many lines one ride shows: the Tracked Actions it pushed closest to due, not every one it touched.
-const WORE_OFF_LINES = 3;
-
 type DatedRide = WearRide & { started_at: Date };
 
 // One Tracked Action and the moment its current cycle began; only a ride after it counts.
@@ -615,12 +612,9 @@ function previewOn(bikeId: number, ride: RideWear, cycles: Cycle[]): Response_Wo
   );
 }
 
-// Shared by the saved ride and the preview, so both rank and cap alike.
+// Shared by the saved ride and the preview, so both rank alike. Every line goes out; a summary cuts its own.
 function topLines(lines: Response_WoreOffLineDto[]): Response_WoreOffLineDto[] {
-  return lines
-    .filter((line) => line.amount > 0)
-    .sort(closestToDue)
-    .slice(0, WORE_OFF_LINES);
+  return lines.filter((line) => line.amount > 0).sort(closestToDue);
 }
 
 // Two rides started at the same moment are told apart by which was stored last.

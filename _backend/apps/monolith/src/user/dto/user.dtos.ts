@@ -11,8 +11,21 @@ import {
   IsPositive,
   IsBoolean,
   IsEnum,
+  IsIn,
   ValidateIf,
 } from 'class-validator';
+
+// Every Hint there is; the list bounds what a client can write into users.hints_seen.
+export const HINT_KEYS = [
+  'tracked_actions',
+  'tracked_action_detail',
+  'unassigned_ride',
+  'check_in',
+  'setup',
+  'reports',
+  'sharing',
+] as const;
+export type HintKey = (typeof HINT_KEYS)[number];
 
 // ------ DTOs for API ------
 // CREATE
@@ -92,6 +105,18 @@ export class UpdateUserDto {
   @IsEnum(tire_pressure_unit)
   @ApiProperty({ enum: tire_pressure_unit, example: tire_pressure_unit.bar })
   tire_pressure_unit?: tire_pressure_unit;
+
+  // Not IsOptional: the column is never null, so only an absent field is let through.
+  @ValidateIf((_, value: unknown) => value !== undefined)
+  @IsBoolean()
+  @ApiProperty({ example: true })
+  hints_enabled?: boolean;
+}
+
+export class HintKeyParamDto {
+  @IsIn(HINT_KEYS)
+  @ApiProperty({ enum: HINT_KEYS, example: 'tracked_actions' })
+  key!: HintKey;
 }
 
 // What an account still holds, counted just before it is destroyed. Read by the delete
@@ -154,6 +179,13 @@ export class UserResponseDto {
   // Last manual sync; null until the first. Drives "synced X ago" and the sync cooldown.
   @ApiProperty({ example: '2026-09-29T10:00:00Z', nullable: true })
   strava_last_sync_at!: Date | null;
+  // Null shows the Welcome.
+  @ApiProperty({ example: '2026-11-05T10:00:00Z', nullable: true })
+  welcome_seen_at!: Date | null;
+  @ApiProperty({ example: ['tracked_actions'], type: [String] })
+  hints_seen!: string[];
+  @ApiProperty({ example: true })
+  hints_enabled!: boolean;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })
   last_login_at!: Date | null;
   @ApiProperty({ example: '2024-01-01T12:00:00Z' })

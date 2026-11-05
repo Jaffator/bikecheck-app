@@ -52,7 +52,7 @@ function ChatPhone(): ReactElement {
       }
     >
       <Box
-        px="md"
+        px="var(--page-inset)"
         // The empty state carries its own offset from the header, so the page adds none.
         pt={empty ? 0 : "md"}
         pb={empty ? 0 : COMPOSER_ROOM}

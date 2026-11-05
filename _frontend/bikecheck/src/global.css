@@ -129,7 +129,7 @@
   --color-border-raised: #333333;
   --color-surface-well: #121212;
 
-  --font-sans: "Roboto", sans-serif;
+  --font-sans: "Geist", sans-serif;
 
   /* Letter-spacing by role, default 0 - see docs/design.md §9 Typography. */
   --tracking-label: 0.08em;
@@ -157,6 +157,16 @@
     inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 -1px 2px 0 rgba(0, 0, 0, 0.4), 0 -14px 32px -6px rgba(0, 0, 0, 0.45);
   /* Off: a calmer surface behind the bike colours. Kept so the cards that still write it need no edit. */
   --card-glow: none;
+}
+
+/* A page's side gutter, shared with the header so its title stays on the cards' edge. */
+:root {
+  --page-inset: 12px;
+}
+@media (min-width: 60em) {
+  :root {
+    --page-inset: 16px;
+  }
 }
 
 /* Every bottom sheet's spacing and ✕: ResponsiveSheet's, and MoreDrawer's by hand - see docs/conventions/drawers.md. */

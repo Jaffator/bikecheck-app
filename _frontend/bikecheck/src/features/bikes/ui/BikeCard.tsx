@@ -35,7 +35,7 @@ function Metric({ icon, children }: { icon: ReactNode; children: ReactNode }): R
   return (
     <Group gap={6} wrap="nowrap">
       {icon}
-      <Text className="tabular-nums" fz={13} tt="uppercase" c="text.6" lts="var(--tracking-label)" style={{ whiteSpace: "nowrap" }}>
+      <Text className="tabular-nums" fz={13} fw={600} c="text.2" style={{ whiteSpace: "nowrap" }}>
         {children}
       </Text>
     </Group>
@@ -63,17 +63,15 @@ function AttentionMeter({ action }: { action: TrackedAction }): ReactElement {
           section: { backgroundColor: color },
         }}
       />
-      <Text className="tabular-nums" fz={11} tt="uppercase" c="var(--color-text-dim)" lts="var(--tracking-label)" lineClamp={1}>
+      <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
         {catalogueLabel(action.action_i18n_key, action.action_name, t)}
       </Text>
       <Text
         className="tabular-nums"
-        fz={11}
-        tt="uppercase"
-        lts="var(--tracking-label)"
+        fz={12}
         ml="auto"
         // Emphasize a reading the ramp has started to warm.
-        c={action.percentage < QUIET_BELOW ? "var(--color-text-dim)" : color}
+        c={action.percentage < QUIET_BELOW ? "text.8" : color}
         style={{ whiteSpace: "nowrap" }}
       >
         {t("tracking.percentage", { value: action.percentage })}
@@ -167,10 +165,9 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
         {worst !== null && worst.percentage > 0 && <AttentionMeter action={worst} />}
 
         <Group gap="sm" wrap="nowrap" justify="space-between">
-          <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" style={{ whiteSpace: "nowrap" }}>
-            {bike.last_ride_at === null
-              ? t("bikes.noRidesYet")
-              : t("bikes.lastRide", { date: lastRideDate(bike.last_ride_at) })}
+          {/* The figures line already says there are no rides yet. */}
+          <Text className="tabular-nums" fz={12} c="text.8" style={{ whiteSpace: "nowrap" }}>
+            {bike.last_ride_at !== null && t("bikes.lastRide", { date: lastRideDate(bike.last_ride_at) })}
           </Text>
           <StravaPairingHint bikeId={bike.id} stravaGearId={bike.strava_gear_id} />
         </Group>

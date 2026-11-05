@@ -1,12 +1,15 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
-import { Box, Group, Skeleton, Stack, Text } from "@mantine/core";
+import { Group, Skeleton, Stack, Text } from "@mantine/core";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useBike } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { lastRideDate } from "@/features/bikes/lastRideDate";
 import { useBikeComponents, useUpdateBikeComponent } from "@/features/components/components.queries";
 import { mountedSuspension } from "@/features/setup/dialBrand";
+import { tyreNames } from "@/features/setup/tyreNames";
 import { useCurrentUser } from "@/features/users/users.queries";
 import type { TirePressureUnit } from "@/features/users/users.types";
 import {
@@ -18,27 +21,20 @@ import {
 import type { SetupProfile } from "@/features/setup/setup.types";
 import type { DialKind } from "@/features/setup/dial.types";
 import {
-  isSetupDirty,
+  countSetupChanges,
   toSetupForm,
   toSetupPayload,
   type SetupFormValues,
   type SetupSuspension,
 } from "@/features/setup/setupForm";
 import { SetupProfileChips } from "@/features/setup/ui/SetupProfileChips";
-import { SetupDesktopLayout } from "@/features/setup/ui/SetupDesktopLayout";
+import { SetupDesktopHeader } from "@/features/setup/ui/SetupDesktopHeader";
 import { SetupHeaderSave } from "@/features/setup/ui/SetupHeaderSave";
-import {
-  SetupNote,
-  SetupProfileForm,
-  SetupSuspensionCards,
-  SetupTyres,
-  type SetupProfileFormProps,
-} from "@/features/setup/ui/SetupProfileForm";
-import { SetupProfileList } from "@/features/setup/ui/SetupProfileList";
+import { SetupProfileForm, type SetupProfileFormProps } from "@/features/setup/ui/SetupProfileForm";
 import { SetupProfileMenu } from "@/features/setup/ui/SetupProfileMenu";
 import { SetupProfileNameDrawer } from "@/features/setup/ui/SetupProfileNameDrawer";
+import { SetupProfileTabs } from "@/features/setup/ui/SetupProfileTabs";
 import { SetupSaveBar } from "@/features/setup/ui/SetupSaveBar";
-import { SetupSection } from "@/features/setup/ui/SetupSection";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useHeaderStore } from "@/store/store";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
@@ -46,9 +42,20 @@ import { useIsDesktop } from "@/layout/breakpoints";
 
 // The pinned bar floats over the page, so the last field needs room to scroll clear of it.
 const BAR_CLEARANCE = "5rem";
+// Desktop caps the page so each card stays near a phone's width; centred like the app's narrow pages.
+const DESKTOP_PAGE_MAX_WIDTH = "70rem";
 
 // The name sheet, when it is open: naming a new profile (blank or a copy) or renaming one.
 type NameSheet = { mode: "create"; copy: boolean } | { mode: "rename"; profile: SetupProfile };
+
+// "Rider 82 kg · edited 12. 10." - the weight the numbers were set for; either half drops out when unknown.
+function profileMeta(weightKg: number | null, profile: SetupProfile | null, t: TFunction): string | null {
+  const parts = [
+    weightKg === null ? null : t("setup.riderWeight", { weight: weightKg }),
+    profile === null ? null : t("setup.lastEdited", { date: lastRideDate(profile.updated_at) }),
+  ].filter((part): part is string => part !== null);
+  return parts.length === 0 ? null : parts.join(" · ");
+}
 
 // The numbers one bike is ridden at, read and written through its Setup Profiles. One
 // profile is read at a time; the bike shows an unsaved default when it has none yet - it
@@ -70,7 +77,7 @@ export function Setup(): ReactElement {
   const updateComponent = useUpdateBikeComponent();
   const setTitleSlot = useHeaderStore((state) => state.setTitleSlot);
   const setHeaderOnBack = useHeaderStore((state) => state.setOnBack);
-  const setActionSlot = useHeaderStore((state) => state.setActionSlot);
+  const setChromeHidden = useHeaderStore((state) => state.setChromeHidden);
   const isDesktop = useIsDesktop();
   // Keep focused fields above the pinned bar and keyboard.
   const formRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
@@ -108,7 +115,8 @@ export function Setup(): ReactElement {
 
   const baseline = useMemo(() => toSetupForm(profile, unit), [profile, unit]);
   const values: SetupFormValues = { ...baseline, ...edits };
-  const dirty = !archived && isSetupDirty(values, baseline);
+  const changes = archived ? 0 : countSetupChanges(values, baseline);
+  const dirty = changes > 0;
 
   // The header names the bike, not the screen: the owner is dialling in this machine.
   useEffect(() => {
@@ -152,25 +160,12 @@ export function Setup(): ReactElement {
     return () => setHeaderOnBack(null);
   }, [setHeaderOnBack]);
 
-  // The header holds on to the button, so it calls whatever submit reads the latest numbers.
-  const submitRef = useRef<() => void>(() => {});
+  // Desktop draws its own taller header - breadcrumbs over the title - in place of the app's bar.
   useEffect(() => {
-    submitRef.current = submit;
-  });
-
-  // Desktop hangs Save in the header, and only while there is something to save.
-  useEffect(() => {
-    if (!isDesktop || !dirty) return;
-    setActionSlot(
-      <SetupHeaderSave
-        saving={save.isPending}
-        saveFailed={save.isError}
-        onDiscard={() => setEdits({})}
-        onSave={() => submitRef.current()}
-      />,
-    );
-    return () => setActionSlot(null);
-  }, [isDesktop, dirty, save.isPending, save.isError, setActionSlot]);
+    if (!isDesktop) return;
+    setChromeHidden(true);
+    return () => setChromeHidden(false);
+  }, [isDesktop, setChromeHidden]);
 
   function set<K extends keyof SetupFormValues>(key: K, value: SetupFormValues[K]): void {
     setEdits((current) => ({ ...current, [key]: value }));
@@ -234,7 +229,7 @@ export function Setup(): ReactElement {
 
   if (bikeLoading || profilesLoading || componentsLoading) {
     return (
-      <Stack gap="md" px="md" pt="md">
+      <Stack gap="md" px="var(--page-inset)" pt="md">
         <Skeleton h={14} w="30%" radius="sm" />
         <Skeleton h={140} radius="lg" />
         <Skeleton h={200} radius="lg" />
@@ -276,6 +271,7 @@ export function Setup(): ReactElement {
     hasShock: bike.has_rear_suspension,
     fork,
     shock,
+    tyreNames: tyreNames(components),
     onDualChange: setDual,
     readOnly: archived,
   };
@@ -283,22 +279,37 @@ export function Setup(): ReactElement {
   return (
     <>
       {isDesktop ? (
-        <Box p="md" ref={formRef}>
-          <SetupDesktopLayout
-            profiles={
-              <SetupSection title={t("setup.profiles")} action={profileMenu}>
-                <SetupProfileList profiles={profiles} selectedId={profile?.id ?? null} onSelect={select} />
-              </SetupSection>
+        <Stack gap="md" px="xl" pb="xl" maw={DESKTOP_PAGE_MAX_WIDTH} mx="auto" ref={formRef}>
+          <SetupDesktopHeader
+            bikeId={bikeId}
+            bikeName={bikeTitle(bike)}
+            onLeave={(to) => whenClean(() => navigate(to))}
+            actions={
+              dirty && (
+                <SetupHeaderSave
+                  changes={changes}
+                  saving={save.isPending}
+                  saveFailed={save.isError}
+                  onDiscard={() => setEdits({})}
+                  onSave={submit}
+                />
+              )
             }
-            tyres={<SetupTyres {...formProps} />}
-            note={<SetupNote {...formProps} />}
-            suspension={<SetupSuspensionCards {...formProps} />}
           />
-        </Box>
+          <SetupProfileTabs
+            profiles={profiles}
+            selectedId={profile?.id ?? null}
+            onSelect={select}
+            onCreate={archived ? undefined : () => openCreate(false)}
+            meta={profileMeta(user?.weight_kg ?? null, profile, t)}
+            menu={profileMenu}
+          />
+          <SetupProfileForm {...formProps} />
+        </Stack>
       ) : (
         <Stack
           gap="md"
-          px="md"
+          px="var(--page-inset)"
           pt="md"
           pb={`calc(${BAR_CLEARANCE} + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
           ref={formRef}

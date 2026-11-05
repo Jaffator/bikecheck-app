@@ -112,7 +112,6 @@ export class AuthController {
   async getMe(@CurrentUser('userId') userId: string): Promise<UserResponseDto> {
     console.log('Current userId:---------');
     const user = await this.userService.getUserbyId(Number(userId));
-    console.log('Current user:', user);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -329,6 +328,9 @@ export class AuthController {
       strava_username: user.strava_username ?? null,
       strava_avatar_url: user.strava_avatar_url ?? null,
       strava_last_sync_at: user.strava_last_sync_at ?? null,
+      welcome_seen_at: user.welcome_seen_at,
+      hints_seen: user.hints_seen,
+      hints_enabled: user.hints_enabled,
       last_login_at: user.last_login_at ?? null,
       updated_at: user.updated_at ?? new Date(),
       created_at: user.created_at || new Date(),

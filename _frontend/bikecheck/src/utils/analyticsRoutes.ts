@@ -27,6 +27,7 @@ const ROUTE_PATTERNS: readonly string[] = [
   "/users/:handle",
   "/users/:handle/:bikeId",
   "/strava-connected",
+  "/welcome",
 ];
 
 // An unknown path may still carry an id, so all of them share one bucket.

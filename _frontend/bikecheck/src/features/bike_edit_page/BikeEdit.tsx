@@ -166,7 +166,7 @@ export function BikeEdit(): ReactElement {
 
   if (isLoading) {
     return (
-      <Stack gap="md" px="md" pt="md">
+      <Stack gap="md" px="var(--page-inset)" pt="md">
         <Skeleton radius="md" style={{ aspectRatio: PHOTO_ASPECT }} />
         <Skeleton h={36} radius="sm" />
         <Skeleton h={36} radius="sm" />
@@ -276,7 +276,7 @@ function BikeEditForm({ bike, categories }: { bike: Bike; categories: string[] }
   return (
     <Stack
       gap="lg"
-      px="md"
+      px="var(--page-inset)"
       pt="md"
       pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))"
       bg="background.9"

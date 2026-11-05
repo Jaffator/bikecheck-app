@@ -11,7 +11,7 @@ import { PersonRow } from "./PersonRow";
 
 export function FollowingPanels(): ReactElement {
   return (
-    <Stack gap="md" px="md" pt="md" pb={PAGE_BOTTOM}>
+    <Stack gap="md" px="var(--page-inset)" pt="md" pb={PAGE_BOTTOM}>
       <FollowSearch />
       <FollowingList />
     </Stack>

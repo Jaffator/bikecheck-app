@@ -49,7 +49,8 @@ export function ServiceReportDocument({ snapshot, onOpenAttachment }: ServiceRep
 
       {/* What the reader checks first: which machine, when, how far it had gone, what it
           came to. */}
-      <section className="grid grid-cols-2 gap-x-6 gap-y-4">
+      {/* One row on desktop, as many columns as there are facts: the place is optional. */}
+      <section className="grid grid-cols-2 gap-x-6 gap-y-4 desktop:grid-cols-none desktop:grid-flow-col desktop:auto-cols-fr">
         <Field label={heading.bike} value={bikeName ?? heading.noBike} muted={bikeName === null} />
         <Field label={heading.date} value={serviceDate ?? heading.noDate} muted={serviceDate === null} />
         {place !== null && <Field label={heading.place} value={place} />}

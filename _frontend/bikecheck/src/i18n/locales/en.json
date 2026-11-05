@@ -42,7 +42,9 @@
     "service": "Service",
     "rides": "Rides",
     "more": "More",
-    "new": "New"
+    "new": "New",
+    "community": "Community",
+    "personalGarage": "Personal garage"
   },
   "more": {
     "chatDetail": "Ask about your bike",
@@ -293,22 +295,45 @@
     "addService": "Add service"
   },
   "dashboard": {
+    "contextBikes_one": "<1>{{count}} bike</1> in the garage",
+    "contextBikes_other": "<1>{{count}} bikes</1> in the garage",
+    "contextLastRide": "last ride {{when}}",
     "greeting": "Welcome, {{name}}!",
     "getStarted": "Start by adding your first bike",
     "noActiveData": "NO ACTIVE DATA",
     "addBike": "Add bike",
     "proTipBody": "Add a bike and components (chain, cassette, tires) <1>BikeCheck</1> predicts maintenance based on your mileage and lets you SHARE your bike setup with others.",
-    "dueTitle": "Due for service",
     "timeTitle": "Time in saddle · {{period}}",
     "climbTitle": "Elevation · {{period}}",
-    "riddenShort": "Distance",
-    "timeShort": "Time",
-    "climbShort": "Elevation",
+    "energyTitle": "Energy · {{period}}",
     "ridesCount_one": "{{count}} ride",
     "ridesCount_other": "{{count}} rides",
-    "gainMonth": "+{{amount}} in {{month}}",
-    "gainWeek": "+{{amount}} this week",
-    "gainYear": "+{{amount}} in {{year}}",
+    "comparisonMonth": "vs. {{month}} to the same day",
+    "comparisonYear": "vs. {{year}} to the same day",
+    "comparisonEmptyYear": "no rides in {{year}}",
+    "comparisonNothingYet": "nothing yet",
+    "comparisonEmptyMonth": {
+      "1": "nothing by January {{day}}",
+      "2": "nothing by February {{day}}",
+      "3": "nothing by March {{day}}",
+      "4": "nothing by April {{day}}",
+      "5": "nothing by May {{day}}",
+      "6": "nothing by June {{day}}",
+      "7": "nothing by July {{day}}",
+      "8": "nothing by August {{day}}",
+      "9": "nothing by September {{day}}",
+      "10": "nothing by October {{day}}",
+      "11": "nothing by November {{day}}",
+      "12": "nothing by December {{day}}"
+    },
+    "equivalentEarthShare": "around the Earth",
+    "equivalentEarthTimes": "around the Earth",
+    "equivalentEverestShare": "of Everest",
+    "equivalentEverestTimes": "Everest",
+    "yardstickEverestName": "{{times}}× Mount Everest",
+    "equivalentMarathonShare": "of a marathon",
+    "equivalentMarathonTimes": "marathons",
+    "perRide": "ø {{value}} / ride",
     "overdueCount_one": "{{count}} overdue",
     "overdueCount_other": "{{count}} overdue",
     "criticalCount_one": "{{count}} critical",
@@ -604,8 +629,8 @@
     "archivedBikes_one": "Archived bikes ({{count}})",
     "archivedBikes_other": "Archived bikes ({{count}})",
     "columnBike": "Bike",
-    "columnDistancePeriod": "Distance · {{period}}",
-    "columnTimePeriod": "Time · {{period}}",
+    "columnDistancePeriod": "Distance {{period}}",
+    "columnTimePeriod": "Time {{period}}",
     "columnWorstPart": "Worst part",
     "columnStatus": "Status",
     "myParts": "My parts",
@@ -1162,7 +1187,8 @@
     "actionAssignBike": "Assign bike",
     "actionViewRide": "View ride",
     "actionView": "View",
-    "actionOpenGarage": "Open garage"
+    "actionOpenGarage": "Open garage",
+    "waitingForBike": "Needs a bike"
   },
   "pendingRides": {
     "cardAction": "Resolve",
@@ -1304,6 +1330,10 @@
     "sag": "Sag",
     "note": "Note",
     "notePlaceholder": "Trail conditions, what you changed and why",
+    "riderWeight": "Rider {{weight}} kg",
+    "lastEdited": "edited {{date}}",
+    "unsavedChanges_one": "{{count}} unsaved change",
+    "unsavedChanges_other": "{{count}} unsaved changes",
     "save": "Save",
     "saveFailed": "Could not save the setup. Try again.",
     "loadFailed": "The setup could not be loaded. Please try again.",
@@ -1539,9 +1569,9 @@
     "forecastInWeeks_other": "in {{count}} weeks",
     "forecastSubtitle": "Estimated from your riding pace.",
     "forecastInfo": "How the forecast works",
-    "forecastWear": "Wear",
+    "forecastPreviousAction": "Previous action",
+    "forecastNextAction": "Next action",
     "forecastToday": "today {{value}}",
-    "forecastProjection": "estimate",
     "forecastLimit": "service limit",
     "nextReplacement": "Next replacement",
     "aboutWeeks_one": "≈ {{count}} week",
@@ -1551,5 +1581,54 @@
     "periodAll": "All",
     "periodAllLong": "All time",
     "periodAllTime": "all time"
+  },
+  "onboarding": {
+    "welcome": {
+      "skip": "Skip",
+      "next": "Next",
+      "back": "Back",
+      "start": "Start",
+      "addFirstBike": "Add your first bike",
+      "step": "Step {{current}} of {{total}}",
+      "intro": {
+        "title": "Welcome to BikeCheck",
+        "body": "Your best tool for managing your bikes."
+      },
+      "rides": {
+        "title": "Strava rides wear your parts",
+        "body": "Every ride takes its toll on the chain, brakes and fork."
+      },
+      "service": {
+        "title": "Know when service is due",
+        "body": "The app watches the intervals and tells you in time."
+      },
+      "garage": {
+        "title": "Your garage and setup in one place",
+        "body": "Pressures, clicks, sag and service history."
+      },
+      "sharing": {
+        "title": "Share your profile or create a service report",
+        "body": "Show your garage to other riders, or send a PDF when you sell the bike."
+      },
+      "sample": {
+        "rideName": "Afternoon loop",
+        "distance": "Distance",
+        "time": "Time",
+        "elevation": "Elevation",
+        "chain": "Chain",
+        "fork": "Fork",
+        "pads": "Brake pads",
+        "alertTitle": "Chain is at 94 %",
+        "alertBody": "Orbea Rallon: time for a new one.",
+        "frontTyre": "Front",
+        "frontPressure": "1.7 bar",
+        "sag": "Sag",
+        "reportSubtitle": "Orbea Rallon · full history",
+        "chainReplacement": "Chain replacement",
+        "padsReplacement": "Brake pad replacement",
+        "forkService": "Fork service",
+        "visibility": "Who can see your profile"
+      }
+    }
   }
 }

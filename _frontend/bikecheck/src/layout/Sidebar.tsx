@@ -10,7 +10,8 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { usePendingRides } from "@/features/strava/strava.queries";
 import { useMyProfile } from "@/features/profile/profile.queries";
-import { HeaderCountBadge } from "./HeaderCountBadge";
+import { Eyebrow } from "@/components/Eyebrow";
+import { BADGE_CAP } from "./HeaderCountBadge";
 import { ADD_BIKE, ADD_SERVICE, NAV_ITEMS, TAB_STROKE, TAB_STROKE_ACTIVE, isActivePath } from "./navItems";
 
 // Larger than the mobile header's 20: the column has room for it.
@@ -36,18 +37,65 @@ interface SidebarRowProps {
 
 // A plain link, not a Mantine button: Mantine's unlayered CSS would beat the hover class.
 function SidebarRow({ to, active, icon, label, trailing }: SidebarRowProps): ReactElement {
-  const tone = active ? "bg-primary-600/20 text-primary-500" : "text-text-600 hover:bg-cards-600";
+  const tone = active ? "bg-primary-600/15 text-primary-500" : "text-text-700 hover:bg-cards-600";
   return (
     <Link
       to={to}
       aria-current={active ? "page" : undefined}
-      className={`flex h-10 items-center gap-3 rounded-lg px-3 transition-colors duration-150 ${tone}`}
+      className={`relative flex h-10 items-center gap-3 rounded-lg px-3 transition-colors duration-150 ${tone}`}
     >
+      {/* Sits on the column's edge, outside the row's padding (px="sm"). */}
+      {active && <span className="absolute -left-3 top-2 bottom-2 w-0.75 rounded-r-full bg-primary-500" />}
       {icon}
-      <Text fz={14} fw={500} lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+      <Text fz={14} fw={active ? 600 : 500} lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
         {label}
       </Text>
       {trailing}
+    </Link>
+  );
+}
+
+// A quiet grey pill: in the column a count is information, not an alarm.
+function SidebarCount({ count }: { count: number }): ReactElement | null {
+  if (count <= 0) return null;
+  return (
+    <Box miw={22} h={20} px={6} bg="cards.5" className="flex items-center justify-center" style={{ borderRadius: "9999px" }}>
+      <Text className="tabular-nums" fz={11} fw={600} c="var(--color-text-dim)" lh={1}>
+        {count > BADGE_CAP ? `${BADGE_CAP}+` : count}
+      </Text>
+    </Box>
+  );
+}
+
+function SidebarSectionLabel({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <Box px="sm" mt="lg" mb={6}>
+      <Eyebrow>{children}</Eyebrow>
+    </Box>
+  );
+}
+
+// Avatar, name and garage line; the whole row opens the settings.
+function UserRow({ active }: { active: boolean }): ReactElement {
+  const { t } = useTranslation();
+  const { data: user } = useCurrentUser();
+  const tone = active ? "bg-primary-600/15" : "hover:bg-cards-600";
+  return (
+    <Link
+      to="/settings"
+      aria-current={active ? "page" : undefined}
+      className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-150 ${tone}`}
+    >
+      {/* name drives the initials fallback when the user has no picture */}
+      <Avatar src={user?.avatar_url} name={user?.name} radius="xl" size={34} style={AVATAR_STYLE} />
+      <Box style={{ flex: 1, minWidth: 0 }}>
+        <Text fz={14} fw={600} c="text.6" lineClamp={1}>
+          {user?.name ?? t("page.settings")}
+        </Text>
+        <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
+          {t("nav.personalGarage")}
+        </Text>
+      </Box>
     </Link>
   );
 }
@@ -58,7 +106,15 @@ function NewMenu(): ReactElement {
   return (
     <Menu position="bottom-start" width="target" radius="md" offset={6}>
       <Menu.Target>
-        <Button fullWidth color="primary.6" c="textDark.6" radius="md" leftSection={<Plus size={18} />}>
+        <Button
+          fullWidth
+          h={38}
+          color="primary.6"
+          c="textDark.6"
+          radius="md"
+          leftSection={<Plus size={18} />}
+          style={{ boxShadow: "0 4px 18px color-mix(in srgb, var(--mantine-color-primary-6) 25%, transparent)" }}
+        >
           {t("nav.new")}
         </Button>
       </Menu.Target>
@@ -83,7 +139,6 @@ function NewMenu(): ReactElement {
 export function Sidebar(): ReactElement {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { data: user } = useCurrentUser();
   const { data: unreadNotifications } = useUnreadNotifications();
   const unreadCount = unreadNotifications?.length ?? 0;
   const { data: pendingRides } = usePendingRides();
@@ -91,10 +146,13 @@ export function Sidebar(): ReactElement {
   const { data: profile } = useMyProfile();
   const pendingRequests = profile?.stats.pending_requests ?? 0;
 
+  // Rides waiting for a bike; the rides row still opens the Assigned tab.
+  const navCounts: Record<string, number> = { "/rides": pendingRideCount };
+
   return (
     <AppShell.Navbar
       withBorder={false}
-      bg="background.8"
+      bg="var(--color-surface-well)"
       px="sm"
       style={{
         paddingTop: SAFE_TOP,
@@ -103,17 +161,15 @@ export function Sidebar(): ReactElement {
       }}
     >
       <AppShell.Section>
-        {/* The header's height, so the mark sits level with the page title beside it. */}
-        <Box h="3rem" px="xs" mb="sm" className="flex items-center">
+        {/* Same gap above and below the mark, so it sits centred between the edge and the button. */}
+        <Box py="lg" px="xs" className="flex items-center justify-center">
           <Logo style={{ height: LOGO_HEIGHT, width: "auto" }} />
         </Box>
-        {/* Inset to the logo's edge, so the button reads narrower than the rows. */}
-        <Box px="xs">
-          <NewMenu />
-        </Box>
+        <NewMenu />
       </AppShell.Section>
 
-      <AppShell.Section grow mt="md" style={{ overflowY: "auto" }}>
+      {/* Bled out to the column edge, so the scroll box does not clip the active bar. */}
+      <AppShell.Section grow mt="lg" mx="-sm" px="sm" style={{ overflowY: "auto" }}>
         <Stack gap={2}>
           {NAV_ITEMS.map(({ labelKey, path, icon: Icon, icon_fill: IconFill }) => {
             // The More tab is the phone's way to Riders and Chat, which have rows of their own here.
@@ -127,19 +183,12 @@ export function Sidebar(): ReactElement {
                 active={active}
                 icon={<RowIcon size={ICON_SIZE} strokeWidth={active ? TAB_STROKE_ACTIVE : TAB_STROKE} />}
                 label={t(labelKey)}
-                // Rides waiting for a bike; the row still opens the Assigned tab.
-                trailing={
-                  path === "/rides" && (
-                    <Box pos="relative" w={20} h={20}>
-                      <HeaderCountBadge count={pendingRideCount} />
-                    </Box>
-                  )
-                }
+                trailing={<SidebarCount count={navCounts[path] ?? 0} />}
               />
             );
           })}
         </Stack>
-        <Divider my="sm" color="var(--color-border-subtle)" />
+        <SidebarSectionLabel>{t("nav.community")}</SidebarSectionLabel>
         <Stack gap={2}>
           <SidebarRow
             to="/follows"
@@ -152,6 +201,7 @@ export function Sidebar(): ReactElement {
                 <Box
                   w={7}
                   h={7}
+                  mr={6}
                   role="status"
                   aria-label={t("follow.requestsTitle")}
                   style={{ borderRadius: "9999px", backgroundColor: "var(--mantine-color-primary-6)" }}
@@ -169,26 +219,16 @@ export function Sidebar(): ReactElement {
       </AppShell.Section>
 
       <AppShell.Section>
-        <Stack gap={2}>
+        <Divider mb="sm" color="var(--color-border-subtle)" />
+        <Stack gap={4}>
           <SidebarRow
             to="/notifications"
             active={isActivePath("/notifications", pathname)}
             icon={<Bell size={ICON_SIZE} strokeWidth={TAB_STROKE} />}
             label={t("page.notifications")}
-            // The badge pins itself to its box's corner, so the box is sized to centre it.
-            trailing={
-              <Box pos="relative" w={20} h={20}>
-                <HeaderCountBadge count={unreadCount} />
-              </Box>
-            }
+            trailing={<SidebarCount count={unreadCount} />}
           />
-          <SidebarRow
-            to="/settings"
-            active={isActivePath("/settings", pathname)}
-            // name drives the initials fallback when the user has no picture
-            icon={<Avatar src={user?.avatar_url} name={user?.name} radius="xl" size={26} style={AVATAR_STYLE} />}
-            label={user?.name ?? t("page.settings")}
-          />
+          <UserRow active={isActivePath("/settings", pathname)} />
         </Stack>
       </AppShell.Section>
     </AppShell.Navbar>

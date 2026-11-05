@@ -140,7 +140,6 @@ function SuspensionRow({
       {/* Empty until picked: the wizard asks for it, so nothing is preselected. */}
       <SegmentedControl<SuspensionLayout | "">
         size="xs"
-        radius="md"
         aria-label={t("addBike.suspension")}
         value={value ?? ""}
         onChange={(layout) => {

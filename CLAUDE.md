@@ -88,7 +88,7 @@ to `theme.ts`. Check every new UI against the dark look before reporting it done
 
 ### Typography
 
-Roboto only; figures get `tabular-nums`, weights 400–700, letter-spacing only via `--tracking-*` tokens.
+Geist only; figures get `tabular-nums`, weights 400–700, letter-spacing only via `--tracking-*` tokens.
 See `docs/design.md` §9 Typography.
 
 ### Domain docs
