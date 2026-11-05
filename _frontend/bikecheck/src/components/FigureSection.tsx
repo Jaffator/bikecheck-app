@@ -33,6 +33,10 @@ export interface FigureSectionProps {
   // Numbers get tabular numerals so they line up; words do not.
   detailFigure?: boolean;
   graphic?: ReactNode;
+  // The eyebrow and the chip's line run the section's full width, for words too long to share it with the graphic.
+  spread?: boolean;
+  // Beside the chip when spread, where the detail stays under the value.
+  against?: string;
   onOpen?: () => void;
 }
 
@@ -44,56 +48,69 @@ export function FigureSection({
   detail,
   detailFigure = false,
   graphic,
+  spread = false,
+  against,
   onOpen,
 }: FigureSectionProps): ReactElement {
   const size = useIsDesktop() ? DESKTOP_VALUE : PHONE_VALUE;
-  const body = (
+  const eyebrow = <Eyebrow color="text.8">{title}</Eyebrow>;
+  const valueLine =
+    value === null ? (
+      <Skeleton h={size.line} w="50%" radius="sm" />
+    ) : (
+      <Group gap={6} align="baseline" wrap="nowrap">
+        <Text
+          className="tabular-nums"
+          fz={size.fz}
+          fw={size.fw}
+          lh={`${String(size.line)}px`}
+          lts="var(--tracking-display)"
+          c="text.6"
+          truncate
+        >
+          {value}
+        </Text>
+        <Text fz={14} fw={600} c="text.8">
+          {unit}
+        </Text>
+      </Group>
+    );
+  const detailLine = <FigureWords figure={detailFigure}>{detail}</FigureWords>;
+  const chipLine = (words: ReactNode): ReactElement => (
+    <Group gap={8} wrap="nowrap" mih={CHIP_HEIGHT}>
+      {chip !== undefined && <Pill>{chip}</Pill>}
+      {words}
+    </Group>
+  );
+  const graphicSlot = graphic !== undefined && (
+    <Box w={GRAPHIC_SLOT} style={{ flexShrink: 0, display: "flex", alignItems: "flex-end" }}>
+      {graphic}
+    </Box>
+  );
+  const body = spread ? (
+    <Stack gap={size.gap}>
+      {eyebrow}
+      <Group gap={12} wrap="nowrap" align="center">
+        <Stack gap={size.gap} style={{ flex: 1, minWidth: 0 }}>
+          {valueLine}
+          {detailLine}
+        </Stack>
+        {graphicSlot}
+      </Group>
+      {chipLine(<FigureWords>{against}</FigureWords>)}
+    </Stack>
+  ) : (
     // The graphic's slot runs the section's full height: a graphic sits on the bottom, level with the words
     // under the value, or fills the height and lays itself out.
     <Group gap={12} wrap="nowrap" align="stretch">
       <Stack gap={size.gap} style={{ flex: 1, minWidth: 0 }}>
-        <Eyebrow color="text.8">{title}</Eyebrow>
+        {eyebrow}
         <Stack gap={size.gap}>
-          {value === null ? (
-            <Skeleton h={size.line} w="50%" radius="sm" />
-          ) : (
-            <Group gap={6} align="baseline" wrap="nowrap">
-              <Text
-                className="tabular-nums"
-                fz={size.fz}
-                fw={size.fw}
-                lh={`${String(size.line)}px`}
-                lts="var(--tracking-display)"
-                c="text.6"
-                truncate
-              >
-                {value}
-              </Text>
-              <Text fz={14} fw={600} c="text.8">
-                {unit}
-              </Text>
-            </Group>
-          )}
-          <Group gap={8} wrap="nowrap" mih={CHIP_HEIGHT}>
-            {chip !== undefined && <Pill>{chip}</Pill>}
-            <Text
-              className={detailFigure ? "tabular-nums" : undefined}
-              fz={12}
-              // A step under the eyebrow, so only the value is bright.
-              c="text.8"
-              truncate
-              style={{ minWidth: 0 }}
-            >
-              {detail}
-            </Text>
-          </Group>
+          {valueLine}
+          {chipLine(detailLine)}
         </Stack>
       </Stack>
-      {graphic !== undefined && (
-        <Box w={GRAPHIC_SLOT} style={{ flexShrink: 0, display: "flex", alignItems: "flex-end" }}>
-          {graphic}
-        </Box>
-      )}
+      {graphicSlot}
     </Group>
   );
 
@@ -115,5 +132,20 @@ export function FigureSection({
     >
       {body}
     </UnstyledButton>
+  );
+}
+
+function FigureWords({ children, figure = false }: { children: ReactNode; figure?: boolean }): ReactElement {
+  return (
+    <Text
+      className={figure ? "tabular-nums" : undefined}
+      fz={12}
+      // A step under the eyebrow, so only the value is bright.
+      c="text.8"
+      truncate
+      style={{ minWidth: 0 }}
+    >
+      {children}
+    </Text>
   );
 }

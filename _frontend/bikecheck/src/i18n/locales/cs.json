@@ -321,6 +321,7 @@
     "comparisonMonth": "vs. {{month}} ke stejnému dni",
     "comparisonYear": "vs. {{year}} ke stejnému dni",
     "comparisonEmptyYear": "v roce {{year}} žádná jízda",
+    "comparisonNoPrevious": "v předchozím období nic",
     "comparisonNothingYet": "zatím nic",
     "comparisonEmptyMonth": {
       "1": "v lednu do {{day}}. dne nic",
@@ -671,6 +672,8 @@
     "archivedBikes_many": "Archivovaná kola ({{count}})",
     "archivedBikes_other": "Archivovaná kola ({{count}})",
     "columnBike": "Kolo",
+    "columnDistance": "Najeto",
+    "columnTime": "Čas",
     "columnDistancePeriod": "Najeto {{period}}",
     "columnTimePeriod": "Čas {{period}}",
     "columnWorstPart": "Nejhorší díl",

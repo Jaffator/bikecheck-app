@@ -54,7 +54,7 @@ export function Dashboard(): ReactElement {
       {!stravaConnected && <StravaStatusCard />}
       <DashboardBannerPhone />
       {/* Right above the figures, so no pitch or banner comes between the switcher and what it drives. */}
-      <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
+      <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth withCustom />
       <DashboardFigures period={period} />
       <LastRidePanel />
       <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />

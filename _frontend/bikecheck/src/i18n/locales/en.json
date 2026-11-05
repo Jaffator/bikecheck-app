@@ -311,6 +311,7 @@
     "comparisonMonth": "vs. {{month}} to the same day",
     "comparisonYear": "vs. {{year}} to the same day",
     "comparisonEmptyYear": "no rides in {{year}}",
+    "comparisonNoPrevious": "nothing in the previous period",
     "comparisonNothingYet": "nothing yet",
     "comparisonEmptyMonth": {
       "1": "nothing by January {{day}}",
@@ -630,6 +631,8 @@
     "archivedBikes_one": "Archived bikes ({{count}})",
     "archivedBikes_other": "Archived bikes ({{count}})",
     "columnBike": "Bike",
+    "columnDistance": "Distance",
+    "columnTime": "Time",
     "columnDistancePeriod": "Distance {{period}}",
     "columnTimePeriod": "Time {{period}}",
     "columnWorstPart": "Worst part",

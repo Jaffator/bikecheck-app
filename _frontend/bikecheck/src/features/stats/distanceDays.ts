@@ -1,8 +1,9 @@
 // Buckets and weeks read from a bike's metres per UTC day, index 0 = the served `from`. Every sum
 // stays in metres; a value is rounded only where it is printed, so the buckets add up to exactly the total.
+import dayjs from "dayjs";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatNumber } from "@/utils/number";
-import type { DistanceBucket } from "./homePeriod";
+import { isCustomPeriod, spanKind, type DistanceBucket } from "./homePeriod";
 import type {
   ComparedDistance,
   ComparedPeriod,
@@ -10,9 +11,13 @@ import type {
   DistanceBike,
   DistancePrevious,
   HomePeriod,
+  NamedPeriod,
 } from "./stats.types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_DAYS = 7;
+// The longest custom span still drawn week by week.
+const WEEKLY_MONTHS = 2;
 
 // Distance, climb, time and energy share one span; only the days summed and how they are printed differ.
 export interface DailySeries {
@@ -80,7 +85,9 @@ export function servedDays(distance: Distance): number {
 
 // Counted from the bucket holding `from`.
 function bucketIndex(from: Date, day: Date, bucket: DistanceBucket): number {
-  if (bucket === "day") return Math.round((day.getTime() - from.getTime()) / DAY_MS);
+  const days = Math.round((day.getTime() - from.getTime()) / DAY_MS);
+  if (bucket === "day") return days;
+  if (bucket === "week") return Math.floor(days / WEEK_DAYS);
   const years = day.getUTCFullYear() - from.getUTCFullYear();
   return bucket === "year" ? years : years * 12 + day.getUTCMonth() - from.getUTCMonth();
 }
@@ -91,6 +98,7 @@ export function bucketStarts(distance: Distance, bucket: DistanceBucket): Date[]
   const count = bucketIndex(from, dayOf(distance.to, 0), bucket) + 1;
   return Array.from({ length: count }, (_, index) => {
     if (bucket === "day") return dayOf(distance.from, index);
+    if (bucket === "week") return dayOf(distance.from, index * WEEK_DAYS);
     if (bucket === "month") return new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + index, 1));
     return new Date(Date.UTC(from.getUTCFullYear() + index, 0, 1));
   });
@@ -206,8 +214,11 @@ export function weeklyRunningMeters(daily: number[], year: number): number[] {
   });
 }
 
-// What one point of the distance line covers: a month steps by day, a year by week, all time by month.
-export type DistanceStep = "day" | "week" | "month";
+// What one point of the distance line covers: a month steps by day, a year by its Monday weeks, all time by
+// month, and a custom span by blocks of 7 days from its first day.
+export type DistanceStep = "day" | "yearWeek" | "week" | "month";
+
+const STEP_OF_PERIOD: Record<NamedPeriod, DistanceStep> = { month: "day", year: "yearWeek", all: "month" };
 
 export interface RunningDistance {
   step: DistanceStep;
@@ -217,22 +228,30 @@ export interface RunningDistance {
   meters: number[][];
 }
 
-// No Period is the phone's year, so it steps by week as desktop's year does.
+// A whole month or year draws exactly as its segment does. No Period is the phone's year.
+export function distanceStep(period: HomePeriod | undefined): DistanceStep {
+  if (period === undefined) return STEP_OF_PERIOD.year;
+  if (!isCustomPeriod(period)) return STEP_OF_PERIOD[period];
+  const kind = spanKind(period);
+  if (kind !== "days") return STEP_OF_PERIOD[kind];
+  return dayjs(period.to).isAfter(dayjs(period.from).add(WEEKLY_MONTHS, "month")) ? "month" : "week";
+}
+
 export function runningDistance(distance: Distance, period: HomePeriod | undefined): RunningDistance {
-  if (period === "month" || period === "all") {
-    const bucket = period === "month" ? "day" : "month";
+  const step = distanceStep(period);
+  if (step === "yearWeek") {
+    const year = servedYear(distance);
     return {
-      step: bucket,
-      starts: bucketStarts(distance, bucket).map((start) => start.toISOString().slice(0, 10)),
-      meters: distance.bikes.map((bike) => runningSum(bucketMeters(bike.daily_m, distance, bucket))),
+      step,
+      starts: weekStarts(servedDays(distance), year),
+      meters: distance.bikes.map((bike) => weeklyRunningMeters(bike.daily_m, year)),
     };
   }
 
-  const year = servedYear(distance);
   return {
-    step: "week",
-    starts: weekStarts(servedDays(distance), year),
-    meters: distance.bikes.map((bike) => weeklyRunningMeters(bike.daily_m, year)),
+    step,
+    starts: bucketStarts(distance, step).map((start) => start.toISOString().slice(0, 10)),
+    meters: distance.bikes.map((bike) => runningSum(bucketMeters(bike.daily_m, distance, step))),
   };
 }
 

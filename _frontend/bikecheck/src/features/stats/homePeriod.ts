@@ -12,7 +12,7 @@ import type { ComparedPeriod, HomePeriod, NamedPeriod } from "./stats.types";
 export type SpanKind = ComparedPeriod | "days";
 
 // A span the distance is summed over.
-export type DistanceBucket = "day" | "month" | "year";
+export type DistanceBucket = "day" | "week" | "month" | "year";
 
 // What Home, Rides and Service open on; never written to the address.
 export const DEFAULT_HOME_PERIOD: NamedPeriod = "month";

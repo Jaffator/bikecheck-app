@@ -1,10 +1,10 @@
 // Home's figures read two ways: against the previous Period (Comparison) or a fixed yardstick (Equivalent).
 import dayjs from "dayjs";
 import type { TFunction } from "i18next";
-import { distanceChange } from "@/features/rides/ridesTable";
+import { distanceChange, previousMonthNumber, type DayRange } from "@/features/rides/ridesTable";
 import { formatNumber } from "@/utils/number";
 import { totalMeters, type DailySeries } from "./distanceDays";
-import { isCustomPeriod } from "./homePeriod";
+import { isCustomPeriod, spanKind } from "./homePeriod";
 import type { ComparedDistance, ComparedPeriod, Distance, HomePeriod } from "./stats.types";
 
 export type FigureReading = "comparison" | "equivalent";
@@ -69,11 +69,24 @@ export function changeLabel(change: number, language: string, t: TFunction): str
   return t("tracking.percentage", { value: `${sign}${formatNumber(Math.abs(change), language)}` });
 }
 
+// A Period with one before it, the custom ones included.
+type ReadPeriod = ComparedPeriod | DayRange;
+
+// A custom Period says what it stands against from its own first day, the ordinary ones from today.
+export function versusPreviousText(period: HomePeriod, t: TFunction): string {
+  const custom = isCustomPeriod(period);
+  const start = custom ? dayjs(period.from) : dayjs();
+  const kind = custom ? spanKind(period) : period;
+  if (kind === "year") return t("ridesTable.vsYear", { year: start.year() - 1 });
+  if (kind === "month") return t(`ridesTable.vsMonth.${String(previousMonthNumber(start))}`);
+  return t("ridesTable.vsPreviousPeriod");
+}
+
 // A figure over the Period beside the same days of the Period before.
 export interface ComparedFigure {
   current: number;
   previous: number;
-  period: ComparedPeriod;
+  period: ReadPeriod;
   // The served last day, so the words name the days the server counted.
   to: string;
 }
@@ -81,12 +94,12 @@ export interface ComparedFigure {
 // A Period's distance with the one before it to read against.
 export interface Compared {
   distance: ComparedDistance;
-  period: ComparedPeriod;
+  period: ReadPeriod;
 }
 
-// Null for all time, which has no Period before it, and for a custom Period until Home reads one.
+// Null for all time, which has no Period before it.
 export function compared(distance: Distance, period: HomePeriod): Compared | null {
-  if (period === "all" || isCustomPeriod(period) || distance.previous === null) return null;
+  if (period === "all" || distance.previous === null) return null;
   return { distance: { ...distance, previous: distance.previous }, period };
 }
 
@@ -99,6 +112,12 @@ export function comparedFigure({ distance, period }: Compared, series: DailySeri
   };
 }
 
+// Home reads a Comparison only over a custom Period; its ordinary segments read as Equivalents.
+export function customComparison(distance: Distance, period: HomePeriod, series: DailySeries): ComparedFigure | null {
+  const against = isCustomPeriod(period) ? compared(distance, period) : null;
+  return against === null ? null : comparedFigure(against, series);
+}
+
 export interface Comparison {
   // Null when the previous Period had nothing, so there is no share to show.
   change: number | null;
@@ -108,12 +127,14 @@ export interface Comparison {
 export function comparisonOf(figure: ComparedFigure, language: string, t: TFunction): Comparison {
   const change = distanceChange(figure.current, figure.previous);
   if (change !== null) return { change, text: versusText(figure, language, t) };
+  if (isCustomPeriod(figure.period)) return { change, text: t("dashboard.comparisonNoPrevious") };
   if (figure.current === 0) return { change, text: t("dashboard.comparisonNothingYet") };
   return { change, text: emptyText(figure, t) };
 }
 
-// "vs. říjen ke stejnému dni", "vs. 2025 ke stejnému dni".
+// "vs. říjen ke stejnému dni", "vs. 2025 ke stejnému dni"; a custom Period is read whole, so no same-day words.
 function versusText({ period, to }: ComparedFigure, language: string, t: TFunction): string {
+  if (isCustomPeriod(period)) return versusPreviousText(period, t);
   const today = dayjs(to);
   if (period === "year") return t("dashboard.comparisonYear", { year: today.year() - 1 });
   const month = new Intl.DateTimeFormat(language, { month: "long" }).format(today.subtract(1, "month").toDate());
