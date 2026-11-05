@@ -3,16 +3,12 @@ import type { ApiError } from "@/api/client";
 import type { User } from "@/features/users/users.types";
 import { markWelcomeSeen } from "./onboarding.api";
 
-// Closes before the server answers: a failed save must not hold the rider on the Welcome.
+// Safe to repeat: the server keeps the first stamp. Welcome closes itself, so a failed save holds nobody.
 export function useMarkWelcomeSeen(): UseMutationResult<User, ApiError, void> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: markWelcomeSeen,
-    onMutate: () => {
-      queryClient.setQueryData<User | null>(["currentUser"], (user) =>
-        user ? { ...user, welcome_seen_at: new Date().toISOString() } : user,
-      );
-    },
+    retry: 2,
     onSuccess: (user) => {
       queryClient.setQueryData(["currentUser"], user);
     },

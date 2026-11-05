@@ -4,13 +4,13 @@ import { useTranslation } from "react-i18next";
 import { SampleSwitch } from "./WelcomeGraphicParts";
 import bikeImage from "@/assets/images/login_bike.webp";
 
-// The report is a white PDF in the app too, so the paper keeps its print colours.
-const PAPER = "#f8f8f8";
-const INK = "#050505";
-const INK_SOFT = "#525252";
-const INK_BODY = "#2b2b2b";
-const RULE = "#cacaca";
-const PLACEHOLDER = "#c5c5c5";
+// The report is a white PDF in the app too, so the paper takes the light end of the ramps.
+const PAPER = "var(--mantine-color-text-1)";
+const INK = "var(--mantine-color-textDark-6)";
+const INK_SOFT = "var(--mantine-color-textDark-4)";
+const INK_BODY = "var(--mantine-color-textDark-5)";
+const RULE = "var(--mantine-color-cards-1)";
+const PLACEHOLDER = "var(--mantine-color-textDark-1)";
 
 // Board A4 is a 390×516 stage, board D4 a 600×600 one with the sheets a size larger.
 const PHONE = {
@@ -73,7 +73,7 @@ export function WelcomeSharingGraphic({ desktop }: { desktop: boolean }): ReactE
           borderRadius: 6,
           backgroundColor: PAPER,
           transform: `rotate(-2.5deg)${art.scale}`,
-          boxShadow: "0 1px 2px 0 rgba(0,0,0,0.4), 0 12px 24px -8px rgba(0,0,0,0.55)",
+          boxShadow: "var(--elev-hero)",
         }}
       >
         <Box style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -88,13 +88,14 @@ export function WelcomeSharingGraphic({ desktop }: { desktop: boolean }): ReactE
             fz={10}
             lh="14px"
             fw={700}
+            lts="var(--tracking-label)"
             style={{ borderRadius: 4, backgroundColor: INK, color: PAPER }}
           >
             PDF
           </Box>
         </Box>
-        <Text mt={14} fz={22} lh="26px" fw={700} lts="var(--tracking-display)" c={INK}>
-          {t("onboarding.welcome.sample.reportTitle")}
+        <Text mt={14} fz={22} lh="26px" fw={700} lts="var(--tracking-title)" c={INK}>
+          {t("report.titlePeriod")}
         </Text>
         <Text mt={2} fz={12} lh="16px" c={INK_SOFT}>
           {t("onboarding.welcome.sample.reportSubtitle")}
@@ -119,8 +120,7 @@ export function WelcomeSharingGraphic({ desktop }: { desktop: boolean }): ReactE
           flexDirection: "column",
           gap: 12,
           borderRadius: 16,
-          boxShadow:
-            "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 1px 2px 0 rgba(0,0,0,0.4), 0 12px 24px -8px rgba(0,0,0,0.55)",
+          boxShadow: "var(--elev-hero)",
         }}
       >
         <Text fz={14} fw={600} c="text.6">
@@ -128,9 +128,9 @@ export function WelcomeSharingGraphic({ desktop }: { desktop: boolean }): ReactE
         </Text>
         <SampleSwitch
           options={[
-            t("onboarding.welcome.sample.nobody"),
-            t("onboarding.welcome.sample.followers"),
-            t("onboarding.welcome.sample.everyone"),
+            t("sharing.visibilityOff"),
+            t("sharing.visibilityFollowers"),
+            t("sharing.visibilityPublic"),
           ]}
           active={2}
         />

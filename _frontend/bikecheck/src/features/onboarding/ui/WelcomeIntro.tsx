@@ -1,13 +1,12 @@
 import type { CSSProperties, ReactElement } from "react";
-import { Box, Button, Group, Modal, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { WelcomeMark } from "./WelcomeMark";
+import { WelcomeSkipButton } from "./WelcomeSkipButton";
+import { SAFE_BOTTOM, SAFE_TOP, WELCOME_DESKTOP_HEIGHT } from "./welcomeLayout";
 
-const DESKTOP_HEIGHT = 600;
 const START_WIDTH = 320;
-const SAFE_TOP = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
-const SAFE_BOTTOM = "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))";
 
 interface WelcomeIntroProps {
   onStart: () => void;
@@ -48,15 +47,13 @@ export function WelcomeIntro({ onStart, onSkip }: WelcomeIntroProps): ReactEleme
     <Stack
       gap={0}
       h={isDesktop ? undefined : "100dvh"}
-      mih={isDesktop ? DESKTOP_HEIGHT : undefined}
+      mih={isDesktop ? WELCOME_DESKTOP_HEIGHT : undefined}
       px={isDesktop ? 32 : 20}
       bg={isDesktop ? "background.8" : "background.9"}
       style={{ paddingTop: isDesktop ? 12 : SAFE_TOP, paddingBottom: isDesktop ? 72 : `calc(32px + ${SAFE_BOTTOM})` }}
     >
       <Group justify="flex-end" h={60} style={{ flexShrink: 0 }}>
-        <UnstyledButton mih={44} fz={14} fw={500} c="var(--color-muted)" onClick={onSkip}>
-          {t("onboarding.welcome.skip")}
-        </UnstyledButton>
+        <WelcomeSkipButton onClick={onSkip} />
       </Group>
 
       <Stack gap={0} align="center" justify="center" ta="center" style={{ flex: "1 1 auto", minHeight: 0 }}>

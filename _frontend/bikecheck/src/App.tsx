@@ -29,7 +29,7 @@ import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
 import { FirstWelcome } from "@/features/onboarding/ui/FirstWelcome";
-import { WelcomeReplay } from "@/features/onboarding/ui/WelcomeReplay";
+import { WelcomeReplay } from "@/features/onboarding_page/WelcomeReplay";
 import { Follows } from "@/features/follow_page/Follows";
 import { Legal } from "@/features/legal_page/Legal";
 import { VerifyEmail } from "@/features/verify_email_page/VerifyEmail";

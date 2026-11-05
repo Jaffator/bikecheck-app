@@ -73,7 +73,7 @@ const SUB_PAGE_ROUTES: string[] = [
 ];
 
 // Routes that own the viewport hide all shared application chrome.
-const FULL_SCREEN_ROUTES: string[] = ["/strava-connected"];
+const FULL_SCREEN_ROUTES: string[] = ["/strava-connected", "/welcome"];
 
 function isFullScreenRoute(pathname: string): boolean {
   return FULL_SCREEN_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));

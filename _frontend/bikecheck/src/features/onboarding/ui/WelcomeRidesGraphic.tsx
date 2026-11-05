@@ -2,10 +2,11 @@ import type { ReactElement } from "react";
 import { Box, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import mapImage from "@/assets/images/welcome_map.svg";
-import { STRAVA, WearChip, WelcomeBike } from "./WelcomeGraphicParts";
+import { STRAVA, TargetDot, WearChip, WelcomeBike } from "./WelcomeGraphicParts";
 import { ROUTE_PATH } from "./welcomeArt";
 
 const MAP_FADE = "radial-gradient(ellipse 54% 52% at 55% 54%, #000 35%, transparent 100%)";
+const ROUTE_GLOW = `drop-shadow(0 0 6px color-mix(in srgb, ${STRAVA} 40%, transparent))`;
 
 // Board A1 is a 390×516 stage, board D1 a 600×600 one.
 const PHONE = {
@@ -48,7 +49,7 @@ function Stat({ label, value }: { label: string; value: string }): ReactElement 
         fz={24}
         lh="30px"
         fw={700}
-        lts="var(--tracking-display)"
+        lts="var(--tracking-title)"
         c="text.6"
         style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
       >
@@ -77,8 +78,8 @@ export function WelcomeRidesGraphic({ desktop }: { desktop: boolean }): ReactEle
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <path d={ROUTE_PATH} stroke={STRAVA} strokeWidth="3" style={{ filter: "drop-shadow(0 0 6px rgba(255,95,31,0.4))" }} />
-          <circle cx="173" cy="172" r="5.5" fill={STRAVA} stroke="#f8f8f8" strokeWidth="2.5" />
+          <path d={ROUTE_PATH} stroke={STRAVA} strokeWidth="3" style={{ filter: ROUTE_GLOW }} />
+          <circle cx="173" cy="172" r="5.5" fill={STRAVA} stroke="var(--mantine-color-text-1)" strokeWidth="2.5" />
         </g>
       </svg>
 
@@ -88,8 +89,7 @@ export function WelcomeRidesGraphic({ desktop }: { desktop: boolean }): ReactEle
         {art.leaders.map(({ line, dot: [cx, cy] }) => (
           <g key={line}>
             <path d={line} stroke={STRAVA} strokeOpacity="0.75" />
-            <circle cx={cx} cy={cy} r="4" fill={STRAVA} />
-            <circle cx={cx} cy={cy} r="9" stroke={STRAVA} strokeOpacity="0.5" />
+            <TargetDot x={cx} y={cy} color={STRAVA} ringOpacity={0.5} />
           </g>
         ))}
       </svg>

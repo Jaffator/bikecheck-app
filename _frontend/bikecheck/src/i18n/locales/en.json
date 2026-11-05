@@ -1622,15 +1622,11 @@
         "frontTyre": "Front",
         "frontPressure": "1.7 bar",
         "sag": "Sag",
-        "reportTitle": "Service report",
         "reportSubtitle": "Orbea Rallon · full history",
         "chainSwap": "Chain replacement",
         "padsSwap": "Brake pad replacement",
         "forkService": "Fork service",
-        "visibility": "Who can see your profile",
-        "nobody": "Nobody",
-        "followers": "Followers",
-        "everyone": "Public"
+        "visibility": "Who can see your profile"
       }
     }
   }

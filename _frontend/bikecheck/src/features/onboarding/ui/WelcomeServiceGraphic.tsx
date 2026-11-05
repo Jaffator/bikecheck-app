@@ -3,12 +3,12 @@ import { Box, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Bell } from "lucide-react";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
-import { RAISED_SHADOW, WelcomeBike } from "./WelcomeGraphicParts";
+import { WelcomeBike } from "./WelcomeGraphicParts";
 
 const SAMPLE_WEAR = "94 %";
 // The same reading the app would paint on a part at this wear.
 const WEAR_ALERT = attentionColor(94);
-const RING_TRACK = "#3a3833";
+const RING_TRACK = "var(--color-decor)";
 const RING_MASK_ID = "welcome-ring-ticks";
 
 // Board A2 is a 390×516 stage, board D2 a 600×600 one.
@@ -45,7 +45,7 @@ export function WelcomeServiceGraphic({ desktop }: { desktop: boolean }): ReactE
             <circle {...circle} fill="none" stroke="#fff" strokeWidth={stroke} pathLength="360" strokeDasharray="1 2" />
           </mask>
         </defs>
-        <circle {...circle} stroke="#0a0a0b" strokeOpacity="0.72" strokeWidth={halo} />
+        <circle {...circle} stroke="var(--mantine-color-background-9)" strokeOpacity="0.72" strokeWidth={halo} />
         <g mask={`url(#${RING_MASK_ID})`} strokeWidth={stroke}>
           <circle {...circle} stroke={RING_TRACK} />
           <circle
@@ -84,7 +84,7 @@ export function WelcomeServiceGraphic({ desktop }: { desktop: boolean }): ReactE
           fontVariantNumeric: "tabular-nums",
           whiteSpace: "nowrap",
           borderRadius: 9999,
-          boxShadow: RAISED_SHADOW,
+          boxShadow: "var(--elev-panel)",
         }}
       >
         {SAMPLE_WEAR}
@@ -101,7 +101,7 @@ export function WelcomeServiceGraphic({ desktop }: { desktop: boolean }): ReactE
           alignItems: "flex-start",
           gap: 12,
           borderRadius: 16,
-          boxShadow: RAISED_SHADOW,
+          boxShadow: "var(--elev-panel)",
         }}
       >
         <Box

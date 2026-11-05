@@ -1,5 +1,6 @@
 import { useState, type ReactElement } from "react";
 import { Modal } from "@mantine/core";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { useWelcomeStep } from "../useWelcomeStep";
 import { WELCOME_SLIDES } from "../welcomeSlides";
@@ -26,7 +27,7 @@ export function Welcome({ onSkip, onAddBike }: WelcomeProps): ReactElement | nul
   const { step, goTo } = useWelcomeStep();
   const [closed, setClosed] = useState<boolean>(false);
 
-  // Closed by hand: the owner's own close lands a tick later, too late for the transition's snapshot.
+  // Its own state: a failed save leaves welcome_seen_at null, and a refetch must not reopen it.
   const leave = (action: () => void): void => {
     welcomeTransition("out", () => {
       setClosed(true);
@@ -34,6 +35,9 @@ export function Welcome({ onSkip, onAddBike }: WelcomeProps): ReactElement | nul
     });
   };
   const skip = (): void => leave(onSkip);
+
+  // Android's back walks the slides, and past the intro it leaves as Skip does.
+  useOverlayBack(!closed, () => (step > 0 ? goTo(step - 1) : skip()));
 
   if (closed) return null;
 

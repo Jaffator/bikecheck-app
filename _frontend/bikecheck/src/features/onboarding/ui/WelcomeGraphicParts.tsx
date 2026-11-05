@@ -2,9 +2,6 @@ import type { CSSProperties, ReactElement } from "react";
 import { Box, Text } from "@mantine/core";
 import bikeImage from "@/assets/images/login_bike.webp";
 
-export const RAISED_SHADOW =
-  "inset 0 1px 0 0 rgba(255,255,255,0.05), 0 1px 2px 0 rgba(0,0,0,0.38), 0 8px 16px -6px rgba(0,0,0,0.5)";
-
 export const STRAVA = "var(--mantine-color-strava-6)";
 
 interface BikeProps {
@@ -21,6 +18,23 @@ export function WelcomeBike({ left, top, width }: BikeProps): ReactElement {
       alt=""
       style={{ position: "absolute", left, top, width, maxWidth: "none", height: "auto" }}
     />
+  );
+}
+
+interface TargetDotProps {
+  x: number;
+  y: number;
+  color: string;
+  ringOpacity: number;
+}
+
+// Where a callout's line lands on the bike. Sits inside the graphic's svg.
+export function TargetDot({ x, y, color, ringOpacity }: TargetDotProps): ReactElement {
+  return (
+    <>
+      <circle cx={x} cy={y} r="4" fill={color} />
+      <circle cx={x} cy={y} r="9" stroke={color} strokeOpacity={ringOpacity} />
+    </>
   );
 }
 
@@ -47,7 +61,7 @@ export function WearChip({ label, value, position }: WearChipProps): ReactElemen
         gap: 6,
         whiteSpace: "nowrap",
         borderRadius: 9999,
-        boxShadow: RAISED_SHADOW,
+        boxShadow: "var(--elev-panel)",
       }}
     >
       <Box c="text.6">{label}</Box>
@@ -71,7 +85,7 @@ export function Callout({ value, label, position }: CalloutProps): ReactElement 
       py={8}
       px={10}
       bg="cards.6"
-      style={{ ...position, boxSizing: "border-box", borderRadius: 12, boxShadow: RAISED_SHADOW }}
+      style={{ ...position, boxSizing: "border-box", borderRadius: 12, boxShadow: "var(--elev-panel)" }}
     >
       <Text fz={17} lh="22px" fw={600} c="text.6" style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
         {value}

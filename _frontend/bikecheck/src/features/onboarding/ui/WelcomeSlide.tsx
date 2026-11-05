@@ -8,7 +8,9 @@ import { WelcomeGarageGraphic } from "./WelcomeGarageGraphic";
 import { WelcomeRidesGraphic } from "./WelcomeRidesGraphic";
 import { WelcomeServiceGraphic } from "./WelcomeServiceGraphic";
 import { WelcomeSharingGraphic } from "./WelcomeSharingGraphic";
+import { WelcomeSkipButton } from "./WelcomeSkipButton";
 import { WelcomeStage } from "./WelcomeStage";
+import { SAFE_BOTTOM, SAFE_TOP, WELCOME_DESKTOP_HEIGHT } from "./welcomeLayout";
 
 const GRAPHICS = {
   rides: WelcomeRidesGraphic,
@@ -18,15 +20,10 @@ const GRAPHICS = {
 };
 
 const LAST_INDEX = WELCOME_SLIDES.length - 1;
-const DESKTOP_HEIGHT = 600;
 const DESKTOP_PANEL_WIDTH = 380;
 const PHONE_PANEL_HEIGHT = 252;
 // The panel lies over the graphic by this much, so its rounded corners sit on the picture.
 const PANEL_OVERLAP = 20;
-const SAFE_TOP = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
-const SAFE_BOTTOM = "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))";
-const PHONE_PANEL_SHADOW =
-  "inset 0 1px 0 0 rgba(255,255,255,0.04), 0 -1px 2px 0 rgba(0,0,0,0.4), 0 -14px 32px -6px rgba(0,0,0,0.45)";
 const DESKTOP_PANEL_SHADOW =
   "inset 1px 0 0 0 rgba(255,255,255,0.04), -1px 0 2px 0 rgba(0,0,0,0.4), -14px 0 32px -6px rgba(0,0,0,0.45)";
 
@@ -35,15 +32,6 @@ interface WelcomeSlideProps {
   onBack: () => void;
   onNext: () => void;
   onSkip: () => void;
-}
-
-function SkipButton({ onClick }: { onClick: () => void }): ReactElement {
-  const { t } = useTranslation();
-  return (
-    <UnstyledButton mih={44} fz={14} fw={500} c="var(--color-muted)" onClick={onClick}>
-      {t("onboarding.welcome.skip")}
-    </UnstyledButton>
-  );
 }
 
 function BackButton({ onClick }: { onClick: () => void }): ReactElement {
@@ -108,7 +96,7 @@ function SlideText({ index, desktop }: { index: number; desktop: boolean }): Rea
         fz={desktop ? 28 : 26}
         lh={desktop ? "34px" : "32px"}
         fw={700}
-        lts="var(--tracking-display)"
+        lts={desktop ? "var(--tracking-display)" : "var(--tracking-title)"}
         c="text.6"
         style={{ textWrap: "balance" }}
       >
@@ -134,7 +122,7 @@ function PhoneSlide({ index, onNext, onSkip }: WelcomeSlideProps): ReactElement 
     <Stack gap={0} h="100dvh" style={{ paddingTop: SAFE_TOP }}>
       <Group justify="space-between" wrap="nowrap" px={20} h={60} style={{ flexShrink: 0 }}>
         <img src={logoName} alt="BikeCheck" style={{ display: "block", height: 22 }} />
-        <SkipButton onClick={onSkip} />
+        <WelcomeSkipButton onClick={onSkip} />
       </Group>
 
       <Box
@@ -162,7 +150,7 @@ function PhoneSlide({ index, onNext, onSkip }: WelcomeSlideProps): ReactElement 
           flexShrink: 0,
           paddingBottom: `calc(32px + ${SAFE_BOTTOM})`,
           borderRadius: "20px 20px 0 0",
-          boxShadow: PHONE_PANEL_SHADOW,
+          boxShadow: "var(--elev-sill)",
         }}
       >
         <SlideText index={index} desktop={false} />
@@ -184,7 +172,7 @@ function PhoneSlide({ index, onNext, onSkip }: WelcomeSlideProps): ReactElement 
 function DesktopSlide({ index, onBack, onNext, onSkip }: WelcomeSlideProps): ReactElement {
   const Graphic = GRAPHICS[WELCOME_SLIDES[index]];
   return (
-    <Group gap={0} wrap="nowrap" align="stretch" h={DESKTOP_HEIGHT}>
+    <Group gap={0} wrap="nowrap" align="stretch" h={WELCOME_DESKTOP_HEIGHT}>
       <Box
         className="welcome-graphic"
         aria-hidden
@@ -192,7 +180,7 @@ function DesktopSlide({ index, onBack, onNext, onSkip }: WelcomeSlideProps): Rea
         mr={-PANEL_OVERLAP}
         style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden" }}
       >
-        <WelcomeStage width={DESKTOP_HEIGHT} height={DESKTOP_HEIGHT}>
+        <WelcomeStage width={WELCOME_DESKTOP_HEIGHT} height={WELCOME_DESKTOP_HEIGHT}>
           <Graphic desktop />
         </WelcomeStage>
       </Box>
@@ -211,7 +199,7 @@ function DesktopSlide({ index, onBack, onNext, onSkip }: WelcomeSlideProps): Rea
       >
         <Group justify="space-between" wrap="nowrap" h={60} style={{ flexShrink: 0 }}>
           <img src={logoName} alt="BikeCheck" style={{ display: "block", height: 22 }} />
-          <SkipButton onClick={onSkip} />
+          <WelcomeSkipButton onClick={onSkip} />
         </Group>
         <SlideText index={index} desktop />
         <Group mt="auto" pt={24} justify="space-between" gap={8} wrap="nowrap">

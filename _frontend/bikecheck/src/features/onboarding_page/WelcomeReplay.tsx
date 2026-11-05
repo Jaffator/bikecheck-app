@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Welcome } from "./Welcome";
+import { Welcome } from "@/features/onboarding/ui/Welcome";
 
 // Played again on its own route: it writes nothing and closes to where it was opened from.
 export function WelcomeReplay(): ReactElement {

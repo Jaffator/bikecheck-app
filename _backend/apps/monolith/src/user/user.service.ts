@@ -326,7 +326,7 @@ export class UserService {
   // ---- Private methods ----
 
   private async requireUser(id: number): Promise<UserFull> {
-    const user = await this.prisma.users.findUnique({ where: { id } });
+    const user = await this.getUserbyId(id);
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
