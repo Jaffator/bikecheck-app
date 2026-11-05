@@ -462,7 +462,9 @@
     "descent": "↓ {{value}} m klesání",
     "noComparison": "Minulý měsíc bez jízd",
     "noComparisonYear": "Minulý rok bez jízd",
+    "noComparisonPeriod": "Předchozí období bez jízd",
     "vsYear": "proti roku {{year}}",
+    "vsPreviousPeriod": "proti předchozímu období",
     "empty": "V tomto výběru nejsou žádné jízdy",
     "vsMonth": {
       "1": "proti lednu",
@@ -1666,9 +1668,17 @@
     "aboutWeeks_other": "≈ {{count}} týdnů",
     "period": "Období",
     "periodMonth": "Tento měsíc",
+    "periodMonthShort": "Měsíc",
     "periodAll": "Vše",
     "periodAllLong": "Celkem",
-    "periodAllTime": "celkem"
+    "periodAllTime": "celkem",
+    "periodCustom": "Vlastní",
+    "periodCustomTitle": "Vlastní období",
+    "periodTabDays": "Dny",
+    "periodTabMonth": "Měsíc",
+    "periodTabYear": "Rok",
+    "periodApply": "Použít",
+    "periodEdit": "Změnit období"
   },
   "onboarding": {
     "welcome": {

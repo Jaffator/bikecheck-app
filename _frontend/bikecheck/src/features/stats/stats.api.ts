@@ -1,6 +1,7 @@
 // Home's chart requests.
 import { apiFetch } from "@/api/client";
-import type { Distance, HomePeriod, Spend, WearForecast } from "./stats.types";
+import { isCustomPeriod } from "./homePeriod";
+import type { Distance, EarliestDay, HomePeriod, Spend, WearForecast } from "./stats.types";
 
 // No Period: the server picks this year, or last year while this one has nothing priced.
 export async function getSpend(period?: HomePeriod): Promise<Spend> {
@@ -12,10 +13,15 @@ export async function getDistance(period?: HomePeriod): Promise<Distance> {
   return apiFetch<Distance>(`/stats/distance${periodQuery(period)}`);
 }
 
+export async function getEarliestDay(): Promise<EarliestDay> {
+  return apiFetch<EarliestDay>("/stats/earliest-day");
+}
+
 export async function getWearForecast(): Promise<WearForecast> {
   return apiFetch<WearForecast>("/stats/wear-forecast");
 }
 
 function periodQuery(period?: HomePeriod): string {
-  return period === undefined ? "" : `?period=${period}`;
+  if (period === undefined) return "";
+  return isCustomPeriod(period) ? `?from=${period.from}&to=${period.to}` : `?period=${period}`;
 }

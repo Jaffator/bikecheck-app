@@ -68,7 +68,7 @@ export function matchPreset(period: ServicePeriod): PeriodPresetId | null {
 // Czech writes the day first, English the month - the same split the history's dates
 // make. The `localizedFormat` dayjs plugin is not loaded, so the patterns are spelled out
 // here rather than left to `format("L")`.
-const DAY_BY_LANGUAGE: Record<string, string> = {
+export const DAY_BY_LANGUAGE: Record<string, string> = {
   cs: "D. M. YYYY",
   en: "MMM D, YYYY",
 };

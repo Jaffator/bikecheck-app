@@ -1,7 +1,7 @@
-// Home's Period, kept in the URL as `?period=`, so a reload or Back keeps it.
-import { useCallback } from "react";
+// Home's Period, kept in the URL as `?period=` or `?from=&to=`, so a reload or Back keeps it.
+import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { DEFAULT_HOME_PERIOD, parseHomePeriod } from "./homePeriod";
+import { parseHomePeriod, writeHomePeriod } from "./homePeriod";
 import type { HomePeriod } from "./stats.types";
 
 export interface HomePeriodControls {
@@ -18,8 +18,7 @@ export function useHomePeriod(): HomePeriodControls {
       setSearchParams(
         (current) => {
           const params = new URLSearchParams(current);
-          if (next === DEFAULT_HOME_PERIOD) params.delete("period");
-          else params.set("period", next);
+          writeHomePeriod(params, next);
           return params;
         },
         { replace: true },
@@ -28,5 +27,8 @@ export function useHomePeriod(): HomePeriodControls {
     [setSearchParams],
   );
 
-  return { period: parseHomePeriod(searchParams.get("period")), setPeriod };
+  // Held, because the cards compare the Period by identity and a custom one is an object.
+  const period = useMemo(() => parseHomePeriod(searchParams), [searchParams]);
+
+  return { period, setPeriod };
 }

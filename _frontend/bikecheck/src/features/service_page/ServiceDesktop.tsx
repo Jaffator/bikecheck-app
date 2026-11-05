@@ -58,7 +58,12 @@ export function ServiceDesktop(): ReactElement {
               leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
               onClick={() => {
                 if (exportBikeId === null) return;
-                setExporting({ kind: "PERIOD", bike_id: exportBikeId, from: period.from ?? undefined });
+                setExporting({
+                  kind: "PERIOD",
+                  bike_id: exportBikeId,
+                  from: period.from ?? undefined,
+                  to: period.to ?? undefined,
+                });
               }}
             >
               {t("service.export")}
@@ -77,7 +82,7 @@ export function ServiceDesktop(): ReactElement {
       </Group>,
     );
     return () => setActionSlot(null);
-  }, [setActionSlot, t, navigate, hasBikes, exportBikeId, period.from, addServicePath]);
+  }, [setActionSlot, t, navigate, hasBikes, exportBikeId, period.from, period.to, addServicePath]);
 
   if (bikes === undefined) {
     return (
@@ -114,7 +119,7 @@ export function ServiceDesktop(): ReactElement {
             </>
           )}
         </Group>
-        <HomePeriodSwitcher value={params.period} onChange={params.setPeriod} />
+        <HomePeriodSwitcher value={params.period} onChange={params.setPeriod} withCustom />
       </Group>
 
       <ServiceFiguresRow bikeId={bikeId} period={params.period} />

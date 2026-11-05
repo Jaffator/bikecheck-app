@@ -444,7 +444,9 @@
     "descent": "↓ {{value}} m descent",
     "noComparison": "No rides the month before",
     "noComparisonYear": "No rides last year",
+    "noComparisonPeriod": "No rides in the previous period",
     "vsYear": "vs {{year}}",
+    "vsPreviousPeriod": "against the previous period",
     "empty": "No rides in this selection",
     "vsMonth": {
       "1": "vs January",
@@ -1577,9 +1579,17 @@
     "aboutWeeks_other": "≈ {{count}} weeks",
     "period": "Period",
     "periodMonth": "This month",
+    "periodMonthShort": "Month",
     "periodAll": "All",
     "periodAllLong": "All time",
-    "periodAllTime": "all time"
+    "periodAllTime": "all time",
+    "periodCustom": "Custom",
+    "periodCustomTitle": "Custom period",
+    "periodTabDays": "Days",
+    "periodTabMonth": "Month",
+    "periodTabYear": "Year",
+    "periodApply": "Apply",
+    "periodEdit": "Change period"
   },
   "onboarding": {
     "welcome": {

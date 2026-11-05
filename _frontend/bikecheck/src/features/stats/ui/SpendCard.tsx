@@ -21,7 +21,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { periodSearch } from "@/features/service/servicePeriod";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { formatCost } from "@/utils/money";
-import { DEFAULT_HOME_PERIOD } from "../homePeriod";
+import { writeHomePeriod } from "../homePeriod";
 import { categoryLabel } from "../spendCategories";
 import { useSpend } from "../stats.queries";
 import type { HomePeriod, Spend, SpendBike, SpendCategory } from "../stats.types";
@@ -171,7 +171,7 @@ function BikeRow({
 function historyLink(bikeId: number, spend: Spend, period: HomePeriod, isDesktop: boolean): string {
   if (!isDesktop) return `/bikes/${String(bikeId)}/history${periodSearch(spend)}`;
   const query = new URLSearchParams({ bike: String(bikeId) });
-  if (period !== DEFAULT_HOME_PERIOD) query.set("period", period);
+  writeHomePeriod(query, period);
   return `/service?${query.toString()}`;
 }
 

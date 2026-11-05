@@ -1,7 +1,7 @@
 // The desktop rides table: its filter as the URL carries it, its weeks and how its figures read.
 import dayjs from "dayjs";
 import type { TFunction } from "i18next";
-import { parseHomePeriod } from "@/features/stats/homePeriod";
+import { customPeriodLabel, isCustomPeriod, parseHomePeriod, wholeSpan } from "@/features/stats/homePeriod";
 import type { HomePeriod } from "@/features/stats/stats.types";
 import type { Ride } from "./rides.types";
 
@@ -21,7 +21,7 @@ export interface RideFilter {
   range: DayRange | null;
 }
 
-// `?bike=&period=&page=`, the same Period switcher Service has.
+// `?bike=&period=&page=` or `?bike=&from=&to=&page=`, the same Period switcher Service has.
 export interface RideTableParams {
   bikeId: number | null;
   period: HomePeriod;
@@ -34,7 +34,7 @@ export function readTableParams(params: URLSearchParams): RideTableParams {
   const page = Number(params.get("page"));
   return {
     bikeId: Number.isInteger(bike) && bike > 0 ? bike : null,
-    period: parseHomePeriod(params.get("period")),
+    period: parseHomePeriod(params),
     page: Number.isInteger(page) && page > 0 ? page : 1,
   };
 }
@@ -46,15 +46,13 @@ export function filterOf(params: RideTableParams, today: dayjs.Dayjs = dayjs()):
 // The whole calendar month or year, so the server compares it with the one before.
 function periodRange(period: HomePeriod, today: dayjs.Dayjs): DayRange | null {
   if (period === "all") return null;
-  return {
-    from: today.startOf(period).format(DAY_FORMAT),
-    to: today.endOf(period).format(DAY_FORMAT),
-  };
+  return isCustomPeriod(period) ? period : wholeSpan(today.format(DAY_FORMAT), period);
 }
 
-// "Září 2026" or "2026"; null for every ride.
+// "Září 2026", "2026" or the days chosen; null for every ride.
 export function periodLabel(period: HomePeriod, language: string, today: dayjs.Dayjs = dayjs()): string | null {
   if (period === "all") return null;
+  if (isCustomPeriod(period)) return customPeriodLabel(period, language);
   if (period === "year") return String(today.year());
   return monthLabel(today, language);
 }

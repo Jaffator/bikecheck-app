@@ -1,6 +1,7 @@
 // Desktop Přiřazené's three figures for the filter: distance against the period before, time, climbing.
 import type { ReactElement, ReactNode } from "react";
 import dayjs from "dayjs";
+import type { TFunction } from "i18next";
 import { SimpleGrid, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Figure } from "@/components/Figure";
@@ -8,6 +9,7 @@ import { formatKm } from "@/features/profile/profileFormat";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { RideFigures } from "@/features/rides/rides.types";
 import { distanceChange, periodLabel, previousMonthNumber } from "@/features/rides/ridesTable";
+import { isCustomPeriod, spanKind } from "@/features/stats/homePeriod";
 import type { HomePeriod } from "@/features/stats/stats.types";
 import { formatNumber } from "@/utils/number";
 
@@ -59,15 +61,26 @@ export function RideFiguresRow({ figures, period }: RideFiguresRowProps): ReactE
   );
 }
 
+// A custom Period says what it stands against from its own first day, the ordinary ones from today.
+function versusText(period: HomePeriod, t: TFunction): string {
+  const custom = isCustomPeriod(period);
+  const start = custom ? dayjs(period.from) : dayjs();
+  const kind = custom ? spanKind(period) : period;
+  if (kind === "year") return t("ridesTable.vsYear", { year: start.year() - 1 });
+  if (kind === "month") return t(`ridesTable.vsMonth.${String(previousMonthNumber(start))}`);
+  return t("ridesTable.vsPreviousPeriod");
+}
+
+function noComparisonKey(period: HomePeriod): string {
+  if (isCustomPeriod(period)) return "ridesTable.noComparisonPeriod";
+  return period === "year" ? "ridesTable.noComparisonYear" : "ridesTable.noComparison";
+}
+
 // "+12 % proti srpnu" or "proti roku 2025"; a period before with no distance leaves nothing to compare.
 function DistanceChange({ figures, period }: { figures: RideFigures; period: HomePeriod }): ReactNode {
   const { t } = useTranslation();
   const change = distanceChange(figures.distance_m, figures.previous_distance_m);
-  if (change === null) return t(period === "year" ? "ridesTable.noComparisonYear" : "ridesTable.noComparison");
-  const versus =
-    period === "year"
-      ? t("ridesTable.vsYear", { year: dayjs().year() - 1 })
-      : t(`ridesTable.vsMonth.${String(previousMonthNumber())}`);
+  if (change === null) return t(noComparisonKey(period));
 
   return (
     <>
@@ -76,7 +89,7 @@ function DistanceChange({ figures, period }: { figures: RideFigures; period: Hom
           value: change > 0 ? `+${String(change)}` : String(change),
         })}
       </Text>
-      {` ${versus}`}
+      {` ${versusText(period, t)}`}
     </>
   );
 }

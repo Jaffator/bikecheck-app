@@ -27,7 +27,7 @@ export function RideFilterBar(): ReactElement {
           />
         ))}
       </Group>
-      <HomePeriodSwitcher value={period} onChange={setPeriod} />
+      <HomePeriodSwitcher value={period} onChange={setPeriod} withCustom />
     </Group>
   );
 }

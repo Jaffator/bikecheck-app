@@ -4,6 +4,7 @@ import type { TFunction } from "i18next";
 import { distanceChange } from "@/features/rides/ridesTable";
 import { formatNumber } from "@/utils/number";
 import { totalMeters, type DailySeries } from "./distanceDays";
+import { isCustomPeriod } from "./homePeriod";
 import type { ComparedDistance, ComparedPeriod, Distance, HomePeriod } from "./stats.types";
 
 export type FigureReading = "comparison" | "equivalent";
@@ -83,9 +84,9 @@ export interface Compared {
   period: ComparedPeriod;
 }
 
-// Null for all time, which has no Period before it.
+// Null for all time, which has no Period before it, and for a custom Period until Home reads one.
 export function compared(distance: Distance, period: HomePeriod): Compared | null {
-  if (period === "all" || distance.previous === null) return null;
+  if (period === "all" || isCustomPeriod(period) || distance.previous === null) return null;
   return { distance: { ...distance, previous: distance.previous }, period };
 }
 

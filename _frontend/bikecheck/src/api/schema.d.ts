@@ -1881,6 +1881,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/earliest-day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Stats getEarliestDay"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/wear-forecast": {
         parameters: {
             query?: never;
@@ -4454,6 +4470,13 @@ export interface components {
             bikes: components["schemas"]["Response_DistanceBikeDto"][];
             /** @description The garage's previous Period of the same kind, under the same ride rules; null for all time and for no period */
             previous: components["schemas"]["Response_DistancePreviousDto"] | null;
+        };
+        Response_EarliestDayDto: {
+            /**
+             * @description Day of the earliest ride or dated Service; null for an empty garage
+             * @example 2023-04-02
+             */
+            day: string | null;
         };
         Response_WearPointDto: {
             /**
@@ -7574,6 +7597,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Response_DistanceDto"];
+                };
+            };
+        };
+    };
+    "Stats getEarliestDay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_EarliestDayDto"];
                 };
             };
         };
