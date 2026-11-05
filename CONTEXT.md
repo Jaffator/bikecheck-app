@@ -200,8 +200,8 @@ The span of days a reading is taken over — the service history and its History
 figures and charts. A Service belongs to its Service Date's day, a ride to the UTC day it started
 on; a ride with no start belongs to no Period. Either end may be left open; both open is all time,
 which is the only Period that counts a Service carrying no Service Date — such a Service falls in
-no bounded Period. Home offers three: this month, the year, and all time, which for rides begins
-on the day of the garage's earliest ride.
+no bounded Period. Home offers this month, the year and all time, which for rides begins on the
+day of the garage's earliest ride, or a custom Period: any span of days the rider picks.
 _Avoid_: Range, timeframe
 
 **Energy**:
@@ -219,8 +219,10 @@ _Avoid_: Benchmark, comparison (that is the previous Period's reading)
 
 **Comparison**:
 A Period's reading set against the previous Period of the same kind, counted up to the same day —
-the 1st to the 3rd of November against the 1st to the 3rd of October. All time has no previous
-Period and so no Comparison; a previous Period with nothing in it gives no share either.
+the 1st to the 3rd of November against the 1st to the 3rd of October. A custom Period is read
+whole: a calendar month against the month before, a calendar year against the year before, any
+other days against the same number of days right before. All time has no previous Period and so no
+Comparison; a previous Period with nothing in it gives no share either.
 _Avoid_: Delta, trend, growth
 
 **Wear Baseline**:

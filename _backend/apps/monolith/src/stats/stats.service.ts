@@ -7,6 +7,7 @@ import { serviceDateInPeriod } from '../bike-event/bike-event.service';
 import { isoDay } from '../ai-chat/tools/tool-dates';
 import { Response_SpendBikeDto, Response_SpendCategoryDto, Response_SpendDto } from './dto/response-spend';
 import { Response_DistanceBikeDto, Response_DistanceDto, Response_DistancePreviousDto } from './dto/response-distance';
+import { Response_EarliestDayDto } from './dto/response-earliest-day';
 import {
   Response_WearForecastDto,
   Response_WearForecastItemDto,
@@ -14,6 +15,7 @@ import {
 } from './dto/response-wear-forecast';
 import { GarageReading, ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import { RIDE_WEAR, wearRideSelect, type WearRide } from '../service-tracking/ride-wear';
+import { isDay, previousRange, type DayRange } from '../ride/ride-period';
 
 // A Service's money follows its Actions' Component Category: the part types an Action
 // targets, or a catch-all Replacement's own category (ADR 0022).
@@ -93,6 +95,14 @@ interface PreviousWindow extends DayWindow {
 export const PERIODS = ['month', 'year', 'all'] as const;
 export type Period = (typeof PERIODS)[number];
 
+// A named Period or two days of the rider's own, never both.
+export interface StatsPeriodQuery extends DayRange {
+  period?: string;
+}
+
+type CustomPeriod = Required<DayRange>;
+type AskedPeriod = Period | CustomPeriod;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
@@ -113,8 +123,8 @@ export class StatsService {
     private readonly serviceTracking: ServiceTrackingService,
   ) {}
 
-  async getSpend(userId: number, period?: string): Promise<Response_SpendDto> {
-    const asked = periodOf(period);
+  async getSpend(userId: number, period?: string, days: DayRange = {}): Promise<Response_SpendDto> {
+    const asked = askedPeriod(period, days);
     const [[window, services], user] = await Promise.all([
       asked === undefined ? this.spendOrLastYear(userId) : this.spendOver(userId, asked),
       this.prisma.users.findUnique({ where: { id: userId }, select: { currency: true } }),
@@ -134,8 +144,8 @@ export class StatsService {
     };
   }
 
-  async getDistance(userId: number, period?: string): Promise<Response_DistanceDto> {
-    const asked = periodOf(period);
+  async getDistance(userId: number, period?: string, days: DayRange = {}): Promise<Response_DistanceDto> {
+    const asked = askedPeriod(period, days);
     const [bikes, colors] = await Promise.all([
       this.prisma.bikes.findMany({ where: ownedBikesWhere(userId), select: garageSelect }),
       colorIndexes(this.prisma, userId),
@@ -151,10 +161,11 @@ export class StatsService {
   // All time begins on the day of the earliest dated ride, or today when there is none.
   private async distanceOver(
     userId: number,
-    period: Period,
+    period: AskedPeriod,
     garage: ColoredBike[],
     today: Date,
   ): Promise<Response_DistanceDto> {
+    if (typeof period === 'object') return this.distanceWithin(userId, period, garage);
     if (period === 'all') {
       const rides = await this.ridesSince(userId);
       return distanceOf({ from: earliestDay(rides, today), to: today }, rides, garage);
@@ -163,9 +174,24 @@ export class StatsService {
     const before = previousWindow(period, today);
     const [rides, earlier] = await Promise.all([
       this.ridesSince(userId, from),
-      this.ridesSince(userId, before.from, new Date(before.to.getTime() + DAY_MS)),
+      this.ridesSince(userId, before.from, dayAfter(before.to)),
     ]);
     return { ...distanceOf({ from, to: today }, rides, garage), previous: previousOf(earlier, before) };
+  }
+
+  // A custom Period is read whole, so its Comparison reads the whole of the Period before, no same-day cut.
+  private async distanceWithin(
+    userId: number,
+    custom: CustomPeriod,
+    garage: ColoredBike[],
+  ): Promise<Response_DistanceDto> {
+    const window = dayWindow(custom);
+    const before = dayWindow(previousRange(custom.from, custom.to));
+    const [rides, earlier] = await Promise.all([
+      this.ridesSince(userId, window.from, dayAfter(window.to)),
+      this.ridesSince(userId, before.from, dayAfter(before.to)),
+    ]);
+    return { ...distanceOf(window, rides, garage), previous: previousOf(earlier, { ...before, sameDay: before.to }) };
   }
 
   // The phone's card asks for no Period: last year while this one draws nothing, so it is not blank all January.
@@ -197,7 +223,9 @@ export class StatsService {
   }
 
   // Open-ended, as Home asks History Totals for the same Period, so the two totals agree.
-  private async spendOver(userId: number, period: Period): Promise<[ServiceWindow, SpendService[]]> {
+  private async spendOver(userId: number, period: AskedPeriod): Promise<[ServiceWindow, SpendService[]]> {
+    if (typeof period === 'object') return [period, await this.servicesIn(userId, period)];
+
     const now = new Date();
     const from: Record<Period, string | null> = {
       month: localDay(now.getFullYear(), now.getMonth(), 1),
@@ -262,6 +290,17 @@ export class StatsService {
     }));
 
     return [...rows, ...folded].filter((row) => row.amount > 0);
+  }
+
+  // Under the rules the spend and distance reads count by, so the first year offered has something in it.
+  async getEarliestDay(userId: number): Promise<Response_EarliestDayDto> {
+    const where = { is_deleted: { not: true }, bikes: ownedBikesWhere(userId) };
+    const [rides, services] = await Promise.all([
+      this.prisma.rides.aggregate({ where, _min: { started_at: true } }),
+      this.prisma.events_bikes.aggregate({ where, _min: { service_date: true } }),
+    ]);
+    const days = [isoDay(rides._min.started_at), serviceDay(services._min.service_date)];
+    return { day: days.filter((day) => day !== null).sort()[0] ?? null };
   }
 
   async getWearForecast(userId: number): Promise<Response_WearForecastDto> {
@@ -373,6 +412,10 @@ function localDay(year: number, month: number, day: number): string {
   return `${String(year)}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+function serviceDay(date: Date | null): string | null {
+  return date === null ? null : localDay(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
 function spent(services: SpendService[]): number {
   return sum(services.map((service) => cents(service.total_cost)));
 }
@@ -401,6 +444,14 @@ function utcDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
+function dayWindow({ from, to }: CustomPeriod): DayWindow {
+  return { from: new Date(`${from}T00:00:00.000Z`), to: new Date(`${to}T00:00:00.000Z`) };
+}
+
+function dayAfter(day: Date): Date {
+  return new Date(day.getTime() + DAY_MS);
+}
+
 function yearStart(year: number): Date {
   return new Date(Date.UTC(year, 0, 1));
 }
@@ -415,6 +466,16 @@ function periodOf(value?: string): Period | undefined {
   throw new BadRequestException(`Unknown period: ${value}`);
 }
 
+// Rubbish is refused like an unknown Period, so it never reads as an empty chart.
+function askedPeriod(period: string | undefined, { from, to }: DayRange): AskedPeriod | undefined {
+  if (from === undefined && to === undefined) return periodOf(period);
+  if (period !== undefined) throw new BadRequestException('A period or two days, not both');
+  if (from === undefined || to === undefined) throw new BadRequestException('A custom Period needs both days');
+  if (!isDay(from) || !isDay(to)) throw new BadRequestException('A day is YYYY-MM-DD');
+  if (from > to) throw new BadRequestException('The first day comes after the last');
+  return { from, to };
+}
+
 function isPeriod(value: string): value is Period {
   return (PERIODS as readonly string[]).includes(value);
 }
@@ -425,7 +486,7 @@ function mondayOf(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - sinceMonday));
 }
 
-// No previous Period: only a month or a year asked for has one to compare with.
+// No previous Period: only a month, a year or days asked for have one to compare with.
 function distanceOf(window: DayWindow, rides: DistanceRide[], garage: ColoredBike[]): Response_DistanceDto {
   return {
     from: isoDay(window.from),

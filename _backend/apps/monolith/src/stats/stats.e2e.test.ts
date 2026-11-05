@@ -269,6 +269,141 @@ describe('StatsController (e2e)', () => {
     expect(allTime.body.previous).toBeNull();
   });
 
+  describe('a custom Period', () => {
+    let customRideIds: number[];
+
+    const addRide = async (startedAt: string, meters: number): Promise<number> => {
+      const { id } = await prisma.rides.create({
+        data: { user_id: ownerId, bike_id: bikeId, started_at: new Date(startedAt), distance_m: meters },
+      });
+      return id;
+    };
+
+    const distanceOver = async (query: string, token = ownerToken): Promise<request.Response> =>
+      request(app.getHttpServer())
+        .get(`/api/stats/distance?${query}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+    beforeAll(async () => {
+      customRideIds = [
+        await addRide('2023-06-15T12:00:00.000Z', 5000),
+        await addRide('2024-02-10T12:00:00.000Z', 10000),
+        await addRide('2024-03-08T12:00:00.000Z', 20000),
+        await addRide('2024-03-10T12:00:00.000Z', 30000),
+      ];
+    });
+
+    afterAll(async () => {
+      await prisma.rides.deleteMany({ where: { id: { in: customRideIds } } });
+    });
+
+    it('spends between two days, in the shape a named Period has', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/stats/spend?from=2025-05-10&to=2025-05-10')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          from: '2025-05-10',
+          to: '2025-05-10',
+          total: 350,
+          categories: [expect.objectContaining({ key: 'unassigned', amount: 350 })],
+          bikes: [expect.objectContaining({ bike_id: bikeId, total: 350, service_count: 2 })],
+        }),
+      );
+    });
+
+    it('compares a whole month with the month before', async () => {
+      const { body } = await distanceOver('from=2024-03-01&to=2024-03-31');
+
+      expect(body).toEqual(expect.objectContaining({ from: '2024-03-01', to: '2024-03-31' }));
+      expect(body.bikes).toEqual([expect.objectContaining({ bike_id: bikeId, total_km: 50, ride_count: 2 })]);
+      expect(body.bikes[0].daily_m).toHaveLength(31);
+      expect(body.previous).toEqual(expect.objectContaining({ from: '2024-02-01', meters: 10000 }));
+      expect(body.previous.daily_m).toHaveLength(29);
+    });
+
+    it('compares a whole year with the year before', async () => {
+      const { body } = await distanceOver('from=2024-01-01&to=2024-12-31');
+
+      expect(body.bikes).toEqual([expect.objectContaining({ total_km: 60 })]);
+      expect(body.previous).toEqual(expect.objectContaining({ from: '2023-01-01', meters: 5000 }));
+      expect(body.previous.daily_m).toHaveLength(365);
+    });
+
+    it('compares any other days with the same number of days right before', async () => {
+      const { body } = await distanceOver('from=2024-03-10&to=2024-03-12');
+
+      expect(body.bikes).toEqual([expect.objectContaining({ daily_m: [30000, 0, 0] })]);
+      expect(body.previous).toEqual(
+        expect.objectContaining({ from: '2024-03-07', meters: 20000, daily_m: [0, 20000, 0] }),
+      );
+    });
+
+    it("charts none of another user's days", async () => {
+      const { body } = await distanceOver('from=2024-03-01&to=2024-03-31', strangerToken);
+
+      expect(body.bikes).toEqual([]);
+      expect(body.previous).toEqual(expect.objectContaining({ meters: 0 }));
+    });
+
+    it.each(['spend', 'distance'])('refuses a broken pair on %s', async (endpoint) => {
+      const broken = [
+        'from=2024-03-01',
+        'to=2024-03-31',
+        'from=2024-03-31&to=2024-03-01',
+        'from=2024-02-30&to=2024-03-01',
+        'from=2024-13-01&to=2024-13-02',
+        'from=march&to=2024-03-01',
+        'from=&to=2024-03-01',
+        'period=month&from=2024-03-01&to=2024-03-31',
+      ];
+
+      for (const query of broken) {
+        await request(app.getHttpServer())
+          .get(`/api/stats/${endpoint}?${query}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .expect(400);
+      }
+    });
+
+    it('reports the earliest ride or dated Service as the first day of the garage', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/stats/earliest-day')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      expect(response.body).toEqual({ day: '2023-06-15' });
+    });
+
+    it('reports the Service when it came before every ride', async () => {
+      // ARRANGE: the custom rides out, and a Service dated before anything else.
+      await prisma.rides.deleteMany({ where: { id: { in: customRideIds } } });
+      const { id } = await prisma.events_bikes.create({
+        data: { bike_id: bikeId, service_date: new Date(2022, 1, 3), is_deleted: false },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get('/api/stats/earliest-day')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+      await prisma.events_bikes.delete({ where: { id } });
+
+      expect(response.body).toEqual({ day: '2022-02-03' });
+    });
+
+    it('reports no day for an empty garage', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/stats/earliest-day')
+        .set('Authorization', `Bearer ${strangerToken}`)
+        .expect(200);
+
+      expect(response.body).toEqual({ day: null });
+    });
+  });
+
   it('forecasts the chain jobs soonest first, at the pace of the last four weeks', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/stats/wear-forecast')
