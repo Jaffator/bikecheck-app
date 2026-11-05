@@ -14,6 +14,7 @@ import { WearForecastCard } from "@/features/stats/ui/WearForecastCard";
 import { StravaSyncChip } from "@/features/strava/ui/StravaSyncChip";
 import { useHeaderStore } from "@/store/store";
 import { DashboardBanner } from "./DashboardBanner";
+import { DashboardContextLine } from "./DashboardContextLine";
 import { DashboardFigures } from "./DashboardFigures";
 
 export function DashboardDesktop(): ReactElement {
@@ -36,8 +37,9 @@ export function DashboardDesktop(): ReactElement {
   }, [setActionSlot, period, setPeriod]);
 
   return (
-    // The header leaves 4px under its row; 12 more makes the page's 16px gap.
-    <Stack gap="md" p="xl" pt={12}>
+    // No top padding: the context line belongs to the header's title just above it.
+    <Stack gap="md" p="xl" pt={0}>
+      <DashboardContextLine />
       <DashboardBanner />
       <DashboardFigures period={period} />
       {/* Each column stacks its own cards, so a short card never leaves a gap under it.

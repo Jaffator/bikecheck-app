@@ -24,5 +24,6 @@ export interface UpdateUserData {
   avatar_url?: string | undefined;
   notifications_enabled?: boolean | undefined;
   tire_pressure_unit?: tire_pressure_unit | undefined;
+  hints_enabled?: boolean | undefined;
   // updated_at - automatic from DB
 }

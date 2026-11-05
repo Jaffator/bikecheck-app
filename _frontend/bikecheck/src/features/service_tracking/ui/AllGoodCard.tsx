@@ -42,7 +42,7 @@ export function AllGoodCard(): ReactElement {
           <Text fz={14} fw={600} c="text.6">
             {t("tracking.allGoodTitle")}
           </Text>
-          <Text fz={12} c="var(--color-text-dim)">
+          <Text fz={12} c="text.8">
             {t("tracking.allGoodBody")}
           </Text>
         </Stack>

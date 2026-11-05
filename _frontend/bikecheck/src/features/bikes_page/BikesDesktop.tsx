@@ -93,8 +93,16 @@ export function BikesDesktop(): ReactElement {
           value={tab}
           onChange={(next) => setParam("tab", parseBikesTab(next) === "archived" ? "archived" : null)}
           withItemsBorders={false}
-          // The theme dims every label; the chosen tab reads bright.
-          classNames={{ label: "tabular-nums data-[active]:!text-[var(--mantine-color-text-6)] data-[active]:font-bold" }}
+          // Same look as Home's Period switcher: the darker labels let the bright chosen tab stand out.
+          classNames={{
+            label:
+              "tabular-nums !text-[var(--mantine-color-text-8)] data-[active]:!text-[var(--mantine-color-text-6)] data-[active]:font-bold",
+          }}
+          styles={{
+            root: { backgroundColor: "var(--mantine-color-cards-5)" },
+            indicator: { backgroundColor: "var(--mantine-color-cards2-6)" },
+            label: { lineHeight: "24px" },
+          }}
           data={[
             { value: "active", label: t("bikes.tabActive", { count: activeCount }) },
             { value: "archived", label: t("bikes.tabArchived", { count: archivedCount }) },

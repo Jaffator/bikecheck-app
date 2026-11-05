@@ -1640,6 +1640,23 @@
           ],
           "format": "date-time"
         },
+        "welcome_seen_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "hints_seen": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hints_enabled": {
+          "type": "boolean",
+          "default": true
+        },
         "accounts": {
           "type": "array",
           "items": {

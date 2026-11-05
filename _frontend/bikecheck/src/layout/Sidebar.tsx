@@ -10,7 +10,6 @@ import { useCurrentUser } from "@/features/users/users.queries";
 import { useUnreadNotifications } from "@/features/notifications/notifications.queries";
 import { usePendingRides } from "@/features/strava/strava.queries";
 import { useMyProfile } from "@/features/profile/profile.queries";
-import { useBikes } from "@/features/bikes/bikes.queries";
 import { Eyebrow } from "@/components/Eyebrow";
 import { BADGE_CAP } from "./HeaderCountBadge";
 import { ADD_BIKE, ADD_SERVICE, NAV_ITEMS, TAB_STROKE, TAB_STROKE_ACTIVE, isActivePath } from "./navItems";
@@ -144,12 +143,11 @@ export function Sidebar(): ReactElement {
   const unreadCount = unreadNotifications?.length ?? 0;
   const { data: pendingRides } = usePendingRides();
   const pendingRideCount = pendingRides?.length ?? 0;
-  const { data: bikes } = useBikes();
   const { data: profile } = useMyProfile();
   const pendingRequests = profile?.stats.pending_requests ?? 0;
 
-  // Bikes owned, rides waiting for a bike; the rides row still opens the Assigned tab.
-  const navCounts: Record<string, number> = { "/bikes": bikes?.length ?? 0, "/rides": pendingRideCount };
+  // Rides waiting for a bike; the rides row still opens the Assigned tab.
+  const navCounts: Record<string, number> = { "/rides": pendingRideCount };
 
   return (
     <AppShell.Navbar

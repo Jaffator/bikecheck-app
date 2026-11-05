@@ -53,7 +53,7 @@ export function EmptyDashboard(): ReactElement {
               {t("common.proTip")}
             </Text>
           </Group>
-          <Text fz={14} lh="22px" c="var(--color-muted)">
+          <Text fz={14} lh="22px" c="text.7">
             {/* Preserve a single translatable sentence. */}
             <Trans
               i18nKey="dashboard.proTipBody"

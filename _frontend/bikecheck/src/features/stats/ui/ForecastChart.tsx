@@ -1,4 +1,4 @@
-// One part's wear: solid as ridden, dotted to the projected date, dashed at the service limit, each named on the chart.
+// One part's wear: solid as ridden, dotted to the projected date, dashed at the service limit; only today and the limit are named.
 import type { ReactElement } from "react";
 import { LineChart } from "@mantine/charts";
 import dayjs from "dayjs";
@@ -8,19 +8,21 @@ import { formatLongDate } from "@/features/service/serviceDates";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
 import type { WearForecastItem } from "../stats.types";
 
-export const CHART_HEIGHT = 160;
+export const CHART_HEIGHT = 140;
 const DUE = 100;
 // Room under 0 % for today's label when the reading itself sits on the floor.
 const FLOOR = -18;
-// The limit and the floor only; the inline labels say the rest.
-const Y_TICKS = [0, DUE];
 const PROJECTION_DASH = "3 5";
 const LIMIT_DASH = "4 4";
-const LIMIT_COLOR = "var(--mantine-color-text-8)";
+const QUIET_COLOR = "var(--mantine-color-text-8)";
+const TODAY_COLOR = "var(--color-text-dim)";
+const FLOOR_COLOR = "var(--color-border-subtle)";
 const CARD_COLOR = "var(--mantine-color-cards-6)";
 const LABEL_SIZE = 11;
 // Keeps a label clear of the line or the dot it names.
 const LABEL_GAP = 9;
+// The widest dot's reach, so its edge and not its centre stands on the text's left edge.
+const PLOT_INSET = 6;
 
 // One chart row: a curve point, the projection's far end, or today carrying both.
 interface ChartRow {
@@ -62,11 +64,15 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
       withDots={false}
       withTooltip={false}
       tickLine="none"
-      strokeDasharray="0"
       textColor="text.8"
-      gridColor="var(--color-border-subtle)"
+      // No axis gutter, so the plot shares the card's left edge; the limit is named and the floor grounds it.
+      withYAxis={false}
+      gridAxis="none"
       lineProps={{ strokeLinecap: "round" }}
-      referenceLines={[{ y: DUE, color: LIMIT_COLOR, strokeDasharray: LIMIT_DASH }]}
+      referenceLines={[
+        { y: DUE, color: QUIET_COLOR, strokeDasharray: LIMIT_DASH },
+        { y: FLOOR, color: FLOOR_COLOR },
+      ]}
       // Time-scaled, so the projection is as long as the weeks it spans.
       xAxisProps={{
         type: "number",
@@ -75,16 +81,10 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
         ticks: [first, last],
         // Recharts would shift both dates inwards again, as if centred; EdgeTick already anchors them.
         interval: 0,
-        tick: <EdgeTick language={i18n.language} emphasizeLast={projected} />,
+        tick: <EdgeTick language={i18n.language} />,
       }}
-      yAxisProps={{
-        width: "auto",
-        ticks: Y_TICKS,
-        domain: [FLOOR, (max: number) => Math.max(DUE, max)],
-        tick: { fontSize: LABEL_SIZE, fill: "currentColor", style: { fontVariantNumeric: "tabular-nums" } },
-        tickFormatter: (percentage: number) => t("tracking.percentage", { value: percentage }),
-      }}
-      lineChartProps={{ margin: { top: 18, right: 8 } }}
+      yAxisProps={{ domain: [FLOOR, (max: number) => Math.max(DUE, max)] }}
+      lineChartProps={{ margin: { top: 18, right: PLOT_INSET, left: PLOT_INSET } }}
     >
       {/* Over the end dot, or at the left when today's label takes the right. */}
       <ReferenceDot
@@ -99,21 +99,6 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
           />
         )}
       />
-      {projected && roomy && (
-        // Under the projection's midpoint, where neither line nor today's label runs.
-        <ReferenceDot
-          x={(today.at + last) / 2}
-          y={(today.wear + DUE) / 2}
-          shape={(dot) => (
-            <InlineLabel
-              x={Number(dot.cx) + LABEL_GAP}
-              y={Number(dot.cy) + LABEL_GAP + LABEL_SIZE / 2}
-              anchor="start"
-              label={t("stats.forecastProjection")}
-            />
-          )}
-        />
-      )}
       {projected && <ReferenceDot x={last} y={DUE} r={4} fill={CARD_COLOR} stroke={color} strokeWidth={2} />}
       <ReferenceDot
         x={today.at}
@@ -177,9 +162,9 @@ function TodayDot({ cx, cy, color, label, side }: TodayDotProps): ReactElement<S
         x={aboveLeft ? cx - 8 : cx + 8}
         y={aboveLeft ? cy - 9 : cy + 14}
         textAnchor={aboveLeft ? "end" : "start"}
-        fontSize={11}
-        fontWeight={400}
-        fill="var(--mantine-color-text-6)"
+        fontSize={LABEL_SIZE}
+        fontWeight={500}
+        fill={TODAY_COLOR}
         // A halo in the card's colour, so the limit line never runs through the figure.
         stroke={CARD_COLOR}
         strokeWidth={4}
@@ -202,7 +187,7 @@ interface InlineLabelProps {
 // Names a line in place of a legend, as quiet as the axis.
 function InlineLabel({ x, y, anchor, label }: InlineLabelProps): ReactElement<SVGElement> {
   return (
-    <text x={x} y={y} textAnchor={anchor} fontSize={LABEL_SIZE} fontWeight={400} fill={LIMIT_COLOR}>
+    <text x={x} y={y} textAnchor={anchor} fontSize={LABEL_SIZE} fontWeight={400} fill={QUIET_COLOR}>
       {label}
     </text>
   );
@@ -211,27 +196,25 @@ function InlineLabel({ x, y, anchor, label }: InlineLabelProps): ReactElement<SV
 // Recharts clones this onto both ticks; each is anchored inwards so neither date is clipped.
 interface EdgeTickProps {
   language: string;
-  // The projected date is the answer the card is for, so it reads brighter than the start.
-  emphasizeLast: boolean;
   x?: number | string;
   y?: number | string;
   index?: number;
   payload?: { value: number };
 }
 
-function EdgeTick({ language, emphasizeLast, x, y, index, payload }: EdgeTickProps): ReactElement | null {
+function EdgeTick({ language, x, y, index, payload }: EdgeTickProps): ReactElement | null {
   if (payload === undefined) return null;
-  const emphasized = emphasizeLast && index !== 0;
 
   return (
     <text
-      x={Number(x)}
+      // Back out over the inset, so both dates end on the card's text edges.
+      x={Number(x) + (index === 0 ? -PLOT_INSET : PLOT_INSET)}
       y={Number(y)}
       dy={14}
       textAnchor={index === 0 ? "start" : "end"}
-      fontSize={11}
+      fontSize={LABEL_SIZE}
       fontWeight={400}
-      fill={emphasized ? "var(--mantine-color-text-6)" : "currentColor"}
+      fill="currentColor"
       style={{ fontVariantNumeric: "tabular-nums" }}
     >
       {formatLongDate(dayjs(payload.value).format("YYYY-MM-DD"), language)}

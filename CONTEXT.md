@@ -409,6 +409,14 @@ The email an account receives the moment it becomes usable: at creation when it 
 on verification otherwise. Never sent to an Unverified Account.
 _Avoid_: Onboarding email, signup email
 
+**Welcome**:
+The slides explaining what the App is for, shown once.
+_Avoid_: Walkthrough, tutorial, tour
+
+**Hint**:
+A one-time bubble explaining one thing on one screen.
+_Avoid_: Tooltip, coach mark
+
 **Notification Email**:
 A notification carried to the inbox as well as to the lock screen and the bell — the same words,
 sent the moment the notification is written, one email per notification. Only some kinds of

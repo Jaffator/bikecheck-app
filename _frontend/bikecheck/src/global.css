@@ -159,6 +159,16 @@
   --card-glow: none;
 }
 
+/* A page's side gutter, shared with the header so its title stays on the cards' edge. */
+:root {
+  --page-inset: 12px;
+}
+@media (min-width: 60em) {
+  :root {
+    --page-inset: 16px;
+  }
+}
+
 /* Every bottom sheet's spacing and ✕: ResponsiveSheet's, and MoreDrawer's by hand - see docs/conventions/drawers.md. */
 :root {
   --sheet-handle-top: 16px;

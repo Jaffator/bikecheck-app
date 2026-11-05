@@ -49,12 +49,12 @@ export function Dashboard(): ReactElement {
   return (
     // Clears the floating create button, so the last card can be scrolled out from under
     // it; desktop has no FAB, so no room. No `p` here: its inline padding beats the responsive `pb` class.
-    <Stack gap="sm" px="md" pt="md" pb={FAB_CLEARANCE}>
+    <Stack gap="sm" px="var(--page-inset)" pt="md" pb={FAB_CLEARANCE}>
       <StatusRow />
-      {/* Right under the chips, so the switcher keeps its place whichever pitch or banner shows. */}
-      <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
       {!stravaConnected && <StravaStatusCard />}
       <DashboardBannerPhone />
+      {/* Right above the figures, so no pitch or banner comes between the switcher and what it drives. */}
+      <HomePeriodSwitcher value={period} onChange={setPeriod} fullWidth />
       <DashboardFigures period={period} />
       <LastRidePanel />
       <AttentionCard bikeId={null} whenEmpty={<AllGoodCard />} />

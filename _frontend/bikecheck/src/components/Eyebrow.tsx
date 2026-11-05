@@ -17,7 +17,7 @@ export function Eyebrow({ children, align, color }: EyebrowProps): ReactElement 
       fw={400}
       tt="uppercase"
       lts="var(--tracking-label)"
-      c={color ?? "var(--color-text-dim)"}
+      c={color ?? "text.8"}
       ta={align}
       lineClamp={1}
     >

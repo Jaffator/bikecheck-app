@@ -1,95 +1,60 @@
-// Home's figures as one card: the Period's distance, time in the saddle and climb, and on desktop what is
-// due now. Distance and climb read as a Comparison or an Equivalent, flipped by a press; terms in CONTEXT.md.
-import { Fragment, type ReactElement, type ReactNode } from "react";
-import { Box, SimpleGrid, Text, useMatches } from "@mantine/core";
+// Home's figures as one card: the Period's distance, climb, time in the saddle and energy. Distance, climb
+// and energy read as an Equivalent; the terms are in CONTEXT.md.
+import type { ReactElement } from "react";
+import { Box, SimpleGrid, useMatches } from "@mantine/core";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { FigureSection, type FigureSectionProps } from "@/components/FigureSection";
+import { FigureSection } from "@/components/FigureSection";
 import { formatDuration } from "@/features/rides/rideDuration";
-import { DUE_FROM, QUIET_COLOR, attentionColor } from "@/features/service_tracking/attentionLevel";
-import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
-import type { AttentionLevel, GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 import {
   CLIMBED,
+  ENERGY,
   RIDDEN,
   SADDLE_TIME,
-  periodSeries,
   totalMeters,
+  weekdayMinutes,
   type DailySeries,
-  type PeriodSeries,
 } from "@/features/stats/distanceDays";
 import {
   EARTH,
   EVEREST,
-  changeLabel,
-  compared,
-  comparedFigure,
-  comparisonOf,
+  MARATHON,
   equivalentLabel,
   equivalentOf,
-  periodName,
-  type Compared,
-  type ComparedFigure,
   type Yardstick,
 } from "@/features/stats/figureReadings";
 import { homePeriodLabel } from "@/features/stats/homePeriod";
-import { useNextReplacement } from "@/features/stats/nextReplacement";
 import { useDistance } from "@/features/stats/stats.queries";
-import type { HomePeriod } from "@/features/stats/stats.types";
-import { PeriodArea } from "@/features/stats/ui/PeriodArea";
-import { PeriodBars } from "@/features/stats/ui/PeriodBars";
-import { PeriodCells } from "@/features/stats/ui/PeriodCells";
+import type { Distance, HomePeriod } from "@/features/stats/stats.types";
+import { WeekdayBars } from "@/features/stats/ui/WeekdayBars";
+import { YardstickFlame } from "@/features/stats/ui/YardstickFlame";
 import { YardstickMountain } from "@/features/stats/ui/YardstickMountain";
 import { YardstickRing } from "@/features/stats/ui/YardstickRing";
-import { useFigureReading, type ReadingFigure } from "@/features/stats/useFigureReading";
 import { useIsDesktop } from "@/layout/breakpoints";
-import { formatNumber } from "@/utils/number";
-
-// Worst first, and only the levels the app speaks at.
-const DUE_LEVELS: { level: AttentionLevel; key: string }[] = [
-  { level: "overdue", key: "dashboard.overdueCount" },
-  { level: "critical", key: "dashboard.criticalCount" },
-  { level: "warning", key: "dashboard.warningCount" },
-];
 
 // The phone stacks the sections; desktop puts four across once there is room.
 const COLS = { base: 1, md: 2, lg: 4 };
 const HAIRLINE = "1px solid var(--color-border)";
 
-// Ridden and climbed read the same response the same way; only the series, the yardstick and the graphics differ.
-const FLIPPED: Record<
-  ReadingFigure,
-  {
-    series: DailySeries;
-    yardstick: Yardstick;
-    titleKey: string;
-    comparison: (series: PeriodSeries, label: string) => ReactNode;
-  }
-> = {
-  distance: {
-    series: RIDDEN,
-    yardstick: EARTH,
-    titleKey: "stats.distanceTitle",
-    comparison: (series, label) => <PeriodBars series={series} label={label} />,
-  },
-  climb: {
-    series: CLIMBED,
-    yardstick: EVEREST,
-    titleKey: "dashboard.climbTitle",
-    comparison: (series, label) => <PeriodArea series={series} label={label} />,
-  },
+type FigureKind = "distance" | "climb" | "energy";
+
+// The Equivalents read the same response the same way; only the series and the yardstick differ.
+const EQUIVALENT_FIGURES: Record<FigureKind, { series: DailySeries; yardstick: Yardstick; titleKey: string }> = {
+  distance: { series: RIDDEN, yardstick: EARTH, titleKey: "stats.distanceTitle" },
+  climb: { series: CLIMBED, yardstick: EVEREST, titleKey: "dashboard.climbTitle" },
+  energy: { series: ENERGY, yardstick: MARATHON, titleKey: "dashboard.energyTitle" },
 };
 
-// Due looks at now, so only the Period's readings take it; the phone leaves it to the attention card.
+// Desktop puts time third, so distance and climb sit side by side; the phone keeps it second. What is due
+// is the attention card's, on both.
 export function DashboardFigures({ period }: { period: HomePeriod }): ReactElement {
   const desktop = useIsDesktop();
   const cols = useMatches(COLS, { getInitialValueInEffect: false });
-  const sections = [
-    <FlippedFigure key="distance" period={period} figure="distance" />,
-    <TimeFigure key="time" period={period} />,
-    <FlippedFigure key="climb" period={period} figure="climb" />,
-    ...(desktop ? [<DueFigure key="due" />] : []),
-  ];
+  const distance = <EquivalentFigure key="distance" period={period} figure="distance" />;
+  const time = <TimeFigure key="time" period={period} />;
+  const climb = <EquivalentFigure key="climb" period={period} figure="climb" />;
+  const energy = <EquivalentFigure key="energy" period={period} figure="energy" />;
+  const sections = desktop ? [distance, climb, time, energy] : [distance, time, climb, energy];
 
   return (
     // Hairlines, not gaps, so the sections read as one card at any column count.
@@ -120,52 +85,31 @@ export function DashboardFigures({ period }: { period: HomePeriod }): ReactEleme
   );
 }
 
-// What a figure says under its value and draws beside it.
-type Readout = Pick<FigureSectionProps, "chip" | "detail" | "graphic">;
-
-interface Readouts {
-  comparison: (figure: ComparedFigure) => Readout;
-  equivalent: (meters: number, yardstick: Yardstick) => Readout;
-}
-
-function useReadouts(): Readouts {
+// The graphic carries the whole reading: the figure in or over it, the yardstick's name under it.
+function YardstickGraphic({ meters, yardstick }: { meters: number; yardstick: Yardstick }): ReactElement {
   const { t, i18n } = useTranslation();
+  const equivalent = equivalentOf(meters, yardstick);
+  const figure = equivalentLabel(equivalent, i18n.language, t);
+  const name = t(equivalent.times > 0 ? yardstick.timesKey : yardstick.shareKey);
+  const label = `${figure} ${name}`;
 
-  return {
-    // The chip only when the Period before had something to set it against.
-    comparison: (figure) => {
-      const { change, text } = comparisonOf(figure, i18n.language, t);
-      return { chip: change === null ? undefined : changeLabel(change, i18n.language, t), detail: text };
-    },
-    equivalent: (meters, yardstick) => {
-      const equivalent = equivalentOf(meters, yardstick);
-      const chip = equivalentLabel(equivalent, i18n.language, t);
-      const detail = t(equivalent.times > 0 ? yardstick.timesKey : yardstick.shareKey);
-      const label = `${chip} ${detail}`;
-      const graphic =
-        yardstick.graphic === "ring" ? (
-          <YardstickRing equivalent={equivalent} label={label} />
-        ) : (
-          <YardstickMountain equivalent={equivalent} label={label} />
-        );
-      return { chip, detail, graphic };
-    },
-  };
+  if (yardstick.graphic === "ring") {
+    return <YardstickRing equivalent={equivalent} figure={figure} name={name} label={label} />;
+  }
+  if (yardstick.graphic === "flame") return <YardstickFlame equivalent={equivalent} label={label} />;
+  return <YardstickMountain equivalent={equivalent} label={label} />;
 }
 
-interface FlippedFigureProps {
+interface EquivalentFigureProps {
   period: HomePeriod;
-  figure: ReadingFigure;
+  figure: FigureKind;
 }
 
-function FlippedFigure({ period, figure }: FlippedFigureProps): ReactElement {
+function EquivalentFigure({ period, figure }: EquivalentFigureProps): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: distance, isPlaceholderData } = useDistance(period);
-  const { reading, flip } = useFigureReading(figure);
-  const readouts = useReadouts();
-  const { series, yardstick, titleKey, comparison } = FLIPPED[figure];
-  const title = t(titleKey, { period: homePeriodLabel(period, i18n.language, t) });
-  const head = { title, unit: series.unit };
+  const { series, yardstick, titleKey } = EQUIVALENT_FIGURES[figure];
+  const head = { title: t(titleKey, { period: homePeriodLabel(period, i18n.language, t) }), unit: series.unit };
 
   if (distance === undefined) return <FigureSection {...head} value={null} />;
   const meters = totalMeters(distance, series);
@@ -173,30 +117,28 @@ function FlippedFigure({ period, figure }: FlippedFigureProps): ReactElement {
   // The last Period's data holds the value, but read against the new Period it would say the wrong thing.
   if (isPlaceholderData) return <FigureSection {...head} value={value} />;
 
-  // All time has no Period before it, so it reads only as the Equivalent and ignores a press.
-  const against = compared(distance, period);
-  if (against === null || reading === "equivalent") {
-    const readout = readouts.equivalent(meters, yardstick);
-    return <FigureSection {...head} value={value} {...readout} onOpen={against === null ? undefined : flip} />;
-  }
-  const readout = readouts.comparison(comparedFigure(against, series));
   return (
     <FigureSection
       {...head}
       value={value}
-      {...readout}
+      detail={perRide(distance, meters, series, i18n.language, t)}
       detailFigure
-      graphic={comparison(periodSeries(against.distance, against.period, series), title)}
-      onOpen={flip}
+      graphic={<YardstickGraphic meters={meters} yardstick={yardstick} />}
     />
   );
 }
 
-// Only ever a Comparison; all time keeps the rides started in it and their average, and draws nothing.
+// "ø 678 m / jízda"; a Period without a ride has no average.
+function perRide(distance: Distance, meters: number, series: DailySeries, language: string, t: TFunction): string {
+  const rides = distance.bikes.reduce((sum, bike) => sum + bike.ride_count, 0);
+  return t("dashboard.perRide", { value: rides === 0 ? "—" : series.format(Math.round(meters / rides), language) });
+}
+
+// The rides started in the Period and their average length under the value; the bars say which weekday
+// gets the most of it.
 function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: distance, isPlaceholderData } = useDistance(period);
-  const readouts = useReadouts();
   const head = {
     title: t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) }),
     unit: SADDLE_TIME.unit,
@@ -207,94 +149,15 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
   const value = SADDLE_TIME.figure(minutes, i18n.language);
   if (isPlaceholderData) return <FigureSection {...head} value={value} />;
 
-  const against = compared(distance, period);
-  if (against === null) {
-    const rides = distance.bikes.reduce((sum, bike) => sum + bike.ride_count, 0);
-    const average = rides === 0 ? "—" : formatDuration(minutes / rides);
-    return (
-      <FigureSection
-        {...head}
-        value={value}
-        detail={`${t("dashboard.ridesCount", { count: rides })} · ø ${average}`}
-        detailFigure
-      />
-    );
-  }
+  const rides = distance.bikes.reduce((sum, bike) => sum + bike.ride_count, 0);
+  const average = rides === 0 ? "—" : formatDuration(minutes / rides);
   return (
     <FigureSection
       {...head}
       value={value}
-      {...readouts.comparison(comparedFigure(against, SADDLE_TIME))}
+      detail={`${t("dashboard.ridesCount", { count: rides })} · ${t("dashboard.perRide", { value: average })}`}
       detailFigure
-      graphic={<TimeCells against={against} label={head.title} />}
+      graphic={<WeekdayBars minutes={weekdayMinutes(distance)} label={head.title} />}
     />
   );
-}
-
-// The same buckets as the bars, since a month's days would not fit the slot beside the figure.
-function TimeCells({ against, label }: { against: Compared; label: string }): ReactElement {
-  const { i18n } = useTranslation();
-  const { distance, period } = against;
-  return (
-    <PeriodCells
-      series={periodSeries(distance, period, SADDLE_TIME)}
-      labels={[
-        periodName(distance.previous.from, period, i18n.language),
-        periodName(distance.from, period, i18n.language),
-      ]}
-      label={label}
-    />
-  );
-}
-
-function DueFigure(): ReactElement {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const { data: due } = useGarageTrackedActions(DUE_FROM);
-
-  return (
-    <FigureSection
-      title={t("dashboard.dueTitle")}
-      value={due === undefined ? null : formatNumber(due.length, i18n.language)}
-      unit={t("dashboard.partsUnit", { count: due?.length ?? 0 })}
-      detail={due === undefined ? "" : due.length === 0 ? <AllGood /> : <DueLevels due={due} />}
-      // The counts are figures; "All good" is words.
-      detailFigure={due !== undefined && due.length > 0}
-      onOpen={() => navigate("/service")}
-    />
-  );
-}
-
-function AllGood(): ReactNode {
-  const { t } = useTranslation();
-  const next = useNextReplacement();
-  const text =
-    next === null || next === undefined
-      ? t("dashboard.dueAllGood")
-      : t("dashboard.dueAllGoodNext", { part: next.part, left: next.left });
-
-  return (
-    <Text span inherit c={QUIET_COLOR}>
-      {text}
-    </Text>
-  );
-}
-
-// Each level that is not zero, in its own colour; any reading at a level wears that level's colour.
-function DueLevels({ due }: { due: GarageTrackedAction[] }): ReactNode {
-  const { t } = useTranslation();
-  const levels = DUE_LEVELS.map(({ level, key }) => ({
-    key,
-    actions: due.filter((action) => action.level === level),
-  })).filter(({ actions }) => actions.length > 0);
-
-  if (levels.length === 0) return t("tracking.allGoodTitle");
-  return levels.map(({ key, actions }, index) => (
-    <Fragment key={key}>
-      {index > 0 && " · "}
-      <Text span inherit c={attentionColor(actions[0].percentage)}>
-        {t(key, { count: actions.length })}
-      </Text>
-    </Fragment>
-  ));
 }

@@ -40,7 +40,7 @@ export function Legal(): ReactElement {
     <Box mih="100dvh" bg="background.9">
       <Box
         className="bg-background-800"
-        px="md"
+        px="var(--page-inset)"
         style={{
           borderBottom: "1px solid var(--mantine-color-other-borderSubtle)",
           position: "sticky",
@@ -60,7 +60,7 @@ export function Legal(): ReactElement {
         </Group>
       </Box>
 
-      <Stack maw={READING_WIDTH} mx="auto" px="md" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
+      <Stack maw={READING_WIDTH} mx="auto" px="var(--page-inset)" pt="md" pb="calc(2rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))">
         {/* The language follows i18n, so switching it in Settings switches the document. */}
         <LegalDocument blocks={legalDocument(documentId, i18n.language)} />
       </Stack>

@@ -26,7 +26,9 @@ import type { DistanceBike, HomePeriod } from "@/features/stats/stats.types";
 import { formatNumber } from "@/utils/number";
 import { BikeThumb } from "./BikeThumb";
 
-const BIKE_COLUMNS = "56px minmax(0, 1.6fr) 112px 88px minmax(0, 1.4fr) 96px 34px 16px";
+// Distance and time are equally wide and left-aligned, so they and the worst part start evenly apart.
+const BIKE_COLUMNS = "56px minmax(0, 1fr) 116px 116px minmax(0, 1fr) 96px 34px 16px";
+const BIKE_COLUMN_GAP = 12;
 
 // Distance and time read Home's Period; the worst part and the status are about now.
 export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
@@ -65,7 +67,8 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
           "",
           "",
         ]}
-        rightAligned={[2, 3, 5]}
+        rightAligned={[5]}
+        gap={BIKE_COLUMN_GAP}
       />
       {rows.map((bike) => {
         const worst = worstOf(bike);
@@ -84,7 +87,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
               display: "grid",
               gridTemplateColumns: BIKE_COLUMNS,
               alignItems: "center",
-              gap: 12,
+              gap: BIKE_COLUMN_GAP,
               padding: PANEL_ROW_PADDING,
               borderTop: PANEL_HAIRLINE,
               transition: PRESS_TRANSITION,
@@ -101,10 +104,10 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
                 {[bike.bike_type, bike.wheel_size].filter((part) => part !== null && part !== "").join(" · ")}
               </Eyebrow>
             </Stack>
-            <Text className="tabular-nums" fz={13} c="text.7" ta="right">
+            <Text className="tabular-nums" fz={13} c="text.7">
               {distance === undefined ? "—" : `${number(ridden(bike)?.total_km ?? 0)} km`}
             </Text>
-            <Text className="tabular-nums" fz={13} c="text.7" ta="right">
+            <Text className="tabular-nums" fz={13} c="text.7">
               {distance === undefined ? "—" : `${number((ridden(bike)?.time_min ?? 0) / 60)} h`}
             </Text>
             <Text fz={13} c="text.7" lineClamp={1}>
@@ -121,13 +124,13 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
             </Text>
             <Box style={{ justifySelf: "end" }}>
               {garage === undefined ? (
-                <Skeleton h={18} w={68} radius="xl" />
+                <Skeleton h={26} w={80} radius="xl" />
               ) : (
-                <HealthBadge actions={byBike.get(bike.id) ?? []} compact />
+                <HealthBadge actions={byBike.get(bike.id) ?? []} tinted />
               )}
             </Box>
             <SetupShortcut bikeId={bike.id} />
-            <ChevronRight size={16} color="var(--color-text-dim)" />
+            <ChevronRight size={16} color="var(--mantine-color-text-8)" />
           </Box>
         );
       })}

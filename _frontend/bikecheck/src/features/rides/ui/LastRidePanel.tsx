@@ -48,7 +48,7 @@ export function LastRidePanel(): ReactElement {
     <Panel title={t("rides.lastRide")} link={{ label: t("page.rides"), onClick: () => navigate("/rides") }}>
       {isLoading && <PanelSkeletonRows count={3} />}
       {!isLoading && ride === null && (
-        <Text fz={13} c="var(--color-text-dim)" p="md" style={{ borderTop: PANEL_HAIRLINE }}>
+        <Text fz={13} c="text.8" p="md" style={{ borderTop: PANEL_HAIRLINE }}>
           {t("bikes.noRidesYet")}
         </Text>
       )}
@@ -121,10 +121,10 @@ function CompactRide({ ride, colorIndex }: RideBodyProps): ReactElement {
       {/* A quiet pointer only; the detail lists what the ride wore off. */}
       {ride.wore_off.length > 0 && (
         <Group gap={4} wrap="nowrap">
-          <Text fz={13} c="var(--color-text-dim)">
+          <Text fz={13} c="text.8">
             {t("rides.woreOffHint")}
           </Text>
-          <ChevronRight size={14} color="var(--color-text-dim)" />
+          <ChevronRight size={14} color="var(--mantine-color-text-8)" />
         </Group>
       )}
     </Stack>
@@ -165,13 +165,13 @@ function CompactRideHeading({ ride, colorIndex }: RideBodyProps): ReactElement {
         {ride.name}
       </Text>
       {ride.started_at !== null && (
-        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
+        <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
           {dayjs(ride.started_at).format(pattern(RIDE_DAY_BY_LANGUAGE, i18n.language))}
         </Text>
       )}
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
         <BikeColorDot colorIndex={colorIndex} size={6} />
-        <Text fz={12} c="var(--color-text-dim)" truncate style={{ minWidth: 0 }}>
+        <Text fz={12} c="text.8" truncate style={{ minWidth: 0 }}>
           {ride.bike_name ?? t("rides.unknownBike")}
         </Text>
         <CheckInMark checkIn={ride.check_in} size={12} />

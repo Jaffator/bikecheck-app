@@ -79,7 +79,7 @@ export function StravaStatusCard({
             <Text fw={700} fz={20} c="text.6" ta="center" style={{ lineHeight: 1.25 }} lts="var(--tracking-title)">
               {t("strava.pitchTitle")}
             </Text>
-            <Text size="sm" c="var(--color-text-dim)" ta="center" style={{ lineHeight: 1.45 }}>
+            <Text size="sm" c="text.7" ta="center" style={{ lineHeight: 1.45 }}>
               {t("strava.pitchBody")}
             </Text>
           </Stack>
@@ -221,7 +221,7 @@ export function StravaStatusCard({
         }}
       >
         <Stack gap="lg">
-          <Text size="sm" c="var(--color-text-dim)" style={{ lineHeight: 1.45 }}>
+          <Text size="sm" c="text.7" style={{ lineHeight: 1.45 }}>
             {t("strava.disconnectConfirmBody")}
           </Text>
 

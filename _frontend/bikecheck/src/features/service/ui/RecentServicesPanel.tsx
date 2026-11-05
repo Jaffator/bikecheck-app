@@ -60,7 +60,7 @@ export function RecentServicesPanel(): ReactElement {
               <Text fz={13} fw={600} c="text.6" lineClamp={1}>
                 {first === undefined ? t("service.noActions") : catalogueLabel(first.i18n_key, first.name, t)}
                 {more > 0 && (
-                  <Text span fz={13} fw={400} c="text.7">
+                  <Text span fz={13} fw={400} c="text.8">
                     {" "}
                     {t("service.moreActions", { count: more })}
                   </Text>
@@ -79,7 +79,7 @@ export function RecentServicesPanel(): ReactElement {
               className="tabular-nums"
               fz={13}
               fw={cost === null || cost === 0 ? 400 : 600}
-              c={cost === null || cost === 0 ? "var(--color-text-dim)" : "text.7"}
+              c={cost === null || cost === 0 ? "text.8" : "text.7"}
               style={{ whiteSpace: "nowrap" }}
             >
               {cost === null ? "" : formatCost(cost, user?.currency ?? null, i18n.language)}

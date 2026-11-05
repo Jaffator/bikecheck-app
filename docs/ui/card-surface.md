@@ -73,7 +73,7 @@ mocks. Anything else is drift. Face, weights and tracking follow `docs/design.md
 
 | role          | style                                                                                          |
 | ------------- | ---------------------------------------------------------------------------------------------- |
-| eyebrow       | `fz={11} fw={400}` uppercase, `lts="var(--tracking-label)"`, `var(--color-text-dim)`           |
+| eyebrow       | `fz={11} fw={400}` uppercase, `lts="var(--tracking-label)"`, `c="text.8"`                      |
 | title         | `fz={16} fw={600} c="text.6"`                                                                  |
 | body and data | `fz={13}` — `tabular-nums` on numbers and dates — `c="text.7"` or `var(--color-text-dim)`      |
 | hero number   | `fz={32} fw={700}` `tabular-nums` (`HistoryTotalsCard` only)                                   |

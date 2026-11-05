@@ -20,7 +20,7 @@ const ICON_SIZE = 16;
 
 export function FollowersPanels(): ReactElement {
   return (
-    <Box px="md" pt="md" pb={PAGE_BOTTOM}>
+    <Box px="var(--page-inset)" pt="md" pb={PAGE_BOTTOM}>
       <FollowersList />
     </Box>
   );

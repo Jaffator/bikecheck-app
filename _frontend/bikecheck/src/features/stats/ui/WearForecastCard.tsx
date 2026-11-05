@@ -17,15 +17,19 @@ import { forecastBikes, chosenBikeActions, hasRides } from "../wearForecast";
 import { ForecastActions } from "./ForecastActions";
 import { CHART_HEIGHT } from "./ForecastChart";
 
+// Quiet, as the period beside every other Home title; the padding only gives the hover veil room,
+// so the margin takes it back and the name still ends on the card's edge.
+const CHIP_PAD = 6;
 const CHIP_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: 7,
+  gap: 6,
   height: 32,
-  padding: "0 10px",
+  padding: `0 ${String(CHIP_PAD)}px`,
+  marginRight: -CHIP_PAD,
+  // The title keeps its width; a long name truncates beside it.
   minWidth: 0,
-  borderRadius: 9999,
-  backgroundColor: "var(--color-surface-raised)",
+  borderRadius: "var(--mantine-radius-md)",
 };
 
 export function WearForecastCard(): ReactElement {
@@ -51,7 +55,7 @@ export function WearForecastCard(): ReactElement {
     return (
       <ForecastPaper>
         <ForecastTitle />
-        <Text fz={13} c="var(--color-text-dim)">
+        <Text fz={13} c="text.8">
           {t("stats.forecastEmpty")}
         </Text>
       </ForecastPaper>
@@ -101,7 +105,7 @@ function ForecastTitle(): ReactElement {
         onClick={() => setExplained(true)}
         style={{ flexShrink: 0 }}
       >
-        <Info size={14} color="var(--color-text-dim)" />
+        <Info size={14} color="var(--mantine-color-text-8)" />
       </ActionIcon>
       <ExplanationModal
         explained={explained ? { title, body: t("stats.forecastSubtitle") } : null}
@@ -129,7 +133,7 @@ function ForecastBikeChip({ item, bikes, onPick }: ForecastBikeChipProps): React
       <Menu.Target>
         <UnstyledButton className="hover-veil" style={CHIP_STYLE}>
           {label}
-          <ChevronDown size={12} strokeWidth={2.4} color="var(--mantine-color-text-6)" style={{ flexShrink: 0 }} />
+          <ChevronDown size={12} strokeWidth={2.4} color="var(--mantine-color-text-8)" style={{ flexShrink: 0 }} />
         </UnstyledButton>
       </Menu.Target>
       <Menu.Dropdown>
@@ -154,7 +158,7 @@ function ChipLabel({ item, colorIndex }: { item: WearForecastItem; colorIndex: n
   return (
     <>
       <BikeColorDot colorIndex={colorIndex} size={7} />
-      <Text fz={13} fw={500} c="text.6" truncate>
+      <Text fz={13} c="text.8" truncate>
         {bikeTitle(item)}
       </Text>
     </>

@@ -15,7 +15,7 @@ export function Pill({ children, small = false }: { children: ReactNode; small?:
       px={small ? 6 : 8}
       fz={small ? 10 : 11}
       fw={600}
-      c="var(--color-text-dim)"
+      c="text.7"
       style={{
         display: "inline-flex",
         alignItems: "center",

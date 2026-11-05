@@ -1,6 +1,6 @@
 // Renders pairing state through query hooks.
 import { useState, type ReactElement, type SyntheticEvent } from "react";
-import { Box, Group, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "@/features/users/users.queries";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
@@ -30,9 +30,6 @@ export function StravaPairingHint({ bikeId, stravaGearId }: StravaPairingHintPro
     <Box onClick={keepFromCard} onKeyDown={keepFromCard} ml="auto" style={{ minWidth: 0 }}>
       <Group gap={6} wrap="nowrap">
         <StravaMark width={14} height={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
-        <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
-          {t("strava.notPaired")}
-        </Text>
         <UnstyledButton onClick={() => setPairing(true)} fz={12} fw={600} c="strava.6" style={{ flexShrink: 0 }}>
           {t("strava.pair")}
         </UnstyledButton>

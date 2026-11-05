@@ -2,17 +2,21 @@
 // its words, and a graphic beside them on the right; pressable when it does something.
 import type { ReactElement, ReactNode } from "react";
 import { Box, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { HOME_FIGURE_SIZE } from "@/features/stats/ui/HomeCardHeader";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { Eyebrow } from "./Eyebrow";
 import { PRESS_TRANSITION } from "./panelRows";
 import { Pill } from "./Pill";
 
-// The skeleton holds the value's line, so nothing jumps when it loads.
-const VALUE_LINE = 32;
+// The value's size and its line, which the skeleton holds so nothing jumps when it loads. The phone's is
+// the figure the other Home cards use, so the stacked sections stay short; desktop has room for a display size.
+const DESKTOP_VALUE = { fz: 28, fw: 700, line: 32, padding: 16, gap: 6 };
+const PHONE_VALUE = { fz: HOME_FIGURE_SIZE, fw: 600, line: 26, padding: 12, gap: 4 };
 // The chip's height, held even without one, so the words sit at the same place in every section.
 const CHIP_HEIGHT = 22;
 // The graphic's slot beside the value and the chip. The words give way to it and truncate; under this
 // much room for the value it is the slot that narrows, down to the ring's width.
-const GRAPHIC_WIDTH = 100;
+const GRAPHIC_WIDTH = 116;
 const GRAPHIC_MIN_WIDTH = 56;
 const VALUE_MIN_WIDTH = 112;
 const GRAPHIC_SLOT = `clamp(${String(GRAPHIC_MIN_WIDTH)}px, calc(100% - ${String(VALUE_MIN_WIDTH + 12)}px), ${String(GRAPHIC_WIDTH)}px)`;
@@ -42,27 +46,30 @@ export function FigureSection({
   graphic,
   onOpen,
 }: FigureSectionProps): ReactElement {
+  const size = useIsDesktop() ? DESKTOP_VALUE : PHONE_VALUE;
   const body = (
-    <Stack gap={6}>
-      <Eyebrow>{title}</Eyebrow>
-      <Group gap={12} wrap="nowrap" align="center">
-        <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
+    // The graphic's slot runs the section's full height: a graphic sits on the bottom, level with the words
+    // under the value, or fills the height and lays itself out.
+    <Group gap={12} wrap="nowrap" align="stretch">
+      <Stack gap={size.gap} style={{ flex: 1, minWidth: 0 }}>
+        <Eyebrow color="text.8">{title}</Eyebrow>
+        <Stack gap={size.gap}>
           {value === null ? (
-            <Skeleton h={VALUE_LINE} w="50%" radius="sm" />
+            <Skeleton h={size.line} w="50%" radius="sm" />
           ) : (
             <Group gap={6} align="baseline" wrap="nowrap">
               <Text
                 className="tabular-nums"
-                fz={28}
-                fw={700}
-                lh={`${String(VALUE_LINE)}px`}
+                fz={size.fz}
+                fw={size.fw}
+                lh={`${String(size.line)}px`}
                 lts="var(--tracking-display)"
                 c="text.6"
                 truncate
               >
                 {value}
               </Text>
-              <Text fz={14} fw={600} c="var(--color-text-dim)">
+              <Text fz={14} fw={600} c="text.8">
                 {unit}
               </Text>
             </Group>
@@ -72,7 +79,8 @@ export function FigureSection({
             <Text
               className={detailFigure ? "tabular-nums" : undefined}
               fz={12}
-              c="var(--color-text-dim)"
+              // A step under the eyebrow, so only the value is bright.
+              c="text.8"
               truncate
               style={{ minWidth: 0 }}
             >
@@ -80,18 +88,18 @@ export function FigureSection({
             </Text>
           </Group>
         </Stack>
-        {graphic !== undefined && (
-          <Box w={GRAPHIC_SLOT} style={{ flexShrink: 0 }}>
-            {graphic}
-          </Box>
-        )}
-      </Group>
-    </Stack>
+      </Stack>
+      {graphic !== undefined && (
+        <Box w={GRAPHIC_SLOT} style={{ flexShrink: 0, display: "flex", alignItems: "flex-end" }}>
+          {graphic}
+        </Box>
+      )}
+    </Group>
   );
 
   if (onOpen === undefined) {
     return (
-      <Box p="md" h="100%">
+      <Box p={size.padding} h="100%">
         {body}
       </Box>
     );
@@ -100,7 +108,7 @@ export function FigureSection({
     <UnstyledButton
       onClick={onOpen}
       className="hover-veil"
-      p="md"
+      p={size.padding}
       h="100%"
       w="100%"
       style={{ display: "block", transition: PRESS_TRANSITION }}

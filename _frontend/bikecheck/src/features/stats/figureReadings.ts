@@ -12,7 +12,7 @@ export type FigureReading = "comparison" | "equivalent";
 export interface Yardstick {
   // In the series' unit: metres, or kcal for energy.
   amount: number;
-  graphic: "ring" | "mountain";
+  graphic: "ring" | "mountain" | "flame";
   // "17 % obvodu Země" while short of it, "11× obvod Země" once covered.
   shareKey: string;
   timesKey: string;
@@ -35,7 +35,7 @@ export const EVEREST: Yardstick = {
 // What running a marathon burns, give or take; the one energy figure most riders have a feel for.
 export const MARATHON: Yardstick = {
   amount: 2_600,
-  graphic: "ring",
+  graphic: "flame",
   shareKey: "dashboard.equivalentMarathonShare",
   timesKey: "dashboard.equivalentMarathonTimes",
 };

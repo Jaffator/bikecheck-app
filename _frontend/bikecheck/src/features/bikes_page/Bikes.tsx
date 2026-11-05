@@ -27,7 +27,7 @@ export function Bikes(): ReactElement {
   // Preserve layout while bikes load.
   if (isLoading) {
     return (
-      <Stack gap="md" px="md" pt="md">
+      <Stack gap="md" px="var(--page-inset)" pt="md">
         {[0, 1].map((row) => (
           <Skeleton key={row} h={300} radius="md" />
         ))}
@@ -57,7 +57,7 @@ export function Bikes(): ReactElement {
     // Reserve space for bottom navigation, which desktop does not have.
     <Stack
       gap="md"
-      px="md"
+      px="var(--page-inset)"
       pt="md"
       pb={{ base: "calc(6rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))", md: "md" }}
     >

@@ -167,6 +167,15 @@ function garageDaily(distance: Distance, series: DailySeries): number[] {
   );
 }
 
+// Every bike's minutes in the saddle by weekday, Monday first.
+export function weekdayMinutes(distance: Distance): number[] {
+  const weekdays = new Array<number>(7).fill(0);
+  garageDaily(distance, SADDLE_TIME).forEach((minutes, day) => {
+    weekdays[(dayOf(distance.from, day).getUTCDay() + 6) % 7] += minutes;
+  });
+  return weekdays;
+}
+
 // Days between the Monday of 1 January's ISO week and 1 January itself; getUTCDay counts from Sunday.
 function mondayOffset(year: number): number {
   return (new Date(Date.UTC(year, 0, 1)).getUTCDay() + 6) % 7;

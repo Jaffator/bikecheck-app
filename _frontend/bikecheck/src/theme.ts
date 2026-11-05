@@ -57,8 +57,8 @@ const cards: MantineColorsTuple = [
   "#a7a7a7",
   "#848484",
   "#6b6764",
-  "#313131",
-  "#1B1C1E",
+  "#21201e",
+  "#1a1918",
   "#1a1612",
   "#14100b",
   "#0f0c08",
@@ -109,8 +109,8 @@ const text: MantineColorsTuple = [
   "#eaeaea",
   "#e5e5e5",
   "#e0e0e0",
-  "#b7b7b7",
-  "#8e8e8e",
+  "#b8b4ad",
+  "#8d887f",
   "#656565",
 ];
 const textDark: MantineColorsTuple = [

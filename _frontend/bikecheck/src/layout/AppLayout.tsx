@@ -272,7 +272,7 @@ export function AppLayout(): ReactElement {
             maw={contentWidth}
             mx="auto"
             // Padding inside the column, like the pages', so the title lines up with their edge.
-            px={desktopTallHeader ? "xl" : "md"}
+            px={desktopTallHeader ? "xl" : "var(--page-inset)"}
             // A wrapped slot grows downward; the title stays level with its first line.
             align={desktopOverview ? "flex-start" : "center"}
             style={{ pointerEvents: "auto" }}

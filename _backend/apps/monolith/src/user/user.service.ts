@@ -5,7 +5,7 @@ import { AccountEventsService } from '../account-events/account-events.service';
 import { NotificationService } from '../notification/notification.service';
 import { StorageService } from '../storage/storage.service';
 import { unlinkStravaAthlete } from '../strava/unlink-strava-athlete';
-import { AccountDeletionSummaryDto, CreateUserDto, UpdateUserDto } from './dto/user.dtos';
+import { AccountDeletionSummaryDto, CreateUserDto, HintKey, UpdateUserDto } from './dto/user.dtos';
 import bcrypt from 'bcrypt';
 import { Prisma, users as UserFull } from '@prisma/client';
 import { LoginGoogleDto } from '../auth/dto/auth.dtos';
@@ -305,7 +305,31 @@ export class UserService {
     );
   }
 
+  // Conditional on null, so a second device keeps the first stamp.
+  async markWelcomeSeen(id: number): Promise<UserFull> {
+    await this.prisma.users.updateMany({
+      where: { id, welcome_seen_at: null },
+      data: { welcome_seen_at: new Date(), updated_at: new Date() },
+    });
+    return this.requireUser(id);
+  }
+
+  // One statement, so two devices can neither add a key twice nor drop each other's.
+  async markHintSeen(id: number, key: HintKey): Promise<UserFull> {
+    await this.prisma.users.updateMany({
+      where: { id, NOT: { hints_seen: { has: key } } },
+      data: { hints_seen: { push: key }, updated_at: new Date() },
+    });
+    return this.requireUser(id);
+  }
+
   // ---- Private methods ----
+
+  private async requireUser(id: number): Promise<UserFull> {
+    const user = await this.prisma.users.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
 
   // Who else holds this name. The index is on lower(btrim(name)), which Prisma cannot
   // express, so the question is asked in SQL - the same way the index will judge it.

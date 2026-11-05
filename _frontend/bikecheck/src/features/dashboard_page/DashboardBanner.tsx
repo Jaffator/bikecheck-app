@@ -191,7 +191,7 @@ function PhoneBanner({ icon: Icon, title, body, onOpen }: PhoneBannerProps): Rea
             </Text>
           )}
         </Stack>
-        <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+        <ChevronRight size={16} color="var(--mantine-color-text-8)" style={{ flexShrink: 0 }} />
       </Group>
     </UnstyledButton>
   );

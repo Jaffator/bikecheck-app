@@ -229,7 +229,7 @@ export function Setup(): ReactElement {
 
   if (bikeLoading || profilesLoading || componentsLoading) {
     return (
-      <Stack gap="md" px="md" pt="md">
+      <Stack gap="md" px="var(--page-inset)" pt="md">
         <Skeleton h={14} w="30%" radius="sm" />
         <Skeleton h={140} radius="lg" />
         <Skeleton h={200} radius="lg" />
@@ -309,7 +309,7 @@ export function Setup(): ReactElement {
       ) : (
         <Stack
           gap="md"
-          px="md"
+          px="var(--page-inset)"
           pt="md"
           pb={`calc(${BAR_CLEARANCE} + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))`}
           ref={formRef}
