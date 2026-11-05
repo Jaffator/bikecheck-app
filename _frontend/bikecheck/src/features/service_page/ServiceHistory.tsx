@@ -10,7 +10,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useHeaderStore } from "@/store/store";
 import { HistoryTotalsCard } from "@/features/service/ui/HistoryTotalsCard";
 import { ServiceList } from "@/features/service/ui/ServiceList";
-import { PeriodFilterModal } from "@/features/service/ui/PeriodFilterModal";
+import { HistoryPeriodPanel } from "@/features/service/ui/HistoryPeriodPanel";
 import { periodLabel } from "@/features/service/servicePeriod";
 import type { ServicePeriod } from "@/features/service/service.types";
 import { useHistoryTotals, useServiceHistory } from "@/features/service/service.queries";
@@ -122,7 +122,7 @@ function ServiceHistoryPhone(): ReactElement {
     return () => setActionSlot(null);
   }, [setActionSlot, t]);
 
-  function setParams(next: Record<string, string | null>): void {
+  function setPeriod(next: ServicePeriod): void {
     const params = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(next)) {
       if (value === null) {
@@ -184,11 +184,11 @@ function ServiceHistoryPhone(): ReactElement {
 
       <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
-      <PeriodFilterModal
+      <HistoryPeriodPanel
         opened={filterOpened}
         onClose={() => setFilterOpened(false)}
         period={period}
-        onApply={(next) => setParams({ from: next.from, to: next.to })}
+        onChange={setPeriod}
       />
     </Stack>
   );

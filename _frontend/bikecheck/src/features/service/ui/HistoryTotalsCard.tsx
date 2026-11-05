@@ -68,7 +68,7 @@ export function HistoryTotalsCard({
           {/* The eyebrow and the bike read as one heading over the figure, so they sit in
               one column beside the button rather than each on a row of its height. */}
           <Stack gap={4} style={{ minWidth: 0 }}>
-            <Text className="tabular-nums uppercase" fz={11} fw={400} c="primary.7" lts="var(--tracking-label)" lineClamp={1}>
+            <Text className="tabular-nums uppercase" fz={11} fw={400} c="primary.7" lts="var(--tracking-label)" lineClamp={2}>
               {`${t("service.totalsTitle")} · ${periodLabel}`}
             </Text>
             <Text fz={15} fw={600} c="text.6" lineClamp={1}>
@@ -82,6 +82,7 @@ export function HistoryTotalsCard({
               radius="md"
               size="xs"
               ml="auto"
+              style={{ flexShrink: 0 }}
               leftSection={<Share2 size={16} color="var(--mantine-color-primary-5)" />}
               disabled={!canShare}
               onClick={onShare}
