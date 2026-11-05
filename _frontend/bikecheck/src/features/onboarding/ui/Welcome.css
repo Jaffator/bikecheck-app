@@ -182,7 +182,7 @@
 
 ::view-transition-old(welcome-title),
 ::view-transition-old(welcome-body) {
-  animation: welcome-text-out 160ms ease-out both;
+  animation: welcome-fade-out 160ms ease-out both;
 }
 
 ::view-transition-new(welcome-title),
@@ -204,13 +204,7 @@
 :root[data-welcome-direction="out"]::view-transition-old(welcome-panel),
 :root[data-welcome-direction="out"]::view-transition-old(welcome-title),
 :root[data-welcome-direction="out"]::view-transition-old(welcome-body) {
-  animation: welcome-leave 280ms ease-out both;
-}
-
-@keyframes welcome-leave {
-  to {
-    opacity: 0;
-  }
+  animation: welcome-fade-out 280ms ease-out both;
 }
 
 @keyframes welcome-graphic-out {
@@ -227,7 +221,7 @@
   }
 }
 
-@keyframes welcome-text-out {
+@keyframes welcome-fade-out {
   to {
     opacity: 0;
   }

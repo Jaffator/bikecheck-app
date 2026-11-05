@@ -1712,8 +1712,8 @@
         "frontPressure": "1,7 bar",
         "sag": "Sag",
         "reportSubtitle": "Orbea Rallon · celá historie",
-        "chainSwap": "Výměna řetězu",
-        "padsSwap": "Výměna destiček",
+        "chainReplacement": "Výměna řetězu",
+        "padsReplacement": "Výměna destiček",
         "forkService": "Servis vidlice",
         "visibility": "Kdo uvidí tvůj profil"
       }

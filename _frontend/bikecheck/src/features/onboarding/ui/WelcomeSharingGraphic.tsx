@@ -102,8 +102,8 @@ export function WelcomeSharingGraphic({ desktop }: { desktop: boolean }): ReactE
         </Text>
         <img src={bikeImage} alt="" style={{ display: "block", width: 226, height: "auto", marginTop: 12 }} />
         <Box mt={12} fz={12} lh="16px" c={INK_BODY} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <ReportRow label={t("onboarding.welcome.sample.chainSwap")} />
-          <ReportRow label={t("onboarding.welcome.sample.padsSwap")} />
+          <ReportRow label={t("onboarding.welcome.sample.chainReplacement")} />
+          <ReportRow label={t("onboarding.welcome.sample.padsReplacement")} />
           <ReportRow label={t("onboarding.welcome.sample.forkService")} />
         </Box>
       </Box>

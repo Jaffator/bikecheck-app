@@ -74,6 +74,17 @@ interface OverlayStore {
   closeTopOverlay: () => boolean;
 }
 
+interface WelcomeStore {
+  // Above the auth gate: a failed save leaves welcome_seen_at null, and an offline refetch remounts the app.
+  leftBy: number | null;
+  setLeftBy: (userId: number) => void;
+}
+
+export const useWelcomeStore = create<WelcomeStore>((set) => ({
+  leftBy: null,
+  setLeftBy: (userId) => set({ leftBy: userId }),
+}));
+
 export const useOverlayStore = create<OverlayStore>((set, get) => ({
   stack: [],
   pushOverlay: (overlay) => set((state) => ({ stack: [...state.stack, overlay] })),

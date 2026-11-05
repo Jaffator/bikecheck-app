@@ -65,7 +65,7 @@ export function WearChip({ label, value, position }: WearChipProps): ReactElemen
       }}
     >
       <Box c="text.6">{label}</Box>
-      <Box c={STRAVA} style={{ fontVariantNumeric: "tabular-nums" }}>
+      <Box c={STRAVA} className="tabular-nums">
         {value}
       </Box>
     </Box>
@@ -87,7 +87,7 @@ export function Callout({ value, label, position }: CalloutProps): ReactElement 
       bg="cards.6"
       style={{ ...position, boxSizing: "border-box", borderRadius: 12, boxShadow: "var(--elev-panel)" }}
     >
-      <Text fz={17} lh="22px" fw={600} c="text.6" style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+      <Text className="tabular-nums" fz={17} lh="22px" fw={600} c="text.6" style={{ whiteSpace: "nowrap" }}>
         {value}
       </Text>
       <Text fz={12} lh="16px" c="var(--color-muted)">

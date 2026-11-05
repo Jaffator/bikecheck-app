@@ -27,7 +27,7 @@ export function Welcome({ onSkip, onAddBike }: WelcomeProps): ReactElement | nul
   const { step, goTo } = useWelcomeStep();
   const [closed, setClosed] = useState<boolean>(false);
 
-  // Its own state: a failed save leaves welcome_seen_at null, and a refetch must not reopen it.
+  // Closed here so the second snapshot of the transition already has it gone, on a replay too.
   const leave = (action: () => void): void => {
     welcomeTransition("out", () => {
       setClosed(true);

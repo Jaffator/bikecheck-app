@@ -69,6 +69,7 @@ export function WelcomeServiceGraphic({ desktop }: { desktop: boolean }): ReactE
       </svg>
 
       <Box
+        className="tabular-nums"
         pos="absolute"
         w={60}
         h={28}
@@ -81,7 +82,6 @@ export function WelcomeServiceGraphic({ desktop }: { desktop: boolean }): ReactE
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontVariantNumeric: "tabular-nums",
           whiteSpace: "nowrap",
           borderRadius: 9999,
           boxShadow: "var(--elev-panel)",
@@ -114,7 +114,7 @@ export function WelcomeServiceGraphic({ desktop }: { desktop: boolean }): ReactE
           <Bell size={20} />
         </Box>
         <div>
-          <Text fz={14} fw={600} c="text.6">
+          <Text className="tabular-nums" fz={14} fw={600} c="text.6">
             {t("onboarding.welcome.sample.alertTitle")}
           </Text>
           <Text fz={13} lh="18px" c="var(--color-text-dim)">

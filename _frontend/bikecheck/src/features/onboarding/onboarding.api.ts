@@ -1,4 +1,3 @@
-// Typed onboarding endpoints use the shared API client.
 import { apiFetch } from "@/api/client";
 import type { User } from "@/features/users/users.types";
 

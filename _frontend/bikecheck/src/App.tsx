@@ -26,6 +26,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAppLinks } from "@/hooks/useAppLinks";
 import { useHideLaunchSplash } from "@/hooks/useHideLaunchSplash";
 import { useCurrentUser, useUpdateUser } from "@/features/users/users.queries";
+import { useWelcomeStore } from "@/store/store";
 import { PublicReport } from "@/features/report/ui/PublicReport";
 import { Reports } from "@/features/report_page/Reports";
 import { FirstWelcome } from "@/features/onboarding/ui/FirstWelcome";
@@ -86,6 +87,7 @@ function ProtectedApp(): ReactElement {
   // Holds the launch splash over the session check, so it fades straight into the first screen.
   useHideLaunchSplash(!isUserLoading);
   const { mutate: patchUser } = useUpdateUser();
+  const welcomeLeftBy = useWelcomeStore((state) => state.leftBy);
   const navigate = useNavigate();
 
   // Memoizes the notification handler to avoid resubscribing native listeners.
@@ -143,7 +145,7 @@ function ProtectedApp(): ReactElement {
       {/* Shows foreground pushes that receive no system tray notification. */}
       {foregroundNotification && <InAppNotification notification={foregroundNotification} onDismiss={dismissNotification} />}
 
-      {user.welcome_seen_at === null && <FirstWelcome />}
+      {user.welcome_seen_at === null && welcomeLeftBy !== user.id && <FirstWelcome userId={user.id} />}
 
       <Routes>
         <Route element={<AppLayout />}>

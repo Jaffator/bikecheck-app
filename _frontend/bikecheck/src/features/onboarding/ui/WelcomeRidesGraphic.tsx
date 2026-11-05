@@ -46,12 +46,13 @@ function Stat({ label, value }: { label: string; value: string }): ReactElement 
         {label}
       </Text>
       <Text
+        className="tabular-nums"
         fz={24}
         lh="30px"
         fw={700}
         lts="var(--tracking-title)"
         c="text.6"
-        style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
+        style={{ whiteSpace: "nowrap" }}
       >
         {value}
       </Text>
