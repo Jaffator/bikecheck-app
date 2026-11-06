@@ -215,13 +215,24 @@ describe('ReportPdfService', () => {
 });
 
 describe('hidePdfTicket', () => {
-  it('blanks the ticket in a logged address', () => {
-    expect(hidePdfTicket('/api/reports/pdf-ticket/abc123')).toBe('/api/reports/pdf-ticket/-');
-    expect(hidePdfTicket('/api/reports/pdf-ticket/abc123?x=1')).toBe('/api/reports/pdf-ticket/-?x=1');
+  const logged = (url: string): { url: string; params: unknown } => ({
+    url,
+    params: { path: url.split('/').slice(2) },
   });
 
-  it('leaves every other address alone', () => {
-    expect(hidePdfTicket('/api/reports/12/pdf-ticket')).toBe('/api/reports/12/pdf-ticket');
-    expect(hidePdfTicket('/api/reports/public/token/pdf')).toBe('/api/reports/public/token/pdf');
+  it('blanks the ticket wherever a logged request carries it', () => {
+    expect(hidePdfTicket(logged('/api/reports/pdf-ticket/abc123'))).toEqual({
+      url: '/api/reports/pdf-ticket/-',
+      params: {},
+    });
+    expect(hidePdfTicket(logged('/api/reports/pdf-ticket/abc123?x=1')).url).toBe('/api/reports/pdf-ticket/-?x=1');
+  });
+
+  it('leaves every other request alone', () => {
+    const minting = logged('/api/reports/12/pdf-ticket');
+    const reading = logged('/api/reports/public/token/pdf');
+
+    expect(hidePdfTicket({ ...minting })).toEqual(minting);
+    expect(hidePdfTicket({ ...reading })).toEqual(reading);
   });
 });

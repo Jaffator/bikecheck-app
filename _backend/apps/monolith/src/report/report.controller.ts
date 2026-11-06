@@ -31,6 +31,9 @@ import { Public } from '../auth/decorators/public.decorator';
 // What the page asks for when it is being drawn for print rather than read.
 const PRINT_VARIANT = '1';
 
+// One request launches a browser, so every route that prints is held well below the global limit.
+const PRINT_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
+
 @Controller('reports')
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
@@ -146,8 +149,7 @@ export class ReportController {
   }
 
   // ---------- GET the report as an A4 PDF (no auth) ----------
-  // One request launches a browser, so this route is held well below the global limit.
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Throttle(PRINT_THROTTLE)
   @Public()
   @ApiOperation({ summary: 'Print a published report to an A4 PDF' })
   @ApiResponse({ status: 200 })
@@ -157,8 +159,7 @@ export class ReportController {
   }
 
   // ---------- GET the caller's own report as an A4 PDF ----------
-  // The same browser launch per request, and the same limit, as the public route.
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Throttle(PRINT_THROTTLE)
   @ApiOperation({ summary: "Print the caller's own report to an A4 PDF, published or not" })
   @ApiResponse({ status: 200 })
   @Get(':id/pdf')
@@ -170,8 +171,7 @@ export class ReportController {
   }
 
   // ---------- POST the caller's own PDF behind a ticket ----------
-  // The same browser launch per request, and the same limit, as the PDF routes above.
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Throttle(PRINT_THROTTLE)
   @ApiOperation({ summary: "Print the caller's own report and hold it behind a one-read ticket" })
   @ApiResponse({ status: 201, type: ResponsePdfTicketDto })
   @Post(':id/pdf-ticket')
@@ -183,15 +183,15 @@ export class ReportController {
   }
 
   // ---------- GET a held PDF by its ticket (no auth) ----------
-  // Inline, so the phone's browser opens the file and offers its own save and share. No-store,
-  // or a cache could answer a ticket that was already used.
+  // No-store, or a cache could answer a used ticket. A download, because a browser's Share on an
+  // opened PDF passes on this dead address rather than the file.
   @Public()
   @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'Read a held PDF once, by its ticket' })
   @ApiResponse({ status: 200 })
   @Get('pdf-ticket/:ticket')
   getTicketPdf(@Param('ticket') ticket: string): StreamableFile {
-    return this.download(this.reportService.claimPdf(ticket), 'inline');
+    return this.download(this.reportService.claimPdf(ticket));
   }
 
   // ---------- GET one attachment behind a share link (no auth) ----------
@@ -220,12 +220,12 @@ export class ReportController {
     return this.stream(attachment);
   }
 
-  private download(file: ReportPdfFile, disposition: 'attachment' | 'inline' = 'attachment'): StreamableFile {
+  private download(file: ReportPdfFile): StreamableFile {
     const encoded = encodeURIComponent(file.filename);
 
     return new StreamableFile(file.body, {
       type: 'application/pdf',
-      disposition: `${disposition}; filename="${encoded}"; filename*=UTF-8''${encoded}`,
+      disposition: `attachment; filename="${encoded}"; filename*=UTF-8''${encoded}`,
       length: file.body.length,
     });
   }

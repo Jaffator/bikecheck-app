@@ -13,11 +13,11 @@ import {
   discardAllReports,
   discardReport,
   exportReport,
+  createOwnedPdfTicketUrl,
   fetchOwnedAttachment,
   fetchOwnedPdf,
   getPublicReport,
   listMyReports,
-  ownedPdfTicketUrl,
   publicAttachmentUrl,
   publicReportPdfUrl,
   publishReport,
@@ -101,12 +101,12 @@ export function useDiscardReport(): UseMutationResult<ReportSummary, Error, numb
 }
 
 // Printing writes nothing, so no list has anything new to say. A webview has no download to
-// hand a blob to, so the phone opens the file in its own browser instead.
+// hand a blob to, so the phone hands the file to its own browser instead.
 export function useDownloadReportPdf(): UseMutationResult<void, Error, number> {
   return useMutation({
     mutationFn: async (id: number) => {
       if (Capacitor.isNativePlatform()) {
-        await Browser.open({ url: await ownedPdfTicketUrl(id) });
+        await Browser.open({ url: await createOwnedPdfTicketUrl(id) });
         return;
       }
 

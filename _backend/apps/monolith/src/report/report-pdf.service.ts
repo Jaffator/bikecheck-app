@@ -32,12 +32,23 @@ const PRINT_KEY_TTL_MS = 60_000;
 // how long an unclaimed file stays in memory.
 const PDF_TICKET_TTL_MS = 60_000;
 
-// The one address with a secret in it. A claimed ticket is dead before any log line is written,
-// and the log is blanked anyway; the Caddyfile filter does the same (ADR 0012).
+// The one address with a secret in it. The Caddyfile filter blanks the same path (ADR 0012).
 const PDF_TICKET_ADDRESS = /(\/reports\/pdf-ticket\/)[^/?]+/;
 
-export function hidePdfTicket(url: string): string {
-  return url.replace(PDF_TICKET_ADDRESS, '$1-');
+interface LoggedRequest {
+  url: string;
+  params: unknown;
+}
+
+// Pino writes the path twice, as the address and as route params, and redact cannot reach into
+// a string. A throttled read is logged with its ticket still live.
+export function hidePdfTicket(req: LoggedRequest): LoggedRequest {
+  if (PDF_TICKET_ADDRESS.test(req.url)) {
+    req.url = req.url.replace(PDF_TICKET_ADDRESS, '$1-');
+    req.params = {};
+  }
+
+  return req;
 }
 
 interface PrintKey {
@@ -89,7 +100,6 @@ export class ReportPdfService {
     return ticket;
   }
 
-  // Gone on the first read: a ticket is good for one, whatever it opened.
   claim(ticket: string): ReportPdfFile | null {
     const file = this.heldFiles.get(ticket) ?? null;
     this.heldFiles.delete(ticket);

@@ -108,12 +108,7 @@ const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http:/
           'req.headers["x-report-print-key"]',
           'res.headers["set-cookie"]',
         ],
-        serializers: {
-          req: (req: { url: string }): { url: string } => {
-            req.url = hidePdfTicket(req.url);
-            return req;
-          },
-        },
+        serializers: { req: hidePdfTicket },
       },
     }),
     UserModule,

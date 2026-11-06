@@ -25,6 +25,7 @@ const CHROMIUM_TIMEOUT_MS = 60_000;
 const GONE = 410;
 const WRONG_KEY = 'a'.repeat(64);
 const EXPIRED_TICKET_MS = 61_000;
+const HELD_FILE = { body: Buffer.from('%PDF-1.7'), filename: 'bike-report.pdf' };
 
 interface OpenedPage {
   url: string;
@@ -264,12 +265,12 @@ describe('ReportController (e2e)', () => {
   });
 
   // The phone's system browser has no session, so a ticket from the owner is all it carries.
-  describe('POST /reports/:id/pdf-ticket', () => {
+  describe('PDF tickets', () => {
+    const mint = (reportId: number): request.Test =>
+      request(app.getHttpServer()).post(`/api/reports/${reportId}/pdf-ticket`);
+
     const mintTicket = async (reportId: number): Promise<string> => {
-      const response = await request(app.getHttpServer())
-        .post(`/api/reports/${reportId}/pdf-ticket`)
-        .set('Authorization', `Bearer ${ownerToken}`)
-        .expect(201);
+      const response = await mint(reportId).set('Authorization', `Bearer ${ownerToken}`).expect(201);
 
       return (response.body as { ticket: string }).ticket;
     };
@@ -280,17 +281,14 @@ describe('ReportController (e2e)', () => {
     it('asks for a session', async () => {
       const report = await exportReport();
 
-      await request(app.getHttpServer()).post(`/api/reports/${report.id}/pdf-ticket`).expect(401);
+      await mint(report.id).expect(401);
     });
 
     it("mints nothing for another user's report", async () => {
       const report = await exportReport();
       const hold = jest.spyOn(app.get(ReportPdfService), 'hold');
 
-      await request(app.getHttpServer())
-        .post(`/api/reports/${report.id}/pdf-ticket`)
-        .set('Authorization', `Bearer ${strangerToken}`)
-        .expect(404);
+      await mint(report.id).set('Authorization', `Bearer ${strangerToken}`).expect(404);
 
       expect(hold).not.toHaveBeenCalled();
       expect(opened).toEqual([]);
@@ -309,16 +307,23 @@ describe('ReportController (e2e)', () => {
     it('refuses an expired ticket', async () => {
       const printer = app.get(ReportPdfService);
       jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'setInterval', 'hrtime', 'performance'] });
-      const ticket = printer.hold({ body: Buffer.from('%PDF-1.7'), filename: 'bike-report.pdf' });
+      const ticket = printer.hold(HELD_FILE);
       jest.advanceTimersByTime(EXPIRED_TICKET_MS);
       jest.useRealTimers();
 
       await follow(ticket).expect(GONE);
     });
 
+    it('refuses a used ticket', async () => {
+      const ticket = app.get(ReportPdfService).hold(HELD_FILE);
+
+      await follow(ticket).expect(200);
+      await follow(ticket).expect(GONE);
+    });
+
     it('keeps a print key and a ticket apart', async () => {
       const report = await exportReport();
-      const ticket = app.get(ReportPdfService).hold({ body: Buffer.from('%PDF-1.7'), filename: 'bike-report.pdf' });
+      const ticket = app.get(ReportPdfService).hold(HELD_FILE);
 
       await readAsStranger(report.public_token).set(PRINT_KEY_HEADER, ticket).expect(GONE);
     });
@@ -333,7 +338,7 @@ describe('ReportController (e2e)', () => {
         const response = await follow(ticket).expect(200);
 
         expect(response.headers['content-type']).toBe('application/pdf');
-        expect(response.headers['content-disposition']).toContain('inline; filename="bike-report-');
+        expect(response.headers['content-disposition']).toContain('attachment; filename="bike-report-');
         expect(response.headers['cache-control']).toBe('no-store');
         expect((response.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
 

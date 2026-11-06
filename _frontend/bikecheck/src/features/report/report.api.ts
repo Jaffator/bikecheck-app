@@ -104,7 +104,7 @@ export async function fetchOwnedPdf(id: number): Promise<ReportPdfFile> {
 
 // POST /reports/:id/pdf-ticket — the phone's way to the same file. The server prints first, so
 // a failure lands here, and the address built from the answer opens once, without a session.
-export async function ownedPdfTicketUrl(id: number): Promise<string> {
+export async function createOwnedPdfTicketUrl(id: number): Promise<string> {
   const { ticket } = await apiFetch<ReportPdfTicket>(`/reports/${id}/pdf-ticket`, { method: "POST" });
 
   return apiUrl(`/reports/pdf-ticket/${encodeURIComponent(ticket)}`);

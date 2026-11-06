@@ -327,7 +327,7 @@ export class ReportService {
     return this.pdf.hold(await this.ownedPdf(id, userId));
   }
 
-  // Missing, wrong, expired and used all leave by the same door as a closed link.
+  // Answers as a closed link does, so a ticket cannot be probed for how it died.
   claimPdf(ticket: string): ReportPdfFile {
     const file = this.pdf.claim(ticket);
     if (file === null) {

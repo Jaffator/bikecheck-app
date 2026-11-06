@@ -38,7 +38,8 @@ bytes: it opens no Report, launches no browser and answers for no Share Link.
 
 That secret does sit in an address, so it is good for one read and 60 seconds, and it is dead by the
 time an access log line is written. Both logs blank it anyway. A reload in the browser is refused, so
-the owner taps Stáhnout PDF again. It lives in memory for the reason the print key does, and a
+the owner taps Stáhnout PDF again. It answers as a download rather than an opened PDF, because a
+browser's Share would pass on the dead address instead of the file. It lives in memory for the reason the print key does, and a
 stored file would outlive the window that made it.
 
 ## Consequences
