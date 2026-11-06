@@ -1,9 +1,22 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, StreamableFile } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  StreamableFile,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { reports } from '@prisma/client';
 import { ReportService } from './report.service';
-import { ReportAttachmentFile, ReportSnapshot } from './report.types';
+import { PRINT_KEY_HEADER } from './report-pdf.service';
+import { ReportAttachmentFile, ReportPdfFile, ReportSnapshot } from './report.types';
 import { ExportReportDto } from './dto/export-report.dto';
 import { ResponseExportedReportDto, ResponseReportBulkDto, ResponseReportDto } from './dto/response-report.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -111,7 +124,16 @@ export class ReportController {
   @ApiOperation({ summary: 'Public view of a report by its share token' })
   @ApiResponse({ status: 200 })
   @Get('public/:token')
-  async getPublic(@Param('token') token: string, @Query('print') print?: string): Promise<ReportSnapshot> {
+  async getPublic(
+    @Param('token') token: string,
+    @Query('print') print?: string,
+    @Headers(PRINT_KEY_HEADER) printKey?: string,
+  ): Promise<ReportSnapshot> {
+    // Only our own chromium sends this, and any key it did not mint is refused outright.
+    if (printKey !== undefined) {
+      return await this.reportService.printedSnapshot(token, printKey);
+    }
+
     // The print variant is the server drawing the page for a file, not a reader opening
     // it, so the same document is read without counting a view.
     return await this.reportService.getPublicSnapshot(token, print !== PRINT_VARIANT);
@@ -125,14 +147,20 @@ export class ReportController {
   @ApiResponse({ status: 200 })
   @Get('public/:token/pdf')
   async getPublicPdf(@Param('token') token: string): Promise<StreamableFile> {
-    const file = await this.reportService.publicPdf(token);
-    const encoded = encodeURIComponent(file.filename);
+    return this.download(await this.reportService.publicPdf(token));
+  }
 
-    return new StreamableFile(file.body, {
-      type: 'application/pdf',
-      disposition: `attachment; filename="${encoded}"; filename*=UTF-8''${encoded}`,
-      length: file.body.length,
-    });
+  // ---------- GET the caller's own report as an A4 PDF ----------
+  // The same browser launch per request, and the same limit, as the public route.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: "Print the caller's own report to an A4 PDF, published or not" })
+  @ApiResponse({ status: 200 })
+  @Get(':id/pdf')
+  async getOwnedPdf(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('userId') userId: string,
+  ): Promise<StreamableFile> {
+    return this.download(await this.reportService.ownedPdf(id, Number(userId)));
   }
 
   // ---------- GET one attachment behind a share link (no auth) ----------
@@ -159,6 +187,16 @@ export class ReportController {
   ): Promise<StreamableFile> {
     const attachment = await this.reportService.ownedAttachment(id, Number(userId), attachmentId);
     return this.stream(attachment);
+  }
+
+  private download(file: ReportPdfFile): StreamableFile {
+    const encoded = encodeURIComponent(file.filename);
+
+    return new StreamableFile(file.body, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${encoded}"; filename*=UTF-8''${encoded}`,
+      length: file.body.length,
+    });
   }
 
   // Wraps what the service read for the transport. The filename is given twice: the

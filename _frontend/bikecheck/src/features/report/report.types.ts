@@ -45,6 +45,12 @@ export interface ExportedReport extends ReportSummary {
   snapshot: ReportSnapshot;
 }
 
+// A printed Report, and the name the server gave it.
+export interface ReportPdfFile {
+  blob: Blob;
+  filename: string;
+}
+
 export interface ExportServiceReportInput {
   kind: "SERVICE";
   service_id: number;

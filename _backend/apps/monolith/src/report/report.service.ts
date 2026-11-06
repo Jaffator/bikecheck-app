@@ -310,6 +310,32 @@ export class ReportService {
     return { body, filename: this.pdfFilename(document) };
   }
 
+  // The owner's file, which publishes nothing. Their own report is printed behind a key of
+  // its own, so chromium can open it while the Share Link stays as it was (ADR 0012).
+  async ownedPdf(id: number, userId: number): Promise<ReportPdfFile> {
+    const report = await this.findOwnedReport(id, userId);
+    const token = report.public_token;
+
+    const body = await this.pdf.printClosed(this.printUrl(token), token);
+
+    return { body, filename: this.pdfFilename(this.storedSnapshot(report).document) };
+  }
+
+  // What chromium reads on that print. Past the closed link only with a key minted for this
+  // report; anything else leaves by the same door as a closed link. Counts no view.
+  async printedSnapshot(token: string, key: string): Promise<ReportSnapshot> {
+    if (!this.pdf.admits(key, token)) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
+    if (report === null) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return this.storedSnapshot(report).document;
+  }
+
   // The same file on the owner's side, so the preview can open what it lists before any
   // of it is public. Their own report, their own receipt - published or not.
   async ownedAttachment(id: number, userId: number, attachmentId: number): Promise<ReportAttachmentFile> {

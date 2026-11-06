@@ -101,7 +101,12 @@ const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http:/
                     },
               ],
             },
-        redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+        redact: [
+          'req.headers.authorization',
+          'req.headers.cookie',
+          'req.headers["x-report-print-key"]',
+          'res.headers["set-cookie"]',
+        ],
       },
     }),
     UserModule,

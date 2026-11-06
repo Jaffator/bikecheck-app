@@ -77,8 +77,7 @@ function PrintPage({ snapshot }: { snapshot: ReportSnapshot }): ReactElement {
   );
 }
 
-// The owner reaches the file the same way the recipient does, on this page, so the app
-// needs no file plugins of its own. Public, so the browser can simply follow it.
+// What a reader downloads. Public, so the browser can simply follow it.
 function DownloadBar({ token }: { token: string | undefined }): ReactElement {
   const { t } = useTranslation();
   const pdfUrl = usePublicReportPdfUrl(token);

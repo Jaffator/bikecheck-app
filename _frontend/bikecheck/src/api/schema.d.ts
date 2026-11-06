@@ -1393,6 +1393,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Print the caller's own report to an A4 PDF, published or not */
+        get: operations["Report getOwnedPdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/public/{token}/attachment/{attachmentId}": {
         parameters: {
             query?: never;
@@ -6743,6 +6760,25 @@ export interface operations {
             header?: never;
             path: {
                 token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Report getOwnedPdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
             };
             cookie?: never;
         };

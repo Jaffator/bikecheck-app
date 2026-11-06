@@ -356,7 +356,7 @@ owner does; a Report is what results.
 **Share Link**:
 The public address a Report is read at. A Report has one from birth, but it stays closed until the
 owner publishes it, and the owner can revoke it afterwards — a revoked link is gone for good, and a
-new one means a new Report.
+new one means a new Report. Downloading a Report as a PDF does not open its Share Link.
 _Avoid_: Public URL, share url, token
 
 **Public Profile**:

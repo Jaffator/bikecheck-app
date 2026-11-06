@@ -12,6 +12,7 @@ import {
   discardReport,
   exportReport,
   fetchOwnedAttachment,
+  fetchOwnedPdf,
   getPublicReport,
   listMyReports,
   publicAttachmentUrl,
@@ -30,6 +31,7 @@ import type {
 } from "./report.types";
 import { isLive } from "./reportLive";
 import type { ApiError } from "@/api/client";
+import { saveFile } from "@/utils/saveFile";
 
 // Every Report the owner has made, newest first. Metadata only, so the list stays cheap
 // however many links they have out. Omitting the bike asks across the whole garage.
@@ -91,6 +93,16 @@ export function useDiscardReport(): UseMutationResult<ReportSummary, Error, numb
     mutationFn: (id: number) => discardReport(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+  });
+}
+
+// Printing writes nothing, so no list has anything new to say.
+export function useDownloadReportPdf(): UseMutationResult<void, Error, number> {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { blob, filename } = await fetchOwnedPdf(id);
+      saveFile(blob, filename);
     },
   });
 }

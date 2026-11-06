@@ -1,11 +1,18 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Group, Loader, Stack, Text } from "@mantine/core";
+import { Capacitor } from "@capacitor/core";
 import { useTranslation } from "react-i18next";
-import { Check, Download, Link2, Share2, Trash2, X } from "lucide-react";
+import { Check, Download, Link2, Share2, X } from "lucide-react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { BikeNameRow } from "@/features/bikes/ui/BikeNameRow";
-import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "@/features/report/report.queries";
+import {
+  useDiscardReport,
+  useDownloadReportPdf,
+  useExportReport,
+  useOwnedAttachmentOpener,
+  usePublishReport,
+} from "@/features/report/report.queries";
 import { BikeReportOptions, type BikeReportChoice } from "./BikeReportOptions";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { ReportDocument } from "./ReportDocument";
@@ -32,18 +39,18 @@ interface ExportSheetProps {
   onClose: () => void;
 }
 
-// Options, preview, publish. One sheet: making a Report and opening it to the world are two
-// deliberate acts, and the second is never a reflex.
+// Options, preview, then a file or a link. One sheet: making a Report and opening it to the
+// world are two deliberate acts, and the second is never a reflex.
 export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
   const made = useExportReport();
   const publish = usePublishReport();
-  const discard = useDiscardReport();
+  const pdf = useDownloadReportPdf();
   // Stable across renders, unlike the mutation object around it, so the effect below can
   // depend on it honestly.
   const startExport = made.mutate;
-  const throwAway = discard.mutate;
+  const throwAway = useDiscardReport().mutate;
 
   // The Report this sheet made, held so publishing can address it and the preview does
   // not depend on a mutation's transient result.
@@ -100,7 +107,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   }
 
   // Nothing was ever published, so a preview the owner walks away from leaves no row
-  // behind — abandoning it and discarding it are the same act.
+  // behind, a downloaded file included: abandoning it and discarding it are the same act.
   function close(): void {
     if (report !== null && shareUrl === null) {
       throwAway(report.id);
@@ -117,7 +124,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     setOptionsDone(false);
     made.reset();
     publish.reset();
-    discard.reset();
+    pdf.reset();
     onClose();
   }
 
@@ -172,9 +179,6 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
                 previewing, receipts included. */}
             {/* Their own report, so the owner reads its files before anyone else can. */}
             <ReportDocument snapshot={report.snapshot} onOpenAttachment={openAttachment} />
-            <Text fz={12} c="var(--color-text-dim)" ta="center">
-              {t("report.previewHint")}
-            </Text>
           </Stack>
         )}
 
@@ -183,44 +187,48 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
         )}
 
         {publish.isError && <Failure>{t("report.publishFailed")}</Failure>}
-        {discard.isError && <Failure>{t("report.discardFailed")}</Failure>}
       </Box>
 
-      {/* Publishing is a distinct second tap, never something the preview does on the way
-          past. */}
+      {/* The file changes nothing, so the sheet stays open for the link. Publishing is a
+          distinct second tap, never something the preview does on the way past. */}
       {report !== null && !isPublished && (
-        <Footer>
-          <Button
-            variant="outline"
-            color="red.5"
-            radius="md"
-            leftSection={<Trash2 size={16} />}
-            loading={discard.isPending}
-            onClick={() => throwAway(report.id, { onSuccess: reset })}
-            styles={{
-              root: {
-                backgroundColor: "transparent",
-                borderColor: "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
-              },
-            }}
-          >
-            {t("report.discard")}
-          </Button>
-          <Button
-            color="primary.6"
-            c="textDark.6"
-            radius="md"
-            leftSection={<Link2 size={16} />}
-            loading={publish.isPending}
-            onClick={() =>
-              publish.mutate(report.id, {
-                onSuccess: (published) => setShareUrl(published.share_url),
-              })
-            }
-          >
-            {t("report.publish")}
-          </Button>
-        </Footer>
+        <>
+          <Footer fill>
+            {canDownloadPdf && (
+              <Button
+                color="primary.6"
+                c="textDark.6"
+                radius="md"
+                leftSection={<Download size={16} />}
+                loading={pdf.isPending}
+                onClick={() => pdf.mutate(report.id)}
+              >
+                {t("report.downloadPdf")}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              radius="md"
+              leftSection={<Link2 size={16} color="var(--mantine-color-primary-5)" />}
+              loading={publish.isPending}
+              onClick={() =>
+                publish.mutate(report.id, {
+                  onSuccess: (published) => setShareUrl(published.share_url),
+                })
+              }
+            >
+              {t("report.publish")}
+            </Button>
+          </Footer>
+          <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
+            {pdf.isError && <Failure>{t("report.pdfFailed")}</Failure>}
+            {canDownloadPdf && (
+              <Text fz={12} lh={1.4} c="var(--color-text-dim)">
+                {t("report.fileOrLinkHint")}
+              </Text>
+            )}
+          </Box>
+        </>
       )}
 
       {isPublished && (
@@ -233,6 +241,9 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     </Sheet>
   );
 }
+
+// A native webview has no download to hand a file to; the phone gets its own path in #371.
+const canDownloadPdf = !Capacitor.isNativePlatform();
 
 // A bike opens on the whole history; Service opens on the span its filter is on.
 function defaultChoice({ from, to }: ExportBikeReportInput): BikeReportChoice {
@@ -410,13 +421,13 @@ function Sheet({
   );
 }
 
-function Footer({ children }: { children: ReactNode }): ReactElement {
+function Footer({ fill = false, children }: { fill?: boolean; children: ReactNode }): ReactElement {
   const isDesktop = useIsDesktop();
 
   return (
     <Group
       gap="sm"
-      grow={!isDesktop}
+      grow={fill || !isDesktop}
       justify="flex-end"
       px={isDesktop ? "md" : undefined}
       pt="sm"

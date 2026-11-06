@@ -1,10 +1,11 @@
 // Report API calls use the shared client. The public read is the one call in the app
 // that expects no session behind it.
-import { apiFetch, apiFetchBlob, apiUrl } from "@/api/client";
+import { apiFetch, apiFetchBlob, apiFetchStream, apiUrl } from "@/api/client";
 import type {
   ExportReportInput,
   ExportedReport,
   ReportBulkResult,
+  ReportPdfFile,
   ReportSnapshot,
   ReportSummary,
 } from "./report.types";
@@ -82,6 +83,22 @@ export function publicAttachmentUrl(token: string, attachmentId: number): string
 // the document is designed once and printed rather than built a second time.
 export function publicReportPdfUrl(token: string): string {
   return apiUrl(`/reports/public/${encodeURIComponent(token)}/pdf`);
+}
+
+// Named by the server; the fallback covers a response that hides its headers.
+const PDF_FILENAME = /filename\*=UTF-8''([^;]+)/;
+const FALLBACK_PDF_FILENAME = "report.pdf";
+
+// GET /reports/:id/pdf — the owner's own Report as a file, published or not. The server prints
+// it itself, so nothing about the Share Link changes and no key ever comes back here.
+export async function fetchOwnedPdf(id: number): Promise<ReportPdfFile> {
+  const response = await apiFetchStream(`/reports/${id}/pdf`);
+  const encoded = response.headers.get("Content-Disposition")?.match(PDF_FILENAME)?.[1];
+
+  return {
+    blob: await response.blob(),
+    filename: encoded === undefined ? FALLBACK_PDF_FILENAME : decodeURIComponent(encoded),
+  };
 }
 
 // The same file on the owner's side, so the preview can open what it lists before any of

@@ -33,6 +33,8 @@ describe('ReportService', () => {
 
   const mockPdf = {
     print: jest.fn(),
+    printClosed: jest.fn(),
+    admits: jest.fn(),
   };
 
   const mockStorage = {
@@ -302,6 +304,8 @@ describe('ReportService', () => {
     });
 
     mockPdf.print.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
+    mockPdf.printClosed.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
+    mockPdf.admits.mockReturnValue(false);
 
     // The caller owns the service and writes in English unless a test says otherwise.
     mockPrisma.users.findUnique.mockResolvedValue({ language: 'en', currency: 'CZK' });
@@ -1213,6 +1217,81 @@ describe('ReportService', () => {
       await service.publicPdf('token-1');
 
       expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ownedPdf', () => {
+    it('prints a closed report for its owner', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+
+      const file = await service.ownedPdf(REPORT_ID, OWNER_ID);
+
+      expect(mockPdf.printClosed).toHaveBeenCalledWith(`${ORIGIN}/r/token-1?print=1`, 'token-1');
+      expect(file.filename).toBe('service-report-2026-07-01.pdf');
+      expect(file.body.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('leaves the share link as it was and counts no view', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+
+      await service.ownedPdf(REPORT_ID, OWNER_ID);
+
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    it("never prints someone else's report, and says nothing of it", async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(null);
+
+      await expect(service.ownedPdf(REPORT_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
+
+      expect(mockPrisma.reports.findFirst).toHaveBeenCalledWith({ where: { id: REPORT_ID, user_id: STRANGER_ID } });
+      expect(mockPdf.printClosed).not.toHaveBeenCalled();
+    });
+
+    // What the owner's browser receives: the file and its name, so no key can ride along.
+    it('answers with nothing but the file and its name', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+
+      const file = await service.ownedPdf(REPORT_ID, OWNER_ID);
+
+      expect(Object.keys(file).sort()).toEqual(['body', 'filename']);
+    });
+  });
+
+  describe('printedSnapshot', () => {
+    it('opens a closed report to a key minted for it', async () => {
+      mockPdf.admits.mockReturnValue(true);
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
+
+      const snapshot = await service.printedSnapshot('token-1', 'the-key');
+
+      expect(mockPdf.admits).toHaveBeenCalledWith('the-key', 'token-1');
+      expect(snapshot.kind).toBe('SERVICE');
+      expect(snapshot).not.toHaveProperty('private');
+    });
+
+    it('counts no view: chromium is not a reader', async () => {
+      mockPdf.admits.mockReturnValue(true);
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
+
+      await service.printedSnapshot('token-1', 'the-key');
+
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    it('answers a refused key as any closed link, without reading the report', async () => {
+      mockPdf.admits.mockReturnValue(false);
+
+      await expect(service.printedSnapshot('token-1', 'wrong')).rejects.toThrow(GoneException);
+      await expect(service.printedSnapshot('token-1', 'wrong')).rejects.toThrow('This report is no longer available');
+      expect(mockPrisma.reports.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('answers the same way once the report is gone', async () => {
+      mockPdf.admits.mockReturnValue(true);
+      mockPrisma.reports.findUnique.mockResolvedValue(null);
+
+      await expect(service.printedSnapshot('token-1', 'the-key')).rejects.toThrow(GoneException);
     });
   });
 
