@@ -2,27 +2,41 @@
 import type { ReactElement } from "react";
 import { Paperclip, RefreshCw, Wrench } from "lucide-react";
 import { formatFileSize } from "@/features/service/attachmentLabels";
-import type { ReportAttachment, ReportService } from "@/features/report/report.types";
+import type { ReportAttachment, ReportHistory, ReportService } from "@/features/report/report.types";
 import {
   REPORT_PAPER,
   reportComponentLabel,
   reportCost,
   reportDate,
+  reportPeriodLabel,
   reportPlace,
+  type ReportVoice,
 } from "@/features/report/reportFormat";
 import type { ReportHeadings } from "@/features/report/reportHeadings";
 import { groupByYear } from "@/features/report/reportTimeline";
-import { RowLabel, Section } from "./ReportPaper";
+import { Field, RowLabel, Section } from "./ReportPaper";
 
-// The language and currency the document was frozen in.
-interface DocumentVoice {
-  language: string;
-  currency: string;
+interface HistoryFiguresProps {
+  history: ReportHistory;
+  voice: ReportVoice;
+  heading: ReportHeadings;
+}
+
+// What a history adds up to, for its screen and print variants to lay out.
+export function HistoryFigures({ history, voice, heading }: HistoryFiguresProps): ReactElement {
+  return (
+    <>
+      <Field label={heading.period} value={reportPeriodLabel(history.period, heading, voice.language)} />
+      <Field label={heading.spent} value={reportCost(history.totals.totalCost, voice)} figure accent />
+      <Field label={heading.services} value={String(history.totals.serviceCount)} figure />
+      <Field label={heading.replacements} value={String(history.totals.replacementCount)} figure />
+    </>
+  );
 }
 
 interface ServiceTimelineProps {
   services: ReportService[];
-  voice: DocumentVoice;
+  voice: ReportVoice;
   heading: ReportHeadings;
   // How a receipt is opened. The bytes come through the report either way, so the reader
   // never sees a storage address.
@@ -67,7 +81,7 @@ function ServiceEntry({
   onOpenAttachment,
 }: {
   service: ReportService;
-  voice: DocumentVoice;
+  voice: ReportVoice;
   heading: ReportHeadings;
   onOpenAttachment: (attachment: ReportAttachment) => void;
 }): ReactElement {

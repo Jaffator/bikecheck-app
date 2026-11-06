@@ -1291,7 +1291,6 @@
     "pickBikeFirst": "Pro export historie vyber jedno kolo.",
     "exporting": "Připravuji report…",
     "exportFailed": "Report se nepodařilo vytvořit. Zkuste to znovu.",
-    "emptyPeriod": "V tomto období nejsou žádné servisy, není co exportovat.",
     "previewHint": "Přesně tohle uvidí příjemce. Zatím není nic zveřejněné.",
     "publish": "Zveřejnit",
     "discard": "Zahodit",

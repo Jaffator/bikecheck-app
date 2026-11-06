@@ -1230,7 +1230,6 @@
     "pickBikeFirst": "Pick one bike to export its history.",
     "exporting": "Preparing the report…",
     "exportFailed": "Could not make the report. Try again.",
-    "emptyPeriod": "There are no services in this period, so there is nothing to export.",
     "previewHint": "This is exactly what the recipient will see. Nothing is public yet.",
     "publish": "Publish",
     "discard": "Discard",

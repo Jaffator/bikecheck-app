@@ -193,7 +193,7 @@ export function BikeDetail(): ReactElement {
               )}
             </Stack>
             {/* An Archived Bike is exported too - it is the machine being sold that a
-                Report kola is most often asked for. */}
+                Bike Report is most often asked for. */}
             <Button
               variant="outline"
               radius="md"

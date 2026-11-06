@@ -4,8 +4,7 @@ import { ActionIcon, Box, Button, Group, Loader, Stack, Text } from "@mantine/co
 import { useTranslation } from "react-i18next";
 import { Check, Download, Link2, Share2, Trash2, X } from "lucide-react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { useBike } from "@/features/bikes/bikes.queries";
+import { BikeNameRow } from "@/features/bikes/ui/BikeNameRow";
 import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "@/features/report/report.queries";
 import { BikeReportOptions, type BikeReportChoice } from "./BikeReportOptions";
 import { CopyLinkButton } from "./CopyLinkButton";
@@ -81,7 +80,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
 
   // A Bike Report is exported once its options have answers, because they are frozen into
   // the document rather than read off it later.
-  function preview(next: BikeReportChoice): void {
+  function exportBikeReport(next: BikeReportChoice): void {
     if (bikeReport === null) return;
 
     const key = JSON.stringify(bikeReport);
@@ -153,11 +152,15 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
         )
       }
     >
-      {showsBike && <BikeRow bikeId={bikeReport.bike_id} />}
+      {showsBike && (
+        <Box px={isDesktop ? "md" : undefined} pt={14} style={{ flexShrink: 0 }}>
+          <BikeNameRow bikeId={bikeReport.bike_id} />
+        </Box>
+      )}
 
       <Box px={isDesktop ? "md" : undefined} pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {/* What a Bike Report carries, before anything is written down. */}
-        {needsOptions && <BikeReportOptions initial={choice ?? defaultChoice(bikeReport)} onPreview={preview} />}
+        {needsOptions && <BikeReportOptions initial={choice ?? defaultChoice(bikeReport)} onPreview={exportBikeReport} />}
 
         {made.isPending && <Waiting label={t("report.exporting")} />}
 
@@ -250,31 +253,6 @@ function bikeReportExport(input: ExportBikeReportInput, choice: BikeReportChoice
 function sheetWidth(showsDocument: boolean, needsOptions: boolean): number | undefined {
   if (showsDocument) return DOCUMENT_MODAL_WIDTH;
   return needsOptions ? OPTIONS_MODAL_WIDTH : undefined;
-}
-
-// Which bike the Export is about, under the sheet's title.
-function BikeRow({ bikeId }: { bikeId: number }): ReactElement | null {
-  const isDesktop = useIsDesktop();
-  const { data: bike } = useBike(bikeId);
-  if (bike === undefined) return null;
-
-  const title = bikeTitle(bike);
-
-  return (
-    <Group gap={12} wrap="nowrap" px={isDesktop ? "md" : undefined} pt={14} style={{ flexShrink: 0 }}>
-      {bike.image_url !== null && (
-        <img
-          src={bike.image_url}
-          alt=""
-          // White behind a cut-out photo, as on BikePhoto.
-          style={{ width: 56, height: 28, objectFit: "cover", borderRadius: 6, background: "#fff", flexShrink: 0 }}
-        />
-      )}
-      <Text fz={15} fw={600} c="text.6" truncate>
-        {title}
-      </Text>
-    </Group>
-  );
 }
 
 // The link, and the two ways anyone actually sends one.

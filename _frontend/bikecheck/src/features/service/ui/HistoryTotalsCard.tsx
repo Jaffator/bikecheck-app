@@ -54,11 +54,6 @@ export function HistoryTotalsCard({
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
 
-  // A period with no work in it would export an empty document, so it is refused here
-  // rather than in the sheet. Totals still on their way disable it without a word.
-  const blockedBy = onExport !== null && totals?.service_count === 0 ? t("report.emptyPeriod") : null;
-  const canExport = onExport !== null && totals !== undefined && totals.service_count > 0;
-
   return (
     <Box style={{ ...SERVICE_CARD_SURFACE, padding: "var(--mantine-spacing-md)" }}>
       <Stack gap="xs">
@@ -86,7 +81,7 @@ export function HistoryTotalsCard({
                 radius="md"
                 size="xs"
                 leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
-                disabled={!canExport}
+                disabled={onExport === null}
                 // A tap on a disabled button reaches nothing, so it has to land on the wrapper.
                 style={{ pointerEvents: onExport === null ? "none" : undefined }}
                 onClick={onExport ?? undefined}
@@ -111,12 +106,6 @@ export function HistoryTotalsCard({
           <Metric label={t("service.totalsReplacements")} value={totals?.replacement_count ?? 0} isStale={isStale} />
 
         </Group>
-
-        {blockedBy !== null && (
-          <Text className="tabular-nums" fz={11} c="var(--color-text-dim)" lineClamp={2}>
-            {blockedBy}
-          </Text>
-        )}
       </Stack>
     </Box>
   );

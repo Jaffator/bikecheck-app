@@ -98,8 +98,8 @@ export interface ReportCovers {
   from: string | null;
   // The day it closes on. A Service opens and closes on the same day.
   to: string | null;
-  // False when no Services are in it, so both ends null read as today, not as the whole history.
-  history: boolean;
+  // Without a history both ends null read as today, not as the whole of it.
+  hasHistory: boolean;
 }
 
 export interface ReportBike {
@@ -122,7 +122,6 @@ export interface ReportPeriod {
   to: string | null;
 }
 
-// The Services one document covers, with what they add up to.
 export interface ReportHistory {
   period: ReportPeriod;
   services: ReportService[];

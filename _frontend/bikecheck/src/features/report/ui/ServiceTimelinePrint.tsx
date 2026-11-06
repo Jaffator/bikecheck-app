@@ -7,24 +7,26 @@ import {
   reportCost,
   reportDate,
   reportPlace,
+  type ReportVoice,
 } from "@/features/report/reportFormat";
 import type { ReportHeadings } from "@/features/report/reportHeadings";
 import { groupByYear } from "@/features/report/reportTimeline";
 import { Section } from "./ReportPaper";
 
-// The language and currency the document was frozen in.
-interface DocumentVoice {
-  language: string;
-  currency: string;
-}
-
 interface ServiceTimelinePrintProps {
   services: ReportService[];
-  voice: DocumentVoice;
+  voice: ReportVoice;
   heading: ReportHeadings;
+  // Action notes and attachment names. Off for a Period Report, whose PDF stays as it printed.
+  detailed?: boolean;
 }
 
-export function ServiceTimelinePrint({ services, voice, heading }: ServiceTimelinePrintProps): ReactElement {
+export function ServiceTimelinePrint({
+  services,
+  voice,
+  heading,
+  detailed = false,
+}: ServiceTimelinePrintProps): ReactElement {
   if (services.length === 0) {
     return (
       <p className="text-sm" style={{ color: REPORT_PAPER.inkMuted }}>
@@ -40,7 +42,7 @@ export function ServiceTimelinePrint({ services, voice, heading }: ServiceTimeli
           <table className="w-full text-left text-[12px] border-collapse">
             <tbody>
               {group.services.map((service, index) => (
-                <ServiceRow key={index} service={service} voice={voice} heading={heading} />
+                <ServiceRow key={index} service={service} voice={voice} heading={heading} detailed={detailed} />
               ))}
             </tbody>
           </table>
@@ -55,10 +57,12 @@ function ServiceRow({
   service,
   voice,
   heading,
+  detailed,
 }: {
   service: ReportService;
-  voice: DocumentVoice;
+  voice: ReportVoice;
   heading: ReportHeadings;
+  detailed: boolean;
 }): ReactElement {
   const date = reportDate(service.serviceDate, voice.language);
   const place = reportPlace(service, heading);
@@ -85,8 +89,22 @@ function ServiceRow({
             {heading.replacement}
           </span>
         )}
+        {detailed &&
+          service.actions.map((action, index) =>
+            action.note === null || action.note.trim() === "" ? null : (
+              <span key={index} className="block mt-1 leading-relaxed whitespace-pre-line">
+                {action.note}
+              </span>
+            ),
+          )}
         {service.note !== null && service.note.trim() !== "" && (
           <span className="block mt-1 leading-relaxed whitespace-pre-line">{service.note}</span>
+        )}
+        {/* On paper an attachment is named rather than opened. */}
+        {detailed && service.attachments.length > 0 && (
+          <span className="block mt-1 break-all" style={{ color: REPORT_PAPER.inkMuted }}>
+            {heading.attachments}: {service.attachments.map((attachment) => attachment.name).join(", ")}
+          </span>
         )}
       </td>
       <td className="py-2.5 pr-4 align-top w-[24%] leading-relaxed">

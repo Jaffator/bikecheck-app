@@ -1,7 +1,5 @@
-// No longer made; a stored one still reads as it was (ADR 0011).
-// The Period Report: what one bike had done to it inside one Period, read as a timeline.
-// The owner previews this and the recipient reads this — one layout, so what was reviewed
-// is what is read.
+// The Period Report: what one bike had done to it inside one Period. No longer made; a stored
+// one still reads as it was (ADR 0011).
 import type { ReactElement } from "react";
 import { Cog } from "lucide-react";
 import type { PeriodReportSnapshot, ReportAttachment } from "@/features/report/report.types";

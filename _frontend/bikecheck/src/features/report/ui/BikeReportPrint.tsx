@@ -2,11 +2,11 @@
 // the `?print=1` query parameter, so the render chromium captures is explicit.
 import type { ReactElement } from "react";
 import type { BikeReportSnapshot } from "@/features/report/report.types";
-import { reportCost, reportPeriodLabel } from "@/features/report/reportFormat";
 import { reportHeadings } from "@/features/report/reportHeadings";
 import { BikeProfilePrint } from "./BikeProfile";
 import { ComponentList } from "./ComponentRow";
-import { DocumentFooter, DocumentHeader, Field, PrintSheet, Section } from "./ReportPaper";
+import { DocumentFooter, DocumentHeader, PrintSheet, Section } from "./ReportPaper";
+import { HistoryFigures } from "./ServiceTimeline";
 import { ServiceTimelinePrint } from "./ServiceTimelinePrint";
 
 interface BikeReportPrintProps {
@@ -35,13 +35,10 @@ export function BikeReportPrint({ snapshot }: BikeReportPrintProps): ReactElemen
         <>
           <Section title={heading.history}>
             <div className="flex justify-between gap-6">
-              <Field label={heading.period} value={reportPeriodLabel(history.period, heading, language)} />
-              <Field label={heading.spent} value={reportCost(history.totals.totalCost, snapshot)} figure accent />
-              <Field label={heading.services} value={String(history.totals.serviceCount)} figure />
-              <Field label={heading.replacements} value={String(history.totals.replacementCount)} figure />
+              <HistoryFigures history={history} voice={snapshot} heading={heading} />
             </div>
           </Section>
-          <ServiceTimelinePrint services={history.services} voice={snapshot} heading={heading} />
+          <ServiceTimelinePrint services={history.services} voice={snapshot} heading={heading} detailed />
         </>
       )}
 

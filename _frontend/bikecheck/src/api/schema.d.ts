@@ -3614,10 +3614,10 @@ export interface components {
              */
             to: Record<string, never> | null;
             /**
-             * @description False when the document holds no Services at all
+             * @description False when the document carries no service history
              * @example true
              */
-            history: boolean;
+            hasHistory: boolean;
         };
         ResponseExportedReportDto: {
             /** @example 1 */

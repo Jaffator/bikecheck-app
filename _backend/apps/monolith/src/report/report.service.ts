@@ -21,6 +21,7 @@ import {
   ReportHistory,
   ReportHistoryTotals,
   ReportPdfFile,
+  ReportPeriod,
   ReportService as ReportedService,
   ReportSnapshot,
   ReportSnapshotPrivate,
@@ -74,6 +75,13 @@ interface OwnerVoice {
   currency: string;
 }
 
+// What the owner kept in a Bike Report; null was switched off.
+interface BikeReportContents {
+  components: ReportComponent[] | null;
+  services: ServiceWithRelations[] | null;
+  period: ReportPeriod;
+}
+
 // A Report and the document it was made from, handed back together by Export.
 export interface ExportedReport {
   report: reports;
@@ -120,9 +128,8 @@ export class ReportService {
     return await this.store(userId, bikeId, this.buildServiceSnapshot(service, owner));
   }
 
-  // The bike, and what the owner switched on. Unlike a Period Report an empty history is no
-  // refusal: the photo and details are a document by themselves. Each choice is read once,
-  // here, and frozen (ADR 0011).
+  // An empty history is no refusal: the photo and details are a document by themselves. Each
+  // choice is read once, here, and frozen (ADR 0011).
   private async exportBike(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
     const bike = await this.findOwnedBike(required(dto.bike_id, 'bike_id'), userId);
     const components = required(dto.include_components, 'include_components')
@@ -131,22 +138,9 @@ export class ReportService {
     const services = required(dto.include_history, 'include_history')
       ? await this.findServicesInPeriod(bike.id, dto.from, dto.to)
       : null;
-    const reported = services?.map((service) => this.buildService(service, owner.language)) ?? null;
-    const history = reported === null ? null : this.buildHistory(reported, dto);
+    const period = { from: dto.from ?? null, to: dto.to ?? null };
 
-    return await this.store(userId, bike.id, {
-      document: {
-        version: REPORT_SNAPSHOT_VERSION,
-        kind: 'BIKE',
-        generatedAt: new Date().toISOString(),
-        language: owner.language,
-        currency: owner.currency,
-        bike: this.buildBike(bike, owner.language),
-        components,
-        history,
-      },
-      private: this.attachmentKeys(services ?? []),
-    });
+    return await this.store(userId, bike.id, this.buildBikeSnapshot(bike, { components, services, period }, owner));
   }
 
   // Writes the document down. Closed, whichever kind it is.
@@ -250,19 +244,19 @@ export class ReportService {
       case 'SERVICE': {
         // One occasion: the document opens and closes on the day the work happened.
         const day = document.service.serviceDate === null ? null : this.day(document.service.serviceDate);
-        return { bike, from: day, to: day, history: true };
+        return { bike, from: day, to: day, hasHistory: true };
       }
       case 'BIKE':
         return {
           bike,
           from: document.history?.period.from ?? null,
           to: document.history?.period.to ?? null,
-          history: document.history !== null,
+          hasHistory: document.history !== null,
         };
       case 'PERIOD':
-        return { bike, from: document.period.from, to: document.period.to, history: true };
+        return { bike, from: document.period.from, to: document.period.to, hasHistory: true };
       case 'BIKECHECK':
-        return { bike, from: null, to: null, history: false };
+        return { bike, from: null, to: null, hasHistory: false };
     }
   }
 
@@ -371,8 +365,28 @@ export class ReportService {
     };
   }
 
-  private buildHistory(services: ReportedService[], { from, to }: ExportReportDto): ReportHistory {
-    return { period: { from: from ?? null, to: to ?? null }, services, totals: this.buildTotals(services) };
+  private buildBikeSnapshot(
+    bike: BikeWithRelations,
+    { components, services, period }: BikeReportContents,
+    owner: OwnerVoice,
+  ): StoredReportSnapshot {
+    const reported = services?.map((service) => this.buildService(service, owner.language)) ?? null;
+    const history: ReportHistory | null =
+      reported === null ? null : { period, services: reported, totals: this.buildTotals(reported) };
+
+    return {
+      document: {
+        version: REPORT_SNAPSHOT_VERSION,
+        kind: 'BIKE',
+        generatedAt: new Date().toISOString(),
+        language: owner.language,
+        currency: owner.currency,
+        bike: this.buildBike(bike, owner.language),
+        components,
+        history,
+      },
+      private: this.attachmentKeys(services ?? []),
+    };
   }
 
   // What the document itself adds up to, counted off the services it froze rather than

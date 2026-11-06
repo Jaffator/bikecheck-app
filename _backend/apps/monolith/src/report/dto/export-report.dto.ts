@@ -24,7 +24,6 @@ export class ExportReportDto {
   @ApiProperty({ example: 42, description: 'Required when kind is SERVICE' })
   service_id?: number;
 
-  // The Bike a Bike Report covers.
   @ValidateIf((dto: ExportReportDto) => dto.kind === report_kind.BIKE)
   @IsInt()
   @IsPositive()

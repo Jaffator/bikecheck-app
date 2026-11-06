@@ -35,8 +35,8 @@ export interface ReportCovers {
   // The day the document opens on: a Service's date, a Period's start. Null is an open end.
   from: string | null;
   to: string | null;
-  // False when no Services are in it, so both ends null read as today, not as the whole history.
-  history: boolean;
+  // Without a history both ends null read as today, not as the whole of it.
+  hasHistory: boolean;
 }
 
 // What Export answers with: the report, and the document it just made. The snapshot rides
@@ -134,7 +134,6 @@ export interface ReportPeriod {
   to: string | null;
 }
 
-// The Services one document covers, with what they add up to.
 export interface ReportHistory {
   period: ReportPeriod;
   services: ReportService[];

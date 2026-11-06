@@ -744,7 +744,7 @@ describe('ReportService', () => {
     it('reads a service report as the one day it covers', () => {
       const covers = service.covers(reportRow() as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: '2026-07-01', to: '2026-07-01', history: true });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: '2026-07-01', to: '2026-07-01', hasHistory: true });
     });
 
     it('reads a period report as the period it was exported for', () => {
@@ -760,7 +760,7 @@ describe('ReportService', () => {
 
       const covers = service.covers(reportRow({ kind: report_kind.PERIOD, snapshot: stored }) as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: PERIOD_TO, history: true });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: PERIOD_TO, hasHistory: true });
     });
 
     it('reads a bikecheck as covering no span', () => {
@@ -769,19 +769,19 @@ describe('ReportService', () => {
 
       const covers = service.covers(reportRow({ kind: report_kind.BIKECHECK, snapshot: stored }) as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null, history: false });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null, hasHistory: false });
     });
 
     it('reads a bike report as the period its history covers', () => {
       const covers = service.covers(bikeReportRow({ period: { from: PERIOD_FROM, to: null } }) as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: null, history: true });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: null, hasHistory: true });
     });
 
     it('reads a bike report without its history as covering no span', () => {
       const covers = service.covers(bikeReportRow(null) as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null, history: false });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null, hasHistory: false });
     });
 
     it('names the bike from the frozen document, so a deleted bike still reads', () => {

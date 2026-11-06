@@ -18,8 +18,8 @@ export class ResponseReportCoversDto {
   @ApiProperty({ example: '2026-12-31', nullable: true, description: 'Inclusive YYYY-MM-DD' })
   to!: string | null;
 
-  @ApiProperty({ example: true, description: 'False when the document holds no Services at all' })
-  history!: boolean;
+  @ApiProperty({ example: true, description: 'False when the document carries no service history' })
+  hasHistory!: boolean;
 }
 
 // Report metadata for the owner's management list. The frozen document itself never

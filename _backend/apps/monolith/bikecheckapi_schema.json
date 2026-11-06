@@ -8183,17 +8183,17 @@
             "nullable": true,
             "description": "Inclusive YYYY-MM-DD"
           },
-          "history": {
+          "hasHistory": {
             "type": "boolean",
             "example": true,
-            "description": "False when the document holds no Services at all"
+            "description": "False when the document carries no service history"
           }
         },
         "required": [
           "bike",
           "from",
           "to",
-          "history"
+          "hasHistory"
         ]
       },
       "ResponseExportedReportDto": {

@@ -17,6 +17,12 @@ export const REPORT_PAPER = {
   accentWash: "#f4f0d7",
 } as const;
 
+// The language and currency a document was frozen in.
+export interface ReportVoice {
+  language: string;
+  currency: string;
+}
+
 // A date as the document's own language writes it.
 export function reportDate(iso: string | null, language: string): string | null {
   if (iso === null) return null;
@@ -24,8 +30,8 @@ export function reportDate(iso: string | null, language: string): string | null 
 }
 
 // A figure in the currency the document was priced in.
-export function reportCost(amount: number, snapshot: { currency: string; language: string }): string {
-  return formatCost(amount, snapshot.currency, snapshot.language);
+export function reportCost(amount: number, voice: ReportVoice): string {
+  return formatCost(amount, voice.currency, voice.language);
 }
 
 // A distance with the document's decimal mark and the app's space-grouped thousands.

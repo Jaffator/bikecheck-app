@@ -6,7 +6,6 @@ import { REPORT_PAPER, reportComponentLabel, reportDate, reportNumber, reportRid
 import type { ReportHeadings } from "@/features/report/reportHeadings";
 import { RowLabel } from "./ReportPaper";
 
-// The bike's parts, or the line saying there are none.
 export function ComponentList({
   components,
   heading,

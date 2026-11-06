@@ -1,6 +1,5 @@
-// No longer made; a stored one still reads as it was (ADR 0011).
-// The BikeCheck: the machine's card rather than its maintenance — the bike, and everything
-// mounted on it, so a buyer can check the build against what is in front of them.
+// The BikeCheck: the bike and everything mounted on it. No longer made; a stored one still
+// reads as it was (ADR 0011).
 import type { ReactElement } from "react";
 import { Cog } from "lucide-react";
 import type { BikeCheckSnapshot } from "@/features/report/report.types";

@@ -2,12 +2,11 @@
 import type { ReactElement } from "react";
 import { Cog, History } from "lucide-react";
 import type { BikeReportSnapshot, ReportAttachment } from "@/features/report/report.types";
-import { reportCost, reportPeriodLabel } from "@/features/report/reportFormat";
 import { reportHeadings } from "@/features/report/reportHeadings";
 import { BikeProfile } from "./BikeProfile";
 import { ComponentList } from "./ComponentRow";
-import { DocumentFooter, DocumentHeader, Field, ScreenSheet, Section } from "./ReportPaper";
-import { ServiceTimeline } from "./ServiceTimeline";
+import { DocumentFooter, DocumentHeader, ScreenSheet, Section } from "./ReportPaper";
+import { HistoryFigures, ServiceTimeline } from "./ServiceTimeline";
 
 interface BikeReportDocumentProps {
   snapshot: BikeReportSnapshot;
@@ -36,10 +35,7 @@ export function BikeReportDocument({ snapshot, onOpenAttachment }: BikeReportDoc
         <>
           <Section icon={<History size={16} />} title={heading.history}>
             <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-              <Field label={heading.period} value={reportPeriodLabel(history.period, heading, language)} />
-              <Field label={heading.spent} value={reportCost(history.totals.totalCost, snapshot)} figure accent />
-              <Field label={heading.services} value={String(history.totals.serviceCount)} figure />
-              <Field label={heading.replacements} value={String(history.totals.replacementCount)} figure />
+              <HistoryFigures history={history} voice={snapshot} heading={heading} />
             </div>
           </Section>
           <ServiceTimeline
