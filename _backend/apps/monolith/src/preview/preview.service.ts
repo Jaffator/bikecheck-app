@@ -38,12 +38,12 @@ const NEUTRAL_DESCRIPTION = 'Track the service of your bikes and share your buil
 // The mark on the neutral card: the mail logo, already in R2 for the same reason.
 const NEUTRAL_LOGO_KEY = `static/${MAIL_LOGO_KEY}`;
 
-// The document's English name, as the public page heads it (reportHeadings.ts).
+// The Report's English name in the app. The frozen older kinds read as a Bike Report too.
 const REPORT_KIND_LABEL: Record<ReportSnapshot['kind'], string> = {
   SERVICE: 'Service Report',
   BIKE: 'Bike Report',
-  PERIOD: 'Period Report',
-  BIKECHECK: 'BikeCheck',
+  PERIOD: 'Bike Report',
+  BIKECHECK: 'Bike Report',
 };
 
 @Injectable()

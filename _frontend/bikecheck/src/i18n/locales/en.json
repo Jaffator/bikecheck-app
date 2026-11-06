@@ -571,7 +571,7 @@
   "bikes": {
     "noBikesFound": "0 BIKES FOUND",
     "emptyTitle": "Your garage is currently empty",
-    "emptyBody": "Add your first bike and start tracking component wear, service intervals, and sharing your BikeCheck with others.",
+    "emptyBody": "Add your first bike and start tracking component wear, service intervals, and sharing your bike with others.",
     "intro": "Manage your high-performance machines and their technical health.",
     "loadFailed": "Your bikes could not be loaded. Please try again.",
     "cardMenu": "Bike actions",
@@ -1219,8 +1219,6 @@
   "report": {
     "titleService": "Service report",
     "titleBike": "Bike report",
-    "titlePeriod": "Period report",
-    "titleBikecheck": "BikeCheck",
     "optionComponents": "Components",
     "optionHistory": "Service history",
     "optionPeriod": "Period",

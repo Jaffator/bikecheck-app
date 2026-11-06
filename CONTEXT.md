@@ -341,13 +341,16 @@ kola. An empty history is no reason to refuse one, as the bike alone is a docume
 Period Report and the BikeCheck.
 
 **Period Report**:
-A Report covering the Services of one Bike within one Period, with their History Totals. May also
-carry the bike's mounted components with their wear and last service, at the owner's choice.
+An older kind of Report, no longer made: the Services of one Bike within one Period, with their
+History Totals, and at the owner's choice the bike's mounted components with their wear and last
+service. One already made keeps its link and its frozen heading, but the app calls it Report kola,
+and link previews and the chat call it a Bike Report.
 _Avoid_: History report, multiple report
 
 **BikeCheck**:
-A Report describing a Bike and everything mounted on it — the machine's card, not its maintenance.
-A different document from the Service and Period Reports, which describe work rather than the bike.
+An older kind of Report, no longer made: a Bike and everything mounted on it. One already made is
+treated as a Period Report is: same link, same frozen heading, and Report kola in the app. Everywhere
+else BikeCheck is the app's name, never a document's.
 
 **Export**:
 The act of making a Report: choosing what it covers, reading it back and creating it. What the

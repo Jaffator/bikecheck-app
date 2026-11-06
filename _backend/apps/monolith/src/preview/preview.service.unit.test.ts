@@ -441,7 +441,7 @@ describe('PreviewService', () => {
 
       const html = await service.reportShell(TOKEN);
 
-      expect(html).toContain('<meta property="og:title" content="Period Report · Orbea Rallon M10 2024" />');
+      expect(html).toContain('<meta property="og:title" content="Bike Report · Orbea Rallon M10 2024" />');
       expect(html).toContain(
         '<meta property="og:description" content="2026-01-01 – 2026-06-30 · 12 services · 4 replacements" />',
       );
@@ -472,7 +472,7 @@ describe('PreviewService', () => {
 
       const html = await service.reportShell(TOKEN);
 
-      expect(html).toContain('<meta property="og:title" content="BikeCheck · Orbea Rallon M10 2024" />');
+      expect(html).toContain('<meta property="og:title" content="Bike Report · Orbea Rallon M10 2024" />');
       expect(html).toContain('<meta property="og:description" content="4,187 km · 1 component" />');
     });
 

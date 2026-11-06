@@ -599,7 +599,7 @@
   "bikes": {
     "noBikesFound": "ŽÁDNÁ KOLA",
     "emptyTitle": "Tvoje garáž je zatím prázdná",
-    "emptyBody": "Přidej svoje první kolo a začni sledovat stav komponentů, servisní intervaly a sdílet svuj BikeCheck s ostaními.",
+    "emptyBody": "Přidej svoje první kolo a začni sledovat stav komponentů, servisní intervaly a sdílet svoje kolo s ostatními.",
     "intro": "Spravuj svá kola a jejich technický stav.",
     "loadFailed": "Kola se nepodařilo načíst. Zkuste to prosím znovu.",
     "cardMenu": "Akce kola",
@@ -1280,8 +1280,6 @@
   "report": {
     "titleService": "Servisní report",
     "titleBike": "Report kola",
-    "titlePeriod": "Report za období",
-    "titleBikecheck": "BikeCheck",
     "optionComponents": "Komponenty",
     "optionHistory": "Servisní historie",
     "optionPeriod": "Období",
