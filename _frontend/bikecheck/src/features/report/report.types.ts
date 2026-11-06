@@ -50,6 +50,10 @@ export interface ReportPdfFile {
   filename: string;
 }
 
+export interface ReportPdfTicket {
+  ticket: string;
+}
+
 export interface ExportServiceReportInput {
   kind: "SERVICE";
   service_id: number;

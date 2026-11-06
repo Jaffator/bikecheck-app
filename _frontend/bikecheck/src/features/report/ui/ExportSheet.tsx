@@ -1,7 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Group, Loader, Stack, Text } from "@mantine/core";
-import { Capacitor } from "@capacitor/core";
 import { useTranslation } from "react-i18next";
 import { Check, Download, Link2, Share2, X } from "lucide-react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
@@ -210,9 +209,6 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   );
 }
 
-// A native webview has no download to hand a file to; the phone gets its own path in #371.
-const canDownloadPdf = !Capacitor.isNativePlatform();
-
 // A bike opens on the whole history; Service opens on the span its filter is on.
 function defaultChoice({ from, to }: ExportBikeReportInput): BikeReportChoice {
   return { components: true, history: true, period: { from: from ?? null, to: to ?? null } };
@@ -252,18 +248,16 @@ function PreviewActions({
   return (
     <>
       <Footer fill>
-        {canDownloadPdf && (
-          <Button
-            color="primary.6"
-            c="textDark.6"
-            radius="md"
-            leftSection={<Download size={16} />}
-            loading={pdf.isPending}
-            onClick={() => pdf.mutate(reportId)}
-          >
-            {t("report.downloadPdf")}
-          </Button>
-        )}
+        <Button
+          color="primary.6"
+          c="textDark.6"
+          radius="md"
+          leftSection={<Download size={16} />}
+          loading={pdf.isPending}
+          onClick={() => pdf.mutate(reportId)}
+        >
+          {t("report.downloadPdf")}
+        </Button>
         <Button
           variant="outline"
           radius="md"
@@ -274,14 +268,12 @@ function PreviewActions({
           {t("report.publish")}
         </Button>
       </Footer>
-      {canDownloadPdf && (
-        <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
-          {pdf.isError && <Failure>{t("report.pdfFailed")}</Failure>}
-          <Text fz={12} lh={1.4} c="var(--color-text-dim)">
-            {t("report.fileOrLinkHint")}
-          </Text>
-        </Box>
-      )}
+      <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
+        {pdf.isError && <Failure>{t("report.pdfFailed")}</Failure>}
+        <Text fz={12} lh={1.4} c="var(--color-text-dim)">
+          {t("report.fileOrLinkHint")}
+        </Text>
+      </Box>
     </>
   );
 }

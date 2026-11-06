@@ -1,5 +1,7 @@
 // React Query hooks for making, publishing and reading Reports.
 import { useCallback, useMemo } from "react";
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 import {
   useMutation,
   useQuery,
@@ -15,6 +17,7 @@ import {
   fetchOwnedPdf,
   getPublicReport,
   listMyReports,
+  ownedPdfTicketUrl,
   publicAttachmentUrl,
   publicReportPdfUrl,
   publishReport,
@@ -97,10 +100,16 @@ export function useDiscardReport(): UseMutationResult<ReportSummary, Error, numb
   });
 }
 
-// Printing writes nothing, so no list has anything new to say.
+// Printing writes nothing, so no list has anything new to say. A webview has no download to
+// hand a blob to, so the phone opens the file in its own browser instead.
 export function useDownloadReportPdf(): UseMutationResult<void, Error, number> {
   return useMutation({
     mutationFn: async (id: number) => {
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url: await ownedPdfTicketUrl(id) });
+        return;
+      }
+
       const { blob, filename } = await fetchOwnedPdf(id);
       saveFile(blob, filename);
     },

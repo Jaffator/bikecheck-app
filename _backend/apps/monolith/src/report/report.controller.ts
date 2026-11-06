@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Headers,
   Param,
   ParseIntPipe,
@@ -18,7 +19,12 @@ import { ReportService } from './report.service';
 import { PRINT_KEY_HEADER } from './report-pdf.service';
 import { ReportAttachmentFile, ReportPdfFile, ReportSnapshot } from './report.types';
 import { ExportReportDto } from './dto/export-report.dto';
-import { ResponseExportedReportDto, ResponseReportBulkDto, ResponseReportDto } from './dto/response-report.dto';
+import {
+  ResponseExportedReportDto,
+  ResponsePdfTicketDto,
+  ResponseReportBulkDto,
+  ResponseReportDto,
+} from './dto/response-report.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
@@ -163,6 +169,31 @@ export class ReportController {
     return this.download(await this.reportService.ownedPdf(id, Number(userId)));
   }
 
+  // ---------- POST the caller's own PDF behind a ticket ----------
+  // The same browser launch per request, and the same limit, as the PDF routes above.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: "Print the caller's own report and hold it behind a one-read ticket" })
+  @ApiResponse({ status: 201, type: ResponsePdfTicketDto })
+  @Post(':id/pdf-ticket')
+  async createPdfTicket(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('userId') userId: string,
+  ): Promise<ResponsePdfTicketDto> {
+    return { ticket: await this.reportService.pdfTicket(id, Number(userId)) };
+  }
+
+  // ---------- GET a held PDF by its ticket (no auth) ----------
+  // Inline, so the phone's browser opens the file and offers its own save and share. No-store,
+  // or a cache could answer a ticket that was already used.
+  @Public()
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Read a held PDF once, by its ticket' })
+  @ApiResponse({ status: 200 })
+  @Get('pdf-ticket/:ticket')
+  getTicketPdf(@Param('ticket') ticket: string): StreamableFile {
+    return this.download(this.reportService.claimPdf(ticket), 'inline');
+  }
+
   // ---------- GET one attachment behind a share link (no auth) ----------
   @Public()
   @ApiOperation({ summary: 'Stream one attachment of a published report' })
@@ -189,12 +220,12 @@ export class ReportController {
     return this.stream(attachment);
   }
 
-  private download(file: ReportPdfFile): StreamableFile {
+  private download(file: ReportPdfFile, disposition: 'attachment' | 'inline' = 'attachment'): StreamableFile {
     const encoded = encodeURIComponent(file.filename);
 
     return new StreamableFile(file.body, {
       type: 'application/pdf',
-      disposition: `attachment; filename="${encoded}"; filename*=UTF-8''${encoded}`,
+      disposition: `${disposition}; filename="${encoded}"; filename*=UTF-8''${encoded}`,
       length: file.body.length,
     });
   }

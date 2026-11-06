@@ -321,6 +321,22 @@ export class ReportService {
     return { body, filename: this.pdfFilename(this.storedSnapshot(report).document) };
   }
 
+  // The phone's way to the same file, for a system browser with no session. Printed here, so
+  // a failure reaches the app that asked rather than a browser tab (ADR 0012).
+  async pdfTicket(id: number, userId: number): Promise<string> {
+    return this.pdf.hold(await this.ownedPdf(id, userId));
+  }
+
+  // Missing, wrong, expired and used all leave by the same door as a closed link.
+  claimPdf(ticket: string): ReportPdfFile {
+    const file = this.pdf.claim(ticket);
+    if (file === null) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return file;
+  }
+
   // What chromium reads on that print. Past the closed link only with a key minted for this
   // report; anything else leaves by the same door as a closed link. Counts no view.
   async printedSnapshot(token: string, key: string): Promise<ReportSnapshot> {

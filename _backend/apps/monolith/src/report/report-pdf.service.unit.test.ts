@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { PRINT_KEY_HEADER, ReportPdfService } from './report-pdf.service';
+import { hidePdfTicket, PRINT_KEY_HEADER, ReportPdfService } from './report-pdf.service';
 
 // The browser is the boundary: what matters here is what the printer hands it and when.
 jest.mock('playwright', () => ({
@@ -13,6 +13,7 @@ const PRINT_URL = `https://app.bikecheck.cloud/r/${TOKEN}?print=1`;
 const API_READ = new URL(`https://app.bikecheck.cloud/api/reports/public/${TOKEN}?print=1`);
 const START = new Date('2026-07-01T12:00:00.000Z');
 const SIXTY_ONE_SECONDS_MS = 61_000;
+const FILE = { body: Buffer.from('%PDF-1.7 printed'), filename: 'bike-report-2026-07-01.pdf' };
 
 type Forward = (options: { headers: Record<string, string> }) => Promise<void>;
 type Handler = (route: {
@@ -170,5 +171,57 @@ describe('ReportPdfService', () => {
     it('refuses a key nobody minted', () => {
       expect(service.admits(TOKEN, 'made-up')).toBe(false);
     });
+  });
+
+  describe('hold and claim', () => {
+    it('hands the file over for a 32-byte ticket', () => {
+      const ticket = service.hold(FILE);
+
+      expect(ticket).toMatch(/^[0-9a-f]{64}$/);
+      expect(service.claim(ticket)).toBe(FILE);
+    });
+
+    it('refuses a ticket already used', () => {
+      const ticket = service.hold(FILE);
+      service.claim(ticket);
+
+      expect(service.claim(ticket)).toBeNull();
+    });
+
+    it('refuses a ticket past its minute, and drops the file', () => {
+      const ticket = service.hold(FILE);
+
+      jest.advanceTimersByTime(SIXTY_ONE_SECONDS_MS);
+
+      expect(service.claim(ticket)).toBeNull();
+      expect(jest.getTimerCount()).toBe(0);
+    });
+
+    it('refuses a ticket nobody minted', () => {
+      service.hold(FILE);
+
+      expect(service.claim('made-up')).toBeNull();
+    });
+
+    it('mints a new ticket for every file', () => {
+      expect(service.hold(FILE)).not.toBe(service.hold(FILE));
+    });
+
+    // Two secrets, two doors: a ticket is no print key.
+    it('admits no ticket as a print key', () => {
+      expect(service.admits(TOKEN, service.hold(FILE))).toBe(false);
+    });
+  });
+});
+
+describe('hidePdfTicket', () => {
+  it('blanks the ticket in a logged address', () => {
+    expect(hidePdfTicket('/api/reports/pdf-ticket/abc123')).toBe('/api/reports/pdf-ticket/-');
+    expect(hidePdfTicket('/api/reports/pdf-ticket/abc123?x=1')).toBe('/api/reports/pdf-ticket/-?x=1');
+  });
+
+  it('leaves every other address alone', () => {
+    expect(hidePdfTicket('/api/reports/12/pdf-ticket')).toBe('/api/reports/12/pdf-ticket');
+    expect(hidePdfTicket('/api/reports/public/token/pdf')).toBe('/api/reports/public/token/pdf');
   });
 });

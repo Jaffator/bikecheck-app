@@ -35,6 +35,8 @@ describe('ReportService', () => {
     print: jest.fn(),
     printWithKey: jest.fn(),
     admits: jest.fn(),
+    hold: jest.fn(),
+    claim: jest.fn(),
   };
 
   const mockStorage = {
@@ -1255,6 +1257,55 @@ describe('ReportService', () => {
       const file = await service.ownedPdf(REPORT_ID, OWNER_ID);
 
       expect(Object.keys(file).sort()).toEqual(['body', 'filename']);
+    });
+  });
+
+  describe('pdfTicket', () => {
+    it('prints first, so a failed print never reaches the system browser', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+      mockPdf.printWithKey.mockRejectedValue(new Error('chromium crashed'));
+
+      await expect(service.pdfTicket(REPORT_ID, OWNER_ID)).rejects.toThrow('chromium crashed');
+
+      expect(mockPdf.hold).not.toHaveBeenCalled();
+    });
+
+    it('holds the printed file behind a ticket and leaves the share link as it was', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+      mockPdf.hold.mockReturnValue('the-ticket');
+
+      const ticket = await service.pdfTicket(REPORT_ID, OWNER_ID);
+
+      expect(ticket).toBe('the-ticket');
+      expect(mockPdf.hold).toHaveBeenCalledWith(expect.objectContaining({ filename: 'service-report-2026-07-01.pdf' }));
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    it("mints nothing for someone else's report", async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(null);
+
+      await expect(service.pdfTicket(REPORT_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
+
+      expect(mockPrisma.reports.findFirst).toHaveBeenCalledWith({ where: { id: REPORT_ID, user_id: STRANGER_ID } });
+      expect(mockPdf.printWithKey).not.toHaveBeenCalled();
+      expect(mockPdf.hold).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('claimPdf', () => {
+    it('hands over what the ticket holds', () => {
+      const file = { body: Buffer.from('%PDF-1.7 printed'), filename: 'bike-report-2026-07-01.pdf' };
+      mockPdf.claim.mockReturnValue(file);
+
+      expect(service.claimPdf('the-ticket')).toBe(file);
+    });
+
+    it('answers a dead ticket as a closed link does, and reads nothing', () => {
+      mockPdf.claim.mockReturnValue(null);
+
+      expect(() => service.claimPdf('wrong')).toThrow(GoneException);
+      expect(() => service.claimPdf('wrong')).toThrow('This report is no longer available');
+      expect(mockPrisma.reports.findUnique).not.toHaveBeenCalled();
     });
   });
 

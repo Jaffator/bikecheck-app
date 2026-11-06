@@ -1410,6 +1410,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/{id}/pdf-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Print the caller's own report and hold it behind a one-read ticket */
+        post: operations["Report createPdfTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/pdf-ticket/{ticket}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a held PDF once, by its ticket */
+        get: operations["Report getTicketPdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/public/{token}/attachment/{attachmentId}": {
         parameters: {
             query?: never;
@@ -3635,6 +3669,10 @@ export interface components {
              * @example true
              */
             hasHistory: boolean;
+        };
+        ResponsePdfTicketDto: {
+            /** @description Goes in GET /reports/pdf-ticket/:ticket */
+            ticket: string;
         };
         ResponseExportedReportDto: {
             /** @example 1 */
@@ -6779,6 +6817,46 @@ export interface operations {
             header?: never;
             path: {
                 id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Report createPdfTicket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponsePdfTicketDto"];
+                };
+            };
+        };
+    };
+    "Report getTicketPdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket: string;
             };
             cookie?: never;
         };

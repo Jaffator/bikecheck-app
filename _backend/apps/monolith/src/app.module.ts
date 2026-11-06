@@ -9,6 +9,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './_filters/all-exceptions.filter';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UserThrottlerGuard } from './_guards/user-throttler.guard';
+import { hidePdfTicket } from './report/report-pdf.service';
 import { BikeModule } from './bike/bike.module';
 import { BikeEventModule } from './bike-event/bike-event.module';
 import { ComponentModuleModule } from './component/component.module';
@@ -107,6 +108,12 @@ const lokiHost = process.env.LOKI_HOST ?? (isProductionEnv ? undefined : 'http:/
           'req.headers["x-report-print-key"]',
           'res.headers["set-cookie"]',
         ],
+        serializers: {
+          req: (req: { url: string }): { url: string } => {
+            req.url = hidePdfTicket(req.url);
+            return req;
+          },
+        },
       },
     }),
     UserModule,

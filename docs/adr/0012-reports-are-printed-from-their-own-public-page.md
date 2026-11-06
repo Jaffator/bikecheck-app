@@ -29,6 +29,18 @@ or share the session's. A key stored on the Report would need a migration for so
 under a minute. So keys sit in the memory of the process that printed them. That relies on one
 monolith answering both the owner and chromium, which is how production runs.
 
+The phone cannot save a blob from a webview, and its system browser has no session, so it needs an
+address of its own. The app asks for a ticket with its session; the server prints the Report there
+and then, holds the file in memory and answers 32 random bytes, which the app puts in
+`/reports/pdf-ticket/:ticket` and opens in the system browser. Printing first means a failure
+reaches the app, where the export window can say so, and the address does nothing but hand over
+bytes: it opens no Report, launches no browser and answers for no Share Link.
+
+That secret does sit in an address, so it is good for one read and 60 seconds, and it is dead by the
+time an access log line is written. Both logs blank it anyway. A reload in the browser is refused, so
+the owner taps Stáhnout PDF again. It lives in memory for the reason the print key does, and a
+stored file would outlive the window that made it.
+
 ## Consequences
 
 - **The public web build is a hard dependency.** Sharing and PDF both stop working until this app
@@ -39,10 +51,10 @@ monolith answering both the owner and chromium, which is how production runs.
 - **Closing the export window discards an unpublished Report**, so a file downloaded without
   publishing leaves nothing in Moje reporty.
 - A reader of a published Report still downloads the PDF from the public page.
-- A second monolith instance would have to share the keys, in Redis for instance, or chromium's
-  read could land on an instance that never minted its key.
-- The phone cannot save a blob from a webview, so it needs its own short-lived address for the
-  file. No file plugins are needed for that either.
+- A second monolith instance would have to share the keys and held files, in Redis for instance,
+  or a read could land on an instance that never minted them.
+- No file plugins: the phone's browser keeps or sends the file. A held file may outlive its Report
+  by up to a minute, as a file already downloaded would.
 - The preview in the export sheet, the public page and the PDF are one component fed from three
   places, so what the owner reviewed is what the recipient reads.
 - The page is empty HTML until its script runs, and the crawlers that build link previews do not

@@ -24,6 +24,7 @@ const itWithBrowser = browserInstalled ? it : it.skip;
 const CHROMIUM_TIMEOUT_MS = 60_000;
 const GONE = 410;
 const WRONG_KEY = 'a'.repeat(64);
+const EXPIRED_TICKET_MS = 61_000;
 
 interface OpenedPage {
   url: string;
@@ -257,6 +258,109 @@ describe('ReportController (e2e)', () => {
         expect(JSON.stringify(opened)).not.toContain(key);
 
         await readAsStranger(token).set(PRINT_KEY_HEADER, key).expect(GONE);
+      },
+      CHROMIUM_TIMEOUT_MS,
+    );
+  });
+
+  // The phone's system browser has no session, so a ticket from the owner is all it carries.
+  describe('POST /reports/:id/pdf-ticket', () => {
+    const mintTicket = async (reportId: number): Promise<string> => {
+      const response = await request(app.getHttpServer())
+        .post(`/api/reports/${reportId}/pdf-ticket`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(201);
+
+      return (response.body as { ticket: string }).ticket;
+    };
+
+    const follow = (ticket: string): request.Test =>
+      request(app.getHttpServer()).get(`/api/reports/pdf-ticket/${ticket}`).responseType('blob');
+
+    it('asks for a session', async () => {
+      const report = await exportReport();
+
+      await request(app.getHttpServer()).post(`/api/reports/${report.id}/pdf-ticket`).expect(401);
+    });
+
+    it("mints nothing for another user's report", async () => {
+      const report = await exportReport();
+      const hold = jest.spyOn(app.get(ReportPdfService), 'hold');
+
+      await request(app.getHttpServer())
+        .post(`/api/reports/${report.id}/pdf-ticket`)
+        .set('Authorization', `Bearer ${strangerToken}`)
+        .expect(404);
+
+      expect(hold).not.toHaveBeenCalled();
+      expect(opened).toEqual([]);
+    });
+
+    it('refuses a wrong ticket as a closed link does', async () => {
+      await follow(WRONG_KEY).expect(GONE);
+    });
+
+    it('answers no address without a ticket', async () => {
+      const response = await request(app.getHttpServer()).get('/api/reports/pdf-ticket/');
+
+      expect(response.status).not.toBe(200);
+    });
+
+    it('refuses an expired ticket', async () => {
+      const printer = app.get(ReportPdfService);
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'setInterval', 'hrtime', 'performance'] });
+      const ticket = printer.hold({ body: Buffer.from('%PDF-1.7'), filename: 'bike-report.pdf' });
+      jest.advanceTimersByTime(EXPIRED_TICKET_MS);
+      jest.useRealTimers();
+
+      await follow(ticket).expect(GONE);
+    });
+
+    it('keeps a print key and a ticket apart', async () => {
+      const report = await exportReport();
+      const ticket = app.get(ReportPdfService).hold({ body: Buffer.from('%PDF-1.7'), filename: 'bike-report.pdf' });
+
+      await readAsStranger(report.public_token).set(PRINT_KEY_HEADER, ticket).expect(GONE);
+    });
+
+    itWithBrowser(
+      'serves the closed report once, to whoever holds the ticket, and keeps it out of any cache',
+      async () => {
+        const report = await exportReport();
+        token = report.public_token;
+
+        const ticket = await mintTicket(report.id);
+        const response = await follow(ticket).expect(200);
+
+        expect(response.headers['content-type']).toBe('application/pdf');
+        expect(response.headers['content-disposition']).toContain('inline; filename="bike-report-');
+        expect(response.headers['cache-control']).toBe('no-store');
+        expect((response.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+
+        await follow(ticket).expect(GONE);
+      },
+      CHROMIUM_TIMEOUT_MS,
+    );
+
+    itWithBrowser(
+      'leaves the share link closed and tells chromium nothing of the ticket',
+      async () => {
+        const report = await exportReport();
+        token = report.public_token;
+
+        const ticket = await mintTicket(report.id);
+        await follow(ticket).expect(200);
+
+        expect(JSON.stringify(opened)).not.toContain(ticket);
+        await readAsStranger(token).expect(GONE);
+        await readAsStranger(`${token}/pdf`).expect(GONE);
+
+        const mine = await request(app.getHttpServer())
+          .get(`/api/reports/mine?bikeId=${bikeId}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .expect(200);
+        const listed = (mine.body as { id: number }[]).find((entry) => entry.id === report.id);
+        expect(listed).toMatchObject({ is_public: false, view_count: 0 });
       },
       CHROMIUM_TIMEOUT_MS,
     );
