@@ -30,6 +30,7 @@ import type { Bike, RiddenBike } from "@/features/bikes/bikes.types";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikePhoto } from "@/features/bikes/ui/BikePhoto";
+import { BikeShareMarks } from "@/features/bikes/ui/BikeShareMarks";
 import { BikeActionTiles } from "@/features/bikes/ui/BikeActionTiles";
 import { BikeComponentsSection } from "@/features/components/ui/BikeComponentsSection";
 import { useRecentServices } from "@/features/service/service.queries";
@@ -158,6 +159,7 @@ function Photo({ bike, trackedActions }: { bike: Bike; trackedActions: TrackedAc
   return (
     <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
       <Stack gap={6} align="flex-end">
+        <BikeShareMarks bike={bike} />
         <HealthBadge actions={trackedActions} />
         <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
       </Stack>

@@ -14,6 +14,7 @@ import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import { useConnectStrava, useLinkStravaGear } from "@/features/strava/strava.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { BikePhoto } from "@/features/bikes/ui/BikePhoto";
+import { BikeShareMarks } from "@/features/bikes/ui/BikeShareMarks";
 import { BikeActionTiles } from "@/features/bikes/ui/BikeActionTiles";
 import { BikeStravaCard } from "@/features/strava/ui/BikeStravaCard";
 import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
@@ -172,6 +173,7 @@ export function BikeDetail(): ReactElement {
         <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
           {/* The same corner, in the same order, as the garage card keeps its badges. */}
           <Stack gap={6} align="flex-end">
+            <BikeShareMarks bike={bike} />
             <HealthBadge actions={trackedActions ?? []} />
             <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
           </Stack>

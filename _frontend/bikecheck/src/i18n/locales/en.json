@@ -1279,6 +1279,8 @@
     "deleteConfirmCancel": "Keep it",
     "deleteFailed": "Could not delete the report. Try again.",
     "bulkActions": "Bulk actions",
+    "liveLinks_one": "{{count}} public link",
+    "liveLinks_other": "{{count}} public links",
     "revokeAll": "Revoke every link",
     "deleteAll": "Delete closed reports",
     "revokeAllConfirmTitle": "Revoke every link?",

@@ -13,7 +13,7 @@ import {
   useRevokeAllReports,
   useRevokeReport,
 } from "@/features/report/report.queries";
-import type { ReportSummary } from "@/features/report/report.types";
+import { isLive } from "@/features/report/reportLive";
 import { useHeaderStore } from "@/store/store";
 import { EmptyReports } from "./EmptyReports";
 
@@ -30,11 +30,6 @@ function parseBikeId(raw: string | null): number | null {
 
 // Which act the owner is about to run across the whole list. Null keeps both shut.
 type Sweep = "revokeAll" | "deleteAll";
-
-// A link still open is one revoking would actually close.
-function isLive(report: ReportSummary): boolean {
-  return report.is_public && !report.revoked;
-}
 
 // Everything the owner has out in their name, newest first. Arriving from a bike detail
 // narrows it to that bike, so the owner is not hunting through every link they ever made.

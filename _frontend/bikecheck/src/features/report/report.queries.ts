@@ -28,6 +28,7 @@ import type {
   ReportSnapshot,
   ReportSummary,
 } from "./report.types";
+import { isLive } from "./reportLive";
 import type { ApiError } from "@/api/client";
 
 // Every Report the owner has made, newest first. Metadata only, so the list stays cheap
@@ -37,6 +38,12 @@ export function useMyReports(bikeId?: number): UseQueryResult<ReportSummary[]> {
     queryKey: ["reports", "mine", bikeId ?? "all"],
     queryFn: () => listMyReports(bikeId),
   });
+}
+
+// One bike's open links, read off the whole-garage list so a garage of cards stays one request.
+export function useLiveReportCount(bikeId: number): number {
+  const { data: reports } = useMyReports();
+  return (reports ?? []).filter((report) => report.bike_id === bikeId && isLive(report)).length;
 }
 
 // Making a Report adds one to what the owner has out in their name.

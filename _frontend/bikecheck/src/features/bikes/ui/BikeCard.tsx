@@ -9,6 +9,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { lastRideDate } from "@/features/bikes/lastRideDate";
 import { BikePhoto } from "./BikePhoto";
+import { BikeShareMarks } from "./BikeShareMarks";
 import { attentionColor, barFill, QUIET_BELOW, worstAction } from "@/features/service_tracking/attentionLevel";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
@@ -132,6 +133,7 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
       <BikePhoto imageUrl={bike.image_url} title={title} subtitle={bike.bikename} titleSize={20}>
         {/* Stack overall bike badges in the photo's bottom corner. */}
         <Stack gap={6} align="flex-end">
+          <BikeShareMarks bike={bike} />
           <HealthBadge actions={actions ?? []} />
           <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
         </Stack>
