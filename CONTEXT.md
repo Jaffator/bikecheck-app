@@ -35,9 +35,10 @@ _Avoid_: Pending ride
 
 **AI Review**:
 A few casual sentences with a 1–5 star rating that Gemini writes about one ride, from its figures
-and its Bike's name, the first time its owner opens it. Kept on the ride, as its `summary`, until
-the ride changes: a Strava re-sync or a move to another Bike clears it, and the next open writes it
-again (ADR 0044).
+and its Bike's name if it has one, as a fresh ride arrives, or else the first time its owner opens
+it. Kept on the ride, as its `summary`, and carried over when an Unassigned Ride gets a Bike. New
+figures from Strava or a move to another Bike clear it, and the next open writes it again
+(ADR 0044, ADR 0046).
 _Avoid_: AI mechanic
 
 **Archived Bike**:

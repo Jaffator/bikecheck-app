@@ -23,7 +23,9 @@ import {
   markCheckInPromptSeen,
   saveRideCheckIn,
 } from "./rides.api";
+import type { RideItem } from "./rideDetail";
 import type { CheckInPrompt, RideAiSummary, RideCheckIn, RidePage } from "./rides.types";
+import { getPendingRideAiSummary } from "@/features/strava/strava.api";
 import { TABLE_PAGE_SIZE, type RideFilter } from "./ridesTable";
 
 // Limits each request payload.
@@ -91,10 +93,13 @@ export function useBikeRideCount(bikeId: number | null): UseQueryResult<number> 
 }
 
 // Under "rides", so a bike change, which clears the review on the server, asks for it again.
-export function useRideAiSummary(rideId: number): UseQueryResult<RideAiSummary, ApiError> {
+// Not under "pendingRides": assigning a ride would refetch a review it no longer has.
+export function useRideAiSummary(item: RideItem): UseQueryResult<RideAiSummary, ApiError> {
   return useQuery({
-    queryKey: ["rides", rideId, "ai-summary"],
-    queryFn: () => getRideAiSummary(rideId),
+    queryKey:
+      item.kind === "ride" ? ["rides", item.ride.id, "ai-summary"] : ["pendingRideSummary", item.ride.activity_id],
+    queryFn: () =>
+      item.kind === "ride" ? getRideAiSummary(item.ride.id) : getPendingRideAiSummary(item.ride.activity_id),
     // A failure stays hidden until the next open; a retry would only ask Gemini again.
     retry: false,
   });

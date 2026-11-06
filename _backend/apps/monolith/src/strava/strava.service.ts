@@ -1,9 +1,11 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import type { strava_pending_activities } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import { RideService } from '../ride/ride.service';
+import { GeminiService } from '../gemini/gemini.service';
 import {
   BRAKE_PAD_PART,
   carried,
@@ -18,8 +20,8 @@ import type { PendingActivities } from '../notification/notification-types.confi
 import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
-import { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
-import { toCheckInPendingDto, toPendingDto } from './pending-activity';
+import { ResponseCheckInPendingDto, ResponseRideSummaryDto } from '../ride/dto/response-ride.dto';
+import { analysisOf, pendingSummaryInput, toCheckInPendingDto, toPendingDto } from './pending-activity';
 import { unlinkStravaAthlete } from './unlink-strava-athlete';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
@@ -29,6 +31,8 @@ import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
 const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 // The window starts at the last sync; this caps how far back a first or late sync walks.
 const SYNC_LOOKBACK_MS = 60 * 24 * 60 * 60 * 1000;
+// A sync lands old rides through the same pipeline; those wait for an open, so a backlog pays nothing.
+const FRESH_RIDE_MS = 48 * 60 * 60 * 1000;
 
 interface SplitMetricEntry {
   distance: number;
@@ -88,6 +92,25 @@ function caloriesOf(rawJson: unknown): number | null {
   return typeof calories === 'number' && Number.isFinite(calories) ? Math.round(calories) : null;
 }
 
+function isFresh(startedAt: string): boolean {
+  return Date.now() - new Date(startedAt).getTime() < FRESH_RIDE_MS;
+}
+
+interface ReviewedRide {
+  distance_m: number | null;
+  duration_min: number | null;
+  elevation_up_m: number | null;
+}
+
+// What a review reads as the ride's size, so a rename alone keeps it.
+function reviewedFigures(ride: ReviewedRide): string {
+  return [ride.distance_m, ride.duration_min, ride.elevation_up_m].map((figure) => Math.round(figure ?? 0)).join();
+}
+
+function reviewedFiguresOf(analyzed: StravaActivityData['analyzedData']): string {
+  return reviewedFigures({ ...analyzed, distance_m: analyzed.distance_km * 1000 });
+}
+
 @Injectable()
 export class StravaEventsService {
   constructor(
@@ -96,6 +119,7 @@ export class StravaEventsService {
     private readonly notificationService: NotificationService,
     private readonly serviceTracking: ServiceTrackingService,
     private readonly rides: RideService,
+    private readonly gemini: GeminiService,
   ) {}
 
   /**
@@ -380,7 +404,7 @@ export class StravaEventsService {
     // Lookup user and bike by Strava IDs
     const user = await this.prisma.users.findFirst({
       where: { strava_athlete_id: String(data.athleteid) },
-      select: { id: true },
+      select: { id: true, language: true },
     });
     if (!user) throw new Error('User not found for Strava athlete ID: ' + data.athleteid);
 
@@ -410,7 +434,11 @@ export class StravaEventsService {
       // Strava can send both "create" and "update" events for the same activity
       // (or redeliver a webhook), so upsert instead of create to avoid a unique
       // constraint violation on activity_id.
-      await this.prisma.strava_pending_activities.upsert({
+      const parked = await this.prisma.strava_pending_activities.findUnique({
+        where: { activity_id: data.activity_id },
+      });
+      const stale = parked !== null && reviewedFiguresOf(analysisOf(parked)) !== reviewedFiguresOf(data.analyzedData);
+      const pending = await this.prisma.strava_pending_activities.upsert({
         where: { activity_id: data.activity_id },
         create: {
           activity_id: data.activity_id,
@@ -421,6 +449,7 @@ export class StravaEventsService {
         update: {
           gear_id: data.gearid,
           analyzed_data: data.analyzedData,
+          ...(stale ? { summary: null } : {}),
         },
       });
 
@@ -442,6 +471,9 @@ export class StravaEventsService {
         // either. The badge counts these, so the ask has to be one row per ride.
         dedupKey: `unassigned:${data.activity_id}`,
       });
+      if (parked === null && isFresh(data.analyzedData.started_at)) {
+        this.writeInBackground(this.writePendingSummary(pending, user.language));
+      }
       return { message: 'Not linked bike, activity saved to pending' };
     } else if (bikeId && user) {
       const result = await this.saveRide(bikeId, user.id, data.activity_id, data.analyzedData);
@@ -470,9 +502,25 @@ export class StravaEventsService {
             bikeName: bikeRow ? [bikeRow.bike_brand, bikeRow.bike_model, bikeRow.year].filter(Boolean).join(' ') : '',
           },
         });
+        if (isFresh(data.analyzedData.started_at))
+          this.writeInBackground(this.rides.writeArrivalSummary(result.rideId));
       }
       return { message: result.message };
     }
+  }
+
+  // Not awaited: Gemini takes seconds and the queue runs one job at a time. A miss is written on open.
+  private writeInBackground(writing: Promise<void>): void {
+    writing.catch((error: unknown) => this.logger.error({ err: error }, 'Arrival review not written'));
+  }
+
+  // One already written by an open stays.
+  private async writePendingSummary(pending: strava_pending_activities, language: string | null): Promise<void> {
+    const summary = await this.gemini.rideSummary(pendingSummaryInput(pending), language);
+    await this.prisma.strava_pending_activities.updateMany({
+      where: { id: pending.id, summary: null },
+      data: { summary },
+    });
   }
 
   // Dismissed = resolved in Pending without ever becoming a ride.
@@ -515,6 +563,20 @@ export class StravaEventsService {
     });
     if (!pending) throw new NotFoundException('Pending activity not found');
     return toPendingDto(pending);
+  }
+
+  // The review an Unassigned Ride shows, written here when arrival left none (ADR 0046).
+  async findPendingSummary(userId: number, activityId: bigint): Promise<ResponseRideSummaryDto> {
+    const pending = await this.prisma.strava_pending_activities.findFirst({
+      where: { user_id: userId, activity_id: activityId, resolved_at: null },
+    });
+    if (!pending) throw new NotFoundException('Pending activity not found');
+    if (pending.summary) return { summary: pending.summary };
+
+    const user = await this.prisma.users.findUnique({ where: { id: userId }, select: { language: true } });
+    const summary = await this.gemini.rideSummary(pendingSummaryInput(pending), user?.language ?? null);
+    await this.prisma.strava_pending_activities.update({ where: { id: pending.id }, data: { summary } });
+    return { summary };
   }
 
   /**
@@ -620,8 +682,7 @@ export class StravaEventsService {
       });
       if (!pending) throw new NotFoundException('No pending activity found');
 
-      const analyzedData = pending.analyzed_data as StravaActivityData['analyzedData'];
-      ({ rideId } = await this.saveRide(params.bikeId, params.userId, Number(pending.activity_id), analyzedData));
+      rideId = await this.saveFromPending(params.bikeId, pending);
       await this.prisma.strava_pending_activities.update({
         where: { id: pending.id },
         data: { resolved_at: new Date() },
@@ -634,8 +695,7 @@ export class StravaEventsService {
         where: { user_id: params.userId, gear_id: null, resolved_at: null },
       });
       for (const activity of pending) {
-        const analyzedData = activity.analyzed_data as StravaActivityData['analyzedData'];
-        await this.saveRide(params.bikeId, params.userId, Number(activity.activity_id), analyzedData);
+        await this.saveFromPending(params.bikeId, activity);
         await this.prisma.strava_pending_activities.update({
           where: { id: activity.id },
           data: { resolved_at: new Date() },
@@ -675,8 +735,7 @@ export class StravaEventsService {
 
       for (const activity of pending) {
         if (activity.gear_id === bike.strava_gear_id) {
-          const analyzedData = activity.analyzed_data as StravaActivityData['analyzedData'];
-          await this.saveRide(bike.id, userId, Number(activity.activity_id), analyzedData);
+          await this.saveFromPending(bike.id, activity);
           await this.prisma.strava_pending_activities.update({
             where: { id: activity.id },
             data: { resolved_at: new Date() },
@@ -692,6 +751,13 @@ export class StravaEventsService {
     // Linking gear can backfill a season onto several bikes at once. Each is evaluated
     // once, at the end, so each says where it stands rather than how it got there.
     await this.serviceTracking.evaluateBikes(touched, userId);
+  }
+
+  // The review written while the ride waited stays with it, though it names no bike.
+  private async saveFromPending(bikeId: number, pending: strava_pending_activities): Promise<number> {
+    const { rideId } = await this.saveRide(bikeId, pending.user_id, Number(pending.activity_id), analysisOf(pending));
+    if (pending.summary) await this.prisma.rides.update({ where: { id: rideId }, data: { summary: pending.summary } });
+    return rideId;
   }
 
   /**
@@ -741,8 +807,8 @@ export class StravaEventsService {
         started_at: new Date(analyzedData.started_at),
         json_data: JSON.stringify(analyzedData.rawJson),
         calories: caloriesOf(analyzedData.rawJson),
-        // The figures may have changed, so the next open writes the review again (ADR 0044).
-        summary: null,
+        // New figures send the next open back to Gemini (ADR 0046).
+        ...(existingRide && reviewedFigures(existingRide) !== reviewedFiguresOf(analyzedData) ? { summary: null } : {}),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
         descent_min: analyzedData.descent_min ?? null,
         distance_m: analyzedData.distance_km * 1000,

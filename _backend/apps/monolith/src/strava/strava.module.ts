@@ -7,6 +7,7 @@ import { NotificationModule } from '../notification/notification.module';
 import { StravaController } from './strava.controller';
 import { ServiceTrackingModule } from '../service-tracking/service-tracking.module';
 import { RideModule } from '../ride/ride.module';
+import { GeminiModule } from '../gemini/gemini.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RideModule } from '../ride/ride.module';
     NotificationModule,
     ServiceTrackingModule,
     RideModule,
+    GeminiModule,
   ],
   controllers: [StravaController],
   providers: [StravaEventsProcessor, StravaEventsService],

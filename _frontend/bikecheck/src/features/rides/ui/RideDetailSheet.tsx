@@ -213,7 +213,7 @@ interface RideAnswersProps {
   woreOff: ReactNode;
 }
 
-// The bike, how it rode, what it wore off and the AI review, which an Unassigned Ride has none of yet.
+// The bike, how it rode, what it wore off and the AI review.
 function RideAnswers({ item, checkIn, woreOff }: RideAnswersProps): ReactElement {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
@@ -243,11 +243,9 @@ function RideAnswers({ item, checkIn, woreOff }: RideAnswersProps): ReactElement
       )}
 
       {woreOff}
-      {item.kind === "ride" && (
-        <Box style={isDesktop ? PUSHED_DOWN : undefined}>
-          <RideAiSummary rideId={item.ride.id} />
-        </Box>
-      )}
+      <Box style={isDesktop ? PUSHED_DOWN : undefined}>
+        <RideAiSummary item={item} />
+      </Box>
     </Stack>
   );
 }

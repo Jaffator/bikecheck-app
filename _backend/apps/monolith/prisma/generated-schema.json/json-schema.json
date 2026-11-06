@@ -1997,6 +1997,12 @@
             "null"
           ],
           "format": "date-time"
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
