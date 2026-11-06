@@ -1,4 +1,4 @@
-// What makes a Report's link open, so the Reports list and the marks on a bike count the same ones.
+// Which Reports count as out there, so the Reports list and the marks on a bike agree.
 import type { ReportSummary } from "./report.types";
 
 // A link still open is one revoking would actually close.

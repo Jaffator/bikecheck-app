@@ -40,8 +40,8 @@ export function useMyReports(bikeId?: number): UseQueryResult<ReportSummary[]> {
   });
 }
 
-// One bike's open links, read off the whole-garage list so a garage of cards stays one request.
-export function useLiveReportCount(bikeId: number): number {
+// One bike's open Share Links, read off the whole-garage list so a garage of cards stays one request.
+export function useOpenLinkCount(bikeId: number): number {
   const { data: reports } = useMyReports();
   return (reports ?? []).filter((report) => report.bike_id === bikeId && isLive(report)).length;
 }
