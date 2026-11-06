@@ -46,7 +46,6 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   const isDesktop = useIsDesktop();
   const made = useExportReport();
   const publish = usePublishReport();
-  const pdf = useDownloadReportPdf();
   // Stable across renders, unlike the mutation object around it, so the effect below can
   // depend on it honestly.
   const startExport = made.mutate;
@@ -124,7 +123,6 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     setOptionsDone(false);
     made.reset();
     publish.reset();
-    pdf.reset();
     onClose();
   }
 
@@ -189,46 +187,16 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
         {publish.isError && <Failure>{t("report.publishFailed")}</Failure>}
       </Box>
 
-      {/* The file changes nothing, so the sheet stays open for the link. Publishing is a
-          distinct second tap, never something the preview does on the way past. */}
       {report !== null && !isPublished && (
-        <>
-          <Footer fill>
-            {canDownloadPdf && (
-              <Button
-                color="primary.6"
-                c="textDark.6"
-                radius="md"
-                leftSection={<Download size={16} />}
-                loading={pdf.isPending}
-                onClick={() => pdf.mutate(report.id)}
-              >
-                {t("report.downloadPdf")}
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              radius="md"
-              leftSection={<Link2 size={16} color="var(--mantine-color-primary-5)" />}
-              loading={publish.isPending}
-              onClick={() =>
-                publish.mutate(report.id, {
-                  onSuccess: (published) => setShareUrl(published.share_url),
-                })
-              }
-            >
-              {t("report.publish")}
-            </Button>
-          </Footer>
-          <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
-            {pdf.isError && <Failure>{t("report.pdfFailed")}</Failure>}
-            {canDownloadPdf && (
-              <Text fz={12} lh={1.4} c="var(--color-text-dim)">
-                {t("report.fileOrLinkHint")}
-              </Text>
-            )}
-          </Box>
-        </>
+        <PreviewActions
+          reportId={report.id}
+          publishing={publish.isPending}
+          onPublish={() =>
+            publish.mutate(report.id, {
+              onSuccess: (published) => setShareUrl(published.share_url),
+            })
+          }
+        />
       )}
 
       {isPublished && (
@@ -264,6 +232,58 @@ function bikeReportExport(input: ExportBikeReportInput, choice: BikeReportChoice
 function sheetWidth(showsDocument: boolean, needsOptions: boolean): number | undefined {
   if (showsDocument) return DOCUMENT_MODAL_WIDTH;
   return needsOptions ? OPTIONS_MODAL_WIDTH : undefined;
+}
+
+// The file changes nothing, so the sheet stays open for the link. Publishing is a distinct
+// second tap, never something the preview does on the way past.
+function PreviewActions({
+  reportId,
+  publishing,
+  onPublish,
+}: {
+  reportId: number;
+  publishing: boolean;
+  onPublish: () => void;
+}): ReactElement {
+  const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
+  const pdf = useDownloadReportPdf();
+
+  return (
+    <>
+      <Footer fill>
+        {canDownloadPdf && (
+          <Button
+            color="primary.6"
+            c="textDark.6"
+            radius="md"
+            leftSection={<Download size={16} />}
+            loading={pdf.isPending}
+            onClick={() => pdf.mutate(reportId)}
+          >
+            {t("report.downloadPdf")}
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          radius="md"
+          leftSection={<Link2 size={16} color="var(--mantine-color-primary-5)" />}
+          loading={publishing}
+          onClick={onPublish}
+        >
+          {t("report.publish")}
+        </Button>
+      </Footer>
+      {canDownloadPdf && (
+        <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
+          {pdf.isError && <Failure>{t("report.pdfFailed")}</Failure>}
+          <Text fz={12} lh={1.4} c="var(--color-text-dim)">
+            {t("report.fileOrLinkHint")}
+          </Text>
+        </Box>
+      )}
+    </>
+  );
 }
 
 // The link, and the two ways anyone actually sends one.

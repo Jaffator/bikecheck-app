@@ -33,7 +33,7 @@ describe('ReportService', () => {
 
   const mockPdf = {
     print: jest.fn(),
-    printClosed: jest.fn(),
+    printWithKey: jest.fn(),
     admits: jest.fn(),
   };
 
@@ -304,7 +304,7 @@ describe('ReportService', () => {
     });
 
     mockPdf.print.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
-    mockPdf.printClosed.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
+    mockPdf.printWithKey.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
     mockPdf.admits.mockReturnValue(false);
 
     // The caller owns the service and writes in English unless a test says otherwise.
@@ -1226,7 +1226,7 @@ describe('ReportService', () => {
 
       const file = await service.ownedPdf(REPORT_ID, OWNER_ID);
 
-      expect(mockPdf.printClosed).toHaveBeenCalledWith(`${ORIGIN}/r/token-1?print=1`, 'token-1');
+      expect(mockPdf.printWithKey).toHaveBeenCalledWith(`${ORIGIN}/r/token-1?print=1`, 'token-1');
       expect(file.filename).toBe('service-report-2026-07-01.pdf');
       expect(file.body.subarray(0, 5).toString()).toBe('%PDF-');
     });
@@ -1245,7 +1245,7 @@ describe('ReportService', () => {
       await expect(service.ownedPdf(REPORT_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
 
       expect(mockPrisma.reports.findFirst).toHaveBeenCalledWith({ where: { id: REPORT_ID, user_id: STRANGER_ID } });
-      expect(mockPdf.printClosed).not.toHaveBeenCalled();
+      expect(mockPdf.printWithKey).not.toHaveBeenCalled();
     });
 
     // What the owner's browser receives: the file and its name, so no key can ride along.
@@ -1265,7 +1265,7 @@ describe('ReportService', () => {
 
       const snapshot = await service.printedSnapshot('token-1', 'the-key');
 
-      expect(mockPdf.admits).toHaveBeenCalledWith('the-key', 'token-1');
+      expect(mockPdf.admits).toHaveBeenCalledWith('token-1', 'the-key');
       expect(snapshot.kind).toBe('SERVICE');
       expect(snapshot).not.toHaveProperty('private');
     });

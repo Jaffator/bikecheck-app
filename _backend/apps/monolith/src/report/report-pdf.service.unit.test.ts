@@ -67,14 +67,14 @@ describe('ReportPdfService', () => {
     jest.useRealTimers();
   });
 
-  describe('printClosed', () => {
+  describe('printWithKey', () => {
     it('admits its key for that report while the print runs', async () => {
       let admitted = false;
       whilePrinting = async (): Promise<void> => {
-        admitted = service.admits(await presentedKey(), TOKEN);
+        admitted = service.admits(TOKEN, await presentedKey());
       };
 
-      await service.printClosed(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
 
       expect(admitted).toBe(true);
     });
@@ -82,10 +82,10 @@ describe('ReportPdfService', () => {
     it('refuses the key for any other report', async () => {
       let admitted = true;
       whilePrinting = async (): Promise<void> => {
-        admitted = service.admits(await presentedKey(), OTHER_TOKEN);
+        admitted = service.admits(OTHER_TOKEN, await presentedKey());
       };
 
-      await service.printClosed(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
 
       expect(admitted).toBe(false);
     });
@@ -95,10 +95,10 @@ describe('ReportPdfService', () => {
       whilePrinting = async (): Promise<void> => {
         const key = await presentedKey();
         jest.setSystemTime(START.getTime() + SIXTY_ONE_SECONDS_MS);
-        admitted = service.admits(key, TOKEN);
+        admitted = service.admits(TOKEN, key);
       };
 
-      await service.printClosed(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
 
       expect(admitted).toBe(false);
     });
@@ -109,9 +109,9 @@ describe('ReportPdfService', () => {
         key = await presentedKey();
       };
 
-      await service.printClosed(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
 
-      expect(service.admits(key, TOKEN)).toBe(false);
+      expect(service.admits(TOKEN, key)).toBe(false);
     });
 
     it('refuses the key after a print that failed', async () => {
@@ -121,9 +121,9 @@ describe('ReportPdfService', () => {
         throw new Error('chromium crashed');
       };
 
-      await expect(service.printClosed(PRINT_URL, TOKEN)).rejects.toThrow('chromium crashed');
+      await expect(service.printWithKey(PRINT_URL, TOKEN)).rejects.toThrow('chromium crashed');
 
-      expect(service.admits(key, TOKEN)).toBe(false);
+      expect(service.admits(TOKEN, key)).toBe(false);
     });
 
     it('mints a new key for every print', async () => {
@@ -132,8 +132,8 @@ describe('ReportPdfService', () => {
         keys.push(await presentedKey());
       };
 
-      await service.printClosed(PRINT_URL, TOKEN);
-      await service.printClosed(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
 
       expect(keys[0]).not.toBe(keys[1]);
     });
@@ -144,7 +144,7 @@ describe('ReportPdfService', () => {
         key = await presentedKey();
       };
 
-      await service.printClosed(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
 
       const launched = (await (chromium.launch as jest.Mock).mock.results[0].value) as {
         newPage: () => Promise<{ goto: jest.Mock }>;
@@ -156,7 +156,7 @@ describe('ReportPdfService', () => {
 
     // A header set for the whole page would go to the CDN holding the bike photo too.
     it('presents the key only on the read of this report', async () => {
-      await service.printClosed(PRINT_URL, TOKEN);
+      await service.printWithKey(PRINT_URL, TOKEN);
 
       expect(matcher(API_READ)).toBe(true);
       expect(matcher(new URL(PRINT_URL))).toBe(false);
@@ -168,7 +168,7 @@ describe('ReportPdfService', () => {
 
   describe('admits', () => {
     it('refuses a key nobody minted', () => {
-      expect(service.admits('made-up', TOKEN)).toBe(false);
+      expect(service.admits(TOKEN, 'made-up')).toBe(false);
     });
   });
 });

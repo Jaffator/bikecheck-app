@@ -19,9 +19,10 @@ that one print and presents it itself.
 
 The key is 32 random bytes, tied to one Report, valid for 60 seconds and retired the moment the
 print ends. It travels only in the `x-report-print-key` header, added by chromium's request routing
-to the one API read of that Report. It is never in an address, so it reaches no access log, no
-referrer and no script on the page, and the web app does not know it exists. It is never returned
-to the owner, whose browser receives only the file.
+to the one API read of that Report. It is never in an address, so it reaches no referrer and no
+script on the page, and the web app does not know it exists. Access logs do record headers, so
+both on its way drop this one: the Caddyfile's log filter and the monolith's redact list. It is
+never returned to the owner, whose browser receives only the file.
 
 A signed key would need no memory, but it could not be retired and would either need a new secret
 or share the session's. A key stored on the Report would need a migration for something that lives

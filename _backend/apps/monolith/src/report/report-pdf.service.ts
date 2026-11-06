@@ -18,8 +18,8 @@ const PAGE_TIMEOUT_MS = 20_000;
 // per box, so a report running past one page would otherwise print page two edge to edge.
 const A4_MARGIN = { top: '16mm', right: '14mm', bottom: '16mm', left: '14mm' };
 
-// Carries the key to the API. A header rather than the address, so no log, referrer or page
-// script ever holds it (ADR 0012).
+// A header rather than the address, so no referrer or page script ever holds the key. Both
+// access logs drop it: the monolith's redact and the Caddyfile filter (ADR 0012).
 export const PRINT_KEY_HEADER = 'x-report-print-key';
 
 const PRINT_KEY_BYTES = 32;
@@ -46,14 +46,8 @@ export class ReportPdfService {
     return await this.capture(url);
   }
 
-  /**
-   * Prints a report whose Share Link may be closed. Chromium presents a key minted for this one
-   * print, and the link itself stays as it was.
-   * @param url The page to open
-   * @param token The report's token, the only one the key opens
-   * @returns The PDF bytes
-   */
-  async printClosed(url: string, token: string): Promise<Buffer> {
+  // The Share Link may be closed, so chromium presents a key minted for this one print.
+  async printWithKey(url: string, token: string): Promise<Buffer> {
     const key = randomBytes(PRINT_KEY_BYTES).toString('hex');
     this.printKeys.set(key, { token, expiresAt: Date.now() + PRINT_KEY_TTL_MS });
 
@@ -64,8 +58,7 @@ export class ReportPdfService {
     }
   }
 
-  // Whether this key was minted for this report and its print is still running.
-  admits(key: string, token: string): boolean {
+  admits(token: string, key: string): boolean {
     const printKey = this.printKeys.get(key);
 
     return printKey !== undefined && printKey.token === token && printKey.expiresAt > Date.now();

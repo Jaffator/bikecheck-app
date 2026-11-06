@@ -316,7 +316,7 @@ export class ReportService {
     const report = await this.findOwnedReport(id, userId);
     const token = report.public_token;
 
-    const body = await this.pdf.printClosed(this.printUrl(token), token);
+    const body = await this.pdf.printWithKey(this.printUrl(token), token);
 
     return { body, filename: this.pdfFilename(this.storedSnapshot(report).document) };
   }
@@ -324,16 +324,11 @@ export class ReportService {
   // What chromium reads on that print. Past the closed link only with a key minted for this
   // report; anything else leaves by the same door as a closed link. Counts no view.
   async printedSnapshot(token: string, key: string): Promise<ReportSnapshot> {
-    if (!this.pdf.admits(key, token)) {
+    if (!this.pdf.admits(token, key)) {
       throw new GoneException(REPORT_CLOSED_MESSAGE);
     }
 
-    const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
-    if (report === null) {
-      throw new GoneException(REPORT_CLOSED_MESSAGE);
-    }
-
-    return this.storedSnapshot(report).document;
+    return this.storedSnapshot(await this.reportByToken(token)).document;
   }
 
   // The same file on the owner's side, so the preview can open what it lists before any
@@ -645,8 +640,17 @@ export class ReportService {
   // Every public path starts here. Unpublished, revoked, expired and unknown all leave by
   // the same door, so a token cannot be probed for which of them it is.
   private async openReport(token: string): Promise<reports> {
+    const report = await this.reportByToken(token);
+    if (!this.isOpen(report)) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return report;
+  }
+
+  private async reportByToken(token: string): Promise<reports> {
     const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
-    if (report === null || !this.isOpen(report)) {
+    if (report === null) {
       throw new GoneException(REPORT_CLOSED_MESSAGE);
     }
 

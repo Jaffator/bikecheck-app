@@ -216,9 +216,9 @@ describe('ReportController (e2e)', () => {
         const printer = app.get(ReportPdfService);
         const admits = printer.admits.bind(printer);
         let readDuringPrint: Promise<number> | undefined;
-        jest.spyOn(printer, 'admits').mockImplementation((key, reportToken) => {
+        jest.spyOn(printer, 'admits').mockImplementation((reportToken, key) => {
           readDuringPrint ??= readAsStranger(token).then((reader) => reader.status);
-          return admits(key, reportToken);
+          return admits(reportToken, key);
         });
 
         await request(app.getHttpServer())
@@ -245,7 +245,7 @@ describe('ReportController (e2e)', () => {
           .responseType('blob')
           .expect(200);
 
-        const key = admits.mock.calls[0][0];
+        const key = admits.mock.calls[0][1];
         expect(key).toMatch(/^[0-9a-f]{64}$/);
 
         // Not to the owner's browser.
