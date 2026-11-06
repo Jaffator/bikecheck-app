@@ -1,8 +1,8 @@
 // The History Totals card: what the filtered history adds up to.
 import type { CSSProperties, ReactElement } from "react";
-import { Box, Button, Divider, Group, Skeleton, Stack, Text, Tooltip } from "@mantine/core";
-import { Download } from "lucide-react";
+import { Box, Divider, Group, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { ExportBikeButton } from "@/features/report/ui/ExportBikeButton";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { SERVICE_CARD_SURFACE } from "@/features/service/serviceCardSurface";
@@ -69,27 +69,7 @@ export function HistoryTotalsCard({
             </Text>
           </Stack>
           {/* Exports exactly what is summed above: the same Bike and the same Period. */}
-          <Tooltip
-            label={t("service.exportPickBike")}
-            disabled={onExport !== null}
-            events={{ hover: true, focus: false, touch: true }}
-          >
-            {/* A disabled button fires no hover, so the tooltip hangs on its wrapper. */}
-            <Box component="span" ml="auto" style={{ flexShrink: 0 }}>
-              <Button
-                variant="outline"
-                radius="md"
-                size="xs"
-                leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
-                disabled={onExport === null}
-                // A tap on a disabled button reaches nothing, so it has to land on the wrapper.
-                style={{ pointerEvents: onExport === null ? "none" : undefined }}
-                onClick={onExport ?? undefined}
-              >
-                {t("report.export")}
-              </Button>
-            </Box>
-          </Tooltip>
+          <ExportBikeButton onExport={onExport} />
         </Group>
 
         {isLoading || totals === undefined ? (

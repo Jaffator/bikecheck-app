@@ -46,7 +46,7 @@ function Mark({ icon: Icon, label, count }: MarkProps): ReactElement {
 
 // Archiving leaves the switch alone, yet an archived bike is off the profile whatever it says.
 function profileVisibilityOf(bike: Bike, profile: Profile | undefined): ProfileVisibility | null {
-  if (bike.is_deleted === true) return null;
+  if (!bike.is_shared || bike.is_deleted === true) return null;
   if (profile === undefined || profile.visibility === "OFF") return null;
   return profile.visibility;
 }
@@ -57,7 +57,7 @@ export function BikeShareMarks({ bike }: { bike: Bike }): ReactElement | null {
   const openLinks = useOpenLinkCount(bike.id);
   const visibility = profileVisibilityOf(bike, profile);
 
-  if (!bike.is_shared || (visibility === null && openLinks === 0)) return null;
+  if (visibility === null && openLinks === 0) return null;
 
   return (
     <Group gap={4} wrap="nowrap">
