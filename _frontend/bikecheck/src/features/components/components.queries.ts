@@ -158,7 +158,7 @@ export function useUpdateBikeComponent(): UseMutationResult<
   });
 }
 
-// Taking a part off changes the build, which the BikeCheck describes — so the bike itself
+// Taking a part off changes the build — so the bike itself
 // is refreshed alongside its components.
 export function useDismountBikeComponent(): UseMutationResult<BikeComponent, Error, DismountBikeComponentInput> {
   const queryClient = useQueryClient();

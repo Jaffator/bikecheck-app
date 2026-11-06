@@ -12,7 +12,7 @@ const DAY_BY_LANGUAGE: Record<string, string> = {
 };
 
 // The Export sheet titles itself from the same map, so a Report is never named one thing
-// while it is made and another once listed. The frozen older kinds read as Report kola too.
+// while it is made and another once listed. The frozen older kinds read as a Bike Report too.
 export const REPORT_KIND_KEY: Record<ReportKind, string> = {
   SERVICE: "report.titleService",
   BIKE: "report.titleBike",

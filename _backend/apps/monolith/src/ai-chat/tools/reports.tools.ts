@@ -41,12 +41,20 @@ export type ReportsToolSet = {
 
 const LIST_REPORTS_DESCRIPTION =
   'The reports the user has exported, newest first: which document each one is - SERVICE for one ' +
-  'occasion, BIKE for the bike with its components and history, called Bike Report, in Czech ' +
-  '"Report kola" - which bike it was made for, how often it has been opened, and what its link ' +
-  'is doing: "unpublished" means made but ' +
-  'never opened to anyone, "published" means the link is live, "revoked" means it is closed for ' +
-  'good. The link itself is never returned and you cannot hand it out. A report outlives the bike ' +
-  'it describes, so a bike_id that is in no bike of the garage is a bike the user has deleted.';
+  'occasion, BIKE for the bike with its components, its history or both, called Bike Report, in ' +
+  'Czech "Report kola" - which bike it was made for, how often it has been opened, and what its ' +
+  'link is doing: "unpublished" means made but never opened to anyone, "published" means the link ' +
+  'is live, "revoked" means it is closed for good. The link itself is never returned and you ' +
+  'cannot hand it out. A report outlives the bike it describes, so a bike_id that is in no bike of ' +
+  'the garage is a bike the user has deleted.';
+
+// The chat names a Report as the app does, so the frozen older kinds read as a Bike Report.
+const KIND_NAME: Record<report_kind, ReportRow['kind']> = {
+  SERVICE: 'SERVICE',
+  BIKE: 'BIKE',
+  PERIOD: 'BIKE',
+  BIKECHECK: 'BIKE',
+};
 
 // One page of reports. A thin row and few per owner, so a page is a whole list many times over.
 const PAGE_SIZE = 50;
@@ -137,18 +145,13 @@ function sortKeyOf(report: ReportRecord): string {
 function toReportRow(report: ReportRecord): ReportRow {
   return {
     report_id: report.id,
-    kind: kindOf(report.kind),
+    kind: KIND_NAME[report.kind],
     bike_id: report.bike_id,
     state: stateOf(report),
     created_at: isoDay(report.created_at),
     view_count: report.view_count,
     last_viewed_at: isoDay(report.last_viewed_at),
   };
-}
-
-// The chat names a Report as the app does, so the frozen older kinds read as a Bike Report.
-function kindOf(kind: report_kind): ReportRow['kind'] {
-  return kind === 'SERVICE' ? 'SERVICE' : 'BIKE';
 }
 
 // Revoked first: a revoked link was published once, so the published flag stays set behind it.

@@ -38,7 +38,7 @@ const NEUTRAL_DESCRIPTION = 'Track the service of your bikes and share your buil
 // The mark on the neutral card: the mail logo, already in R2 for the same reason.
 const NEUTRAL_LOGO_KEY = `static/${MAIL_LOGO_KEY}`;
 
-// The Report's English name in the app. The frozen older kinds read as a Bike Report too.
+// The older kinds go by the Bike Report's name here; only their frozen pages keep the old heading.
 const REPORT_KIND_LABEL: Record<ReportSnapshot['kind'], string> = {
   SERVICE: 'Service Report',
   BIKE: 'Bike Report',
