@@ -4,6 +4,7 @@ import {
   Combobox,
   Drawer,
   Menu,
+  Modal,
   Pagination,
   Progress,
   Popover,
@@ -272,6 +273,14 @@ export const theme = createTheme({
           boxShadow: "var(--elev-panel)",
           color: "var(--mantine-color-text-6)",
         },
+      },
+    }),
+    // Mantine's own surface is white, and the title black on it.
+    Modal: Modal.extend({
+      styles: {
+        content: { backgroundColor: "var(--mantine-color-cards-6)" },
+        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       },
     }),
     Menu: Menu.extend({

@@ -1,8 +1,9 @@
 // The share drawer: one segmented control decides the state, under it the preview, the
 // address (Public only - in the app people go by name), what goes out and which bikes.
-// Every change saves at once; the handle saves on leaving the field.
+// Every change saves at once, except going Public, which asks for the bikes first; the
+// handle saves on leaving the field.
 import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { Box, Center, Group, Image, Loader, SegmentedControl, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Center, Group, Loader, SegmentedControl, Stack, Text, UnstyledButton } from "@mantine/core";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -10,7 +11,6 @@ import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { Bike } from "@/features/bikes/bikes.types";
-import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { handleError, handleErrorFromApi, profileUrl } from "../handle";
 import { useMyProfile, useSaveSharing } from "../profile.queries";
 import {
@@ -23,11 +23,12 @@ import {
 } from "../profile.types";
 import { VISIBILITY_HINT_KEY, VISIBILITY_LABEL_KEY } from "../profileVisibility";
 import { HandleField } from "./HandleField";
+import { PublicBikesModal } from "./PublicBikesModal";
+import { ShareBikeRow } from "./ShareBikeRow";
 import { ShareSwitchRow } from "./ShareSwitchRow";
 
 // Above the page it opens from, matching the settings drawers.
 const DRAWER_Z_INDEX = 320;
-const THUMB_SIZE = 40;
 
 // A card one step lighter than the sheet it sits on, so it has an edge of its own and not
 // only a hairline (design canvas "Profile sharing · tonal fix").
@@ -119,6 +120,10 @@ interface ShareSwitches {
   costs: boolean;
 }
 
+function sharedByBike(bikes: Bike[]): Record<number, boolean> {
+  return Object.fromEntries(bikes.map((bike) => [bike.id, bike.is_shared]));
+}
+
 function sharePayload(shares: ShareSwitches): UpdateProfilePayload {
   return {
     share_components: shares.components,
@@ -145,14 +150,19 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
     history: profile.share_history,
     costs: profile.share_costs,
   });
-  const [sharedBikes, setSharedBikes] = useState<Record<number, boolean>>(() =>
-    Object.fromEntries(bikes.map((bike) => [bike.id, bike.is_shared])),
-  );
+  // Switches thrown but not read back yet. Dropped once the refetch is in, so a save that
+  // failed halfway shows what landed.
+  const [unsavedBikes, setUnsavedBikes] = useState<Record<number, boolean>>({});
+  const [choosingBikes, setChoosingBikes] = useState(false);
   // What the server refused the last save for - a taken handle is only ever known there.
   const [refusedFor, setRefusedFor] = useState<HandleErrorCode | null>(null);
   const [confirmingRename, setConfirmingRename] = useState(false);
 
+  const sharedBikes = { ...sharedByBike(bikes), ...unsavedBikes };
   const off = visibility === "OFF";
+  // Any save in this window would carry Public past a bike save that may yet fail.
+  const goingPublic = save.isPending && visibility === "PUBLIC" && profile.visibility !== "PUBLIC";
+  const locked = off || goingPublic;
   const error = handleError(handle) ?? refusedFor;
   const renaming = profile.handle !== null && handle !== profile.handle;
   // The preview shows what is saved, not what is typed: an unsaved handle has no page.
@@ -176,16 +186,36 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
         profile: { ...(carriesHandle ? { handle } : {}), visibility, ...sharePayload(shares), ...overrides },
         bikes: changedBikes,
       },
-      { onError: (failure) => setRefusedFor(handleErrorFromApi(failure)) },
+      { onError: undoFailedSave, onSettled: () => setUnsavedBikes({}) },
+    );
+  }
+
+  // A refused handle keeps its field open for fixing; any other failure saved no visibility.
+  function undoFailedSave(failure: Error): void {
+    const refused = handleErrorFromApi(failure);
+    setRefusedFor(refused);
+    if (refused === null) setVisibility(profile.visibility);
+  }
+
+  function goPublic(chosen: Record<number, boolean>): void {
+    setChoosingBikes(false);
+    setVisibility("PUBLIC");
+    setUnsavedBikes(chosen);
+    const changed = bikes.filter((bike) => chosen[bike.id] !== sharedBikes[bike.id]);
+    persist(
+      { visibility: "PUBLIC" },
+      changed.map((bike) => ({ id: bike.id, is_shared: chosen[bike.id] })),
     );
   }
 
   function changeVisibility(next: ProfileVisibility): void {
-    setVisibility(next);
     if (next === "PUBLIC") {
-      persist({ visibility: next });
+      // With one bike there is nothing to choose between.
+      if (bikes.length > 1) setChoosingBikes(true);
+      else goPublic(sharedBikes);
       return;
     }
+    setVisibility(next);
     // Leaving Public hides the field, so whatever was typed there is dropped, not kept invisibly.
     const saved = profile.handle ?? profile.suggested_handle ?? "";
     changeHandle(saved);
@@ -199,13 +229,13 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
   }
 
   function setBikeShared(id: number, checked: boolean): void {
-    setSharedBikes((current) => ({ ...current, [id]: checked }));
+    setUnsavedBikes((current) => ({ ...current, [id]: checked }));
     persist({}, [{ id, is_shared: checked }]);
   }
 
   // A rename kills the old link the moment it lands, so it is asked about first.
   function saveHandle(): void {
-    if (error !== null || handle === profile.handle) return;
+    if (goingPublic || error !== null || handle === profile.handle) return;
     if (renaming) {
       setConfirmingRename(true);
       return;
@@ -232,6 +262,7 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
           withItemsBorders={false}
           radius="xl"
           color="primary.6"
+          disabled={goingPublic}
           value={visibility}
           onChange={(value) => changeVisibility(value as ProfileVisibility)}
           data={PROFILE_VISIBILITIES.map((value) => ({ value, label: t(VISIBILITY_LABEL_KEY[value]) }))}
@@ -272,21 +303,21 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
           label={t("sharing.shareComponents")}
           hint={t("sharing.shareComponentsHint")}
           checked={shares.components}
-          disabled={off}
+          disabled={locked}
           onChange={(checked) => setShare("components", checked)}
         />
         <ShareSwitchRow
           label={t("sharing.shareSetup")}
           hint={t("sharing.shareSetupHint")}
           checked={shares.setup}
-          disabled={off}
+          disabled={locked}
           onChange={(checked) => setShare("setup", checked)}
         />
         <ShareSwitchRow
           label={t("sharing.shareHistory")}
           hint={t("sharing.shareHistoryHint")}
           checked={shares.history}
-          disabled={off}
+          disabled={locked}
           onChange={(checked) => setShare("history", checked)}
         />
         {/* Costs only mean something with the history they belong to. */}
@@ -296,7 +327,7 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
             label={t("sharing.shareCosts")}
             hint={t("sharing.shareCostsHint")}
             checked={shares.costs}
-            disabled={off}
+            disabled={locked}
             onChange={(checked) => setShare("costs", checked)}
           />
         )}
@@ -304,14 +335,13 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
 
       <Section title={t("sharing.sectionBikes")}>
         {bikes.map((bike, index) => (
-          <ShareSwitchRow
+          <ShareBikeRow
             key={bike.id}
+            bike={bike}
             first={index === 0}
-            label={bikeTitle(bike)}
             checked={sharedBikes[bike.id]}
-            disabled={off}
+            disabled={locked}
             onChange={(checked) => setBikeShared(bike.id, checked)}
-            leading={<BikeThumb bike={bike} dimmed={off || !sharedBikes[bike.id]} />}
           />
         ))}
         {bikes.length === 0 && (
@@ -336,30 +366,14 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
         cancelLabel={t("sharing.renameCancel")}
         confirmLabel={t("sharing.renameConfirm")}
       />
+
+      <PublicBikesModal
+        opened={choosingBikes}
+        bikes={bikes}
+        shared={sharedBikes}
+        onCancel={() => setChoosingBikes(false)}
+        onConfirm={goPublic}
+      />
     </Stack>
-  );
-}
-
-interface BikeThumbProps {
-  bike: Bike;
-  dimmed: boolean;
-}
-
-function BikeThumb({ bike, dimmed }: BikeThumbProps): ReactElement {
-  if (!bike.image_url) {
-    return (
-      <Box w={THUMB_SIZE} h={THUMB_SIZE} style={{ borderRadius: 6, backgroundColor: "var(--mantine-color-cards-5)", flexShrink: 0 }} />
-    );
-  }
-  return (
-    <Image
-      src={bike.image_url}
-      alt=""
-      w={THUMB_SIZE}
-      h={THUMB_SIZE}
-      radius="sm"
-      fit="cover"
-      style={{ flexShrink: 0, opacity: dimmed ? 0.4 : 1 }}
-    />
   );
 }
