@@ -66,7 +66,7 @@ export function ServiceDesktop(): ReactElement {
                 });
               }}
             >
-              {t("service.export")}
+              {t("report.export")}
             </Button>
           </Box>
         </Tooltip>

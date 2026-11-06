@@ -1,9 +1,9 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useState, type ReactElement } from "react";
-import { ActionIcon, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Button, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowUpRight, ChevronRight, Clock, Gauge, Archive, Info, Share2 } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Clock, Gauge, Archive, Info, Download } from "lucide-react";
 import { useBike, useArchiveBike } from "@/features/bikes/bikes.queries";
 import { useBikeRideCount } from "@/features/rides/rides.queries";
 import { useHistoryTotals } from "@/features/service/service.queries";
@@ -44,10 +44,6 @@ const METRIC_COLORS = {
   elevation: "var(--mantine-color-text-8)",
   time: "var(--mantine-color-text-8)",
 } as const;
-
-// The share mark rides on the name's first line rather than centred on a two-line name
-// block, and the button is taller than that line - so it lifts by half the difference.
-const SHARE_ICON_LIFT = -3;
 
 // The machine's own page: what it is, what it has done, and what can be done with it.
 export function BikeDetail(): ReactElement {
@@ -184,7 +180,7 @@ export function BikeDetail(): ReactElement {
         <Stack gap={8} p="md">
           {/* The name leads and may run to a second line - a long brand, model and year
               together outrun one. The one act the page offers stands beside it. */}
-          <Group gap="sm" wrap="nowrap" align="flex-start" justify="space-between">
+          <Group gap="sm" wrap="nowrap" align="center" justify="space-between">
             <Stack gap={2} style={{ minWidth: 0 }}>
               <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
                 {bikeTitle(bike)}
@@ -198,17 +194,17 @@ export function BikeDetail(): ReactElement {
             </Stack>
             {/* An Archived Bike is exported too - it is the machine being sold that a
                 BikeCheck is most often asked for. */}
-            <ActionIcon
-              variant="transparent"
-              radius="xl"
-              size="lg"
-              aria-label={t("report.exportBikeCheck")}
+            <Button
+              variant="outline"
+              radius="md"
+              h={44}
+              px={12}
+              leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
               onClick={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
-              mt={SHARE_ICON_LIFT}
               style={{ flexShrink: 0 }}
             >
-              <Share2 size={20} color="var(--mantine-color-primary-6)" />
-            </ActionIcon>
+              {t("report.export")}
+            </Button>
           </Group>
 
           {/* What the bike has done, on one line: units only, so the icon and its colour

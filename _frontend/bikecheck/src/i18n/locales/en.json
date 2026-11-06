@@ -533,7 +533,6 @@
     "total": "Total",
     "components": "Components",
     "serviceDetails": "Service details",
-    "share": "Share",
     "fileType": {
       "pdf": "PDF document",
       "image": "Photo",
@@ -567,7 +566,6 @@
     "columnPlace": "Where",
     "columnCost": "Cost",
     "emptyFilter": "No services in this selection.",
-    "export": "Export",
     "exportPickBike": "Pick a bike"
   },
   "bikes": {
@@ -1227,7 +1225,7 @@
     "includeComponents": "Include components",
     "includeComponentsHint": "Lists the bike's components with their wear and last service.",
     "exportPeriod": "Export this history",
-    "exportBikeCheck": "Share",
+    "export": "Export",
     "pickBikeFirst": "Pick one bike to export its history.",
     "exporting": "Preparing the report…",
     "exportFailed": "Could not make the report. Try again.",

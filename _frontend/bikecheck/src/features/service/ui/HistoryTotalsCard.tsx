@@ -1,7 +1,7 @@
 // The History Totals card: what the filtered history adds up to.
 import type { CSSProperties, ReactElement } from "react";
-import { Box, Button, Divider, Group, Skeleton, Stack, Text } from "@mantine/core";
-import { Share2 } from "lucide-react";
+import { Box, Button, Divider, Group, Skeleton, Stack, Text, Tooltip } from "@mantine/core";
+import { Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatCost } from "@/utils/money";
 import { useCurrentUser } from "@/features/users/users.queries";
@@ -37,7 +37,7 @@ export function HistoryTotalsCard({
   periodLabel,
   isLoading,
   isStale,
-  onShare,
+  onExport,
 }: {
   totals: HistoryTotals | undefined;
   // One bike by name, or what the whole garage is called.
@@ -48,18 +48,16 @@ export function HistoryTotalsCard({
   // than taken away, so the card does not jump while the new ones arrive.
   isStale: boolean;
   // Exports what the card is summing. Null when no one bike is chosen, which a Period
-  // Report needs - the card says so rather than leaving a dead button unexplained.
-  onShare: (() => void) | null;
+  // Report needs; the button then stays, disabled, with a tooltip saying why.
+  onExport: (() => void) | null;
 }): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
 
   // A period with no work in it would export an empty document, so it is refused here
   // rather than in the sheet. Totals still on their way disable it without a word.
-  // Across all bikes there is nothing a Period Report could be about, so the button is not
-  // there at all - only a chosen bike with an empty period gets the button and the reason.
-  const blockedBy = onShare !== null && totals?.service_count === 0 ? t("report.emptyPeriod") : null;
-  const canShare = onShare !== null && totals !== undefined && totals.service_count > 0;
+  const blockedBy = onExport !== null && totals?.service_count === 0 ? t("report.emptyPeriod") : null;
+  const canExport = onExport !== null && totals !== undefined && totals.service_count > 0;
 
   return (
     <Box style={{ ...SERVICE_CARD_SURFACE, padding: "var(--mantine-spacing-md)" }}>
@@ -76,20 +74,27 @@ export function HistoryTotalsCard({
             </Text>
           </Stack>
           {/* Exports exactly what is summed above: the same Bike and the same Period. */}
-          {onShare !== null && (
-            <Button
-              variant="outline"
-              radius="md"
-              size="xs"
-              ml="auto"
-              style={{ flexShrink: 0 }}
-              leftSection={<Share2 size={16} color="var(--mantine-color-primary-5)" />}
-              disabled={!canShare}
-              onClick={onShare}
-            >
-              {t("report.share")}
-            </Button>
-          )}
+          <Tooltip
+            label={t("service.exportPickBike")}
+            disabled={onExport !== null}
+            events={{ hover: true, focus: false, touch: true }}
+          >
+            {/* A disabled button fires no hover, so the tooltip hangs on its wrapper. */}
+            <Box component="span" ml="auto" style={{ flexShrink: 0 }}>
+              <Button
+                variant="outline"
+                radius="md"
+                size="xs"
+                leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
+                disabled={!canExport}
+                // A tap on a disabled button reaches nothing, so it has to land on the wrapper.
+                style={{ pointerEvents: onExport === null ? "none" : undefined }}
+                onClick={onExport ?? undefined}
+              >
+                {t("report.export")}
+              </Button>
+            </Box>
+          </Tooltip>
         </Group>
 
         {isLoading || totals === undefined ? (

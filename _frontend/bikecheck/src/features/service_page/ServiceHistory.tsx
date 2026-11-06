@@ -63,7 +63,7 @@ function ServiceHistoryPhone(): ReactElement {
   const { data: bikes } = useBikes();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const [filterOpened, setFilterOpened] = useState(false);
-  // What the Share button is exporting. Null keeps the export sheet shut.
+  // What the Export button is exporting. Null keeps the export sheet shut.
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
 
   // A bike in the path narrows the page to it; none means the whole garage. The period
@@ -151,7 +151,7 @@ function ServiceHistoryPhone(): ReactElement {
             periodLabel={periodLabel(period, t, i18n.language)}
             isLoading={totalsLoading}
             isStale={totalsStale}
-            onShare={
+            onExport={
               exportBikeId === null
                 ? null
                 : () =>

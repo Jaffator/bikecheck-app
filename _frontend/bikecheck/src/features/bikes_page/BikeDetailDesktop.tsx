@@ -1,7 +1,6 @@
 // Desktop `/bikes/:id`: the bike itself on the left, what it owes and is made of on the right.
 import type { ReactElement, ReactNode } from "react";
 import {
-  ActionIcon,
   Anchor,
   Box,
   Breadcrumbs,
@@ -21,11 +20,11 @@ import {
   ArrowUpRight,
   ChevronRight,
   Clock,
+  Download,
   Gauge,
   Info,
   Pencil,
   Plus,
-  Share2,
 } from "lucide-react";
 import type { Bike, RiddenBike } from "@/features/bikes/bikes.types";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
@@ -172,7 +171,7 @@ function NameBlock({ bike, onExport }: { bike: RiddenBike; onExport: () => void 
 
   return (
     <Stack gap={8}>
-      <Group gap="sm" wrap="nowrap" align="flex-start" justify="space-between">
+      <Group gap="sm" wrap="nowrap" align="center" justify="space-between">
         <Stack gap={2} style={{ minWidth: 0 }}>
           <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
             {bikeTitle(bike)}
@@ -183,16 +182,17 @@ function NameBlock({ bike, onExport }: { bike: RiddenBike; onExport: () => void 
             </Text>
           )}
         </Stack>
-        <ActionIcon
-          variant="transparent"
-          radius="xl"
-          size="lg"
-          aria-label={t("report.exportBikeCheck")}
+        <Button
+          variant="outline"
+          radius="md"
+          h={44}
+          px={12}
+          leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
           onClick={onExport}
           style={{ flexShrink: 0 }}
         >
-          <Share2 size={20} color="var(--mantine-color-primary-6)" />
-        </ActionIcon>
+          {t("report.export")}
+        </Button>
       </Group>
       <Group gap="md" wrap="wrap">
         <Metric icon={<Gauge size={14} />} value={t("bikes.kilometres", { count: figures.km })} />

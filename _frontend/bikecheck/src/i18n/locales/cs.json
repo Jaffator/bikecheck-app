@@ -555,7 +555,6 @@
     "total": "Celkem",
     "components": "Komponenty",
     "serviceDetails": "Detaily servisu",
-    "share": "Sdílet",
     "fileType": {
       "pdf": "PDF dokument",
       "image": "Fotka",
@@ -595,7 +594,6 @@
     "columnPlace": "Kde",
     "columnCost": "Cena",
     "emptyFilter": "V tomto výběru není žádný servis.",
-    "export": "Export",
     "exportPickBike": "Vyber kolo"
   },
   "bikes": {
@@ -1288,7 +1286,7 @@
     "includeComponents": "Včetně komponent",
     "includeComponentsHint": "Vypíše komponenty kola s nájezdem a posledním servisem.",
     "exportPeriod": "Exportovat tuto historii",
-    "exportBikeCheck": "Exportovat BikeCheck",
+    "export": "Export",
     "pickBikeFirst": "Pro export historie vyber jedno kolo.",
     "exporting": "Připravuji report…",
     "exportFailed": "Report se nepodařilo vytvořit. Zkuste to znovu.",

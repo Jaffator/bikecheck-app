@@ -8,6 +8,7 @@ import {
   Progress,
   Popover,
   SegmentedControl,
+  Tooltip,
   createTheme,
   type MantineColorsTuple,
 } from "@mantine/core";
@@ -262,6 +263,17 @@ export const theme = createTheme({
       },
     }),
     // The light scheme drops a white menu; every dropdown sits on the card surface instead.
+    // Mantine's own tooltip is a blue-grey that belongs to no ramp here.
+    Tooltip: Tooltip.extend({
+      styles: {
+        tooltip: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          border: "1px solid var(--color-border-strong)",
+          boxShadow: "var(--elev-panel)",
+          color: "var(--mantine-color-text-6)",
+        },
+      },
+    }),
     Menu: Menu.extend({
       styles: {
         dropdown: {
