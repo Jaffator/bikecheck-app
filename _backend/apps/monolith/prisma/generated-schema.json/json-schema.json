@@ -1827,7 +1827,8 @@
           "enum": [
             "SERVICE",
             "PERIOD",
-            "BIKECHECK"
+            "BIKECHECK",
+            "BIKE"
           ]
         },
         "snapshot": {

@@ -1,14 +1,43 @@
-// One part on a bike, as a Period Report and a BikeCheck both write it down - so the two
-// never word the same thing differently.
+// One part on a bike, as every document listing them writes it down - so none of them words
+// the same thing differently.
 import type { ReactElement } from "react";
 import type { ReportComponent } from "@/features/report/report.types";
 import { REPORT_PAPER, reportComponentLabel, reportDate, reportNumber, reportRideTime } from "@/features/report/reportFormat";
 import type { ReportHeadings } from "@/features/report/reportHeadings";
 import { RowLabel } from "./ReportPaper";
 
+// The bike's parts, or the line saying there are none.
+export function ComponentList({
+  components,
+  heading,
+  language,
+  compact = false,
+}: {
+  components: ReportComponent[];
+  heading: ReportHeadings;
+  language: string;
+  compact?: boolean;
+}): ReactElement {
+  if (components.length === 0) {
+    return (
+      <p className={compact ? "text-[12px]" : "text-sm"} style={{ color: REPORT_PAPER.inkMuted }}>
+        {heading.noComponents}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col">
+      {components.map((component, index) => (
+        <ComponentRow key={index} component={component} heading={heading} language={language} compact={compact} />
+      ))}
+    </div>
+  );
+}
+
 // One part on the bike: what it is, how far it has gone, and when it was last worked on —
 // which is what a buyer checks against the machine in front of them.
-export function ComponentRow({
+function ComponentRow({
   component,
   heading,
   language,

@@ -3568,14 +3568,14 @@ export interface components {
              * @example SERVICE
              * @enum {string}
              */
-            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            kind: "SERVICE" | "BIKE";
             /**
              * @description Required when kind is SERVICE
              * @example 42
              */
             service_id: number;
             /**
-             * @description Required when kind is PERIOD or BIKECHECK
+             * @description Required when kind is BIKE
              * @example 15
              */
             bike_id: number;
@@ -3590,10 +3590,15 @@ export interface components {
              */
             to?: string;
             /**
-             * @description Required when kind is PERIOD
-             * @example false
+             * @description Required when kind is BIKE
+             * @example true
              */
             include_components: boolean;
+            /**
+             * @description Required when kind is BIKE
+             * @example true
+             */
+            include_history: boolean;
         };
         ResponseReportCoversDto: {
             /** @example Pivot Firebird 2023 */
@@ -3608,6 +3613,11 @@ export interface components {
              * @example 2026-12-31
              */
             to: Record<string, never> | null;
+            /**
+             * @description False when the document holds no Services at all
+             * @example true
+             */
+            history: boolean;
         };
         ResponseExportedReportDto: {
             /** @example 1 */
@@ -3620,7 +3630,7 @@ export interface components {
              * @example SERVICE
              * @enum {string}
              */
-            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            kind: "SERVICE" | "PERIOD" | "BIKECHECK" | "BIKE";
             /** @example 42 */
             bike_id: number;
             covers: components["schemas"]["ResponseReportCoversDto"];
@@ -3656,7 +3666,7 @@ export interface components {
              * @example SERVICE
              * @enum {string}
              */
-            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            kind: "SERVICE" | "PERIOD" | "BIKECHECK" | "BIKE";
             /** @example 42 */
             bike_id: number;
             covers: components["schemas"]["ResponseReportCoversDto"];

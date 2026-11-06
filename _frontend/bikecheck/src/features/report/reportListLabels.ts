@@ -11,10 +11,10 @@ const DAY_BY_LANGUAGE: Record<string, string> = {
   en: "MMM D, YYYY",
 };
 
-// What the app calls each of the three documents. The Export sheet titles itself from the
-// same map, so a Report is never named one thing while it is made and another once listed.
+// What the app calls each document. The Export sheet titles itself from the same map, so a Report is never named one thing while it is made and another once listed.
 export const REPORT_KIND_KEY: Record<ReportKind, string> = {
   SERVICE: "report.titleService",
+  BIKE: "report.titleBike",
   PERIOD: "report.titlePeriod",
   BIKECHECK: "report.titleBikecheck",
 };
@@ -28,8 +28,8 @@ export function reportDay(day: string | null, language: string): string | null {
 
 // What the document covers, in as few words as it takes to tell two links apart: the day
 // the work happened, the span a Period was exported for, or the bike as it stood.
-export function coversLabel(kind: ReportKind, covers: ReportCovers, t: TFunction, language: string): string {
-  if (kind === "BIKECHECK") return t("report.coversNow");
+export function coversLabel(covers: ReportCovers, t: TFunction, language: string): string {
+  if (!covers.history) return t("report.coversNow");
 
   const from = reportDay(covers.from, language);
   const to = reportDay(covers.to, language);

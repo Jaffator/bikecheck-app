@@ -193,14 +193,14 @@ export function BikeDetail(): ReactElement {
               )}
             </Stack>
             {/* An Archived Bike is exported too - it is the machine being sold that a
-                BikeCheck is most often asked for. */}
+                Report kola is most often asked for. */}
             <Button
               variant="outline"
               radius="md"
               h={44}
               px={12}
               leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
-              onClick={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+              onClick={() => setExporting({ kind: "BIKE", bike_id: bike.id })}
               style={{ flexShrink: 0 }}
             >
               {t("report.export")}
@@ -324,7 +324,7 @@ export function BikeDetail(): ReactElement {
           archived={archived}
           paired={paired}
           onOpenSpecs={() => setShowingSpecs(true)}
-          onExport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+          onExport={() => setExporting({ kind: "BIKE", bike_id: bike.id })}
           onPairGear={() => setPairingGear(true)}
         />
       ) : (

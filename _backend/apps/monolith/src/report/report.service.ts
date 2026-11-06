@@ -18,9 +18,9 @@ import {
   ReportBike,
   ReportComponent,
   ReportCovers,
+  ReportHistory,
   ReportHistoryTotals,
   ReportPdfFile,
-  ReportPeriod,
   ReportService as ReportedService,
   ReportSnapshot,
   ReportSnapshotPrivate,
@@ -51,8 +51,8 @@ const serviceReportInclude = {
 
 type ServiceWithRelations = Prisma.events_bikesGetPayload<{ include: typeof serviceReportInclude }>;
 
-// The bike a Period Report or a BikeCheck is written about. Its type is a catalogue label,
-// so it comes along to be resolved at export time like every other one.
+// The bike a Bike Report is written about. Its type is a catalogue label, so it comes along
+// to be resolved at export time like every other one.
 const reportBikeInclude = { bike_types: true } satisfies Prisma.bikesInclude;
 
 type BikeWithRelations = Prisma.bikesGetPayload<{ include: typeof reportBikeInclude }>;
@@ -102,10 +102,8 @@ export class ReportService {
     switch (dto.kind) {
       case report_kind.SERVICE:
         return await this.exportService(userId, dto, owner);
-      case report_kind.PERIOD:
-        return await this.exportPeriod(userId, dto, owner);
-      case report_kind.BIKECHECK:
-        return await this.exportBikeCheck(userId, dto, owner);
+      case report_kind.BIKE:
+        return await this.exportBike(userId, dto, owner);
     }
   }
 
@@ -122,31 +120,33 @@ export class ReportService {
     return await this.store(userId, bikeId, this.buildServiceSnapshot(service, owner));
   }
 
-  // The services one bike ran up inside one Period. An empty Period is refused before a
-  // row is written, so an empty document is never made - let alone published.
-  private async exportPeriod(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
+  // The bike, and what the owner switched on. Unlike a Period Report an empty history is no
+  // refusal: the photo and details are a document by themselves. Each choice is read once,
+  // here, and frozen (ADR 0011).
+  private async exportBike(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
     const bike = await this.findOwnedBike(required(dto.bike_id, 'bike_id'), userId);
-    const services = await this.findServicesInPeriod(bike.id, dto.from, dto.to);
-    if (services.length === 0) {
-      throw new BadRequestException('There are no services in this period to export');
-    }
-
-    const period: ReportPeriod = { from: dto.from ?? null, to: dto.to ?? null };
-    // The choice is read once, here, and frozen: a report exported without components
-    // never grows them (ADR 0011).
     const components = required(dto.include_components, 'include_components')
       ? await this.findMountedComponents(bike.id, owner.language)
       : null;
+    const services = required(dto.include_history, 'include_history')
+      ? await this.findServicesInPeriod(bike.id, dto.from, dto.to)
+      : null;
+    const reported = services?.map((service) => this.buildService(service, owner.language)) ?? null;
+    const history = reported === null ? null : this.buildHistory(reported, dto);
 
-    return await this.store(userId, bike.id, this.buildPeriodSnapshot(bike, services, period, components, owner));
-  }
-
-  // The machine's card: the bike, and everything mounted on it right now.
-  private async exportBikeCheck(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
-    const bike = await this.findOwnedBike(required(dto.bike_id, 'bike_id'), userId);
-    const components = await this.findMountedComponents(bike.id, owner.language);
-
-    return await this.store(userId, bike.id, this.buildBikeCheckSnapshot(bike, components, owner));
+    return await this.store(userId, bike.id, {
+      document: {
+        version: REPORT_SNAPSHOT_VERSION,
+        kind: 'BIKE',
+        generatedAt: new Date().toISOString(),
+        language: owner.language,
+        currency: owner.currency,
+        bike: this.buildBike(bike, owner.language),
+        components,
+        history,
+      },
+      private: this.attachmentKeys(services ?? []),
+    });
   }
 
   // Writes the document down. Closed, whichever kind it is.
@@ -250,12 +250,19 @@ export class ReportService {
       case 'SERVICE': {
         // One occasion: the document opens and closes on the day the work happened.
         const day = document.service.serviceDate === null ? null : this.day(document.service.serviceDate);
-        return { bike, from: day, to: day };
+        return { bike, from: day, to: day, history: true };
       }
+      case 'BIKE':
+        return {
+          bike,
+          from: document.history?.period.from ?? null,
+          to: document.history?.period.to ?? null,
+          history: document.history !== null,
+        };
       case 'PERIOD':
-        return { bike, from: document.period.from, to: document.period.to };
+        return { bike, from: document.period.from, to: document.period.to, history: true };
       case 'BIKECHECK':
-        return { bike, from: null, to: null };
+        return { bike, from: null, to: null, history: false };
     }
   }
 
@@ -364,50 +371,8 @@ export class ReportService {
     };
   }
 
-  private buildPeriodSnapshot(
-    bike: BikeWithRelations,
-    services: ServiceWithRelations[],
-    period: ReportPeriod,
-    components: ReportComponent[] | null,
-    owner: OwnerVoice,
-  ): StoredReportSnapshot {
-    const reported = services.map((service) => this.buildService(service, owner.language));
-
-    return {
-      document: {
-        version: REPORT_SNAPSHOT_VERSION,
-        kind: 'PERIOD',
-        generatedAt: new Date().toISOString(),
-        language: owner.language,
-        currency: owner.currency,
-        bike: this.buildBike(bike, owner.language),
-        period,
-        services: reported,
-        totals: this.buildTotals(reported),
-        components,
-      },
-      private: this.attachmentKeys(services),
-    };
-  }
-
-  private buildBikeCheckSnapshot(
-    bike: BikeWithRelations,
-    components: ReportComponent[],
-    owner: OwnerVoice,
-  ): StoredReportSnapshot {
-    return {
-      document: {
-        version: REPORT_SNAPSHOT_VERSION,
-        kind: 'BIKECHECK',
-        generatedAt: new Date().toISOString(),
-        language: owner.language,
-        currency: owner.currency,
-        bike: this.buildBike(bike, owner.language),
-        components,
-      },
-      // A BikeCheck describes the machine, not the paperwork - it carries no files.
-      private: { attachmentKeys: {} },
-    };
+  private buildHistory(services: ReportedService[], { from, to }: ExportReportDto): ReportHistory {
+    return { period: { from: from ?? null, to: to ?? null }, services, totals: this.buildTotals(services) };
   }
 
   // What the document itself adds up to, counted off the services it froze rather than
@@ -654,6 +619,8 @@ export class ReportService {
     switch (document.kind) {
       case 'SERVICE':
         return `service-report-${this.day(document.service.serviceDate ?? document.generatedAt)}.pdf`;
+      case 'BIKE':
+        return `bike-report-${this.day(document.generatedAt)}.pdf`;
       case 'PERIOD':
         return `period-report-${this.day(document.period.from ?? document.generatedAt)}.pdf`;
       case 'BIKECHECK':
@@ -694,6 +661,8 @@ export class ReportService {
     switch (document.kind) {
       case 'SERVICE':
         return document.service.attachments;
+      case 'BIKE':
+        return document.history?.services.flatMap((service) => service.attachments) ?? [];
       case 'PERIOD':
         return document.services.flatMap((service) => service.attachments);
       case 'BIKECHECK':

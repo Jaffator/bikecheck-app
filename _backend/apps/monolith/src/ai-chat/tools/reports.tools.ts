@@ -41,7 +41,8 @@ export type ReportsToolSet = {
 
 const LIST_REPORTS_DESCRIPTION =
   'The reports the user has exported, newest first: which document each one is - SERVICE for one ' +
-  'occasion, PERIOD for a span of history, BIKECHECK for the bike itself - which bike it was made ' +
+  'occasion, BIKE for the bike with its components and history, and the older PERIOD for a span of ' +
+  'history and BIKECHECK for the bike itself - which bike it was made ' +
   'for, how often it has been opened, and what its link is doing: "unpublished" means made but ' +
   'never opened to anyone, "published" means the link is live, "revoked" means it is closed for ' +
   'good. The link itself is never returned and you cannot hand it out. A report outlives the bike ' +

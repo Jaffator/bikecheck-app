@@ -1,4 +1,4 @@
-// How a Period Report's timeline divides. Shared by the screen and print variants, so the
+// How a document's timeline divides. Shared by the screen and print variants, so the
 // two never group the same services differently.
 import type { ReportService } from "./report.types";
 import { reportServiceYear } from "./reportFormat";

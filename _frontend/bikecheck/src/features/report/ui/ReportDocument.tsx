@@ -4,6 +4,8 @@
 import type { ReactElement } from "react";
 import { ServiceReportDocument } from "./ServiceReportDocument";
 import { ServiceReportPrint } from "./ServiceReportPrint";
+import { BikeReportDocument } from "./BikeReportDocument";
+import { BikeReportPrint } from "./BikeReportPrint";
 import { PeriodReportDocument } from "./PeriodReportDocument";
 import { PeriodReportPrint } from "./PeriodReportPrint";
 import { BikeCheckDocument } from "./BikeCheckDocument";
@@ -32,6 +34,8 @@ export function ReportDocument(props: ReportDocumentProps): ReactElement {
     switch (snapshot.kind) {
       case "SERVICE":
         return <ServiceReportPrint snapshot={snapshot} />;
+      case "BIKE":
+        return <BikeReportPrint snapshot={snapshot} />;
       case "PERIOD":
         return <PeriodReportPrint snapshot={snapshot} />;
       case "BIKECHECK":
@@ -44,6 +48,8 @@ export function ReportDocument(props: ReportDocumentProps): ReactElement {
   switch (snapshot.kind) {
     case "SERVICE":
       return <ServiceReportDocument snapshot={snapshot} onOpenAttachment={props.onOpenAttachment} />;
+    case "BIKE":
+      return <BikeReportDocument snapshot={snapshot} onOpenAttachment={props.onOpenAttachment} />;
     case "PERIOD":
       return <PeriodReportDocument snapshot={snapshot} onOpenAttachment={props.onOpenAttachment} />;
     case "BIKECHECK":

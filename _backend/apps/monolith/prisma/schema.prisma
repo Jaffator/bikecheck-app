@@ -598,8 +598,10 @@ model tracked_action_state {
 
 enum report_kind {
   SERVICE
+  // No longer written; their frozen Reports still read (ADR 0011).
   PERIOD
   BIKECHECK
+  BIKE
 }
 
 model reports {
@@ -607,7 +609,7 @@ model reports {
   public_token   String      @unique @db.VarChar
   user_id        Int
   bike_id        Int // informative only, NOT a relation: report must survive bike deletion
-  // Which of the three documents this is; the public page picks its layout from it.
+  // Which document this is; the public page picks its layout from it.
   kind           report_kind
   snapshot       Json // frozen copy of what the report covers, resolved to text at export
   // Made and published are two acts: a report stays closed until this is set.

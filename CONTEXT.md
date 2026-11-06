@@ -327,12 +327,18 @@ _Avoid_: Clicks from open, turns, position
 **Report**:
 A frozen document made from what the owner selected, shared outside the app. Its contents never
 change after it is made — the Services it was built from may be edited or deleted afterwards, and
-the Report still reads as it did the day it was made. Comes in three kinds: Service Report, Period
-Report and BikeCheck.
+the Report still reads as it did the day it was made. A new one is a Service Report or a Bike Report;
+Period Reports and BikeChecks already made stay as they are, but no new ones are written.
 _Avoid_: Export (that is the act, not the thing), snapshot, share
 
 **Service Report**:
 A Report covering one Service — the doc a workshop or a warranty claim asks for.
+
+**Bike Report**:
+A Report describing one Bike: always its photo and details, and at the owner's choice its mounted
+components and its Services within one Period, with their History Totals. The app calls it Report
+kola. An empty history is no reason to refuse one, as the bike alone is a document. It replaced the
+Period Report and the BikeCheck.
 
 **Period Report**:
 A Report covering the Services of one Bike within one Period, with their History Totals. May also

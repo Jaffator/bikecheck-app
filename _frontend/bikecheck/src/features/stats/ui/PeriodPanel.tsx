@@ -14,6 +14,8 @@ import { useEarliestDay } from "../stats.queries";
 import type { HomePeriod } from "../stats.types";
 
 const SHEET_Z_INDEX = 320;
+// Above the Export modal, which opens this from inside itself.
+const POPOVER_Z_INDEX = 330;
 
 // The picker's bounds: nothing before the garage's first year, nothing after today.
 interface PickerBounds {
@@ -53,7 +55,7 @@ export function PeriodPanel({ opened, onClose, value, onChange, action, children
 
   if (isDesktop) {
     return (
-      <Popover opened={opened} onDismiss={onClose} position="bottom-end" offset={8}>
+      <Popover opened={opened} onDismiss={onClose} position="bottom-end" offset={8} zIndex={POPOVER_Z_INDEX}>
         <Popover.Target>
           <Box>{children}</Box>
         </Popover.Target>

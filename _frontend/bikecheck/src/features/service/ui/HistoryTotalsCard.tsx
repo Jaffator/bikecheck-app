@@ -47,7 +47,7 @@ export function HistoryTotalsCard({
   // The numbers on screen belong to the filter the user just left. Shown dimmed rather
   // than taken away, so the card does not jump while the new ones arrive.
   isStale: boolean;
-  // Exports what the card is summing. Null when no one bike is chosen, which a Period
+  // Exports what the card is summing. Null when no one bike is chosen, which a Bike
   // Report needs; the button then stays, disabled, with a tooltip saying why.
   onExport: (() => void) | null;
 }): ReactElement {

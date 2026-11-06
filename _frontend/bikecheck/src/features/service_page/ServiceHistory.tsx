@@ -92,8 +92,8 @@ function ServiceHistoryPhone(): ReactElement {
   // empty state, so they stand down and it takes the page - the same as Reports.
   const isEmpty = !isLoading && !isError && services.length === 0;
 
-  // A Period Report covers one bike, so a garage of one needs no choice to say which. The
-  // whole garage of several is nothing a Period Report could be about.
+  // A Bike Report covers one bike, so a garage of one needs no choice to say which. The
+  // whole garage of several is nothing a Bike Report could be about.
   const exportBikeId = bikeId ?? (bikes?.length === 1 ? bikes[0].id : null);
 
   // Opens at the top whichever page it came from: the service page may have been scrolled
@@ -156,7 +156,7 @@ function ServiceHistoryPhone(): ReactElement {
                 ? null
                 : () =>
                     setExporting({
-                      kind: "PERIOD",
+                      kind: "BIKE",
                       bike_id: exportBikeId,
                       from: period.from ?? undefined,
                       to: period.to ?? undefined,

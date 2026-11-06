@@ -1,5 +1,5 @@
-// The phone history's Period: the shared panel, plus All, since this page has no switcher to leave a Period with.
-import type { ReactElement } from "react";
+// The shared Period panel plus All, for a place with no switcher to leave a Period with.
+import type { ReactElement, ReactNode } from "react";
 import { Button } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ALL_TIME, closedSpan } from "@/features/service/servicePeriod";
@@ -12,9 +12,17 @@ interface HistoryPeriodPanelProps {
   onClose: () => void;
   period: ServicePeriod;
   onChange: (period: ServicePeriod) => void;
+  // What the desktop popover hangs under; the phone history has no desktop to hang from.
+  children?: ReactNode;
 }
 
-export function HistoryPeriodPanel({ opened, onClose, period, onChange }: HistoryPeriodPanelProps): ReactElement {
+export function HistoryPeriodPanel({
+  opened,
+  onClose,
+  period,
+  onChange,
+  children = null,
+}: HistoryPeriodPanelProps): ReactElement {
   const { t } = useTranslation();
 
   return (
@@ -37,8 +45,7 @@ export function HistoryPeriodPanel({ opened, onClose, period, onChange }: Histor
         </Button>
       }
     >
-      {/* Phone only, so there is nothing for a popover to hang under. */}
-      {null}
+      {children}
     </PeriodPanel>
   );
 }
