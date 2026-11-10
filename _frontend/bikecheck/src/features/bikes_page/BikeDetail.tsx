@@ -1,9 +1,9 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useState, type ReactElement } from "react";
-import { ActionIcon, Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowUpRight, ChevronRight, Clock, Gauge, Archive, Info, Share2 } from "lucide-react";
+import { Archive } from "lucide-react";
 import { useBike, useArchiveBike } from "@/features/bikes/bikes.queries";
 import { useBikeRideCount } from "@/features/rides/rides.queries";
 import { useHistoryTotals } from "@/features/service/service.queries";
@@ -11,15 +11,15 @@ import { usePendingRides } from "@/features/strava/strava.queries";
 import { ALL_TIME } from "@/features/service/servicePeriod";
 import { formatCost } from "@/utils/money";
 import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
-import { useConnectStrava, useLinkStravaGear } from "@/features/strava/strava.queries";
+import { useLinkStravaGear } from "@/features/strava/strava.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { BikePhoto } from "@/features/bikes/ui/BikePhoto";
 import { BikeActionTiles } from "@/features/bikes/ui/BikeActionTiles";
-import { BikeStravaCard } from "@/features/strava/ui/BikeStravaCard";
-import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
+import { BikeExportButton } from "@/features/bikes/ui/BikeExportButton";
+import { BikeHeroCard } from "@/features/bikes/ui/BikeHeroCard";
+import { ShareDrawer } from "@/features/profile/ui/ShareDrawer";
+import { useOpenLinkCount } from "@/features/report/report.queries";
 import { TrackedActionsSection } from "@/features/service_tracking/ui/TrackedActionsSection";
 import { useBikeTrackedActions } from "@/features/service_tracking/tracking.queries";
-import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
 import { BikeSpecsDrawer } from "@/features/bikes/ui/BikeSpecsDrawer";
 import { BikeComponentsSection } from "@/features/components/ui/BikeComponentsSection";
 import { CustomPartsDrawer } from "@/features/components/ui/CustomPartsDrawer";
@@ -34,20 +34,6 @@ import { BikeActionsMenu } from "@/features/bikes/ui/BikeActionsMenu";
 import { TRANSPARENT_HEADER_CONTROL } from "@/layout/headerControl";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { BikeDetailBreadcrumbs, BikeDetailDesktop, BikeDetailHeaderActions } from "./BikeDetailDesktop";
-
-// One hue per reading, so the line is read by colour before it is read by number. The
-// green is the one the health badge already uses; the yellow is the brand's own. The
-// Strava orange stays reserved for Strava, so the ride time takes a warmer orange of its
-// own. All five clear 4.5:1 on the card.
-const METRIC_COLORS = {
-  distance: "var(--mantine-color-text-8)",
-  elevation: "var(--mantine-color-text-8)",
-  time: "var(--mantine-color-text-8)",
-} as const;
-
-// The share mark rides on the name's first line rather than centred on a two-line name
-// block, and the button is taller than that line - so it lifts by half the difference.
-const SHARE_ICON_LIFT = -3;
 
 // The machine's own page: what it is, what it has done, and what can be done with it.
 export function BikeDetail(): ReactElement {
@@ -70,16 +56,17 @@ export function BikeDetail(): ReactElement {
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   // The full spec list, which is read once and then left alone.
   const [showingSpecs, setShowingSpecs] = useState(false);
+  // Whether the bike is on the owner's profile is switched in the share drawer.
+  const [sharing, setSharing] = useState(false);
   const archive = useArchiveBike();
   const unpair = useLinkStravaGear();
-  const connect = useConnectStrava();
+  const openLinks = useOpenLinkCount(Number(id));
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const setHeaderTransparent = useHeaderStore((state) => state.setHeaderTransparent);
   const setTitleSlot = useHeaderStore((state) => state.setTitleSlot);
   const setBackHidden = useHeaderStore((state) => state.setBackHidden);
   const isDesktop = useIsDesktop();
 
-  const paired = bike?.strava_gear_id != null;
   // An Archived Bike is a frozen record: readable, exportable, and written to by nothing.
   const archived = bike?.is_deleted === true;
 
@@ -160,103 +147,14 @@ export function BikeDetail(): ReactElement {
   // Desktop lays the same pieces out in columns - see BikeDetailDesktop.
   const phoneContent = (
     <>
-      {/* The bike, read the way it is written on the frame: photo and name are one object,
-          so they sit on one card rather than two stacked surfaces. */}
-      <Paper
-        radius="lg"
-        style={{
-          overflow: "hidden",
-          backgroundColor: "var(--mantine-color-cards-6)",
-          backgroundImage: "var(--card-glow)",
-          border: "none",
-          boxShadow: "var(--elev-hero)",
-        }}
-      >
-        {/* The name is carried below, so the photo is left bare but for its badge. */}
-        <BikePhoto imageUrl={bike.image_url} title={bikeTitle(bike)} subtitle={null} titleSize={24} showCaption={false}>
-          {/* The same corner, in the same order, as the garage card keeps its badges. */}
-          <Stack gap={6} align="flex-end">
-            <HealthBadge actions={trackedActions ?? []} />
-            <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
-          </Stack>
-        </BikePhoto>
-
-        <Stack gap={8} p="md">
-          {/* The name leads and may run to a second line - a long brand, model and year
-              together outrun one. The one act the page offers stands beside it. */}
-          <Group gap="sm" wrap="nowrap" align="flex-start" justify="space-between">
-            <Stack gap={2} style={{ minWidth: 0 }}>
-              <Text fw={700} fz={24} c="text.6" lh={1.2} lineClamp={2}>
-                {bikeTitle(bike)}
-              </Text>
-              {/* The garage and this page are the only places a bike answers to its nickname. */}
-              {bike.bikename !== null && bike.bikename !== "" && (
-                <Text className="tabular-nums" fz={11} tt="uppercase" c="var(--color-text-dim)" lineClamp={1}>
-                  {bike.bikename}
-                </Text>
-              )}
-            </Stack>
-            {/* An Archived Bike is exported too - it is the machine being sold that a
-                BikeCheck is most often asked for. */}
-            <ActionIcon
-              variant="transparent"
-              radius="xl"
-              size="lg"
-              aria-label={t("report.exportBikeCheck")}
-              onClick={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
-              mt={SHARE_ICON_LIFT}
-              style={{ flexShrink: 0 }}
-            >
-              <Share2 size={20} color="var(--mantine-color-primary-6)" />
-            </ActionIcon>
-          </Group>
-
-          {/* What the bike has done, on one line: units only, so the icon and its colour
-              carry what each number is. What the bike is - its frame size and weight - is
-              read in the spec sheet below. */}
-          <Group gap="md" wrap="wrap">
-            <Metric
-              icon={<Gauge size={14} color={METRIC_COLORS.distance} />}
-              value={t("bikes.kilometres", { count: bikeFigures(bike).km })}
-            />
-            <Metric
-              icon={<ArrowUpRight size={14} color={METRIC_COLORS.elevation} />}
-              value={t("bikes.metres", { count: bikeFigures(bike).elevationM })}
-            />
-            <Metric
-              icon={<Clock size={14} color={METRIC_COLORS.time} />}
-              value={t("bikes.hours", {
-                count: Math.round(bikeFigures(bike).timeMin / 60),
-              })}
-            />
-          </Group>
-        </Stack>
-
-        {/* The specs are read once and the actions daily, so the list stays behind a row
-            rather than pushing the tiles below the fold. It belongs to the bike above it,
-            so it sits on the same card, parted from it only by a rule. */}
-        <UnstyledButton
-          onClick={() => setShowingSpecs(true)}
-          px="md"
-          py={15}
-          w="100%"
-          style={{
-            borderTop: "1px solid var(--color-border-subtle)",
-            color: "var(--mantine-color-text-6)",
-            cursor: "pointer",
-          }}
-        >
-          <Group justify="space-between" wrap="nowrap">
-            <Group gap={8} wrap="nowrap">
-              <Info size={16} color="var(--color-text-dim)" />
-              <Text fz={15} fw={600} c="text.6">
-                {t("bikes.specsAction")}
-              </Text>
-            </Group>
-            <ChevronRight size={16} color="var(--color-text-dim)" />
-          </Group>
-        </UnstyledButton>
-      </Paper>
+      <BikeHeroCard
+        bike={bike}
+        trackedActions={trackedActions ?? []}
+        archived={archived}
+        onOpenSpecs={() => setShowingSpecs(true)}
+        onPairGear={() => setPairingGear(true)}
+        onOpenSharing={() => setSharing(true)}
+      />
       {/* Says plainly what this page now is, so nobody looks for the actions that are gone. */}
       {archived && (
         <Paper
@@ -282,24 +180,14 @@ export function BikeDetail(): ReactElement {
         </Paper>
       )}
 
-
-      {/* A paired bike has nothing left to ask of Strava, so the card goes away — which
-          gear it answers to is read in the spec sheet. */}
-      {!paired && !archived && (
-        <BikeStravaCard
-          accountConnected={user?.strava_athlete_id != null}
-          onConnectAccount={() => connect.mutate()}
-          onPairGear={() => setPairingGear(true)}
-          connectFailed={connect.isError}
-          connecting={connect.isPending}
-        />
-      )}
+      <BikeExportButton onExport={() => setExporting({ kind: "BIKE", bike_id: bike.id })} />
 
       <BikeActionTiles
         onAddService={archived ? undefined : () => navigate(`/service/new?bike=${String(bike.id)}`)}
-        onOpenReports={() => navigate(`/reports?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/bikes/${String(bike.id)}/history`)}
         onOpenSetup={() => navigate(`/bikes/${String(bike.id)}/setup`)}
+        onOpenLinks={() => navigate(`/reports?bike=${String(bike.id)}`)}
+        openLinks={openLinks}
       />
 
       {/* What the bike still owes, above what it is made of: the readings are what the
@@ -326,10 +214,11 @@ export function BikeDetail(): ReactElement {
           bike={bike}
           trackedActions={trackedActions ?? []}
           archived={archived}
-          paired={paired}
+          openLinks={openLinks}
           onOpenSpecs={() => setShowingSpecs(true)}
-          onExport={() => setExporting({ kind: "BIKECHECK", bike_id: bike.id })}
+          onExport={() => setExporting({ kind: "BIKE", bike_id: bike.id })}
           onPairGear={() => setPairingGear(true)}
+          onOpenSharing={() => setSharing(true)}
         />
       ) : (
         phoneContent
@@ -352,6 +241,8 @@ export function BikeDetail(): ReactElement {
       <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
       <GearLinkingSheet opened={pairingGear} onClose={() => setPairingGear(false)} bikeIds={[bike.id]} />
+
+      <ShareDrawer opened={sharing} onClose={() => setSharing(false)} />
 
       <CustomPartsDrawer opened={managingParts} onClose={() => setManagingParts(false)} />
 
@@ -417,13 +308,3 @@ export function BikeDetail(): ReactElement {
   );
 }
 
-function Metric({ icon, value }: { icon: ReactElement; value: string }): ReactElement {
-  return (
-    <Group gap={6} wrap="nowrap">
-      {icon}
-      <Text className="tabular-nums" fz={13} c="text.6" lineClamp={1}>
-        {value}
-      </Text>
-    </Group>
-  );
-}

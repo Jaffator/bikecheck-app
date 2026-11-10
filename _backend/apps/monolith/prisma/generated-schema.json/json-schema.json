@@ -1827,7 +1827,8 @@
           "enum": [
             "SERVICE",
             "PERIOD",
-            "BIKECHECK"
+            "BIKECHECK",
+            "BIKE"
           ]
         },
         "snapshot": {
@@ -1997,6 +1998,12 @@
             "null"
           ],
           "format": "date-time"
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },

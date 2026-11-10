@@ -1,4 +1,6 @@
 // Home's charts, as the API serves them. An Archived Bike is in none of them (ADR 0024).
+import type { components } from "@/api/schema";
+import type { DayRange } from "@/features/rides/ridesTable";
 import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 
 export interface SpendCategory {
@@ -75,11 +77,17 @@ export interface Distance {
   previous: DistancePrevious | null;
 }
 
-// The span desktop Home reads its figures and charts over; no Period is the phone's year.
-export type HomePeriod = "month" | "year" | "all";
+// The first day this garage has anything to read.
+export type EarliestDay = components["schemas"]["Response_EarliestDayDto"];
+
+// The switcher's ordinary segments.
+export type NamedPeriod = "month" | "year" | "all";
+
+// The span desktop Home reads its figures and charts over, or days the rider picked; no Period is the phone's year.
+export type HomePeriod = NamedPeriod | DayRange;
 
 // A Period with one before it to compare with.
-export type ComparedPeriod = Exclude<HomePeriod, "all">;
+export type ComparedPeriod = Exclude<NamedPeriod, "all">;
 
 export type ComparedDistance = Distance & { previous: DistancePrevious };
 

@@ -8121,8 +8121,7 @@
             "type": "string",
             "enum": [
               "SERVICE",
-              "PERIOD",
-              "BIKECHECK"
+              "BIKE"
             ],
             "example": "SERVICE"
           },
@@ -8134,7 +8133,7 @@
           "bike_id": {
             "type": "number",
             "example": 15,
-            "description": "Required when kind is PERIOD or BIKECHECK"
+            "description": "Required when kind is BIKE"
           },
           "from": {
             "type": "string",
@@ -8148,15 +8147,21 @@
           },
           "include_components": {
             "type": "boolean",
-            "example": false,
-            "description": "Required when kind is PERIOD"
+            "example": true,
+            "description": "Required when kind is BIKE"
+          },
+          "include_history": {
+            "type": "boolean",
+            "example": true,
+            "description": "Required when kind is BIKE"
           }
         },
         "required": [
           "kind",
           "service_id",
           "bike_id",
-          "include_components"
+          "include_components",
+          "include_history"
         ]
       },
       "ResponseReportCoversDto": {
@@ -8177,12 +8182,18 @@
             "example": "2026-12-31",
             "nullable": true,
             "description": "Inclusive YYYY-MM-DD"
+          },
+          "hasHistory": {
+            "type": "boolean",
+            "example": true,
+            "description": "False when the document carries no service history"
           }
         },
         "required": [
           "bike",
           "from",
-          "to"
+          "to",
+          "hasHistory"
         ]
       },
       "ResponseExportedReportDto": {
@@ -8205,7 +8216,8 @@
             "enum": [
               "SERVICE",
               "PERIOD",
-              "BIKECHECK"
+              "BIKECHECK",
+              "BIKE"
             ],
             "example": "SERVICE"
           },
@@ -8285,7 +8297,8 @@
             "enum": [
               "SERVICE",
               "PERIOD",
-              "BIKECHECK"
+              "BIKECHECK",
+              "BIKE"
             ],
             "example": "SERVICE"
           },

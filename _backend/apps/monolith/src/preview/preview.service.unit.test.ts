@@ -10,7 +10,7 @@ import { StorageService } from '../storage/storage.service';
 import { ResponseProfileGarageDto } from '../profile/dto/response-profile-garage.dto';
 import { ResponseProfileBikeDto } from '../profile/dto/response-profile-bike.dto';
 import { GoneException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { PeriodReportSnapshot, ReportSnapshot, ServiceReportSnapshot } from '../report/report.types';
+import { BikeReportSnapshot, PeriodReportSnapshot, ReportSnapshot, ServiceReportSnapshot } from '../report/report.types';
 
 // The one boundary the service reads on its own: the built index.html on disk.
 jest.mock('fs/promises', () => ({
@@ -190,6 +190,22 @@ describe('PreviewService', () => {
     services: [],
     totals: { totalCost: 18340, serviceCount: 12, replacementCount: 4 },
     components: null,
+  });
+
+  const bikeReport = (overrides: Partial<BikeReportSnapshot> = {}): BikeReportSnapshot => ({
+    version: 2,
+    kind: 'BIKE',
+    generatedAt: GENERATED_AT,
+    language: 'cs',
+    currency: 'CZK',
+    bike: reportBike,
+    components: [],
+    history: {
+      period: { from: null, to: null },
+      services: [],
+      totals: { totalCost: 18340, serviceCount: 12, replacementCount: 4 },
+    },
+    ...overrides,
   });
 
   const bikeCheck = (): ReportSnapshot => ({
@@ -425,11 +441,30 @@ describe('PreviewService', () => {
 
       const html = await service.reportShell(TOKEN);
 
-      expect(html).toContain('<meta property="og:title" content="Period Report · Orbea Rallon M10 2024" />');
+      expect(html).toContain('<meta property="og:title" content="Bike Report · Orbea Rallon M10 2024" />');
       expect(html).toContain(
         '<meta property="og:description" content="2026-01-01 – 2026-06-30 · 12 services · 4 replacements" />',
       );
       expect(html).not.toContain('18,340');
+    });
+
+    it('describes a Bike Report by what it carries, never by what it cost', async () => {
+      mockReport.getPublicSnapshot.mockResolvedValue(bikeReport());
+
+      const html = await service.reportShell(TOKEN);
+
+      expect(html).toContain('<meta property="og:title" content="Bike Report · Orbea Rallon M10 2024" />');
+      expect(html).toContain('0 components · 12 services');
+      expect(html).not.toContain('18,340');
+    });
+
+    it('leaves out of a Bike Report line what the owner switched off', async () => {
+      mockReport.getPublicSnapshot.mockResolvedValue(bikeReport({ components: null, history: null }));
+
+      const html = await service.reportShell(TOKEN);
+
+      expect(html).not.toContain('component');
+      expect(html).not.toContain(' service');
     });
 
     it('describes a BikeCheck by the mileage and the build', async () => {
@@ -437,7 +472,7 @@ describe('PreviewService', () => {
 
       const html = await service.reportShell(TOKEN);
 
-      expect(html).toContain('<meta property="og:title" content="BikeCheck · Orbea Rallon M10 2024" />');
+      expect(html).toContain('<meta property="og:title" content="Bike Report · Orbea Rallon M10 2024" />');
       expect(html).toContain('<meta property="og:description" content="4,187 km · 1 component" />');
     });
 

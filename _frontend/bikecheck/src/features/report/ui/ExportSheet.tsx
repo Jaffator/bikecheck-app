@@ -1,26 +1,36 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Group, Loader, Stack, Switch, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Check, Link2, Share2, Trash2, X } from "lucide-react";
+import { Check, Download, Link2, Share2, X } from "lucide-react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import { useDiscardReport, useExportReport, useOwnedAttachmentOpener, usePublishReport } from "@/features/report/report.queries";
+import { BikeNameRow } from "@/features/bikes/ui/BikeNameRow";
+import {
+  useDiscardReport,
+  useDownloadReportPdf,
+  useExportReport,
+  useOwnedAttachmentOpener,
+  usePublishReport,
+} from "@/features/report/report.queries";
+import { BikeReportOptions, type BikeReportChoice } from "./BikeReportOptions";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { ReportDocument } from "./ReportDocument";
 import { REPORT_KIND_KEY } from "@/features/report/reportListLabels";
-import type { ExportReportInput, ExportedReport, ReportKind } from "@/features/report/report.types";
-import { ApiError } from "@/api/client";
+import type {
+  ExportBikeReportInput,
+  ExportReportInput,
+  ExportedReport,
+  ReportKind,
+} from "@/features/report/report.types";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { canShareLink, shareLink } from "@/utils/shareLink";
 
 // The sheet stands over what it was opened from, the same way the service detail does.
 const SHEET_HEIGHT = "90%";
 const SHEET_Z_INDEX = 320;
+const OPTIONS_MODAL_WIDTH = 480;
 // The paper's own max-w-3xl plus the modal's gutters and scrollbar, so no dark edge is left.
 const DOCUMENT_MODAL_WIDTH = 820;
-
-// What the server answers with when the period it was handed covers no services.
-const EMPTY_PERIOD_STATUS = 400;
 
 interface ExportSheetProps {
   // Null closes the sheet. What is being exported, once open.
@@ -28,26 +38,25 @@ interface ExportSheetProps {
   onClose: () => void;
 }
 
-// Export, preview, publish. Three states, one sheet: making a Report and opening it to
-// the world are two deliberate acts, and the second is never a reflex.
+// Options, preview, then a file or a link. One sheet: making a Report and opening it to the
+// world are two deliberate acts, and the second is never a reflex.
 export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
   const made = useExportReport();
   const publish = usePublishReport();
-  const discard = useDiscardReport();
   // Stable across renders, unlike the mutation object around it, so the effect below can
   // depend on it honestly.
   const startExport = made.mutate;
-  const throwAway = discard.mutate;
+  const throwAway = useDiscardReport().mutate;
 
   // The Report this sheet made, held so publishing can address it and the preview does
   // not depend on a mutation's transient result.
   const [report, setReport] = useState<ExportedReport | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  // The Period Report's one option, and whether the owner has settled it. Held here until
-  // Export, because the choice is frozen into the Report the moment it is made.
-  const [includeComponents, setIncludeComponents] = useState(false);
+  // What a Bike Report carries, and whether the owner has settled it. Held here so a failed
+  // Export returns to the answers given, not to the defaults.
+  const [choice, setChoice] = useState<BikeReportChoice | null>(null);
   const [optionsDone, setOptionsDone] = useState(false);
   // Which input has already been exported. An export writes a row, so it must happen once
   // per thing the sheet was opened on, however many times the effect runs.
@@ -59,12 +68,13 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   const openAttachment = useOwnedAttachmentOpener(report?.id);
 
   const opened = input !== null;
-  const needsOptions = input !== null && input.kind === "PERIOD" && !optionsDone;
+  const bikeReport = input !== null && input.kind === "BIKE" ? input : null;
+  const needsOptions = bikeReport !== null && !optionsDone;
 
-  // The kinds that ask nothing are exported the moment the sheet opens. An export writes a
-  // row, so it must happen once per opening however many times this runs.
+  // A Service Report asks nothing, so it is exported the moment the sheet opens. An export
+  // writes a row, so it must happen once per opening however many times this runs.
   useEffect(() => {
-    if (input === null || input.kind === "PERIOD") return;
+    if (input === null || input.kind === "BIKE") return;
 
     const key = JSON.stringify(input);
     if (exported.current === key) return;
@@ -73,32 +83,29 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     startExport(input, { onSuccess: setReport });
   }, [input, startExport]);
 
-  // The Period Report is exported once its one option has an answer, because the answer is
-  // frozen into the document rather than read off it later.
-  function confirmOptions(): void {
-    if (input === null || input.kind !== "PERIOD") return;
+  // A Bike Report is exported once its options have answers, because they are frozen into
+  // the document rather than read off it later.
+  function exportBikeReport(next: BikeReportChoice): void {
+    if (bikeReport === null) return;
 
-    const key = JSON.stringify(input);
+    const key = JSON.stringify(bikeReport);
     if (exported.current === key) return;
     exported.current = key;
+    setChoice(next);
     setOptionsDone(true);
 
-    startExport(
-      { ...input, include_components: includeComponents },
-      {
-        onSuccess: setReport,
-        // Nothing was written, so the owner goes back to the step they came from and can
-        // answer again - a period holding nothing is an answer, not a dead end.
-        onError: () => {
-          exported.current = null;
-          setOptionsDone(false);
-        },
+    startExport(bikeReportExport(bikeReport, next), {
+      onSuccess: setReport,
+      // Nothing was written, so the owner goes back to the step they came from.
+      onError: () => {
+        exported.current = null;
+        setOptionsDone(false);
       },
-    );
+    });
   }
 
   // Nothing was ever published, so a preview the owner walks away from leaves no row
-  // behind — abandoning it and discarding it are the same act.
+  // behind, a downloaded file included: abandoning it and discarding it are the same act.
   function close(): void {
     if (report !== null && shareUrl === null) {
       throwAway(report.id);
@@ -111,23 +118,25 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     exported.current = null;
     setReport(null);
     setShareUrl(null);
-    setIncludeComponents(false);
+    setChoice(null);
     setOptionsDone(false);
     made.reset();
     publish.reset();
-    discard.reset();
     onClose();
   }
 
   const isPublished = shareUrl !== null;
   // Only the document reads wide; the question before it and the link after it stay a dialog.
   const showsDocument = made.isPending || (report !== null && !isPublished);
+  // The phone keeps the bike over its document; the wide desktop preview has no use for it.
+  const showsBike = bikeReport !== null && !isPublished && (needsOptions || !isDesktop);
 
   return (
     <Sheet
       opened={opened}
       onClose={close}
-      wide={showsDocument}
+      width={sheetWidth(showsDocument, needsOptions)}
+      fitted={needsOptions}
       title={
         isPublished ? (
           // Once the link exists, the sheet says so where its name was.
@@ -135,18 +144,31 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
             <Check size={20} color="var(--mantine-color-primary-6)" />
             <span>{t("report.publishedConfirm")}</span>
           </Group>
+        ) : titleKind.current === "BIKE" ? (
+          <Group gap={8} wrap="nowrap">
+            <Download size={18} color="var(--mantine-color-text-6)" />
+            <Text component="span" fz={16} fw={600} c="text.6">
+              {t("report.export")}
+            </Text>
+          </Group>
         ) : (
           t(REPORT_KIND_KEY[titleKind.current])
         )
       }
     >
+      {showsBike && (
+        <Box px={isDesktop ? "md" : undefined} pt={14} style={{ flexShrink: 0 }}>
+          <BikeNameRow bikeId={bikeReport.bike_id} />
+        </Box>
+      )}
+
       <Box px={isDesktop ? "md" : undefined} pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-        {/* The one question a Period Report asks, before anything is written down. */}
-        {needsOptions && <Options checked={includeComponents} onChange={setIncludeComponents} />}
+        {/* What a Bike Report carries, before anything is written down. */}
+        {needsOptions && <BikeReportOptions initial={choice ?? defaultChoice(bikeReport)} onPreview={exportBikeReport} />}
 
         {made.isPending && <Waiting label={t("report.exporting")} />}
 
-        {made.isError && <Failure>{t(exportFailureKey(made.error))}</Failure>}
+        {made.isError && <Failure>{t("report.exportFailed")}</Failure>}
 
         {report !== null && !isPublished && (
           <Stack gap="md" pb="md">
@@ -154,9 +176,6 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
                 previewing, receipts included. */}
             {/* Their own report, so the owner reads its files before anyone else can. */}
             <ReportDocument snapshot={report.snapshot} onOpenAttachment={openAttachment} />
-            <Text fz={12} c="var(--color-text-dim)" ta="center">
-              {t("report.previewHint")}
-            </Text>
           </Stack>
         )}
 
@@ -165,58 +184,18 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
         )}
 
         {publish.isError && <Failure>{t("report.publishFailed")}</Failure>}
-        {discard.isError && <Failure>{t("report.discardFailed")}</Failure>}
       </Box>
 
-      {needsOptions && (
-        <Footer>
-          <Button
-            color="primary.6"
-            c="textDark.6"
-            radius="md"
-            rightSection={<ArrowRight size={16} />}
-            onClick={confirmOptions}
-          >
-            {t("report.continue")}
-          </Button>
-        </Footer>
-      )}
-
-      {/* Publishing is a distinct second tap, never something the preview does on the way
-          past. */}
       {report !== null && !isPublished && (
-        <Footer>
-          <Button
-            variant="outline"
-            color="red.5"
-            radius="md"
-            leftSection={<Trash2 size={16} />}
-            loading={discard.isPending}
-            onClick={() => throwAway(report.id, { onSuccess: reset })}
-            styles={{
-              root: {
-                backgroundColor: "transparent",
-                borderColor: "color-mix(in srgb, var(--mantine-color-red-5) 45%, transparent)",
-              },
-            }}
-          >
-            {t("report.discard")}
-          </Button>
-          <Button
-            color="primary.6"
-            c="textDark.6"
-            radius="md"
-            leftSection={<Link2 size={16} />}
-            loading={publish.isPending}
-            onClick={() =>
-              publish.mutate(report.id, {
-                onSuccess: (published) => setShareUrl(published.share_url),
-              })
-            }
-          >
-            {t("report.publish")}
-          </Button>
-        </Footer>
+        <PreviewActions
+          reportId={report.id}
+          publishing={publish.isPending}
+          onPublish={() =>
+            publish.mutate(report.id, {
+              onSuccess: (published) => setShareUrl(published.share_url),
+            })
+          }
+        />
       )}
 
       {isPublished && (
@@ -230,46 +209,72 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   );
 }
 
-// A period holding no services is refused before a report is made, and that is worth saying
-// plainly: "try again" is advice that cannot work.
-function exportFailureKey(error: Error): string {
-  return error instanceof ApiError && error.status === EMPTY_PERIOD_STATUS
-    ? "report.emptyPeriod"
-    : "report.exportFailed";
+// History is off unless the opener asks for it; Service does, on the span its filter is on.
+function defaultChoice({ from, to, include_history }: ExportBikeReportInput): BikeReportChoice {
+  return { components: true, history: include_history ?? false, period: { from: from ?? null, to: to ?? null } };
 }
 
-// What a Period Report may also carry. The choice is frozen into the document, so it is
-// made before Export rather than offered on the preview.
-function Options({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }): ReactElement {
+function bikeReportExport(input: ExportBikeReportInput, choice: BikeReportChoice): ExportBikeReportInput {
+  return {
+    kind: "BIKE",
+    bike_id: input.bike_id,
+    from: choice.period.from ?? undefined,
+    to: choice.period.to ?? undefined,
+    include_components: choice.components,
+    include_history: choice.history,
+  };
+}
+
+function sheetWidth(showsDocument: boolean, needsOptions: boolean): number | undefined {
+  if (showsDocument) return DOCUMENT_MODAL_WIDTH;
+  return needsOptions ? OPTIONS_MODAL_WIDTH : undefined;
+}
+
+// The file changes nothing, so the sheet stays open for the link. Publishing is a distinct
+// second tap, never something the preview does on the way past.
+function PreviewActions({
+  reportId,
+  publishing,
+  onPublish,
+}: {
+  reportId: number;
+  publishing: boolean;
+  onPublish: () => void;
+}): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
+  const pdf = useDownloadReportPdf();
 
   return (
-    <Stack gap="md" pb="md">
-      <Text fz={14} c="text.8">
-        {t("report.optionsBody")}
-      </Text>
-      <Switch
-        pt={20}
-        withThumbIndicator={false}
-        label={t("report.includeComponents")}
-        description={t("report.includeComponentsHint")}
-        checked={checked}
-        onChange={(event) => onChange(event.currentTarget.checked)}
-        aria-label={t("addBike.ebike")}
-        styles={{
-          label: {
-            color: "var(--mantine-color-text-6)",
-          },
-          track: {
-            backgroundColor: checked ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
-            borderColor: "var(--mantine-color-other-borderSolid)",
-          },
-          thumb: {
-            backgroundColor: checked ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
-          },
-        }}
-      />
-    </Stack>
+    <>
+      <Footer fill>
+        <Button
+          color="primary.6"
+          c="textDark.6"
+          radius="md"
+          leftSection={<Download size={16} />}
+          loading={pdf.isPending}
+          onClick={() => pdf.mutate(reportId)}
+        >
+          {t("report.downloadPdf")}
+        </Button>
+        <Button
+          variant="outline"
+          radius="md"
+          leftSection={<Link2 size={16} color="var(--mantine-color-primary-5)" />}
+          loading={publishing}
+          onClick={onPublish}
+        >
+          {t("report.publish")}
+        </Button>
+      </Footer>
+      <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
+        {pdf.isError && <Failure>{t("report.pdfFailed")}</Failure>}
+        <Text fz={12} lh={1.4} c="var(--color-text-dim)">
+          {t("report.fileOrLinkHint")}
+        </Text>
+      </Box>
+    </>
   );
 }
 
@@ -356,13 +361,17 @@ function wasDismissed(error: unknown): boolean {
 function Sheet({
   opened,
   onClose,
-  wide,
+  width,
+  fitted,
   title,
   children,
 }: {
   opened: boolean;
   onClose: () => void;
-  wide: boolean;
+  // Of the desktop modal; left out, the default.
+  width: number | undefined;
+  // As tall as what it holds, not as tall as a document.
+  fitted: boolean;
   title: ReactNode;
   children: ReactNode;
 }): ReactElement {
@@ -374,12 +383,12 @@ function Sheet({
       opened={opened}
       onClose={onClose}
       desktop="modal"
-      modalSize={wide ? DOCUMENT_MODAL_WIDTH : undefined}
+      modalSize={width}
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
       styles={{
         content: {
-          height: SHEET_HEIGHT,
+          height: fitted ? "auto" : SHEET_HEIGHT,
           display: "flex",
           flexDirection: "column",
         },
@@ -424,13 +433,13 @@ function Sheet({
   );
 }
 
-function Footer({ children }: { children: ReactNode }): ReactElement {
+function Footer({ fill = false, children }: { fill?: boolean; children: ReactNode }): ReactElement {
   const isDesktop = useIsDesktop();
 
   return (
     <Group
       gap="sm"
-      grow={!isDesktop}
+      grow={fill || !isDesktop}
       justify="flex-end"
       px={isDesktop ? "md" : undefined}
       pt="sm"

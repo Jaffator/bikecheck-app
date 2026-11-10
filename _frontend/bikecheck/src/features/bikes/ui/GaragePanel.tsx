@@ -20,7 +20,7 @@ import { useGarageTrackedActions } from "@/features/service_tracking/tracking.qu
 import type { GarageTrackedAction, TrackedAction } from "@/features/service_tracking/tracking.types";
 import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
 import { SetupShortcut } from "@/features/setup/ui/SetupShortcut";
-import { homePeriodLabel } from "@/features/stats/homePeriod";
+import { homePeriodLabel, isCustomPeriod } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { DistanceBike, HomePeriod } from "@/features/stats/stats.types";
 import { formatNumber } from "@/utils/number";
@@ -38,6 +38,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
   const { data: garage } = useGarageTrackedActions(EVERY_READING);
   const { data: distance } = useDistance(period);
   const label = homePeriodLabel(period, i18n.language, t);
+  const custom = isCustomPeriod(period);
 
   const byBike = new Map<number, GarageTrackedAction[]>();
   for (const action of garage ?? []) byBike.set(action.bike_id, [...(byBike.get(action.bike_id) ?? []), action]);
@@ -60,8 +61,9 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
         cells={[
           "",
           t("bikes.columnBike"),
-          t("bikes.columnDistancePeriod", { period: label }),
-          t("bikes.columnTimePeriod", { period: label }),
+          // Days do not fit the column; the switcher above it names them.
+          custom ? t("bikes.columnDistance") : t("bikes.columnDistancePeriod", { period: label }),
+          custom ? t("bikes.columnTime") : t("bikes.columnTimePeriod", { period: label }),
           t("bikes.columnWorstPart"),
           t("bikes.columnStatus"),
           "",
@@ -126,7 +128,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
               {garage === undefined ? (
                 <Skeleton h={26} w={80} radius="xl" />
               ) : (
-                <HealthBadge actions={byBike.get(bike.id) ?? []} tinted />
+                <HealthBadge actions={byBike.get(bike.id) ?? []} />
               )}
             </Box>
             <SetupShortcut bikeId={bike.id} />

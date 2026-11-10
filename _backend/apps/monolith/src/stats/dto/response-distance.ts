@@ -60,7 +60,7 @@ export class Response_DistanceBikeDto {
   calories!: number;
 }
 
-// The totals stop at the same day of the previous Period; the days run through the whole of it.
+// The totals stop at the same day of the previous Period, a custom one's at its end; the days run through the whole.
 export class Response_DistancePreviousDto {
   @ApiProperty({ example: '2026-10-01', description: 'First UTC day of the previous Period, index 0 of the days' })
   from!: string;

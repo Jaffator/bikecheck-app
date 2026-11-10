@@ -12,19 +12,19 @@ export function StravaLinkedBadge({ stravaGearId }: { stravaGearId: string | nul
 
   return (
     <Group
-      // Match health badge dimensions when badges stack.
-      gap={5}
-      px={8}
-      py={3}
+      // The health badge's pill, since the two stack in one corner.
+      gap={6}
+      h={26}
+      pl={8}
+      pr={10}
+      wrap="nowrap"
       style={{
         borderRadius: "9999px",
-        backgroundColor: "rgba(20, 20, 20, 0.75)",
-        border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 55%, transparent)",
-        backdropFilter: "blur(4px)",
+        backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 13%, var(--mantine-color-cards-6))",
       }}
     >
-      <StravaMark width={10} height={10} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
-      <Text className="tabular-nums" fz={10} c="var(--mantine-color-strava-6)">
+      <StravaMark width={12} height={12} color="var(--mantine-color-strava-6)" style={{ display: "block", flexShrink: 0 }} />
+      <Text className="tabular-nums" fz={12} fw={600} c="var(--mantine-color-strava-6)" style={{ whiteSpace: "nowrap" }}>
         {t("strava.paired")}
       </Text>
     </Group>

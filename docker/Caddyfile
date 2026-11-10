@@ -24,7 +24,13 @@ www.{$WEBSITE_HOST} {
 # The App: the SPA and the two Nest apps on one origin (docs/research/hosting.md §5).
 {$PUBLIC_HOST} {
 	# Access log to stderr, so `docker logs caddy` has it; the daemon rotates it.
-	log
+	# Caddy logs request headers, and the print key travels in one; the PDF ticket is in the path (ADR 0012).
+	log {
+		format filter {
+			request>headers>X-Report-Print-Key delete
+			request>uri regexp "(/reports/pdf-ticket/)[^/?]+" "${1}-"
+		}
+	}
 
 	# Facebook's crawler accepts only gzip/deflate.
 	encode gzip

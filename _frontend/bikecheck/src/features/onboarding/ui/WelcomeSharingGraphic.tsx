@@ -95,7 +95,7 @@ export function WelcomeSharingGraphic({ desktop }: { desktop: boolean }): ReactE
           </Box>
         </Box>
         <Text mt={14} fz={22} lh="26px" fw={700} lts="var(--tracking-title)" c={INK}>
-          {t("report.titlePeriod")}
+          {t("report.titleBike")}
         </Text>
         <Text mt={2} fz={12} lh="16px" c={INK_SOFT}>
           {t("onboarding.welcome.sample.reportSubtitle")}

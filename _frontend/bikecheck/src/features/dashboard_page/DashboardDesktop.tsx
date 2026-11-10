@@ -30,7 +30,7 @@ export function DashboardDesktop(): ReactElement {
           <StravaSyncChip />
           <GarageVisibilityChip />
         </Group>
-        <HomePeriodSwitcher value={period} onChange={setPeriod} />
+        <HomePeriodSwitcher value={period} onChange={setPeriod} withCustom />
       </Group>,
     );
     return () => setActionSlot(null);

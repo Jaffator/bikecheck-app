@@ -94,10 +94,10 @@ describe('StatsService', () => {
   const mockServiceTracking = { getGarageReadings: jest.fn() };
 
   const mockPrisma = {
-    events_bikes: { findMany: jest.fn() },
+    events_bikes: { findMany: jest.fn(), aggregate: jest.fn() },
     component_groups: { findMany: jest.fn() },
     users: { findUnique: jest.fn() },
-    rides: { findMany: jest.fn() },
+    rides: { findMany: jest.fn(), aggregate: jest.fn() },
     bikes: { findMany: jest.fn() },
   };
 
@@ -479,6 +479,44 @@ describe('StatsService', () => {
     it('rejects a period Home does not know', async () => {
       // ACT + ASSERT
       await expect(stats.getSpend(OWNER_ID, 'decade')).rejects.toThrow(BadRequestException);
+    });
+
+    it('serves a custom Period between its two days, both counted, in the shape a named one has', async () => {
+      // ARRANGE
+      services = [
+        service(RALLON, '2026-02-28T12:00:00.000Z', 900, []),
+        service(RALLON, '2026-03-01T12:00:00.000Z', 100, []),
+        service(RALLON, '2026-03-15T12:00:00.000Z', 200, []),
+        service(RALLON, '2026-03-16T12:00:00.000Z', 400, []),
+        service(RALLON, null, 800, []),
+      ];
+
+      // ACT
+      const result = await stats.getSpend(OWNER_ID, undefined, { from: '2026-03-01', to: '2026-03-15' });
+
+      // ASSERT
+      expect(result).toEqual({
+        from: '2026-03-01',
+        to: '2026-03-15',
+        currency: 'CZK',
+        total: 300,
+        categories: [expect.objectContaining({ key: 'unassigned', amount: 300 })],
+        bikes: [expect.objectContaining({ bike_id: RALLON.id, total: 300, service_count: 2 })],
+      });
+    });
+
+    it.each([
+      ['only a first day', undefined, { from: '2026-03-01' }],
+      ['only a last day', undefined, { to: '2026-03-15' }],
+      ['a first day after the last', undefined, { from: '2026-03-16', to: '2026-03-15' }],
+      ['a day that does not exist', undefined, { from: '2026-02-30', to: '2026-03-15' }],
+      ['a month that does not exist', undefined, { from: '2026-13-01', to: '2026-13-02' }],
+      ['rubbish', undefined, { from: 'march', to: '2026-03-15' }],
+      ['an empty day', undefined, { from: '', to: '2026-03-15' }],
+      ['days beside a period', 'month', { from: '2026-03-01', to: '2026-03-15' }],
+    ])('refuses %s', async (_case, period, days) => {
+      // ACT + ASSERT
+      await expect(stats.getSpend(OWNER_ID, period, days)).rejects.toThrow(BadRequestException);
     });
 
     it('counts what History Totals counts: no deleted services and no archived bikes', async () => {
@@ -883,6 +921,120 @@ describe('StatsService', () => {
       await expect(stats.getDistance(OWNER_ID, 'week')).rejects.toThrow(BadRequestException);
     });
 
+    it('refuses days beside a period, and half a pair', async () => {
+      // ACT + ASSERT
+      await expect(stats.getDistance(OWNER_ID, 'year', { from: '2025-03-01', to: '2025-03-31' })).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(stats.getDistance(OWNER_ID, undefined, { from: '2025-03-01' })).rejects.toThrow(BadRequestException);
+    });
+
+    it('serves a custom Period day by day between its two days, in the shape a named one has', async () => {
+      // ARRANGE: 2 to 4 February 2025, a ride either side of it.
+      rides = [
+        ride(RALLON, '2025-02-01T23:59:00.000Z', 90000),
+        ride(RALLON, '2025-02-02T00:00:00.000Z', 10000, { duration_min: 30, elevation_up_m: 100, calories: 300 }),
+        ride(RALLON, '2025-02-04T23:59:00.000Z', 20000, { duration_min: 60, elevation_up_m: 200, calories: 600 }),
+        ride(RALLON, '2025-02-05T00:00:00.000Z', 40000),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, undefined, { from: '2025-02-02', to: '2025-02-04' });
+
+      // ASSERT
+      expect(result.from).toBe('2025-02-02');
+      expect(result.to).toBe('2025-02-04');
+      expect(result.bikes).toEqual([
+        expect.objectContaining({
+          bike_id: RALLON.id,
+          daily_m: [10000, 0, 20000],
+          daily_elevation_m: [100, 0, 200],
+          daily_time_min: [30, 0, 60],
+          daily_calories: [300, 0, 600],
+          total_km: 30,
+          ride_count: 2,
+        }),
+      ]);
+    });
+
+    it('compares a whole month with the whole month before, shorter or not', async () => {
+      // ARRANGE: February 2025 has 28 days, January's last ride falls past that.
+      rides = [
+        ride(RALLON, '2024-12-31T23:00:00.000Z', 90000),
+        ride(RALLON, '2025-01-01T08:00:00.000Z', 10000),
+        ride(RALLON, '2025-01-31T08:00:00.000Z', 20000, { duration_min: 60 }),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, undefined, { from: '2025-02-01', to: '2025-02-28' });
+
+      // ASSERT
+      expect(result.previous).toEqual(
+        expect.objectContaining({
+          from: '2025-01-01',
+          meters: 30000,
+          time_min: 60,
+          daily_m: days(31, { 0: 10000, 30: 20000 }),
+        }),
+      );
+    });
+
+    it('compares a whole year with the whole year before, a leap year or not', async () => {
+      // ARRANGE
+      rides = [
+        ride(RALLON, '2023-12-31T23:00:00.000Z', 90000),
+        ride(RALLON, '2024-01-01T08:00:00.000Z', 10000),
+        ride(RALLON, '2024-12-31T08:00:00.000Z', 20000),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, undefined, { from: '2025-01-01', to: '2025-12-31' });
+
+      // ASSERT: 2024 has 366 days.
+      expect(result.previous).toEqual(
+        expect.objectContaining({ from: '2024-01-01', meters: 30000, daily_m: days(366, { 0: 10000, 365: 20000 }) }),
+      );
+    });
+
+    it('compares any other days with the same number of days right before', async () => {
+      // ARRANGE: 10 to 12 March is three days; before them run 7 to 9 March.
+      rides = [
+        ride(RALLON, '2025-03-06T23:00:00.000Z', 90000),
+        ride(RALLON, '2025-03-07T08:00:00.000Z', 10000),
+        ride(RALLON, '2025-03-09T23:00:00.000Z', 20000),
+        ride(RALLON, '2025-03-10T08:00:00.000Z', 40000),
+      ];
+
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, undefined, { from: '2025-03-10', to: '2025-03-12' });
+
+      // ASSERT
+      expect(result.previous).toEqual(
+        expect.objectContaining({ from: '2025-03-07', meters: 30000, daily_m: [10000, 0, 20000] }),
+      );
+    });
+
+    it('steps a month of a year below 100 back in that year, not into the 1900s', async () => {
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, undefined, { from: '0050-03-01', to: '0050-03-31' });
+
+      // ASSERT
+      expect(result.previous?.from).toBe('0050-02-01');
+      expect(result.previous?.daily_m).toHaveLength(28);
+    });
+
+    it.each([
+      ['two whole months', '2025-03-01', '2025-04-30', '2024-12-30', 61],
+      ['twelve whole months across a new year', '2024-07-01', '2025-06-30', '2023-07-02', 365],
+    ])('counts %s as any other days', async (_case, from, to, previousFrom, length) => {
+      // ACT
+      const result = await stats.getDistance(OWNER_ID, undefined, { from, to });
+
+      // ASSERT
+      expect(result.previous?.from).toBe(previousFrom);
+      expect(result.previous?.daily_m).toHaveLength(length);
+    });
+
     it('compares this month with the month before up to the same day, under the same ride rules', async () => {
       // ARRANGE: Tuesday 3 November; the Stumpy is archived.
       jest.setSystemTime(new Date('2026-11-03T10:00:00.000Z'));
@@ -1009,6 +1161,62 @@ describe('StatsService', () => {
 
       // ASSERT
       expect(result.previous).toBeNull();
+    });
+  });
+
+  describe('getEarliestDay', () => {
+    const earliest = (rideAt: Date | null, serviceAt: Date | null): void => {
+      mockPrisma.rides.aggregate.mockResolvedValue({ _min: { started_at: rideAt } });
+      mockPrisma.events_bikes.aggregate.mockResolvedValue({ _min: { service_date: serviceAt } });
+    };
+
+    it('serves the day of the earliest ride when it came first', async () => {
+      // ARRANGE
+      earliest(new Date('2023-04-02T23:30:00.000Z'), new Date(2024, 0, 15));
+
+      // ACT + ASSERT
+      await expect(stats.getEarliestDay(OWNER_ID)).resolves.toEqual({ day: '2023-04-02' });
+    });
+
+    it('serves the day of the earliest dated Service when it came first', async () => {
+      // ARRANGE
+      earliest(new Date('2024-01-15T08:00:00.000Z'), new Date(2023, 3, 2));
+
+      // ACT + ASSERT
+      await expect(stats.getEarliestDay(OWNER_ID)).resolves.toEqual({ day: '2023-04-02' });
+    });
+
+    it('serves a garage with rides only, and one with Services only', async () => {
+      // ARRANGE + ACT
+      earliest(new Date('2023-04-02T08:00:00.000Z'), null);
+      const ridesOnly = await stats.getEarliestDay(OWNER_ID);
+      earliest(null, new Date(2024, 0, 15));
+      const servicesOnly = await stats.getEarliestDay(OWNER_ID);
+
+      // ASSERT
+      expect(ridesOnly).toEqual({ day: '2023-04-02' });
+      expect(servicesOnly).toEqual({ day: '2024-01-15' });
+    });
+
+    it('serves no day for an empty garage', async () => {
+      // ARRANGE
+      earliest(null, null);
+
+      // ACT + ASSERT
+      await expect(stats.getEarliestDay(OWNER_ID)).resolves.toEqual({ day: null });
+    });
+
+    it("reads only the user's own undeleted rides and Services, on bikes still in the garage", async () => {
+      // ARRANGE
+      earliest(null, null);
+      const where = { is_deleted: { not: true }, bikes: { user_id: OWNER_ID, is_deleted: { not: true } } };
+
+      // ACT
+      await stats.getEarliestDay(OWNER_ID);
+
+      // ASSERT
+      expect(mockPrisma.rides.aggregate).toHaveBeenCalledWith(expect.objectContaining({ where }));
+      expect(mockPrisma.events_bikes.aggregate).toHaveBeenCalledWith(expect.objectContaining({ where }));
     });
   });
 

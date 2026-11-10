@@ -5,6 +5,9 @@ import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
+import type { ExportReportInput } from "@/features/report/report.types";
+import { ExportBikeButton } from "@/features/report/ui/ExportBikeButton";
+import { ExportSheet } from "@/features/report/ui/ExportSheet";
 import { BikeFilterChips } from "@/features/service/ui/BikeFilterChips";
 import { SWIPE_AREA_STYLE, useBikePanel, useBikeSwipe } from "@/features/service/useBikeSwipe";
 import { ServiceList } from "@/features/service/ui/ServiceList";
@@ -44,6 +47,8 @@ function ServicePhone(): ReactElement {
   const { data: bikes } = useBikes();
   // Null reads as every bike.
   const [bikeId, setBikeId] = useState<number | null>(null);
+  // What the Export button is exporting. Null keeps the export sheet shut.
+  const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   const { data, isLoading, isError, isPlaceholderData: listStale } = useRecentServices(bikeId ?? undefined);
 
   const services = data?.items ?? [];
@@ -127,9 +132,15 @@ function ServicePhone(): ReactElement {
             {planned}
             {attention}
 
-            <Text fw={600} fz={15} c="text.7">
-              {t("service.recentTitle")}
-            </Text>
+            <Group gap="sm" wrap="nowrap" align="center">
+              <Text fw={600} fz={15} c="text.7">
+                {t("service.recentTitle")}
+              </Text>
+              {/* The chips pick the bike, so what the tooltip asks for can be done on this page. */}
+              <ExportBikeButton
+                onExport={historyBikeId === null ? null : () => setExporting({ kind: "BIKE", bike_id: historyBikeId, include_history: true })}
+              />
+            </Group>
 
             <ServiceList
               services={services}
@@ -161,6 +172,8 @@ function ServicePhone(): ReactElement {
           </Stack>
         </Box>
       </Box>
+
+      <ExportSheet input={exporting} onClose={() => setExporting(null)} />
     </Stack>
   );
 }

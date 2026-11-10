@@ -1,19 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'stream';
-import {
-  BadRequestException,
-  ConflictException,
-  GoneException,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, GoneException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { report_kind, reports } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { ReportService } from './report.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ReportPdfService } from './report-pdf.service';
-import { StoredReportSnapshot } from './report.types';
+import { BikeReportSnapshot, StoredReportSnapshot } from './report.types';
 
 // A report is frozen at the moment it is made, so every test here fixes that moment and
 // the date of the work it covers.
@@ -39,6 +33,10 @@ describe('ReportService', () => {
 
   const mockPdf = {
     print: jest.fn(),
+    printWithKey: jest.fn(),
+    admits: jest.fn(),
+    hold: jest.fn(),
+    claim: jest.fn(),
   };
 
   const mockStorage = {
@@ -59,6 +57,7 @@ describe('ReportService', () => {
     },
     events_bikes: { findFirst: jest.fn(), findMany: jest.fn() },
     bikes: { findFirst: jest.fn() },
+    rides: { aggregate: jest.fn() },
     components_mounted: { findMany: jest.fn() },
     users: { findUnique: jest.fn() },
   };
@@ -261,6 +260,19 @@ describe('ReportService', () => {
     };
   }
 
+  // A published Bike Report, whose history is what a test hands in; null left it out.
+  const bikeReportRow = (history: Record<string, unknown> | null): Record<string, unknown> => {
+    const stored = storedSnapshot();
+    stored.document = {
+      ...stored.document,
+      kind: 'BIKE',
+      components: null,
+      history: history === null ? null : { period: { from: null, to: null }, services: [], ...history },
+    } as unknown as typeof stored.document;
+
+    return reportRow({ kind: report_kind.BIKE, is_public: true, snapshot: stored });
+  };
+
   // The document Export just wrote, read back out of the create call.
   const writtenSnapshot = (): StoredReportSnapshot =>
     mockPrisma.reports.create.mock.calls[0][0].data.snapshot as StoredReportSnapshot;
@@ -295,12 +307,15 @@ describe('ReportService', () => {
     });
 
     mockPdf.print.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
+    mockPdf.printWithKey.mockResolvedValue(Buffer.from('%PDF-1.7 printed'));
+    mockPdf.admits.mockReturnValue(false);
 
     // The caller owns the service and writes in English unless a test says otherwise.
     mockPrisma.users.findUnique.mockResolvedValue({ language: 'en', currency: 'CZK' });
     mockPrisma.events_bikes.findFirst.mockResolvedValue(serviceRow());
     mockPrisma.events_bikes.findMany.mockResolvedValue([serviceRow()]);
     mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow());
+    mockPrisma.rides.aggregate.mockResolvedValue({ _sum: { distance_m: null, duration_min: null } });
     mockPrisma.components_mounted.findMany.mockResolvedValue([mountedRow()]);
     mockPrisma.reports.create.mockImplementation((args: { data: Record<string, unknown> }) =>
       Promise.resolve({ ...reportRow(), ...args.data }),
@@ -511,19 +526,48 @@ describe('ReportService', () => {
     });
   });
 
-  describe('exportReport - period', () => {
-    const exportPeriod = (overrides: Record<string, unknown> = {}) =>
+  describe('exportReport - bike report', () => {
+    const exportBike = (overrides: Record<string, unknown> = {}) =>
       service.exportReport(OWNER_ID, {
-        kind: report_kind.PERIOD,
+        kind: report_kind.BIKE,
         bike_id: BIKE_ID,
         from: PERIOD_FROM,
         to: PERIOD_TO,
-        include_components: false,
+        include_components: true,
+        include_history: true,
         ...overrides,
       });
 
+    const exportedBikeReport = async (overrides: Record<string, unknown> = {}): Promise<BikeReportSnapshot> => {
+      const { snapshot } = await exportBike(overrides);
+      if (snapshot.kind !== 'BIKE') throw new Error('expected a bike report');
+      return snapshot;
+    };
+
+    it('is written as its own kind, never a BikeCheck or a Period Report', async () => {
+      const { report } = await exportBike();
+
+      expect(report.kind).toBe(report_kind.BIKE);
+    });
+
+    it("adds the bike's rides to the distance and ride time the owner typed", async () => {
+      mockPrisma.rides.aggregate.mockResolvedValue({ _sum: { distance_m: 1_840_500, duration_min: 3180 } });
+
+      const { bike } = await exportedBikeReport();
+
+      expect(bike).toEqual(expect.objectContaining({ totalKm: 5200 + 1840, totalTimeMin: 14000 + 3180 }));
+    });
+
+    it('leaves an untyped, unridden bike unknown rather than zero', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ total_km: null, total_time_min: null }));
+
+      const { bike } = await exportedBikeReport();
+
+      expect(bike).toEqual(expect.objectContaining({ totalKm: null, totalTimeMin: null }));
+    });
+
     it('covers exactly the services that bike and that period cover', async () => {
-      await exportPeriod();
+      await exportBike();
 
       expect(mockPrisma.events_bikes.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -537,29 +581,28 @@ describe('ReportService', () => {
       );
     });
 
-    it('leaves the window open at the end the caller left open', async () => {
-      await exportPeriod({ from: undefined, to: undefined });
+    it('reads the whole history when no period was chosen', async () => {
+      const snapshot = await exportedBikeReport({ from: undefined, to: undefined });
 
       const { where } = mockPrisma.events_bikes.findMany.mock.calls[0][0] as { where: Record<string, unknown> };
       expect(where).not.toHaveProperty('service_date');
+      expect(snapshot.history?.period).toEqual({ from: null, to: null });
     });
 
     it('names the period it covers, so "no services" reads as "none in this window"', async () => {
-      const { snapshot } = await exportPeriod();
-      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+      const snapshot = await exportedBikeReport();
 
-      expect(snapshot.period).toEqual({ from: PERIOD_FROM, to: PERIOD_TO });
+      expect(snapshot.history?.period).toEqual({ from: PERIOD_FROM, to: PERIOD_TO });
     });
 
     it('carries the history totals of the services it froze', async () => {
       mockPrisma.events_bikes.findMany.mockResolvedValue([serviceRow(), serviceRow({ id: 43 })]);
 
-      const { snapshot } = await exportPeriod();
-      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+      const snapshot = await exportedBikeReport();
 
-      expect(snapshot.services).toHaveLength(2);
+      expect(snapshot.history?.services).toHaveLength(2);
       // Two services at 1800 each, and one replacement in each of them.
-      expect(snapshot.totals).toEqual({ totalCost: 3600, serviceCount: 2, replacementCount: 2 });
+      expect(snapshot.history?.totals).toEqual({ totalCost: 3600, serviceCount: 2, replacementCount: 2 });
     });
 
     it('carries where each service was done, and nothing for one never recorded', async () => {
@@ -569,64 +612,65 @@ describe('ReportService', () => {
         serviceRow({ id: 44, place: null, shop_name: null }),
       ]);
 
-      const { snapshot } = await exportPeriod();
-      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+      const snapshot = await exportedBikeReport();
 
-      expect(snapshot.services.map(({ place, shopName }) => ({ place, shopName }))).toEqual([
+      expect(snapshot.history?.services.map(({ place, shopName }) => ({ place, shopName }))).toEqual([
         { place: 'SHOP', shopName: 'Bike Centrum' },
         { place: 'HOME', shopName: null },
         { place: null, shopName: null },
       ]);
     });
 
-    it('refuses an empty period rather than exporting a document of nothing', async () => {
+    // A bike with no services yet still has a photo and details to hand over.
+    it('makes the document for a history holding nothing, unlike a Period Report', async () => {
       mockPrisma.events_bikes.findMany.mockResolvedValue([]);
 
-      await expect(exportPeriod()).rejects.toThrow(BadRequestException);
-      expect(mockPrisma.reports.create).not.toHaveBeenCalled();
+      const snapshot = await exportedBikeReport();
+
+      expect(snapshot.history?.services).toEqual([]);
+      expect(snapshot.history?.totals).toEqual({ totalCost: 0, serviceCount: 0, replacementCount: 0 });
     });
 
-    it("refuses another user's bike", async () => {
-      mockPrisma.bikes.findFirst.mockResolvedValue(null);
+    it('leaves the history null when it was switched off, which is not an empty one', async () => {
+      const snapshot = await exportedBikeReport({ include_history: false });
 
-      await expect(exportPeriod()).rejects.toThrow(NotFoundException);
-      expect(mockPrisma.reports.create).not.toHaveBeenCalled();
+      expect(snapshot.history).toBeNull();
+      expect(mockPrisma.events_bikes.findMany).not.toHaveBeenCalled();
+      expect(writtenSnapshot().private.attachmentKeys).toEqual({});
     });
 
-    it('leaves components null when they were not asked for, which is not an empty list', async () => {
-      const { snapshot } = await exportPeriod({ include_components: false });
-      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+    it('leaves components null when they were switched off, which is not an empty list', async () => {
+      const snapshot = await exportedBikeReport({ include_components: false });
 
       expect(snapshot.components).toBeNull();
       expect(mockPrisma.components_mounted.findMany).not.toHaveBeenCalled();
     });
 
-    it('freezes the components choice: a report made with them keeps exactly those', async () => {
-      const { snapshot } = await exportPeriod({ include_components: true });
-      if (snapshot.kind !== 'PERIOD') throw new Error('expected a period report');
+    it('still carries the bike with both switches off', async () => {
+      const snapshot = await exportedBikeReport({ include_components: false, include_history: false });
 
-      expect(snapshot.components).toHaveLength(1);
+      expect(snapshot.bike.brand).toBe('Pivot');
+      expect(snapshot.bike.imageUrl).toBe('https://storage.example.com/bikes/firebird.webp');
+    });
+
+    it('freezes what was asked for: what was written is what a reader is answered with', async () => {
+      const snapshot = await exportedBikeReport();
+
       expect(snapshot.components?.[0]).toMatchObject({ type: 'Fork', description: 'Fox 38 Factory' });
-      // What was written down is what a reader is answered with, later and forever.
       expect(writtenSnapshot().document).toEqual(snapshot);
     });
 
     it('keeps every attachment key of every service it covers, and none in the document', async () => {
-      const { snapshot } = await exportPeriod();
+      const snapshot = await exportedBikeReport();
 
       expect(JSON.stringify(snapshot)).not.toContain(STORAGE_URL);
       expect(writtenSnapshot().private.attachmentKeys).toEqual({ '900': STORAGE_KEY });
     });
-  });
-
-  describe('exportReport - bikecheck', () => {
-    const exportBikeCheck = (userId = OWNER_ID) =>
-      service.exportReport(userId, { kind: report_kind.BIKECHECK, bike_id: BIKE_ID });
 
     it('refuses a bike the caller does not own', async () => {
       mockPrisma.bikes.findFirst.mockResolvedValue(null);
 
-      await expect(exportBikeCheck(STRANGER_ID)).rejects.toThrow(NotFoundException);
+      await expect(exportBike()).rejects.toThrow(NotFoundException);
       expect(mockPrisma.reports.create).not.toHaveBeenCalled();
     });
 
@@ -635,20 +679,11 @@ describe('ReportService', () => {
     it('exports from an archived bike', async () => {
       mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ is_deleted: true }));
 
-      await expect(exportBikeCheck()).resolves.toBeDefined();
-    });
-
-    // reports.bike_id is deliberately not a relation, so a frozen document outlives the
-    // bike - and the name it froze is what still says which bike it describes (ADR 0011).
-    it('names the bike as text, so the document survives the bike', async () => {
-      const { snapshot } = await exportBikeCheck();
-      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
-
-      expect(typeof snapshot.bike.name).toBe('string');
+      await expect(exportBike()).resolves.toBeDefined();
     });
 
     it('asks only for a bike the caller owns', async () => {
-      await exportBikeCheck();
+      await exportBike();
 
       expect(mockPrisma.bikes.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: BIKE_ID, user_id: OWNER_ID } }),
@@ -656,8 +691,7 @@ describe('ReportService', () => {
     });
 
     it("carries the bike's identity, photo and odometer", async () => {
-      const { snapshot } = await exportBikeCheck();
-      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
+      const snapshot = await exportedBikeReport();
 
       expect(snapshot.bike).toEqual({
         name: 'Firebird',
@@ -674,15 +708,14 @@ describe('ReportService', () => {
     });
 
     it('lists every active mounted component with its wear, its position and when it went on', async () => {
-      const { snapshot } = await exportBikeCheck();
-      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
+      const snapshot = await exportedBikeReport();
 
       expect(mockPrisma.components_mounted.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { bike_id: BIKE_ID, is_active: true, is_deleted: { not: true } },
         }),
       );
-      expect(snapshot.components[0]).toMatchObject({
+      expect(snapshot.components?.[0]).toMatchObject({
         type: 'Fork',
         category: 'Suspension',
         description: 'Fox 38 Factory',
@@ -699,17 +732,10 @@ describe('ReportService', () => {
     it("resolves the catalogue in the owner's language, not the reader's", async () => {
       mockPrisma.users.findUnique.mockResolvedValue({ language: 'cs', currency: 'CZK' });
 
-      const { snapshot } = await exportBikeCheck();
-      if (snapshot.kind !== 'BIKECHECK') throw new Error('expected a bikecheck');
+      const snapshot = await exportedBikeReport();
 
       expect(snapshot.language).toBe('cs');
-      expect(snapshot.components[0].type).not.toBe('Fork');
-    });
-
-    it('carries no attachments: it describes the machine, not the paperwork', async () => {
-      await exportBikeCheck();
-
-      expect(writtenSnapshot().private.attachmentKeys).toEqual({});
+      expect(snapshot.components?.[0].type).not.toBe('Fork');
     });
   });
 
@@ -742,7 +768,7 @@ describe('ReportService', () => {
     it('reads a service report as the one day it covers', () => {
       const covers = service.covers(reportRow() as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: '2026-07-01', to: '2026-07-01' });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: '2026-07-01', to: '2026-07-01', hasHistory: true });
     });
 
     it('reads a period report as the period it was exported for', () => {
@@ -758,7 +784,7 @@ describe('ReportService', () => {
 
       const covers = service.covers(reportRow({ kind: report_kind.PERIOD, snapshot: stored }) as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: PERIOD_TO });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: PERIOD_TO, hasHistory: true });
     });
 
     it('reads a bikecheck as covering no span', () => {
@@ -767,7 +793,19 @@ describe('ReportService', () => {
 
       const covers = service.covers(reportRow({ kind: report_kind.BIKECHECK, snapshot: stored }) as unknown as reports);
 
-      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null });
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null, hasHistory: false });
+    });
+
+    it('reads a bike report as the period its history covers', () => {
+      const covers = service.covers(bikeReportRow({ period: { from: PERIOD_FROM, to: null } }) as unknown as reports);
+
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: PERIOD_FROM, to: null, hasHistory: true });
+    });
+
+    it('reads a bike report without its history as covering no span', () => {
+      const covers = service.covers(bikeReportRow(null) as unknown as reports);
+
+      expect(covers).toEqual({ bike: 'Pivot Firebird 2023', from: null, to: null, hasHistory: false });
     });
 
     it('names the bike from the frozen document, so a deleted bike still reads', () => {
@@ -1088,6 +1126,28 @@ describe('ReportService', () => {
       await expect(service.publicAttachment('token-1', OTHER_REPORTS_ATTACHMENT_ID)).rejects.toThrow(GoneException);
     });
 
+    it('serves a file listed in a bike report history', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(
+        bikeReportRow({
+          services: [
+            {
+              attachments: [{ id: ATTACHMENT_ID, name: 'faktura.pdf', contentType: 'application/pdf', sizeBytes: 1 }],
+            },
+          ],
+        }),
+      );
+
+      const attachment = await service.publicAttachment('token-1', ATTACHMENT_ID);
+
+      expect(attachment.name).toBe('faktura.pdf');
+    });
+
+    it('refuses a file on a bike report whose history was left out', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(bikeReportRow(null));
+
+      await expect(service.publicAttachment('token-1', ATTACHMENT_ID)).rejects.toThrow(GoneException);
+    });
+
     it('does not reach storage at all for a closed report', async () => {
       mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
 
@@ -1149,6 +1209,14 @@ describe('ReportService', () => {
       expect(file.body.subarray(0, 5).toString()).toBe('%PDF-');
     });
 
+    it('names a bike report after the day it was made', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(bikeReportRow(null));
+
+      const file = await service.publicPdf('token-1');
+
+      expect(file.filename).toBe('bike-report-2026-07-01.pdf');
+    });
+
     it.each(closedStates)('answers a %s token with the same gone message', async (state, overrides) => {
       mockPrisma.reports.findUnique.mockResolvedValue(state === 'unknown' ? null : reportRow(overrides));
 
@@ -1169,6 +1237,130 @@ describe('ReportService', () => {
       await service.publicPdf('token-1');
 
       expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ownedPdf', () => {
+    it('prints a closed report for its owner', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+
+      const file = await service.ownedPdf(REPORT_ID, OWNER_ID);
+
+      expect(mockPdf.printWithKey).toHaveBeenCalledWith(`${ORIGIN}/r/token-1?print=1`, 'token-1');
+      expect(file.filename).toBe('service-report-2026-07-01.pdf');
+      expect(file.body.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('leaves the share link as it was and counts no view', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+
+      await service.ownedPdf(REPORT_ID, OWNER_ID);
+
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    it("never prints someone else's report, and says nothing of it", async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(null);
+
+      await expect(service.ownedPdf(REPORT_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
+
+      expect(mockPrisma.reports.findFirst).toHaveBeenCalledWith({ where: { id: REPORT_ID, user_id: STRANGER_ID } });
+      expect(mockPdf.printWithKey).not.toHaveBeenCalled();
+    });
+
+    // What the owner's browser receives: the file and its name, so no key can ride along.
+    it('answers with nothing but the file and its name', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+
+      const file = await service.ownedPdf(REPORT_ID, OWNER_ID);
+
+      expect(Object.keys(file).sort()).toEqual(['body', 'filename']);
+    });
+  });
+
+  describe('pdfTicket', () => {
+    it('prints first, so a failed print never reaches the system browser', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+      mockPdf.printWithKey.mockRejectedValue(new Error('chromium crashed'));
+
+      await expect(service.pdfTicket(REPORT_ID, OWNER_ID)).rejects.toThrow('chromium crashed');
+
+      expect(mockPdf.hold).not.toHaveBeenCalled();
+    });
+
+    it('holds the printed file behind a ticket and leaves the share link as it was', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: false }));
+      mockPdf.hold.mockReturnValue('the-ticket');
+
+      const ticket = await service.pdfTicket(REPORT_ID, OWNER_ID);
+
+      expect(ticket).toBe('the-ticket');
+      expect(mockPdf.hold).toHaveBeenCalledWith(expect.objectContaining({ filename: 'service-report-2026-07-01.pdf' }));
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    it("mints nothing for someone else's report", async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(null);
+
+      await expect(service.pdfTicket(REPORT_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
+
+      expect(mockPrisma.reports.findFirst).toHaveBeenCalledWith({ where: { id: REPORT_ID, user_id: STRANGER_ID } });
+      expect(mockPdf.printWithKey).not.toHaveBeenCalled();
+      expect(mockPdf.hold).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('claimPdf', () => {
+    it('hands over what the ticket holds', () => {
+      const file = { body: Buffer.from('%PDF-1.7 printed'), filename: 'bike-report-2026-07-01.pdf' };
+      mockPdf.claim.mockReturnValue(file);
+
+      expect(service.claimPdf('the-ticket')).toBe(file);
+    });
+
+    it('answers a dead ticket as a closed link does, and reads nothing', () => {
+      mockPdf.claim.mockReturnValue(null);
+
+      expect(() => service.claimPdf('wrong')).toThrow(GoneException);
+      expect(() => service.claimPdf('wrong')).toThrow('This report is no longer available');
+      expect(mockPrisma.reports.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('printedSnapshot', () => {
+    it('opens a closed report to a key minted for it', async () => {
+      mockPdf.admits.mockReturnValue(true);
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
+
+      const snapshot = await service.printedSnapshot('token-1', 'the-key');
+
+      expect(mockPdf.admits).toHaveBeenCalledWith('token-1', 'the-key');
+      expect(snapshot.kind).toBe('SERVICE');
+      expect(snapshot).not.toHaveProperty('private');
+    });
+
+    it('counts no view: chromium is not a reader', async () => {
+      mockPdf.admits.mockReturnValue(true);
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: false }));
+
+      await service.printedSnapshot('token-1', 'the-key');
+
+      expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    it('answers a refused key as any closed link, without reading the report', async () => {
+      mockPdf.admits.mockReturnValue(false);
+
+      await expect(service.printedSnapshot('token-1', 'wrong')).rejects.toThrow(GoneException);
+      await expect(service.printedSnapshot('token-1', 'wrong')).rejects.toThrow('This report is no longer available');
+      expect(mockPrisma.reports.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('answers the same way once the report is gone', async () => {
+      mockPdf.admits.mockReturnValue(true);
+      mockPrisma.reports.findUnique.mockResolvedValue(null);
+
+      await expect(service.printedSnapshot('token-1', 'the-key')).rejects.toThrow(GoneException);
     });
   });
 

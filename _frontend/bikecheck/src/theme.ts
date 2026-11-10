@@ -4,12 +4,16 @@ import {
   Combobox,
   Drawer,
   Menu,
+  Modal,
   Pagination,
   Progress,
+  Popover,
   SegmentedControl,
+  Tooltip,
   createTheme,
   type MantineColorsTuple,
 } from "@mantine/core";
+import { DatePicker, MonthPicker, YearPicker } from "@mantine/dates";
 import { CONTENT_MAX_WIDTH } from "./layout/contentWidth";
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
@@ -167,6 +171,23 @@ function disabledLook(disabled: boolean | undefined): React.CSSProperties {
   } as React.CSSProperties;
 }
 
+// Mantine's calendars read the light scheme's ramps directly, so those are remapped on the group
+// that holds every control. Sizing, and the selected day's own contrast, stay Mantine's.
+const CALENDAR_HOVER = "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)";
+const CALENDAR_STYLES = {
+  levelsGroup: {
+    "--mantine-color-text": "var(--mantine-color-text-6)",
+    "--mantine-color-gray-0": CALENDAR_HOVER,
+    "--mantine-color-gray-1": CALENDAR_HOVER,
+    "--mantine-primary-color-light": CALENDAR_HOVER,
+    "--mantine-primary-color-light-hover": CALENDAR_HOVER,
+    fontVariantNumeric: "tabular-nums",
+  } as React.CSSProperties,
+  calendarHeaderControl: { color: "var(--mantine-color-text-6)" },
+  calendarHeaderLevel: { color: "var(--mantine-color-text-6)", fontWeight: 600 },
+  weekday: { color: "var(--color-text-dim)" },
+};
+
 export const theme = createTheme({
   autoContrast: true,
   primaryColor: "primary",
@@ -243,6 +264,25 @@ export const theme = createTheme({
       },
     }),
     // The light scheme drops a white menu; every dropdown sits on the card surface instead.
+    // Mantine's own tooltip is a blue-grey that belongs to no ramp here.
+    Tooltip: Tooltip.extend({
+      styles: {
+        tooltip: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          border: "1px solid var(--color-border-strong)",
+          boxShadow: "var(--elev-panel)",
+          color: "var(--mantine-color-text-6)",
+        },
+      },
+    }),
+    // Mantine's own surface is white, and the title black on it.
+    Modal: Modal.extend({
+      styles: {
+        content: { backgroundColor: "var(--mantine-color-cards-6)" },
+        header: { backgroundColor: "var(--mantine-color-cards-6)" },
+        title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
+      },
+    }),
     Menu: Menu.extend({
       styles: {
         dropdown: {
@@ -253,6 +293,19 @@ export const theme = createTheme({
         },
       },
     }),
+    // Likewise a popover, and the calendars inside one.
+    Popover: Popover.extend({
+      styles: {
+        dropdown: {
+          backgroundColor: "var(--mantine-color-cards-6)",
+          border: "1px solid var(--color-border-strong)",
+          boxShadow: "var(--elev-panel)",
+        },
+      },
+    }),
+    DatePicker: DatePicker.extend({ styles: CALENDAR_STYLES }),
+    MonthPicker: MonthPicker.extend({ styles: CALENDAR_STYLES }),
+    YearPicker: YearPicker.extend({ styles: CALENDAR_STYLES }),
     // Mantine's light-scheme controls read white/gray-4/gray-0 directly, so those are remapped to the quiet outline.
     Pagination: Pagination.extend({
       vars: () => ({

@@ -3,7 +3,7 @@ import { useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Box, Button, Divider, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Browser } from "@capacitor/browser";
-import { FileText, Image as ImageIcon, NotebookText, Paperclip, Share2, Trash2, X } from "lucide-react";
+import { Download, FileText, Image as ImageIcon, NotebookText, Paperclip, Trash2, X } from "lucide-react";
 import dayjs from "dayjs";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { formatCost } from "@/utils/money";
@@ -44,7 +44,7 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
   const isDesktop = useIsDesktop();
   const { data: user } = useCurrentUser();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  // What the Share button is exporting. Null keeps the export sheet shut.
+  // What the Export button is exporting. Null keeps the export sheet shut.
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
   // The sheet is still on screen while it slides out. Held on to, what it was last showing
   // stays drawn all the way down instead of emptying into skeletons on the way.
@@ -218,14 +218,15 @@ export function ServiceDetailSheet({ serviceId, seed, onClose }: ServiceDetailSh
         <Button
           variant="filled"
           color="primary.6"
+          c="textDark.6"
           radius="md"
-          leftSection={<Share2 size={16} />}
+          leftSection={<Download size={16} />}
           disabled={shownId === null}
           onClick={() => {
             if (shownId !== null) setExporting({ kind: "SERVICE", service_id: shownId });
           }}
         >
-          {t("service.share")}
+          {t("report.export")}
         </Button>
       </Group>
 

@@ -1,7 +1,7 @@
 // The desktop table's bike, period and page, kept in the URL so a refresh keeps them.
 import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { DEFAULT_HOME_PERIOD } from "@/features/stats/homePeriod";
+import { writeHomePeriod } from "@/features/stats/homePeriod";
 import type { HomePeriod } from "@/features/stats/stats.types";
 import { readTableParams, type RideTableParams } from "./ridesTable";
 
@@ -42,8 +42,7 @@ export function useRideTableParams(): RideTableControls {
   const setPeriod = useCallback(
     (period: HomePeriod): void =>
       update((params) => {
-        if (period === DEFAULT_HOME_PERIOD) params.delete("period");
-        else params.set("period", period);
+        writeHomePeriod(params, period);
         params.delete("page");
       }),
     [update],

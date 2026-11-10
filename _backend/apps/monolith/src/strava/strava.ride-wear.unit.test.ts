@@ -268,13 +268,22 @@ describe('StravaEventsService ride wear', () => {
   });
 
   // A corrected ride may carry new figures, so the next open writes its review again.
-  it('clears the review of a ride Strava resends', async () => {
+  it('clears the review of a ride Strava resends with new figures', async () => {
     await strava.saveAnalyzedData(rideOn());
     rides[0].summary = 'Written about the first version';
 
     await strava.saveAnalyzedData(rideOn({ distance_km: 45 }));
 
     expect(rides[0].summary).toBeNull();
+  });
+
+  it('keeps the review of a ride Strava resends with the same figures', async () => {
+    await strava.saveAnalyzedData(rideOn());
+    rides[0].summary = 'Written about the first version';
+
+    await strava.saveAnalyzedData(rideOn({ name: 'Renamed on Strava' }));
+
+    expect(rides[0].summary).toBe('Written about the first version');
   });
 
   // Moving a ride away takes back exactly what saving it gave, so moving it back restores the save.

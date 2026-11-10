@@ -69,6 +69,8 @@ export function FieldLabel({ children, dimmed = false }: { children: string; dim
   );
 }
 
+const SELECTED_TINT = "color-mix(in srgb, var(--mantine-color-primary-6) 15%, var(--mantine-color-cards-6))";
+
 function choiceStyle(selected: boolean, fill: boolean): CSSProperties {
   return {
     flex: fill ? "1 1 0" : "0 0 auto",
@@ -81,9 +83,7 @@ function choiceStyle(selected: boolean, fill: boolean): CSSProperties {
     fontSize: 13,
     fontWeight: 500,
     // Mock G's filled tile, so a pick reads the same in every grouped list.
-    backgroundColor: selected
-      ? "color-mix(in srgb, var(--mantine-color-primary-6) 15%, var(--mantine-color-cards-6))"
-      : "var(--color-surface-raised)",
+    backgroundColor: selected ? SELECTED_TINT : "var(--color-surface-raised)",
     color: selected ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
   };
 }
@@ -151,6 +151,9 @@ function SuspensionRow({
           { value: "full", label: t("addBike.suspensionFull") },
         ]}
         style={{ marginLeft: "auto" }}
+        // Same pick tint as the wheel/frame tiles above.
+        styles={{ indicator: { backgroundColor: SELECTED_TINT } }}
+        classNames={{ label: "data-[active]:!text-[var(--mantine-color-primary-6)]" }}
       />
     </Box>
   );

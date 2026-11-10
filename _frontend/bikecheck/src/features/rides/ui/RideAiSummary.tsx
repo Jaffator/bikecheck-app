@@ -3,15 +3,16 @@ import type { ReactElement } from "react";
 import { Box, Skeleton, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Eyebrow } from "@/components/Eyebrow";
+import type { RideItem } from "@/features/rides/rideDetail";
 import { useRideAiSummary } from "@/features/rides/rides.queries";
 import { RIDE_CARD_STYLE } from "./rideCard";
 
 // About the height of the up to three sentences Gemini writes.
 const SKELETON_WIDTHS = ["100%", "100%", "60%"];
 
-export function RideAiSummary({ rideId }: { rideId: number }): ReactElement | null {
+export function RideAiSummary({ item }: { item: RideItem }): ReactElement | null {
   const { t } = useTranslation();
-  const { data, isError } = useRideAiSummary(rideId);
+  const { data, isError } = useRideAiSummary(item);
   // A failed refetch keeps the text already shown; only a review never had is left out.
   if (!data && isError) return null;
 

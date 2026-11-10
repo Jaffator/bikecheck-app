@@ -1393,6 +1393,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Print the caller's own report to an A4 PDF, published or not */
+        get: operations["Report getOwnedPdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/{id}/pdf-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Print the caller's own report and hold it behind a one-read ticket */
+        post: operations["Report createPdfTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/pdf-ticket/{ticket}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a held PDF once, by its ticket */
+        get: operations["Report getTicketPdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/public/{token}/attachment/{attachmentId}": {
         parameters: {
             query?: never;
@@ -1873,6 +1924,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["Stats getDistance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/earliest-day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["Stats getEarliestDay"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3552,14 +3619,14 @@ export interface components {
              * @example SERVICE
              * @enum {string}
              */
-            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            kind: "SERVICE" | "BIKE";
             /**
              * @description Required when kind is SERVICE
              * @example 42
              */
             service_id: number;
             /**
-             * @description Required when kind is PERIOD or BIKECHECK
+             * @description Required when kind is BIKE
              * @example 15
              */
             bike_id: number;
@@ -3574,10 +3641,15 @@ export interface components {
              */
             to?: string;
             /**
-             * @description Required when kind is PERIOD
-             * @example false
+             * @description Required when kind is BIKE
+             * @example true
              */
             include_components: boolean;
+            /**
+             * @description Required when kind is BIKE
+             * @example true
+             */
+            include_history: boolean;
         };
         ResponseReportCoversDto: {
             /** @example Pivot Firebird 2023 */
@@ -3592,6 +3664,15 @@ export interface components {
              * @example 2026-12-31
              */
             to: Record<string, never> | null;
+            /**
+             * @description False when the document carries no service history
+             * @example true
+             */
+            hasHistory: boolean;
+        };
+        ResponsePdfTicketDto: {
+            /** @description Goes in GET /reports/pdf-ticket/:ticket */
+            ticket: string;
         };
         ResponseExportedReportDto: {
             /** @example 1 */
@@ -3604,7 +3685,7 @@ export interface components {
              * @example SERVICE
              * @enum {string}
              */
-            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            kind: "SERVICE" | "PERIOD" | "BIKECHECK" | "BIKE";
             /** @example 42 */
             bike_id: number;
             covers: components["schemas"]["ResponseReportCoversDto"];
@@ -3640,7 +3721,7 @@ export interface components {
              * @example SERVICE
              * @enum {string}
              */
-            kind: "SERVICE" | "PERIOD" | "BIKECHECK";
+            kind: "SERVICE" | "PERIOD" | "BIKECHECK" | "BIKE";
             /** @example 42 */
             bike_id: number;
             covers: components["schemas"]["ResponseReportCoversDto"];
@@ -4454,6 +4535,13 @@ export interface components {
             bikes: components["schemas"]["Response_DistanceBikeDto"][];
             /** @description The garage's previous Period of the same kind, under the same ride rules; null for all time and for no period */
             previous: components["schemas"]["Response_DistancePreviousDto"] | null;
+        };
+        Response_EarliestDayDto: {
+            /**
+             * @description Day of the earliest ride or dated Service; null for an empty garage
+             * @example 2023-04-02
+             */
+            day: string | null;
         };
         Response_WearPointDto: {
             /**
@@ -6723,6 +6811,65 @@ export interface operations {
             };
         };
     };
+    "Report getOwnedPdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "Report createPdfTicket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponsePdfTicketDto"];
+                };
+            };
+        };
+    };
+    "Report getTicketPdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "Report getPublicAttachment": {
         parameters: {
             query?: never;
@@ -7574,6 +7721,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Response_DistanceDto"];
+                };
+            };
+        };
+    };
+    "Stats getEarliestDay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Response_EarliestDayDto"];
                 };
             };
         };

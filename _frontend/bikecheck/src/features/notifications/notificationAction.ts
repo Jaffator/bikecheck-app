@@ -33,6 +33,11 @@ export function canDeleteNotification(notification: Notification): boolean {
   return notification.is_read || notification.type !== "strava_activity_unassigned";
 }
 
+// Mark all reads what the server clears on view; an ask stays unread until its ride has a bike.
+export function clearsOnMarkAll(notification: Notification): boolean {
+  return !notification.is_read && notification.type !== "strava_activity_unassigned";
+}
+
 export function notificationAction(notification: Notification): NotificationAction | null {
   const route = notificationRoute(notification.type, notification.payload);
 

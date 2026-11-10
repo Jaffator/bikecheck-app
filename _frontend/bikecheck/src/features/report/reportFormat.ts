@@ -17,6 +17,12 @@ export const REPORT_PAPER = {
   accentWash: "#f4f0d7",
 } as const;
 
+// The language and currency a document was frozen in.
+export interface ReportVoice {
+  language: string;
+  currency: string;
+}
+
 // A date as the document's own language writes it.
 export function reportDate(iso: string | null, language: string): string | null {
   if (iso === null) return null;
@@ -24,8 +30,8 @@ export function reportDate(iso: string | null, language: string): string | null 
 }
 
 // A figure in the currency the document was priced in.
-export function reportCost(amount: number, snapshot: { currency: string; language: string }): string {
-  return formatCost(amount, snapshot.currency, snapshot.language);
+export function reportCost(amount: number, voice: ReportVoice): string {
+  return formatCost(amount, voice.currency, voice.language);
 }
 
 // A distance with the document's decimal mark and the app's space-grouped thousands.
@@ -56,10 +62,14 @@ export function reportBikeName(bike: ReportBike): string | null {
 
 // The part in full: which kind it was, where it sat, and what the owner called it.
 export function reportComponentLabel(component: ReportComponent): string {
-  const position = component.position ? ` (${component.position})` : "";
   const described = component.description?.trim();
-  const kind = `${component.type}${position}`;
+  const kind = reportComponentKind(component);
   return described ? `${kind}: ${described}` : kind;
+}
+
+// Which kind of part and where it sat, without what the owner called it.
+export function reportComponentKind(component: ReportComponent): string {
+  return component.position ? `${component.type} (${component.position})` : component.type;
 }
 
 // How the Period the document covers reads on it. Both ends open is all time, which is the

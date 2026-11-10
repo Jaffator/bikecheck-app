@@ -28,7 +28,7 @@ interface ReportFixture {
   id: number;
   user_id: number;
   bike_id: number;
-  kind: 'SERVICE' | 'PERIOD' | 'BIKECHECK';
+  kind: 'SERVICE' | 'BIKE' | 'PERIOD' | 'BIKECHECK';
   public_token: string;
   snapshot: { note: string };
   is_public: boolean;
@@ -95,13 +95,21 @@ describe('reportsTools', () => {
     expect(page.next_cursor).toBeUndefined();
     expect(page.rows[0]).toEqual({
       report_id: REPORT_ID,
-      kind: 'PERIOD',
+      kind: 'BIKE',
       bike_id: BIKE_ID,
       state: 'published',
       created_at: '2026-06-14',
       view_count: 3,
       last_viewed_at: '2026-06-20',
     });
+  });
+
+  it('names the frozen older kinds as the Bike Report, as the app does', async () => {
+    database([report({ id: 201, kind: 'BIKECHECK' }), report({ id: 200, kind: 'SERVICE' })]);
+
+    const page = await tools(OWNER_ID).list_reports.execute({}, CALL);
+
+    expect(page.rows.map((row) => row.kind).sort()).toEqual(['BIKE', 'SERVICE']);
   });
 
   it('never hands out the share link or the frozen document', async () => {

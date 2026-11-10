@@ -1,5 +1,6 @@
 // A pending Strava activity as the client reads it; shared by the Pending list and the check-in prompt.
 import type { strava_pending_activities } from '@prisma/client';
+import { powerOf, type RideSummaryInput } from '../gemini/gemini.service';
 import type { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
 import type { RideWear } from '../service-tracking/ride-wear';
 import type { WearPreview } from '../service-tracking/service-tracking.service';
@@ -36,6 +37,25 @@ export function toPendingDto(activity: strava_pending_activities): ResponsePendi
 // With its wear on every bike, so the drawer previews the picked one before the ride is saved.
 export function toCheckInPendingDto(row: strava_pending_activities, preview: WearPreview): ResponseCheckInPendingDto {
   return { ...toPendingDto(row), wore_off_by_bike: preview(pendingWear(row)) };
+}
+
+// The review's allowlist (ADR 0044), with no bike: it is written before the ride has one.
+export function pendingSummaryInput(activity: strava_pending_activities): RideSummaryInput {
+  const analyzed = analysisOf(activity);
+  const { name, sport_type } = toPendingDto(activity);
+  return {
+    name,
+    sport_type,
+    started_at: analyzed.started_at,
+    bike: null,
+    distance_km: Math.round(analyzed.distance_km * 10) / 10,
+    duration_min: analyzed.duration_min,
+    elevation_up_m: analyzed.elevation_up_m,
+    elevation_down_m: analyzed.elevation_down_m,
+    speed_avg_kmh: analyzed.speed_avg,
+    max_speed_kmh: analyzed.max_speed_kmh,
+    ...powerOf(analyzed.rawJson ?? null),
+  };
 }
 
 // Older stored analyses may lack the figure; null reads as unknown, not zero.

@@ -32,7 +32,7 @@ export function PrintSheet({ children }: { children: ReactNode }): ReactElement 
   );
 }
 
-// What the reader sees first: the mark, and which of the three documents this is.
+// What the reader sees first: the mark, and which document this is.
 export function DocumentHeader({ title, print = false }: { title: string; print?: boolean }): ReactElement {
   return (
     <header className={`flex flex-col items-center ${print ? "gap-4" : "gap-1"}`}>

@@ -9,6 +9,7 @@
 
 export interface ReportHeadings {
   serviceDocument: string;
+  bikeDocument: string;
   periodDocument: string;
   bikeCheckDocument: string;
   period: string;
@@ -19,6 +20,7 @@ export interface ReportHeadings {
   services: string;
   replacements: string;
   spent: string;
+  history: string;
   build: string;
   brand: string;
   model: string;
@@ -27,10 +29,7 @@ export interface ReportHeadings {
   bikeType: string;
   ebike: string;
   yes: string;
-  mounted: string;
-  lastService: string;
   wear: string;
-  neverServiced: string;
   noComponents: string;
   noServices: string;
   bike: string;
@@ -59,6 +58,7 @@ export interface ReportHeadings {
 
 const en: ReportHeadings = {
   serviceDocument: "Service Report",
+  bikeDocument: "Bike Report",
   periodDocument: "Period Report",
   bikeCheckDocument: "BikeCheck",
   period: "Period",
@@ -68,6 +68,7 @@ const en: ReportHeadings = {
   services: "Services",
   replacements: "Replacements",
   spent: "Total spent",
+  history: "Service history",
   build: "Build",
   brand: "Brand",
   model: "Model",
@@ -76,10 +77,7 @@ const en: ReportHeadings = {
   bikeType: "Type",
   ebike: "E-bike",
   yes: "Yes",
-  mounted: "Mounted",
-  lastService: "Last service",
   wear: "Wear",
-  neverServiced: "Never serviced",
   noComponents: "No components on record",
   noServices: "No services in this period",
   bike: "Bike",
@@ -108,6 +106,7 @@ const en: ReportHeadings = {
 
 const cs: ReportHeadings = {
   serviceDocument: "Servisní report",
+  bikeDocument: "Report kola",
   periodDocument: "Report za období",
   bikeCheckDocument: "BikeCheck",
   period: "Období",
@@ -117,6 +116,7 @@ const cs: ReportHeadings = {
   services: "Servisy",
   replacements: "Výměny",
   spent: "Celkem utraceno",
+  history: "Servisní historie",
   build: "Osazení",
   brand: "Značka",
   model: "Model",
@@ -125,10 +125,7 @@ const cs: ReportHeadings = {
   bikeType: "Typ",
   ebike: "Elektrokolo",
   yes: "Ano",
-  mounted: "Namontováno",
-  lastService: "Poslední servis",
   wear: "Nájezd",
-  neverServiced: "Zatím neservisováno",
   noComponents: "Žádné komponenty v evidenci",
   noServices: "V tomto období žádné servisy",
   bike: "Kolo",

@@ -139,18 +139,22 @@ function nextServicesOffset(
   return loaded < lastPage.total_count ? loaded : undefined;
 }
 
-// One change in the share drawer. The settings go first: a refused handle must leave the
-// bike switches as they were. Both caches are read again whatever the outcome, so a save
-// that failed halfway still shows what actually landed.
+// One change in the share drawer. The bikes go first: a failed bike save must leave the
+// profile as it was, not Public with the wrong bikes out.
 export function useSaveSharing(): UseMutationResult<Profile, Error, SaveSharingInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ profile, bikes }: SaveSharingInput) => {
+      const results = await Promise.allSettled(
+        bikes.map((bike) => updateBike({ id: bike.id, bike: { is_shared: bike.is_shared }, image: null })),
+      );
+      // Every bike has answered by now, so the refetch below sees all that landed.
+      const failed = results.find((result): result is PromiseRejectedResult => result.status === "rejected");
+      if (failed) throw failed.reason;
       const saved = await updateMyProfile(profile);
       // Seeded at once so Kopírovat / Otevřít follow the switch without waiting for a refetch.
       queryClient.setQueryData(PROFILE_ME_QUERY_KEY, saved);
-      await Promise.all(bikes.map((bike) => updateBike({ id: bike.id, bike: { is_shared: bike.is_shared }, image: null })));
       return saved;
     },
     onSettled: async () => {

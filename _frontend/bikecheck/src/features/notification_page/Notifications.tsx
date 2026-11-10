@@ -1,26 +1,23 @@
 // Notifications page.
 import { useEffect, useMemo, type ReactElement } from "react";
-import { ActionIcon, Box, Button, Group, Loader, Stack, Text } from "@mantine/core";
-import { CheckCheck, Settings } from "lucide-react";
+import { Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Eyebrow } from "@/components/Eyebrow";
+import { clearsOnMarkAll } from "@/features/notifications/notificationAction";
 import {
   useNotifications,
-  useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useMarkNotificationsViewed,
 } from "@/features/notifications/notifications.queries";
 import { notificationRoute } from "@/features/notifications/notificationRoute";
-import { groupByDay } from "@/features/notifications/notificationTime";
 import type { Notification } from "@/features/notifications/notifications.types";
-import { NOTIFICATION_ROW_INSET, NotificationListRow } from "@/features/notifications/ui/NotificationListRow";
-import { usePendingRides } from "@/features/strava/strava.queries";
-import type { PendingRide } from "@/features/strava/strava.types";
+import { NotificationDayGroups } from "@/features/notifications/ui/NotificationDayGroups";
+import { NotificationListRow } from "@/features/notifications/ui/NotificationListRow";
+import { usePendingRideOf } from "@/features/notifications/usePendingRideOf";
 import { useIsDesktop } from "@/layout/breakpoints";
-import { useHeaderStore } from "@/store/store";
 import { EmptyNotifications } from "./EmptyNotifications";
 import { NotificationsDesktop } from "./NotificationsDesktop";
+import { useNotificationHeaderActions } from "./useNotificationHeaderActions";
 
 export function Notifications(): ReactElement {
   const isDesktop = useIsDesktop();
@@ -33,14 +30,10 @@ function NotificationsPhone(): ReactElement {
   const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotifications();
   const markRead = useMarkNotificationRead();
   const { mutate: markViewed } = useMarkNotificationsViewed();
-  const { data: pendingRides } = usePendingRides();
+  const pendingRideOf = usePendingRideOf();
   const notifications = useMemo(() => data?.pages.flat() ?? [], [data]);
-  const pendingById = useMemo(
-    () => new Map((pendingRides ?? []).map((ride) => [ride.activity_id, ride])),
-    [pendingRides],
-  );
 
-  usePhoneHeaderActions(notifications.some(isClearedByMarkAll));
+  useNotificationHeaderActions(notifications.some(clearsOnMarkAll), null);
 
   // Opening the list is what clears the badge - of the announcements, at least. An
   // unassigned ride stays counted until a bike is picked for it, so the number that
@@ -77,23 +70,19 @@ function NotificationsPhone(): ReactElement {
 
   return (
     <Stack gap={0} pb="md">
-      {groupByDay(notifications).map((group, index) => (
-        <Stack key={group.notifications[0].id} gap={0}>
-          <Box px={NOTIFICATION_ROW_INSET} pt={index === 0 ? 8 : 16} pb={4}>
-            <Eyebrow>{t(`notifications.group.${group.day}`)}</Eyebrow>
-          </Box>
-          {group.notifications.map((notification, rowIndex) => (
-            <NotificationListRow
-              key={notification.id}
-              notification={notification}
-              day={group.day}
-              first={rowIndex === 0}
-              pendingRide={pendingRideOf(notification, pendingById)}
-              onOpen={openNotification}
-            />
-          ))}
-        </Stack>
-      ))}
+      <NotificationDayGroups
+        notifications={notifications}
+        renderRow={(notification, day, first) => (
+          <NotificationListRow
+            key={notification.id}
+            notification={notification}
+            day={day}
+            first={first}
+            pendingRide={pendingRideOf(notification)}
+            onOpen={openNotification}
+          />
+        )}
+      />
       {hasNextPage && (
         <Button
           variant="subtle"
@@ -109,38 +98,4 @@ function NotificationsPhone(): ReactElement {
       )}
     </Stack>
   );
-}
-
-function pendingRideOf(notification: Notification, pendingById: Map<string, PendingRide>): PendingRide | undefined {
-  const activityId = notification.payload?.activityId;
-  return activityId === undefined ? undefined : pendingById.get(activityId);
-}
-
-// Mark all leaves an ask unread until its ride has a bike, so an ask alone offers nothing to clear.
-function isClearedByMarkAll(notification: Notification): boolean {
-  return !notification.is_read && notification.type !== "strava_activity_unassigned";
-}
-
-// Mark all as read and the gear to Settings hang in the header beside the title.
-function usePhoneHeaderActions(canClear: boolean): void {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const setActionSlot = useHeaderStore((state) => state.setActionSlot);
-  const { mutate: markAll } = useMarkAllNotificationsRead();
-
-  useEffect(() => {
-    setActionSlot(
-      <Group gap={4} wrap="nowrap">
-        {canClear && (
-          <ActionIcon variant="transparent" size="lg" aria-label={t("notifications.markAllRead")} onClick={() => markAll()}>
-            <CheckCheck size={20} color="var(--color-muted)" />
-          </ActionIcon>
-        )}
-        <ActionIcon variant="transparent" size="lg" aria-label={t("notifications.settingsAria")} onClick={() => navigate("/settings")}>
-          <Settings size={20} color="var(--color-muted)" />
-        </ActionIcon>
-      </Group>,
-    );
-    return () => setActionSlot(null);
-  }, [setActionSlot, t, navigate, markAll, canClear]);
 }

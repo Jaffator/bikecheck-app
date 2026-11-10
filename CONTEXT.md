@@ -35,9 +35,10 @@ _Avoid_: Pending ride
 
 **AI Review**:
 A few casual sentences with a 1–5 star rating that Gemini writes about one ride, from its figures
-and its Bike's name, the first time its owner opens it. Kept on the ride, as its `summary`, until
-the ride changes: a Strava re-sync or a move to another Bike clears it, and the next open writes it
-again (ADR 0044).
+and its Bike's name if it has one, as a fresh ride arrives, or else the first time its owner opens
+it. Kept on the ride, as its `summary`, and carried over when an Unassigned Ride gets a Bike. New
+figures from Strava or a move to another Bike clear it, and the next open writes it again
+(ADR 0044, ADR 0046).
 _Avoid_: AI mechanic
 
 **Archived Bike**:
@@ -54,7 +55,9 @@ _Avoid_: Premium, subscription
 **Locked Bike**:
 A Bike beyond the first on an account without Pro. It stays in the garage, greyed out, and does
 nothing until unlocked: no wear, no notifications, no place in lists or totals. Rides on it while
-locked are lost, not kept for later. Unlike an Archived Bike, it is not the owner's act.
+locked wait as Unassigned Rides and land on it once it is unlocked. Unlike an Archived Bike, it is
+not the owner's act. An Archived first Bike keeps its free place; only deleting it frees that place,
+for the oldest remaining Bike.
 _Avoid_: Inactive bike, disabled bike
 
 **Deleting a Bike**:
@@ -198,8 +201,8 @@ The span of days a reading is taken over — the service history and its History
 figures and charts. A Service belongs to its Service Date's day, a ride to the UTC day it started
 on; a ride with no start belongs to no Period. Either end may be left open; both open is all time,
 which is the only Period that counts a Service carrying no Service Date — such a Service falls in
-no bounded Period. Home offers three: this month, the year, and all time, which for rides begins
-on the day of the garage's earliest ride.
+no bounded Period. Home offers this month, the year and all time, which for rides begins on the
+day of the garage's earliest ride, or a custom Period: any span of days the rider picks.
 _Avoid_: Range, timeframe
 
 **Energy**:
@@ -217,8 +220,10 @@ _Avoid_: Benchmark, comparison (that is the previous Period's reading)
 
 **Comparison**:
 A Period's reading set against the previous Period of the same kind, counted up to the same day —
-the 1st to the 3rd of November against the 1st to the 3rd of October. All time has no previous
-Period and so no Comparison; a previous Period with nothing in it gives no share either.
+the 1st to the 3rd of November against the 1st to the 3rd of October. A custom Period is read
+whole: a calendar month against the month before, a calendar year against the year before, any
+other days against the same number of days right before. All time has no previous Period and so no
+Comparison; a previous Period with nothing in it gives no share either.
 _Avoid_: Delta, trend, growth
 
 **Wear Baseline**:
@@ -322,21 +327,30 @@ _Avoid_: Clicks from open, turns, position
 **Report**:
 A frozen document made from what the owner selected, shared outside the app. Its contents never
 change after it is made — the Services it was built from may be edited or deleted afterwards, and
-the Report still reads as it did the day it was made. Comes in three kinds: Service Report, Period
-Report and BikeCheck.
+the Report still reads as it did the day it was made. A new one is a Service Report or a Bike Report;
+Period Reports and BikeChecks already made stay as they are, but no new ones are written.
 _Avoid_: Export (that is the act, not the thing), snapshot, share
 
 **Service Report**:
 A Report covering one Service — the doc a workshop or a warranty claim asks for.
 
+**Bike Report**:
+A Report describing one Bike: always its photo and details, and at the owner's choice its mounted
+components and its Services within one Period, with their History Totals. The app calls it Report
+kola. An empty history is no reason to refuse one, as the bike alone is a document. It replaced the
+Period Report and the BikeCheck.
+
 **Period Report**:
-A Report covering the Services of one Bike within one Period, with their History Totals. May also
-carry the bike's mounted components with their wear and last service, at the owner's choice.
+An older kind of Report, no longer made: the Services of one Bike within one Period, with their
+History Totals, and at the owner's choice the bike's mounted components with their wear and last
+service. One already made keeps its link and its frozen heading, but the app calls it Report kola,
+and link previews and the chat call it a Bike Report.
 _Avoid_: History report, multiple report
 
 **BikeCheck**:
-A Report describing a Bike and everything mounted on it — the machine's card, not its maintenance.
-A different document from the Service and Period Reports, which describe work rather than the bike.
+An older kind of Report, no longer made: a Bike and everything mounted on it. One already made is
+treated as a Period Report is: same link, same frozen heading, and Report kola in the app. Everywhere
+else BikeCheck is the app's name, never a document's.
 
 **Export**:
 The act of making a Report: choosing what it covers, reading it back and creating it. What the
@@ -345,7 +359,7 @@ owner does; a Report is what results.
 **Share Link**:
 The public address a Report is read at. A Report has one from birth, but it stays closed until the
 owner publishes it, and the owner can revoke it afterwards — a revoked link is gone for good, and a
-new one means a new Report.
+new one means a new Report. Downloading a Report as a PDF does not open its Share Link.
 _Avoid_: Public URL, share url, token
 
 **Public Profile**:

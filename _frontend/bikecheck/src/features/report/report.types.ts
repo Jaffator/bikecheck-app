@@ -1,7 +1,7 @@
 // Mirrors the backend report DTOs and the frozen snapshot it stores.
 import type { ServicePlace } from "@/features/service/service.types";
 
-export type ReportKind = "SERVICE" | "PERIOD" | "BIKECHECK";
+export type ReportKind = "SERVICE" | "BIKE" | "PERIOD" | "BIKECHECK";
 
 // What a bulk act answers with: how many reports it actually reached. The server counts,
 // not the list the owner was looking at when they asked.
@@ -32,10 +32,11 @@ export interface ReportSummary {
 export interface ReportCovers {
   // The bike as the document named it.
   bike: string;
-  // The day the document opens on: a Service's date, a Period's start. Null is an open end,
-  // and a BikeCheck covers no span at all.
+  // The day the document opens on: a Service's date, a Period's start. Null is an open end.
   from: string | null;
   to: string | null;
+  // Without a history both ends null read as today, not as the whole of it.
+  hasHistory: boolean;
 }
 
 // What Export answers with: the report, and the document it just made. The snapshot rides
@@ -44,29 +45,33 @@ export interface ExportedReport extends ReportSummary {
   snapshot: ReportSnapshot;
 }
 
+export interface ReportPdfFile {
+  blob: Blob;
+  filename: string;
+}
+
+export interface ReportPdfTicket {
+  ticket: string;
+}
+
 export interface ExportServiceReportInput {
   kind: "SERVICE";
   service_id: number;
 }
 
-// The Period Report is asked for with the same Bike and Period the history list is already
-// running on, so the Report and the screen can never disagree.
-export interface ExportPeriodReportInput {
-  kind: "PERIOD";
+// From Service it opens on the Bike and Period the history list runs on, from a bike on the
+// whole history.
+export interface ExportBikeReportInput {
+  kind: "BIKE";
   bike_id: number;
   from?: string;
   to?: string;
-  // Answered on the Export sheet's Options step rather than by whatever opened it, because
-  // the choice is frozen into the Report: one exported without components never grows them.
+  // The opener only seeds the switches; the Export sheet's first step has the final say.
   include_components?: boolean;
+  include_history?: boolean;
 }
 
-export interface ExportBikeCheckInput {
-  kind: "BIKECHECK";
-  bike_id: number;
-}
-
-export type ExportReportInput = ExportServiceReportInput | ExportPeriodReportInput | ExportBikeCheckInput;
+export type ExportReportInput = ExportServiceReportInput | ExportBikeReportInput;
 
 // ------------------------------------------------------------------
 // The frozen document
@@ -74,7 +79,7 @@ export type ExportReportInput = ExportServiceReportInput | ExportPeriodReportInp
 
 // A discriminated union on `kind`: the page narrows on the discriminant and lays the
 // document out accordingly.
-export type ReportSnapshot = ServiceReportSnapshot | PeriodReportSnapshot | BikeCheckSnapshot;
+export type ReportSnapshot = ServiceReportSnapshot | BikeReportSnapshot | PeriodReportSnapshot | BikeCheckSnapshot;
 
 interface SnapshotCommon {
   version: number;
@@ -93,6 +98,15 @@ export interface ServiceReportSnapshot extends SnapshotCommon {
   service: ReportService;
 }
 
+export interface BikeReportSnapshot extends SnapshotCommon {
+  kind: "BIKE";
+  bike: ReportBike;
+  // Both are null when the owner switched them off, which is not an empty list.
+  components: ReportComponent[] | null;
+  history: ReportHistory | null;
+}
+
+// No longer made; a stored one still reads as it was (ADR 0011).
 export interface PeriodReportSnapshot extends SnapshotCommon {
   kind: "PERIOD";
   bike: ReportBike;
@@ -103,6 +117,7 @@ export interface PeriodReportSnapshot extends SnapshotCommon {
   components: ReportComponent[] | null;
 }
 
+// No longer made; a stored one still reads as it was (ADR 0011).
 export interface BikeCheckSnapshot extends SnapshotCommon {
   kind: "BIKECHECK";
   bike: ReportBike;
@@ -125,6 +140,12 @@ export interface ReportBike {
 export interface ReportPeriod {
   from: string | null;
   to: string | null;
+}
+
+export interface ReportHistory {
+  period: ReportPeriod;
+  services: ReportService[];
+  totals: ReportHistoryTotals;
 }
 
 export interface ReportHistoryTotals {

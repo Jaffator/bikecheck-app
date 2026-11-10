@@ -38,7 +38,7 @@ export function ServiceDesktop(): ReactElement {
   const bikeId = bikes === undefined || bikes.some((bike) => bike.id === params.bikeId) ? params.bikeId : null;
   const hasBikes = (bikes?.length ?? 0) > 0;
   const period = homePeriodServices(params.period);
-  // A Period Report covers one bike; a garage of one needs no choice to say which.
+  // A Bike Report covers one bike; a garage of one needs no choice to say which.
   const exportBikeId = bikeId ?? (bikes?.length === 1 ? bikes[0].id : null);
   const addServicePath = bikeId === null ? ADD_SERVICE.path : `${ADD_SERVICE.path}?bike=${String(bikeId)}`;
   const anythingDue = (due ?? []).some((action) => bikeId === null || action.bike_id === bikeId);
@@ -58,10 +58,16 @@ export function ServiceDesktop(): ReactElement {
               leftSection={<Download size={16} color="var(--mantine-color-primary-5)" />}
               onClick={() => {
                 if (exportBikeId === null) return;
-                setExporting({ kind: "PERIOD", bike_id: exportBikeId, from: period.from ?? undefined });
+                setExporting({
+                  kind: "BIKE",
+                  bike_id: exportBikeId,
+                  from: period.from ?? undefined,
+                  to: period.to ?? undefined,
+                  include_history: true,
+                });
               }}
             >
-              {t("service.export")}
+              {t("report.export")}
             </Button>
           </Box>
         </Tooltip>
@@ -77,7 +83,7 @@ export function ServiceDesktop(): ReactElement {
       </Group>,
     );
     return () => setActionSlot(null);
-  }, [setActionSlot, t, navigate, hasBikes, exportBikeId, period.from, addServicePath]);
+  }, [setActionSlot, t, navigate, hasBikes, exportBikeId, period.from, period.to, addServicePath]);
 
   if (bikes === undefined) {
     return (
@@ -114,7 +120,7 @@ export function ServiceDesktop(): ReactElement {
             </>
           )}
         </Group>
-        <HomePeriodSwitcher value={params.period} onChange={params.setPeriod} />
+        <HomePeriodSwitcher value={params.period} onChange={params.setPeriod} withCustom />
       </Group>
 
       <ServiceFiguresRow bikeId={bikeId} period={params.period} />

@@ -1,7 +1,7 @@
 // Home's chart queries.
 import { keepPreviousData, useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { getDistance, getSpend, getWearForecast } from "./stats.api";
-import type { Distance, HomePeriod, Spend, WearForecast } from "./stats.types";
+import { getDistance, getEarliestDay, getSpend, getWearForecast } from "./stats.api";
+import type { Distance, EarliestDay, HomePeriod, Spend, WearForecast } from "./stats.types";
 
 // Keyed under "services", so every write that drops the history drops the spend with it. The last
 // Period's numbers hold their place while the next one loads.
@@ -19,6 +19,15 @@ export function useDistance(period?: HomePeriod): UseQueryResult<Distance> {
     queryKey: ["rides", "distance", period ?? "default"],
     queryFn: () => getDistance(period),
     placeholderData: keepPreviousData,
+  });
+}
+
+// Rides and dated Services both move it and no one write drops it, so each opening of the panel asks again.
+export function useEarliestDay(): UseQueryResult<EarliestDay> {
+  return useQuery({
+    queryKey: ["stats", "earliest-day"],
+    queryFn: getEarliestDay,
+    staleTime: 0,
   });
 }
 

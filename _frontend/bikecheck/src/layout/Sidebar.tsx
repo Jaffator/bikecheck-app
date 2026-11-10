@@ -1,6 +1,6 @@
 // The desktop shell's navigation: what the tab bar, the FAB, the More sheet and the header's
 // bell and avatar hold on a phone, in one fixed column (ADR 0035).
-import type { CSSProperties, ReactElement, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { AppShell, Avatar, Box, Button, Divider, Menu, Stack, Text } from "@mantine/core";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -100,37 +100,102 @@ function UserRow({ active }: { active: boolean }): ReactElement {
   );
 }
 
+const EASE_OUT = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+
+// Drops from the button and settles; a scale from Mantine's presets would grow out of the middle.
+const DROP_TRANSITION = {
+  in: { opacity: 1, transform: "none" },
+  out: { opacity: 0, transform: "translateY(-6px) scale(0.97)" },
+  common: { transformOrigin: "top center" },
+  transitionProperty: "opacity, transform",
+};
+
+// Service first: it is the everyday entry, a bike is added once in a while.
+const CREATE_TILES = [
+  { action: ADD_SERVICE, shortKey: "nav.newService" },
+  { action: ADD_BIKE, shortKey: "nav.newBike" },
+];
+
+interface NewMenuProps {
+  opened: boolean;
+  onChange: (opened: boolean) => void;
+}
+
 // Every create action from any page; the FAB's per-page offer has no place to stand here.
-function NewMenu(): ReactElement {
+// Two tiles on frosted glass; the column behind them steps back while it is open.
+function NewMenu({ opened, onChange }: NewMenuProps): ReactElement {
   const { t } = useTranslation();
   return (
-    <Menu position="bottom-start" width="target" radius="md" offset={6}>
+    <Menu
+      opened={opened}
+      onChange={onChange}
+      position="bottom"
+      width="target"
+      offset={8}
+      transitionProps={{ transition: DROP_TRANSITION, duration: 220, exitDuration: 140, timingFunction: EASE_OUT }}
+    >
       <Menu.Target>
         <Button
           fullWidth
-          h={38}
+          h={40}
           color="primary.6"
           c="textDark.6"
-          radius="md"
-          leftSection={<Plus size={18} />}
+          radius={10}
+          leftSection={
+            <Plus
+              size={17}
+              strokeWidth={2.5}
+              style={{
+                // Turns into a close mark, so the same button reads as the way back out.
+                transform: opened ? "rotate(45deg)" : "none",
+                transition: "transform 280ms cubic-bezier(0.34, 1.4, 0.64, 1)",
+              }}
+            />
+          }
           style={{ boxShadow: "0 4px 18px color-mix(in srgb, var(--mantine-color-primary-6) 25%, transparent)" }}
         >
           {t("nav.new")}
         </Button>
       </Menu.Target>
       <Menu.Dropdown
-        bg="cards.6"
         p={6}
         style={{
-          border: "1px solid var(--mantine-color-cards-5)",
-          boxShadow: "0 0 10px 0 color-mix(in srgb, var(--mantine-color-text-9) 35%, transparent)",
+          borderRadius: 14,
+          backgroundColor: "rgba(30, 29, 27, 0.78)",
+          backdropFilter: "blur(18px) saturate(1.2)",
+          WebkitBackdropFilter: "blur(18px) saturate(1.2)",
+          border: "1px solid var(--color-border-strong)",
+          boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.75)",
         }}
       >
-        {[ADD_BIKE, ADD_SERVICE].map(({ labelKey, path, icon: Icon }) => (
-          <Menu.Item key={path} color="text" fw={600} leftSection={<Icon size={18} />} component={Link} to={path}>
-            {t(labelKey)}
-          </Menu.Item>
-        ))}
+        <Box className="grid grid-cols-2 gap-1.5">
+          {CREATE_TILES.map(({ action: { labelKey, path, icon: Icon }, shortKey }) => (
+            <Menu.Item
+              key={path}
+              component={Link}
+              to={path}
+              // The tile shows the short word under the menu's own "Add"; a reader hears it whole.
+              aria-label={t(labelKey)}
+              // A resting tint by class: Mantine's own hover rule still wins over it.
+              className="bg-white/[0.035]"
+              styles={{
+                item: {
+                  "--menu-item-hover": "color-mix(in srgb, var(--mantine-color-primary-6) 12%, transparent)",
+                  flexDirection: "column",
+                  gap: 8,
+                  padding: "14px 6px 12px",
+                  borderRadius: 10,
+                  color: "var(--mantine-color-text-3)",
+                } as CSSProperties,
+                itemSection: { marginInline: 0 },
+                itemLabel: { flex: "none", fontSize: 13, fontWeight: 600 },
+              }}
+              leftSection={<Icon size={28} color="var(--mantine-color-primary-6)" aria-hidden />}
+            >
+              {t(shortKey)}
+            </Menu.Item>
+          ))}
+        </Box>
       </Menu.Dropdown>
     </Menu>
   );
@@ -145,6 +210,7 @@ export function Sidebar(): ReactElement {
   const pendingRideCount = pendingRides?.length ?? 0;
   const { data: profile } = useMyProfile();
   const pendingRequests = profile?.stats.pending_requests ?? 0;
+  const [newMenuOpened, setNewMenuOpened] = useState(false);
 
   // Rides waiting for a bike; the rides row still opens the Assigned tab.
   const navCounts: Record<string, number> = { "/rides": pendingRideCount };
@@ -165,11 +231,23 @@ export function Sidebar(): ReactElement {
         <Box py="lg" px="xs" className="flex items-center justify-center">
           <Logo style={{ height: LOGO_HEIGHT, width: "auto" }} />
         </Box>
-        <NewMenu />
+        <NewMenu opened={newMenuOpened} onChange={setNewMenuOpened} />
       </AppShell.Section>
 
-      {/* Bled out to the column edge, so the scroll box does not clip the active bar. */}
-      <AppShell.Section grow mt="lg" mx="-sm" px="sm" style={{ overflowY: "auto" }}>
+      {/* Bled out to the column edge, so the scroll box does not clip the active bar. Steps back
+          under the open menu, so the overlap reads as layering rather than a collision. */}
+      <AppShell.Section
+        grow
+        mt="lg"
+        mx="-sm"
+        px="sm"
+        style={{
+          overflowY: "auto",
+          opacity: newMenuOpened ? 0.28 : 1,
+          filter: newMenuOpened ? "blur(1.5px)" : "none",
+          transition: `opacity 200ms ${EASE_OUT}, filter 200ms ${EASE_OUT}`,
+        }}
+      >
         <Stack gap={2}>
           {NAV_ITEMS.map(({ labelKey, path, icon: Icon, icon_fill: IconFill }) => {
             // The More tab is the phone's way to Riders and Chat, which have rows of their own here.

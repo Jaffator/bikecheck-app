@@ -1,5 +1,7 @@
 // React Query hooks for making, publishing and reading Reports.
 import { useCallback, useMemo } from "react";
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 import {
   useMutation,
   useQuery,
@@ -11,7 +13,9 @@ import {
   discardAllReports,
   discardReport,
   exportReport,
+  createOwnedPdfTicketUrl,
   fetchOwnedAttachment,
+  fetchOwnedPdf,
   getPublicReport,
   listMyReports,
   publicAttachmentUrl,
@@ -28,7 +32,9 @@ import type {
   ReportSnapshot,
   ReportSummary,
 } from "./report.types";
+import { isLive } from "./reportLive";
 import type { ApiError } from "@/api/client";
+import { saveFile } from "@/utils/saveFile";
 
 // Every Report the owner has made, newest first. Metadata only, so the list stays cheap
 // however many links they have out. Omitting the bike asks across the whole garage.
@@ -37,6 +43,12 @@ export function useMyReports(bikeId?: number): UseQueryResult<ReportSummary[]> {
     queryKey: ["reports", "mine", bikeId ?? "all"],
     queryFn: () => listMyReports(bikeId),
   });
+}
+
+// One bike's open Share Links, read off the whole-garage list so a garage of cards stays one request.
+export function useOpenLinkCount(bikeId: number): number {
+  const { data: reports } = useMyReports();
+  return (reports ?? []).filter((report) => report.bike_id === bikeId && isLive(report)).length;
 }
 
 // Making a Report adds one to what the owner has out in their name.
@@ -84,6 +96,22 @@ export function useDiscardReport(): UseMutationResult<ReportSummary, Error, numb
     mutationFn: (id: number) => discardReport(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+  });
+}
+
+// Printing writes nothing, so no list has anything new to say. A webview has no download to
+// hand a blob to, so the phone hands the file to its own browser instead.
+export function useDownloadReportPdf(): UseMutationResult<void, Error, number> {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url: await createOwnedPdfTicketUrl(id) });
+        return;
+      }
+
+      const { blob, filename } = await fetchOwnedPdf(id);
+      saveFile(blob, filename);
     },
   });
 }

@@ -7,9 +7,9 @@ import { service_place } from '@prisma/client';
 
 export const REPORT_SNAPSHOT_VERSION = 2;
 
-// What a reader gets. A discriminated union on `kind`, so one column serves all three
-// documents and the public page narrows on the discriminant.
-export type ReportSnapshot = ServiceReportSnapshot | PeriodReportSnapshot | BikeCheckSnapshot;
+// What a reader gets. A discriminated union on `kind`, so one column serves every document
+// and the public page narrows on the discriminant.
+export type ReportSnapshot = ServiceReportSnapshot | BikeReportSnapshot | PeriodReportSnapshot | BikeCheckSnapshot;
 
 interface SnapshotCommon {
   version: typeof REPORT_SNAPSHOT_VERSION;
@@ -29,6 +29,15 @@ export interface ServiceReportSnapshot extends SnapshotCommon {
   service: ReportService;
 }
 
+export interface BikeReportSnapshot extends SnapshotCommon {
+  kind: 'BIKE';
+  bike: ReportBike;
+  // Both are null when the owner switched them off, which is not an empty list.
+  components: ReportComponent[] | null;
+  history: ReportHistory | null;
+}
+
+// No longer written; a stored one still reads as it was made (ADR 0011).
 export interface PeriodReportSnapshot extends SnapshotCommon {
   kind: 'PERIOD';
   bike: ReportBike;
@@ -39,6 +48,7 @@ export interface PeriodReportSnapshot extends SnapshotCommon {
   components: ReportComponent[] | null;
 }
 
+// No longer written; a stored one still reads as it was made (ADR 0011).
 export interface BikeCheckSnapshot extends SnapshotCommon {
   kind: 'BIKECHECK';
   bike: ReportBike;
@@ -86,9 +96,10 @@ export interface ReportCovers {
   bike: string;
   // The day the document opens on: a Service's date, a Period's start. Null is an open end.
   from: string | null;
-  // The day it closes on. A Service opens and closes on the same day; a BikeCheck covers no
-  // span at all and leaves both ends null.
+  // The day it closes on. A Service opens and closes on the same day.
   to: string | null;
+  // Without a history both ends null read as today, not as the whole of it.
+  hasHistory: boolean;
 }
 
 export interface ReportBike {
@@ -109,6 +120,12 @@ export interface ReportPeriod {
   // Inclusive YYYY-MM-DD, or null for an open end. Both open is all time.
   from: string | null;
   to: string | null;
+}
+
+export interface ReportHistory {
+  period: ReportPeriod;
+  services: ReportService[];
+  totals: ReportHistoryTotals;
 }
 
 export interface ReportHistoryTotals {

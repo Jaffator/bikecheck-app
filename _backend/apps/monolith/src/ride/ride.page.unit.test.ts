@@ -114,7 +114,7 @@ describe('RideService page of rides', () => {
     });
   });
 
-  // A span that is not whole months is compared with as many days just before it.
+  // A span that is no calendar month or year is compared with as many days just before it.
   it('reads the previous period of a week as the week before', async () => {
     rides([], []);
 

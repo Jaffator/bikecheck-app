@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import { RideService } from '../ride/ride.service';
+import { GeminiService } from '../gemini/gemini.service';
 
 jest.mock('axios');
 
@@ -28,14 +29,16 @@ describe('StravaEventsService', () => {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
-    rides: { findUnique: jest.fn(), findMany: jest.fn(), upsert: jest.fn() },
+    rides: { findUnique: jest.fn(), findMany: jest.fn(), upsert: jest.fn(), update: jest.fn() },
     components_mounted: { findMany: jest.fn(), updateMany: jest.fn() },
   };
 
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
   const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn(), getWearPreview: jest.fn() };
-  const mockRides = { removeStravaRide: jest.fn() };
+  const mockRides = { removeStravaRide: jest.fn(), writeArrivalSummary: jest.fn() };
+  const mockGemini = { rideSummary: jest.fn() };
   const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 
   // What strava-service hands the monolith once a ride has been analysed.
@@ -57,6 +60,7 @@ describe('StravaEventsService', () => {
         { provide: NotificationService, useValue: mockNotifications },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
         { provide: RideService, useValue: mockRides },
+        { provide: GeminiService, useValue: mockGemini },
         { provide: getLoggerToken(StravaEventsService.name), useValue: mockLogger },
       ],
     }).compile();
@@ -66,6 +70,7 @@ describe('StravaEventsService', () => {
     mockPrisma.users.findFirst.mockResolvedValue({ id: OWNER_ID });
     mockPrisma.users.findUnique.mockResolvedValue({ strava_athlete_id: String(ATHLETE_ID) });
     mockPrisma.bikes.findMany.mockResolvedValue([]);
+    mockPrisma.strava_pending_activities.findUnique.mockResolvedValue(null);
     mockPrisma.strava_pending_activities.upsert.mockResolvedValue({});
     // No ride saved yet unless a case says so, so the gear decides the bike.
     mockPrisma.rides.findUnique.mockResolvedValue(null);
@@ -270,6 +275,138 @@ describe('StravaEventsService', () => {
       });
 
       expect(rideId).toBe(55);
+    });
+  });
+
+  describe('the review written as a ride arrives', () => {
+    const NOW = new Date().toISOString();
+    const LAST_MONTH = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const figures = { distance_km: 42, duration_min: 120, elevation_up_m: 600 };
+    const unassigned = (startedAt: string, analyzed = {}): ReturnType<typeof activity> =>
+      ({
+        ...activity(null),
+        analyzedData: { ...figures, started_at: startedAt, ...analyzed },
+      }) as ReturnType<typeof activity>;
+    const settle = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
+
+    beforeEach(() => {
+      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue(null);
+      mockPrisma.strava_pending_activities.upsert.mockResolvedValue({ id: 3, analyzed_data: figures });
+      mockGemini.rideSummary.mockResolvedValue('Parádní jízda, 4/5.');
+    });
+
+    it('writes it for a fresh Unassigned Ride, in the background of the notification', async () => {
+      let release: (text: string) => void = () => undefined;
+      mockGemini.rideSummary.mockReturnValue(new Promise((resolve) => (release = resolve)));
+
+      await service.saveAnalyzedData(unassigned(NOW));
+      expect(mockNotifications.create).toHaveBeenCalled();
+
+      release('Parádní jízda, 4/5.');
+      await settle();
+      expect(mockPrisma.strava_pending_activities.updateMany).toHaveBeenCalledWith({
+        where: { id: 3, summary: null },
+        data: { summary: 'Parádní jízda, 4/5.' },
+      });
+    });
+
+    // A sync lands a backlog through the same pipeline.
+    it('leaves an old ride for its first open', async () => {
+      await service.saveAnalyzedData(unassigned(LAST_MONTH));
+      await settle();
+
+      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
+    });
+
+    it('survives Gemini failing, for the next open to write', async () => {
+      mockGemini.rideSummary.mockRejectedValue(new Error('down'));
+
+      await expect(service.saveAnalyzedData(unassigned(NOW))).resolves.toBeDefined();
+      await settle();
+
+      expect(mockNotifications.create).toHaveBeenCalled();
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+
+    it('writes it for a fresh ride on a recognised bike', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrisma.bikes.findUnique.mockResolvedValue(null);
+      mockRides.writeArrivalSummary.mockResolvedValue(undefined);
+      jest
+        .spyOn(service as never, 'saveRide')
+        .mockResolvedValue({ message: 'saved', isNew: true, rideId: 55 } as never);
+
+      await service.saveAnalyzedData({ ...activity(), analyzedData: { ...figures, started_at: NOW } } as never);
+
+      expect(mockRides.writeArrivalSummary).toHaveBeenCalledWith(55);
+    });
+
+    it('keeps the review through a rename, and asks nothing of Gemini', async () => {
+      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue({ id: 3, analyzed_data: figures });
+
+      await service.saveAnalyzedData(unassigned(NOW, { name: 'Renamed' }));
+      await settle();
+
+      expect(mockPrisma.strava_pending_activities.upsert.mock.calls[0][0].update).not.toHaveProperty('summary');
+      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
+    });
+
+    it('clears the review when the figures change', async () => {
+      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue({ id: 3, analyzed_data: figures });
+
+      await service.saveAnalyzedData(unassigned(NOW, { distance_km: 45 }));
+
+      expect(mockPrisma.strava_pending_activities.upsert.mock.calls[0][0].update.summary).toBeNull();
+    });
+
+    it('hands the review to the ride the Unassigned Ride becomes', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue({
+        id: 3,
+        activity_id: 98765n,
+        user_id: OWNER_ID,
+        summary: 'Parádní jízda, 4/5.',
+        analyzed_data: { distance_km: 42, started_at: '2026-09-20T08:00:00.000Z' },
+      });
+      mockPrisma.rides.upsert.mockResolvedValue({ id: 55, started_at: new Date('2026-09-20T08:00:00.000Z') });
+
+      await service.resolvePendingActivities_noGear({
+        activityId: 98765n,
+        bikeId: BIKE_ID,
+        userId: OWNER_ID,
+        gearId: null,
+      });
+
+      expect(mockPrisma.rides.update).toHaveBeenCalledWith({
+        where: { id: 55 },
+        data: { summary: 'Parádní jízda, 4/5.' },
+      });
+    });
+  });
+
+  describe('the review an Unassigned Ride opens', () => {
+    const parked = { id: 3, activity_id: 98765n, analyzed_data: { distance_km: 42, rawJson: {} }, summary: null };
+
+    it('returns a kept review without asking Gemini', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue({ ...parked, summary: 'Hotovo' });
+
+      await expect(service.findPendingSummary(OWNER_ID, 98765n)).resolves.toEqual({ summary: 'Hotovo' });
+      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
+    });
+
+    it('writes one arrival left out, with no bike, in the rider language', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue(parked);
+      mockPrisma.users.findUnique.mockResolvedValue({ language: 'cs' });
+      mockGemini.rideSummary.mockResolvedValue('Parádní jízda, 4/5.');
+
+      const result = await service.findPendingSummary(OWNER_ID, 98765n);
+
+      expect(result).toEqual({ summary: 'Parádní jízda, 4/5.' });
+      expect(mockGemini.rideSummary.mock.calls[0][0].bike).toBeNull();
+      expect(mockGemini.rideSummary.mock.calls[0][1]).toBe('cs');
+      expect(mockPrisma.strava_pending_activities.update).toHaveBeenCalledWith({
+        where: { id: 3 },
+        data: { summary: 'Parádní jízda, 4/5.' },
+      });
     });
   });
 

@@ -3,7 +3,7 @@ import { check_in_status, Prisma, type strava_pending_activities } from '@prisma
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere } from '../bike/owned-bike.where';
 import { ServiceTrackingService, type WearPreview } from '../service-tracking/service-tracking.service';
-import { GeminiService, type RideSummaryInput } from '../gemini/gemini.service';
+import { GeminiService, powerOf, type RideSummaryInput } from '../gemini/gemini.service';
 import {
   BRAKE_PAD_PART,
   carried,
@@ -226,6 +226,15 @@ export class RideService {
     return { summary };
   }
 
+  // Written as a fresh ride lands, without waiting for an open; one already written by an open stays.
+  async writeArrivalSummary(rideId: number): Promise<void> {
+    const ride = await this.prisma.rides.findFirst({ where: { id: rideId }, select: summaryRideSelect });
+    if (!ride) return;
+
+    const summary = await this.gemini.rideSummary(summaryInputOf(ride), ride.users.language);
+    await this.prisma.rides.updateMany({ where: { id: ride.id, summary: null }, data: { summary } });
+  }
+
   /**
    * Moves a ride to another of the user's bikes, taking its wear off the parts that carried it
    * and putting it on the parts the new bike had mounted at the time.
@@ -436,15 +445,8 @@ function summaryInputOf(ride: SummaryRide): RideSummaryInput {
     elevation_down_m: ride.elevation_down_m ?? 0,
     speed_avg_kmh: ride.speed_avg ?? 0,
     max_speed_kmh: ride.max_speed_kmh ?? 0,
-    average_watts: watts(activity?.average_watts),
-    max_watts: watts(activity?.max_watts),
-    weighted_average_watts: watts(activity?.weighted_average_watts),
+    ...powerOf(activity),
   };
-}
-
-// Strava sends power only for a ride that recorded or estimated it.
-function watts(value: unknown): number | null {
-  return typeof value === 'number' ? Math.round(value) : null;
 }
 
 // The user's rides the lists show: not deleted, and not on an Archived Bike (ADR 0024).

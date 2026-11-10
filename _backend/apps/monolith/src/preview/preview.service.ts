@@ -38,11 +38,12 @@ const NEUTRAL_DESCRIPTION = 'Track the service of your bikes and share your buil
 // The mark on the neutral card: the mail logo, already in R2 for the same reason.
 const NEUTRAL_LOGO_KEY = `static/${MAIL_LOGO_KEY}`;
 
-// The document's English name, as the public page heads it (reportHeadings.ts).
+// The older kinds go by the Bike Report's name here; only their frozen pages keep the old heading.
 const REPORT_KIND_LABEL: Record<ReportSnapshot['kind'], string> = {
   SERVICE: 'Service Report',
-  PERIOD: 'Period Report',
-  BIKECHECK: 'BikeCheck',
+  BIKE: 'Bike Report',
+  PERIOD: 'Bike Report',
+  BIKECHECK: 'Bike Report',
 };
 
 @Injectable()
@@ -318,6 +319,12 @@ function reportLine(document: ReportSnapshot): string {
       const when =
         document.service.serviceDate === null ? 'Service' : `Service on ${day(document.service.serviceDate)}`;
       return `${when} · ${count(document.service.actions.length, 'action')}`;
+    }
+    case 'BIKE': {
+      const parts = document.bike.totalKm === null ? [] : [km(document.bike.totalKm)];
+      if (document.components !== null) parts.push(count(document.components.length, 'component'));
+      if (document.history !== null) parts.push(count(document.history.totals.serviceCount, 'service'));
+      return parts.join(' · ');
     }
     case 'PERIOD': {
       const span =

@@ -1,10 +1,11 @@
-// Home's figures as one card: the Period's distance, climb, time in the saddle and energy. Distance, climb
-// and energy read as an Equivalent; the terms are in CONTEXT.md.
+// Home's figures as one card: the Period's distance, climb, time in the saddle and energy. Distance, climb and
+// energy read as an Equivalent, and all four against the Period before over a custom one; terms in CONTEXT.md.
 import type { ReactElement } from "react";
 import { Box, SimpleGrid, useMatches } from "@mantine/core";
+import { ArrowUpRight, Gauge, Timer, type LucideIcon } from "lucide-react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { FigureSection } from "@/components/FigureSection";
+import { FigureSection, type FigureSectionProps } from "@/components/FigureSection";
 import { formatDuration } from "@/features/rides/rideDuration";
 import {
   CLIMBED,
@@ -19,11 +20,15 @@ import {
   EARTH,
   EVEREST,
   MARATHON,
+  changeLabel,
+  comparisonOf,
+  customComparison,
   equivalentLabel,
   equivalentOf,
+  type ComparedFigure,
   type Yardstick,
 } from "@/features/stats/figureReadings";
-import { homePeriodLabel } from "@/features/stats/homePeriod";
+import { homePeriodLabel, isCustomPeriod } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { Distance, HomePeriod } from "@/features/stats/stats.types";
 import { WeekdayBars } from "@/features/stats/ui/WeekdayBars";
@@ -39,9 +44,12 @@ const HAIRLINE = "1px solid var(--color-border)";
 type FigureKind = "distance" | "climb" | "energy";
 
 // The Equivalents read the same response the same way; only the series and the yardstick differ.
-const EQUIVALENT_FIGURES: Record<FigureKind, { series: DailySeries; yardstick: Yardstick; titleKey: string }> = {
-  distance: { series: RIDDEN, yardstick: EARTH, titleKey: "stats.distanceTitle" },
-  climb: { series: CLIMBED, yardstick: EVEREST, titleKey: "dashboard.climbTitle" },
+const EQUIVALENT_FIGURES: Record<
+  FigureKind,
+  { series: DailySeries; yardstick: Yardstick; titleKey: string; icon?: LucideIcon }
+> = {
+  distance: { series: RIDDEN, yardstick: EARTH, titleKey: "stats.distanceTitle", icon: Gauge },
+  climb: { series: CLIMBED, yardstick: EVEREST, titleKey: "dashboard.climbTitle", icon: ArrowUpRight },
   energy: { series: ENERGY, yardstick: MARATHON, titleKey: "dashboard.energyTitle" },
 };
 
@@ -108,8 +116,13 @@ interface EquivalentFigureProps {
 function EquivalentFigure({ period, figure }: EquivalentFigureProps): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: distance, isPlaceholderData } = useDistance(period);
-  const { series, yardstick, titleKey } = EQUIVALENT_FIGURES[figure];
-  const head = { title: t(titleKey, { period: homePeriodLabel(period, i18n.language, t) }), unit: series.unit };
+  const { series, yardstick, titleKey, icon } = EQUIVALENT_FIGURES[figure];
+  const head = {
+    title: t(titleKey, { period: homePeriodLabel(period, i18n.language, t) }),
+    icon,
+    unit: series.unit,
+    spread: isCustomPeriod(period),
+  };
 
   if (distance === undefined) return <FigureSection {...head} value={null} />;
   const meters = totalMeters(distance, series);
@@ -124,8 +137,20 @@ function EquivalentFigure({ period, figure }: EquivalentFigureProps): ReactEleme
       detail={perRide(distance, meters, series, i18n.language, t)}
       detailFigure
       graphic={<YardstickGraphic meters={meters} yardstick={yardstick} />}
+      {...comparisonReadout(customComparison(distance, period, series), i18n.language, t)}
     />
   );
+}
+
+// The chip only when the Period before had something to set it against.
+function comparisonReadout(
+  figure: ComparedFigure | null,
+  language: string,
+  t: TFunction,
+): Pick<FigureSectionProps, "chip" | "against"> {
+  if (figure === null) return {};
+  const { change, text } = comparisonOf(figure, language, t);
+  return { chip: change === null ? undefined : changeLabel(change, language, t), against: text };
 }
 
 // "ø 678 m / jízda"; a Period without a ride has no average.
@@ -141,7 +166,9 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
   const { data: distance, isPlaceholderData } = useDistance(period);
   const head = {
     title: t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) }),
+    icon: Timer,
     unit: SADDLE_TIME.unit,
+    spread: isCustomPeriod(period),
   };
 
   if (distance === undefined) return <FigureSection {...head} value={null} />;
@@ -158,6 +185,7 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
       detail={`${t("dashboard.ridesCount", { count: rides })} · ${t("dashboard.perRide", { value: average })}`}
       detailFigure
       graphic={<WeekdayBars minutes={weekdayMinutes(distance)} label={head.title} />}
+      {...comparisonReadout(customComparison(distance, period, SADDLE_TIME), i18n.language, t)}
     />
   );
 }

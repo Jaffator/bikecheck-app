@@ -1,12 +1,13 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { StravaEventsService } from './strava.service';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { LinkStravaGearDto } from './dto/link-strava-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
-import { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
+import { ResponseCheckInPendingDto, ResponseRideSummaryDto } from '../ride/dto/response-ride.dto';
 import { ResolvePendingActivityDto } from './dto/resolve-pending-activity.dto';
 import { ResponseResolvePendingActivityDto } from './dto/response-resolve-pending-activity.dto';
 import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
@@ -89,6 +90,19 @@ export class StravaController {
     @Param('activityId') activityId: string,
   ): Promise<ResponsePendingStravaDto> {
     return this.stravaEventService.getPendingActivity(Number(userId), BigInt(activityId));
+  }
+
+  // ---------- GET a pending ride's AI review ----------
+  // May ask Gemini, so this route is held well below the global limit.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({ summary: "The pending ride's AI review, written on the first request if arrival left none" })
+  @ApiResponse({ status: 200, type: ResponseRideSummaryDto })
+  @Get('pending-activities/:activityId/summary')
+  findPendingSummary(
+    @CurrentUser('userId') userId: string,
+    @Param('activityId') activityId: string,
+  ): Promise<ResponseRideSummaryDto> {
+    return this.stravaEventService.findPendingSummary(Number(userId), BigInt(activityId));
   }
 
   // ---------- POST assign a pending ride to a bike ----------

@@ -660,6 +660,19 @@ describe('RideService', () => {
       });
     });
 
+    it('writes an arrival review over nothing, so one an open wrote stays', async () => {
+      mockPrisma.rides.findFirst.mockResolvedValue(unreviewed);
+      mockPrisma.rides.updateMany = jest.fn();
+      mockGemini.rideSummary.mockResolvedValue('Parádní jízda, 4/5.');
+
+      await service.writeArrivalSummary(5);
+
+      expect(mockPrisma.rides.updateMany).toHaveBeenCalledWith({
+        where: { id: 5, summary: null },
+        data: { summary: 'Parádní jízda, 4/5.' },
+      });
+    });
+
     it('returns a kept review without asking Gemini again', async () => {
       mockPrisma.rides.findFirst.mockResolvedValue({ ...unreviewed, summary: 'Already written' });
 

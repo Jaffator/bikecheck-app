@@ -160,7 +160,7 @@ function DistanceChart({ distance, period }: { distance: Distance; period: HomeP
         textColor="text.8"
         gridColor="var(--color-border-subtle)"
         valueFormatter={(km) => formatKm(km, i18n.language)}
-        xAxisProps={{ tick: X_TICK, ...xAxisOf(line, servedYear(distance)) }}
+        xAxisProps={{ tick: X_TICK, ...xAxisOf(line, servedYear(distance), i18n.language) }}
         // Sized to its longest label; Mantine's 10px tick shift is dropped, auto width cannot see it.
         yAxisProps={{
           width: "auto",
@@ -204,9 +204,13 @@ function yTicks(topKm: number): number[] {
   return [0, step, step * 2];
 }
 
-// The year names each month under its first week, a month ticks weekly from the 1st, all time is the chart's.
-function xAxisOf(line: RunningDistance, year: number): AreaChartProps["xAxisProps"] {
+// The year names each month under its first week, a month ticks weekly from the 1st, a custom span's weeks
+// name the day they start, all time is the chart's.
+function xAxisOf(line: RunningDistance, year: number, language: string): AreaChartProps["xAxisProps"] {
   if (line.step === "week") {
+    return { ticks: line.starts, tickFormatter: (start: string) => formatServiceDateShort(start, language) };
+  }
+  if (line.step === "yearWeek") {
     return {
       ticks: monthTicks(year, line.starts),
       tickFormatter: (week: string) => weekMonth(year, line.starts, week).format("MMM"),
@@ -223,7 +227,9 @@ function xAxisOf(line: RunningDistance, year: number): AreaChartProps["xAxisProp
 
 // dayjs, not Intl: Mantine also asks for a label while the tooltip is hidden, and Intl throws on it.
 function pointLabel(step: DistanceStep, start: string, language: string, t: TFunction): string {
-  if (step === "week") return t("stats.distanceWeek", { date: formatServiceDateShort(start, language) });
+  if (step === "week" || step === "yearWeek") {
+    return t("stats.distanceWeek", { date: formatServiceDateShort(start, language) });
+  }
   if (step === "day") return formatServiceDateShort(start, language);
   return dayjs(start).format("MMMM YYYY");
 }

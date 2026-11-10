@@ -10,7 +10,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useHeaderStore } from "@/store/store";
 import { HistoryTotalsCard } from "@/features/service/ui/HistoryTotalsCard";
 import { ServiceList } from "@/features/service/ui/ServiceList";
-import { PeriodFilterModal } from "@/features/service/ui/PeriodFilterModal";
+import { HistoryPeriodPanel } from "@/features/service/ui/HistoryPeriodPanel";
 import { periodLabel } from "@/features/service/servicePeriod";
 import type { ServicePeriod } from "@/features/service/service.types";
 import { useHistoryTotals, useServiceHistory } from "@/features/service/service.queries";
@@ -63,7 +63,7 @@ function ServiceHistoryPhone(): ReactElement {
   const { data: bikes } = useBikes();
   const setActionSlot = useHeaderStore((state) => state.setActionSlot);
   const [filterOpened, setFilterOpened] = useState(false);
-  // What the Share button is exporting. Null keeps the export sheet shut.
+  // What the Export button is exporting. Null keeps the export sheet shut.
   const [exporting, setExporting] = useState<ExportReportInput | null>(null);
 
   // A bike in the path narrows the page to it; none means the whole garage. The period
@@ -92,8 +92,8 @@ function ServiceHistoryPhone(): ReactElement {
   // empty state, so they stand down and it takes the page - the same as Reports.
   const isEmpty = !isLoading && !isError && services.length === 0;
 
-  // A Period Report covers one bike, so a garage of one needs no choice to say which. The
-  // whole garage of several is nothing a Period Report could be about.
+  // A Bike Report covers one bike, so a garage of one needs no choice to say which. The
+  // whole garage of several is nothing a Bike Report could be about.
   const exportBikeId = bikeId ?? (bikes?.length === 1 ? bikes[0].id : null);
 
   // Opens at the top whichever page it came from: the service page may have been scrolled
@@ -122,7 +122,7 @@ function ServiceHistoryPhone(): ReactElement {
     return () => setActionSlot(null);
   }, [setActionSlot, t]);
 
-  function setParams(next: Record<string, string | null>): void {
+  function setPeriod(next: ServicePeriod): void {
     const params = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(next)) {
       if (value === null) {
@@ -151,15 +151,16 @@ function ServiceHistoryPhone(): ReactElement {
             periodLabel={periodLabel(period, t, i18n.language)}
             isLoading={totalsLoading}
             isStale={totalsStale}
-            onShare={
+            onExport={
               exportBikeId === null
                 ? null
                 : () =>
                     setExporting({
-                      kind: "PERIOD",
+                      kind: "BIKE",
                       bike_id: exportBikeId,
                       from: period.from ?? undefined,
                       to: period.to ?? undefined,
+                      include_history: true,
                     })
             }
           />
@@ -184,11 +185,11 @@ function ServiceHistoryPhone(): ReactElement {
 
       <ExportSheet input={exporting} onClose={() => setExporting(null)} />
 
-      <PeriodFilterModal
+      <HistoryPeriodPanel
         opened={filterOpened}
         onClose={() => setFilterOpened(false)}
         period={period}
-        onApply={(next) => setParams({ from: next.from, to: next.to })}
+        onChange={setPeriod}
       />
     </Stack>
   );

@@ -1,29 +1,41 @@
-// One desktop notification: icon, title and body, its one action, time and the unread dot, then delete.
+// One desktop notification: the phone row's anatomy, with its action, time and delete in columns.
 import type { MouseEvent, ReactElement } from "react";
-import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Stack, Text } from "@mantine/core";
 import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PANEL_HAIRLINE, PRESS_TRANSITION, onPanelRowKey } from "@/components/panelRows";
 import { canDeleteNotification, notificationAction, type NotificationAction } from "@/features/notifications/notificationAction";
-import { NOTIFICATION_ICONS, notificationIconColor } from "@/features/notifications/notificationIcon";
 import { notificationTime, type NotificationDay } from "@/features/notifications/notificationTime";
 import type { Notification } from "@/features/notifications/notifications.types";
+import type { PendingRide } from "@/features/strava/strava.types";
+import {
+  NOTIFICATION_ROW_GAP,
+  NOTIFICATION_ROW_INSET,
+  NOTIFICATION_ROW_MIN_HEIGHT,
+  NotificationMark,
+  NotificationRowDetail,
+  NotificationRowTitle,
+  NotificationUnreadDot,
+} from "./NotificationRowParts";
 
-// Wide enough for today's relative stamp ("před 44 minutami") plus the unread dot.
-const QUEUE_COLUMNS = "32px minmax(0, 1fr) auto 136px 28px";
+// Wide enough for the longest stamp, an older day ("Wed 30. 12.").
+const QUEUE_COLUMNS = "minmax(0, 1fr) auto 72px 28px";
+
+// The row opens the same place as its action, so a quiet list need not be a column of buttons and bins.
+const ON_ROW_HOVER = "opacity-0 group-hover:opacity-100 focus-visible:opacity-100";
 
 interface NotificationQueueRowProps {
   notification: Notification;
   day: NotificationDay;
+  // The first row of a day draws no hairline above it.
+  first: boolean;
+  pendingRide: PendingRide | undefined;
   onOpen: (notification: Notification, route: string | null) => void;
   onDelete: (notification: Notification) => void;
 }
 
-export function NotificationQueueRow({ notification, day, onOpen, onDelete }: NotificationQueueRowProps): ReactElement {
-  const unread = !notification.is_read;
+export function NotificationQueueRow({ notification, day, first, pendingRide, onOpen, onDelete }: NotificationQueueRowProps): ReactElement {
   const action = notificationAction(notification);
-  const Icon = NOTIFICATION_ICONS[notification.type];
-  const iconColor = notificationIconColor(notification, unread);
   const open = (): void => onOpen(notification, action?.route ?? null);
 
   return (
@@ -34,58 +46,47 @@ export function NotificationQueueRow({ notification, day, onOpen, onDelete }: No
       onKeyDown={(event) => onPanelRowKey(event, open)}
       className="hover-veil group"
       style={{
-        display: "grid",
-        gridTemplateColumns: QUEUE_COLUMNS,
-        alignItems: "center",
-        gap: 14,
-        minHeight: 64,
-        padding: "10px 0",
-        borderTop: PANEL_HAIRLINE,
+        position: "relative",
+        display: "flex",
+        gap: NOTIFICATION_ROW_GAP,
+        paddingLeft: NOTIFICATION_ROW_INSET,
         cursor: "pointer",
         transition: PRESS_TRANSITION,
       }}
     >
+      {!notification.is_read && <NotificationUnreadDot />}
+      <NotificationMark notification={notification} pendingRide={pendingRide} />
+
       <Box
-        w={32}
-        h={32}
         style={{
-          borderRadius: "50%",
-          display: "flex",
+          flex: 1,
+          minWidth: 0,
+          minHeight: NOTIFICATION_ROW_MIN_HEIGHT,
+          display: "grid",
+          gridTemplateColumns: QUEUE_COLUMNS,
           alignItems: "center",
-          justifyContent: "center",
-          // The icon's own colour, faint, so the circle reads as its tint.
-          backgroundColor: `color-mix(in srgb, ${iconColor} 14%, transparent)`,
+          gap: 14,
+          padding: `${NOTIFICATION_ROW_GAP}px ${NOTIFICATION_ROW_INSET}px ${NOTIFICATION_ROW_GAP}px 0`,
+          borderTop: first ? undefined : PANEL_HAIRLINE,
         }}
       >
-        {Icon !== undefined && <Icon size={16} color={iconColor} />}
-      </Box>
+        <Stack gap={2} style={{ minWidth: 0 }}>
+          <NotificationRowTitle notification={notification} />
+          <NotificationRowDetail notification={notification} pendingRide={pendingRide} />
+        </Stack>
 
-      <Stack gap={2} style={{ minWidth: 0 }}>
-        <Text fz={13} fw={600} c={unread ? "text.6" : "var(--color-text-dim)"} lineClamp={1}>
-          {notification.title}
-        </Text>
-        <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
-          {notification.body}
-        </Text>
-      </Stack>
+        {action === null ? <span /> : <ActionButton action={action} onClick={open} />}
 
-      {action === null ? <span /> : <ActionButton action={action} onClick={open} />}
-
-      <Group gap={8} justify="flex-end" wrap="nowrap">
-        <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" ta="right" style={{ whiteSpace: "nowrap" }}>
+        <Text className="tabular-nums" fz={12} lh="16px" c="var(--color-muted)" ta="right" style={{ whiteSpace: "nowrap" }}>
           {notificationTime(notification.created_at, day)}
         </Text>
-        {unread && (
-          <Box w={8} h={8} style={{ borderRadius: "50%", backgroundColor: "var(--mantine-color-primary-6)", flexShrink: 0 }} />
-        )}
-      </Group>
 
-      {canDeleteNotification(notification) ? <DeleteButton onClick={() => onDelete(notification)} /> : <span />}
+        {canDeleteNotification(notification) ? <DeleteButton onClick={() => onDelete(notification)} /> : <span />}
+      </Box>
     </Box>
   );
 }
 
-// Shows on row hover or keyboard focus, so a quiet list is not a column of bins.
 function DeleteButton({ onClick }: { onClick: () => void }): ReactElement {
   const { t } = useTranslation();
   const click = (event: MouseEvent): void => {
@@ -101,7 +102,7 @@ function DeleteButton({ onClick }: { onClick: () => void }): ReactElement {
       aria-label={t("notifications.deleteAria")}
       onClick={click}
       onKeyDown={(event) => event.stopPropagation()}
-      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+      className={ON_ROW_HOVER}
     >
       <Trash2 size={16} />
     </ActionIcon>
@@ -117,7 +118,7 @@ function ActionButton({ action, onClick }: { action: NotificationAction; onClick
   };
 
   return (
-    <Button size="xs" radius="md" variant="subtle" color="primary.6" onClick={click}>
+    <Button size="xs" radius="md" variant="subtle" color="primary.6" onClick={click} className={ON_ROW_HOVER}>
       {t(action.labelKey)}
     </Button>
   );

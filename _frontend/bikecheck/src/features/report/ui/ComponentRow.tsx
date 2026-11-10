@@ -1,14 +1,41 @@
-// One part on a bike, as a Period Report and a BikeCheck both write it down - so the two
-// never word the same thing differently.
+// One part on a bike, as every document listing them writes it down - so none of them words
+// the same thing differently.
 import type { ReactElement } from "react";
 import type { ReportComponent } from "@/features/report/report.types";
-import { REPORT_PAPER, reportComponentLabel, reportDate, reportNumber, reportRideTime } from "@/features/report/reportFormat";
+import { REPORT_PAPER, reportComponentKind, reportNumber, reportRideTime } from "@/features/report/reportFormat";
 import type { ReportHeadings } from "@/features/report/reportHeadings";
 import { RowLabel } from "./ReportPaper";
 
-// One part on the bike: what it is, how far it has gone, and when it was last worked on —
-// which is what a buyer checks against the machine in front of them.
-export function ComponentRow({
+export function ComponentList({
+  components,
+  heading,
+  language,
+  compact = false,
+}: {
+  components: ReportComponent[];
+  heading: ReportHeadings;
+  language: string;
+  compact?: boolean;
+}): ReactElement {
+  if (components.length === 0) {
+    return (
+      <p className={compact ? "text-[12px]" : "text-sm"} style={{ color: REPORT_PAPER.inkMuted }}>
+        {heading.noComponents}
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col">
+      {components.map((component, index) => (
+        <ComponentRow key={index} component={component} heading={heading} language={language} compact={compact} />
+      ))}
+    </div>
+  );
+}
+
+// One part on the bike: what kind it is, which model, and how far it has gone.
+function ComponentRow({
   component,
   heading,
   language,
@@ -19,8 +46,7 @@ export function ComponentRow({
   language: string;
   compact?: boolean;
 }): ReactElement {
-  const mounted = reportDate(component.mountedAt, language);
-  const lastService = reportDate(component.lastServiceAt, language);
+  const description = component.description?.trim();
 
   return (
     <div
@@ -29,12 +55,11 @@ export function ComponentRow({
     >
       <div className="flex flex-col gap-0.5 min-w-0">
         <span className={`font-semibold leading-snug ${compact ? "text-[12px]" : "text-[15px]"}`}>
-          {reportComponentLabel(component)}
+          {reportComponentKind(component)}
         </span>
-        <span className="tabular-nums text-[11px]" style={{ color: REPORT_PAPER.inkMuted }}>
-          {mounted === null ? "" : `${heading.mounted}: ${mounted} · `}
-          {`${heading.lastService}: ${lastService ?? heading.neverServiced}`}
-        </span>
+        {description && (
+          <span className={`leading-snug ${compact ? "text-[12px]" : "text-[15px]"}`}>{description}</span>
+        )}
       </div>
       <div className="flex flex-col items-end gap-0.5 shrink-0">
         <RowLabel>{heading.wear}</RowLabel>

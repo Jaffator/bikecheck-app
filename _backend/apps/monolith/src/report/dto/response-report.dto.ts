@@ -17,6 +17,9 @@ export class ResponseReportCoversDto {
 
   @ApiProperty({ example: '2026-12-31', nullable: true, description: 'Inclusive YYYY-MM-DD' })
   to!: string | null;
+
+  @ApiProperty({ example: true, description: 'False when the document carries no service history' })
+  hasHistory!: boolean;
 }
 
 // Report metadata for the owner's management list. The frozen document itself never
@@ -64,6 +67,12 @@ export class ResponseReportDto {
 export class ResponseReportBulkDto {
   @ApiProperty({ example: 3, description: 'How many reports the act reached' })
   count!: number;
+}
+
+// Good for one read of the printed file, for a minute. Only the owner's app ever receives it.
+export class ResponsePdfTicketDto {
+  @ApiProperty({ description: 'Goes in GET /reports/pdf-ticket/:ticket' })
+  ticket!: string;
 }
 
 // What Export answers with. The snapshot rides along so the owner previews the document

@@ -18,6 +18,7 @@ import {
   ReportBike,
   ReportComponent,
   ReportCovers,
+  ReportHistory,
   ReportHistoryTotals,
   ReportPdfFile,
   ReportPeriod,
@@ -51,8 +52,8 @@ const serviceReportInclude = {
 
 type ServiceWithRelations = Prisma.events_bikesGetPayload<{ include: typeof serviceReportInclude }>;
 
-// The bike a Period Report or a BikeCheck is written about. Its type is a catalogue label,
-// so it comes along to be resolved at export time like every other one.
+// The bike a Bike Report is written about. Its type is a catalogue label, so it comes along
+// to be resolved at export time like every other one.
 const reportBikeInclude = { bike_types: true } satisfies Prisma.bikesInclude;
 
 type BikeWithRelations = Prisma.bikesGetPayload<{ include: typeof reportBikeInclude }>;
@@ -72,6 +73,27 @@ type MountedWithRelations = Prisma.components_mountedGetPayload<{ include: typeo
 interface OwnerVoice {
   language: string;
   currency: string;
+}
+
+// What the owner kept in a Bike Report; null was switched off.
+interface BikeReportContents {
+  components: ReportComponent[] | null;
+  services: ServiceWithRelations[] | null;
+  period: ReportPeriod;
+  rides: RideTotals;
+}
+
+// What the bike's rides add up to; the bike's own totals hold only what the owner typed.
+interface RideTotals {
+  km: number;
+  timeMin: number;
+}
+
+const NO_RIDES: RideTotals = { km: 0, timeMin: 0 };
+
+// Nothing typed and nothing ridden stays unknown, not zero.
+function withRides(typed: number | null, ridden: number): number | null {
+  return typed === null && ridden === 0 ? null : (typed ?? 0) + ridden;
 }
 
 // A Report and the document it was made from, handed back together by Export.
@@ -102,10 +124,8 @@ export class ReportService {
     switch (dto.kind) {
       case report_kind.SERVICE:
         return await this.exportService(userId, dto, owner);
-      case report_kind.PERIOD:
-        return await this.exportPeriod(userId, dto, owner);
-      case report_kind.BIKECHECK:
-        return await this.exportBikeCheck(userId, dto, owner);
+      case report_kind.BIKE:
+        return await this.exportBike(userId, dto, owner);
     }
   }
 
@@ -119,34 +139,28 @@ export class ReportService {
       throw new NotFoundException(`Service with ID ${serviceId} has no bike to report on`);
     }
 
-    return await this.store(userId, bikeId, this.buildServiceSnapshot(service, owner));
+    const rides = await this.rideTotals(bikeId);
+    return await this.store(userId, bikeId, this.buildServiceSnapshot(service, owner, rides));
   }
 
-  // The services one bike ran up inside one Period. An empty Period is refused before a
-  // row is written, so an empty document is never made - let alone published.
-  private async exportPeriod(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
+  // An empty history is no refusal: the photo and details are a document by themselves. Each
+  // choice is read once, here, and frozen (ADR 0011).
+  private async exportBike(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
     const bike = await this.findOwnedBike(required(dto.bike_id, 'bike_id'), userId);
-    const services = await this.findServicesInPeriod(bike.id, dto.from, dto.to);
-    if (services.length === 0) {
-      throw new BadRequestException('There are no services in this period to export');
-    }
-
-    const period: ReportPeriod = { from: dto.from ?? null, to: dto.to ?? null };
-    // The choice is read once, here, and frozen: a report exported without components
-    // never grows them (ADR 0011).
     const components = required(dto.include_components, 'include_components')
       ? await this.findMountedComponents(bike.id, owner.language)
       : null;
+    const services = required(dto.include_history, 'include_history')
+      ? await this.findServicesInPeriod(bike.id, dto.from, dto.to)
+      : null;
+    const period = { from: dto.from ?? null, to: dto.to ?? null };
+    const rides = await this.rideTotals(bike.id);
 
-    return await this.store(userId, bike.id, this.buildPeriodSnapshot(bike, services, period, components, owner));
-  }
-
-  // The machine's card: the bike, and everything mounted on it right now.
-  private async exportBikeCheck(userId: number, dto: ExportReportDto, owner: OwnerVoice): Promise<ExportedReport> {
-    const bike = await this.findOwnedBike(required(dto.bike_id, 'bike_id'), userId);
-    const components = await this.findMountedComponents(bike.id, owner.language);
-
-    return await this.store(userId, bike.id, this.buildBikeCheckSnapshot(bike, components, owner));
+    return await this.store(
+      userId,
+      bike.id,
+      this.buildBikeSnapshot(bike, { components, services, period, rides }, owner),
+    );
   }
 
   // Writes the document down. Closed, whichever kind it is.
@@ -250,12 +264,19 @@ export class ReportService {
       case 'SERVICE': {
         // One occasion: the document opens and closes on the day the work happened.
         const day = document.service.serviceDate === null ? null : this.day(document.service.serviceDate);
-        return { bike, from: day, to: day };
+        return { bike, from: day, to: day, hasHistory: true };
       }
+      case 'BIKE':
+        return {
+          bike,
+          from: document.history?.period.from ?? null,
+          to: document.history?.period.to ?? null,
+          hasHistory: document.history !== null,
+        };
       case 'PERIOD':
-        return { bike, from: document.period.from, to: document.period.to };
+        return { bike, from: document.period.from, to: document.period.to, hasHistory: true };
       case 'BIKECHECK':
-        return { bike, from: null, to: null };
+        return { bike, from: null, to: null, hasHistory: false };
     }
   }
 
@@ -309,6 +330,43 @@ export class ReportService {
     return { body, filename: this.pdfFilename(document) };
   }
 
+  // The owner's file, which publishes nothing. Their own report is printed behind a key of
+  // its own, so chromium can open it while the Share Link stays as it was (ADR 0012).
+  async ownedPdf(id: number, userId: number): Promise<ReportPdfFile> {
+    const report = await this.findOwnedReport(id, userId);
+    const token = report.public_token;
+
+    const body = await this.pdf.printWithKey(this.printUrl(token), token);
+
+    return { body, filename: this.pdfFilename(this.storedSnapshot(report).document) };
+  }
+
+  // The phone's way to the same file, for a system browser with no session. Printed here, so
+  // a failure reaches the app that asked rather than a browser tab (ADR 0012).
+  async pdfTicket(id: number, userId: number): Promise<string> {
+    return this.pdf.hold(await this.ownedPdf(id, userId));
+  }
+
+  // Answers as a closed link does, so a ticket cannot be probed for how it died.
+  claimPdf(ticket: string): ReportPdfFile {
+    const file = this.pdf.claim(ticket);
+    if (file === null) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return file;
+  }
+
+  // What chromium reads on that print. Past the closed link only with a key minted for this
+  // report; anything else leaves by the same door as a closed link. Counts no view.
+  async printedSnapshot(token: string, key: string): Promise<ReportSnapshot> {
+    if (!this.pdf.admits(token, key)) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return this.storedSnapshot(await this.reportByToken(token)).document;
+  }
+
   // The same file on the owner's side, so the preview can open what it lists before any
   // of it is public. Their own report, their own receipt - published or not.
   async ownedAttachment(id: number, userId: number, attachmentId: number): Promise<ReportAttachmentFile> {
@@ -349,7 +407,11 @@ export class ReportService {
 
   // ---------- Building the document ----------
 
-  private buildServiceSnapshot(service: ServiceWithRelations, owner: OwnerVoice): StoredReportSnapshot {
+  private buildServiceSnapshot(
+    service: ServiceWithRelations,
+    owner: OwnerVoice,
+    rides: RideTotals,
+  ): StoredReportSnapshot {
     return {
       document: {
         version: REPORT_SNAPSHOT_VERSION,
@@ -357,56 +419,34 @@ export class ReportService {
         generatedAt: new Date().toISOString(),
         language: owner.language,
         currency: owner.currency,
-        bike: this.buildBike(service.bikes, owner.language),
+        bike: this.buildBike(service.bikes, owner.language, rides),
         service: this.buildService(service, owner.language),
       },
       private: this.attachmentKeys([service]),
     };
   }
 
-  private buildPeriodSnapshot(
+  private buildBikeSnapshot(
     bike: BikeWithRelations,
-    services: ServiceWithRelations[],
-    period: ReportPeriod,
-    components: ReportComponent[] | null,
+    { components, services, period, rides }: BikeReportContents,
     owner: OwnerVoice,
   ): StoredReportSnapshot {
-    const reported = services.map((service) => this.buildService(service, owner.language));
+    const reported = services?.map((service) => this.buildService(service, owner.language)) ?? null;
+    const history: ReportHistory | null =
+      reported === null ? null : { period, services: reported, totals: this.buildTotals(reported) };
 
     return {
       document: {
         version: REPORT_SNAPSHOT_VERSION,
-        kind: 'PERIOD',
+        kind: 'BIKE',
         generatedAt: new Date().toISOString(),
         language: owner.language,
         currency: owner.currency,
-        bike: this.buildBike(bike, owner.language),
-        period,
-        services: reported,
-        totals: this.buildTotals(reported),
+        bike: this.buildBike(bike, owner.language, rides),
         components,
+        history,
       },
-      private: this.attachmentKeys(services),
-    };
-  }
-
-  private buildBikeCheckSnapshot(
-    bike: BikeWithRelations,
-    components: ReportComponent[],
-    owner: OwnerVoice,
-  ): StoredReportSnapshot {
-    return {
-      document: {
-        version: REPORT_SNAPSHOT_VERSION,
-        kind: 'BIKECHECK',
-        generatedAt: new Date().toISOString(),
-        language: owner.language,
-        currency: owner.currency,
-        bike: this.buildBike(bike, owner.language),
-        components,
-      },
-      // A BikeCheck describes the machine, not the paperwork - it carries no files.
-      private: { attachmentKeys: {} },
+      private: this.attachmentKeys(services ?? []),
     };
   }
 
@@ -438,7 +478,7 @@ export class ReportService {
     return sources;
   }
 
-  private buildBike(bike: BikeWithRelations | null, language: string): ReportBike {
+  private buildBike(bike: BikeWithRelations | null, language: string, rides: RideTotals): ReportBike {
     // A report outlives the bike it describes, so the bike may already be gone.
     if (bike === null) {
       return {
@@ -466,8 +506,9 @@ export class ReportService {
           ? null
           : catalogueLabel(language, bike.bike_types.i18n_key, bike.bike_types.type ?? ''),
       ebike: bike.ebike,
-      totalKm: bike.total_km,
-      totalTimeMin: bike.total_time_min,
+      // Typed plus ridden, the figure the bike's own page shows.
+      totalKm: withRides(bike.total_km, rides.km),
+      totalTimeMin: withRides(bike.total_time_min, rides.timeMin),
       imageUrl: bike.image_url,
     };
   }
@@ -534,6 +575,16 @@ export class ReportService {
   }
 
   // ---------- Helpers ----------
+
+  private async rideTotals(bikeId: number): Promise<RideTotals> {
+    const sums = await this.prisma.rides.aggregate({
+      where: { bike_id: bikeId, is_deleted: { not: true } },
+      _sum: { distance_m: true, duration_min: true },
+    });
+    if (sums._sum.distance_m === null && sums._sum.duration_min === null) return NO_RIDES;
+
+    return { km: Math.floor((sums._sum.distance_m ?? 0) / 1000), timeMin: sums._sum.duration_min ?? 0 };
+  }
 
   private async findOwnedService(serviceId: number, userId: number): Promise<ServiceWithRelations> {
     const service = await this.prisma.events_bikes.findFirst({
@@ -640,8 +691,17 @@ export class ReportService {
   // Every public path starts here. Unpublished, revoked, expired and unknown all leave by
   // the same door, so a token cannot be probed for which of them it is.
   private async openReport(token: string): Promise<reports> {
+    const report = await this.reportByToken(token);
+    if (!this.isOpen(report)) {
+      throw new GoneException(REPORT_CLOSED_MESSAGE);
+    }
+
+    return report;
+  }
+
+  private async reportByToken(token: string): Promise<reports> {
     const report = await this.prisma.reports.findUnique({ where: { public_token: token } });
-    if (report === null || !this.isOpen(report)) {
+    if (report === null) {
       throw new GoneException(REPORT_CLOSED_MESSAGE);
     }
 
@@ -654,6 +714,8 @@ export class ReportService {
     switch (document.kind) {
       case 'SERVICE':
         return `service-report-${this.day(document.service.serviceDate ?? document.generatedAt)}.pdf`;
+      case 'BIKE':
+        return `bike-report-${this.day(document.generatedAt)}.pdf`;
       case 'PERIOD':
         return `period-report-${this.day(document.period.from ?? document.generatedAt)}.pdf`;
       case 'BIKECHECK':
@@ -694,6 +756,8 @@ export class ReportService {
     switch (document.kind) {
       case 'SERVICE':
         return document.service.attachments;
+      case 'BIKE':
+        return document.history?.services.flatMap((service) => service.attachments) ?? [];
       case 'PERIOD':
         return document.services.flatMap((service) => service.attachments);
       case 'BIKECHECK':

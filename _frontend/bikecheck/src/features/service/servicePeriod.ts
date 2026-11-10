@@ -1,8 +1,7 @@
-// The period the History Totals and the history list are read for: the presets that fill
-// it in, and how it reads once chosen. The card's eyebrow and the filter both format
-// here, so the two can never call the same period different things.
+// The period the History Totals and the history list are read for, and how it reads once chosen.
 import dayjs from "dayjs";
 import type { TFunction } from "i18next";
+import type { DayRange } from "@/features/rides/ridesTable";
 import { pattern } from "./serviceDates";
 import type { ServicePeriod } from "./service.types";
 
@@ -13,19 +12,17 @@ export const ALL_TIME: ServicePeriod = { from: null, to: null };
 // 1 January is the first of January wherever the user is standing.
 const DAY_FORMAT = "YYYY-MM-DD";
 
-// The presets, in the order the filter offers them.
-export type PeriodPresetId = "all" | "thisYear" | "last12Months";
+// The periods the card names rather than spells out.
+type PeriodPresetId = "all" | "thisYear";
 
 interface PeriodPreset {
   id: PeriodPresetId;
-  // The translation key that names it, on the filter and on the card alike.
   labelKey: string;
-  // Built when asked for rather than held, so a preset chosen either side of midnight
-  // means what it says.
+  // Built when asked for rather than held, so it still means what it says after midnight.
   period: () => ServicePeriod;
 }
 
-export const PERIOD_PRESETS: PeriodPreset[] = [
+const PERIOD_PRESETS: PeriodPreset[] = [
   { id: "all", labelKey: "service.periodAll", period: () => ALL_TIME },
   {
     id: "thisYear",
@@ -33,15 +30,6 @@ export const PERIOD_PRESETS: PeriodPreset[] = [
     period: () => ({
       from: dayjs().startOf("year").format(DAY_FORMAT),
       to: dayjs().endOf("year").format(DAY_FORMAT),
-    }),
-  },
-  {
-    id: "last12Months",
-    labelKey: "service.periodLast12Months",
-    // Twelve months back from today, today included.
-    period: () => ({
-      from: dayjs().subtract(12, "month").add(1, "day").format(DAY_FORMAT),
-      to: dayjs().format(DAY_FORMAT),
     }),
   },
 ];
@@ -55,9 +43,7 @@ export function periodSearch(period: ServicePeriod): string {
   return query === "" ? "" : `?${query}`;
 }
 
-// Which preset a period is, if any. A period the user typed by hand matches none, and the
-// filter shows no preset as chosen.
-export function matchPreset(period: ServicePeriod): PeriodPresetId | null {
+function matchPreset(period: ServicePeriod): PeriodPresetId | null {
   const preset = PERIOD_PRESETS.find((candidate) => {
     const { from, to } = candidate.period();
     return from === period.from && to === period.to;
@@ -65,10 +51,15 @@ export function matchPreset(period: ServicePeriod): PeriodPresetId | null {
   return preset?.id ?? null;
 }
 
+// What the panel reopens on; an open end, as a spend link may carry, starts it empty.
+export function closedSpan({ from, to }: ServicePeriod): DayRange | null {
+  return from !== null && to !== null ? { from, to } : null;
+}
+
 // Czech writes the day first, English the month - the same split the history's dates
 // make. The `localizedFormat` dayjs plugin is not loaded, so the patterns are spelled out
 // here rather than left to `format("L")`.
-const DAY_BY_LANGUAGE: Record<string, string> = {
+export const DAY_BY_LANGUAGE: Record<string, string> = {
   cs: "D. M. YYYY",
   en: "MMM D, YYYY",
 };
@@ -79,7 +70,7 @@ function formatDay(day: string | null, language: string): string | null {
 }
 
 // How the chosen period reads on the card's eyebrow. A preset is named; anything else is
-// spelled out, so a period the user typed is never hidden behind a word.
+// spelled out, so the days chosen are never hidden behind a word.
 export function periodLabel(period: ServicePeriod, t: TFunction, language: string): string {
   const preset = PERIOD_PRESETS.find((candidate) => candidate.id === matchPreset(period));
   if (preset !== undefined) return t(preset.labelKey);

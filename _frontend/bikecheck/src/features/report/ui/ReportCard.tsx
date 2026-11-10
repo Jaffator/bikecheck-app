@@ -61,7 +61,7 @@ export function ReportCard({ report, onRevoke, onDelete }: ReportCardProps): Rea
       }}
     >
       <Stack gap={5} p="sm">
-        {/* Which of the three documents this is, and where its link stands. */}
+        {/* Which document this is, and where its link stands. */}
         <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
           <Text className="tabular-nums uppercase" fz={11} fw={400} c="cards.3" lts="var(--tracking-label)" lineClamp={1}>
             {t(REPORT_KIND_KEY[report.kind])}
@@ -92,7 +92,7 @@ export function ReportCard({ report, onRevoke, onDelete }: ReportCardProps): Rea
           {report.covers.bike}
         </Text>
         <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
-          {coversLabel(report.kind, report.covers, t, i18n.language)}
+          {coversLabel(report.covers, t, i18n.language)}
         </Text>
 
         {/* Enough to tell two links apart: when it was made, and what has happened to it. */}
