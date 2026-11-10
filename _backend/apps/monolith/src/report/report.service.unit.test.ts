@@ -57,6 +57,7 @@ describe('ReportService', () => {
     },
     events_bikes: { findFirst: jest.fn(), findMany: jest.fn() },
     bikes: { findFirst: jest.fn() },
+    rides: { aggregate: jest.fn() },
     components_mounted: { findMany: jest.fn() },
     users: { findUnique: jest.fn() },
   };
@@ -314,6 +315,7 @@ describe('ReportService', () => {
     mockPrisma.events_bikes.findFirst.mockResolvedValue(serviceRow());
     mockPrisma.events_bikes.findMany.mockResolvedValue([serviceRow()]);
     mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow());
+    mockPrisma.rides.aggregate.mockResolvedValue({ _sum: { distance_m: null, duration_min: null } });
     mockPrisma.components_mounted.findMany.mockResolvedValue([mountedRow()]);
     mockPrisma.reports.create.mockImplementation((args: { data: Record<string, unknown> }) =>
       Promise.resolve({ ...reportRow(), ...args.data }),
@@ -546,6 +548,22 @@ describe('ReportService', () => {
       const { report } = await exportBike();
 
       expect(report.kind).toBe(report_kind.BIKE);
+    });
+
+    it("adds the bike's rides to the distance and ride time the owner typed", async () => {
+      mockPrisma.rides.aggregate.mockResolvedValue({ _sum: { distance_m: 1_840_500, duration_min: 3180 } });
+
+      const { bike } = await exportedBikeReport();
+
+      expect(bike).toEqual(expect.objectContaining({ totalKm: 5200 + 1840, totalTimeMin: 14000 + 3180 }));
+    });
+
+    it('leaves an untyped, unridden bike unknown rather than zero', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue(bikeRow({ total_km: null, total_time_min: null }));
+
+      const { bike } = await exportedBikeReport();
+
+      expect(bike).toEqual(expect.objectContaining({ totalKm: null, totalTimeMin: null }));
     });
 
     it('covers exactly the services that bike and that period cover', async () => {

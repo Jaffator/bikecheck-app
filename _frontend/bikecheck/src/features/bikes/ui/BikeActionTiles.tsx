@@ -1,37 +1,34 @@
-// What the owner can do with this bike, as a two-column grid. Two weights: a filled tile is a
-// branded act, an outlined one goes somewhere. Tiles that navigate carry a chevron on their right.
+// What the owner can do with this bike, as a two-by-two grid on phone and desktop alike. Two
+// weights: a filled tile is a branded act, an outlined one goes somewhere and carries a chevron.
 import type { ReactElement, ReactNode } from "react";
 import { Box, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, FileText, History, SlidersHorizontal } from "lucide-react";
+import { ChevronRight, History, Link2, SlidersHorizontal } from "lucide-react";
 import { Bikecheck } from "@/assets/icons/bikecheck";
 
 interface BikeActionTilesProps {
   // Absent on an Archived Bike, which takes no new work.
   onAddService?: () => void;
-  onOpenReports: () => void;
   onOpenHistory: () => void;
   // The Setup screen: the numbers the bike is ridden at (ADR 0029).
   onOpenSetup: () => void;
-  // Desktop's three in a row have no width left for a chevron.
-  cols?: 2 | 3;
-  // Desktop's last cell, while Strava still has something to ask of this bike.
-  stravaTile?: ReactNode;
+  // The bike's Reports, where each Share Link is opened or closed.
+  onOpenLinks: () => void;
+  // Open Share Links, zero included, so the tile always says how many are out.
+  openLinks: number;
 }
 
 export function BikeActionTiles({
   onAddService,
-  onOpenReports,
   onOpenHistory,
   onOpenSetup,
-  cols = 2,
-  stravaTile,
+  onOpenLinks,
+  openLinks,
 }: BikeActionTilesProps): ReactElement {
   const { t } = useTranslation();
-  const chevron = cols === 2;
 
   return (
-    <SimpleGrid cols={cols} spacing="sm">
+    <SimpleGrid cols={2} spacing="sm">
       {onAddService !== undefined && (
         <Tile
           // Servicing is the app's own act, so the tile wears the app's own mark.
@@ -43,31 +40,26 @@ export function BikeActionTiles({
           textColor="var(--mantine-color-black)"
         />
       )}
-      <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} chevron={chevron} />
-      <Tile icon={<SlidersHorizontal size={20} />} label={t("setup.tile")} onClick={onOpenSetup} chevron={chevron} />
-      <Tile icon={<FileText size={20} />} label={t("report.myReports")} onClick={onOpenReports} chevron={chevron} />
-      {stravaTile}
+      <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} />
+      <Tile icon={<SlidersHorizontal size={20} />} label={t("setup.tile")} onClick={onOpenSetup} />
+      <Tile icon={<Link2 size={20} />} label={t("report.linksTile")} onClick={onOpenLinks} count={openLinks} />
     </SimpleGrid>
   );
 }
 
-// One tile. Filled when it is branded, outlined otherwise; the chevron sits against the
-// right edge, centred on the tile rather than on the label.
-export function Tile({
-  icon,
-  label,
-  onClick,
-  fill,
-  textColor,
-  chevron = false,
-}: {
+interface TileProps {
   icon: ReactNode;
   label: string;
   onClick: () => void;
   fill?: string;
   textColor?: string;
-  chevron?: boolean;
-}): ReactElement {
+  // A figure beside the chevron.
+  count?: number;
+}
+
+// One tile. Filled when it is branded, outlined otherwise; an outlined one goes somewhere, so
+// its chevron sits against the right edge, centred on the tile rather than on the label.
+function Tile({ icon, label, onClick, fill, textColor, count }: TileProps): ReactElement {
   const filled = fill !== undefined;
 
   return (
@@ -80,7 +72,6 @@ export function Tile({
       className="active:scale-[0.985]"
       style={{
         backgroundColor: filled ? fill : "var(--mantine-color-cards-6)",
-        backgroundImage: filled ? undefined : "var(--card-glow)",
         boxShadow: "var(--elev-row)",
         color: filled ? textColor : "var(--mantine-color-text-6)",
         cursor: "pointer",
@@ -90,15 +81,16 @@ export function Tile({
       <Box style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
           <Box style={{ display: "flex", color: filled ? textColor : "var(--mantine-color-primary-6)" }}>{icon}</Box>
-
           <Text fz={14} fw={600} c={filled ? textColor : "text.6"} lineClamp={2}>
             {label}
           </Text>
         </Stack>
-        {/* Says "this goes somewhere" rather than "this does something". */}
-        {chevron && (
-          <ChevronRight size={16} color={filled ? textColor : "var(--color-text-dim)"} style={{ flexShrink: 0 }} />
+        {count !== undefined && (
+          <Text className="tabular-nums" fz={14} fw={600} c="text.8">
+            {count}
+          </Text>
         )}
+        {!filled && <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
       </Box>
     </Paper>
   );

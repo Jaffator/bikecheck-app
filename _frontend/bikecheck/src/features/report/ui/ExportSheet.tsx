@@ -209,9 +209,9 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   );
 }
 
-// A bike opens on the whole history; Service opens on the span its filter is on.
-function defaultChoice({ from, to }: ExportBikeReportInput): BikeReportChoice {
-  return { components: true, history: true, period: { from: from ?? null, to: to ?? null } };
+// History is off unless the opener asks for it; Service does, on the span its filter is on.
+function defaultChoice({ from, to, include_history }: ExportBikeReportInput): BikeReportChoice {
+  return { components: true, history: include_history ?? false, period: { from: from ?? null, to: to ?? null } };
 }
 
 function bikeReportExport(input: ExportBikeReportInput, choice: BikeReportChoice): ExportBikeReportInput {

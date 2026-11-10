@@ -10,6 +10,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useIsDesktop } from "@/layout/breakpoints";
 // import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
 // import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
+import { SingleGearSheet } from "./SingleGearSheet";
 import { StravaConnectBike } from "@/assets/icons/svg_icons/StravaConnectBike";
 import { TbBikeOff } from "react-icons/tb";
 import { Info, Link2, TriangleAlert, MoveRight } from "lucide-react";
@@ -21,8 +22,15 @@ interface GearLinkingSheetProps {
   bikeIds?: number[];
 }
 
-// Pair BikeCheck bikes with their Strava gear.
-export function GearLinkingSheet({ opened, onClose, bikeIds }: GearLinkingSheetProps): ReactElement {
+// Pair BikeCheck bikes with their Strava gear. One bike has a list to pick from; several share a table.
+export function GearLinkingSheet(props: GearLinkingSheetProps): ReactElement {
+  if (props.bikeIds?.length === 1) {
+    return <SingleGearSheet opened={props.opened} onClose={props.onClose} bikeId={props.bikeIds[0]} />;
+  }
+  return <GearLinkingTableSheet {...props} />;
+}
+
+function GearLinkingTableSheet({ opened, onClose, bikeIds }: GearLinkingSheetProps): ReactElement {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
   const { data, isLoading, isError } = useGearLinking(opened);

@@ -43,6 +43,8 @@
     "rides": "Rides",
     "more": "More",
     "new": "New",
+    "newService": "Service",
+    "newBike": "Bike",
     "community": "Community",
     "personalGarage": "Personal garage"
   },
@@ -641,7 +643,9 @@
     "sortName": "Name",
     "lastRide": "Last ride {{date}}",
     "columnType": "Type",
-    "columnArchivedOn": "Archived on"
+    "columnArchivedOn": "Archived on",
+    "sharingRow": "Sharing",
+    "sharingOn": "On"
   },
   "bikeComponents": {
     "title": "Components",
@@ -1152,7 +1156,12 @@
     "syncQueued_other": "Fetching {{count}} new rides from Strava…",
     "syncNothing": "No new rides",
     "syncFailed": "Sync failed. Try again.",
-    "syncTooSoon": "Synced a moment ago. Try again in a few minutes."
+    "syncTooSoon": "Synced a moment ago. Try again in a few minutes.",
+    "pairBikeTitle": "Which Strava bike is {{bike}}?",
+    "pairBikeBody": "Its rides will then be added by themselves and its parts will wear correctly.",
+    "gearByName": "By name",
+    "gearTakenShort": "Already paired with {{bike}}",
+    "gearMissing": "Bike missing on Strava? Add it in your Strava profile."
   },
   "notifications": {
     "empty": "No notifications yet",
@@ -1177,6 +1186,8 @@
     "group": {
       "today": "Today",
       "yesterday": "Yesterday",
+      "week": "Last week",
+      "month": "Last month",
       "earlier": "Earlier"
     },
     "actionLogService": "Log service",
@@ -1291,7 +1302,9 @@
     "deleteAllConfirmBody_other": "{{count}} closed reports leave the list along with how often they were opened. Live links stay standing. This cannot be undone.",
     "deleteAllDone_one": "{{count}} report deleted.",
     "deleteAllDone_other": "{{count}} reports deleted.",
-    "deleteAllFailed": "Could not delete the reports. Try again."
+    "deleteAllFailed": "Could not delete the reports. Try again.",
+    "exportBikeReport": "Export service report",
+    "linksTile": "Links"
   },
   "bikeEdit": {
     "title": "Edit bike",

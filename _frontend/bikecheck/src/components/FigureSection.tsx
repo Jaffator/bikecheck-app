@@ -2,6 +2,7 @@
 // its words, and a graphic beside them on the right; pressable when it does something.
 import type { ReactElement, ReactNode } from "react";
 import { Box, Group, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import type { LucideIcon } from "lucide-react";
 import { HOME_FIGURE_SIZE } from "@/features/stats/ui/HomeCardHeader";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { Eyebrow } from "./Eyebrow";
@@ -24,6 +25,8 @@ export const GRAPHIC_HEIGHT = 56;
 
 export interface FigureSectionProps {
   title: string;
+  // Before the value, so the figure is found by its glyph too.
+  icon?: LucideIcon;
   // Null while it loads.
   value: string | null;
   unit: string;
@@ -42,6 +45,7 @@ export interface FigureSectionProps {
 
 export function FigureSection({
   title,
+  icon: Icon,
   value,
   unit,
   chip,
@@ -59,6 +63,14 @@ export function FigureSection({
       <Skeleton h={size.line} w="50%" radius="sm" />
     ) : (
       <Group gap={6} align="baseline" wrap="nowrap">
+        {Icon !== undefined && (
+          <Icon
+            size={Math.round(size.fz * 0.75)}
+            color="var(--color-text-dim)"
+            aria-hidden
+            style={{ flexShrink: 0, alignSelf: "center" }}
+          />
+        )}
         <Text
           className="tabular-nums"
           fz={size.fz}

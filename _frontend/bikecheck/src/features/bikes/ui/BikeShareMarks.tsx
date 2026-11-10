@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Link2, type LucideIcon } from "lucide-react";
 import type { Bike } from "@/features/bikes/bikes.types";
 import { useMyProfile } from "@/features/profile/profile.queries";
-import type { Profile, ProfileVisibility } from "@/features/profile/profile.types";
+import { profileVisibilityOf } from "@/features/bikes/bikeSharing";
 import { VISIBILITY_ICON, VISIBILITY_LABEL_KEY } from "@/features/profile/profileVisibility";
 import { useOpenLinkCount } from "@/features/report/report.queries";
 
@@ -42,13 +42,6 @@ function Mark({ icon: Icon, label, count }: MarkProps): ReactElement {
       )}
     </Group>
   );
-}
-
-// Archiving leaves the switch alone, yet an archived bike is off the profile whatever it says.
-function profileVisibilityOf(bike: Bike, profile: Profile | undefined): ProfileVisibility | null {
-  if (!bike.is_shared || bike.is_deleted === true) return null;
-  if (profile === undefined || profile.visibility === "OFF") return null;
-  return profile.visibility;
 }
 
 export function BikeShareMarks({ bike }: { bike: Bike }): ReactElement | null {

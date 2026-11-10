@@ -45,6 +45,8 @@
     "rides": "Jízdy",
     "more": "Více",
     "new": "Přidat",
+    "newService": "Servis",
+    "newBike": "Kolo",
     "community": "Komunita",
     "personalGarage": "Osobní garáž"
   },
@@ -682,7 +684,9 @@
     "sortName": "Název",
     "lastRide": "Poslední jízda {{date}}",
     "columnType": "Typ",
-    "columnArchivedOn": "Archivováno"
+    "columnArchivedOn": "Archivováno",
+    "sharingRow": "Sdílení",
+    "sharingOn": "Zapnuto"
   },
   "bikeComponents": {
     "title": "Komponenty",
@@ -1209,7 +1213,12 @@
     "syncQueued_other": "Stahuji {{count}} nových jízd ze Stravy…",
     "syncNothing": "Žádné nové jízdy",
     "syncFailed": "Synchronizace se nepodařila. Zkus to znovu.",
-    "syncTooSoon": "Synchronizovalo se před chvílí. Zkus to za pár minut."
+    "syncTooSoon": "Synchronizovalo se před chvílí. Zkus to za pár minut.",
+    "pairBikeTitle": "Které kolo ze Stravy je {{bike}}?",
+    "pairBikeBody": "Jízdy na něm se pak připíšou samy a díly se budou správně opotřebovávat.",
+    "gearByName": "Podle názvu",
+    "gearTakenShort": "Už propojeno s {{bike}}",
+    "gearMissing": "Kolo na Stravě chybí? Přidej ho v profilu Strava."
   },
   "notifications": {
     "empty": "Zatím žádné notifikace",
@@ -1236,6 +1245,8 @@
     "group": {
       "today": "Dnes",
       "yesterday": "Včera",
+      "week": "Před týdnem",
+      "month": "Před měsícem",
       "earlier": "Dříve"
     },
     "actionLogService": "Zapsat servis",
@@ -1364,7 +1375,9 @@
     "deleteAllDone_few": "Smazány {{count}} reporty.",
     "deleteAllDone_many": "Smazáno {{count}} reportu.",
     "deleteAllDone_other": "Smazáno {{count}} reportů.",
-    "deleteAllFailed": "Reporty se nepodařilo smazat. Zkuste to znovu."
+    "deleteAllFailed": "Reporty se nepodařilo smazat. Zkuste to znovu.",
+    "exportBikeReport": "Export servisního reportu",
+    "linksTile": "Odkazy"
   },
   "bikeEdit": {
     "title": "Upravit kolo",

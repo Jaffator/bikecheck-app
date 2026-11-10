@@ -1,11 +1,8 @@
-// When a notification arrived, as the desktop list groups and stamps it.
+// When a notification arrived, as both lists group and stamp it.
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import type { Notification } from "./notifications.types";
 
-dayjs.extend(relativeTime);
-
-export type NotificationDay = "today" | "yesterday" | "earlier";
+export type NotificationDay = "today" | "yesterday" | "week" | "month" | "earlier";
 
 export interface NotificationGroup {
   day: NotificationDay;
@@ -13,10 +10,14 @@ export interface NotificationGroup {
 }
 
 // By the user's local calendar day, so a 23:59 ride is yesterday one minute after midnight.
+// Week and month count back seven and thirty days from today, not calendar weeks.
 export function notificationDay(createdAt: string, now: Date = new Date()): NotificationDay {
   const created = dayjs(createdAt);
-  if (created.isSame(now, "day")) return "today";
-  if (created.isSame(dayjs(now).subtract(1, "day"), "day")) return "yesterday";
+  const daysAgo = dayjs(now).startOf("day").diff(created.startOf("day"), "day");
+  if (daysAgo <= 0) return "today";
+  if (daysAgo === 1) return "yesterday";
+  if (daysAgo <= 7) return "week";
+  if (daysAgo <= 30) return "month";
   return "earlier";
 }
 
@@ -32,17 +33,12 @@ export function groupByDay(notifications: Notification[], now: Date = new Date()
   return groups;
 }
 
-// Today reads relative, yesterday by the clock, anything older by weekday and date.
-export function notificationTime(createdAt: string, day: NotificationDay): string {
+// Today counts back in minutes, then hours; yesterday by the clock, anything older by weekday and date.
+export function notificationTime(createdAt: string, day: NotificationDay, now: Date = new Date()): string {
   const created = dayjs(createdAt);
-  if (day === "today") return created.fromNow();
   if (day === "yesterday") return created.format("HH:mm");
-  return created.format("ddd D. M.");
-}
+  if (day !== "today") return created.format("ddd D. M.");
 
-// A phone row has no room for "před 16 hodinami", so today shrinks to minutes, then hours.
-export function notificationShortTime(createdAt: string, day: NotificationDay, now: Date = new Date()): string {
-  if (day !== "today") return notificationTime(createdAt, day);
-  const minutes = dayjs(now).diff(createdAt, "minute");
+  const minutes = dayjs(now).diff(created, "minute");
   return minutes < 60 ? `${Math.max(minutes, 1)} min` : `${Math.floor(minutes / 60)} h`;
 }

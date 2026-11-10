@@ -62,10 +62,14 @@ export function reportBikeName(bike: ReportBike): string | null {
 
 // The part in full: which kind it was, where it sat, and what the owner called it.
 export function reportComponentLabel(component: ReportComponent): string {
-  const position = component.position ? ` (${component.position})` : "";
   const described = component.description?.trim();
-  const kind = `${component.type}${position}`;
+  const kind = reportComponentKind(component);
   return described ? `${kind}: ${described}` : kind;
+}
+
+// Which kind of part and where it sat, without what the owner called it.
+export function reportComponentKind(component: ReportComponent): string {
+  return component.position ? `${component.type} (${component.position})` : component.type;
 }
 
 // How the Period the document covers reads on it. Both ends open is all time, which is the

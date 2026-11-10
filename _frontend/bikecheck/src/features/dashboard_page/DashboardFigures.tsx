@@ -2,6 +2,7 @@
 // energy read as an Equivalent, and all four against the Period before over a custom one; terms in CONTEXT.md.
 import type { ReactElement } from "react";
 import { Box, SimpleGrid, useMatches } from "@mantine/core";
+import { ArrowUpRight, Gauge, Timer, type LucideIcon } from "lucide-react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { FigureSection, type FigureSectionProps } from "@/components/FigureSection";
@@ -43,9 +44,12 @@ const HAIRLINE = "1px solid var(--color-border)";
 type FigureKind = "distance" | "climb" | "energy";
 
 // The Equivalents read the same response the same way; only the series and the yardstick differ.
-const EQUIVALENT_FIGURES: Record<FigureKind, { series: DailySeries; yardstick: Yardstick; titleKey: string }> = {
-  distance: { series: RIDDEN, yardstick: EARTH, titleKey: "stats.distanceTitle" },
-  climb: { series: CLIMBED, yardstick: EVEREST, titleKey: "dashboard.climbTitle" },
+const EQUIVALENT_FIGURES: Record<
+  FigureKind,
+  { series: DailySeries; yardstick: Yardstick; titleKey: string; icon?: LucideIcon }
+> = {
+  distance: { series: RIDDEN, yardstick: EARTH, titleKey: "stats.distanceTitle", icon: Gauge },
+  climb: { series: CLIMBED, yardstick: EVEREST, titleKey: "dashboard.climbTitle", icon: ArrowUpRight },
   energy: { series: ENERGY, yardstick: MARATHON, titleKey: "dashboard.energyTitle" },
 };
 
@@ -112,9 +116,10 @@ interface EquivalentFigureProps {
 function EquivalentFigure({ period, figure }: EquivalentFigureProps): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: distance, isPlaceholderData } = useDistance(period);
-  const { series, yardstick, titleKey } = EQUIVALENT_FIGURES[figure];
+  const { series, yardstick, titleKey, icon } = EQUIVALENT_FIGURES[figure];
   const head = {
     title: t(titleKey, { period: homePeriodLabel(period, i18n.language, t) }),
+    icon,
     unit: series.unit,
     spread: isCustomPeriod(period),
   };
@@ -161,6 +166,7 @@ function TimeFigure({ period }: { period: HomePeriod }): ReactElement {
   const { data: distance, isPlaceholderData } = useDistance(period);
   const head = {
     title: t("dashboard.timeTitle", { period: homePeriodLabel(period, i18n.language, t) }),
+    icon: Timer,
     unit: SADDLE_TIME.unit,
     spread: isCustomPeriod(period),
   };

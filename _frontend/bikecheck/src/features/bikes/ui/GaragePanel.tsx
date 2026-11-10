@@ -128,7 +128,7 @@ export function GaragePanel({ period }: { period: HomePeriod }): ReactElement {
               {garage === undefined ? (
                 <Skeleton h={26} w={80} radius="xl" />
               ) : (
-                <HealthBadge actions={byBike.get(bike.id) ?? []} tinted />
+                <HealthBadge actions={byBike.get(bike.id) ?? []} />
               )}
             </Box>
             <SetupShortcut bikeId={bike.id} />

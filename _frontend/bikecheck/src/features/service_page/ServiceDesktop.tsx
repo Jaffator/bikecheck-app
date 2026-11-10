@@ -63,6 +63,7 @@ export function ServiceDesktop(): ReactElement {
                   bike_id: exportBikeId,
                   from: period.from ?? undefined,
                   to: period.to ?? undefined,
+                  include_history: true,
                 });
               }}
             >

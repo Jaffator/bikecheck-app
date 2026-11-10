@@ -138,7 +138,7 @@ function ServicePhone(): ReactElement {
               </Text>
               {/* The chips pick the bike, so what the tooltip asks for can be done on this page. */}
               <ExportBikeButton
-                onExport={historyBikeId === null ? null : () => setExporting({ kind: "BIKE", bike_id: historyBikeId })}
+                onExport={historyBikeId === null ? null : () => setExporting({ kind: "BIKE", bike_id: historyBikeId, include_history: true })}
               />
             </Group>
 

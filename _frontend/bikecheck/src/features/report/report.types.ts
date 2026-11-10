@@ -66,8 +66,7 @@ export interface ExportBikeReportInput {
   bike_id: number;
   from?: string;
   to?: string;
-  // Answered on the Export sheet's first step rather than by whatever opened it, because
-  // the choice is frozen into the Report.
+  // The opener only seeds the switches; the Export sheet's first step has the final say.
   include_components?: boolean;
   include_history?: boolean;
 }

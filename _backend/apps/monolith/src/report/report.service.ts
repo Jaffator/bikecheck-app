@@ -80,6 +80,20 @@ interface BikeReportContents {
   components: ReportComponent[] | null;
   services: ServiceWithRelations[] | null;
   period: ReportPeriod;
+  rides: RideTotals;
+}
+
+// What the bike's rides add up to; the bike's own totals hold only what the owner typed.
+interface RideTotals {
+  km: number;
+  timeMin: number;
+}
+
+const NO_RIDES: RideTotals = { km: 0, timeMin: 0 };
+
+// Nothing typed and nothing ridden stays unknown, not zero.
+function withRides(typed: number | null, ridden: number): number | null {
+  return typed === null && ridden === 0 ? null : (typed ?? 0) + ridden;
 }
 
 // A Report and the document it was made from, handed back together by Export.
@@ -125,7 +139,8 @@ export class ReportService {
       throw new NotFoundException(`Service with ID ${serviceId} has no bike to report on`);
     }
 
-    return await this.store(userId, bikeId, this.buildServiceSnapshot(service, owner));
+    const rides = await this.rideTotals(bikeId);
+    return await this.store(userId, bikeId, this.buildServiceSnapshot(service, owner, rides));
   }
 
   // An empty history is no refusal: the photo and details are a document by themselves. Each
@@ -139,8 +154,13 @@ export class ReportService {
       ? await this.findServicesInPeriod(bike.id, dto.from, dto.to)
       : null;
     const period = { from: dto.from ?? null, to: dto.to ?? null };
+    const rides = await this.rideTotals(bike.id);
 
-    return await this.store(userId, bike.id, this.buildBikeSnapshot(bike, { components, services, period }, owner));
+    return await this.store(
+      userId,
+      bike.id,
+      this.buildBikeSnapshot(bike, { components, services, period, rides }, owner),
+    );
   }
 
   // Writes the document down. Closed, whichever kind it is.
@@ -387,7 +407,11 @@ export class ReportService {
 
   // ---------- Building the document ----------
 
-  private buildServiceSnapshot(service: ServiceWithRelations, owner: OwnerVoice): StoredReportSnapshot {
+  private buildServiceSnapshot(
+    service: ServiceWithRelations,
+    owner: OwnerVoice,
+    rides: RideTotals,
+  ): StoredReportSnapshot {
     return {
       document: {
         version: REPORT_SNAPSHOT_VERSION,
@@ -395,7 +419,7 @@ export class ReportService {
         generatedAt: new Date().toISOString(),
         language: owner.language,
         currency: owner.currency,
-        bike: this.buildBike(service.bikes, owner.language),
+        bike: this.buildBike(service.bikes, owner.language, rides),
         service: this.buildService(service, owner.language),
       },
       private: this.attachmentKeys([service]),
@@ -404,7 +428,7 @@ export class ReportService {
 
   private buildBikeSnapshot(
     bike: BikeWithRelations,
-    { components, services, period }: BikeReportContents,
+    { components, services, period, rides }: BikeReportContents,
     owner: OwnerVoice,
   ): StoredReportSnapshot {
     const reported = services?.map((service) => this.buildService(service, owner.language)) ?? null;
@@ -418,7 +442,7 @@ export class ReportService {
         generatedAt: new Date().toISOString(),
         language: owner.language,
         currency: owner.currency,
-        bike: this.buildBike(bike, owner.language),
+        bike: this.buildBike(bike, owner.language, rides),
         components,
         history,
       },
@@ -454,7 +478,7 @@ export class ReportService {
     return sources;
   }
 
-  private buildBike(bike: BikeWithRelations | null, language: string): ReportBike {
+  private buildBike(bike: BikeWithRelations | null, language: string, rides: RideTotals): ReportBike {
     // A report outlives the bike it describes, so the bike may already be gone.
     if (bike === null) {
       return {
@@ -482,8 +506,9 @@ export class ReportService {
           ? null
           : catalogueLabel(language, bike.bike_types.i18n_key, bike.bike_types.type ?? ''),
       ebike: bike.ebike,
-      totalKm: bike.total_km,
-      totalTimeMin: bike.total_time_min,
+      // Typed plus ridden, the figure the bike's own page shows.
+      totalKm: withRides(bike.total_km, rides.km),
+      totalTimeMin: withRides(bike.total_time_min, rides.timeMin),
       imageUrl: bike.image_url,
     };
   }
@@ -550,6 +575,16 @@ export class ReportService {
   }
 
   // ---------- Helpers ----------
+
+  private async rideTotals(bikeId: number): Promise<RideTotals> {
+    const sums = await this.prisma.rides.aggregate({
+      where: { bike_id: bikeId, is_deleted: { not: true } },
+      _sum: { distance_m: true, duration_min: true },
+    });
+    if (sums._sum.distance_m === null && sums._sum.duration_min === null) return NO_RIDES;
+
+    return { km: Math.floor((sums._sum.distance_m ?? 0) / 1000), timeMin: sums._sum.duration_min ?? 0 };
+  }
 
   private async findOwnedService(serviceId: number, userId: number): Promise<ServiceWithRelations> {
     const service = await this.prisma.events_bikes.findFirst({

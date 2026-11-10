@@ -1,7 +1,7 @@
 // The page a Share Link opens: outside the authenticated shell, outside AppLayout, with
 // no session fetch. Reading a Report costs the recipient nothing — no account, no install,
 // no login.
-import type { ReactElement, ReactNode } from "react";
+import { useEffect, type ReactElement, type ReactNode } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Button, Loader } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -68,6 +68,7 @@ export function PublicReport(): ReactElement {
 // The A4 sheet as chromium sees it, and the marker that tells it the drawing is done.
 function PrintPage({ snapshot }: { snapshot: ReportSnapshot }): ReactElement {
   const settled = useReportSettled();
+  usePaperBackground();
 
   return (
     <main style={{ backgroundColor: REPORT_PAPER.sheet }} className="w-full flex justify-center">
@@ -75,6 +76,14 @@ function PrintPage({ snapshot }: { snapshot: ReportSnapshot }): ReactElement {
       {settled && <span hidden {...REPORT_SETTLED_MARKER} />}
     </main>
   );
+}
+
+// The app's dark page would otherwise fill the last sheet below a short document.
+function usePaperBackground(): void {
+  useEffect(() => {
+    document.documentElement.style.background = REPORT_PAPER.sheet;
+    document.body.style.background = REPORT_PAPER.sheet;
+  }, []);
 }
 
 // What a reader downloads. Public, so the browser can simply follow it.

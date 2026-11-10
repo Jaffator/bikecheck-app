@@ -29,10 +29,7 @@ export interface ReportHeadings {
   bikeType: string;
   ebike: string;
   yes: string;
-  mounted: string;
-  lastService: string;
   wear: string;
-  neverServiced: string;
   noComponents: string;
   noServices: string;
   bike: string;
@@ -80,10 +77,7 @@ const en: ReportHeadings = {
   bikeType: "Type",
   ebike: "E-bike",
   yes: "Yes",
-  mounted: "Mounted",
-  lastService: "Last service",
   wear: "Wear",
-  neverServiced: "Never serviced",
   noComponents: "No components on record",
   noServices: "No services in this period",
   bike: "Bike",
@@ -131,10 +125,7 @@ const cs: ReportHeadings = {
   bikeType: "Typ",
   ebike: "Elektrokolo",
   yes: "Ano",
-  mounted: "Namontováno",
-  lastService: "Poslední servis",
   wear: "Nájezd",
-  neverServiced: "Zatím neservisováno",
   noComponents: "Žádné komponenty v evidenci",
   noServices: "V tomto období žádné servisy",
   bike: "Kolo",
