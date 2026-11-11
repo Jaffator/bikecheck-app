@@ -1,11 +1,10 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import type { strava_pending_activities } from '@prisma/client';
+import { Prisma, type strava_pending_activities } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import { RideService } from '../ride/ride.service';
-import { GeminiService } from '../gemini/gemini.service';
 import {
   BRAKE_PAD_PART,
   carried,
@@ -20,8 +19,8 @@ import type { PendingActivities } from '../notification/notification-types.confi
 import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
-import { ResponseCheckInPendingDto, ResponseRideSummaryDto } from '../ride/dto/response-ride.dto';
-import { analysisOf, pendingSummaryInput, toCheckInPendingDto, toPendingDto } from './pending-activity';
+import { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
+import { analysisOf, toCheckInPendingDto, toPendingDto } from './pending-activity';
 import { unlinkStravaAthlete } from './unlink-strava-athlete';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
@@ -31,8 +30,8 @@ import { ResponseStravaSyncDto } from './dto/response-strava-sync.dto';
 const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 // The window starts at the last sync; this caps how far back a first or late sync walks.
 const SYNC_LOOKBACK_MS = 60 * 24 * 60 * 60 * 1000;
-// A sync lands old rides through the same pipeline; those wait for an open, so a backlog pays nothing.
-const FRESH_RIDE_MS = 48 * 60 * 60 * 1000;
+// The longest Strava Data may be cached (policy §6.2).
+const STRAVA_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface SplitMetricEntry {
   distance: number;
@@ -92,25 +91,6 @@ function caloriesOf(rawJson: unknown): number | null {
   return typeof calories === 'number' && Number.isFinite(calories) ? Math.round(calories) : null;
 }
 
-function isFresh(startedAt: string): boolean {
-  return Date.now() - new Date(startedAt).getTime() < FRESH_RIDE_MS;
-}
-
-interface ReviewedRide {
-  distance_m: number | null;
-  duration_min: number | null;
-  elevation_up_m: number | null;
-}
-
-// What a review reads as the ride's size, so a rename alone keeps it.
-function reviewedFigures(ride: ReviewedRide): string {
-  return [ride.distance_m, ride.duration_min, ride.elevation_up_m].map((figure) => Math.round(figure ?? 0)).join();
-}
-
-function reviewedFiguresOf(analyzed: StravaActivityData['analyzedData']): string {
-  return reviewedFigures({ ...analyzed, distance_m: analyzed.distance_km * 1000 });
-}
-
 @Injectable()
 export class StravaEventsService {
   constructor(
@@ -119,7 +99,6 @@ export class StravaEventsService {
     private readonly notificationService: NotificationService,
     private readonly serviceTracking: ServiceTrackingService,
     private readonly rides: RideService,
-    private readonly gemini: GeminiService,
   ) {}
 
   /**
@@ -147,8 +126,7 @@ export class StravaEventsService {
    * Unlinks the user's Strava account. strava-service owns the tokens, the raw
    * activities and the revoke call, so it does that half; the user row here is what the frontend
    * reads to know whether an account is linked, so it is cleared afterwards.
-   * Bikes keep their strava gear ids — reconnecting the same account then finds
-   * them still linked instead of asking the user to pair everything again.
+   * Gear ids go too, so reconnecting means pairing the bikes again.
    */
   async disconnect(userId: number): Promise<void> {
     const user = await this.prisma.users.findUnique({
@@ -166,21 +144,48 @@ export class StravaEventsService {
       throw new Error(`Failed to disconnect Strava: ${(error as Error).message}`);
     }
 
-    // The cached profile goes with the link — leaving a name behind would have
-    // the app still showing an account it no longer has any claim to.
-    await this.prisma.users.update({
-      where: { id: userId },
-      data: {
-        strava_athlete_id: null,
-        strava_firstname: null,
-        strava_lastname: null,
-        strava_username: null,
-        strava_avatar_url: null,
-        strava_last_sync_at: null,
-      },
-    });
+    await this.clearStravaLink(userId);
 
     this.logger.info({ custom: true, userId, athleteId: user.strava_athlete_id }, 'Strava account unlinked');
+  }
+
+  // The user withdrew access on Strava; strava-service has already dropped its tokens and raw activities.
+  async stravaDeauthorized(data: { athleteId: number }): Promise<void> {
+    const user = await this.prisma.users.findFirst({
+      where: { strava_athlete_id: String(data.athleteId) },
+      select: { id: true },
+    });
+    if (!user) return;
+
+    await this.clearStravaLink(user.id);
+    this.logger.info({ custom: true, userId: user.id, athleteId: data.athleteId }, 'Strava access revoked on Strava');
+  }
+
+  // Everything copied from Strava goes with the link; km, time and wear stay as the app's own record (#378).
+  private async clearStravaLink(userId: number): Promise<void> {
+    // One transaction, so a failure midway leaves the link either whole or gone.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.strava_pending_activities.deleteMany({ where: { user_id: userId } });
+      // Ride notifications carry the km and the activity name from Strava.
+      await tx.notifications.deleteMany({
+        where: { user_id: userId, type: { in: ['strava_activity_saved', 'strava_activity_unassigned'] } },
+      });
+      await tx.rides.updateMany({ where: { user_id: userId }, data: { activity_strava_id: null } });
+      await tx.bikes.updateMany({ where: { user_id: userId }, data: { strava_gear_id: null } });
+      await tx.users.update({
+        where: { id: userId },
+        data: {
+          strava_athlete_id: null,
+          strava_firstname: null,
+          strava_lastname: null,
+          strava_username: null,
+          strava_avatar_url: null,
+          strava_last_sync_at: null,
+        },
+      });
+    });
+    // Written after the cleanup, or it would be swept away with the ride notifications.
+    await this.notificationService.create({ userId, type: 'strava_disconnected' });
   }
 
   async listUnmatchedStravaGear(userId: number): Promise<ResponseUnmatchedStravaGearDto> {
@@ -434,22 +439,19 @@ export class StravaEventsService {
       // Strava can send both "create" and "update" events for the same activity
       // (or redeliver a webhook), so upsert instead of create to avoid a unique
       // constraint violation on activity_id.
-      const parked = await this.prisma.strava_pending_activities.findUnique({
-        where: { activity_id: data.activity_id },
-      });
-      const stale = parked !== null && reviewedFiguresOf(analysisOf(parked)) !== reviewedFiguresOf(data.analyzedData);
-      const pending = await this.prisma.strava_pending_activities.upsert({
+      await this.prisma.strava_pending_activities.upsert({
         where: { activity_id: data.activity_id },
         create: {
           activity_id: data.activity_id,
           user_id: user.id,
           gear_id: data.gearid,
           analyzed_data: data.analyzedData,
+          analyzed_at: new Date(),
         },
         update: {
           gear_id: data.gearid,
           analyzed_data: data.analyzedData,
-          ...(stale ? { summary: null } : {}),
+          analyzed_at: new Date(),
         },
       });
 
@@ -471,9 +473,6 @@ export class StravaEventsService {
         // either. The badge counts these, so the ask has to be one row per ride.
         dedupKey: `unassigned:${data.activity_id}`,
       });
-      if (parked === null && isFresh(data.analyzedData.started_at)) {
-        this.writeInBackground(this.writePendingSummary(pending, user.language));
-      }
       return { message: 'Not linked bike, activity saved to pending' };
     } else if (bikeId && user) {
       const result = await this.saveRide(bikeId, user.id, data.activity_id, data.analyzedData);
@@ -502,25 +501,9 @@ export class StravaEventsService {
             bikeName: bikeRow ? [bikeRow.bike_brand, bikeRow.bike_model, bikeRow.year].filter(Boolean).join(' ') : '',
           },
         });
-        if (isFresh(data.analyzedData.started_at))
-          this.writeInBackground(this.rides.writeArrivalSummary(result.rideId));
       }
       return { message: result.message };
     }
-  }
-
-  // Not awaited: Gemini takes seconds and the queue runs one job at a time. A miss is written on open.
-  private writeInBackground(writing: Promise<void>): void {
-    writing.catch((error: unknown) => this.logger.error({ err: error }, 'Arrival review not written'));
-  }
-
-  // One already written by an open stays.
-  private async writePendingSummary(pending: strava_pending_activities, language: string | null): Promise<void> {
-    const summary = await this.gemini.rideSummary(pendingSummaryInput(pending), language);
-    await this.prisma.strava_pending_activities.updateMany({
-      where: { id: pending.id, summary: null },
-      data: { summary },
-    });
   }
 
   // Dismissed = resolved in Pending without ever becoming a ride.
@@ -550,33 +533,65 @@ export class StravaEventsService {
     });
     // The list polls, so an empty one skips the garage read.
     if (pending.length === 0) return [];
+    const available = await this.withAnalyses(pending);
     const preview = await this.serviceTracking.getWearPreview(userId);
-    return pending.map((row) => toCheckInPendingDto(row, preview));
+    return available.map((row) => toCheckInPendingDto(row, preview));
   }
 
   /**
    * One pending activity, addressed the way a notification addresses it.
    */
   async getPendingActivity(userId: number, activityId: bigint): Promise<ResponsePendingStravaDto> {
-    const pending = await this.prisma.strava_pending_activities.findFirst({
-      where: { user_id: userId, activity_id: activityId, resolved_at: null },
-    });
-    if (!pending) throw new NotFoundException('Pending activity not found');
+    const pending = await this.findAnalyzedPending(userId, activityId);
     return toPendingDto(pending);
   }
 
-  // The review an Unassigned Ride shows, written here when arrival left none (ADR 0046).
-  async findPendingSummary(userId: number, activityId: bigint): Promise<ResponseRideSummaryDto> {
+  // Unresolved and with its payload, fetched again from Strava if the cache was purged.
+  private async findAnalyzedPending(userId: number, activityId: bigint): Promise<strava_pending_activities> {
     const pending = await this.prisma.strava_pending_activities.findFirst({
       where: { user_id: userId, activity_id: activityId, resolved_at: null },
     });
-    if (!pending) throw new NotFoundException('Pending activity not found');
-    if (pending.summary) return { summary: pending.summary };
+    const analyzed = pending ? await this.withAnalysis(pending) : null;
+    if (!analyzed) throw new NotFoundException('Pending activity not found');
+    return analyzed;
+  }
 
-    const user = await this.prisma.users.findUnique({ where: { id: userId }, select: { language: true } });
-    const summary = await this.gemini.rideSummary(pendingSummaryInput(pending), user?.language ?? null);
-    await this.prisma.strava_pending_activities.update({ where: { id: pending.id }, data: { summary } });
-    return { summary };
+  // Rows Strava no longer gives (deleted, made private, access gone) drop out.
+  private async withAnalyses(rows: strava_pending_activities[]): Promise<strava_pending_activities[]> {
+    const analyzed: strava_pending_activities[] = [];
+    for (const row of rows) {
+      const one = await this.withAnalysis(row);
+      if (one) analyzed.push(one);
+    }
+    return analyzed;
+  }
+
+  // Past the 7-day cache the payload is gone (policy §6.2); Strava is asked again and the copy kept 7 more days.
+  private async withAnalysis(row: strava_pending_activities): Promise<strava_pending_activities | null> {
+    if (row.analyzed_data !== null) return row;
+    try {
+      const user = await this.prisma.users.findUnique({ where: { id: row.user_id }, select: { strava_athlete_id: true } });
+      if (!user?.strava_athlete_id) return null;
+      const activity = await this.getFromStravaService(`/strava/activity/${user.strava_athlete_id}/${row.activity_id}`);
+      const { analyzedData } = await this.analyzeStravaData(activity);
+      return await this.prisma.strava_pending_activities.update({
+        where: { id: row.id },
+        data: { analyzed_data: analyzedData, analyzed_at: new Date() },
+      });
+    } catch (error) {
+      this.logger.warn({ err: error, activityId: String(row.activity_id) }, 'Pending ride not fetched again from Strava');
+      return null;
+    }
+  }
+
+  /** Drops every pending payload cached longer than 7 days (policy §6.2); the rows stay for dedupe. */
+  async purgeStaleAnalyses(now: Date = new Date()): Promise<number> {
+    const { count } = await this.prisma.strava_pending_activities.updateMany({
+      where: { analyzed_at: { lt: new Date(now.getTime() - STRAVA_CACHE_MS) } },
+      data: { analyzed_data: Prisma.DbNull, analyzed_at: null },
+    });
+    this.logger.info({ custom: true, count }, 'Stale pending Strava payloads purged');
+    return count;
   }
 
   /**
@@ -662,6 +677,14 @@ export class StravaEventsService {
     return response.data;
   }
 
+  private async getFromStravaService<T>(path: string): Promise<T> {
+    const response = await axios.get<T>(`${process.env.STRAVA_SERVICE_URL}${path}`, {
+      headers: { 'x-internal-secret': process.env.INTERNAL_API_SECRET },
+      timeout: 15000,
+    });
+    return response.data;
+  }
+
   /**
    * Resolves pending activities that have no Strava gearId.
    * - If activityId is provided: assigns a single activity to the given bike.
@@ -677,10 +700,7 @@ export class StravaEventsService {
       // No gear_id filter: the user assigns the ride by hand either way, and a
       // ride parked against unknown gear is exactly one of the cases this is
       // for.
-      const pending = await this.prisma.strava_pending_activities.findFirst({
-        where: { user_id: params.userId, activity_id: params.activityId, resolved_at: null },
-      });
-      if (!pending) throw new NotFoundException('No pending activity found');
+      const pending = await this.findAnalyzedPending(params.userId, params.activityId);
 
       rideId = await this.saveFromPending(params.bikeId, pending);
       await this.prisma.strava_pending_activities.update({
@@ -694,7 +714,7 @@ export class StravaEventsService {
       const pending = await this.prisma.strava_pending_activities.findMany({
         where: { user_id: params.userId, gear_id: null, resolved_at: null },
       });
-      for (const activity of pending) {
+      for (const activity of await this.withAnalyses(pending)) {
         await this.saveFromPending(params.bikeId, activity);
         await this.prisma.strava_pending_activities.update({
           where: { id: activity.id },
@@ -716,12 +736,13 @@ export class StravaEventsService {
    * Matches all unresolved pending activities by gearId and saves them.
    */
   async resolvePendingActivity_with_GearId(userId: number): Promise<void> {
-    const pending = await this.prisma.strava_pending_activities.findMany({
+    const unresolved = await this.prisma.strava_pending_activities.findMany({
       where: { user_id: userId, resolved_at: null },
     });
 
     // Nothing to resolve -> skip the extra query and loops.
-    if (pending.length === 0) return;
+    if (unresolved.length === 0) return;
+    const pending = await this.withAnalyses(unresolved);
 
     const bikes = await this.prisma.bikes.findMany({
       where: { user_id: userId, is_deleted: { not: true } },
@@ -753,10 +774,8 @@ export class StravaEventsService {
     await this.serviceTracking.evaluateBikes(touched, userId);
   }
 
-  // The review written while the ride waited stays with it, though it names no bike.
   private async saveFromPending(bikeId: number, pending: strava_pending_activities): Promise<number> {
     const { rideId } = await this.saveRide(bikeId, pending.user_id, Number(pending.activity_id), analysisOf(pending));
-    if (pending.summary) await this.prisma.rides.update({ where: { id: rideId }, data: { summary: pending.summary } });
     return rideId;
   }
 
@@ -789,7 +808,6 @@ export class StravaEventsService {
         bike_id: bikeId,
         user_id: userId,
         started_at: new Date(analyzedData.started_at),
-        json_data: JSON.stringify(analyzedData.rawJson),
         calories: caloriesOf(analyzedData.rawJson),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
         descent_min: analyzedData.descent_min ?? null,
@@ -805,10 +823,7 @@ export class StravaEventsService {
       },
       update: {
         started_at: new Date(analyzedData.started_at),
-        json_data: JSON.stringify(analyzedData.rawJson),
         calories: caloriesOf(analyzedData.rawJson),
-        // New figures send the next open back to Gemini (ADR 0046).
-        ...(existingRide && reviewedFigures(existingRide) !== reviewedFiguresOf(analyzedData) ? { summary: null } : {}),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
         descent_min: analyzedData.descent_min ?? null,
         distance_m: analyzedData.distance_km * 1000,

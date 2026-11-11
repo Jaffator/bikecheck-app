@@ -49,9 +49,6 @@ export interface Ride {
   bike_id: number;
   // Preserved when the bike is unavailable.
   bike_name: string | null;
-  // Strava's own title for the ride. Strava always sends one, so this is never
-  // null — the empty string is only the type-level floor.
-  name: string;
   started_at: string | null;
   distance_m: number | null;
   duration_min: number | null;
@@ -59,11 +56,6 @@ export interface Ride {
   elevation_down_m: number | null;
   speed_avg: number | null;
   max_speed_kmh: number | null;
-  // Strava's own simplified route, lifted out of the stored activity by the API so the
-  // list never carries the raw payload. Null for a ride recorded without GPS.
-  summary_polyline: string | null;
-  // Strava's sport type, e.g. "MountainBikeRide"; null where Strava sent none.
-  sport_type: string | null;
   // When the ride reached BikeCheck, not when it was ridden.
   created_at: string | null;
   // Every Tracked Action the ride wore, closest to due first; empty where it wore off nothing.
@@ -113,9 +105,4 @@ export interface RidePage {
   total: number;
   weeks: RideWeek[];
   figures: RideFigures;
-}
-
-// The ride's AI review; not the ride card's RideSummary.
-export interface RideAiSummary {
-  summary: string;
 }

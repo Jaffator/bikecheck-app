@@ -42,8 +42,6 @@ interface PartFixture {
   position: string | null;
   mounted_at: Date | null;
   removed_at: Date | null;
-  total_km: number | null;
-  total_time_min: number | null;
   is_active: boolean;
   is_deleted: boolean;
   drivetrain_km: number;
@@ -81,8 +79,6 @@ function part(overrides: Partial<PartFixture> = {}): PartFixture {
     position: null,
     mounted_at: MOUNTED_AT,
     removed_at: null,
-    total_km: 1240,
-    total_time_min: 3600,
     is_active: true,
     is_deleted: false,
     drivetrain_km: 900,
@@ -172,8 +168,6 @@ describe('partsTools', () => {
       status: 'removed',
       mounted_at: '2026-03-01',
       removed_at: '2026-08-20',
-      total_km: 1240,
-      total_time_min: 3600,
       service_count: 0,
     });
   });
@@ -192,13 +186,11 @@ describe('partsTools', () => {
     expect(answered).not.toContain('health_index');
   });
 
-  it('reads a missing number as null and a missing text as empty, and an undated part as null', async () => {
-    database([part({ component_desc: null, position: null, mounted_at: null, total_km: null, total_time_min: null })]);
+  it('reads a missing text as empty and an undated part as null', async () => {
+    database([part({ component_desc: null, position: null, mounted_at: null })]);
 
     const [row] = (await tools(OWNER_ID).list_parts.execute({}, CALL)).rows;
 
-    expect(row.total_km).toBeNull();
-    expect(row.total_time_min).toBeNull();
     expect(row.component_desc).toBe('');
     expect(row.position).toBe('');
     expect(row.mounted_at).toBeNull();

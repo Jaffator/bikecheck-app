@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { TokenService } from '../tokens/tokens.service';
 import { DatabaseService } from '../database/database.service';
@@ -40,21 +40,13 @@ export class StravaWebhookService {
     this.logger.info({ custom: true, athlete_id, activity_id }, 'Strava Activity data deleted from database');
   }
 
-  /**
-   * Updates the stored raw Strava activity JSON.
-   * @returns The id of the updated row.
-   */
-  async updateActivityData(activityData: any, athlete_id: number, activity_id: number): Promise<any> {
-    const updatedActivity = await this.databaseService.query(
-      'UPDATE strava_activities_raw SET strava_data = $1, updated_at = NOW() WHERE athlete_id = $2 AND activity_id = $3 RETURNING id',
-      [activityData, athlete_id, activity_id],
+  /** Drops raw activities cached longer than 7 days (policy §6.2). */
+  async purgeStaleActivities(): Promise<number> {
+    const purged = await this.databaseService.query(
+      "DELETE FROM strava_activities_raw WHERE COALESCE(updated_at, created_at) < NOW() - INTERVAL '7 days' RETURNING id",
     );
-    if (updatedActivity.length === 0) {
-      this.logger.error({ athlete_id, activity_id }, 'No activity found to update');
-      throw new Error('No activity found to update');
-    }
-    this.logger.info({ custom: true, updatedActivity }, 'Strava Activity data updated in database');
-    return updatedActivity[0];
+    this.logger.info({ custom: true, count: purged.length }, 'Stale raw Strava activities purged');
+    return purged.length;
   }
 
   /**
@@ -62,7 +54,7 @@ export class StravaWebhookService {
    * @returns The id of the saved row.
    */
   async saveActivityData(activityData: any, athlete_id: number, activity_id: number): Promise<any> {
-    // A synced ride can already have a raw row from a run the monolith never finished.
+    // A synced ride can already have a raw row, and an update can come after the purge removed one.
     const existing = await this.databaseService.query(
       'UPDATE strava_activities_raw SET strava_data = $1, updated_at = NOW() WHERE athlete_id = $2 AND activity_id = $3 RETURNING id',
       [activityData, athlete_id, activity_id],
@@ -98,6 +90,13 @@ export class StravaWebhookService {
     } catch (error) {
       throw new Error(`Error fetching Strava API: ${(error as Error).message}`);
     }
+  }
+
+  /** One ride, slimmed the way a webhook sends it on; a run or a hike is not found. */
+  async fetchRide(athlete_id: number, activity_id: number): Promise<unknown> {
+    const activity = await this.downloadActivity(activity_id, athlete_id);
+    if (!RIDE_TYPES.includes(activity.data.type)) throw new NotFoundException('Activity is not a ride');
+    return this.simplifyActivityData(activity.data);
   }
 
   /**

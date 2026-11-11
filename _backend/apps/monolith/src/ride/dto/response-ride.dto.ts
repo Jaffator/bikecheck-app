@@ -37,13 +37,6 @@ export class ResponseRideDto {
   @ApiProperty({ example: 'S-Works Tarmac', nullable: true })
   bike_name!: string | null;
 
-  // Strava's own title for the activity, lifted out of the stored payload so
-  // the list does not have to parse the raw blob to draw a heading. Strava
-  // always sends one — it auto-names an untitled ride — so this is never null;
-  // the empty string is only the type-level floor.
-  @ApiProperty({ example: 'Morning Mountain Bike Ride' })
-  name!: string;
-
   @ApiProperty({ example: '2026-08-19T06:12:00.000Z', nullable: true })
   started_at!: string | null;
 
@@ -64,17 +57,6 @@ export class ResponseRideDto {
 
   @ApiProperty({ example: 54, nullable: true })
   max_speed_kmh!: number | null;
-
-  // The route, lifted out of the stored payload for the same reason the name is:
-  // the raw Strava activity is tens of kilobytes and this is the only part of it
-  // the client draws. Strava's own simplified route - null for a ride recorded
-  // without GPS.
-  @ApiProperty({ example: 'ki}fHuqrbBGx@_@lAsA|Bi@n@', nullable: true })
-  summary_polyline!: string | null;
-
-  // Strava's sport type, lifted out of the stored payload like the route. Null where Strava sent none.
-  @ApiProperty({ type: String, example: 'MountainBikeRide', nullable: true })
-  sport_type!: string | null;
 
   // When the ride reached BikeCheck, which the check-in reads as "arrived N min ago".
   @ApiProperty({ type: String, example: '2026-08-19T08:40:00.000Z', nullable: true })
@@ -164,10 +146,4 @@ export class ResponseCheckInPromptDto {
 
   @ApiProperty({ type: [ResponseCheckInPendingDto] })
   pending!: ResponseCheckInPendingDto[];
-}
-
-// The ride's AI review, written on its first open (ADR 0044).
-export class ResponseRideSummaryDto {
-  @ApiProperty({ example: 'A proper Enduro sufferfest, 4/5 stars. Wipe those stanchions. Catch ya in the dirt!' })
-  summary!: string;
 }

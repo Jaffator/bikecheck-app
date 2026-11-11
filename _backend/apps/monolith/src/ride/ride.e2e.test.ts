@@ -84,7 +84,6 @@ describe('RideController (e2e)', () => {
         bike_id: bike,
         distance_m: 25400,
         duration_min: 90,
-        json_data: { name: 'Ride' },
         ...ride,
       },
     });
@@ -122,14 +121,12 @@ describe('RideController (e2e)', () => {
       distance_m: 25400,
       duration_min: 90,
       elevation_up_m: 800,
-      json_data: { name: 'Evening loop' },
     });
     await insertRide(bikeId, {
       started_at: new Date('2025-04-02T08:00:00.000Z'),
       distance_m: 10000,
       duration_min: 40,
       elevation_up_m: 300,
-      json_data: { name: 'Commute' },
     });
 
     await registerVerified(stranger);
@@ -148,7 +145,7 @@ describe('RideController (e2e)', () => {
       .expect(200);
 
     expect(response.body.total).toBe(2);
-    expect(response.body.items.map((ride: { name: string }) => ride.name)).toEqual(['Commute', 'Evening loop']);
+    expect(response.body.items.map((ride: { distance_m: number }) => ride.distance_m)).toEqual([10000, 25400]);
     expect(response.body.items[0]).toEqual(
       expect.objectContaining({
         bike_id: bikeId,

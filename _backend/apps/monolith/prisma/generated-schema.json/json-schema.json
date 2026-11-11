@@ -1240,22 +1240,6 @@
             "null"
           ]
         },
-        "json_data": {
-          "type": [
-            "number",
-            "string",
-            "boolean",
-            "object",
-            "array",
-            "null"
-          ]
-        },
-        "summary": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "suspension_min": {
           "type": [
             "integer",
@@ -1988,6 +1972,13 @@
             "null"
           ]
         },
+        "analyzed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -1998,12 +1989,6 @@
             "null"
           ],
           "format": "date-time"
-        },
-        "summary": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       }
     },

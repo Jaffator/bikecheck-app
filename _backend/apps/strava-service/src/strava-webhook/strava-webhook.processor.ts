@@ -1,21 +1,32 @@
 import { Processor, WorkerHost, OnWorkerEvent, InjectQueue } from '@nestjs/bullmq';
+import { OnModuleInit } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { StravaWebhookEventDto } from './dto/strava-webhook-event.dto';
 import { StravaWebhookService } from './strava-webhook.service';
+import { TokenService } from '../tokens/tokens.service';
 import stravaJsonData_forTest from '../example_strava_data/example_strava_data.json';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+const PURGE_JOB = 'purge-stale-activities';
+
 // Decorator name must exactly match the Queue name registered in the module
 @Processor('strava-webhook-queue')
-export class StravaProcessor extends WorkerHost {
+export class StravaProcessor extends WorkerHost implements OnModuleInit {
   constructor(
     @InjectPinoLogger(StravaProcessor.name) private readonly logger: PinoLogger,
     @InjectQueue('strava-monolith-queue') private readonly eventsQueue: Queue,
+    @InjectQueue('strava-webhook-queue') private readonly webhookQueue: Queue,
     private readonly stravaWebhookService: StravaWebhookService,
+    private readonly tokenService: TokenService,
   ) {
     super();
+  }
+
+  // Upsert, so every restart keeps one daily schedule instead of adding another.
+  async onModuleInit(): Promise<void> {
+    await this.webhookQueue.upsertJobScheduler(PURGE_JOB, { pattern: '0 3 * * *' }, { name: PURGE_JOB });
   }
   // NestJS automatically calls this method when a new job appears in the queue
   async process(job: Job<any, any, string>) {
@@ -38,8 +49,21 @@ export class StravaProcessor extends WorkerHost {
       return { skipped: true, reason: 'Mock set sent ride by ride' };
     }
 
+    if (job.name === PURGE_JOB) {
+      const purged = await this.stravaWebhookService.purgeStaleActivities();
+      return { skipped: true, reason: `${purged} raw activities purged` };
+    }
+
     if (job.name === 'process-strava-event') {
       const stravaEvent: StravaWebhookEventDto = job.data;
+
+      // ------------------------ Access revoked on Strava ------------------------
+      if (stravaEvent.object_type === 'athlete') {
+        // Other athlete updates carry nothing we keep; only a revoked grant needs action (policy §7.4).
+        if (stravaEvent.updates.authorized !== 'false') return { skipped: true, reason: 'Athlete update ignored' };
+        await this.tokenService.removeLocalData(stravaEvent.owner_id);
+        return { type: 'deauthorized', data: { athleteId: stravaEvent.owner_id } };
+      }
 
       // ------------------------ Delete ------------------------
       if (stravaEvent.aspect_type === 'delete') {
@@ -74,7 +98,7 @@ export class StravaProcessor extends WorkerHost {
 
       // ------------ Update ------------
       if (stravaEvent.aspect_type === 'update') {
-        await this.stravaWebhookService.updateActivityData(
+        await this.stravaWebhookService.saveActivityData(
           activityData.data,
           stravaEvent.owner_id,
           stravaEvent.object_id,
@@ -96,7 +120,9 @@ export class StravaProcessor extends WorkerHost {
         ? 'strava_activity-created'
         : result.type === 'update'
           ? 'strava_activity-updated'
-          : 'strava_activity-deleted';
+          : result.type === 'deauthorized'
+            ? 'strava-deauthorized'
+            : 'strava_activity-deleted';
     console.log(jobName);
     // Continue to queue in monolithic app for further processing
     await this.eventsQueue.add(jobName, result.data);

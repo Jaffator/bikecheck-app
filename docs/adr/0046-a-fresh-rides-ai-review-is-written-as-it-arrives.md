@@ -1,5 +1,7 @@
 # A fresh ride's AI review is written as it arrives
 
+*Status: superseded by ADR 0047, the AI Review is removed.*
+
 ADR 0044 wrote the review on the first open, so nothing was paid for a ride nobody read. An Unassigned
 Ride showed no review at all, and Save closes its drawer, so the rider rarely came back to one. The
 rest of ADR 0044 stands: what Gemini may read, the pinned model, the rider's language.

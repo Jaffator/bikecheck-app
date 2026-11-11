@@ -7,7 +7,14 @@ import { PANEL_HAIRLINE } from "@/components/panelRows";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { RideMap } from "@/components/RideMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import { rideFiguresOf, rideItemKey, woreOffShown, type RideItem, type RideWalk } from "@/features/rides/rideDetail";
+import {
+  rideFiguresOf,
+  rideItemKey,
+  routeOf,
+  woreOffShown,
+  type RideItem,
+  type RideWalk,
+} from "@/features/rides/rideDetail";
 import type { CheckInStatus } from "@/features/rides/rides.types";
 import {
   useRideCheckIn,
@@ -17,7 +24,6 @@ import {
 } from "@/features/rides/useRideCheckIn";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { CheckInBikeField } from "./CheckInBikeField";
-import { RideAiSummary } from "./RideAiSummary";
 import { RideCheckInFields } from "./RideCheckInFields";
 import { RideDetailActions, RideWalkActions } from "./RideDetailActions";
 import { RideDetailHeader } from "./RideDetailHeader";
@@ -200,7 +206,7 @@ function RideOverview({ item, mapHeight, children }: RideOverviewProps): ReactEl
   return (
     <Stack gap={SECTION_GAP}>
       {/* Static on the phone, so a drag on it never fights the sheet's own. */}
-      <RideMap polyline={item.ride.summary_polyline} height={mapHeight} interactive={isDesktop} />
+      <RideMap polyline={routeOf(item)} height={mapHeight} interactive={isDesktop} />
       <RideFigureGrid figures={rideFiguresOf(item)} />
       {children}
     </Stack>
@@ -213,10 +219,9 @@ interface RideAnswersProps {
   woreOff: ReactNode;
 }
 
-// The bike, how it rode, what it wore off and the AI review.
+// The bike, how it rode and what it wore off.
 function RideAnswers({ item, checkIn, woreOff }: RideAnswersProps): ReactElement {
   const { t } = useTranslation();
-  const isDesktop = useIsDesktop();
   const { data: bikes } = useBikes();
   const [pickerOpened, setPickerOpened] = useState(false);
   const pickedId = checkIn.pick?.kind === "bike" ? checkIn.pick.bikeId : null;
@@ -243,9 +248,6 @@ function RideAnswers({ item, checkIn, woreOff }: RideAnswersProps): ReactElement
       )}
 
       {woreOff}
-      <Box style={isDesktop ? PUSHED_DOWN : undefined}>
-        <RideAiSummary item={item} />
-      </Box>
     </Stack>
   );
 }

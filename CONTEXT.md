@@ -33,14 +33,6 @@ none. Counts toward no odometer and wears no part until the owner gives it a Bik
 Pairing a Bike gives it that gear's Unassigned Rides on its own. Survives disconnecting Strava.
 _Avoid_: Pending ride
 
-**AI Review**:
-A few casual sentences with a 1–5 star rating that Gemini writes about one ride, from its figures
-and its Bike's name if it has one, as a fresh ride arrives, or else the first time its owner opens
-it. Kept on the ride, as its `summary`, and carried over when an Unassigned Ride gets a Bike. New
-figures from Strava or a move to another Bike clear it, and the next open writes it again
-(ADR 0044, ADR 0046).
-_Avoid_: AI mechanic
-
 **Archived Bike**:
 A Bike its owner has taken out of use. It leaves the garage, the dashboard and every list and
 total, keeps its whole history, and is reached only through the archive. Reversible, and nothing

@@ -5,8 +5,8 @@ import { notifications } from "@mantine/notifications";
 import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { lastRideDate } from "@/features/bikes/lastRideDate";
 import { useDismissRide } from "@/features/rides/rides.queries";
+import { rideTitle } from "@/features/rides/rideTitle";
 import type { Ride } from "@/features/rides/rides.types";
 import { QUIET_RED_BUTTON } from "./actionBar";
 
@@ -57,7 +57,7 @@ export function DeleteRideButton({ ride, onDeleted, inBar = false }: DeleteRideB
         onCancel={cancel}
         onConfirm={confirm}
         title={t("rides.deleteTitle")}
-        body={t("rides.deleteBody", { ride: rideLine(ride) })}
+        body={t("rides.deleteBody", { ride: rideTitle(ride, t("rides.unknownBike")) })}
         cancelLabel={t("rides.deleteCancel")}
         confirmLabel={t("rides.deleteConfirm")}
         pending={dismiss.isPending}
@@ -70,11 +70,4 @@ export function DeleteRideButton({ ride, onDeleted, inBar = false }: DeleteRideB
       </ConfirmModal>
     </>
   );
-}
-
-// "Morning Ride · 42 km · 3. 9.", so the user sees which ride goes.
-function rideLine(ride: Ride): string {
-  const km = `${Math.round((ride.distance_m ?? 0) / 1000)} km`;
-  const date = ride.started_at === null ? null : lastRideDate(ride.started_at);
-  return [ride.name, km, date].filter((part) => part !== null).join(" · ");
 }

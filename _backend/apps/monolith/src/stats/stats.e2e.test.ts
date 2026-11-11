@@ -1,5 +1,3 @@
-import fs from 'fs/promises';
-import path from 'path';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
@@ -177,37 +175,6 @@ describe('StatsController (e2e)', () => {
     expect(sum(bike.daily_elevation_m)).toBe(900);
     expect(sum(bike.daily_time_min)).toBe(120);
     expect(sum(bike.daily_calories)).toBe(1742);
-  });
-
-  it('fills calories from the stored Strava activity the way the migration backfilled the old rides', async () => {
-    // ARRANGE: a ride imported before the column existed: kcal only in json_data, stored as a JSON string.
-    const legacy = await prisma.rides.create({
-      data: {
-        user_id: ownerId,
-        bike_id: bikeId,
-        started_at: new Date(Date.now() - 400 * DAY_MS),
-        json_data: JSON.stringify({ id: 1, calories: 1234.6 }),
-      },
-    });
-    const migration = await fs.readFile(
-      path.join(__dirname, '../../prisma/migrations/20261104120000_ride_calories/migration.sql'),
-      'utf8',
-    );
-    // Comments off, so a statement is read by its first keyword.
-    const backfill = migration
-      .replace(/^\s*--.*$/gm, '')
-      .split(';')
-      .map((statement) => statement.trim())
-      .filter((statement) => statement.startsWith('UPDATE'));
-    expect(backfill).toHaveLength(1);
-
-    // ACT
-    await prisma.$executeRawUnsafe(backfill[0]);
-    const filled = await prisma.rides.findUnique({ where: { id: legacy.id }, select: { calories: true } });
-    await prisma.rides.delete({ where: { id: legacy.id } });
-
-    // ASSERT: rounded, the way the import writes it.
-    expect(filled?.calories).toBe(1235);
   });
 
   it("charts none of another user's distance", async () => {

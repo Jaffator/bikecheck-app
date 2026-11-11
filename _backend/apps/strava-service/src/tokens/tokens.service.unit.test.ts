@@ -28,10 +28,11 @@ describe('TokenService.disconnect', () => {
     await service.disconnect(ATHLETE_ID);
 
     expect(mockPost).toHaveBeenCalledWith(
-      'https://www.strava.com/oauth/deauthorize',
-      { access_token: 'token' },
-      expect.anything(),
+      'https://www.strava.com/oauth/revoke',
+      expect.objectContaining({}),
+      expect.objectContaining({ auth: expect.anything() }),
     );
+    expect(String(mockPost.mock.calls[0][1])).toBe('token=token');
     expect(clientQuery.mock.calls.map(([sql]) => sql)).toEqual([
       'DELETE FROM access_tokens WHERE athlete_id = $1',
       'DELETE FROM refresh_tokens WHERE athlete_id = $1',

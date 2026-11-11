@@ -3,7 +3,6 @@ import { check_in_status, Prisma, type strava_pending_activities } from '@prisma
 import { PrismaService } from '../../prisma/prisma.service';
 import { ownedBikeWhere } from '../bike/owned-bike.where';
 import { ServiceTrackingService, type WearPreview } from '../service-tracking/service-tracking.service';
-import { GeminiService, powerOf, type RideSummaryInput } from '../gemini/gemini.service';
 import {
   BRAKE_PAD_PART,
   carried,
@@ -15,7 +14,6 @@ import {
 } from '../service-tracking/ride-wear';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 import type { Response_BikeWoreOffDto } from '../service-tracking/dto/response-bike-wore-off';
-import type { StravaActivityData } from '../strava/strava.service';
 import { analysisOf, toCheckInPendingDto } from '../strava/pending-activity';
 import {
   ResponseCheckInPromptDto,
@@ -23,16 +21,13 @@ import {
   ResponseRideCheckInDto,
   ResponseRideDto,
   ResponseRidePageDto,
-  ResponseRideSummaryDto,
 } from './dto/response-ride.dto';
 import { SaveRideCheckInDto } from './dto/save-ride-check-in.dto';
 import { isDay, isTimeZone, localDay, previousRange, startedWithin, type DayRange } from './ride-period';
 import { figuresOf, summedRideSelect, weeksOf, type SummedRide } from './ride-totals';
 
 const DEFAULT_LIMIT = 20;
-// One request cannot drain the table. The raw Strava payload no longer leaves the
-// server - only the name and the route are lifted out of it - but a page is still
-// a page of rows.
+// One request cannot drain the table.
 const MAX_LIMIT = 100;
 
 // The bike as the list needs it. Selected rather than included whole: the ride
@@ -52,7 +47,6 @@ interface RideRow {
   elevation_down_m?: number | null;
   speed_avg?: number | null;
   max_speed_kmh?: number | null;
-  json_data?: unknown;
   check_in?: CheckInRow | null;
 }
 
@@ -68,7 +62,6 @@ export class RideService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serviceTracking: ServiceTrackingService,
-    private readonly gemini: GeminiService,
   ) {}
 
   /**
@@ -212,29 +205,6 @@ export class RideService {
     return this.prisma.rides.findMany({ where, select: summedRideSelect });
   }
 
-  // Asked of Gemini once and kept, so a second open costs nothing (ADR 0044).
-  async findSummary(userId: number, rideId: number): Promise<ResponseRideSummaryDto> {
-    const ride = await this.prisma.rides.findFirst({
-      where: { id: rideId, ...listedRidesWhere(userId) },
-      select: summaryRideSelect,
-    });
-    if (!ride) throw new NotFoundException('Ride not found');
-    if (ride.summary) return { summary: ride.summary };
-
-    const summary = await this.gemini.rideSummary(summaryInputOf(ride), ride.users.language);
-    await this.prisma.rides.update({ where: { id: ride.id }, data: { summary } });
-    return { summary };
-  }
-
-  // Written as a fresh ride lands, without waiting for an open; one already written by an open stays.
-  async writeArrivalSummary(rideId: number): Promise<void> {
-    const ride = await this.prisma.rides.findFirst({ where: { id: rideId }, select: summaryRideSelect });
-    if (!ride) return;
-
-    const summary = await this.gemini.rideSummary(summaryInputOf(ride), ride.users.language);
-    await this.prisma.rides.updateMany({ where: { id: ride.id, summary: null }, data: { summary } });
-  }
-
   /**
    * Moves a ride to another of the user's bikes, taking its wear off the parts that carried it
    * and putting it on the parts the new bike had mounted at the time.
@@ -253,7 +223,7 @@ export class RideService {
     await this.prisma.$transaction(async (tx) => {
       await shiftWear(tx, ride.bike_id, ride, -1);
       await shiftWear(tx, bikeId, ride, 1);
-      await tx.rides.update({ where: { id: ride.id }, data: { bike_id: bikeId, summary: null } });
+      await tx.rides.update({ where: { id: ride.id }, data: { bike_id: bikeId } });
     });
 
     // One bike's readings dropped and the other's grew, so both may cross a band.
@@ -275,9 +245,7 @@ export class RideService {
       await shiftWear(tx, ride.bike_id, ride, -1);
       // Hard, not soft: a soft-deleted ride would still be found when Strava sends the activity again.
       await tx.rides.delete({ where: { id: ride.id } });
-      if (ride.activity_strava_id !== null) {
-        await markDismissed(tx, userId, ride.activity_strava_id, pendingAnalysisOf(ride));
-      }
+      if (ride.activity_strava_id !== null) await markDismissed(tx, userId, ride.activity_strava_id);
     });
 
     await this.serviceTracking.evaluateBikes([ride.bike_id], userId);
@@ -363,90 +331,16 @@ function shifted(current: number | null | undefined, amount: number, sign: 1 | -
   return Math.max(0, (current ?? 0) + sign * amount);
 }
 
-const dismissedRideSelect = {
-  ...movedRideSelect,
-  activity_strava_id: true,
-  json_data: true,
-  elevation_down_m: true,
-  speed_avg: true,
-  max_speed_kmh: true,
-  descent_min: true,
-} satisfies Prisma.ridesSelect;
-type DismissedRide = Prisma.ridesGetPayload<{ select: typeof dismissedRideSelect }>;
-type PendingAnalysis = StravaActivityData['analyzedData'];
+const dismissedRideSelect = { ...movedRideSelect, activity_strava_id: true } satisfies Prisma.ridesSelect;
 
-// Resolved with no ride is what the Strava webhook and sync read as dismissed.
-async function markDismissed(
-  tx: Prisma.TransactionClient,
-  userId: number,
-  activityId: bigint,
-  analysis: PendingAnalysis,
-): Promise<void> {
+// Resolved with no ride is what the Strava webhook and sync read as dismissed; it needs no payload.
+async function markDismissed(tx: Prisma.TransactionClient, userId: number, activityId: bigint): Promise<void> {
   const now = new Date();
   await tx.strava_pending_activities.upsert({
     where: { activity_id: activityId },
-    create: { activity_id: activityId, user_id: userId, analyzed_data: analysis, resolved_at: now },
+    create: { activity_id: activityId, user_id: userId, analyzed_data: Prisma.DbNull, analyzed_at: null, resolved_at: now },
     update: { resolved_at: now },
   });
-}
-
-// The analysis Strava parks a pending activity with, rebuilt from the saved ride (the inverse of saveRide).
-function pendingAnalysisOf(ride: DismissedRide): PendingAnalysis {
-  const rawJson = asActivity(ride.json_data);
-  const facts = activityFacts(rawJson);
-  return {
-    rawJson,
-    // A Strava ride is always saved with its start; the fallback only satisfies the type.
-    started_at: ride.started_at?.toISOString() ?? '',
-    name: facts.name,
-    summary_polyline: facts.summary_polyline,
-    suspension_minutes: ride.suspension_min ?? 0,
-    health_index_brake_pad: ride.health_index_brake_pad ?? 0,
-    descent_min: ride.descent_min ?? undefined,
-    drivetrain_km: (ride.drivetrain_meters ?? 0) / 1000,
-    distance_km: (ride.distance_m ?? 0) / 1000,
-    duration_min: ride.duration_min ?? 0,
-    elevation_up_m: ride.elevation_up_m ?? 0,
-    elevation_down_m: ride.elevation_down_m ?? 0,
-    speed_avg: ride.speed_avg ?? 0,
-    max_speed_kmh: ride.max_speed_kmh ?? 0,
-  };
-}
-
-const summaryRideSelect = {
-  id: true,
-  summary: true,
-  started_at: true,
-  distance_m: true,
-  duration_min: true,
-  elevation_up_m: true,
-  elevation_down_m: true,
-  speed_avg: true,
-  max_speed_kmh: true,
-  json_data: true,
-  bikes: { select: BIKE_SELECT },
-  users: { select: { language: true } },
-} satisfies Prisma.ridesSelect;
-type SummaryRide = Prisma.ridesGetPayload<{ select: typeof summaryRideSelect }>;
-
-// The allowlist: no position, route, notes, heart rate or athlete reaches Gemini (ADR 0044).
-function summaryInputOf(ride: SummaryRide): RideSummaryInput {
-  const activity = asActivity(ride.json_data);
-  const facts = activityFacts(activity);
-
-  return {
-    name: facts.name,
-    sport_type: facts.sport_type,
-    started_at: ride.started_at?.toISOString() ?? null,
-    bike: bikeName(ride.bikes),
-    distance_km: Math.round((ride.distance_m ?? 0) / 100) / 10,
-    duration_min: ride.duration_min ?? 0,
-    elevation_up_m: ride.elevation_up_m ?? 0,
-    elevation_down_m: ride.elevation_down_m ?? 0,
-    speed_avg_kmh: ride.speed_avg ?? 0,
-    max_speed_kmh: ride.max_speed_kmh ?? 0,
-    ...powerOf(activity),
-  };
 }
 
 // The user's rides the lists show: not deleted, and not on an Archived Bike (ADR 0024).
@@ -459,8 +353,11 @@ function promptSince(now: Date): Date {
 }
 
 // Unresolved and started in the window; a backfill lands now but may have been ridden long ago.
+// A purged payload is not fetched for the drawer: the Unassigned tab still offers the ride.
 function waitingForBike(rows: strava_pending_activities[], since: Date): strava_pending_activities[] {
-  return rows.filter((row) => row.resolved_at === null && new Date(analysisOf(row).started_at) >= since);
+  return rows.filter(
+    (row) => row.resolved_at === null && row.analyzed_data !== null && new Date(analysisOf(row).started_at) >= since,
+  );
 }
 
 // A ride assigned from Pending reached BikeCheck when its pending row did, not when it was assigned.
@@ -507,54 +404,6 @@ function clamp(value: number, fallback: number, min: number, max: number): numbe
   return Math.min(Math.max(Math.trunc(value), min), max);
 }
 
-// What the list needs out of the stored Strava payload. Read together in one pass:
-// the blob is large, and parsing it once per question is the cost this endpoint is
-// trying to avoid.
-interface ActivityFacts {
-  name: string;
-  summary_polyline: string | null;
-  sport_type: string | null;
-}
-
-interface StravaActivity {
-  name?: unknown;
-  map?: { summary_polyline?: unknown } | null;
-  sport_type?: unknown;
-  average_watts?: unknown;
-  max_watts?: unknown;
-  weighted_average_watts?: unknown;
-}
-
-// The title, the route and the sport type, read out of the stored payload. It is written with
-// JSON.stringify, but Prisma hands a Json column back parsed, so both shapes are
-// accepted rather than assuming either. Strava always sends a name, so the empty
-// string is a type-level floor, not an expected state; the route is genuinely
-// absent for a ride recorded without GPS.
-function activityFacts(jsonData: unknown): ActivityFacts {
-  const activity = asActivity(jsonData);
-  const name = activity?.name;
-  const polyline = activity?.map?.summary_polyline;
-  const sportType = activity?.sport_type;
-
-  return {
-    name: typeof name === 'string' ? name : '',
-    summary_polyline: typeof polyline === 'string' && polyline.length > 0 ? polyline : null,
-    sport_type: typeof sportType === 'string' && sportType.length > 0 ? sportType : null,
-  };
-}
-
-function asActivity(jsonData: unknown): StravaActivity | null {
-  if (typeof jsonData === 'string') {
-    try {
-      return asActivity(JSON.parse(jsonData) as unknown);
-    } catch {
-      // A payload that will not parse carries neither a name nor a route.
-      return null;
-    }
-  }
-  return typeof jsonData === 'object' && jsonData !== null ? (jsonData as StravaActivity) : null;
-}
-
 // A ride is a record of what was ridden, so the bike is named by what it is -
 // never by the nickname its owner gave it. Every part is optional, so the pieces
 // are joined rather than templated.
@@ -585,15 +434,12 @@ function woreOffByBike(
 }
 
 function toRideDto(row: RideRow, woreOff: Response_WoreOffLineDto[]): ResponseRideDto {
-  const facts = activityFacts(row.json_data);
-
   return {
     id: row.id,
     // BigInt does not survive JSON, and the id is past 2^53 anyway.
     activity_strava_id: row.activity_strava_id === null ? null : String(row.activity_strava_id),
     bike_id: row.bike_id,
     bike_name: bikeName(row.bikes),
-    name: facts.name,
     started_at: row.started_at ? row.started_at.toISOString() : null,
     distance_m: row.distance_m ?? null,
     duration_min: row.duration_min ?? null,
@@ -601,8 +447,6 @@ function toRideDto(row: RideRow, woreOff: Response_WoreOffLineDto[]): ResponseRi
     elevation_down_m: row.elevation_down_m ?? null,
     speed_avg: row.speed_avg ?? null,
     max_speed_kmh: row.max_speed_kmh ?? null,
-    summary_polyline: facts.summary_polyline,
-    sport_type: facts.sport_type,
     created_at: row.created_at ? row.created_at.toISOString() : null,
     wore_off: woreOff,
     check_in: row.check_in

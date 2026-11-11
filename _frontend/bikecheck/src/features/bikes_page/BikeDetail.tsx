@@ -14,7 +14,6 @@ import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import { useLinkStravaGear } from "@/features/strava/strava.queries";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { BikeActionTiles } from "@/features/bikes/ui/BikeActionTiles";
-import { BikeExportButton } from "@/features/bikes/ui/BikeExportButton";
 import { BikeHeroCard } from "@/features/bikes/ui/BikeHeroCard";
 import { ShareDrawer } from "@/features/profile/ui/ShareDrawer";
 import { useOpenLinkCount } from "@/features/report/report.queries";
@@ -180,9 +179,8 @@ export function BikeDetail(): ReactElement {
         </Paper>
       )}
 
-      <BikeExportButton onExport={() => setExporting({ kind: "BIKE", bike_id: bike.id })} />
-
       <BikeActionTiles
+        onExport={() => setExporting({ kind: "BIKE", bike_id: bike.id })}
         onAddService={archived ? undefined : () => navigate(`/service/new?bike=${String(bike.id)}`)}
         onOpenHistory={() => navigate(`/bikes/${String(bike.id)}/history`)}
         onOpenSetup={() => navigate(`/bikes/${String(bike.id)}/setup`)}

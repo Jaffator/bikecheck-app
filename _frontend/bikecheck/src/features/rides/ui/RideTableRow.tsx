@@ -11,6 +11,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { CHECK_IN_COLOR, symptomKey } from "@/features/rides/checkIn";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { Ride, RideCheckIn } from "@/features/rides/rides.types";
+import { rideTitle } from "@/features/rides/rideTitle";
 import { woreOffSummary } from "@/features/rides/woreOff";
 import { formatNumber } from "@/utils/number";
 
@@ -49,8 +50,9 @@ export function RideTableRow({ ride, colorIndex, onOpen }: RideTableRowProps): R
       }}
     >
       <Group gap={10} wrap="nowrap" style={{ minWidth: 0 }}>
+        {/* No route kept with the ride (#375); #376 fetches it on demand. */}
         <RouteMap
-          polyline={ride.summary_polyline}
+          polyline={null}
           width={52}
           height={36}
           color={colorIndex === null ? undefined : bikeColor(colorIndex)}
@@ -58,7 +60,7 @@ export function RideTableRow({ ride, colorIndex, onOpen }: RideTableRowProps): R
         />
         <Stack gap={0} style={{ minWidth: 0 }}>
           <Text fz={13} fw={600} c="text.6" lineClamp={1}>
-            {ride.name}
+            {rideTitle(ride, t("rides.unknownBike"))}
           </Text>
           <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
             {ride.started_at === null ? "—" : startLabel(ride.started_at, i18n.language)}

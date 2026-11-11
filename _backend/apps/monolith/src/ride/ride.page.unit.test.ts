@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RideService } from './ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
-import { GeminiService } from '../gemini/gemini.service';
 
 const PRAGUE = 'Europe/Prague';
 const SEPTEMBER = { from: '2026-09-01', to: '2026-09-30', tz: PRAGUE };
@@ -35,7 +34,6 @@ function listed(id: number, startedAt: string | null): object {
     bike_id: 7,
     bikes: { bike_brand: 'Orbea', bike_model: 'Rallon', year: 2024 },
     started_at: startedAt === null ? null : new Date(startedAt),
-    json_data: null,
     check_in: null,
   };
 }
@@ -82,7 +80,6 @@ describe('RideService page of rides', () => {
         RideService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
-        { provide: GeminiService, useValue: { rideSummary: jest.fn() } },
       ],
     }).compile();
 

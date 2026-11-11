@@ -1,5 +1,5 @@
 // What a notification row wears before a word of it is read.
-import { CalendarCheck, CircleQuestionMark, TriangleAlert, UserCheck, UserPlus, Users } from "lucide-react";
+import { CalendarCheck, CircleQuestionMark, TriangleAlert, Unplug, UserCheck, UserPlus, Users } from "lucide-react";
 import { PiPath } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import { attentionColor } from "@/features/service_tracking/attentionLevel";
@@ -15,6 +15,7 @@ export const NOTIFICATION_ICONS: Partial<Record<NotificationType, IconType>> = {
   new_follower: Users,
   follow_request: UserPlus,
   follow_accepted: UserCheck,
+  strava_disconnected: Unplug,
 };
 
 // Where each level begins, so the reminder wears the same colour the row on the card does.

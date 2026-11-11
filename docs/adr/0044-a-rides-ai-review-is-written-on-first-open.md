@@ -1,5 +1,7 @@
 # A ride's AI review is written when it is first opened
 
+*Status: superseded by ADR 0047, the AI Review is removed.*
+
 Every ride saved from Strava used to queue a Gemini job (`gemini-queue`) that wrote `rides.summary`,
 a few casual sentences with a star rating. Nothing showed it, so every new ride and every re-sync
 paid for text nobody read (#308). **The review is now written when the rider first opens the ride's

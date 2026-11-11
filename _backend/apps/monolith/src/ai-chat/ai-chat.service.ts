@@ -12,13 +12,12 @@ import type { ChatErrorReason, EmitChatEvent } from './ai-chat.types';
 import { garageTools, type GarageToolSet } from './tools/garage.tools';
 import { partsTools, type PartsToolSet } from './tools/parts.tools';
 import { reportsTools, type ReportsToolSet } from './tools/reports.tools';
-import { ridesTools, type RidesToolSet } from './tools/rides.tools';
 import { servicesTools, type ServicesToolSet } from './tools/services.tools';
 import { setupTools, type SetupToolSet } from './tools/setup.tools';
 import { trackedActionTools, type TrackedActionsToolSet } from './tools/tracked-actions.tools';
 import type { PageTool, ToolPage } from './tools/tool-page';
 
-// Configuration is constants here, as it is in GeminiService: swapping the provider is a
+// Configuration is constants here: swapping the provider is a
 // change of code and a deploy, never a decision taken in the middle of a conversation.
 const MODEL = 'gpt-4o-mini';
 
@@ -90,7 +89,6 @@ type SelectedBike = { id: number; bike_brand: string; bike_model: string | null 
 type ChatToolSet = GarageToolSet &
   PartsToolSet &
   ServicesToolSet &
-  RidesToolSet &
   SetupToolSet &
   ReportsToolSet &
   TrackedActionsToolSet;
@@ -284,7 +282,6 @@ export class AiChatService {
     const garage = garageTools(this.prisma, userId);
     const parts = partsTools(this.prisma, userId);
     const services = servicesTools(this.prisma, userId);
-    const rides = ridesTools(this.prisma, userId);
     const setup = setupTools(this.prisma, userId);
     const reports = reportsTools(this.prisma, userId);
     const tracked = trackedActionTools(this.serviceTracking, this.prisma, userId);
@@ -293,7 +290,6 @@ export class AiChatService {
       get_garage: this.instrument('get_garage', garage.get_garage, turn, emit),
       list_parts: this.instrument('list_parts', parts.list_parts, turn, emit),
       list_services: this.instrument('list_services', services.list_services, turn, emit),
-      list_rides: this.instrument('list_rides', rides.list_rides, turn, emit),
       get_setup: this.instrument('get_setup', setup.get_setup, turn, emit),
       list_reports: this.instrument('list_reports', reports.list_reports, turn, emit),
       list_tracked_actions: this.instrument('list_tracked_actions', tracked.list_tracked_actions, turn, emit),
@@ -512,7 +508,7 @@ function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-// English, in sections, as in GeminiService. Everything the chat is not allowed to get wrong
+// English, in sections. Everything the chat is not allowed to get wrong
 // is here, because the prompt is the only place a tool contract can be argued with.
 function systemPrompt(ctx: PromptContext): string {
   return `
@@ -522,7 +518,6 @@ them, and the maintenance done on them. You answer questions about the data of t
 are talking to, and nothing else.
 
 Be factual. No jokes, no sign-offs, no emoji, no encouragement. Address the user informally.
-The app's ride summaries are written in a playful voice - that is not you, do not imitate it.
 
 # CONTEXT
 Today's date: ${ctx.today}
@@ -546,7 +541,7 @@ of your answer - "Chain" becomes "Řetěz" in Czech.
 
 # GATE
 Before any tool, decide whether the message is a question about the user's bikes, parts,
-services, rides or costs.
+services or costs.
 
 When you cannot tell what is being asked, or the question is about something else entirely,
 call no tool at all. Answer in one sentence - that you do not understand, or that this is not
@@ -562,6 +557,8 @@ after is answered as # WHAT YOU DO NOT KNOW says, not turned away here.
 Strava is part of the user's own data, not another app you know nothing about: whether the
 account is connected is in # CONTEXT, and strava_paired on each bike of the garage says
 which machines rides land on. Answer from those two, and never turn such a question away.
+You cannot see rides, distances or ride times: when asked how far or how long the user rode,
+say you cannot read that.
 
 # TOOLS
 Call get_garage before anything else. It gives you the user's bikes and their active parts
@@ -616,8 +613,7 @@ choose a range yourself and name it in the answer ("over the last 12 months...")
 # READING THE NUMBERS
 A number nobody recorded arrives as null. Null is not zero and not a reading: say the figure is
 not recorded, and never put a number of your own in its place.
-- distance_km, total_km, duration_min, elevation_m, year, cost, a setup pressure at null - the
-  figure was never written down. Say so.
+- year, cost, a setup pressure at null - the figure was never written down. Say so.
 - A zero that does arrive is a real zero and may be stated as one.
 - service_count at 0 is a finding, not a gap: say the part has no service on record. Never
   leave it out because there is nothing to report.
@@ -634,7 +630,7 @@ Wear readings come from list_tracked_actions, and three things about them are no
 Tools return { rows, total_count }, plus truncated: true when rows were cut. State a total, an
 average or a count as complete ONLY when the number of rows you actually read equals
 total_count. Otherwise say in the same sentence what the figure is based on: "over the last
-200 of 287 rides that comes to 3 480 km". You may fetch further pages with next_cursor, but
+200 of 287 services that comes to 3 480 CZK". You may fetch further pages with next_cursor, but
 never report a partial figure as a whole one.
 
 # WRITING THE ANSWER
@@ -648,8 +644,7 @@ Write prose. Numbers belong inside the sentences, not in tables, lists or cards.
 numbered points, no bold labels: three bikes are three clauses of one sentence, not three rows.
 Name a bike by brand and model - "Santa Cruz Hightower" - and shorten it on later mentions.
 Name a part by its type and description - "Shimano XT chain".
-Round distance_km to whole kilometres. Give duration_min in whole hours. Write cost with the
-user's currency. Write dates out in words, never as ISO.
+Write cost with the user's currency. Write dates out in words, never as ISO.
 
 # WHAT YOU DO NOT KNOW
 You see only what the tools return.

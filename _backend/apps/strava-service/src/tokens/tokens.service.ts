@@ -53,7 +53,8 @@ export class TokenService {
       response_type: 'code',
       redirect_uri: `${process.env.STRAVA_SERVICE_URL}/strava/exchange_token`,
       approval_prompt: 'force',
-      scope: 'profile:read_all,activity:read_all,activity:write,read_all',
+      // Only what the sync reads: the athlete's gear and activities. Nothing is written to Strava.
+      scope: 'profile:read_all,activity:read_all',
       state,
     });
 
@@ -143,11 +144,19 @@ export class TokenService {
   async disconnect(athleteID: number): Promise<void> {
     try {
       const accessToken = await this.getAccessToken(athleteID);
-      await axios.post('https://www.strava.com/oauth/deauthorize', { access_token: accessToken }, { timeout: 5000 });
+      await axios.post('https://www.strava.com/oauth/revoke', new URLSearchParams({ token: accessToken }), {
+        auth: { username: String(process.env.STRAVA_CLIENT_ID), password: String(process.env.STRAVA_CLIENT_SECRET) },
+        timeout: 5000,
+      });
     } catch (err) {
       this.logger.warn({ err, athleteID }, 'Strava deauthorize failed, removing local tokens anyway');
     }
 
+    await this.removeLocalData(athleteID);
+  }
+
+  // Also runs when the user revokes access on Strava's side: no grant is left to revoke, only our copies.
+  async removeLocalData(athleteID: number): Promise<void> {
     await this.databaseService.transaction(async (client) => {
       await client.query('DELETE FROM access_tokens WHERE athlete_id = $1', [athleteID]);
       await client.query('DELETE FROM refresh_tokens WHERE athlete_id = $1', [athleteID]);

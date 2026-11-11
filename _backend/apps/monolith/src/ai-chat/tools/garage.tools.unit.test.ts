@@ -19,8 +19,6 @@ interface PartRow {
   component_type_id: number;
   component_desc: string | null;
   position: string | null;
-  total_km: number | null;
-  total_time_min: number | null;
   removed_at: Date | null;
   is_deleted: boolean;
   component_types: { component_type: string };
@@ -35,9 +33,6 @@ interface BikeRow {
   bike_model: string | null;
   bikename: string | null;
   year: number | null;
-  total_km: number | null;
-  total_time_min: number | null;
-  total_elevation_m: number | null;
   strava_gear_id: string | null;
   components_mounted: PartRow[];
 }
@@ -48,8 +43,6 @@ function part(overrides: Partial<PartRow> = {}): PartRow {
     component_type_id: 12,
     component_desc: 'Shimano XT M8100',
     position: null,
-    total_km: 1240,
-    total_time_min: 3600,
     removed_at: null,
     is_deleted: false,
     component_types: { component_type: 'Chain' },
@@ -66,9 +59,6 @@ function bike(overrides: Partial<BikeRow> = {}): BikeRow {
     bike_model: 'Hightower',
     bikename: 'Modrá bestie',
     year: 2021,
-    total_km: 4300,
-    total_time_min: 12_000,
-    total_elevation_m: 51_000,
     strava_gear_id: null,
     components_mounted: [part()],
     ...overrides,
@@ -115,9 +105,6 @@ describe('garageTools', () => {
       bike_brand: 'Santa Cruz',
       bike_model: 'Hightower',
       year: 2021,
-      total_km: 4300,
-      total_time_min: 12_000,
-      elevation_m: 51_000,
       strava_paired: false,
       parts: [
         {
@@ -126,8 +113,6 @@ describe('garageTools', () => {
           component_type: 'Chain',
           position: '',
           component_desc: 'Shimano XT M8100',
-          total_km: 1240,
-          total_time_min: 3600,
         },
       ],
     });
@@ -145,24 +130,21 @@ describe('garageTools', () => {
     expect(JSON.stringify(page)).not.toContain('b1234567');
   });
 
-  it('reads a number nobody recorded as null, which is not a zero', async () => {
-    garage([
-      bike({
-        total_km: null,
-        total_time_min: null,
-        total_elevation_m: null,
-        components_mounted: [part({ total_km: null, total_time_min: null, component_desc: null })],
-      }),
-    ]);
+  it('reads a part nobody described as an empty description', async () => {
+    garage([bike({ components_mounted: [part({ component_desc: null })] })]);
 
     const [row] = (await tools(OWNER_ID).get_garage.execute({}, CALL)).rows;
 
-    expect(row.total_km).toBeNull();
-    expect(row.total_time_min).toBeNull();
-    expect(row.elevation_m).toBeNull();
-    expect(row.parts[0].total_km).toBeNull();
-    expect(row.parts[0].total_time_min).toBeNull();
     expect(row.parts[0].component_desc).toBe('');
+  });
+
+  // Distance, time and climb come from Strava, which may not feed an AI (policy §5.3).
+  it('hands out no distance, time or climb', async () => {
+    garage([bike()]);
+
+    const page = await tools(OWNER_ID).get_garage.execute({}, CALL);
+
+    expect(JSON.stringify(page)).not.toMatch(/total_km|total_time_min|elevation_m/);
   });
 
   it('carries only what is on the machine now', async () => {

@@ -1,17 +1,15 @@
 import { NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RideService } from './ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
-import { GeminiService } from '../gemini/gemini.service';
 
 describe('RideService', () => {
   let service: RideService;
 
   // What each ride wore off is Service Tracking's to say; this suite only reads the ride itself.
   const mockServiceTracking = { getWoreOff: jest.fn(), evaluateBikes: jest.fn() };
-  // Gemini is the outside world: the suite checks what is sent to it, not what it writes.
-  const mockGemini = { rideSummary: jest.fn() };
 
   const mockPrisma = {
     rides: {
@@ -37,7 +35,6 @@ describe('RideService', () => {
         RideService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
-        { provide: GeminiService, useValue: mockGemini },
       ],
     }).compile();
 
@@ -155,69 +152,18 @@ describe('RideService', () => {
       expect(page.items[0].bike_name).toBe('Specialized Epic EVO');
     });
 
-    it('lifts the name and the route out of the payload, and leaves the payload behind', async () => {
-      // Stored the way the Strava sync writes it: a stringified activity in a Json
-      // column, which Prisma hands back as the string it was given.
+    // A ride keeps no Strava payload past 7 days (policy §6.2), so no title, route or sport type.
+    it('carries no Strava title, route or sport type', async () => {
       mockPrisma.rides.findMany.mockResolvedValue([
-        {
-          id: 5,
-          activity_strava_id: null,
-          bike_id: 7,
-          bikes: { bike_brand: 'Specialized', bike_model: 'Tarmac SL7', year: 2022 },
-          json_data: JSON.stringify({
-            name: 'Morning Mountain Bike Ride',
-            map: { summary_polyline: 'ki}fHuqrbBGx@_@lA' },
-            segment_efforts: ['the rest of the blob, which the client never sees'],
-          }),
-        },
+        { id: 5, activity_strava_id: null, bike_id: 7, bikes: null, distance_m: 42000 },
       ]);
       mockPrisma.rides.count.mockResolvedValue(1);
 
       const page = await service.findPage(1, 20, 0);
 
-      expect(page.items[0].name).toBe('Morning Mountain Bike Ride');
-      expect(page.items[0].summary_polyline).toBe('ki}fHuqrbBGx@_@lA');
-      // The whole point of lifting them out: the blob does not travel.
-      expect(page.items[0]).not.toHaveProperty('json_data');
-    });
-
-    it('lifts the sport type out of the payload', async () => {
-      mockPrisma.rides.findMany.mockResolvedValue([
-        {
-          id: 5,
-          activity_strava_id: null,
-          bike_id: 7,
-          bikes: null,
-          json_data: JSON.stringify({ name: 'Morning Ride', sport_type: 'MountainBikeRide', type: 'Ride' }),
-        },
-        { id: 6, activity_strava_id: null, bike_id: 7, bikes: null, json_data: { name: 'Old Ride' } },
-      ]);
-      mockPrisma.rides.count.mockResolvedValue(2);
-
-      const page = await service.findPage(1, 20, 0);
-
-      expect(page.items[0].sport_type).toBe('MountainBikeRide');
-      // A payload without one says nothing, rather than guessing from the older `type`.
-      expect(page.items[1].sport_type).toBeNull();
-    });
-
-    it('reads a ride recorded without GPS as having no route', async () => {
-      mockPrisma.rides.findMany.mockResolvedValue([
-        {
-          id: 5,
-          activity_strava_id: null,
-          bike_id: 7,
-          bikes: { bike_brand: 'Specialized', bike_model: 'Tarmac SL7', year: 2022 },
-          json_data: { name: 'Indoor Ride', map: { summary_polyline: '' } },
-        },
-      ]);
-      mockPrisma.rides.count.mockResolvedValue(1);
-
-      const page = await service.findPage(1, 20, 0);
-
-      // An empty polyline is no route, not a route of length zero.
-      expect(page.items[0].summary_polyline).toBeNull();
-      expect(page.items[0].name).toBe('Indoor Ride');
+      expect(page.items[0]).not.toHaveProperty('name');
+      expect(page.items[0]).not.toHaveProperty('summary_polyline');
+      expect(page.items[0]).not.toHaveProperty('sport_type');
     });
 
     it('clamps the page size, so one request cannot ask for the whole table', async () => {
@@ -378,15 +324,6 @@ describe('RideService', () => {
       expect(mockServiceTracking.evaluateBikes).toHaveBeenCalledWith([OLD_BIKE, NEW_BIKE], 7);
     });
 
-    // The review names the bike, so the next open writes one about the bike the ride is on now.
-    it('clears the ride review', async () => {
-      garage([]);
-
-      await service.changeBike(7, 5, NEW_BIKE);
-
-      expect(mockPrisma.rides.update.mock.calls[0][0]).toMatchObject({ where: { id: 5 }, data: { summary: null } });
-    });
-
     it('writes nothing when the ride is already on that bike', async () => {
       garage([part(10, OLD_BIKE, 'Chain')]);
 
@@ -425,15 +362,7 @@ describe('RideService', () => {
   });
 
   describe('dismiss', () => {
-    const stravaRide = {
-      ...ride,
-      activity_strava_id: BigInt('13579246810'),
-      json_data: JSON.stringify({ name: 'Morning Ride', map: { summary_polyline: 'ki}fH' } }),
-      elevation_down_m: 598,
-      speed_avg: 16,
-      max_speed_kmh: 54,
-      descent_min: 31,
-    };
+    const stravaRide = { ...ride, activity_strava_id: BigInt('13579246810') };
 
     // The Strava ride above, saved on the old bike among these parts.
     function saved(parts: Part[]): void {
@@ -477,28 +406,15 @@ describe('RideService', () => {
       expect(upsert.update.resolved_at).toBeInstanceOf(Date);
     });
 
-    // analyzed_data is required, so the row carries the ride as a pending row would.
-    it('stores the ride own figures as the pending row analysis', async () => {
+    // The dismissed mark only dedupes; it keeps no Strava payload.
+    it('writes no payload on the pending row', async () => {
       saved([]);
 
       await service.dismiss(7, 5);
 
-      expect(mockPrisma.strava_pending_activities.upsert.mock.calls[0][0].create.analyzed_data).toEqual({
-        rawJson: { name: 'Morning Ride', map: { summary_polyline: 'ki}fH' } },
-        started_at: '2026-09-20T08:00:00.000Z',
-        name: 'Morning Ride',
-        summary_polyline: 'ki}fH',
-        suspension_minutes: 90,
-        health_index_brake_pad: 4,
-        descent_min: 31,
-        drivetrain_km: 38,
-        distance_km: 32,
-        duration_min: 120,
-        elevation_up_m: 612.4,
-        elevation_down_m: 598,
-        speed_avg: 16,
-        max_speed_kmh: 54,
-      });
+      const create = mockPrisma.strava_pending_activities.upsert.mock.calls[0][0].create;
+      expect(create.analyzed_data).toBe(Prisma.DbNull);
+      expect(create.analyzed_at).toBeNull();
     });
 
     it('evaluates the bike the wear came off', async () => {
@@ -587,113 +503,4 @@ describe('RideService', () => {
     });
   });
 
-  describe('findSummary', () => {
-    // 32.4 km, 2 h, 612 m up and 598 m down on the Orbea, with no review yet.
-    const unreviewed = {
-      id: 5,
-      summary: null as string | null,
-      started_at: new Date('2026-09-20T08:00:00.000Z'),
-      distance_m: 32400,
-      duration_min: 120,
-      elevation_up_m: 612,
-      elevation_down_m: 598,
-      speed_avg: 16,
-      max_speed_kmh: 54,
-      json_data: JSON.stringify({ name: 'Morning ride', sport_type: 'MountainBikeRide' }),
-      bikes: { bike_brand: 'Orbea', bike_model: 'Rallon', year: 2024 },
-      users: { language: 'cs' },
-    };
-
-    it('sends Gemini the ride figures, its name, sport and bike, and nothing else of the payload', async () => {
-      mockPrisma.rides.findFirst.mockResolvedValue({
-        ...unreviewed,
-        json_data: JSON.stringify({
-          name: 'Morning ride',
-          sport_type: 'MountainBikeRide',
-          average_watts: 182.4,
-          max_watts: 640,
-          weighted_average_watts: 201,
-          start_latlng: [50.08, 14.42],
-          end_latlng: [50.09, 14.43],
-          map: { summary_polyline: 'u{~vFvyys@fS]' },
-          description: 'With Pete',
-          private_note: 'Knee hurts again',
-          average_heartrate: 151,
-          max_heartrate: 182,
-          athlete: { id: 424242 },
-          location_city: 'Praha',
-          gear: { name: 'Strava calls it the Rallon' },
-        }),
-      });
-      mockGemini.rideSummary.mockResolvedValue('A review');
-
-      await service.findSummary(7, 5);
-
-      expect(mockGemini.rideSummary.mock.calls[0][0]).toEqual({
-        name: 'Morning ride',
-        sport_type: 'MountainBikeRide',
-        started_at: '2026-09-20T08:00:00.000Z',
-        bike: 'Orbea Rallon 2024',
-        distance_km: 32.4,
-        duration_min: 120,
-        elevation_up_m: 612,
-        elevation_down_m: 598,
-        speed_avg_kmh: 16,
-        max_speed_kmh: 54,
-        average_watts: 182,
-        max_watts: 640,
-        weighted_average_watts: 201,
-      });
-    });
-
-    it('writes the review in the rider language and keeps it on the ride', async () => {
-      mockPrisma.rides.findFirst.mockResolvedValue(unreviewed);
-      mockGemini.rideSummary.mockResolvedValue('Pořádná enduro jízda, 4/5.');
-
-      const result = await service.findSummary(7, 5);
-
-      expect(result).toEqual({ summary: 'Pořádná enduro jízda, 4/5.' });
-      expect(mockGemini.rideSummary.mock.calls[0][1]).toBe('cs');
-      expect(mockPrisma.rides.update).toHaveBeenCalledWith({
-        where: { id: 5 },
-        data: { summary: 'Pořádná enduro jízda, 4/5.' },
-      });
-    });
-
-    it('writes an arrival review over nothing, so one an open wrote stays', async () => {
-      mockPrisma.rides.findFirst.mockResolvedValue(unreviewed);
-      mockPrisma.rides.updateMany = jest.fn();
-      mockGemini.rideSummary.mockResolvedValue('Parádní jízda, 4/5.');
-
-      await service.writeArrivalSummary(5);
-
-      expect(mockPrisma.rides.updateMany).toHaveBeenCalledWith({
-        where: { id: 5, summary: null },
-        data: { summary: 'Parádní jízda, 4/5.' },
-      });
-    });
-
-    it('returns a kept review without asking Gemini again', async () => {
-      mockPrisma.rides.findFirst.mockResolvedValue({ ...unreviewed, summary: 'Already written' });
-
-      const result = await service.findSummary(7, 5);
-
-      expect(result).toEqual({ summary: 'Already written' });
-      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
-      expect(mockPrisma.rides.update).not.toHaveBeenCalled();
-    });
-
-    it('refuses a ride that is not the user own, is deleted, or is on an archived bike', async () => {
-      mockPrisma.rides.findFirst.mockResolvedValue(null);
-
-      await expect(service.findSummary(7, 5)).rejects.toThrow(NotFoundException);
-      expect(mockPrisma.rides.findFirst.mock.calls[0][0].where).toEqual({
-        id: 5,
-        user_id: 7,
-        is_deleted: { not: true },
-        bikes: { is_deleted: { not: true } },
-      });
-      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
-    });
-  });
 });

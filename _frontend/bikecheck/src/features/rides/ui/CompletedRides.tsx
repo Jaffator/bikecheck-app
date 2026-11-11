@@ -17,6 +17,7 @@ import { CheckInMark } from "./CheckInMark";
 import { RideDetailSheet } from "./RideDetailSheet";
 import type { Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { rideTitle } from "@/features/rides/rideTitle";
 
 // Clears the floating tab bar, so the last ride can be scrolled out from under it. Desktop has none.
 const FOOTER_CLEARANCE = {
@@ -36,12 +37,11 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
   return (
     <CompletedRideCard
       onOpen={onOpen}
-      leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
-      /* The activity's own title leads: it is what the user named the ride, so it
-         identifies it faster than the bike or the date. */
+      /* No route kept with the ride (#375); #376 fetches it on demand. */
+      leading={<RouteMap polyline={null} width={50} height={50} simplify={CARD_SIMPLIFY} />}
       title={
         <>
-          {ride.name}
+          {rideTitle(ride, t("rides.unknownBike"))}
           <span style={{ marginInlineStart: 8 }}>
             <CheckInMark checkIn={ride.check_in} size={15} />
           </span>

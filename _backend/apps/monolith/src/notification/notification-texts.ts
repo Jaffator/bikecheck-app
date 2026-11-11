@@ -181,6 +181,16 @@ const TEXTS: Record<NotificationType, NotificationTexts> = {
       body: (payload) => `The garage${garageLabel(payload, ' of')} is open to you.`,
     },
   },
+  strava_disconnected: {
+    cs: {
+      title: () => 'Strava odpojena',
+      body: () => 'Data ze Stravy byla smazána. Najeté km a opotřebení dílů zůstávají.',
+    },
+    en: {
+      title: () => 'Strava disconnected',
+      body: () => 'Your Strava data was deleted. Distance and part wear stay.',
+    },
+  },
 };
 
 // "Jarda Novák (@jaffa)", or whichever half is known: a follower without a profile has no

@@ -404,8 +404,6 @@ model rides {
   created_at             DateTime? @default(now()) @db.Timestamptz(6)
   drivetrain_meters      Int?
   duration_min           Int?
-  json_data              Json?
-  summary                String?   @db.VarChar
   suspension_min         Int?
   updated_at             DateTime? @db.Timestamptz(6)
   activity_strava_id     BigInt?   @unique
@@ -683,10 +681,11 @@ model strava_pending_activities {
   activity_id   BigInt    @unique
   user_id       Int
   gear_id       String?   @db.VarChar
-  analyzed_data Json
+  // Strava Data, cached 7 days at most (policy §6.2); null once purged, fetched again when needed.
+  analyzed_data Json?
+  analyzed_at   DateTime? @default(now()) @db.Timestamptz(6)
   created_at    DateTime  @default(now()) @db.Timestamptz(6)
   resolved_at   DateTime? @db.Timestamptz(6)
-  summary       String?   @db.VarChar
 
   @@index([gear_id, user_id], map: "strava_pending_gear_athlete")
 }

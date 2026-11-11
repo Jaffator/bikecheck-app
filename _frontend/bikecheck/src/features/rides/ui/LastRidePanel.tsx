@@ -18,6 +18,7 @@ import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides, useSaveRideCheckIn } from "@/features/rides/rides.queries";
 import type { CheckInStatus, Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { rideTitle } from "@/features/rides/rideTitle";
 import { pattern } from "@/features/service/serviceDates";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { CheckInMark } from "./CheckInMark";
@@ -94,8 +95,8 @@ interface RideBodyProps {
 function FullRide({ ride, colorIndex }: RideBodyProps): ReactElement {
   return (
     <Stack gap="sm">
-      {/* A picture, so the click goes to the card and opens the ride. */}
-      <RideMap polyline={ride.summary_polyline} height={150} interactive={false} />
+      {/* A picture, so the click goes to the card. No route kept with the ride (#375); #376 fetches it. */}
+      <RideMap polyline={null} height={150} interactive={false} />
       <RideHeading ride={ride} colorIndex={colorIndex} dateFormat="D. M. YYYY · HH:mm" />
       <RideMetrics ride={ride} compact={false} />
       <WoreOff lines={ride.wore_off} />
@@ -111,7 +112,7 @@ function CompactRide({ ride, colorIndex }: RideBodyProps): ReactElement {
     <Stack gap="sm">
       <Group gap="sm" wrap="nowrap" align="stretch">
         <Box w={THUMBNAIL_SIZE} h={THUMBNAIL_SIZE} style={THUMBNAIL_STYLE}>
-          <RideMap polyline={ride.summary_polyline} height={THUMBNAIL_SIZE} interactive={false} thumbnail />
+          <RideMap polyline={null} height={THUMBNAIL_SIZE} interactive={false} thumbnail />
         </Box>
         <Stack justify="space-between" gap="xs" style={{ flex: 1, minWidth: 0 }}>
           <CompactRideHeading ride={ride} colorIndex={colorIndex} />
@@ -137,7 +138,7 @@ function RideHeading({ ride, colorIndex, dateFormat }: RideBodyProps & { dateFor
   return (
     <Stack gap={2}>
       <Text fz={16} fw={600} c="text.6" lineClamp={1}>
-        {ride.name}
+        {rideTitle(ride, t("rides.unknownBike"))}
       </Text>
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
         <BikeColorDot colorIndex={colorIndex} size={6} />
@@ -162,7 +163,7 @@ function CompactRideHeading({ ride, colorIndex }: RideBodyProps): ReactElement {
   return (
     <Stack gap={2}>
       <Text fz={15} fw={600} lh={1.3} c="text.6" lineClamp={2}>
-        {ride.name}
+        {rideTitle(ride, t("rides.unknownBike"))}
       </Text>
       {ride.started_at !== null && (
         <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>

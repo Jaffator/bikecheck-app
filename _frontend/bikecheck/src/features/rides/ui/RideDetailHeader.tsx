@@ -12,6 +12,7 @@ import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import type { BikePick, RideItem, RideWalk } from "@/features/rides/rideDetail";
+import { rideTitle } from "@/features/rides/rideTitle";
 
 dayjs.extend(relativeTime);
 
@@ -36,9 +37,9 @@ export function RideDetailHeader({ item, pick, walk }: RideDetailHeaderProps): R
   return (
     <Stack gap={4} style={{ minWidth: 0 }}>
       {walk !== undefined && <WalkEyebrow arrivedAt={ride.created_at} walk={walk} />}
-      {/* An Unassigned Ride parked before Strava titles were kept has none; its start stands in. */}
+      {/* A ride keeps no Strava title (#375); an Unassigned Ride without one shows its start. */}
       <Text fw={600} fz={22} lh={1.15} lts="var(--tracking-title)" c="text.6" lineClamp={2}>
-        {ride.name || started}
+        {item.kind === "ride" ? rideTitle(item.ride, t("rides.unknownBike")) : item.ride.name || started}
       </Text>
       <Group gap={7} wrap="nowrap" style={{ minWidth: 0 }}>
         <BikeColorDot colorIndex={colorIndex} size={7} />

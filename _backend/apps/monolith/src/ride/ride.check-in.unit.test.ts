@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RideService } from './ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
-import { GeminiService } from '../gemini/gemini.service';
 import type { Response_WoreOffLineDto } from '../service-tracking/dto/response-wore-off-line';
 
 const NOW = new Date('2026-09-29T12:00:00.000Z');
@@ -22,7 +21,6 @@ function ride(id: number, startedDaysAgo: number, createdDaysAgo: number, checkI
     bikes: { bike_brand: 'Orbea', bike_model: 'Rallon', year: 2024 },
     started_at: daysAgo(startedDaysAgo),
     created_at: daysAgo(createdDaysAgo),
-    json_data: null,
     check_in: checkIn,
   };
 }
@@ -80,7 +78,6 @@ describe('RideService check-in', () => {
         RideService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
-        { provide: GeminiService, useValue: { rideSummary: jest.fn() } },
       ],
     }).compile();
 
@@ -227,6 +224,17 @@ describe('RideService check-in', () => {
       } = await service.findCheckInPrompt(1, NOW);
 
       expect(offered.sport_type).toBe('MountainBikeRide');
+    });
+
+    // Its payload is past the 7-day cache; the Unassigned tab fetches it again, the drawer does not.
+    it('leaves out a pending ride whose payload was purged', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ check_in_prompted_at: null });
+      mockPrisma.rides.findMany.mockResolvedValue([]);
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([
+        { ...pending(900, 1, 8), analyzed_data: null },
+      ]);
+
+      await expect(service.findCheckInPrompt(1, NOW)).resolves.toEqual({ rides: [], pending: [] });
     });
 
     // A 60-day backfill lands now, but only rides started in the window are asked about.
