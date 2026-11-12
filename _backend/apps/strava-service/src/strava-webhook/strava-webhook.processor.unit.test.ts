@@ -23,6 +23,7 @@ const athleteEvent = (updates: Record<string, string>): Job =>
 
 describe('StravaProcessor athlete events', () => {
   const tokens = { removeLocalData: jest.fn() };
+  const eventsQueue = { add: jest.fn() };
   const webhook = {
     downloadActivity: jest.fn(),
     purgeStaleActivities: jest.fn(),
@@ -34,8 +35,8 @@ describe('StravaProcessor athlete events', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     processor = new StravaProcessor(
-      { debug: jest.fn() } as unknown as PinoLogger,
-      {} as Queue,
+      { debug: jest.fn(), info: jest.fn() } as unknown as PinoLogger,
+      eventsQueue as unknown as Queue,
       {} as Queue,
       webhook as unknown as StravaWebhookService,
       tokens as unknown as TokenService,
@@ -43,11 +44,27 @@ describe('StravaProcessor athlete events', () => {
   });
 
   it('drops the local data when the user revokes access on Strava', async () => {
+    tokens.removeLocalData.mockResolvedValue(true);
     const result = await processor.process(athleteEvent({ authorized: 'false' }));
 
     expect(tokens.removeLocalData).toHaveBeenCalledWith(ATHLETE_ID);
     expect(result).toEqual({ type: 'deauthorized', data: { athleteId: ATHLETE_ID } });
     expect(webhook.downloadActivity).not.toHaveBeenCalled();
+  });
+
+  // Revoking in the app makes Strava send the same event after our own cleanup.
+  it('does not tell the monolith again about an athlete already unlinked', async () => {
+    tokens.removeLocalData.mockResolvedValue(false);
+
+    const result = await processor.process(athleteEvent({ authorized: 'false' }));
+
+    expect(result).toEqual({ skipped: true, reason: 'Athlete already unlinked' });
+  });
+
+  it('hands a revoked grant on to the monolith as strava-deauthorized', async () => {
+    await processor.onCompleted({ id: '1' } as Job, { type: 'deauthorized', data: { athleteId: ATHLETE_ID } });
+
+    expect(eventsQueue.add).toHaveBeenCalledWith('strava-deauthorized', { athleteId: ATHLETE_ID });
   });
 
   it('ignores any other athlete update', async () => {

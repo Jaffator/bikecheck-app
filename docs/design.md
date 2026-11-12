@@ -14,7 +14,7 @@ service event. The owner can generate a shareable report (e.g. when selling a bi
 - See my bikes, their mileage and health indexes ("bikes").
 - **Log service events — record what was done to the bike (the core of the app).**
 - Know when a component needs service (chain, brakes…) based on mileage / health.
-- Review rides synced from Strava (with an AI ride summary).
+- Review rides synced from Strava.
 - Get notified (push + in-app) when something needs attention or a new Strava ride arrives.
 - Generate a shareable report (bike + components + service history) as a link / PDF.
 
@@ -83,7 +83,7 @@ More → drawer: Riders, Chat         │ 🔔 Notif.  3 │                    
       → Suspension group, Fork component)
 
 📋 Rides
-   └─ Feed of recent rides across bikes, each with the AI (Gemini) summary + rating
+   └─ Feed of recent rides across bikes, each with its figures
 
 👤 Account (opened from the avatar menu, not a tab)
    └─ Profile, Strava account, notification settings, organization, logout

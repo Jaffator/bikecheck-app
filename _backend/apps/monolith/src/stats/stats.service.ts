@@ -63,7 +63,6 @@ const distanceSelect = {
   distance_m: true,
   duration_min: true,
   elevation_up_m: true,
-  calories: true,
 } satisfies Prisma.ridesSelect;
 type DistanceRide = Prisma.ridesGetPayload<{ select: typeof distanceSelect }>;
 
@@ -80,10 +79,8 @@ interface BikeRides {
   daily_m: number[];
   daily_elevation_m: number[];
   daily_time_min: number[];
-  daily_calories: number[];
   ride_count: number;
   time_min: number;
-  calories: number;
 }
 
 // The whole Period before; the totals stop at `sameDay`, a day the shorter month lacks reading as its last.
@@ -516,12 +513,11 @@ function previousOf(rides: DistanceRide[], window: PreviousWindow): Response_Dis
     meters: sum(counted.map((ride) => ride.distance_m ?? 0)),
     elevation_m: sum(counted.map((ride) => ride.elevation_up_m ?? 0)),
     time_min: sum(counted.map((ride) => ride.duration_min ?? 0)),
-    calories: sum(counted.map((ride) => ride.calories ?? 0)),
     ...garageDays(ridesByBike(rides, window), windowDays(window)),
   };
 }
 
-type DailyColumn = 'daily_m' | 'daily_elevation_m' | 'daily_time_min' | 'daily_calories';
+type DailyColumn = 'daily_m' | 'daily_elevation_m' | 'daily_time_min';
 
 // Every bike's days added up, so the client draws the garage without knowing the bikes; a day no
 // bike rode is a 0, never a gap.
@@ -535,7 +531,6 @@ function garageDays(ridden: Map<number, BikeRides>, days: number): Pick<BikeRide
     daily_m: summed('daily_m'),
     daily_elevation_m: summed('daily_elevation_m'),
     daily_time_min: summed('daily_time_min'),
-    daily_calories: summed('daily_calories'),
   };
 }
 
@@ -570,10 +565,8 @@ function ridesByBike(rides: DistanceRide[], window: DayWindow): Map<number, Bike
     entry.daily_m[day] += ride.distance_m ?? 0;
     entry.daily_elevation_m[day] += ride.elevation_up_m ?? 0;
     entry.daily_time_min[day] += ride.duration_min ?? 0;
-    entry.daily_calories[day] += ride.calories ?? 0;
     entry.ride_count += 1;
     entry.time_min += ride.duration_min ?? 0;
-    entry.calories += ride.calories ?? 0;
     byBike.set(ride.bike_id, entry);
   }
   return byBike;
@@ -584,10 +577,8 @@ function noRides(days: number): BikeRides {
     daily_m: new Array<number>(days).fill(0),
     daily_elevation_m: new Array<number>(days).fill(0),
     daily_time_min: new Array<number>(days).fill(0),
-    daily_calories: new Array<number>(days).fill(0),
     ride_count: 0,
     time_min: 0,
-    calories: 0,
   };
 }
 

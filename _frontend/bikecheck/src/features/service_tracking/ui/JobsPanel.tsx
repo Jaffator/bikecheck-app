@@ -7,18 +7,16 @@ import { CalendarDays, Check } from "lucide-react";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Panel, PanelSkeletonRows } from "@/components/Panel";
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, onPanelRowKey } from "@/components/panelRows";
-import { colorIndexOf } from "@/features/bikes/bikeColors";
-import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import {
   DUE_FROM,
   QUIET_COLOR,
   attentionColor,
+  attentionInk,
   trackedActionKey,
 } from "@/features/service_tracking/attentionLevel";
-import { readingFigure, remainingLabel } from "@/features/service_tracking/intervalFigures";
+import { attentionFigure, readingFigure } from "@/features/service_tracking/intervalFigures";
 import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import { trackedActionServiceLink } from "@/features/service_tracking/serviceLink";
 import { useGarageTrackedActions } from "@/features/service_tracking/tracking.queries";
@@ -29,7 +27,8 @@ import { BulletBar } from "./BulletBar";
 import { PlanSheet } from "./PlanSheet";
 import { TrackedActionDrawer } from "./TrackedActionDrawer";
 
-const JOB_COLUMNS = "minmax(0, 1fr) 130px 104px 136px";
+// A fixed button column, so every row's line ends at the same place whatever its labels say.
+const JOB_COLUMNS = "minmax(0, 1fr) 264px";
 
 interface JobsPanelProps {
   // Set on the Service page, where null is every bike; Home passes none and links to Service.
@@ -81,10 +80,7 @@ function JobRow({
 }): ReactElement {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { data: bikes } = useBikes();
-  const color = attentionColor(action.percentage);
-  // Critical and overdue pull the eye; a warning waits its turn.
-  const urgent = action.level === "critical" || action.level === "overdue";
+  const ink = attentionInk(action);
 
   return (
     <Box
@@ -97,46 +93,35 @@ function JobRow({
         display: "grid",
         gridTemplateColumns: JOB_COLUMNS,
         alignItems: "center",
-        gap: 12,
+        columnGap: 40,
         padding: PANEL_ROW_PADDING,
         borderTop: PANEL_HAIRLINE,
       }}
     >
-      <Stack gap={2} style={{ minWidth: 0 }}>
-        <Text fz={13} fw={600} c="text.6" lineClamp={1}>
-          {catalogueLabel(action.action_i18n_key, action.action_name, t)}
-        </Text>
+      <Stack gap={8} style={{ minWidth: 0 }}>
+        <Group gap={16} justify="space-between" wrap="nowrap" align="baseline">
+          <Text fz={14} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
+            {catalogueLabel(action.action_i18n_key, action.action_name, t)}
+          </Text>
+          <Text className="tabular-nums" fz={13} fw={600} c={ink} style={{ whiteSpace: "nowrap" }}>
+            {attentionFigure(action, i18n.language, t)}
+          </Text>
+        </Group>
+        <BulletBar percentage={action.percentage} color={attentionColor(action.percentage)} />
         {/* The part is the drawer's to name; the row says only which bike. */}
-        <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-          <BikeColorDot colorIndex={colorIndexOf(bikes, action.bike_id)} size={6} />
-          <Text fz={13} c="text.8" lineClamp={1} style={{ minWidth: 0 }}>
-            {bikeTitle(action)}
-          </Text>
-        </Group>
-      </Stack>
-      <Stack gap={4} style={{ minWidth: 0 }}>
-        <Group gap={10} wrap="nowrap">
-          <BulletBar percentage={action.percentage} color={color} />
-          <Text className="tabular-nums" fz={13} fw={600} c={color} ta="right" w={48} style={{ flexShrink: 0 }}>
-            {t("tracking.percentage", { value: action.percentage })}
-          </Text>
-        </Group>
         <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
-          {readingFigure(action, i18n.language)}
+          {`${bikeTitle(action)} · ${readingFigure(action, i18n.language)}`}
         </Text>
       </Stack>
-      <Text className="tabular-nums" fz={13} c="text.8" ta="right" lineClamp={1}>
-        {remainingLabel(action, i18n.language, t)}
-      </Text>
-      {/* Stacked rather than side by side: a second column would squeeze the Action's name to nothing at lg. */}
-      <Stack gap={6}>
+      <Group gap={8} wrap="nowrap" justify="flex-end">
         <Button
-          fullWidth
           size="xs"
           radius="md"
-          variant={urgent ? "filled" : "outline"}
-          color={urgent ? "primary.6" : undefined}
-          c={urgent ? "textDark.6" : undefined}
+          variant="outline"
+          // Quiet until pointed at, so no row shouts before the owner reaches it.
+          vars={() => ({
+            root: { "--button-hover": "var(--mantine-color-primary-6)", "--button-hover-color": "var(--mantine-color-textDark-6)" },
+          })}
           onClick={(event) => {
             event.stopPropagation();
             navigate(trackedActionServiceLink(action));
@@ -145,7 +130,7 @@ function JobRow({
           {t(action.replace_action ? "tracking.logReplacement" : "tracking.logService")}
         </Button>
         <PlanButton planned={action.planned_for} onPlan={onPlan} />
-      </Stack>
+      </Group>
     </Box>
   );
 }
@@ -157,7 +142,6 @@ function PlanButton({ planned, onPlan }: { planned: string | null; onPlan: () =>
 
   return (
     <Button
-      fullWidth
       size="xs"
       radius="md"
       variant="outline"

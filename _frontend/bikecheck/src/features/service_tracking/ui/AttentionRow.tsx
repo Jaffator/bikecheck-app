@@ -1,20 +1,19 @@
-// One Tracked Action as the phone lists it, the desktop row stacked: the job and its bike,
-// how far it has come against the interval, and the plan the owner can set without opening it.
+// One Tracked Action as the phone lists it: the job and what is left of it, the line, which bike,
+// and the plan the owner can set without opening it.
 import type { ReactElement } from "react";
 import { Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ChevronRight } from "lucide-react";
 import { onPanelRowKey } from "@/components/panelRows";
-import { colorIndexOf } from "@/features/bikes/bikeColors";
-import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import { attentionColor } from "@/features/service_tracking/attentionLevel";
-import { remainingLabel } from "@/features/service_tracking/intervalFigures";
+import { attentionColor, attentionInk } from "@/features/service_tracking/attentionLevel";
+import { attentionFigure } from "@/features/service_tracking/intervalFigures";
 import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
 import { BulletBar } from "./BulletBar";
 import { PlanDayButton } from "./PlanDayButton";
+
+// Fits the Czech "Naplánovat", so every row's line ends at the same place.
+const PLAN_WIDTH = 84;
 
 interface AttentionRowProps {
   action: GarageTrackedAction;
@@ -24,8 +23,7 @@ interface AttentionRowProps {
 
 export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): ReactElement {
   const { t, i18n } = useTranslation();
-  const { data: bikes } = useBikes();
-  const color = attentionColor(action.percentage);
+  const ink = attentionInk(action);
 
   // A div rather than a <button>: the plan button sits inside, and buttons cannot nest.
   return (
@@ -37,43 +35,32 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
       onKeyDown={(event) => onPanelRowKey(event, onOpen)}
       className="hover-veil active:scale-[0.985]"
       style={{
-        display: "block",
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto",
+        alignItems: "center",
+        columnGap: 16,
         width: "100%",
         transition: "transform 0.12s ease",
       }}
     >
-      <Stack gap={8}>
-        <Stack gap={2}>
-          {/* The chevron says the row opens; the desktop row has the hover for that. */}
-          <Group gap="sm" wrap="nowrap" align="center">
-            <Text fz={13} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0, flex: 1 }}>
-              {catalogueLabel(action.action_i18n_key, action.action_name, t)}
-            </Text>
-            <Text className="tabular-nums" fz={13} fw={600} c={color} style={{ whiteSpace: "nowrap" }}>
-              {t("tracking.percentage", { value: action.percentage })}
-            </Text>
-            <ChevronRight size={14} color="var(--mantine-color-text-8)" style={{ flexShrink: 0 }} />
-          </Group>
-
-          <Group gap="sm" wrap="nowrap" align="center">
-            <Group gap={6} wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
-              <BikeColorDot colorIndex={colorIndexOf(bikes, action.bike_id)} size={6} />
-              <Text fz={12} c="text.8" lineClamp={1} style={{ minWidth: 0 }}>
-                {bikeTitle(action)}
-              </Text>
-            </Group>
-            <Text className="tabular-nums" fz={12} c="text.8" style={{ whiteSpace: "nowrap" }}>
-              {remainingLabel(action, i18n.language, t)}
-            </Text>
-          </Group>
-        </Stack>
-
-        <BulletBar percentage={action.percentage} color={color} />
-
-        <Group>
-          <PlanDayButton planned={action.planned_for} onPlan={onPlan} />
+      <Stack gap={7} style={{ minWidth: 0 }}>
+        <Group gap="sm" wrap="nowrap" align="baseline">
+          <Text fz={14} fw={600} c="text.6" lineClamp={2} style={{ minWidth: 0, flex: 1 }}>
+            {catalogueLabel(action.action_i18n_key, action.action_name, t)}
+          </Text>
+          <Text className="tabular-nums" fz={13} fw={600} c={ink} style={{ whiteSpace: "nowrap" }}>
+            {attentionFigure(action, i18n.language, t)}
+          </Text>
         </Group>
+
+        <BulletBar percentage={action.percentage} color={attentionColor(action.percentage)} />
+
+        <Text fz={12} c="text.8" lineClamp={1}>
+          {bikeTitle(action)}
+        </Text>
       </Stack>
+
+      <PlanDayButton planned={action.planned_for} onPlan={onPlan} width={PLAN_WIDTH} />
     </UnstyledButton>
   );
 }

@@ -35,7 +35,6 @@ export interface NotificationTextPayload {
   // every other field here.
   elevationM?: number;
   gearName?: string;
-  activityName?: string;
   // How many Tracked Actions on the bike are coming up, due, and past due. Where the bike
   // stands, not only what just moved - the line has to size the job, and an action
   // announced last week is still an action waiting.
@@ -280,15 +279,13 @@ function plannedBody(
   return payload.bikeName ? `${payload.bikeName} · ${jobs}` : jobs;
 }
 
-// The ride's own name identifies it better than anything else, so it takes the
-// place the ask used to hold. The distance still leads. A ride that arrived
-// without a name falls back to the ask, which is why the notification was sent.
+// No Strava title (policy §6.2): the figures lead and the ask closes the line.
 function unassignedBody(payload: NotificationTextPayload, unit: string, ask: string): string {
   const parts: string[] = [];
   if (payload.km !== undefined) parts.push(`${payload.km} ${unit}`);
   const climb = climbed(payload);
   if (climb !== null) parts.push(climb);
-  parts.push(payload.activityName ?? ask);
+  parts.push(ask);
   return parts.join(' · ');
 }
 

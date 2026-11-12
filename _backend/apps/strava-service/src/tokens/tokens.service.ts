@@ -4,10 +4,20 @@ import { randomUUID } from 'crypto';
 import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { DatabaseService } from '../database/database.service';
 import { Queue } from 'bullmq';
-import axios from 'axios';
+import axios, { type AxiosResponse } from 'axios';
 import 'dotenv/config';
 import { InjectQueue } from '@nestjs/bullmq/dist/decorators/inject-queue.decorator';
 import type { StravaReturnTo } from '@contracts/strava-oauth.contract';
+
+// What the sync cannot work without: the gear list on /athlete, and Only Me activities.
+const REQUIRED_SCOPES = ['profile:read_all', 'activity:read_all'];
+
+// The athlete may untick scopes on Strava's page; the callback lists those actually granted.
+export function hasRequiredScopes(granted: string | undefined): boolean {
+  // Strava sends commas, its docs say spaces; both are read.
+  const scopes = (granted ?? '').split(/[,\s]+/);
+  return REQUIRED_SCOPES.every((scope) => scopes.includes(scope));
+}
 
 export interface OAuthState {
   user_id: number;
@@ -54,7 +64,7 @@ export class TokenService {
       redirect_uri: `${process.env.STRAVA_SERVICE_URL}/strava/exchange_token`,
       approval_prompt: 'force',
       // Only what the sync reads: the athlete's gear and activities. Nothing is written to Strava.
-      scope: 'profile:read_all,activity:read_all',
+      scope: REQUIRED_SCOPES.join(','),
       state,
     });
 
@@ -103,13 +113,7 @@ export class TokenService {
   }
 
   async exchangeToken(code: string, userID: number): Promise<boolean> {
-    // Get refresh and access tokens from Strava API
-    const response = await axios.post('https://www.strava.com/oauth/token', {
-      client_id: process.env.STRAVA_CLIENT_ID,
-      client_secret: process.env.STRAVA_CLIENT_SECRET,
-      code: code,
-      grant_type: 'authorization_code',
-    });
+    const response = await this.exchangeCode(code);
 
     // Send UserID and the athlete profile to monolith. The profile travels with
     // the link event because this is the only moment it is on hand — Strava
@@ -143,11 +147,7 @@ export class TokenService {
    */
   async disconnect(athleteID: number): Promise<void> {
     try {
-      const accessToken = await this.getAccessToken(athleteID);
-      await axios.post('https://www.strava.com/oauth/revoke', new URLSearchParams({ token: accessToken }), {
-        auth: { username: String(process.env.STRAVA_CLIENT_ID), password: String(process.env.STRAVA_CLIENT_SECRET) },
-        timeout: 5000,
-      });
+      await this.revokeToken(await this.getAccessToken(athleteID));
     } catch (err) {
       this.logger.warn({ err, athleteID }, 'Strava deauthorize failed, removing local tokens anyway');
     }
@@ -155,16 +155,48 @@ export class TokenService {
     await this.removeLocalData(athleteID);
   }
 
+  // A grant missing a required scope is taken back at once; nothing is saved and the monolith never hears of it.
+  async rejectGrant(code: string): Promise<void> {
+    try {
+      const response = await this.exchangeCode(code);
+      await this.revokeToken(response.data.access_token);
+    } catch (err) {
+      this.logger.warn({ err }, 'Could not revoke a grant with missing scopes');
+    }
+  }
+
+  // Trades the callback's one-time code for the athlete's tokens and profile.
+  private async exchangeCode(code: string): Promise<AxiosResponse> {
+    return axios.post('https://www.strava.com/oauth/token', {
+      client_id: process.env.STRAVA_CLIENT_ID,
+      client_secret: process.env.STRAVA_CLIENT_SECRET,
+      code,
+      grant_type: 'authorization_code',
+    });
+  }
+
+  // Revoking the access token takes its refresh token along (Strava docs).
+  private async revokeToken(accessToken: string): Promise<void> {
+    const body = new URLSearchParams({ token: accessToken, token_type_hint: 'access_token' });
+    await axios.post('https://www.strava.com/oauth/revoke', body, {
+      auth: { username: process.env.STRAVA_CLIENT_ID ?? '', password: process.env.STRAVA_CLIENT_SECRET ?? '' },
+      timeout: 5000,
+    });
+  }
+
   // Also runs when the user revokes access on Strava's side: no grant is left to revoke, only our copies.
-  async removeLocalData(athleteID: number): Promise<void> {
-    await this.databaseService.transaction(async (client) => {
-      await client.query('DELETE FROM access_tokens WHERE athlete_id = $1', [athleteID]);
-      await client.query('DELETE FROM refresh_tokens WHERE athlete_id = $1', [athleteID]);
+  // True when the athlete was still linked; an in-app unlink has already removed the tokens by the time Strava's webhook comes.
+  async removeLocalData(athleteID: number): Promise<boolean> {
+    const removedTokens = await this.databaseService.transaction(async (client): Promise<number> => {
+      const access = await client.query('DELETE FROM access_tokens WHERE athlete_id = $1', [athleteID]);
+      const refresh = await client.query('DELETE FROM refresh_tokens WHERE athlete_id = $1', [athleteID]);
       // The webhook copies go too: unlinking, or a deleted account, leaves nothing taken from Strava (#272).
       await client.query('DELETE FROM strava_activities_raw WHERE athlete_id = $1', [athleteID]);
+      return (access?.rowCount ?? 0) + (refresh?.rowCount ?? 0);
     });
 
     this.logger.info({ custom: true, athlete_id: athleteID }, 'Strava tokens and raw activities removed');
+    return removedTokens > 0;
   }
 
   private async _getNewAccessToken(athleteID: number): Promise<string> {

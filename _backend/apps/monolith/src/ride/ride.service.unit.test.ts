@@ -152,17 +152,17 @@ describe('RideService', () => {
       expect(page.items[0].bike_name).toBe('Specialized Epic EVO');
     });
 
-    // A ride keeps no Strava payload past 7 days (policy §6.2), so no title, route or sport type.
-    it('carries no Strava title, route or sport type', async () => {
+    // A ride keeps its route for the thumbnail, but no Strava title or sport type.
+    it('carries the route, but no Strava title or sport type', async () => {
       mockPrisma.rides.findMany.mockResolvedValue([
-        { id: 5, activity_strava_id: null, bike_id: 7, bikes: null, distance_m: 42000 },
+        { id: 5, activity_strava_id: null, bike_id: 7, bikes: null, distance_m: 42000, summary_polyline: 'ki}fH' },
       ]);
       mockPrisma.rides.count.mockResolvedValue(1);
 
       const page = await service.findPage(1, 20, 0);
 
       expect(page.items[0]).not.toHaveProperty('name');
-      expect(page.items[0]).not.toHaveProperty('summary_polyline');
+      expect(page.items[0].summary_polyline).toBe('ki}fH');
       expect(page.items[0]).not.toHaveProperty('sport_type');
     });
 

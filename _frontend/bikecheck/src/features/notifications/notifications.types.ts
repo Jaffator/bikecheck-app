@@ -20,7 +20,6 @@ export interface NotificationPayload {
   km?: number;
   elevationM?: number;
   bikeName?: string;
-  activityName?: string;
   // The service wizard's ids for the most worn job a plan reminder opens.
   groupId?: number;
   actionId?: number;

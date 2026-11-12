@@ -1265,11 +1265,15 @@
             "null"
           ]
         },
-        "calories": {
+        "summary_polyline": {
           "type": [
-            "integer",
+            "string",
             "null"
           ]
+        },
+        "is_private": {
+          "type": "boolean",
+          "default": false
         },
         "bikes": {
           "$ref": "#/definitions/bikes"

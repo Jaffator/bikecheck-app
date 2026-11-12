@@ -1,4 +1,4 @@
-import { TokenService } from './tokens.service';
+import { TokenService, hasRequiredScopes } from './tokens.service';
 import type { DatabaseService } from '../database/database.service';
 import type { PinoLogger } from 'nestjs-pino';
 import type { Queue } from 'bullmq';
@@ -32,7 +32,7 @@ describe('TokenService.disconnect', () => {
       expect.objectContaining({}),
       expect.objectContaining({ auth: expect.anything() }),
     );
-    expect(String(mockPost.mock.calls[0][1])).toBe('token=token');
+    expect(String(mockPost.mock.calls[0][1])).toBe('token=token&token_type_hint=access_token');
     expect(clientQuery.mock.calls.map(([sql]) => sql)).toEqual([
       'DELETE FROM access_tokens WHERE athlete_id = $1',
       'DELETE FROM refresh_tokens WHERE athlete_id = $1',
@@ -46,5 +46,44 @@ describe('TokenService.disconnect', () => {
     await service.disconnect(ATHLETE_ID);
 
     expect(clientQuery).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('hasRequiredScopes', () => {
+  it('accepts a grant with the gear list and Only Me activities', () => {
+    expect(hasRequiredScopes('read,activity:read_all,profile:read_all')).toBe(true);
+    expect(hasRequiredScopes('read activity:read_all profile:read_all')).toBe(true);
+  });
+
+  // The athlete can untick either box on Strava's page.
+  it('refuses a grant missing either scope, or none at all', () => {
+    expect(hasRequiredScopes('read,activity:read_all')).toBe(false);
+    expect(hasRequiredScopes('read,profile:read_all,activity:read')).toBe(false);
+    expect(hasRequiredScopes(undefined)).toBe(false);
+  });
+});
+
+describe('TokenService.rejectGrant', () => {
+  it('exchanges the code only to revoke it, saving nothing', async () => {
+    const database = { query: jest.fn(), transaction: jest.fn() };
+    const queue = { add: jest.fn() };
+    const service = new TokenService(
+      { warn: jest.fn() } as unknown as PinoLogger,
+      queue as unknown as Queue,
+      database as unknown as DatabaseService,
+    );
+    mockPost.mockReset();
+    mockPost.mockResolvedValueOnce({ data: { access_token: 'half' } });
+
+    await service.rejectGrant('code');
+
+    expect(mockPost).toHaveBeenLastCalledWith(
+      'https://www.strava.com/oauth/revoke',
+      expect.anything(),
+      expect.objectContaining({ auth: expect.anything() }),
+    );
+    expect(String(mockPost.mock.calls[1][1])).toBe('token=half&token_type_hint=access_token');
+    expect(queue.add).not.toHaveBeenCalled();
+    expect(database.query).not.toHaveBeenCalled();
   });
 });

@@ -31,6 +31,10 @@ export class ResponsePendingStravaDto {
   @ApiProperty({ type: String, example: 'MountainBikeRide', nullable: true })
   sport_type!: string | null;
 
+  // Visible to the athlete only on Strava; marked, not hidden.
+  @ApiProperty({ example: false })
+  is_private!: boolean;
+
   @ApiProperty({ example: 42 })
   distance_km!: number;
 

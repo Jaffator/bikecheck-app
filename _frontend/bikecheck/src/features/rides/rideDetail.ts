@@ -81,9 +81,9 @@ export function woreOffShown(item: RideItem, pick: BikePick | null, walk: RideWa
   return item.kind === "ride" ? item.ride.wore_off : woreOffOn(item.ride.wore_off_by_bike, pickedId);
 }
 
-// A ride keeps no Strava route (#375, on demand in #376); an Unassigned Ride still has its 7-day copy.
+// The route Strava drew for the ride; null for one recorded without GPS.
 export function routeOf(item: RideItem): string | null {
-  return item.kind === "pending" ? item.ride.summary_polyline : null;
+  return item.ride.summary_polyline;
 }
 
 // The bike a ride moves to on save; null leaves it where it is.

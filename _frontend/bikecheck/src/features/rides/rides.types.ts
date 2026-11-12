@@ -56,6 +56,10 @@ export interface Ride {
   elevation_down_m: number | null;
   speed_avg: number | null;
   max_speed_kmh: number | null;
+  // Strava shows it only to its rider; marked in the lists, not hidden.
+  is_private: boolean;
+  // Strava's simplified route as an encoded polyline; null for a ride recorded without GPS.
+  summary_polyline: string | null;
   // When the ride reached BikeCheck, not when it was ridden.
   created_at: string | null;
   // Every Tracked Action the ride wore, closest to due first; empty where it wore off nothing.

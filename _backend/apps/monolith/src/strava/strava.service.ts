@@ -20,7 +20,13 @@ import axios from 'axios';
 import { ResponseUnmatchedStravaGearDto } from './dto/response-strava-unmatched-gear.dto';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import { ResponseCheckInPendingDto } from '../ride/dto/response-ride.dto';
-import { analysisOf, toCheckInPendingDto, toPendingDto } from './pending-activity';
+import {
+  analysisOf,
+  isPrivateActivity,
+  routeOfAnalysis,
+  toCheckInPendingDto,
+  toPendingDto,
+} from './pending-activity';
 import { unlinkStravaAthlete } from './unlink-strava-athlete';
 import { ResponseStravaAuthorizeUrlDto } from './dto/response-strava-authorize-url.dto';
 import { GearLinkDto } from './dto/link-strava-gear.dto';
@@ -85,12 +91,6 @@ function getKslopeUP(slopePercent: number): number {
   return 0;
 }
 
-// Strava's kcal estimate, whole; read from the activity itself so rides parked as pending earlier carry it too.
-function caloriesOf(rawJson: unknown): number | null {
-  const calories = (rawJson as { calories?: unknown } | null | undefined)?.calories;
-  return typeof calories === 'number' && Number.isFinite(calories) ? Math.round(calories) : null;
-}
-
 @Injectable()
 export class StravaEventsService {
   constructor(
@@ -141,7 +141,7 @@ export class StravaEventsService {
     try {
       await unlinkStravaAthlete(Number(user.strava_athlete_id));
     } catch (error) {
-      throw new Error(`Failed to disconnect Strava: ${(error as Error).message}`);
+      throw new Error(`Failed to disconnect Strava: ${(error as Error).message}`, { cause: error });
     }
 
     await this.clearStravaLink(userId);
@@ -161,17 +161,18 @@ export class StravaEventsService {
     this.logger.info({ custom: true, userId: user.id, athleteId: data.athleteId }, 'Strava access revoked on Strava');
   }
 
-  // Everything copied from Strava goes with the link; km, time and wear stay as the app's own record (#378).
+  // Strava's copies go with the link, the route too; km, time and wear stay as the app's own record (#378).
   private async clearStravaLink(userId: number): Promise<void> {
     // One transaction, so a failure midway leaves the link either whole or gone.
     await this.prisma.$transaction(async (tx) => {
       await tx.strava_pending_activities.deleteMany({ where: { user_id: userId } });
-      // Ride notifications carry the km and the activity name from Strava.
+      // Ride notifications carry the km and time Strava sent.
       await tx.notifications.deleteMany({
         where: { user_id: userId, type: { in: ['strava_activity_saved', 'strava_activity_unassigned'] } },
       });
-      await tx.rides.updateMany({ where: { user_id: userId }, data: { activity_strava_id: null } });
-      await tx.bikes.updateMany({ where: { user_id: userId }, data: { strava_gear_id: null } });
+      // The activity id stays, so a reconnect can tell the rides apart and fetch their routes again.
+      await tx.rides.updateMany({ where: { user_id: userId }, data: { summary_polyline: null, is_private: false } });
+      await tx.bikes.updateMany({ where: { user_id: userId }, data: { strava_gear_id: null, strava_name: null } });
       await tx.users.update({
         where: { id: userId },
         data: {
@@ -466,7 +467,6 @@ export class StravaEventsService {
           activityId: String(data.activity_id),
           km: Math.round(data.analyzedData.distance_km),
           elevationM: Math.round(data.analyzedData.elevation_up_m),
-          ...(data.analyzedData.name ? { activityName: data.analyzedData.name } : {}),
           ...(data.gearid ? { gearId: data.gearid } : {}),
         },
         // Strava sends both "create" and "update" for the same ride, and can redeliver
@@ -580,8 +580,15 @@ export class StravaEventsService {
       });
     } catch (error) {
       this.logger.warn({ err: error, activityId: String(row.activity_id) }, 'Pending ride not fetched again from Strava');
+      if (axios.isAxiosError(error) && error.response?.status === 404) await this.dropGonePending(row);
       return null;
     }
+  }
+
+  // Deleted or private on Strava: resolved like a dismissed ride, so it is no longer asked for on every poll.
+  private async dropGonePending(row: strava_pending_activities): Promise<void> {
+    await this.prisma.strava_pending_activities.update({ where: { id: row.id }, data: { resolved_at: new Date() } });
+    await this.notificationService.resolveActivityAsk(row.user_id, String(row.activity_id));
   }
 
   /** Drops every pending payload cached longer than 7 days (policy §6.2); the rows stay for dedupe. */
@@ -808,7 +815,8 @@ export class StravaEventsService {
         bike_id: bikeId,
         user_id: userId,
         started_at: new Date(analyzedData.started_at),
-        calories: caloriesOf(analyzedData.rawJson),
+        is_private: isPrivateActivity(analyzedData.rawJson),
+        summary_polyline: routeOfAnalysis(analyzedData),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
         descent_min: analyzedData.descent_min ?? null,
         activity_strava_id: BigInt(activityId),
@@ -823,7 +831,8 @@ export class StravaEventsService {
       },
       update: {
         started_at: new Date(analyzedData.started_at),
-        calories: caloriesOf(analyzedData.rawJson),
+        is_private: isPrivateActivity(analyzedData.rawJson),
+        summary_polyline: routeOfAnalysis(analyzedData),
         health_index_brake_pad: analyzedData.health_index_brake_pad,
         descent_min: analyzedData.descent_min ?? null,
         distance_m: analyzedData.distance_km * 1000,

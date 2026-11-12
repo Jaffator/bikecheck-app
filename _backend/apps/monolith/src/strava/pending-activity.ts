@@ -6,6 +6,17 @@ import type { WearPreview } from '../service-tracking/service-tracking.service';
 import { ResponsePendingStravaDto } from './dto/response-pending-strava.dto';
 import type { StravaActivityData } from './strava.service';
 
+// Strava marks a ride only the athlete may see as `only_me`, older payloads as `private`.
+export function isPrivateActivity(rawJson: unknown): boolean {
+  const activity = rawJson as { visibility?: unknown; private?: unknown } | null | undefined;
+  return activity?.visibility === 'only_me' || activity?.private === true;
+}
+
+// Analyses stored before the route was lifted out still carry it in the raw blob; null without GPS.
+export function routeOfAnalysis(analyzed: StravaActivityData['analyzedData']): string | null {
+  return analyzed.summary_polyline ?? (analyzed.rawJson?.map?.summary_polyline as string | undefined) ?? null;
+}
+
 // Lifts the ride's own figures out of the stored analysis, so the client gets
 // a flat row instead of the whole raw Strava blob.
 export function toPendingDto(activity: strava_pending_activities): ResponsePendingStravaDto {
@@ -18,11 +29,9 @@ export function toPendingDto(activity: strava_pending_activities): ResponsePendi
     // Rides stored before the name was lifted out still carry it in the raw
     // blob, so read that rather than showing them nameless.
     name: analyzed.name ?? (analyzed.rawJson?.name as string | undefined) ?? '',
-    // Same fallback as the name: rides stored before the route was lifted out
-    // still carry it in the raw blob. Null for rides recorded without GPS.
-    summary_polyline:
-      analyzed.summary_polyline ?? (analyzed.rawJson?.map?.summary_polyline as string | undefined) ?? null,
+    summary_polyline: routeOfAnalysis(analyzed),
     sport_type: typeof sportType === 'string' && sportType.length > 0 ? sportType : null,
+    is_private: isPrivateActivity(analyzed.rawJson),
     distance_km: Math.round(analyzed.distance_km),
     duration_min: Math.round(analyzed.duration_min),
     elevation_up_m: Math.round(analyzed.elevation_up_m),

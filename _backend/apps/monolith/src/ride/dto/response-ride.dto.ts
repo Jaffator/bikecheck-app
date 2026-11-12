@@ -58,6 +58,14 @@ export class ResponseRideDto {
   @ApiProperty({ example: 54, nullable: true })
   max_speed_kmh!: number | null;
 
+  // Strava's simplified route as an encoded polyline; null for a ride recorded without GPS.
+  @ApiProperty({ type: String, example: 'ki}fH', nullable: true })
+  summary_polyline!: string | null;
+
+  // Visible to the athlete only on Strava; marked, not hidden.
+  @ApiProperty({ example: false })
+  is_private!: boolean;
+
   // When the ride reached BikeCheck, which the check-in reads as "arrived N min ago".
   @ApiProperty({ type: String, example: '2026-08-19T08:40:00.000Z', nullable: true })
   created_at!: string | null;

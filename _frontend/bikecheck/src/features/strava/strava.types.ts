@@ -45,6 +45,8 @@ export interface PendingRide {
   summary_polyline: string | null;
   // Strava's sport type, e.g. "MountainBikeRide"; null where Strava sent none.
   sport_type: string | null;
+  // Strava shows it only to its rider; marked in the lists, not hidden.
+  is_private: boolean;
   distance_km: number;
   duration_min: number;
   elevation_up_m: number;

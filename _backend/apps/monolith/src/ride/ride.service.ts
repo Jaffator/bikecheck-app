@@ -47,6 +47,8 @@ interface RideRow {
   elevation_down_m?: number | null;
   speed_avg?: number | null;
   max_speed_kmh?: number | null;
+  is_private?: boolean;
+  summary_polyline?: string | null;
   check_in?: CheckInRow | null;
 }
 
@@ -447,6 +449,8 @@ function toRideDto(row: RideRow, woreOff: Response_WoreOffLineDto[]): ResponseRi
     elevation_down_m: row.elevation_down_m ?? null,
     speed_avg: row.speed_avg ?? null,
     max_speed_kmh: row.max_speed_kmh ?? null,
+    is_private: row.is_private ?? false,
+    summary_polyline: row.summary_polyline ?? null,
     created_at: row.created_at ? row.created_at.toISOString() : null,
     wore_off: woreOff,
     check_in: row.check_in

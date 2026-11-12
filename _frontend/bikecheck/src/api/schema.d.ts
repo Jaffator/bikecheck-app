@@ -3428,6 +3428,8 @@ export interface components {
             summary_polyline: Record<string, never> | null;
             /** @example MountainBikeRide */
             sport_type: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 42 */
             distance_km: number;
             /** @example 96 */
@@ -3460,6 +3462,8 @@ export interface components {
             summary_polyline: Record<string, never> | null;
             /** @example MountainBikeRide */
             sport_type: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 42 */
             distance_km: number;
             /** @example 96 */
@@ -3504,8 +3508,6 @@ export interface components {
             bike_id: number;
             /** @example S-Works Tarmac */
             bike_name: Record<string, never> | null;
-            /** @example Morning Mountain Bike Ride */
-            name: string;
             /** @example 2026-08-19T06:12:00.000Z */
             started_at: Record<string, never> | null;
             /** @example 42000 */
@@ -3520,10 +3522,10 @@ export interface components {
             speed_avg: Record<string, never> | null;
             /** @example 54 */
             max_speed_kmh: Record<string, never> | null;
-            /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
-            summary_polyline: Record<string, never> | null;
-            /** @example MountainBikeRide */
-            sport_type: string | null;
+            /** @example ki}fH */
+            summary_polyline: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 2026-08-19T08:40:00.000Z */
             created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
@@ -3550,8 +3552,6 @@ export interface components {
             bike_id: number;
             /** @example S-Works Tarmac */
             bike_name: Record<string, never> | null;
-            /** @example Morning Mountain Bike Ride */
-            name: string;
             /** @example 2026-08-19T06:12:00.000Z */
             started_at: Record<string, never> | null;
             /** @example 42000 */
@@ -3566,10 +3566,10 @@ export interface components {
             speed_avg: Record<string, never> | null;
             /** @example 54 */
             max_speed_kmh: Record<string, never> | null;
-            /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
-            summary_polyline: Record<string, never> | null;
-            /** @example MountainBikeRide */
-            sport_type: string | null;
+            /** @example ki}fH */
+            summary_polyline: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 2026-08-19T08:40:00.000Z */
             created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
@@ -4423,16 +4423,6 @@ export interface components {
              */
             daily_time_min: number[];
             /**
-             * @description kcal per UTC day, indexed like daily_m; a ride without calories burns 0
-             * @example [
-             *       0,
-             *       820,
-             *       0,
-             *       2410
-             *     ]
-             */
-            daily_calories: number[];
-            /**
              * @description Whole km of the sum of daily_m
              * @example 51
              */
@@ -4447,11 +4437,6 @@ export interface components {
              * @example 312
              */
             time_min: number;
-            /**
-             * @description The sum of those rides' calories
-             * @example 3230
-             */
-            calories: number;
         };
         Response_DistancePreviousDto: {
             /**
@@ -4474,11 +4459,6 @@ export interface components {
              * @example 260
              */
             time_min: number;
-            /**
-             * @description kcal burnt up to the same day
-             * @example 4120
-             */
-            calories: number;
             /**
              * @description The garage's metres per UTC day over the whole previous Period
              * @example [
@@ -4509,16 +4489,6 @@ export interface components {
              *     ]
              */
             daily_time_min: number[];
-            /**
-             * @description kcal per day, indexed like daily_m
-             * @example [
-             *       700,
-             *       0,
-             *       500,
-             *       2000
-             *     ]
-             */
-            daily_calories: number[];
         };
         Response_DistanceDto: {
             /**

@@ -88,13 +88,19 @@ export class StravaWebhookService {
       this.logger.info({ custom: true }, 'Succesfuly fetched Strava activity data');
       return activityData;
     } catch (error) {
-      throw new Error(`Error fetching Strava API: ${(error as Error).message}`);
+      throw new Error(`Error fetching Strava API: ${(error as Error).message}`, { cause: error });
     }
   }
 
   /** One ride, slimmed the way a webhook sends it on; a run or a hike is not found. */
   async fetchRide(athlete_id: number, activity_id: number): Promise<unknown> {
-    const activity = await this.downloadActivity(activity_id, athlete_id);
+    const activity = await this.downloadActivity(activity_id, athlete_id).catch((error: Error) => {
+      // Deleted or private on Strava: the caller must tell it from a failure worth retrying.
+      if (axios.isAxiosError(error.cause) && [403, 404].includes(error.cause.response?.status ?? 0)) {
+        throw new NotFoundException('Activity is gone from Strava');
+      }
+      throw error;
+    });
     if (!RIDE_TYPES.includes(activity.data.type)) throw new NotFoundException('Activity is not a ride');
     return this.simplifyActivityData(activity.data);
   }

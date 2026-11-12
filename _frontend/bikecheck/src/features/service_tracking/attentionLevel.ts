@@ -11,8 +11,11 @@ import type { AttentionLevel, TrackedAction } from "./tracking.types";
 // Level, warming as the part runs out. Highest stop first, so the first one a reading
 // clears is the one it wears. Every stop clears 4.5:1 on cards.6 — the brand yellow at good
 // reads 7.93:1, the overdue red 4.94:1.
+// The ramp's top stop, also the only colour the Needs attention list spends.
+export const OVERDUE_COLOR = "#F26B5B";
+
 const ATTENTION_RAMP: { from: number; color: string }[] = [
-  { from: 100, color: "#F26B5B" },
+  { from: 100, color: OVERDUE_COLOR },
   { from: 90, color: "#F07B66" },
   { from: 75, color: "#F0803A" },
   // primary.6, the brand yellow. A literal because the ramp is read into inline styles
@@ -52,6 +55,16 @@ export function worstAction(actions: TrackedAction[]): TrackedAction | null {
   if (actions.length === 0) return null;
 
   return actions.reduce((worst, action) => (action.percentage > worst.percentage ? action : worst));
+}
+
+// Past the interval, the one state the Needs attention list marks out.
+export function isOverdue(action: Pick<TrackedAction, "current" | "interval">): boolean {
+  return action.current > action.interval;
+}
+
+// The list's figures stay grey until a job runs past due; the line alone carries the ramp.
+export function attentionInk(action: Pick<TrackedAction, "current" | "interval">): string {
+  return isOverdue(action) ? OVERDUE_COLOR : "var(--mantine-color-text-7)";
 }
 
 // How full the bar behind a reading runs. An overdue action fills it and no more — the

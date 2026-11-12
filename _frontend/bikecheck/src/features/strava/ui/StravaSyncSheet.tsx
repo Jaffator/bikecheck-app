@@ -2,10 +2,9 @@
 import { useState, type ReactElement } from "react";
 import { Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ConfirmModal } from "@/components/ConfirmModal";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import { useDisconnectStrava } from "@/features/strava/strava.queries";
 import { useStravaLastSync } from "@/features/strava/stravaLastSync";
+import { DisconnectStravaConfirm } from "./DisconnectStravaConfirm";
 import { SyncStravaButton } from "./SyncStravaButton";
 
 // Above the page it opens from, matching the settings drawers.
@@ -19,17 +18,7 @@ interface StravaSyncSheetProps {
 export function StravaSyncSheet({ opened, onClose }: StravaSyncSheetProps): ReactElement {
   const { t, i18n } = useTranslation();
   const { lastSync } = useStravaLastSync();
-  const disconnect = useDisconnectStrava();
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
-
-  function confirmDisconnect(): void {
-    disconnect.mutate(undefined, {
-      onSuccess: () => {
-        setConfirmingDisconnect(false);
-        onClose();
-      },
-    });
-  }
 
   return (
     <ResponsiveSheet
@@ -61,15 +50,10 @@ export function StravaSyncSheet({ opened, onClose }: StravaSyncSheetProps): Reac
         </UnstyledButton>
       </Stack>
 
-      <ConfirmModal
+      <DisconnectStravaConfirm
         opened={confirmingDisconnect}
-        onCancel={() => setConfirmingDisconnect(false)}
-        onConfirm={confirmDisconnect}
-        pending={disconnect.isPending}
-        title={t("strava.disconnectConfirmTitle")}
-        body={disconnect.isError ? t("strava.disconnectFailed") : t("strava.disconnectConfirmBody")}
-        cancelLabel={t("strava.disconnectConfirmCancel")}
-        confirmLabel={t("strava.disconnect")}
+        onClose={() => setConfirmingDisconnect(false)}
+        onDisconnected={onClose}
       />
     </ResponsiveSheet>
   );

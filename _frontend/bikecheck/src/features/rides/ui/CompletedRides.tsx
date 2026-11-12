@@ -14,6 +14,7 @@ import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides } from "@/features/rides/rides.queries";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
 import { CheckInMark } from "./CheckInMark";
+import { PrivateMark } from "./PrivateMark";
 import { RideDetailSheet } from "./RideDetailSheet";
 import type { Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
@@ -37,11 +38,11 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
   return (
     <CompletedRideCard
       onOpen={onOpen}
-      /* No route kept with the ride (#375); #376 fetches it on demand. */
-      leading={<RouteMap polyline={null} width={50} height={50} simplify={CARD_SIMPLIFY} />}
+      leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
       title={
         <>
           {rideTitle(ride, t("rides.unknownBike"))}
+          <PrivateMark isPrivate={ride.is_private} />
           <span style={{ marginInlineStart: 8 }}>
             <CheckInMark checkIn={ride.check_in} size={15} />
           </span>

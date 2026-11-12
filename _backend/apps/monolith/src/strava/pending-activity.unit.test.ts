@@ -1,5 +1,5 @@
 import type { strava_pending_activities } from '@prisma/client';
-import { toPendingDto } from './pending-activity';
+import { isPrivateActivity, toPendingDto } from './pending-activity';
 
 const ANALYSIS = {
   rawJson: { sport_type: 'MountainBikeRide' },
@@ -40,5 +40,23 @@ describe('toPendingDto', () => {
     const dto = toPendingDto(pendingRow(ANALYSIS));
 
     expect(dto).toMatchObject({ elevation_down_m: null, speed_avg: null, max_speed_kmh: null });
+  });
+
+  it('marks a ride only the athlete sees on Strava', () => {
+    const dto = toPendingDto(pendingRow({ ...ANALYSIS, rawJson: { visibility: 'only_me' } }));
+
+    expect(dto.is_private).toBe(true);
+  });
+});
+
+describe('isPrivateActivity', () => {
+  it.each([
+    [{ visibility: 'only_me' }, true],
+    [{ private: true }, true],
+    [{ visibility: 'followers_only' }, false],
+    [{ visibility: 'everyone', private: false }, false],
+    [undefined, false],
+  ])('reads %p as private: %p', (rawJson, expected) => {
+    expect(isPrivateActivity(rawJson)).toBe(expected);
   });
 });

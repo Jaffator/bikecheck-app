@@ -16,9 +16,9 @@ export class StravaEventsProcessor extends WorkerHost implements OnModuleInit {
     super();
   }
 
-  // Upsert, so every restart keeps one daily schedule instead of adding another.
+  // Pending payloads are kept for now, so the daily purge is off; upsertJobScheduler turns it back on.
   async onModuleInit(): Promise<void> {
-    await this.queue.upsertJobScheduler(PURGE_JOB, { pattern: '0 3 * * *' }, { name: PURGE_JOB });
+    await this.queue.removeJobScheduler(PURGE_JOB);
   }
 
   async process(job: Job): Promise<{ message: string } | void> {

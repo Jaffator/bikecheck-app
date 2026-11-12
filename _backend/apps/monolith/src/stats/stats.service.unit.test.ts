@@ -570,11 +570,9 @@ describe('StatsService', () => {
             daily_m: days(28, { 0: 12400, 10: 38200 }),
             daily_elevation_m: days(28, {}),
             daily_time_min: days(28, { 0: 45, 10: 125 }),
-            daily_calories: days(28, {}),
             total_km: 51,
             ride_count: 3,
             time_min: 170,
-            calories: 0,
           },
         ],
         previous: null,
@@ -610,22 +608,6 @@ describe('StatsService', () => {
       expect(result.bikes[0].daily_elevation_m).toEqual(days(28, { 0: 310, 10: 845, 27: 120 }));
     });
 
-    it('serves kcal per UTC day on the same days as the metres ridden, no calories as 0, and their sum', async () => {
-      // ARRANGE
-      rides = [
-        ride(RALLON, '2026-01-01T09:00:00.000Z', 12400, { calories: 820 }),
-        ride(RALLON, '2026-01-11T06:00:00.000Z', 8000, { calories: null }),
-        ride(RALLON, '2026-01-11T23:30:00.000Z', 30200, { calories: 2410 }),
-        ride(RALLON, '2026-02-03T09:00:00.000Z', 5000, { calories: 300 }),
-      ];
-
-      // ACT
-      const result = await stats.getDistance(OWNER_ID, 'year');
-
-      // ASSERT: the ride stamped after today burns on today, like its metres.
-      expect(result.bikes[0].daily_calories).toEqual(days(28, { 0: 820, 10: 2410, 27: 300 }));
-      expect(result.bikes[0].calories).toBe(3530);
-    });
 
     it('puts a ride stamped after today on today', async () => {
       // ARRANGE
@@ -731,9 +713,9 @@ describe('StatsService', () => {
       // ARRANGE: Friday 25 September.
       jest.setSystemTime(TODAY);
       rides = [
-        ride(RALLON, '2026-08-31T22:00:00.000Z', 40000, { duration_min: 120, calories: 1500 }),
-        ride(RALLON, '2026-09-01T07:00:00.000Z', 20000, { duration_min: 60, calories: 800 }),
-        ride(RALLON, '2026-09-25T06:00:00.000Z', 15000, { duration_min: 50, calories: 600 }),
+        ride(RALLON, '2026-08-31T22:00:00.000Z', 40000, { duration_min: 120 }),
+        ride(RALLON, '2026-09-01T07:00:00.000Z', 20000, { duration_min: 60 }),
+        ride(RALLON, '2026-09-25T06:00:00.000Z', 15000, { duration_min: 50 }),
       ];
 
       // ACT
@@ -753,11 +735,9 @@ describe('StatsService', () => {
             daily_m: days(25, { 0: 20000, 24: 15000 }),
             daily_elevation_m: days(25, {}),
             daily_time_min: days(25, { 0: 60, 24: 50 }),
-            daily_calories: days(25, { 0: 800, 24: 600 }),
             total_km: 35,
             ride_count: 2,
             time_min: 110,
-            calories: 1400,
           },
         ],
         // 31 August is past 25 August: in the month before's days, not in its totals.
@@ -766,11 +746,9 @@ describe('StatsService', () => {
           meters: 0,
           elevation_m: 0,
           time_min: 0,
-          calories: 0,
           daily_m: days(31, { 30: 40000 }),
           daily_elevation_m: days(31, {}),
           daily_time_min: days(31, { 30: 120 }),
-          daily_calories: days(31, { 30: 1500 }),
         },
       });
     });
@@ -805,11 +783,9 @@ describe('StatsService', () => {
           meters: 0,
           elevation_m: 0,
           time_min: 0,
-          calories: 0,
           daily_m: days(365, { 160: 40000 }),
           daily_elevation_m: days(365, {}),
           daily_time_min: days(365, {}),
-          daily_calories: days(365, {}),
         },
       });
     });
@@ -933,8 +909,8 @@ describe('StatsService', () => {
       // ARRANGE: 2 to 4 February 2025, a ride either side of it.
       rides = [
         ride(RALLON, '2025-02-01T23:59:00.000Z', 90000),
-        ride(RALLON, '2025-02-02T00:00:00.000Z', 10000, { duration_min: 30, elevation_up_m: 100, calories: 300 }),
-        ride(RALLON, '2025-02-04T23:59:00.000Z', 20000, { duration_min: 60, elevation_up_m: 200, calories: 600 }),
+        ride(RALLON, '2025-02-02T00:00:00.000Z', 10000, { duration_min: 30, elevation_up_m: 100 }),
+        ride(RALLON, '2025-02-04T23:59:00.000Z', 20000, { duration_min: 60, elevation_up_m: 200 }),
         ride(RALLON, '2025-02-05T00:00:00.000Z', 40000),
       ];
 
@@ -950,7 +926,6 @@ describe('StatsService', () => {
           daily_m: [10000, 0, 20000],
           daily_elevation_m: [100, 0, 200],
           daily_time_min: [30, 0, 60],
-          daily_calories: [300, 0, 600],
           total_km: 30,
           ride_count: 2,
         }),
@@ -1044,10 +1019,10 @@ describe('StatsService', () => {
       ];
       rides = [
         ride(RALLON, '2026-09-30T23:00:00.000Z', 90000, { duration_min: 300, elevation_up_m: 2000 }),
-        ride(RALLON, '2026-10-01T00:00:00.000Z', 20000, { duration_min: 60, elevation_up_m: 400, calories: 700 }),
-        ride(RALLON, '2026-10-03T23:59:00.000Z', 15000, { duration_min: 45, elevation_up_m: null, calories: 500 }),
-        ride(RALLON, '2026-10-02T09:00:00.000Z', null, { duration_min: 20, elevation_up_m: 50, calories: null }),
-        ride(RALLON, '2026-10-04T00:00:00.000Z', 70000, { duration_min: 200, elevation_up_m: 1500, calories: 2000 }),
+        ride(RALLON, '2026-10-01T00:00:00.000Z', 20000, { duration_min: 60, elevation_up_m: 400 }),
+        ride(RALLON, '2026-10-03T23:59:00.000Z', 15000, { duration_min: 45, elevation_up_m: null }),
+        ride(RALLON, '2026-10-02T09:00:00.000Z', null, { duration_min: 20, elevation_up_m: 50 }),
+        ride(RALLON, '2026-10-04T00:00:00.000Z', 70000, { duration_min: 200, elevation_up_m: 1500 }),
         { ...ride(RALLON, '2026-10-02T09:00:00.000Z', 50000, { duration_min: 100 }), is_deleted: true },
         ride(STUMPY, '2026-10-02T09:00:00.000Z', 40000, { duration_min: 90 }),
         ride(RALLON, '2026-11-02T09:00:00.000Z', 30000, { duration_min: 80 }),
@@ -1063,11 +1038,9 @@ describe('StatsService', () => {
         meters: 35000,
         elevation_m: 450,
         time_min: 125,
-        calories: 1200,
         daily_m: days(31, { 0: 20000, 2: 15000, 3: 70000 }),
         daily_elevation_m: days(31, { 0: 400, 1: 50, 3: 1500 }),
         daily_time_min: days(31, { 0: 60, 1: 20, 2: 45, 3: 200 }),
-        daily_calories: days(31, { 0: 700, 2: 500, 3: 2000 }),
       });
     });
 
@@ -1088,11 +1061,9 @@ describe('StatsService', () => {
         meters: 12000,
         elevation_m: 150,
         time_min: 40,
-        calories: 0,
         daily_m: days(28, { 27: 12000 }),
         daily_elevation_m: days(28, { 27: 150 }),
         daily_time_min: days(28, { 27: 40 }),
-        daily_calories: days(28, {}),
       });
     });
 
@@ -1116,11 +1087,9 @@ describe('StatsService', () => {
         meters: 30000,
         elevation_m: 500,
         time_min: 90,
-        calories: 0,
         daily_m: days(365, { 0: 20000, 306: 10000, 307: 70000 }),
         daily_elevation_m: days(365, { 0: 400, 306: 100, 307: 1500 }),
         daily_time_min: days(365, { 0: 60, 306: 30, 307: 200 }),
-        daily_calories: days(365, {}),
       });
     });
 
@@ -1141,11 +1110,9 @@ describe('StatsService', () => {
         meters: 12000,
         elevation_m: 0,
         time_min: 40,
-        calories: 0,
         daily_m: days(365, { 58: 12000, 59: 5000 }),
         daily_elevation_m: days(365, {}),
         daily_time_min: days(365, { 58: 40, 59: 20 }),
-        daily_calories: days(365, {}),
       });
     });
 

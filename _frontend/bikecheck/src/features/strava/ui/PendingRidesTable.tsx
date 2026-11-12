@@ -15,6 +15,7 @@ import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import { pendingItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
+import { PrivateMark } from "@/features/rides/ui/PrivateMark";
 import { RideDetailSheet } from "@/features/rides/ui/RideDetailSheet";
 import { useDismissPendingRide, usePendingRides, useResolvePendingRide } from "@/features/strava/strava.queries";
 import type { PendingRide } from "@/features/strava/strava.types";
@@ -196,6 +197,7 @@ function PendingRow({
       <Stack gap={0} style={{ minWidth: 0 }}>
         <Text fz={13} fw={600} c="text.6" lineClamp={1}>
           {ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
+          <PrivateMark isPrivate={ride.is_private} />
         </Text>
         <Text className="tabular-nums" fz={12} c="var(--color-text-dim)">
           {dayjs(ride.started_at).format("D. M. YYYY H:mm")}

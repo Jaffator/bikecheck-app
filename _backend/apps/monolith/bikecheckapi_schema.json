@@ -2673,37 +2673,6 @@
         ]
       }
     },
-    "/api/rides/{id}/summary": {
-      "get": {
-        "operationId": "Ride findSummary",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseRideSummaryDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "The ride's AI review, written on the first request and kept until the ride changes",
-        "tags": [
-          "Ride"
-        ]
-      }
-    },
     "/api/rides/{id}/bike": {
       "patch": {
         "operationId": "Ride changeBike",
@@ -3000,6 +2969,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "x-report-print-key",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3032,6 +3009,85 @@
           }
         },
         "summary": "Print a published report to an A4 PDF",
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/api/reports/{id}/pdf": {
+      "get": {
+        "operationId": "Report getOwnedPdf",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Print the caller's own report to an A4 PDF, published or not",
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/api/reports/{id}/pdf-ticket": {
+      "post": {
+        "operationId": "Report createPdfTicket",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePdfTicketDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Print the caller's own report and hold it behind a one-read ticket",
+        "tags": [
+          "Report"
+        ]
+      }
+    },
+    "/api/reports/pdf-ticket/{ticket}": {
+      "get": {
+        "operationId": "Report getTicketPdf",
+        "parameters": [
+          {
+            "name": "ticket",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Read a held PDF once, by its ticket",
         "tags": [
           "Report"
         ]
@@ -4067,6 +4123,20 @@
         "operationId": "Stats getSpend",
         "parameters": [
           {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Last day, YYYY-MM-DD; needs `from`, refuses `period`",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "First day, YYYY-MM-DD; needs `to`, refuses `period`",
+            "schema": {}
+          },
+          {
             "name": "period",
             "required": false,
             "in": "query",
@@ -4103,6 +4173,20 @@
         "operationId": "Stats getDistance",
         "parameters": [
           {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Last day, YYYY-MM-DD; needs `from`, refuses `period`",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "First day, YYYY-MM-DD; needs `to`, refuses `period`",
+            "schema": {}
+          },
+          {
             "name": "period",
             "required": false,
             "in": "query",
@@ -4124,6 +4208,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Response_DistanceDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Stats"
+        ]
+      }
+    },
+    "/api/stats/earliest-day": {
+      "get": {
+        "operationId": "Stats getEarliestDay",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response_EarliestDayDto"
                 }
               }
             }
@@ -7731,10 +7836,6 @@
             "example": "S-Works Tarmac",
             "nullable": true
           },
-          "name": {
-            "type": "string",
-            "example": "Morning Mountain Bike Ride"
-          },
           "started_at": {
             "type": "object",
             "example": "2026-08-19T06:12:00.000Z",
@@ -7770,16 +7871,6 @@
             "example": 54,
             "nullable": true
           },
-          "summary_polyline": {
-            "type": "object",
-            "example": "ki}fHuqrbBGx@_@lAsA|Bi@n@",
-            "nullable": true
-          },
-          "sport_type": {
-            "type": "string",
-            "example": "MountainBikeRide",
-            "nullable": true
-          },
           "created_at": {
             "type": "string",
             "example": "2026-08-19T08:40:00.000Z",
@@ -7812,7 +7903,6 @@
           "activity_strava_id",
           "bike_id",
           "bike_name",
-          "name",
           "started_at",
           "distance_m",
           "duration_min",
@@ -7820,8 +7910,6 @@
           "elevation_down_m",
           "speed_avg",
           "max_speed_kmh",
-          "summary_polyline",
-          "sport_type",
           "created_at",
           "wore_off",
           "check_in",
@@ -7905,10 +7993,6 @@
             "example": "S-Works Tarmac",
             "nullable": true
           },
-          "name": {
-            "type": "string",
-            "example": "Morning Mountain Bike Ride"
-          },
           "started_at": {
             "type": "object",
             "example": "2026-08-19T06:12:00.000Z",
@@ -7944,16 +8028,6 @@
             "example": 54,
             "nullable": true
           },
-          "summary_polyline": {
-            "type": "object",
-            "example": "ki}fHuqrbBGx@_@lAsA|Bi@n@",
-            "nullable": true
-          },
-          "sport_type": {
-            "type": "string",
-            "example": "MountainBikeRide",
-            "nullable": true
-          },
           "created_at": {
             "type": "string",
             "example": "2026-08-19T08:40:00.000Z",
@@ -7980,7 +8054,6 @@
           "activity_strava_id",
           "bike_id",
           "bike_name",
-          "name",
           "started_at",
           "distance_m",
           "duration_min",
@@ -7988,8 +8061,6 @@
           "elevation_down_m",
           "speed_avg",
           "max_speed_kmh",
-          "summary_polyline",
-          "sport_type",
           "created_at",
           "wore_off",
           "check_in"
@@ -8088,18 +8159,6 @@
           "total",
           "weeks",
           "figures"
-        ]
-      },
-      "ResponseRideSummaryDto": {
-        "type": "object",
-        "properties": {
-          "summary": {
-            "type": "string",
-            "example": "A proper Enduro sufferfest, 4/5 stars. Wipe those stanchions. Catch ya in the dirt!"
-          }
-        },
-        "required": [
-          "summary"
         ]
       },
       "ChangeRideBikeDto": {
@@ -8364,6 +8423,18 @@
         },
         "required": [
           "count"
+        ]
+      },
+      "ResponsePdfTicketDto": {
+        "type": "object",
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "description": "Goes in GET /reports/pdf-ticket/:ticket"
+          }
+        },
+        "required": [
+          "ticket"
         ]
       },
       "ResponseChatMessageDto": {
@@ -10128,6 +10199,20 @@
           "to",
           "bikes",
           "previous"
+        ]
+      },
+      "Response_EarliestDayDto": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "example": "2023-04-02",
+            "nullable": true,
+            "description": "Day of the earliest ride or dated Service; null for an empty garage"
+          }
+        },
+        "required": [
+          "day"
         ]
       },
       "Response_WearPointDto": {

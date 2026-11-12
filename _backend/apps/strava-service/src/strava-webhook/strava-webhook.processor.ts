@@ -24,9 +24,9 @@ export class StravaProcessor extends WorkerHost implements OnModuleInit {
     super();
   }
 
-  // Upsert, so every restart keeps one daily schedule instead of adding another.
+  // Raw activities are kept for now, so the daily purge is off; upsertJobScheduler turns it back on.
   async onModuleInit(): Promise<void> {
-    await this.webhookQueue.upsertJobScheduler(PURGE_JOB, { pattern: '0 3 * * *' }, { name: PURGE_JOB });
+    await this.webhookQueue.removeJobScheduler(PURGE_JOB);
   }
   // NestJS automatically calls this method when a new job appears in the queue
   async process(job: Job<any, any, string>) {
@@ -61,7 +61,9 @@ export class StravaProcessor extends WorkerHost implements OnModuleInit {
       if (stravaEvent.object_type === 'athlete') {
         // Other athlete updates carry nothing we keep; only a revoked grant needs action (policy §7.4).
         if (stravaEvent.updates.authorized !== 'false') return { skipped: true, reason: 'Athlete update ignored' };
-        await this.tokenService.removeLocalData(stravaEvent.owner_id);
+        const wasLinked = await this.tokenService.removeLocalData(stravaEvent.owner_id);
+        // An in-app unlink cleans up and notifies the user itself; telling the monolith again would notify twice.
+        if (!wasLinked) return { skipped: true, reason: 'Athlete already unlinked' };
         return { type: 'deauthorized', data: { athleteId: stravaEvent.owner_id } };
       }
 

@@ -1,14 +1,14 @@
 // Renders Strava connection state through query hooks.
 import { useState, type ReactElement } from "react";
-import { Box, Button, Group, Modal, Paper, Stack, Text } from "@mantine/core";
+import { Box, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { CircleCheck } from "lucide-react";
 import { useCurrentUser } from "@/features/users/users.queries";
-import { useConnectStrava, useDisconnectStrava } from "@/features/strava/strava.queries";
+import { useConnectStrava } from "@/features/strava/strava.queries";
 import { stravaDisplayName } from "@/features/strava/strava.types";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import mapBackground from "@/assets/icons/svg_icons/mapbg.svg";
-import { useOverlayBack } from "@/hooks/useOverlayBack";
+import { DisconnectStravaConfirm } from "./DisconnectStravaConfirm";
 import { StravaConnectButton } from "./StravaConnectButton";
 
 interface StravaStatusCardProps {
@@ -26,16 +26,11 @@ export function StravaStatusCard({
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
   const connect = useConnectStrava();
-  const disconnect = useDisconnectStrava();
-
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
 
   const connected = Boolean(user?.strava_athlete_id);
   // Linked athlete name, if Strava provided one.
   const stravaName = user ? stravaDisplayName(user) : null;
-
-  // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(confirmingDisconnect, () => setConfirmingDisconnect(false));
 
   if (!connected && connectedOnly) return null;
 
@@ -182,7 +177,6 @@ export function StravaStatusCard({
               color="red.5"
               radius="md"
               size="compact-sm"
-              loading={disconnect.isPending}
               onClick={() => {
                 setConfirmingDisconnect(true);
               }}
@@ -199,56 +193,9 @@ export function StravaStatusCard({
             </Button>
           )}
         </Group>
-
-        {disconnect.isError && (
-          <Text size="xs" c="red.5">
-            {t("strava.disconnectFailed")}
-          </Text>
-        )}
       </Stack>
 
-      {/* Confirms disconnect because reconnecting requires Strava consent. */}
-      <Modal
-        opened={confirmingDisconnect}
-        onClose={() => setConfirmingDisconnect(false)}
-        title={t("strava.disconnectConfirmTitle")}
-        centered
-        radius="md"
-        styles={{
-          content: { backgroundColor: "var(--mantine-color-cards-6)" },
-          header: { backgroundColor: "var(--mantine-color-cards-6)" },
-          title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
-        }}
-      >
-        <Stack gap="lg">
-          <Text size="sm" c="text.7" style={{ lineHeight: 1.45 }}>
-            {t("strava.disconnectConfirmBody")}
-          </Text>
-
-          <Group gap="sm" grow>
-            <Button
-              variant="default"
-              radius="md"
-              onClick={() => setConfirmingDisconnect(false)}
-              disabled={disconnect.isPending}
-            >
-              {t("strava.disconnectConfirmCancel")}
-            </Button>
-            <Button
-              color="red.5"
-              radius="md"
-              loading={disconnect.isPending}
-              onClick={() => {
-                disconnect.mutate(undefined, {
-                  onSuccess: () => setConfirmingDisconnect(false),
-                });
-              }}
-            >
-              {t("strava.disconnect")}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+      <DisconnectStravaConfirm opened={confirmingDisconnect} onClose={() => setConfirmingDisconnect(false)} />
     </Paper>
   );
 }
