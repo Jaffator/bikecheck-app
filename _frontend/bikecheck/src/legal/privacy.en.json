@@ -51,7 +51,7 @@
       "We also record, for each active session, the device and IP address it was signed in from, so that a session that is not yours can be recognised and ended.",
       "Information collected from other sources",
       "In Short: We collect information from the services you connect yourself, and from nothing else.",
-      "If you connect your Strava account, we receive from Strava your athlete identifier, first and last name, username and profile picture, the bikes ('gear') recorded in your Strava account, and your activities — their start time, distance, elevation, duration, average and maximum speed, and the gear they were ridden on. We use this only to attribute rides to the right bike and to keep its wear up to date. Activities you have made private on Strava are handled the same way and are marked as private in the app. You can disconnect Strava at any time in Settings.",
+      "If you connect your Strava account, we receive from Strava your athlete identifier, first and last name, username and profile picture, the bikes ('gear') recorded in your Strava account, and your activities — their start time, distance, elevation, duration, average and maximum speed, and the gear they were ridden on. We use this only to attribute rides to the right bike and to keep its wear up to date. Activities you have made private on Strava are handled the same way and are marked as private in the app. Kilometres and time from your Strava rides are shown to others on your Public Profile or through a Report link only if you agree when you publish it. You can disconnect Strava at any time in Settings.",
       "We do not buy personal information from data brokers, marketing partners, or public databases."
     ]
   },

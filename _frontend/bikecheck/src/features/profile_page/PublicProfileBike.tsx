@@ -55,7 +55,7 @@ export function PublicProfileBike(): ReactElement {
         {bike.setup !== null && <PublicBikeSetup profiles={bike.setup} unit={page.tire_pressure_unit} />}
       </PublicBikeHero>
       {/* A section that is off is null and absent; nothing shared leaves the hero alone. */}
-      {bike.components !== null && <PublicBikeComponents groups={bike.components} />}
+      {bike.components !== null && <PublicBikeComponents groups={bike.components} figures={page.figures} />}
       {bike.history !== null && <PublicBikeHistory handle={handle} bikeId={id} history={bike.history} />}
     </PublicShell>
   );

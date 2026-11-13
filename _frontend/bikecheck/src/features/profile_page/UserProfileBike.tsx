@@ -77,7 +77,7 @@ export function UserProfileBike(): ReactElement {
 
       {/* A section that is off is null and absent; nothing shared leaves the hero alone. */}
       {bike.setup !== null && <UserBikeSetup profiles={bike.setup} unit={page.tire_pressure_unit} />}
-      {bike.components !== null && <UserBikeComponents groups={bike.components} />}
+      {bike.components !== null && <UserBikeComponents groups={bike.components} figures={page.figures} />}
       {bike.history !== null && <UserBikeHistory handle={handle} bikeId={id} history={bike.history} />}
     </Stack>
   );

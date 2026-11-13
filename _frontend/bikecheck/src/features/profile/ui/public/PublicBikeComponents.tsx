@@ -75,7 +75,7 @@ function SideRail({ groups, seededName }: RailProps): ReactElement {
   );
 }
 
-function PartRow({ part }: { part: ProfileMountedPart }): ReactElement {
+function PartRow({ part, figures }: { part: ProfileMountedPart; figures: boolean }): ReactElement {
   const { t, i18n } = useTranslation();
   const seededName = useSeededName();
   const type = seededName(part.type.i18n_key, part.type.name);
@@ -93,14 +93,16 @@ function PartRow({ part }: { part: ProfileMountedPart }): ReactElement {
         )}
         <p className="mt-0.5 text-[15px] font-semibold leading-snug">{title}</p>
       </div>
-      <p className="tabular-nums shrink-0 text-[11px] text-[var(--pp-paper-dim)]">
-        {part.distance_km === null ? t("sharing.sinceNew") : formatKm(part.distance_km, i18n.language)}
-      </p>
+      {figures && (
+        <p className="tabular-nums shrink-0 text-[11px] text-[var(--pp-paper-dim)]">
+          {part.distance_km === null ? t("sharing.sinceNew") : formatKm(part.distance_km, i18n.language)}
+        </p>
+      )}
     </div>
   );
 }
 
-function CategoryBlock({ group }: { group: ProfileComponentGroup }): ReactElement {
+function CategoryBlock({ group, figures }: { group: ProfileComponentGroup; figures: boolean }): ReactElement {
   const seededName = useSeededName();
 
   return (
@@ -116,7 +118,7 @@ function CategoryBlock({ group }: { group: ProfileComponentGroup }): ReactElemen
       </div>
       <div className="mt-3 space-y-1.5">
         {group.parts.map((part) => (
-          <PartRow key={part.id} part={part} />
+          <PartRow key={part.id} part={part} figures={figures} />
         ))}
       </div>
     </section>
@@ -125,9 +127,11 @@ function CategoryBlock({ group }: { group: ProfileComponentGroup }): ReactElemen
 
 interface PublicBikeComponentsProps {
   groups: ProfileComponentGroup[];
+  // False when the owner kept the wear back, which is not the same as no wear on record.
+  figures: boolean;
 }
 
-export function PublicBikeComponents({ groups }: PublicBikeComponentsProps): ReactElement | null {
+export function PublicBikeComponents({ groups, figures }: PublicBikeComponentsProps): ReactElement | null {
   const { t } = useTranslation();
   const seededName = useSeededName();
 
@@ -154,7 +158,7 @@ export function PublicBikeComponents({ groups }: PublicBikeComponentsProps): Rea
           <SideRail groups={groups} seededName={seededName} />
           <div className="min-w-0 space-y-10">
             {groups.map((group) => (
-              <CategoryBlock key={group.category.name} group={group} />
+              <CategoryBlock key={group.category.name} group={group} figures={figures} />
             ))}
           </div>
         </div>

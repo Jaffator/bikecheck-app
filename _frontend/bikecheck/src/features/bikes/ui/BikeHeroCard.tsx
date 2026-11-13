@@ -20,8 +20,6 @@ import { formatNumber } from "@/utils/number";
 import { BikePhoto } from "./BikePhoto";
 import { profileVisibilityOf } from "@/features/bikes/bikeSharing";
 
-// Strava's artwork at a height that fits a row; it scales but is never restyled.
-const CONNECT_HEIGHT = 32;
 const ROW_ICON = 16;
 
 interface BikeHeroCardProps {
@@ -131,7 +129,7 @@ function StravaRow({ bike, onPairGear }: { bike: RiddenBike; onPairGear: () => v
           icon={icon}
           label={t("strava.statusTitle")}
           trailing={
-            <StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} height={CONNECT_HEIGHT} />
+            <StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} />
           }
         />
         {connect.isError && (

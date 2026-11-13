@@ -28,9 +28,13 @@ export async function listMyReports(bikeId?: number): Promise<ReportSummary[]> {
   return apiFetch<ReportSummary[]>(`/reports/mine${query}`);
 }
 
-// PATCH /reports/:id/publish — opens the Share Link. The deliberate second act.
-export async function publishReport(id: number): Promise<ReportSummary> {
-  return apiFetch<ReportSummary>(`/reports/${id}/publish`, { method: "PATCH" });
+// PATCH /reports/:id/publish — opens the Share Link. The deliberate second act, with the owner's
+// answer on whether Strava's km and time may be read through it.
+export async function publishReport(id: number, shareFigures: boolean): Promise<ReportSummary> {
+  return apiFetch<ReportSummary>(`/reports/${id}/publish`, {
+    method: "PATCH",
+    body: JSON.stringify({ share_figures: shareFigures }),
+  });
 }
 
 // PATCH /reports/:id/revoke — takes the link back. Final: the page and every attachment

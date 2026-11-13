@@ -32,13 +32,13 @@ const MAX_LIMIT = 100;
 
 // The bike as the list needs it. Selected rather than included whole: the ride
 // list has no use for the rest of the bike.
-const BIKE_SELECT = { bike_brand: true, bike_model: true, year: true } as const;
+const BIKE_SELECT = { bike_brand: true, bike_model: true } as const;
 
 interface RideRow {
   id: number;
   activity_strava_id: bigint | null;
   bike_id: number;
-  bikes: { bike_brand?: string | null; bike_model?: string | null; year?: number | null } | null;
+  bikes: { bike_brand?: string | null; bike_model?: string | null } | null;
   started_at?: Date | null;
   created_at?: Date | null;
   distance_m?: number | null;
@@ -411,7 +411,7 @@ function clamp(value: number, fallback: number, min: number, max: number): numbe
 // are joined rather than templated.
 function bikeName(bike: RideRow['bikes']): string | null {
   if (bike === null) return null;
-  const parts = [bike.bike_brand, bike.bike_model, bike.year].filter((part): part is string | number => Boolean(part));
+  const parts = [bike.bike_brand, bike.bike_model].filter((part): part is string => Boolean(part));
   return parts.length > 0 ? parts.join(' ') : null;
 }
 

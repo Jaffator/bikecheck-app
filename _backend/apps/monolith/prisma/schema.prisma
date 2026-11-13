@@ -618,6 +618,8 @@ model reports {
   last_viewed_at DateTime?   @db.Timestamptz(6)
   // Closed for good. Alongside is_public, never in place of it - see ADR 0011.
   revoked        Boolean     @default(false)
+  // The owner agreed that Strava-derived km and time are read through the link (#380).
+  share_figures  Boolean     @default(false)
   // Never written: links do not expire on their own. The read path checks it anyway.
   expires_at     DateTime?   @db.Timestamptz(6)
   created_at     DateTime    @default(now()) @db.Timestamptz(6)
@@ -651,6 +653,8 @@ model public_profiles {
   share_history    Boolean            @default(false)
   // Meaningful only with share_history.
   share_costs      Boolean            @default(false)
+  // Km and time come from Strava rides: readers other than the owner see them only with this consent (#380).
+  share_figures    Boolean            @default(false)
   view_count       Int                @default(0)
   last_viewed_at   DateTime?          @db.Timestamptz(6)
   created_at       DateTime           @default(now()) @db.Timestamptz(6)

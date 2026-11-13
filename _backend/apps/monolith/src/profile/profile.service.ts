@@ -120,7 +120,10 @@ export type HandleReason =
 
 // What a PATCH may carry besides the handle.
 type ProfileSettings = Partial<
-  Pick<public_profiles, 'visibility' | 'share_components' | 'share_setup' | 'share_history' | 'share_costs'>
+  Pick<
+    public_profiles,
+    'visibility' | 'share_components' | 'share_setup' | 'share_history' | 'share_costs' | 'share_figures'
+  >
 >;
 
 const OFF_DEFAULTS: Omit<ResponseProfileDto, 'suggested_handle' | 'public_origin'> = {
@@ -130,6 +133,7 @@ const OFF_DEFAULTS: Omit<ResponseProfileDto, 'suggested_handle' | 'public_origin
   share_setup: true,
   share_history: false,
   share_costs: false,
+  share_figures: true,
   stats: { views: 0, followers: 0, pending_requests: 0 },
 };
 
@@ -175,6 +179,7 @@ function settingsOf(dto: UpdateProfileDto): ProfileSettings {
     ...(dto.share_setup !== undefined && { share_setup: dto.share_setup }),
     ...(dto.share_history !== undefined && { share_history: dto.share_history }),
     ...(dto.share_costs !== undefined && { share_costs: dto.share_costs }),
+    ...(dto.share_figures !== undefined && { share_figures: dto.share_figures }),
   };
 }
 
@@ -270,7 +275,9 @@ export class ProfileService {
       owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
       visibility: profile.visibility,
       relation,
-      garage: mayReadGarage(profile, relation) ? await this.garageOf(profile, owner) : null,
+      garage: mayReadGarage(profile, relation)
+        ? await this.garageOf(profile, owner, figuresShown(profile, relation))
+        : null,
     };
   }
 
@@ -292,7 +299,7 @@ export class ProfileService {
       owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
       visibility: profile.visibility,
       relation: 'NONE',
-      garage: await this.garageOf(profile, owner),
+      garage: await this.garageOf(profile, owner, profile.share_figures),
     };
   }
 
@@ -332,7 +339,8 @@ export class ProfileService {
 
     const owner = await this.prisma.users.findUnique({ where: { id: profile.user_id }, select: ownerSelect });
     // Read only what goes out: a section that is off is never even fetched.
-    const parts = profile.share_components ? await this.mountedParts(bike.id) : null;
+    const figures = figuresShown(profile, relation);
+    const parts = profile.share_components ? await this.mountedParts(bike.id, figures) : null;
     const profiles = profile.share_setup ? await this.setupProfiles(bike.id) : null;
     const currency = owner?.currency ?? FALLBACK_CURRENCY;
     const history = profile.share_history ? await this.historyOf(bike.id, costsIn(profile, currency)) : null;
@@ -341,12 +349,13 @@ export class ProfileService {
       owner: { handle: profile.handle, name: owner?.name ?? null, avatar_url: owner?.avatar_url ?? null },
       visibility: profile.visibility,
       relation,
+      figures,
       currency,
       tire_pressure_unit: owner?.tire_pressure_unit ?? 'bar',
       bike: {
-        ...bikeIdentity(bike, profile),
+        ...bikeIdentity(bike, profile, figures),
         updated_at: lastUpdated(profile, [bike]).toISOString(),
-        time_min: bike.total_time_min ?? 0,
+        time_min: figures ? (bike.total_time_min ?? 0) : null,
         ebike: bike.ebike,
         frame_material: bike.frame_material,
         has_front_suspension: bike.has_front_suspension,
@@ -402,12 +411,14 @@ export class ProfileService {
   }
 
   // The build as the Report writes it: what is on the bike now, in the catalogue's order.
-  private async mountedParts(bikeId: number): Promise<MountedPart[]> {
-    return await this.prisma.components_mounted.findMany({
+  private async mountedParts(bikeId: number, figures: boolean): Promise<MountedPart[]> {
+    const parts = await this.prisma.components_mounted.findMany({
       where: { bike_id: bikeId, is_active: true, is_deleted: { not: true } },
       orderBy: [{ component_type_id: 'asc' }, { id: 'asc' }],
       include: mountedPartInclude,
     });
+    // Masked here, before any mapper sees a row, so no section can let the wear through.
+    return figures ? parts : parts.map((part) => ({ ...part, total_km: null, total_time_min: null }));
   }
 
   // Every profile of the bike, oldest first as the Setup screen lists them.
@@ -481,7 +492,11 @@ export class ProfileService {
     return await this.prisma.follows.count({ where: { followed_id: userId, status: 'PENDING' } });
   }
 
-  private async garageOf(profile: public_profiles, owner: GarageOwner | null): Promise<ProfileGarageDto> {
+  private async garageOf(
+    profile: public_profiles,
+    owner: GarageOwner | null,
+    figures: boolean,
+  ): Promise<ProfileGarageDto> {
     const bikes = await this.prisma.bikes.findMany({
       where: { ...ownedBikesWhere(profile.user_id), is_shared: true },
       orderBy: { id: 'asc' },
@@ -491,6 +506,7 @@ export class ProfileService {
     return {
       updated_at: lastUpdated(profile, bikes).toISOString(),
       shares: {
+        figures,
         components: profile.share_components,
         setup: profile.share_setup,
         history: profile.share_history,
@@ -498,13 +514,13 @@ export class ProfileService {
       },
       totals: {
         bikes: bikes.length,
-        distance_km: sum(bikes.map((bike) => bike.total_km ?? 0)),
+        distance_km: figures ? sum(bikes.map((bike) => bike.total_km ?? 0)) : null,
         components: profile.share_components ? sum(bikes.map((bike) => bike.components_mounted.length)) : null,
         services: profile.share_history ? sum(bikes.map((bike) => bike.events_bikes.length)) : null,
       },
       currency: owner?.currency ?? FALLBACK_CURRENCY,
       tire_pressure_unit: owner?.tire_pressure_unit ?? 'bar',
-      bikes: bikes.map((bike) => toBikeCard(bike, profile)),
+      bikes: bikes.map((bike) => toBikeCard(bike, profile, figures)),
     };
   }
 
@@ -520,6 +536,7 @@ export class ProfileService {
       share_setup: row.share_setup,
       share_history: row.share_history,
       share_costs: row.share_costs,
+      share_figures: row.share_figures,
       stats: {
         views: row.view_count,
         followers: await this.followerCount(row.user_id),
@@ -544,6 +561,11 @@ function mayReadGarage(profile: public_profiles, relation: ProfileRelation): boo
   return profile.visibility === 'FOLLOWERS' && relation === 'FOLLOWING';
 }
 
+// Km and time come from Strava rides: the owner always sees them, any other reader only with consent (#380).
+function figuresShown(profile: public_profiles, relation: ProfileRelation): boolean {
+  return relation === 'SELF' || profile.share_figures;
+}
+
 function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
@@ -564,7 +586,11 @@ function lastUpdated(profile: public_profiles, bikes: GarageBike[]): Date {
 
 // What the card and the bike page share: the bike itself and the Services count the history
 // switch lets out. The parts count is the card's alone - the page carries the build instead.
-function bikeIdentity(bike: GarageBike, profile: public_profiles): Omit<ProfileBikeCardDto, 'components'> {
+function bikeIdentity(
+  bike: GarageBike,
+  profile: public_profiles,
+  figures: boolean,
+): Omit<ProfileBikeCardDto, 'components'> {
   return {
     id: bike.id,
     name: bike.bikename,
@@ -573,14 +599,14 @@ function bikeIdentity(bike: GarageBike, profile: public_profiles): Omit<ProfileB
     year: bike.year,
     type: bike.bike_types === null ? null : { i18n_key: bike.bike_types.i18n_key, name: bike.bike_types.type ?? '' },
     image_url: bike.image_url,
-    distance_km: bike.total_km ?? 0,
+    distance_km: figures ? (bike.total_km ?? 0) : null,
     services: profile.share_history ? bike.events_bikes.length : null,
   };
 }
 
-function toBikeCard(bike: GarageBike, profile: public_profiles): ProfileBikeCardDto {
+function toBikeCard(bike: GarageBike, profile: public_profiles, figures: boolean): ProfileBikeCardDto {
   return {
-    ...bikeIdentity(bike, profile),
+    ...bikeIdentity(bike, profile, figures),
     components: profile.share_components ? bike.components_mounted.length : null,
   };
 }

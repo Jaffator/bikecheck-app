@@ -20,6 +20,8 @@ export interface ReportSummary {
   bike_id: number;
   covers: ReportCovers;
   is_public: boolean;
+  // Km and time from Strava are readable through the link.
+  share_figures: boolean;
   view_count: number;
   last_viewed_at: string | null;
   revoked: boolean;

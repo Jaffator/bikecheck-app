@@ -20,6 +20,8 @@ export interface Profile {
   share_setup: boolean;
   share_history: boolean;
   share_costs: boolean;
+  // Consent to publish the Strava-derived km and time.
+  share_figures: boolean;
   stats: ProfileStats;
   suggested_handle: string | null;
   // The address is `${public_origin}/u/${handle}`.
@@ -34,6 +36,7 @@ export interface UpdateProfilePayload {
   share_setup?: boolean;
   share_history?: boolean;
   share_costs?: boolean;
+  share_figures?: boolean;
 }
 
 // What PATCH /profiles/me refuses a handle with: 400 for the rule, 409 HANDLE_TAKEN.
@@ -70,6 +73,8 @@ export interface ProfileOwner {
 }
 
 export interface ProfileShares {
+  // False when the owner kept the Strava-derived km and time back; they come as null.
+  figures: boolean;
   components: boolean;
   setup: boolean;
   history: boolean;
@@ -79,7 +84,7 @@ export interface ProfileShares {
 // Over the listed bikes only. A count is null when its section is off.
 export interface ProfileTotals {
   bikes: number;
-  distance_km: number;
+  distance_km: number | null;
   components: number | null;
   services: number | null;
 }
@@ -99,7 +104,7 @@ export interface ProfileBikeCard {
   year: number | null;
   type: ProfileBikeType | null;
   image_url: string | null;
-  distance_km: number;
+  distance_km: number | null;
   components: number | null;
   services: number | null;
 }
@@ -226,7 +231,7 @@ export interface ProfileServicesPage {
 export interface ProfileBike extends Omit<ProfileBikeCard, "components"> {
   // Last Updated of this bike alone: the newest of the bike, its parts and its Services.
   updated_at: string;
-  time_min: number;
+  time_min: number | null;
   ebike: boolean;
   frame_material: string | null;
   has_front_suspension: boolean;
@@ -242,6 +247,8 @@ export interface ProfileBikeResponse {
   owner: ProfileOwner;
   visibility: ProfileVisibility;
   relation: ProfileRelation;
+  // False when the owner kept the Strava-derived km and time back.
+  figures: boolean;
   currency: string;
   tire_pressure_unit: TirePressureUnit;
   bike: ProfileBike;

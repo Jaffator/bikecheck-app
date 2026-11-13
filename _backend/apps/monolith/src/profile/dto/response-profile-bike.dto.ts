@@ -176,8 +176,8 @@ export class ProfileBikeDto extends OmitType(ProfileBikeCardDto, ['components'] 
   @ApiProperty({ example: '2026-09-12T00:00:00.000Z' })
   updated_at!: string;
 
-  @ApiProperty({ example: 15000 })
-  time_min!: number;
+  @ApiProperty({ example: 15000, nullable: true })
+  time_min!: number | null;
 
   @ApiProperty({ example: false })
   ebike!: boolean;
@@ -209,6 +209,10 @@ export class ProfileBikeDto extends OmitType(ProfileBikeCardDto, ['components'] 
 export class ResponseProfileBikeDto {
   @ApiProperty({ type: ProfileOwnerDto })
   owner!: ProfileOwnerDto;
+
+  // False when the owner kept the Strava-derived km and time back; the figures come as null.
+  @ApiProperty({ example: true })
+  figures!: boolean;
 
   @ApiProperty({ enum: profile_visibility, example: profile_visibility.PUBLIC })
   visibility!: profile_visibility;

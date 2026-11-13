@@ -63,12 +63,17 @@ export function useExportReport(): UseMutationResult<ExportedReport, Error, Expo
   });
 }
 
+interface PublishReportInput {
+  id: number;
+  shareFigures: boolean;
+}
+
 // Publishing opens the link, which changes what the Reports list says about it.
-export function usePublishReport(): UseMutationResult<ReportSummary, Error, number> {
+export function usePublishReport(): UseMutationResult<ReportSummary, Error, PublishReportInput> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => publishReport(id),
+    mutationFn: ({ id, shareFigures }: PublishReportInput) => publishReport(id, shareFigures),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["reports"] });
     },

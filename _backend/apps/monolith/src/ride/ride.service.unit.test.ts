@@ -130,7 +130,7 @@ describe('RideService', () => {
 
       const page = await service.findPage(1, 20, 0);
 
-      expect(page.items[0].bike_name).toBe('Specialized Tarmac SL7 2022');
+      expect(page.items[0].bike_name).toBe('Specialized Tarmac SL7');
       // The relation itself does not travel to the client.
       expect(page.items[0]).not.toHaveProperty('bikes');
     });

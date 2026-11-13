@@ -1848,6 +1848,10 @@
           "type": "boolean",
           "default": false
         },
+        "share_figures": {
+          "type": "boolean",
+          "default": false
+        },
         "expires_at": {
           "type": [
             "string",
@@ -1892,6 +1896,10 @@
           "default": false
         },
         "share_costs": {
+          "type": "boolean",
+          "default": false
+        },
+        "share_figures": {
           "type": "boolean",
           "default": false
         },

@@ -19,6 +19,10 @@ export class ProfileOwnerDto {
 }
 
 export class ProfileSharesDto {
+  // False when the owner kept the Strava-derived km and time back; the figures come as null.
+  @ApiProperty({ example: true })
+  figures!: boolean;
+
   @ApiProperty({ example: true })
   components!: boolean;
 
@@ -37,8 +41,8 @@ export class ProfileTotalsDto {
   @ApiProperty({ example: 3 })
   bikes!: number;
 
-  @ApiProperty({ example: 12480 })
-  distance_km!: number;
+  @ApiProperty({ example: 12480, nullable: true })
+  distance_km!: number | null;
 
   @ApiProperty({ example: 32, nullable: true })
   components!: number | null;
@@ -78,8 +82,8 @@ export class ProfileBikeCardDto {
   @ApiProperty({ example: 'https://storage.example.com/bikes/rallon.webp', nullable: true })
   image_url!: string | null;
 
-  @ApiProperty({ example: 4187 })
-  distance_km!: number;
+  @ApiProperty({ example: 4187, nullable: true })
+  distance_km!: number | null;
 
   @ApiProperty({ example: 32, nullable: true })
   components!: number | null;

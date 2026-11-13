@@ -46,6 +46,9 @@ export class ResponseReportDto {
   @ApiProperty({ example: false, description: 'A report stays closed until it is published' })
   is_public!: boolean;
 
+  @ApiProperty({ example: true, description: 'Km and time from Strava are readable through the link' })
+  share_figures!: boolean;
+
   @ApiProperty({ example: 3 })
   view_count!: number;
 

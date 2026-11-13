@@ -7,12 +7,11 @@ import { useIsDesktop } from "@/layout/breakpoints";
 import orangeArtwork from "@/assets/strava/btn_strava_connect_with_orange.svg";
 import whiteArtwork from "@/assets/strava/btn_strava_connect_with_white.svg";
 
-// The artwork's own size.
+// The artwork's own size, which Strava's brand rules fix at 48 px everywhere.
 const NATIVE_HEIGHT = 48;
 const NATIVE_RATIO = "237 / 48";
 // A wide desktop column would stretch the ratio into a slab, so desktop gets a fixed bar.
 const DESKTOP_BAR_HEIGHT = 56;
-const DESKTOP_ARTWORK_HEIGHT = 40;
 
 // White is Strava's own variant for a surface already in their orange.
 const ARTWORK = { orange: orangeArtwork, white: whiteArtwork } as const;
@@ -23,7 +22,6 @@ interface StravaConnectButtonProps {
   onClick: () => void;
   // While the redirect to Strava is under way: greyed out and inert, the artwork has no spinner.
   pending?: boolean;
-  height?: number;
   variant?: keyof typeof ARTWORK;
   // Fills the container's width in the artwork's colour, the artwork centred at its own size.
   fullWidth?: boolean;
@@ -32,13 +30,11 @@ interface StravaConnectButtonProps {
 export function StravaConnectButton({
   onClick,
   pending = false,
-  height = NATIVE_HEIGHT,
   variant = "orange",
   fullWidth = false,
 }: StravaConnectButtonProps): ReactElement {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
-  const artworkHeight = isDesktop ? DESKTOP_ARTWORK_HEIGHT : NATIVE_HEIGHT;
 
   return (
     <UnstyledButton
@@ -59,7 +55,7 @@ export function StravaConnectButton({
       <img
         src={ARTWORK[variant]}
         alt=""
-        style={{ display: "block", height: fullWidth ? artworkHeight : height, width: "auto" }}
+        style={{ display: "block", height: NATIVE_HEIGHT, width: "auto" }}
       />
     </UnstyledButton>
   );

@@ -19,6 +19,7 @@ import { ReportService } from './report.service';
 import { PRINT_KEY_HEADER } from './report-pdf.service';
 import { ReportAttachmentFile, ReportPdfFile, ReportSnapshot } from './report.types';
 import { ExportReportDto } from './dto/export-report.dto';
+import { PublishReportDto } from './dto/publish-report.dto';
 import {
   ResponseExportedReportDto,
   ResponsePdfTicketDto,
@@ -99,8 +100,9 @@ export class ReportController {
   async publish(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('userId') userId: string,
+    @Body() body: PublishReportDto,
   ): Promise<ResponseReportDto> {
-    const report = await this.reportService.publish(id, Number(userId));
+    const report = await this.reportService.publish(id, Number(userId), body.share_figures);
     return this.toDto(report);
   }
 
@@ -253,6 +255,7 @@ export class ReportController {
       bike_id: report.bike_id,
       covers: this.reportService.covers(report),
       is_public: report.is_public,
+      share_figures: report.share_figures,
       view_count: report.view_count,
       last_viewed_at: report.last_viewed_at,
       revoked: report.revoked,

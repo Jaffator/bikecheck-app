@@ -13,6 +13,7 @@ import { EmptyRides } from "@/features/rides_page/EmptyRides";
 import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides } from "@/features/rides/rides.queries";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
+import { ViewOnStravaLink } from "@/features/strava/ui/ViewOnStravaLink";
 import { CheckInMark } from "./CheckInMark";
 import { PrivateMark } from "./PrivateMark";
 import { RideDetailSheet } from "./RideDetailSheet";
@@ -41,7 +42,7 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
       leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
       title={
         <>
-          {rideTitle(ride, t("rides.unknownBike"))}
+          {rideTitle(ride, t)}
           <PrivateMark isPrivate={ride.is_private} />
           <span style={{ marginInlineStart: 8 }}>
             <CheckInMark checkIn={ride.check_in} size={15} />
@@ -59,6 +60,7 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
           </Text>
         </Group>
       }
+      corner={<ViewOnStravaLink activityId={ride.activity_strava_id} fz={12} boxed />}
       metrics={
         <>
           <HistoryMetric icon={Route}>{t("pendingRides.distance", { count: toKm(ride.distance_m) })}</HistoryMetric>

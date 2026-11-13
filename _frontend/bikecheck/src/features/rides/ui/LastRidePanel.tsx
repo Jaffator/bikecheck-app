@@ -139,7 +139,7 @@ function RideHeading({ ride, colorIndex, dateFormat }: RideBodyProps & { dateFor
   return (
     <Stack gap={2}>
       <Text fz={16} fw={600} c="text.6" lineClamp={1}>
-        {rideTitle(ride, t("rides.unknownBike"))}
+        {rideTitle(ride, t)}
         <PrivateMark isPrivate={ride.is_private} />
       </Text>
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -165,7 +165,7 @@ function CompactRideHeading({ ride, colorIndex }: RideBodyProps): ReactElement {
   return (
     <Stack gap={2}>
       <Text fz={15} fw={600} lh={1.3} c="text.6" lineClamp={2}>
-        {rideTitle(ride, t("rides.unknownBike"))}
+        {rideTitle(ride, t)}
         <PrivateMark isPrivate={ride.is_private} />
       </Text>
       {ride.started_at !== null && (

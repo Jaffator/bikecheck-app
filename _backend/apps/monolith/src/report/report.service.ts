@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { serviceDateInPeriod } from '../bike-event/bike-event.service';
 import { StorageService } from '../storage/storage.service';
 import { ReportPdfService } from './report-pdf.service';
+import { withoutFigures } from './report-figures';
 import { catalogueLabel, FALLBACK_REPORT_CURRENCY, reportLanguage } from './report-catalogue-labels';
 import { ExportReportDto } from './dto/export-report.dto';
 import { ownedBikeWhere } from '../bike/owned-bike.where';
@@ -182,13 +183,13 @@ export class ReportService {
 
   // Opens the share link. A revoked report is closed for good; publishing it again would
   // resurrect a link its owner killed.
-  async publish(id: number, userId: number): Promise<reports> {
+  async publish(id: number, userId: number, shareFigures: boolean): Promise<reports> {
     const report = await this.findOwnedReport(id, userId);
     if (report.revoked) {
       throw new ConflictException('A revoked report cannot be published again');
     }
 
-    return await this.prisma.reports.update({ where: { id }, data: { is_public: true } });
+    return await this.prisma.reports.update({ where: { id }, data: { is_public: true, share_figures: shareFigures } });
   }
 
   // Final. What it closes is the page and every attachment behind it, at the same instant.
@@ -299,7 +300,7 @@ export class ReportService {
       });
     }
 
-    return this.storedSnapshot(report).document;
+    return this.readerDocument(report);
   }
 
   // One attachment behind a share link. The state is re-checked here, per file, on every
@@ -325,6 +326,7 @@ export class ReportService {
     const report = await this.openReport(token);
     const document = this.storedSnapshot(report).document;
 
+    // The print opens the public page without a key, so it reads what any reader would.
     const body = await this.pdf.print(this.printUrl(token));
 
     return { body, filename: this.pdfFilename(document) };
@@ -763,6 +765,13 @@ export class ReportService {
       case 'BIKECHECK':
         return [];
     }
+  }
+
+  // What a reader behind the Share Link gets: the frozen document, with the Strava-derived km and time
+  // left out unless the owner agreed (#380).
+  private readerDocument(report: reports): ReportSnapshot {
+    const document = this.storedSnapshot(report).document;
+    return report.share_figures ? document : withoutFigures(document);
   }
 
   private storedSnapshot(report: reports): StoredReportSnapshot {

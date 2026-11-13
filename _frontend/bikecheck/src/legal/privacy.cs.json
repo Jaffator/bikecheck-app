@@ -51,7 +51,7 @@
       "U každé aktivní relace rovněž zaznamenáváme zařízení a IP adresu, ze které bylo přihlášení provedeno, aby bylo možné rozpoznat a ukončit relaci, která není vaše.",
       "Údaje z jiných zdrojů",
       "Ve zkratce: Údaje získáváme ze služeb, které si sami připojíte, a odnikud jinud.",
-      "Pokud připojíte účet Strava, získáme od Stravy váš identifikátor atleta, jméno a příjmení, uživatelské jméno a profilový obrázek, kola („gear“) vedená ve vašem účtu Strava a vaše aktivity — jejich začátek, vzdálenost, převýšení, dobu trvání, průměrnou a maximální rychlost a vybavení, na kterém byly odjety. Používáme to pouze k přiřazení jízd ke správnému kolu a k udržování jeho opotřebení v aktuálním stavu. Aktivity, které máte na Stravě soukromé, zpracováváme stejně a v aplikaci je označíme jako soukromé. Stravu můžete kdykoli odpojit v Nastavení.",
+      "Pokud připojíte účet Strava, získáme od Stravy váš identifikátor atleta, jméno a příjmení, uživatelské jméno a profilový obrázek, kola („gear“) vedená ve vašem účtu Strava a vaše aktivity — jejich začátek, vzdálenost, převýšení, dobu trvání, průměrnou a maximální rychlost a vybavení, na kterém byly odjety. Používáme to pouze k přiřazení jízd ke správnému kolu a k udržování jeho opotřebení v aktuálním stavu. Aktivity, které máte na Stravě soukromé, zpracováváme stejně a v aplikaci je označíme jako soukromé. Kilometry a čas z vašich jízd ze Stravy ostatním ukážeme na veřejném profilu nebo přes odkaz na Report jen tehdy, když při zveřejnění souhlasíte. Stravu můžete kdykoli odpojit v Nastavení.",
       "Osobní údaje nekupujeme od datových brokerů, marketingových partnerů ani z veřejných databází."
     ]
   },

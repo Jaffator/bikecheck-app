@@ -61,7 +61,7 @@ export function DashboardBanner(): ReactElement {
                 icon={Unplug}
                 title={t("strava.notConnectedTitle")}
                 body={connect.isError ? t("strava.connectFailed") : t("dashboard.bannerStravaBody")}
-                action={<StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} height={40} />}
+                action={<StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} />}
               />
             );
           case "pair":

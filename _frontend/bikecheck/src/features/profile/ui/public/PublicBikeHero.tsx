@@ -105,12 +105,16 @@ export function PublicBikeHero({ handle, page, children }: PublicBikeHeroProps):
               {t("publicProfile.bikeIntro")}
             </p>
             <dl className="mt-7 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
-              <Reading label={t("publicProfile.figureBikeDistance")} value={formatNumber(bike.distance_km, i18n.language)} unit="km" />
-              <Reading
-                label={t("publicProfile.figureRideTime")}
-                value={formatNumber(Math.round(bike.time_min / MINUTES_PER_HOUR), i18n.language)}
-                unit="h"
-              />
+              {bike.distance_km !== null && (
+                <Reading label={t("publicProfile.figureBikeDistance")} value={formatNumber(bike.distance_km, i18n.language)} unit="km" />
+              )}
+              {bike.time_min !== null && (
+                <Reading
+                  label={t("publicProfile.figureRideTime")}
+                  value={formatNumber(Math.round(bike.time_min / MINUTES_PER_HOUR), i18n.language)}
+                  unit="h"
+                />
+              )}
               {partsCount !== null && <Reading label={t("publicProfile.figureComponents")} value={partsCount} />}
               {bike.services !== null && <Reading label={t("publicProfile.figureServices")} value={bike.services} />}
             </dl>

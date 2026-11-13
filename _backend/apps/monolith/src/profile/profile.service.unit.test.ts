@@ -19,6 +19,7 @@ interface ProfileRow {
   share_setup: boolean;
   share_history: boolean;
   share_costs: boolean;
+  share_figures: boolean;
   view_count: number;
   last_viewed_at: Date | null;
   created_at: Date;
@@ -250,6 +251,7 @@ describe('ProfileService', () => {
                 share_setup: true,
                 share_history: true,
                 share_costs: false,
+                share_figures: false,
                 view_count: 0,
                 last_viewed_at: null,
                 created_at: NOW,
@@ -375,6 +377,7 @@ describe('ProfileService', () => {
       share_setup: true,
       share_history: true,
       share_costs: false,
+      share_figures: true,
       view_count: 0,
       last_viewed_at: null,
       created_at: NOW,
@@ -558,6 +561,7 @@ describe('ProfileService', () => {
         share_setup: true,
         share_history: false,
         share_costs: false,
+        share_figures: true,
         stats: { views: 0, followers: 0, pending_requests: 0 },
         suggested_handle: 'jardal',
         public_origin: ORIGIN,
@@ -818,6 +822,7 @@ describe('ProfileService', () => {
         share_setup: true,
         share_history: true,
         share_costs: false,
+        share_figures: false,
         stats: { views: 0, followers: 0, pending_requests: 0 },
         suggested_handle: null,
         public_origin: ORIGIN,
@@ -1123,6 +1128,62 @@ describe('ProfileService', () => {
     });
   });
 
+  // Km and time come from Strava rides: other readers get them only with the owner's consent (#380).
+  describe('the consent to publish km and time', () => {
+    beforeEach(() => {
+      mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, share_figures: false });
+      seedBike({ id: 1, total_km: 4187, total_time_min: 15000, components_mounted: [part()] });
+    });
+
+    it('leaves the garage figures out for another reader', async () => {
+      const { garage } = await service.read('jaffa', OTHER_ID);
+
+      expect(garage?.shares.figures).toBe(false);
+      expect(garage?.totals.distance_km).toBeNull();
+      expect(garage?.bikes[0].distance_km).toBeNull();
+    });
+
+    it('leaves the bike hero and the part wear out for another reader', async () => {
+      const page = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(page.figures).toBe(false);
+      expect(page.bike.distance_km).toBeNull();
+      expect(page.bike.time_min).toBeNull();
+      const parts = page.bike.components?.flatMap((group) => group.parts) ?? [];
+      expect(parts.length).toBeGreaterThan(0);
+      expect(parts.every((one) => one.distance_km === null && one.time_min === null)).toBe(true);
+    });
+
+    it('leaves them out of the web page too', async () => {
+      const page = await service.readPublic('jaffa');
+
+      expect(page.garage.totals.distance_km).toBeNull();
+    });
+
+    it('shows the owner everything of their own profile', async () => {
+      const { garage } = await service.read('jaffa', OWNER_ID);
+
+      expect(garage?.shares.figures).toBe(true);
+      expect(garage?.totals.distance_km).toBe(4187);
+    });
+
+    it('shows everyone the figures once the owner agreed', async () => {
+      seed({ user_id: OWNER_ID, handle: 'jaffa', visibility: profile_visibility.PUBLIC, share_figures: true });
+
+      const page = await service.readBike('jaffa', 1, OTHER_ID);
+
+      expect(page.bike.distance_km).toBe(4187);
+      expect(page.bike.time_min).toBe(15000);
+    });
+
+    it('saves the consent with the rest of the settings', async () => {
+      const saved = await service.updateMine(OWNER_ID, { share_figures: true });
+
+      expect(saved.share_figures).toBe(true);
+    });
+  });
+
   describe('read - the garage', () => {
     beforeEach(() => {
       mockPrisma.users.findUnique.mockResolvedValue(ownerRow);
@@ -1189,7 +1250,7 @@ describe('ProfileService', () => {
 
       const page = await service.read('jaffa', OTHER_ID);
 
-      expect(page.garage?.shares).toEqual({ components: false, setup: true, history: true, costs: false });
+      expect(page.garage?.shares).toEqual({ figures: true, components: false, setup: true, history: true, costs: false });
       expect(page.garage?.totals).toMatchObject({ components: null, services: 1 });
       expect(page.garage?.bikes[0]).toMatchObject({ components: null, services: 1 });
     });

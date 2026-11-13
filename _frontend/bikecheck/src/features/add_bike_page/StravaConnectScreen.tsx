@@ -160,7 +160,7 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
             root: {
               height: "3.25rem",
               backgroundColor: "transparent",
-              borderColor: "var(--mantine-color-other-borderSolid)",
+              border: "none",
               color: "var(--mantine-color-primary-6)",
             },
             label: {

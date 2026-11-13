@@ -1,6 +1,6 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Group, Loader, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Checkbox, Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Check, Download, Link2, Share2, X } from "lucide-react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
@@ -54,6 +54,8 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
   // not depend on a mutation's transient result.
   const [report, setReport] = useState<ExportedReport | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  // The owner's consent to publish Strava's km and time with the link; offered ticked.
+  const [shareFigures, setShareFigures] = useState(true);
   // What a Bike Report carries, and whether the owner has settled it. Held here so a failed
   // Export returns to the answers given, not to the defaults.
   const [choice, setChoice] = useState<BikeReportChoice | null>(null);
@@ -118,6 +120,7 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
     exported.current = null;
     setReport(null);
     setShareUrl(null);
+    setShareFigures(true);
     setChoice(null);
     setOptionsDone(false);
     made.reset();
@@ -190,10 +193,13 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
         <PreviewActions
           reportId={report.id}
           publishing={publish.isPending}
+          shareFigures={shareFigures}
+          onShareFiguresChange={setShareFigures}
           onPublish={() =>
-            publish.mutate(report.id, {
-              onSuccess: (published) => setShareUrl(published.share_url),
-            })
+            publish.mutate(
+              { id: report.id, shareFigures },
+              { onSuccess: (published) => setShareUrl(published.share_url) },
+            )
           }
         />
       )}
@@ -235,10 +241,14 @@ function sheetWidth(showsDocument: boolean, needsOptions: boolean): number | und
 function PreviewActions({
   reportId,
   publishing,
+  shareFigures,
+  onShareFiguresChange,
   onPublish,
 }: {
   reportId: number;
   publishing: boolean;
+  shareFigures: boolean;
+  onShareFiguresChange: (checked: boolean) => void;
   onPublish: () => void;
 }): ReactElement {
   const { t } = useTranslation();
@@ -247,6 +257,22 @@ function PreviewActions({
 
   return (
     <>
+      {/* Only the link carries the figures to a reader; the file is the owner's own. */}
+      <Box px={isDesktop ? "md" : undefined} pt={12}>
+        <Checkbox
+          checked={shareFigures}
+          onChange={(event) => onShareFiguresChange(event.currentTarget.checked)}
+          label={t("sharing.figuresConsent")}
+          radius={6}
+          iconColor="textDark.6"
+          styles={{
+            label: { color: "var(--mantine-color-text-7)", fontSize: 13 },
+            input: shareFigures
+              ? undefined
+              : { backgroundColor: "var(--mantine-color-cards-6)", borderColor: "var(--mantine-color-cards-4)" },
+          }}
+        />
+      </Box>
       <Footer fill>
         <Button
           color="primary.6"

@@ -366,6 +366,14 @@ stay), **Followers only** (approved Followers, inside the app; the web address a
 **Public** (anyone at the address). One switch, set only in the share drawer.
 _Avoid_: Private (Off is a Visibility, not a privacy setting), privacy, status
 
+**Figures Consent**:
+The owner's yes to letting readers see the km and time that come from Strava rides: on a Public
+Profile (any reader but the owner) and on a Report's Share Link (page and PDF). Without it the
+figures are left out and the rest goes out as usual. Offered ticked where the owner goes Public or
+publishes a link, kept with that profile or that Report, and the owner's own view and file always
+carry the figures.
+_Avoid_: Strava consent, data consent
+
 **Shared Bike**:
 A bike the owner lets out on their Public Profile — every bike is one until its switch is turned
 off. An archived bike is never shown whatever its switch says, and comes back as it was set when

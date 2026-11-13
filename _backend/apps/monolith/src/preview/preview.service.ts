@@ -281,7 +281,8 @@ function ownerName(name: string | null, handle: string): string {
 
 // "2 bikes · 4,187 km · 32 components · 26 services"; a null count is a section the owner keeps in.
 function garageLine(garage: ProfileGarageDto): string {
-  const parts = [count(garage.totals.bikes, 'bike'), km(garage.totals.distance_km)];
+  const parts = [count(garage.totals.bikes, 'bike')];
+  if (garage.totals.distance_km !== null) parts.push(km(garage.totals.distance_km));
   if (garage.totals.components !== null) parts.push(count(garage.totals.components, 'component'));
   if (garage.totals.services !== null) parts.push(count(garage.totals.services, 'service'));
   return parts.join(' · ');
@@ -290,7 +291,8 @@ function garageLine(garage: ProfileGarageDto): string {
 // "4,187 km · 32 components · 26 services": the parts of the build that goes out, the
 // Services on record - each only while its section is shared.
 function bikeLine(bike: ProfileBikeDto): string {
-  const parts = [km(bike.distance_km)];
+  const parts: string[] = [];
+  if (bike.distance_km !== null) parts.push(km(bike.distance_km));
   if (bike.components !== null) parts.push(count(sum(bike.components.map((group) => group.parts.length)), 'component'));
   if (bike.history !== null) parts.push(count(bike.history.total_count, 'service'));
   return parts.join(' · ');

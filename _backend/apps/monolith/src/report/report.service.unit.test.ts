@@ -199,6 +199,7 @@ describe('ReportService', () => {
     kind: report_kind.SERVICE,
     snapshot: storedSnapshot(),
     is_public: false,
+    share_figures: false,
     view_count: 0,
     last_viewed_at: null,
     revoked: false,
@@ -826,23 +827,38 @@ describe('ReportService', () => {
     it('opens the share link', async () => {
       mockPrisma.reports.findFirst.mockResolvedValue(reportRow());
 
-      const report = await service.publish(REPORT_ID, OWNER_ID);
+      const report = await service.publish(REPORT_ID, OWNER_ID, true);
 
       expect(report.is_public).toBe(true);
-      expect(mockPrisma.reports.update).toHaveBeenCalledWith({ where: { id: REPORT_ID }, data: { is_public: true } });
+      expect(mockPrisma.reports.update).toHaveBeenCalledWith({
+        where: { id: REPORT_ID },
+        data: { is_public: true, share_figures: true },
+      });
+    });
+
+    // The consent is the owner's answer at publishing; unticked, the link opens without the figures.
+    it('keeps the answer to the consent with the link', async () => {
+      mockPrisma.reports.findFirst.mockResolvedValue(reportRow());
+
+      await service.publish(REPORT_ID, OWNER_ID, false);
+
+      expect(mockPrisma.reports.update).toHaveBeenCalledWith({
+        where: { id: REPORT_ID },
+        data: { is_public: true, share_figures: false },
+      });
     });
 
     it('refuses to resurrect a revoked report', async () => {
       mockPrisma.reports.findFirst.mockResolvedValue(reportRow({ is_public: true, revoked: true }));
 
-      await expect(service.publish(REPORT_ID, OWNER_ID)).rejects.toThrow(ConflictException);
+      await expect(service.publish(REPORT_ID, OWNER_ID, true)).rejects.toThrow(ConflictException);
       expect(mockPrisma.reports.update).not.toHaveBeenCalled();
     });
 
     it('does not reach another user report', async () => {
       mockPrisma.reports.findFirst.mockResolvedValue(null);
 
-      await expect(service.publish(REPORT_ID, STRANGER_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.publish(REPORT_ID, STRANGER_ID, true)).rejects.toThrow(NotFoundException);
       expect(mockPrisma.reports.findFirst).toHaveBeenCalledWith({ where: { id: REPORT_ID, user_id: STRANGER_ID } });
     });
   });
@@ -1025,6 +1041,28 @@ describe('ReportService', () => {
 
       expect(snapshot.kind).toBe('SERVICE');
       expect(mockPrisma.reports.update).not.toHaveBeenCalled();
+    });
+
+    // Km and time come from Strava rides (#380): the reader gets them only if the owner agreed.
+    it('leaves the Strava-derived km and time out unless the owner agreed', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true, share_figures: false }));
+
+      const snapshot = await service.getPublicSnapshot('token-1');
+
+      if (snapshot.kind !== 'SERVICE') throw new Error('expected a service report');
+      expect(snapshot.service.odometerKm).toBeNull();
+      expect(snapshot.service.odometerTimeMin).toBeNull();
+      expect(snapshot.bike.totalKm).toBeNull();
+      expect(snapshot.bike.totalTimeMin).toBeNull();
+    });
+
+    it('keeps them when the owner agreed', async () => {
+      mockPrisma.reports.findUnique.mockResolvedValue(reportRow({ is_public: true, share_figures: true }));
+
+      const snapshot = await service.getPublicSnapshot('token-1');
+
+      if (snapshot.kind !== 'SERVICE') throw new Error('expected a service report');
+      expect(snapshot.service.odometerKm).toBe(4800);
     });
 
     it('strips what the reader has no business seeing', async () => {

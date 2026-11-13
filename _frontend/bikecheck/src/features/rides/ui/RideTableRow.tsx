@@ -12,11 +12,13 @@ import { CHECK_IN_COLOR, symptomKey } from "@/features/rides/checkIn";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { Ride, RideCheckIn } from "@/features/rides/rides.types";
 import { rideTitle } from "@/features/rides/rideTitle";
+import { ViewOnStravaLink } from "@/features/strava/ui/ViewOnStravaLink";
 import { PrivateMark } from "./PrivateMark";
 import { woreOffSummary } from "@/features/rides/woreOff";
 import { formatNumber } from "@/utils/number";
 
-export const RIDE_TABLE_COLUMNS = "minmax(0, 2fr) minmax(0, 1.1fr) 56px 64px 64px minmax(0, 1.4fr) 104px";
+// The empty 104px track parts the metrics from wore off; the last one holds "View on Strava" under a blank head.
+export const RIDE_TABLE_COLUMNS = "minmax(0, 1.2fr) minmax(0, 1fr) 80px 64px 80px 104px minmax(0, 2fr) 104px 104px";
 // The table draws the route at 52 px, about the phone card's size.
 const ROUTE_SIMPLIFY = 1;
 // The table shows the first two; the detail has them all.
@@ -60,7 +62,7 @@ export function RideTableRow({ ride, colorIndex, onOpen }: RideTableRowProps): R
         />
         <Stack gap={0} style={{ minWidth: 0 }}>
           <Text fz={13} fw={600} c="text.6" lineClamp={1}>
-            {rideTitle(ride, t("rides.unknownBike"))}
+            {rideTitle(ride, t)}
             <PrivateMark isPrivate={ride.is_private} />
           </Text>
           <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
@@ -75,18 +77,22 @@ export function RideTableRow({ ride, colorIndex, onOpen }: RideTableRowProps): R
         </Text>
       </Group>
       <Text className="tabular-nums" fz={13} c="text.7" ta="right">
-        {figure((ride.distance_m ?? 0) / 1000, 1)}
+        {`${figure((ride.distance_m ?? 0) / 1000, 1)} km`}
       </Text>
       <Text className="tabular-nums" fz={13} c="text.7" ta="right">
         {formatDuration(ride.duration_min ?? 0)}
       </Text>
       <Text className="tabular-nums" fz={13} c="text.7" ta="right">
-        {figure(ride.elevation_up_m ?? 0)}
+        {`${figure(ride.elevation_up_m ?? 0)} m`}
       </Text>
+      <Box />
       <Text className="tabular-nums" fz={12} c="var(--color-text-dim)" lineClamp={1}>
         {woreOffSummary(ride.wore_off, WORE_OFF_SHOWN, t) ?? "—"}
       </Text>
       <CheckInCell checkIn={ride.check_in} />
+      <Box>
+        <ViewOnStravaLink activityId={ride.activity_strava_id} fz={12} />
+      </Box>
     </Box>
   );
 }

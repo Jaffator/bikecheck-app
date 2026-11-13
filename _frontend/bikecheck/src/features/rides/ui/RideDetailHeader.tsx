@@ -13,6 +13,7 @@ import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
 import type { BikePick, RideItem, RideWalk } from "@/features/rides/rideDetail";
 import { rideTitle } from "@/features/rides/rideTitle";
+import { ViewOnStravaLink } from "@/features/strava/ui/ViewOnStravaLink";
 import { PrivateMark } from "./PrivateMark";
 
 dayjs.extend(relativeTime);
@@ -40,7 +41,7 @@ export function RideDetailHeader({ item, pick, walk }: RideDetailHeaderProps): R
       {walk !== undefined && <WalkEyebrow arrivedAt={ride.created_at} walk={walk} />}
       {/* A ride keeps no Strava title (#375); an Unassigned Ride without one shows its start. */}
       <Text fw={600} fz={22} lh={1.15} lts="var(--tracking-title)" c="text.6" lineClamp={2}>
-        {item.kind === "ride" ? rideTitle(item.ride, t("rides.unknownBike")) : item.ride.name || started}
+        {item.kind === "ride" ? rideTitle(item.ride, t) : item.ride.name || started}
         <PrivateMark isPrivate={item.ride.is_private} size={16} />
       </Text>
       <Group gap={7} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -49,6 +50,7 @@ export function RideDetailHeader({ item, pick, walk }: RideDetailHeaderProps): R
           {[bikeName, started].filter((part) => part !== null).join(" · ")}
         </Text>
       </Group>
+      <ViewOnStravaLink activityId={item.kind === "ride" ? item.ride.activity_strava_id : item.ride.activity_id} />
     </Stack>
   );
 }

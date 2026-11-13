@@ -149,7 +149,7 @@ describe('RideController (e2e)', () => {
     expect(response.body.items[0]).toEqual(
       expect.objectContaining({
         bike_id: bikeId,
-        bike_name: 'Santa Cruz Hightower 2022',
+        bike_name: 'Santa Cruz Hightower',
         started_at: '2025-04-02T08:00:00.000Z',
         distance_m: 10000,
         check_in: null,
@@ -211,7 +211,7 @@ describe('RideController (e2e)', () => {
       .get(`/api/rides?bikeId=${otherBikeId}`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .expect(200);
-    expect(listed.body.items).toEqual([expect.objectContaining({ id: rideId, bike_name: 'Canyon Spectral 2022' })]);
+    expect(listed.body.items).toEqual([expect.objectContaining({ id: rideId, bike_name: 'Canyon Spectral' })]);
     expect(await chainKm(bikeId)).toBe(0);
     expect(await chainKm(otherBikeId)).toBe(30);
   });
