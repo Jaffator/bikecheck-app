@@ -3,7 +3,6 @@ import { useState, type ReactElement } from "react";
 import { Anchor, Button, Group, Loader, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { TriangleAlert } from "lucide-react";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { suggestGear } from "../gearSuggestion";
@@ -158,12 +157,6 @@ export function GearOption({
         cursor: taken ? "not-allowed" : "pointer",
       }}
     >
-      <StravaMark
-        width={14}
-        height={14}
-        color={taken ? "var(--color-text-dim)" : "var(--mantine-color-strava-6)"}
-        style={{ flexShrink: 0 }}
-      />
       <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
         <Text fz={15} fw={600} c="text.6" lineClamp={1}>
           {name}

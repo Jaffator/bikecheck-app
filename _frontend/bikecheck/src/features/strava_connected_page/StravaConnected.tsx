@@ -3,12 +3,11 @@ import { useState, type ReactElement } from "react";
 import { Avatar, Box, Button, Group, Stack, Text, Title } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useGearLinking } from "@/features/strava/strava.queries";
 import { stravaDisplayName } from "@/features/strava/strava.types";
 import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import type { User } from "@/features/users/users.types";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { StravaConnectedDesktop } from "./StravaConnectedDesktop";
@@ -88,7 +87,8 @@ export function StravaConnected(): ReactElement {
               // Animation controls the resting glow.
             }}
           >
-            <StravaMark width={33} height={33} style={{ color: "var(--mantine-color-strava-6)" }} />
+            {/* A tick, not Strava's mark: their brand rules keep it off our own screens. */}
+            <Check size={33} strokeWidth={2.5} color="var(--mantine-color-strava-6)" />
           </Box>
 
           <Title

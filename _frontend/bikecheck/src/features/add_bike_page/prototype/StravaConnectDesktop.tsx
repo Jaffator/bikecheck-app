@@ -3,9 +3,8 @@
 import type { ReactElement } from "react";
 import { Box, Button, Group, Paper, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, ArrowRightLeft } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import trailIllustration from "@/assets/images/rides.png";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
 import { StravaConnectButton } from "@/features/strava/ui/StravaConnectButton";
 import { BENEFITS } from "../StravaConnectScreen";
@@ -35,7 +34,7 @@ export function StravaConnectDesktop({ onConnect, onSkip, connecting }: StravaCo
         style={cardSurface}
       >
         <Box className="flex flex-col justify-center gap-9" px={56} py={64} style={{ flex: "1 1 420px" }}>
-          <BrandPair />
+          <BrandMark />
 
           <Text component="h1" m={0} maw={460} fz={44} fw={600} c="text.6" lh={1.08} lts="var(--tracking-display)">
             {t("addBike.stravaTitle")}
@@ -80,22 +79,11 @@ export function StravaConnectDesktop({ onConnect, onSkip, connecting }: StravaCo
   );
 }
 
-// Strava and BikeCheck marks joined by a swap arrow.
-function BrandPair(): ReactElement {
+// Ours alone: Strava's brand rules keep their mark from standing level with it.
+function BrandMark(): ReactElement {
   return (
-    <Group gap="sm">
-      <Box
-        className="flex items-center justify-center"
-        w={48}
-        h={48}
-        style={{ borderRadius: 12, backgroundColor: "var(--mantine-color-strava-6)" }}
-      >
-        <StravaMark width={24} height={24} style={{ color: "#FFFFFF" }} />
-      </Box>
-      <ArrowRightLeft size={18} color="var(--color-muted)" />
-      <Box className="flex overflow-hidden" w={48} h={48} style={{ borderRadius: 12 }}>
-        <BikecheckMark width="100%" height="100%" />
-      </Box>
-    </Group>
+    <Box className="flex overflow-hidden" w={48} h={48} style={{ borderRadius: 12 }}>
+      <BikecheckMark width="100%" height="100%" />
+    </Box>
   );
 }

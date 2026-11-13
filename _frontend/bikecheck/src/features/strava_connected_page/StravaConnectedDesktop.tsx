@@ -2,10 +2,9 @@
 import { useEffect, type ReactElement, type ReactNode } from "react";
 import { Box, Button, Paper, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { useHeaderStore } from "@/store/store";
 import trailIllustration from "@/assets/images/rides.png";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { cardSurface } from "@/features/add_bike_page/prototype/bikeProto";
 
 interface StravaConnectedDesktopProps {
@@ -41,7 +40,8 @@ export function StravaConnectedDesktop({ athlete, onContinue }: StravaConnectedD
               border: "1px solid color-mix(in srgb, var(--mantine-color-strava-6) 45%, transparent)",
             }}
           >
-            <StravaMark width={33} height={33} style={{ color: "var(--mantine-color-strava-6)" }} />
+            {/* A tick, not Strava's mark: their brand rules keep it off our own screens. */}
+            <Check size={33} strokeWidth={2.5} color="var(--mantine-color-strava-6)" />
           </Box>
 
           <Text component="h1" m={0} maw={460} fz={44} fw={600} c="text.6" lh={1.08} lts="var(--tracking-display)">

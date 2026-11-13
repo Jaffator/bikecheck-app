@@ -1,10 +1,9 @@
 import { useEffect, type ReactElement } from "react";
 import { Box, Button, Group, Stack, Text, Title } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, ArrowRightLeft, Bell, History, LineChart, RefreshCw } from "lucide-react";
+import { ArrowRight, Bell, History, LineChart, RefreshCw } from "lucide-react";
 import { useHeaderStore } from "@/store/store";
 import trailIllustration from "@/assets/images/rides.png";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import BikecheckMark from "@/assets/icons/bikecheck/onlylogo.svg?react";
 import { StravaConnectButton } from "@/features/strava/ui/StravaConnectButton";
 
@@ -70,35 +69,18 @@ export function StravaConnectScreen({ onConnect, onSkip, connecting }: StravaCon
       </Box>
 
       <Stack align="center" gap="md" style={{ position: "relative", marginTop: "2rem", flexShrink: 0 }}>
-        <Group gap="sm" align="center">
-          <Box
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "3.5rem",
-              height: "3.5rem",
-              borderRadius: "0.75rem",
-              backgroundColor: "var(--mantine-color-strava-6)",
-            }}
-          >
-            <StravaMark width={28} height={28} style={{ color: "#FFFFFF" }} />
-          </Box>
-
-          <ArrowRightLeft size={20} color="var(--mantine-color-text-8)" />
-
-          <Box
-            style={{
-              display: "flex",
-              width: "3.5rem",
-              height: "3.5rem",
-              borderRadius: "0.75rem",
-              overflow: "hidden",
-            }}
-          >
-            <BikecheckMark width="100%" height="100%" />
-          </Box>
-        </Group>
+        {/* Ours alone: Strava's brand rules keep their mark from standing level with it. */}
+        <Box
+          style={{
+            display: "flex",
+            width: "3.5rem",
+            height: "3.5rem",
+            borderRadius: "0.75rem",
+            overflow: "hidden",
+          }}
+        >
+          <BikecheckMark width="100%" height="100%" />
+        </Box>
 
         <Title
           order={1}

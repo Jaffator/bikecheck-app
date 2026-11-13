@@ -6,7 +6,6 @@ import { CircleCheck } from "lucide-react";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { useConnectStrava } from "@/features/strava/strava.queries";
 import { stravaDisplayName } from "@/features/strava/strava.types";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import mapBackground from "@/assets/icons/svg_icons/mapbg.svg";
 import { DisconnectStravaConfirm } from "./DisconnectStravaConfirm";
 import { StravaConnectButton } from "./StravaConnectButton";
@@ -125,24 +124,6 @@ export function StravaStatusCard({
       {/* Both are one strip tall: settings pads it as the rows of its cards are padded. */}
       <Stack gap="md" px={allowDisconnect ? "md" : "sm"} py={allowDisconnect ? 10 : "sm"} style={{ position: "relative" }}>
         <Group gap="sm" wrap="nowrap" align="center">
-          <Box
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: allowDisconnect ? "2.25rem" : "1.75rem",
-              height: allowDisconnect ? "2.25rem" : "1.75rem",
-              borderRadius: "0.625rem",
-              backgroundColor: "color-mix(in srgb, var(--mantine-color-strava-6) 14%, transparent)",
-            }}
-          >
-            <StravaMark
-              width={allowDisconnect ? 18 : 15}
-              height={allowDisconnect ? 18 : 15}
-              color="var(--mantine-color-strava-6)"
-            />
-          </Box>
-
           {allowDisconnect ? (
             <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
               {/* Displays the linked athlete name or the Strava fallback title. */}
@@ -158,7 +139,7 @@ export function StravaStatusCard({
             </Stack>
           ) : (
             <Group gap="xs" wrap="nowrap" style={{ flex: 1, minWidth: 0 }} justify="space-between">
-              <Text fw={600} fz={14} c="text.6" truncate>
+              <Text fw={600} fz={14} c="strava.6" truncate>
                 {t("strava.statusTitle")}
               </Text>
               <Group gap={5} wrap="nowrap">

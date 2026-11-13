@@ -10,7 +10,6 @@ import type { Bike, RiddenBike } from "@/features/bikes/bikes.types";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useIsDesktop } from "@/layout/breakpoints";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { formatNumber } from "@/utils/number";
 
 // The same layer the service sheet stands on, so overlays never fight the FAB.
@@ -115,9 +114,6 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
                 label={t("strava.linkedToLabel")}
                 // Paired before the name was stored: say the pairing holds, never the id.
                 value={bike.strava_name ?? t("strava.paired")}
-                icon={
-                  <StravaMark width={12} height={12} color="var(--mantine-color-strava-6)" style={{ flexShrink: 0 }} />
-                }
               />
             )}
           </Section>
@@ -156,18 +152,15 @@ function Section({ title, children }: { title: string; children: ReactNode }): R
 }
 
 // One fact: what it is on the left, what it reads on the right.
-function SpecRow({ label, value, icon }: { label: string; value: string; icon?: ReactNode }): ReactElement {
+function SpecRow({ label, value }: { label: string; value: string }): ReactElement {
   return (
     <Group justify="space-between" gap="md" wrap="nowrap" align="flex-start">
       <Text fz={14} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
         {label}
       </Text>
-      <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        {icon}
-        <Text className="tabular-nums" fz={14} c="text.6" ta="right" lineClamp={2}>
-          {value}
-        </Text>
-      </Group>
+      <Text className="tabular-nums" fz={14} c="text.6" ta="right" lineClamp={2} style={{ minWidth: 0 }}>
+        {value}
+      </Text>
     </Group>
   );
 }

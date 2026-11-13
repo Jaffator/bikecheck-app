@@ -12,7 +12,6 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, TriangleAlert } from "lucide-react";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import {
@@ -310,13 +309,6 @@ function BikeCard({
             wrap="nowrap"
             style={{ flexShrink: 0, maxWidth: "45%" }}
           >
-            {chosenName !== null && (
-              <StravaMark
-                width={12}
-                height={12}
-                color="var(--mantine-color-strava-6)"
-              />
-            )}
             <Text
               fz={13}
               fw={chosenName !== null ? 600 : 400}

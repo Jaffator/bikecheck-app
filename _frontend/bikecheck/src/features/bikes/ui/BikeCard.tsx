@@ -3,7 +3,6 @@ import type { ReactElement } from "react";
 import { Group, Paper, Progress, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Clock, Mountain, Route, type LucideIcon } from "lucide-react";
-import { StravaPairingHint } from "@/features/strava/ui/StravaPairingHint";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
@@ -15,7 +14,7 @@ import { useBikeTrackedActions } from "@/features/service_tracking/tracking.quer
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { HealthBadge } from "@/features/service_tracking/ui/HealthBadge";
-import { StravaLinkedBadge } from "@/features/strava/ui/StravaLinkedBadge";
+import { StravaBikeBadge } from "@/features/strava/ui/StravaBikeBadge";
 import { formatNumber } from "@/utils/number";
 
 interface BikeCardProps {
@@ -123,7 +122,7 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
         <Stack gap={6} align="flex-end">
           <BikeShareMarks bike={bike} />
           <HealthBadge actions={actions ?? []} />
-          <StravaLinkedBadge stravaGearId={bike.strava_gear_id} />
+          <StravaBikeBadge bikeId={bike.id} stravaGearId={bike.strava_gear_id} />
         </Stack>
       </BikePhoto>
 
@@ -149,16 +148,12 @@ export function BikeCard({ bike, onOpen }: BikeCardProps): ReactElement {
             say so with an empty bar and a zero, which is a line of card spent on nothing. */}
         {worst !== null && worst.percentage > 0 && <AttentionMeter action={worst} />}
 
-        {/* Plain, because a Mantine Group would beat `empty:hidden`: with neither child the row takes no gap. */}
-        <div className="flex items-center justify-between gap-3 empty:hidden">
-          {/* The figures line already says there are no rides yet. */}
-          {bike.last_ride_at !== null && (
-            <Text className="tabular-nums" fz={12} c="text.8" style={{ whiteSpace: "nowrap" }}>
-              {t("bikes.lastRide", { date: lastRideDate(bike.last_ride_at) })}
-            </Text>
-          )}
-          <StravaPairingHint bikeId={bike.id} stravaGearId={bike.strava_gear_id} />
-        </div>
+        {/* The figures line already says there are no rides yet. */}
+        {bike.last_ride_at !== null && (
+          <Text className="tabular-nums" fz={12} c="text.8" style={{ whiteSpace: "nowrap" }}>
+            {t("bikes.lastRide", { date: lastRideDate(bike.last_ride_at) })}
+          </Text>
+        )}
       </Stack>
     </Paper>
   );
