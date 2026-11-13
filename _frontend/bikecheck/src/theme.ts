@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Button,
+  Checkbox,
   Combobox,
   Drawer,
   Menu,
@@ -232,6 +233,15 @@ export const theme = createTheme({
         },
       }),
       styles: (_theme, props) => ({ root: disabledLook(props.disabled) }),
+    }),
+    // Light scheme paints an unticked box white; only that state is overridden, so the primary fill still ticks.
+    Checkbox: Checkbox.extend({
+      defaultProps: { radius: 6, iconColor: "textDark.6" },
+      styles: (_theme, props) => ({
+        input: props.checked
+          ? {}
+          : { backgroundColor: "var(--mantine-color-cards-6)", borderColor: "var(--mantine-color-cards-4)" },
+      }),
     }),
     // A bottom sheet stays over the content column in a browser instead of spanning the window.
     Drawer: Drawer.extend({

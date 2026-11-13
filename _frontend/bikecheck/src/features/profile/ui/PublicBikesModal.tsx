@@ -74,14 +74,7 @@ function BikeChoice({ bikes, shared, figures, onCancel, onConfirm }: BikeChoiceP
         checked={consent}
         onChange={(event) => setConsent(event.currentTarget.checked)}
         label={t("sharing.figuresConsent")}
-        radius={6}
-        iconColor="textDark.6"
-        styles={{
-          label: { color: "var(--mantine-color-text-7)", fontSize: 13 },
-          input: consent
-            ? undefined
-            : { backgroundColor: "var(--mantine-color-cards-6)", borderColor: "var(--mantine-color-cards-4)" },
-        }}
+        styles={{ label: { color: "var(--mantine-color-text-7)", fontSize: 13 } }}
       />
 
       <Group gap="sm" grow>
