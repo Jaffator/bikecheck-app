@@ -20,7 +20,7 @@ import {
   suggestChoices,
   type GearChoices,
 } from "../multiGearPairing";
-import { useGearLinking } from "../strava.queries";
+import { useGearLinking, useLinkStravaGear } from "../strava.queries";
 import type {
   GearLink,
   GearLinkingBike,
@@ -32,7 +32,6 @@ import { GearOption } from "./SingleGearSheet";
 interface MultiGearSheetProps {
   opened: boolean;
   onClose: () => void;
-  onPair: (links: GearLink[]) => void;
 }
 
 // Capped height with a flex body, so the card list scrolls and the footer stays put.
@@ -61,7 +60,6 @@ interface GearHolder {
 export function MultiGearSheet({
   opened,
   onClose,
-  onPair,
 }: MultiGearSheetProps): ReactElement {
   const { t } = useTranslation();
   const { data, isLoading, isError } = useGearLinking(opened);
@@ -103,7 +101,7 @@ export function MultiGearSheet({
         )}
 
         {data !== undefined && data.strava_bikes.length > 0 && (
-          <PairingCards data={data} onClose={onClose} onPair={onPair} />
+          <PairingCards data={data} onClose={onClose} />
         )}
       </Stack>
     </ResponsiveSheet>
@@ -113,15 +111,11 @@ export function MultiGearSheet({
 interface PairingCardsProps {
   data: GearLinkingData;
   onClose: () => void;
-  onPair: (links: GearLink[]) => void;
 }
 
-function PairingCards({
-  data,
-  onClose,
-  onPair,
-}: PairingCardsProps): ReactElement {
+function PairingCards({ data, onClose }: PairingCardsProps): ReactElement {
   const { t } = useTranslation();
+  const link = useLinkStravaGear();
   const rows = data.bikecheck_bikes.filter(
     (bike) => bike.strava_gear_id === null,
   );
@@ -172,7 +166,7 @@ function PairingCards({
   }
 
   function submit(): void {
-    const links = rows
+    const links: GearLink[] = rows
       .filter((bike) => choices[bike.id] != null)
       .map((bike) => ({
         bikecheckBikeId: bike.id,
@@ -181,7 +175,7 @@ function PairingCards({
           data.strava_bikes.find((gear) => gear.id === choices[bike.id])
             ?.name ?? null,
       }));
-    onPair(links);
+    link.mutate(links, { onSuccess: onClose });
   }
 
   return (
@@ -214,6 +208,11 @@ function PairingCards({
       </Stack>
 
       <Stack gap={10} pt="xs" style={{ flexShrink: 0 }}>
+        {link.isError && (
+          <Text size="sm" c="red.5" ta="center">
+            {t("strava.gearLinkingFailed")}
+          </Text>
+        )}
         <Text fz={12} c="var(--color-text-dim)" ta="center">
           {t("strava.pairBikesSummary", {
             count: chosenCount,
@@ -228,6 +227,7 @@ function PairingCards({
             radius="md"
             h={48}
             c="textDark.6"
+            loading={link.isPending}
             disabled={chosenCount === 0}
             onClick={submit}
             style={{ flex: 2 }}

@@ -18,7 +18,6 @@ import { Login } from "@/features/login_page/Login";
 import { Settings } from "@/features/settings_page/Settings";
 import { Notifications } from "@/features/notification_page/Notifications";
 import { StravaConnected } from "@/features/strava_connected_page/StravaConnected";
-import { GearLinkingMockPage } from "@/features/strava/prototype/GearLinkingMockPage";
 import { InAppNotification } from "@/components/InAppNotification";
 import { OfflineModal } from "@/components/OfflineModal";
 import { NetworkError } from "@/api/client";
@@ -173,8 +172,6 @@ function ProtectedApp(): ReactElement {
           {/* Handles the completed Strava OAuth deep link. */}
           <Route path="/strava-connected" element={<StravaConnected />} />
           <Route path="/welcome" element={<WelcomeReplay />} />
-          {/* PROTOTYPE: multi-bike pairing sheet on fake data. */}
-          <Route path="/mock/gear-linking" element={<GearLinkingMockPage />} />
         </Route>
       </Routes>
     </>
