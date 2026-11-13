@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, Check } from "lucide-react";
 import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import { PhotoCropModal } from "../PhotoCropModal";
-import { StravaConnectScreen } from "../StravaConnectScreen";
+import { StravaConnectDesktop } from "./StravaConnectDesktop";
 import { useAddBikeWizard } from "../useAddBikeWizard";
 import { BikeAsidePrototype } from "./BikeAsidePrototype";
 import { BikePartsDesktop } from "./BikePartsDesktop";
@@ -31,15 +31,12 @@ export function AddBikeDesktopPrototype(): ReactElement {
 
   // After a save, the same way on as the phone: pair with Strava gear, or offer to connect Strava.
   if (wizard.offeringStrava) {
-    // The phone screen as is, held to a phone-wide column so its rows don't stretch across the desktop.
     return (
-      <Box maw={480} mx="auto">
-        <StravaConnectScreen
-          onConnect={wizard.connectStrava}
-          onSkip={wizard.leaveAfterSave}
-          connecting={wizard.connectingStrava}
-        />
-      </Box>
+      <StravaConnectDesktop
+        onConnect={wizard.connectStrava}
+        onSkip={wizard.leaveAfterSave}
+        connecting={wizard.connectingStrava}
+      />
     );
   }
   if (wizard.savedBike) {

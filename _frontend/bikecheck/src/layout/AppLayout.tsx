@@ -75,7 +75,11 @@ const SUB_PAGE_ROUTES: string[] = [
 // Routes that own the viewport hide all shared application chrome.
 const FULL_SCREEN_ROUTES: string[] = ["/strava-connected", "/welcome"];
 
-function isFullScreenRoute(pathname: string): boolean {
+// On desktop these sit in the shell as a card, so the sidebar stays.
+const DESKTOP_SHELL_ROUTES: string[] = ["/strava-connected"];
+
+function isFullScreenRoute(pathname: string, isDesktop: boolean): boolean {
+  if (isDesktop && DESKTOP_SHELL_ROUTES.includes(pathname)) return false;
   return FULL_SCREEN_ROUTES.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
@@ -154,7 +158,7 @@ export function AppLayout(): ReactElement {
   const headerTransparent = useHeaderStore((state) => state.headerTransparent);
   const isDesktop = useIsDesktop();
   const { ref: actionsRef, height: actionsHeight } = useElementSize();
-  const fullScreen = isFullScreenRoute(location.pathname);
+  const fullScreen = isFullScreenRoute(location.pathname, isDesktop);
   // Hides chrome when the route or page state requires it. On desktop that is the header
   // alone: the sidebar leaves only with a full-screen route.
   const chromeHidden = chromeHiddenByPage || fullScreen;

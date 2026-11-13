@@ -121,11 +121,20 @@ interface GearOptionProps {
   selected: boolean;
   // The title of the owner's other bike that already has this gear.
   takenBy: string | null;
+  // The multi-bike sheet says "picked for", since that pairing is not saved yet.
+  takenKey?: string;
   suggested: boolean;
   onPick: () => void;
 }
 
-function GearOption({ name, selected, takenBy, suggested, onPick }: GearOptionProps): ReactElement {
+export function GearOption({
+  name,
+  selected,
+  takenBy,
+  takenKey = "strava.gearTakenShort",
+  suggested,
+  onPick,
+}: GearOptionProps): ReactElement {
   const { t } = useTranslation();
   const taken = takenBy !== null;
 
@@ -161,7 +170,7 @@ function GearOption({ name, selected, takenBy, suggested, onPick }: GearOptionPr
         </Text>
         {taken && (
           <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
-            {t("strava.gearTakenShort", { bike: takenBy })}
+            {t(takenKey, { bike: takenBy })}
           </Text>
         )}
       </Stack>

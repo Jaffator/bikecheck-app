@@ -1163,7 +1163,16 @@
     "pairBikeBody": "Its rides will then be added by themselves and its parts will wear correctly.",
     "gearByName": "By name",
     "gearTakenShort": "Already paired with {{bike}}",
-    "gearMissing": "Bike missing on Strava? Add it in your Strava profile."
+    "gearMissing": "Bike missing on Strava? Add it in your Strava profile.",
+    "pairBikesTitle": "Pair your bikes with Strava",
+    "pairBikesBody": "Rides on a paired bike are added by themselves and its parts wear correctly.",
+    "pairBikesPick": "Pick a bike",
+    "pairBikesPickFromStrava": "Pick the Strava bike",
+    "pairBikesTakenBy": "Picked for {{bike}}",
+    "pairBikesLeave": "Don't pair yet",
+    "pairBikesSummary": "{{count}} of {{total}} bikes will be paired, the rest can wait.",
+    "pairBikesConfirm_one": "Pair {{count}} bike",
+    "pairBikesConfirm_other": "Pair {{count}} bikes"
   },
   "notifications": {
     "empty": "No notifications yet",

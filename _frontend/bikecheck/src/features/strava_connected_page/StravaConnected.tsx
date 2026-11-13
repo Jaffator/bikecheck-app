@@ -9,14 +9,17 @@ import { useGearLinking } from "@/features/strava/strava.queries";
 import { stravaDisplayName } from "@/features/strava/strava.types";
 import { GearLinkingSheet } from "@/features/strava/ui/GearLinkingSheet";
 import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
+import type { User } from "@/features/users/users.types";
+import { useIsDesktop } from "@/layout/breakpoints";
+import { StravaConnectedDesktop } from "./StravaConnectedDesktop";
 
 // OAuth deep-link destination after the backend links the account.
 export function StravaConnected(): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
   // Refetched by the deep-link hook, so this reflects the link that just happened.
   const { data: user } = useCurrentUser();
-  const stravaName = user ? stravaDisplayName(user) : null;
   const [pairingGear, setPairingGear] = useState(false);
   // Preloads gear to determine whether pairing should be offered.
   const { data: gearLinking } = useGearLinking(true);
@@ -26,8 +29,37 @@ export function StravaConnected(): ReactElement {
     gearLinking.strava_bikes.length > 0 &&
     gearLinking.bikecheck_bikes.some((bike) => bike.strava_gear_id === null);
 
-  // Route configuration hides application chrome for this screen.
+  function handleContinue(): void {
+    // Opens pairing only when available Strava gear needs assignment.
+    if (hasGearToPair) {
+      setPairingGear(true);
+      return;
+    }
+    // Replaces the completed OAuth route in history.
+    navigate("/bikes", { replace: true });
+  }
 
+  const pairingSheet = (
+    // Opens pairing for every unpaired BikeCheck bike.
+    <GearLinkingSheet
+      opened={pairingGear}
+      onClose={() => {
+        setPairingGear(false);
+        navigate("/bikes", { replace: true });
+      }}
+    />
+  );
+
+  if (isDesktop) {
+    return (
+      <>
+        <StravaConnectedDesktop athlete={<StravaAthlete user={user} />} onContinue={handleContinue} />
+        {pairingSheet}
+      </>
+    );
+  }
+
+  // Route configuration hides application chrome for this screen.
   return (
     <>
       <Stack
@@ -73,26 +105,7 @@ export function StravaConnected(): ReactElement {
             {t("strava.connectedTitle")}
           </Title>
 
-          {/* Shows available athlete identity details after linking. */}
-          {user?.strava_athlete_id && (stravaName || user.strava_username) && (
-            <Group gap="sm" wrap="nowrap" justify="center" mt={5}>
-              {user.strava_avatar_url && (
-                <Avatar src={user.strava_avatar_url} name={stravaName!} color="initials" radius="xl" size={35} />
-              )}
-              <Stack gap={2} align={user.strava_avatar_url ? "flex-start" : "center"}>
-                {stravaName && (
-                  <Text fw={600} size="sm" c="#E8E2D4">
-                    {stravaName}
-                  </Text>
-                )}
-                {user.strava_username && (
-                  <Text size="xs" c="#C7C6CA" opacity={0.6}>
-                    @{user.strava_username}
-                  </Text>
-                )}
-              </Stack>
-            </Group>
-          )}
+          <StravaAthlete user={user} />
         </Stack>
 
         {/* ----------- Explanation and the way on ----------- */}
@@ -105,15 +118,7 @@ export function StravaConnected(): ReactElement {
             fullWidth
             radius="sm"
             rightSection={<ArrowRight size={12} />}
-            onClick={() => {
-              // Opens pairing only when available Strava gear needs assignment.
-              if (hasGearToPair) {
-                setPairingGear(true);
-                return;
-              }
-              // Replaces the completed OAuth route in history.
-              navigate("/bikes", { replace: true });
-            }}
+            onClick={handleContinue}
             styles={{
               root: {
                 height: "3.25rem",
@@ -131,14 +136,33 @@ export function StravaConnected(): ReactElement {
           </Button>
         </Stack>
       </Stack>
-      {/* Opens pairing for every unpaired BikeCheck bike. */}
-      <GearLinkingSheet
-        opened={pairingGear}
-        onClose={() => {
-          setPairingGear(false);
-          navigate("/bikes", { replace: true });
-        }}
-      />
+      {pairingSheet}
     </>
+  );
+}
+
+// The linked athlete's avatar, name and handle, when Strava sent any of them.
+function StravaAthlete({ user }: { user: User | undefined }): ReactElement | null {
+  const stravaName = user ? stravaDisplayName(user) : null;
+  if (!user?.strava_athlete_id || !(stravaName || user.strava_username)) return null;
+
+  return (
+    <Group gap="sm" wrap="nowrap" justify="center" mt={5}>
+      {user.strava_avatar_url && (
+        <Avatar src={user.strava_avatar_url} name={stravaName ?? undefined} color="initials" radius="xl" size={35} />
+      )}
+      <Stack gap={2} align={user.strava_avatar_url ? "flex-start" : "center"}>
+        {stravaName && (
+          <Text fw={600} size="sm" c="#E8E2D4">
+            {stravaName}
+          </Text>
+        )}
+        {user.strava_username && (
+          <Text size="xs" c="#C7C6CA" opacity={0.6}>
+            @{user.strava_username}
+          </Text>
+        )}
+      </Stack>
+    </Group>
   );
 }

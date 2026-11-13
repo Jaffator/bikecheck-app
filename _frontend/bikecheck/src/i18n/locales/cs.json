@@ -1220,7 +1220,18 @@
     "pairBikeBody": "Jízdy na něm se pak připíšou samy a díly se budou správně opotřebovávat.",
     "gearByName": "Podle názvu",
     "gearTakenShort": "Už propojeno s {{bike}}",
-    "gearMissing": "Kolo na Stravě chybí? Přidej ho v profilu Strava."
+    "gearMissing": "Kolo na Stravě chybí? Přidej ho v profilu Strava.",
+    "pairBikesTitle": "Propoj kola se Stravou",
+    "pairBikesBody": "Jízdy na propojeném kole se připíšou samy a díly se budou správně opotřebovávat.",
+    "pairBikesPick": "Vyber kolo",
+    "pairBikesPickFromStrava": "Vyber kolo ze Stravy",
+    "pairBikesTakenBy": "Vybráno u {{bike}}",
+    "pairBikesLeave": "Zatím nepropojovat",
+    "pairBikesSummary": "Propojí se {{count}} z {{total}} kol, ostatní můžeš nechat na později.",
+    "pairBikesConfirm_one": "Propojit {{count}} kolo",
+    "pairBikesConfirm_few": "Propojit {{count}} kola",
+    "pairBikesConfirm_many": "Propojit {{count}} kola",
+    "pairBikesConfirm_other": "Propojit {{count}} kol"
   },
   "notifications": {
     "empty": "Zatím žádné notifikace",

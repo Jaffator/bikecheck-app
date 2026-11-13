@@ -14,7 +14,7 @@ interface StravaConnectScreenProps {
   connecting: boolean;
 }
 
-const BENEFITS = [
+export const BENEFITS = [
   { key: "stravaBenefitLifespan", Icon: History },
   { key: "stravaBenefitSync", Icon: RefreshCw },
   { key: "stravaBenefitMonitoring", Icon: LineChart },
