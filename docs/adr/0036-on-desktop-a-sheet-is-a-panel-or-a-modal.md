@@ -8,14 +8,15 @@ bottom of the window with a grab handle nobody can grab is the one piece of the 
 **On desktop a sheet becomes one of two things, chosen by what it holds:**
 
 - **A panel from the right**, for a sheet that shows one thing out of a list the user is still
-  reading: `ServiceDetailSheet`, `PendingRideSheet`, `BikeComponentDetailSheet`,
-  `BikeSpecsDrawer`. The list stays in view beside it, which is the master-detail a desktop user
-  expects from Service.
+  reading: `ServiceDetailSheet`, `BikeComponentDetailSheet`. It stands over the same dimmed,
+  blurred overlay as a modal, so the list stays in view behind it but is not clickable until the
+  panel closes.
 - **A centred modal**, for a sheet that asks for something and closes: the forms and
   confirmations — profile edit, password, account deletion, custom tag, custom parts, component
   form, tracked action, share, export, archive, remove follower, gear linking, setup profile name.
-  `RideDetailSheet` is the one reader here: it opens from Home, where there is no list to stay
-  beside, and its route on a real map belongs in the middle of the screen, not on its edge.
+  Two readers sit here too: `RideDetailSheet`, which opens from Home with no list to stay beside
+  and whose route on a map belongs in the middle of the screen, and `BikeSpecsDrawer`, a short
+  list of facts that reads better as a window than as a full-height strip.
 
 Below the breakpoint every sheet stays exactly the bottom sheet `drawers.md` describes.
 
@@ -47,3 +48,10 @@ drifting apart the way the transition props already could.
 - The split above is where the migration starts, not a law: a sheet that turns out to be read
   more than filled in moves to `panel` in the change that finds it, unless, like
   `RideDetailSheet`, it also opens where no list stands beside it.
+
+## Amended 2026-11-13
+
+The panel first came without an overlay, scroll lock or focus trap, so another row in the list
+swapped what it showed. It now takes the modal's overlay: one backdrop for every desktop layer,
+and a click outside closes the panel like it closes a modal. The cost is that opening another
+row takes a close first. `BikeSpecsDrawer` moved from panel to modal in the same change.

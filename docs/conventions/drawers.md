@@ -35,9 +35,10 @@ grabber, and the entry on the overlay stack that Android's back gesture closes.
 ## Panel or modal
 
 - **`desktop="panel"`** for a sheet that shows one thing out of a list the user is still
-  reading: `ServiceDetailSheet`, `BikeComponentDetailSheet`, `BikeSpecsDrawer`.
+  reading: `ServiceDetailSheet`, `BikeComponentDetailSheet`.
 - **`desktop="modal"`** for a sheet that asks for something and closes: every form and
-  confirmation. Also `RideDetailSheet`, which opens from Home with no list beside it (ADR 0036).
+  confirmation. Also `RideDetailSheet`, which opens from Home with no list beside it, and
+  `BikeSpecsDrawer`, a short list of facts (ADR 0036).
 
 A modal that turns out to be read more than filled in moves to `panel` in the change that finds it,
 unless it also opens where no list stands beside it.
@@ -98,13 +99,11 @@ On desktop nothing here applies: a panel or modal keeps Mantine's header and ✕
 
 ## On desktop
 
-- **Panel**: a right-side `Drawer`, the window's full height. No overlay, no scroll lock, no
-  focus trap — the list stays live beside it, and clicking another row swaps what the panel
-  shows. A list addressed by the query string (ADR 0010) replaces the entry when it swaps, so
-  back and ✕ still close the panel rather than walking through every row opened.
+- **Panel**: a right-side `Drawer`, the window's full height, over the dimmed, blurred overlay
+  every sheet uses. The list behind it stays in view but is not clickable until the panel closes.
 - **Modal**: a centred `Modal` with Mantine's own entrance, the one `ConfirmModal` makes, over
   the same overlay.
-- No grabber and no drag. Closed by ✕, Esc and — the modal — a click outside, unless
+- No grabber and no drag. Closed by ✕, Esc and a click outside, unless
   `dismissible={false}`. `closeOnClickOutside={false}` keeps ✕ and Esc but ignores the click:
   only the desktop bike lookup, so a running search is left on purpose.
 - The content's `height`, `maxHeight` and `marginBottom` are dropped: a panel is as tall as the
