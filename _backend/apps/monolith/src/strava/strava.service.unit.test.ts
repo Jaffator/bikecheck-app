@@ -1,4 +1,6 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { getLoggerToken } from 'nestjs-pino';
 import axios from 'axios';
 import { StravaEventsService } from './strava.service';
@@ -6,7 +8,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
 import { RideService } from '../ride/ride.service';
-import { GeminiService } from '../gemini/gemini.service';
 
 jest.mock('axios');
 
@@ -22,7 +23,9 @@ describe('StravaEventsService', () => {
 
   const mockPrisma = {
     users: { findFirst: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    bikes: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+    notifications: { deleteMany: jest.fn() },
+    $transaction: jest.fn(),
+    bikes: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     strava_pending_activities: {
       upsert: jest.fn(),
       findMany: jest.fn(),
@@ -30,15 +33,15 @@ describe('StravaEventsService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      deleteMany: jest.fn(),
     },
-    rides: { findUnique: jest.fn(), findMany: jest.fn(), upsert: jest.fn(), update: jest.fn() },
+    rides: { findUnique: jest.fn(), findMany: jest.fn(), upsert: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     components_mounted: { findMany: jest.fn(), updateMany: jest.fn() },
   };
 
   const mockNotifications = { create: jest.fn(), resolveActivityAsk: jest.fn() };
   const mockServiceTracking = { evaluateBike: jest.fn(), evaluateBikes: jest.fn(), getWearPreview: jest.fn() };
-  const mockRides = { removeStravaRide: jest.fn(), writeArrivalSummary: jest.fn() };
-  const mockGemini = { rideSummary: jest.fn() };
+  const mockRides = { removeStravaRide: jest.fn() };
   const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
 
   // What strava-service hands the monolith once a ride has been analysed.
@@ -60,7 +63,6 @@ describe('StravaEventsService', () => {
         { provide: NotificationService, useValue: mockNotifications },
         { provide: ServiceTrackingService, useValue: mockServiceTracking },
         { provide: RideService, useValue: mockRides },
-        { provide: GeminiService, useValue: mockGemini },
         { provide: getLoggerToken(StravaEventsService.name), useValue: mockLogger },
       ],
     }).compile();
@@ -68,6 +70,7 @@ describe('StravaEventsService', () => {
     service = module.get<StravaEventsService>(StravaEventsService);
 
     mockPrisma.users.findFirst.mockResolvedValue({ id: OWNER_ID });
+    mockPrisma.$transaction.mockImplementation((run: (tx: typeof mockPrisma) => Promise<unknown>) => run(mockPrisma));
     mockPrisma.users.findUnique.mockResolvedValue({ strava_athlete_id: String(ATHLETE_ID) });
     mockPrisma.bikes.findMany.mockResolvedValue([]);
     mockPrisma.strava_pending_activities.findUnique.mockResolvedValue(null);
@@ -218,9 +221,9 @@ describe('StravaEventsService', () => {
     });
   });
 
-  describe('energy', () => {
-    // What saveRide writes for a ride whose Strava activity reads like this, new and re-synced alike.
-    async function savedCalories(rawJson: Record<string, unknown>): Promise<unknown[]> {
+  describe('private rides', () => {
+    // What saveRide writes as is_private, new and re-synced alike.
+    async function savedPrivate(rawJson: Record<string, unknown>): Promise<unknown[]> {
       mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
       mockPrisma.rides.findUnique.mockResolvedValue(null);
       mockPrisma.rides.upsert.mockResolvedValue({ id: 1 });
@@ -233,15 +236,52 @@ describe('StravaEventsService', () => {
       const [{ create, update }] = mockPrisma.rides.upsert.mock.calls[0] as [
         { create: Record<string, unknown>; update: Record<string, unknown> },
       ];
-      return [create.calories, update.calories];
+      return [create.is_private, update.is_private];
     }
 
-    it('writes whole kcal from the activity on import and on re-sync', async () => {
-      expect(await savedCalories({ calories: 1742.4 })).toEqual([1742, 1742]);
+    it('marks a ride Strava shows only to its athlete, and still saves it', async () => {
+      expect(await savedPrivate({ visibility: 'only_me' })).toEqual([true, true]);
     });
 
-    it('writes null when Strava sent no calories', async () => {
-      expect(await savedCalories({ name: 'Morning ride' })).toEqual([null, null]);
+    it('leaves a public ride unmarked', async () => {
+      expect(await savedPrivate({ visibility: 'everyone' })).toEqual([false, false]);
+    });
+  });
+
+  describe('the ride route', () => {
+    it('keeps the route on import and on re-sync', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrisma.rides.findUnique.mockResolvedValue(null);
+      mockPrisma.rides.upsert.mockResolvedValue({ id: 1 });
+
+      await service.saveAnalyzedData({
+        ...activity(),
+        analyzedData: { distance_km: 42, started_at: '2026-09-20T08:00:00.000Z', summary_polyline: 'ki}fH' },
+      } as unknown as Parameters<StravaEventsService['saveAnalyzedData']>[0]);
+
+      const [{ create, update }] = mockPrisma.rides.upsert.mock.calls[0] as [
+        { create: Record<string, unknown>; update: Record<string, unknown> },
+      ];
+      expect([create.summary_polyline, update.summary_polyline]).toEqual(['ki}fH', 'ki}fH']);
+    });
+
+    // An analysis parked before the route was lifted out still has it in the raw payload.
+    it('keeps the route of an older analysis from its raw payload', async () => {
+      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
+      mockPrisma.rides.findUnique.mockResolvedValue(null);
+      mockPrisma.rides.upsert.mockResolvedValue({ id: 1 });
+
+      await service.saveAnalyzedData({
+        ...activity(),
+        analyzedData: {
+          distance_km: 42,
+          started_at: '2026-09-20T08:00:00.000Z',
+          rawJson: { map: { summary_polyline: 'ki}fH' } },
+        },
+      } as unknown as Parameters<StravaEventsService['saveAnalyzedData']>[0]);
+
+      const [{ create }] = mockPrisma.rides.upsert.mock.calls[0] as [{ create: Record<string, unknown> }];
+      expect(create.summary_polyline).toBe('ki}fH');
     });
   });
 
@@ -278,138 +318,6 @@ describe('StravaEventsService', () => {
     });
   });
 
-  describe('the review written as a ride arrives', () => {
-    const NOW = new Date().toISOString();
-    const LAST_MONTH = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const figures = { distance_km: 42, duration_min: 120, elevation_up_m: 600 };
-    const unassigned = (startedAt: string, analyzed = {}): ReturnType<typeof activity> =>
-      ({
-        ...activity(null),
-        analyzedData: { ...figures, started_at: startedAt, ...analyzed },
-      }) as ReturnType<typeof activity>;
-    const settle = (): Promise<void> => new Promise((resolve) => setImmediate(resolve));
-
-    beforeEach(() => {
-      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue(null);
-      mockPrisma.strava_pending_activities.upsert.mockResolvedValue({ id: 3, analyzed_data: figures });
-      mockGemini.rideSummary.mockResolvedValue('Parádní jízda, 4/5.');
-    });
-
-    it('writes it for a fresh Unassigned Ride, in the background of the notification', async () => {
-      let release: (text: string) => void = () => undefined;
-      mockGemini.rideSummary.mockReturnValue(new Promise((resolve) => (release = resolve)));
-
-      await service.saveAnalyzedData(unassigned(NOW));
-      expect(mockNotifications.create).toHaveBeenCalled();
-
-      release('Parádní jízda, 4/5.');
-      await settle();
-      expect(mockPrisma.strava_pending_activities.updateMany).toHaveBeenCalledWith({
-        where: { id: 3, summary: null },
-        data: { summary: 'Parádní jízda, 4/5.' },
-      });
-    });
-
-    // A sync lands a backlog through the same pipeline.
-    it('leaves an old ride for its first open', async () => {
-      await service.saveAnalyzedData(unassigned(LAST_MONTH));
-      await settle();
-
-      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
-    });
-
-    it('survives Gemini failing, for the next open to write', async () => {
-      mockGemini.rideSummary.mockRejectedValue(new Error('down'));
-
-      await expect(service.saveAnalyzedData(unassigned(NOW))).resolves.toBeDefined();
-      await settle();
-
-      expect(mockNotifications.create).toHaveBeenCalled();
-      expect(mockLogger.error).toHaveBeenCalled();
-    });
-
-    it('writes it for a fresh ride on a recognised bike', async () => {
-      mockPrisma.bikes.findFirst.mockResolvedValue({ id: BIKE_ID });
-      mockPrisma.bikes.findUnique.mockResolvedValue(null);
-      mockRides.writeArrivalSummary.mockResolvedValue(undefined);
-      jest
-        .spyOn(service as never, 'saveRide')
-        .mockResolvedValue({ message: 'saved', isNew: true, rideId: 55 } as never);
-
-      await service.saveAnalyzedData({ ...activity(), analyzedData: { ...figures, started_at: NOW } } as never);
-
-      expect(mockRides.writeArrivalSummary).toHaveBeenCalledWith(55);
-    });
-
-    it('keeps the review through a rename, and asks nothing of Gemini', async () => {
-      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue({ id: 3, analyzed_data: figures });
-
-      await service.saveAnalyzedData(unassigned(NOW, { name: 'Renamed' }));
-      await settle();
-
-      expect(mockPrisma.strava_pending_activities.upsert.mock.calls[0][0].update).not.toHaveProperty('summary');
-      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
-    });
-
-    it('clears the review when the figures change', async () => {
-      mockPrisma.strava_pending_activities.findUnique.mockResolvedValue({ id: 3, analyzed_data: figures });
-
-      await service.saveAnalyzedData(unassigned(NOW, { distance_km: 45 }));
-
-      expect(mockPrisma.strava_pending_activities.upsert.mock.calls[0][0].update.summary).toBeNull();
-    });
-
-    it('hands the review to the ride the Unassigned Ride becomes', async () => {
-      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue({
-        id: 3,
-        activity_id: 98765n,
-        user_id: OWNER_ID,
-        summary: 'Parádní jízda, 4/5.',
-        analyzed_data: { distance_km: 42, started_at: '2026-09-20T08:00:00.000Z' },
-      });
-      mockPrisma.rides.upsert.mockResolvedValue({ id: 55, started_at: new Date('2026-09-20T08:00:00.000Z') });
-
-      await service.resolvePendingActivities_noGear({
-        activityId: 98765n,
-        bikeId: BIKE_ID,
-        userId: OWNER_ID,
-        gearId: null,
-      });
-
-      expect(mockPrisma.rides.update).toHaveBeenCalledWith({
-        where: { id: 55 },
-        data: { summary: 'Parádní jízda, 4/5.' },
-      });
-    });
-  });
-
-  describe('the review an Unassigned Ride opens', () => {
-    const parked = { id: 3, activity_id: 98765n, analyzed_data: { distance_km: 42, rawJson: {} }, summary: null };
-
-    it('returns a kept review without asking Gemini', async () => {
-      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue({ ...parked, summary: 'Hotovo' });
-
-      await expect(service.findPendingSummary(OWNER_ID, 98765n)).resolves.toEqual({ summary: 'Hotovo' });
-      expect(mockGemini.rideSummary).not.toHaveBeenCalled();
-    });
-
-    it('writes one arrival left out, with no bike, in the rider language', async () => {
-      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue(parked);
-      mockPrisma.users.findUnique.mockResolvedValue({ language: 'cs' });
-      mockGemini.rideSummary.mockResolvedValue('Parádní jízda, 4/5.');
-
-      const result = await service.findPendingSummary(OWNER_ID, 98765n);
-
-      expect(result).toEqual({ summary: 'Parádní jízda, 4/5.' });
-      expect(mockGemini.rideSummary.mock.calls[0][0].bike).toBeNull();
-      expect(mockGemini.rideSummary.mock.calls[0][1]).toBe('cs');
-      expect(mockPrisma.strava_pending_activities.update).toHaveBeenCalledWith({
-        where: { id: 3 },
-        data: { summary: 'Parádní jízda, 4/5.' },
-      });
-    });
-  });
-
   describe('listing pending rides', () => {
     // The drawer previews the picked bike's wear before the ride is saved, as the check-in walk does.
     it('carries the wear of each ride on every bike', async () => {
@@ -439,6 +347,190 @@ describe('StravaEventsService', () => {
 
       await expect(service.listPendingActivities(OWNER_ID)).resolves.toEqual([]);
       expect(mockServiceTracking.getWearPreview).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the 7-day cache of a pending ride (policy §6.2)', () => {
+    const purged = { id: 3, activity_id: 98765n, user_id: OWNER_ID, gear_id: null, analyzed_data: null };
+    // What strava-service returns for the ride, slimmed like a webhook payload.
+    const fromStrava = {
+      id: 98765,
+      athlete: { id: ATHLETE_ID },
+      gear: null,
+      name: 'Morning ride',
+      start_date: '2026-09-20T08:00:00.000Z',
+      distance: 42000,
+      moving_time: 5400,
+      total_elevation_gain: 600,
+      average_speed: 7,
+      max_speed: 15,
+      map: { summary_polyline: 'ki}fH' },
+      splits_metric: [],
+    };
+
+    beforeEach(() => {
+      mockServiceTracking.getWearPreview.mockResolvedValue(jest.fn().mockReturnValue([]));
+      mockPrisma.strava_pending_activities.update.mockImplementation(({ data }) => ({ ...purged, ...data }));
+    });
+
+    it('purges payloads cached longer than 7 days and keeps the rows', async () => {
+      mockPrisma.strava_pending_activities.updateMany.mockResolvedValue({ count: 2 });
+      const now = new Date('2026-11-11T03:00:00.000Z');
+
+      await expect(service.purgeStaleAnalyses(now)).resolves.toBe(2);
+      expect(mockPrisma.strava_pending_activities.updateMany).toHaveBeenCalledWith({
+        where: { analyzed_at: { lt: new Date('2026-11-04T03:00:00.000Z') } },
+        data: { analyzed_data: Prisma.DbNull, analyzed_at: null },
+      });
+    });
+
+    it('fetches a purged ride again from Strava and caches it for 7 more days', async () => {
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([purged]);
+      (axios.get as jest.Mock).mockResolvedValue({ data: fromStrava });
+
+      const [listed] = await service.listPendingActivities(OWNER_ID);
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining(`/strava/activity/${ATHLETE_ID}/98765`),
+        expect.anything(),
+      );
+      const { data } = mockPrisma.strava_pending_activities.update.mock.calls[0][0];
+      expect(data.analyzed_at).toBeInstanceOf(Date);
+      expect(listed).toMatchObject({ name: 'Morning ride', distance_km: 42 });
+    });
+
+    // Deleted, made private or access gone: nothing to show and nothing to assign.
+    it('leaves out a purged ride Strava no longer gives', async () => {
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([purged]);
+      (axios.get as jest.Mock).mockRejectedValue(new Error('404'));
+
+      await expect(service.listPendingActivities(OWNER_ID)).resolves.toEqual([]);
+    });
+
+    it('fetches a purged ride again before assigning it', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue(purged);
+      (axios.get as jest.Mock).mockResolvedValue({ data: fromStrava });
+      mockPrisma.rides.upsert.mockResolvedValue({ id: 55, started_at: new Date(fromStrava.start_date) });
+
+      await service.resolvePendingActivities_noGear({ activityId: 98765n, bikeId: BIKE_ID, userId: OWNER_ID, gearId: null });
+
+      expect(mockPrisma.rides.upsert.mock.calls[0][0].create).toMatchObject({ distance_m: 42000 });
+    });
+
+    // Strava answered 404: the ride is gone for good, so it is not asked for again on every poll.
+    it('resolves a purged ride Strava says is gone, and retries one that merely failed', async () => {
+      mockPrisma.strava_pending_activities.findMany.mockResolvedValue([purged]);
+      (axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
+      (axios.get as jest.Mock).mockRejectedValue({ response: { status: 404 } });
+
+      await service.listPendingActivities(OWNER_ID);
+
+      expect(mockPrisma.strava_pending_activities.update).toHaveBeenCalledWith({
+        where: { id: 3 },
+        data: { resolved_at: expect.any(Date) },
+      });
+      expect(mockNotifications.resolveActivityAsk).toHaveBeenCalledWith(OWNER_ID, '98765');
+
+      mockPrisma.strava_pending_activities.update.mockClear();
+      (axios.get as jest.Mock).mockRejectedValue({ response: { status: 500 } });
+
+      await service.listPendingActivities(OWNER_ID);
+
+      expect(mockPrisma.strava_pending_activities.update).not.toHaveBeenCalled();
+      (axios.isAxiosError as unknown as jest.Mock).mockReset();
+    });
+
+    it('refuses to assign a purged ride Strava no longer gives', async () => {
+      mockPrisma.strava_pending_activities.findFirst.mockResolvedValue(purged);
+      (axios.get as jest.Mock).mockRejectedValue(new Error('404'));
+
+      await expect(
+        service.resolvePendingActivities_noGear({ activityId: 98765n, bikeId: BIKE_ID, userId: OWNER_ID, gearId: null }),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.rides.upsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('unlinking Strava in the app', () => {
+    it('has strava-service revoke the grant, then clears the same as a revoke on Strava', async () => {
+      (axios.post as jest.Mock).mockResolvedValue({});
+
+      await service.disconnect(OWNER_ID);
+
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/strava/disconnect'),
+        { athleteId: ATHLETE_ID },
+        expect.anything(),
+      );
+      expect(mockPrisma.rides.updateMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID },
+        data: { summary_polyline: null, is_private: false },
+      });
+      expect(mockPrisma.bikes.updateMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID },
+        data: { strava_gear_id: null, strava_name: null },
+      });
+      expect(mockPrisma.notifications.deleteMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, type: { in: ['strava_activity_saved', 'strava_activity_unassigned'] } },
+      });
+      expect(mockPrisma.strava_pending_activities.deleteMany).toHaveBeenCalledWith({ where: { user_id: OWNER_ID } });
+      expect(mockNotifications.create).toHaveBeenCalledWith({ userId: OWNER_ID, type: 'strava_disconnected' });
+    });
+
+    // Clearing first would leave tokens in strava-service with no user pointing at them.
+    it('keeps the link when strava-service could not unlink', async () => {
+      (axios.post as jest.Mock).mockRejectedValue(new Error('timeout'));
+
+      await expect(service.disconnect(OWNER_ID)).rejects.toThrow('Failed to disconnect Strava');
+      expect(mockPrisma.users.update).not.toHaveBeenCalled();
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses a user with no Strava linked', async () => {
+      mockPrisma.users.findUnique.mockResolvedValue({ strava_athlete_id: null });
+
+      await expect(service.disconnect(OWNER_ID)).rejects.toThrow(NotFoundException);
+      expect(axios.post).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('access revoked on Strava', () => {
+    it('unlinks the user and drops the parked rides', async () => {
+      await service.stravaDeauthorized({ athleteId: ATHLETE_ID });
+
+      expect(mockPrisma.users.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { strava_athlete_id: String(ATHLETE_ID) } }),
+      );
+      expect(mockPrisma.strava_pending_activities.deleteMany).toHaveBeenCalledWith({ where: { user_id: OWNER_ID } });
+      expect(mockPrisma.users.update).toHaveBeenCalledWith({
+        where: { id: OWNER_ID },
+        data: expect.objectContaining({ strava_athlete_id: null, strava_avatar_url: null }),
+      });
+    });
+
+    it('drops the routes, gear links and ride notifications, then tells the user', async () => {
+      await service.stravaDeauthorized({ athleteId: ATHLETE_ID });
+
+      expect(mockPrisma.rides.updateMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID },
+        data: { summary_polyline: null, is_private: false },
+      });
+      expect(mockPrisma.bikes.updateMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID },
+        data: { strava_gear_id: null, strava_name: null },
+      });
+      expect(mockPrisma.notifications.deleteMany).toHaveBeenCalledWith({
+        where: { user_id: OWNER_ID, type: { in: ['strava_activity_saved', 'strava_activity_unassigned'] } },
+      });
+      expect(mockNotifications.create).toHaveBeenCalledWith({ userId: OWNER_ID, type: 'strava_disconnected' });
+    });
+
+    it('ignores an athlete nobody linked', async () => {
+      mockPrisma.users.findFirst.mockResolvedValue(null);
+
+      await service.stravaDeauthorized({ athleteId: ATHLETE_ID });
+
+      expect(mockPrisma.users.update).not.toHaveBeenCalled();
     });
   });
 

@@ -13,8 +13,6 @@ export interface GaragePartRow {
   component_type: string;
   position: string;
   component_desc: string;
-  total_km: number | null;
-  total_time_min: number | null;
 }
 
 // One bike with what is on it now. Named by brand and model - `bikename` is what its owner
@@ -26,9 +24,6 @@ export interface GarageBikeRow {
   // The model year, as the app writes it beside the name - "Cube Nuroad 2025". Null on a bike
   // whose owner never filled it in.
   year: number | null;
-  total_km: number | null;
-  total_time_min: number | null;
-  elevation_m: number | null;
   // Whether Strava rides land on this bike by themselves. The gear id itself says nothing to
   // the user, so only the fact of the pairing goes out.
   strava_paired: boolean;
@@ -54,16 +49,12 @@ const GET_GARAGE_DESCRIPTION =
 // came off is not part of the build any more.
 const MOUNTED = { is_active: true, is_deleted: { not: true } } satisfies Prisma.components_mountedWhereInput;
 
-// The bike and its build, with nothing derived: the computed columns wear tracking reads are
-// inputs to a reading, not answers, so they stay in.
+// The bike and its build. No distance, time or climb: they come from Strava, which may not feed an AI (policy §5.3).
 const garageSelect = {
   id: true,
   bike_brand: true,
   bike_model: true,
   year: true,
-  total_km: true,
-  total_time_min: true,
-  total_elevation_m: true,
   strava_gear_id: true,
   components_mounted: {
     where: MOUNTED,
@@ -73,8 +64,6 @@ const garageSelect = {
       component_type_id: true,
       component_desc: true,
       position: true,
-      total_km: true,
-      total_time_min: true,
       component_types: { select: { component_type: true } },
     },
   },
@@ -113,9 +102,6 @@ function toGarageBikeRow(bike: GarageBike): GarageBikeRow {
     bike_brand: bike.bike_brand,
     bike_model: bike.bike_model ?? '',
     year: bike.year,
-    total_km: bike.total_km,
-    total_time_min: bike.total_time_min,
-    elevation_m: bike.total_elevation_m,
     strava_paired: bike.strava_gear_id != null,
     parts: bike.components_mounted.map(toGaragePartRow),
   };
@@ -128,7 +114,5 @@ function toGaragePartRow(part: GaragePart): GaragePartRow {
     component_type: part.component_types.component_type,
     position: part.position ?? '',
     component_desc: part.component_desc ?? '',
-    total_km: part.total_km,
-    total_time_min: part.total_time_min,
   };
 }

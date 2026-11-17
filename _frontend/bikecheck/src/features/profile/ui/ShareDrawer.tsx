@@ -118,6 +118,7 @@ interface ShareSwitches {
   setup: boolean;
   history: boolean;
   costs: boolean;
+  figures: boolean;
 }
 
 function sharedByBike(bikes: Bike[]): Record<number, boolean> {
@@ -130,6 +131,7 @@ function sharePayload(shares: ShareSwitches): UpdateProfilePayload {
     share_setup: shares.setup,
     share_history: shares.history,
     share_costs: shares.costs,
+    share_figures: shares.figures,
   };
 }
 
@@ -149,6 +151,7 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
     setup: profile.share_setup,
     history: profile.share_history,
     costs: profile.share_costs,
+    figures: profile.share_figures,
   });
   // Switches thrown but not read back yet. Dropped once the refetch is in, so a save that
   // failed halfway shows what landed.
@@ -197,13 +200,14 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
     if (refused === null) setVisibility(profile.visibility);
   }
 
-  function goPublic(chosen: Record<number, boolean>): void {
+  function goPublic(chosen: Record<number, boolean>, figures: boolean): void {
     setChoosingBikes(false);
     setVisibility("PUBLIC");
+    setShares((current) => ({ ...current, figures }));
     setUnsavedBikes(chosen);
     const changed = bikes.filter((bike) => chosen[bike.id] !== sharedBikes[bike.id]);
     persist(
-      { visibility: "PUBLIC" },
+      { visibility: "PUBLIC", share_figures: figures },
       changed.map((bike) => ({ id: bike.id, is_shared: chosen[bike.id] })),
     );
   }
@@ -212,7 +216,7 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
     if (next === "PUBLIC") {
       // With one bike there is nothing to choose between.
       if (bikes.length > 1) setChoosingBikes(true);
-      else goPublic(sharedBikes);
+      else goPublic(sharedBikes, shares.figures);
       return;
     }
     setVisibility(next);
@@ -331,6 +335,14 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
             onChange={(checked) => setShare("costs", checked)}
           />
         )}
+        {/* Strava's figures need the owner's say-so before anyone else reads them. */}
+        <ShareSwitchRow
+          label={t("sharing.shareFigures")}
+          hint={t("sharing.shareFiguresHint")}
+          checked={shares.figures}
+          disabled={locked}
+          onChange={(checked) => setShare("figures", checked)}
+        />
       </Section>
 
       <Section title={t("sharing.sectionBikes")}>
@@ -371,6 +383,7 @@ function ShareForm({ profile, bikes, onPreview }: ShareFormProps): ReactElement 
         opened={choosingBikes}
         bikes={bikes}
         shared={sharedBikes}
+        figures={shares.figures}
         onCancel={() => setChoosingBikes(false)}
         onConfirm={goPublic}
       />

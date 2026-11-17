@@ -20,9 +20,11 @@ const PART_INDENT = 50;
 
 interface UserBikeComponentsProps {
   groups: ProfileComponentGroup[];
+  // False when the owner kept the wear back, which is not the same as no wear on record.
+  figures: boolean;
 }
 
-export function UserBikeComponents({ groups }: UserBikeComponentsProps): ReactElement | null {
+export function UserBikeComponents({ groups, figures }: UserBikeComponentsProps): ReactElement | null {
   const { t } = useTranslation();
   const seededName = useSeededName();
   const total = groups.reduce((sum, group) => sum + group.parts.length, 0);
@@ -54,7 +56,7 @@ export function UserBikeComponents({ groups }: UserBikeComponentsProps): ReactEl
               </Text>
             </Group>
             {group.parts.map((part) => (
-              <PartRow key={part.id} part={part} />
+              <PartRow key={part.id} part={part} figures={figures} />
             ))}
           </Box>
         ))}
@@ -71,7 +73,7 @@ function categoryMark(category: ProfileCatalogueName): ReactElement {
   return <Icon width={CATEGORY_ICON_SIZE} height={CATEGORY_ICON_SIZE} />;
 }
 
-function PartRow({ part }: { part: ProfileMountedPart }): ReactElement {
+function PartRow({ part, figures }: { part: ProfileMountedPart; figures: boolean }): ReactElement {
   const { t, i18n } = useTranslation();
   const seededName = useSeededName();
   const position = positionLabel(part.position, t);
@@ -97,9 +99,11 @@ function PartRow({ part }: { part: ProfileMountedPart }): ReactElement {
           </Text>
         )}
       </Stack>
-      <Text className="tabular-nums" fz={11} c="var(--color-text-dim)" pt={2} style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
-        {part.distance_km === null ? t("sharing.sinceNew") : formatKm(part.distance_km, i18n.language)}
-      </Text>
+      {figures && (
+        <Text className="tabular-nums" fz={11} c="var(--color-text-dim)" pt={2} style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
+          {part.distance_km === null ? t("sharing.sinceNew") : formatKm(part.distance_km, i18n.language)}
+        </Text>
+      )}
     </Group>
   );
 }

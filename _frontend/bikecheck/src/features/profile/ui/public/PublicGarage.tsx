@@ -52,11 +52,13 @@ function GarageHero({ owner, garage }: GarageHeroProps): ReactElement {
         </p>
         <dl className="mt-7 flex flex-wrap gap-x-10 gap-y-5">
           <Reading label={t("publicProfile.figureBikes")} value={totals.bikes} />
-          <Reading
-            label={t("publicProfile.figureDistance")}
-            value={formatNumber(totals.distance_km, i18n.language)}
-            unit="km"
-          />
+          {totals.distance_km !== null && (
+            <Reading
+              label={t("publicProfile.figureDistance")}
+              value={formatNumber(totals.distance_km, i18n.language)}
+              unit="km"
+            />
+          )}
           {totals.components !== null && <Reading label={t("publicProfile.figureComponents")} value={totals.components} />}
           {totals.services !== null && <Reading label={t("publicProfile.figureServices")} value={totals.services} />}
         </dl>

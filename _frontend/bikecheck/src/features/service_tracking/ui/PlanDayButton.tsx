@@ -22,12 +22,12 @@ export function PlanDayButton({ planned, onPlan, width }: PlanDayButtonProps): R
         size="compact-xs"
         variant="subtle"
         color="gray"
-        radius="sm"
+        radius="lg"
+        h={36}
+        px={8}
         className="tabular-nums"
-        fz={11}
-        tt="uppercase"
+        fz={12}
         styles={{
-          label: { letterSpacing: "var(--tracking-label)" },
           root: {
             color: frameColor(planned),
             border: "1px solid var(--mantine-color-inputs-5)",

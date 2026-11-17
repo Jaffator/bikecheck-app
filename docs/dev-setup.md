@@ -18,7 +18,7 @@ The `.env` files hold secrets and are not in git. Copy them from the old machine
 
 | File | Holds |
 |---|---|
-| `_backend/apps/monolith/.env` | monolith database, Redis, Strava, Gemini, storage, mail |
+| `_backend/apps/monolith/.env` | monolith database, Redis, Strava, storage, mail |
 | `_backend/apps/strava-service/.env` | strava-service database and Strava keys |
 | `_frontend/bikecheck/.env`, `.env.local` | API base URL and frontend keys |
 

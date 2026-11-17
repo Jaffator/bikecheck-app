@@ -1,9 +1,9 @@
-// What the owner can do with this bike, as a two-by-two grid on phone and desktop alike. Two
-// weights: a filled tile is a branded act, an outlined one goes somewhere and carries a chevron.
+// What the owner can do with this bike: one wide branded act over a row of four quiet icon tiles,
+// the same on phone and desktop.
 import type { ReactElement, ReactNode } from "react";
-import { Box, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
+import { Box, Button, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, History, Link2, SlidersHorizontal } from "lucide-react";
+import { Download, Link2, Plus, SlidersHorizontal } from "lucide-react";
 import { Bikecheck } from "@/assets/icons/bikecheck";
 
 interface BikeActionTilesProps {
@@ -14,8 +14,10 @@ interface BikeActionTilesProps {
   onOpenSetup: () => void;
   // The bike's Reports, where each Share Link is opened or closed.
   onOpenLinks: () => void;
-  // Open Share Links, zero included, so the tile always says how many are out.
+  // Open Share Links; the badge shows only when some are out.
   openLinks: number;
+  // The Bike Report export sheet.
+  onExport: () => void;
 }
 
 export function BikeActionTiles({
@@ -24,26 +26,34 @@ export function BikeActionTiles({
   onOpenSetup,
   onOpenLinks,
   openLinks,
+  onExport,
 }: BikeActionTilesProps): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <SimpleGrid cols={2} spacing="sm">
+    <Stack gap="md">
       {onAddService !== undefined && (
-        <Tile
-          // Servicing is the app's own act, so the tile wears the app's own mark.
-          icon={<Bikecheck width={26} height={20} />}
-          label={t("fab.addService")}
+        <Button
+          color="primary.6"
+          c="textDark.6"
+          radius="md"
+          fz={16}
+          fw={600}
+          leftSection={<Plus size={20} />}
           onClick={onAddService}
-          // The act run most often, so it is the loudest thing on the grid.
-          fill="var(--mantine-color-primary-6)"
-          textColor="var(--mantine-color-black)"
-        />
+          style={{ height: 52 }}
+        >
+          {t("fab.addService")}
+        </Button>
       )}
-      <Tile icon={<History size={20} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} />
-      <Tile icon={<SlidersHorizontal size={20} />} label={t("setup.tile")} onClick={onOpenSetup} />
-      <Tile icon={<Link2 size={20} />} label={t("report.linksTile")} onClick={onOpenLinks} count={openLinks} />
-    </SimpleGrid>
+      <SimpleGrid cols={4} spacing={8}>
+        <Tile icon={<Bikecheck width={28} height={22} />} label={t("bikes.tileServiceHistory")} onClick={onOpenHistory} />
+        <Tile icon={<SlidersHorizontal size={22} />} label={t("setup.tile")} onClick={onOpenSetup} />
+        <Tile icon={<Link2 size={22} />} label={t("report.linksTile")} onClick={onOpenLinks} count={openLinks} />
+        {/* Archived bikes keep it: a bike being sold is when a report is most often asked for. */}
+        <Tile icon={<Download size={22} />} label={t("report.export")} onClick={onExport} />
+      </SimpleGrid>
+    </Stack>
   );
 }
 
@@ -51,47 +61,67 @@ interface TileProps {
   icon: ReactNode;
   label: string;
   onClick: () => void;
-  fill?: string;
-  textColor?: string;
-  // A figure beside the chevron.
   count?: number;
 }
 
-// One tile. Filled when it is branded, outlined otherwise; an outlined one goes somewhere, so
-// its chevron sits against the right edge, centred on the tile rather than on the label.
-function Tile({ icon, label, onClick, fill, textColor, count }: TileProps): ReactElement {
-  const filled = fill !== undefined;
-
+function Tile({ icon, label, onClick, count }: TileProps): ReactElement {
   return (
     <Paper
+      component="button"
+      type="button"
       radius="lg"
-      p="md"
       onClick={onClick}
-      role="button"
       // A tile is itself one button, so it presses - see docs/ui/card-surface.md.
-      className="active:scale-[0.985]"
+      className="hover-veil active:scale-[0.985]"
       style={{
-        backgroundColor: filled ? fill : "var(--mantine-color-cards-6)",
+        position: "relative",
+        height: 80,
+        padding: 0,
+        border: "1px solid var(--color-border)",
+        backgroundColor: "var(--mantine-color-cards-6)",
         boxShadow: "var(--elev-row)",
-        color: filled ? textColor : "var(--mantine-color-text-6)",
+        color: "var(--mantine-color-text-5)",
         cursor: "pointer",
         transition: "transform 120ms ease",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
       }}
     >
-      <Box style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <Stack gap="sm" style={{ flex: 1, minWidth: 0 }}>
-          <Box style={{ display: "flex", color: filled ? textColor : "var(--mantine-color-primary-6)" }}>{icon}</Box>
-          <Text fz={14} fw={600} c={filled ? textColor : "text.6"} lineClamp={2}>
-            {label}
-          </Text>
-        </Stack>
-        {count !== undefined && (
-          <Text className="tabular-nums" fz={14} fw={600} c="text.8">
-            {count}
-          </Text>
-        )}
-        {!filled && <ChevronRight size={16} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
-      </Box>
+      <Box style={{ display: "flex", height: 22, alignItems: "center" }}>{icon}</Box>
+      <Text fz={13} fw={500} c="text.6" lineClamp={1}>
+        {label}
+      </Text>
+      {count !== undefined && count > 0 && <CountBadge count={count} />}
     </Paper>
+  );
+}
+
+function CountBadge({ count }: { count: number }): ReactElement {
+  return (
+    <Text
+      component="span"
+      className="tabular-nums"
+      fz={11}
+      fw={600}
+      style={{
+        position: "absolute",
+        top: 8,
+        right: 8,
+        minWidth: 18,
+        height: 18,
+        padding: "0 5px",
+        borderRadius: 9,
+        backgroundColor: "var(--color-border)",
+        color: "var(--color-text-dim)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {count}
+    </Text>
   );
 }

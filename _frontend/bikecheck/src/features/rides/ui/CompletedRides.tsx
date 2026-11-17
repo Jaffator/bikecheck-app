@@ -13,10 +13,13 @@ import { EmptyRides } from "@/features/rides_page/EmptyRides";
 import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides } from "@/features/rides/rides.queries";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
+import { ViewOnStravaLink } from "@/features/strava/ui/ViewOnStravaLink";
 import { CheckInMark } from "./CheckInMark";
+import { PrivateMark } from "./PrivateMark";
 import { RideDetailSheet } from "./RideDetailSheet";
 import type { Ride } from "@/features/rides/rides.types";
 import { formatDuration } from "@/features/rides/rideDuration";
+import { rideTitle } from "@/features/rides/rideTitle";
 
 // Clears the floating tab bar, so the last ride can be scrolled out from under it. Desktop has none.
 const FOOTER_CLEARANCE = {
@@ -37,11 +40,10 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
     <CompletedRideCard
       onOpen={onOpen}
       leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
-      /* The activity's own title leads: it is what the user named the ride, so it
-         identifies it faster than the bike or the date. */
       title={
         <>
-          {ride.name}
+          {rideTitle(ride, t)}
+          <PrivateMark isPrivate={ride.is_private} />
           <span style={{ marginInlineStart: 8 }}>
             <CheckInMark checkIn={ride.check_in} size={15} />
           </span>
@@ -58,6 +60,7 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
           </Text>
         </Group>
       }
+      corner={<ViewOnStravaLink activityId={ride.activity_strava_id} fz={12} boxed />}
       metrics={
         <>
           <HistoryMetric icon={Route}>{t("pendingRides.distance", { count: toKm(ride.distance_m) })}</HistoryMetric>

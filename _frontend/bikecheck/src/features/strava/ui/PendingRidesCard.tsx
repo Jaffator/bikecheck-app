@@ -16,6 +16,7 @@ import type { PendingRide } from "@/features/strava/strava.types";
 import { pendingItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
+import { PrivateMark } from "@/features/rides/ui/PrivateMark";
 import { RideDetailSheet } from "@/features/rides/ui/RideDetailSheet";
 
 // How far a point may stray before the thumbnail drops it, in viewBox units. Matches the
@@ -32,7 +33,12 @@ function PendingRideRow({ ride, onOpen }: { ride: PendingRide; onOpen: () => voi
       /* Route shape distinguishes otherwise similar ride rows. */
       leading={<RouteMap polyline={ride.summary_polyline} width={50} height={50} simplify={CARD_SIMPLIFY} />}
       /* Clamps long Strava titles to preserve row height. */
-      title={ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
+      title={
+        <>
+          {ride.name || dayjs(ride.started_at).format("D. M. YYYY")}
+          <PrivateMark isPrivate={ride.is_private} />
+        </>
+      }
       subtitle={dayjs(ride.started_at).format("D. M. YYYY H:mm")}
       metrics={
         <>

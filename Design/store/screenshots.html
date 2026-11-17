@@ -45,9 +45,8 @@
     letter-spacing: -0.02em;
   }
   .headline b { color: var(--yellow); font-weight: 700; }
-  /* brand mention: Strava orange with its mark inlined from the app's strava.svg */
+  /* Strava's brand rules keep their mark off store screenshots, so only the name. */
   .headline .strava { color: #fc4c02; white-space: nowrap; }
-  .headline .strava svg { height: 1.05em; width: auto; vertical-align: -0.16em; margin-right: 0.02em; }
   /* titanium band, black inner body, screen: a light frame so the near-black screens stand off the background */
   .phone {
     margin-top: 52px;
@@ -125,7 +124,7 @@
   <div class="hero"><img src="screens/08-closing.jpg" alt="" /></div>
 </div>
 <script>
-  const STRAVA = '<span class="strava"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M 8.6935,9.972 7.649,7.914 l -1.5325,0 2.577,5.086 2.575,-5.086 -1.533,0 m -3.504,-2.7995 1.418,2.799 2.086,0 L 6.2315,1 l -3.5,6.914 2.0845,0"/></svg>Strava</span>';
+  const STRAVA = '<span class="strava">Strava</span>';
   const SLIDES = [
     { file: "01-home.jpg",    cs: "Stav kol na první pohled",           en: "Your bikes' health at a glance" },
     { file: "02-bike.jpg",    cs: "Každé kolo má svůj profil",          en: "Every bike has its profile" },

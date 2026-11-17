@@ -4,7 +4,6 @@ import type { ReactElement, ReactNode } from "react";
 import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, Info, Users } from "lucide-react";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import type { RiddenBike } from "@/features/bikes/bikes.types";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
@@ -20,8 +19,6 @@ import { formatNumber } from "@/utils/number";
 import { BikePhoto } from "./BikePhoto";
 import { profileVisibilityOf } from "@/features/bikes/bikeSharing";
 
-// Strava's artwork at a height that fits a row; it scales but is never restyled.
-const CONNECT_HEIGHT = 32;
 const ROW_ICON = 16;
 
 interface BikeHeroCardProps {
@@ -121,17 +118,16 @@ function StravaRow({ bike, onPairGear }: { bike: RiddenBike; onPairGear: () => v
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
   const connect = useConnectStrava();
-  const icon = <StravaMark width={ROW_ICON} height={ROW_ICON} color="var(--mantine-color-strava-6)" />;
 
   // Strava's own button is the only way into their OAuth, so the row itself is not pressable.
   if (user?.strava_athlete_id == null) {
     return (
       <>
         <CardRow
-          icon={icon}
           label={t("strava.statusTitle")}
+          labelColor="strava.6"
           trailing={
-            <StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} height={CONNECT_HEIGHT} />
+            <StravaConnectButton onClick={() => connect.mutate()} pending={connect.isPending} />
           }
         />
         {connect.isError && (
@@ -146,8 +142,8 @@ function StravaRow({ bike, onPairGear }: { bike: RiddenBike; onPairGear: () => v
   const paired = bike.strava_gear_id !== null;
   return (
     <CardRow
-      icon={icon}
       label={t("strava.statusTitle")}
+      labelColor="strava.6"
       detail={t(paired ? "strava.paired" : "strava.notPaired")}
       onClick={onPairGear}
       trailing={
@@ -192,8 +188,10 @@ function SharingRow({ bike, onOpenSharing }: { bike: RiddenBike; onOpenSharing: 
 }
 
 interface CardRowProps {
-  icon: ReactNode;
+  // Left out on the Strava row: their brand rules keep the mark off it, the word carries it.
+  icon?: ReactNode;
   label: string;
+  labelColor?: string;
   // Dim, after the label.
   detail?: string;
   trailing: ReactNode;
@@ -202,12 +200,12 @@ interface CardRowProps {
 }
 
 // One row under the card's figures, parted from what is above by a rule.
-function CardRow({ icon, label, detail, trailing, onClick }: CardRowProps): ReactElement {
+function CardRow({ icon, label, labelColor = "text.6", detail, trailing, onClick }: CardRowProps): ReactElement {
   const body = (
     <Group justify="space-between" wrap="nowrap" gap="sm" px="md" mih={52} py={8}>
       <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
         {icon}
-        <Text fz={15} fw={600} c="text.6" lineClamp={1}>
+        <Text fz={15} fw={600} c={labelColor} lineClamp={1}>
           {label}
           {detail !== undefined && (
             <Text span inherit fw={500} c="text.8">

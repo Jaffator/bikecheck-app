@@ -14,7 +14,7 @@ export function bikeStatsLine(
   language: string,
   translate: (key: string, options: { count: number }) => string,
 ): string {
-  const parts = [formatKm(bike.distance_km, language)];
+  const parts = bike.distance_km === null ? [] : [formatKm(bike.distance_km, language)];
   if (bike.components !== null) parts.push(translate("sharing.partsCount", { count: bike.components }));
   if (bike.services !== null) parts.push(translate("sharing.servicesCount", { count: bike.services }));
   return parts.join(" · ");

@@ -63,6 +63,21 @@ export function remainingLabel(
   return action.current > action.interval ? figure : translate("tracking.leftValue", { value: figure });
 }
 
+// The Needs attention row's one figure; a wear index has no unit to count down, so it keeps its percent.
+export function attentionFigure(
+  action: TrackedAction,
+  language: string,
+  translate: (key: string, options: { value: string | number }) => string,
+): string {
+  if (action.axis === "health_index") return translate("tracking.percentage", { value: action.percentage });
+
+  const over = action.current - action.interval;
+  if (over <= 0) return remainingLabel(action, language, translate);
+
+  const figure = `${axisValue(action.axis, over, language)} ${axisUnit(action.axis)}`.trim();
+  return translate("tracking.overValue", { value: figure });
+}
+
 // A tenth of the bike's own plan, which is what one tap of − or + moves the Service
 // Interval by. Taken from the plan and never from the value on screen, so − undoes exactly
 // what + did however many taps deep — a step off the current value would not come back.

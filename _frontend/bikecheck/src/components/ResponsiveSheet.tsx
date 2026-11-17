@@ -137,10 +137,8 @@ export function ResponsiveSheet({
         position="right"
         radius={0}
         transitionProps={PANEL_MOTION}
-        // The list stays live beside it: another row swaps what the panel shows.
-        withOverlay={false}
-        lockScroll={false}
-        trapFocus={false}
+        // Same dimmed, blurred backdrop as a modal; a click on it closes the panel.
+        overlayProps={OVERLAY}
         styles={{
           ...styles,
           content: {

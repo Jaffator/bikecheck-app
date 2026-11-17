@@ -81,6 +81,11 @@ export function woreOffShown(item: RideItem, pick: BikePick | null, walk: RideWa
   return item.kind === "ride" ? item.ride.wore_off : woreOffOn(item.ride.wore_off_by_bike, pickedId);
 }
 
+// The route Strava drew for the ride; null for one recorded without GPS.
+export function routeOf(item: RideItem): string | null {
+  return item.ride.summary_polyline;
+}
+
 // The bike a ride moves to on save; null leaves it where it is.
 export function movedTo(ride: Ride, pick: BikePick | null): number | null {
   return pick?.kind === "bike" && pick.bikeId !== ride.bike_id ? pick.bikeId : null;

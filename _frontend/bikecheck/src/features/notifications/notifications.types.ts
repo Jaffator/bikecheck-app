@@ -9,7 +9,8 @@ export type NotificationType =
   | "achievement_unlocked"
   | "new_follower"
   | "follow_request"
-  | "follow_accepted";
+  | "follow_accepted"
+  | "strava_disconnected";
 
 // Optional data used to open notification routes.
 export interface NotificationPayload {
@@ -19,7 +20,6 @@ export interface NotificationPayload {
   km?: number;
   elevationM?: number;
   bikeName?: string;
-  activityName?: string;
   // The service wizard's ids for the most worn job a plan reminder opens.
   groupId?: number;
   actionId?: number;

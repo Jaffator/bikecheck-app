@@ -3428,6 +3428,8 @@ export interface components {
             summary_polyline: Record<string, never> | null;
             /** @example MountainBikeRide */
             sport_type: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 42 */
             distance_km: number;
             /** @example 96 */
@@ -3460,6 +3462,8 @@ export interface components {
             summary_polyline: Record<string, never> | null;
             /** @example MountainBikeRide */
             sport_type: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 42 */
             distance_km: number;
             /** @example 96 */
@@ -3504,8 +3508,6 @@ export interface components {
             bike_id: number;
             /** @example S-Works Tarmac */
             bike_name: Record<string, never> | null;
-            /** @example Morning Mountain Bike Ride */
-            name: string;
             /** @example 2026-08-19T06:12:00.000Z */
             started_at: Record<string, never> | null;
             /** @example 42000 */
@@ -3520,10 +3522,10 @@ export interface components {
             speed_avg: Record<string, never> | null;
             /** @example 54 */
             max_speed_kmh: Record<string, never> | null;
-            /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
-            summary_polyline: Record<string, never> | null;
-            /** @example MountainBikeRide */
-            sport_type: string | null;
+            /** @example ki}fH */
+            summary_polyline: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 2026-08-19T08:40:00.000Z */
             created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
@@ -3550,8 +3552,6 @@ export interface components {
             bike_id: number;
             /** @example S-Works Tarmac */
             bike_name: Record<string, never> | null;
-            /** @example Morning Mountain Bike Ride */
-            name: string;
             /** @example 2026-08-19T06:12:00.000Z */
             started_at: Record<string, never> | null;
             /** @example 42000 */
@@ -3566,10 +3566,10 @@ export interface components {
             speed_avg: Record<string, never> | null;
             /** @example 54 */
             max_speed_kmh: Record<string, never> | null;
-            /** @example ki}fHuqrbBGx@_@lAsA|Bi@n@ */
-            summary_polyline: Record<string, never> | null;
-            /** @example MountainBikeRide */
-            sport_type: string | null;
+            /** @example ki}fH */
+            summary_polyline: string | null;
+            /** @example false */
+            is_private: boolean;
             /** @example 2026-08-19T08:40:00.000Z */
             created_at: string | null;
             wore_off: components["schemas"]["Response_WoreOffLineDto"][];
@@ -3710,6 +3710,13 @@ export interface components {
             /** @description The frozen document, exactly as a reader would receive it */
             snapshot: Record<string, never>;
         };
+        PublishReportDto: {
+            /**
+             * @description Strava-derived km and time may be read through the link
+             * @example true
+             */
+            share_figures: boolean;
+        };
         ResponseReportDto: {
             /** @example 1 */
             id: number;
@@ -3730,6 +3737,11 @@ export interface components {
              * @example false
              */
             is_public: boolean;
+            /**
+             * @description Km and time from Strava are readable through the link
+             * @example true
+             */
+            share_figures: boolean;
             /** @example 3 */
             view_count: number;
             /** @example null */
@@ -3961,6 +3973,8 @@ export interface components {
             share_history: boolean;
             /** @example false */
             share_costs: boolean;
+            /** @example true */
+            share_figures: boolean;
             stats: components["schemas"]["ProfileStatsDto"];
             /**
              * @description Only while no row exists
@@ -3989,6 +4003,11 @@ export interface components {
              * @example false
              */
             share_costs?: boolean;
+            /**
+             * @description Consent to publish Strava-derived km and time
+             * @example true
+             */
+            share_figures?: boolean;
         };
         ProfileOwnerDto: {
             /** @example jarda-novak */
@@ -3999,6 +4018,11 @@ export interface components {
             avatar_url: Record<string, never> | null;
         };
         ProfileSharesDto: {
+            /**
+             * @description False when the owner kept the Strava-derived km and time back; the figures come as null.
+             * @example true
+             */
+            figures: boolean;
             /** @example true */
             components: boolean;
             /** @example true */
@@ -4012,7 +4036,7 @@ export interface components {
             /** @example 3 */
             bikes: number;
             /** @example 12480 */
-            distance_km: number;
+            distance_km: Record<string, never> | null;
             /** @example 32 */
             components: Record<string, never> | null;
             /** @example 26 */
@@ -4042,7 +4066,7 @@ export interface components {
             /** @example https://storage.example.com/bikes/rallon.webp */
             image_url: Record<string, never> | null;
             /** @example 4187 */
-            distance_km: number;
+            distance_km: Record<string, never> | null;
             /** @example 32 */
             components: Record<string, never> | null;
             /** @example 26 */
@@ -4204,13 +4228,13 @@ export interface components {
             /** @example https://storage.example.com/bikes/rallon.webp */
             image_url: Record<string, never> | null;
             /** @example 4187 */
-            distance_km: number;
+            distance_km: Record<string, never> | null;
             /** @example 26 */
             services: Record<string, never> | null;
             /** @example 2026-09-12T00:00:00.000Z */
             updated_at: string;
             /** @example 15000 */
-            time_min: number;
+            time_min: Record<string, never> | null;
             /** @example false */
             ebike: boolean;
             /** @example carbon */
@@ -4238,6 +4262,11 @@ export interface components {
              * @enum {string}
              */
             relation: "SELF" | "NONE" | "PENDING" | "FOLLOWING";
+            /**
+             * @description False when the owner kept the Strava-derived km and time back; the figures come as null.
+             * @example true
+             */
+            figures: boolean;
             /** @example CZK */
             currency: string;
             /**
@@ -4423,16 +4452,6 @@ export interface components {
              */
             daily_time_min: number[];
             /**
-             * @description kcal per UTC day, indexed like daily_m; a ride without calories burns 0
-             * @example [
-             *       0,
-             *       820,
-             *       0,
-             *       2410
-             *     ]
-             */
-            daily_calories: number[];
-            /**
              * @description Whole km of the sum of daily_m
              * @example 51
              */
@@ -4447,11 +4466,6 @@ export interface components {
              * @example 312
              */
             time_min: number;
-            /**
-             * @description The sum of those rides' calories
-             * @example 3230
-             */
-            calories: number;
         };
         Response_DistancePreviousDto: {
             /**
@@ -4474,11 +4488,6 @@ export interface components {
              * @example 260
              */
             time_min: number;
-            /**
-             * @description kcal burnt up to the same day
-             * @example 4120
-             */
-            calories: number;
             /**
              * @description The garage's metres per UTC day over the whole previous Period
              * @example [
@@ -4509,16 +4518,6 @@ export interface components {
              *     ]
              */
             daily_time_min: number[];
-            /**
-             * @description kcal per day, indexed like daily_m
-             * @example [
-             *       700,
-             *       0,
-             *       500,
-             *       2000
-             *     ]
-             */
-            daily_calories: number[];
         };
         Response_DistanceDto: {
             /**
@@ -6717,7 +6716,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishReportDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {

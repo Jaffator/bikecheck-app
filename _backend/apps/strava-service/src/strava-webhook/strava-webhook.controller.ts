@@ -42,6 +42,16 @@ export class WebhookController {
   }
 
   // ------------------------------------------------------------
+  // ---------- One ride again, once its 7-day cache is gone ----
+  // ------------------------------------------------------------
+  // Returned, not stored: the monolith keeps its own 7-day copy (policy §6.2).
+  @UseGuards(InternalAuthGuard)
+  @Get('/activity/:athleteId/:activityId')
+  async getActivity(@Param('athleteId') athleteId: string, @Param('activityId') activityId: string): Promise<unknown> {
+    return this.stravaWebhookService.fetchRide(Number(athleteId), Number(activityId));
+  }
+
+  // ------------------------------------------------------------
   // ---------- Catch up on missed rides (called by monolith) ---
   // ------------------------------------------------------------
   @UseGuards(InternalAuthGuard)

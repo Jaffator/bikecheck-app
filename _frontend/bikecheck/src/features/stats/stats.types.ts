@@ -41,16 +41,14 @@ export interface DistanceBike {
   color_index: number;
   // Metres per UTC day, index 0 = the served `from`, one entry per day through `to`.
   daily_m: number[];
-  // Metres climbed, minutes ridden and kcal burnt per UTC day, indexed like daily_m.
+  // Metres climbed and minutes ridden per UTC day, indexed like daily_m.
   daily_elevation_m: number[];
   daily_time_min: number[];
-  daily_calories: number[];
   // Whole km of the sum of daily_m.
   total_km: number;
-  // The rides started in the window, the sum of their minutes and of their kcal.
+  // The rides started in the window and the sum of their minutes.
   ride_count: number;
   time_min: number;
-  calories: number;
 }
 
 // The garage's previous Period of the same kind: totals up to the same day, days over the whole of it.
@@ -60,11 +58,9 @@ export interface DistancePrevious {
   meters: number;
   elevation_m: number;
   time_min: number;
-  calories: number;
   daily_m: number[];
   daily_elevation_m: number[];
   daily_time_min: number[];
-  daily_calories: number[];
 }
 
 export interface Distance {

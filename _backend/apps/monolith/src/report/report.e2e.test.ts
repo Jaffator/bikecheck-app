@@ -371,6 +371,36 @@ describe('ReportController (e2e)', () => {
     );
   });
 
+  // Strava's km and time reach a reader only with the owner's answer at publishing (#380).
+  describe('PATCH /reports/:id/publish', () => {
+    const publish = (id: number, body: object): request.Test =>
+      request(app.getHttpServer()).patch(`/api/reports/${id}/publish`).set('Authorization', `Bearer ${ownerToken}`).send(body);
+
+    it('asks for the consent', async () => {
+      const { id } = await exportReport();
+
+      await publish(id, {}).expect(400);
+    });
+
+    it('keeps the answer with the link and hides the figures when it is no', async () => {
+      const { id, public_token } = await exportReport();
+
+      const published = await publish(id, { share_figures: false }).expect(200);
+      expect(published.body).toMatchObject({ is_public: true, share_figures: false });
+
+      const read = await readAsStranger(public_token).expect(200);
+      expect(read.body.bike).toMatchObject({ totalKm: null, totalTimeMin: null });
+    });
+
+    it('opens the link with the figures when the owner agreed', async () => {
+      const { id } = await exportReport();
+
+      const published = await publish(id, { share_figures: true }).expect(200);
+
+      expect(published.body).toMatchObject({ is_public: true, share_figures: true });
+    });
+  });
+
   describe('GET /reports/public/:token', () => {
     beforeEach(async () => {
       token = (await exportReport()).public_token;

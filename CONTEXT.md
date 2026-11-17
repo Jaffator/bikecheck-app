@@ -33,14 +33,6 @@ none. Counts toward no odometer and wears no part until the owner gives it a Bik
 Pairing a Bike gives it that gear's Unassigned Rides on its own. Survives disconnecting Strava.
 _Avoid_: Pending ride
 
-**AI Review**:
-A few casual sentences with a 1–5 star rating that Gemini writes about one ride, from its figures
-and its Bike's name if it has one, as a fresh ride arrives, or else the first time its owner opens
-it. Kept on the ride, as its `summary`, and carried over when an Unassigned Ride gets a Bike. New
-figures from Strava or a move to another Bike clear it, and the next open writes it again
-(ADR 0044, ADR 0046).
-_Avoid_: AI mechanic
-
 **Archived Bike**:
 A Bike its owner has taken out of use. It leaves the garage, the dashboard and every list and
 total, keeps its whole history, and is reached only through the archive. Reversible, and nothing
@@ -205,16 +197,9 @@ no bounded Period. Home offers this month, the year and all time, which for ride
 day of the garage's earliest ride, or a custom Period: any span of days the rider picks.
 _Avoid_: Range, timeframe
 
-**Energy**:
-The kcal a Period's rides burnt, as Strava estimates them per ride; a ride Strava sent no estimate
-for burns 0. Read on Home the way distance and climb are read, with the average per ride under
-it. Never handed to the ride review (ADR 0044).
-_Avoid_: Calories (the column's name, not the figure's), kJ (Strava sends it only with a power meter)
-
 **Equivalent**:
-A Period's distance, climb or Energy read against one fixed yardstick known the world over — the
-Earth's circumference for distance, Everest for climb, a marathon's worth (2 600 kcal) for Energy —
-the same for every rider wherever they ride. Read as a share until the yardstick is reached, then
+A Period's distance or climb read against one fixed yardstick known the world over — the
+Earth's circumference for distance, Everest for climb — the same for every rider wherever they ride. Read as a share until the yardstick is reached, then
 as how many whole times it has been covered.
 _Avoid_: Benchmark, comparison (that is the previous Period's reading)
 
@@ -380,6 +365,14 @@ Who may open a Public Profile: **Off** (nobody, not even a Follower — the sett
 stay), **Followers only** (approved Followers, inside the app; the web address answers to no one) or
 **Public** (anyone at the address). One switch, set only in the share drawer.
 _Avoid_: Private (Off is a Visibility, not a privacy setting), privacy, status
+
+**Figures Consent**:
+The owner's yes to letting readers see the km and time that come from Strava rides: on a Public
+Profile (any reader but the owner) and on a Report's Share Link (page and PDF). Without it the
+figures are left out and the rest goes out as usual. Offered ticked where the owner goes Public or
+publishes a link, kept with that profile or that Report, and the owner's own view and file always
+carry the figures.
+_Avoid_: Strava consent, data consent
 
 **Shared Bike**:
 A bike the owner lets out on their Public Profile — every bike is one until its switch is turned

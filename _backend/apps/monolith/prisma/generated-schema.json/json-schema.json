@@ -1240,22 +1240,6 @@
             "null"
           ]
         },
-        "json_data": {
-          "type": [
-            "number",
-            "string",
-            "boolean",
-            "object",
-            "array",
-            "null"
-          ]
-        },
-        "summary": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "suspension_min": {
           "type": [
             "integer",
@@ -1281,11 +1265,15 @@
             "null"
           ]
         },
-        "calories": {
+        "summary_polyline": {
           "type": [
-            "integer",
+            "string",
             "null"
           ]
+        },
+        "is_private": {
+          "type": "boolean",
+          "default": false
         },
         "bikes": {
           "$ref": "#/definitions/bikes"
@@ -1860,6 +1848,10 @@
           "type": "boolean",
           "default": false
         },
+        "share_figures": {
+          "type": "boolean",
+          "default": false
+        },
         "expires_at": {
           "type": [
             "string",
@@ -1904,6 +1896,10 @@
           "default": false
         },
         "share_costs": {
+          "type": "boolean",
+          "default": false
+        },
+        "share_figures": {
           "type": "boolean",
           "default": false
         },
@@ -1988,6 +1984,13 @@
             "null"
           ]
         },
+        "analyzed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -1998,12 +2001,6 @@
             "null"
           ],
           "format": "date-time"
-        },
-        "summary": {
-          "type": [
-            "string",
-            "null"
-          ]
         }
       }
     },

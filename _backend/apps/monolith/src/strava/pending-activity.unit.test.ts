@@ -1,5 +1,5 @@
 import type { strava_pending_activities } from '@prisma/client';
-import { pendingSummaryInput, toPendingDto } from './pending-activity';
+import { isPrivateActivity, toPendingDto } from './pending-activity';
 
 const ANALYSIS = {
   rawJson: { sport_type: 'MountainBikeRide' },
@@ -21,27 +21,11 @@ function pendingRow(analyzed: Record<string, unknown>): strava_pending_activitie
     user_id: 7,
     gear_id: 'b12345',
     analyzed_data: analyzed as strava_pending_activities['analyzed_data'],
+    analyzed_at: new Date('2026-09-20T08:40:00.000Z'),
     created_at: new Date('2026-09-20T08:40:00.000Z'),
     resolved_at: null,
-    summary: null,
   };
 }
-
-describe('pendingSummaryInput', () => {
-  it('hands Gemini the allowlist and no bike', () => {
-    const input = pendingSummaryInput(
-      pendingRow({
-        ...ANALYSIS,
-        distance_km: 42.34,
-        rawJson: { sport_type: 'MountainBikeRide', average_watts: 181.6, athlete: { id: 1 }, map: { polyline: 'x' } },
-      }),
-    );
-
-    expect(input).toMatchObject({ bike: null, distance_km: 42.3, sport_type: 'MountainBikeRide', average_watts: 182 });
-    expect(JSON.stringify(input)).not.toContain('polyline');
-    expect(JSON.stringify(input)).not.toContain('athlete');
-  });
-});
 
 describe('toPendingDto', () => {
   it('carries descent and speeds, rounded like the other figures', () => {
@@ -56,5 +40,23 @@ describe('toPendingDto', () => {
     const dto = toPendingDto(pendingRow(ANALYSIS));
 
     expect(dto).toMatchObject({ elevation_down_m: null, speed_avg: null, max_speed_kmh: null });
+  });
+
+  it('marks a ride only the athlete sees on Strava', () => {
+    const dto = toPendingDto(pendingRow({ ...ANALYSIS, rawJson: { visibility: 'only_me' } }));
+
+    expect(dto.is_private).toBe(true);
+  });
+});
+
+describe('isPrivateActivity', () => {
+  it.each([
+    [{ visibility: 'only_me' }, true],
+    [{ private: true }, true],
+    [{ visibility: 'followers_only' }, false],
+    [{ visibility: 'everyone', private: false }, false],
+    [undefined, false],
+  ])('reads %p as private: %p', (rawJson, expected) => {
+    expect(isPrivateActivity(rawJson)).toBe(expected);
   });
 });

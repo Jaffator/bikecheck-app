@@ -19,7 +19,7 @@ const WEEK_DAYS = 7;
 // The longest custom span still drawn week by week.
 const WEEKLY_MONTHS = 2;
 
-// Distance, climb, time and energy share one span; only the days summed and how they are printed differ.
+// Distance, climb and time share one span; only the days summed and how they are printed differ.
 export interface DailySeries {
   daily: (bike: DistanceBike) => number[];
   previous: (previous: DistancePrevious) => number;
@@ -56,16 +56,6 @@ export const SADDLE_TIME: DailySeries = {
   figure: (minutes, language) => formatNumber(Math.round(minutes / 60), language),
   unit: "h",
   format: (minutes, language) => `${formatNumber(Math.round(minutes / 60), language)} h`,
-};
-
-// Strava's kcal, printed whole.
-export const ENERGY: DailySeries = {
-  daily: (bike) => bike.daily_calories,
-  previous: (previous) => previous.calories,
-  previousDaily: (previous) => previous.daily_calories,
-  figure: (kcal, language) => formatNumber(Math.round(kcal), language),
-  unit: "kcal",
-  format: (kcal, language) => `${formatNumber(Math.round(kcal), language)} kcal`,
 };
 
 // The UTC day `index` days after `from`.

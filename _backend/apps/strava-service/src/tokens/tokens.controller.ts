@@ -1,6 +1,6 @@
 import { Body, Controller, ForbiddenException, Get, Post, Query, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import type { Response } from 'express';
-import { TokenService } from './tokens.service';
+import { TokenService, hasRequiredScopes } from './tokens.service';
 import { InternalAuthGuard } from '../common/internal-auth.guard';
 import { CreateOAuthStateDto } from './dto/create-oauth-state.dto';
 import { DisconnectAthleteDto } from './dto/disconnect-athlete.dto';
@@ -45,6 +45,7 @@ export class TokenController {
     @Query('code') code: string,
     @Query('state') state: string,
     @Query('error') error: string | undefined,
+    @Query('scope') scope: string | undefined,
     @Res() res: Response,
   ): Promise<void> {
     const oauthState = await this.tokenService.consumeState(state);
@@ -52,21 +53,33 @@ export class TokenController {
 
     // Strava sends error=access_denied when the athlete declines; there is no code to exchange.
     if (error !== undefined) {
-      res.redirect(returnUrl(oauthState.return_to, false));
+      res.redirect(returnUrl(oauthState.return_to, 'denied'));
+      return;
+    }
+
+    // Half a grant would sync without gear or private rides, so it is refused rather than kept.
+    if (!hasRequiredScopes(scope)) {
+      await this.tokenService.rejectGrant(code);
+      res.redirect(returnUrl(oauthState.return_to, 'missing-scopes'));
       return;
     }
 
     await this.tokenService.exchangeToken(code, oauthState.user_id);
-    res.redirect(returnUrl(oauthState.return_to, true));
+    res.redirect(returnUrl(oauthState.return_to, 'connected'));
   }
 }
 
+type OAuthOutcome = 'connected' | 'denied' | 'missing-scopes';
+
 // Desktop started in the same tab, so it returns to the web app; a phone returns through the
 // custom scheme, the only URL that brings the installed app back to the front.
-function returnUrl(returnTo: StravaReturnTo, connected: boolean): string {
-  if (returnTo === 'web') return new URL(connected ? '/strava-connected' : '/', process.env.FRONTEND_URL).toString();
+function returnUrl(returnTo: StravaReturnTo, outcome: OAuthOutcome): string {
+  if (returnTo === 'web') {
+    if (outcome === 'connected') return new URL('/strava-connected', process.env.FRONTEND_URL).toString();
+    return new URL(outcome === 'denied' ? '/' : '/?strava=missing-scopes', process.env.FRONTEND_URL).toString();
+  }
   // No slash before the path: APP_DEEP_LINK_URL already ends in "://".
-  return `${process.env.APP_DEEP_LINK_URL}${connected ? 'strava-connected' : 'strava-denied'}`;
+  return `${process.env.APP_DEEP_LINK_URL}strava-${outcome}`;
 }
 
 // The authorize URL is built in TokenService.buildAuthorizeUrl().

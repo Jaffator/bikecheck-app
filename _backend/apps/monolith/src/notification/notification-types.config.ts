@@ -15,7 +15,8 @@ export type NotificationType =
   | 'achievement_unlocked'
   | 'new_follower'
   | 'follow_request'
-  | 'follow_accepted';
+  | 'follow_accepted'
+  | 'strava_disconnected';
 
 export interface NotificationTypeConfig {
   channels: NotificationChannel[];
@@ -99,6 +100,10 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, NotificationTypeConfi
     channels: ['push', 'inApp'],
     route: '/users/:handle',
     pushEmoji: '✅',
+  },
+  // Receipt for the Strava Data deleted when the link ends (policy §2.5). In-app only: nothing to act on.
+  strava_disconnected: {
+    channels: ['inApp'],
   },
 };
 

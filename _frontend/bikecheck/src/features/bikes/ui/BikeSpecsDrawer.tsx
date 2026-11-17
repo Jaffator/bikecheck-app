@@ -10,7 +10,6 @@ import type { Bike, RiddenBike } from "@/features/bikes/bikes.types";
 import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useIsDesktop } from "@/layout/breakpoints";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { formatNumber } from "@/utils/number";
 
 // The same layer the service sheet stands on, so overlays never fight the FAB.
@@ -32,7 +31,8 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
     <ResponsiveSheet
       opened={opened}
       onClose={onClose}
-      desktop="panel"
+      desktop="modal"
+      modalSize={480}
       zIndex={SHEET_Z_INDEX}
       withCloseButton={false}
       styles={{
@@ -44,20 +44,20 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
           display: "flex",
           flexDirection: "column",
         },
-        // The desktop panel pads its scroll instead; a bottom sheet takes the wrapper's padding.
+        // The desktop modal pads its scroll instead; a bottom sheet takes the wrapper's padding.
         body: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", ...(isDesktop ? { padding: 0 } : {}) },
       }}
     >
       <Box
-        px={isDesktop ? "md" : undefined}
-        pt={isDesktop ? "md" : undefined}
-        pb={isDesktop ? "1.25rem" : undefined}
+        px={isDesktop ? "xl" : undefined}
+        pt={isDesktop ? 28 : undefined}
+        pb={isDesktop ? "xl" : undefined}
         style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
       >
-        <Stack gap="lg">
+        <Stack gap={isDesktop ? 28 : "lg"}>
           <Group justify="space-between" align="flex-start" wrap="nowrap">
-            <Stack gap={2} style={{ minWidth: 0 }}>
-              <Text fw={700} fz={22} c="text.6" lh={1.2} lineClamp={2}>
+            <Stack gap={isDesktop ? 6 : 2} style={{ minWidth: 0 }}>
+              <Text fw={700} fz={isDesktop ? 24 : 22} c="text.6" lh={1.2} lineClamp={2}>
                 {bikeTitle(bike)}
               </Text>
               <Text className="tabular-nums uppercase" fz={11} c="var(--color-text-dim)" lts="var(--tracking-label)">
@@ -66,7 +66,9 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
             </Stack>
             {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
             {isDesktop && (
-              <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label={t("action.close")} onClick={onClose}>
+              <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label={t("action.close")} onClick={onClose}
+                // Pulls the hit area out so the ✕ glyph lines up with the padding, not its circle.
+                style={{ margin: "-4px -8px 0 0" }}>
                 <X size={20} color="var(--mantine-color-text-6)" />
               </ActionIcon>
             )}
@@ -115,9 +117,6 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
                 label={t("strava.linkedToLabel")}
                 // Paired before the name was stored: say the pairing holds, never the id.
                 value={bike.strava_name ?? t("strava.paired")}
-                icon={
-                  <StravaMark width={12} height={12} color="var(--mantine-color-strava-6)" style={{ flexShrink: 0 }} />
-                }
               />
             )}
           </Section>
@@ -144,30 +143,29 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
 
 // A block of facts under its own small-caps heading, ruled off from the next.
 function Section({ title, children }: { title: string; children: ReactNode }): ReactElement {
+  const isDesktop = useIsDesktop();
+
   return (
-    <Stack gap="xs">
+    <Stack gap={isDesktop ? "sm" : "xs"}>
       <Text className="tabular-nums uppercase" fz={12} fw={600} c="var(--mantine-color-text-8)" lts="var(--tracking-label)">
         {title}
       </Text>
       <Divider color="var(--mantine-color-inputs-5)" />
-      <Stack gap={8}>{children}</Stack>
+      <Stack gap={isDesktop ? 14 : 8}>{children}</Stack>
     </Stack>
   );
 }
 
 // One fact: what it is on the left, what it reads on the right.
-function SpecRow({ label, value, icon }: { label: string; value: string; icon?: ReactNode }): ReactElement {
+function SpecRow({ label, value }: { label: string; value: string }): ReactElement {
   return (
     <Group justify="space-between" gap="md" wrap="nowrap" align="flex-start">
       <Text fz={14} c="var(--color-text-dim)" style={{ flexShrink: 0 }}>
         {label}
       </Text>
-      <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        {icon}
-        <Text className="tabular-nums" fz={14} c="text.6" ta="right" lineClamp={2}>
-          {value}
-        </Text>
-      </Group>
+      <Text className="tabular-nums" fz={14} c="text.6" ta="right" lineClamp={2} style={{ minWidth: 0 }}>
+        {value}
+      </Text>
     </Group>
   );
 }

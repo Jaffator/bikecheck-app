@@ -34,4 +34,9 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsBoolean()
   share_costs?: boolean;
+
+  @ApiProperty({ example: true, required: false, description: 'Consent to publish Strava-derived km and time' })
+  @IsOptional()
+  @IsBoolean()
+  share_figures?: boolean;
 }

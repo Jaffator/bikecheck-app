@@ -5,7 +5,6 @@ import { RideService } from '../ride/ride.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { ServiceTrackingService } from '../service-tracking/service-tracking.service';
-import { GeminiService } from '../gemini/gemini.service';
 
 const OWNER_ID = 7;
 const ORBEA = 15;
@@ -182,7 +181,6 @@ describe('StravaEventsService ride wear', () => {
         { provide: PrismaService, useValue: db },
         { provide: NotificationService, useValue: { create: jest.fn(), resolveActivityAsk: jest.fn() } },
         { provide: ServiceTrackingService, useValue: { evaluateBike: jest.fn(), evaluateBikes: jest.fn() } },
-        { provide: GeminiService, useValue: { rideSummary: jest.fn() } },
         { provide: getLoggerToken(StravaEventsService.name), useValue: { info: jest.fn(), error: jest.fn() } },
       ],
     }).compile();
@@ -265,25 +263,6 @@ describe('StravaEventsService ride wear', () => {
       13: { total_km: 545, total_time_min: 1130, suspension_min: 295 },
       14: { total_km: 545, total_time_min: 1130, health_index: 16 },
     });
-  });
-
-  // A corrected ride may carry new figures, so the next open writes its review again.
-  it('clears the review of a ride Strava resends with new figures', async () => {
-    await strava.saveAnalyzedData(rideOn());
-    rides[0].summary = 'Written about the first version';
-
-    await strava.saveAnalyzedData(rideOn({ distance_km: 45 }));
-
-    expect(rides[0].summary).toBeNull();
-  });
-
-  it('keeps the review of a ride Strava resends with the same figures', async () => {
-    await strava.saveAnalyzedData(rideOn());
-    rides[0].summary = 'Written about the first version';
-
-    await strava.saveAnalyzedData(rideOn({ name: 'Renamed on Strava' }));
-
-    expect(rides[0].summary).toBe('Written about the first version');
   });
 
   // Moving a ride away takes back exactly what saving it gave, so moving it back restores the save.

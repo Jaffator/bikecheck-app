@@ -56,11 +56,16 @@ export function UserBikeHero({ bike }: UserBikeHeroProps): ReactElement {
         </Stack>
 
         <Group gap="md" wrap="wrap">
-          <Metric icon={<Gauge size={METRIC_ICON_SIZE} color={METRIC_COLOR} />} value={formatKm(bike.distance_km, i18n.language)} />
-          <Metric
-            icon={<Clock size={METRIC_ICON_SIZE} color={METRIC_COLOR} />}
-            value={t("bikes.hours", { count: Math.round(bike.time_min / 60) })}
-          />
+          {/* Km and time are Strava's; without the owner's consent they are not there. */}
+          {bike.distance_km !== null && (
+            <Metric icon={<Gauge size={METRIC_ICON_SIZE} color={METRIC_COLOR} />} value={formatKm(bike.distance_km, i18n.language)} />
+          )}
+          {bike.time_min !== null && (
+            <Metric
+              icon={<Clock size={METRIC_ICON_SIZE} color={METRIC_COLOR} />}
+              value={t("bikes.hours", { count: Math.round(bike.time_min / 60) })}
+            />
+          )}
           {partsCount !== null && (
             <Metric
               icon={<IoLogoWebComponent size={METRIC_ICON_SIZE} color={METRIC_COLOR} />}

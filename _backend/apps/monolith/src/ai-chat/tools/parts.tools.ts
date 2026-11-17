@@ -26,8 +26,6 @@ export interface PartHistoryRow {
   // ISO day, or null on a part whose date nobody recorded.
   mounted_at: string | null;
   removed_at: string | null;
-  total_km: number | null;
-  total_time_min: number | null;
   // Services that touched this part, zero included: an Unserviced Component is a finding to
   // state, not something to read out of an empty answer.
   service_count: number;
@@ -89,8 +87,6 @@ const partsSelect = {
   is_active: true,
   mounted_at: true,
   removed_at: true,
-  total_km: true,
-  total_time_min: true,
   bikes: { select: { bike_brand: true, bike_model: true } },
   component_types: { select: { component_type: true } },
 } satisfies Prisma.components_mountedSelect;
@@ -221,8 +217,6 @@ function toPartHistoryRow(part: PartRecord, serviceCount: number): PartHistoryRo
     status: part.is_active === true ? 'mounted' : 'removed',
     mounted_at: isoDay(part.mounted_at),
     removed_at: isoDay(part.removed_at),
-    total_km: part.total_km,
-    total_time_min: part.total_time_min,
     service_count: serviceCount,
   };
 }

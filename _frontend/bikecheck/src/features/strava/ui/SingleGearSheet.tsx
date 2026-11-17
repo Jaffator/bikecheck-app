@@ -3,7 +3,6 @@ import { useState, type ReactElement } from "react";
 import { Anchor, Button, Group, Loader, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { TriangleAlert } from "lucide-react";
-import StravaMark from "@/assets/icons/svg_icons/strava.svg?react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { suggestGear } from "../gearSuggestion";
@@ -121,11 +120,20 @@ interface GearOptionProps {
   selected: boolean;
   // The title of the owner's other bike that already has this gear.
   takenBy: string | null;
+  // The multi-bike sheet says "picked for", since that pairing is not saved yet.
+  takenKey?: string;
   suggested: boolean;
   onPick: () => void;
 }
 
-function GearOption({ name, selected, takenBy, suggested, onPick }: GearOptionProps): ReactElement {
+export function GearOption({
+  name,
+  selected,
+  takenBy,
+  takenKey = "strava.gearTakenShort",
+  suggested,
+  onPick,
+}: GearOptionProps): ReactElement {
   const { t } = useTranslation();
   const taken = takenBy !== null;
 
@@ -149,19 +157,13 @@ function GearOption({ name, selected, takenBy, suggested, onPick }: GearOptionPr
         cursor: taken ? "not-allowed" : "pointer",
       }}
     >
-      <StravaMark
-        width={14}
-        height={14}
-        color={taken ? "var(--color-text-dim)" : "var(--mantine-color-strava-6)"}
-        style={{ flexShrink: 0 }}
-      />
       <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
         <Text fz={15} fw={600} c="text.6" lineClamp={1}>
           {name}
         </Text>
         {taken && (
           <Text fz={12} c="var(--color-text-dim)" lineClamp={1}>
-            {t("strava.gearTakenShort", { bike: takenBy })}
+            {t(takenKey, { bike: takenBy })}
           </Text>
         )}
       </Stack>

@@ -5,7 +5,6 @@
 // tools the turn was allowed to reach for. Anything finer would be grading prose, which is a
 // second model's job and not this one's.
 import {
-  B1_HOURS,
   B1_PART_COUNT,
   B2_FORK_PRESSURE_PSI,
   BIKES,
@@ -15,7 +14,6 @@ import {
   FORK_REMAINING_MIN,
   LAST_SERVICE_COST,
   PREVIOUS_SERVICE_COST,
-  RIDES_LAST_MONTH_KM,
   SERVICE_TOTAL_12M,
   SERVICE_TOTAL_ALL,
   bike,
@@ -66,6 +64,11 @@ const OTHER_BRANDS = [B2.brand, B3.brand];
 
 // A gate answer says it cannot help and stops there. What it must not do is name the garage,
 // which is the failure mode: turning a question it did not understand into a bike report.
+// Distance and ride time come from Strava, which no model may read (ADR 0047): the honest answer is that
+// the chat cannot see them, and the bike's own figures must not leak in.
+const CANNOT_SEE: Needle[] = [['nevid', 'nemam pristup', 'nedokazu', 'nemohu', 'nemuzu']];
+const NO_RIDE_FIGURES = [String(B1.totalKm), String(B2.totalKm)];
+
 const REFUSES: EvalCheck = { noTools: true, mustNot: [B1.brand, ...OTHER_BRANDS], maxSentences: 3 };
 
 export const QUESTIONS: EvalItem[] = [
@@ -92,13 +95,13 @@ export const QUESTIONS: EvalItem[] = [
     id: 'A3',
     category: 'facts',
     turns: [{ question: `Kolik kilometrů má najeto ${B1.brand}?` }],
-    check: { must: [String(B1.totalKm)], mustNot: [String(B2.totalKm)], tools: ['get_garage'] },
+    check: { must: CANNOT_SEE, mustNot: NO_RIDE_FIGURES },
   },
   {
     id: 'A4',
     category: 'facts',
     turns: [{ question: `Kolik hodin mám najeto na ${B1.brand}?` }],
-    check: { must: [String(B1_HOURS)], tools: ['get_garage'] },
+    check: { must: CANNOT_SEE },
   },
   {
     id: 'A5',
@@ -133,7 +136,7 @@ export const QUESTIONS: EvalItem[] = [
     id: 'A9',
     category: 'facts',
     turns: [{ question: 'Kolik jsem najel za poslední měsíc?' }],
-    check: { must: [String(RIDES_LAST_MONTH_KM)], tools: ['get_garage', 'list_rides'] },
+    check: { must: CANNOT_SEE },
   },
   {
     id: 'A10',
@@ -179,19 +182,19 @@ export const QUESTIONS: EvalItem[] = [
     id: 'C1',
     category: 'context',
     turns: [{ question: 'Kolik má najeto?', bike: 'B1' }],
-    check: { must: [String(B1.totalKm)], mustNot: [String(B2.totalKm)], tools: ['get_garage'] },
+    check: { must: CANNOT_SEE, mustNot: NO_RIDE_FIGURES },
   },
   {
     id: 'C2',
     category: 'context',
     turns: [{ question: 'Kolik má najeto?', bike: 'B2' }],
-    check: { must: [String(B2.totalKm)], mustNot: [String(B1.totalKm)], tools: ['get_garage'] },
+    check: { must: CANNOT_SEE, mustNot: NO_RIDE_FIGURES },
   },
   {
     id: 'C3',
     category: 'context',
     turns: [{ question: `Kolik má najeto ${B1.brand}?` }, { question: `A ${B2.brand}?` }],
-    check: { must: [String(B2.totalKm)], tools: ['get_garage'] },
+    check: { must: CANNOT_SEE, mustNot: NO_RIDE_FIGURES },
   },
   {
     id: 'C4',
@@ -258,9 +261,9 @@ export const QUESTIONS: EvalItem[] = [
   {
     id: 'D6',
     category: 'edges',
-    // An empty filtered page says the filter matched nothing, never that the user has no rides.
+    // Rides are out of reach altogether, so a year nobody rode in is answered like any other.
     turns: [{ question: 'Kolik jsem najel v roce 2019?' }],
-    check: { must: ['2019'], tools: ['get_garage', 'list_rides'] },
+    check: { must: CANNOT_SEE },
   },
   {
     id: 'D7',

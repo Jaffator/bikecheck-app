@@ -7,9 +7,8 @@ import { PANEL_HAIRLINE } from "@/components/panelRows";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { rideItemOf } from "@/features/rides/rideDetail";
-import { formatDuration } from "@/features/rides/rideDuration";
 import { useFilteredRides } from "@/features/rides/rides.queries";
-import type { Ride, RideWeek } from "@/features/rides/rides.types";
+import type { Ride } from "@/features/rides/rides.types";
 import { TABLE_PAGE_SIZE, filterOf, groupByWeek, periodLabel, weekLabel } from "@/features/rides/ridesTable";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
 import { useRideTableParams } from "@/features/rides/useRideTableParams";
@@ -67,19 +66,19 @@ export function AssignedRidesTable({ openActivityId, onOpenedActivityHandled }: 
               cells={[
                 t("ridesTable.columnRide"),
                 t("ridesTable.columnBike"),
-                t("ridesTable.columnKm"),
+                t("rides.statDistance"),
                 t("rides.statDuration"),
-                t("ridesTable.columnClimb"),
+                t("rides.statElevation"),
+                "",
                 t("rides.woreOff"),
                 t("ridesTable.columnCheckIn"),
+                "",
               ]}
               rightAligned={[2, 3, 4]}
             />
             {groupByWeek(items).map((group) => (
               <Fragment key={group.start ?? "undated"}>
-                {group.start !== null && (
-                  <WeekHeader start={group.start} week={data.weeks.find((week) => week.start === group.start)} />
-                )}
+                {group.start !== null && <WeekHeader start={group.start} />}
                 {group.rides.map((ride) => (
                   <RideTableRow
                     key={ride.id}
@@ -102,13 +101,12 @@ export function AssignedRidesTable({ openActivityId, onOpenedActivityHandled }: 
   );
 }
 
-// A week split across pages repeats its header, with the whole week's total each time.
-function WeekHeader({ start, week }: { start: string; week: RideWeek | undefined }): ReactElement {
+// A week split across pages repeats its header.
+function WeekHeader({ start }: { start: string }): ReactElement {
   const { t, i18n } = useTranslation();
 
   return (
     <Group
-      justify="space-between"
       wrap="nowrap"
       px="md"
       py={6}
@@ -120,15 +118,6 @@ function WeekHeader({ start, week }: { start: string; week: RideWeek | undefined
       <Text fz={12} fw={700} c="text.6">
         {weekLabel(start, i18n.language, t)}
       </Text>
-      {week !== undefined && (
-        <Text className="tabular-nums" fz={12} c="var(--color-text-dim)">
-          {[
-            t("dashboard.ridesCount", { count: week.count }),
-            t("pendingRides.distance", { count: Math.round(week.km) }),
-            formatDuration(week.time_min),
-          ].join(" · ")}
-        </Text>
-      )}
     </Group>
   );
 }

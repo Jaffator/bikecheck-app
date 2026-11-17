@@ -6,7 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Archive, ArrowRight, Pencil } from "lucide-react";
 import type { RiddenBike } from "@/features/bikes/bikes.types";
 import { BikeActionTiles } from "@/features/bikes/ui/BikeActionTiles";
-import { BikeExportButton } from "@/features/bikes/ui/BikeExportButton";
 import { BikeHeroCard } from "@/features/bikes/ui/BikeHeroCard";
 import { BikeComponentsSection } from "@/features/components/ui/BikeComponentsSection";
 import { useRecentServices } from "@/features/service/service.queries";
@@ -63,8 +62,8 @@ export function BikeDetailDesktop({
             onOpenSharing={onOpenSharing}
           />
           {archived && <ArchivedNote />}
-          <BikeExportButton onExport={onExport} />
           <BikeActionTiles
+            onExport={onExport}
             onAddService={archived ? undefined : () => navigate(`/service/new?bike=${id}`)}
             onOpenHistory={() => navigate(`/service?bike=${id}`)}
             onOpenSetup={() => navigate(`/bikes/${id}/setup`)}

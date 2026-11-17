@@ -40,13 +40,6 @@ export class Response_DistanceBikeDto {
   })
   daily_time_min!: number[];
 
-  @ApiProperty({
-    type: [Number],
-    example: [0, 820, 0, 2410],
-    description: 'kcal per UTC day, indexed like daily_m; a ride without calories burns 0',
-  })
-  daily_calories!: number[];
-
   @ApiProperty({ example: 51, description: 'Whole km of the sum of daily_m' })
   total_km!: number;
 
@@ -55,9 +48,6 @@ export class Response_DistanceBikeDto {
 
   @ApiProperty({ example: 312, description: "The sum of those rides' duration_min" })
   time_min!: number;
-
-  @ApiProperty({ example: 3230, description: "The sum of those rides' calories" })
-  calories!: number;
 }
 
 // The totals stop at the same day of the previous Period, a custom one's at its end; the days run through the whole.
@@ -73,9 +63,6 @@ export class Response_DistancePreviousDto {
 
   @ApiProperty({ example: 260, description: 'Minutes ridden up to the same day' })
   time_min!: number;
-
-  @ApiProperty({ example: 4120, description: 'kcal burnt up to the same day' })
-  calories!: number;
 
   @ApiProperty({
     type: [Number],
@@ -97,9 +84,6 @@ export class Response_DistancePreviousDto {
     description: 'Minutes ridden per day, indexed like daily_m',
   })
   daily_time_min!: number[];
-
-  @ApiProperty({ type: [Number], example: [700, 0, 500, 2000], description: 'kcal per day, indexed like daily_m' })
-  daily_calories!: number[];
 }
 
 export class Response_DistanceDto {

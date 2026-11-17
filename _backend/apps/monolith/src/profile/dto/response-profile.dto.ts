@@ -34,6 +34,9 @@ export class ResponseProfileDto {
   @ApiProperty({ example: false })
   share_costs!: boolean;
 
+  @ApiProperty({ example: true })
+  share_figures!: boolean;
+
   @ApiProperty({ type: ProfileStatsDto })
   stats!: ProfileStatsDto;
 

@@ -88,12 +88,12 @@ export function UserProfileHero({ page, onOpenSharing }: UserProfileHeroProps): 
   );
 }
 
-// Bikes and distance always; parts and Services only while the owner shares the section.
+// Bikes always, distance with the owner's consent; parts and Services only while the owner shares the section.
 function figuresOf(garage: ProfileGarage, language: string, t: (key: string) => string): Figure[] {
-  const figures: Figure[] = [
-    { label: t("sharing.figureBikes"), value: String(garage.totals.bikes) },
-    { label: t("sharing.figureDistance"), value: formatKm(garage.totals.distance_km, language) },
-  ];
+  const figures: Figure[] = [{ label: t("sharing.figureBikes"), value: String(garage.totals.bikes) }];
+  if (garage.totals.distance_km !== null) {
+    figures.push({ label: t("sharing.figureDistance"), value: formatKm(garage.totals.distance_km, language) });
+  }
   if (garage.totals.components !== null) {
     figures.push({ label: t("sharing.figureParts"), value: String(garage.totals.components) });
   }

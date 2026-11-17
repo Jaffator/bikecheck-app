@@ -88,7 +88,7 @@ export function NotificationRowTitle({ notification }: { notification: Notificat
       lineClamp={1}
       style={{ flex: "1 1 auto", minWidth: 0 }}
     >
-      {rowTitle(notification)}
+      {notification.title}
     </Text>
   );
 }
@@ -120,13 +120,7 @@ function isRide(notification: Notification): boolean {
   return notification.type === "strava_activity_unassigned" || notification.type === "strava_activity_saved";
 }
 
-// Every unassigned ride shares one headline, so the ride's own name takes its place.
-function rowTitle(notification: Notification): string {
-  if (notification.type !== "strava_activity_unassigned") return notification.title;
-  return notification.payload?.activityName ?? notification.title;
-}
-
-// The stored body already carries the ride's name, which is the title here, so only its figures stay.
+// An unassigned ride keeps only its figures in the row; the headline is the shared "new ride".
 function rowDetail(notification: Notification, waiting: boolean, t: TFunction): string {
   if (notification.type !== "strava_activity_unassigned") return notification.body;
 

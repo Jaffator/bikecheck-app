@@ -4,7 +4,6 @@ const TOOL_STEP_KEYS: Record<string, string> = {
   get_garage: "chat.stepGarage",
   list_parts: "chat.stepParts",
   list_services: "chat.stepServices",
-  list_rides: "chat.stepRides",
   get_setup: "chat.stepSetup",
   list_reports: "chat.stepReports",
   list_tracked_actions: "chat.stepTrackedActions",

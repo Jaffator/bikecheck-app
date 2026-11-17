@@ -1,5 +1,5 @@
-// Home's figures as one card: the Period's distance, climb, time in the saddle and energy. Distance, climb and
-// energy read as an Equivalent, and all four against the Period before over a custom one; terms in CONTEXT.md.
+// Home's figures as one card: the Period's distance, climb and time in the saddle. Distance and climb read as an
+// Equivalent, and all three against the Period before over a custom one; terms in CONTEXT.md.
 import type { ReactElement } from "react";
 import { Box, SimpleGrid, useMatches } from "@mantine/core";
 import { ArrowUpRight, Gauge, Timer, type LucideIcon } from "lucide-react";
@@ -9,7 +9,6 @@ import { FigureSection, type FigureSectionProps } from "@/components/FigureSecti
 import { formatDuration } from "@/features/rides/rideDuration";
 import {
   CLIMBED,
-  ENERGY,
   RIDDEN,
   SADDLE_TIME,
   totalMeters,
@@ -19,7 +18,6 @@ import {
 import {
   EARTH,
   EVEREST,
-  MARATHON,
   changeLabel,
   comparisonOf,
   customComparison,
@@ -32,16 +30,15 @@ import { homePeriodLabel, isCustomPeriod } from "@/features/stats/homePeriod";
 import { useDistance } from "@/features/stats/stats.queries";
 import type { Distance, HomePeriod } from "@/features/stats/stats.types";
 import { WeekdayBars } from "@/features/stats/ui/WeekdayBars";
-import { YardstickFlame } from "@/features/stats/ui/YardstickFlame";
 import { YardstickMountain } from "@/features/stats/ui/YardstickMountain";
 import { YardstickRing } from "@/features/stats/ui/YardstickRing";
 import { useIsDesktop } from "@/layout/breakpoints";
 
-// The phone stacks the sections; desktop puts four across once there is room.
-const COLS = { base: 1, md: 2, lg: 4 };
+// The phone stacks the sections; desktop puts three across once there is room.
+const COLS = { base: 1, md: 3 };
 const HAIRLINE = "1px solid var(--color-border)";
 
-type FigureKind = "distance" | "climb" | "energy";
+type FigureKind = "distance" | "climb";
 
 // The Equivalents read the same response the same way; only the series and the yardstick differ.
 const EQUIVALENT_FIGURES: Record<
@@ -50,7 +47,6 @@ const EQUIVALENT_FIGURES: Record<
 > = {
   distance: { series: RIDDEN, yardstick: EARTH, titleKey: "stats.distanceTitle", icon: Gauge },
   climb: { series: CLIMBED, yardstick: EVEREST, titleKey: "dashboard.climbTitle", icon: ArrowUpRight },
-  energy: { series: ENERGY, yardstick: MARATHON, titleKey: "dashboard.energyTitle" },
 };
 
 // Desktop puts time third, so distance and climb sit side by side; the phone keeps it second. What is due
@@ -61,8 +57,7 @@ export function DashboardFigures({ period }: { period: HomePeriod }): ReactEleme
   const distance = <EquivalentFigure key="distance" period={period} figure="distance" />;
   const time = <TimeFigure key="time" period={period} />;
   const climb = <EquivalentFigure key="climb" period={period} figure="climb" />;
-  const energy = <EquivalentFigure key="energy" period={period} figure="energy" />;
-  const sections = desktop ? [distance, climb, time, energy] : [distance, time, climb, energy];
+  const sections = desktop ? [distance, climb, time] : [distance, time, climb];
 
   return (
     // Hairlines, not gaps, so the sections read as one card at any column count.
@@ -104,7 +99,6 @@ function YardstickGraphic({ meters, yardstick }: { meters: number; yardstick: Ya
   if (yardstick.graphic === "ring") {
     return <YardstickRing equivalent={equivalent} figure={figure} name={name} label={label} />;
   }
-  if (yardstick.graphic === "flame") return <YardstickFlame equivalent={equivalent} label={label} />;
   return <YardstickMountain equivalent={equivalent} label={label} />;
 }
 

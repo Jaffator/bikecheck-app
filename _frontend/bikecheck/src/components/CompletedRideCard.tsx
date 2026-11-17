@@ -1,8 +1,9 @@
 // The row the ride lists are built from — completed and pending rides are the same card
 // with different content in its slots.
 import type { ReactElement, ReactNode } from "react";
-import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Box, Group, Paper, Stack, Text } from "@mantine/core";
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { onPanelRowKey } from "./panelRows";
 
 interface CompletedRideCardProps {
   // The visual that identifies the row at a glance: a route map, a photo, an icon.
@@ -15,6 +16,8 @@ interface CompletedRideCardProps {
   meta?: ReactNode;
   // The row of icon-and-number readings along the bottom; use HistoryMetric for each.
   metrics?: ReactNode;
+  // Pinned to the top-right, beside the title, e.g. a link out.
+  corner?: ReactNode;
   // Off by default: the ride lists have never shown one and must stay as they are.
   chevron?: boolean;
   onOpen: () => void;
@@ -27,11 +30,19 @@ export function CompletedRideCard({
   subtitle,
   meta,
   metrics,
+  corner,
   chevron = false,
   onOpen,
 }: CompletedRideCardProps): ReactElement {
   return (
-    <UnstyledButton onClick={onOpen} style={{ display: "block", width: "100%", textAlign: "left" }}>
+    // A div, not a button: rows may carry a link, which a <button> cannot hold.
+    <Box
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => onPanelRowKey(event, onOpen)}
+      style={{ display: "block", width: "100%", textAlign: "left", cursor: "pointer" }}
+    >
       <Paper
         radius="lg"
         p="sm"
@@ -53,9 +64,12 @@ export function CompletedRideCard({
           <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
             {/* Keeps title, date and metadata visually grouped. */}
             <Stack gap={2}>
-              <Text fw={600} fz={16} c="text.6" lineClamp={1}>
-                {title}
-              </Text>
+              <Group gap="sm" wrap="nowrap" justify="space-between" align="flex-start">
+                <Text fw={600} fz={16} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
+                  {title}
+                </Text>
+                {corner}
+              </Group>
               {subtitle !== undefined && (
                 <Text fz={13} c="text.7">
                   {subtitle}
@@ -73,7 +87,7 @@ export function CompletedRideCard({
           {chevron && <ChevronRight size={18} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
         </Group>
       </Paper>
-    </UnstyledButton>
+    </Box>
   );
 }
 
