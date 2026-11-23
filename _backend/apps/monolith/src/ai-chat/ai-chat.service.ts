@@ -311,7 +311,7 @@ export class AiChatService {
       execute: async (input: Input, options: ToolCallOptions): Promise<ToolPage<Row>> => {
         this.announce(name, turn, emit);
         const started = performance.now();
-        const page = await read(input, options);když kliknu na 
+        const page = await read(input, options);
         const record: ToolCallRecord = {
           tool_name: name,
           // The tool's own arguments, which are ids, dates and a cursor - never free text.
