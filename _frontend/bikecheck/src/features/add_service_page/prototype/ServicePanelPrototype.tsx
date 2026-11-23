@@ -30,7 +30,7 @@ import { useTranslation } from "react-i18next";
 import { Calendar, Check, Paperclip, Store, X } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { useShopNames, useUploadServiceAttachment } from "@/features/service/service.queries";
 import { catalogueLabel, componentTypeLabel } from "@/features/service/serviceLabels";
 import type { UploadedAttachment } from "@/features/service/service.types";
@@ -49,8 +49,6 @@ import type { ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype"
 const PANEL_TOP = "4rem";
 // Kept clear under the panel: the page's own bottom padding, so a full panel adds no scroll to it.
 const PANEL_BOTTOM_AIR = 32;
-
-const BIKE_DOT_SIZE = 10;
 
 // The panel starts beside the first card and sticks under the header later, so the room
 // beneath it changes as the page scrolls. Written straight to the element: no re-render per frame.
@@ -219,14 +217,13 @@ function BikeSelect({
       styles={panelInputStyles}
       comboboxProps={dropdownProps}
       leftSection={
-        picked === undefined ? undefined : <BikeColorDot colorIndex={picked.color_index} size={BIKE_DOT_SIZE} />
+        picked === undefined ? undefined : <BikeColorIcon colorIndex={picked.color_index} />
       }
       leftSectionPointerEvents="none"
       renderOption={({ option, checked }) => (
         <Group gap={10} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
-          <BikeColorDot
+          <BikeColorIcon
             colorIndex={bikes.find((bike) => String(bike.id) === option.value)?.color_index ?? null}
-            size={BIKE_DOT_SIZE}
           />
           <Text fz={14} fw={600} c="text.6" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
             {option.label}

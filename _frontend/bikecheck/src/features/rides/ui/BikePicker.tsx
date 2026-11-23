@@ -6,7 +6,7 @@ import { Ban, Check, ChevronDown, ChevronUp, TriangleAlert } from "lucide-react"
 import { useTranslation } from "react-i18next";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { MISSING_BIKE_COLOR } from "@/features/rides/checkIn";
 import type { BikePick } from "@/features/rides/rideDetail";
 import { useIsDesktop } from "@/layout/breakpoints";
@@ -132,7 +132,7 @@ function TriggerContent({ opened, notMine, missing, picked, fallbackName }: Trig
 
   return (
     <PickedRow
-      mark={<BikeColorDot colorIndex={picked?.color_index ?? null} size={8} />}
+      mark={<BikeColorIcon colorIndex={picked?.color_index ?? null} />}
       name={picked === null ? fallbackName : bikeTitle(picked)}
     />
   );
@@ -200,7 +200,7 @@ function BikeOption({ bike, active, separated, rowHeight }: BikeOptionProps): Re
         borderTop: separated ? "1px solid var(--color-border-subtle)" : undefined,
       }}
     >
-      <BikeColorDot colorIndex={bike.color_index} size={10} />
+      <BikeColorIcon colorIndex={bike.color_index} />
       <Text fz={14} fw={600} c="text.6" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
         {bikeTitle(bike)}
       </Text>

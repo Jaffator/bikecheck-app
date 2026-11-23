@@ -8,7 +8,7 @@ import { onPanelRowKey } from "@/components/panelRows";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import {
   EVERY_READING,
@@ -118,7 +118,7 @@ function PlannedRow({
             {catalogueLabel(action.action_i18n_key, action.action_name, t)}
           </Text>
           <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-            <BikeColorDot colorIndex={colorIndexOf(bikes, action.bike_id)} size={6} />
+            <BikeColorIcon colorIndex={colorIndexOf(bikes, action.bike_id)} />
             <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
               {bikeTitle(action)}
             </Text>

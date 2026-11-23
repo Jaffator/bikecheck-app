@@ -8,6 +8,7 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { bikeColor } from "@/features/bikes/bikeColors";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { formatKm } from "@/features/profile/profileFormat";
 import { formatServiceDateShort } from "@/features/service/serviceDates";
 import { useIsDesktop } from "@/layout/breakpoints";
@@ -339,11 +340,7 @@ function Legend({ bikes, withTotals }: { bikes: DistanceBike[]; withTotals: bool
           maw="100%"
           style={{ borderRadius: 8, border: "1px solid var(--color-border-subtle)" }}
         >
-          <Box
-            w={14}
-            h={2.5}
-            style={{ flexShrink: 0, borderRadius: 2, backgroundColor: bikeColor(bike.color_index) }}
-          />
+          <BikeColorIcon colorIndex={bike.color_index} />
           <Text fz={13} c="text.7" truncate style={{ minWidth: 0 }}>
             {bikeTitle(bike)}
           </Text>

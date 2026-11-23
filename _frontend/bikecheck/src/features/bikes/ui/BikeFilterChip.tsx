@@ -2,7 +2,7 @@
 import type { ReactElement } from "react";
 import { Box, Chip } from "@mantine/core";
 import { chipStyles } from "@/features/add_bike_page/formStyles";
-import { BikeColorDot } from "./BikeColorDot";
+import { BikeColorIcon } from "./BikeColorIcon";
 
 interface BikeFilterChipProps {
   label: string;
@@ -28,7 +28,7 @@ export function BikeFilterChip({ label, colorIndex, dotColor, active, onClick }:
       {/* Chip wraps children in a plain span: the dot would stack above the name, and a
           baseline-aligned row would make the chip taller than its dotless neighbours. */}
       <Box component="span" style={{ display: "inline-flex", alignItems: "center", gap: 6, verticalAlign: "top" }}>
-        {colorIndex !== undefined && <BikeColorDot colorIndex={colorIndex} size={7} />}
+        {colorIndex !== undefined && <BikeColorIcon colorIndex={colorIndex} />}
         {dotColor !== undefined && (
           <Box
             w={7}

@@ -6,7 +6,7 @@ import { Check, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { useChangeRideBike } from "@/features/rides/rides.queries";
 import type { Ride } from "@/features/rides/rides.types";
 import { BAR_BUTTON_HEIGHT } from "./actionBar";
@@ -61,7 +61,7 @@ export function ChangeBikeMenu({ ride, onMoved, inBar = false }: ChangeBikeMenuP
               color="text"
               fw={600}
               disabled={current}
-              leftSection={<BikeColorDot colorIndex={bike.color_index} />}
+              leftSection={<BikeColorIcon colorIndex={bike.color_index} />}
               rightSection={current ? <Check size={14} /> : undefined}
               onClick={() => move(bike.id, bikeTitle(bike))}
             >

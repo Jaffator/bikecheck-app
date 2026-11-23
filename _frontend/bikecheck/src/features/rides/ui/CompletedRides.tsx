@@ -2,7 +2,7 @@
 import { memo, useState, type ReactElement } from "react";
 import { Group, Loader, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Bike, Clock, Mountain, Route } from "lucide-react";
+import { Clock, Mountain, Route } from "lucide-react";
 import dayjs from "dayjs";
 import { RouteMap } from "@/components/RouteMap";
 import { CompletedRideCard, HistoryMetric } from "@/components/CompletedRideCard";
@@ -10,6 +10,9 @@ import { useInfiniteScrollSentinel } from "@/hooks/useInfiniteScrollSentinel";
 import { PullFrame } from "@/components/PullFrame";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { EmptyRides } from "@/features/rides_page/EmptyRides";
+import { colorIndexOf } from "@/features/bikes/bikeColors";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
+import { useBikes } from "@/features/bikes/bikes.queries";
 import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides } from "@/features/rides/rides.queries";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
@@ -35,6 +38,7 @@ const CARD_SIMPLIFY = 1;
 // Displays one confirmed ride.
 function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactElement {
   const { t } = useTranslation();
+  const { data: bikes } = useBikes();
 
   return (
     <CompletedRideCard
@@ -54,7 +58,7 @@ function RideRow({ ride, onOpen }: { ride: Ride; onOpen: () => void }): ReactEle
          the date rather than competing with the title. */
       meta={
         <Group gap={6} wrap="nowrap">
-          <Bike size={13} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />
+          <BikeColorIcon colorIndex={colorIndexOf(bikes, ride.bike_id)} />
           <Text fz={13} c="var(--color-text-dim)" lineClamp={1}>
             {ride.bike_name ?? t("rides.unknownBike")}
           </Text>

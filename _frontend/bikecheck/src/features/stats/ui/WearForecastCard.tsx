@@ -8,7 +8,7 @@ import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
 import { useWearForecast } from "../stats.queries";
@@ -142,7 +142,7 @@ function ForecastBikeChip({ item, bikes, onPick }: ForecastBikeChipProps): React
             key={bike.id}
             color="text"
             fw={600}
-            leftSection={<BikeColorDot colorIndex={bike.color_index} />}
+            leftSection={<BikeColorIcon colorIndex={bike.color_index} />}
             rightSection={bike.id === item.bike_id ? <Check size={14} /> : undefined}
             onClick={() => onPick(bike.id)}
           >
@@ -157,7 +157,7 @@ function ForecastBikeChip({ item, bikes, onPick }: ForecastBikeChipProps): React
 function ChipLabel({ item, colorIndex }: { item: WearForecastItem; colorIndex: number | null }): ReactElement {
   return (
     <>
-      <BikeColorDot colorIndex={colorIndex} size={7} />
+      <BikeColorIcon colorIndex={colorIndex} />
       <Text fz={13} c="text.8" truncate>
         {bikeTitle(item)}
       </Text>

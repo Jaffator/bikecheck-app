@@ -8,7 +8,7 @@ import { Panel, PanelPageFooter, PanelSkeletonRows, PanelTableHead } from "@/com
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, onPanelRowKey } from "@/components/panelRows";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { HISTORY_TABLE_PAGE_SIZE, useServiceHistoryPage } from "@/features/service/service.queries";
 import type { ServiceHistoryItem, ServiceMonthTotal, ServicePeriod } from "@/features/service/service.types";
 import { formatServiceDateShort, groupServicesByMonth } from "@/features/service/serviceDates";
@@ -171,7 +171,7 @@ function HistoryRow({ service, onOpen }: { service: ServiceHistoryItem; onOpen: 
         )}
       </Text>
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        <BikeColorDot colorIndex={colorIndexOf(bikes, service.bike_id)} size={7} />
+        <BikeColorIcon colorIndex={colorIndexOf(bikes, service.bike_id)} />
         <Text fz={12} c="text.7" lineClamp={1}>
           {service.bike_name ?? t("service.unknownBike")}
         </Text>
