@@ -1,18 +1,27 @@
-// One Tracked Action, wherever it is read: the job on top, the percentage beside it, and
-// underneath the part it is owed on with the figures behind the reading. The job leads
+// One Tracked Action, wherever it is read: the job on top, the line, and underneath the part
+// it is owed on with the figures behind the reading; the percentage stands beside them. The job leads
 // because the row is about work waiting, not about a part. The bike's own page and the
 // dashboard show the same row — the dashboard only leads its meta line with the bike,
 // because its list spans the whole garage.
-import { useState, type ReactElement } from "react";
-import { ActionIcon, Box, Group, Progress, Stack, Text, UnstyledButton } from "@mantine/core";
+import { useState, type CSSProperties, type ReactElement } from "react";
+import { ActionIcon, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, Info } from "lucide-react";
 import { ExplanationModal } from "@/components/ExplanationModal";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { positionLabel, wearExplanation } from "@/features/components/componentLabels";
-import { attentionColor, axisReading, barFill } from "@/features/service_tracking/attentionLevel";
+import { attentionColor, axisReading } from "@/features/service_tracking/attentionLevel";
 import { PASSED_PLAN_COLOR, isPlanPassed, planDayLabel } from "@/features/service_tracking/plannedDay";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
+import { BulletBar } from "./BulletBar";
+
+// The figure keeps a column of its own, as on Needs attention, so every row's line ends at the same place.
+const READING_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) 84px",
+  alignItems: "center",
+  columnGap: 16,
+};
 
 interface TrackedActionRowProps {
   action: TrackedAction;
@@ -37,8 +46,8 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
   const part = side === null ? type : `${type} (${side})`;
 
   const reading = (
-    <Stack gap={6}>
-      <Group gap="sm" wrap="nowrap" align="baseline">
+    <Box style={READING_GRID}>
+      <Stack gap={7} style={{ minWidth: 0 }}>
         {/* The button belongs to the name, so it keeps the name's company rather than the
             line's own spacing. */}
         <Group gap={2} wrap="nowrap" align="center" style={{ minWidth: 0 }}>
@@ -62,45 +71,40 @@ export function TrackedActionRow({ action, prefix, onOpen }: TrackedActionRowPro
             </ActionIcon>
           )}
         </Group>
-        <Text className="tabular-nums" fz={12} c={color} ml="auto" style={{ whiteSpace: "nowrap" }}>
+
+        <BulletBar percentage={action.percentage} color={color} />
+
+        <Group gap="sm" wrap="nowrap" align="baseline">
+          <Text className="tabular-nums" fz={11} tt="uppercase" c="text.8" lts="var(--tracking-label)" lineClamp={1} style={{ minWidth: 0 }}>
+            {prefix === null ? part : `${prefix} · ${part}`}
+          </Text>
+          <Text
+            className="tabular-nums"
+            fz={11}
+            tt="uppercase"
+            c="text.8"
+            lts="var(--tracking-label)"
+            ml="auto"
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {axisReading(action, i18n.language, t)}
+            {/* Read-only here; the plan is changed in the drawer. */}
+            {action.planned_for !== null && (
+              <Text span inherit c={isPlanPassed(action.planned_for) ? PASSED_PLAN_COLOR : undefined}>
+                {` · ${planDayLabel(action.planned_for, i18n.language)}`}
+              </Text>
+            )}
+          </Text>
+        </Group>
+      </Stack>
+
+      <Group gap={4} wrap="nowrap" justify="flex-end">
+        <Text className="tabular-nums" fz={13} fw={600} c={color} style={{ whiteSpace: "nowrap" }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
         {onOpen !== null && <ChevronRight size={14} color="var(--color-text-dim)" style={{ flexShrink: 0 }} />}
       </Group>
-
-      <Progress
-        value={barFill(action) * 100}
-        size={8}
-        radius="xl"
-        styles={{
-          root: { backgroundColor: "var(--color-decor-sunk)" },
-          section: { backgroundColor: color },
-        }}
-      />
-
-      <Group gap="sm" wrap="nowrap" align="baseline">
-        <Text className="tabular-nums" fz={11} tt="uppercase" c="text.8" lts="var(--tracking-label)" lineClamp={1} style={{ minWidth: 0 }}>
-          {prefix === null ? part : `${prefix} · ${part}`}
-        </Text>
-        <Text
-          className="tabular-nums"
-          fz={11}
-          tt="uppercase"
-          c="text.8"
-          lts="var(--tracking-label)"
-          ml="auto"
-          style={{ whiteSpace: "nowrap" }}
-        >
-          {axisReading(action, i18n.language, t)}
-          {/* Read-only here; the plan is changed in the drawer. */}
-          {action.planned_for !== null && (
-            <Text span inherit c={isPlanPassed(action.planned_for) ? PASSED_PLAN_COLOR : undefined}>
-              {` · ${planDayLabel(action.planned_for, i18n.language)}`}
-            </Text>
-          )}
-        </Text>
-      </Group>
-    </Stack>
+    </Box>
   );
 
   // The info button sits on the heading it explains, which puts it inside whatever the row

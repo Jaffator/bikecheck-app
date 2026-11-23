@@ -70,7 +70,6 @@ export function AddBikeSummaryModal({
       onClose={onClose}
       title={t("addBike.summaryTitle")}
       centered
-      radius="md"
       // Scroll long component lists inside the modal.
       scrollAreaComponent={ScrollArea.Autosize}
       styles={{ title: { fontWeight: 600 } }}

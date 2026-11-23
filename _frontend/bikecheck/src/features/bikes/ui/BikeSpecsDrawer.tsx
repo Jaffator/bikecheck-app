@@ -11,6 +11,7 @@ import { bikeFigures } from "@/features/bikes/bikeFigures";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { formatNumber } from "@/utils/number";
+import { MODAL_PADDING } from "@/theme";
 
 // The same layer the service sheet stands on, so overlays never fight the FAB.
 const SHEET_Z_INDEX = 300;
@@ -49,9 +50,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
       }}
     >
       <Box
-        px={isDesktop ? "xl" : undefined}
-        pt={isDesktop ? 28 : undefined}
-        pb={isDesktop ? "xl" : undefined}
+        p={isDesktop ? MODAL_PADDING : undefined}
         style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
       >
         <Stack gap={isDesktop ? 28 : "lg"}>
@@ -69,7 +68,7 @@ export function BikeSpecsDrawer({ opened, onClose, bike }: BikeSpecsDrawerProps)
               <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" aria-label={t("action.close")} onClick={onClose}
                 // Pulls the hit area out so the ✕ glyph lines up with the padding, not its circle.
                 style={{ margin: "-4px -8px 0 0" }}>
-                <X size={20} color="var(--mantine-color-text-6)" />
+                <X size={20} color="var(--mantine-color-text-8)" />
               </ActionIcon>
             )}
           </Group>

@@ -48,7 +48,7 @@ export function RideCheckInFields({ draft, onChange }: RideCheckInFieldsProps): 
   }
 
   return (
-    <Stack gap="sm">
+    <Stack gap="sm" style={{ flex: 1 }}>
       <Group gap={10} align="baseline" wrap="nowrap">
         <Eyebrow>{t("checkIn.question")}</Eyebrow>
         <Text fz={12} c="var(--color-text-dim)">
@@ -74,7 +74,8 @@ export function RideCheckInFields({ draft, onChange }: RideCheckInFieldsProps): 
         </Field>
       )}
 
-      <Stack gap={8} mt="xs">
+      {/* Pushed to the column's bottom, so the note ends level with the wear card. */}
+      <Stack gap={8} style={{ marginTop: "auto", paddingTop: 8 }}>
         <Eyebrow>{t("checkIn.note")}</Eyebrow>
         <Box px="md" py={6} style={RIDE_CARD_STYLE}>
           <Textarea

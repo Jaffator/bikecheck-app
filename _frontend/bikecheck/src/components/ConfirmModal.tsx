@@ -51,7 +51,6 @@ export function ConfirmModal({
       onClose={onCancel}
       title={title}
       centered
-      radius="md"
       zIndex={CONFIRM_Z_INDEX}
       styles={{
         content: { backgroundColor: "var(--mantine-color-cards-6)" },

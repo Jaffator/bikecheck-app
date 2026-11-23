@@ -48,8 +48,10 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Play Console flags unobfuscated DEX; Capacitor's consumer rules keep the plugin classes
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             // Bundles native .so symbols so Play Console can symbolicate crashes from plugin libraries
             ndk { debugSymbolLevel 'SYMBOL_TABLE' }
         }

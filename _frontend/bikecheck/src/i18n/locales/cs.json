@@ -37,7 +37,17 @@
     "intervalFailed": "Interval se nepodařilo uložit.",
     "announceLabel": "Upozornění na servis",
     "announceBands": "75 %, 90 %, pak po 10 %",
-    "announceFailed": "Nastavení se nepodařilo uložit."
+    "announceFailed": "Nastavení se nepodařilo uložit.",
+    "settingsTitle": "Nastavení",
+    "planHint": "Vyber den, kdy to uděláš",
+    "overBy": "Překročeno o",
+    "levelNote": {
+      "very_good": "Do servisu zbývá ještě hodně",
+      "good": "Zatím v pořádku",
+      "warning": "Blíží se servisní interval",
+      "critical": "Interval je skoro vyčerpaný",
+      "overdue": "Po intervalu, naplánuj servis"
+    }
   },
   "nav": {
     "home": "Domů",
@@ -978,6 +988,12 @@
     "pickPart": "Vyber díl",
     "missingPart": "U některého úkonu chybí díl.",
     "dropHint": "nebo sem přetáhni soubor",
+    "jobCount_one": "{{count}} úkon",
+    "jobCount_few": "{{count}} úkony",
+    "jobCount_many": "{{count}} úkonu",
+    "jobCount_other": "{{count}} úkonů",
+    "optional": "nepovinné",
+    "totalCostHint": "Díly a práce",
     "changeBikeTitle": "Změnit kolo?",
     "changeBikeBody": "Zaškrtnuté úkony patří k dílům původního kola a ztratí se.",
     "savedTitle": "Servis uložen",
@@ -1688,6 +1704,7 @@
     "forecastNextAction": "Další úkon",
     "forecastToday": "dnes {{value}}",
     "forecastLimit": "limit servisu",
+    "forecastYourBikes": "Tvoje kola",
     "nextReplacement": "Nejbližší výměna",
     "aboutWeeks_one": "≈ {{count}} týden",
     "aboutWeeks_few": "≈ {{count}} týdny",

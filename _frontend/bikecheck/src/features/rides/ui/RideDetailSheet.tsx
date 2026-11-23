@@ -228,7 +228,7 @@ function RideAnswers({ item, checkIn, woreOff }: RideAnswersProps): ReactElement
   const notMine = checkIn.pick?.kind === "notMine";
 
   return (
-    <Stack gap={SECTION_GAP}>
+    <Stack gap={SECTION_GAP} style={{ height: "100%" }}>
       <CheckInBikeField
         bikes={bikes ?? []}
         picked={bikes?.find((bike) => bike.id === pickedId) ?? null}
@@ -242,7 +242,10 @@ function RideAnswers({ item, checkIn, woreOff }: RideAnswersProps): ReactElement
 
       {/* A ride that was not the rider's leaves, so it has nothing to rate. Out of reach under the bike list. */}
       {!notMine && (
-        <Box inert={pickerOpened} style={{ opacity: pickerOpened ? 0.4 : 1, transition: "opacity 150ms ease" }}>
+        <Box
+          inert={pickerOpened}
+          style={{ flex: 1, display: "flex", flexDirection: "column", opacity: pickerOpened ? 0.4 : 1, transition: "opacity 150ms ease" }}
+        >
           <RideCheckInFields draft={checkIn.draft} onChange={checkIn.setDraft} />
         </Box>
       )}

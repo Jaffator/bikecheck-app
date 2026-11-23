@@ -104,7 +104,7 @@ function SetupProfileNameBody({
             onClick={onClose}
             style={{ flexShrink: 0 }}
           >
-            <X size={18} color="var(--color-text-dim)" />
+            <X size={18} color="var(--mantine-color-text-8)" />
           </ActionIcon>
         )}
       </Group>

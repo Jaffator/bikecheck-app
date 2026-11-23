@@ -35,7 +35,17 @@
     "intervalFailed": "The interval could not be saved.",
     "announceLabel": "Service announcements",
     "announceBands": "75 %, 90 %, then every 10 %",
-    "announceFailed": "The setting could not be saved."
+    "announceFailed": "The setting could not be saved.",
+    "settingsTitle": "Settings",
+    "planHint": "Pick the day you will do it",
+    "overBy": "Over by",
+    "levelNote": {
+      "very_good": "Plenty left before service",
+      "good": "Fine for now",
+      "warning": "Getting close to its interval",
+      "critical": "Almost at its interval",
+      "overdue": "Past its interval, service it soon"
+    }
   },
   "nav": {
     "home": "Home",
@@ -923,6 +933,10 @@
     "pickPart": "Pick a part",
     "missingPart": "A service action has no part picked.",
     "dropHint": "or drop a file here",
+    "jobCount_one": "{{count}} job",
+    "jobCount_other": "{{count}} jobs",
+    "optional": "optional",
+    "totalCostHint": "Parts and labour",
     "changeBikeTitle": "Change bike?",
     "changeBikeBody": "The ticked actions belong to the other bike’s parts and will be lost.",
     "savedTitle": "Service saved",
@@ -1597,6 +1611,7 @@
     "forecastNextAction": "Next action",
     "forecastToday": "today {{value}}",
     "forecastLimit": "service limit",
+    "forecastYourBikes": "Your bikes",
     "nextReplacement": "Next replacement",
     "aboutWeeks_one": "≈ {{count}} week",
     "aboutWeeks_other": "≈ {{count}} weeks",

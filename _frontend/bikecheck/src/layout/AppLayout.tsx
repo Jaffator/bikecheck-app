@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type ReactElement } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
-import { useLocation, useNavigate, useOutlet } from "react-router-dom";
+import { Link, useLocation, useNavigate, useOutlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Bell, ArrowLeft } from "lucide-react";
 import Logo from "@/assets/icons/bikecheck/Logo_white.svg?react";
@@ -316,7 +316,9 @@ export function AppLayout(): ReactElement {
               <>
                 {pageTitleKey === null ? (
                   // Home has no title of its own, so the app's mark stands where one would be.
-                  <Logo style={{ height: LOGO_HEIGHT, width: "auto", marginLeft: LOGO_INSET }} />
+                  <Link to="/" aria-label={t("nav.home")} className="flex">
+                    <Logo style={{ height: LOGO_HEIGHT, width: "auto", marginLeft: LOGO_INSET }} />
+                  </Link>
                 ) : (
                   <Group gap="xs" c="cards.1" h={desktopOverview ? DESKTOP_HEADER_ROW : undefined}>
                     {/* Decorative icon beside the title; on desktop the sidebar row already shows it. */}

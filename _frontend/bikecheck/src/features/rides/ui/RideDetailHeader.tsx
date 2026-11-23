@@ -49,8 +49,10 @@ export function RideDetailHeader({ item, pick, walk }: RideDetailHeaderProps): R
         <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" lineClamp={1}>
           {[bikeName, started].filter((part) => part !== null).join(" · ")}
         </Text>
+        <Box ml="sm" style={{ flexShrink: 0 }}>
+          <ViewOnStravaLink activityId={item.kind === "ride" ? item.ride.activity_strava_id : item.ride.activity_id} />
+        </Box>
       </Group>
-      <ViewOnStravaLink activityId={item.kind === "ride" ? item.ride.activity_strava_id : item.ride.activity_id} />
     </Stack>
   );
 }

@@ -2,6 +2,7 @@ import {
   ActionIcon,
   Button,
   Checkbox,
+  CloseButton,
   Combobox,
   Drawer,
   Menu,
@@ -16,6 +17,9 @@ import {
 } from "@mantine/core";
 import { DatePicker, MonthPicker, YearPicker } from "@mantine/dates";
 import { CONTENT_MAX_WIDTH } from "./layout/contentWidth";
+
+// A modal's room between its edge and its content, header included.
+export const MODAL_PADDING = 24;
 
 // Figma-derived ramps: shade 0 is lightest and shade 6 is the base value.
 const primary: MantineColorsTuple = [
@@ -234,6 +238,15 @@ export const theme = createTheme({
       }),
       styles: (_theme, props) => ({ root: disabledLook(props.disabled) }),
     }),
+    // Every modal's ✕ in the same muted grey as a sheet's; light scheme would hover it white.
+    CloseButton: CloseButton.extend({
+      styles: {
+        root: {
+          color: "var(--mantine-color-text-8)",
+          "--mantine-color-gray-0": "var(--mantine-color-cards-5)",
+        } as React.CSSProperties,
+      },
+    }),
     // Light scheme paints an unticked box white; only that state is overridden, so the primary fill still ticks.
     Checkbox: Checkbox.extend({
       defaultProps: { radius: 6, iconColor: "textDark.6" },
@@ -286,7 +299,9 @@ export const theme = createTheme({
       },
     }),
     // Mantine's own surface is white, and the title black on it.
+    // Every modal as rounded as a dashboard card, with the same room inside.
     Modal: Modal.extend({
+      defaultProps: { radius: "lg", padding: MODAL_PADDING },
       styles: {
         content: { backgroundColor: "var(--mantine-color-cards-6)" },
         header: { backgroundColor: "var(--mantine-color-cards-6)" },

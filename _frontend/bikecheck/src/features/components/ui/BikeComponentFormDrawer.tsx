@@ -10,6 +10,7 @@ import {
   Group,
   NumberInput,
   Select,
+  SimpleGrid,
   Stack,
   Text,
   Textarea,
@@ -305,7 +306,7 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
             onClick={onClose}
             style={{ flexShrink: 0 }}
           >
-            <X size={18} color="var(--color-text-dim)" />
+            <X size={18} color="var(--mantine-color-text-8)" />
           </ActionIcon>
         )}
       </Group>
@@ -319,18 +320,33 @@ function BikeComponentFormBody({ opened, onClose, bikeId, ebike, component }: Bi
             {!editing && (
               <Stack gap={6}>
                 <Text style={inputStyles.label}>{t("bikeComponents.categoryFilterLabel")}</Text>
-                {/* Scrolls sideways rather than wrapping, so the picker under it keeps its
-                  place however many categories the catalogue has. */}
-                <Group gap="xs" wrap="nowrap" className="overflow-x-auto" pb={4} style={{ scrollbarWidth: "none" }}>
-                  {categories.map((group) => (
-                    <CategoryCard
-                      key={group.id}
-                      group={group}
-                      selected={categoryId === group.id}
-                      onSelect={() => pickCategory(group.id)}
-                    />
-                  ))}
-                </Group>
+                {/* The modal has room to show every category at once; the phone strip scrolls sideways
+                    instead, so the picker under it keeps its place however many there are. */}
+                {isDesktop ? (
+                  <SimpleGrid cols={4} spacing="xs">
+                    {categories.map((group) => (
+                      <CategoryCard
+                        key={group.id}
+                        group={group}
+                        selected={categoryId === group.id}
+                        onSelect={() => pickCategory(group.id)}
+                        fill
+                      />
+                    ))}
+                  </SimpleGrid>
+                ) : (
+                  <Group gap="xs" wrap="nowrap" className="overflow-x-auto" pb={4} style={{ scrollbarWidth: "none" }}>
+                    {categories.map((group) => (
+                      <CategoryCard
+                        key={group.id}
+                        group={group}
+                        selected={categoryId === group.id}
+                        onSelect={() => pickCategory(group.id)}
+                        fill={false}
+                      />
+                    ))}
+                  </Group>
+                )}
               </Stack>
             )}
 
@@ -602,20 +618,24 @@ function CategoryCard({
   group,
   selected,
   onSelect,
+  fill,
 }: {
   group: ComponentGroup;
   selected: boolean;
   onSelect: () => void;
+  // Takes its grid cell, where a long name gets a second line instead of an ellipsis.
+  fill: boolean;
 }): ReactElement {
   const { t } = useTranslation();
 
   return (
-    <UnstyledButton onClick={onSelect} style={{ flexShrink: 0 }}>
+    <UnstyledButton onClick={onSelect} style={{ flexShrink: 0, height: fill ? "100%" : undefined }}>
       <Stack
         gap={6}
         align="center"
         justify="center"
-        w={96}
+        w={fill ? "100%" : 96}
+        h={fill ? "100%" : undefined}
         py="sm"
         px="xs"
         style={{
@@ -627,7 +647,7 @@ function CategoryCard({
         }}
       >
         {categoryIcon(group.group_name, CATEGORY_ICON_SIZE)}
-        <Text className="tabular-nums" fz={11} ta="center" lineClamp={1} c={selected ? "primary.6" : "var(--color-text-dim)"}>
+        <Text className="tabular-nums" fz={11} ta="center" lh={1.25} lineClamp={fill ? 2 : 1} c={selected ? "primary.6" : "var(--color-text-dim)"}>
           {catalogueLabel(group.i18n_key, group.group_name, t)}
         </Text>
       </Stack>

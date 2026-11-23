@@ -3,8 +3,9 @@ import type { ReactElement } from "react";
 import { BikeIcon_fill } from "@/assets/icons/bikecheck";
 import { bikeColor } from "../bikeColors";
 
-// The SVG carries a fixed 131px height, so height is auto to keep the aspect ratio.
+// Explicit height from the 209x131 viewBox; height auto on inline SVG falls back to 150px.
 const ICON_WIDTH = 14;
+const ICON_HEIGHT = (ICON_WIDTH * 131) / 209;
 
 interface BikeColorIconProps {
   // Null draws nothing: a bike whose colour is not known yet.
@@ -17,7 +18,8 @@ export function BikeColorIcon({ colorIndex }: BikeColorIconProps): ReactElement 
   return (
     <BikeIcon_fill
       width={ICON_WIDTH}
-      style={{ height: "auto", color: bikeColor(colorIndex), flexShrink: 0 }}
+      height={ICON_HEIGHT}
+      style={{ color: bikeColor(colorIndex), flexShrink: 0 }}
       aria-hidden
     />
   );

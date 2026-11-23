@@ -1,5 +1,7 @@
 // What the forecast card shows: which bikes get a chip, which bike it opens on and its Tracked Actions.
 import type { ListedBike } from "@/features/bikes/bikes.types";
+import { overallLevel } from "@/features/service_tracking/attentionLevel";
+import type { AttentionLevel } from "@/features/service_tracking/tracking.types";
 import { weeksUntil } from "./nextReplacement";
 import type { WearForecastItem } from "./stats.types";
 
@@ -45,4 +47,9 @@ export function chosenBikeActions(items: WearForecastItem[], chosenBikeId: numbe
 
   const opening = preselected(items);
   return opening === undefined ? [] : bikeOptions(items, opening.bike_id);
+}
+
+// The bike's worst Tracked Action, as the bike picker names it.
+export function bikeLevel(items: WearForecastItem[], bikeId: number): AttentionLevel {
+  return overallLevel(bikeOptions(items, bikeId));
 }

@@ -47,8 +47,6 @@ export function OfflineModal({ opened, onReconnected }: OfflineModalProps): Reac
       closeOnClickOutside={false}
       closeOnEscape={false}
       centered
-      radius="lg"
-      padding="lg"
       zIndex={OFFLINE_Z_INDEX}
       overlayProps={{ backgroundOpacity: 0.64, blur: 6 }}
       styles={{ content: { backgroundColor: "var(--mantine-color-cards-6)" } }}

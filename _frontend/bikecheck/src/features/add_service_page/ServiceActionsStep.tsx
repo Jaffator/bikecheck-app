@@ -1,6 +1,17 @@
 // A component only talks to hooks — no fetch, no URL, no manual loading state.
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
-import { Box, Button, Checkbox, Chip, Group, Loader, Stack, Text, Textarea, UnstyledButton } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Group,
+  NumberInput,
+  Stack,
+  Text,
+  Textarea,
+  UnstyledButton,
+} from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Banknote, Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useHeaderStore } from "@/store/store";
@@ -20,8 +31,10 @@ import {
   autosizeInputStyles,
   chipStyles,
   disabledButtonStyles,
+  inputStyles,
   lightFieldLabel,
 } from "@/features/add_bike_page/formStyles";
+import { useIsDesktop } from "@/layout/breakpoints";
 import { catalogueLabel, componentTypeLabel, shortComponentLabel } from "@/features/service/serviceLabels";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { componentTypeIcon } from "@/features/service/ui/componentIcon";
@@ -60,7 +73,7 @@ export function ServiceActionsStep({
 }: ServiceActionsStepProps): ReactElement {
   const { t, i18n } = useTranslation();
   const { data: user } = useCurrentUser();
-  const { data: category, isLoading, isError } = useCategoryActions(bikeId, draft?.categoryId ?? null);
+  const { data: category, isError } = useCategoryActions(bikeId, draft?.categoryId ?? null);
   const keyboardOffset = useKeyboardOffset();
   // A price near the end of the list would otherwise be focused behind the bar.
   const listRef = useScrollIntoViewOnFocus<HTMLDivElement>("[data-fixed-footer]");
@@ -128,12 +141,6 @@ export function ServiceActionsStep({
   return (
     <>
       <Stack gap="lg" pb={BAR_CLEARANCE} ref={listRef}>
-        {isLoading && (
-          <Group justify="center" p="xl">
-            <Loader size="sm" />
-          </Group>
-        )}
-
         {isError && (
           <Text size="sm" c="red.5">
             {t("addService.actionsFailed")}
@@ -244,6 +251,25 @@ const CHECKBOX_SIZE = 22;
 const CHECKBOX_GAP = 12;
 const BODY_INDENT = CHECKBOX_SIZE + CHECKBOX_GAP;
 
+// Small labels over the desktop's own Note and Price fields.
+const fieldLabelSmall: CSSProperties = {
+  ...inputStyles.label,
+  fontSize: 12,
+  color: "var(--mantine-color-text-7)",
+  marginBottom: 6,
+};
+const deskInput: CSSProperties = { ...inputStyles.input, borderRadius: 10, height: 40, minHeight: 40 };
+const deskNoteStyles = {
+  ...autosizeInputStyles,
+  label: fieldLabelSmall,
+  input: { ...autosizeInputStyles.input, borderRadius: 10, minHeight: 40, paddingBlock: 9 },
+};
+const deskPriceStyles = {
+  ...inputStyles,
+  label: fieldLabelSmall,
+  input: { ...deskInput, textAlign: "right", fontVariantNumeric: "tabular-nums" } as CSSProperties,
+};
+
 // A full tap target, pulled into the card's padding so the icon sits near the edge.
 const CHEVRON_TARGET = 44;
 const CHEVRON_PULL = -12;
@@ -304,6 +330,7 @@ export function ActionRow({
   onToggleTag,
 }: ActionRowProps): ReactElement {
   const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
   const rowRef = useRef<HTMLDivElement>(null);
   const [tagDrawerOpen, setTagDrawerOpen] = useState(false);
 
@@ -350,7 +377,10 @@ export function ActionRow({
   }, [opened]);
 
   return (
-    <Box ref={rowRef} style={{ scrollMarginTop: SCROLL_MARGIN_TOP }}>
+    <Box
+      ref={rowRef}
+      style={{ scrollMarginTop: SCROLL_MARGIN_TOP }}
+    >
       <ActionRowHeader
         action={action}
         picked={picked}
@@ -364,31 +394,35 @@ export function ActionRow({
           <ComponentsField action={action} picked={picked} onToggle={onToggle} onUpdate={onUpdate} />
           <TagsField action={action} taken={taken} onToggleTag={toggleTag} onAdd={() => setTagDrawerOpen(true)} />
           {/* This note holds what the user wrote and nothing else; the tags join it on save. */}
-          <Box>
-            <Box style={{ borderTop: PANEL_HAIRLINE }}>
-              <NoteRow
-                label={t("addService.note")}
-                value={picked?.customNote ?? ""}
-                onChange={(note) => onUpdate({ customNote: note })}
-                emptyLabel={t("addService.addNote")}
-                placeholder={t("addService.customNotePlaceholder")}
-                maxLength={NOTE_MAX_LENGTH}
-                disabled={picked === undefined}
-                compact
-              />
+          {isDesktop ? (
+            <NotePriceFields picked={picked} onUpdate={onUpdate} />
+          ) : (
+            <Box>
+              <Box style={{ borderTop: PANEL_HAIRLINE }}>
+                <NoteRow
+                  label={t("addService.note")}
+                  value={picked?.customNote ?? ""}
+                  onChange={(note) => onUpdate({ customNote: note })}
+                  emptyLabel={t("addService.addNote")}
+                  placeholder={t("addService.customNotePlaceholder")}
+                  maxLength={NOTE_MAX_LENGTH}
+                  disabled={picked === undefined}
+                  compact
+                />
+              </Box>
+              <Box style={{ borderTop: PANEL_HAIRLINE }}>
+                {/* An emptied field means no figure was recorded, not a price of zero. */}
+                <PriceRow
+                  label={t("addService.partialCost")}
+                  value={picked?.partialCost ?? ""}
+                  onChange={(value) => onUpdate({ partialCost: value === "" ? null : Number(value) })}
+                  placeholder={t("addService.partialCostPlaceholder")}
+                  disabled={picked === undefined}
+                  compact
+                />
+              </Box>
             </Box>
-            <Box style={{ borderTop: PANEL_HAIRLINE }}>
-              {/* An emptied field means no figure was recorded, not a price of zero. */}
-              <PriceRow
-                label={t("addService.partialCost")}
-                value={picked?.partialCost ?? ""}
-                onChange={(value) => onUpdate({ partialCost: value === "" ? null : Number(value) })}
-                placeholder={t("addService.partialCostPlaceholder")}
-                disabled={picked === undefined}
-                compact
-              />
-            </Box>
-          </Box>
+          )}
         </Stack>
       )}
 
@@ -400,6 +434,52 @@ export function ActionRow({
         tags={action.tags}
         onCreated={takeTag}
         onDeleted={dropTag}
+      />
+    </Box>
+  );
+}
+
+// The desktop has room to type both in place, instead of a sheet per field.
+function NotePriceFields({
+  picked,
+  onUpdate,
+}: {
+  picked: PickedAction | undefined;
+  onUpdate: (patch: Partial<PickedAction>) => void;
+}): ReactElement {
+  const { t, i18n } = useTranslation();
+  const { data: user } = useCurrentUser();
+  const locked = picked === undefined;
+
+  return (
+    <Box style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 140px", gap: 12, alignItems: "start" }}>
+      <Textarea
+        label={t("addService.note")}
+        placeholder={t("addService.customNotePlaceholder")}
+        value={picked?.customNote ?? ""}
+        maxLength={NOTE_MAX_LENGTH}
+        autosize
+        minRows={1}
+        maxRows={6}
+        disabled={locked}
+        styles={deskNoteStyles}
+        onChange={(event) => onUpdate({ customNote: event.currentTarget.value })}
+      />
+      {/* An emptied field means no figure was recorded, not a price of zero. */}
+      <NumberInput
+        label={t("addService.partialCost")}
+        placeholder={t("addService.partialCostPlaceholder")}
+        value={picked?.partialCost ?? ""}
+        min={0}
+        hideControls
+        disabled={locked}
+        styles={deskPriceStyles}
+        rightSection={
+          <Text fz={14} c="text.8">
+            {currencySymbol(user?.currency ?? null, i18n.language)}
+          </Text>
+        }
+        onChange={(value) => onUpdate({ partialCost: value === "" ? null : Number(value) })}
       />
     </Box>
   );

@@ -3,12 +3,14 @@ import { useState, type ReactElement } from "react";
 import { Box, Button, Center, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, Check } from "lucide-react";
+import { CalendarDays, Check, RefreshCw } from "lucide-react";
+import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Panel, PanelSkeletonRows } from "@/components/Panel";
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, onPanelRowKey } from "@/components/panelRows";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { catalogueLabel } from "@/features/service/serviceLabels";
+import { componentTypeIcon } from "@/features/service/ui/componentIcon";
 import {
   DUE_FROM,
   QUIET_COLOR,
@@ -27,8 +29,12 @@ import { BulletBar } from "./BulletBar";
 import { PlanSheet } from "./PlanSheet";
 import { TrackedActionDrawer } from "./TrackedActionDrawer";
 
-// A fixed button column, so every row's line ends at the same place whatever its labels say.
-const JOB_COLUMNS = "minmax(0, 1fr) 264px";
+// Fixed button widths, so the buttons stack as columns and every bar ends at the same place.
+const LOG_BUTTON_WIDTH = 160;
+const PLAN_BUTTON_WIDTH = 120;
+const JOB_COLUMNS = `minmax(0, 1fr) ${String(LOG_BUTTON_WIDTH + 8 + PLAN_BUTTON_WIDTH)}px`;
+const PART_ICON_SIZE = 18;
+const BUTTON_ICON_SIZE = 14;
 
 interface JobsPanelProps {
   // Set on the Service page, where null is every bike; Home passes none and links to Service.
@@ -98,26 +104,38 @@ function JobRow({
         borderTop: PANEL_HAIRLINE,
       }}
     >
-      <Stack gap={8} style={{ minWidth: 0 }}>
-        <Group gap={16} justify="space-between" wrap="nowrap" align="baseline">
-          <Text fz={14} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
-            {catalogueLabel(action.action_i18n_key, action.action_name, t)}
+      <Group gap={12} wrap="nowrap" align="flex-start" style={{ minWidth: 0 }}>
+        {componentTypeIcon(action.component_type, PART_ICON_SIZE)}
+        <Stack gap={8} style={{ minWidth: 0, flex: 1 }}>
+          <Group gap={16} justify="space-between" wrap="nowrap" align="baseline">
+            <Text fz={14} fw={600} c="text.6" lineClamp={1} style={{ minWidth: 0 }}>
+              {catalogueLabel(action.action_i18n_key, action.action_name, t)}
+            </Text>
+            <Text className="tabular-nums" fz={13} fw={600} c={ink} style={{ whiteSpace: "nowrap" }}>
+              {attentionFigure(action, i18n.language, t)}
+            </Text>
+          </Group>
+          <BulletBar percentage={action.percentage} color={attentionColor(action.percentage)} />
+          {/* The part is the drawer's to name; the row says only which bike. */}
+          <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
+            {`${bikeTitle(action)} · ${readingFigure(action, i18n.language)}`}
           </Text>
-          <Text className="tabular-nums" fz={13} fw={600} c={ink} style={{ whiteSpace: "nowrap" }}>
-            {attentionFigure(action, i18n.language, t)}
-          </Text>
-        </Group>
-        <BulletBar percentage={action.percentage} color={attentionColor(action.percentage)} />
-        {/* The part is the drawer's to name; the row says only which bike. */}
-        <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
-          {`${bikeTitle(action)} · ${readingFigure(action, i18n.language)}`}
-        </Text>
-      </Stack>
+        </Stack>
+      </Group>
       <Group gap={8} wrap="nowrap" justify="flex-end">
         <Button
           size="xs"
           radius="md"
           variant="outline"
+          w={LOG_BUTTON_WIDTH}
+          justify="flex-start"
+          leftSection={
+            action.replace_action ? (
+              <RefreshCw size={BUTTON_ICON_SIZE} />
+            ) : (
+              <Bikecheck width={BUTTON_ICON_SIZE} height={BUTTON_ICON_SIZE} />
+            )
+          }
           // Quiet until pointed at, so no row shouts before the owner reaches it.
           vars={() => ({
             root: { "--button-hover": "var(--mantine-color-primary-6)", "--button-hover-color": "var(--mantine-color-textDark-6)" },
@@ -145,9 +163,18 @@ function PlanButton({ planned, onPlan }: { planned: string | null; onPlan: () =>
       size="xs"
       radius="md"
       variant="outline"
-      c={passed ? PASSED_PLAN_COLOR : undefined}
+      w={PLAN_BUTTON_WIDTH}
+      justify="flex-start"
       className={planned === null ? undefined : "tabular-nums"}
-      leftSection={<CalendarDays size={14} color={passed ? PASSED_PLAN_COLOR : "var(--mantine-color-primary-6)"} />}
+      leftSection={<CalendarDays size={BUTTON_ICON_SIZE} />}
+      // Fills like the log button; a `c` prop would pin the text colour over the hover.
+      vars={() => ({
+        root: {
+          ...(passed && { "--button-color": PASSED_PLAN_COLOR }),
+          "--button-hover": "var(--mantine-color-primary-6)",
+          "--button-hover-color": "var(--mantine-color-textDark-6)",
+        },
+      })}
       onClick={(event) => {
         event.stopPropagation();
         onPlan();

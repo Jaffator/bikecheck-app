@@ -229,7 +229,9 @@ export function Sidebar(): ReactElement {
       <AppShell.Section>
         {/* Same gap above and below the mark, so it sits centred between the edge and the button. */}
         <Box py="lg" px="xs" className="flex items-center justify-center">
-          <Logo style={{ height: LOGO_HEIGHT, width: "auto" }} />
+          <Link to="/" aria-label={t("nav.home")} className="flex">
+            <Logo style={{ height: LOGO_HEIGHT, width: "auto" }} />
+          </Link>
         </Box>
         <NewMenu opened={newMenuOpened} onChange={setNewMenuOpened} />
       </AppShell.Section>

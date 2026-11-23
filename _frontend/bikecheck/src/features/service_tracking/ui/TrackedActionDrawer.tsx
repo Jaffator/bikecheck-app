@@ -4,13 +4,13 @@
 // Opened from the bike's own page and from the dashboard alike, so a row that looks the
 // same behaves the same wherever it is met.
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Button, Divider, Group, NumberInput, Progress, Stack, Switch, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Group, NumberInput, SimpleGrid, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { ChevronRight, Minus, Plus, RotateCcw, X } from "lucide-react";
+import { Bell, CalendarDays, ChevronRight, History, Minus, Plus, RotateCcw, X } from "lucide-react";
+import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
-import { inputStyles } from "@/features/add_bike_page/formStyles";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import { measureLabel, positionLabel } from "@/features/components/componentLabels";
 import { attentionColor, barFill } from "@/features/service_tracking/attentionLevel";
@@ -30,6 +30,7 @@ import { useSetTrackedActionInterval, useSetTrackedActionNotify } from "@/featur
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { PlanSheet } from "./PlanSheet";
+import { MODAL_PADDING } from "@/theme";
 
 // The same layer every other sheet stands on, so overlays never fight the FAB.
 const SHEET_Z_INDEX = 300;
@@ -39,6 +40,45 @@ const SHEET_Z_INDEX = 300;
 // and the write re-evaluates the whole bike and may announce, so the push lands on the
 // number the owner actually stopped on.
 const WRITE_DELAY_MS = 600;
+
+const GROUP_STYLE: CSSProperties = {
+  borderRadius: 16,
+  overflow: "hidden",
+  backgroundColor: "var(--color-surface-raised)",
+};
+
+const ICON_TILE_STYLE: CSSProperties = {
+  width: 36,
+  height: 36,
+  display: "grid",
+  placeItems: "center",
+  flexShrink: 0,
+  borderRadius: 10,
+  backgroundColor: "rgba(255, 255, 255, 0.05)",
+  color: "var(--mantine-color-text-7)",
+};
+
+// Row padding, icon tile and gap: where a row's text starts.
+const ROW_TEXT_INSET = 16 + 36 + 14;
+
+// The stepper's ends and its field sit in one well.
+const STEPPER_STYLE: CSSProperties = {
+  borderRadius: 12,
+  backgroundColor: "var(--color-surface-well)",
+  border: "1px solid var(--color-border-raised)",
+};
+
+const STEPPER_INPUT_STYLES = {
+  input: {
+    height: 38,
+    padding: 0,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: 600,
+    fontVariantNumeric: "tabular-nums",
+    color: "var(--mantine-color-text-6)",
+  },
+} as const;
 
 interface TrackedActionDrawerProps {
   // Null closes the drawer.
@@ -73,9 +113,7 @@ export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProp
       }}
     >
       <Box
-        px={isDesktop ? "md" : undefined}
-        pt={isDesktop ? "md" : undefined}
-        pb={isDesktop ? "1.25rem" : undefined}
+        p={isDesktop ? MODAL_PADDING : undefined}
         style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
       >
         {/* Keyed on the opening, so every one starts with a closed editor rather than
@@ -103,28 +141,38 @@ function Body({
   const job = catalogueLabel(action.action_i18n_key, action.action_name, t);
 
   return (
-    <Stack gap="lg">
+    <Stack gap={24}>
       <Header action={action} job={job} onClose={onClose} />
 
       <ReadingCard action={action} />
 
-      <Stack gap={0}>
-        <Divider color="var(--mantine-color-inputs-5)" />
-        <PlanSetting
-          action={action}
-          onTap={() => {
-            setPlanning(true);
-          }}
-        />
-        <IntervalSetting action={action} onWritten={onWritten} />
-        <AnnounceSetting action={action} onWritten={onWritten} />
+      <Stack gap={10}>
+        <Text fz={11} fw={600} tt="uppercase" lts="var(--tracking-label)" c="text.8" px={4}>
+          {t("tracking.settingsTitle")}
+        </Text>
+        <Box style={GROUP_STYLE}>
+          <PlanSetting
+            action={action}
+            onTap={() => {
+              setPlanning(true);
+            }}
+          />
+          <RowDivider />
+          <IntervalSetting action={action} onWritten={onWritten} />
+          <RowDivider />
+          <AnnounceSetting action={action} onWritten={onWritten} />
+        </Box>
       </Stack>
 
       <Button
         fullWidth
+        h={48}
+        fz={15}
+        fw={600}
         color="primary.6"
         c="textDark.6"
         radius="md"
+        leftSection={<Bikecheck width={22} height={14} aria-hidden />}
         onClick={() => {
           navigate(trackedActionServiceLink(action));
         }}
@@ -150,31 +198,32 @@ function PlanSetting({ action, onTap }: { action: TrackedAction; onTap: () => vo
 
   return (
     <SettingRow
+      icon={<CalendarDays size={18} />}
       label={t("tracking.plannedFor")}
       badge={null}
       onTap={onTap}
       value={
         <Group gap={6} wrap="nowrap" align="center">
           {planned === null ? (
-            <Text fz={13} c="var(--color-text-dim)">
+            <Text fz={14} c="text.7">
               {t("tracking.notPlanned")}
             </Text>
           ) : (
-            <Text className="tabular-nums" fz={13} c={isPlanPassed(planned) ? PASSED_PLAN_COLOR : "text.7"}>
+            <Text className="tabular-nums" fz={14} c={isPlanPassed(planned) ? PASSED_PLAN_COLOR : "text.7"}>
               {planDayLabel(planned, i18n.language)}
             </Text>
           )}
-          <ChevronRight size={16} color="var(--color-text-dim)" />
+          <ChevronRight size={16} color="var(--mantine-color-text-8)" />
         </Group>
       }
-      hint={null}
+      hint={<HintText>{t("tracking.planHint")}</HintText>}
       error={null}
     />
   );
 }
 
-// The job leads, because the drawer is about work waiting; the part follows, because it is
-// which one owes it — and the side is what tells two tyres apart.
+// The job leads, because the drawer is about work waiting; the part's own name follows, then
+// which kind it is — the side is what tells two tyres apart — and since when it is on.
 function Header({
   action,
   job,
@@ -189,18 +238,23 @@ function Header({
   const side = positionLabel(action.position, t);
   const type = catalogueLabel(action.component_type_i18n_key, action.component_type, t);
   const typeAndSide = side === null ? type : `${type} (${side})`;
-  // The rows no longer name the part, so the drawer carries its description too.
-  const part = [typeAndSide, action.component_desc].filter((piece) => piece !== null && piece !== "").join(" · ");
   const mounted = action.mounted_at === null ? null : dayjs(action.mounted_at).format("D. M. YYYY");
+  const meta = mounted === null ? typeAndSide : `${typeAndSide} · ${t("tracking.mountedOn", { date: mounted })}`;
+  const desc = action.component_desc;
 
   return (
-    <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
-      <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
-        <Text fz={20} fw={700} c="text.6" lh={1.2} lineClamp={2}>
+    <Group justify="space-between" wrap="nowrap" align="flex-start" gap="md">
+      <Stack gap={6} style={{ minWidth: 0, flex: 1 }}>
+        <Text fz={20} fw={600} c="text.6" lh={1.2} lts="var(--tracking-title)" lineClamp={2}>
           {job}
         </Text>
-        <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={2}>
-          {mounted === null ? part : `${part} · ${t("tracking.mountedOn", { date: mounted })}`}
+        {desc !== null && desc !== "" && (
+          <Text fz={14} c="text.7" lh={1.3} lineClamp={2}>
+            {desc}
+          </Text>
+        )}
+        <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
+          {meta}
         </Text>
       </Stack>
 
@@ -209,67 +263,102 @@ function Header({
         <ActionIcon
           variant="subtle"
           color="gray"
-          radius="xl"
-          size="md"
+          radius="md"
+          size={36}
+          mt={-6}
+          mr={-6}
           aria-label={t("action.close")}
           onClick={onClose}
           style={{ flexShrink: 0 }}
         >
-          <X size={18} color="var(--color-text-dim)" />
+          <X size={18} color="var(--mantine-color-text-8)" />
         </ActionIcon>
       )}
     </Group>
   );
 }
 
-// The same number and the same colour the row showed, and then the two figures behind
-// them: how far the part has come against the interval in force, and what is left of it.
+// The same number and the same colour the row showed, what that level means, and then the two
+// figures behind them: how far the part has come against the interval in force, and what is left.
 function ReadingCard({ action }: { action: TrackedAction }): ReactElement {
   const { t, i18n } = useTranslation();
   const color = attentionColor(action.percentage);
   const unit = axisUnit(action.axis);
   // The unit lands once at the end, the way the row writes the same pair.
   const figure = (value: number): string => `${axisValue(action.axis, value, i18n.language)} ${unit}`.trim();
-  const wear = `${axisValue(action.axis, action.current, i18n.language)} / ${figure(action.interval)}`;
+  const over = action.current - action.interval;
 
   return (
-    <Stack gap="sm">
-      <Group justify="space-between" wrap="nowrap" align="center">
-        <Group
-          gap={5}
-          px={8}
-          py={3}
-          style={{
-            borderRadius: "9999px",
-            border: `1px solid ${color}`,
-            backgroundColor: "var(--mantine-color-cards-6)",
-          }}
-        >
-          <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
-          <Text className="tabular-nums" fz={10} tt="uppercase" lts="var(--tracking-label)" c={color}>
-            {t(`bikes.health.${action.level}`)}
+    <Stack gap={16} p={18} style={{ borderRadius: 16, backgroundColor: "var(--color-surface-raised)" }}>
+      <Group justify="space-between" wrap="nowrap" align="flex-end" gap="md">
+        <Stack gap={8} style={{ minWidth: 0 }}>
+          <LevelBadge label={t(`bikes.health.${action.level}`)} color={color} />
+          <Text fz={13} c="text.7" lineClamp={2}>
+            {t(`tracking.levelNote.${action.level}`)}
           </Text>
-        </Group>
-
-        <Text className="tabular-nums" fz={22} fw={400} c={color} lh={1}>
+        </Stack>
+        <Text className="tabular-nums" fz={36} fw={700} c={color} lh={1} lts="var(--tracking-display)" style={{ flexShrink: 0 }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
       </Group>
 
-      <Progress
-        value={barFill(action) * 100}
-        size={6}
-        radius="xl"
-        styles={{
-          root: { backgroundColor: "var(--color-decor-sunk)" },
-          section: { backgroundColor: color },
-        }}
-      />
+      <Box aria-hidden h={6} style={{ borderRadius: 3, overflow: "hidden", backgroundColor: "var(--color-surface-well)" }}>
+        <Box h="100%" w={`${String(barFill(action) * 100)}%`} style={{ borderRadius: 3, backgroundColor: color }} />
+      </Box>
 
-      {/* Named by the accumulator it was taken from, so suspension hours are never read as
-          the bike's own and drivetrain kilometres never as the odometer's. */}
-      <Figure label={measureLabel(action.measure, t)} value={wear} />
-      <Figure label={t("tracking.remaining")} value={figure(remainingWear(action))} />
+      <SimpleGrid cols={2} spacing={12}>
+        {/* Named by the accumulator it was taken from, so suspension hours are never read as
+            the bike's own and drivetrain kilometres never as the odometer's. */}
+        <FigureTile label={measureLabel(action.measure, t)}>
+          {axisValue(action.axis, action.current, i18n.language)}{" "}
+          <Text span inherit c="text.8" fw={500}>
+            / {figure(action.interval)}
+          </Text>
+        </FigureTile>
+        {/* Past the interval nothing remains, so the tile says by how much it is over instead. */}
+        {over > 0 ? (
+          <FigureTile label={t("tracking.overBy")} color={color}>
+            {figure(over)}
+          </FigureTile>
+        ) : (
+          <FigureTile label={t("tracking.remaining")}>{figure(remainingWear(action))}</FigureTile>
+        )}
+      </SimpleGrid>
+    </Stack>
+  );
+}
+
+function LevelBadge({ label, color }: { label: string; color: string }): ReactElement {
+  return (
+    <Group
+      gap={6}
+      wrap="nowrap"
+      h={24}
+      px={10}
+      style={{
+        alignSelf: "flex-start",
+        borderRadius: 9999,
+        backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`,
+      }}
+    >
+      <Box w={6} h={6} style={{ borderRadius: "50%", backgroundColor: color, flexShrink: 0 }} />
+      <Text fz={11} fw={600} tt="uppercase" lts="var(--tracking-label)" c={color} style={{ whiteSpace: "nowrap" }}>
+        {label}
+      </Text>
+    </Group>
+  );
+}
+
+// One figure under the bar, on a tile of its own so the two read as a pair.
+function FigureTile({ label, color, children }: { label: string; color?: string; children: ReactNode }): ReactElement {
+  return (
+    <Stack gap={4} px={14} py={12} style={{ minWidth: 0, borderRadius: 12, backgroundColor: "var(--mantine-color-cards-6)" }}>
+      <Text fz={11} fw={500} tt="uppercase" lts="var(--tracking-label)" c="text.8" lineClamp={1}>
+        {label}
+      </Text>
+      <Text className="tabular-nums" fz={16} fw={600} c={color ?? "text.6"} style={{ whiteSpace: "nowrap" }}>
+        {children}
+      </Text>
     </Stack>
   );
 }
@@ -295,20 +384,6 @@ function Pill({ label }: { label: string }): ReactElement {
     >
       {label}
     </Text>
-  );
-}
-
-// One figure under the bar: what it is on the left, what it says on the right.
-function Figure({ label, value }: { label: string; value: string }): ReactElement {
-  return (
-    <Group justify="space-between" wrap="nowrap" gap="md" align="baseline">
-      <Text className="tabular-nums" fz={11} tt="uppercase" lts="var(--tracking-label)" c="var(--color-text-dim)" lineClamp={1}>
-        {label}
-      </Text>
-      <Text className="tabular-nums" fz={13} c="text.7" style={{ whiteSpace: "nowrap" }}>
-        {value}
-      </Text>
-    </Group>
   );
 }
 
@@ -370,14 +445,16 @@ function IntervalSetting({
 
   const departure = intervalDeparture({ ...action, interval_override: entered });
   const plan = `${axisValue(action.axis, action.default_interval, i18n.language)} ${unit}`.trim();
+  const custom = action.interval_override !== null;
 
   return (
     <SettingRow
+      icon={<History size={18} />}
       label={t("tracking.intervalLabel")}
-      badge={action.interval_override === null ? null : t("tracking.intervalCustom")}
+      badge={custom ? t("tracking.intervalCustom") : null}
       onTap={null}
       value={
-        <Group gap={6} wrap="nowrap" align="center">
+        <Group gap={0} wrap="nowrap" align="center" h={40} style={STEPPER_STYLE}>
           <StepButton
             label={t("tracking.intervalLess")}
             disabled={entered <= step}
@@ -385,7 +462,7 @@ function IntervalSetting({
               setEntered((value) => Math.max(step, value - step));
             }}
           >
-            <Minus size={16} color="var(--mantine-color-primary-6)" />
+            <Minus size={16} />
           </StepButton>
 
           <NumberInput
@@ -394,10 +471,11 @@ function IntervalSetting({
             allowNegative={false}
             allowDecimal={false}
             hideControls
+            variant="unstyled"
             suffix={unit === "" ? undefined : ` ${unit}`}
             aria-label={t("tracking.intervalLabel")}
-            styles={inputStyles}
-            w={96}
+            styles={STEPPER_INPUT_STYLES}
+            w={64}
             onChange={(value) => {
               const typed = Number(value);
               if (!Number.isFinite(typed) || typed < 1) return;
@@ -412,23 +490,21 @@ function IntervalSetting({
               setEntered((value) => value + step);
             }}
           >
-            <Plus size={16} color="var(--mantine-color-primary-6)" />
+            <Plus size={16} />
           </StepButton>
         </Group>
       }
       hint={
-        action.interval_override === null ? null : (
-          <Group justify="space-between" wrap="nowrap" gap="sm" align="center" pb={12}>
-            <Text fz={12} c="var(--color-text-dim)" lineClamp={2}>
-              {t(departureKey(departure), { percent: Math.abs(departure), value: plan })}
-            </Text>
-            {/* Only where there is something to take back, and small on purpose: it undoes
-                a year's worth of tapping in one go. */}
+        <Group gap={4} wrap="nowrap" align="center">
+          <HintText>{t(departureKey(departure), { percent: Math.abs(departure), value: plan })}</HintText>
+          {/* Only where there is something to take back, and small on purpose: it undoes
+              a year's worth of tapping in one go. */}
+          {custom && (
             <ActionIcon
               variant="subtle"
               color="gray"
               radius="xl"
-              size="md"
+              size="sm"
               aria-label={t("tracking.intervalReset")}
               disabled={write.isPending}
               onClick={() => {
@@ -437,10 +513,10 @@ function IntervalSetting({
               }}
               style={{ flexShrink: 0 }}
             >
-              <RotateCcw size={16} color="var(--color-text-dim)" />
+              <RotateCcw size={14} color="var(--mantine-color-text-8)" />
             </ActionIcon>
-          </Group>
-        )
+          )}
+        </Group>
       }
       error={write.isError ? t("tracking.intervalFailed") : null}
     />
@@ -455,8 +531,7 @@ function departureKey(departure: number): string {
   return "tracking.intervalSameAsPlan";
 }
 
-// One end of the stepper. Quiet by default — the theme draws the outline, and the only
-// colour on it is the sign itself.
+// One end of the joined stepper; the only colour on it is the sign itself.
 function StepButton({
   label,
   disabled,
@@ -470,22 +545,15 @@ function StepButton({
 }): ReactElement {
   return (
     <ActionIcon
-      variant="outline"
-      radius="md"
-      size="lg"
+      variant="subtle"
+      color="primary.6"
+      radius={11}
+      size={38}
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      // Drawn as the steppers on the Setup sheet are, so every − and + in the app reads the
-      // same — and squared up to the field it steps, which is 2.4rem tall.
-      style={
-        {
-          flexShrink: 0,
-          "--ai-bg": "var(--mantine-color-cards-6)",
-          "--ai-bd": "1px solid var(--color-border-strong)",
-          "--ai-size": "2.4rem",
-        } as CSSProperties
-      }
+      // The well behind it stays visible when disabled, instead of the theme's grey fill.
+      style={{ flexShrink: 0, backgroundColor: "transparent" }}
     >
       {children}
     </ActionIcon>
@@ -513,16 +581,14 @@ function AnnounceSetting({
 
   return (
     <SettingRow
+      icon={<Bell size={18} />}
       label={t("tracking.announceLabel")}
       badge={null}
       onTap={null}
-      hint={
-        <Text fz={12} c="var(--color-text-dim)" pb={12}>
-          {t("tracking.announceBands")}
-        </Text>
-      }
+      hint={<HintText>{t("tracking.announceBands")}</HintText>}
       value={
         <Switch
+          size="md"
           withThumbIndicator={false}
           checked={action.notify}
           disabled={write.isPending}
@@ -532,11 +598,12 @@ function AnnounceSetting({
           }}
           styles={{
             track: {
-              backgroundColor: action.notify ? "var(--mantine-color-primary-6)" : "var(--mantine-color-cards-4)",
-              borderColor: "var(--mantine-color-other-borderSolid)",
+              backgroundColor: action.notify ? "var(--mantine-color-primary-6)" : "var(--color-border-raised)",
+              borderColor: "transparent",
             },
             thumb: {
-              backgroundColor: action.notify ? "var(--mantine-color-black)" : "var(--mantine-color-text-6)",
+              backgroundColor: action.notify ? "var(--mantine-color-textDark-6)" : "var(--mantine-color-text-8)",
+              borderColor: "transparent",
             },
           }}
         />
@@ -546,10 +613,24 @@ function AnnounceSetting({
   );
 }
 
-// One control in the list above the button: what it is on the left, what it stands at on
-// the right, and under both a line saying what the control means. A row with nothing to
-// tap is not a control at all — its own button is.
+function HintText({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <Text className="tabular-nums" fz={12} c="text.8" lh={1.35}>
+      {children}
+    </Text>
+  );
+}
+
+// A hairline from the text's edge, not the icon's, as grouped settings lists draw it.
+function RowDivider(): ReactElement {
+  return <Box h={1} ml={ROW_TEXT_INSET} style={{ backgroundColor: "var(--color-border-subtle)" }} />;
+}
+
+// One control in the settings group: its icon, what it is with a line saying what it means, and
+// what it stands at on the right. A row with nothing to tap is not a control at all — its own
+// button is.
 function SettingRow({
+  icon,
   label,
   badge,
   value,
@@ -557,55 +638,54 @@ function SettingRow({
   hint,
   error,
 }: {
+  icon: ReactNode;
   label: string;
   // "Custom", where the owner has departed from the bike's plan.
   badge: string | null;
   value: ReactNode;
   onTap: (() => void) | null;
-  // What the control means, under it. Styled by the caller, because one row explains itself
-  // in a sentence and the other in a sentence with a button on the end of it.
   hint: ReactNode;
   error: string | null;
 }): ReactElement {
-  const heading = (
-    <Group justify="space-between" wrap="nowrap" gap="md" py={14} align="center">
-      <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
-        <Text fz={14} fw={600} c="text.6" lineClamp={1}>
-          {label}
-        </Text>
-        {badge !== null && <Pill label={badge} />}
+  const row = (
+    <Box px={16} py={12}>
+      <Group wrap="nowrap" gap={14} align="center" mih={40}>
+        <Box style={ICON_TILE_STYLE}>{icon}</Box>
+        <Stack gap={2} style={{ minWidth: 0, flex: 1 }}>
+          <Group gap={8} wrap="nowrap" style={{ minWidth: 0 }}>
+            <Text fz={14} fw={600} c="text.6" lineClamp={1}>
+              {label}
+            </Text>
+            {badge !== null && <Pill label={badge} />}
+          </Group>
+          {hint}
+        </Stack>
+        <Box style={{ flexShrink: 0 }}>{value}</Box>
       </Group>
-      <Box style={{ flexShrink: 0 }}>{value}</Box>
-    </Group>
-  );
-
-  return (
-    <>
-      {onTap === null ? (
-        heading
-      ) : (
-        <Box
-          role="button"
-          tabIndex={0}
-          onClick={onTap}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            onTap();
-          }}
-          style={{ cursor: "pointer" }}
-        >
-          {heading}
-        </Box>
-      )}
-      {hint}
       {error !== null && (
-        <Text fz={11} c="red.5" pb={12}>
+        <Text fz={11} c="red.5" mt={6} ml={ROW_TEXT_INSET - 16}>
           {error}
         </Text>
       )}
-      <Divider color="var(--mantine-color-inputs-5)" />
-    </>
+    </Box>
+  );
+
+  if (onTap === null) return row;
+
+  return (
+    <Box
+      role="button"
+      tabIndex={0}
+      className="hover-veil"
+      onClick={onTap}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onTap();
+      }}
+    >
+      {row}
+    </Box>
   );
 }
 

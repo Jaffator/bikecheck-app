@@ -24,6 +24,7 @@ import type {
 } from "@/features/report/report.types";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { canShareLink, shareLink } from "@/utils/shareLink";
+import { MODAL_PADDING } from "@/theme";
 
 // The sheet stands over what it was opened from, the same way the service detail does.
 const SHEET_HEIGHT = "90%";
@@ -160,12 +161,12 @@ export function ExportSheet({ input, onClose }: ExportSheetProps): ReactElement 
       }
     >
       {showsBike && (
-        <Box px={isDesktop ? "md" : undefined} pt={14} style={{ flexShrink: 0 }}>
+        <Box px={isDesktop ? MODAL_PADDING : undefined} pt={14} style={{ flexShrink: 0 }}>
           <BikeNameRow bikeId={bikeReport.bike_id} />
         </Box>
       )}
 
-      <Box px={isDesktop ? "md" : undefined} pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+      <Box px={isDesktop ? MODAL_PADDING : undefined} pt="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         {/* What a Bike Report carries, before anything is written down. */}
         {needsOptions && <BikeReportOptions initial={choice ?? defaultChoice(bikeReport)} onPreview={exportBikeReport} />}
 
@@ -258,7 +259,7 @@ function PreviewActions({
   return (
     <>
       {/* Only the link carries the figures to a reader; the file is the owner's own. */}
-      <Box px={isDesktop ? "md" : undefined} pt={12}>
+      <Box px={isDesktop ? MODAL_PADDING : undefined} pt={12}>
         <Checkbox
           checked={shareFigures}
           onChange={(event) => onShareFiguresChange(event.currentTarget.checked)}
@@ -287,7 +288,7 @@ function PreviewActions({
           {t("report.publish")}
         </Button>
       </Footer>
-      <Box px={isDesktop ? "md" : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
+      <Box px={isDesktop ? MODAL_PADDING : undefined} pt={isDesktop ? 0 : 12} pb={isDesktop ? "md" : undefined}>
         {pdf.isError && <Failure>{t("report.pdfFailed")}</Failure>}
         <Text fz={12} lh={1.4} c="var(--color-text-dim)">
           {t("report.fileOrLinkHint")}
@@ -424,8 +425,8 @@ function Sheet({
       <Group
         justify="space-between"
         align="center"
-        px={isDesktop ? "md" : undefined}
-        pt={isDesktop ? "md" : undefined}
+        px={isDesktop ? MODAL_PADDING : undefined}
+        pt={isDesktop ? MODAL_PADDING : undefined}
         wrap="nowrap"
         style={{ flexShrink: 0 }}
       >
@@ -443,7 +444,7 @@ function Sheet({
             aria-label={t("action.close")}
             onClick={onClose}
           >
-            <X size={20} color="var(--mantine-color-text-6)" />
+            <X size={20} color="var(--mantine-color-text-8)" />
           </ActionIcon>
         )}
       </Group>
@@ -460,9 +461,9 @@ function Footer({ fill = false, children }: { fill?: boolean; children: ReactNod
       gap="sm"
       grow={fill || !isDesktop}
       justify="flex-end"
-      px={isDesktop ? "md" : undefined}
+      px={isDesktop ? MODAL_PADDING : undefined}
       pt="sm"
-      pb={isDesktop ? "0.75rem" : undefined}
+      pb={isDesktop ? MODAL_PADDING : undefined}
       wrap="nowrap"
       style={{ flexShrink: 0 }}
     >

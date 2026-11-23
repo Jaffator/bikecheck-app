@@ -1,36 +1,17 @@
 // Home's forecast card; the pace, the date and the curve are decided in StatsService.
-import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
-import { ActionIcon, Box, Group, Menu, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
-import { Check, ChevronDown, Info } from "lucide-react";
+import { useState, type ReactElement, type ReactNode } from "react";
+import { ActionIcon, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ExplanationModal } from "@/components/ExplanationModal";
-import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import type { ListedBike } from "@/features/bikes/bikes.types";
-import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
 import { useWearForecast } from "../stats.queries";
-import type { WearForecastItem } from "../stats.types";
 import { forecastBikes, chosenBikeActions, hasRides } from "../wearForecast";
 import { ForecastActions } from "./ForecastActions";
+import { ForecastBikePicker } from "./ForecastBikePicker";
 import { CHART_HEIGHT } from "./ForecastChart";
-
-// Quiet, as the period beside every other Home title; the padding only gives the hover veil room,
-// so the margin takes it back and the name still ends on the card's edge.
-const CHIP_PAD = 6;
-const CHIP_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  height: 32,
-  padding: `0 ${String(CHIP_PAD)}px`,
-  marginRight: -CHIP_PAD,
-  // The title keeps its width; a long name truncates beside it.
-  minWidth: 0,
-  borderRadius: "var(--mantine-radius-md)",
-};
 
 export function WearForecastCard(): ReactElement {
   const { t } = useTranslation();
@@ -71,7 +52,12 @@ export function WearForecastCard(): ReactElement {
       <ForecastPaper>
         <Group justify="space-between" wrap="nowrap" gap={8}>
           <ForecastTitle />
-          <ForecastBikeChip item={actions[0]} bikes={forecastBikes(garage ?? [], items)} onPick={setChosenBikeId} />
+          <ForecastBikePicker
+            item={actions[0]}
+            bikes={forecastBikes(garage ?? [], items)}
+            items={items}
+            onPick={setChosenBikeId}
+          />
         </Group>
         <ForecastActions key={bikeId} items={actions} onOpen={setOpened} />
       </ForecastPaper>
@@ -115,56 +101,6 @@ function ForecastTitle(): ReactElement {
   );
 }
 
-interface ForecastBikeChipProps {
-  // Names the bike shown; the garage list only adds its colour and the others.
-  item: WearForecastItem;
-  bikes: ListedBike[];
-  onPick: (bikeId: number) => void;
-}
-
-// One bike is not a choice worth offering, so its chip opens nothing.
-function ForecastBikeChip({ item, bikes, onPick }: ForecastBikeChipProps): ReactElement {
-  const label = <ChipLabel item={item} colorIndex={colorIndexOf(bikes, item.bike_id)} />;
-  if (bikes.length < 2) return <Box style={CHIP_STYLE}>{label}</Box>;
-
-  // In place, not portalled: a portalled list flickers in the Capacitor webview.
-  return (
-    <Menu position="bottom-end" radius="md" shadow="md" withinPortal={false}>
-      <Menu.Target>
-        <UnstyledButton className="hover-veil" style={CHIP_STYLE}>
-          {label}
-          <ChevronDown size={12} strokeWidth={2.4} color="var(--mantine-color-text-8)" style={{ flexShrink: 0 }} />
-        </UnstyledButton>
-      </Menu.Target>
-      <Menu.Dropdown>
-        {bikes.map((bike) => (
-          <Menu.Item
-            key={bike.id}
-            color="text"
-            fw={600}
-            leftSection={<BikeColorIcon colorIndex={bike.color_index} />}
-            rightSection={bike.id === item.bike_id ? <Check size={14} /> : undefined}
-            onClick={() => onPick(bike.id)}
-          >
-            {bikeTitle(bike)}
-          </Menu.Item>
-        ))}
-      </Menu.Dropdown>
-    </Menu>
-  );
-}
-
-function ChipLabel({ item, colorIndex }: { item: WearForecastItem; colorIndex: number | null }): ReactElement {
-  return (
-    <>
-      <BikeColorIcon colorIndex={colorIndex} />
-      <Text fz={13} c="text.8" truncate>
-        {bikeTitle(item)}
-      </Text>
-    </>
-  );
-}
-
 function ForecastPaper({ children }: { children: ReactNode }): ReactElement {
   return (
     <Paper
@@ -180,7 +116,7 @@ function ForecastPaper({ children }: { children: ReactNode }): ReactElement {
         boxShadow: "var(--elev-panel)",
       }}
     >
-      <Stack gap="sm">{children}</Stack>
+      <Stack gap="lg">{children}</Stack>
     </Paper>
   );
 }
