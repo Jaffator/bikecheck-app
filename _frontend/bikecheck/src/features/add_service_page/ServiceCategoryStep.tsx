@@ -4,7 +4,11 @@ import { Button, Group, Loader, Paper, SimpleGrid, Stack, Text, UnstyledButton }
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
-import { useBikeCategories } from "@/features/service/service.queries";
+import {
+  useBikeCategories,
+  useEnsureCategoryActions,
+  usePrefetchCategoryActions,
+} from "@/features/service/service.queries";
 import type { BikeCategory } from "@/features/service/service.types";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 
@@ -21,6 +25,14 @@ export function ServiceCategoryStep({ bikeId, onChoose }: ServiceCategoryStepPro
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: categories, isLoading, isError } = useBikeCategories(bikeId);
+  usePrefetchCategoryActions(bikeId, categories);
+  const ensureActions = useEnsureCategoryActions();
+
+  // The tiles stay until the actions are cached, so the next step never opens on a loader.
+  async function choose(category: BikeCategory): Promise<void> {
+    if (bikeId !== null) await ensureActions(bikeId, category.group_id);
+    onChoose(category);
+  }
 
   if (isLoading) {
     return (
@@ -66,7 +78,7 @@ export function ServiceCategoryStep({ bikeId, onChoose }: ServiceCategoryStepPro
     <Stack gap="sm">
       <SimpleGrid cols={2} spacing="sm">
         {categories?.map((category) => (
-          <CategoryTile key={category.group_id} category={category} onChoose={() => onChoose(category)} />
+          <CategoryTile key={category.group_id} category={category} onChoose={() => void choose(category)} />
         ))}
       </SimpleGrid>
     </Stack>

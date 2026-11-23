@@ -1,6 +1,6 @@
-// One part's wear: solid as ridden, dotted to the projected date, dashed at the service limit; only today and the limit are named.
+// One part's wear: solid and filled as ridden, dotted to the projected date, dashed at the service limit; only today and the limit are named.
 import type { ReactElement } from "react";
-import { LineChart } from "@mantine/charts";
+import { AreaChart, type AreaChartSeries } from "@mantine/charts";
 import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
 import { ReferenceDot } from "recharts";
@@ -19,6 +19,7 @@ const TODAY_COLOR = "var(--color-text-dim)";
 const FLOOR_COLOR = "var(--color-border-subtle)";
 const CARD_COLOR = "var(--mantine-color-cards-6)";
 const LABEL_SIZE = 11;
+const RIDDEN_FILL = 0.1;
 // Keeps a label clear of the line or the dot it names.
 const LABEL_GAP = 9;
 // The widest dot's reach, so its edge and not its centre stands on the text's left edge.
@@ -50,7 +51,7 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
   const projected = item.projected_date !== null;
 
   return (
-    <LineChart
+    <AreaChart
       h={CHART_HEIGHT}
       // The reading around it is the button; a touch here would only focus the surface and ring it.
       style={{ pointerEvents: "none" }}
@@ -68,7 +69,9 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
       // No axis gutter, so the plot shares the card's left edge; the limit is named and the floor grounds it.
       withYAxis={false}
       gridAxis="none"
-      lineProps={{ strokeLinecap: "round" }}
+      withGradient={false}
+      fillOpacity={RIDDEN_FILL}
+      areaProps={areaProps}
       referenceLines={[
         { y: DUE, color: QUIET_COLOR, strokeDasharray: LIMIT_DASH },
         { y: FLOOR, color: FLOOR_COLOR },
@@ -84,7 +87,7 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
         tick: <EdgeTick language={i18n.language} />,
       }}
       yAxisProps={{ domain: [FLOOR, (max: number) => Math.max(DUE, max)] }}
-      lineChartProps={{ margin: { top: 18, right: PLOT_INSET, left: PLOT_INSET } }}
+      areaChartProps={{ margin: { top: 18, right: PLOT_INSET, left: PLOT_INSET } }}
     >
       {/* Over the end dot, or at the left when today's label takes the right. */}
       <ReferenceDot
@@ -113,8 +116,13 @@ export function ForecastChart({ item }: { item: WearForecastItem }): ReactElemen
           />
         )}
       />
-    </LineChart>
+    </AreaChart>
   );
+}
+
+// Only the ridden part is filled, down to the floor line rather than to 0 %.
+function areaProps(series: AreaChartSeries): { strokeLinecap: "round"; fillOpacity?: number; baseValue?: "dataMin" } {
+  return series.name === "wear" ? { strokeLinecap: "round", baseValue: "dataMin" } : { strokeLinecap: "round", fillOpacity: 0 };
 }
 
 // The curve up to today, then the projection from today's point to 100 % on its date.

@@ -294,7 +294,7 @@ function Header({
             aria-label={t("action.close")}
             onClick={onClose}
           >
-            <X size={20} color="var(--mantine-color-text-6)" />
+            <X size={20} color="var(--mantine-color-text-8)" />
           </ActionIcon>
         )}
       </Group>

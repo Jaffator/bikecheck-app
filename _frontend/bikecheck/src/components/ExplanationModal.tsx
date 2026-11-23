@@ -29,7 +29,6 @@ export function ExplanationModal({ explained, onClose }: ExplanationModalProps):
       onClose={onClose}
       title={explained?.title ?? ""}
       centered
-      radius="md"
       zIndex={EXPLANATION_Z_INDEX}
       styles={{
         content: { backgroundColor: "var(--mantine-color-cards-6)" },

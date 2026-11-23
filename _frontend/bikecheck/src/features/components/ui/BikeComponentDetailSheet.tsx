@@ -139,7 +139,7 @@ function Header({
         {isDesktop && (
           <Group gap={5} wrap="nowrap" style={{ flexShrink: 0 }}>
             <ActionIcon variant="subtle" color="gray" radius="xl" size="md" aria-label={t("action.close")} onClick={onClose}>
-              <X size={18} color="var(--color-text-dim)" />
+              <X size={18} color="var(--mantine-color-text-8)" />
             </ActionIcon>
           </Group>
         )}

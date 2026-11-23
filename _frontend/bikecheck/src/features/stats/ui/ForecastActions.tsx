@@ -39,7 +39,7 @@ export function ForecastActions({ items, onOpen }: ForecastActionsProps): ReactE
   });
 
   return (
-    <Stack gap="md">
+    <Stack gap="lg">
       <ActionChips items={items} chosen={chosen} onPick={pick} />
       <Box style={SWIPE_STYLE} {...swipe.handlers}>
         <ForecastReading
@@ -54,7 +54,7 @@ export function ForecastActions({ items, onOpen }: ForecastActionsProps): ReactE
   );
 }
 
-// A very good reading warns of nothing, so it gets no dot and neutral words; the chart still draws it green.
+// A very good reading warns of nothing, so it gets neutral words; the chart still draws it green.
 function warningColor(item: WearForecastItem): string | undefined {
   return item.percentage < QUIET_BELOW ? undefined : attentionColor(item.percentage);
 }
@@ -81,7 +81,7 @@ function ActionChips({ items, chosen, onPick }: ActionChipsProps): ReactElement 
         <ActionChip
           key={trackedActionKey(item)}
           label={catalogueLabel(item.action_i18n_key, item.action_name, t)}
-          dotColor={warningColor(item)}
+          color={attentionColor(item.percentage)}
           active={trackedActionKey(item) === chosenKey}
           onClick={() => onPick(item)}
         />
@@ -92,13 +92,13 @@ function ActionChips({ items, chosen, onPick }: ActionChipsProps): ReactElement 
 
 interface ActionChipProps {
   label: string;
-  dotColor: string | undefined;
+  // The chart's colour, so the chosen chip and its curve read as one.
+  color: string;
   active: boolean;
   onClick: () => void;
 }
 
-// Borderless tab: fill alone tells the chosen one apart.
-function ActionChip({ label, dotColor, active, onClick }: ActionChipProps): ReactElement {
+function ActionChip({ label, color, active, onClick }: ActionChipProps): ReactElement {
   return (
     <UnstyledButton
       onClick={onClick}
@@ -108,32 +108,18 @@ function ActionChip({ label, dotColor, active, onClick }: ActionChipProps): Reac
       px={12}
       fz={13}
       fw={500}
-      c={active ? "primary.6" : "var(--color-text-dim)"}
+      c={active ? "text.6" : "var(--color-text-dim)"}
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 6,
         flexShrink: 0,
         borderRadius: "var(--mantine-radius-md)",
         whiteSpace: "nowrap",
-        backgroundColor: active
-          ? "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)"
-          : "var(--color-surface-raised)",
+        backgroundColor: active ? `color-mix(in srgb, ${color} 12%, transparent)` : "var(--color-surface-raised)",
+        // Inset, so the outline never changes the chip's size.
+        boxShadow: active ? `inset 0 0 0 1px color-mix(in srgb, ${color} 40%, transparent)` : undefined,
       }}
     >
-      {dotColor !== undefined && (
-        <Box
-          w={7}
-          h={7}
-          // A dark ring on the chosen chip, so a yellow warning dot does not melt into the yellow accent.
-          style={{
-            borderRadius: "50%",
-            backgroundColor: dotColor,
-            flexShrink: 0,
-            boxShadow: active ? "0 0 0 2px var(--mantine-color-cards-6)" : undefined,
-          }}
-        />
-      )}
       {label}
     </UnstyledButton>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import { Drawer, Modal, type ModalProps } from "@mantine/core";
 import { SheetCloseButton } from "@/components/SheetCloseButton";
+import { MODAL_PADDING } from "@/theme";
 import { SheetGrabber, SHEET_GRABBER_ROOM } from "@/components/SheetGrabber";
 import { SHEET_TRANSITION } from "@/components/sheetMotion";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
@@ -163,7 +164,8 @@ export function ResponsiveSheet({
       {...shared}
       centered
       size={shownModalSize}
-      radius="md"
+      radius="lg"
+      padding={MODAL_PADDING}
       overlayProps={OVERLAY}
       styles={{
         ...styles,

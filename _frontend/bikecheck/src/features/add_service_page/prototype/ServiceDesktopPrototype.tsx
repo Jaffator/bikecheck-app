@@ -1,7 +1,7 @@
 // PROTOTYPE (proto/desktop-wizards): the service wizard on desktop as one screen in three zones -
 // which part, what was done, and the Service itself. Design: "BikeCheck desktop redesign" canvas.
-import { Fragment, useEffect, useRef, useState, type ReactElement } from "react";
-import { Box, Button, Group, Loader, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { Box, Button, Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -19,7 +19,7 @@ import { useServiceDesktopPrototype, type ServiceDesktopPrototypeState } from ".
 // Two rows: what names a column, then what fills it - so the category list, the first card and
 // the panel all start on one edge. Below Tailwind's xl the categories fold into a row on top.
 const GRID_CLASS =
-  "grid items-start gap-x-6 gap-y-2.5 grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[13.75rem_minmax(0,1fr)_22.5rem]";
+  "grid items-start gap-x-6 gap-y-2.5 grid-cols-[minmax(0,1fr)_23.5rem] xl:grid-cols-[13.75rem_minmax(0,1fr)_26rem]";
 const NAV_LABEL_CELL = "hidden xl:block xl:col-start-1 xl:row-start-1 xl:self-end";
 const NAV_CELL =
   "col-start-1 col-end-3 row-start-1 mb-3 flex flex-row flex-wrap gap-1 xl:col-end-2 xl:row-start-2 xl:mb-0 xl:sticky xl:top-16 xl:flex-col xl:flex-nowrap";
@@ -210,9 +210,11 @@ function CategoryButton({
         padding: "8px 12px",
         borderRadius: 10,
         fontSize: 14,
-        fontWeight: 600,
+        fontWeight: active ? 600 : 500,
         backgroundColor: active ? "var(--mantine-color-cards-6)" : "transparent",
-        color: active ? "var(--mantine-color-primary-6)" : "var(--mantine-color-text-6)",
+        // The chosen category reads white, the rest quiet. Inline, as Mantine's CSS beats a class.
+        color: active ? "var(--mantine-color-text-6)" : "var(--mantine-color-text-8)",
+        transition: "color 150ms ease",
       }}
     >
       <Group component="span" gap={10} wrap="nowrap">
@@ -241,6 +243,38 @@ function CategoryButton({
         </Box>
       )}
     </UnstyledButton>
+  );
+}
+
+// The open action steps out of the list as a card of its own, the same surface but raised.
+const LIFTED_CARD: CSSProperties = {
+  backgroundColor: "var(--mantine-color-cards-6)",
+  border: "none",
+  boxShadow: "var(--elev-hero)",
+};
+
+interface ActionListProps {
+  actions: CatalogueAction[];
+  openId: number | null;
+  renderAction: (action: CatalogueAction) => ReactElement;
+}
+
+// The list closes up around the open action, so the one being filled in reads as the focus.
+function ActionList({ actions, openId, renderAction }: ActionListProps): ReactElement {
+  const index = actions.findIndex((action) => action.id === openId);
+  if (index < 0) return <GroupedList>{actions.map(renderAction)}</GroupedList>;
+
+  const before = actions.slice(0, index);
+  const after = actions.slice(index + 1);
+
+  return (
+    <Stack gap={8}>
+      {before.length > 0 && <GroupedList>{before.map(renderAction)}</GroupedList>}
+      <Paper radius="lg" px="md" style={LIFTED_CARD}>
+        {renderAction(actions[index])}
+      </Paper>
+      {after.length > 0 && <GroupedList>{after.map(renderAction)}</GroupedList>}
+    </Stack>
   );
 }
 
@@ -362,7 +396,7 @@ function ActionsList({ proto }: { proto: ServiceDesktopPrototypeState }): ReactE
         <Fragment key={section.title}>
           {/* The first run is named in the heading above, so its card starts this row. */}
           {index > 0 && <SectionTitle mt={12}>{section.title}</SectionTitle>}
-          <GroupedList>{section.actions.map(renderAction)}</GroupedList>
+          <ActionList actions={section.actions} openId={proto.openActionId} renderAction={renderAction} />
         </Fragment>
       ))}
     </Stack>

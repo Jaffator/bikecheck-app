@@ -26,7 +26,6 @@ export function ServiceSavedModal({ opened, summary, onAnother, onDone }: Servic
       onClose={onDone}
       centered
       withCloseButton={false}
-      radius="lg"
       size={420}
       styles={{ content: { backgroundColor: "var(--mantine-color-cards-6)" } }}
     >

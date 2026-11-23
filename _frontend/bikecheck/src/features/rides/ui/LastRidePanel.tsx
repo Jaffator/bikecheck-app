@@ -12,7 +12,7 @@ import { PANEL_HAIRLINE, PRESS_TRANSITION } from "@/components/panelRows";
 import { RideMap } from "@/components/RideMap";
 import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { CHECK_IN_COLOR } from "@/features/rides/checkIn";
 import { rideItemOf } from "@/features/rides/rideDetail";
 import { useRides, useSaveRideCheckIn } from "@/features/rides/rides.queries";
@@ -143,7 +143,7 @@ function RideHeading({ ride, colorIndex, dateFormat }: RideBodyProps & { dateFor
         <PrivateMark isPrivate={ride.is_private} />
       </Text>
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        <BikeColorDot colorIndex={colorIndex} size={6} />
+        <BikeColorIcon colorIndex={colorIndex} />
         <Eyebrow>
           {[
             ride.started_at === null ? null : dayjs(ride.started_at).format(dateFormat),
@@ -174,7 +174,7 @@ function CompactRideHeading({ ride, colorIndex }: RideBodyProps): ReactElement {
         </Text>
       )}
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        <BikeColorDot colorIndex={colorIndex} size={6} />
+        <BikeColorIcon colorIndex={colorIndex} />
         <Text fz={12} c="text.8" truncate style={{ minWidth: 0 }}>
           {ride.bike_name ?? t("rides.unknownBike")}
         </Text>

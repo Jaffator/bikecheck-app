@@ -96,9 +96,7 @@ export function ShareDrawer({ opened, onClose }: ShareDrawerProps): ReactElement
       }
       styles={{
         content: { height: "auto", maxHeight: "92dvh" },
-        // The desktop modal's, where cards run closer to the edges than plain rows would; a
-        // bottom sheet takes the wrapper's.
-        body: { paddingInline: 8, paddingBottom: "3rem" },
+        body: { paddingBottom: "3rem" },
         title: { fontWeight: 600, color: "var(--mantine-color-text-6)" },
       }}
     >

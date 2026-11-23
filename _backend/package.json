@@ -12,6 +12,8 @@
     "start_ngrok": "ngrok http 3002",
     "db:pulldb": "prisma db pull && prisma generate",
     "db:devseed": "ts-node scripts/seedData/main_dev.ts",
+    "rides:backfill-routes": "ts-node apps/monolith/scripts/backfill-ride-polylines.ts",
+    "rides:mock-routes": "ts-node apps/monolith/scripts/mock-ride-polylines.ts",
     "catalogue:sync": "ts-node apps/monolith/scripts/sync-catalogue-names.ts",
     "chat:eval": "ts-node apps/monolith/scripts/chatEval/run.ts",
     "chat:eval:seed": "ts-node apps/monolith/scripts/chatEval/seed_eval.ts",

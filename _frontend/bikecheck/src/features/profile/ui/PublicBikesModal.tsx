@@ -38,7 +38,6 @@ export function PublicBikesModal({ opened, ...choice }: PublicBikesModalProps): 
       onClose={choice.onCancel}
       title={t("sharing.pickBikesTitle")}
       centered
-      radius="md"
       zIndex={MODAL_Z_INDEX}
       withCloseButton={false}
     >

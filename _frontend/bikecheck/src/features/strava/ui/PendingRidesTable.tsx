@@ -11,7 +11,7 @@ import { RouteMap } from "@/components/RouteMap";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { pendingItemOf } from "@/features/rides/rideDetail";
 import { formatDuration } from "@/features/rides/rideDuration";
 import { useReleasedRideLink } from "@/features/rides/useReleasedRideLink";
@@ -226,7 +226,7 @@ function PendingRow({
                 key={bike.id}
                 color="text"
                 fw={600}
-                leftSection={<BikeColorDot colorIndex={bike.color_index} />}
+                leftSection={<BikeColorIcon colorIndex={bike.color_index} />}
                 onClick={() => onAssign(bike.id)}
               >
                 {bikeTitle(bike)}

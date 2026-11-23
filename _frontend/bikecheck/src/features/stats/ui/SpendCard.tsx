@@ -17,7 +17,7 @@ import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { periodSearch } from "@/features/service/servicePeriod";
 import { useIsDesktop } from "@/layout/breakpoints";
 import { formatCost } from "@/utils/money";
@@ -134,9 +134,9 @@ function BikeRow({
     >
       <Group justify="space-between" wrap="nowrap" gap="sm" py={ROW_PADDING} align="flex-start">
         <Group gap={8} wrap="nowrap" align="flex-start" style={{ minWidth: 0 }}>
-          {/* Sits on the name's first line, so a wrapped name keeps its dot beside it. */}
+          {/* Sits on the name's first line, so a wrapped name keeps its icon beside it. */}
           <Center h={NAME_LINE_HEIGHT} style={{ flexShrink: 0 }}>
-            <BikeColorDot colorIndex={colorIndex} size={7} />
+            <BikeColorIcon colorIndex={colorIndex} />
           </Center>
           <Text fz={14} fw={500} lh={`${String(NAME_LINE_HEIGHT)}px`} c="text.6">
             {bikeTitle(bike)}

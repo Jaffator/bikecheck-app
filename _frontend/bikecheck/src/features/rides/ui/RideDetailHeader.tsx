@@ -10,7 +10,7 @@ import { colorIndexOf } from "@/features/bikes/bikeColors";
 import { useBikes } from "@/features/bikes/bikes.queries";
 import type { ListedBike } from "@/features/bikes/bikes.types";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import type { BikePick, RideItem, RideWalk } from "@/features/rides/rideDetail";
 import { rideTitle } from "@/features/rides/rideTitle";
 import { ViewOnStravaLink } from "@/features/strava/ui/ViewOnStravaLink";
@@ -45,12 +45,14 @@ export function RideDetailHeader({ item, pick, walk }: RideDetailHeaderProps): R
         <PrivateMark isPrivate={item.ride.is_private} size={16} />
       </Text>
       <Group gap={7} wrap="nowrap" style={{ minWidth: 0 }}>
-        <BikeColorDot colorIndex={colorIndex} size={7} />
+        <BikeColorIcon colorIndex={colorIndex} />
         <Text className="tabular-nums" fz={13} c="var(--color-text-dim)" lineClamp={1}>
           {[bikeName, started].filter((part) => part !== null).join(" · ")}
         </Text>
+        <Box ml="sm" style={{ flexShrink: 0 }}>
+          <ViewOnStravaLink activityId={item.kind === "ride" ? item.ride.activity_strava_id : item.ride.activity_id} />
+        </Box>
       </Group>
-      <ViewOnStravaLink activityId={item.kind === "ride" ? item.ride.activity_strava_id : item.ride.activity_id} />
     </Stack>
   );
 }

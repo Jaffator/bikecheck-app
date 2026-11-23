@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { PANEL_HAIRLINE, PANEL_ROW_PADDING, onPanelRowKey } from "@/components/panelRows";
 import { RouteMap } from "@/components/RouteMap";
 import { bikeColor } from "@/features/bikes/bikeColors";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { CHECK_IN_COLOR, symptomKey } from "@/features/rides/checkIn";
 import { formatDuration } from "@/features/rides/rideDuration";
 import type { Ride, RideCheckIn } from "@/features/rides/rides.types";
@@ -71,7 +71,7 @@ export function RideTableRow({ ride, colorIndex, onOpen }: RideTableRowProps): R
         </Stack>
       </Group>
       <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-        <BikeColorDot colorIndex={colorIndex} size={7} />
+        <BikeColorIcon colorIndex={colorIndex} />
         <Text fz={12} c="text.7" lineClamp={1}>
           {ride.bike_name ?? t("rides.unknownBike")}
         </Text>

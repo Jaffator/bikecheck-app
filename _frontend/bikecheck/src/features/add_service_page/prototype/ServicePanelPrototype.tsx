@@ -27,12 +27,13 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { Calendar, Check, Paperclip, Store, X } from "lucide-react";
+import { Calendar, Check, House, Paperclip, Store, X } from "lucide-react";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import type { ListedBike } from "@/features/bikes/bikes.types";
-import { BikeColorDot } from "@/features/bikes/ui/BikeColorDot";
+import { BikeColorIcon } from "@/features/bikes/ui/BikeColorIcon";
 import { useShopNames, useUploadServiceAttachment } from "@/features/service/service.queries";
 import { catalogueLabel, componentTypeLabel } from "@/features/service/serviceLabels";
+import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import type { UploadedAttachment } from "@/features/service/service.types";
 import { useCurrentUser } from "@/features/users/users.queries";
 import { currencySymbol } from "@/utils/money";
@@ -49,8 +50,6 @@ import type { ServiceDesktopPrototypeState } from "./useServiceDesktopPrototype"
 const PANEL_TOP = "4rem";
 // Kept clear under the panel: the page's own bottom padding, so a full panel adds no scroll to it.
 const PANEL_BOTTOM_AIR = 32;
-
-const BIKE_DOT_SIZE = 10;
 
 // The panel starts beside the first card and sticks under the header later, so the room
 // beneath it changes as the page scrolls. Written straight to the element: no re-render per frame.
@@ -83,14 +82,75 @@ function usePanelRoom(): RefObject<HTMLDivElement | null> {
 
 const SHOP_NAME_MAX_LENGTH = 100;
 
-const panelLabel: CSSProperties = { ...inputStyles.label, fontSize: 13 };
-const panelInputStyles = { ...inputStyles, label: panelLabel };
-const panelAutosizeStyles = { ...autosizeInputStyles, label: panelLabel };
+// The panel's room from its edge, as a modal's.
+const PANEL_PAD = 24;
+const SECTION_GAP = 24;
+
+// Every section is named the same quiet way, so the values carry the panel.
+const panelLabel: CSSProperties = {
+  ...inputStyles.label,
+  fontSize: 11,
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: "var(--tracking-label)",
+  color: "var(--mantine-color-text-8)",
+  marginBottom: 8,
+};
+const panelInput: CSSProperties = { ...inputStyles.input, borderRadius: 12, minHeight: 44 };
+const panelInputStyles = { ...inputStyles, label: panelLabel, input: panelInput };
+const panelAutosizeStyles = {
+  ...autosizeInputStyles,
+  label: panelLabel,
+  input: { ...autosizeInputStyles.input, borderRadius: 12 },
+};
 
 const dashedSlot: CSSProperties = {
   border: "1px dashed var(--mantine-color-cards-4)",
-  borderRadius: "0.75rem",
+  borderRadius: 12,
 };
+
+const ATTACH_TILE: CSSProperties = {
+  width: 36,
+  height: 36,
+  display: "grid",
+  placeItems: "center",
+  flexShrink: 0,
+  borderRadius: 10,
+  color: "var(--mantine-color-primary-6)",
+  backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 12%, transparent)",
+};
+
+const PRICE_WELL: CSSProperties = {
+  minWidth: 120,
+  justifyContent: "flex-end",
+  borderRadius: 12,
+  border: "1px solid var(--mantine-color-inputs-5)",
+  backgroundColor: "var(--mantine-color-inputs-6)",
+};
+
+const doneCard: CSSProperties = {
+  borderRadius: 14,
+  overflow: "hidden",
+  backgroundColor: "var(--color-surface-raised)",
+};
+
+// A segmented well like the fields around it; the chosen side is raised out of it.
+const placeStyles = {
+  // Sized by Mantine, so the indicator it measures lines up with the labels.
+  root: {
+    padding: 4,
+    borderRadius: 12,
+    border: "1px solid var(--mantine-color-inputs-5)",
+    backgroundColor: "var(--mantine-color-inputs-6)",
+  },
+  indicator: {
+    borderRadius: 8,
+    backgroundColor: "var(--color-border-raised)",
+    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.4)",
+  },
+  label: { paddingBlock: 7, paddingInline: 6, fontSize: 13, fontWeight: 600 },
+  innerLabel: { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 },
+} satisfies Record<string, CSSProperties>;
 
 interface ServicePanelPrototypeProps {
   proto: ServiceDesktopPrototypeState;
@@ -121,15 +181,13 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
         boxShadow: "var(--elev-panel)",
       }}
     >
-      <Text fw={700} fz={16} c="text.6" px="lg" pt="lg" pb="sm">
-        {t("addService.panelTitle")}
-      </Text>
+      <PanelHeader count={proto.blocks.reduce((sum, block) => sum + block.actions.length, 0)} />
 
       {/* Everything but the total and Save scrolls inside the panel. */}
       <Stack
-        gap="md"
-        px="lg"
-        pb="md"
+        gap={SECTION_GAP}
+        px={PANEL_PAD}
+        pb={PANEL_PAD}
         style={{
           flex: 1,
           minHeight: 0,
@@ -142,7 +200,7 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
 
         <Box style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem" }}>
           {/* Both labelled the same way, so the two controls share a baseline. */}
-          <Stack gap={4}>
+          <Stack gap={0}>
             <Text style={panelLabel}>{t("addService.serviceDate")}</Text>
             <TextInput
               type="date"
@@ -152,19 +210,22 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
               styles={panelInputStyles}
               className="tabular-nums"
               rightSection={<Calendar size={16} color="var(--color-text-dim)" />}
+              style={{ cursor: "pointer" }}
+              onClick={(event) => openDatePicker(event.currentTarget)}
               onChange={(event) => proto.setServiceDate(event.currentTarget.value)}
             />
           </Stack>
-          <Stack gap={4}>
+          <Stack gap={0}>
             <Text style={panelLabel}>{t("addService.place")}</Text>
             <SegmentedControl
               fullWidth
               aria-label={t("addService.place")}
               value={proto.place}
               onChange={(value) => proto.setPlace(value === "SHOP" ? "SHOP" : "HOME")}
+              styles={placeStyles}
               data={[
-                { value: "HOME", label: t("addService.placeHome") },
-                { value: "SHOP", label: t("addService.placeShop") },
+                { value: "HOME", label: <PlaceLabel icon={<House size={14} />} label={t("addService.placeHome")} /> },
+                { value: "SHOP", label: <PlaceLabel icon={<Store size={14} />} label={t("addService.placeShop")} /> },
               ]}
             />
           </Stack>
@@ -175,7 +236,7 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
         )}
 
         <Textarea
-          label={t("addService.note")}
+          label={<OptionalLabel label={t("addService.note")} />}
           placeholder={t("addService.notePlaceholder")}
           value={proto.note}
           autosize
@@ -197,7 +258,70 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
   );
 }
 
-// Each bike wears the colour dot it has on the dashboard, in the field and in the list.
+// The browser's own calendar button is hidden app-wide, so a click anywhere on the field opens it.
+function openDatePicker(input: HTMLInputElement): void {
+  try {
+    input.showPicker();
+  } catch {
+    // No showPicker here: the field keeps focus and takes typing.
+  }
+}
+
+// The count says at a glance how much the save will record.
+function PanelHeader({ count }: { count: number }): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Group justify="space-between" wrap="nowrap" gap="sm" px={PANEL_PAD} pt={PANEL_PAD} pb={SECTION_GAP}>
+      <Text fw={600} fz={18} c="text.6" lts="var(--tracking-title)">
+        {t("addService.panelTitle")}
+      </Text>
+      {count > 0 && (
+        <Text
+          className="tabular-nums"
+          fz={12}
+          fw={600}
+          c="primary.6"
+          px={10}
+          h={24}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            borderRadius: 9999,
+            backgroundColor: "color-mix(in srgb, var(--mantine-color-primary-6) 14%, transparent)",
+          }}
+        >
+          {t("addService.jobCount", { count })}
+        </Text>
+      )}
+    </Group>
+  );
+}
+
+function PlaceLabel({ icon, label }: { icon: ReactElement; label: string }): ReactElement {
+  return (
+    <>
+      {icon}
+      {label}
+    </>
+  );
+}
+
+// A section the service saves fine without says so, quietly beside its name.
+function OptionalLabel({ label }: { label: string }): ReactElement {
+  const { t } = useTranslation();
+
+  return (
+    <Text component="span" style={{ ...panelLabel, display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+      {label}
+      <Text component="span" fz={12} fw={400} tt="none" lts={0} c="text.8">
+        {t("addService.optional")}
+      </Text>
+    </Text>
+  );
+}
+
+// Each bike wears the bike icon it has on the dashboard, in the field and in the list.
 function BikeSelect({
   bikes,
   bikeId,
@@ -216,17 +340,16 @@ function BikeSelect({
       data={bikes.map((bike) => ({ value: String(bike.id), label: bikeTitle(bike) }))}
       value={bikeId === null ? null : String(bikeId)}
       allowDeselect={false}
-      styles={panelInputStyles}
+      styles={{ ...panelInputStyles, input: { ...panelInput, minHeight: 48, fontSize: 15, fontWeight: 600 } }}
       comboboxProps={dropdownProps}
       leftSection={
-        picked === undefined ? undefined : <BikeColorDot colorIndex={picked.color_index} size={BIKE_DOT_SIZE} />
+        picked === undefined ? undefined : <BikeColorIcon colorIndex={picked.color_index} />
       }
       leftSectionPointerEvents="none"
       renderOption={({ option, checked }) => (
         <Group gap={10} wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
-          <BikeColorDot
+          <BikeColorIcon
             colorIndex={bikes.find((bike) => String(bike.id) === option.value)?.color_index ?? null}
-            size={BIKE_DOT_SIZE}
           />
           <Text fz={14} fw={600} c="text.6" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
             {option.label}
@@ -254,44 +377,50 @@ function DoneList({ proto, currency }: { proto: ServiceDesktopPrototypeState; cu
         );
 
   return (
-    <Stack gap={6}>
+    <Stack gap={0}>
       <Text style={panelLabel}>{t("addService.stepActions")}</Text>
-      {ordered.length === 0 && (
-        <Text fz={13} c="var(--color-text-dim)" ta="center" px="sm" py="md" style={dashedSlot}>
+      {ordered.length === 0 ? (
+        <Text fz={13} c="text.8" ta="center" px="sm" py="md" style={dashedSlot}>
           {t("addService.nothingDone")}
         </Text>
-      )}
-      {ordered.map((block) => (
-        <Box key={block.categoryId} pt={10} style={{ borderTop: "1px solid var(--color-border-subtle)" }}>
-          <Text fz={11} fw={600} tt="uppercase" lts="var(--tracking-label)" c="primary.6" mb={2}>
-            {catalogueLabel(block.categoryI18nKey, block.categoryName, t)}
-          </Text>
-          {block.actions.map((action) => (
-            <DoneRow
-              key={action.actionId}
-              action={action}
-              currency={currency}
-              onShow={() => proto.showAction(block.categoryId, action.actionId)}
-              onRemove={() => proto.removeAction(action.actionId)}
-            />
+      ) : (
+        <Stack gap={8}>
+          {ordered.map((block) => (
+            <Box key={block.categoryId} style={doneCard}>
+              <Group gap={8} wrap="nowrap" px={14} pt={12} pb={4}>
+                {categoryIcon(block.categoryName, 14)}
+                <Text fz={11} fw={600} tt="uppercase" lts="var(--tracking-label)" c="primary.6">
+                  {catalogueLabel(block.categoryI18nKey, block.categoryName, t)}
+                </Text>
+              </Group>
+              {block.actions.map((action, index) => (
+                <DoneRow
+                  key={action.actionId}
+                  action={action}
+                  currency={currency}
+                  divided={index > 0}
+                  onShow={() => proto.showAction(block.categoryId, action.actionId)}
+                  onRemove={() => proto.removeAction(action.actionId)}
+                />
+              ))}
+            </Box>
           ))}
-        </Box>
-      ))}
+        </Stack>
+      )}
     </Stack>
   );
 }
 
-function DoneRow({
-  action,
-  currency,
-  onShow,
-  onRemove,
-}: {
+interface DoneRowProps {
   action: PickedAction;
   currency: string;
+  // A hairline above every row but a category's first.
+  divided: boolean;
   onShow: () => void;
   onRemove: () => void;
-}): ReactElement {
+}
+
+function DoneRow({ action, currency, divided, onShow, onRemove }: DoneRowProps): ReactElement {
   const { t } = useTranslation();
   const label = catalogueLabel(action.actionI18nKey, action.actionName, t);
   const parts = action.candidates.filter((component) => action.componentIds.includes(component.id));
@@ -306,12 +435,21 @@ function DoneRow({
     .join(", ");
 
   return (
-    <Group gap={6} wrap="nowrap" align="center">
-      <UnstyledButton onClick={onShow} py={5} style={{ flex: 1, minWidth: 0 }}>
+    <Group
+      gap={8}
+      wrap="nowrap"
+      align="center"
+      mih={56}
+      py={8}
+      pl={14}
+      pr={8}
+      style={{ borderTop: divided ? "1px solid var(--color-border-subtle)" : undefined }}
+    >
+      <UnstyledButton onClick={onShow} style={{ flex: 1, minWidth: 0 }}>
         <Text fz={14} fw={600} c="text.6" lineClamp={1}>
           {label}
         </Text>
-        <Text fz={13} c={missingPart ? "orange.5" : "var(--color-text-dim)"} lineClamp={2}>
+        <Text fz={12} mt={2} c={missingPart ? "orange.5" : "text.8"} lineClamp={2}>
           {missingPart ? t("addService.pickPart") : sub}
         </Text>
       </UnstyledButton>
@@ -320,8 +458,16 @@ function DoneRow({
           {action.partialCost} {currency}
         </Text>
       )}
-      <ActionIcon variant="transparent" aria-label={t("addService.removeAction", { name: label })} onClick={onRemove}>
-        <X size={15} color="var(--color-text-dim)" />
+      <ActionIcon
+        variant="subtle"
+        color="gray"
+        radius="xl"
+        size={32}
+        aria-label={t("addService.removeAction", { name: label })}
+        onClick={onRemove}
+        style={{ flexShrink: 0 }}
+      >
+        <X size={16} color="var(--mantine-color-text-8)" />
       </ActionIcon>
     </Group>
   );
@@ -385,8 +531,8 @@ function AttachmentsField({
   }
 
   return (
-    <Stack gap={6}>
-      <Text style={panelLabel}>{t("addService.attachments")}</Text>
+    <Stack gap={8}>
+      <OptionalLabel label={t("addService.attachments")} />
       {attachments.map((attachment) => (
         <Group key={attachment.url} justify="space-between" wrap="nowrap">
           <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
@@ -423,23 +569,28 @@ function AttachmentsField({
           <UnstyledButton
             {...props}
             className="hover-veil"
-            p="sm"
-            style={{ ...dashedSlot, textAlign: "center", opacity: upload.isPending || full ? 0.5 : 1 }}
+            px={14}
+            py={12}
+            style={{ ...dashedSlot, opacity: upload.isPending || full ? 0.5 : 1 }}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault();
               addFiles(Array.from(event.dataTransfer.files));
             }}
           >
-            <Group gap={8} justify="center" wrap="nowrap">
-              <Paperclip size={16} color="var(--mantine-color-primary-5)" />
-              <Text fw={600} fz={14} c="text.6">
-                {t("addService.addAttachment")}
-              </Text>
+            <Group gap={12} wrap="nowrap">
+              <Box style={ATTACH_TILE}>
+                <Paperclip size={18} />
+              </Box>
+              <Stack gap={2}>
+                <Text fw={600} fz={14} c="text.6">
+                  {t("addService.addAttachment")}
+                </Text>
+                <Text fz={12} c="text.8">
+                  {t("addService.dropHint")}
+                </Text>
+              </Stack>
             </Group>
-            <Text fz={13} c="var(--color-text-dim)">
-              {t("addService.dropHint")}
-            </Text>
           </UnstyledButton>
         )}
       </FileButton>
@@ -467,12 +618,17 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
   const totalWidth = `${String(Math.max(String(typedTotal ?? proto.totalCost).length, 1) + 0.5)}ch`;
 
   return (
-    <Stack gap="sm" px="lg" pt="md" pb="lg" style={{ borderTop: "1px solid var(--color-border-subtle)" }}>
-      <Group justify="space-between" align="baseline" wrap="nowrap">
-        <Text fz={14} c="var(--color-text-dim)">
-          {t("addService.totalCost")}
-        </Text>
-        <Group gap={6} wrap="nowrap" align="baseline">
+    <Stack gap={16} px={PANEL_PAD} pt={20} pb={PANEL_PAD} style={{ borderTop: "1px solid var(--color-border-subtle)" }}>
+      <Group justify="space-between" align="center" wrap="nowrap" gap="sm">
+        <Stack gap={2}>
+          <Text fz={14} fw={600} c="text.6">
+            {t("addService.totalCost")}
+          </Text>
+          <Text fz={12} c="text.8">
+            {t("addService.totalCostHint")}
+          </Text>
+        </Stack>
+        <Group gap={6} wrap="nowrap" align="center" h={44} px={14} style={PRICE_WELL}>
           <NumberInput
             variant="unstyled"
             aria-label={t("addService.totalCost")}
@@ -489,7 +645,7 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
                 borderRadius: 0,
                 textAlign: "right",
                 fontWeight: 700,
-                fontSize: 22,
+                fontSize: 20,
                 lineHeight: 1.1,
                 letterSpacing: "var(--tracking-title)",
                 fontVariantNumeric: "tabular-nums",
@@ -499,7 +655,7 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
             onChange={changeTotal}
             onBlur={blurTotal}
           />
-          <Text fw={700} fz={22} c="text.6" lh={1.1}>
+          <Text fw={600} fz={16} c="text.8" lh={1.1}>
             {currency}
           </Text>
         </Group>
@@ -516,11 +672,13 @@ function PanelFooter({ proto, currency }: { proto: ServiceDesktopPrototypeState;
         color="primary.6"
         c={proto.canSave ? "textDark.6" : undefined}
         radius="md"
-        leftSection={<Check size={16} />}
+        leftSection={<Check size={18} />}
         disabled={!proto.canSave}
         loading={proto.saving}
         styles={disabledButtonStyles}
-        style={{ height: "2.75rem" }}
+        h={48}
+        fz={15}
+        fw={600}
         onClick={proto.save}
       >
         {t("addService.save")}

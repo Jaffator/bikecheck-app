@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { onPanelRowKey } from "@/components/panelRows";
 import { bikeTitle } from "@/features/bikes/bikeTitle";
 import { catalogueLabel } from "@/features/service/serviceLabels";
+import { componentTypeIcon } from "@/features/service/ui/componentIcon";
 import { attentionColor, attentionInk } from "@/features/service_tracking/attentionLevel";
 import { attentionFigure } from "@/features/service_tracking/intervalFigures";
 import type { GarageTrackedAction } from "@/features/service_tracking/tracking.types";
@@ -14,6 +15,7 @@ import { PlanDayButton } from "./PlanDayButton";
 
 // Fits the Czech "Naplánovat", so every row's line ends at the same place.
 const PLAN_WIDTH = 84;
+const PART_ICON_SIZE = 18;
 
 interface AttentionRowProps {
   action: GarageTrackedAction;
@@ -43,22 +45,25 @@ export function AttentionRow({ action, onOpen, onPlan }: AttentionRowProps): Rea
         transition: "transform 0.12s ease",
       }}
     >
-      <Stack gap={7} style={{ minWidth: 0 }}>
-        <Group gap="sm" wrap="nowrap" align="baseline">
-          <Text fz={14} fw={600} c="text.6" lineClamp={2} style={{ minWidth: 0, flex: 1 }}>
-            {catalogueLabel(action.action_i18n_key, action.action_name, t)}
-          </Text>
-          <Text className="tabular-nums" fz={13} fw={600} c={ink} style={{ whiteSpace: "nowrap" }}>
-            {attentionFigure(action, i18n.language, t)}
-          </Text>
-        </Group>
+      <Group gap={12} wrap="nowrap" align="flex-start" style={{ minWidth: 0 }}>
+        {componentTypeIcon(action.component_type, PART_ICON_SIZE)}
+        <Stack gap={7} style={{ minWidth: 0, flex: 1 }}>
+          <Group gap="sm" wrap="nowrap" align="baseline">
+            <Text fz={14} fw={600} c="text.6" lineClamp={2} style={{ minWidth: 0, flex: 1 }}>
+              {catalogueLabel(action.action_i18n_key, action.action_name, t)}
+            </Text>
+            <Text className="tabular-nums" fz={13} fw={600} c={ink} style={{ whiteSpace: "nowrap" }}>
+              {attentionFigure(action, i18n.language, t)}
+            </Text>
+          </Group>
 
-        <BulletBar percentage={action.percentage} color={attentionColor(action.percentage)} />
+          <BulletBar percentage={action.percentage} color={attentionColor(action.percentage)} />
 
-        <Text fz={12} c="text.8" lineClamp={1}>
-          {bikeTitle(action)}
-        </Text>
-      </Stack>
+          <Text fz={12} c="text.8" lineClamp={1}>
+            {bikeTitle(action)}
+          </Text>
+        </Stack>
+      </Group>
 
       <PlanDayButton planned={action.planned_for} onPlan={onPlan} width={PLAN_WIDTH} />
     </UnstyledButton>

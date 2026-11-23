@@ -39,7 +39,6 @@ export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProp
       onClose={wizard.closeSummary}
       centered
       size={840}
-      radius="lg"
       title={
         <Box>
           <Text fw={700} fz={18} c="text.6">

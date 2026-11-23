@@ -1,4 +1,5 @@
 // React Query hooks for the service history.
+import { useEffect } from "react";
 import {
   keepPreviousData,
   useInfiniteQuery,
@@ -143,6 +144,37 @@ export function useCategoryActions(
     queryFn: () => getCategoryActions(bikeId ?? 0, categoryId ?? 0),
     enabled: bikeId !== null && categoryId !== null,
   });
+}
+
+// Warms every category's actions while the user is still choosing, so the next step opens without a loader.
+export function usePrefetchCategoryActions(bikeId: number | null, categories: BikeCategory[] | undefined): void {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (bikeId === null || categories === undefined) return;
+    for (const category of categories) {
+      void queryClient.prefetchQuery({
+        queryKey: categoryActionsKey(bikeId, category.group_id),
+        queryFn: () => getCategoryActions(bikeId, category.group_id),
+      });
+    }
+  }, [bikeId, categories, queryClient]);
+}
+
+// Resolves once a category's actions are cached; a failed fetch still resolves so the step can say so.
+export function useEnsureCategoryActions(): (bikeId: number, categoryId: number) => Promise<void> {
+  const queryClient = useQueryClient();
+
+  return async (bikeId: number, categoryId: number): Promise<void> => {
+    try {
+      await queryClient.ensureQueryData({
+        queryKey: categoryActionsKey(bikeId, categoryId),
+        queryFn: () => getCategoryActions(bikeId, categoryId),
+      });
+    } catch {
+      // The actions step reads the same query and shows its error.
+    }
+  };
 }
 
 // A tag the user added themselves joins the catalogue, so every open action step must

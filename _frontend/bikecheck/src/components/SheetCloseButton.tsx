@@ -28,8 +28,8 @@ export function SheetCloseButton({ onClose }: SheetCloseButtonProps): ReactEleme
 
   return (
     <UnstyledButton aria-label={t("action.close")} onClick={onClose} style={CORNER}>
-      {/* Same grey as Mantine's desktop CloseButton, so both ✕ match. */}
-      <X size={16} strokeWidth={2} color="var(--mantine-color-gray-7)" />
+      {/* Same muted grey as the theme's CloseButton, so every ✕ matches. */}
+      <X size={16} strokeWidth={2} color="var(--mantine-color-text-8)" />
     </UnstyledButton>
   );
 }
