@@ -195,7 +195,7 @@ export function ServicePanelPrototype({ proto, onRequestBike }: ServicePanelProt
   );
 }
 
-// Each bike wears the colour dot it has on the dashboard, in the field and in the list.
+// Each bike wears the bike icon it has on the dashboard, in the field and in the list.
 function BikeSelect({
   bikes,
   bikeId,

@@ -134,7 +134,7 @@ function BikeRow({
     >
       <Group justify="space-between" wrap="nowrap" gap="sm" py={ROW_PADDING} align="flex-start">
         <Group gap={8} wrap="nowrap" align="flex-start" style={{ minWidth: 0 }}>
-          {/* Sits on the name's first line, so a wrapped name keeps its dot beside it. */}
+          {/* Sits on the name's first line, so a wrapped name keeps its icon beside it. */}
           <Center h={NAME_LINE_HEIGHT} style={{ flexShrink: 0 }}>
             <BikeColorIcon colorIndex={colorIndex} />
           </Center>
