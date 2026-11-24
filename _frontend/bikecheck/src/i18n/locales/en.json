@@ -1627,6 +1627,12 @@
     "periodApply": "Apply",
     "periodEdit": "Change period"
   },
+  "billing": {
+    "limitTitle_one": "Your first bike is free",
+    "limitTitle_other": "Your first {{count}} bikes are free",
+    "limitBody": "More bikes will be paid later on.",
+    "limitArchived": "Archived bikes count too."
+  },
   "onboarding": {
     "welcome": {
       "skip": "Skip",

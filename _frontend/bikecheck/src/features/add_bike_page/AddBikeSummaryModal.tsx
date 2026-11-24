@@ -62,12 +62,14 @@ export function AddBikeSummaryModal({
   const frameSize = specification.frameSize === "other" ? specification.sizeLength.trim() : (specification.frameSize ?? "");
 
   // Android's back gesture dismisses this rather than the page under it.
-  useOverlayBack(opened, onClose);
+  const onTop = useOverlayBack(opened, onClose);
 
   return (
     <Modal
       opened={opened}
       onClose={onClose}
+      // Esc on the limit sheet leaves the summary under it.
+      closeOnEscape={onTop}
       title={t("addBike.summaryTitle")}
       centered
       // Scroll long component lists inside the modal.

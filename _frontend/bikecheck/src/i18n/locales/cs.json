@@ -1722,6 +1722,14 @@
     "periodApply": "Použít",
     "periodEdit": "Změnit období"
   },
+  "billing": {
+    "limitTitle_one": "Zdarma máš jedno kolo",
+    "limitTitle_few": "Zdarma máš {{count}} kola",
+    "limitTitle_many": "Zdarma máš {{count}} kola",
+    "limitTitle_other": "Zdarma máš {{count}} kol",
+    "limitBody": "Další kola budou časem placená, platbu teprve připravujeme.",
+    "limitArchived": "Počítají se i archivovaná kola."
+  },
   "onboarding": {
     "welcome": {
       "skip": "Přeskočit",

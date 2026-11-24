@@ -540,6 +540,8 @@ model users {
   // Keys of the dismissed Hints. A new Hint is a new key, with no migration.
   hints_seen            String[]               @default([])
   hints_enabled         Boolean                @default(true)
+  // How many Bikes the account may hold, archived ones included. Free is one.
+  bike_limit            Int                    @default(1)
   accounts              accounts[]
   bikes                 bikes[]
   chat_messages         chat_messages[]

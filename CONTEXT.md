@@ -41,8 +41,14 @@ _Avoid_: Deleted bike, retired bike, bin
 
 **Pro**:
 The paid plan: any number of Bikes in use and AI chat with no monthly limit. Belongs to the account,
-not the device. Without it an account is on **Free**: its first Bike and 100 AI questions a month.
+not the device.
 _Avoid_: Premium, subscription
+
+**Free**:
+What an account without Pro is on: one Bike and 100 AI questions a month. Every Bike it has counts,
+archived ones included; only Deleting a Bike frees its place. At the limit nothing but adding a Bike
+is refused: restoring an Archived Bike always works, and an account over the limit keeps them all.
+_Avoid_: Trial, basic plan
 
 **Locked Bike**:
 A Bike beyond the first on an account without Pro. It stays in the garage, greyed out, and does

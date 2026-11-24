@@ -9,6 +9,8 @@ import { BikeDetail } from "@/features/bikes_page/BikeDetail";
 import { BikeEdit } from "@/features/bike_edit_page/BikeEdit";
 import { Setup } from "@/features/setup_page/Setup";
 import { AddBikeIdentity } from "@/features/add_bike_page/AddBikeIdentity";
+import { AddBikeGate } from "@/features/billing/ui/AddBikeGate";
+import { BikeLimitSheet } from "@/features/billing/ui/BikeLimitSheet";
 import { Service } from "@/features/service_page/Service";
 import { ServiceHistory } from "@/features/service_page/ServiceHistory";
 import { AddService } from "@/features/add_service_page/AddService";
@@ -144,12 +146,21 @@ function ProtectedApp(): ReactElement {
 
       {user.welcome_seen_at === null && welcomeLeftBy !== user.id && <FirstWelcome userId={user.id} />}
 
+      <BikeLimitSheet />
+
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/bikes" element={<Bikes />} />
           {/* Must precede the parameterized bike route. */}
-          <Route path="/bikes/new" element={<AddBikeIdentity />} />
+          <Route
+            path="/bikes/new"
+            element={
+              <AddBikeGate>
+                <AddBikeIdentity />
+              </AddBikeGate>
+            }
+          />
           <Route path="/bikes/:id" element={<BikeDetail />} />
           <Route path="/bikes/:id/edit" element={<BikeEdit />} />
           <Route path="/bikes/:id/setup" element={<Setup />} />

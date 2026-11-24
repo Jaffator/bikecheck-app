@@ -85,6 +85,19 @@ export const useWelcomeStore = create<WelcomeStore>((set) => ({
   setLeftBy: (userId) => set({ leftBy: userId }),
 }));
 
+interface BikeLimitStore {
+  opened: boolean;
+  show: () => void;
+  hide: () => void;
+}
+
+// The limit sheet is mounted once; every way into the add-bike wizard opens it from here.
+export const useBikeLimitStore = create<BikeLimitStore>((set) => ({
+  opened: false,
+  show: () => set({ opened: true }),
+  hide: () => set({ opened: false }),
+}));
+
 export const useOverlayStore = create<OverlayStore>((set, get) => ({
   stack: [],
   pushOverlay: (overlay) => set((state) => ({ stack: [...state.stack, overlay] })),

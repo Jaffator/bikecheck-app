@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/me/welcome-seen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark the Welcome as seen; a repeat call keeps the first stamp */
+        post: operations["User markWelcomeSeen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/me/hints/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a Hint as dismissed; a repeat call changes nothing */
+        post: operations["User markHintSeen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/{id}": {
         parameters: {
             query?: never;
@@ -506,6 +540,23 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["Bike deleteHard"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/billing/bike-limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in account's bike limit and what counts against it */
+        get: operations["Billing bikeLimit"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1197,23 +1248,6 @@ export interface paths {
         };
         /** List the current user's rides, newest first */
         get: operations["Ride listRides"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/rides/{id}/summary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** The ride's AI review, written on the first request and kept until the ride changes */
-        get: operations["Ride findSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2031,6 +2065,16 @@ export interface components {
             strava_avatar_url: Record<string, never> | null;
             /** @example 2026-09-29T10:00:00Z */
             strava_last_sync_at: Record<string, never> | null;
+            /** @example 2026-11-05T10:00:00Z */
+            welcome_seen_at: Record<string, never> | null;
+            /**
+             * @example [
+             *       "tracked_actions"
+             *     ]
+             */
+            hints_seen: string[];
+            /** @example true */
+            hints_enabled: boolean;
             /** @example 2024-01-01T12:00:00Z */
             last_login_at: Record<string, never>;
             /**
@@ -2072,6 +2116,8 @@ export interface components {
              * @enum {string}
              */
             tire_pressure_unit: "bar" | "psi";
+            /** @example true */
+            hints_enabled: boolean;
         };
         DeviceTokenDto: {
             /** @example caYcjw...:APA91b... */
@@ -2511,6 +2557,23 @@ export interface components {
              * @example 2026-09-23T08:00:00.000Z
              */
             last_ride_at: string | null;
+        };
+        ResponseBikeLimitDto: {
+            /**
+             * @description How many Bikes the account may hold
+             * @example 1
+             */
+            bike_limit: number;
+            /**
+             * @description Bikes counted against the limit, archived ones included
+             * @example 1
+             */
+            bike_count: number;
+            /**
+             * @description True when an Archived Bike is among the counted
+             * @example false
+             */
+            has_archived_bikes: boolean;
         };
         Attachment_BikeEventDto: {
             /** @example faktura.pdf */
@@ -3606,10 +3669,6 @@ export interface components {
             weeks: components["schemas"]["ResponseRideWeekDto"][];
             figures: components["schemas"]["ResponseRideFiguresDto"];
         };
-        ResponseRideSummaryDto: {
-            /** @example A proper Enduro sufferfest, 4/5 stars. Wipe those stanchions. Catch ya in the dirt! */
-            summary: string;
-        };
         ChangeRideBikeDto: {
             /** @example 2 */
             bikeId: number;
@@ -3670,10 +3729,6 @@ export interface components {
              */
             hasHistory: boolean;
         };
-        ResponsePdfTicketDto: {
-            /** @description Goes in GET /reports/pdf-ticket/:ticket */
-            ticket: string;
-        };
         ResponseExportedReportDto: {
             /** @example 1 */
             id: number;
@@ -3694,6 +3749,11 @@ export interface components {
              * @example false
              */
             is_public: boolean;
+            /**
+             * @description Km and time from Strava are readable through the link
+             * @example true
+             */
+            share_figures: boolean;
             /** @example 3 */
             view_count: number;
             /** @example null */
@@ -3709,13 +3769,6 @@ export interface components {
             created_at: string;
             /** @description The frozen document, exactly as a reader would receive it */
             snapshot: Record<string, never>;
-        };
-        PublishReportDto: {
-            /**
-             * @description Strava-derived km and time may be read through the link
-             * @example true
-             */
-            share_figures: boolean;
         };
         ResponseReportDto: {
             /** @example 1 */
@@ -3762,6 +3815,17 @@ export interface components {
              * @example 3
              */
             count: number;
+        };
+        PublishReportDto: {
+            /**
+             * @description Strava-derived km and time may be read through the link
+             * @example true
+             */
+            share_figures: boolean;
+        };
+        ResponsePdfTicketDto: {
+            /** @description Goes in GET /reports/pdf-ticket/:ticket */
+            ticket: string;
         };
         ResponseChatMessageDto: {
             /** @example 1 */
@@ -4018,10 +4082,7 @@ export interface components {
             avatar_url: Record<string, never> | null;
         };
         ProfileSharesDto: {
-            /**
-             * @description False when the owner kept the Strava-derived km and time back; the figures come as null.
-             * @example true
-             */
+            /** @example true */
             figures: boolean;
             /** @example true */
             components: boolean;
@@ -4252,6 +4313,8 @@ export interface components {
         };
         ResponseProfileBikeDto: {
             owner: components["schemas"]["ProfileOwnerDto"];
+            /** @example true */
+            figures: boolean;
             /**
              * @example PUBLIC
              * @enum {string}
@@ -4262,11 +4325,6 @@ export interface components {
              * @enum {string}
              */
             relation: "SELF" | "NONE" | "PENDING" | "FOLLOWING";
-            /**
-             * @description False when the owner kept the Strava-derived km and time back; the figures come as null.
-             * @example true
-             */
-            figures: boolean;
             /** @example CZK */
             currency: string;
             /**
@@ -4715,6 +4773,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    "User markWelcomeSeen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponseDto"];
+                };
+            };
+        };
+    };
+    "User markHintSeen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: "tracked_actions" | "tracked_action_detail" | "unassigned_ride" | "check_in" | "setup" | "reports" | "sharing";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponseDto"];
+                };
             };
         };
     };
@@ -5206,6 +5304,13 @@ export interface operations {
                     "application/json": components["schemas"]["ResponseBikeDto"];
                 };
             };
+            /** @description BIKE_LIMIT_REACHED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     "Bike searchBikeExternal": {
@@ -5430,6 +5535,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    "Billing bikeLimit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseBikeLimitDto"];
+                };
             };
         };
     };
@@ -6558,27 +6682,6 @@ export interface operations {
             };
         };
     };
-    "Ride findSummary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ResponseRideSummaryDto"];
-                };
-            };
-        };
-    };
     "Ride changeBike": {
         parameters: {
             query?: never;
@@ -6779,7 +6882,9 @@ export interface operations {
             query: {
                 print: string;
             };
-            header?: never;
+            header: {
+                "x-report-print-key": string;
+            };
             path: {
                 token: string;
             };
@@ -7687,6 +7792,10 @@ export interface operations {
     "Stats getSpend": {
         parameters: {
             query?: {
+                /** @description Last day, YYYY-MM-DD; needs `from`, refuses `period` */
+                to?: unknown;
+                /** @description First day, YYYY-MM-DD; needs `to`, refuses `period` */
+                from?: unknown;
                 /** @description Omitted: this year, or last year while this one has nothing priced */
                 period?: "month" | "year" | "all";
             };
@@ -7709,6 +7818,10 @@ export interface operations {
     "Stats getDistance": {
         parameters: {
             query?: {
+                /** @description Last day, YYYY-MM-DD; needs `from`, refuses `period` */
+                to?: unknown;
+                /** @description First day, YYYY-MM-DD; needs `to`, refuses `period` */
+                from?: unknown;
                 /** @description Omitted: this year, or last year while this one has no ride */
                 period?: "month" | "year" | "all";
             };

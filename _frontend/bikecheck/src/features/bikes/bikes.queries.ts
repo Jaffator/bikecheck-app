@@ -7,6 +7,8 @@ import {
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
+import { isBikeLimitError } from "@/features/billing/bikeLimit";
+import { BIKE_LIMIT_QUERY_KEY } from "@/features/billing/billing.queries";
 import {
   getBikes,
   getBike,
@@ -98,9 +100,14 @@ export function useCreateBike(): UseMutationResult<Bike, Error, CreateBikeInput>
   return useMutation({
     mutationFn: (input: CreateBikeInput) => createBike(input),
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: BIKE_LIMIT_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: ["bikes"] });
       // Refresh bikes available to the gear-pairing sheet.
       await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
+    },
+    // Awaited, so the limit sheet opens on the figures the server refused by.
+    onError: async (error) => {
+      if (isBikeLimitError(error)) await queryClient.invalidateQueries({ queryKey: BIKE_LIMIT_QUERY_KEY });
     },
   });
 }
@@ -136,6 +143,7 @@ export function useExternalBikeComponents(bikeUrl: string | null): UseQueryResul
 // Everything an archived bike leaves: the garage, the rides list, the service history and
 // its totals, the pairing sheet and the pending rides archiving discarded.
 async function refreshAfterArchiveChange(queryClient: QueryClient): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: BIKE_LIMIT_QUERY_KEY });
   await queryClient.invalidateQueries({ queryKey: ["bikes"] });
   await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });
   await queryClient.invalidateQueries({ queryKey: ["rides"] });

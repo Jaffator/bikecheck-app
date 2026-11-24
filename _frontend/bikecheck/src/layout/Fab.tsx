@@ -3,6 +3,7 @@ import { ActionIcon, Affix, Group, Stack, Transition, UnstyledButton } from "@ma
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { GoPlus } from "react-icons/go";
+import { useAddBikeGate } from "@/features/billing/useAddBikeGate";
 import { tapFeedback } from "@/utils/haptics";
 import { useHideOnScrollDown } from "@/hooks/useHideOnScrollDown";
 import { useOverlayBack } from "@/hooks/useOverlayBack";
@@ -52,6 +53,7 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const enterAddBike = useAddBikeGate();
   // Runs before early returns to preserve hook order.
   const visible = useHideOnScrollDown();
   const [openedOn, setOpenedOn] = useState(location.pathname);
@@ -79,6 +81,10 @@ export function Fab({ menuOpened, onMenuOpenedChange }: FabProps): ReactElement 
 
   function go(path: string): void {
     tapFeedback();
+    if (path === ADD_BIKE.path) {
+      void enterAddBike({ onRefused: () => onMenuOpenedChange(false) });
+      return;
+    }
     // Closing here first would commit before the deferred route and flash the old page.
     navigate(path);
   }

@@ -3,6 +3,7 @@ import { type ReactElement } from "react";
 import { Alert, Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Check, TriangleAlert } from "lucide-react";
+import { useOverlayBack } from "@/hooks/useOverlayBack";
 import { componentTypeId, groupComponents, positionsOf, readEntry } from "../bikeComponents.types";
 import type { AddBikeWizard } from "../useAddBikeWizard";
 
@@ -17,6 +18,7 @@ interface BikeSummaryDesktopProps {
 
 export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProps): ReactElement {
   const { t } = useTranslation();
+  const onTop = useOverlayBack(wizard.summaryOpen, wizard.closeSummary);
   const { specification, componentEntries, splitComponents, disabledComponents } = wizard;
   const { brand, model, year } = wizard.form.values;
   const grouped = groupComponents(wizard.componentGroups ?? [], wizard.defaultComponents ?? []);
@@ -37,6 +39,8 @@ export function BikeSummaryDesktop({ wizard, onConfirm }: BikeSummaryDesktopProp
     <Modal
       opened={wizard.summaryOpen}
       onClose={wizard.closeSummary}
+      // Esc on the limit sheet leaves the summary under it.
+      closeOnEscape={onTop}
       centered
       size={840}
       title={

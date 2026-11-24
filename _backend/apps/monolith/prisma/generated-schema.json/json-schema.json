@@ -1645,6 +1645,10 @@
           "type": "boolean",
           "default": true
         },
+        "bike_limit": {
+          "type": "integer",
+          "default": 1
+        },
         "accounts": {
           "type": "array",
           "items": {
