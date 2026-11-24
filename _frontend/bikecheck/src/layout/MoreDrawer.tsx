@@ -32,7 +32,7 @@ interface CardProps {
   title: string;
   // The figures or the pitch under the title, in the data voice.
   detail: string;
-  // What waits inside: a count, or a word such as AI.
+  // What waits inside: a count, or nothing.
   tag: ReactNode;
   onOpen: () => void;
 }
@@ -165,11 +165,7 @@ export function MoreDrawer({ opened, onClose }: MoreDrawerProps): ReactElement {
             icon={<MessageCircleMore size={19} color="var(--mantine-color-text-6)" />}
             title={t("page.chat")}
             detail={t("more.chatDetail")}
-            tag={
-              <Text className="tabular-nums" fz={10} fw={700} tt="uppercase" lts="var(--tracking-label)" c="primary.6" style={{ flexShrink: 0 }}>
-                {t("more.chatTag")}
-              </Text>
-            }
+            tag={null}
             onOpen={() => open("/chat")}
           />
         </Group>

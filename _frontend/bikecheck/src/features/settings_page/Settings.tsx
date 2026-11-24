@@ -30,11 +30,17 @@ const CARD_STYLE = {
   boxShadow: "var(--elev-panel)",
 } as const;
 
-// Darker than Mantine's light-scheme default, to sit on the dark card without glowing.
-const SEGMENTED_CONTROL_STYLES = {
-  root: { backgroundColor: "var(--mantine-color-inputs-6)" },
-  indicator: { backgroundColor: "var(--mantine-color-cards-5)" },
-  label: { color: "var(--color-text-dim)" },
+// The share drawer's visibility control at row height: a sunk well, the chosen state in the accent.
+const SEGMENTED_CONTROL_PROPS = {
+  withItemsBorders: false,
+  radius: "xl",
+  // The theme paints every label dim, so the active one is forced dark by class.
+  classNames: { label: "data-[active]:!text-[var(--mantine-color-textDark-6)] data-[active]:font-bold" },
+  styles: {
+    root: { backgroundColor: "var(--color-surface-well)", border: "1px solid var(--color-border-strong)" },
+    indicator: { backgroundColor: "var(--mantine-color-primary-6)", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)" },
+    label: { color: "var(--mantine-color-text-7)" },
+  },
 } as const;
 
 const PAGE_END_MARGIN = "calc(1.5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 10px)))";
@@ -197,7 +203,7 @@ export function Settings(): ReactElement | null {
             <SegmentedControl
               value={i18n.language}
               onChange={changeLanguage}
-              styles={SEGMENTED_CONTROL_STYLES}
+              {...SEGMENTED_CONTROL_PROPS}
               data={SUPPORTED_LANGUAGES.map((language) => ({
                 value: language,
                 label: t(`language.${language}`),
@@ -212,7 +218,7 @@ export function Settings(): ReactElement | null {
             <SegmentedControl
               value={user?.currency ?? FALLBACK_CURRENCY}
               onChange={changeCurrency}
-              styles={SEGMENTED_CONTROL_STYLES}
+              {...SEGMENTED_CONTROL_PROPS}
               data={SUPPORTED_CURRENCIES.map((currency) => ({ value: currency, label: currency }))}
             />
           </Group>
@@ -225,7 +231,7 @@ export function Settings(): ReactElement | null {
             <SegmentedControl
               value={user.tire_pressure_unit}
               onChange={changeTirePressureUnit}
-              styles={SEGMENTED_CONTROL_STYLES}
+              {...SEGMENTED_CONTROL_PROPS}
               data={TIRE_PRESSURE_UNITS.map((unit) => ({ value: unit, label: unit }))}
             />
           </Group>
@@ -328,7 +334,7 @@ export function Settings(): ReactElement | null {
 
       {/* Strava's attribution: the app shows it here only, at the page's foot. */}
       <Group justify="center" mt="xs" mb={PAGE_END_MARGIN}>
-        <PoweredByStrava height={9} />
+        <PoweredByStrava />
       </Group>
 
       <ProfileEditDrawer user={user} opened={editing} onClose={() => setEditing(false)} />

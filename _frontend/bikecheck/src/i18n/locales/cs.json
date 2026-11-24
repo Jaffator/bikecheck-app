@@ -62,7 +62,6 @@
   },
   "more": {
     "chatDetail": "Zeptej se na svoje kolo",
-    "chatTag": "AI",
     "ridersFollowers": "sledujících",
     "ridersRequests": "žádostí"
   },
@@ -77,7 +76,7 @@
     "serviceHistory": "Historie servisů",
     "reports": "Reporty",
     "follows": "Jezdci",
-    "chat": "Chat",
+    "chat": "AI asistent",
     "legalTerms": "Podmínky použití",
     "legalPrivacy": "Ochrana osobních údajů",
     "legalDeleteAccount": "Smazání účtu"

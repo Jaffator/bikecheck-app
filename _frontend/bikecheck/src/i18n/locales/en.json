@@ -60,7 +60,6 @@
   },
   "more": {
     "chatDetail": "Ask about your bike",
-    "chatTag": "AI",
     "ridersFollowers": "followers",
     "ridersRequests": "requests"
   },
@@ -75,7 +74,7 @@
     "serviceHistory": "Service history",
     "reports": "Reports",
     "follows": "Riders",
-    "chat": "Chat",
+    "chat": "AI assistant",
     "legalTerms": "Terms of use",
     "legalPrivacy": "Privacy policy",
     "legalDeleteAccount": "Delete your account"
