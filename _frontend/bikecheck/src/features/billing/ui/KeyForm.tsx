@@ -1,29 +1,23 @@
-// Where an early user enters the key they were sent.
-import { useState, type FormEvent, type ReactElement } from "react";
+import type { FormEvent, ReactElement } from "react";
 import { Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { disabledButtonStyles, inputStyles } from "@/features/add_bike_page/formStyles";
-import { keyErrorLabel } from "../bikeLimit";
-import { useRedeemKey } from "../useRedeemKey";
+import { useKeyForm } from "../useKeyForm";
 
 // What the API accepts (RedeemKeyDto).
 const KEY_MAX_LENGTH = 100;
 
 export function KeyForm(): ReactElement {
   const { t } = useTranslation();
-  const redeem = useRedeemKey();
-  const [code, setCode] = useState("");
+  const { code, setCode, canSubmit, isPending, failure, submit } = useKeyForm();
 
-  const trimmed = code.trim();
-
-  function submit(event: FormEvent): void {
+  function onSubmit(event: FormEvent): void {
     event.preventDefault();
-    if (trimmed === "" || redeem.isPending) return;
-    redeem.mutate(trimmed);
+    submit();
   }
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={onSubmit}>
       <Stack gap="xs">
         <Text size="sm" c="text.6" style={{ lineHeight: 1.45 }}>
           {t("billing.keyPrompt")}
@@ -31,16 +25,15 @@ export function KeyForm(): ReactElement {
         <Group gap="xs" wrap="nowrap">
           <TextInput
             value={code}
-            onChange={(event) => {
-              setCode(event.currentTarget.value);
-              redeem.reset();
-            }}
+            onChange={(event) => setCode(event.currentTarget.value)}
             placeholder={t("billing.keyLabel")}
             aria-label={t("billing.keyLabel")}
             maxLength={KEY_MAX_LENGTH}
-            error={redeem.isError}
+            error={failure !== null}
             styles={inputStyles}
             flex={1}
+            // Typing while it is sent would reset the request under way.
+            readOnly={isPending}
             autoComplete="off"
             autoCapitalize="none"
             autoCorrect="off"
@@ -49,20 +42,20 @@ export function KeyForm(): ReactElement {
           <Button
             type="submit"
             color="primary.6"
-            c={trimmed === "" ? undefined : "textDark.6"}
+            c={canSubmit ? "textDark.6" : undefined}
             radius="md"
-            h="2.4rem"
+            h={inputStyles.input.height}
             styles={disabledButtonStyles}
-            loading={redeem.isPending}
-            disabled={trimmed === ""}
+            loading={isPending}
+            disabled={!canSubmit}
             style={{ flexShrink: 0 }}
           >
             {t("billing.keyUnlock")}
           </Button>
         </Group>
-        {redeem.isError && (
+        {failure !== null && (
           <Text fz={13} c="red.5" role="alert">
-            {t(keyErrorLabel(redeem.error))}
+            {t(failure)}
           </Text>
         )}
       </Stack>

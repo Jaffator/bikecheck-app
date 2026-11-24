@@ -58,7 +58,7 @@ gives its use back. Changing, switching off or deleting a Key never takes back w
 _Avoid_: Promo code, voucher, coupon
 
 **Locked Bike**:
-A Bike beyond the first on an account without Pro. It stays in the garage, greyed out, and does
+A Bike beyond the free ones on an account without Pro. It stays in the garage, greyed out, and does
 nothing until unlocked: no wear, no notifications, no place in lists or totals. Rides on it while
 locked wait as Unassigned Rides and land on it once it is unlocked. Unlike an Archived Bike, it is
 not the owner's act. An Archived first Bike keeps its free place; only deleting it frees that place,
