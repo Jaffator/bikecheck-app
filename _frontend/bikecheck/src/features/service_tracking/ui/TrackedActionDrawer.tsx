@@ -7,12 +7,11 @@ import { useEffect, useState, type CSSProperties, type ReactElement, type ReactN
 import { ActionIcon, Box, Button, Group, NumberInput, SimpleGrid, Stack, Switch, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import dayjs from "dayjs";
 import { Bell, CalendarDays, ChevronRight, History, Minus, Plus, RotateCcw, X } from "lucide-react";
 import Bikecheck from "@/assets/icons/bikecheck/bikecheck.svg?react";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { catalogueLabel } from "@/features/service/serviceLabels";
-import { measureLabel, positionLabel } from "@/features/components/componentLabels";
+import { measureLabel } from "@/features/components/componentLabels";
 import { attentionColor, barFill } from "@/features/service_tracking/attentionLevel";
 import {
   axisUnit,
@@ -104,7 +103,7 @@ export function TrackedActionDrawer({ action, onClose }: TrackedActionDrawerProp
         // short of covering the page it was opened from.
         content: {
           height: "auto",
-          maxHeight: "85vh",
+          maxHeight: "95dvh",
           display: "flex",
           flexDirection: "column",
         },
@@ -222,8 +221,7 @@ function PlanSetting({ action, onTap }: { action: TrackedAction; onTap: () => vo
   );
 }
 
-// The job leads, because the drawer is about work waiting; the part's own name follows, then
-// which kind it is — the side is what tells two tyres apart — and since when it is on.
+// The job leads, because the drawer is about work waiting; the part's own name follows.
 function Header({
   action,
   job,
@@ -235,11 +233,6 @@ function Header({
 }): ReactElement {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
-  const side = positionLabel(action.position, t);
-  const type = catalogueLabel(action.component_type_i18n_key, action.component_type, t);
-  const typeAndSide = side === null ? type : `${type} (${side})`;
-  const mounted = action.mounted_at === null ? null : dayjs(action.mounted_at).format("D. M. YYYY");
-  const meta = mounted === null ? typeAndSide : `${typeAndSide} · ${t("tracking.mountedOn", { date: mounted })}`;
   const desc = action.component_desc;
 
   return (
@@ -253,9 +246,6 @@ function Header({
             {desc}
           </Text>
         )}
-        <Text className="tabular-nums" fz={12} c="text.8" lineClamp={1}>
-          {meta}
-        </Text>
       </Stack>
 
       {/* A bottom sheet wears the wrapper's ✕ in its corner. */}
@@ -297,7 +287,7 @@ function ReadingCard({ action }: { action: TrackedAction }): ReactElement {
             {t(`tracking.levelNote.${action.level}`)}
           </Text>
         </Stack>
-        <Text className="tabular-nums" fz={36} fw={700} c={color} lh={1} lts="var(--tracking-display)" style={{ flexShrink: 0 }}>
+        <Text className="tabular-nums" fz={28} fw={700} c={color} lh={1} lts="var(--tracking-display)" style={{ flexShrink: 0 }}>
           {t("tracking.percentage", { value: action.percentage })}
         </Text>
       </Group>
@@ -352,7 +342,7 @@ function LevelBadge({ label, color }: { label: string; color: string }): ReactEl
 // One figure under the bar, on a tile of its own so the two read as a pair.
 function FigureTile({ label, color, children }: { label: string; color?: string; children: ReactNode }): ReactElement {
   return (
-    <Stack gap={4} px={14} py={12} style={{ minWidth: 0, borderRadius: 12, backgroundColor: "var(--mantine-color-cards-6)" }}>
+    <Stack gap={4} px={12} py={10} style={{ minWidth: 0, borderRadius: 12, backgroundColor: "var(--mantine-color-cards-6)" }}>
       <Text fz={11} fw={500} tt="uppercase" lts="var(--tracking-label)" c="text.8" lineClamp={1}>
         {label}
       </Text>

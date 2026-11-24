@@ -18,7 +18,6 @@ import { useHeaderStore } from "@/store/store";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useScrollIntoViewOnFocus } from "@/hooks/useScrollIntoViewOnFocus";
 import { PINNED_BAR_LEFT, PINNED_BAR_WIDTH } from "@/layout/contentWidth";
-import { GroupedList } from "@/components/GroupedList";
 import { LIST_ROW_HEIGHT } from "@/components/groupedListStyles";
 import { NoteRow } from "@/components/NoteRow";
 import { PriceRow } from "@/components/PriceRow";
@@ -38,6 +37,7 @@ import { useIsDesktop } from "@/layout/breakpoints";
 import { catalogueLabel, componentTypeLabel, shortComponentLabel } from "@/features/service/serviceLabels";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { componentTypeIcon } from "@/features/service/ui/componentIcon";
+import { ActionList } from "./ActionList";
 import { CustomTagDrawer } from "./CustomTagDrawer";
 import { NOTE_MAX_LENGTH, type DraftBlock, type PickedAction } from "./serviceWizard.types";
 
@@ -154,11 +154,21 @@ export function ServiceActionsStep({
         )}
 
         {serviceActions.length > 0 && (
-          <GroupedList title={t("addService.groupService")}>{serviceActions.map(renderAction)}</GroupedList>
+          <ActionList
+            title={t("addService.groupService")}
+            actions={serviceActions}
+            openId={openActionId}
+            renderAction={renderAction}
+          />
         )}
 
         {replacementActions.length > 0 && (
-          <GroupedList title={t("addService.groupReplacement")}>{replacementActions.map(renderAction)}</GroupedList>
+          <ActionList
+            title={t("addService.groupReplacement")}
+            actions={replacementActions}
+            openId={openActionId}
+            renderAction={renderAction}
+          />
         )}
       </Stack>
 

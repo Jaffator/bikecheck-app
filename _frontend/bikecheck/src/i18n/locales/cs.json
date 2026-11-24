@@ -15,7 +15,6 @@
     "axisWearIndex": "Index opotřebení",
     "logReplacement": "Zapsat výměnu",
     "logService": "Zapsat servis",
-    "mountedOn": "nasazeno {{date}}",
     "remaining": "Zbývá",
     "leftValue": "zbývá {{value}}",
     "overValue": "{{value}} po termínu",
