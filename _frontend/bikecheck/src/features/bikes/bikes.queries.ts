@@ -100,7 +100,7 @@ export function useCreateBike(): UseMutationResult<Bike, Error, CreateBikeInput>
   return useMutation({
     mutationFn: (input: CreateBikeInput) => createBike(input),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: BIKE_LIMIT_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: BIKE_LIMIT_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: ["bikes"] });
       // Refresh bikes available to the gear-pairing sheet.
       await queryClient.invalidateQueries({ queryKey: ["gearLinking"] });

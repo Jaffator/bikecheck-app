@@ -55,7 +55,7 @@ A Bike beyond the first on an account without Pro. It stays in the garage, greye
 nothing until unlocked: no wear, no notifications, no place in lists or totals. Rides on it while
 locked wait as Unassigned Rides and land on it once it is unlocked. Unlike an Archived Bike, it is
 not the owner's act. An Archived first Bike keeps its free place; only deleting it frees that place,
-for the oldest remaining Bike.
+for the oldest remaining Bike. Comes with Pro; until Pro exists no Bike is ever locked.
 _Avoid_: Inactive bike, disabled bike
 
 **Deleting a Bike**:

@@ -19,7 +19,11 @@ export function useAddBikeGate(): (options?: EnterOptions) => Promise<void> {
 
   return useCallback(
     async ({ replace, onRefused }: EnterOptions = {}): Promise<void> => {
-      if (knownToHaveRoom(queryClient) || (await askForRoom(queryClient))) {
+      const from = window.location.href;
+      const hasRoom = knownToHaveRoom(queryClient) || (await askForRoom(queryClient));
+      // Gone elsewhere meanwhile, or a second tap. The whole href: native routes live in the hash.
+      if (window.location.href !== from) return;
+      if (hasRoom) {
         navigate(ADD_BIKE.path, { replace });
         return;
       }
