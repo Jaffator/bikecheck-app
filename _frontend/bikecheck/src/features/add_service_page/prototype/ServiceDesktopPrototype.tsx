@@ -1,15 +1,15 @@
 // PROTOTYPE (proto/desktop-wizards): the service wizard on desktop as one screen in three zones -
 // which part, what was done, and the Service itself. Design: "BikeCheck desktop redesign" canvas.
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
-import { Box, Button, Group, Loader, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Fragment, useEffect, useRef, useState, type ReactElement } from "react";
+import { Box, Button, Group, Loader, Stack, Text, UnstyledButton } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { GroupedList } from "@/components/GroupedList";
 import { catalogueLabel } from "@/features/service/serviceLabels";
 import type { BikeCategory, CatalogueAction, CategoryActions } from "@/features/service/service.types";
 import { categoryIcon } from "@/features/service/ui/categoryIcon";
 import { useHeaderStore } from "@/store/store";
+import { ActionList } from "../ActionList";
 import { ActionRow } from "../ServiceActionsStep";
 import type { PickedAction } from "../serviceWizard.types";
 import { ServicePanelPrototype } from "./ServicePanelPrototype";
@@ -243,38 +243,6 @@ function CategoryButton({
         </Box>
       )}
     </UnstyledButton>
-  );
-}
-
-// The open action steps out of the list as a card of its own, the same surface but raised.
-const LIFTED_CARD: CSSProperties = {
-  backgroundColor: "var(--mantine-color-cards-6)",
-  border: "none",
-  boxShadow: "var(--elev-hero)",
-};
-
-interface ActionListProps {
-  actions: CatalogueAction[];
-  openId: number | null;
-  renderAction: (action: CatalogueAction) => ReactElement;
-}
-
-// The list closes up around the open action, so the one being filled in reads as the focus.
-function ActionList({ actions, openId, renderAction }: ActionListProps): ReactElement {
-  const index = actions.findIndex((action) => action.id === openId);
-  if (index < 0) return <GroupedList>{actions.map(renderAction)}</GroupedList>;
-
-  const before = actions.slice(0, index);
-  const after = actions.slice(index + 1);
-
-  return (
-    <Stack gap={8}>
-      {before.length > 0 && <GroupedList>{before.map(renderAction)}</GroupedList>}
-      <Paper radius="lg" px="md" style={LIFTED_CARD}>
-        {renderAction(actions[index])}
-      </Paper>
-      {after.length > 0 && <GroupedList>{after.map(renderAction)}</GroupedList>}
-    </Stack>
   );
 }
 

@@ -111,7 +111,7 @@
   --color-text-bright: #e4e2e2;
   --color-text-dim: #cec7bf;
   --color-accent: #b7c9d3;
-  --color-surface: #2a241f;
+  --color-surface: #2e2823;
   --color-border-solid: #757575;
   --color-border-strong: rgba(255, 255, 255, 0.12);
   --color-border-subtle: rgba(255, 255, 255, 0.07);
@@ -119,15 +119,15 @@
   --color-decor: #352e28;
   /* A track sunk below the hero card's own surface (cards.6, #282828) rather than beside
      it, so the bar reads as a groove the meter fills. */
-  --color-decor-deep: #1a1612;
+  --color-decor-deep: #1e1a16;
   /* The same groove, sunk only half a step below cards.6 - for a track on a row card,
      which carries less light than the hero and would read as a hole at the deep shade. */
-  --color-decor-sunk: #201b1b;
+  --color-decor-sunk: #241f1f;
   /* Design canvas "Dark surface ladder": a card on a sheet is one step lighter than the sheet,
      a control track one step darker (a well). The sheet itself is cards.6. */
-  --color-surface-raised: #262626;
-  --color-border-raised: #333333;
-  --color-surface-well: #121212;
+  --color-surface-raised: #2a2a2a;
+  --color-border-raised: #373737;
+  --color-surface-well: #161616;
 
   --font-sans: "Geist", sans-serif;
 

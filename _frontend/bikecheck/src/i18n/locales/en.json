@@ -13,7 +13,6 @@
     "axisWearIndex": "Wear index",
     "logReplacement": "Log replacement",
     "logService": "Log service",
-    "mountedOn": "mounted {{date}}",
     "remaining": "Remaining",
     "leftValue": "{{value}} left",
     "overValue": "{{value}} over",
