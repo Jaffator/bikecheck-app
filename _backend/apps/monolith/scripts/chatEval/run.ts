@@ -73,7 +73,7 @@ function normalise(text: string): string {
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .replace(/(\d)[\s  ](?=\d)/g, '$1');
+    .replace(/(\d)[\s](?=\d)/g, '$1');
 }
 
 // Roughly how many sentences an answer runs to. A refusal that goes on is not a refusal.
