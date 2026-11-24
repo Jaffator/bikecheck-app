@@ -67,7 +67,7 @@ interface ItemResult {
 }
 
 // Numbers are read, not spelled: "1 620 Kc", "1620,-" and "1620" are the same answer, and so are
-// "řetěz" and "retez". Everything is folded down to that before a check looks at it.
+// "řetěz" and "retez". Everything is folded down to that before a check looks at it ok.
 function normalise(text: string): string {
   return text
     .normalize('NFD')
