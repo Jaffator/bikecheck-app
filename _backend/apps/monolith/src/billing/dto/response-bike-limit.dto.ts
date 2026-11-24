@@ -9,4 +9,7 @@ export class ResponseBikeLimitDto {
 
   @ApiProperty({ example: false, description: 'True when an Archived Bike is among the counted' })
   has_archived_bikes!: boolean;
+
+  @ApiProperty({ example: false, description: 'True once the account has used a Key' })
+  key_used!: boolean;
 }

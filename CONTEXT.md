@@ -45,10 +45,17 @@ not the device.
 _Avoid_: Premium, subscription
 
 **Free**:
-What an account without Pro is on: one Bike and 100 AI questions a month. Every Bike it has counts,
-archived ones included; only Deleting a Bike frees its place. At the limit nothing but adding a Bike
-is refused: restoring an Archived Bike always works, and an account over the limit keeps them all.
+What an account without Pro is on: one Bike, two with a Key, and 100 AI questions a month. Every Bike
+it has counts, archived ones included; only Deleting a Bike frees its place. At the limit nothing but
+adding a Bike is refused: restoring an Archived Bike always works, and an account over the limit keeps
+them all.
 _Avoid_: Trial, basic plan
+
+**Key**:
+A code the owner sends privately to early users, which gives an account its second Bike for good. One
+Key is shared by many accounts, up to its own cap; an account uses one at most, and a deleted account
+gives its use back. Changing, switching off or deleting a Key never takes back what it gave.
+_Avoid_: Promo code, voucher, coupon
 
 **Locked Bike**:
 A Bike beyond the first on an account without Pro. It stays in the garage, greyed out, and does

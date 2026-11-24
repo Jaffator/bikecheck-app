@@ -1631,7 +1631,14 @@
     "limitTitle_one": "Your first bike is free",
     "limitTitle_other": "Your first {{count}} bikes are free",
     "limitBody": "More bikes will be paid later on.",
-    "limitArchived": "Archived bikes count too."
+    "limitArchived": "Archived bikes count too.",
+    "keyPrompt": "Have an early user key? Enter it to add a second bike for free.",
+    "keyLabel": "Key",
+    "keyUnlock": "Unlock",
+    "keyNotValid": "This key is not valid. Check it and try again.",
+    "keyUsedUp": "This key has been used up.",
+    "keyTooMany": "Too many attempts. Try again in a minute.",
+    "keyFailed": "The key could not be checked. Try again."
   },
   "onboarding": {
     "welcome": {

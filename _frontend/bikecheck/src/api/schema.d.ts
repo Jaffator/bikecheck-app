@@ -562,6 +562,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/billing/redeem-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Redeem a Key; an account that already used one gets its current state back */
+        post: operations["Billing redeemKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bike-events/create": {
         parameters: {
             query?: never;
@@ -2574,6 +2591,18 @@ export interface components {
              * @example false
              */
             has_archived_bikes: boolean;
+            /**
+             * @description True once the account has used a Key
+             * @example false
+             */
+            key_used: boolean;
+        };
+        RedeemKeyDto: {
+            /**
+             * @description Letter case and surrounding spaces do not matter
+             * @example ABCD-1234
+             */
+            code: string;
         };
         Attachment_BikeEventDto: {
             /** @example faktura.pdf */
@@ -5554,6 +5583,50 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ResponseBikeLimitDto"];
                 };
+            };
+        };
+    };
+    "Billing redeemKey": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RedeemKeyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseBikeLimitDto"];
+                };
+            };
+            /** @description KEY_NOT_VALID */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description KEY_USED_UP */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description More than 5 attempts a minute */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

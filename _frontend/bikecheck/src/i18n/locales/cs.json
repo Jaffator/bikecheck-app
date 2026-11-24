@@ -1728,7 +1728,14 @@
     "limitTitle_many": "Zdarma máš {{count}} kola",
     "limitTitle_other": "Zdarma máš {{count}} kol",
     "limitBody": "Další kola budou časem placená, platbu teprve připravujeme.",
-    "limitArchived": "Počítají se i archivovaná kola."
+    "limitArchived": "Počítají se i archivovaná kola.",
+    "keyPrompt": "Máš klíč pro první uživatele? Zadej ho a přidáš druhé kolo zdarma.",
+    "keyLabel": "Klíč",
+    "keyUnlock": "Odemknout",
+    "keyNotValid": "Tenhle klíč neplatí. Zkontroluj ho a zkus to znovu.",
+    "keyUsedUp": "Tenhle klíč už je vyčerpaný.",
+    "keyTooMany": "Moc pokusů. Zkus to znovu za minutu.",
+    "keyFailed": "Klíč se nepodařilo ověřit. Zkus to znovu."
   },
   "onboarding": {
     "welcome": {

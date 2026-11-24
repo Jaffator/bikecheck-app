@@ -1046,6 +1046,47 @@
         ]
       }
     },
+    "/api/billing/redeem-key": {
+      "post": {
+        "operationId": "Billing redeemKey",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseBikeLimitDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "KEY_NOT_VALID"
+          },
+          "409": {
+            "description": "KEY_USED_UP"
+          },
+          "429": {
+            "description": "More than 5 attempts a minute"
+          }
+        },
+        "summary": "Redeem a Key; an account that already used one gets its current state back",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
     "/api/bike-events/create": {
       "post": {
         "operationId": "BikeEvent create",
@@ -5648,12 +5689,33 @@
             "type": "boolean",
             "example": false,
             "description": "True when an Archived Bike is among the counted"
+          },
+          "key_used": {
+            "type": "boolean",
+            "example": false,
+            "description": "True once the account has used a Key"
           }
         },
         "required": [
           "bike_limit",
           "bike_count",
-          "has_archived_bikes"
+          "has_archived_bikes",
+          "key_used"
+        ]
+      },
+      "RedeemKeyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "ABCD-1234",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Letter case and surrounding spaces do not matter"
+          }
+        },
+        "required": [
+          "code"
         ]
       },
       "Attachment_BikeEventDto": {

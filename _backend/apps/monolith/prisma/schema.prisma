@@ -504,6 +504,18 @@ model account_events {
   @@index([occurred_at])
 }
 
+// A Key: a shared code granting a bike limit to a capped number of accounts. Rows are made by
+// hand; max_accounts 0 switches one off. Uses are counted from the accounts holding it.
+model bike_keys {
+  id           Int      @id @default(autoincrement())
+  // Unique by lower(btrim(code)), an index Prisma cannot declare.
+  code         String   @db.VarChar
+  bike_limit   Int
+  max_accounts Int
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  users        users[]
+}
+
 // The account. Deleted hard, never archived (ADR 0028): everything below cascades from
 // this row, so a deleted account leaves nothing of the rider behind.
 model users {
@@ -542,7 +554,10 @@ model users {
   hints_enabled         Boolean                @default(true)
   // How many Bikes the account may hold, archived ones included. Free is one.
   bike_limit            Int                    @default(1)
+  // The Key the account used, at most one. The limit it granted outlives it.
+  bike_key_id           Int?
   accounts              accounts[]
+  bike_key              bike_keys?             @relation(fields: [bike_key_id], references: [id])
   bikes                 bikes[]
   chat_messages         chat_messages[]
   component_types       component_types[]
@@ -558,6 +573,7 @@ model users {
   reports               reports[]
   rides                 rides[]
 
+  @@index([bike_key_id])
   @@index([created_at], map: "users_created_at")
   @@index([last_login_at], map: "users_last_login_at")
   @@index([name], map: "users_name")
