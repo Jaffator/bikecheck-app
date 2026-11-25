@@ -59,7 +59,7 @@ export function BikeLimitSheet(): ReactElement {
       zIndex={SHEET_Z_INDEX}
       styles={isDesktop ? DESKTOP_STYLES : phoneStyles(keyboardOffset)}
     >
-      <ProSheetBody overWizard={overWizard} isTyping={keyboardOffset > 0} onGoOn={goOn} />
+      <ProSheetBody overWizard={overWizard} isTyping={keyboardOffset > 0} onGoOn={goOn} onClose={hide} />
     </ResponsiveSheet>
   );
 }

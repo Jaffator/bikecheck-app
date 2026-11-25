@@ -2,8 +2,9 @@ import { useRef, useState } from "react";
 import { hasPro } from "./bikeLimit";
 import { useBikeLimit, useRedeemKey } from "./billing.queries";
 import { redeemFailureText } from "./redeemFailure";
+import { useProPurchase, type ProPurchase, type PurchaseStep } from "./useProPurchase";
 
-export type ProStep = "offer" | "key" | "keyChecking" | "keyFailed" | "keyDone";
+export type ProStep = "offer" | "key" | "keyChecking" | "keyFailed" | "keyDone" | PurchaseStep;
 
 export interface ProSheetState {
   step: ProStep;
@@ -18,12 +19,14 @@ export interface ProSheetState {
   showKey: () => void;
   showOffer: () => void;
   submit: () => void;
+  purchase: ProPurchase;
 }
 
 // The steps of the Pro sheet. It holds one opening: the sheet is remounted for the next.
 export function useProSheet(): ProSheetState {
   const { data: limit } = useBikeLimit();
   const redeem = useRedeemKey();
+  const purchase = useProPurchase();
   const [opened, setOpened] = useState<"offer" | "key">("offer");
   const [code, setCode] = useState("");
   // A double tap lands before the checking step is drawn.
@@ -38,7 +41,7 @@ export function useProSheet(): ProSheetState {
     if (limit !== undefined && hasPro(limit)) return "keyDone";
     if (redeem.isPending) return "keyChecking";
     if (redeem.isError) return "keyFailed";
-    return opened;
+    return purchase.step ?? opened;
   }
 
   return {
@@ -57,6 +60,7 @@ export function useProSheet(): ProSheetState {
     showOffer: () => {
       setOpened("offer");
       redeem.reset();
+      purchase.leave();
     },
     submit: () => {
       if (!canSubmit || isSending.current) return;
@@ -67,5 +71,6 @@ export function useProSheet(): ProSheetState {
         },
       });
     },
+    purchase,
   };
 }

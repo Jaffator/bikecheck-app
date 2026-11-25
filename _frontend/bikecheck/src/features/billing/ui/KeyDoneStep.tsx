@@ -1,16 +1,10 @@
 // Pro from a key: what the rider has, that it is free, and the way on to the bike.
 import type { ReactElement, RefObject } from "react";
-import { Group, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ProPrimaryButton } from "./ProButtons";
+import { ProOutcomeHeading } from "./ProOutcomeHeading";
+import { ProRows } from "./ProRows";
 import { ProStepFrame } from "./ProStepFrame";
-import { ProTitle } from "./ProTitle";
-
-const ROWS = [
-  { label: "billing.rowBikes", value: "billing.rowBikesValue" },
-  { label: "billing.rowAi", value: "billing.rowAiValue" },
-  { label: "billing.rowPrice", value: "billing.rowPriceValue" },
-] as const;
 
 interface KeyDoneStepProps {
   headingRef: RefObject<HTMLHeadingElement | null>;
@@ -26,42 +20,14 @@ export function KeyDoneStep({ headingRef, overWizard, onGoOn }: KeyDoneStepProps
     <ProStepFrame
       actions={<ProPrimaryButton label={t(overWizard ? "billing.continue" : "billing.addBike")} onClick={onGoOn} />}
     >
-      <Group gap={12} wrap="nowrap">
-        <DoneCheck />
-        <ProTitle headingRef={headingRef} fz={28} lh="36px" fw={700} lts="var(--tracking-display)">
-          {t("billing.unlockedTitle")}
-        </ProTitle>
-      </Group>
-      <dl className="pro-rows">
-        {ROWS.map((row) => (
-          <div key={row.label} className="pro-rows__row">
-            <Text component="dt" fz="inherit" lh="20px" c="text.7">
-              {t(row.label)}
-            </Text>
-            <Text component="dd" m={0} ta="right" fz="inherit" lh="20px" fw={500} c="text.6">
-              {t(row.value)}
-            </Text>
-          </div>
-        ))}
-      </dl>
-    </ProStepFrame>
-  );
-}
-
-function DoneCheck(): ReactElement {
-  return (
-    <svg width={36} height={36} viewBox="0 0 64 64" aria-hidden style={{ flexShrink: 0 }}>
-      <circle className="pro-check__disc" cx={32} cy={32} r={32} fill="var(--mantine-color-primary-6)" />
-      <path
-        className="pro-check__tick"
-        pathLength={1}
-        d="M20 33 28.5 41.5 45 24"
-        fill="none"
-        stroke="var(--mantine-color-textDark-6)"
-        strokeWidth={6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      <ProOutcomeHeading headingRef={headingRef} title={t("billing.unlockedTitle")} outcome="done" />
+      <ProRows
+        rows={[
+          { label: t("billing.rowBikes"), value: t("billing.rowBikesValue") },
+          { label: t("billing.rowAi"), value: t("billing.rowAiValue") },
+          { label: t("billing.rowPrice"), value: t("billing.rowPriceValue") },
+        ]}
       />
-    </svg>
+    </ProStepFrame>
   );
 }

@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode, RefObject } from "react";
 import { Title, type TitleProps } from "@mantine/core";
 
-interface ProTitleProps extends Pick<TitleProps, "fz" | "lh" | "fw" | "lts"> {
+interface ProTitleProps extends Pick<TitleProps, "fz" | "lh" | "fw" | "lts" | "c"> {
   headingRef: RefObject<HTMLHeadingElement | null>;
   children: ReactNode;
 }

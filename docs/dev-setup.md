@@ -96,7 +96,18 @@ cd _backend && npm run strava_app:start:dev       # Strava service
 cd _frontend/bikecheck && npm run dev             # app on :5173
 ```
 
-## 8. Check the code
+## 8. Look at the purchase of Pro (optional)
+
+Pro is not for sale yet. Its purchase steps show in local development only, with a simulated payment;
+a production build ignores the switch. In `_frontend/bikecheck/.env.local`:
+
+| Variable | Value |
+|---|---|
+| `VITE_PRO_SALES` | `true` turns the purchase steps on |
+| `VITE_PRO_PLATFORM` | `web` or `android`; left out, the platform the app runs on |
+| `VITE_PRO_PAYMENT` | `failed` refuses the payment; left out, it passes |
+
+## 9. Check the code
 
 ```bash
 # frontend typecheck
