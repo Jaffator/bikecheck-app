@@ -20,7 +20,9 @@ const SAFE_TOP = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
 
 // The columns reach the modal's edges, so its ✕ lies over them.
 const CLOSE_STRIP = 56;
-const DESKTOP_STYLES: Record<"header" | "body", CSSProperties> = {
+// The page behind is near-black, so a faint edge is what sets the modal off it.
+const DESKTOP_STYLES: Record<"content" | "header" | "body", CSSProperties> = {
+  content: { border: "1px solid var(--color-border-strong)" },
   header: { minHeight: CLOSE_STRIP, marginBottom: -CLOSE_STRIP, padding: "0 16px", backgroundColor: "transparent" },
   body: { padding: 0 },
 };
