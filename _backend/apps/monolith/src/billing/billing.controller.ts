@@ -11,7 +11,7 @@ export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 
   // ---------- GET the account's bike limit ----------
-  @ApiOperation({ summary: "The signed-in account's bike limit and what counts against it" })
+  @ApiOperation({ summary: "The signed-in account's bike limit, what counts against it and since when it has Pro" })
   @ApiResponse({ status: 200, type: ResponseBikeLimitDto })
   @Get('bike-limit')
   async bikeLimit(@CurrentUser('userId') userId: string): Promise<ResponseBikeLimitDto> {
@@ -19,7 +19,7 @@ export class BillingController {
   }
 
   // ---------- POST a Key ----------
-  @ApiOperation({ summary: 'Redeem a Key; an account that already used one gets its current state back' })
+  @ApiOperation({ summary: 'Redeem a Key for Pro; an account that has Pro gets its current state back' })
   @ApiResponse({ status: 200, type: ResponseBikeLimitDto })
   @ApiResponse({ status: 404, description: 'KEY_NOT_VALID' })
   @ApiResponse({ status: 409, description: 'KEY_USED_UP' })

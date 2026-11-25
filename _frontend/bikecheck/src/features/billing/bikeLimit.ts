@@ -9,8 +9,8 @@ export function isBikeLimitError(error: unknown): boolean {
   return error instanceof ApiError && error.details.includes(BIKE_LIMIT_REACHED);
 }
 
-export function hasRoom({ bike_count, bike_limit }: BikeLimit): boolean {
-  return bike_count < bike_limit;
+export function hasRoom({ pro_since, bike_count, bike_limit }: BikeLimit): boolean {
+  return pro_since !== null || bike_count < bike_limit;
 }
 
 // Read without a request, so the wizard opens in the same tick as the tap.

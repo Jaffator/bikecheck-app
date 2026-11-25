@@ -20,14 +20,14 @@ export function useBikeLimit(): UseQueryResult<BikeLimit> {
   return useQuery(bikeLimitQuery);
 }
 
-// A hook option, not mutate's own: the raised limit unmounts the form, which would drop that.
-export function useRedeemKey(onRedeemed: (limit: BikeLimit) => void): UseMutationResult<BikeLimit, Error, string> {
+// A hook option, not mutate's own: Pro unmounts the form, which would drop that.
+export function useRedeemKey(onRedeemed: () => void): UseMutationResult<BikeLimit, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: redeemKey,
     onSuccess: (limit) => {
       queryClient.setQueryData(BIKE_LIMIT_QUERY_KEY, limit);
-      onRedeemed(limit);
+      onRedeemed();
     },
   });
 }

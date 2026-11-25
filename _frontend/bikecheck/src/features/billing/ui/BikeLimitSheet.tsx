@@ -20,7 +20,7 @@ export function BikeLimitSheet(): ReactElement {
   const hide = useBikeLimitStore((state) => state.hide);
   const { data: limit } = useBikeLimit();
   const keyboardOffset = useKeyboardOffset();
-  const canUseKey = limit?.bike_limit === FREE_BIKE_LIMIT && !limit.key_used;
+  const canUseKey = limit?.pro_since === null;
   // Mounted after whatever it opens over, so one Esc does not close the summary with it.
   const opening = useOpeningCount(opened);
 

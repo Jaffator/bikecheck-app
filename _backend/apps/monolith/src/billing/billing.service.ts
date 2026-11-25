@@ -3,7 +3,7 @@ import { Prisma, bike_keys, users } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResponseBikeLimitDto } from './dto/response-bike-limit.dto';
 
-type AccountLimit = Pick<users, 'bike_limit' | 'bike_key_id'>;
+type AccountLimit = Pick<users, 'bike_limit' | 'pro_since'>;
 
 @Injectable()
 export class BillingService {
@@ -12,7 +12,7 @@ export class BillingService {
   // Archived bikes count too: only deleting a bike frees its place.
   async bikeLimit(userId: number): Promise<ResponseBikeLimitDto> {
     const [user, bikeCount, archivedCount] = await Promise.all([
-      this.prisma.users.findUnique({ where: { id: userId }, select: { bike_limit: true, bike_key_id: true } }),
+      this.prisma.users.findUnique({ where: { id: userId }, select: { bike_limit: true, pro_since: true } }),
       this.prisma.bikes.count({ where: { user_id: userId } }),
       this.prisma.bikes.count({ where: { user_id: userId, is_deleted: true } }),
     ]);
@@ -22,48 +22,46 @@ export class BillingService {
       bike_limit: user.bike_limit,
       bike_count: bikeCount,
       has_archived_bikes: archivedCount > 0,
-      key_used: user.bike_key_id !== null,
+      pro_since: user.pro_since,
     };
   }
 
   // Cheap refusal before any photo is stored; holdBikePlace is what actually keeps the limit.
   async requireBikePlace(userId: number): Promise<void> {
-    const { bike_limit: limit, bike_count: count } = await this.bikeLimit(userId);
-    refuseOverLimit(count, limit);
+    const state = await this.bikeLimit(userId);
+    refuseOverLimit(state, state.bike_count);
   }
 
   // Locks the account row until the creating transaction ends, so two requests cannot take one place.
   async holdBikePlace(db: Prisma.TransactionClient, userId: number): Promise<void> {
     const account = await lockAccount(db, userId);
-    refuseOverLimit(await db.bikes.count({ where: { user_id: userId } }), account.bike_limit);
+    refuseOverLimit(account, await db.bikes.count({ where: { user_id: userId } }));
   }
 
-  // One key per account: a repeat, whatever it carries, changes nothing.
+  // Pro has no end (ADR 0048): an account that has it, whatever it enters, keeps it as it stands.
   async redeemKey(userId: number, code: string): Promise<ResponseBikeLimitDto> {
     await this.prisma.$transaction(async (db) => {
       const account = await lockAccount(db, userId);
-      if (account.bike_key_id !== null) return;
+      if (account.pro_since !== null) return;
 
       const key = await lockKey(db, code);
       const uses = await db.users.count({ where: { bike_key_id: key.id } });
       if (uses >= key.max_accounts) throw new ConflictException('KEY_USED_UP');
 
-      // A limit raised by hand is never lowered.
-      const bikeLimit = Math.max(account.bike_limit, key.bike_limit);
-      await db.users.update({ where: { id: userId }, data: { bike_key_id: key.id, bike_limit: bikeLimit } });
+      await db.users.update({ where: { id: userId }, data: { bike_key_id: key.id, pro_since: new Date() } });
     });
 
     return await this.bikeLimit(userId);
   }
 }
 
-function refuseOverLimit(bikeCount: number, bikeLimit: number): void {
-  if (bikeCount >= bikeLimit) throw new ForbiddenException('BIKE_LIMIT_REACHED');
+function refuseOverLimit({ pro_since, bike_limit }: AccountLimit, bikeCount: number): void {
+  if (pro_since === null && bikeCount >= bike_limit) throw new ForbiddenException('BIKE_LIMIT_REACHED');
 }
 
 async function lockAccount(db: Prisma.TransactionClient, userId: number): Promise<AccountLimit> {
   const [account] = await db.$queryRaw<AccountLimit[]>`
-    SELECT bike_limit, bike_key_id FROM users WHERE id = ${userId} FOR UPDATE
+    SELECT bike_limit, pro_since FROM users WHERE id = ${userId} FOR UPDATE
   `;
   if (!account) throw new NotFoundException('User not found');
 

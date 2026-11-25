@@ -504,13 +504,12 @@ model account_events {
   @@index([occurred_at])
 }
 
-// A Key: a shared code granting a bike limit to a capped number of accounts. Rows are made by
+// A Key: a shared code giving Pro to a capped number of accounts. Rows are made by
 // hand; max_accounts 0 switches one off. Uses are counted from the accounts holding it.
 model bike_keys {
   id           Int      @id @default(autoincrement())
   // Unique by lower(btrim(code)), an index Prisma cannot declare.
   code         String   @db.VarChar
-  bike_limit   Int
   max_accounts Int
   created_at   DateTime @default(now()) @db.Timestamptz(6)
   users        users[]
@@ -552,10 +551,12 @@ model users {
   // Keys of the dismissed Hints. A new Hint is a new key, with no migration.
   hints_seen            String[]               @default([])
   hints_enabled         Boolean                @default(true)
-  // How many Bikes the account may hold, archived ones included. Free is one.
+  // How many Bikes the account may hold without Pro, archived ones included; raised by hand.
   bike_limit            Int                    @default(1)
-  // The Key the account used, at most one. The limit it granted outlives it.
+  // The Key the account used, at most one; its uses are counted from this.
   bike_key_id           Int?
+  // When Pro started, null without it. Kept apart from the Key, which may be deleted (ADR 0048).
+  pro_since             DateTime?              @db.Timestamptz(6)
   accounts              accounts[]
   bike_key              bike_keys?             @relation(fields: [bike_key_id], references: [id])
   bikes                 bikes[]

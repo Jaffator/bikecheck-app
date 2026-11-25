@@ -1729,7 +1729,7 @@
     "limitTitle_other": "Zdarma máš {{count}} kol",
     "limitBody": "Další kola budou časem placená, platbu teprve připravujeme.",
     "limitArchived": "Počítají se i archivovaná kola.",
-    "keyPrompt": "Máš klíč pro první uživatele? Zadej ho a přidáš druhé kolo zdarma.",
+    "keyPrompt": "Máš klíč pro první uživatele? Zadej ho a přidáš si zdarma kol, kolik chceš.",
     "keyLabel": "Klíč",
     "keyUnlock": "Odemknout",
     "keyNotValid": "Tenhle klíč neplatí. Zkontroluj ho a zkus to znovu.",

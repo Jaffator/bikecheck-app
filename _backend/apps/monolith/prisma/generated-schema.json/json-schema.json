@@ -1495,9 +1495,6 @@
         "code": {
           "type": "string"
         },
-        "bike_limit": {
-          "type": "integer"
-        },
         "max_accounts": {
           "type": "integer"
         },
@@ -1675,6 +1672,13 @@
         "bike_limit": {
           "type": "integer",
           "default": 1
+        },
+        "pro_since": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
         },
         "accounts": {
           "type": "array",

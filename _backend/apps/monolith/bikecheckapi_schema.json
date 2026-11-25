@@ -1040,7 +1040,7 @@
             }
           }
         },
-        "summary": "The signed-in account's bike limit and what counts against it",
+        "summary": "The signed-in account's bike limit, what counts against it and since when it has Pro",
         "tags": [
           "Billing"
         ]
@@ -1081,7 +1081,7 @@
             "description": "More than 5 attempts a minute"
           }
         },
-        "summary": "Redeem a Key; an account that already used one gets its current state back",
+        "summary": "Redeem a Key for Pro; an account that has Pro gets its current state back",
         "tags": [
           "Billing"
         ]
@@ -5678,7 +5678,7 @@
           "bike_limit": {
             "type": "number",
             "example": 1,
-            "description": "How many Bikes the account may hold"
+            "description": "How many Bikes the account may hold without Pro"
           },
           "bike_count": {
             "type": "number",
@@ -5690,17 +5690,19 @@
             "example": false,
             "description": "True when an Archived Bike is among the counted"
           },
-          "key_used": {
-            "type": "boolean",
-            "example": false,
-            "description": "True once the account has used a Key"
+          "pro_since": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "example": "2026-11-25T10:00:00.000Z",
+            "description": "When Pro started, null without Pro. With Pro the limit does not apply"
           }
         },
         "required": [
           "bike_limit",
           "bike_count",
           "has_archived_bikes",
-          "key_used"
+          "pro_since"
         ]
       },
       "RedeemKeyDto": {

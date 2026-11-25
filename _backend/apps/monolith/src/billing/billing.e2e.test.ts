@@ -14,6 +14,13 @@ interface Rider {
   accessToken: string | undefined;
 }
 
+interface BikeLimitState {
+  bike_limit: number;
+  bike_count: number;
+  has_archived_bikes: boolean;
+  pro_since: string | null;
+}
+
 describe('Bike limit (e2e)', () => {
   let app: NestExpressApplication;
   let prisma: PrismaService;
@@ -86,7 +93,7 @@ describe('Bike limit (e2e)', () => {
     await prisma.users.update({ where: { id: rider.id }, data: { bike_limit: limit } });
   };
 
-  const readLimit = async (): Promise<unknown> => {
+  const readLimit = async (): Promise<BikeLimitState> => {
     const response = await request(app.getHttpServer())
       .get('/api/billing/bike-limit')
       .set('Authorization', `Bearer ${rider.accessToken}`)
@@ -126,7 +133,7 @@ describe('Bike limit (e2e)', () => {
 
   // Runs first, before any test sets a limit, so what it reads is the default.
   it('gives a new account one place and no bike in it', async () => {
-    expect(await readLimit()).toEqual({ bike_limit: 1, bike_count: 0, has_archived_bikes: false, key_used: false });
+    expect(await readLimit()).toEqual({ bike_limit: 1, bike_count: 0, has_archived_bikes: false, pro_since: null });
   });
 
   it('keeps the limit behind the session', async () => {
@@ -146,7 +153,7 @@ describe('Bike limit (e2e)', () => {
       await expectRefused(createBike('Grail'));
 
       expect(await garage()).toEqual([id]);
-      expect(await readLimit()).toEqual({ bike_limit: 1, bike_count: 1, has_archived_bikes: false, key_used: false });
+      expect(await readLimit()).toEqual({ bike_limit: 1, bike_count: 1, has_archived_bikes: false, pro_since: null });
     });
 
     it('refuses before the photo is stored', async () => {
@@ -170,7 +177,7 @@ describe('Bike limit (e2e)', () => {
 
       await expectRefused(createBike('Grail'));
 
-      expect(await readLimit()).toEqual({ bike_limit: 1, bike_count: 1, has_archived_bikes: true, key_used: false });
+      expect(await readLimit()).toEqual({ bike_limit: 1, bike_count: 1, has_archived_bikes: true, pro_since: null });
     });
 
     it('takes the place a deleted bike freed', async () => {
@@ -228,9 +235,7 @@ describe('Bike limit (e2e)', () => {
 
     const addKey = async (maxAccounts = 20): Promise<bike_keys> => {
       keys += 1;
-      return await prisma.bike_keys.create({
-        data: { code: `Early-${stamp}-${keys}`, bike_limit: 2, max_accounts: maxAccounts },
-      });
+      return await prisma.bike_keys.create({ data: { code: `Early-${stamp}-${keys}`, max_accounts: maxAccounts } });
     };
 
     const redeem = (code: string, as: Rider = rider): request.Test =>
@@ -249,24 +254,44 @@ describe('Bike limit (e2e)', () => {
       expect(response.body.message).toBe('KEY_NOT_VALID');
     };
 
-    const fresh = { bike_limit: 1, bike_count: 0, has_archived_bikes: false, key_used: false };
-    const unlocked = { ...fresh, bike_limit: 2, key_used: true };
+    const fresh = { bike_limit: 1, bike_count: 0, has_archived_bikes: false, pro_since: null };
+    const pro = { ...fresh, pro_since: expect.any(String) };
 
     beforeEach(async () => {
       rider = await signUp();
     });
 
-    it('lets the second bike in and refuses the third', async () => {
+    it('gives Pro from this moment, with any number of bikes', async () => {
       const { code } = await addKey();
       await addBike('Spectral');
       await expectRefused(createBike('Grail'));
+      const before = Date.now();
 
       const response = await redeem(code).expect(200);
 
-      expect(response.body).toEqual({ ...unlocked, bike_count: 1 });
+      const state: BikeLimitState = response.body;
+      expect(state).toEqual({ ...pro, bike_count: 1 });
+      const since = new Date(state.pro_since ?? 0).getTime();
+      expect(since).toBeGreaterThanOrEqual(before);
+      expect(since).toBeLessThanOrEqual(Date.now());
       await addBike('Grail');
+      await addBike('Aeroad');
+      await addBike('Neuron');
+      expect(await readLimit()).toEqual({ ...state, bike_count: 4 });
+    });
+
+    it('lets a Pro account add a bike with its archived ones over the limit', async () => {
+      await setLimit(2);
+      await archive(await addBike('Spectral'));
+      await archive(await addBike('Grail'));
       await expectRefused(createBike('Aeroad'));
-      expect(await readLimit()).toEqual({ ...unlocked, bike_count: 2 });
+      const { code } = await addKey();
+      await redeem(code).expect(200);
+
+      const id = await addBike('Aeroad');
+
+      expect(await garage()).toEqual([id]);
+      expect(await readLimit()).toEqual({ ...pro, bike_limit: 2, bike_count: 3, has_archived_bikes: true });
     });
 
     it('does not mind letter case and surrounding spaces', async () => {
@@ -274,7 +299,7 @@ describe('Bike limit (e2e)', () => {
 
       const response = await redeem(`  ${code.toUpperCase()} `).expect(200);
 
-      expect(response.body).toEqual(unlocked);
+      expect(response.body).toEqual(pro);
     });
 
     it('refuses a key that does not exist', async () => {
@@ -308,28 +333,28 @@ describe('Bike limit (e2e)', () => {
       await expectUsedUp(redeem(code));
     });
 
-    it('changes nothing for an account that already used one', async () => {
+    it('changes nothing for an account that already has Pro', async () => {
       const used = await addKey(2);
       const other = await addKey();
-      await redeem(used.code).expect(200);
+      const { body: state } = await redeem(used.code).expect(200);
 
       const again = await redeem(used.code).expect(200);
       const another = await redeem(other.code).expect(200);
       const invalid = await redeem(`nothing-${stamp}`).expect(200);
 
-      expect([again.body, another.body, invalid.body]).toEqual([unlocked, unlocked, unlocked]);
+      expect([again.body, another.body, invalid.body]).toEqual([state, state, state]);
       // The repeat took no use of either.
       expect(await prisma.users.count({ where: { bike_key_id: used.id } })).toBe(1);
       expect(await prisma.users.count({ where: { bike_key_id: other.id } })).toBe(0);
     });
 
-    it('never lowers a limit raised by hand', async () => {
+    it('leaves a limit raised by hand alone', async () => {
       const { code } = await addKey();
       await setLimit(5);
 
       const response = await redeem(code).expect(200);
 
-      expect(response.body).toEqual({ ...unlocked, bike_limit: 5 });
+      expect(response.body).toEqual({ ...pro, bike_limit: 5 });
     });
 
     it('gets its use back from a deleted account', async () => {
@@ -346,15 +371,24 @@ describe('Bike limit (e2e)', () => {
       await redeem(code).expect(200);
     });
 
-    it('keeps the limit it gave when it is changed, switched off or deleted', async () => {
+    it('never takes Pro back when it is changed, switched off or deleted', async () => {
       const { id, code } = await addKey();
-      await redeem(code).expect(200);
+      const other = await addKey();
+      const { body: state } = await redeem(code).expect(200);
 
-      await prisma.bike_keys.update({ where: { id }, data: { code: `${code}-new`, bike_limit: 1, max_accounts: 0 } });
-      expect(await readLimit()).toEqual(unlocked);
+      await prisma.bike_keys.update({ where: { id }, data: { code: `${code}-new` } });
+      expect(await readLimit()).toEqual(state);
+
+      await prisma.bike_keys.update({ where: { id }, data: { max_accounts: 0 } });
+      expect(await readLimit()).toEqual(state);
 
       await prisma.bike_keys.delete({ where: { id } });
-      expect(await readLimit()).toEqual({ ...unlocked, key_used: false });
+      expect(await readLimit()).toEqual(state);
+
+      // The link to the Key is gone, Pro is not: another one is not used up on it.
+      const again = await redeem(other.code).expect(200);
+      expect(again.body).toEqual(state);
+      expect(await prisma.users.count({ where: { bike_key_id: other.id } })).toBe(0);
     });
 
     it('gives its last use to one of two accounts asking at once', async () => {
@@ -373,6 +407,7 @@ describe('Bike limit (e2e)', () => {
       const responses = await Promise.all([redeem(code), redeem(code)]);
 
       expect(responses.map(({ status }) => status)).toEqual([200, 200]);
+      expect(responses[0].body).toEqual(responses[1].body);
     });
 
     it('is tried at most five times a minute per account', async () => {

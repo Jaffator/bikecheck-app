@@ -2,9 +2,7 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ADD_BIKE } from "@/layout/navItems";
 import { useBikeLimitStore } from "@/store/store";
-import { hasRoom } from "./bikeLimit";
 import { useRedeemKey } from "./billing.queries";
-import type { BikeLimit } from "./billing.types";
 import { redeemFailureText } from "./redeemFailure";
 import { useAddBikeGate } from "./useAddBikeGate";
 
@@ -28,10 +26,10 @@ export function useKeyForm(): KeyForm {
   const trimmed = code.trim();
   const canSubmit = trimmed !== "";
 
-  function goOn(limit: BikeLimit): void {
+  function goOn(): void {
     const { opened, hide } = useBikeLimitStore.getState();
-    // Closed meanwhile, or over the raised limit too: the rider stays where they are.
-    if (!opened || !hasRoom(limit)) return;
+    // Closed meanwhile: the rider stays where they are.
+    if (!opened) return;
     hide();
     // Refused on save, the wizard is already open with everything entered.
     if (pathname !== ADD_BIKE.path) void enterAddBike();

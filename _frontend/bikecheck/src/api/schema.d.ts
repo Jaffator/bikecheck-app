@@ -552,7 +552,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The signed-in account's bike limit and what counts against it */
+        /** The signed-in account's bike limit, what counts against it and since when it has Pro */
         get: operations["Billing bikeLimit"];
         put?: never;
         post?: never;
@@ -571,7 +571,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Redeem a Key; an account that already used one gets its current state back */
+        /** Redeem a Key for Pro; an account that has Pro gets its current state back */
         post: operations["Billing redeemKey"];
         delete?: never;
         options?: never;
@@ -2577,7 +2577,7 @@ export interface components {
         };
         ResponseBikeLimitDto: {
             /**
-             * @description How many Bikes the account may hold
+             * @description How many Bikes the account may hold without Pro
              * @example 1
              */
             bike_limit: number;
@@ -2592,10 +2592,11 @@ export interface components {
              */
             has_archived_bikes: boolean;
             /**
-             * @description True once the account has used a Key
-             * @example false
+             * Format: date-time
+             * @description When Pro started, null without Pro. With Pro the limit does not apply
+             * @example 2026-11-25T10:00:00.000Z
              */
-            key_used: boolean;
+            pro_since: string | null;
         };
         RedeemKeyDto: {
             /**
