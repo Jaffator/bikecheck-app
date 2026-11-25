@@ -1,0 +1,308 @@
+/* The Pro sheet. Only the card's metal and the foil of its mark are colours of their own. */
+.pro-sheet {
+  --pro-metal: linear-gradient(
+    112deg,
+    #1b1916 0%,
+    #11100e 18%,
+    #26241f 34%,
+    #302d28 40%,
+    #211f1b 47%,
+    #0d0c0b 62%,
+    #171513 78%,
+    #0a0a09 100%
+  );
+  --pro-metal-edge:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.42), inset 1px 0 0 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 1px 2px 0 rgba(0, 0, 0, 0.35), 0 8px 14px -8px rgba(0, 0, 0, 0.45);
+  --pro-foil: linear-gradient(
+    to bottom right,
+    var(--mantine-color-primary-4),
+    var(--mantine-color-primary-6) 50%,
+    #9c9140
+  );
+  --pro-card-height: 212px;
+  --pro-card-pad: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* With the keyboard up, the key and its button have to fit above it. */
+.pro-sheet--typing {
+  --pro-card-height: 168px;
+}
+
+.pro-sheet__step {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: pro-step 300ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.pro-card {
+  flex-shrink: 0;
+  width: 100%;
+  height: var(--pro-card-height);
+  perspective: 1400px;
+  transition: height 420ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.pro-card__turn {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 620ms cubic-bezier(0.3, 0, 0.1, 1);
+}
+
+.pro-card--turned .pro-card__turn {
+  transform: rotateY(180deg);
+}
+
+.pro-card__face {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 16px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.pro-card__face--front {
+  background: var(--pro-metal);
+  box-shadow: var(--pro-metal-edge);
+  color: var(--mantine-color-primary-6);
+}
+
+.pro-card__face--back {
+  border: 1px solid var(--mantine-color-inputs-5);
+  background: var(--color-surface-well);
+  transform: rotateY(180deg);
+}
+
+.pro-card__name {
+  position: absolute;
+  top: var(--pro-card-pad);
+  left: var(--pro-card-pad);
+}
+
+.pro-card__foot {
+  position: absolute;
+  inset: auto var(--pro-card-pad) var(--pro-card-pad);
+}
+
+/* The shadow along the foil's lower edge presses the mark into the metal. */
+.pro-card__mark {
+  position: absolute;
+  top: 58px;
+  right: var(--pro-card-pad);
+  width: 118px;
+  aspect-ratio: 282 / 175;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.5));
+}
+
+.pro-card__mark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--pro-foil);
+  -webkit-mask: url("../../../assets/icons/bikecheck/bikecheck.svg") center / contain no-repeat;
+  mask: url("../../../assets/icons/bikecheck/bikecheck.svg") center / contain no-repeat;
+}
+
+.pro-key {
+  position: absolute;
+  inset: auto var(--pro-card-pad) 18px;
+}
+
+.pro-key__input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid var(--color-border-solid);
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--mantine-color-text-6);
+  font: 500 18px var(--font-sans);
+}
+
+.pro-key__input::placeholder {
+  color: var(--mantine-color-text-8);
+  opacity: 1;
+}
+
+.pro-key__input:focus {
+  border-bottom-color: var(--mantine-color-primary-6);
+}
+
+.pro-key__input[aria-invalid="true"] {
+  border-bottom-color: var(--mantine-color-red-4);
+}
+
+.pro-key__run {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  overflow: hidden;
+}
+
+.pro-key__run::before {
+  content: "";
+  display: block;
+  width: 35%;
+  height: 100%;
+  background: var(--mantine-color-primary-6);
+  animation: pro-run 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.pro-key__error {
+  margin: 10px 0 0;
+  min-height: 36px;
+}
+
+.pro-check__disc {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pro-disc 450ms cubic-bezier(0.2, 0.9, 0.25, 1) 300ms backwards;
+}
+
+.pro-check__tick {
+  stroke-dasharray: 1;
+  animation: pro-tick 360ms cubic-bezier(0.5, 0, 0.1, 1) 550ms backwards;
+}
+
+.pro-rows {
+  margin: 12px 0 0;
+  font-size: 15px;
+}
+
+.pro-rows__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* Focused by script for a screen reader, never by Tab. */
+.pro-heading:focus {
+  outline: none;
+}
+
+@media (min-width: 60em) {
+  .pro-sheet {
+    --pro-card-height: 256px;
+    --pro-card-pad: 24px;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 372px;
+    gap: 0;
+    min-height: min(640px, 85dvh);
+  }
+
+  .pro-sheet__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 44px;
+    background: var(--mantine-color-background-9);
+  }
+
+  .pro-sheet__side {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pro-sheet__step {
+    flex: 1;
+    justify-content: space-between;
+    gap: 40px;
+    padding: 56px 32px 32px;
+  }
+
+  .pro-card {
+    max-width: 432px;
+    perspective: 1600px;
+  }
+
+  .pro-card__mark {
+    top: 71px;
+    width: 142px;
+  }
+
+  .pro-card__face--back {
+    background: var(--mantine-color-cards-6);
+  }
+
+  .pro-key {
+    bottom: 24px;
+  }
+
+  .pro-key__input {
+    height: 60px;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: var(--tracking-display);
+  }
+
+  .pro-rows {
+    font-size: 14px;
+  }
+
+  .pro-rows__row {
+    padding: 10px 0;
+  }
+}
+
+@keyframes pro-step {
+  from {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pro-run {
+  from {
+    transform: translateX(-60%);
+  }
+  to {
+    transform: translateX(285%);
+  }
+}
+
+@keyframes pro-disc {
+  from {
+    transform: scale(0);
+  }
+}
+
+@keyframes pro-tick {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+/* The steps change at once: no turn, no drawing, and the checking line stands still. */
+@media (prefers-reduced-motion: reduce) {
+  .pro-card,
+  .pro-card__turn {
+    transition: none;
+  }
+
+  .pro-sheet__step,
+  .pro-check__disc,
+  .pro-check__tick {
+    animation: none;
+  }
+
+  .pro-key__run::before {
+    width: 100%;
+    animation: none;
+  }
+}
