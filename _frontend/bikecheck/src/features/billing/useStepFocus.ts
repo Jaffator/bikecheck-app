@@ -7,20 +7,19 @@ interface StepFocus {
 }
 
 // What had focus goes with its step: the key field takes it, or the heading of what came instead.
-export function useStepFocus(step: ProStep): StepFocus {
+export function useStepFocus(step: ProStep, showsBack: boolean): StepFocus {
   const field = useRef<HTMLInputElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const last = useRef(step);
 
   useEffect(() => {
-    // The sheet's first focus is its own; while checking it stays where it was.
+    // The sheet's first focus is its own.
     if (last.current === step) return;
     last.current = step;
-    if (step === "keyChecking") return;
-    const target = step === "key" || step === "keyFailed" ? field : heading;
+    const target = showsBack ? field : heading;
     // The card is mid-turn: the browser's own scroll would jump the sheet.
     target.current?.focus({ preventScroll: true });
-  }, [step]);
+  }, [step, showsBack]);
 
   return { field, heading };
 }

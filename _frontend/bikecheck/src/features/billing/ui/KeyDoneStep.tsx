@@ -1,9 +1,10 @@
 // Pro from a key: what the rider has, that it is free, and the way on to the bike.
 import type { ReactElement, RefObject } from "react";
-import { Group, Text, Title } from "@mantine/core";
+import { Group, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { ProPrimaryButton } from "./ProButtons";
 import { ProStepFrame } from "./ProStepFrame";
+import { ProTitle } from "./ProTitle";
 
 const ROWS = [
   { label: "billing.rowBikes", value: "billing.rowBikesValue" },
@@ -27,19 +28,9 @@ export function KeyDoneStep({ headingRef, overWizard, onGoOn }: KeyDoneStepProps
     >
       <Group gap={12} wrap="nowrap">
         <DoneCheck />
-        <Title
-          ref={headingRef}
-          tabIndex={-1}
-          className="pro-heading"
-          order={2}
-          fz={28}
-          lh="36px"
-          fw={700}
-          lts="var(--tracking-display)"
-          c="text.6"
-        >
+        <ProTitle headingRef={headingRef} fz={28} lh="36px" fw={700} lts="var(--tracking-display)">
           {t("billing.unlockedTitle")}
-        </Title>
+        </ProTitle>
       </Group>
       <dl className="pro-rows">
         {ROWS.map((row) => (

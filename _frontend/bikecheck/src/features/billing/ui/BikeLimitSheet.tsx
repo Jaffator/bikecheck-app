@@ -1,6 +1,7 @@
 // Why another bike cannot be added, and Pro. Mounted once for the whole app; every gate opens this one.
 import { useEffect, type CSSProperties, type ReactElement } from "react";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useOpeningCount } from "@/hooks/useOpeningCount";
@@ -15,6 +16,8 @@ const SHEET_Z_INDEX = 400;
 
 const MODAL_WIDTH = 940;
 
+const SAFE_TOP = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
+
 // The columns reach the modal's edges, so its ✕ lies over them.
 const CLOSE_STRIP = 56;
 const DESKTOP_STYLES: Record<"header" | "body", CSSProperties> = {
@@ -23,6 +26,7 @@ const DESKTOP_STYLES: Record<"header" | "body", CSSProperties> = {
 };
 
 export function BikeLimitSheet(): ReactElement {
+  const { t } = useTranslation();
   const opened = useBikeLimitStore((state) => state.opened);
   const hide = useBikeLimitStore((state) => state.hide);
   const { pathname } = useLocation();
@@ -38,6 +42,8 @@ export function BikeLimitSheet(): ReactElement {
   useEffect(() => hide, [hide]);
 
   function goOn(): void {
+    // A second tap on the sheet sliding away.
+    if (!useBikeLimitStore.getState().opened) return;
     hide();
     if (!overWizard) void enterAddBike();
   }
@@ -49,6 +55,7 @@ export function BikeLimitSheet(): ReactElement {
       onClose={hide}
       desktop="modal"
       modalSize={MODAL_WIDTH}
+      label={t("billing.proName")}
       zIndex={SHEET_Z_INDEX}
       styles={isDesktop ? DESKTOP_STYLES : phoneStyles(keyboardOffset)}
     >
@@ -57,13 +64,15 @@ export function BikeLimitSheet(): ReactElement {
   );
 }
 
-// Rides above the software keyboard, which the webview does not resize for.
+// Rides above the software keyboard, which the webview does not resize for, in all the room that is left.
 function phoneStyles(keyboardOffset: number): Record<"content", CSSProperties> {
+  if (keyboardOffset === 0) return { content: { height: "auto", maxHeight: "88dvh" } };
+
   return {
     content: {
       height: "auto",
       marginBottom: keyboardOffset,
-      maxHeight: `calc(88dvh - ${String(keyboardOffset)}px)`,
+      maxHeight: `calc(100dvh - ${String(keyboardOffset)}px - ${SAFE_TOP})`,
     },
   };
 }

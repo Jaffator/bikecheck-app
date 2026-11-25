@@ -21,8 +21,7 @@ interface ProSheetBodyProps {
 export function ProSheetBody({ overWizard, isTyping, onGoOn }: ProSheetBodyProps): ReactElement {
   const { data: limit } = useBikeLimit();
   const pro = useProSheet();
-  const { field, heading } = useStepFocus(pro.step);
-  const isChecking = pro.step === "keyChecking";
+  const { field, heading } = useStepFocus(pro.step, pro.showsBack);
 
   function onSubmit(event: FormEvent): void {
     event.preventDefault();
@@ -40,7 +39,7 @@ export function ProSheetBody({ overWizard, isTyping, onGoOn }: ProSheetBodyProps
               fieldRef={field}
               code={pro.code}
               onChange={pro.setCode}
-              isChecking={isChecking}
+              isChecking={pro.isChecking}
               failure={pro.failure}
             />
           }
@@ -49,7 +48,7 @@ export function ProSheetBody({ overWizard, isTyping, onGoOn }: ProSheetBodyProps
       <div className="pro-sheet__side">
         {pro.step === "offer" && <OfferStep headingRef={heading} limit={limit} onHaveKey={pro.showKey} />}
         {pro.showsBack && (
-          <KeyStep headingRef={heading} isChecking={isChecking} canSubmit={pro.canSubmit} onBack={pro.showOffer} />
+          <KeyStep headingRef={heading} isChecking={pro.isChecking} canSubmit={pro.canSubmit} onBack={pro.showOffer} />
         )}
         {pro.step === "keyDone" && <KeyDoneStep headingRef={heading} overWizard={overWizard} onGoOn={onGoOn} />}
       </div>

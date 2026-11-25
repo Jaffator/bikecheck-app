@@ -2,9 +2,8 @@ import type { CSSProperties, ReactElement } from "react";
 import { Button } from "@mantine/core";
 import { disabledButtonStyles } from "@/features/add_bike_page/formStyles";
 
-// Readable while disabled: checking a key is said on the button itself.
+// Lighter than the shared disabled look: checking a key is said on the button, so it has to be read.
 const DISABLED_PRIMARY = {
-  ...disabledButtonStyles.root,
   "--mantine-color-disabled": "var(--color-surface-raised)",
   "--mantine-color-disabled-color": "var(--color-muted)",
   opacity: 1,

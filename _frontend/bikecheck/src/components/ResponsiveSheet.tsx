@@ -53,6 +53,8 @@ interface ResponsiveSheetProps {
   // Width of the desktop modal; left out, Mantine's default.
   modalSize?: ModalProps["size"];
   title?: ReactNode;
+  // Names the dialog for a screen reader when no title does.
+  label?: string;
   // Mantine's own cross on desktop; a sheet drawing its own header turns it off. A bottom
   // sheet wears the wrapper's ✕ instead.
   withCloseButton?: boolean;
@@ -72,6 +74,7 @@ export function ResponsiveSheet({
   desktop,
   modalSize,
   title,
+  label,
   withCloseButton = true,
   dismissible = true,
   closeOnClickOutside = true,
@@ -91,6 +94,7 @@ export function ResponsiveSheet({
     opened: visible,
     onClose,
     title: shownTitle,
+    attributes: { content: { "aria-label": label } },
     withCloseButton,
     zIndex,
     // A sheet under a confirmation stays put when Esc dismisses the confirmation.

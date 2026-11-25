@@ -9,6 +9,7 @@ export interface ProSheetState {
   step: ProStep;
   // Which side of the card is up.
   showsBack: boolean;
+  isChecking: boolean;
   code: string;
   setCode: (code: string) => void;
   canSubmit: boolean;
@@ -23,12 +24,13 @@ export interface ProSheetState {
 export function useProSheet(): ProSheetState {
   const { data: limit } = useBikeLimit();
   const redeem = useRedeemKey();
-  const [asked, setAsked] = useState<"offer" | "key">("offer");
+  const [opened, setOpened] = useState<"offer" | "key">("offer");
   const [code, setCode] = useState("");
   // A double tap lands before the checking step is drawn.
   const isSending = useRef(false);
 
   const step = currentStep();
+  const isChecking = step === "keyChecking";
   const trimmed = code.trim();
   const canSubmit = trimmed !== "" && (step === "key" || step === "keyFailed");
 
@@ -36,22 +38,24 @@ export function useProSheet(): ProSheetState {
     if (limit !== undefined && hasPro(limit)) return "keyDone";
     if (redeem.isPending) return "keyChecking";
     if (redeem.isError) return "keyFailed";
-    return asked;
+    return opened;
   }
 
   return {
     step,
-    showsBack: step === "key" || step === "keyChecking" || step === "keyFailed",
+    showsBack: isChecking || step === "key" || step === "keyFailed",
+    isChecking,
     code,
     setCode: (next) => {
+      if (isSending.current) return;
       setCode(next);
       redeem.reset();
     },
     canSubmit,
     failure: redeem.error === null ? null : redeemFailureText(redeem.error),
-    showKey: () => setAsked("key"),
+    showKey: () => setOpened("key"),
     showOffer: () => {
-      setAsked("offer");
+      setOpened("offer");
       redeem.reset();
     },
     submit: () => {

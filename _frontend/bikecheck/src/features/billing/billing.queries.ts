@@ -25,7 +25,9 @@ export function useRedeemKey(): UseMutationResult<BikeLimit, Error, string> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: redeemKey,
-    onSuccess: (limit) => {
+    onSuccess: async (limit) => {
+      // A read already under way would come back without Pro.
+      await queryClient.cancelQueries({ queryKey: BIKE_LIMIT_QUERY_KEY });
       queryClient.setQueryData(BIKE_LIMIT_QUERY_KEY, limit);
     },
   });

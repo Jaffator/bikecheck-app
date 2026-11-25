@@ -32,6 +32,12 @@
 /* With the keyboard up, the key and its button have to fit above it. */
 .pro-sheet--typing {
   --pro-card-height: 168px;
+
+  gap: 16px;
+}
+
+.pro-sheet--typing .pro-sheet__step {
+  gap: 16px;
 }
 
 .pro-sheet__step {
@@ -137,12 +143,13 @@
   opacity: 1;
 }
 
-.pro-key__input:focus {
-  border-bottom-color: var(--mantine-color-primary-6);
-}
-
 .pro-key__input[aria-invalid="true"] {
   border-bottom-color: var(--mantine-color-red-4);
+}
+
+/* Last, so focus shows over a refusal too; the text under the field says that. */
+.pro-key__input:focus {
+  border-bottom-color: var(--mantine-color-primary-6);
 }
 
 .pro-key__run {
@@ -150,6 +157,10 @@
   inset: auto 0 0;
   height: 2px;
   overflow: hidden;
+}
+
+.pro-key__input:read-only {
+  border-bottom-color: var(--color-border-solid);
 }
 
 .pro-key__run::before {
