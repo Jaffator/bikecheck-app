@@ -12,7 +12,6 @@ interface PurchaseStepsProps {
   headingRef: RefObject<HTMLHeadingElement | null>;
   step: ProStep;
   purchase: ProPurchase;
-  overWizard: boolean;
   onBack: () => void;
   onClose: () => void;
 }
@@ -21,7 +20,6 @@ export function PurchaseSteps({
   headingRef,
   step,
   purchase,
-  overWizard,
   onBack,
   onClose,
 }: PurchaseStepsProps): ReactElement {
@@ -30,7 +28,7 @@ export function PurchaseSteps({
       {step === "summary" && (
         <>
           <ProBackButton onClick={onBack} />
-          <SummaryStep headingRef={headingRef} onPay={() => void purchase.pay()} />
+          <SummaryStep headingRef={headingRef} purchase={purchase} />
         </>
       )}
       {step === "confirming" && <ConfirmingStep headingRef={headingRef} />}
@@ -38,7 +36,7 @@ export function PurchaseSteps({
         <PaymentFailedStep headingRef={headingRef} onTryAgain={purchase.showSummary} onClose={onClose} />
       )}
       {step === "paid" && purchase.paidAt !== null && (
-        <PaidStep headingRef={headingRef} paidAt={purchase.paidAt} overWizard={overWizard} onClose={onClose} />
+        <PaidStep headingRef={headingRef} paidAt={purchase.paidAt} onClose={onClose} />
       )}
     </>
   );

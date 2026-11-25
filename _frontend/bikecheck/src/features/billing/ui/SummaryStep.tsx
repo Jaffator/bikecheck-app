@@ -1,9 +1,10 @@
 // What the rider agrees to before paying: the amount, the next payment and how it ends.
-import { useState, type ReactElement, type RefObject } from "react";
+import type { ReactElement, RefObject } from "react";
 import { Checkbox, Stack, Text } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { nextPaymentDate } from "../proDates";
-import { PRO_PLATFORM, PRO_PRICE } from "../proSales";
+import { NEEDS_CONSENT, PRO_PLATFORM, PRO_PRICE } from "../proSales";
+import type { ProPurchase } from "../useProPurchase";
 import { ProBenefits } from "./ProBenefits";
 import { ProPrimaryButton } from "./ProButtons";
 import { ProOutcomeHeading } from "./ProOutcomeHeading";
@@ -14,18 +15,13 @@ const TEXTS = {
   android: { cancel: "billing.cancelAndroid", pay: "billing.payAndroid", note: "billing.payAndroidNote" },
 } as const;
 
-// Google Play has its own step for it.
-const NEEDS_CONSENT = PRO_PLATFORM === "web";
-
 interface SummaryStepProps {
   headingRef: RefObject<HTMLHeadingElement | null>;
-  onPay: () => void;
+  purchase: ProPurchase;
 }
 
-export function SummaryStep({ headingRef, onPay }: SummaryStepProps): ReactElement {
+export function SummaryStep({ headingRef, purchase }: SummaryStepProps): ReactElement {
   const { t } = useTranslation();
-  // Gone with the step: coming back, the rider agrees again.
-  const [consented, setConsented] = useState(false);
   const texts = TEXTS[PRO_PLATFORM];
 
   return (
@@ -43,9 +39,9 @@ export function SummaryStep({ headingRef, onPay }: SummaryStepProps): ReactEleme
       <Text fz={13} lh={1.5} c="text.7" style={{ textWrap: "pretty" }}>
         {t("billing.afterCancel")}
       </Text>
-      {NEEDS_CONSENT && <Consent checked={consented} onChange={setConsented} />}
+      {NEEDS_CONSENT && <Consent checked={purchase.consented} onChange={purchase.setConsented} />}
       <Stack gap={12}>
-        <ProPrimaryButton label={t(texts.pay)} disabled={NEEDS_CONSENT && !consented} onClick={onPay} />
+        <ProPrimaryButton label={t(texts.pay)} disabled={!purchase.canPay} onClick={() => void purchase.pay()} />
         <Text ta="center" fz={12} lh={1.4} c="var(--color-muted)" style={{ textWrap: "balance" }}>
           {t(texts.note)}
         </Text>
@@ -70,9 +66,10 @@ function Consent({ checked, onChange }: ConsentProps): ReactElement {
       onChange={(event) => onChange(event.currentTarget.checked)}
       label={t("billing.consent")}
       styles={{
-        inner: { marginTop: 14, marginLeft: 14 },
-        // The label's padding, so the whole tile ticks it.
-        label: { padding: "14px 14px 14px 12px", fontSize: 13, lineHeight: 1.5, color: "var(--color-text-dim)" },
+        // The label lies under the box too, so the whole tile ticks it.
+        body: { position: "relative" },
+        inner: { position: "absolute", top: 14, left: 14 },
+        label: { padding: "14px 14px 14px 48px", fontSize: 13, lineHeight: 1.5, color: "var(--color-text-dim)" },
         input: checked ? {} : { backgroundColor: "var(--mantine-color-cards-6)", borderColor: "var(--color-border-solid)" },
       }}
     />

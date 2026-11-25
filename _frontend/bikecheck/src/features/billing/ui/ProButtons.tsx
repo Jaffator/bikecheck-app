@@ -41,6 +41,7 @@ export function ProPrimaryButton({ label, disabled = false, onClick }: ProButton
 export function ProQuietButton({ label, disabled = false, onClick }: ProButtonProps): ReactElement {
   return (
     <Button
+      className="tabular-nums"
       variant="subtle"
       fullWidth
       c="var(--color-text-dim)"

@@ -11,18 +11,16 @@ import { ProStepFrame } from "./ProStepFrame";
 interface PaidStepProps {
   headingRef: RefObject<HTMLHeadingElement | null>;
   paidAt: string;
-  // The wizard is open underneath, so the way on is back to it.
-  overWizard: boolean;
   onClose: () => void;
 }
 
-export function PaidStep({ headingRef, paidAt, overWizard, onClose }: PaidStepProps): ReactElement {
+export function PaidStep({ headingRef, paidAt, onClose }: PaidStepProps): ReactElement {
   const { t } = useTranslation();
 
   return (
     <ProStepFrame
       // Closes only: a simulated payment gives no Pro, so the wizard would meet the limit again.
-      actions={<ProPrimaryButton label={t(overWizard ? "billing.continue" : "billing.addBike")} onClick={onClose} />}
+      actions={<ProPrimaryButton label={t("billing.addBike")} onClick={onClose} />}
     >
       <ProOutcomeHeading headingRef={headingRef} title={t("billing.paidTitle")} outcome="done" amount={PRO_PRICE} />
       <ProRows

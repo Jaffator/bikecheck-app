@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { proPayment } from "./proPayment";
-import { PRO_SALES } from "./proSales";
+import { NEEDS_CONSENT, PRO_SALES } from "./proSales";
 
 export type PurchaseStep = "summary" | "confirming" | "paymentFailed" | "paid";
 
@@ -9,6 +9,9 @@ export interface ProPurchase {
   step: PurchaseStep | null;
   // Null until the payment passes.
   paidAt: string | null;
+  consented: boolean;
+  setConsented: (consented: boolean) => void;
+  canPay: boolean;
   showSummary: () => void;
   leave: () => void;
   pay: () => Promise<void>;
@@ -17,12 +20,14 @@ export interface ProPurchase {
 // The purchase steps of the Pro sheet.
 export function useProPurchase(): ProPurchase {
   const [step, setStep] = useState<PurchaseStep | null>(null);
+  const [consented, setConsented] = useState(false);
   const [paidAt, setPaidAt] = useState<string | null>(null);
   // A double tap lands before the confirming step is drawn.
   const isPaying = useRef(false);
+  const canPay = step === "summary" && (consented || !NEEDS_CONSENT);
 
   async function pay(): Promise<void> {
-    if (!PRO_SALES || step !== "summary" || isPaying.current) return;
+    if (!PRO_SALES || !canPay || isPaying.current) return;
     isPaying.current = true;
     setStep("confirming");
     const result = await proPayment.pay();
@@ -34,8 +39,14 @@ export function useProPurchase(): ProPurchase {
   return {
     step,
     paidAt,
+    consented,
+    setConsented,
+    canPay,
     showSummary: () => {
-      if (PRO_SALES) setStep("summary");
+      if (!PRO_SALES) return;
+      // Every way to the summary asks again.
+      setConsented(false);
+      setStep("summary");
     },
     leave: () => setStep(null),
     pay,

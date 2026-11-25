@@ -62,7 +62,6 @@ export function ProSheetBody({ overWizard, isTyping, onGoOn, onClose }: ProSheet
             headingRef={heading}
             step={pro.step}
             purchase={pro.purchase}
-            overWizard={overWizard}
             onBack={pro.showOffer}
             onClose={onClose}
           />
