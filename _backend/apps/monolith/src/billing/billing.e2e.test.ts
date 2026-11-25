@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from '../app.module';
 import { bike_keys } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ResponseBikeLimitDto } from './dto/response-bike-limit.dto';
 import { StorageService } from '../storage/storage.service';
 import request from 'supertest';
 import setCookie from 'set-cookie-parser';
@@ -14,12 +15,8 @@ interface Rider {
   accessToken: string | undefined;
 }
 
-interface BikeLimitState {
-  bike_limit: number;
-  bike_count: number;
-  has_archived_bikes: boolean;
-  pro_since: string | null;
-}
+// As it arrives over HTTP: a date is a string there.
+type BikeLimitState = Omit<ResponseBikeLimitDto, 'pro_since'> & { pro_since: string | null };
 
 describe('Bike limit (e2e)', () => {
   let app: NestExpressApplication;
@@ -389,6 +386,8 @@ describe('Bike limit (e2e)', () => {
       const again = await redeem(other.code).expect(200);
       expect(again.body).toEqual(state);
       expect(await prisma.users.count({ where: { bike_key_id: other.id } })).toBe(0);
+      await addBike('Spectral');
+      await addBike('Grail');
     });
 
     it('gives its last use to one of two accounts asking at once', async () => {
@@ -402,12 +401,13 @@ describe('Bike limit (e2e)', () => {
     });
 
     it('counts once when one account asks twice at once', async () => {
-      const { code } = await addKey(1);
+      const { id, code } = await addKey(1);
 
       const responses = await Promise.all([redeem(code), redeem(code)]);
 
       expect(responses.map(({ status }) => status)).toEqual([200, 200]);
       expect(responses[0].body).toEqual(responses[1].body);
+      expect(await prisma.users.count({ where: { bike_key_id: id } })).toBe(1);
     });
 
     it('is tried at most five times a minute per account', async () => {

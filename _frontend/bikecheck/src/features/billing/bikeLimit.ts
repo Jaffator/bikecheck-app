@@ -9,8 +9,13 @@ export function isBikeLimitError(error: unknown): boolean {
   return error instanceof ApiError && error.details.includes(BIKE_LIMIT_REACHED);
 }
 
-export function hasRoom({ pro_since, bike_count, bike_limit }: BikeLimit): boolean {
-  return pro_since !== null || bike_count < bike_limit;
+export function hasPro({ pro_since }: BikeLimit): boolean {
+  return pro_since !== null;
+}
+
+// Pro has no bike limit.
+export function hasRoom(state: BikeLimit): boolean {
+  return hasPro(state) || state.bike_count < state.bike_limit;
 }
 
 // Read without a request, so the wizard opens in the same tick as the tap.
@@ -19,7 +24,7 @@ export function knownToHaveRoom(queryClient: QueryClient): boolean {
   return state?.data !== undefined && !state.isInvalidated && hasRoom(state.data);
 }
 
-// A cached refusal is asked again: the limit may have been raised meanwhile.
+// A cached refusal is asked again: Pro or a higher limit may have come meanwhile.
 export async function askForRoom(queryClient: QueryClient): Promise<boolean> {
   try {
     return hasRoom(await queryClient.fetchQuery({ ...bikeLimitQuery, staleTime: 0 }));

@@ -6,6 +6,7 @@ import { ResponsiveSheet } from "@/components/ResponsiveSheet";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { useOpeningCount } from "@/hooks/useOpeningCount";
 import { useBikeLimitStore } from "@/store/store";
+import { hasPro } from "../bikeLimit";
 import { useBikeLimit } from "../billing.queries";
 import { KeyForm } from "./KeyForm";
 
@@ -20,7 +21,7 @@ export function BikeLimitSheet(): ReactElement {
   const hide = useBikeLimitStore((state) => state.hide);
   const { data: limit } = useBikeLimit();
   const keyboardOffset = useKeyboardOffset();
-  const canUseKey = limit?.pro_since === null;
+  const canUseKey = limit !== undefined && !hasPro(limit);
   // Mounted after whatever it opens over, so one Esc does not close the summary with it.
   const opening = useOpeningCount(opened);
 

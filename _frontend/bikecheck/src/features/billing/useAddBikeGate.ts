@@ -11,7 +11,7 @@ interface EnterOptions {
   onRefused?: () => void;
 }
 
-// The one way into the add-bike wizard: under the limit it opens, over it the limit sheet does.
+// The one way into the add-bike wizard: with room it opens, without it the limit sheet does.
 export function useAddBikeGate(): (options?: EnterOptions) => Promise<void> {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
