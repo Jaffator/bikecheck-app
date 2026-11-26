@@ -1,7 +1,7 @@
 // Home's forecast card; the pace, the date and the curve are decided in StatsService.
 import { useState, type ReactElement, type ReactNode } from "react";
 import { ActionIcon, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
-import { Info } from "lucide-react";
+import { Info, Timer } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ExplanationModal } from "@/components/ExplanationModal";
 import { useBikes } from "@/features/bikes/bikes.queries";
@@ -9,6 +9,7 @@ import type { TrackedAction } from "@/features/service_tracking/tracking.types";
 import { TrackedActionDrawer } from "@/features/service_tracking/ui/TrackedActionDrawer";
 import { useWearForecast } from "../stats.queries";
 import { forecastBikes, chosenBikeActions, hasRides } from "../wearForecast";
+import { EmptyWell } from "./EmptyWell";
 import { ForecastActions } from "./ForecastActions";
 import { ForecastBikePicker } from "./ForecastBikePicker";
 import { CHART_HEIGHT } from "./ForecastChart";
@@ -35,10 +36,11 @@ export function WearForecastCard(): ReactElement {
   if (actions.length === 0 || !items.some(hasRides)) {
     return (
       <ForecastPaper>
-        <ForecastTitle />
-        <Text fz={13} c="text.8">
-          {t("stats.forecastEmpty")}
-        </Text>
+        {/* The paper's lg gap is for the chart; the empty card keeps Distance's and Spend's 14 so all three match. */}
+        <Stack gap={14}>
+          <ForecastTitle />
+          <EmptyWell icon={Timer}>{t("stats.forecastEmpty")}</EmptyWell>
+        </Stack>
       </ForecastPaper>
     );
   }

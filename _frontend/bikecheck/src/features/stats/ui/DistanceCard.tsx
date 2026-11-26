@@ -2,6 +2,7 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { Box, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { AreaChart, type AreaChartProps } from "@mantine/charts";
+import { Route } from "lucide-react";
 import dayjs from "dayjs";
 import { useYAxisScale } from "recharts";
 import type { TFunction } from "i18next";
@@ -23,6 +24,7 @@ import {
 } from "../distanceDays";
 import { useDistance } from "../stats.queries";
 import type { Distance, DistanceBike, HomePeriod } from "../stats.types";
+import { EmptyWell } from "./EmptyWell";
 import { HOME_FIGURE_SIZE, HomeCardHeader, HomeFigure } from "./HomeCardHeader";
 
 const CHART_HEIGHT = 160;
@@ -96,9 +98,7 @@ export function DistanceCard({ period }: { period: HomePeriod }): ReactElement {
       </Stack>
 
       {drawn.bikes.length === 0 ? (
-        <Text fz={13} c="text.8">
-          {t("stats.distanceEmptyPeriod")}
-        </Text>
+        <EmptyWell icon={Route}>{t("stats.distanceEmptyPeriod")}</EmptyWell>
       ) : (
         <DistanceChart distance={drawn} period={shown} />
       )}

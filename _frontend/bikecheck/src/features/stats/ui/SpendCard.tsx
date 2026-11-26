@@ -10,6 +10,7 @@ import {
   Text,
   UnstyledButton,
 } from "@mantine/core";
+import { Banknote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Eyebrow } from "@/components/Eyebrow";
@@ -25,6 +26,7 @@ import { writeHomePeriod } from "../homePeriod";
 import { categoryLabel } from "../spendCategories";
 import { useSpend } from "../stats.queries";
 import type { HomePeriod, Spend, SpendBike, SpendCategory } from "../stats.types";
+import { EmptyWell } from "./EmptyWell";
 import { HomeCardHeader, HomeFigure } from "./HomeCardHeader";
 
 const CATEGORY_BAR_HEIGHT = 4;
@@ -54,13 +56,12 @@ export function SpendCard({ period }: { period: HomePeriod }): ReactElement {
     <SpendPaper>
       <Stack gap={10}>
         <HomeCardHeader title={t("stats.spend")} period={period} />
-        <SpendTotal spend={spend} />
+        {/* Zero says nothing, so an empty card keeps only its header, as Distance does. */}
+        {spend.bikes.length > 0 && <SpendTotal spend={spend} />}
       </Stack>
 
       {spend.bikes.length === 0 ? (
-        <Text fz={13} c="text.8">
-          {t("stats.spendEmpty")}
-        </Text>
+        <EmptyWell icon={Banknote}>{t("stats.spendEmpty")}</EmptyWell>
       ) : (
         <>
           <BikeRows spend={spend} period={period} bikes={bikes} />
